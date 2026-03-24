@@ -1,0 +1,188 @@
+<?php
+// api/worker_enroll.php - OMNI-ENGINE V28.2 (OPTIMIZED ATOMIC ENROLLMENT)
+// This worker handles standard flow triggers like segment entry using direct SQL.
+
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
+ini_set('display_errors', 0);
+set_time_limit(300);
+
+require_once 'db_connect.php';
+require_once 'flow_helpers.php';
+require_once 'segment_helper.php';
+
+date_default_timezone_set('Asia/Ho_Chi_Minh');
+$pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+header('Content-Type: application/json; charset=utf-8');
+
+$now = date('Y-m-d H:i:s');
+$logs = [];
+$logs[] = "--- ENROLLMENT WORKER START: $now ---";
+
+// 1. Segment Sync — QUEUE-BASED (replaces full blocking scan)
+// [FIX] Old approach: SELECT COUNT(*) for ALL segments before any enrollment.
+// With 200 segments × 1s each = 200s wasted → timeout before enrollment starts.
+// New approach: Only sync segments that have pending updates in segment_count_update_queue
+// (inserted by cleanup/split/exclude operations), plus any segment not synced in >1 hour.
+// Cap at 20 per run to bound worst-case sync time to ~20s.
+$logs[] = "[Segment] Syncing queued segments...";
+
+$syncedSegments = 0;
+$syncLimit = 20;
+
+try {
+    // Priority 1: Segments explicitly queued for update
+    $stmtQueue = $pdo->query(
+        "SELECT DISTINCT q.segment_id, seg.criteria
+         FROM segment_count_update_queue q
+         JOIN segments seg ON q.segment_id = seg.id
+         ORDER BY q.queued_at ASC
+         LIMIT $syncLimit"
+    );
+    $queuedSegs = $stmtQueue->fetchAll();
+
+    foreach ($queuedSegs as $seg) {
+        $segId = $seg['segment_id'];
+        if (empty($seg['criteria'])) {
+            $pdo->prepare("UPDATE segments SET subscriber_count = (SELECT COUNT(*) FROM subscribers), synced_at = NOW() WHERE id = ?")
+                ->execute([$segId]);
+        } else {
+            $segRes = buildSegmentWhereClause($seg['criteria'], $segId);
+            $stmtC = $pdo->prepare("SELECT COUNT(*) FROM subscribers s WHERE " . $segRes['sql']);
+            $stmtC->execute($segRes['params']);
+            $count = $stmtC->fetchColumn();
+            $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ?")
+                ->execute([$count, $segId]);
+        }
+        // Remove from queue after successful sync
+        $pdo->prepare("DELETE FROM segment_count_update_queue WHERE segment_id = ?")
+            ->execute([$segId]);
+        $syncedSegments++;
+    }
+
+    // Priority 2: Stale segments (not synced in 1 hour) — fill up remaining slots
+    $remaining = $syncLimit - $syncedSegments;
+    if ($remaining > 0) {
+        $stmtStale = $pdo->prepare(
+            "SELECT id, criteria FROM segments
+             WHERE (synced_at IS NULL OR synced_at < DATE_SUB(NOW(), INTERVAL 1 HOUR))
+             ORDER BY synced_at ASC LIMIT ?"
+        );
+        $stmtStale->execute([$remaining]);
+        foreach ($stmtStale->fetchAll() as $seg) {
+            if (empty($seg['criteria'])) {
+                $pdo->prepare("UPDATE segments SET subscriber_count = (SELECT COUNT(*) FROM subscribers), synced_at = NOW() WHERE id = ?")
+                    ->execute([$seg['id']]);
+            } else {
+                $segRes = buildSegmentWhereClause($seg['criteria'], $seg['id']);
+                $stmtC = $pdo->prepare("SELECT COUNT(*) FROM subscribers s WHERE " . $segRes['sql']);
+                $stmtC->execute($segRes['params']);
+                $count = $stmtC->fetchColumn();
+                $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ?")
+                    ->execute([$count, $seg['id']]);
+            }
+            $syncedSegments++;
+        }
+    }
+} catch (Exception $e) {
+    $logs[] = "[Segment] Sync error: " . $e->getMessage();
+}
+
+$logs[] = "[Segment] Synced $syncedSegments segment(s) (queue-based, max $syncLimit).";
+
+
+
+// 2. Standard Flow Enrollment
+$logs[] = "[Enrollment] Checking active flows for new enrollments...";
+$stmtActiveFlows = $pdo->query("SELECT id, name, steps, config FROM flows WHERE status = 'active'");
+$activeFlows = $stmtActiveFlows->fetchAll();
+
+foreach ($activeFlows as $flow) {
+    $steps = json_decode($flow['steps'], true) ?: [];
+    $fConfig = json_decode($flow['config'], true) ?: [];
+    $frequency = $fConfig['frequency'] ?? 'one-time';
+    $allowMultiple = !empty($fConfig['allowMultiple']);
+    $maxEnrollments = (int) ($fConfig['maxEnrollments'] ?? 0);
+    $cooldownHours = (int) ($fConfig['enrollmentCooldownHours'] ?? 12);
+
+    $trigger = null;
+    foreach ($steps as $s) {
+        if ($s['type'] === 'trigger') {
+            $trigger = $s;
+            break;
+        }
+    }
+    if (!$trigger || !isset($trigger['nextStepId']))
+        continue;
+
+    $tConfig = $trigger['config'] ?? [];
+    $tType = $tConfig['type'] ?? 'segment';
+
+    // handled by worker_trigger.php: date, dormant, campaign
+    if ($tType !== 'segment')
+        continue;
+
+    $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
+    $stmtSeg->execute([$tConfig['targetId']]);
+    $segDef = $stmtSeg->fetch();
+
+    if (!$segDef) {
+        $logs[] = "  - Flow '{$flow['name']}': Trigger segment '{$tConfig['targetId']}' not found.";
+        continue;
+    }
+
+    $segRes = buildSegmentWhereClause($segDef['criteria'], $tConfig['targetId']);
+    $segSql = $segRes['sql'];
+    $segParams = $segRes['params'];
+
+    $existsCheckSql = "";
+    $checkParams = [];
+    if ($frequency === 'one-time') {
+        $existsCheckSql = "AND NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ?)";
+        $checkParams[] = $flow['id'];
+    } else {
+        $checks = [];
+        if ($maxEnrollments > 0) {
+            $checks[] = "(SELECT COUNT(*) FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ?) < $maxEnrollments";
+            $checkParams[] = $flow['id'];
+        }
+        if ($allowMultiple) {
+            $checks[] = "NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ? AND sfs.status IN ('waiting', 'processing'))";
+            $checkParams[] = $flow['id'];
+        } else {
+            $checks[] = "NOT EXISTS (
+                SELECT 1 FROM subscriber_flow_states sfs 
+                WHERE sfs.subscriber_id = s.id 
+                AND sfs.flow_id = ? 
+                AND (sfs.status IN ('waiting', 'processing') OR sfs.updated_at > DATE_SUB(NOW(), INTERVAL $cooldownHours HOUR))
+            )";
+            $checkParams[] = $flow['id'];
+        }
+        $existsCheckSql = "AND " . implode(" AND ", $checks);
+    }
+
+    $sqlIns = "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at)
+               SELECT s.id, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
+               FROM subscribers s
+               WHERE s.status IN ('active', 'lead', 'customer') 
+               AND ($segSql)
+               $existsCheckSql";
+
+    $pastTime = date('Y-m-d H:i:s', strtotime('-1 second'));
+    $params = array_merge([$flow['id'], $trigger['nextStepId'], $pastTime], $segParams, $checkParams);
+
+    try {
+        $stmtIns = $pdo->prepare($sqlIns);
+        $stmtIns->execute($params);
+        $enrolledCount = $stmtIns->rowCount();
+
+        if ($enrolledCount > 0) {
+            $pdo->prepare("UPDATE flows SET stat_enrolled = stat_enrolled + ? WHERE id = ?")->execute([$enrolledCount, $flow['id']]);
+            $logs[] = "  - Flow '{$flow['name']}': Enrolled $enrolledCount subscribers.";
+        }
+    } catch (Exception $e) {
+        $logs[] = "  - [ERROR] Flow '{$flow['name']}': " . $e->getMessage();
+    }
+}
+
+$logs[] = "--- ENROLLMENT WORKER END ---";
+echo json_encode(['status' => 'completed', 'logs' => $logs]);

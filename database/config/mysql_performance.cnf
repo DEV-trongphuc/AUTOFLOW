@@ -1,0 +1,186 @@
+# =====================================================
+# MySQL Configuration for High-Performance Web Tracking
+# Target: 1M events/day (300M events/year)
+# =====================================================
+# 
+# Location: /etc/mysql/my.cnf or /etc/my.cnf
+# After editing, restart MySQL: sudo systemctl restart mysql
+#
+# =====================================================
+
+[mysqld]
+
+# =====================================================
+# GENERAL SETTINGS
+# =====================================================
+user = mysql
+pid-file = /var/run/mysqld/mysqld.pid
+socket = /var/run/mysqld/mysqld.sock
+port = 3306
+basedir = /usr
+datadir = /var/lib/mysql
+tmpdir = /tmp
+
+# Character set
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+
+# =====================================================
+# CONNECTION SETTINGS
+# =====================================================
+max_connections = 500
+max_connect_errors = 100000
+wait_timeout = 600
+interactive_timeout = 600
+
+# Connection pool
+thread_cache_size = 50
+table_open_cache = 4000
+table_definition_cache = 2000
+
+# =====================================================
+# INNODB SETTINGS (Critical for performance)
+# =====================================================
+
+# Buffer Pool (Set to 70-80% of available RAM)
+# For 16GB RAM server: 12GB
+# For 8GB RAM server: 6GB
+innodb_buffer_pool_size = 8G
+
+# Buffer pool instances (1 per GB, max 64)
+innodb_buffer_pool_instances = 8
+
+# Log file size (larger = better write performance)
+innodb_log_file_size = 1G
+innodb_log_buffer_size = 256M
+
+# Flush method (O_DIRECT reduces double buffering)
+innodb_flush_method = O_DIRECT
+
+# Flush log at transaction commit
+innodb_flush_log_at_trx_commit = 2  # 2 = flush every second (faster, small data loss risk)
+
+# File per table
+innodb_file_per_table = 1
+
+# IO capacity (adjust based on disk speed)
+# SSD: 5000-10000
+# HDD: 200-500
+innodb_io_capacity = 2000
+innodb_io_capacity_max = 4000
+
+# Read/Write threads
+innodb_read_io_threads = 8
+innodb_write_io_threads = 8
+
+# Adaptive hash index
+innodb_adaptive_hash_index = ON
+
+# =====================================================
+# QUERY CACHE (Deprecated in MySQL 8.0+)
+# =====================================================
+# For MySQL 5.7 and below
+# query_cache_type = 1
+# query_cache_size = 256M
+# query_cache_limit = 2M
+
+# =====================================================
+# TEMPORARY TABLES
+# =====================================================
+tmp_table_size = 256M
+max_heap_table_size = 256M
+
+# =====================================================
+# SORT & JOIN BUFFERS
+# =====================================================
+sort_buffer_size = 4M
+read_buffer_size = 2M
+read_rnd_buffer_size = 4M
+join_buffer_size = 4M
+
+# =====================================================
+# BINARY LOGGING (For replication & point-in-time recovery)
+# =====================================================
+server-id = 1
+log_bin = /var/log/mysql/mysql-bin.log
+binlog_format = ROW
+expire_logs_days = 7
+max_binlog_size = 100M
+
+# =====================================================
+# SLOW QUERY LOG (For performance monitoring)
+# =====================================================
+slow_query_log = 1
+slow_query_log_file = /var/log/mysql/slow-query.log
+long_query_time = 2  # Log queries taking > 2 seconds
+log_queries_not_using_indexes = 1
+
+# =====================================================
+# ERROR LOG
+# =====================================================
+log_error = /var/log/mysql/error.log
+
+# =====================================================
+# PERFORMANCE SCHEMA (For advanced monitoring)
+# =====================================================
+performance_schema = ON
+performance_schema_max_table_instances = 12500
+performance_schema_max_table_handles = 4000
+
+# =====================================================
+# REPLICATION (Optional - for read scaling)
+# =====================================================
+# Master configuration
+# log_bin = mysql-bin
+# binlog_do_db = your_database
+
+# Slave configuration
+# relay_log = relay-bin
+# read_only = 1
+
+# =====================================================
+# SECURITY
+# =====================================================
+# Disable LOAD DATA LOCAL INFILE
+local_infile = 0
+
+# Skip DNS resolution
+skip-name-resolve
+
+# =====================================================
+# MONITORING QUERIES
+# =====================================================
+# Run these to monitor performance:
+#
+# 1. Check buffer pool usage:
+#    SELECT (PagesData*PageSize)/POWER(1024,3) DataGB FROM 
+#    (SELECT variable_value PagesData FROM information_schema.global_status WHERE variable_name='Innodb_buffer_pool_pages_data') A,
+#    (SELECT variable_value PageSize FROM information_schema.global_status WHERE variable_name='Innodb_page_size') B;
+#
+# 2. Check slow queries:
+#    SELECT * FROM mysql.slow_log ORDER BY query_time DESC LIMIT 10;
+#
+# 3. Check table sizes:
+#    SELECT table_name, ROUND(((data_length + index_length) / 1024 / 1024), 2) AS 'Size (MB)'
+#    FROM information_schema.TABLES WHERE table_schema = 'your_database' ORDER BY (data_length + index_length) DESC;
+#
+# =====================================================
+
+[mysql]
+# Client settings
+default-character-set = utf8mb4
+
+[mysqldump]
+quick
+quote-names
+max_allowed_packet = 64M
+
+# =====================================================
+# NOTES:
+# =====================================================
+# 1. Adjust innodb_buffer_pool_size based on your RAM
+# 2. Monitor slow query log regularly
+# 3. Use EXPLAIN on slow queries
+# 4. Consider read replicas for high read load
+# 5. Backup before making changes!
+# =====================================================

@@ -1,0 +1,26 @@
+﻿components/ai/UnifiedChat.tsx(714,85): error TS2551: Property 'zalo_oa_name' does not exist on type 'Conversation'. Did you mean 'zalo_name'?
+components/ai/UnifiedChat.tsx(714,128): error TS2339: Property 'page_name' does not exist on type 'Conversation'.
+components/ai/UnifiedChat.tsx(721,44): error TS2551: Property 'last_message_time' does not exist on type 'Conversation'. Did you mean 'last_message_at'?
+components/ai/UnifiedChat.tsx(1205,88): error TS1501: This regular expression flag is only available when targeting 'es6' or later.
+components/ai/UnifiedChat.tsx(2221,62): error TS2339: Property 'replace' does not exist on type 'never'.
+components/ai/UnifiedChat.tsx(2408,95): error TS2339: Property 'description' does not exist on type 'JourneyItem'.
+components/ai/UnifiedChat.tsx(2471,25): error TS2322: Type '(id: string, data: any) => Promise<void>' is not assignable to type '(updated: Subscriber) => void'.
+  Target signature provides too few arguments. Expected 2 or more, but got 1.
+components/ai/UnifiedChat.tsx(2477,25): error TS2322: Type '(segId: string) => boolean' is not assignable to type '(sub: Subscriber, criteria: string) => boolean'.
+  Types of parameters 'segId' and 'sub' are incompatible.
+    Type 'Subscriber' is not assignable to type 'string'.
+components/ai/UnifiedChat.tsx(2597,21): error TS2322: Type '{ zaloId: string; onClose: () => void; }' is not assignable to type 'IntrinsicAttributes & ZaloUserProfileModalProps'.
+  Property 'zaloId' does not exist on type 'IntrinsicAttributes & ZaloUserProfileModalProps'.
+components/ai/UnifiedChat.tsx(2848,17): error TS2322: Type 'number | boolean' is not assignable to type 'boolean'.
+  Type 'number' is not assignable to type 'boolean'.
+components/audience/CustomerProfileModal.tsx(608,162): error TS2322: Type '{ className: string; title: string; }' is not assignable to type 'IntrinsicAttributes & Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 'IntrinsicAttributes & Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>'.
+components/audience/CustomerProfileModal.tsx(609,161): error TS2322: Type '{ className: string; title: string; }' is not assignable to type 'IntrinsicAttributes & Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 'IntrinsicAttributes & Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>'.
+components/audience/CustomerProfileModal.tsx(1731,88): error TS1501: This regular expression flag is only available when targeting 'es6' or later.
+components/audience/CustomerProfileModal.tsx(1950,29): error TS2322: Type '{ subscriberId: string; isOpen: true; onClose: () => void; }' is not assignable to type 'IntrinsicAttributes & MetaCustomerProfileModalProps'.
+  Property 'isOpen' does not exist on type 'IntrinsicAttributes & MetaCustomerProfileModalProps'.
+components/flows/ManualTriggerFlowModal.tsx(116,33): error TS2322: Type '{ children: string; size: "sm"; variant: "secondary"; icon: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>; onClick: () => Promise<...>; loading: boolean; className: string; }' is not assignable to type 'IntrinsicAttributes & ButtonProps'.
+  Property 'loading' does not exist on type 'IntrinsicAttributes & ButtonProps'. Did you mean 'isLoading'?
+components/zalo/ZaloUserProfileModal.tsx(470,49): error TS2322: Type '{ label: string; multiline: true; rows: number; value: string; onChange: (e: ChangeEvent<HTMLInputElement, HTMLInputElement>) => void; placeholder: string; }' is not assignable to type 'IntrinsicAttributes & InputProps'.
+  Property 'multiline' does not exist on type 'IntrinsicAttributes & InputProps'. Did you mean 'multiple'?

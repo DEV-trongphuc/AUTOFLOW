@@ -1,0 +1,21 @@
+<?php
+require_once 'db_connect.php';
+header('Content-Type: application/json');
+
+$propertyId = $_GET['property_id'] ?? '7ac8420d-b248-4ab5-a97d-0fd177e0ae64';
+$apiKey = $pdo->query("SELECT gemini_api_key FROM ai_chatbot_settings WHERE property_id = '$propertyId' LIMIT 1")->fetchColumn();
+if (empty($apiKey)) {
+    $apiKey = getenv('GEMINI_API_KEY');
+}
+
+$url = "https://generativelanguage.googleapis.com/v1beta/models?key=" . $apiKey;
+$ch = curl_init($url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+echo json_encode([
+    'http_code' => $httpCode,
+    'response' => json_decode($response, true)
+], JSON_PRETTY_PRINT);

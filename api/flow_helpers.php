@@ -1,0 +1,1118 @@
+<?php
+// api/flow_helpers.php - OMNI-ENGINE V29.6 (SHARED HELPERS)
+// Shared logic for worker_flow.php and worker_priority.php to ensure consistency and prevent duplication.
+
+/**
+ * Check if subscriber triggered an advancedExit condition (form submit, purchase, custom event).
+ * Looks at activityCache first, falls back to DB query if needed.
+ * Returns true if subscriber should exit the flow, false otherwise.
+ */
+if (!function_exists('checkAdvancedExit')) {
+    function checkAdvancedExit($pdo, $subscriberId, $enrolledAt, $advancedExitConfig, $activityCache = [])
+    {
+        if (empty($advancedExitConfig))
+            return false;
+
+        // Map section key → activity type stored in subscriber_activity
+        $sectionTypeMap = [
+            'forms' => 'form_submit',
+            'purchases' => 'purchase',
+            'customEvents' => 'custom_event',
+        ];
+
+        foreach ($sectionTypeMap as $section => $actType) {
+            $cfg = $advancedExitConfig[$section] ?? [];
+            if (empty($cfg['enabled']))
+                continue;
+
+            $isAll = !empty($cfg['all']);
+            $targetIds = $cfg['ids'] ?? [];
+
+            // 1. Check in-memory activityCache first (fast path)
+            $foundInCache = false;
+            foreach ($activityCache as $act) {
+                if ($act['type'] !== $actType)
+                    continue;
+                // Check if activity happened AFTER enrollment
+                if (!empty($enrolledAt) && $act['created_at'] <= $enrolledAt)
+                    continue;
+
+                if ($isAll || empty($targetIds)) {
+                    $foundInCache = true;
+                    break;
+                }
+                // Match specific IDs (reference_id stores form_id / purchase_event_id / custom_event_id)
+                if (in_array($act['reference_id'], $targetIds)) {
+                    $foundInCache = true;
+                    break;
+                }
+            }
+
+            if ($foundInCache)
+                return true;
+
+            // 2. Fallback to DB query (if activityCache didn't cover this type)
+            // [FIX] Guard NULL/empty $enrolledAt: MySQL evaluates 'created_at > NULL' as UNKNOWN
+            // (always false), making every exit condition silently inactive.
+            $safeEnrolledAt = !empty($enrolledAt) ? $enrolledAt : '1970-01-01 00:00:00';
+            if ($isAll || empty($targetIds)) {
+                $stmt = $pdo->prepare(
+                    "SELECT 1 FROM subscriber_activity WHERE subscriber_id = ? AND type = ? AND created_at > ? LIMIT 1"
+                );
+                $stmt->execute([$subscriberId, $actType, $safeEnrolledAt]);
+            } else {
+                $placeholders = implode(',', array_fill(0, count($targetIds), '?'));
+                $stmt = $pdo->prepare(
+                    "SELECT 1 FROM subscriber_activity WHERE subscriber_id = ? AND type = ? AND reference_id IN ($placeholders) AND created_at > ? LIMIT 1"
+                );
+                $stmt->execute(array_merge([$subscriberId, $actType], $targetIds, [$safeEnrolledAt]));
+            }
+
+            if ($stmt->fetchColumn())
+                return true;
+        }
+
+        return false;
+    }
+}
+
+
+if (!function_exists('logActivity')) {
+    /**
+     * Log activity for a subscriber with history limiting (keep last 10)
+     */
+    function logActivity($pdo, $subscriberId, $type, $referenceId, $referenceName, $details, $flowId = null, $campaignId = null, $extra = [])
+    {
+        // ESSENTIAL ENGAGEMENT TYPES: Keep forever for accurate lifetime statistics
+        // 10M UPDATE: Added system progression types (enter_flow, condition_true, etc.) to support Flow Analytics Journey View.
+        $essentialTypes = [
+            'open_email',
+            'click_link',
+            'receive_email',
+            'failed_email',
+            'unsubscribe',
+            'form_submit',
+            'purchase',
+            'reply_email',
+            'custom_event',
+            'lead_score_sync',
+            // Flow Progression Types (Required for "Passed Through" stats)
+            'enter_flow',
+            'update_tag',
+            'list_action',
+            'condition_true',
+            'condition_false',
+            'wait_processed',
+            'remove_action',
+            'ab_test_a',
+            'ab_test_b',
+            'advanced_condition',
+            // Zalo Interaction Types
+            'follow',
+            'zalo_sent', // Added
+            'meta_sent', // Added
+            'user_reacted_message',
+            'user_feedback',
+            'user_send_text',
+            // ZNS Types
+            'sent_zns', // Added
+            'zns_sent', // Added
+            'zns_delivered',
+            'zns_clicked',
+            'click_zns',
+            'zns_failed',
+            'zns_replied',
+            // Critical Flow Events
+            'frequency_cap_reached',
+            'complete_flow',
+            'exit_flow',
+            'unsubscribed_from_flow',
+            'zns_skipped',
+            'delete_contact',
+            'web_activity'
+        ];
+
+        // If it's a system progress event (wait, enter, exit, tag update, etc.), skip logging to keep Flow history clean
+        if (!in_array($type, $essentialTypes)) {
+            return;
+        }
+
+        // 10M UPGRADE: Static cache for existence check to reduce redundant queries
+        static $subCache = [];
+        if (!isset($subCache[$subscriberId])) {
+            // [FIX] LRU-style cap: prevent memory exhaustion during long worker runs
+            // processing thousands of subscribers. Without this cap, $subCache grows
+            // indefinitely, eventually triggering "Allowed memory size exhausted".
+            if (count($subCache) > 500) {
+                array_shift($subCache);
+            }
+            // [FIX] Silent fail if subscriber is missing (e.g. from debug tests or deleted users)
+            $stmtCheckSub = $pdo->prepare("SELECT id FROM subscribers WHERE id = ?");
+            $stmtCheckSub->execute([$subscriberId]);
+            if (!$stmtCheckSub->fetch()) {
+                $subCache[$subscriberId] = false;
+                return;
+            }
+            $subCache[$subscriberId] = true;
+        } else if ($subCache[$subscriberId] === false) {
+            return;
+        }
+
+        // Prepare Extended Data
+        $ip = $extra['ip'] ?? null;
+        $ua = $extra['user_agent'] ?? null;
+        $device = $extra['device_type'] ?? null;
+        $os = $extra['os'] ?? null;
+        $browser = $extra['browser'] ?? null;
+        $location = $extra['location'] ?? null;
+
+        // [PERFORMANCE] LOG BUFFERING
+        // Instead of inserting directly into subscriber_activity (heavy index), we insert into activity_buffer.
+        // A background worker will move these to the main table.
+
+        // [FIX] Store BOTH key aliases to prevent downstream key-mismatch bugs:
+        // - 'ua' and 'user_agent' for User-Agent string
+        // - 'device' and 'device_type' for device category (desktop/mobile/tablet)
+        $bufferExtra = array_merge($extra, [
+            'reference_name' => $referenceName,
+            'ip' => $ip,
+            'ua' => $ua,
+            'user_agent' => $ua,   // alias
+            'device' => $device,
+            'device_type' => $device, // alias
+            'os' => $os,
+            'browser' => $browser,
+            'location' => $location
+        ]);
+
+
+        try {
+            $jsonData = json_encode($bufferExtra);
+            $stmtBuf = $pdo->prepare("INSERT INTO activity_buffer (subscriber_id, type, details, reference_id, flow_id, campaign_id, extra_data) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmtBuf->execute([$subscriberId, $type, $details, $referenceId, $flowId, $campaignId, $jsonData]);
+        } catch (Exception $e) {
+            // Fallback: Create table if missing
+            if (strpos($e->getMessage(), "doesn't exist") !== false) {
+                try {
+                    $pdo->exec("CREATE TABLE IF NOT EXISTS activity_buffer (
+                        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                        subscriber_id char(36) NOT NULL,
+                        type VARCHAR(50) NOT NULL,
+                        details TEXT,
+                        reference_id VARCHAR(100),
+                        flow_id VARCHAR(50),
+                        campaign_id VARCHAR(50),
+                        extra_data JSON,
+                        processed TINYINT(1) DEFAULT 0,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        INDEX idx_processed (processed)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
+                    $stmtBuf = $pdo->prepare("INSERT INTO activity_buffer (subscriber_id, type, details, reference_id, flow_id, campaign_id, extra_data) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                    $stmtBuf->execute([$subscriberId, $type, $details, $referenceId, $flowId, $campaignId, $jsonData]);
+                } catch (Exception $ex) {
+                    // Last resort: Fallback to direct synchronous insert (Old behavior)
+                    try {
+                        $stmtIns = $pdo->prepare("INSERT INTO subscriber_activity (subscriber_id, type, reference_id, flow_id, campaign_id, reference_name, details, ip_address, user_agent, device_type, os, browser, location, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+                        $stmtIns->execute([$subscriberId, $type, $referenceId, $flowId, $campaignId, $referenceName, $details, $ip, $ua, $device, $os, $browser, $location]);
+                    } catch (Exception $finalEx) {
+                        // ignore log failure
+                    }
+                }
+            } else {
+                // Log error
+            }
+        }
+
+        $updateFields = ["last_activity_at = NOW()"];
+        $updateParams = [];
+
+        if (!empty($os)) {
+            $updateFields[] = "last_os = ?";
+            $updateParams[] = $os;
+        }
+        if (!empty($device)) {
+            $updateFields[] = "last_device = ?";
+            $updateParams[] = $device;
+        }
+        if (!empty($browser)) {
+            $updateFields[] = "last_browser = ?";
+            $updateParams[] = $browser;
+        }
+        if (!empty($location)) {
+            $updateFields[] = "last_city = ?"; // Assuming location format is "City, Country"
+            $updateParams[] = $location;
+        }
+
+        $updateParams[] = $subscriberId;
+
+        if (!empty($updateFields)) {
+            $sql = "UPDATE subscribers SET " . implode(', ', $updateFields) . " WHERE id = ?";
+            $pdo->prepare($sql)->execute($updateParams);
+        }
+
+        // NO CLEANUP for essential types. We want lifetime history for stats.
+
+        // [10M UPGRADE] Event-Driven Flow Progression (Smart Trigger)
+        $triggerTypes = ['open_email', 'click_link', 'zns_clicked', 'zns_replied', 'form_submit', 'purchase', 'custom_event'];
+
+        if (in_array($type, $triggerTypes) && $subscriberId) {
+            try {
+                // Find flows where this subscriber is WAITING
+                $stmtWait = $pdo->prepare("SELECT id, flow_id FROM subscriber_flow_states WHERE subscriber_id = ? AND status = 'waiting'");
+                $stmtWait->execute([$subscriberId]);
+                $waitingFlows = $stmtWait->fetchAll(PDO::FETCH_ASSOC);
+
+                if (!empty($waitingFlows)) {
+                    $apiUrl = defined('API_BASE_URL') ? API_BASE_URL : 'https://automation.ideas.edu.vn/mail_api';
+                    if (strpos($apiUrl, 'http') === false)
+                        $apiUrl = 'https://automation.ideas.edu.vn/mail_api';
+
+                    $mh = curl_multi_init();
+                    $channels = [];
+
+                    foreach ($waitingFlows as $wf) {
+                        $url = $apiUrl . "/worker_flow.php?priority_queue_id=" . $wf['id'] . "&priority_sub_id=" . $subscriberId . "&priority_flow_id=" . $wf['flow_id'];
+
+                        $c = curl_init();
+                        curl_setopt($c, CURLOPT_URL, $url);
+                        curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($c, CURLOPT_TIMEOUT, 1); // Fire and forget (very short timeout)
+                        curl_setopt($c, CURLOPT_NOSIGNAL, 1);
+                        curl_setopt($c, CURLOPT_SSL_VERIFYPEER, false);
+                        curl_multi_add_handle($mh, $c);
+                        $channels[] = $c;
+                    }
+
+                    $running = null;
+                    do {
+                        $status = curl_multi_exec($mh, $running);
+                        if ($running) {
+                            // [FIX] Critical: yield CPU to OS while waiting for socket activity.
+                            // Without curl_multi_select(), this loop spins millions of times
+                            // per second consuming 100% of a CPU core. Under 100 concurrent
+                            // events, this brings the server to its knees.
+                            curl_multi_select($mh);
+                        }
+                    } while ($running && $status == CURLM_OK);
+
+                    foreach ($channels as $c) {
+                        curl_multi_remove_handle($mh, $c);
+                        curl_close($c);
+                    }
+                    curl_multi_close($mh);
+                }
+            } catch (Exception $e) {
+                // checking flow states shouldn't break the main request
+            }
+        }
+    }
+}
+
+/**
+ * Dispatch a background job (or trigger immediate recursive worker)
+ */
+function dispatchFlowWorker($pdo, $type, $payload)
+{
+    $apiUrl = defined('API_BASE_URL') ? API_BASE_URL : 'https://automation.ideas.edu.vn/mail_api';
+    if (strpos($apiUrl, 'http') === false)
+        $apiUrl = 'https://automation.ideas.edu.vn/mail_api';
+
+    // 1. Recursive Priority Trigger (Immediate Chaining)
+    if (isset($payload['priority_queue_id']) || ($payload['mode'] ?? '') === 'batch') {
+        $params = http_build_query($payload);
+        $workerUrl = $apiUrl . "/worker_priority.php?" . $params;
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $workerUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+        curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        @curl_exec($ch);
+        curl_close($ch);
+        return;
+    }
+
+    // 2. Trigger Based Actions (e.g. Tag added)
+    if ($type === 'flows' && isset($payload['trigger_type'])) {
+        // Direct call if helper is available, otherwise could rely on generic worker
+        if (function_exists('enrollSubscribersBulk')) {
+            $sIds = isset($payload['subscriber_id']) ? [$payload['subscriber_id']] : [];
+            if (!empty($sIds)) {
+                enrollSubscribersBulk($pdo, $sIds, $payload['trigger_type'], $payload['target_id'] ?? null);
+            }
+        } else {
+            // Fallback: Try to require trigger_helper if file exists
+            if (file_exists(__DIR__ . '/trigger_helper.php')) {
+                require_once __DIR__ . '/trigger_helper.php';
+                if (function_exists('enrollSubscribersBulk')) {
+                    $sIds = isset($payload['subscriber_id']) ? [$payload['subscriber_id']] : [];
+                    if (!empty($sIds)) {
+                        enrollSubscribersBulk($pdo, $sIds, $payload['trigger_type'], $payload['target_id'] ?? null);
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Dispatch a campaign background job (Trigger worker_campaign.php)
+ */
+function dispatchCampaignWorker($pdo, $campaignId)
+{
+    $apiUrl = defined('API_BASE_URL') ? API_BASE_URL : 'https://automation.ideas.edu.vn/mail_api';
+    if (strpos($apiUrl, 'http') === false)
+        $apiUrl = 'https://automation.ideas.edu.vn/mail_api';
+
+    $workerUrl = $apiUrl . "/worker_campaign.php?campaign_id=" . $campaignId;
+
+    // Use non-blocking CURL if possible, otherwise standard curl
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $workerUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+    curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    @curl_exec($ch);
+    curl_close($ch);
+}
+
+/**
+ * Parse dynamic looping content in email templates
+ */
+function parseLoopingContent($html, $context)
+{
+    return preg_replace_callback('/<!-- START_ITEM_LOOP -->(.*?)<!-- END_ITEM_LOOP -->/s', function ($matches) use ($context) {
+        $template = $matches[1];
+        $output = '';
+        $items = $context['items'] ?? [];
+        if (is_array($items) && count($items) > 0) {
+            foreach ($items as $item) {
+                $row = $template;
+                foreach ($item as $key => $val) {
+                    $row = str_replace("{{item.$key}}", $val, $row);
+                }
+                $output .= $row;
+            }
+        }
+        return $output;
+    }, $html);
+}
+
+/**
+ * Resolve email content from Template ID or Custom HTML
+ */
+function resolveEmailContent($pdo, $templateId, $customHtml, $fallbackBody = '', $context = [])
+{
+    $htmlContent = '';
+    if ($templateId && $templateId !== 'custom-html') {
+        $stmt = $pdo->prepare("SELECT html_content FROM templates WHERE id = ?");
+        $stmt->execute([$templateId]);
+        $htmlContent = $stmt->fetchColumn();
+        if ($htmlContent && $fallbackBody && strpos($htmlContent, '{{body}}') !== false) {
+            $htmlContent = str_replace('{{body}}', $fallbackBody, $htmlContent);
+        }
+    } elseif ($templateId === 'custom-html' || !empty($customHtml)) {
+        $htmlContent = !empty($customHtml) ? $customHtml : $fallbackBody;
+    } else {
+        // Fallback to contentBody if no customHtml and no valid templateId
+        $htmlContent = $fallbackBody;
+    }
+
+    if (!$htmlContent) {
+        $htmlContent = "<html><body><p>(No Content)</p></body></html>";
+    }
+
+    return parseLoopingContent($htmlContent, $context);
+}
+
+/**
+ * Replace merge tags in content
+ */
+function replaceMergeTags($html, $subscriber, $context = [])
+{
+    if (empty($html))
+        return "";
+
+    $firstName = $subscriber['first_name'] ?? ($subscriber['firstName'] ?? '');
+    $lastName = $subscriber['last_name'] ?? ($subscriber['lastName'] ?? '');
+    $fullName = trim($firstName . ' ' . $lastName);
+    $email = $subscriber['email'] ?? '';
+
+    // Standard Map (Old logic + Fallbacks)
+    $subscriberId = $subscriber['subscriber_id'] ?? $subscriber['id'] ?? '';
+    $phoneNumber = $subscriber['phone_number'] ?? $subscriber['phone'] ?? '';
+    $map = [
+        'first_name' => $firstName,
+        'firstName' => $firstName,
+        'last_name' => $lastName,
+        'lastName' => $lastName,
+        'full_name' => $fullName ?: 'Bạn',
+        'fullName' => $fullName ?: 'Bạn',
+        'customer_name' => $fullName ?: 'Bạn',
+        'customerName' => $fullName ?: 'Bạn',
+        'email' => $email,
+        'company_name' => $subscriber['company_name'] ?? '',
+        'phone' => $phoneNumber,
+        'phone_number' => $phoneNumber,
+        'job_title' => $subscriber['job_title'] ?? '',
+        'company' => $subscriber['company_name'] ?? '',
+        'city' => $subscriber['city'] ?? ($subscriber['last_city'] ?? ''),
+        'country' => $subscriber['country'] ?? '',
+        'address' => $subscriber['address'] ?? ($subscriber['city'] ?? ($subscriber['last_city'] ?? '')),
+        'gender' => $subscriber['gender'] ?? '',
+        'birthday' => $subscriber['date_of_birth'] ?? '',
+        'date_of_birth' => $subscriber['date_of_birth'] ?? '',
+        'anniversary' => $subscriber['anniversary_date'] ?? '',
+        'anniversary_date' => $subscriber['anniversary_date'] ?? '',
+        'joined_at' => $subscriber['joined_at'] ? date('d/m/Y', strtotime($subscriber['joined_at'])) : '',
+        'year' => date('Y'),
+        'date' => date('d/m/Y'),
+        'current_date' => date('d/m/Y'),
+        'time' => date('H:i'),
+        'current_time' => date('H:i'),
+        // New special variables
+        'today' => date('d/m/Y'),           // Ngày hôm nay (dd/mm/yyyy)
+        'today_ymd' => date('Y-m-d'),        // Ngày hôm nay (yyyy-mm-dd)
+        'today_dmy' => date('d-m-Y'),        // Ngày hôm nay (dd-mm-yyyy)
+        'subscriber_id' => $subscriberId,    // ID của subscriber (full 32 chars)
+        'subscriber_id_short' => substr((string) $subscriberId, 0, 10), // [ZNS] ID ngắn 10 ký tự cho ZNS fields có max length
+        'contact_id' => $subscriberId,       // Alias for subscriber_id
+        'contact_id_short' => substr((string) $subscriberId, 0, 10), // Alias short
+        'random_id' => str_pad((string) rand(0, 9999999999), 10, '0', STR_PAD_LEFT), // [ZNS] Random 10 chữ số
+        'random_6' => str_pad((string) rand(0, 999999), 6, '0', STR_PAD_LEFT),       // [ZNS] Random 6 chữ số
+        // [FIX] camelCase aliases to match frontend email editor variables
+        'phoneNumber' => $phoneNumber,
+        'companyName' => $subscriber['company_name'] ?? '',
+        'jobTitle' => $subscriber['job_title'] ?? '',
+        // [BUG-FIX] unsubscribeLink CANNOT reference $map here — $map is still being built.
+        // Referencing $map['unsubscribe_url'] inside the $map array definition is a PHP self-
+        // reference bug: $map does not yet exist, so it always resolves to empty string.
+        // Fix: use $context['unsubscribe_url'] directly. A post-build step below will
+        // also inject it from the merged context to handle late-binding cases.
+        'unsubscribeLink' => $context['unsubscribe_url'] ?? '',
+        'campaignName' => $context['campaign_name'] ?? ($context['campaignName'] ?? ''),
+    ];
+
+    // Add custom attributes to map
+    $customAttrs = [];
+    if (isset($subscriber['custom_attributes'])) {
+        $customAttrs = is_array($subscriber['custom_attributes'])
+            ? $subscriber['custom_attributes']
+            : (json_decode($subscriber['custom_attributes'], true) ?: []);
+    }
+    foreach ($customAttrs as $k => $v) {
+        if (is_string($v) || is_numeric($v)) {
+            $map[$k] = $v;
+        }
+    }
+
+    // Merge Context
+    foreach ($context as $key => $val) {
+        if (is_string($val) || is_numeric($val)) {
+            $map[$key] = $val;
+        }
+    }
+
+    // [BUG-FIX] Post-build fix for unsubscribeLink:
+    // After context is merged, re-apply unsubscribeLink in case it was provided
+    // in $context under a different key (e.g. 'unsubscribeLink' directly).
+    if (empty($map['unsubscribeLink']) && !empty($map['unsubscribe_url'])) {
+        $map['unsubscribeLink'] = $map['unsubscribe_url'];
+    }
+
+    // [ROBUST FIX] Use Regex to handle {{ var }}, {{var}}, {{ VAR }} etc
+    $html = preg_replace_callback('/{{\s*(.*?)\s*}}/i', function ($m) use ($map) {
+        $tag = trim($m[1]);
+        if (array_key_exists($tag, $map)) {
+            return $map[$tag];
+        }
+        // Return original if tag not found to avoid stripping potential system tags
+        return $m[0];
+    }, $html);
+
+    return $html;
+}
+
+/**
+ * Check if a subscriber matches criteria (Segment logic)
+ */
+function isSubscriberMatch($sub, $criteriaJson)
+{
+    global $pdo;
+    if (empty($criteriaJson))
+        return true;
+
+    $groups = is_string($criteriaJson) ? json_decode($criteriaJson, true) : $criteriaJson;
+
+    if (!$groups || !is_array($groups))
+        return false;
+
+    foreach ($groups as $group) {
+        $groupMatch = true;
+        if (!isset($group['conditions']) || !is_array($group['conditions']))
+            continue; // Skip if no conditions
+
+        foreach ($group['conditions'] as $cond) {
+            $field = $cond['field'];
+            $op = $cond['operator'];
+            $val = strtolower($cond['value'] ?? '');
+            $actualVal = "";
+
+            if (strpos($field, 'stats.') === 0) {
+                $statKey = str_replace('stats.', '', $field);
+                if ($statKey == 'emailsOpened')
+                    $actualVal = $sub['stats_opened'] ?? 0;
+                else if ($statKey == 'linksClicked')
+                    $actualVal = $sub['stats_clicked'] ?? 0;
+            } else if ($field === 'tags') {
+                // 10M UPGRADE: Cache relational tags for this call
+                $sid = $sub['id'] ?? $sub['sub_id'] ?? $sub['subscriber_id'] ?? null;
+                static $lastSubIdForTags = null;
+                static $currentSubTags = [];
+
+                if ($sid && $lastSubIdForTags !== $sid) {
+                    $stmtTag = $pdo->prepare("SELECT t_sub.name FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE st.subscriber_id = ?");
+                    $stmtTag->execute([$sid]);
+                    $currentSubTags = $stmtTag->fetchAll(PDO::FETCH_COLUMN);
+                    $lastSubIdForTags = $sid;
+                }
+
+                $hasTag = false;
+                foreach ($currentSubTags as $st) {
+                    if (strcasecmp($st, $cond['value']) === 0) {
+                        $hasTag = true;
+                        break;
+                    }
+                }
+
+                if ($op === 'contains' && !$hasTag) {
+                    $groupMatch = false;
+                    break;
+                } else if ($op === 'not_contains' && $hasTag) {
+                    $groupMatch = false;
+                    break;
+                }
+                continue;
+            } else if ($field === 'lastActivityDays') {
+                $lastAct = $sub['last_activity_at'] ?? null;
+                $refDate = $lastAct ? $lastAct : ($sub['joined_at'] ?? date('Y-m-d'));
+                $actualVal = (time() - strtotime($refDate)) / (86400); // days
+            } else {
+                // Map frontend field names to DB columns (handles both camelCase and snake_case)
+                $map = [
+                    'firstName' => 'first_name',
+                    'first_name' => 'first_name',
+                    'lastName' => 'last_name',
+                    'last_name' => 'last_name',
+                    'email' => 'email',
+                    'phoneNumber' => 'phone_number',
+                    'phone_number' => 'phone_number',
+                    'companyName' => 'company_name',
+                    'company_name' => 'company_name',
+                    'jobTitle' => 'job_title',
+                    'job_title' => 'job_title',
+                    'gender' => 'gender',
+                    'status' => 'status',
+                    'source' => 'source',
+                    'salesperson' => 'salesperson',
+                    'city' => 'city',
+                    'country' => 'country',
+                    'address' => 'address',
+                    'dateOfBirth' => 'date_of_birth',
+                    'date_of_birth' => 'date_of_birth',
+                    'anniversaryDate' => 'anniversary_date',
+                    'anniversary_date' => 'anniversary_date',
+                    'joinedAt' => 'joined_at',
+                    'joined_at' => 'joined_at',
+                    'leadScore' => 'lead_score',
+                    'lead_score' => 'lead_score',
+                    'verified' => 'verified',
+                    'os' => 'last_os',
+                    'device' => 'last_device',
+                    'browser' => 'last_browser'
+                ];
+
+                $dbField = $map[$field] ?? null;
+
+                if ($dbField && isset($sub[$dbField])) {
+                    $actualVal = $sub[$dbField];
+                } else {
+                    // Not a standard field? Check CUSTOM ATTRIBUTES
+                    // 1. Check if sub has custom_attributes (already decoded or needs decoding)
+                    $customAttrs = [];
+                    if (isset($sub['custom_attributes'])) {
+                        $customAttrs = is_array($sub['custom_attributes'])
+                            ? $sub['custom_attributes']
+                            : (json_decode($sub['custom_attributes'], true) ?: []);
+                    }
+
+                    if (isset($customAttrs[$field])) {
+                        $actualVal = $customAttrs[$field];
+                    } else {
+                        // Final fallback: direct check for $sub[$field] might work if already hydrated
+                        $actualVal = $sub[$field] ?? "";
+                    }
+                }
+            }
+
+            $actualVal = (string) $actualVal;
+            $isMatch = false;
+
+            switch ($op) {
+                case 'contains':
+                    if (strpos(strtolower($actualVal), $val) !== false)
+                        $isMatch = true;
+                    break;
+                case 'not_contains':
+                    if (strpos(strtolower($actualVal), $val) === false)
+                        $isMatch = true;
+                    break;
+                case 'equals':
+                case 'is':
+                    if (strtolower($actualVal) == $val)
+                        $isMatch = true;
+                    break;
+                case 'is_not':
+                    if (strtolower($actualVal) != $val)
+                        $isMatch = true;
+                    break;
+                case 'starts_with':
+                    if (substr(strtolower($actualVal), 0, strlen($val)) === $val)
+                        $isMatch = true;
+                    break;
+                case 'greater_than':
+                    if ((float) $actualVal > (float) $val)
+                        $isMatch = true;
+                    break;
+                case 'less_than':
+                    if ((float) $actualVal < (float) $val)
+                        $isMatch = true;
+                    break;
+                case 'after':
+                    if (strtotime($actualVal) > strtotime($val))
+                        $isMatch = true;
+                    break;
+                case 'before':
+                    if (strtotime($actualVal) < strtotime($val))
+                        $isMatch = true;
+                    break;
+                case 'on':
+                    if (date('Y-m-d', strtotime($actualVal)) === $val)
+                        $isMatch = true;
+                    break;
+            }
+
+            if (!$isMatch) {
+                $groupMatch = false;
+                break;
+            }
+        }
+        if ($groupMatch)
+            return true;
+    }
+    return false;
+}
+
+/**
+ * Detect Hard Bounce and mark subscriber as bounced
+ */
+function checkAndHandleHardBounce($pdo, $subscriberId, $errorMessage)
+{
+    if (!is_string($errorMessage)) {
+        return false;
+    }
+
+    $isHardBounce = false;
+    $hardBounceKeywords = [
+        'hard bounce',
+        'invalid recipient',
+        'unreachable',
+        'address rejected',
+        'does not exist',
+        '550 5.1.1',
+        '550 5.2.1',
+        '550 5.1.1',
+        'user unknown',
+        'recipient unknown',
+        'mailbox not found',
+        'account disabled',
+        '5.1.1',
+        'permanent failure'
+    ];
+
+    $errorMessage = strtolower($errorMessage); // Normalize once
+
+    foreach ($hardBounceKeywords as $kb) {
+        if (strpos($errorMessage, $kb) !== false) {
+            $isHardBounce = true;
+            break;
+        }
+    }
+
+    if ($isHardBounce) {
+        $pdo->prepare("UPDATE subscribers SET status = 'bounced' WHERE id = ?")->execute([$subscriberId]);
+        return true;
+    }
+
+    return false;
+}
+/**
+ * Fetch a comprehensive subscriber profile for flow evaluation
+ */
+function getSubscriberProfileForFlow($pdo, $subscriberId)
+{
+    $stmt = $pdo->prepare("SELECT * FROM subscribers WHERE id = ? LIMIT 1");
+    $stmt->execute([$subscriberId]);
+    $sub = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($sub) {
+        // [10M UPGRADE] Fetch Relational Tags for proper evaluation
+        $stmtT = $pdo->prepare("SELECT t.name FROM subscriber_tags st JOIN tags t ON st.tag_id = t.id WHERE st.subscriber_id = ?");
+        $stmtT->execute([$subscriberId]);
+        $sub['tags_array'] = $stmtT->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    return $sub;
+}
+
+/**
+ * Centrally evaluate a group of advanced conditions (AND logic within a group)
+ * Shared between worker_flow.php and worker_priority.php
+ */
+function evaluateAdvancedConditionGroup($pdo, $subscriberId, $subProfile, $conditions)
+{
+    if (empty($conditions)) {
+        return true;
+    }
+
+    foreach ($conditions as $cond) {
+        $field = $cond['field'];
+        $op = $cond['operator'];
+        $val = trim($cond['value'] ?? '');
+
+        // -----------------------------------------------------------------
+        // 1. Map Fields to Actual Subscriber Data
+        // -----------------------------------------------------------------
+        $actualVal = "";
+        $isArrayField = false;
+        $isSpecialField = false; // handled separately (web_activity, activity_history, lastActivityDays)
+        $condMatch = false;
+
+        // --- Profile scalar fields ---
+        $profileFieldMap = [
+            'email' => 'email',
+            'first_name' => 'first_name',
+            'firstName' => 'first_name',
+            'last_name' => 'last_name',
+            'lastName' => 'last_name',
+            'phone_number' => 'phone_number',
+            'phoneNumber' => 'phone_number',
+            'company_name' => 'company_name',
+            'companyName' => 'company_name',
+            'job_title' => 'job_title',
+            'jobTitle' => 'job_title',
+            'status' => 'status',
+            'source' => 'source',
+            'gender' => 'gender',
+            'country' => 'country',
+            'city' => 'city',
+            'address' => 'address',
+            'salesperson' => 'salesperson',
+            'meta_psid' => 'meta_psid',
+            'verified' => 'verified',
+            'lead_score' => 'lead_score',
+            'leadScore' => 'lead_score',
+            'os' => 'last_os',
+            'device' => 'last_device',
+            'browser' => 'last_browser',
+            'last_os' => 'last_os',
+            'last_device' => 'last_device',
+            'last_browser' => 'last_browser',
+            'joined_at' => 'joined_at',
+            'joinedAt' => 'joined_at',
+            'date_of_birth' => 'date_of_birth',
+            'dateOfBirth' => 'date_of_birth',
+            'anniversary_date' => 'anniversary_date',
+            'anniversaryDate' => 'anniversary_date',
+            'last_activity_at' => 'last_activity_at',
+            'lastActivityAt' => 'last_activity_at',
+        ];
+
+        if ($field === 'tags') {
+            // [10M UPGRADE] Use pre-fetched relational tags
+            if (isset($subProfile['tags_array'])) {
+                $actualVal = $subProfile['tags_array'];
+            } else {
+                $stmtT = $pdo->prepare("SELECT t.name FROM subscriber_tags st JOIN tags t ON st.tag_id = t.id WHERE st.subscriber_id = ?");
+                $stmtT->execute([$subscriberId]);
+                $actualVal = $stmtT->fetchAll(PDO::FETCH_COLUMN);
+            }
+            $isArrayField = true;
+
+        } elseif (isset($profileFieldMap[$field])) {
+            $actualVal = $subProfile[$profileFieldMap[$field]] ?? '';
+
+        } elseif ($field === 'lastActivityDays' || $field === 'last_activity_days') {
+            // Days since last activity — compare as number
+            $isSpecialField = true;
+            $lastAt = $subProfile['last_activity_at'] ?? $subProfile['joined_at'] ?? null;
+            if ($lastAt) {
+                $diffDays = (int) floor((time() - strtotime($lastAt)) / 86400);
+            } else {
+                $diffDays = 9999; // never active
+            }
+            $condMatch = false;
+            // [BUG-FIX #9] Correct strict vs. non-strict comparison:
+            // 'greater_than' must be strict (>), 'greater_than_or_equal' must be (>=).
+            // Previously both mapped to >=, making them equivalent (wrong).
+            if ($op === 'greater_than') {
+                $condMatch = ($diffDays > (int) $val);
+            } elseif ($op === 'greater_than_or_equal') {
+                $condMatch = ($diffDays >= (int) $val);
+            } elseif ($op === 'less_than') {
+                $condMatch = ($diffDays < (int) $val);
+            } elseif ($op === 'less_than_or_equal') {
+                $condMatch = ($diffDays <= (int) $val);
+            } elseif ($op === 'equals') {
+                $condMatch = ($diffDays === (int) $val);
+            }
+
+        } elseif ($field === 'web_activity') {
+            // Check web visit history (subscriber_activity WHERE type LIKE 'web_%')
+            $isSpecialField = true;
+            $lookbackLimit = (int) ($cond['lookback'] ?? 50);
+            if ($lookbackLimit <= 0)
+                $lookbackLimit = 1000;
+
+            static $webHistoryCache = [];
+            $cacheKey = $subscriberId . '_web_' . $lookbackLimit;
+            if (!isset($webHistoryCache[$cacheKey])) {
+                // [FIX] LRU-style cap: $webHistoryCache stores full HTML-length text arrays
+                // for each subscriber. At 5,000 subscribers this can exhaust all available RAM.
+                if (count($webHistoryCache) > 200) {
+                    array_shift($webHistoryCache);
+                }
+                $stmtH = $pdo->prepare(
+                    "SELECT CONCAT(COALESCE(reference_name,''), ' ', COALESCE(details,''))
+                     FROM subscriber_activity
+                     WHERE subscriber_id = ? AND type LIKE 'web_%'
+                     ORDER BY created_at DESC LIMIT " . (int) $lookbackLimit
+                );
+                $stmtH->execute([$subscriberId]);
+                $webHistoryCache[$cacheKey] = $stmtH->fetchAll(PDO::FETCH_COLUMN);
+            }
+            $historyItems = $webHistoryCache[$cacheKey];
+
+            $pageUrl = trim($cond['page_url'] ?? '');
+            $keywords = array_filter(array_map('trim', preg_split('/[,|]/', $val, -1, PREG_SPLIT_NO_EMPTY)));
+            $found = false;
+            foreach ($historyItems as $line) {
+                // Use mb_stripos for proper Unicode/Vietnamese case-insensitive matching
+                $kwMatch = empty($keywords) ? true : false;
+                foreach ($keywords as $kw) {
+                    if ($kw !== '' && mb_stripos($line, $kw, 0, 'UTF-8') !== false) {
+                        $kwMatch = true;
+                        break;
+                    }
+                }
+                // page_url empty → always match (no URL filter)
+                $pageMatch = empty($pageUrl) || mb_stripos($line, $pageUrl, 0, 'UTF-8') !== false;
+                if ($kwMatch && $pageMatch) {
+                    $found = true;
+                    break;
+                }
+            }
+            $condMatch = ($op === 'not_contains') ? !$found : $found;
+
+
+        } elseif ($field === 'activity_history') {
+            // Flexible activity history check:
+            // cond['activity_type'] = 'click_link' | 'open_email' | 'custom_event' | 'purchase' | 'zns_sent' | 'unsubscribe' | ... (comma-sep for OR)
+            // cond['value'] = keyword to search in details
+            // cond['lookback'] = number of records to check (default 50)
+            // cond['days'] = only check within last N days (optional)
+            $isSpecialField = true;
+            $activityTypes = array_filter(array_map('trim', preg_split('/[,|]/', $cond['activity_type'] ?? '', -1, PREG_SPLIT_NO_EMPTY)));
+            $lookbackLimit = max(1, (int) ($cond['lookback'] ?? 50));
+            $lookbackDays = (int) ($cond['days'] ?? 0);
+
+            $sql = "SELECT CONCAT(COALESCE(details,''), ' ', COALESCE(reference_name,''), ' ', COALESCE(reference_id,''))
+                    FROM subscriber_activity
+                    WHERE subscriber_id = ?";
+            $params = [$subscriberId];
+
+            if (!empty($activityTypes)) {
+                $placeholders = implode(',', array_fill(0, count($activityTypes), '?'));
+                $sql .= " AND type IN ($placeholders)";
+                $params = array_merge($params, $activityTypes);
+            }
+            if ($lookbackDays > 0) {
+                $sql .= " AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)";
+                $params[] = $lookbackDays;
+            }
+            $sql .= " ORDER BY created_at DESC LIMIT " . (int) $lookbackLimit;
+
+            $stmtAH = $pdo->prepare($sql);
+            $stmtAH->execute($params);
+            $activityItems = $stmtAH->fetchAll(PDO::FETCH_COLUMN);
+
+            $keywords = array_filter(array_map('trim', preg_split('/[,|]/', $val, -1, PREG_SPLIT_NO_EMPTY)));
+            $found = false;
+            if (empty($keywords)) {
+                // No keyword filter — just check if any activity exists
+                $found = !empty($activityItems);
+            } else {
+                foreach ($activityItems as $line) {
+                    foreach ($keywords as $kw) {
+                        if (!empty($kw) && stripos($line, $kw) !== false) {
+                            $found = true;
+                            break 2;
+                        }
+                    }
+                }
+            }
+            $condMatch = ($op === 'not_contains' || $op === 'is_not_set') ? !$found : $found;
+
+        } else {
+            // Fallback: try custom_attributes JSON field
+            $isSpecialField = true;
+            if (!empty($subProfile['custom_attributes'])) {
+                $customAttrs = is_array($subProfile['custom_attributes'])
+                    ? $subProfile['custom_attributes']
+                    : json_decode($subProfile['custom_attributes'], true);
+                $actualVal = $customAttrs[$field] ?? '';
+            } else {
+                $actualVal = '';
+            }
+            // Fall through to scalar evaluation below
+            $isSpecialField = false; // let scalar logic handle it
+        }
+
+        // Skip scalar evaluation if special field already set $condMatch
+        if ($isSpecialField) {
+            if (!$condMatch)
+                return false;
+            continue;
+        }
+
+        // -----------------------------------------------------------------
+        // 2. Evaluate Condition
+        // -----------------------------------------------------------------
+
+        // --- A. ARRAY LOGIC (tags) ---
+        if ($isArrayField && is_array($actualVal)) {
+            switch ($op) {
+                case 'contains':
+                    foreach ($actualVal as $item) {
+                        if (mb_stripos($item, $val) !== false) {
+                            $condMatch = true;
+                            break;
+                        }
+                    }
+                    break;
+                case 'not_contains':
+                    $condMatch = true;
+                    foreach ($actualVal as $item) {
+                        if (mb_stripos($item, $val) !== false) {
+                            $condMatch = false;
+                            break;
+                        }
+                    }
+                    break;
+                case 'is_set':
+                    $condMatch = !empty($actualVal);
+                    break;
+                case 'is_not_set':
+                    $condMatch = empty($actualVal);
+                    break;
+                default:
+                    $condMatch = false;
+            }
+        } else {
+            // --- B. SCALAR LOGIC ---
+            $isDateOp = in_array($op, ['is_before', 'is_after', 'is_on']);
+            // [FIX] Custom attribute values decoded from JSON can be arrays.
+            // Casting an array directly to string produces the literal "Array",
+            // making all comparisons wrong and triggering PHP "Array to string" warnings.
+            if (is_array($actualVal)) {
+                $actualVal = json_encode($actualVal, JSON_UNESCAPED_UNICODE);
+            }
+            $checkVal = $isDateOp ? (string) $actualVal : strtolower((string) $actualVal);
+            $targetVal = $isDateOp ? (string) $val : strtolower((string) $val);
+
+            // Smart matching for tech fields
+            if (in_array($field, ['os', 'device', 'browser', 'last_os', 'last_device', 'last_browser'])) {
+                if ($op === 'equals')
+                    $op = 'contains';
+                elseif ($op === 'is_not')
+                    $op = 'not_contains';
+            }
+
+            switch ($op) {
+                case 'equals':
+                    $condMatch = ($checkVal === $targetVal);
+                    break;
+                case 'is_not':
+                    $condMatch = ($checkVal !== $targetVal);
+                    break;
+                case 'contains':
+                    $condMatch = (strpos($checkVal, $targetVal) !== false);
+                    break;
+                case 'not_contains':
+                    $condMatch = (strpos($checkVal, $targetVal) === false);
+                    break;
+                case 'starts_with':
+                    $condMatch = str_starts_with($checkVal, $targetVal);
+                    break;
+                case 'ends_with':
+                    $condMatch = str_ends_with($checkVal, $targetVal);
+                    break;
+                case 'is_set':
+                    $condMatch = ($actualVal !== '' && $actualVal !== null);
+                    break;
+                case 'is_not_set':
+                    $condMatch = ($actualVal === '' || $actualVal === null);
+                    break;
+                case 'greater_than':
+                    $condMatch = (is_numeric($actualVal) && is_numeric($val) && (float) $actualVal > (float) $val);
+                    break;
+                case 'less_than':
+                    $condMatch = (is_numeric($actualVal) && is_numeric($val) && (float) $actualVal < (float) $val);
+                    break;
+                case 'in_list':
+                    $listItems = array_filter(array_map('trim', preg_split("/[\r\n,]+/", $targetVal)));
+                    $condMatch = in_array($checkVal, $listItems);
+                    break;
+                case 'is_on':
+                case 'is_before':
+                case 'is_after':
+                    if (!$actualVal) {
+                        $condMatch = false;
+                    } else {
+                        $dbTs = strtotime(date('Y-m-d', strtotime($actualVal)));
+                        $userTs = strtotime(date('Y-m-d', strtotime($val)));
+                        if ($dbTs === false || $userTs === false) {
+                            $condMatch = false;
+                            break;
+                        }
+                        if ($op === 'is_on')
+                            $condMatch = ($dbTs === $userTs);
+                        if ($op === 'is_before')
+                            $condMatch = ($dbTs < $userTs);
+                        if ($op === 'is_after')
+                            $condMatch = ($dbTs > $userTs);
+                    }
+                    break;
+            }
+        }
+
+        if (!$condMatch) {
+            return false;
+        }
+    }
+
+    return true;
+}

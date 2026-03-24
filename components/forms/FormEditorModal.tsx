@@ -1,0 +1,306 @@
+
+import React, { useState, useEffect } from 'react';
+import {
+    Code2, Plus, Globe, CheckCircle2, ChevronDown, Sparkles, FileInput, Braces, Trash2, Database, Type, Mail, Phone, Briefcase, Building, MapPin, Calendar, Bell, BellRing
+} from 'lucide-react';
+import { api } from '../../services/storageAdapter';
+import { FormDefinition, FormField } from '../../types';
+import Button from '../common/Button';
+import Modal from '../common/Modal';
+import Input from '../common/Input';
+import Select from '../common/Select';
+import toast from 'react-hot-toast';
+
+const DB_FIELDS = [
+    { value: 'email', label: 'Địa chỉ Email (Bắt buộc)', type: 'email', required: true, icon: Mail },
+    { value: 'firstName', label: 'Tên khách hàng', type: 'text', required: false, icon: Type },
+    { value: 'lastName', label: 'Họ khách hàng', type: 'text', required: false, icon: Type },
+    { value: 'phoneNumber', label: 'Số điện thoại', type: 'tel', required: false, icon: Phone },
+    { value: 'jobTitle', label: 'Chức danh', type: 'text', required: false, icon: Briefcase },
+    { value: 'companyName', label: 'Công ty', type: 'text', required: false, icon: Building },
+    { value: 'country', label: 'Quốc gia', type: 'text', required: false, icon: Globe },
+    { value: 'city', label: 'Thành phố', type: 'text', required: false, icon: MapPin },
+    { value: 'dateOfBirth', label: 'Ngày sinh', type: 'date', required: false, icon: Calendar },
+];
+
+interface FormEditorModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    editingFormId: string | null;
+    initialData?: Partial<FormDefinition>;
+    lists: any[];
+    onSuccess: () => void;
+}
+
+const FormEditorModal: React.FC<FormEditorModalProps> = ({
+    isOpen, onClose, editingFormId, initialData, lists, onSuccess
+}) => {
+    const [formData, setFormData] = useState<Partial<FormDefinition>>({
+        name: '', targetListId: '', fields: [{ id: 'f-email', dbField: 'email', label: 'Địa chỉ Email', required: true, type: 'email' }],
+        notificationEnabled: false, notificationEmails: '', notificationCcEmails: '', notificationSubject: ''
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            if (initialData) {
+                setFormData({
+                    ...initialData,
+                    notificationEnabled: initialData.notificationEnabled || false,
+                    notificationEmails: initialData.notificationEmails || '',
+                    notificationCcEmails: initialData.notificationCcEmails || '',
+                    notificationSubject: initialData.notificationSubject || ''
+                });
+            } else {
+                setFormData({
+                    name: '', targetListId: '', fields: [{ id: 'f-email', dbField: 'email', label: 'Địa chỉ Email', required: true, type: 'email' }],
+                    notificationEnabled: false, notificationEmails: '', notificationCcEmails: '', notificationSubject: ''
+                });
+            }
+        }
+    }, [isOpen, initialData]);
+
+    const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+        if (type === 'success') toast.success(message);
+        else if (type === 'error') toast.error(message);
+        else toast(message);
+    };
+
+    const handleAddField = () => {
+        setFormData({
+            ...formData,
+            fields: [...(formData.fields || []), { id: crypto.randomUUID(), dbField: 'firstName', label: 'Tên khách hàng', required: false, type: 'text' }]
+        });
+    };
+
+    const updateField = (id: string, updates: Partial<FormField>) => {
+        setFormData({
+            ...formData,
+            fields: formData.fields?.map(f => {
+                if (f.id !== id) return f;
+                const newF = { ...f, ...updates };
+                if (updates.dbField) {
+                    const def = DB_FIELDS.find(d => d.value === updates.dbField);
+                    if (def) {
+                        newF.label = def.label;
+                        newF.type = def.type as any;
+                    }
+                }
+                return newF;
+            })
+        });
+    };
+
+    const handleSaveForm = async () => {
+        if (!formData.name || !formData.targetListId) {
+            showToast('Vui lòng điền đủ tên và list đích', 'error');
+            return;
+        }
+        setIsSubmitting(true);
+
+        let res;
+        if (editingFormId) {
+            res = await api.put<FormDefinition>(`forms/${editingFormId}`, formData);
+        } else {
+            res = await api.post<FormDefinition>('forms', formData);
+        }
+
+        if (res.success) {
+            onSuccess();
+            onClose();
+        } else {
+            showToast(res.message || 'Lỗi khi lưu Form', 'error');
+        }
+        setIsSubmitting(false);
+    };
+
+    const getFieldIcon = (dbField: string) => {
+        const field = DB_FIELDS.find(f => f.value === dbField);
+        return field?.icon || Type;
+    }
+
+    return (
+        <>
+            <Modal
+                isOpen={isOpen}
+                onClose={onClose}
+                title={editingFormId ? "Chỉnh sửa biểu mẫu" : "Thiết kế biểu mẫu mới"}
+                size="lg"
+                footer={<div className="flex justify-between w-full"><Button variant="ghost" onClick={onClose}>Hủy</Button><Button icon={CheckCircle2} onClick={handleSaveForm} isLoading={isSubmitting}>{editingFormId ? 'Cập nhật Form' : 'Lưu cấu hình Form'}</Button></div>}
+            >
+                <div className="space-y-8 py-2">
+                    {/* SECTION 1: General Info */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <Input
+                            label="Tên định danh Form"
+                            placeholder="VD: Form Landing Page..."
+                            value={formData.name}
+                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                            autoFocus
+                        />
+                        <Select
+                            label="Danh sách lưu trữ đích"
+                            options={lists.map(l => ({ value: l.id, label: l.name }))}
+                            value={formData.targetListId || ''}
+                            onChange={v => setFormData({ ...formData, targetListId: v })}
+                            placeholder="Chọn danh sách đích..."
+                            icon={Database}
+                            variant="outline"
+                        />
+                    </div>
+
+                    {/* SECTION 1.5: Email Notification */}
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-100">
+                            <div>
+                                <h5 className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                                    <Bell className="w-4 h-4 text-[#ffa900]" /> Thông báo Email
+                                </h5>
+                                <p className="text-[10px] text-slate-400 font-medium mt-1">Gửi email thông báo cho tư vấn viên khi có lead mới.</p>
+                            </div>
+                            <div
+                                onClick={() => setFormData({ ...formData, notificationEnabled: !formData.notificationEnabled })}
+                                className="flex items-center gap-2 cursor-pointer select-none"
+                            >
+                                <div className={`w-11 h-6 rounded-full p-0.5 transition-all duration-300 flex items-center ${
+                                    formData.notificationEnabled ? 'bg-amber-500 justify-end' : 'bg-slate-300 justify-start'
+                                }`}>
+                                    <div className="w-4.5 h-4.5 w-5 h-5 bg-white rounded-full shadow-sm" />
+                                </div>
+                                <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                                    formData.notificationEnabled ? 'text-amber-600' : 'text-slate-400'
+                                }`}>{formData.notificationEnabled ? 'Bật' : 'Tắt'}</span>
+                            </div>
+                        </div>
+
+                        {formData.notificationEnabled && (
+                            <div className="space-y-4 bg-amber-50/50 border border-amber-100 rounded-2xl p-4 animate-in slide-in-from-top-2 duration-300">
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">
+                                        <BellRing className="w-3 h-3 inline mr-1 text-amber-500" />
+                                        Email nhận thông báo <span className="text-slate-400 font-normal lowercase normal-case tracking-normal">(To — nhiều email cách nhau bằng dấu phẩy)</span>
+                                    </label>
+                                    <textarea
+                                        rows={2}
+                                        placeholder="vd: tuvan1@cty.com, manager@cty.com"
+                                        value={formData.notificationEmails || ''}
+                                        onChange={e => setFormData({ ...formData, notificationEmails: e.target.value })}
+                                        className="w-full px-4 py-3 bg-white border-2 border-amber-200 focus:border-amber-400 rounded-xl text-sm text-slate-700 outline-none resize-none transition-all focus:ring-4 focus:ring-amber-400/10 placeholder:text-slate-300"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">
+                                        <Mail className="w-3 h-3 inline mr-1 text-slate-400" />
+                                        CC Email <span className="text-slate-400 font-normal lowercase normal-case tracking-normal">(tùy chọn — nhiều email cách nhau bằng dấu phẩy)</span>
+                                    </label>
+                                    <textarea
+                                        rows={2}
+                                        placeholder="vd: giamdoc@cty.com, ketoan@cty.com"
+                                        value={formData.notificationCcEmails || ''}
+                                        onChange={e => setFormData({ ...formData, notificationCcEmails: e.target.value })}
+                                        className="w-full px-4 py-3 bg-white border-2 border-slate-200 focus:border-amber-400 rounded-xl text-sm text-slate-700 outline-none resize-none transition-all focus:ring-4 focus:ring-amber-400/10 placeholder:text-slate-300"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">Tiêu đề email (tùy chọn)</label>
+                                    <input
+                                        type="text"
+                                        placeholder={`VD: [${formData.name || 'Form'}] Lead mới cần xử lý`}
+                                        value={formData.notificationSubject || ''}
+                                        onChange={e => setFormData({ ...formData, notificationSubject: e.target.value })}
+                                        className="w-full h-10 px-4 bg-white border-2 border-amber-200 focus:border-amber-400 rounded-xl text-sm text-slate-700 outline-none transition-all focus:ring-4 focus:ring-amber-400/10 placeholder:text-slate-300"
+                                    />
+                                </div>
+                                <div className="flex items-start gap-2 p-3 bg-white rounded-xl border border-amber-100">
+                                    <span className="text-base mt-0.5">📧</span>
+                                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                                        Email sẽ chứa toàn bộ trường dữ liệu mà khách hàng gửi — bao gồm cả custom fields như <code className="bg-amber-100 px-1 rounded text-amber-700 text-[10px]">hoc_van</code>, <code className="bg-amber-100 px-1 rounded text-amber-700 text-[10px]">chuong_trinh</code>, v.v.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* SECTION 2: Fields Structure */}
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-end px-1 pb-2 border-b border-slate-100">
+                            <div>
+                                <h5 className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                                    <Braces className="w-4 h-4 text-[#ffa900]" /> Cấu trúc trường dữ liệu
+                                </h5>
+                                <p className="text-[10px] text-slate-400 font-medium mt-1">Định nghĩa các trường thông tin bạn muốn thu thập từ khách hàng.</p>
+                            </div>
+                            <button onClick={handleAddField} className="text-[10px] font-black text-blue-600 hover:text-white flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-600 rounded-lg transition-all border border-blue-100 active:scale-95 shadow-sm">
+                                <Plus className="w-3.5 h-3.5" /> THÊM TRƯỜNG
+                            </button>
+                        </div>
+
+                        <div className="space-y-3 bg-slate-50/50 p-2 rounded-[24px] border border-slate-200/50 min-h-[200px]">
+                            {formData.fields?.map((field, idx) => {
+                                const FieldIcon = getFieldIcon(field.dbField);
+                                return (
+                                    <div key={field.id} className="group relative flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all animate-in slide-in-from-bottom-2 duration-300">
+                                        <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-[10px] font-bold text-slate-500 border-2 border-white shadow-sm z-10">{idx + 1}</div>
+
+                                        <div className="pl-4 w-full sm:w-56 shrink-0">
+                                            <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Trường Database</label>
+                                            <div className="relative">
+                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><FieldIcon className="w-4 h-4" /></div>
+                                                <select
+                                                    value={field.dbField}
+                                                    onChange={e => updateField(field.id, { dbField: e.target.value })}
+                                                    disabled={field.dbField === 'email'}
+                                                    className={`w-full pl-9 pr-8 py-2.5 rounded-xl text-xs font-bold appearance-none outline-none border-2 transition-all ${field.dbField === 'email' ? 'bg-slate-50 border-slate-100 text-slate-500' : 'bg-white border-slate-200 text-slate-700 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10'}`}
+                                                >
+                                                    {DB_FIELDS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                                </select>
+                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                                            </div>
+                                        </div>
+
+                                        <div className="flex-1 w-full">
+                                            <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Tiêu đề hiển thị (Label)</label>
+                                            <input
+                                                value={field.label}
+                                                onChange={e => updateField(field.id, { label: e.target.value })}
+                                                className="w-full h-[40px] px-4 bg-slate-50 border-2 border-transparent rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-[#ffa900] transition-all placeholder:text-slate-300"
+                                                placeholder="Nhập tên trường..."
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto pt-2 sm:pt-6 border-t sm:border-t-0 border-slate-100 mt-2 sm:mt-0">
+                                            <div
+                                                onClick={() => field.dbField !== 'email' && updateField(field.id, { required: !field.required })}
+                                                className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg transition-all select-none ${field.dbField === 'email' ? 'opacity-50 pointer-events-none bg-slate-100' : 'hover:bg-slate-50'}`}
+                                            >
+                                                <div className={`w-9 h-5 rounded-full p-0.5 transition-all duration-300 flex items-center ${field.required ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'}`}>
+                                                    <div className="w-4 h-4 bg-white rounded-full shadow-sm"></div>
+                                                </div>
+                                                <span className={`text-[9px] font-bold uppercase tracking-wider ${field.required ? 'text-emerald-600' : 'text-slate-400'}`}>Bắt buộc</span>
+                                            </div>
+
+                                            {field.dbField !== 'email' ? (
+                                                <button onClick={() => setFormData({ ...formData, fields: formData.fields?.filter(f => f.id !== field.id) })} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"><Trash2 className="w-4 h-4" /></button>
+                                            ) : (
+                                                <div className="w-8"></div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            <div className="p-4 bg-white/40 border-2 border-dashed border-slate-200 rounded-2xl text-center">
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide flex items-center justify-center gap-2">
+                                    <Sparkles className="w-3.5 h-3.5" /> Dữ liệu sẽ tự động đồng bộ vào hồ sơ khách hàng.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </Modal>
+
+        </>
+    );
+};
+
+export default FormEditorModal;

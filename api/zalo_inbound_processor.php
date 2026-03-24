@@ -1,0 +1,432 @@
+<?php
+// zalo_inbound_processor.php - 10M Scale Optimized Zalo Logic
+// MISSION-CRITICAL ASYNC HANDLER
+
+require_once 'zalo_helpers.php';
+require_once 'zalo_scoring_helper.php';
+require_once 'flow_helpers.php';
+require_once 'trigger_helper.php';
+
+function handleZaloInboundJob($pdo, $payload)
+{
+    if (empty($payload))
+        return false;
+
+    $subId = $payload['sub_id'] ?? null;
+    $zaloUserId = $payload['zalo_user_id'] ?? null;
+    $oaConfigId = $payload['oa_config_id'] ?? null;
+    $event = $payload['event'] ?? '';
+    $msgText = $payload['message_text'] ?? '';
+    $email = $payload['email'] ?? null;
+    $phone = $payload['phone'] ?? null;
+    $eventId = $payload['event_id'] ?? null;
+    $timestamp = $payload['timestamp'] ?? time();
+    $senderData = $payload['sender_data'] ?? [];
+
+    if (!$zaloUserId || !$oaConfigId)
+        return false;
+
+    // 0. FETCH OA CONFIG
+    $stmtOa = $pdo->prepare("SELECT id, access_token, name FROM zalo_oa_configs WHERE id = ? LIMIT 1");
+    $stmtOa->execute([$oaConfigId]);
+    $oaConfig = $stmtOa->fetch(PDO::FETCH_ASSOC);
+    if (!$oaConfig)
+        return false;
+
+    $accessToken = $oaConfig['access_token'];
+
+    // 1. DATA EXTRACTION & PROFILE SYNC
+    // [10M UPGRADE] Async Profile Sync (Moved from webhook.php to here)
+    $msgEvents = ['user_send_text', 'user_send_image', 'user_send_link', 'user_send_audio', 'user_send_video', 'user_send_location', 'user_send_sticker', 'user_send_gif'];
+    $interactionEvents = ['follow', 'user_submit_info', 'user_reacted_message', 'user_feedback'];
+
+    if (in_array($event, array_merge($interactionEvents, $msgEvents))) {
+        $accessToken = ensureZaloToken($pdo, $oaConfigId);
+        if ($accessToken) {
+            $profile = getZaloUserProfile($accessToken, $zaloUserId);
+            if ($profile) {
+                // [REAL-TIME SYNC] Sync to Main Subscribers (Standard fields)
+                $mainId = upsertZaloSubscriber($pdo, $zaloUserId, $profile, $oaConfigId);
+                if ($mainId) {
+                    checkDynamicTriggers($pdo, $mainId);
+                }
+            }
+        }
+    }
+
+    if ($email || $phone) {
+        // [10M] Update Zalo specific profile
+        $stmtZ = $pdo->prepare("UPDATE zalo_subscribers SET manual_email = COALESCE(manual_email, ?), phone_number = COALESCE(phone_number, ?) WHERE id = ?");
+        $stmtZ->execute([$email, $phone, $subId]);
+
+        // Link/Sync to Main Subscriber
+        require_once 'zalo_sync_helpers.php';
+        syncZaloToMain($pdo, $subId);
+    }
+
+    // 2. BROADCAST & ZNS TRACKING (user_received_message, user_seen_message)
+    if ($event === 'user_received_message' || $event === 'user_seen_message' || $event === 'user_reacted_message') {
+        processZaloTrackingEvent($pdo, $event, $payload, $subId, $zaloUserId);
+        return true;
+    }
+
+    // 3. STAFF REPLY TRACKING & AI PAUSE (oa_send_*)
+    if (strpos($event, 'oa_send_') === 0) {
+        processStaffReply($pdo, $event, $payload, $subId, $zaloUserId);
+        return true;
+    }
+
+    // 4. INBOUND ACTIVITY & SCORING
+    if (in_array($event, $msgEvents)) {
+        logZaloMsg($pdo, $zaloUserId, 'inbound', $msgText);
+
+        // [NEW FIX] Ensure AI Conversation exists and log visitor message to Unified Chat
+        try {
+            $stmtProp = $pdo->prepare("SELECT ai_chatbot_id FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' AND ai_chatbot_id IS NOT NULL LIMIT 1");
+            $stmtProp->execute([$oaConfigId]);
+            $aiPropId = $stmtProp->fetchColumn();
+
+            if ($aiPropId) {
+                $zaloVid = "zalo_" . $zaloUserId;
+                $stmtConv = $pdo->prepare("SELECT id FROM ai_conversations WHERE visitor_id = ? AND property_id = ? LIMIT 1");
+                $stmtConv->execute([$zaloVid, $aiPropId]);
+                $convId = $stmtConv->fetchColumn();
+
+                if (!$convId) {
+                    $convId = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x', mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0x0fff) | 0x4000, mt_rand(0, 0x3fff) | 0x8000, mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff));
+                    $pdo->prepare("INSERT INTO ai_conversations (id, property_id, visitor_id, status, created_at, updated_at, last_message_at) VALUES (?, ?, ?, 'ai', NOW(), NOW(), NOW())")->execute([$convId, $aiPropId, $zaloVid]);
+                }
+
+                $pdo->prepare("INSERT INTO ai_messages (conversation_id, sender, message, created_at) VALUES (?, 'visitor', ?, NOW())")->execute([$convId, $msgText]);
+                $pdo->prepare("UPDATE ai_conversations SET last_message = ?, last_message_at = NOW() WHERE id = ?")->execute([$msgText, $convId]);
+            }
+        } catch (Exception $e) { /* silent fail */ }
+
+        // Marker Extraction (Button Clicks captured in text)
+        if ($event === 'user_send_text') {
+            processMarkers($pdo, $msgText, $subId, $zaloUserId, $eventId);
+        }
+
+        if ($event !== 'user_send_text') {
+            updateZaloLeadScore($pdo, $zaloUserId, 'message');
+            logZaloSubscriberActivity($pdo, $subId, $event, null, "KH gửi tin nhắn (+5 điểm): $msgText", "Zalo Webhook", $eventId);
+        }
+    } elseif (in_array($event, $interactionEvents)) {
+        $points = ($event === 'follow') ? 2 : (($event === 'user_reacted_message') ? 3 : 5);
+        $scoreType = ($event === 'follow') ? 'follow' : (($event === 'user_reacted_message') ? 'reaction' : 'feedback');
+
+        updateZaloLeadScore($pdo, $zaloUserId, $scoreType);
+        logZaloSubscriberActivity($pdo, $subId, $event, null, "Sự kiện Zalo $event (+$points điểm)", "Zalo Webhook", $eventId);
+
+        // Log to Main Timeline
+        $stmtMain = $pdo->prepare("SELECT id FROM subscribers WHERE zalo_user_id = ? LIMIT 1");
+        $stmtMain->execute([$zaloUserId]);
+        $mainId = $stmtMain->fetchColumn();
+        if ($mainId) {
+            $evLabel = $event === 'follow' ? 'Follow OA' : ($event === 'user_reacted_message' ? 'Reaction' : 'Feedback');
+            logActivity($pdo, $mainId, $event, null, $evLabel, "Sự kiện Zalo $event (+$points điểm)", null, null);
+            if ($event === 'follow')
+                triggerFlows($pdo, $mainId, 'zalo_follow', null);
+        }
+    }
+
+    // 5. AUTOMATION FLOW TRIGGERS (Inbound Message Flow)
+    if ($event === 'user_send_text') {
+        $stmtMain = $pdo->prepare("SELECT id FROM subscribers WHERE zalo_user_id = ? LIMIT 1");
+        $stmtMain->execute([$zaloUserId]);
+        $mainId = $stmtMain->fetchColumn();
+        if ($mainId) {
+            triggerFlows($pdo, $mainId, 'inbound_message', $msgText);
+
+            // Contextual ZNS Reply Check
+            checkZnsReplyContext($pdo, $mainId, $zaloUserId, $msgText);
+        }
+    }
+
+    // 6. SCENARIO AUTO-REPLY (Keyword, Holiday, AI)
+    if ($event === 'follow' || in_array($event, $msgEvents)) {
+        $scenario = findZaloScenario($pdo, $oaConfig, $zaloUserId, $subId, $event, $msgText);
+        if ($scenario) {
+            logZaloSubscriberActivity($pdo, $subId, 'automation_trigger', $scenario['id'], "Kích hoạt kịch bản: " . ($scenario['title'] ?? 'Auto'), $msgText, $eventId);
+            sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $scenario, $msgText);
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Process Staff Replies, pause AI, and sync to chat history.
+ */
+function processStaffReply($pdo, $event, $payload, $subId, $zaloUserId)
+{
+    if (!$subId)
+        return;
+
+    $msgText = $payload['message_text'] ?? '';
+    $eventId = $payload['event_id'] ?? null;
+
+    // Detect System/Automated Replies
+    $isAutomated = (strpos($msgText, '[Automation]') === 0) || (strpos($msgText, '[System Message]') === 0);
+
+    if (!$isAutomated) {
+        // [ULTIMATE FIX] Kiểm tra đối soát với kịch bản (Scenario)
+        $stmtCheckS = $pdo->prepare("SELECT id FROM zalo_automation_scenarios WHERE (content = ? OR title = ?) AND status = 'active' LIMIT 1");
+        $stmtCheckS->execute([$msgText, $msgText]);
+        if ($stmtCheckS->fetch()) {
+            $isAutomated = true;
+        }
+
+        // [ULTIMATE FIX] Kiểm tra đối soát với Log tin nhắn hệ thống vừa gửi trong 5 phút qua
+        if (!$isAutomated) {
+            $stmtCheckLog = $pdo->prepare("SELECT id FROM zalo_user_messages WHERE zalo_user_id = ? AND direction = 'outbound' AND (message_text = ? OR message_text LIKE ?) AND created_at >= DATE_SUB(NOW(), INTERVAL 5 MINUTE) LIMIT 1");
+            $stmtCheckLog->execute([$zaloUserId, $msgText, "%Automation%"]);
+            if ($stmtCheckLog->fetch()) {
+                $isAutomated = true;
+            }
+        }
+    }
+
+    if (!$isAutomated) {
+        // Kiểm tra xem khách hàng có vừa mới Follow xong không (Trong 2 phút đầu ưu tiên kịch bảnChào mừng)
+        $stmtFollow = $pdo->prepare("SELECT id FROM zalo_subscriber_activity WHERE subscriber_id = ? AND type = 'follow' AND created_at >= DATE_SUB(NOW(), INTERVAL 2 MINUTE) LIMIT 1");
+        $stmtFollow->execute([$subId]);
+        if ($stmtFollow->fetch())
+            $isAutomated = true;
+    }
+
+    if (!$isAutomated) {
+        $stmtFollow = $pdo->prepare("SELECT id FROM zalo_subscriber_activity WHERE subscriber_id = ? AND type = 'follow' AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MINUTE) LIMIT 1");
+        $stmtFollow->execute([$subId]);
+        if ($stmtFollow->fetch())
+            $isAutomated = true;
+    }
+
+    if ($isAutomated) {
+        logZaloMsg($pdo, $zaloUserId, 'outbound', "[System Message] " . $msgText);
+        logZaloSubscriberActivity($pdo, $subId, 'system_reply', null, "System/Greeting: $msgText", "Zalo OA", $eventId);
+    } else {
+        logZaloMsg($pdo, $zaloUserId, 'outbound', $msgText);
+        logZaloSubscriberActivity($pdo, $subId, 'staff_reply', null, "Tư vấn viên trả lời: $msgText", "Zalo OA", $eventId);
+
+        // Pause AI
+        $pdo->prepare("UPDATE zalo_subscribers SET ai_paused_until = DATE_ADD(NOW(), INTERVAL 30 MINUTE) WHERE id = ?")->execute([$subId]);
+
+        // Sync to Chat History UI
+        syncStaffReplyToChatHistory($pdo, $zaloUserId, $msgText);
+    }
+}
+
+function syncStaffReplyToChatHistory($pdo, $zaloUserId, $msgText)
+{
+    try {
+        $zaloVid = "zalo_" . $zaloUserId;
+        $stmtC = $pdo->prepare("SELECT id FROM ai_conversations WHERE visitor_id = ? AND status != 'closed' ORDER BY last_message_at DESC LIMIT 1");
+        $stmtC->execute([$zaloVid]);
+        $convId = $stmtC->fetchColumn();
+        if ($convId) {
+            $pdo->prepare("INSERT INTO ai_messages (conversation_id, sender, message) VALUES (?, 'human', ?)")->execute([$convId, $msgText]);
+            $pdo->prepare("UPDATE ai_conversations SET last_message = ?, last_message_at = NOW() WHERE id = ?")->execute([$msgText, $convId]);
+        }
+    } catch (Exception $e) {
+    }
+}
+
+/**
+ * Handle Delivered/Seen events for Zalo Messages and Broadcasts.
+ */
+function processZaloTrackingEvent($pdo, $event, $payload, $subId, $zaloUserId)
+{
+    $msgId = $payload['zalo_msg_id'] ?? null;
+    if (!$msgId)
+        return;
+
+    // 1. ZNS Delivery Logs
+    if ($event === 'user_received_message' || $event === 'user_seen_message') {
+        $newStatus = ($event === 'user_received_message') ? 'delivered' : 'seen';
+
+        // Update ZNS Log
+        $stmtUpd = $pdo->prepare("UPDATE zalo_delivery_logs SET status = ? WHERE zalo_msg_id = ? AND status != 'seen' AND status != ?");
+        $stmtUpd->execute([$newStatus, $msgId, $newStatus]);
+
+        if ($stmtUpd->rowCount() > 0) {
+            // Find linked main subscriber and flow/step
+            $stmtLog = $pdo->prepare("SELECT flow_id, step_id FROM zalo_delivery_logs WHERE zalo_msg_id = ? LIMIT 1");
+            $stmtLog->execute([$msgId]);
+            $logEntry = $stmtLog->fetch();
+
+            if ($logEntry) {
+                $stmtMain = $pdo->prepare("SELECT linked_subscriber_id FROM zalo_subscribers WHERE zalo_user_id = ? LIMIT 1");
+                $stmtMain->execute([$zaloUserId]);
+                $mainId = $stmtMain->fetchColumn();
+
+                if ($mainId) {
+                    $points = ($event === 'user_received_message') ? 1 : 3;
+                    $label = ($event === 'user_received_message') ? 'ZNS Delivered' : 'ZNS Seen';
+
+                    logActivity($pdo, $mainId, "zns_" . $newStatus, $logEntry['step_id'], 'ZNS Automation', "$label (+$points điểm)", $logEntry['flow_id'], $logEntry['flow_id']);
+                    $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + ? WHERE id = ?")->execute([$points, $mainId]);
+
+                    if ($event === 'user_seen_message' && $logEntry['flow_id']) {
+                        $pdo->prepare("UPDATE campaigns SET count_unique_opened = count_unique_opened + 1 WHERE id = ?")->execute([$logEntry['flow_id']]);
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Broadcast Tracking
+    $stmtT = $pdo->prepare("SELECT id, broadcast_id, status FROM zalo_broadcast_tracking WHERE zalo_msg_id = ?");
+    $stmtT->execute([$msgId]);
+    $track = $stmtT->fetch();
+    if ($track) {
+        if ($event === 'user_seen_message' && !in_array($track['status'], ['seen', 'reacted'])) {
+            $pdo->prepare("UPDATE zalo_broadcast_tracking SET status = 'seen', seen_at = NOW() WHERE id = ?")->execute([$track['id']]);
+            $pdo->prepare("UPDATE zalo_broadcasts SET stats_seen = stats_seen + 1 WHERE id = ?")->execute([$track['broadcast_id']]);
+            if ($subId)
+                logZaloSubscriberActivity($pdo, $subId, 'seen_broadcast', $track['broadcast_id'], "Đã xem Broadcast", "Broadcast");
+        } elseif ($event === 'user_reacted_message' && $track['status'] !== 'reacted') {
+            $pdo->prepare("UPDATE zalo_broadcast_tracking SET status = 'reacted', reacted_at = NOW() WHERE id = ?")->execute([$track['id']]);
+            $pdo->prepare("UPDATE zalo_broadcasts SET stats_reacted = stats_reacted + 1 WHERE id = ?")->execute([$track['broadcast_id']]);
+            if ($subId)
+                logZaloSubscriberActivity($pdo, $subId, 'reacted_broadcast', $track['broadcast_id'], "Đã tương tác Broadcast", "Broadcast");
+        }
+    }
+}
+
+function processMarkers($pdo, &$msgText, $subId, $zaloUserId, $eventId)
+{
+    if (preg_match_all('/\s*\|\s*([a-zA-Z0-9_]+):([A-Za-z0-9+\/]+={0,2})/', $msgText, $matches, PREG_SET_ORDER)) {
+        foreach ($matches as $match) {
+            $fullMarker = $match[0];
+            $markerSid = $match[1];
+            $markerLabel = base64_decode($match[2]);
+
+            $msgText = trim(str_replace($fullMarker, '', $msgText));
+
+            if ($subId) {
+                // Anti-Spam: Block click if < 2 seconds
+                $stmtDebounce = $pdo->prepare("SELECT id FROM zalo_subscriber_activity WHERE subscriber_id = ? AND type = 'click_link' AND reference_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 2 SECOND) LIMIT 1");
+                $stmtDebounce->execute([$subId, $markerSid]);
+                if ($stmtDebounce->fetch())
+                    continue;
+
+                logZaloSubscriberActivity($pdo, $subId, 'click_link', $markerSid, "Click Button (+2 điểm): $markerLabel", $markerLabel, $eventId . "_click_" . $markerSid);
+
+                $stmtMain = $pdo->prepare("SELECT id FROM subscribers WHERE zalo_user_id = ? LIMIT 1");
+                $stmtMain->execute([$zaloUserId]);
+                $mainId = $stmtMain->fetchColumn();
+                if ($mainId) {
+                    logActivity($pdo, $mainId, 'click_link', $markerSid, 'Zalo Button', "Click Button (+2 điểm): $markerLabel", null, null);
+                    updateZaloLeadScore($pdo, $zaloUserId, 'click', $markerSid);
+                }
+            }
+        }
+    }
+}
+
+function checkZnsReplyContext($pdo, $mainId, $zaloUserId, $msgText)
+{
+    $stmtZns = $pdo->prepare("SELECT flow_id FROM subscriber_activity WHERE subscriber_id = ? AND type = 'zns_sent' AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR) ORDER BY created_at DESC LIMIT 1");
+    $stmtZns->execute([$mainId]);
+    $lastZns = $stmtZns->fetch();
+
+    if ($lastZns) {
+        logActivity($pdo, $mainId, 'reply_zns', $lastZns['flow_id'], 'Zalo Reply', "Replied to ZNS (+5 điểm): $msgText", $lastZns['flow_id'], null);
+        $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + 5 WHERE id = ?")->execute([$mainId]);
+    }
+}
+
+function findZaloScenario($pdo, $oaConfig, $zId, $subId, $event, $msgLower)
+{
+    $nowTime = date('H:i:s');
+    $nowDay = date('w');
+    $oaId = $oaConfig['id'];
+    $msgLower = mb_strtolower($msgLower, "UTF-8");
+
+    // Cooldown check for AI
+    $skipAI = isAiPaused($pdo, $subId, $zId);
+
+    // 1. Holiday
+    $stmtH = $pdo->prepare("SELECT * FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'holiday' AND status = 'active'");
+    $stmtH->execute([$oaId]);
+    while ($h = $stmtH->fetch()) {
+        if (isScenarioActive($h, $nowTime, $nowDay)) {
+            $stmtFreq = $pdo->prepare("SELECT id FROM zalo_subscriber_activity WHERE subscriber_id = ? AND type = 'automation_reply' AND reference_id = ? AND created_at >= CURDATE()");
+            $stmtFreq->execute([$subId, $h['id']]);
+            if (!$stmtFreq->fetch())
+                return $h;
+            if ($h['priority_override'])
+                return null; // Block others
+        }
+    }
+
+    // 2. Exact Keywords / Contains
+    if ($event === 'user_send_text') {
+        $stmtS = $pdo->prepare("SELECT * FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type IN ('keyword', 'ai_reply') AND status = 'active' ORDER BY created_at DESC");
+        $stmtS->execute([$oaId]);
+        $scenarios = $stmtS->fetchAll();
+
+        foreach ($scenarios as $s) {
+            if (!isScenarioActive($s, $nowTime, $nowDay))
+                continue;
+            if ($s['type'] === 'ai_reply' && (empty($s['trigger_text']) || $s['trigger_text'] === '*' || $s['trigger_text'] === 'default'))
+                continue;
+
+            $keywords = array_map('trim', explode(',', mb_strtolower($s['trigger_text'] ?? '', "UTF-8")));
+            foreach ($keywords as $kw) {
+                if ($s['match_type'] === 'contains' && mb_strpos($msgLower, $kw) !== false)
+                    return $s;
+                if ($s['match_type'] === 'exact' && $msgLower === $kw)
+                    return $s;
+            }
+        }
+    }
+
+    // 3. Fallback AI / Welcome
+    if ($event === 'follow') {
+        $stmtW = $pdo->prepare("SELECT * FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'welcome' AND status = 'active' LIMIT 1");
+        $stmtW->execute([$oaId]);
+        $row = $stmtW->fetch();
+        if ($row && isScenarioActive($row, $nowTime, $nowDay))
+            return $row;
+    }
+
+    if ($event === 'user_send_text' && !$skipAI) {
+        $stmtAI = $pdo->prepare("SELECT * FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' AND (trigger_text IS NULL OR trigger_text = '' OR trigger_text = '*') AND status = 'active' LIMIT 1");
+        $stmtAI->execute([$oaId]);
+        $rowAI = $stmtAI->fetch();
+        if ($rowAI && isScenarioActive($rowAI, $nowTime, $nowDay))
+            return $rowAI;
+    }
+
+    return null;
+}
+
+function isAiPaused($pdo, $subId, $ziloUserId)
+{
+    if (!$subId)
+        return false;
+
+    // Check pause timer
+    $stmtP = $pdo->prepare("SELECT ai_paused_until FROM zalo_subscribers WHERE id = ?");
+    $stmtP->execute([$subId]);
+    $until = $stmtP->fetchColumn();
+    if ($until && strtotime($until) > time())
+        return true;
+
+    // Check staff reply (2 min cooldown)
+    $stmtCool = $pdo->prepare("SELECT id FROM zalo_subscriber_activity WHERE subscriber_id = ? AND type = 'staff_reply' AND created_at >= DATE_SUB(NOW(), INTERVAL 2 MINUTE) LIMIT 1");
+    $stmtCool->execute([$subId]);
+    if ($stmtCool->fetch())
+        return true;
+
+    // Check human mode
+    $vid = "zalo_" . $ziloUserId;
+    $stmtH = $pdo->prepare("SELECT status FROM ai_conversations WHERE visitor_id = ? AND status = 'human' LIMIT 1");
+    $stmtH->execute([$vid]);
+    if ($stmtH->fetchColumn() === 'human')
+        return true;
+
+    return false;
+}

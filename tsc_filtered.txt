@@ -1,0 +1,2324 @@
+﻿
+components/ai/chat/ChatHeader.tsx(34,33): 
+error TS2339: Property 'avatar' does not 
+exist on type 'ChatbotInfo'.
+components/ai/chat/ChatHeader.tsx(35,45): 
+error TS2339: Property 'avatar' does not 
+exist on type 'ChatbotInfo'.
+components/ai/chat/ChatHeader.tsx(47,91): 
+error TS2339: Property 'model' does not 
+exist on type 'ChatbotInfo'.
+components/ai/chat/ChatHeader.tsx(47,137): 
+error TS2339: Property 'model' does not 
+exist on type 'ChatbotInfo'.
+components/ai/HomeView.tsx(56,21): error 
+TS2322: Type '(e: MouseEvent<Element, 
+MouseEvent>, bot: any) => void' is not 
+assignable to type 
+'MouseEventHandler<HTMLButtonElement>'.
+  Target signature provides too few 
+arguments. Expected 2 or more, but got 1.
+components/ai/training/AITrainingDetail.tsx(2
+62,42): error TS2345: Argument of type 
+'"inbox"' is not assignable to parameter of 
+type '"embed" | "settings" | "training" | 
+"instruction"'.
+components/ai/training/AITrainingDetail.tsx(2
+76,49): error TS2345: Argument of type 
+'"inbox"' is not assignable to parameter of 
+type '"embed" | "settings" | "training" | 
+"instruction"'.
+components/ai/training/AITrainingDetail.tsx(2
+77,194): error TS2367: This comparison 
+appears to be unintentional because the 
+types '"embed" | "settings" | "training" | 
+"instruction"' and '"inbox"' have no overlap.
+components/ai/training/AITrainingDetail.tsx(4
+74,29): error TS2322: Type '(ids: string[]) 
+=> void' is not assignable to type '() => 
+void'.
+  Target signature provides too few 
+arguments. Expected 1 or more, but got 0.
+components/ai/training/AITrainingDetail.tsx(5
+42,95): error TS2322: Type '{ className: 
+string; title: string; }' is not assignable 
+to type 'IntrinsicAttributes & 
+Omit<LucideProps, "ref"> & 
+RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+components/ai/training/AITrainingDetail.tsx(5
+57,117): error TS2322: Type '{ className: 
+string; title: string; }' is not assignable 
+to type 'IntrinsicAttributes & 
+Omit<LucideProps, "ref"> & 
+RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+components/ai/training/AITrainingDetail.tsx(5
+74,121): error TS2322: Type '{ className: 
+string; title: string; }' is not assignable 
+to type 'IntrinsicAttributes & 
+Omit<LucideProps, "ref"> & 
+RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+components/ai/training/AITrainingDetail.tsx(7
+54,21): error TS2367: This comparison 
+appears to be unintentional because the 
+types '"embed" | "settings" | "instruction"' 
+and '"inbox"' have no overlap.
+components/ai/UnifiedChat.tsx(713,85): error 
+TS2551: Property 'zalo_oa_name' does not 
+exist on type 'Conversation'. Did you mean 
+'zalo_name'?
+components/ai/UnifiedChat.tsx(713,128): 
+error TS2339: Property 'page_name' does not 
+exist on type 'Conversation'.
+components/ai/UnifiedChat.tsx(720,44): error 
+TS2551: Property 'last_message_time' does 
+not exist on type 'Conversation'. Did you 
+mean 'last_message_at'?
+components/ai/UnifiedChat.tsx(2222,62): 
+error TS2339: Property 'replace' does not 
+exist on type 'never'.
+components/ai/UnifiedChat.tsx(2409,95): 
+error TS2339: Property 'description' does 
+not exist on type 'JourneyItem'.
+components/ai/UnifiedChat.tsx(2472,25): 
+error TS2322: Type '(id: string, data: any) 
+=> Promise<void>' is not assignable to type 
+'(updated: Subscriber) => void'.
+  Target signature provides too few 
+arguments. Expected 2 or more, but got 1.
+components/ai/UnifiedChat.tsx(2478,25): 
+error TS2322: Type '(segId: string) => 
+boolean' is not assignable to type '(sub: 
+Subscriber, criteria: string) => boolean'.
+  Types of parameters 'segId' and 'sub' are 
+incompatible.
+    Type 'Subscriber' is not assignable to 
+type 'string'.
+components/ai/UnifiedChat.tsx(2598,21): 
+error TS2322: Type '{ zaloId: string; 
+onClose: () => void; }' is not assignable to 
+type 'IntrinsicAttributes & 
+ZaloUserProfileModalProps'.
+  Property 'zaloId' does not exist on type 
+'IntrinsicAttributes & 
+ZaloUserProfileModalProps'.
+components/ai/UnifiedChat.tsx(2849,17): 
+error TS2322: Type 'number | boolean' is not 
+assignable to type 'boolean'.
+  Type 'number' is not assignable to type 
+'boolean'.
+components/audience/AdvancedFilters.tsx(138,3
+7): error TS2322: Type '"default"' is not 
+assignable to type '"outline" | "ghost" | 
+"filled" | "premium"'.
+components/audience/AdvancedFilters.tsx(158,3
+7): error TS2322: Type '"default"' is not 
+assignable to type '"outline" | "ghost" | 
+"filled" | "premium"'.
+components/audience/AdvancedFilters.tsx(175,3
+7): error TS2322: Type '"default"' is not 
+assignable to type '"outline" | "ghost" | 
+"filled" | "premium"'.
+components/audience/CustomerProfileModal.tsx(
+608,162): error TS2322: Type '{ className: 
+string; title: string; }' is not assignable 
+to type 'IntrinsicAttributes & 
+Omit<LucideProps, "ref"> & 
+RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+components/audience/CustomerProfileModal.tsx(
+609,161): error TS2322: Type '{ className: 
+string; title: string; }' is not assignable 
+to type 'IntrinsicAttributes & 
+Omit<LucideProps, "ref"> & 
+RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+components/audience/CustomerProfileModal.tsx(
+1950,29): error TS2322: Type '{ 
+subscriberId: string; isOpen: true; onClose: 
+() => void; }' is not assignable to type 
+'IntrinsicAttributes & 
+MetaCustomerProfileModalProps'.
+  Property 'isOpen' does not exist on type 
+'IntrinsicAttributes & 
+MetaCustomerProfileModalProps'.
+components/audience/ImportSubscribersModal.ts
+x(169,13): error TS2353: Object literal may 
+only specify known properties, and 
+'missingPhone' does not exist in type 
+'SetStateAction<{ valid: number; duplicates: 
+number; total: number; }>'.
+components/audience/tabs/ContactsTab.tsx(83,1
+25): error TS2322: Type '{ className: 
+string; title: string; }' is not assignable 
+to type 'IntrinsicAttributes & 
+Omit<LucideProps, "ref"> & 
+RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+components/audience/tabs/ContactsTab.tsx(84,1
+24): error TS2322: Type '{ className: 
+string; title: string; }' is not assignable 
+to type 'IntrinsicAttributes & 
+Omit<LucideProps, "ref"> & 
+RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+components/audience/tabs/ContactsTab.tsx(85,1
+11): error TS2322: Type '{ className: 
+string; title: string; }' is not assignable 
+to type 'IntrinsicAttributes & 
+Omit<LucideProps, "ref"> & 
+RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+components/audience/tabs/ContactsTab.tsx(119,
+67): error TS2367: This comparison appears 
+to be unintentional because the types 
+'"lead" | "customer" | "bounced" | 
+"complained"' and '"unsub"' have no overlap.
+components/campaigns/CampaignDeliveryDetailsT
+ab.tsx(480,52): error TS2322: Type '"error" 
+| "success"' is not assignable to type 
+'"success" | "danger" | "warning" | "info" | 
+"neutral" | "brand" | "pink" | "amber"'.
+  Type '"error"' is not assignable to type 
+'"success" | "danger" | "warning" | "info" | 
+"neutral" | "brand" | "pink" | "amber"'.
+components/campaigns/CampaignDeliveryDetailsT
+ab.tsx(487,56): error TS2322: Type '"error"' 
+is not assignable to type '"success" | 
+"danger" | "warning" | "info" | "neutral" | 
+"brand" | "pink" | "amber"'.
+components/campaigns/CampaignDetailDrawer.tsx
+(256,36): error TS2322: Type '"success" | 
+"secondary" | "warning" | "info"' is not 
+assignable to type '"success" | "danger" | 
+"warning" | "info" | "neutral" | "brand" | 
+"pink" | "amber"'.
+  Type '"secondary"' is not assignable to 
+type '"success" | "danger" | "warning" | 
+"info" | "neutral" | "brand" | "pink" | 
+"amber"'.
+components/campaigns/CampaignDetailDrawer.tsx
+(369,72): error TS2339: Property 'failed' 
+does not exist on type '{ sent: number; 
+opened: number; clicked: number; bounced: 
+number; spam: number; unsubscribed: number; 
+}'.
+components/campaigns/CampaignDetailDrawer.tsx
+(370,172): error TS2339: Property 'failed' 
+does not exist on type '{ sent: number; 
+opened: number; clicked: number; bounced: 
+number; spam: number; unsubscribed: number; 
+}'.
+components/campaigns/CampaignDetailDrawer.tsx
+(422,64): error TS2339: Property 'failed' 
+does not exist on type '{ sent: number; 
+opened: number; clicked: number; bounced: 
+number; spam: number; unsubscribed: number; 
+}'.
+components/campaigns/CampaignDetailDrawer.tsx
+(429,177): error TS2339: Property 'failed' 
+does not exist on type '{ sent: number; 
+opened: number; clicked: number; bounced: 
+number; spam: number; unsubscribed: number; 
+}'.
+components/campaigns/CampaignDetailDrawer.tsx
+(601,157): error TS2339: Property 'failed' 
+does not exist on type '{ sent: number; 
+opened: number; clicked: number; bounced: 
+number; spam: number; unsubscribed: number; 
+}'.
+components/campaigns/CampaignDetailDrawer.tsx
+(601,236): error TS2339: Property 'failed' 
+does not exist on type '{ sent: number; 
+opened: number; clicked: number; bounced: 
+number; spam: number; unsubscribed: number; 
+}'.
+components/campaigns/CampaignDetailDrawer.tsx
+(785,68): error TS2339: Property 
+'count_unsubscribed' does not exist on type 
+'Campaign'.
+components/campaigns/CampaignDetailDrawer.tsx
+(786,130): error TS2339: Property 
+'count_unsubscribed' does not exist on type 
+'Campaign'.
+components/campaigns/CampaignDetailDrawer.tsx
+(893,41): error TS2322: Type '(page?: 
+number) => Promise<void>' is not assignable 
+to type 
+'MouseEventHandler<HTMLButtonElement>'.
+  Types of parameters 'page' and 'event' are 
+incompatible.
+    Type 'MouseEvent<HTMLButtonElement, 
+MouseEvent>' is not assignable to type 
+'number'.
+components/campaigns/CampaignWizard.tsx(1320,
+33): error TS2322: Type 
+'import("F:/DOWNLOAD/copy-of-mailflow-pro 
+(2) - Copy/copy-of-mailflow-pro/copy-of-mailf
+low-pro/copy-of-mailflow-pro/types").Flow[]' 
+is not assignable to type 'Flow[]'.
+  Type 
+'import("F:/DOWNLOAD/copy-of-mailflow-pro 
+(2) - Copy/copy-of-mailflow-pro/copy-of-mailf
+low-pro/copy-of-mailflow-pro/types").Flow' 
+is not assignable to type 'Flow'.
+    Types of property 'status' are 
+incompatible.
+      Type '"draft" | "archived" | "active" 
+| "paused"' is not assignable to type 
+'"archived" | "active" | "inactive"'.
+        Type '"draft"' is not assignable to 
+type '"archived" | "active" | "inactive"'.
+components/campaigns/CampaignWizard.tsx(1345,
+326): error TS2322: Type 'string | true' is 
+not assignable to type 'boolean'.
+  Type 'string' is not assignable to type 
+'boolean'.
+components/campaigns/LaunchPreview.tsx(723,41
+): error TS2322: Type '{ id: string; 
+checked: boolean; onChange: (checked: 
+boolean) => void; label: string; }' is not 
+assignable to type 'IntrinsicAttributes & 
+CheckboxProps'.
+  Property 'id' does not exist on type 
+'IntrinsicAttributes & CheckboxProps'.
+components/campaigns/TechStatsTab.tsx(77,46):
+ error TS2322: Type '{ children: Element; 
+title: string; icon: 
+ForwardRefExoticComponent<Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>>; 
+className: string; }' is not assignable to 
+type 'IntrinsicAttributes & CardProps'.
+  Property 'icon' does not exist on type 
+'IntrinsicAttributes & CardProps'.
+components/campaigns/TechStatsTab.tsx(118,49)
+: error TS2322: Type '{ children: Element; 
+title: string; icon: 
+ForwardRefExoticComponent<Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>>; 
+className: string; }' is not assignable to 
+type 'IntrinsicAttributes & CardProps'.
+  Property 'icon' does not exist on type 
+'IntrinsicAttributes & CardProps'.
+components/campaigns/TechStatsTab.tsx(148,50)
+: error TS2322: Type '{ children: Element; 
+title: string; icon: 
+ForwardRefExoticComponent<Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>>; 
+className: string; }' is not assignable to 
+type 'IntrinsicAttributes & CardProps'.
+  Property 'icon' does not exist on type 
+'IntrinsicAttributes & CardProps'.
+components/flows/builder/FlowHeader.tsx(32,3)
+: error TS2339: Property 'onBack' does not 
+exist on type 'FlowHeaderProps'.
+components/flows/builder/FlowHeader.tsx(33,3)
+: error TS2339: Property 'onTabChange' does 
+not exist on type 'FlowHeaderProps'.
+components/flows/builder/FlowHeader.tsx(34,3)
+: error TS2339: Property 'onToggleStatus' 
+does not exist on type 'FlowHeaderProps'.
+components/flows/builder/FlowHeader.tsx(35,3)
+: error TS2339: Property 'onToggleViewMode' 
+does not exist on type 'FlowHeaderProps'.
+components/flows/config/TriggerConfig.tsx(466
+,30): error TS2367: This comparison appears 
+to be unintentional because the types 
+'"form" | "date" | "campaign" | "tag" | 
+"segment" | "purchase" | "custom_event"' and 
+'"inbound_message"' have no overlap.
+components/flows/config/TriggerConfig.tsx(495
+,30): error TS2367: This comparison appears 
+to be unintentional because the types 
+'"form" | "date" | "campaign" | "tag" | 
+"segment" | "purchase" | "custom_event"' and 
+'"zalo_follow"' have no overlap.
+components/flows/config/TriggerConfig.tsx(511
+,30): error TS2367: This comparison appears 
+to be unintentional because the types 
+'"form" | "date" | "campaign" | "tag" | 
+"segment" | "purchase" | "custom_event"' and 
+'"unsubscribe"' have no overlap.
+components/flows/ManualTriggerFlowModal.tsx(1
+15,33): error TS2322: Type '{ children: 
+string; size: "sm"; variant: "secondary"; 
+icon: 
+ForwardRefExoticComponent<Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>>; 
+onClick: () => Promise<...>; loading: 
+boolean; className: string; }' is not 
+assignable to type 'IntrinsicAttributes & 
+ButtonProps'.
+  Property 'loading' does not exist on type 
+'IntrinsicAttributes & ButtonProps'. Did you 
+mean 'isLoading'?
+components/flows/modals/HistoryModal.tsx(89,4
+1): error TS2322: Type '"xs"' is not 
+assignable to type '"md" | "sm" | "lg"'.
+components/flows/modals/HistoryModal.tsx(91,4
+1): error TS2322: Type 'Element' is not 
+assignable to type 'ElementType<any, keyof 
+IntrinsicElements>'.
+components/flows/modals/StepErrorModal.tsx(14
+7,91): error TS2322: Type '"large"' is not 
+assignable to type '"md" | "sm" | "lg" | 
+"xl" | "2xl" | "3xl" | "4xl" | "full"'.
+components/flows/modals/StepErrorModal.tsx(37
+1,33): error TS2322: Type '{ children: 
+string; onClick: () => Promise<void>; 
+disabled: boolean; loading: boolean; }' is 
+not assignable to type 'IntrinsicAttributes 
+& ButtonProps'.
+  Property 'loading' does not exist on type 
+'IntrinsicAttributes & ButtonProps'. Did you 
+mean 'isLoading'?
+components/flows/modals/StepParticipantsModal
+.tsx(684,157): error TS2367: This comparison 
+appears to be unintentional because the 
+types '"waiting" | "all" | "unsubscribed" | 
+"opened" | "failed" | "clicks" | "preview" | 
+"inactive" | "zns_sent" | "zns_clicked" | 
+"report" | "zns_replied" | "zns_failed" | 
+"all_touched"' and '"zns_skipped"' have no 
+overlap.
+components/flows/modals/StepParticipantsModal
+.tsx(1187,101): error TS2367: This 
+comparison appears to be unintentional 
+because the types '"all" | "unsubscribed" | 
+"clicks" | "preview" | "zns_sent" | 
+"zns_clicked" | "report" | "zns_replied" | 
+"zns_failed"' and '"waiting"' have no 
+overlap.
+components/flows/modals/StepUnsubscribeModal.
+tsx(62,90): error TS2322: Type '"large"' is 
+not assignable to type '"md" | "sm" | "lg" | 
+"xl" | "2xl" | "3xl" | "4xl" | "full"'.
+components/flows/nodes/FlowNodes.tsx(131,60):
+ error TS2741: Property 'failed' is missing 
+in type '{ total: number; waiting: number; 
+processed: number; }' but required in type 
+'{ total: number; waiting: number; 
+processed: number; failed: number; }'.
+components/flows/nodes/FlowNodes.tsx(201,60):
+ error TS2741: Property 'failed' is missing 
+in type '{ total: number; waiting: number; 
+processed: number; }' but required in type 
+'{ total: number; waiting: number; 
+processed: number; failed: number; }'.
+components/flows/nodes/FlowNodes.tsx(233,60):
+ error TS2741: Property 'failed' is missing 
+in type '{ total: number; waiting: number; 
+processed: number; }' but required in type 
+'{ total: number; waiting: number; 
+processed: number; failed: number; }'.
+components/flows/nodes/FlowNodes.tsx(341,60):
+ error TS2741: Property 'failed' is missing 
+in type '{ total: number; waiting: number; 
+processed: number; }' but required in type 
+'{ total: number; waiting: number; 
+processed: number; failed: number; }'.
+components/flows/nodes/FlowNodes.tsx(388,60):
+ error TS2741: Property 'failed' is missing 
+in type '{ total: number; waiting: number; 
+processed: number; }' but required in type 
+'{ total: number; waiting: number; 
+processed: number; failed: number; }'.
+components/flows/nodes/FlowNodes.tsx(414,56):
+ error TS2741: Property 'failed' is missing 
+in type '{ total: number; waiting: number; 
+processed: number; }' but required in type 
+'{ total: number; waiting: number; 
+processed: number; failed: number; }'.
+components/flows/nodes/FlowNodes.tsx(447,60):
+ error TS2741: Property 'failed' is missing 
+in type '{ total: number; waiting: number; 
+processed: number; }' but required in type 
+'{ total: number; waiting: number; 
+processed: number; failed: number; }'.
+components/flows/nodes/FlowNodes.tsx(500,60):
+ error TS2741: Property 'failed' is missing 
+in type '{ total: number; waiting: number; 
+processed: number; }' but required in type 
+'{ total: number; waiting: number; 
+processed: number; failed: number; }'.
+components/flows/nodes/FlowNodes.tsx(546,60):
+ error TS2741: Property 'failed' is missing 
+in type '{ total: number; waiting: number; 
+processed: number; }' but required in type 
+'{ total: number; waiting: number; 
+processed: number; failed: number; }'.
+components/flows/tabs/FlowAnalyticsTab.tsx(50
+9,22): error TS2367: This comparison appears 
+to be unintentional because the types '"all" 
+| "clicks" | "all_touched"' and '"report"' 
+have no overlap.
+components/flows/tabs/FlowAnalyticsTab.tsx(51
+3,22): error TS2367: This comparison appears 
+to be unintentional because the types 
+'"all"' and '"zns_sent"' have no overlap.
+components/flows/tabs/FlowAnalyticsTab.tsx(51
+4,22): error TS2367: This comparison appears 
+to be unintentional because the types 
+'"all"' and '"zns_clicked"' have no overlap.
+components/flows/tabs/FlowAnalyticsTab.tsx(51
+5,22): error TS2367: This comparison appears 
+to be unintentional because the types 
+'"all"' and '"zns_replied"' have no overlap.
+components/flows/tabs/FlowAnalyticsTab.tsx(51
+6,22): error TS2367: This comparison appears 
+to be unintentional because the types 
+'"all"' and '"zns_failed"' have no overlap.
+components/flows/tabs/FlowAnalyticsTab.tsx(62
+5,25): error TS2345: Argument of type 
+'"zns_sent"' is not assignable to parameter 
+of type 'SetStateAction<"waiting" | "all" | 
+"unsubscribed" | "opened" | "failed" | 
+"clicks" | "all_touched">'.
+components/flows/tabs/FlowAnalyticsTab.tsx(14
+64,34): error TS2367: This comparison 
+appears to be unintentional because the 
+types '"all"' and '"zns_sent"' have no 
+overlap.
+components/flows/tabs/FlowAnalyticsTab.tsx(14
+65,34): error TS2367: This comparison 
+appears to be unintentional because the 
+types '"all"' and '"zns_clicked"' have no 
+overlap.
+components/flows/tabs/FlowAnalyticsTab.tsx(14
+66,34): error TS2367: This comparison 
+appears to be unintentional because the 
+types '"all"' and '"zns_replied"' have no 
+overlap.
+components/flows/tabs/FlowAnalyticsTab.tsx(14
+67,34): error TS2367: This comparison 
+appears to be unintentional because the 
+types '"all"' and '"zns_failed"' have no 
+overlap.
+components/flows/tabs/FlowAnalyticsTab.tsx(14
+82,34): error TS2367: This comparison 
+appears to be unintentional because the 
+types '"all"' and '"zns_sent"' have no 
+overlap.
+components/flows/tabs/FlowAnalyticsTab.tsx(14
+83,34): error TS2367: This comparison 
+appears to be unintentional because the 
+types '"all"' and '"zns_clicked"' have no 
+overlap.
+components/flows/tabs/FlowAnalyticsTab.tsx(14
+84,34): error TS2367: This comparison 
+appears to be unintentional because the 
+types '"all"' and '"zns_replied"' have no 
+overlap.
+components/flows/tabs/FlowAnalyticsTab.tsx(14
+85,34): error TS2367: This comparison 
+appears to be unintentional because the 
+types '"all"' and '"zns_failed"' have no 
+overlap.
+components/flows/tabs/FlowAnalyticsTab.tsx(15
+80,71): error TS2769: No overload matches 
+this call.
+  The last overload gave the following error.
+    Object literal may only specify known 
+properties, and 'className' does not exist 
+in type 'Partial<unknown> & Attributes'.
+components/flows/tabs/FlowSettingsTab.tsx(74,
+37): error TS2339: Property 'frequency' does 
+not exist on type '{}'.
+components/meta/MetaConfig.tsx(298,37): 
+error TS2322: Type '{ children: string; 
+onClick: () => Promise<void>; loading: 
+boolean; icon: 
+ForwardRefExoticComponent<Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>>; 
+size: "md"; className: string; }' is not 
+assignable to type 'IntrinsicAttributes & 
+ButtonProps'.
+  Property 'loading' does not exist on type 
+'IntrinsicAttributes & ButtonProps'. Did you 
+mean 'isLoading'?
+components/meta/MetaGrowthReport.tsx(161,96):
+ error TS2353: Object literal may only 
+specify known properties, and 'shadow' does 
+not exist in type 'Properties<string | 
+number, string & {}>'.
+components/meta/MetaGrowthReport.tsx(182,96):
+ error TS2353: Object literal may only 
+specify known properties, and 'shadow' does 
+not exist in type 'Properties<string | 
+number, string & {}>'.
+components/meta/MetaGrowthReport.tsx(202,96):
+ error TS2353: Object literal may only 
+specify known properties, and 'shadow' does 
+not exist in type 'Properties<string | 
+number, string & {}>'.
+components/reports/AIChatReport.tsx(87,92): 
+error TS2353: Object literal may only 
+specify known properties, and 'shadow' does 
+not exist in type 'Properties<string | 
+number, string & {}>'.
+components/reports/WebJourneyReport.tsx(94,96
+): error TS2353: Object literal may only 
+specify known properties, and 'shadow' does 
+not exist in type 'Properties<string | 
+number, string & {}>'.
+components/settings/ZaloOAManager.tsx(188,25)
+: error TS2345: Argument of type '{ title: 
+string; message: string; variant: "danger"; 
+requireConfirmText: string; onConfirm: () => 
+Promise<void>; }' is not assignable to 
+parameter of type 'SetStateAction<{ isOpen: 
+boolean; title: string; message: ReactNode; 
+variant: "danger" | "warning" | "info"; 
+onConfirm: () => void; requireConfirmText?: 
+string; }>'.
+  Property 'isOpen' is missing in type '{ 
+title: string; message: string; variant: 
+"danger"; requireConfirmText: string; 
+onConfirm: () => Promise<void>; }' but 
+required in type '{ isOpen: boolean; title: 
+string; message: ReactNode; variant: 
+"danger" | "warning" | "info"; onConfirm: () 
+=> void; requireConfirmText?: string; }'.
+components/settings/ZaloTemplateCreateModal.t
+sx(639,13): error TS2322: Type '"7xl"' is 
+not assignable to type '"md" | "sm" | "lg" | 
+"xl" | "2xl" | "3xl" | "4xl" | "full"'.
+components/settings/ZaloTemplateCreateModal.t
+sx(952,53): error TS2322: Type '"xs"' is not 
+assignable to type '"md" | "sm" | "lg"'.
+components/settings/ZaloTemplateModal.tsx(475
+,17): error TS2741: Property 'template_type' 
+is missing in type 'ZaloTemplate' but 
+required in type 'ZaloTemplate'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(125,81): error TS2551: 
+Property 'buttonBackgroundColor' does not 
+exist on type 'EmailBlockStyle'. Did you 
+mean 'backgroundColor'?
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(140,50): error TS2345: 
+Argument of type 'BorderRadius<string | 
+number>' is not assignable to parameter of 
+type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(214,54): error TS2345: 
+Argument of type 'BorderRadius<string | 
+number>' is not assignable to parameter of 
+type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(248,32): error TS2339: 
+Property 'labelColor' does not exist on type 
+'CSSProperties'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(257,38): error TS2339: 
+Property 'timelineDotColor' does not exist 
+on type 'CSSProperties'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(258,39): error TS2339: 
+Property 'timelineLineColor' does not exist 
+on type 'CSSProperties'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(282,72): error TS2339: 
+Property 'timelineLineStyle' does not exist 
+on type 'CSSProperties'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(310,40): error TS2339: 
+Property 'checkIconColor' does not exist on 
+type 'CSSProperties'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(311,48): error TS2339: 
+Property 'checkIconSize' does not exist on 
+type 'CSSProperties'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(312,39): error TS2339: 
+Property 'showCheckListTitle' does not exist 
+on type 'CSSProperties'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(319,180): error TS2345: 
+Argument of type 'BorderRadius<string | 
+number>' is not assignable to parameter of 
+type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(328,63): error TS2339: 
+Property 'showItemTitle' does not exist on 
+type 'CSSProperties'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(329,62): error TS2339: 
+Property 'showItemDescription' does not 
+exist on type 'CSSProperties'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(358,44): error TS2345: 
+Argument of type 'Gap<string | number>' is 
+not assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(365,58): error TS2339: 
+Property 'iconMode' does not exist on type 
+'CSSProperties'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(366,88): error TS2551: 
+Property 'iconBackgroundColor' does not 
+exist on type 'CSSProperties'. Did you mean 
+'backgroundColor'?
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(367,71): error TS2339: 
+Property 'iconSize' does not exist on type 
+'CSSProperties'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(368,84): error TS2339: 
+Property 'iconColor' does not exist on type 
+'CSSProperties'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(387,82): error TS2345: 
+Argument of type 'BorderRadius<string | 
+number>' is not assignable to parameter of 
+type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(422,82): error TS2345: 
+Argument of type 'BorderRadius<string | 
+number>' is not assignable to parameter of 
+type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(452,42): error TS2339: 
+Property 'playButtonColor' does not exist on 
+type 'CSSProperties'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(462,197): error TS2345: 
+Argument of type 'BorderRadius<string | 
+number>' is not assignable to parameter of 
+type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(500,54): error TS2345: 
+Argument of type 'BorderRadius<string | 
+number>' is not assignable to parameter of 
+type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+components/templates/EmailEditor/components/C
+anvasBlock.tsx(564,66): error TS2345: 
+Argument of type 'BorderRadius<string | 
+number>' is not assignable to parameter of 
+type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+components/templates/EmailEditor/components/C
+anvasColumn.tsx(91,63): error TS2345: 
+Argument of type 'BorderRadius<string | 
+number>' is not assignable to parameter of 
+type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+components/templates/EmailEditor/components/C
+anvasRow.tsx(86,155): error TS2345: Argument 
+of type 'BorderRadius<string | number>' is 
+not assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+components/templates/EmailEditor/components/C
+anvasSection.tsx(93,50): error TS2345: 
+Argument of type 'BorderRadius<string | 
+number>' is not assignable to parameter of 
+type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+components/templates/EmailEditor/components/P
+roperties/RadiusControl.tsx(31,46): error 
+TS2322: Type 'number' is not assignable to 
+type 'string'.
+components/templates/EmailEditor/constants/ed
+itorConstants.ts(2,32): error TS2307: Cannot 
+find module '../../../types' or its 
+corresponding type declarations.
+components/templates/EmailEditor/EmailCanvas.
+tsx(269,53): error TS2322: Type '"left" | 
+"right" | "top" | "bottom" | "inside"' is 
+not assignable to type '"top" | "bottom" | 
+"inside"'.
+  Type '"left"' is not assignable to type 
+'"top" | "bottom" | "inside"'.
+components/triggers/CustomEventDetailModal.ts
+x(109,84): error TS2339: Property 
+'createdAt' does not exist on type 
+'CustomEvent'.
+components/triggers/PurchaseEventDetailModal.
+tsx(112,84): error TS2339: Property 
+'createdAt' does not exist on type 
+'PurchaseEvent'.
+components/web-tracking/conversations/Convers
+ationsTab.tsx(776,108): error TS2322: Type 
+'{ className: string; title: string; }' is 
+not assignable to type 'IntrinsicAttributes 
+& Omit<LucideProps, "ref"> & 
+RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+components/web-tracking/conversations/Convers
+ationsTab.tsx(832,171): error TS2322: Type 
+'{ className: string; title: string; }' is 
+not assignable to type 'IntrinsicAttributes 
+& Omit<LucideProps, "ref"> & 
+RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+components/web-tracking/overview/PagesTabCont
+ent.tsx(82,53): error TS2339: Property 
+'avgLoadTime' does not exist on type '{ url: 
+string; urlHash?: string; title: string; 
+count: number; avgTime: number; avgScroll: 
+number; bounceRate: number; }'.
+components/web-tracking/overview/PagesTabCont
+ent.tsx(193,56): error TS2339: Property 
+'url' does not exist on type '{ type: 
+string; target: string; count: number; }'.
+components/web-tracking/overview/PagesTabCont
+ent.tsx(196,137): error TS2339: Property 
+'url' does not exist on type '{ type: 
+string; target: string; count: number; }'.
+components/web-tracking/overview/PagesTabCont
+ent.tsx(197,79): error TS2339: Property 
+'url' does not exist on type '{ type: 
+string; target: string; count: number; }'.
+components/web-tracking/overview/RetentionTab
+Content.tsx(27,26): error TS2345: Argument 
+of type 'unknown' is not assignable to 
+parameter of type 
+'SetStateAction<RetentionData[]>'.
+components/zalo/ScenarioModal.tsx(480,95): 
+error TS2353: Object literal may only 
+specify known properties, and 
+'priority_override' does not exist in type 
+'SetStateAction<{ id: any; oa_config_id: 
+any; type: any; trigger_text: any; 
+match_type: any; title: any; content: any; 
+message_type: any; image_url: any; 
+attachment_id: any; buttons: any; status: 
+any; schedule_type: any; start_time: any; 
+end_time: any; active_days: any; 
+ai_chatbot_id: any; }>'.
+components/zalo/ScenarioModal.tsx(494,95): 
+error TS2353: Object literal may only 
+specify known properties, and 
+'priority_override' does not exist in type 
+'SetStateAction<{ id: any; oa_config_id: 
+any; type: any; trigger_text: any; 
+match_type: any; title: any; content: any; 
+message_type: any; image_url: any; 
+attachment_id: any; buttons: any; status: 
+any; schedule_type: any; start_time: any; 
+end_time: any; active_days: any; 
+ai_chatbot_id: any; }>'.
+components/zalo/ScenarioModal.tsx(567,97): 
+error TS2353: Object literal may only 
+specify known properties, and 
+'holiday_start_at' does not exist in type 
+'SetStateAction<{ id: any; oa_config_id: 
+any; type: any; trigger_text: any; 
+match_type: any; title: any; content: any; 
+message_type: any; image_url: any; 
+attachment_id: any; buttons: any; status: 
+any; schedule_type: any; start_time: any; 
+end_time: any; active_days: any; 
+ai_chatbot_id: any; }>'.
+components/zalo/ScenarioModal.tsx(575,97): 
+error TS2353: Object literal may only 
+specify known properties, and 
+'holiday_end_at' does not exist in type 
+'SetStateAction<{ id: any; oa_config_id: 
+any; type: any; trigger_text: any; 
+match_type: any; title: any; content: any; 
+message_type: any; image_url: any; 
+attachment_id: any; buttons: any; status: 
+any; schedule_type: any; start_time: any; 
+end_time: any; active_days: any; 
+ai_chatbot_id: any; }>'.
+components/zalo/ScenarioModal.tsx(677,45): 
+error TS2322: Type '{ placeholder: string; 
+multiline: true; rows: number; value: any; 
+onChange: (e: ChangeEvent<HTMLInputElement, 
+HTMLInputElement>) => void; }' is not 
+assignable to type 'IntrinsicAttributes & 
+InputProps'.
+  Property 'multiline' does not exist on 
+type 'IntrinsicAttributes & InputProps'. Did 
+you mean 'multiple'?
+components/zalo/ScenarioModal.tsx(754,65): 
+error TS2322: Type 'string' is not 
+assignable to type 'number'.
+components/zalo/ScenarioModal.tsx(771,65): 
+error TS2322: Type 'string' is not 
+assignable to type 'number'.
+components/zalo/ScenarioModal.tsx(804,69): 
+error TS2322: Type 'string' is not 
+assignable to type 'number'.
+components/zalo/ZaloBroadcastTab.tsx(234,29):
+ error TS2322: Type 'string' is not 
+assignable to type 'number'.
+components/zalo/ZaloBroadcastTab.tsx(407,45):
+ error TS2322: Type '{ label: string; 
+placeholder: string; value: string; 
+onChange: (e: ChangeEvent<HTMLInputElement, 
+HTMLInputElement>) => void; multiline: true; 
+rows: number; }' is not assignable to type 
+'IntrinsicAttributes & InputProps'.
+  Property 'multiline' does not exist on 
+type 'IntrinsicAttributes & InputProps'. Did 
+you mean 'multiple'?
+components/zalo/ZaloBroadcastTab.tsx(605,45):
+ error TS2322: Type 'string' is not 
+assignable to type 'number'.
+components/zalo/ZaloDashboard.tsx(108,49): 
+error TS2322: Type '"success" | "secondary" 
+| "danger" | "warning"' is not assignable to 
+type '"success" | "danger" | "warning" | 
+"info" | "neutral" | "brand" | "pink" | 
+"amber"'.
+  Type '"secondary"' is not assignable to 
+type '"success" | "danger" | "warning" | 
+"info" | "neutral" | "brand" | "pink" | 
+"amber"'.
+components/zalo/ZaloReportTab.tsx(89,29): 
+error TS2322: Type '{ value: string; label: 
+JSX.Element; }' is not assignable to type 
+'Option'.
+  Types of property 'label' are incompatible.
+    Type 'Element' is not assignable to type 
+'string'.
+components/zalo/ZaloReportTab.tsx(107,25): 
+error TS2322: Type 'string' is not 
+assignable to type 'number'.
+components/zalo/ZaloReportTab.tsx(116,25): 
+error TS2322: Type 'string' is not 
+assignable to type 'number'.
+components/zalo/ZaloReportTab.tsx(164,96): 
+error TS2353: Object literal may only 
+specify known properties, and 'shadow' does 
+not exist in type 'Properties<string | 
+number, string & {}>'.
+components/zalo/ZaloReportTab.tsx(185,96): 
+error TS2353: Object literal may only 
+specify known properties, and 'shadow' does 
+not exist in type 'Properties<string | 
+number, string & {}>'.
+components/zalo/ZaloReportTab.tsx(205,96): 
+error TS2353: Object literal may only 
+specify known properties, and 'shadow' does 
+not exist in type 'Properties<string | 
+number, string & {}>'.
+components/zalo/ZaloUserProfileModal.tsx(469,
+49): error TS2322: Type '{ label: string; 
+multiline: true; rows: number; value: 
+string; onChange: (e: 
+ChangeEvent<HTMLInputElement, 
+HTMLInputElement>) => void; placeholder: 
+string; }' is not assignable to type 
+'IntrinsicAttributes & InputProps'.
+  Property 'multiline' does not exist on 
+type 'IntrinsicAttributes & InputProps'. Did 
+you mean 'multiple'?
+copy-of-mailflow-pro/App.tsx(7,19): error 
+TS2307: Cannot find module './pages/Login' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/App.tsx(9,23): error 
+TS2307: Cannot find module 
+'./pages/Campaigns' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/App.tsx(10,23): error 
+TS2307: Cannot find module 
+'./pages/Templates' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/App.tsx(11,22): error 
+TS2307: Cannot find module 
+'./pages/Audience' or its corresponding type 
+declarations.
+copy-of-mailflow-pro/App.tsx(12,19): error 
+TS2307: Cannot find module './pages/Flows' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/App.tsx(13,22): error 
+TS2307: Cannot find module 
+'./pages/Settings' or its corresponding type 
+declarations.
+copy-of-mailflow-pro/App.tsx(14,21): error 
+TS2307: Cannot find module './pages/Reports' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/App.tsx(15,18): error 
+TS2307: Cannot find module './pages/Tags' or 
+its corresponding type declarations.
+copy-of-mailflow-pro/App.tsx(16,25): error 
+TS2307: Cannot find module 
+'./pages/ApiTriggers' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/App.tsx(17,26): error 
+TS2307: Cannot find module 
+'./pages/SocialSettings' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/App.tsx(18,25): error 
+TS2307: Cannot find module 
+'./pages/WebTracking' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/App.tsx(19,24): error 
+TS2307: Cannot find module 
+'./pages/AITraining' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/App.tsx(20,22): error 
+TS2307: Cannot find module 
+'./pages/ChatPage' or its corresponding type 
+declarations.
+copy-of-mailflow-pro/App.tsx(21,30): error 
+TS2307: Cannot find module 
+'./pages/CategoryChatPage' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/App.tsx(22,26): error 
+TS2307: Cannot find module 
+'./services/mockData' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/components/ai/AIChatWidg
+et.tsx(8,21): error TS2307: Cannot find 
+module '../../services/storageAdapter' or 
+its corresponding type declarations.
+copy-of-mailflow-pro/components/audience/Adva
+ncedFilters.tsx(88,37): error TS2322: Type 
+'"default"' is not assignable to type 
+'"outline" | "ghost" | "filled"'.
+copy-of-mailflow-pro/components/audience/Adva
+ncedFilters.tsx(108,37): error TS2322: Type 
+'"default"' is not assignable to type 
+'"outline" | "ghost" | "filled"'.
+copy-of-mailflow-pro/components/audience/Adva
+ncedFilters.tsx(125,37): error TS2322: Type 
+'"default"' is not assignable to type 
+'"outline" | "ghost" | "filled"'.
+copy-of-mailflow-pro/components/audience/Audi
+enceSplitModal.tsx(4,21): error TS2307: 
+Cannot find module 
+'../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/audience/Bulk
+ActionsToolbar.tsx(4,28): error TS2307: 
+Cannot find module '../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/audience/Clea
+nupModal.tsx(3,21): error TS2307: Cannot 
+find module '../../services/storageAdapter' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/components/audience/Cust
+omerProfileModal.tsx(21,21): error TS2307: 
+Cannot find module 
+'../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/audience/Cust
+omerProfileModal.tsx(22,59): error TS2307: 
+Cannot find module '../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/audience/Cust
+omerProfileModal.tsx(25,28): error TS2307: 
+Cannot find module '../../utils/listHelpers' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/components/audience/Cust
+omerProfileModal.tsx(534,148): error TS2322: 
+Type '{ className: string; title: string; }' 
+is not assignable to type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+copy-of-mailflow-pro/components/audience/Cust
+omerProfileModal.tsx(535,147): error TS2322: 
+Type '{ className: string; title: string; }' 
+is not assignable to type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+copy-of-mailflow-pro/components/audience/Goog
+leSheetsSetup.tsx(9,21): error TS2307: 
+Cannot find module 
+'../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/audience/Grou
+pDetailModal.tsx(10,28): error TS2307: 
+Cannot find module '../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/audience/Grou
+pDetailModal.tsx(62,20): error TS2307: 
+Cannot find module 
+'../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/audience/Grou
+pDetailModal.tsx(65,17): error TS2347: 
+Untyped function calls may not accept type 
+arguments.
+copy-of-mailflow-pro/components/audience/Grou
+pDetailModal.tsx(80,20): error TS2307: 
+Cannot find module 
+'../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/audience/Grou
+pDetailModal.tsx(81,17): error TS2347: 
+Untyped function calls may not accept type 
+arguments.
+copy-of-mailflow-pro/components/audience/List
+MergeModal.tsx(6,21): error TS2307: Cannot 
+find module '../../services/storageAdapter' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/components/audience/Misa
+Setup.tsx(9,21): error TS2307: Cannot find 
+module '../../services/storageAdapter' or 
+its corresponding type declarations.
+copy-of-mailflow-pro/components/audience/Segm
+entBuilderModal.tsx(3,37): error TS2307: 
+Cannot find module '../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/audience/Segm
+entBuilderModal.tsx(4,21): error TS2307: 
+Cannot find module 
+'../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/audience/Segm
+entCleanupModal.tsx(6,25): error TS2307: 
+Cannot find module '../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/audience/tabs
+/ContactsTab.tsx(6,28): error TS2307: Cannot 
+find module '../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/audience/tabs
+/ContactsTab.tsx(81,125): error TS2322: Type 
+'{ className: string; title: string; }' is 
+not assignable to type 'IntrinsicAttributes 
+& Omit<LucideProps, "ref"> & 
+RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+copy-of-mailflow-pro/components/audience/tabs
+/ContactsTab.tsx(82,124): error TS2322: Type 
+'{ className: string; title: string; }' is 
+not assignable to type 'IntrinsicAttributes 
+& Omit<LucideProps, "ref"> & 
+RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+copy-of-mailflow-pro/components/audience/tabs
+/SegmentsTab.tsx(5,25): error TS2307: Cannot 
+find module '../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/audience/tabs
+/ZaloAudienceTab.tsx(2,21): error TS2307: 
+Cannot find module 
+'../../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/campaigns/Aud
+ienceSelector.tsx(2,21): error TS2307: 
+Cannot find module 
+'../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/campaigns/Aud
+ienceSelector.tsx(7,42): error TS2307: 
+Cannot find module '../../utils/listHelpers' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/components/campaigns/Cam
+paignDeliveryDetailsTab.tsx(3,21): error 
+TS2307: Cannot find module 
+'../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/campaigns/Cam
+paignDeliveryDetailsTab.tsx(4,38): error 
+TS2307: Cannot find module '../../types' or 
+its corresponding type declarations.
+copy-of-mailflow-pro/components/campaigns/Cam
+paignDeliveryDetailsTab.tsx(429,52): error 
+TS2322: Type '"error" | "success"' is not 
+assignable to type '"success" | "danger" | 
+"warning" | "info" | "neutral" | "brand" | 
+"pink" | "amber"'.
+  Type '"error"' is not assignable to type 
+'"success" | "danger" | "warning" | "info" | 
+"neutral" | "brand" | "pink" | "amber"'.
+copy-of-mailflow-pro/components/campaigns/Cam
+paignDeliveryDetailsTab.tsx(436,56): error 
+TS2322: Type '"error"' is not assignable to 
+type '"success" | "danger" | "warning" | 
+"info" | "neutral" | "brand" | "pink" | 
+"amber"'.
+copy-of-mailflow-pro/components/campaigns/Cam
+paignDetailDrawer.tsx(10,57): error TS2307: 
+Cannot find module '../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/campaigns/Cam
+paignDetailDrawer.tsx(17,21): error TS2307: 
+Cannot find module 
+'../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/campaigns/Cam
+paignDetailDrawer.tsx(241,36): error TS2322: 
+Type '"success" | "secondary" | "warning" | 
+"info"' is not assignable to type '"success" 
+| "danger" | "warning" | "info" | "neutral" 
+| "brand" | "pink" | "amber"'.
+  Type '"secondary"' is not assignable to 
+type '"success" | "danger" | "warning" | 
+"info" | "neutral" | "brand" | "pink" | 
+"amber"'.
+copy-of-mailflow-pro/components/campaigns/Cam
+paignList.tsx(4,42): error TS2307: Cannot 
+find module '../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/campaigns/Cam
+paignWizard.tsx(8,79): error TS2307: Cannot 
+find module '../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/campaigns/Cam
+paignWizard.tsx(9,21): error TS2307: Cannot 
+find module '../../services/storageAdapter' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/components/campaigns/Cam
+paignWizard.tsx(644,326): error TS2322: Type 
+'string | true' is not assignable to type 
+'boolean'.
+  Type 'string' is not assignable to type 
+'boolean'.
+copy-of-mailflow-pro/components/campaigns/Flo
+wReviewModal.tsx(7,32): error TS2307: Cannot 
+find module '../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/campaigns/Lau
+nchPreview.tsx(7,50): error TS2307: Cannot 
+find module '../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/campaigns/Lau
+nchPreview.tsx(8,21): error TS2307: Cannot 
+find module '../../services/storageAdapter' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/components/campaigns/Rem
+inderManager.tsx(5,44): error TS2307: Cannot 
+find module '../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/campaigns/Tec
+hStatsTab.tsx(2,21): error TS2307: Cannot 
+find module '../../services/storageAdapter' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/components/campaigns/Tec
+hStatsTab.tsx(75,46): error TS2322: Type '{ 
+children: Element; title: string; icon: 
+ForwardRefExoticComponent<Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>>; 
+className: string; }' is not assignable to 
+type 'IntrinsicAttributes & CardProps'.
+  Property 'icon' does not exist on type 
+'IntrinsicAttributes & CardProps'.
+copy-of-mailflow-pro/components/campaigns/Tec
+hStatsTab.tsx(116,49): error TS2322: Type '{ 
+children: Element; title: string; icon: 
+ForwardRefExoticComponent<Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>>; 
+className: string; }' is not assignable to 
+type 'IntrinsicAttributes & CardProps'.
+  Property 'icon' does not exist on type 
+'IntrinsicAttributes & CardProps'.
+copy-of-mailflow-pro/components/campaigns/Tec
+hStatsTab.tsx(146,50): error TS2322: Type '{ 
+children: Element; title: string; icon: 
+ForwardRefExoticComponent<Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>>; 
+className: string; }' is not assignable to 
+type 'IntrinsicAttributes & CardProps'.
+  Property 'icon' does not exist on type 
+'IntrinsicAttributes & CardProps'.
+copy-of-mailflow-pro/components/campaigns/Tes
+tEmailModal.tsx(6,21): error TS2307: Cannot 
+find module '../../services/storageAdapter' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/components/common/LinkCl
+icksTab.tsx(3,21): error TS2307: Cannot find 
+module '../../services/storageAdapter' or 
+its corresponding type declarations.
+copy-of-mailflow-pro/components/flows/builder
+/FlowHeader.tsx(5,22): error TS2307: Cannot 
+find module '../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/builder
+/FlowHeader.tsx(26,3): error TS2339: 
+Property 'onBack' does not exist on type 
+'FlowHeaderProps'.
+copy-of-mailflow-pro/components/flows/builder
+/FlowHeader.tsx(27,3): error TS2339: 
+Property 'onTabChange' does not exist on 
+type 'FlowHeaderProps'.
+copy-of-mailflow-pro/components/flows/builder
+/FlowHeader.tsx(28,3): error TS2339: 
+Property 'onToggleStatus' does not exist on 
+type 'FlowHeaderProps'.
+copy-of-mailflow-pro/components/flows/builder
+/FlowHeader.tsx(29,3): error TS2339: 
+Property 'onToggleViewMode' does not exist 
+on type 'FlowHeaderProps'.
+copy-of-mailflow-pro/components/flows/builder
+/FlowHistoryList.tsx(3,28): error TS2307: 
+Cannot find module 
+'../../../services/historyService' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/builder
+/FlowSidebar.tsx(4,28): error TS2307: Cannot 
+find module 
+'../../../services/historyService' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/builder
+/FlowSidebar.tsx(5,33): error TS2307: Cannot 
+find module 
+'../../../services/flowValidationService' or 
+its corresponding type declarations.
+copy-of-mailflow-pro/components/flows/builder
+/FlowTree.tsx(3,48): error TS2307: Cannot 
+find module '../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/config/
+AdvancedConditionConfig.tsx(6,22): error 
+TS2307: Cannot find module '../../../types' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/components/flows/config/
+AdvancedExitTrigger.tsx(4,21): error TS2307: 
+Cannot find module 
+'../../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/config/
+AdvancedExitTrigger.tsx(6,60): error TS2307: 
+Cannot find module '../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/config/
+ConditionConfig.tsx(3,22): error TS2307: 
+Cannot find module '../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/config/
+ConditionConfig.tsx(4,21): error TS2307: 
+Cannot find module 
+'../../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/config/
+EmailActionConfig.tsx(4,21): error TS2307: 
+Cannot find module 
+'../../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/config/
+EmailActionConfig.tsx(5,38): error TS2307: 
+Cannot find module '../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/config/
+EmailActionConfig.tsx(11,34): error TS2307: 
+Cannot find module 
+'../../../services/systemTemplates' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/config/
+EmailPreviewDrawer.tsx(4,26): error TS2307: 
+Cannot find module '../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/config/
+LinkFlowConfig.tsx(4,21): error TS2307: 
+Cannot find module 
+'../../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/config/
+LinkFlowConfig.tsx(5,22): error TS2307: 
+Cannot find module '../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/config/
+ListActionConfig.tsx(4,21): error TS2307: 
+Cannot find module 
+'../../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/config/
+TriggerConfig.tsx(9,21): error TS2307: 
+Cannot find module 
+'../../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/config/
+TriggerConfig.tsx(10,85): error TS2307: 
+Cannot find module '../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/config/
+TriggerConfig.tsx(12,42): error TS2307: 
+Cannot find module 
+'../../../utils/listHelpers' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/config/
+UpdateTagConfig.tsx(4,21): error TS2307: 
+Cannot find module 
+'../../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/config/
+UpdateTagConfig.tsx(5,22): error TS2307: 
+Cannot find module '../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/config/
+ZaloZNSStepConfig.tsx(3,21): error TS2307: 
+Cannot find module 
+'../../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/FlowCar
+d.tsx(4,85): error TS2307: Cannot find 
+module '../../types' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/components/flows/ManualT
+riggerFlowModal.tsx(7,34): error TS2307: 
+Cannot find module '../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/ManualT
+riggerFlowModal.tsx(8,21): error TS2307: 
+Cannot find module 
+'../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/ManualT
+riggerFlowModal.tsx(115,33): error TS2322: 
+Type '{ children: string; size: "sm"; 
+variant: "secondary"; icon: 
+ForwardRefExoticComponent<Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>>; 
+onClick: () => Promise<...>; loading: 
+boolean; className: string; }' is not 
+assignable to type 'IntrinsicAttributes & 
+ButtonProps'.
+  Property 'loading' does not exist on type 
+'IntrinsicAttributes & ButtonProps'. Did you 
+mean 'isLoading'?
+copy-of-mailflow-pro/components/flows/modals/
+AddStepModal.tsx(5,26): error TS2307: Cannot 
+find module '../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/modals/
+FlowSimulateModal.tsx(9,22): error TS2307: 
+Cannot find module '../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/modals/
+IntegrationGuideModal.tsx(5,27): error 
+TS2307: Cannot find module '../../../types' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/components/flows/modals/
+StepEditor.tsx(5,32): error TS2307: Cannot 
+find module '../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/modals/
+StepErrorModal.tsx(5,21): error TS2307: 
+Cannot find module 
+'../../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/modals/
+StepErrorModal.tsx(128,91): error TS2322: 
+Type '"large"' is not assignable to type 
+'"md" | "sm" | "lg" | "xl" | "full"'.
+copy-of-mailflow-pro/components/flows/modals/
+StepErrorModal.tsx(348,33): error TS2322: 
+Type '{ children: string; onClick: () => 
+Promise<void>; disabled: boolean; loading: 
+boolean; }' is not assignable to type 
+'IntrinsicAttributes & ButtonProps'.
+  Property 'loading' does not exist on type 
+'IntrinsicAttributes & ButtonProps'. Did you 
+mean 'isLoading'?
+copy-of-mailflow-pro/components/flows/modals/
+StepParticipantsModal.tsx(3,21): error 
+TS2307: Cannot find module 
+'../../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/modals/
+StepParticipantsModal.tsx(420,159): error 
+TS2367: This comparison appears to be 
+unintentional because the types '"waiting" | 
+"all" | "unsubscribed" | "opened" | "failed" 
+| "clicks" | "zns_sent" | "zns_clicked" | 
+"report" | "zns_replied" | "zns_failed" | 
+"all_touched"' and '"zns_delivered"' have no 
+overlap.
+copy-of-mailflow-pro/components/flows/modals/
+StepUnsubscribeModal.tsx(62,90): error 
+TS2322: Type '"large"' is not assignable to 
+type '"md" | "sm" | "lg" | "xl" | "full"'.
+copy-of-mailflow-pro/components/flows/nodes/F
+lowNodes.tsx(4,48): error TS2307: Cannot 
+find module '../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owAnalyticsTab.tsx(13,34): error TS2307: 
+Cannot find module '../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owAnalyticsTab.tsx(14,21): error TS2307: 
+Cannot find module 
+'../../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owAnalyticsTab.tsx(24,40): error TS2307: 
+Cannot find module 
+'../../../utils/flowLabeling' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owAnalyticsTab.tsx(473,13): error TS2367: 
+This comparison appears to be unintentional 
+because the types '"waiting" | "all" | 
+"unsubscribed" | "opened" | "failed" | 
+"clicks" | "all_touched"' and '"report"' 
+have no overlap.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owAnalyticsTab.tsx(485,22): error TS2367: 
+This comparison appears to be unintentional 
+because the types '"all"' and '"clicks"' 
+have no overlap.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owAnalyticsTab.tsx(487,22): error TS2367: 
+This comparison appears to be unintentional 
+because the types '"all"' and '"zns_sent"' 
+have no overlap.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owAnalyticsTab.tsx(488,22): error TS2367: 
+This comparison appears to be unintentional 
+because the types '"all"' and 
+'"zns_clicked"' have no overlap.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owAnalyticsTab.tsx(489,22): error TS2367: 
+This comparison appears to be unintentional 
+because the types '"all"' and 
+'"zns_replied"' have no overlap.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owAnalyticsTab.tsx(490,22): error TS2367: 
+This comparison appears to be unintentional 
+because the types '"all"' and '"zns_failed"' 
+have no overlap.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owAnalyticsTab.tsx(582,25): error TS2345: 
+Argument of type '"zns_sent"' is not 
+assignable to parameter of type 
+'SetStateAction<"waiting" | "all" | 
+"unsubscribed" | "opened" | "failed" | 
+"clicks" | "all_touched">'.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owAnalyticsTab.tsx(1366,34): error TS2367: 
+This comparison appears to be unintentional 
+because the types '"all"' and '"zns_sent"' 
+have no overlap.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owAnalyticsTab.tsx(1367,34): error TS2367: 
+This comparison appears to be unintentional 
+because the types '"all"' and 
+'"zns_clicked"' have no overlap.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owAnalyticsTab.tsx(1368,34): error TS2367: 
+This comparison appears to be unintentional 
+because the types '"all"' and 
+'"zns_replied"' have no overlap.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owAnalyticsTab.tsx(1369,34): error TS2367: 
+This comparison appears to be unintentional 
+because the types '"all"' and '"zns_failed"' 
+have no overlap.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owAnalyticsTab.tsx(1384,34): error TS2367: 
+This comparison appears to be unintentional 
+because the types '"all"' and '"zns_sent"' 
+have no overlap.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owAnalyticsTab.tsx(1385,34): error TS2367: 
+This comparison appears to be unintentional 
+because the types '"all"' and 
+'"zns_clicked"' have no overlap.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owAnalyticsTab.tsx(1386,34): error TS2367: 
+This comparison appears to be unintentional 
+because the types '"all"' and 
+'"zns_replied"' have no overlap.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owAnalyticsTab.tsx(1387,34): error TS2367: 
+This comparison appears to be unintentional 
+because the types '"all"' and '"zns_failed"' 
+have no overlap.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owAnalyticsTab.tsx(1456,71): error TS2769: 
+No overload matches this call.
+  The last overload gave the following error.
+    Object literal may only specify known 
+properties, and 'className' does not exist 
+in type 'Partial<unknown> & Attributes'.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owBuilderTab.tsx(4,48): error TS2307: Cannot 
+find module '../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/tabs/Fl
+owSettingsTab.tsx(4,22): error TS2307: 
+Cannot find module '../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/flows/Templat
+eSelector.tsx(4,26): error TS2307: Cannot 
+find module '../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/forms/FormEdi
+torModal.tsx(6,21): error TS2307: Cannot 
+find module '../../services/storageAdapter' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/components/forms/FormEdi
+torModal.tsx(7,43): error TS2307: Cannot 
+find module '../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/settings/Zalo
+OAManager.tsx(7,21): error TS2307: Cannot 
+find module '../../services/storageAdapter' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(4,60): 
+error TS2307: Cannot find module 
+'../../../../types' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(132,50): 
+error TS2345: Argument of type 
+'BorderRadius<string | number>' is not 
+assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(205,54): 
+error TS2345: Argument of type 
+'BorderRadius<string | number>' is not 
+assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(230,32): 
+error TS2339: Property 'labelColor' does not 
+exist on type 'CSSProperties'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(239,38): 
+error TS2339: Property 'timelineDotColor' 
+does not exist on type 'CSSProperties'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(240,39): 
+error TS2339: Property 'timelineLineColor' 
+does not exist on type 'CSSProperties'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(264,72): 
+error TS2339: Property 'timelineLineStyle' 
+does not exist on type 'CSSProperties'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(292,40): 
+error TS2339: Property 'checkIconColor' does 
+not exist on type 'CSSProperties'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(293,48): 
+error TS2339: Property 'checkIconSize' does 
+not exist on type 'CSSProperties'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(294,39): 
+error TS2339: Property 'showCheckListTitle' 
+does not exist on type 'CSSProperties'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(301,180):
+ error TS2345: Argument of type 
+'BorderRadius<string | number>' is not 
+assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(310,63): 
+error TS2339: Property 'showItemTitle' does 
+not exist on type 'CSSProperties'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(311,62): 
+error TS2339: Property 'showItemDescription' 
+does not exist on type 'CSSProperties'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(340,44): 
+error TS2345: Argument of type 'Gap<string | 
+number>' is not assignable to parameter of 
+type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(347,58): 
+error TS2339: Property 'iconMode' does not 
+exist on type 'CSSProperties'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(348,88): 
+error TS2551: Property 'iconBackgroundColor' 
+does not exist on type 'CSSProperties'. Did 
+you mean 'backgroundColor'?
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(349,71): 
+error TS2339: Property 'iconSize' does not 
+exist on type 'CSSProperties'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(350,84): 
+error TS2339: Property 'iconColor' does not 
+exist on type 'CSSProperties'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(369,82): 
+error TS2345: Argument of type 
+'BorderRadius<string | number>' is not 
+assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(404,82): 
+error TS2345: Argument of type 
+'BorderRadius<string | number>' is not 
+assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(434,42): 
+error TS2339: Property 'playButtonColor' 
+does not exist on type 'CSSProperties'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(444,197):
+ error TS2345: Argument of type 
+'BorderRadius<string | number>' is not 
+assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(482,54): 
+error TS2345: Argument of type 
+'BorderRadius<string | number>' is not 
+assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasBlock.tsx(546,66): 
+error TS2345: Argument of type 
+'BorderRadius<string | number>' is not 
+assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasColumn.tsx(4,60): 
+error TS2307: Cannot find module 
+'../../../../types' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasColumn.tsx(86,63): 
+error TS2345: Argument of type 
+'BorderRadius<string | number>' is not 
+assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasRow.tsx(3,60): 
+error TS2307: Cannot find module 
+'../../../../types' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasRow.tsx(84,155): 
+error TS2345: Argument of type 
+'BorderRadius<string | number>' is not 
+assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasSection.tsx(4,60): 
+error TS2307: Cannot find module 
+'../../../../types' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasSection.tsx(97,50):
+ error TS2345: Argument of type 
+'BorderRadius<string | number>' is not 
+assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 
+'string'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CanvasUI.tsx(6,28): 
+error TS2307: Cannot find module 
+'../../../../types' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/CountdownTimer.tsx(2,28):
+ error TS2307: Cannot find module 
+'../../../../types' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/Properties/BackgroundCont
+rol.tsx(3,33): error TS2307: Cannot find 
+module '../../../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/Properties/BorderControl.
+tsx(3,61): error TS2307: Cannot find module 
+'../../../../../types' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/Properties/ColorPicker.ts
+x(4,61): error TS2307: Cannot find module 
+'../../../../../types' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/Properties/ColumnStructur
+eControl.tsx(3,28): error TS2307: Cannot 
+find module '../../../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/Properties/FontControl.ts
+x(4,33): error TS2307: Cannot find module 
+'../../../../../types' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/Properties/ImageLibraryMo
+dal.tsx(8,21): error TS2307: Cannot find 
+module 
+'../../../../../services/storageAdapter' or 
+its corresponding type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/Properties/RadiusControl.
+tsx(3,33): error TS2307: Cannot find module 
+'../../../../../types' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/components/Properties/ShadowControl.
+tsx(3,33): error TS2307: Cannot find module 
+'../../../../../types' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/constants/editorConstants.ts(2,32): 
+error TS2307: Cannot find module 
+'../../../types' or its corresponding type 
+declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/EmailCanvas.tsx(4,60): error 
+TS2307: Cannot find module '../../../types' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/EmailCanvas.tsx(269,53): error 
+TS2322: Type '"left" | "right" | "top" | 
+"bottom" | "inside"' is not assignable to 
+type '"top" | "bottom" | "inside"'.
+  Type '"left"' is not assignable to type 
+'"top" | "bottom" | "inside"'.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/EmailProperties.tsx(6,71): error 
+TS2307: Cannot find module '../../../types' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/EmailToolbox.tsx(6,28): error 
+TS2307: Cannot find module '../../../types' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/index.tsx(4,87): error TS2307: 
+Cannot find module '../../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/utils/blockUtils.ts(2,71): error 
+TS2307: Cannot find module 
+'../../../../types' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/utils/canvasUtils.ts(3,49): error 
+TS2307: Cannot find module 
+'../../../../types' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/components/templates/Ema
+ilEditor/utils/htmlCompiler.ts(1,61): error 
+TS2307: Cannot find module 
+'../../../../types' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/components/triggers/Cust
+omEventDetailModal.tsx(3,29): error TS2307: 
+Cannot find module '../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/triggers/Cust
+omEventsTab.tsx(7,21): error TS2307: Cannot 
+find module '../../services/storageAdapter' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/components/triggers/Cust
+omEventsTab.tsx(8,29): error TS2307: Cannot 
+find module '../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/triggers/Form
+sTab.tsx(8,21): error TS2307: Cannot find 
+module '../../services/storageAdapter' or 
+its corresponding type declarations.
+copy-of-mailflow-pro/components/triggers/Form
+sTab.tsx(9,43): error TS2307: Cannot find 
+module '../../types' or its corresponding 
+type declarations.
+copy-of-mailflow-pro/components/triggers/Purc
+haseEventDetailModal.tsx(3,31): error 
+TS2307: Cannot find module '../../types' or 
+its corresponding type declarations.
+copy-of-mailflow-pro/components/triggers/Purc
+hasesTab.tsx(7,21): error TS2307: Cannot 
+find module '../../services/storageAdapter' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/components/triggers/Purc
+hasesTab.tsx(8,31): error TS2307: Cannot 
+find module '../../types' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/web-tracking/
+conversations/ConversationsTab.tsx(12,21): 
+error TS2307: Cannot find module 
+'../../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/web-tracking/
+conversations/ConversationsTab.tsx(762,108): 
+error TS2322: Type '{ className: string; 
+title: string; }' is not assignable to type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+copy-of-mailflow-pro/components/web-tracking/
+conversations/ConversationsTab.tsx(818,171): 
+error TS2322: Type '{ className: string; 
+title: string; }' is not assignable to type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 
+'IntrinsicAttributes & Omit<LucideProps, 
+"ref"> & RefAttributes<SVGSVGElement>'.
+copy-of-mailflow-pro/components/web-tracking/
+LiveTrafficModal.tsx(4,21): error TS2307: 
+Cannot find module 
+'../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/web-tracking/
+overview/PagesTabContent.tsx(82,53): error 
+TS2339: Property 'avgLoadTime' does not 
+exist on type '{ url: string; urlHash?: 
+string; title: string; count: number; 
+avgTime: number; avgScroll: number; 
+bounceRate: number; }'.
+copy-of-mailflow-pro/components/web-tracking/
+overview/PagesTabContent.tsx(184,56): error 
+TS2339: Property 'url' does not exist on 
+type '{ type: string; target: string; count: 
+number; }'.
+copy-of-mailflow-pro/components/web-tracking/
+overview/PagesTabContent.tsx(187,137): error 
+TS2339: Property 'url' does not exist on 
+type '{ type: string; target: string; count: 
+number; }'.
+copy-of-mailflow-pro/components/web-tracking/
+overview/PagesTabContent.tsx(188,79): error 
+TS2339: Property 'url' does not exist on 
+type '{ type: string; target: string; count: 
+number; }'.
+copy-of-mailflow-pro/components/web-tracking/
+overview/RetentionTabContent.tsx(4,21): 
+error TS2307: Cannot find module 
+'../../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/web-tracking/
+PageDetailsModal.tsx(3,21): error TS2307: 
+Cannot find module 
+'../../services/storageAdapter' or its 
+corresponding type declarations.
+copy-of-mailflow-pro/components/web-tracking/
+VisitorsTab.tsx(8,21): error TS2307: Cannot 
+find module '../../services/storageAdapter' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/components/zalo/Scenario
+Modal.tsx(441,95): error TS2353: Object 
+literal may only specify known properties, 
+and 'priority_override' does not exist in 
+type 'SetStateAction<{ id: any; 
+oa_config_id: any; type: any; trigger_text: 
+any; match_type: any; title: any; content: 
+any; message_type: any; image_url: any; 
+attachment_id: any; buttons: any; status: 
+any; schedule_type: any; start_time: any; 
+end_time: any; active_days: any; 
+ai_chatbot_id: any; }>'.
+copy-of-mailflow-pro/components/zalo/Scenario
+Modal.tsx(441,123): error TS2339: Property 
+'priority_override' does not exist on type 
+'{ id: any; oa_config_id: any; type: any; 
+trigger_text: any; match_type: any; title: 
+any; content: any; message_type: any; 
+image_url: any; attachment_id: any; buttons: 
+any; status: any; schedule_type: any; 
+start_time: any; end_time: any; active_days: 
+any; ai_chatbot_id: any; }'.
+copy-of-mailflow-pro/components/zalo/Scenario
+Modal.tsx(454,76): error TS2339: Property 
+'priority_override' does not exist on type 
+'{ id: any; oa_config_id: any; type: any; 
+trigger_text: any; match_type: any; title: 
+any; content: any; message_type: any; 
+image_url: any; attachment_id: any; buttons: 
+any; status: any; schedule_type: any; 
+start_time: any; end_time: any; active_days: 
+any; ai_chatbot_id: any; }'.
+copy-of-mailflow-pro/components/zalo/Scenario
+Modal.tsx(455,95): error TS2353: Object 
+literal may only specify known properties, 
+and 'priority_override' does not exist in 
+type 'SetStateAction<{ id: any; 
+oa_config_id: any; type: any; trigger_text: 
+any; match_type: any; title: any; content: 
+any; message_type: any; image_url: any; 
+attachment_id: any; buttons: any; status: 
+any; schedule_type: any; start_time: any; 
+end_time: any; active_days: any; 
+ai_chatbot_id: any; }>'.
+copy-of-mailflow-pro/components/zalo/Scenario
+Modal.tsx(455,123): error TS2339: Property 
+'priority_override' does not exist on type 
+'{ id: any; oa_config_id: any; type: any; 
+trigger_text: any; match_type: any; title: 
+any; content: any; message_type: any; 
+image_url: any; attachment_id: any; buttons: 
+any; status: any; schedule_type: any; 
+start_time: any; end_time: any; active_days: 
+any; ai_chatbot_id: any; }'.
+copy-of-mailflow-pro/components/zalo/Scenario
+Modal.tsx(459,68): error TS2339: Property 
+'priority_override' does not exist on type 
+'{ id: any; oa_config_id: any; type: any; 
+trigger_text: any; match_type: any; title: 
+any; content: any; message_type: any; 
+image_url: any; attachment_id: any; buttons: 
+any; status: any; schedule_type: any; 
+start_time: any; end_time: any; active_days: 
+any; ai_chatbot_id: any; }'.
+copy-of-mailflow-pro/components/zalo/Scenario
+Modal.tsx(467,72): error TS2339: Property 
+'priority_override' does not exist on type 
+'{ id: any; oa_config_id: any; type: any; 
+trigger_text: any; match_type: any; title: 
+any; content: any; message_type: any; 
+image_url: any; attachment_id: any; buttons: 
+any; status: any; schedule_type: any; 
+start_time: any; end_time: any; active_days: 
+any; ai_chatbot_id: any; }'.
+copy-of-mailflow-pro/components/zalo/Scenario
+Modal.tsx(530,69): error TS2339: Property 
+'holiday_start_at' does not exist on type '{ 
+id: any; oa_config_id: any; type: any; 
+trigger_text: any; match_type: any; title: 
+any; content: any; message_type: any; 
+image_url: any; attachment_id: any; buttons: 
+any; status: any; schedule_type: any; 
+start_time: any; end_time: any; active_days: 
+any; ai_chatbot_id: any; }'.
+copy-of-mailflow-pro/components/zalo/Scenario
+Modal.tsx(531,97): error TS2353: Object 
+literal may only specify known properties, 
+and 'holiday_start_at' does not exist in 
+type 'SetStateAction<{ id: any; 
+oa_config_id: any; type: any; trigger_text: 
+any; match_type: any; title: any; content: 
+any; message_type: any; image_url: any; 
+attachment_id: any; buttons: any; status: 
+any; schedule_type: any; start_time: any; 
+end_time: any; active_days: any; 
+ai_chatbot_id: any; }>'.
+copy-of-mailflow-pro/components/zalo/Scenario
+Modal.tsx(539,69): error TS2339: Property 
+'holiday_end_at' does not exist on type '{ 
+id: any; oa_config_id: any; type: any; 
+trigger_text: any; match_type: any; title: 
+any; content: any; message_type: any; 
+image_url: any; attachment_id: any; buttons: 
+any; status: any; schedule_type: any; 
+start_time: any; end_time: any; active_days: 
+any; ai_chatbot_id: any; }'.
+copy-of-mailflow-pro/components/zalo/Scenario
+Modal.tsx(540,97): error TS2353: Object 
+literal may only specify known properties, 
+and 'holiday_end_at' does not exist in type 
+'SetStateAction<{ id: any; oa_config_id: 
+any; type: any; trigger_text: any; 
+match_type: any; title: any; content: any; 
+message_type: any; image_url: any; 
+attachment_id: any; buttons: any; status: 
+any; schedule_type: any; start_time: any; 
+end_time: any; active_days: any; 
+ai_chatbot_id: any; }>'.
+copy-of-mailflow-pro/components/zalo/ZaloAudi
+enceTab.tsx(2,21): error TS2307: Cannot find 
+module '../../services/storageAdapter' or 
+its corresponding type declarations.
+copy-of-mailflow-pro/components/zalo/ZaloBroa
+dcastTab.tsx(2,21): error TS2307: Cannot 
+find module '../../services/storageAdapter' 
+or its corresponding type declarations.
+copy-of-mailflow-pro/components/zalo/ZaloDash
+board.tsx(3,21): error TS2307: Cannot find 
+module '../../services/storageAdapter' or 
+its corresponding type declarations.
+copy-of-mailflow-pro/components/zalo/ZaloDash
+board.tsx(108,49): error TS2322: Type 
+'"success" | "secondary" | "danger" | 
+"warning"' is not assignable to type 
+'"success" | "danger" | "warning" | "info" | 
+"neutral" | "brand" | "pink" | "amber"'.
+  Type '"secondary"' is not assignable to 
+type '"success" | "danger" | "warning" | 
+"info" | "neutral" | "brand" | "pink" | 
+"amber"'.
+copy-of-mailflow-pro/components/zalo/ZaloRepo
+rtTab.tsx(4,21): error TS2307: Cannot find 
+module '../../services/storageAdapter' or 
+its corresponding type declarations.
+copy-of-mailflow-pro/components/zalo/ZaloRepo
+rtTab.tsx(146,96): error TS2353: Object 
+literal may only specify known properties, 
+and 'shadow' does not exist in type 
+'Properties<string | number, string & {}>'.
+copy-of-mailflow-pro/components/zalo/ZaloRepo
+rtTab.tsx(167,96): error TS2353: Object 
+literal may only specify known properties, 
+and 'shadow' does not exist in type 
+'Properties<string | number, string & {}>'.
+copy-of-mailflow-pro/components/zalo/ZaloRepo
+rtTab.tsx(187,96): error TS2353: Object 
+literal may only specify known properties, 
+and 'shadow' does not exist in type 
+'Properties<string | number, string & {}>'.
+copy-of-mailflow-pro/components/zalo/ZaloUser
+ProfileModal.tsx(8,21): error TS2307: Cannot 
+find module '../../services/storageAdapter' 
+or its corresponding type declarations.
+pages/AITraining.tsx(954,48): error TS2339: 
+Property 'content' does not exist on type 
+'AIDoc'.
+pages/AITraining.tsx(962,46): error TS2339: 
+Property 'tags' does not exist on type 
+'AIDoc'.
+pages/AITraining.tsx(1222,59): error TS2339: 
+Property 'content_size' does not exist on 
+type '{ id: string; property_id: string; 
+name: string; source_type: string; 
+is_active: number; status: "error" | 
+"pending" | "trained"; priority: number; 
+parent_id?: string; created_at: string; 
+updated_at: string; _meta?: any; }'.
+pages/AITraining.tsx(1382,12): error TS2339: 
+Property 'description' does not exist on 
+type 'WebProperty'.
+pages/AITraining.tsx(1382,29): error TS2339: 
+Property 'description' does not exist on 
+type 'WebProperty'.
+pages/AITraining.tsx(1399,21): error TS2322: 
+Type '{ mainTab: "chat" | "website"; 
+setMainTab: Dispatch<SetStateAction<"chat" | 
+"website">>; searchTerm: string; 
+setSearchTerm: 
+Dispatch<SetStateAction<string>>; ... 22 
+more ...; activePropertyId: string; }' is 
+not assignable to type 'IntrinsicAttributes 
+& AITrainingGridProps'.
+  Property 'chatbots' does not exist on type 
+'IntrinsicAttributes & AITrainingGridProps'.
+pages/AITraining.tsx(1427,21): error TS2322: 
+Type '"embed" | "settings" | "training" | 
+"instruction" | "inbox"' is not assignable 
+to type '"embed" | "settings" | "training" | 
+"instruction"'.
+  Type '"inbox"' is not assignable to type 
+'"embed" | "settings" | "training" | 
+"instruction"'.
+pages/AITraining.tsx(1543,17): error TS2322: 
+Type '{ isCreateCategoryModalOpen: boolean; 
+setIsCreateCategoryModalOpen: 
+Dispatch<SetStateAction<boolean>>; 
+newCategoryName: string; setNewCategoryName: 
+Dispatch<...>; ... 103 more ...; 
+setEditingDoc: Dispatch<...>; }' is not 
+assignable to type 'IntrinsicAttributes & 
+AIModalsProps'.
+  Property 'cancelEditSynonym' does not 
+exist on type 'IntrinsicAttributes & 
+AIModalsProps'.
+  Property 'chatbots' does not exist on type 
+'IntrinsicAttributes & AITrainingGridProps'.
+  Property 'cancelEditSynonym' does not 
+exist on type 'IntrinsicAttributes & 
+AIModalsProps'.
+pages/Audience.tsx(1171,71): error TS2345: 
+Argument of type '{ isOpen: true; title: 
+string; message: string; onConfirm: () => 
+Promise<void>; }' is not assignable to 
+parameter of type 'SetStateAction<{ isOpen: 
+boolean; title: string; message: ReactNode; 
+variant: "danger" | "warning" | "info"; 
+onConfirm: () => void; requireConfirmText?: 
+string; }>'.
+  Property 'variant' is missing in type '{ 
+isOpen: true; title: string; message: 
+string; onConfirm: () => Promise<void>; }' 
+but required in type '{ isOpen: boolean; 
+title: string; message: ReactNode; variant: 
+"danger" | "warning" | "info"; onConfirm: () 
+=> void; requireConfirmText?: string; }'.
+pages/Audience.tsx(1200,71): error TS2345: 
+Argument of type '{ isOpen: true; title: 
+string; message: string; onConfirm: () => 
+Promise<void>; }' is not assignable to 
+parameter of type 'SetStateAction<{ isOpen: 
+boolean; title: string; message: ReactNode; 
+variant: "danger" | "warning" | "info"; 
+onConfirm: () => void; requireConfirmText?: 
+string; }>'.
+  Property 'variant' is missing in type '{ 
+isOpen: true; title: string; message: 
+string; onConfirm: () => Promise<void>; }' 
+but required in type '{ isOpen: boolean; 
+title: string; message: ReactNode; variant: 
+"danger" | "warning" | "info"; onConfirm: () 
+=> void; requireConfirmText?: string; }'.
+pages/Audience.tsx(1324,45): error TS2353: 
+Object literal may only specify known 
+properties, and 'confirmLabel' does not 
+exist in type 'SetStateAction<{ isOpen: 
+boolean; title: string; message: ReactNode; 
+variant: "danger" | "warning" | "info"; 
+onConfirm: () => void; requireConfirmText?: 
+string; }>'.
+pages/Audience.tsx(1556,139): error TS2339: 
+Property 'count' does not exist on type '{ 
+id: string; name: string; }'.
+pages/Campaigns.tsx(220,59): error TS2367: 
+This comparison appears to be unintentional 
+because the types '"zalo_zns"' and 
+'"regular"' have no overlap.
+pages/Campaigns/CampaignList.tsx(253,36): 
+error TS2322: Type '"secondary"' is not 
+assignable to type '"success" | "danger" | 
+"warning" | "info" | "neutral" | "brand" | 
+"pink" | "amber"'.
+pages/CategoryChat/components/ChatbotCard.tsx
+(58,21): error TS2322: Type '(e: 
+MouseEvent<Element, MouseEvent>, bot: any) 
+=> void' is not assignable to type 
+'MouseEventHandler<HTMLButtonElement>'.
+  Target signature provides too few 
+arguments. Expected 2 or more, but got 1.
+pages/CategoryChat/components/GlobalWorkspace
+View.tsx(10,21): error TS2307: Cannot find 
+module '../../services/storageAdapter' or 
+its corresponding type declarations.
+pages/CategoryChat/components/GlobalWorkspace
+View.tsx(307,83): error TS2304: Cannot find 
+name 'FileSpreadsheet'.
+  Target signature provides too few 
+arguments. Expected 2 or more, but got 1.
+  Types of parameters 'docToSave' and 
+'event' are incompatible.
+    Type 'MouseEvent<HTMLButtonElement, 
+MouseEvent>' is missing the following 
+properties from type 'FileAttachment': name, 
+size
+  Target signature provides too few 
+arguments. Expected 3 or more, but got 1.
+pages/ChatPage.tsx(241,34): error TS2353: 
+Object literal may only specify known 
+properties, and 'focusRing' does not exist 
+in type 'Properties<string | number, string 
+& {}>'.
+pages/Flows.tsx(991,17): error TS2353: 
+Object literal may only specify known 
+properties, and 'requireConfirmText' does 
+not exist in type 'SetStateAction<{ isOpen: 
+boolean; title: string; message: string; 
+onConfirm: () => void; variant?: "danger" | 
+"warning"; confirmLabel?: string; }>'.
+pages/Flows.tsx(1026,17): error TS2353: 
+Object literal may only specify known 
+properties, and 'requireConfirmText' does 
+not exist in type 'SetStateAction<{ isOpen: 
+boolean; title: string; message: string; 
+onConfirm: () => void; variant?: "danger" | 
+"warning"; confirmLabel?: string; }>'.
+pages/Flows.tsx(1583,75): error TS2367: This 
+comparison appears to be unintentional 
+because the types '"warning" | "critical"' 
+and '"error"' have no overlap.
+pages/Flows.tsx(1587,29): error TS2322: Type 
+'{ flow: Flow; isSaving: boolean; 
+hasCriticalErrors: boolean; isViewMode: 
+boolean; activeTab: FlowViewTab; 
+durationInfo: { min: string; max: string; 
+breakdown: { label: string; min: number; 
+max: number; }[]; }; ... 14 more ...; 
+onToggleReportMode: () => void; }' is not 
+assignable to type 'IntrinsicAttributes & 
+FlowHeaderProps'.
+  Property 'onBack' does not exist on type 
+'IntrinsicAttributes & FlowHeaderProps'.
+pages/Flows.tsx(1668,62): error TS2322: Type 
+'{ children: Element; key: FlowViewTab; 
+activeId: FlowViewTab; className: string; }' 
+is not assignable to type 
+'IntrinsicAttributes & TabTransitionProps'.
+  Property 'activeId' does not exist on type 
+'IntrinsicAttributes & TabTransitionProps'.
+pages/Flows.tsx(1677,120): error TS2322: 
+Type 'string' is not assignable to type 
+'"no" | "yes" | "B" | "A"'.
+pages/Flows.tsx(1846,50): error TS2339: 
+Property 'requireConfirmText' does not exist 
+on type '{ isOpen: boolean; title: string; 
+message: string; onConfirm: () => void; 
+variant?: "danger" | "warning"; 
+confirmLabel?: string; }'.
+pages/Flows.tsx(2106,14): error TS2741: 
+Property 'onStatusFilter' is missing in type 
+'{ isOpen: boolean; onClose: () => void; 
+group: { id: string; name: string; type: 
+"list" | "tag" | "segment"; count: number; 
+}; members: any[]; totalCount: number; 
+currentPage: number; totalPages: number; ... 
+5 more ...; onViewProfile: Dispatch<...>; }' 
+but required in type 'GroupDetailModalProps'.
+pages/Tags.tsx(509,21): error TS2322: Type 
+'string[]' is not assignable to type '{ id: 
+string; name: string; }[]'.
+  Type 'string' is not assignable to type '{ 
+id: string; name: string; }'.
+pages/Templates.tsx(590,93): error TS2339: 
+Property 'label' does not exist on type 
+'TemplateGroup'.
+  Property 'onJumpToChat' does not exist on 
+type 'IntrinsicAttributes & 
+VisitorsTabProps'.
+services/mockData.ts(24,9): error TS2741: 
+Property 'unsubscribed' is missing in type 
+'{ sent: number; opened: number; clicked: 
+number; bounced: number; spam: number; }' 
+but required in type '{ sent: number; 
+opened: number; clicked: number; bounced: 
+number; spam: number; unsubscribed: number; 
+}'.
+
+

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MailFlow Pro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      color: #334155;
+      /* slate-700 */
+    }
+
+    /* Custom Scrollbar */
+
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #e2e8f0;
+      border-radius: 20px;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #cbd5e1;
+      background-clip: content-box;
+    }
+
+    /* Smooth Page Transitions */
+
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Dashed Border Animation for Paths */
+
+    @keyframes dash {
+      to {
+        stroke-dashoffset: -20;
+      }
+    }
+
+    /* Custom pill styles */
+
+    .pill-button {
+      border-radius: 9999px;
+      padding: 0.5rem 1rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition-property: all;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      transition-duration: 150ms;
+    }
+
+    .pill-button-active {
+      background-color: white;
+      color: #ca7900;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+
+    .pill-button-inactive {
+      color: #64748b;
+    }
+
+    .pill-button-inactive:hover {
+      color: #334155;
+    }
+
+    /* Skeleton Shimmer Animation */
+
+    @keyframes shimmer {
+      100% {
+        transform: translateX(100%);
+      }
+    }
+  </style>
+
+  <script type="importmap">
+{
+  "imports": {
+    "recharts": "https://esm.sh/recharts@^3.6.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.11.0",
+    "react-dom": "https://esm.sh/react-dom@^19.2.3",
+    "react-router-dom/": "https://esm.sh/react-router-dom@^7.11.0/"
+  }
+}
+</script>
+  <script type="module" crossorigin src="/assets/index-32nE9Mjw.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CfWi5nET.css">
+</head>
+
+<body>
+  <div id="root"></div>
+</body>
+
+</html>

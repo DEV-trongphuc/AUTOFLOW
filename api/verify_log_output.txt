@@ -1,0 +1,2 @@
+Table 'admin_logs' exists.
+Current log count: 0
