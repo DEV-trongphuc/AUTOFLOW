@@ -1,0 +1,39 @@
+title,trigger_keywords,match_mode,reply_text,buttons,is_active
+"Chào hỏi & Hỏi vai trò","chào, xin chào, hello, hi, tư vấn, tìm hiểu, thông tin",contains,"Dạ chào anh/chị, cảm ơn anh/chị đã quan tâm đến chương trình Thạc sĩ của Swiss UMEF (Thụy Sĩ) – trường được kiểm định chất lượng cao nhất bởi Hội đồng Liên bang Thụy Sĩ (SAC).
+
+Để IDEAS có thể tư vấn đúng trọng tâm, anh/chị chia sẻ giúp em mình đang làm việc ở vai trò nào nhé?","Chủ doanh nghiệp / Founder | Quản lý / Trưởng bộ phận | Tìm hiểu ứng dụng AI",1
+"Tư vấn EMBA - Chủ doanh nghiệp","chủ doanh nghiệp, founder, giám đốc, CEO, EMBA, chương trình EMBA",contains,"Dạ vâng, với góc độ của chủ doanh nghiệp, chương trình **EMBA Online** (Thạc sĩ Quản trị Kinh doanh cấp cao) sẽ rất phù hợp.
+
+Chương trình không đi sâu vào lý thuyết mà tập trung giải quyết các bài toán khi anh/chị cần tối ưu chi phí, quản trị rủi ro hoặc mở rộng quy mô kinh doanh.
+
+Anh/chị muốn tìm hiểu thêm điều gì ạ?","Học phí EMBA | Lịch học EMBA | Điều kiện đầu vào | Tư vấn 1:1",1
+"Tư vấn MBA - Quản lý / Trưởng bộ phận","quản lý, trưởng bộ phận, team lead, MBA, chương trình MBA",contains,"Em hiểu rồi ạ. Để chuẩn bị cho những bước tiến xa hơn trong công việc, chương trình **MBA Trực tuyến** sẽ giúp anh/chị hệ thống hóa lại tư duy quản trị một cách bài bản, từ đó tự tin hơn khi điều hành đội ngũ.
+
+Anh/chị muốn tìm hiểu thêm điều gì ạ?","Học phí MBA | Lịch học MBA | Điều kiện đầu vào | Tư vấn 1:1",1
+"Tư vấn MSc AI - Ứng dụng AI","AI, trí tuệ nhân tạo, MSc AI, ứng dụng AI, công nghệ, machine learning",contains,"Dạ, xu hướng ứng dụng công nghệ hiện nay là rất thiết thực. Chương trình **MSc AI** (Thạc sĩ Khoa học Trí tuệ Nhân tạo Ứng dụng) sẽ giúp anh/chị hiểu rõ bản chất của AI để đưa vào vận hành thực tế tại doanh nghiệp sao cho hiệu quả nhất.
+
+Anh/chị muốn tìm hiểu thêm điều gì ạ?","Học phí MSc AI | Lịch học MSc AI | Điều kiện đầu vào | Tư vấn 1:1",1
+"Điều kiện đầu vào - Bằng cấp","bằng cấp, điều kiện, tuyển sinh, đầu vào, cử nhân, đại học, yêu cầu",contains,"Dạ, để đảm bảo học viên có thể tham gia chương trình chuẩn Thụy Sĩ, Swiss UMEF yêu cầu đầu vào cơ bản là đã tốt nghiệp Đại học/Cử nhân.
+
+Anh/chị đã hoàn thành bằng Đại học chưa ạ?","Đã có bằng Đại học | Chưa có bằng Đại học",1
+"Chưa có bằng Đại học - TopUp BBA","chưa có bằng, chưa tốt nghiệp, liên thông, BBA, TopUp, cử nhân 1 năm",contains,"Dạ em hiểu, rất nhiều anh chị bận rộn xây dựng sự nghiệp từ sớm nên chưa kịp hoàn thiện văn bằng đại học.
+
+IDEAS và Swiss UMEF có thiết kế riêng **Chương trình liên thông trực tuyến Cử nhân Quản trị Kinh doanh (TopUp - BBA)** chỉ gói gọn trong **1 năm**. Đây là bước đệm tối ưu để anh/chị vừa chuẩn hóa bằng cấp, vừa lấy đà học thẳng lên hệ Thạc sĩ.
+
+Anh/chị có muốn tìm hiểu lộ trình 1 năm này không ạ?","Tư vấn lộ trình BBA | Nhận tài liệu qua Zalo",1
+"Điều kiện tiếng Anh - Phỏng vấn thay IELTS","tiếng Anh, IELTS, TOEIC, ngoại ngữ, chứng chỉ, điều kiện tiếng Anh",contains,"Về điều kiện tiếng Anh (tương đương IELTS 6.0), em biết các anh chị quản lý thường rất bận rộn và hiếm khi có thời gian đi thi chứng chỉ.
+
+IDEAS có một đặc quyền linh hoạt hơn: Anh/chị có thể tham gia **một buổi phỏng vấn đánh giá năng lực trực tiếp** với đại diện của trường tại Việt Nam thay vì phải nộp chứng chỉ cứng.
+
+Phương án nào tiện cho anh/chị hơn ạ?","Đã có chứng chỉ IELTS/TOEIC | Xếp lịch phỏng vấn | Lo tiếng Anh lâu không dùng",1
+"Rào cản - Quá bận không có thời gian học","bận, thời gian, lịch học, không có thời gian, bận rộn, linh hoạt",contains,"Em rất hiểu điều này, với các anh chị làm quản lý thì thời gian là vấn đề lớn nhất.
+
+Đó là lý do hệ thống LMS của Swiss UMEF và IDEAS thiết kế bài giảng theo từng module ngắn **(45 phút)**. Anh/chị hoàn toàn có thể tranh thủ xem trên điện thoại hoặc laptop bất cứ lúc nào, không bị gò bó lịch lên lớp cứng nhắc. Video bài giảng và tài liệu luôn sẵn sàng **24/7** ạ.","Xem lịch học mẫu | Tư vấn thêm",1
+"Gói MBA Gateway - Trải nghiệm 3 tháng","gateway, học thử, trải nghiệm, 5 triệu, ưu đãi, đăng ký, nhập học",contains,"Thay vì yêu cầu anh/chị cam kết một khoản học phí lớn ngay lập tức, IDEAS thiết kế đặc quyền **MBA Gateway**.
+
+Chỉ với mức phí danh dự **5 triệu đồng**, anh/chị có trọn vẹn **3 tháng** 'sống' trong hệ sinh thái Thụy Sĩ, học thử môn đầu tiên và giao lưu cùng mạng lưới tinh hoa.
+
+Anh/chị đã sẵn sàng bước vào hành trình này chưa?","Nhận ưu đãi trải nghiệm | Cần tư vấn thêm",1
+"Chốt - Kết nối chuyên gia tư vấn","tư vấn, gặp, gọi điện, liên hệ, zalo, tài liệu, brochure, hỗ trợ",contains,"Quyết định của những người dẫn đầu luôn dứt khoát. Em đã đóng gói toàn bộ thông tin và sẽ chuyển ngay đến Giám đốc Tuyển sinh Học thuật của IDEAS.
+
+Anh/chị ưu tiên phương thức nào ạ?","Gọi tư vấn 1:1 ngay | Nhận tài liệu qua Zalo",1

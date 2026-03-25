@@ -1609,7 +1609,7 @@
         // Prevent showing actions if we are currently loading/processing a request
         // Prevent showing actions if we are currently loading OR Cooldown is active
         // This ensures actions only appear when the user is allowed to click them.
-        if (State.loading || State.cooldown > 0) {
+        if (State.loading) {
             // Hide containers
             const liveContainer = document.getElementById("mf-live-quick-actions");
             if (liveContainer) liveContainer.style.display = "none";
@@ -4176,29 +4176,49 @@
                     return;
                 }
 
-                const msgText =
-                    json.data?.message || json.message || "Xin lỗi, đã có lỗi xảy ra.";
-                const err = {
-                    id: Date.now().toString(),
-                    role: "assistant",
-                    content: msgText,
-                    timestamp: Date.now(),
-                    isError: !json.success,
-                };
-                State.messages.push(err);
-                document
-                    .getElementById("mf-messages")
-                    .appendChild(createMessageEl(err));
-                document.getElementById("mf-messages").scrollTop =
-                    document.getElementById("mf-messages").scrollHeight;
-                saveState();
+                const msgSource = json.data?.message || json.message || "Xin lỗi, đã có lỗi xảy ra.";
+                // Split multi-bubble messages (separator could be ||| or \n\n\n\n from our backend)
+                let bubbles = msgSource.split(msgSource.includes('\n\n\n\n') ? '\n\n\n\n' : '|||');
+                bubbles = bubbles.map(b => b.trim()).filter(b => b);
+                if (bubbles.length === 0) bubbles = ["Xin lỗi, đã có lỗi xảy ra."];
+
+                for (let i = 0; i < bubbles.length; i++) {
+                    const txt = bubbles[i];
+                    
+                    showTyping(true);
+                    await new Promise(r => setTimeout(r, i === 0 ? 800 : 1200));
+                    showTyping(false);
+
+                    const err = {
+                        id: Date.now().toString() + "_" + i,
+                        role: "assistant",
+                        content: txt,
+                        timestamp: Date.now(),
+                        isError: !json.success,
+                    };
+                    State.messages.push(err);
+                    document
+                        .getElementById("mf-messages")
+                        .appendChild(createMessageEl(err));
+                    document.getElementById("mf-messages").scrollTop =
+                        document.getElementById("mf-messages").scrollHeight;
+                    saveState();
+                    
+                    if (State.isLiveMode || State.isSoundEnabled) {
+                        speakTextStreaming(txt, currentSession);
+                    }
+                }
+
                 State.loading = false;
+                State.cooldown = 0; // Clear cooldown on response
                 if (window.__mf_app && window.__mf_app.updateSendState)
                     window.__mf_app.updateSendState();
+                updateSendState(); // Also call local version
                 startPolling();
 
-                // Parse actions from JSON response too (Robust Regex)
-                const actionMatch = msgText.match(
+                // Parse actions from JSON response too (Robust Regex) - Only check the last bubble!
+                const lastBubbleTxt = bubbles[bubbles.length - 1];
+                const actionMatch = lastBubbleTxt.match(
                     /\[(?:ACTIONS|ACTION|BUTTONS|BUTTON|OPTIONS):?\s*([\s\S]*?)\]/i,
                 );
                 if (actionMatch && actionMatch[1]) {
@@ -4209,7 +4229,7 @@
                     syncQuick();
                 } else {
                     // Fallback for case without brackets
-                    const rawMatch = msgText.match(
+                    const rawMatch = lastBubbleTxt.match(
                         /(?:ACTIONS|ACTION|BUTTONS|BUTTON|OPTIONS):?\s*([^\]\n]+)/i,
                     );
                     if (rawMatch && rawMatch[1]) {
@@ -4221,8 +4241,6 @@
                     }
                 }
 
-                if (State.isLiveMode || State.isSoundEnabled)
-                    speakTextStreaming(msgText, currentSession);
                 return;
             }
 
@@ -4478,11 +4496,13 @@
                 }
 
                 State.loading = false;
+                State.cooldown = 0; // Clear cooldown on response
                 // botMsg.content = fullContent; // Already set in constructor above
                 saveState();
                 checkEndOfResponse();
                 if (window.__mf_app && window.__mf_app.updateSendState)
                     window.__mf_app.updateSendState();
+                updateSendState(); // Also call local version
                 startPolling();
             }
         } catch (e) {

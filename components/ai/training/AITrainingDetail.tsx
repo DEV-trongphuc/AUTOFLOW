@@ -9,6 +9,7 @@ import AITrainingTable from '../../AITrainingTable';
 import AdminLogsTab from './AdminLogsTab';
 import VisibilitySettings from '../VisibilitySettings';
 import FastRepliesSettings from '../FastRepliesSettings';
+import ScenarioManager from '../ScenarioManager';
 import UnifiedChat from '../UnifiedChat';
 import { MessageSquare } from 'lucide-react';
 import InputModal from '../../common/InputModal';
@@ -22,8 +23,8 @@ interface AITrainingDetailProps {
     setIsOptimizationModalOpen: (o: boolean) => void;
     setIsEmbeddingModalOpen: (o: boolean) => void;
     setIsTipsModalOpen: (o: boolean) => void;
-    activeTab: 'training' | 'settings' | 'embed' | 'instruction' | 'inbox' | 'logs';
-    setActiveTab: (t: 'training' | 'settings' | 'embed' | 'instruction' | 'inbox' | 'logs') => void;
+    activeTab: 'training' | 'settings' | 'embed' | 'instruction' | 'inbox' | 'logs' | 'scenarios';
+    setActiveTab: (t: 'training' | 'settings' | 'embed' | 'instruction' | 'inbox' | 'logs' | 'scenarios') => void;
     setSelectedBotLogsId: (id: string | null) => void;
     setIsFolderModalOpen: (o: boolean) => void;
     setIsSynonymsModalOpen: (o: boolean) => void;
@@ -534,6 +535,14 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                             <MessageSquare className="w-4 h-4" />
                             HỘP THƯ
                         </button>
+                        <button
+                            onClick={() => setActiveTab('scenarios')}
+                            className={`flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-[10px] lg:text-[11px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${activeTab === 'scenarios'
+                                ? (isDarkTheme ? 'bg-slate-800 text-slate-200 border border-slate-700 shadow-sm' : 'bg-slate-100 text-slate-700 shadow-sm border border-slate-200')
+                                : (isDarkTheme ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600')}`}
+                        >
+                            <Zap className="w-4 h-4" /> KỊCH BẢN
+                        </button>
                     </>
                 ) : (
                     <>
@@ -553,6 +562,14 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                 : (isDarkTheme ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600')}`}
                         >
                             <BookOpen className="w-4 h-4" /> DỮ LIỆU HUẤN LUYỆN
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('scenarios')}
+                            className={`flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-[10px] lg:text-[11px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${activeTab === 'scenarios'
+                                ? (isDarkTheme ? 'bg-slate-800 text-slate-200 border border-slate-700 shadow-sm' : 'bg-slate-100 text-slate-700 shadow-sm border border-slate-200')
+                                : (isDarkTheme ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600')}`}
+                        >
+                            <Zap className="w-4 h-4" /> KỊCH BẢN
                         </button>
                         <button
                             onClick={() => setActiveTab('instruction')}
@@ -1653,7 +1670,17 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                         </div>
                     </div>
                 </div>
+
+                {/* ── SCENARIOS TAB ─────────────────────────────────────────────── */}
+                <div className={activeTab === 'scenarios' ? "block animate-in fade-in duration-300" : "hidden"}>
+                    <ScenarioManager
+                        propertyId={selectedProperty}
+                        isDarkTheme={isDarkTheme}
+                        brandColor={brandColor}
+                    />
+                </div>
             </div >
+
 
             <InputModal
                 isOpen={isRenameModalOpen}

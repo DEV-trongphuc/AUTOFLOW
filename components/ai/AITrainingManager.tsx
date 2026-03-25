@@ -124,7 +124,7 @@ const AITrainingManager: React.FC<AITrainingManagerProps> = ({ onClose, category
 
     const [viewMode, setViewMode] = useState<'grid' | 'doc'>('grid');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'training' | 'settings' | 'embed' | 'instruction' | 'inbox' | 'logs'>('inbox');
+    const [activeTab, setActiveTab] = useState<'training' | 'settings' | 'embed' | 'instruction' | 'inbox' | 'logs' | 'scenarios'>('inbox');
     const [newDoc, setNewDoc] = useState<{ name: string, content: string, tags: string, batchName?: string }>({ name: '', content: '', tags: '', batchName: '' });
     const [tagInput, setTagInput] = useState('');
     const [loading, setLoading] = useState(false);

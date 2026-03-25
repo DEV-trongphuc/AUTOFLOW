@@ -2566,6 +2566,77 @@ CHÚ Ý:
             exit;
         }
 
+        // ─── SCENARIO CHECK (Priority 1 — runs BEFORE fast reply and AI) ──────────
+        $scenarioMatch = checkScenario($pdo, $propertyId, $visitorUuid, $userMsg, $convId);
+        if ($scenarioMatch) {
+            if (!$convId) {
+                enforceChatLimits($pdo, $visitorUuid);
+                $convId = bin2hex(random_bytes(16));
+                $pdo->prepare("INSERT INTO ai_conversations (id, visitor_id, property_id, status) VALUES (?, ?, ?, 'ai')")->execute([$convId, $visitorUuid, $propertyId]);
+            }
+
+            // Set state tracking if scenario flow begins
+            if (!empty($scenarioMatch['start_node'])) {
+                $pdo->prepare("UPDATE ai_conversations SET active_scenario_id = ?, active_node_id = ? WHERE id = ?")
+                    ->execute([$scenarioMatch['scenario_id'], $scenarioMatch['start_node'], $convId]);
+            }
+
+            if (strpos($visitorUuid, 'meta_') !== 0 && strpos($visitorUuid, 'zalo_') !== 0) {
+                $pdo->prepare("INSERT INTO ai_messages (conversation_id, sender, message) VALUES (?, 'visitor', ?)")->execute([$convId, $userMsg]);
+            }
+            // Build reply text: split into multiple bubbles if ||| separator is used
+            $scenarioReplyText = $scenarioMatch['reply_text'];
+            $bubbles = array_map('trim', explode('|||', $scenarioReplyText));
+            $bubbles = array_filter($bubbles, function($b) { return $b !== ''; });
+            if (empty($bubbles)) $bubbles = [''];
+            
+            $scenarioButtons = $scenarioMatch['buttons'] ?? [];
+            if (!empty($scenarioButtons)) {
+                // Filter out wildcard buttons (*) from UI
+                $scenarioButtons = array_values(array_filter($scenarioButtons, function($b) {
+                    return trim($b['label'] ?? '') !== '*' && trim($b['label'] ?? '') !== '';
+                }));
+                
+                $btnLabels = array_map(function($b) { return $b['label'] ?? ''; }, $scenarioButtons);
+                $btnLabels = array_filter($btnLabels);
+                if (!empty($btnLabels)) {
+                    // Append actions only to the last bubble
+                    $lastIndex = array_key_last($bubbles);
+                    $bubbles[$lastIndex] .= "\n[ACTIONS: " . implode(' | ', $btnLabels) . "]";
+                }
+            }
+            
+            // Insert each bubble as a separate message
+            foreach ($bubbles as $bubble) {
+                if (trim($bubble) !== '') {
+                    $pdo->prepare("INSERT INTO ai_messages (conversation_id, sender, message) VALUES (?, 'ai', ?)")->execute([$convId, $bubble]);
+                    updateConversationStats($pdo, $convId, $bubble);
+                }
+            }
+            
+            // For the frontend response, return the combined text so the widget renders all of them
+            // AI Chatbot Embedded widget handles \n\n natively to separate paragraphs, or we can just send the last bubble
+            // with `message`. Actually, the widget expects one string and parses it to multiple bubbles if we want,
+            // but the DB has them as separate messages now, so history load will show them correctly.
+            // For immediate return, we'll join them with double linebreaks so it renders cohesively.
+            $combinedReplyForFrontend = implode("\n\n\n\n", $bubbles);
+            
+            logAIChat($visitorUuid, $propertyId, 'SCENARIO', 'HIT', "Scenario: " . ($scenarioMatch['scenario_title'] ?? 'unknown'));
+            header('Content-Type: application/json');
+            header('X-Conversation-Id: ' . $convId);
+            echo json_encode([
+                'success' => true,
+                'version' => API_VERSION,
+                'data' => [
+                    'message'         => $combinedReplyForFrontend,
+                    'conversation_id' => $convId,
+                    'scenario_hit'    => true,
+                    'buttons'         => $scenarioButtons,
+                ]
+            ]);
+            exit;
+        }
+
         // Fast Reply
         $fastReply = getFastReply($userMsg, $settings);
         if ($fastReply) {
