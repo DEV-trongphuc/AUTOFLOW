@@ -53,7 +53,6 @@ const WebTracking: React.FC = () => {
     // Delete Modal State
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [siteToDelete, setSiteToDelete] = useState<WebProperty | null>(null);
-    const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
 
     // Visitors State
     const [visitors, setVisitors] = useState<Visitor[]>([]);
@@ -273,16 +272,11 @@ const WebTracking: React.FC = () => {
     const handleDeleteClick = (site: WebProperty, e: React.MouseEvent) => {
         e.stopPropagation();
         setSiteToDelete(site);
-        setDeleteConfirmInput('');
         setIsDeleteOpen(true);
     };
 
     const confirmDeleteAction = async () => {
         if (!siteToDelete) return;
-        if (deleteConfirmInput !== siteToDelete.domain) {
-            toast.error('Tên miền xác nhận không khớp');
-            return;
-        }
 
         try {
             await api.delete(`web_tracking?action=delete&id=${siteToDelete.id}`);
@@ -766,8 +760,6 @@ const WebTracking: React.FC = () => {
                 isDeleteOpen={isDeleteOpen}
                 setIsDeleteOpen={setIsDeleteOpen}
                 siteToDelete={siteToDelete}
-                deleteConfirmInput={deleteConfirmInput}
-                setDeleteConfirmInput={setDeleteConfirmInput}
                 confirmDeleteAction={confirmDeleteAction}
             />
         </div>

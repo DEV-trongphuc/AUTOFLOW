@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { AlertTriangle, X, Loader2 } from 'lucide-react';
 
@@ -37,7 +37,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     const [animateIn, setAnimateIn] = useState(false);
     const [confirmInput, setConfirmInput] = useState('');
 
-    const isConfirmDisabled = isLoading || (requireConfirmText && confirmInput !== requireConfirmText);
+    const isConfirmDisabled = isLoading || (requireConfirmText && confirmInput.trim().toLowerCase() !== requireConfirmText.trim().toLowerCase());
 
     useEffect(() => {
         if (isOpen) {
@@ -116,8 +116,8 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
                     {requireConfirmText && (
                         <div className="mt-6 space-y-2">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                Xác nhận bằng cách nhập: <span className="text-slate-800 select-all cursor-copy">"{requireConfirmText}"</span>
+                            <label className="text-xs font-bold text-slate-500 tracking-wider">
+                                <span className="uppercase">Xác nhận bằng cách nhập:</span> <span className="text-slate-800 select-all cursor-copy normal-case">"{requireConfirmText}"</span>
                             </label>
                             <input
                                 type="text"

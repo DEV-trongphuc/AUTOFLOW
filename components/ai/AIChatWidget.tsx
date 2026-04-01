@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import {
     MessageCircle, X, Send, User,
@@ -622,7 +622,7 @@ const AIChatWidget: React.FC<AIChatWidgetProps> = ({
         <div id="mf-chat-widget" className={`
             fixed ${positionClass} bg-white/95 !backdrop-blur-xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] rounded-[2.5rem] border border-white/20 flex flex-col overflow-hidden z-[9999] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
             chat-widget-animate mf-ignore-tracking
-            ${isMaximized ? 'w-[450px] h-[750px]' : 'w-[400px] h-[650px]'}
+            ${isMaximized ? 'w-[450px] h-[750px] max-h-[calc(100vh-80px)] max-w-[calc(100vw-32px)]' : 'w-[400px] h-[650px] max-h-[calc(100vh-80px)] max-w-[calc(100vw-32px)]'}
         `} style={{ fontFamily: '"Inter", sans-serif', '--brand-primary': config?.brand_color || '#ffa900' } as React.CSSProperties}>
 
             <style dangerouslySetInnerHTML={{

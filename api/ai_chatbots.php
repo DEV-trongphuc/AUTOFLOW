@@ -105,6 +105,23 @@ try {
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
 
+// --- Helper Functions ---
+function clearBotCache($pdo, $id, $isCat = false) {
+    if (!$id) return;
+    $cacheDir = __DIR__ . '/cache';
+    @unlink("$cacheDir/settings_{$id}.json");
+    @unlink("$cacheDir/settings_org_{$id}.json");
+    if ($isCat && $pdo) {
+        $stmt = $pdo->prepare("SELECT id FROM ai_chatbots WHERE category_id = ?");
+        $stmt->execute([$id]);
+        $bots = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        foreach ($bots as $botId) {
+            @unlink("$cacheDir/settings_{$botId}.json");
+            @unlink("$cacheDir/settings_org_{$botId}.json");
+        }
+    }
+}
+
 // --- Category Functions ---
 
 function listCategories($pdo)
@@ -241,6 +258,8 @@ bot_avatar = VALUES(bot_avatar)");
     if ($currentAdminId)
         logAdminAction($pdo, $currentAdminId, 'update_category', 'category', $id, ['name' => $name]);
 
+    clearBotCache($pdo, $id, true);
+
     echo json_encode(['success' => true]);
 }
 
@@ -260,6 +279,7 @@ function deleteCategory($pdo, $id)
     // Delete category
     $stmt = $pdo->prepare("DELETE FROM ai_chatbot_categories WHERE id = ?");
     if ($stmt->execute([$id])) {
+        clearBotCache($pdo, $id, true);
         global $currentAdminId;
         if ($currentAdminId)
             logAdminAction($pdo, $currentAdminId, 'delete_category', 'category', $id);
@@ -463,6 +483,8 @@ function updateChatbot($pdo, $data)
     if ($currentAdminId)
         logAdminAction($pdo, $currentAdminId, 'update_chatbot', 'bot', $id, $data);
 
+    clearBotCache($pdo, $id, false);
+
     echo json_encode(['success' => true]);
 }
 
@@ -484,6 +506,8 @@ function deleteChatbot($pdo, $id)
     global $currentAdminId;
     if ($currentAdminId)
         logAdminAction($pdo, $currentAdminId, 'delete_chatbot', 'bot', $id);
+
+    clearBotCache($pdo, $id, false);
 
     echo json_encode(['success' => true]);
 }

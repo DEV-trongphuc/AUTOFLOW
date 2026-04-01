@@ -1964,6 +1964,20 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
         // --- LOGIC: SYSTEM PROMPT MODIFICATION ---
         $sysInstructionText = ($settings['system_instruction'] ?? "Bạn là trợ lý ảo chuyên nghiệp.");
 
+        // --- DYNAMIC REPLACEMENT OF PLACEHOLDERS ---
+        $botName = $settings['bot_name'] ?? 'AI Consultant';
+        $companyName = $settings['company_name'] ?? 'Doanh nghiệp';
+        $todayStr = date('d/m/Y');
+        $replacePairs = [
+            '{$botName}' => $botName,
+            '{botName}' => $botName,
+            '{$companyName}' => $companyName,
+            '{companyName}' => $companyName,
+            '{$today}' => $todayStr,
+            '{today}' => $todayStr
+        ];
+        $sysInstructionText = str_replace(array_keys($replacePairs), array_values($replacePairs), $sysInstructionText);
+
         // ── USER PROFILE: Inject current user's identity for personalization ──
         $genderText = "";
         if (!empty($currentOrgUser['gender'])) {

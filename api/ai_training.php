@@ -1102,6 +1102,10 @@ try {
             $cacheFile = __DIR__ . "/cache/settings_{$propertyId}.json";
             if (file_exists($cacheFile))
                 unlink($cacheFile);
+                
+            $cacheFileOrg = __DIR__ . "/cache/settings_org_{$propertyId}.json";
+            if (file_exists($cacheFileOrg))
+                unlink($cacheFileOrg);
 
             // ALSO CLEAR RAG CACHE for this property because settings changed
             $pdo->prepare("DELETE FROM ai_rag_search_cache WHERE property_id = ?")->execute([$propertyId]);

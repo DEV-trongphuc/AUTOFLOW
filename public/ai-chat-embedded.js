@@ -2437,9 +2437,10 @@
 
             /* MAIN WINDOW - FIXED: 2.5rem radius and shadow matching react */
             #mf-window {
-                position: fixed; bottom: 30px; ${isLeft ? "left: 30px;" : "right: 30px;"
-            }
+                position: fixed; bottom: 30px; ${isLeft ? "left: 30px;" : "right: 30px;"}
                 width: 480px; height: 650px;
+                max-height: calc(100vh - 80px);
+                max-width: calc(100vw - 40px);
                 background: rgba(255,255,255,0.95);
                 backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
                 border-radius: 2.5rem; /* React: rounded-[2.5rem] */

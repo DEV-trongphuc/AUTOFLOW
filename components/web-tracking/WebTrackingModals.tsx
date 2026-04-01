@@ -24,8 +24,6 @@ interface WebTrackingModalsProps {
     isDeleteOpen: boolean;
     setIsDeleteOpen: (open: boolean) => void;
     siteToDelete: WebProperty | null;
-    deleteConfirmInput: string;
-    setDeleteConfirmInput: (val: string) => void;
     confirmDeleteAction: () => void;
 }
 
@@ -45,8 +43,6 @@ const WebTrackingModals: React.FC<WebTrackingModalsProps> = ({
     isDeleteOpen,
     setIsDeleteOpen,
     siteToDelete,
-    deleteConfirmInput,
-    setDeleteConfirmInput,
     confirmDeleteAction
 }) => {
     return (
