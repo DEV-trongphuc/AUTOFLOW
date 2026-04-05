@@ -920,9 +920,19 @@
             return;
         }
 
-        var scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-        if (scrollHeight <= 0) return;
-        var p = Math.round(window.scrollY / scrollHeight * 100);
+        var target = e.target;
+        if (target === document) target = document.documentElement;
+        
+        var clientHeight = target.clientHeight || window.innerHeight;
+        // Ignore tiny scrollable elements (like textareas, small dropdown lists)
+        if (clientHeight < window.innerHeight * 0.5) return;
+
+        var scrollHeight = target.scrollHeight - clientHeight;
+        if (scrollHeight <= 10) return;
+
+        var scrollTop = target.scrollTop || window.scrollY || window.pageYOffset || 0;
+        var p = Math.round((scrollTop / scrollHeight) * 100);
+        
         if (p < 0) p = 0;
         if (p > 100) p = 100;
 
@@ -942,7 +952,7 @@
                 duration: Math.floor(sessionActiveTime / 1000)
             });
         }
-    }, { passive: true });
+    }, { passive: true, capture: true });
 
     document.addEventListener('visibilitychange', function () {
         if (document.visibilityState === 'hidden') {

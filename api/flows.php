@@ -18,8 +18,9 @@ try {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_flow_snapshots_flow (flow_id),
         INDEX idx_flow_snapshots_created (created_at)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-} catch (Exception $ignored) {
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+} catch (Exception $e) {
+    error_log("Failed to create flow_snapshots table: " . $e->getMessage());
 }
 
 // GET snapshots list for a flow
@@ -73,12 +74,21 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'flow-snap
         $snapshotId = $body['id'] ?? bin2hex(random_bytes(16));
         $stmt = $pdo->prepare("INSERT INTO flow_snapshots (id, flow_id, label, flow_data, created_by) VALUES (?, ?, ?, ?, ?)");
         $stmt->execute([$snapshotId, $flowId, $label, json_encode($flowData, JSON_UNESCAPED_UNICODE), $createdBy]);
-        // Prune: keep latest 20
-        $pdo->prepare("DELETE FROM flow_snapshots WHERE flow_id = ? AND id NOT IN (
-            SELECT id FROM (SELECT id FROM flow_snapshots WHERE flow_id = ? ORDER BY created_at DESC LIMIT 20) AS keep
-        )")->execute([$flowId, $flowId]);
+        
+        // Prune: keep latest 20 (Compatible with all MySQL/MariaDB versions)
+        $stmtKeep = $pdo->prepare("SELECT id FROM flow_snapshots WHERE flow_id = ? ORDER BY created_at DESC LIMIT 20");
+        $stmtKeep->execute([$flowId]);
+        $keepIds = $stmtKeep->fetchAll(PDO::FETCH_COLUMN);
+        
+        if (!empty($keepIds)) {
+            $placeholders = implode(',', array_fill(0, count($keepIds), '?'));
+            $delParams = array_merge([$flowId], $keepIds);
+            $pdo->prepare("DELETE FROM flow_snapshots WHERE flow_id = ? AND id NOT IN ($placeholders)")->execute($delParams);
+        }
+        
         jsonResponse(true, ['id' => $snapshotId, 'message' => 'Đã lưu phiên bản']);
     } catch (Exception $e) {
+        error_log("Flow snapshot save error: " . $e->getMessage());
         jsonResponse(false, null, $e->getMessage());
     }
 }

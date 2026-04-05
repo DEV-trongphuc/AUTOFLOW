@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useMemo, useEffect } from 'react';
 import { User, Users, X, Smartphone, Tablet, Monitor, Terminal, MapPin, Search, Globe, ChevronDown, RefreshCw, ChevronLeft, ChevronRight, Repeat, Clock, ShieldAlert, Check, List, BarChart3, ShieldCheck, Trash2, Bot, MessageSquare } from 'lucide-react';
 import { Visitor, VisitorStats, WebProperty } from './types';
@@ -735,8 +735,8 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
                                                         // Filter out 0% scroll events (redundant)
                                                         if (ev.type === 'scroll' && (ev.target_text === '0' || ev.target_text === 0)) return false;
 
-                                                        if (journeySubTab === 'all') return ['pageview', 'click', 'identify', 'canvas_click'].includes(ev.type);
-                                                        if (journeySubTab === 'other') return !['pageview', 'click', 'canvas_click'].includes(ev.type); // Show everything else including scroll/ping if 'other' selected
+                                                        if (journeySubTab === 'all') return ev.type !== 'ping';
+                                                        if (journeySubTab === 'other') return !['pageview', 'click', 'canvas_click', 'identify'].includes(ev.type) && ev.type !== 'ping';
                                                         return ev.type === journeySubTab;
                                                     });
 
