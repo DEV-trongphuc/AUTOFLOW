@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import {
@@ -224,7 +224,7 @@ const CategoryChatPage: React.FC = () => {
         const handleOnline = () => {
             setIsOffline(false);
             setHasNetworkError(false);
-            window.location.reload(); // Proactive reload to sync state
+            // Removed proactive reload to prevent losing user's unsaved states/chat drafts
         };
         const handleOffline = () => setIsOffline(true);
 
@@ -332,7 +332,6 @@ const CategoryChatPage: React.FC = () => {
     }, [activeBot?.id, setHasPdfs]);
 
     const {
-        sendStreamingChat,
         handleSend,
         regenerateResponse,
         isGeneratingImage: isChatGeneratingImage
@@ -572,12 +571,6 @@ const CategoryChatPage: React.FC = () => {
 
     useEffect(() => {
         if (isImageGenMode) {
-            if (imageProvider !== 'gemini-3-pro-image-preview') {
-                setImageProvider('gemini-3-pro-image-preview');
-            }
-            if (imageSize !== 'auto') {
-                setImageSize('auto');
-            }
             const targetModel = imageProvider.replace('-image', '');
             if (selectedModel !== targetModel) {
                 if (!prevTextModelRef.current) prevTextModelRef.current = selectedModel;
@@ -589,9 +582,12 @@ const CategoryChatPage: React.FC = () => {
                     setSelectedModel(prevTextModelRef.current);
                 }
                 prevTextModelRef.current = '';
+            } else if (selectedModel === 'gemini-3-pro-preview') {
+                // Fallback for page reload state where prev is empty but model is stuck on a hidden preview model
+                setSelectedModel('auto');
             }
         }
-    }, [isImageGenMode]);
+    }, [isImageGenMode, imageProvider, selectedModel]);
 
     const docInputRef = useRef<HTMLInputElement>(null);
     const streamingBlockRef = useRef<{ name: string, index: number } | null>(null);
@@ -633,7 +629,7 @@ const CategoryChatPage: React.FC = () => {
     const [selectedGlobalDocs, setSelectedGlobalDocs] = useState<string[]>([]);
     const [isGlobalSelectMode, setIsGlobalSelectMode] = useState(false);
     const [isDeleteGlobalModalOpen, setIsDeleteGlobalModalOpen] = useState(false);
-    const [globalAssetIdsToDelete, setGlobalAssetIdsToDelete] = useState<number[]>([]);
+    const [globalAssetIdsToDelete, setGlobalAssetIdsToDelete] = useState<any[]>([]);
     const [globalPage, setGlobalPage] = useState(1);
     const [globalTotal, setGlobalTotal] = useState(0);
     const GLOBAL_PAGE_SIZE = 18;
@@ -869,7 +865,7 @@ const CategoryChatPage: React.FC = () => {
 
 
 
-    const handleDeleteFromDb = useCallback(async (ids: number[]) => {
+    const handleDeleteFromDb = useCallback(async (ids: any[]) => {
         setGlobalAssetIdsToDelete(ids);
         setIsDeleteGlobalModalOpen(true);
     }, []);
@@ -1775,24 +1771,22 @@ const CategoryChatPage: React.FC = () => {
         return () => clearTimeout(timer);
     }, [imageProvider, imageStyle, imageSize, isImageGenMode, isKbOnlyMode]);
 
-    // Enforce mutual exclusivity between Code Mode and Image Generation - OPTIMIZED to prevent infinite loop
-    const modeChangeRef = useRef<'code' | 'image' | null>(null);
+    // Enforce mutual exclusivity between Code Mode and Image Generation
+    const prevImageMode = useRef(isImageGenMode);
+    const prevCodeMode = useRef(isCodeMode);
 
     useEffect(() => {
-        if (isImageGenMode && isCodeMode && modeChangeRef.current !== 'image') {
-            modeChangeRef.current = 'image';
-            setIsCodeMode(false);
-            setTimeout(() => { modeChangeRef.current = null; }, 100);
+        if (isImageGenMode && !prevImageMode.current) {
+            // Image mode was just turned ON
+            if (isCodeMode) setIsCodeMode(false);
         }
+        if (isCodeMode && !prevCodeMode.current) {
+            // Code mode was just turned ON
+            if (isImageGenMode) setIsImageGenMode(false);
+        }
+        prevImageMode.current = isImageGenMode;
+        prevCodeMode.current = isCodeMode;
     }, [isImageGenMode, isCodeMode]);
-
-    useEffect(() => {
-        if (isCodeMode && isImageGenMode && modeChangeRef.current !== 'code') {
-            modeChangeRef.current = 'code';
-            setIsImageGenMode(false);
-            setTimeout(() => { modeChangeRef.current = null; }, 100);
-        }
-    }, [isCodeMode, isImageGenMode]);
 
     const [interimText, setInterimText] = useState(''); // [NEW] Realtime text
     const isInitialScrollRef = useRef(true);

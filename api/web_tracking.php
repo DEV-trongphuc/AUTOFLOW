@@ -57,7 +57,7 @@ if ($method === 'GET' && $action === 'visitor_journey' && !empty($_GET['visitor_
                 pv.url as page_url
             FROM web_events e
             LEFT JOIN web_page_views pv ON e.page_view_id = pv.id
-            WHERE e.visitor_id = ? AND e.event_type NOT IN ('scroll', 'ping')
+            WHERE e.visitor_id = ? AND e.event_type != 'ping'
             ORDER BY e.created_at DESC 
             LIMIT 50
         ");
@@ -630,7 +630,7 @@ if ($method === 'GET' && $action === 'visitors') {
                 FROM web_events e
                 LEFT JOIN web_page_views pv ON e.page_view_id = pv.id
                 WHERE e.visitor_id = ? AND e.property_id = ? 
-                AND e.event_type NOT IN ('scroll', 'ping')
+                AND e.event_type != 'ping'
                 ORDER BY e.created_at DESC 
                 LIMIT 100
             ");

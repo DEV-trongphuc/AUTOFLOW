@@ -2137,10 +2137,9 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
             nhất.\n";
             $sysInstructionText .= "3. Nếu người dùng yêu cầu tạo/sửa ảnh, hãy thêm 1-2 câu tiếng Việt giao tiếp tự nhiên (VD: 'Dưới đây là hình ảnh tôi tạo theo yêu cầu của bạn:') TRƯỚC khi gọi thẻ lệnh.\n";
             $sysInstructionText .= "4. Thẻ lệnh [IMAGE_REQUEST: ...] phải được đặt ở CUỐI CÙNG, sau đoạn hội thoại tiếng Việt. TUYỆT ĐỐI KHÔNG giải thích lại nội dung prompt tiếng Anh cho người dùng.\n";
-            $sysInstructionText .= "5. Sử dụng cú pháp BẮT BUỘC: [IMAGE_REQUEST:
-            your_detailed_narrative_english_prompt]\n";
-            $sysInstructionText .= "6. Đối với Nano Banana Pro: Bạn hỗ trợ tới 14 ảnh tham khảo, khả năng chèn văn bản
-            chính xác và 'Tư duy' để tối ưu bố cục.\n\n";
+            $sysInstructionText .= "5. Sử dụng cú pháp BẮT BUỘC: [IMAGE_REQUEST: your_detailed_narrative_english_prompt]\n";
+            $sysInstructionText .= "6. Đối với Nano Banana Pro: Bạn hỗ trợ tới 14 ảnh tham khảo, khả năng chèn văn bản chính xác và 'Tư duy' để tối ưu bố cục.\n";
+            $sysInstructionText .= "7. LƯU Ý TỐI QUAN TRỌNG: TUYỆT ĐỐI KHÔNG BAO GIỜ tự viết mã Markdown hình ảnh (như `![Generated Image](URL)`). Nhiệm vụ DUY NHẤT của bạn là xuất ra thẻ `[IMAGE_REQUEST: ...]`, hệ thống sẽ tự động bắt lấy thẻ này và hiển thị ảnh thật cho người dùng.\n\n";
 
 
             $sysInstructionText .= "QUY TẮC QUAN TRỌNG:\n";
@@ -2363,6 +2362,17 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
                         }
                     }
 
+                    // Process previewUrls into base64 for historical reference images
+                    foreach ($allReferenceImages as &$refImg) {
+                        if (empty($refImg['base64']) && !empty($refImg['previewUrl']) && strpos($refImg['previewUrl'], 'data:') !== 0) {
+                            if (function_exists('getBase64FromUrl')) {
+                                $b64 = getBase64FromUrl($refImg['previewUrl']);
+                                if ($b64) $refImg['base64'] = $b64;
+                            }
+                        }
+                    }
+                    unset($refImg);
+
                     // [FIX] Deduplicate reference images by previewUrl to prevent token waste.
                     // If user sent image A this turn AND image A was saved in history metadata,
                     // the loop above would add it twice → wasted token budget + model confusion.
@@ -2465,6 +2475,17 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
                         }
                     }
                 }
+
+                // Process previewUrls into base64 for historical reference images
+                foreach ($allReferenceImages as &$refImg) {
+                    if (empty($refImg['base64']) && !empty($refImg['previewUrl']) && strpos($refImg['previewUrl'], 'data:') !== 0) {
+                        if (function_exists('getBase64FromUrl')) {
+                            $b64 = getBase64FromUrl($refImg['previewUrl']);
+                            if ($b64) $refImg['base64'] = $b64;
+                        }
+                    }
+                }
+                unset($refImg);
 
                 // [FIX] Deduplicate by previewUrl — same fix as streaming path above.
                 // Prevents same image from appearing twice if user re-sent it this turn.

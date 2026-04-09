@@ -1610,9 +1610,17 @@ try {
                         $newId = bin2hex(random_bytes(18));
                         $isFolder = ($sourceDoc['source_type'] === 'folder');
 
+                        $cleanMeta = $sourceDoc['metadata'];
+                        if (!empty($cleanMeta)) {
+                            $m = json_decode($cleanMeta, true);
+                            if (is_array($m)) {
+                                unset($m['pinecone_id'], $m['vector_id'], $m['chunk_ids'], $m['trained_at'], $m['error']);
+                                $cleanMeta = json_encode($m);
+                            }
+                        }
+
                         // Insert basic copy
-                        $stmtInsert = $pdo->prepare("INSERT INTO ai_training_docs (id, property_id, name, source_type, is_active,
-    status, priority, content, tags, metadata, parent_id) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)");
+                        $stmtInsert = $pdo->prepare("INSERT INTO ai_training_docs (id, property_id, name, source_type, is_active, status, priority, content, tags, metadata, parent_id) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)");
                         $stmtInsert->execute([
                             $newId,
                             $targetPropertyId,
@@ -1622,7 +1630,7 @@ try {
                             $sourceDoc['priority'],
                             $sourceDoc['content'],
                             $sourceDoc['tags'],
-                            $sourceDoc['metadata'],
+                            $cleanMeta,
                             '0' // Flat copy for selected items (re-parenting internal folder structure would be too complex for selected
                             // subsets)
                         ]);
@@ -1638,9 +1646,17 @@ try {
                                 $children = $stmtChild->fetchAll(PDO::FETCH_ASSOC);
 
                                 foreach ($children as $child) {
+                                    $cleanChildMeta = $child['metadata'];
+                                    if (!empty($cleanChildMeta)) {
+                                        $cm = json_decode($cleanChildMeta, true);
+                                        if (is_array($cm)) {
+                                            unset($cm['pinecone_id'], $cm['vector_id'], $cm['chunk_ids'], $cm['trained_at'], $cm['error']);
+                                            $cleanChildMeta = json_encode($cm);
+                                        }
+                                    }
+
                                     $newChildId = bin2hex(random_bytes(18));
-                                    $stmtIns = $pdo->prepare("INSERT INTO ai_training_docs (id, property_id, name, source_type, is_active, status,
-    priority, content, tags, metadata, parent_id) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)");
+                                    $stmtIns = $pdo->prepare("INSERT INTO ai_training_docs (id, property_id, name, source_type, is_active, status, priority, content, tags, metadata, parent_id) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)");
                                     $stmtIns->execute([
                                         $newChildId,
                                         $targetPropertyId,
@@ -1650,7 +1666,7 @@ try {
                                         $child['priority'],
                                         $child['content'],
                                         $child['tags'],
-                                        $child['metadata'],
+                                        $cleanChildMeta,
                                         $newParentId
                                     ]);
 

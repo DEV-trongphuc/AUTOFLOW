@@ -46,13 +46,15 @@ const HomeView = React.memo(({
                         </div>
                     </div>
 
-                    <div className="absolute -top-12 -right-6 z-10 animate-bounce-slow hidden md:block">
-                        <img
-                            src="https://pngfile.net/files/preview/960x960/11741189725reo9wbrtum5xxfbhubjnxavgk71sl6ptkgksc801wvj0l5pjgdch8arnleln7oqh0kzvi0wrniegc642iks8woshwo14pifdaq67.png"
-                            alt="AI Mascot"
-                            className="w-40 h-auto drop-shadow-2xl"
-                            style={{ transform: 'scaleX(-1)' }}
-                        />
+                    <div className="absolute -top-12 -right-6 z-10 hidden md:block group cursor-pointer transition-transform hover:-translate-y-2 duration-300">
+                        <a href="https://www.facebook.com/trongphuc.me/" target="_blank" rel="noopener noreferrer" title="Liên hệ IT Support">
+                            <img
+                                src="https://pngfile.net/files/preview/960x960/11741189725reo9wbrtum5xxfbhubjnxavgk71sl6ptkgksc801wvj0l5pjgdch8arnleln7oqh0kzvi0wrniegc642iks8woshwo14pifdaq67.png"
+                                alt="AI Mascot"
+                                className="w-40 h-auto drop-shadow-2xl animate-bounce-slow group-hover:animate-none"
+                                style={{ transform: 'scaleX(-1)' }}
+                            />
+                        </a>
                     </div>
                 </div>
 

@@ -797,7 +797,7 @@ const AIModals: React.FC<AIModalsProps> = (props) => {
                         <Button
                             variant="danger"
                             className="w-full h-11 font-black"
-                            disabled={deleteVerifyText !== 'DELETE'}
+                            disabled={deleteVerifyText.toUpperCase() !== 'DELETE'}
                             onClick={confirmBulkDelete}
                             isLoading={loading}
                             isDarkTheme={isDarkTheme}

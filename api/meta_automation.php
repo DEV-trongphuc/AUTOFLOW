@@ -116,6 +116,12 @@ try {
             $startTime = $input['start_time'] ?? '00:00:00';
             $endTime = $input['end_time'] ?? '23:59:59';
             $activeDays = $input['active_days'] ?? '0,1,2,3,4,5,6';
+            if (strpos($activeDays, '{') === 0) {
+                $test = json_decode($activeDays, true);
+                if (json_last_error() !== JSON_ERROR_NONE || !is_array($test)) {
+                    jsonResponse(false, null, 'Invalid structure for active_days');
+                }
+            }
             $priorityOverride = $input['priority_override'] ?? 0;
             $holidayStartAt = !empty($input['holiday_start_at']) ? $input['holiday_start_at'] : null;
             $holidayEndAt = !empty($input['holiday_end_at']) ? $input['holiday_end_at'] : null;

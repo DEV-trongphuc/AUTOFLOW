@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useEffect, useState, useMemo } from 'react';
 import { api } from '../../services/storageAdapter';
 import {
@@ -354,12 +354,18 @@ const MetaCustomers: React.FC = () => {
                                                 <div className="flex items-center">
                                                     <div className="relative mr-3">
                                                         <div className="h-10 w-10 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 group-hover:from-[#fff4e0] group-hover:to-[#ffe8cc] transition-all shadow-sm">
-                                                            {sub.avatar || sub.profile_pic ? (
-                                                                <img src={sub.avatar || sub.profile_pic} alt="" className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                <div className="w-full h-full flex items-center justify-center text-slate-600 group-hover:text-[#ca7900] text-[13px] font-bold">
-                                                                    {getInitials(sub.name || sub.display_name || 'Facebook User')}
-                                                                </div>
+                                                            <div className="w-full h-full flex items-center justify-center text-slate-600 group-hover:text-[#ca7900] text-[13px] font-bold uppercase">
+                                                                {getInitials(sub.name || sub.display_name || 'Facebook User')}
+                                                            </div>
+                                                            {(sub.avatar || sub.profile_pic) && (
+                                                                <img 
+                                                                    src={sub.avatar || sub.profile_pic} 
+                                                                    alt="" 
+                                                                    className="absolute inset-0 w-full h-full object-cover bg-white" 
+                                                                    onError={(e) => {
+                                                                        (e.currentTarget as HTMLImageElement).style.display = 'none';
+                                                                    }}
+                                                                />
                                                             )}
                                                         </div>
                                                     </div>
@@ -517,11 +523,17 @@ const MetaCustomers: React.FC = () => {
 
                             <div className="relative z-10">
                                 <div className="flex items-start justify-between mb-8">
-                                    <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-slate-50 overflow-hidden flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
-                                        {page.avatar_url ? (
-                                            <img src={page.avatar_url} alt="" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <Facebook className="w-6 h-6" />
+                                    <div className="relative w-12 h-12 bg-[#fff4e0] rounded-2xl shadow-sm border border-[#ffe8cc] overflow-hidden flex items-center justify-center text-[#ffa900] group-hover:scale-110 transition-transform font-black text-2xl uppercase shrink-0">
+                                        {page.page_name || page.name ? (page.page_name || page.name).charAt(0) : 'F'}
+                                        {page.avatar_url && (
+                                            <img
+                                                src={page.avatar_url}
+                                                alt=""
+                                                className="absolute inset-0 w-full h-full object-cover bg-white"
+                                                onError={(e) => {
+                                                    (e.currentTarget as HTMLImageElement).style.display = 'none';
+                                                }}
+                                            />
                                         )}
                                     </div>
                                     <span className="text-[9px] font-black px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full border border-blue-100/50 uppercase tracking-widest flex items-center gap-1.5">

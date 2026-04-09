@@ -733,7 +733,7 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
                                                 {(() => {
                                                     const filteredJourneyEvents = visitorEvents.filter(ev => {
                                                         // Filter out 0% scroll events (redundant)
-                                                        if (ev.type === 'scroll' && (ev.target_text === '0' || ev.target_text === 0)) return false;
+                                                        if (ev.type === 'scroll' && (ev.target === '0' || ev.target === 0 || ev.target_text === '0' || ev.target_text === 0)) return false;
 
                                                         if (journeySubTab === 'all') return ev.type !== 'ping';
                                                         if (journeySubTab === 'other') return !['pageview', 'click', 'canvas_click', 'identify'].includes(ev.type) && ev.type !== 'ping';

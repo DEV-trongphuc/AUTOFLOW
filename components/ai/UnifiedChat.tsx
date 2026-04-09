@@ -524,8 +524,13 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
     }, []); // Run once on mount
 
     // Separate effect for page changes (không clear conversations)
+    const isFirstPageEffect = useRef(true);
     useEffect(() => {
-        if (propertyId && page > 1) {
+        if (propertyId) {
+            if (isFirstPageEffect.current) {
+                isFirstPageEffect.current = false;
+                return;
+            }
             fetchConversations();
         }
     }, [page]);

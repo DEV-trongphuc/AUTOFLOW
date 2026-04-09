@@ -1546,12 +1546,16 @@ Lịch sử hoạt động:
     }, [docs]);
 
     const onToggleSelect = React.useCallback((id: string) => {
-        const targetDoc = docs.find(d => d.id === id);
-        const childrenIds = (targetDoc?.source_type === 'folder')
-            ? docs.filter(d => d.parent_id === id).map(d => d.id)
-            : [];
+        const getAllDescendantIds = (parentId: string): string[] => {
+            const children = docs.filter(d => d.parent_id === parentId).map(d => d.id);
+            let descendants = [...children];
+            for (const childId of children) {
+                descendants = [...descendants, ...getAllDescendantIds(childId)];
+            }
+            return descendants;
+        };
 
-        const allToToggle = [id, ...childrenIds];
+        const allToToggle = [id, ...getAllDescendantIds(id)];
 
         setSelectedIds(prev => {
             const newSet = new Set(prev);
@@ -1591,11 +1595,8 @@ Lịch sử hoạt động:
     }, [selectedIds, docs]);
 
     const handleFinalBulkDelete = React.useCallback(async () => {
-        const currentAI = [...properties, ...chatbots].find(p => p.id === selectedProperty);
-        const currentAIName = currentAI?.name || '';
-
-        if (deleteVerifyText !== currentAIName) {
-            toast.error('Tên AI Chatbot không kh?p. Vui lòng ki?m tra l?i.');
+        if (deleteVerifyText.toUpperCase() !== 'DELETE') {
+            toast.error('Vui lòng nhập đúng chữ DELETE để xác nhận.');
             return;
         }
 

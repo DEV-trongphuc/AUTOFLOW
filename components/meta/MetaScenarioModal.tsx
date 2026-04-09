@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Link, Phone, Globe, MessageCircle, MessageSquare, Star, Zap, Calendar, Smile, ChevronUp, ChevronDown, AlertCircle, Sparkles, Clock, Info, Bot, UploadCloud, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -169,7 +169,12 @@ const MetaScenarioModal: React.FC<MetaScenarioModalProps> = ({ scenario, onClose
             return;
         }
 
-        const days = formData.active_days.split(',').filter(d => d !== '');
+        let currentDaysStr = formData.active_days;
+        if (currentDaysStr.startsWith('{')) {
+            currentDaysStr = "1,2,3,4,5,6,0";
+        }
+
+        const days = currentDaysStr.split(',').filter(d => d !== '');
         let newDays;
         if (days.includes(day)) {
             newDays = days.filter(d => d !== day);
@@ -320,6 +325,8 @@ const MetaScenarioModal: React.FC<MetaScenarioModalProps> = ({ scenario, onClose
         const payload = { ...formData };
         if (isPerDay) {
             payload.active_days = JSON.stringify(perDaySchedule);
+        } else if (payload.active_days.startsWith('{')) {
+            payload.active_days = "1,2,3,4,5,6,0";
         }
         onSave(payload);
     };
@@ -594,9 +601,18 @@ const MetaScenarioModal: React.FC<MetaScenarioModalProps> = ({ scenario, onClose
                                                             if (newVal && Object.keys(perDaySchedule).length === 0) {
                                                                 // Initialize from current daily
                                                                 const initial: any = {};
-                                                                formData.active_days.split(',').forEach(d => {
-                                                                    if (d) initial[d] = { start: formData.start_time, end: formData.end_time };
-                                                                });
+                                                                if (formData.active_days.startsWith('{')) {
+                                                                    try {
+                                                                        const parsed = JSON.parse(formData.active_days);
+                                                                        Object.assign(initial, parsed);
+                                                                    } catch (e) {
+                                                                        // Fallback if parse fails
+                                                                    }
+                                                                } else {
+                                                                    formData.active_days.split(',').forEach(d => {
+                                                                        if (d) initial[d] = { start: formData.start_time, end: formData.end_time };
+                                                                    });
+                                                                }
                                                                 setPerDaySchedule(initial);
                                                             }
                                                         }}

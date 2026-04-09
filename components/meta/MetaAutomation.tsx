@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Plus, MessageSquare, Star, Zap, Trash2, Edit2, Play, Pause, Search, BarChart, Info, Bot, Calendar, ChevronDown } from 'lucide-react';
 import MetaScenarioModal from './MetaScenarioModal';
@@ -184,13 +184,19 @@ const MetaAutomation: React.FC = () => {
                         className="w-full flex items-center justify-between bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-4 py-2.5 font-bold hover:bg-slate-100 transition-colors"
                     >
                         <div className="flex items-center gap-3">
-                            {selectedConfig?.avatar_url ? (
-                                <img src={selectedConfig.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover border border-slate-200" />
-                            ) : (
-                                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-[10px]">
-                                    {selectedConfig?.page_name?.charAt(0) || 'P'}
-                                </div>
-                            )}
+                            <div className="relative w-6 h-6 rounded-full overflow-hidden border border-[#ffe8cc] bg-[#fff4e0] flex items-center justify-center text-[#ffa900] font-black text-[10px] shrink-0">
+                                {selectedConfig?.page_name ? selectedConfig.page_name.charAt(0) : 'P'}
+                                {selectedConfig?.avatar_url && (
+                                    <img 
+                                        src={selectedConfig.avatar_url} 
+                                        alt="" 
+                                        className="absolute inset-0 w-full h-full object-cover bg-white" 
+                                        onError={(e) => {
+                                            (e.currentTarget as HTMLImageElement).style.display = 'none';
+                                        }}
+                                    />
+                                )}
+                            </div>
                             <span className="truncate max-w-[160px]">{selectedConfig?.page_name || 'Chọn Fanpage'}</span>
                         </div>
                         <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
@@ -216,13 +222,19 @@ const MetaAutomation: React.FC = () => {
                                                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                                 }`}
                                         >
-                                            {c.avatar_url ? (
-                                                <img src={c.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border border-slate-200" />
-                                            ) : (
-                                                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-xs border border-slate-200">
-                                                    {c.page_name.charAt(0)}
-                                                </div>
-                                            )}
+                                            <div className="relative w-8 h-8 rounded-full overflow-hidden border border-[#ffe8cc] bg-[#fff4e0] flex items-center justify-center text-[#ffa900] font-black text-xs shrink-0">
+                                                {c.page_name ? c.page_name.charAt(0) : 'F'}
+                                                {c.avatar_url && (
+                                                    <img 
+                                                        src={c.avatar_url} 
+                                                        alt="" 
+                                                        className="absolute inset-0 w-full h-full object-cover bg-white" 
+                                                        onError={(e) => {
+                                                            (e.currentTarget as HTMLImageElement).style.display = 'none';
+                                                        }}
+                                                    />
+                                                )}
+                                            </div>
                                             <div className="text-left">
                                                 <div className="font-bold truncate">{c.page_name}</div>
                                                 <div className="text-[10px] text-slate-400">ID: {c.id.substring(0, 8)}...</div>

@@ -27,7 +27,7 @@ interface GlobalWorkspaceViewProps {
     setSelectedGlobalDocs: React.Dispatch<React.SetStateAction<string[]>>;
     setIsGlobalSelectMode: (is: boolean) => void;
     isGlobalSelectMode: boolean;
-    handleDeleteFromDb: (ids: number[]) => void;
+    handleDeleteFromDb: (ids: any[]) => void;
     setWorkspaceDocs: React.Dispatch<React.SetStateAction<FileAttachment[]>>;
     chatAssets: { files: FileAttachment[], images: FileAttachment[] };
     setDeletedGalleryImages: React.Dispatch<React.SetStateAction<string[]>>;
@@ -255,31 +255,33 @@ const GlobalWorkspaceView = React.memo(({
                                         Make Global
                                     </button>
                                 )}
-                                <button
-                                    onClick={async () => {
-                                        const toDeleteNames = selectedGlobalDocs;
-                                        const toDeleteIds = globalDbAssets
-                                            .filter(a => toDeleteNames.includes(a.name))
-                                            .map(a => a.id)
-                                            .filter(id => typeof id === 'number') as number[];
+                                    <button
+                                        onClick={async () => {
 
-                                        if (toDeleteIds.length > 0) {
-                                            handleDeleteFromDb(toDeleteIds);
-                                        } else {
-                                            setWorkspaceDocs(prev => prev.filter(d => !toDeleteNames.includes(d.name)));
-                                        }
+                                            const toDeleteNames = selectedGlobalDocs;
+                                            const toDeleteIds = globalDbAssets
+                                                .filter(a => toDeleteNames.includes(a.name))
+                                                .map(a => a.id)
+                                                .filter(id => id != null && !String(id).startsWith('training_'));
 
-                                        const chatImgUrls = chatAssets.images
-                                            .filter(img => toDeleteNames.includes(img.name))
-                                            .map(img => img.previewUrl!)
-                                            .filter(Boolean);
-                                        if (chatImgUrls.length > 0) {
-                                            setDeletedGalleryImages(prev => [...prev, ...chatImgUrls]);
-                                        }
+                                            if (toDeleteIds.length > 0) {
+                                                handleDeleteFromDb(toDeleteIds);
+                                            } else {
+                                                setWorkspaceDocs(prev => prev.filter(d => !toDeleteNames.includes(d.name)));
+                                                setIsGlobalSelectMode(false);
+                                            }
 
-                                        setSelectedGlobalDocs([]);
-                                        setIsGlobalSelectMode(false);
-                                    }}
+                                            const chatImgUrls = chatAssets.images
+                                                .filter(img => toDeleteNames.includes(img.name))
+                                                .map(img => img.previewUrl!)
+                                                .filter(Boolean);
+                                            if (chatImgUrls.length > 0) {
+                                                setDeletedGalleryImages(prev => [...prev, ...chatImgUrls]);
+                                            }
+
+                                            setSelectedGlobalDocs([]);
+                                            setIsGlobalSelectMode(false);
+                                        }}
                                     disabled={selectedGlobalDocs.length === 0}
                                     className="h-10 px-5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-2 active:scale-95 shadow-sm"
                                 >
@@ -413,7 +415,9 @@ const GlobalWorkspaceView = React.memo(({
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                if (typeof doc.id === 'number') {
+                                                                
+                                                                const idStr = String(doc.id);
+                                                                if (doc.id != null && !idStr.startsWith('training_')) {
                                                                     handleDeleteFromDb([doc.id]);
                                                                 } else {
                                                                     setWorkspaceDocs(prev => prev.filter(d => d.name !== doc.name));

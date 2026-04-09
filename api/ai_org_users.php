@@ -107,22 +107,23 @@ if ($method === 'GET' && ($action === 'list' || $action === '')) {
 
     try {
         if ($categoryId) {
-            // ORG ISOLATION: filter by admin_id (org scope) in addition to category
+            // ORG ISOLATION: Return all users in the org (access is org-wide)
             if ($orgScopeAdminId) {
                 $stmt = $pdo->prepare("
-                    SELECT u.id, u.email, u.full_name, u.gender, u.role, u.status, u.status_reason, u.status_expiry, u.permissions, u.last_login, u.created_at 
+                    SELECT u.id, u.email, u.full_name, u.gender, u.role, u.status, u.status_reason, u.status_expiry, u.permissions, u.last_login, u.created_at,
+                    IF(uc.id IS NOT NULL, 1, 0) as in_category
                     FROM ai_org_users u
-                    JOIN ai_org_user_categories uc ON u.id = uc.user_id
-                    WHERE uc.category_id = ? AND (u.admin_id = ? OR u.id = ?)
+                    LEFT JOIN ai_org_user_categories uc ON u.id = uc.user_id AND uc.category_id = ?
+                    WHERE u.admin_id = ? OR u.id = ?
                     ORDER BY u.created_at DESC
                 ");
                 $stmt->execute([$categoryId, $orgScopeAdminId, $orgScopeAdminId]);
             } else {
                 $stmt = $pdo->prepare("
-                    SELECT u.id, u.email, u.full_name, u.gender, u.role, u.status, u.status_reason, u.status_expiry, u.permissions, u.last_login, u.created_at 
+                    SELECT u.id, u.email, u.full_name, u.gender, u.role, u.status, u.status_reason, u.status_expiry, u.permissions, u.last_login, u.created_at,
+                    IF(uc.id IS NOT NULL, 1, 0) as in_category
                     FROM ai_org_users u
-                    JOIN ai_org_user_categories uc ON u.id = uc.user_id
-                    WHERE uc.category_id = ?
+                    LEFT JOIN ai_org_user_categories uc ON u.id = uc.user_id AND uc.category_id = ?
                     ORDER BY u.created_at DESC
                 ");
                 $stmt->execute([$categoryId]);

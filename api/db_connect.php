@@ -62,7 +62,7 @@ $detectedUrl = rtrim("$protocol://$httpHost$apiDir", '/');
 // [OPTIMIZED] Dynamic API URL Detection with manual override support
 if (defined('ENV_API_URL')) {
     define('API_BASE_URL', ENV_API_URL);
-} elseif (isset($_SERVER['HTTP_HOST']) && (strpos($_SERVER['HTTP_HOST'], 'localhost') !== false || strpos($_SERVER['HTTP_HOST'], '127.0.0.1') !== false)) {
+} elseif (isset($_SERVER['HTTP_HOST'])) {
     define('API_BASE_URL', $detectedUrl);
 } else {
     // Production default (can be overridden by a config file or env var)

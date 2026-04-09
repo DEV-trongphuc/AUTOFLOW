@@ -1,4 +1,4 @@
-﻿
+
 import * as React from 'react';
 import { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
 import { FileAttachment, Message, ChatbotInfo } from '../types';
@@ -199,7 +199,7 @@ export const ChatPageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [isEnhancing, setIsEnhancing] = useState(false);
     const [isImageSettingsOpen, setIsImageSettingsOpen] = useState(false);
     const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-    const [imageProvider, setImageProvider] = useState('gemini-2.5-flash-lite-image');
+    const [imageProvider, setImageProvider] = useState(() => localStorage.getItem('imageProvider') || 'gemini-3-pro-image-preview');
     const [isEditingImage, setIsEditingImage] = useState(false);
     const [imageStyle, setImageStyle] = useState(() => localStorage.getItem('imageStyle') || 'professional');
     const [imageSize, setImageSize] = useState(() => localStorage.getItem('imageSize') || '1K');

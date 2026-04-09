@@ -119,7 +119,7 @@ export function useWorkspace(currentUser: any, activeBot: ChatbotInfo | null, se
         }
     }, [activeBot?.id, currentUser]);
 
-    const handleDeleteFromDb = useCallback(async (ids: number[]) => {
+    const handleDeleteFromDb = useCallback(async (ids: any[]) => {
         const tid = toast.loading('Đang xóa...');
         try {
             const res = await api.post<any>('ai_org_chatbot', {

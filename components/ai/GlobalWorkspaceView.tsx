@@ -28,7 +28,7 @@ interface GlobalWorkspaceViewProps {
     setSelectedGlobalDocs: React.Dispatch<React.SetStateAction<string[]>>;
     setIsGlobalSelectMode: (is: boolean) => void;
     isGlobalSelectMode: boolean;
-    handleDeleteFromDb: (ids: number[]) => void;
+    handleDeleteFromDb: (ids: any[]) => void;
     setWorkspaceDocs: React.Dispatch<React.SetStateAction<FileAttachment[]>>;
     chatAssets: { files: FileAttachment[], images: FileAttachment[] };
     setDeletedGalleryImages: React.Dispatch<React.SetStateAction<string[]>>;
@@ -211,11 +211,12 @@ const GlobalWorkspaceView = React.memo(({
 
                                     <button
                                         onClick={async () => {
+
                                             const toDeleteNames = selectedGlobalDocs;
                                             const toDeleteIds = globalDbAssets
                                                 .filter(a => toDeleteNames.includes(a.name))
                                                 .map(a => a.id)
-                                                .filter(id => typeof id === 'number') as number[];
+                                                .filter(id => id != null && !String(id).startsWith('training_'));
 
                                             if (toDeleteIds.length > 0) {
                                                 handleDeleteFromDb(toDeleteIds);
@@ -468,7 +469,9 @@ const GlobalWorkspaceView = React.memo(({
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                if (typeof doc.id === 'number') {
+                                                                
+                                                                const idStr = String(doc.id);
+                                                                if (doc.id != null && !idStr.startsWith('training_')) {
                                                                     handleDeleteFromDb([doc.id]);
                                                                 } else {
                                                                     setWorkspaceDocs(prev => prev.filter(d => d.name !== doc.name));
