@@ -299,7 +299,7 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
 
                                     <div className="flex justify-between items-start relative z-10">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-16 h-16 shrink-0 transition-transform duration-500 group-hover:scale-110">
+                                            <div className="w-12 h-12 shrink-0 transition-transform duration-500 group-hover:scale-110">
                                                 <img src="/imgs/ICON.png" className="w-full h-full object-contain" alt="" />
                                             </div>
                                             <div className="min-w-0">
@@ -553,7 +553,7 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
 
                                                 <div className="flex justify-between items-start relative z-10">
                                                     <div className="flex items-center gap-4">
-                                                        <div className="relative w-16 h-16 shrink-0 transition-transform duration-500 group-hover:scale-110">
+                                                        <div className="relative w-12 h-12 shrink-0 transition-transform duration-500 group-hover:scale-110">
                                                             <img src="/imgs/ICON.png" className="w-full h-full object-contain" alt="" />
                                                             {activePropertyId === c.id && (
                                                                 <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-[3px] border-white rounded-full shadow-md z-30 flex items-center justify-center">
