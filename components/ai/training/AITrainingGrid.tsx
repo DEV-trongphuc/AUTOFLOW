@@ -299,11 +299,8 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
 
                                     <div className="flex justify-between items-start relative z-10">
                                         <div className="flex items-center gap-4">
-                                            <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br flex items-center justify-center text-white shadow-md group-hover:rotate-6 transition-transform ${p.ai_enabled
-                                                ? 'from-brand to-brand-dark shadow-brand/20'
-                                                : (isDarkTheme ? 'from-slate-700 to-slate-800 shadow-slate-900' : 'from-slate-400 to-slate-500 shadow-slate-200')
-                                                }`}>
-                                                <img src="/imgs/ICON.png" className="w-full h-full object-contain p-2" alt="" />
+                                            <div className="w-16 h-16 shrink-0 transition-transform duration-500 group-hover:scale-110">
+                                                <img src="/imgs/ICON.png" className="w-full h-full object-contain" alt="" />
                                             </div>
                                             <div className="min-w-0">
                                                 <h4 className={`text-base font-bold leading-tight truncate pr-2 ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`} title={p.name}>{p.name}</h4>
@@ -556,8 +553,8 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
 
                                                 <div className="flex justify-between items-start relative z-10">
                                                     <div className="flex items-center gap-4">
-                                                        <div className={`relative w-12 h-12 rounded-2xl bg-gradient-to-br flex items-center justify-center text-white shadow-sm group-hover:rotate-6 transition-transform ${activePropertyId === c.id || c.ai_enabled ? 'from-brand shadow-brand/10' : (isDarkTheme ? 'from-slate-700 to-slate-800 shadow-slate-900' : 'from-slate-400 to-slate-500 shadow-slate-100')}`}>
-                                                            <img src="/imgs/ICON.png" className="w-full h-full object-contain p-2" alt="" />
+                                                        <div className="relative w-16 h-16 shrink-0 transition-transform duration-500 group-hover:scale-110">
+                                                            <img src="/imgs/ICON.png" className="w-full h-full object-contain" alt="" />
                                                             {activePropertyId === c.id && (
                                                                 <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-[3px] border-white rounded-full shadow-md z-30 flex items-center justify-center">
                                                                     <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
