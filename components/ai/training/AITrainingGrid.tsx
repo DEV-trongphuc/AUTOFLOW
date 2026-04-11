@@ -295,7 +295,7 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
                             ) : filteredProperties.map(p => (
                                 <div key={p.id} className={`group p-6 rounded-[32px] border transition-all flex flex-col justify-between gap-6 relative overflow-hidden ${isDarkTheme ? 'bg-slate-900 border-slate-800 hover:border-brand/30 shadow-inner shadow-slate-950/20' : 'bg-white border-slate-100 shadow-sm hover:shadow-xl hover:border-brand/30'}`}>
                                     <div className={`absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform ${p.ai_enabled ? 'text-brand' : (isDarkTheme ? 'text-slate-400' : 'text-slate-500')
-                                        }`}><Bot className="w-32 h-32" /></div>
+                                        }`}><img src="/imgs/ICON.png" className="w-32 h-32 object-contain grayscale brightness-0" alt="" /></div>
 
                                     <div className="flex justify-between items-start relative z-10">
                                         <div className="flex items-center gap-4">
@@ -303,7 +303,7 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
                                                 ? 'from-brand to-brand-dark shadow-brand/20'
                                                 : (isDarkTheme ? 'from-slate-700 to-slate-800 shadow-slate-900' : 'from-slate-400 to-slate-500 shadow-slate-200')
                                                 }`}>
-                                                <Bot className="w-6 h-6" />
+                                                <img src="/imgs/ICON.png" className="w-full h-full object-contain p-2" alt="" />
                                             </div>
                                             <div className="min-w-0">
                                                 <h4 className={`text-base font-bold leading-tight truncate pr-2 ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`} title={p.name}>{p.name}</h4>
@@ -552,12 +552,12 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 </div>
-                                                <div className={`absolute top-0 right-0 p-8 opacity-[0.03] transition-transform group-hover:scale-125 ${isDarkTheme ? 'text-brand' : 'text-emerald-600'}`}><Bot className="w-32 h-32" /></div>
+                                                <div className={`absolute top-0 right-0 p-8 opacity-[0.03] transition-transform group-hover:scale-125 ${isDarkTheme ? 'text-brand' : 'text-emerald-600'}`}><img src="/imgs/ICON.png" className="w-32 h-32 object-contain grayscale brightness-0" alt="" /></div>
 
                                                 <div className="flex justify-between items-start relative z-10">
                                                     <div className="flex items-center gap-4">
                                                         <div className={`relative w-12 h-12 rounded-2xl bg-gradient-to-br flex items-center justify-center text-white shadow-sm group-hover:rotate-6 transition-transform ${activePropertyId === c.id || c.ai_enabled ? 'from-brand shadow-brand/10' : (isDarkTheme ? 'from-slate-700 to-slate-800 shadow-slate-900' : 'from-slate-400 to-slate-500 shadow-slate-100')}`}>
-                                                            <Bot className="w-6 h-6" />
+                                                            <img src="/imgs/ICON.png" className="w-full h-full object-contain p-2" alt="" />
                                                             {activePropertyId === c.id && (
                                                                 <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-[3px] border-white rounded-full shadow-md z-30 flex items-center justify-center">
                                                                     <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
