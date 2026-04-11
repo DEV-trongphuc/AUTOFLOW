@@ -132,7 +132,8 @@ const renderContent = (content: string, role: 'user' | 'assistant', onActionClic
                 );
             } else if (fileExtMatch) {
                 const ext = fileExtMatch[1].toLowerCase();
-                const fileName = label || url.split('/').pop() || 'Tài liệu';
+                const fileName = label || url.split('/').pop() || 'Tỉ lệ'
+
 
                 parts.push(
                     <a
@@ -762,7 +763,7 @@ const AIChatWidget: React.FC<AIChatWidgetProps> = ({
                                                     }
 
                                                     const formContainer = (document.getElementById(`email-${msg.id}`)?.closest('.animate-in'));
-                                                    if (formContainer) formContainer.innerHTML = '<div class="py-2 text-[13px] text-emerald-600 font-bold flex items-center gap-2 mf-ignore-tracking"><div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center mf-ignore-tracking"><svg class="w-4 h-4 mf-ignore-tracking" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div> Đã gửi thông tin thành công!</div>';
+                                                    if (formContainer) formContainer.innerHTML = '<div class="py-2 text-[13px] text-emerald-600 font-bold flex items-center gap-2 mf-ignore-tracking"><div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center mf-ignore-tracking"><svg class="w-4 h-4 mf-ignore-tracking" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div> đã gửi thông tin thành công!</div>';
                                                 }}
                                                 className="w-full py-3.5 bg-orange-500 hover:bg-orange-600 active:scale-[0.97] text-white text-[13px] font-bold rounded-xl transition-all shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2.5 mf-ignore-tracking"
                                             >

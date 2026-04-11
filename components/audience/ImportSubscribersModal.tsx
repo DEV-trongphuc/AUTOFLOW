@@ -316,7 +316,7 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
                         </div>
                         <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100 text-center">
                             <p className="text-2xl font-black text-orange-500">{stats.missingPhone || 0}</p>
-                            <p className="text-[10px] font-bold text-orange-700 uppercase tracking-widest">Thiếu SĐT (ZNS sẽ bỏ qua)</p>
+                            <p className="text-[10px] font-bold text-orange-700 uppercase tracking-widest">Thiếu SĐT (ZNS sẽ Bỏ qua)</p>
                         </div>
                     </div>
 

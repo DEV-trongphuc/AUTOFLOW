@@ -311,7 +311,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                             <div className="space-y-4">
                                 <VisualMeasure label="Chiều rộng cột" value={getStyle('width')} onChange={(v) => updateStyle({ width: v })} max={600} canAuto />
                                 <div className="space-y-2">
-                                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Căn dọc</label>
+                                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Còn dọc</label>
                                     <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
                                         {[{ v: 'top', label: 'Trên' }, { v: 'middle', label: 'Giữa' }, { v: 'bottom', label: 'Dưới' }].map(opt => (
                                             <button key={opt.v} onClick={() => updateStyle({ verticalAlign: opt.v as any })} className={`flex-1 py-1.5 text-[9px] font-bold uppercase rounded-lg transition-all ${(getStyle('verticalAlign') || 'top') === opt.v ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}>{opt.label}</button>
@@ -850,7 +850,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                     </div>
                                 </Accordion>
 
-                                <Accordion title="Độ rộng &amp; Căn chỉnh cột" icon={LucideIcons.Columns}>
+                                <Accordion title="Độ rộng &amp; Còn chỉnh cột" icon={LucideIcons.Columns}>
                                     <div className="space-y-2">
                                         {Array.from({ length: getStyle('tableCols') ?? 4 }, (_, ci) => {
                                             const widths: string[] = getStyle('tableColWidths') || [];

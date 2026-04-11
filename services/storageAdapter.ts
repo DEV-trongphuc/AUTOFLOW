@@ -137,7 +137,20 @@ async function request<T>(
 ): Promise<ApiResponse<T>> {
   if (method === 'GET') {
     const cached = apiCache[endpoint];
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    const isStaticEndpoint = typeof endpoint === 'string' && (endpoint.startsWith('tags') || endpoint.startsWith('segments') || endpoint.startsWith('flows') || endpoint.startsWith('integrations') || endpoint.startsWith('lists'));
+    
+    // [PERF] Tăng TTL cho dữ liệu tĩnh lên 30s, các dữ liệu khác 5s
+    const ttl = isStaticEndpoint ? 30000 : 5000;
+    
+    // Bỏ qua Bộ nhớ đệm nếu Endpoint chứa các tham số Bộ Lọc CÓ GIÁ TRỊ (search, sort khác newest, v.v)
+    const hasActiveFilters = 
+      /search=[^&]+/.test(endpoint) ||
+      (/sort=[^&]+/.test(endpoint) && !endpoint.includes('sort=newest')) || 
+      (/status=[^&]+/.test(endpoint) && !endpoint.includes('status=all')) ||
+      /tag=[^&]+/.test(endpoint);
+      
+    if (!hasActiveFilters && cached && Date.now() - cached.timestamp < ttl) {
+      if (isLocal) console.log(`[⚡ API CACHE] ${endpoint} - Served instantly`);
       return cached.data;
     }
   } else {
@@ -175,12 +188,14 @@ async function request<T>(
 
       const url = withAdminToken(`${baseUrl}/${phpFile}.php${finalQueryParams}`);
 
-      if (isLocal) {
-        console.log(`[API REQUEST] ${method} ${url}`);
-      }
-
       // ── First attempt ──────────────────────────────────────────────────────
+      const startTime = performance.now();
       let response = await executeRequest(url, method, body, options?.signal);
+      const latency = ((performance.now() - startTime) / 1000).toFixed(2);
+
+      if (isLocal) {
+        console.log(`[⚡ API ${method}] ${url} - Took ${latency}s`);
+      }
 
       // ── Auto-retry on 401: token expired mid-flight ───────────────────────
       if (response.status === 401) {
@@ -279,10 +294,19 @@ async function request<T>(
   }
 }
 
+export const clearApiCache = (prefix?: string) => {
+  if (prefix) {
+    Object.keys(apiCache).forEach(k => { if (k.startsWith(prefix)) delete apiCache[k]; });
+  } else {
+    Object.keys(apiCache).forEach(k => delete apiCache[k]);
+  }
+};
+
 export const api = {
   get: <T>(endpoint: string) => request<T>(endpoint, 'GET'),
   post: <T>(endpoint: string, data: any, options?: { signal?: AbortSignal }) => request<T>(endpoint, 'POST', data, options),
   put: <T>(endpoint: string, data: any) => request<T>(endpoint, 'PUT', data),
   delete: <T>(endpoint: string, data?: any) => request<T>(endpoint, 'DELETE', data),
-  baseUrl: DEFAULT_API_URL
+  baseUrl: DEFAULT_API_URL,
+  clearCache: clearApiCache
 };

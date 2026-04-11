@@ -187,7 +187,7 @@ const LinkClicksTab: React.FC<LinkClicksTabProps> = ({ type, id, stepId, initial
                             <MousePointerClick className="w-6 h-6" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Tổng lượt Click</p>
+                            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Tỉ lệ Click</p>
                             <h4 className="text-2xl font-black text-slate-800 tracking-tight">{totalAllClicks.toLocaleString()}</h4>
                         </div>
                     </div>
@@ -294,7 +294,7 @@ const LinkClicksTab: React.FC<LinkClicksTabProps> = ({ type, id, stepId, initial
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                                     <input
                                         type="text"
-                                        placeholder="Tìm kiếm khách hàng..."
+                                        placeholder="Tìm kiếm Khách hàng..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-sm"

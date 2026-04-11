@@ -251,7 +251,7 @@ const CleanupModal: React.FC<CleanupModalProps> = ({ target, onClose: _onClose, 
 
     const handleCleanup = async () => {
         if (activeTab === 'junk' && targetStatuses.length === 0) {
-            toast.error('Vui lòng chọn ít nhất một loại trạng thái');
+            toast.error('Vui lòng chọn ít nhất một loại Trạng thái');
             return;
         }
 
@@ -394,7 +394,8 @@ const CleanupModal: React.FC<CleanupModalProps> = ({ target, onClose: _onClose, 
                                     />
                                     <CheckboxCard
                                         title="Unsubscribed"
-                                        description="Đã hủy đăng ký."
+                                        description="Đã Hủy đăng ký"
+
                                         checked={targetStatuses.includes('unsubscribed')}
                                         onChange={() => {
                                             if (targetStatuses.includes('unsubscribed')) setTargetStatuses(targetStatuses.filter(s => s !== 'unsubscribed'));

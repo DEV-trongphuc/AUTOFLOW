@@ -418,7 +418,7 @@ const SegmentBuilderModal: React.FC<SegmentBuilderModalProps> = ({ isOpen, onClo
                         </div>
                         <div>
                             <h2 className="text-lg font-bold text-slate-800 tracking-tight">{initialSegment ? 'Chỉnh sửa Phân Khúc' : 'Tạo Phân Khúc Mới'}</h2>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bộ lọc dữ liệu khách hàng</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bộ lọc dữ liệu Khách hàng</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all">

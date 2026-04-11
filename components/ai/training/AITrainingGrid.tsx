@@ -315,7 +315,8 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
                                     <div className="space-y-4 relative z-10">
                                         <div className={`flex items-center justify-between p-3 rounded-2xl border transition-colors ${isDarkTheme ? 'bg-slate-800/50 border-slate-700 group-hover:bg-brand/10 group-hover:border-brand/20' : 'bg-slate-50 border-slate-100 group-hover:bg-brand/5 group-hover:border-brand/10'}`}>
                                             <div className="flex flex-col">
-                                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Tài liệu</span>
+                                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Tỉ lệ</span>
+
                                                 <span className={`text-sm font-black ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>{(p.stats?.docs_count || 0).toLocaleString()} <span className="text-[10px] font-medium text-slate-500">docs</span></span>
                                             </div>
                                             <div className={`h-8 w-px ${isDarkTheme ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
@@ -574,7 +575,8 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
                                                 <div className="space-y-4 relative z-10">
                                                     <div style={{ backgroundColor: isDarkTheme ? '#1E293B' : 'var(--brand-surface)', borderColor: isDarkTheme ? '#334155' : 'var(--brand-border)' }} className="flex items-center justify-between p-3 rounded-2xl border transition-colors">
                                                         <div className="flex flex-col">
-                                                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Tài liệu</span>
+                                                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Tỉ lệ</span>
+
                                                             <span className={`text-sm font-black ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>{(c.stats?.docs_count || 0).toLocaleString()} <span className="text-[10px] font-medium text-slate-500">docs</span></span>
                                                         </div>
                                                         <div className={`h-8 w-px ${isDarkTheme ? 'bg-slate-700' : 'bg-slate-200'}`}></div>

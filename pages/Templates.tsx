@@ -721,7 +721,7 @@ const Templates: React.FC = () => {
                     : "Xóa nhóm mẫu này?"}
                 message={deleteConfirm.type === 'template'
                     ? (deleteConfirm.ids.length > 1 ? "Hành động này sẽ xóa vĩnh viễn các mẫu thiết kế đã chọn. Các mẫu đang được sử dụng sẽ không bị xóa." : "Hành động này sẽ xóa vĩnh viễn mẫu thiết kế. Bạn không thể khôi phục sau khi xóa.")
-                    : "Hành động này sẽ xóa nhóm. Các mẫu email trong nhóm này sẽ trở về trạng thái 'Chưa phân loại' và KHÔNG bị xóa."}
+                    : "Hành động này sẽ xóa nhóm. Các mẫu email trong nhóm này sẽ trở về Trạng thái 'Chưa phân loại' và KHÔNG bị xóa."}
                 variant="danger"
             />
 

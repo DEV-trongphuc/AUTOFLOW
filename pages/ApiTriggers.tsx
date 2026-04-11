@@ -9,9 +9,9 @@ import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 
 const DB_FIELDS_REF = [
-    { field: 'email', type: 'String', req: 'YES', desc: 'Định danh khách hàng duy nhất (Bắt buộc).' },
-    { field: 'firstName', type: 'String', req: 'No', desc: 'Tên khách hàng (First Name).' },
-    { field: 'lastName', type: 'String', req: 'No', desc: 'Họ khách hàng (Last Name).' },
+    { field: 'email', type: 'String', req: 'YES', desc: 'Định danh Khách hàng duy nhất (Bắt buộc).' },
+    { field: 'firstName', type: 'String', req: 'No', desc: 'Tên Khách hàng (First Name).' },
+    { field: 'lastName', type: 'String', req: 'No', desc: 'Họ Khách hàng (Last Name).' },
     { field: 'phoneNumber', type: 'String', req: 'No', desc: 'Số điện thoại.' },
     { field: 'gender', type: 'String', req: 'No', desc: 'Giới tính (male / female / other).' },
     { field: 'dateOfBirth', type: 'Date', req: 'No', desc: 'Ngày sinh, định dạng YYYY-MM-DD.' },
@@ -34,7 +34,7 @@ const ApiTriggers: React.FC = () => {
                 showStatus={true}
                 statusText="API Gateway Online"
                 actions={[
-                    { label: 'Tài liệu Data', icon: BookOpen, onClick: () => setShowDocs(true), primary: true }
+                    { label: 'Tỉ lệ Data', icon: BookOpen, onClick: () => setShowDocs(true), primary: true }
                 ]}
             />
 
@@ -64,7 +64,7 @@ const ApiTriggers: React.FC = () => {
                         <div>
                             <h4 className="text-sm font-bold text-blue-900 uppercase tracking-tight">Quy chuẩn trường dữ liệu</h4>
                             <p className="text-xs text-blue-700 mt-1 leading-relaxed">
-                                Khi gọi API (Purchase, Custom Event hoặc Form), bạn có thể gửi kèm các thông tin dưới đây để hệ thống tự động cập nhật vào hồ sơ khách hàng (Subscriber Profile).
+                                Khi gọi API (Purchase, Custom Event hoặc Form), bạn có thể gửi kèm các thông tin dưới đây để hệ thống tự động cập nhật vào hồ sơ Khách hàng (Subscriber Profile).
                             </p>
                         </div>
                     </div>

@@ -50,7 +50,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                             </div>
                             <div>
                                 <h3 className="text-sm font-black text-slate-800 tracking-tight">Trang Ph? Bi?n</h3>
-                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">N?i dung thu hút ngu?i dùng</p>
+                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Ná»™i dung thu hï¿½t ngu?i dï¿½ng</p>
                             </div>
                         </div>
 
@@ -58,7 +58,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                             <div className="relative flex-1">
                                 <input
                                     type="text"
-                                    placeholder="Tìm ki?m trang..."
+                                    placeholder="Tï¿½m ki?m trang..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all"
@@ -69,11 +69,11 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
 
                         <div className="hidden sm:flex items-center gap-6 text-[9px] font-semibold uppercase tracking-widest text-slate-400">
                             <div className="flex items-center gap-1.5 w-14 justify-end group cursor-pointer" onClick={() => setIsBounceInfoOpen(true)}>
-                                <span className="whitespace-nowrap group-hover:text-rose-500 transition-colors">T? l? thoát</span>
+                                <span className="whitespace-nowrap group-hover:text-rose-500 transition-colors">Tá»‰ lá»‡ thoï¿½t</span>
                                 <Info className="w-3 h-3 text-slate-300 group-hover:text-rose-500 transition-colors" />
                             </div>
-                            <span className="w-14 text-right">Th?i gian</span>
-                            <span className="w-14 text-right">Lu?t xem</span>
+                            <span className="w-14 text-right">Thá»i gian</span>
+                            <span className="w-14 text-right">LÆ°á»£t xem</span>
                         </div>
                     </div>
 
@@ -139,7 +139,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                             );
                         })}
                         {(!displayedPages || displayedPages.length === 0) && (
-                            <div className="py-20 text-center text-slate-400 text-sm italic font-medium bg-white rounded-2xl border border-slate-100">Không tìm th?y trang nào</div>
+                            <div className="py-20 text-center text-slate-400 text-sm italic font-medium bg-white rounded-2xl border border-slate-100">Khï¿½ng tï¿½m th?y trang nï¿½o</div>
                         )}
                     </div>
 
@@ -149,7 +149,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                             onClick={() => setShowAll(!showAll)}
                             className="w-full py-3 px-4 bg-white hover:bg-slate-50 border border-slate-200 hover:border-blue-300 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm font-semibold text-slate-600 hover:text-blue-600 group"
                         >
-                            <span>{showAll ? 'Thu g?n' : `Xem thêm ${filteredPages.length - 10} trang`}</span>
+                            <span>{showAll ? 'Thu g?n' : `Xem thï¿½m ${filteredPages.length - 10} trang`}</span>
                             <ChevronDown className={`w-4 h-4 transition-transform ${showAll ? 'rotate-180' : ''}`} />
                         </button>
                     )}
@@ -162,8 +162,8 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                             <MousePointer2 className="w-4 h-4" />
                         </div>
                         <div>
-                            <h3 className="text-sm font-black text-slate-800 tracking-tight">Tuong Tác</h3>
-                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Hành vi ngu?i dùng</p>
+                            <h3 className="text-sm font-black text-slate-800 tracking-tight">Tuong Tï¿½c</h3>
+                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Hï¿½nh vi ngu?i dï¿½ng</p>
                         </div>
                     </div>
 
@@ -182,7 +182,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <p className={`text-[11px] font-semibold truncate mb-0.5 ${isUnknown ? 'text-slate-300 italic' : 'text-slate-600 group-hover:text-slate-900'}`} title={event.target}>
-                                                {isUnknown ? 'Không rõ' : event.target}
+                                                {isUnknown ? 'Khï¿½ng rï¿½' : event.target}
                                             </p>
                                             <div className="flex items-center gap-2">
                                                 <span className={`text-[8px] font-bold uppercase tracking-widest transition-colors ${event.type === 'click' ? 'text-blue-500 group-hover:text-blue-600' :
@@ -193,7 +193,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                                                 </span>
                                                 {event.url && (
                                                     <>
-                                                        <span className="text-slate-300">•</span>
+                                                        <span className="text-slate-300">ï¿½</span>
                                                         <span className="text-[8px] text-slate-400 truncate max-w-[150px]" title={event.url}>
                                                             {shortenUrl(event.url)}
                                                         </span>
@@ -214,7 +214,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                             );
                         })}
                         {(!stats?.topEvents || stats.topEvents.length === 0) && (
-                            <div className="py-20 text-center text-slate-400 text-sm italic font-medium bg-white rounded-xl border border-slate-100">Chua có d? li?u</div>
+                            <div className="py-20 text-center text-slate-400 text-sm italic font-medium bg-white rounded-xl border border-slate-100">Chua cï¿½ d? li?u</div>
                         )}
                     </div>
                 </div>
@@ -245,7 +245,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                         <div className="p-2 bg-rose-50 text-rose-600 rounded-xl">
                             <Activity className="w-5 h-5" />
                         </div>
-                        <span className="text-xl font-black text-slate-800 tracking-tight">V? T? l? thoát (Bounce Rate)</span>
+                        <span className="text-xl font-black text-slate-800 tracking-tight">V? Tá»‰ lá»‡ thoï¿½t (Bounce Rate)</span>
                     </div>
                 }
                 size="xl"
@@ -256,10 +256,10 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                             <div className="p-2 bg-rose-600 text-white rounded-xl">
                                 <BookOpen className="w-5 h-5" />
                             </div>
-                            Bounce Rate là gì?
+                            Bounce Rate lï¿½ gï¿½?
                         </h4>
                         <p className="text-sm text-slate-500 leading-relaxed font-medium">
-                            Bounce rate hay T? l? thoát là ph?n tram s? lu?t truy c?p trang web ch? xem duy nh?t m?t trang và r?i di ngay l?p t?c mà không có thêm tuong tác nào khác (nhu nh?n vào link ho?c xem trang th? hai). Nó do lu?ng m?c d? tuong tác và tính h?p d?n c?a trang dích.
+                            Bounce rate hay Tá»‰ lá»‡ thoï¿½t lï¿½ ph?n tram s? lu?t truy c?p trang web ch? xem duy nh?t m?t trang vï¿½ r?i di ngay l?p t?c mï¿½ khï¿½ng cï¿½ thï¿½m tuong tï¿½c nï¿½o khï¿½c (nhu nh?n vï¿½o link ho?c xem trang th? hai). Nï¿½ do lu?ng m?c d? tuong tï¿½c vï¿½ tï¿½nh h?p d?n c?a trang dï¿½ch.
                         </p>
                     </div>
 
@@ -269,13 +269,13 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                                 <div className="w-8 h-8 bg-teal-50 text-teal-600 rounded-lg flex items-center justify-center">
                                     <TrendingUp className="w-4 h-4" />
                                 </div>
-                                T? l? bao nhiêu là t?t?
+                                Tá»‰ lá»‡ bao nhiï¿½u lï¿½ t?t?
                             </h5>
                             <p className="text-xs text-slate-500 leading-relaxed font-medium mb-4">
-                                Không có con s? "chu?n" cho m?i linh v?c. T? l? thoát ph? thu?c r?t l?n vào lo?i trang web và m?c dích c?a trang.
+                                Khï¿½ng cï¿½ con s? "chu?n" cho má»›i linh v?c. Tá»‰ lá»‡ thoï¿½t ph? thu?c r?t l?n vï¿½o lo?i trang web vï¿½ m?c dï¿½ch c?a trang.
                             </p>
                             <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl italic text-[11px] text-orange-800 font-bold">
-                                "Ví d?: M?t trang blog tr? l?i dúng câu h?i ngu?i dùng tìm ki?m có th? có t? l? thoát 90%+ nhung v?n là trang ch?t lu?ng t?t."
+                                "Vï¿½ d?: M?t trang blog tr? l?i dï¿½ng cï¿½u h?i ngu?i dï¿½ng tï¿½m ki?m cï¿½ th? cï¿½ t? l? thoï¿½t 90%+ nhung v?n lï¿½ trá»Ÿ lÆ°u?ng t?t."
                             </div>
                         </div>
 
@@ -284,14 +284,14 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                                 <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
                                     <Table className="w-4 h-4" />
                                 </div>
-                                Trung bình theo ngành
+                                Trung bï¿½nh theo ngï¿½nh
                             </h5>
                             <div className="space-y-3">
                                 {[
-                                    { label: 'Bán l? / TMĞT', range: '20% - 40%', color: 'text-teal-500' },
+                                    { label: 'Bï¿½n l? / TMï¿½T', range: '20% - 40%', color: 'text-teal-500' },
                                     { label: 'D?ch v?', range: '10% - 30%', color: 'text-teal-500' },
-                                    { label: 'T?o khách hàng ti?m nang', range: '30% - 50%', color: 'text-blue-500' },
-                                    { label: 'N?i dung (Content site)', range: '40% - 60%', color: 'text-amber-600' },
+                                    { label: 'T?o KhÃ¡ch hÃ ng ti?m nang', range: '30% - 50%', color: 'text-blue-500' },
+                                    { label: 'Ná»™i dung (Content site)', range: '40% - 60%', color: 'text-amber-600' },
                                     { label: 'Blog / Landing Page', range: '70% - 90%', color: 'text-rose-500' }
                                 ].map((item, i) => (
                                     <div key={i} className="flex items-center justify-between text-[11px] font-bold py-2 border-b border-slate-50 last:border-0">
@@ -304,19 +304,19 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                     </div>
 
                     <div className="p-8 bg-slate-900 rounded-[32px] text-white">
-                        <h5 className="font-black text-sm mb-4 text-rose-400">Cách gi?m t? l? thoát:</h5>
+                        <h5 className="font-black text-sm mb-4 text-rose-400">Cï¿½ch gi?m t? l? thoï¿½t:</h5>
                         <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[11px] font-bold text-slate-300">
                             <li className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10 italic">
-                                • C?i thi?n t?c d? t?i trang
+                                ï¿½ C?i thi?n t?c d? t?i trang
                             </li>
                             <li className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10 italic">
-                                • T?i uu hi?n th? trên di d?ng
+                                ï¿½ T?i uu hi?n th? trï¿½n di d?ng
                             </li>
                             <li className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10 italic">
-                                • N?i dung d? d?c, chia nh? do?n
+                                ï¿½ Ná»™i dung d? d?c, chia nh? do?n
                             </li>
                             <li className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10 italic">
-                                • Kêu g?i hành d?ng (CTA) rõ ràng
+                                ï¿½ Kï¿½u gá»­i hï¿½nh d?ng (CTA) rï¿½ rï¿½ng
                             </li>
                         </ul>
                     </div>

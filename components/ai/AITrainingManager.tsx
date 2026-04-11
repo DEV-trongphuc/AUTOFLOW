@@ -907,7 +907,7 @@ const AITrainingManager: React.FC<AITrainingManagerProps> = ({ onClose, category
                     is_active: currentStatus ? 0 : 1
                 });
                 if (res.success) {
-                    toast.success('Đã cập nhật trạng thái nhóm');
+                    toast.success('Đã cập nhật Trạng thái nhóm');
                     fetchDocs();
                 }
             } else {

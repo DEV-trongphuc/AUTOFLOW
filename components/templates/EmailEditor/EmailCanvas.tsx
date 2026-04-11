@@ -29,7 +29,7 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
     const [dropPosition, setDropPosition] = useState<'top' | 'bottom' | 'inside' | 'left' | 'right' | null>(null);
     const [draggingBlockId, setDraggingBlockId] = useState<string | null>(null);
 
-    // Scan tất cả màu đang dùng để gợi ý trong editor
+    // Scan tất cả màu đang dùng đã gửi ý trong editor
     const usedColors = useMemo(() => {
         const colors = new Set<string>();
         const traverse = (items: EmailBlock[]) => {

@@ -323,7 +323,8 @@ if ($method === 'POST' && $route === 'exclude') {
 
 switch ($method) {
     case 'GET':
-
+        // [PERF] Release session lock immediately to prevent "Pending" state in DevTools
+        if (session_id()) session_write_close();
 
         try {
             // NEW: Stats Route

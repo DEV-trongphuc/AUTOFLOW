@@ -177,7 +177,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                         icon = MessageSquare; color = 'text-indigo-600 bg-indigo-50 border-indigo-100'; label = 'Đã Phản hồi';
                         break;
                     case 'unsubscribe':
-                        icon = UserMinus; color = 'text-rose-600 bg-rose-50 border-rose-100'; label = 'Hủy đăng ký';
+                        icon = UserMinus; color = 'text-rose-600 bg-rose-50 border-rose-100'; label = 'Hủy đăng ký'
                         break;
                     case 'join_list':
                         icon = List; color = 'text-blue-500 bg-blue-50'; label = 'Vào Danh sách';
@@ -288,7 +288,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
 
                 const displayLabel = (() => {
                     if (act.type === 'reply_email') return 'Khách hàng phản hồi';
-                    if (act.type === 'unsubscribe') return 'Đã hủy đăng ký';
+                    if (act.type === 'unsubscribe') return 'Đã Hủy đăng ký'
 
                     if (act.type.startsWith('web_') && actUrl) {
                         return `${label}: ${actUrl}`;
@@ -648,7 +648,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
 
                 <div className="shrink-0 mb-4">
                     <Tabs activeId={activeTab} onChange={setActiveTab} items={[
-                        { id: 'info', label: 'Cá nhân', icon: User },
+                        { id: 'info', label: 'Cònhân', icon: User },
                         { id: 'stats', label: 'Số liệu', icon: BarChart2 },
                         { id: 'automation', label: 'Tham gia', icon: Activity, count: memberInsights.segments.length + (Array.isArray(formData.listIds) ? formData.listIds.length : 0) },
                         { id: 'activity', label: 'Hành trình', icon: History },
@@ -752,14 +752,14 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
 
 
 
-                                {/* Nhóm 2: Công việc */}
+                                {/* Nhóm 2: Còng việc */}
                                 <section className="space-y-4">
                                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
-                                        <div className="w-4 h-px bg-slate-200"></div> Công việc & Công ty
+                                        <div className="w-4 h-px bg-slate-200"></div> Còng việc & Còng ty
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 bg-white p-4 md:p-6 rounded-2xl md:rounded-[28px] border border-slate-100 shadow-sm">
                                         <Input label="Chức danh" value={formData.jobTitle} onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })} disabled={!isEditing} icon={Briefcase} />
-                                        <Input label="Tên Công ty" value={formData.companyName} onChange={(e) => setFormData({ ...formData, companyName: e.target.value })} disabled={!isEditing} icon={Building} />
+                                        <Input label="Tên Còng ty" value={formData.companyName} onChange={(e) => setFormData({ ...formData, companyName: e.target.value })} disabled={!isEditing} icon={Building} />
                                     </div>
                                 </section>
 
@@ -973,7 +973,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
 
                                     <div className="grid grid-cols-3 gap-3">
                                         {[
-                                            { label: 'Đã gửi', value: formData.stats?.emailsSent || 0, color: 'blue', icon: Send },
+                                            { label: 'đã gửi', value: formData.stats?.emailsSent || 0, color: 'blue', icon: Send },
                                             { label: 'Đã mở', value: formData.stats?.emailsOpened || 0, color: 'orange', icon: MailOpen, rate: formData.stats?.emailsSent > 0 ? Math.round((formData.stats.emailsOpened / formData.stats.emailsSent) * 100) : 0 },
                                             { label: 'Đã bấm', value: formData.stats?.linksClicked || 0, color: 'emerald', icon: MousePointer2, rate: formData.stats?.emailsOpened > 0 ? Math.round((formData.stats.linksClicked / formData.stats.emailsOpened) * 100) : 0 },
                                         ].map((stat, idx) => (
@@ -1085,7 +1085,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                         <button
                                                             onClick={() => handleLocalRemoveList(lId)}
                                                             className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-all"
-                                                            title="Gỡ khỏi danh sách (Cần lưu để áp dụng)"
+                                                            title="Gỡ khỏi danh sách (Còn lưu để áp dụng)"
                                                         >
                                                             <UserMinus className="w-4 h-4" />
                                                         </button>
@@ -1186,7 +1186,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                 <section className="space-y-4">
                                     <div className="flex items-center justify-between px-1">
                                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                                            <GitMerge className="w-3.5 h-3.5" /> Automation đang chạy
+                                            <GitMerge className="w-3.5 h-3.5" /> Automation Đang chờ
                                         </h4>
                                         <button
                                             onClick={() => setIsManualTriggerOpen(true)}
@@ -1515,7 +1515,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                 </div>
                                 <textarea
                                     className="flex-1 w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 text-sm font-medium text-slate-700 outline-none focus:ring-4 focus:ring-orange-50/5 focus:border-[#ffa900] focus:bg-white transition-all shadow-inner leading-relaxed resize-none"
-                                    placeholder="Nhập ghi chú chi tiết cho khách hàng này..."
+                                    placeholder="Nhập ghi chú chi tiết cho Khách hàng này..."
                                     value={(() => {
                                         // Handle different note formats
                                         if (typeof formData.notes === 'string') {
@@ -1572,7 +1572,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                 </ul>
                             </div>
                         </div>
-                        <p className="text-xs text-slate-600 font-medium">Bạn có chắc chắn muốn thực hiện hành động này và để các quy trình trên chạy cho khách hàng này không?</p>
+                        <p className="text-xs text-slate-600 font-medium">Bạn có chắc chắn muốn thực hiện hành động này và để các quy trình trên chạy cho Khách hàng này không?</p>
                     </div>
                 }
                 confirmLabel="Xác nhận & Kích hoạt"
@@ -1639,7 +1639,7 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
 
             // Temporary: Use a known Property ID or fetch it via `formData`.
             // Let's check `formData` dump. `view_file` showed `subscribers` table has `property_id`.
-            // But `activeTab` logic has access to `formData`.
+            // But `activeTỉ lệ has access to `formData`.
             // Let's use `(subscriber as any).property_id`.
 
             // Re-read API: It takes `property_id` as GET param.

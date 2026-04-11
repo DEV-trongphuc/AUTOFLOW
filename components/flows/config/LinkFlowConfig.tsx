@@ -53,7 +53,7 @@ const LinkFlowConfig: React.FC<LinkFlowConfigProps> = ({ config, onChange, curre
        <div className="p-4 bg-violet-50 text-violet-700 rounded-2xl border border-violet-100 flex gap-3">
           <GitMerge className="w-5 h-5 flex-shrink-0 mt-0.5" />
           <p className="text-xs font-medium leading-relaxed">
-             Hành động này sẽ ngắt kịch bản hiện tại và đưa khách hàng sang một quy trình mới.
+             Hành động này sẽ ngắt kịch bản hiện tại và đưa Khách hàng sang một quy trình mới.
              <br/><span className="text-[10px] opacity-70 italic">*Chỉ hiển thị các Flow đang hoạt động (Active) và không phụ thuộc vào Chiến dịch.</span>
           </p>
        </div>

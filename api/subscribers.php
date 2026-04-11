@@ -35,14 +35,16 @@ function formatSubscriber($row, $tags = [])
     $row['dateOfBirth'] = $row['date_of_birth'] ?? null;
     $row['anniversaryDate'] = $row['anniversary_date'] ?? null;
     $row['lastActivityAt'] = $row['last_activity_at'] ?? null; // Added mapping
-    $row['updatedAt'] = $row['updated_at'] ?? null; // NEW: Map updatedAt
     $row['notes'] = json_decode($row['notes'] ?? '[]', true); // Decode notes
-// If json_decode returns a string (e.g., "plain text"), wrap it in array for consistent UI
+    // If json_decode returns a string (e.g., "plain text"), wrap it in array for consistent UI
     if (is_string($row['notes'])) {
         $row['notes'] = [$row['notes']];
     } elseif (!is_array($row['notes'])) {
         $row['notes'] = [];
     }
+
+    $row['status'] = $row['status'] ?? 'active'; // REPAIR: React Internal Error "missing static flag" due to NULL status
+
 
     $row['stats'] = [
         'emailsSent' => (int) ($row['stats_sent'] ?? 0),
@@ -358,6 +360,8 @@ anniversary_date = VALUES(anniversary_date)";
 // --- CHU TRÌNH CRUD THÔNG THƯỜNG ---
 switch ($method) {
     case 'GET':
+        // [PERF] Release session lock immediately to prevent "Pending" state in DevTools
+        if (session_id()) session_write_close();
         if ($path || isset($_GET['email']) || isset($_GET['visitor_id'])) {
             if (isset($_GET['email'])) {
                 $stmt = $pdo->prepare("SELECT s.* FROM subscribers s WHERE s.email = ?");
@@ -650,29 +654,71 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
                         $tagMap[$row['subscriber_id']][] = $row['name'];
                     }
 
-                    // PERFORMANCE FIX: Optimized batch fetch for chat counts using UNION to accurately use indexes
-                    $sqlChat = "SELECT sub_id, COUNT(DISTINCT conv_id) as cnt FROM (
-    SELECT s.id as sub_id, c.id as conv_id
-    FROM subscribers s
-    JOIN web_visitors v ON s.id = v.subscriber_id
-    JOIN ai_conversations c ON v.id = c.visitor_id
-    WHERE s.id IN ($placeholders)
-    UNION ALL
-    SELECT s.id as sub_id, c.id as conv_id
-    FROM subscribers s
-    JOIN ai_conversations c ON c.visitor_id = CONCAT('meta_', s.meta_psid)
-    WHERE s.id IN ($placeholders) AND s.meta_psid IS NOT NULL
-    UNION ALL
-    SELECT s.id as sub_id, c.id as conv_id
-    FROM subscribers s
-    JOIN ai_conversations c ON c.visitor_id = CONCAT('zalo_', s.zalo_user_id)
-    WHERE s.id IN ($placeholders) AND s.zalo_user_id IS NOT NULL
-    ) AS combined_chats GROUP BY sub_id";
+                    // OPTIMIZED: Pre-build visitor_id list in PHP to avoid CONCAT() at JOIN time
+                    // This lets MySQL use the visitor_id index on ai_conversations
+                    $metaVisitorIds = [];
+                    $zaloVisitorIds = [];
+                    foreach ($rawRows as $r) {
+                        if (!empty($r['meta_psid']))     $metaVisitorIds[] = 'meta_' . $r['meta_psid'];
+                        if (!empty($r['zalo_user_id']))  $zaloVisitorIds[] = 'zalo_' . $r['zalo_user_id'];
+                    }
 
-                    $stmtChat = $pdo->prepare($sqlChat);
-                    // Pass subIds 3 times for 3 UNION parts
-                    $stmtChat->execute(array_merge($subIds, $subIds, $subIds));
-                    $chatMap = $stmtChat->fetchAll(PDO::FETCH_KEY_PAIR);
+                    // Web visitors sub-query (Fast Index IN array)
+                    $webVisitorIds = [];
+                    $webVisToSubMap = [];
+                    $stmtWv = $pdo->prepare("SELECT id, subscriber_id FROM web_visitors WHERE subscriber_id IN ($placeholders)");
+                    $stmtWv->execute($subIds);
+                    foreach ($stmtWv->fetchAll(PDO::FETCH_ASSOC) as $wvRow) {
+                        $vid = (string)$wvRow['id'];
+                        $webVisitorIds[] = $vid;
+                        $webVisToSubMap[$vid] = $wvRow['subscriber_id'];
+                    }
+
+                    if (!empty($webVisitorIds)) {
+                        $wPh = implode(',', array_fill(0, count($webVisitorIds), '?'));
+                        $stmtChatWeb = $pdo->prepare("SELECT visitor_id, COUNT(DISTINCT id) as cnt FROM ai_conversations WHERE visitor_id IN ($wPh) GROUP BY visitor_id");
+                        $stmtChatWeb->execute($webVisitorIds);
+                        
+                        foreach ($stmtChatWeb->fetchAll(PDO::FETCH_ASSOC) as $cRow) {
+                            $subIdForVisit = $webVisToSubMap[(string)$cRow['visitor_id']] ?? null;
+                            if ($subIdForVisit) {
+                                $chatMap[$subIdForVisit] = ($chatMap[$subIdForVisit] ?? 0) + (int)$cRow['cnt'];
+                            }
+                        }
+                    }
+
+                    // Meta: lookup by pre-built visitor_id list (index-friendly IN clause)
+                    if (!empty($metaVisitorIds)) {
+                        $mPh = implode(',', array_fill(0, count($metaVisitorIds), '?'));
+                        $stmtMeta = $pdo->prepare(
+                            "SELECT s.id as sub_id, COUNT(DISTINCT c.id) as cnt
+                             FROM subscribers s
+                             JOIN ai_conversations c ON c.visitor_id = CONCAT('meta_', s.meta_psid)
+                             WHERE c.visitor_id IN ($mPh) AND s.id IN ($placeholders)
+                             GROUP BY s.id"
+                        );
+                        $stmtMeta->execute(array_merge($metaVisitorIds, $subIds));
+                        foreach ($stmtMeta->fetchAll(PDO::FETCH_KEY_PAIR) as $sid => $cnt) {
+                            $chatMap[$sid] = ($chatMap[$sid] ?? 0) + (int)$cnt;
+                        }
+                    }
+
+                    // Zalo: same approach
+                    if (!empty($zaloVisitorIds)) {
+                        $zPh = implode(',', array_fill(0, count($zaloVisitorIds), '?'));
+                        $stmtZalo = $pdo->prepare(
+                            "SELECT s.id as sub_id, COUNT(DISTINCT c.id) as cnt
+                             FROM subscribers s
+                             JOIN ai_conversations c ON c.visitor_id = CONCAT('zalo_', s.zalo_user_id)
+                             WHERE c.visitor_id IN ($zPh) AND s.id IN ($placeholders)
+                             GROUP BY s.id"
+                        );
+                        $stmtZalo->execute(array_merge($zaloVisitorIds, $subIds));
+                        foreach ($stmtZalo->fetchAll(PDO::FETCH_KEY_PAIR) as $sid => $cnt) {
+                            $chatMap[$sid] = ($chatMap[$sid] ?? 0) + (int)$cnt;
+                        }
+                    }
+
                 }
 
                 $data = array_map(function ($sub) use ($listMap, $tagMap, $chatMap) {
@@ -682,7 +728,7 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
                     return $s;
                 }, $rawRows);
 
-                jsonResponse(true, [
+                $responsePayload = [
                     'data' => $data,
                     'pagination' => [
                         'total' => $total,
@@ -690,7 +736,25 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
                         'page' => $page,
                         'limit' => $limit
                     ]
-                ]);
+                ];
+
+                // INJECT: Global stats for Dashboard KPIs when limit=1 (initial load)
+                if ($limit === 1 && $page === 1) {
+                    try {
+                        $stmtStats = $pdo->query("SELECT IFNULL(status, 'active') as status_val, COUNT(*) as c FROM subscribers GROUP BY IFNULL(status, 'active')");
+                        $statusCounts = $stmtStats->fetchAll(PDO::FETCH_KEY_PAIR);
+                        $responsePayload['globalStats'] = [
+                            'customer' => (int)($statusCounts['customer'] ?? 0),
+                            'unsubscribed' => (int)($statusCounts['unsubscribed'] ?? 0),
+                            'lead' => (int)($statusCounts['lead'] ?? 0),
+                            'active' => (int)($statusCounts['active'] ?? 0),
+                        ];
+                    } catch (Throwable $e) {
+                        // ignore error
+                    }
+                }
+
+                jsonResponse(true, $responsePayload);
             } catch (Throwable $e) {
                 error_log("Subscriber Data Fetch Error: " . $e->getMessage() . " SQL: " . ($sql ?? 'N/A'));
                 jsonResponse(false, null, "Lỗi lấy danh sách khách hàng: " . $e->getMessage());

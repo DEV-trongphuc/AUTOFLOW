@@ -1009,7 +1009,7 @@ const CategoryChatPage: React.FC = () => {
             handleDeleteGalleryImages([url]);
         };
         (window as any).__editImage = async (url: string) => {
-            const toastId = toast.loading('Đang chu?n b? ?nh...');
+            const toastId = toast.loading('Đang tải ảnh...');
             try {
                 let base64data = '';
                 let type = 'image/jpeg';
@@ -3041,7 +3041,7 @@ const CategoryChatPage: React.FC = () => {
                         onClick={() => navigate('/')}
                         className="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest text-sm hover:scale-105 active:scale-95 transition-all shadow-xl"
                     >
-                        Về trang chủ
+                        Về trĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐang chờ
                     </button>
                 </div>
             </div>
@@ -3285,7 +3285,7 @@ const CategoryChatPage: React.FC = () => {
                                                                 onClick={() => { setIsGallerySelectMode(false); setSelectedGalleryImages([]); }}
                                                                 className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${isDarkTheme ? 'bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
                                                             >
-                                                                H?y
+                                                                Hủy
                                                             </button>
                                                         </>
                                                     ) : (
@@ -3640,7 +3640,7 @@ const CategoryChatPage: React.FC = () => {
                                                                     className={`w-full h-12 border-2 border-dashed rounded-2xl flex items-center justify-center gap-2 font-bold transition-all text-sm uppercase tracking-widest ${isImageGenMode ? (isDarkTheme ? 'border-slate-800 text-slate-600 cursor-not-allowed' : 'border-slate-100 text-slate-300 cursor-not-allowed') : (isDarkTheme ? 'border-slate-700 hover:border-brand hover:bg-brand hover:bg-opacity-5 text-slate-400 hover:text-brand' : 'border-slate-200 hover:border-brand hover:bg-brand hover:bg-opacity-5 text-slate-400 hover:text-brand')}`}
                                                                 >
                                                                     <Upload className="w-4 h-4" />
-                                                                    Tải lên tệp mới
+                                                                    Tỉ lệ tệp mới
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -4625,7 +4625,7 @@ const CategoryChatPage: React.FC = () => {
                         // ... logic ...
                         const doMakeGlobal = async () => {
                             try {
-                                const tid = toast.loading('Đang x? lý...');
+                                const tid = toast.loading('ĐĐang xử lýý...');
                                 await api.post('ai_org_chatbot', {
                                     action: 'workspace_save', // Use workspace_save for consistency
                                     url: previewImage,
@@ -4741,7 +4741,7 @@ const CategoryChatPage: React.FC = () => {
                                     },
                                     {
                                         title: "Đồng bộ đa thiết bị",
-                                        desc: "Tài liệu tải lên Global Workspace sẽ khả dụng cho tất cả các Bot của bạn trên mọi cuộc hội thoại."
+                                        desc: "Tỉ lệ tải lên Global Workspace sẽ khả dụng cho tất cả các Bot của bạn trên mọi cuộc hội thoại."
                                     }
                                 ]
                                     .map((item, i) => (

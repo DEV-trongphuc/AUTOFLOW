@@ -38,7 +38,7 @@ const MERGE_TAGS = [
     { label: 'Tên (First Name)', value: '{{first_name}}' },
     { label: 'Họ (Last Name)', value: '{{last_name}}' },
     { label: 'Email', value: '{{email}}' },
-    { label: 'Công ty', value: '{{company}}' },
+    { label: 'Còng ty', value: '{{company}}' },
     { label: 'Chức danh', value: '{{job_title}}' },
     { label: 'Số điện thoại', value: '{{phone}}' },
     { label: 'Link Hủy đăng ký', value: '{{unsubscribe_url}}' },
@@ -559,7 +559,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
         else if (stepId === step + 1) {
             if (isStepValid(step, true)) setStep(stepId);
         } else if (stepId > step + 1) {
-            toast.error('Vui lòng hoàn thành các bước theo thứ tự');
+            toast.error('Vui lòng Hoàn thành các bước theo thứ tự');
         }
     };
 
@@ -656,7 +656,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                         // ...and it is NOT ACTIVE
                         if (flowToCheck.status !== 'active') {
                             toast.error(
-                                `Kịch bản liên kết "${flowToCheck.name}" chưa được Kích hoạt!\n\nNếu bạn gửi bây giờ, khách hàng sẽ KHÔNG được thêm vào quy trình chăm sóc.\nVui lòng sang trang Automation để bật Flow này lên trước.`,
+                                `Kịch bản liên kết "${flowToCheck.name}" chưa được Kích hoạt!\n\nNếu bạn gửi bây giờ, Khách hàng sẽ KHÔNG được thêm vào quy trình chăm sóc.\nVui lòng sang trang Automation để bật Flow này lên trước.`,
                                 { duration: 8000, icon: '🛑', style: { borderRadius: '16px', background: '#fff1f2', border: '1px solid #fda4af', color: '#be123c' } }
                             );
                             return; // BLOCK SENDING
@@ -665,7 +665,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                 }
             } catch (err) {
                 console.error("Flow validation failed", err);
-                toast.error("Không thể kiểm tra trạng thái Flow liên kết. Vui lòng thử lại.");
+                toast.error("Không thể kiểm tra Trạng thái Flow liên kết. Vui lòng thử lại.");
                 return;
             }
         }
@@ -850,7 +850,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                         <TabTransition className="space-y-6 max-w-4xl mx-auto py-4">
                             <div className="text-center mb-6 lg:mb-8">
                                 <h4 className="text-xl lg:text-3xl font-black text-slate-800 tracking-tight">Cấu hình kịch bản</h4>
-                                <p className="text-slate-500 text-xs lg:text-sm mt-2 font-medium">Bắt đầu hành trình bằng việc chọn phương thức tiếp cận khách hàng tối ưu.</p>
+                                <p className="text-slate-500 text-xs lg:text-sm mt-2 font-medium">Bắt đầu hành trình bằng việc chọn phương thức tiếp cận Khách hàng tối ưu.</p>
                             </div>
 
                             {/* CAMPAIGN TYPE SELECTOR - PREMIUM UPGRADE */}
@@ -865,7 +865,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                     </div>
                                     <h5 className={`text-xl font-black mb-2 transition-colors ${(!formData.type || formData.type === 'email') ? 'text-blue-900' : 'text-slate-800'}`}>Campaign Marketing</h5>
                                     <p className={`text-sm font-medium leading-relaxed ${(!formData.type || formData.type === 'email') ? 'text-blue-700/80' : 'text-slate-500'}`}>
-                                        Gửi email hàng loạt với giao diện kéo thả trực quan, tỉ lệ vào inbox cao và báo cáo chi tiết.
+                                        Gửi email hàng loạt với giao diện kéo thả trực quan, tỉ lệ vào inbox cao và Báo cáo chi tiết.
                                     </p>
                                     <div className={`mt-6 flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${(!formData.type || formData.type === 'email') ? 'text-blue-600' : 'text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity'}`}>
                                         <span>Chọn phương thức này</span>
@@ -1018,7 +1018,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                             onClick={() => setStep(3)}
                                                             className="flex items-center justify-center gap-2 py-2 px-3 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl text-[10px] font-bold transition-all border border-blue-100"
                                                         >
-                                                            <Upload className="w-3.5 h-3.5" /> Tải lên CSV
+                                                            <Upload className="w-3.5 h-3.5" /> Tỉ lệ CSV
                                                         </button>
                                                     </div>
                                                     <p className="text-[9px] text-slate-400 italic text-center leading-tight">Bạn có thể tải lên CSV ở Bước 3 (Đối tượng) để tự động khớp các tham số trên.</p>

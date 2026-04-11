@@ -124,7 +124,7 @@ const MetaAutomation: React.FC = () => {
             toast.success(`Đã ${newStatus === 'active' ? 'kích hoạt' : 'tạm dừng'}`);
             fetchScenarios(selectedConfigId);
         } catch (error) {
-            toast.error('Lỗi khi cập nhật trạng thái');
+            toast.error('Lỗi khi cập nhật Trạng thái');
         }
     };
 

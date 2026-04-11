@@ -218,7 +218,7 @@ export const MetaCustomerProfileModal: React.FC<MetaCustomerProfileModalProps> =
                                 <ProfileTab
                                     active={activeTab === 'personal'}
                                     onClick={() => setActiveTab('personal')}
-                                    label="Cá nhân"
+                                    label="Cònhân"
                                     icon={User}
                                 />
                                 <ProfileTab
@@ -547,7 +547,7 @@ export const MetaCustomerProfileModal: React.FC<MetaCustomerProfileModalProps> =
                                                     value={formData.notes}
                                                     onChange={e => setFormData({ ...formData, notes: e.target.value })}
                                                     className="w-full min-h-[150px] p-6 bg-slate-50/50 border border-slate-200 rounded-[28px] text-sm font-medium text-slate-600 focus:outline-none focus:border-blue-500 transition-all resize-none shadow-inner mt-2"
-                                                    placeholder="Nhập ghi chú quan trọng về khách hàng này..."
+                                                    placeholder="Nhập ghi chú quan trọng về Khách hàng này..."
                                                 />
                                                 <button
                                                     onClick={handleSave}

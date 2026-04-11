@@ -31,7 +31,7 @@ const FIELDS = [
     { value: 'first_name', label: 'Tên (First Name)', icon: User, type: FIELD_TYPES.STRING },
     { value: 'last_name', label: 'Họ (Last Name)', icon: User, type: FIELD_TYPES.STRING },
     { value: 'tags', label: 'Thẻ (Tags)', icon: Layers, type: FIELD_TYPES.ARRAY },
-    { value: 'company_name', label: 'Công ty', icon: Monitor, type: FIELD_TYPES.STRING },
+    { value: 'company_name', label: 'Còng ty', icon: Monitor, type: FIELD_TYPES.STRING },
     { value: 'job_title', label: 'Chức danh', icon: User, type: FIELD_TYPES.STRING },
     { value: 'source', label: 'Nguồn gốc (Source)', icon: Globe, type: FIELD_TYPES.STRING },
     { value: 'salesperson', label: 'Nhân viên phụ trách', icon: User, type: FIELD_TYPES.STRING },
@@ -73,7 +73,7 @@ const OPERATORS_BY_TYPE: Record<string, any[]> = {
         { value: 'is_on', label: 'Chính xác ngày' },
         { value: 'is_before', label: 'Trước ngày' },
         { value: 'is_after', label: 'Sau ngày' },
-        { value: 'is_set', label: 'Có ngày' },
+        { value: 'is_set', label: 'Còngày' },
         { value: 'is_not_set', label: 'Chưa có ngày' },
     ],
     [FIELD_TYPES.ENUM]: [

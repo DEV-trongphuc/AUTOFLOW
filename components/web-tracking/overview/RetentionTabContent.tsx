@@ -61,7 +61,7 @@ const RetentionTabContent: React.FC<RetentionTabContentProps> = ({ property, dev
                     <div>
                         <h3 className="text-2xl font-black text-slate-800 tracking-tight">Phân tích Trung thành</h3>
                         <p className="text-slate-500 text-sm mt-1 font-medium max-w-md leading-relaxed">
-                            Theo dõi tỉ lệ khách hàng trung thành quay lại website theo từng {cycle === 'day' ? 'ngày' : cycle === 'month' ? 'tháng' : 'tuần'}. Đây là chỉ số quan trọng để đánh giá chất lượng nội dung.
+                            Theo dõi tỉ lệ Khách hàng trung thành quay lại website theo từng {cycle === 'day' ? 'ngày' : cycle === 'month' ? 'tháng' : 'tuần'}. Đây là chỉ số quan trọng để đánh giá chất lượng nội dung.
                         </p>
                     </div>
                 </div>
@@ -220,11 +220,11 @@ const RetentionTabContent: React.FC<RetentionTabContentProps> = ({ property, dev
                         </h4>
                         <div className="space-y-4 relative">
                             <p className="text-sm text-slate-500 leading-relaxed font-medium">
-                                Chỉ số Retention cao chứng tỏ website của bạn đủ sức hấp dẫn. Nếu tỉ lệ giảm quá nhanh ở các tuần đầu/ngày đầu, bạn cần xem xét lại chiến lược giữ chân khách hàng (Email Marketing, Zalo ZNS...).
+                                Chỉ số Retention cao chứng tỏ website của bạn đủ sức hấp dẫn. Nếu tỉ lệ giảm quá nhanh ở các tuần đầu/ngày đầu, bạn cần xem xét lại chiến lược giữ chân Khách hàng (Email Marketing, Zalo ZNS...).
                             </p>
                             <div className="p-5 bg-white border border-slate-100 rounded-[24px] flex items-start gap-4 mt-6">
                                 <blockquote className="text-xs text-orange-800 font-bold italic leading-relaxed">
-                                    "Phân tích Cohort giúp bạn biết được liệu các cập nhật website gần đây có thực sự làm khách hàng hài lòng hơn hay không."
+                                    "Phân tích Cohort giúp bạn biết được liệu các cập nhật website gần đây có thực sự làm Khách hàng hài lòng hơn hay không."
                                 </blockquote>
                             </div>
                         </div>

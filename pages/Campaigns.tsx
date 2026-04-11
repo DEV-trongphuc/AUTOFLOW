@@ -39,6 +39,9 @@ const Campaigns: React.FC = () => {
     const [isWizardOpen, setIsWizardOpen] = useState(false);
     const [wizardInitialData, setWizardInitialData] = useState<Partial<Campaign> | undefined>(undefined);
 
+    // Guard against React StrictMode double fetching
+    const initialLoadDone = React.useRef(false);
+
     // Filtering & Viewing
     const [activeTab, setActiveTab] = useState<'all' | 'sent' | 'scheduled' | 'draft' | 'waiting'>('all');
     const [activeType, setActiveType] = useState<'all' | 'email' | 'zalo_zns'>('all');
@@ -82,7 +85,11 @@ const Campaigns: React.FC = () => {
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
-    useEffect(() => { fetchInitialData(); }, []);
+    useEffect(() => { 
+        if (initialLoadDone.current) return;
+        initialLoadDone.current = true;
+        fetchInitialData(); 
+    }, []);
 
     useKeyboardShortcuts({
         'n': () => {
@@ -92,8 +99,13 @@ const Campaigns: React.FC = () => {
         }
     }, [setIsWizardOpen, setSelectedDetailCampaign, setWizardInitialData]);
 
-    // Re-fetch campaigns when search or page changes
+    // Re-fetch campaigns when search or page changes (but not on initial mount)
+    const isFirstRun = React.useRef(true);
     useEffect(() => {
+        if (isFirstRun.current) {
+            isFirstRun.current = false;
+            return;
+        }
         loadCampaigns(pagination.page, debouncedSearch);
     }, [debouncedSearch, pagination.page]);
 
@@ -163,7 +175,8 @@ const Campaigns: React.FC = () => {
                     count: tag.subscriber_count || 0
                 })));
             }
-
+            
+            // Initial Campaigns Fetch (parallellized by the backend thanks to session unlock, but handled after the UI gets settings to avoid huge bundle stalls in JS thread)
             await loadCampaigns(1, debouncedSearch);
 
             // Logic to sync verified emails from Settings (Source of Truth)
@@ -395,7 +408,7 @@ const Campaigns: React.FC = () => {
 
             <PageHero 
                 title={<>Campaign <span className="text-orange-100/80">Marketing</span></>}
-                subtitle="Gửi Email & Zalo ZNS · theo dõi hiệu suất thời gian thực với sức mạnh từ Trí tuệ nhân tạo."
+                subtitle="Gửi Email & Zalo ZNS · theo dõi hiệu suất Thời gian thực với sức mạnh từ Trí tuệ nhân tạo."
                 showStatus={true}
                 statusText="AI Engine Active"
                 actions={[
@@ -437,7 +450,7 @@ const Campaigns: React.FC = () => {
 
                     <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group">
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-emerald-500 transition-colors">Tỷ lệ mở trung bình</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-emerald-500 transition-colors">Tỉ lệ mở trung bình</p>
                             <h3 className="text-2xl font-black text-slate-800 tracking-tight">{stats.openRate}%</h3>
                         </div>
                         <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-2xl shadow-lg shadow-emerald-500/10 flex items-center justify-center transition-all group-hover:scale-110">
@@ -467,7 +480,7 @@ const Campaigns: React.FC = () => {
                         onChange={setActiveTab as any}
                         items={[
                             { id: 'all', label: 'Tất cả', icon: PieChart },
-                            { id: 'sent', label: 'Đã gửi', icon: CheckCircle2 },
+                            { id: 'sent', label: 'đã gửi', icon: CheckCircle2 },
                             { id: 'waiting', label: 'Chờ Flow', icon: GitMerge },
                             { id: 'scheduled', label: 'Đang xử lý', icon: CalendarClock },
                             { id: 'draft', label: 'Bản nháp', icon: FileText }
@@ -597,7 +610,7 @@ const Campaigns: React.FC = () => {
                 isOpen={isTipsModalOpen}
                 onClose={() => setIsTipsModalOpen(false)}
                 title="Mẹo Chiến dịch"
-                subtitle="Tối ưu hóa nội dung & Tỷ lệ chuyển đổi"
+                subtitle="Tối ưu hóa nội dung & Tỉ lệ chuyển đổi"
                 accentColor="blue"
                 tips={[
                     {
@@ -609,7 +622,7 @@ const Campaigns: React.FC = () => {
                     },
                     {
                         icon: Sparkles,
-                        title: "Cá nhân hóa nội dung",
+                        title: "Cònhân hóa nội dung",
                         description: "Sử dụng tag {first_name} trong tiêu đề để tăng tới 25% tỷ lệ click.",
                         colorClass: "bg-gradient-to-br from-blue-400 to-indigo-500",
                         highlight: "Mẹo hay"
@@ -623,7 +636,7 @@ const Campaigns: React.FC = () => {
                     {
                         icon: Zap,
                         title: "Follow-up tự động",
-                        description: "Kết nối với Flow chăm sóc ngay sau khi gửi để tối đa hóa điểm chạm khách hàng.",
+                        description: "Kết nối với Flow chăm sóc ngay sau khi gửi để tối đa hóa điểm chạm Khách hàng.",
                         colorClass: "bg-gradient-to-br from-emerald-400 to-teal-500",
                         highlight: "Nâng cao"
                     },

@@ -46,14 +46,55 @@ try {
         $params = [$targetId];
     } elseif ($targetType === 'all') {
         $conds = ["1=1"];
-        if ($statusFilter !== 'all') {
-            $conds[] = "status = ?";
-            $params[] = $statusFilter;
+        $params = [];
+        
+        $search = $data['search'] ?? '';
+        $status = $data['status'] ?? 'all';
+        $tag = $data['tag'] ?? 'all';
+        $verified = $data['verified'] ?? 'all';
+        
+        if (!empty($search)) {
+            $conds[] = "(email LIKE ? OR first_name LIKE ? OR last_name LIKE ? OR phone_number LIKE ? OR company_name LIKE ?)";
+            $wildcard = "%$search%";
+            $params[] = $wildcard; $params[] = $wildcard; $params[] = $wildcard; $params[] = $wildcard; $params[] = $wildcard;
         }
-        if ($tagFilter !== 'all') {
-            $conds[] = "id IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE t_sub.name = ?)";
-            $params[] = $tagFilter;
+
+        if ($status !== 'all') {
+            $statusArray = explode(',', $status);
+            if (count($statusArray) > 1) {
+                $placeholders = implode(',', array_fill(0, count($statusArray), '?'));
+                $conds[] = "status IN ($placeholders)";
+                $params = array_merge($params, $statusArray);
+            } else {
+                $conds[] = "status = ?";
+                $params[] = $status;
+            }
         }
+        
+        if ($verified !== 'all') {
+            $conds[] = "verified = ?";
+            $params[] = (int) $verified;
+        }
+
+        if ($tag !== 'all' && $tag !== '') {
+            $tagArray = explode(',', $tag);
+            $placeholders = implode(',', array_fill(0, count($tagArray), '?'));
+            $conds[] = "id IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE t_sub.name IN ($placeholders))";
+            $params = array_merge($params, $tagArray);
+        }
+        
+        $customAttrKey = $data['custom_attr_key'] ?? '';
+        $customAttrValue = $data['custom_attr_value'] ?? '';
+        if (!empty($customAttrKey) && $customAttrKey !== 'all') {
+            $safeKey = preg_replace('/[^a-zA-Z0-9_\-]/', '', $customAttrKey);
+            if (!empty($customAttrValue)) {
+                $conds[] = "JSON_EXTRACT(custom_attributes, '$.{$safeKey}') = ?";
+                $params[] = $customAttrValue;
+            } else {
+                $conds[] = "JSON_EXTRACT(custom_attributes, '$.{$safeKey}') IS NOT NULL";
+            }
+        }
+        
         $whereClause = implode(" AND ", $conds);
     } elseif ($targetType === 'segment' || $targetType === 'filter') {
         // Handled above

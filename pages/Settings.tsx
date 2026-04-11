@@ -353,7 +353,7 @@ const Settings: React.FC = () => {
                                 <div className="p-2.5 lg:p-3 bg-orange-50 rounded-xl lg:rounded-2xl text-[#ca7900] shadow-sm"><FlaskConical className="w-5 h-5 lg:w-6 lg:h-6" /></div>
                                 <div>
                                     <h3 className="text-base lg:text-lg font-black text-slate-800">Automation Sandbox</h3>
-                                    <p className="text-[10px] lg:text-xs text-slate-500 font-medium">Giả lập hành động khách hàng để kiểm tra Flow.</p>
+                                    <p className="text-[10px] lg:text-xs text-slate-500 font-medium">Giả lập hành động Khách hàng để kiểm tra Flow.</p>
                                 </div>
                             </div>
 
@@ -522,7 +522,7 @@ const Settings: React.FC = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <Input label="Máy chủ (Host)" placeholder="email-smtp.us-east-1.amazonaws.com" value={smtp.smtp_host} onChange={e => setSmtp({ ...smtp, smtp_host: e.target.value })} icon={Globe} />
                                         <div className="grid grid-cols-2 gap-4">
-                                            <Input label="Cổng (Port)" placeholder="587" value={smtp.smtp_port} onChange={e => setSmtp({ ...smtp, smtp_port: e.target.value })} icon={Hash} />
+                                            <Input label="Còng (Port)" placeholder="587" value={smtp.smtp_port} onChange={e => setSmtp({ ...smtp, smtp_port: e.target.value })} icon={Hash} />
                                             <Select
                                                 label="Mã hóa"
                                                 options={[
@@ -697,7 +697,7 @@ const Settings: React.FC = () => {
                                     <div className="p-4 bg-white/50 rounded-2xl border border-slate-100 flex items-start gap-3">
                                         <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                                         <p className="text-[11px] text-slate-500 leading-relaxed">
-                                            API Key này sẽ được sử dụng chung cho các tính năng như: **AI Chatbot**, **Phân tích phân khúc khách hàng**, **Tự động hóa hành trình** và các module AI chưa có cấu hình riêng.
+                                            API Key này sẽ được sử dụng chung cho các tính năng như: **AI Chatbot**, **Phân tích phân khúc Khách hàng**, **Tự động hóa hành trình** và các module AI chưa có cấu hình riêng.
                                         </p>
                                     </div>
                                 </div>
@@ -850,8 +850,8 @@ const Settings: React.FC = () => {
                             <div>
                                 <h3 className="text-2xl font-black mb-3 italic">Cách thức kiểm tra</h3>
                                 <p className="text-slate-400 text-sm font-medium leading-[1.8]">
-                                    Hệ thống thực hiện quét thời gian thực toàn bộ thư mục <b>/api/</b>, kiểm tra quyền ghi của folder <b>/uploads/</b> và <b>/logs/</b>,
-                                    đồng thời xác minh kết nối cơ sở dữ liệu. Nếu bất kỳ file nào có trạng thái <span className="text-rose-400 font-black italic">MISSING</span>,
+                                    Hệ thống thực hiện quét Thời gian thực toàn bộ thư mục <b>/api/</b>, kiểm tra quyền ghi của folder <b>/uploads/</b> và <b>/logs/</b>,
+                                    đồng thời xác minh kết nối cơ sở dữ liệu. Nếu bất kỳ file nào có Trạng thái <span className="text-rose-400 font-black italic">MISSING</span>,
                                     vui lòng liên hệ kỹ thuật để tải lên lại các file bị thiếu.
                                 </p>
                             </div>

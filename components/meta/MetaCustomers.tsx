@@ -179,7 +179,7 @@ const MetaCustomers: React.FC = () => {
                 {/* Stats Section Sync with Audience Page */}
                 {stats && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <StatCard label="TỔNG KHÁCH HÀNG" value={stats.all} icon={Users} color="blue" />
+                        <StatCard label="TỔNG Khách hàng" value={stats.all} icon={Users} color="blue" />
                         <StatCard label="ĐÃ ĐỊNH DANH" value={stats.identified} icon={BadgeCheck} color="emerald" />
                         <StatCard label="CHỜ XỬ LÝ" value={stats.unsynced} icon={RefreshCw} color="amber" />
                     </div>
@@ -187,8 +187,8 @@ const MetaCustomers: React.FC = () => {
 
                 <div className="flex flex-col lg:flex-row gap-4 justify-between items-center bg-slate-50 p-3 rounded-2xl border border-slate-100 mb-6">
                     <div className="flex-1 flex flex-col sm:flex-row gap-3 w-full">
-                        <div className="flex-1 relative group bg-white rounded-xl border border-slate-200 h-11 flex items-center overflow-hidden transition-all focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/5">
-                            <Search className="w-4 h-4 ml-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                        <div className="flex-1 relative group bg-white rounded-xl border border-slate-200 h-11 flex items-center overflow-hidden transition-all focus-within:border-amber-600 focus-within:ring-4 focus-within:ring-amber-600/5">
+                            <Search className="w-4 h-4 ml-4 text-slate-400 group-focus-within:text-amber-600 transition-colors" />
                             <input
                                 type="text"
                                 placeholder="Tìm theo tên, email, PSID..."
@@ -201,12 +201,12 @@ const MetaCustomers: React.FC = () => {
                             <div className="relative" ref={filterRef}>
                                 <button
                                     onClick={() => setIsFilterOpen(!isFilterOpen)}
-                                    className={`h-11 px-6 rounded-xl border font-bold text-xs flex items-center gap-2 transition-all active:scale-95 ${isFilterOpen ? 'bg-slate-900 text-white border-slate-900 shadow-xl shadow-slate-900/10' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+                                    className={`h-11 px-6 rounded-xl border font-bold text-xs flex items-center gap-2 transition-all active:scale-95 ${isFilterOpen ? 'bg-slate-900 !text-white border-slate-900 shadow-xl shadow-slate-900/10' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
                                 >
-                                    <Filter className={`w-4 h-4 ${isFilterOpen ? 'text-blue-400' : 'text-slate-400'}`} />
+                                    <Filter className={`w-4 h-4 ${isFilterOpen ? 'text-amber-400' : 'text-slate-400'}`} />
                                     Bộ lọc
                                     {(filterVerify !== 'all' || filterPoints !== 'all' || filterDataType !== 'all') && (
-                                        <span className="w-4 h-4 rounded-full bg-blue-500 text-white text-[9px] flex items-center justify-center animate-in zoom-in ml-1">
+                                        <span className="w-4 h-4 rounded-full bg-amber-600 !text-white text-[9px] flex items-center justify-center animate-in zoom-in ml-1">
                                             {(filterVerify !== 'all' ? 1 : 0) + (filterPoints !== 'all' ? 1 : 0) + (filterDataType !== 'all' ? 1 : 0)}
                                         </span>
                                     )}
@@ -226,7 +226,7 @@ const MetaCustomers: React.FC = () => {
                                                         <button
                                                             key={opt.id}
                                                             onClick={() => setFilterVerify(opt.id as any)}
-                                                            className={`px-4 py-2.5 rounded-xl text-xs font-bold text-left transition-all flex items-center justify-between ${filterVerify === opt.id ? 'bg-blue-50 text-blue-600 ring-1 ring-blue-100' : 'text-slate-500 hover:bg-slate-50'}`}
+                                                            className={`px-4 py-2.5 rounded-xl text-xs font-bold text-left transition-all flex items-center justify-between ${filterVerify === opt.id ? 'bg-amber-50 text-amber-600 ring-1 ring-amber-100' : 'text-slate-500 hover:bg-slate-50'}`}
                                                         >
                                                             {opt.label}
                                                             {filterVerify === opt.id && <Check className="w-3.5 h-3.5" />}
@@ -320,7 +320,7 @@ const MetaCustomers: React.FC = () => {
                                                     onChange={(e) => handleSelectAll(e.target.checked)}
                                                     className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-[#ffa900] checked:bg-[#ffa900] hover:border-[#ffa900]"
                                                 />
-                                                <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                                <Check className="absolute w-3.5 h-3.5 !text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" />
                                             </div>
                                         </th>
                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tên</th>
@@ -336,7 +336,7 @@ const MetaCustomers: React.FC = () => {
                                     {filteredSubscribers.map(sub => (
                                         <tr
                                             key={sub.id}
-                                            className={`hover:bg-slate-50 transition-colors group cursor-pointer ${selectedIds.includes(sub.id) ? 'bg-blue-50/20' : ''}`}
+                                            className={`hover:bg-slate-50 transition-colors group cursor-pointer ${selectedIds.includes(sub.id) ? 'bg-amber-50/20' : ''}`}
                                             onClick={() => setSelectedProfileId(sub.id)}
                                         >
                                             <td className="px-6 py-4 pl-8" onClick={e => { e.stopPropagation(); toggleSelect(sub.id); }}>
@@ -345,9 +345,9 @@ const MetaCustomers: React.FC = () => {
                                                         type="checkbox"
                                                         checked={selectedIds.includes(sub.id)}
                                                         onChange={() => { }}
-                                                        className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-blue-600 checked:bg-blue-600 hover:border-blue-600"
+                                                        className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-amber-600 checked:bg-amber-600 hover:border-amber-600"
                                                     />
-                                                    <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                                    <Check className="absolute w-3.5 h-3.5 !text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" />
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -372,7 +372,7 @@ const MetaCustomers: React.FC = () => {
                                                     <div>
                                                         <div className="text-sm font-bold text-slate-800 group-hover:text-[#ca7900] transition-colors flex items-center gap-1">
                                                             {sub.name || sub.display_name || 'Facebook User'}
-                                                            {(sub.manual_email || sub.phone_number || sub.email || sub.phone) && <BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-50" />}
+                                                            {(sub.manual_email || sub.phone_number || sub.email || sub.phone) && <BadgeCheck className="w-3.5 h-3.5 text-amber-600 fill-amber-50" />}
                                                         </div>
                                                         <div className="text-[11px] font-medium text-slate-400 truncate w-32">PSID: {String(sub.psid || '').substring(0, 8)}...</div>
                                                     </div>
@@ -407,7 +407,7 @@ const MetaCustomers: React.FC = () => {
                                                 <span className="text-xs font-medium text-slate-500">{new Date(sub.created_at || sub.joined_at).toLocaleDateString('vi-VN')}</span>
                                             </td>
                                             <td className="px-6 py-4 text-right pr-8">
-                                                <button className="text-slate-300 hover:text-blue-600 p-1.5 hover:bg-blue-50 rounded-lg transition-colors">
+                                                <button className="text-slate-300 hover:text-amber-600 p-1.5 hover:bg-amber-50 rounded-lg transition-colors">
                                                     <MoreHorizontal className="w-4 h-4" />
                                                 </button>
                                             </td>
@@ -471,17 +471,17 @@ const MetaCustomers: React.FC = () => {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-blue-600 rounded-[14px] shadow-lg shadow-blue-600/10 flex items-center justify-center text-white flex-shrink-0">
+                    <div className="w-10 h-10 bg-amber-600 rounded-[14px] shadow-lg shadow-amber-600/10 flex items-center justify-center !text-white flex-shrink-0">
                         <Facebook className="w-5 h-5" />
                     </div>
                     <div>
-                        <h2 className="text-sm font-black text-slate-800 tracking-tight uppercase">Danh sách khách hàng Messenger</h2>
+                        <h2 className="text-sm font-black text-slate-800 tracking-tight uppercase">Danh sách Khách hàng Messenger</h2>
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 opacity-80">Tự động đồng bộ từ Facebook Pages</p>
                     </div>
                 </div>
                 <div className="hidden lg:flex items-center gap-4 px-6 border-l border-slate-200/50">
                     <div className="text-right">
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Tổng khách hàng</p>
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Tổng Khách hàng</p>
                         <p className="text-lg font-black text-slate-800 tracking-tighter">
                             {Array.isArray(pages) ? pages.reduce((acc, p) => acc + Number(p.subscriber_count || 0), 0).toLocaleString() : '0'}
                         </p>
@@ -517,9 +517,9 @@ const MetaCustomers: React.FC = () => {
                         <div
                             key={page.id}
                             onClick={() => handlePageClick(page)}
-                            className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-2xl hover:border-blue-100 transition-all cursor-pointer group relative overflow-hidden"
+                            className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-2xl hover:border-amber-100 transition-all cursor-pointer group relative overflow-hidden"
                         >
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-full -mr-16 -mt-16 group-hover:bg-blue-50 transition-colors"></div>
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50/50 rounded-full -mr-16 -mt-16 group-hover:bg-amber-50 transition-colors"></div>
 
                             <div className="relative z-10">
                                 <div className="flex items-start justify-between mb-8">
@@ -536,7 +536,7 @@ const MetaCustomers: React.FC = () => {
                                             />
                                         )}
                                     </div>
-                                    <span className="text-[9px] font-black px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full border border-blue-100/50 uppercase tracking-widest flex items-center gap-1.5">
+                                    <span className="text-[9px] font-black px-3 py-1.5 bg-amber-50 text-amber-600 rounded-full border border-amber-100/50 uppercase tracking-widest flex items-center gap-1.5">
                                         <RefreshCw className="w-3 h-3 animate-spin duration-[15s]" /> Live Sync
                                     </span>
                                 </div>
@@ -549,7 +549,7 @@ const MetaCustomers: React.FC = () => {
                                         <span className="text-3xl font-black text-slate-800 tracking-tighter">{(page.subscriber_count || 0).toLocaleString()}</span>
                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Khách hàng Meta</span>
                                     </div>
-                                    <div className="w-10 h-10 bg-slate-50 text-slate-400 rounded-2xl group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-lg group-hover:shadow-blue-500/20 transition-all flex items-center justify-center">
+                                    <div className="w-10 h-10 bg-slate-50 text-slate-400 rounded-2xl group-hover:bg-amber-600 group-hover:!text-white group-hover:shadow-lg group-hover:shadow-amber-600/20 transition-all flex items-center justify-center">
                                         <ArrowLeft className="w-5 h-5 rotate-180" />
                                     </div>
                                 </div>
@@ -563,8 +563,8 @@ const MetaCustomers: React.FC = () => {
 };
 
 const StatCard = ({ label, value, icon: Icon, color }: any) => (
-    <div className="bg-white px-5 py-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 group hover:border-blue-200 transition-all duration-300">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${color === 'blue' ? 'bg-blue-50 text-blue-600' :
+    <div className="bg-white px-5 py-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 group hover:border-amber-200 transition-all duration-300">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${color === 'blue' ? 'bg-amber-50 text-amber-600' :
             color === 'emerald' ? 'bg-emerald-50 text-emerald-600' :
                 'bg-amber-50 text-amber-600'
             } group-hover:scale-105`}>
@@ -581,7 +581,7 @@ const TabButton = ({ active, onClick, label, count, icon: Icon }: any) => (
     <button
         onClick={onClick}
         className={`px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-2.5 active:scale-95 ${active
-            ? 'bg-blue-600 text-white shadow-xl shadow-blue-500/20'
+            ? 'bg-amber-600 !text-white shadow-xl shadow-amber-600/20'
             : 'text-slate-500 hover:text-slate-800 hover:bg-white'
             }`}
     >

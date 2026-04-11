@@ -50,7 +50,7 @@ const WebJourneyReport: React.FC<WebReportProps> = ({ dateRange }) => {
         { label: 'NB. TRUY CẬP (USERS)', value: overview.visitors || 0, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
         { label: 'PHIÊN (SESSIONS)', value: overview.sessions || 0, icon: ArrowUpRight, color: 'text-indigo-600', bg: 'bg-indigo-50' },
         { label: 'XEM TRANG (VIEWS)', value: overview.pageViews || 0, icon: MousePointerClick, color: 'text-orange-600', bg: 'bg-orange-50' },
-        { label: 'THỜI GIAN TB', value: overview.avgDuration ? `${Math.round(overview.avgDuration)}s` : '0s', icon: Clock, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        { label: 'Thời gian TB', value: overview.avgDuration ? `${Math.round(overview.avgDuration)}s` : '0s', icon: Clock, color: 'text-emerald-600', bg: 'bg-emerald-50' },
     ];
 
     return (

@@ -345,12 +345,19 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
     }, [resizeRight, stopResizingRight]);
 
 
-    // Fetch history whenever modal is opened
+    // Fetch history whenever modal is opened (lazy - don't block conversation loading)
     useEffect(() => {
         if (showAnalysisModal && propertyId) {
             fetchLastAnalysis();
         }
     }, [showAnalysisModal, propertyId]);
+
+    // Load analysis once on mount for public/embed mode
+    useEffect(() => {
+        if (defaultShowAnalysis && propertyId) {
+            fetchLastAnalysis();
+        }
+    }, []);
 
     // Drag Handlers
     const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -438,9 +445,9 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
             setSelectedConv(null);
             setPage(1); // Reset về trang 1
             if (!publicMode) {
+                // Run fetchConversations immediately; analysis is loaded lazily (on modal open)
                 fetchConversations();
             }
-            fetchLastAnalysis();
         }
     }, [propertyId, source, debouncedSearchTerm, filterDate, filterIp, filterIdType, selectedPageId]);
 
@@ -501,11 +508,11 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
         try {
             const res = await api.get<any>(`ai_chatbot?action=delete_analysis&property_id=${propertyId}&index=${indexToDelete}&is_group=${isGroup ? 1 : 0}`);
             if (res.success) {
-                toast.success('Đã xóa báo cáo thành công');
+                toast.success('Đã xóa Báo cáo thành công');
                 fetchLastAnalysis(true); // skipViewSwitch = true
             }
         } catch (e) {
-            toast.error('Lỗi khi xóa báo cáo');
+            toast.error('Lỗi khi xóa Báo cáo');
         } finally {
             setShowDeleteConfirm(false);
             setIndexToDelete(null);
@@ -641,20 +648,17 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
         const fetchId = ++latestMsgFetchId.current;
         setMsgLoading(true);
         setHasMoreMessages(false);
+        setMessages([]); // Clear immediately for instant feedback
+        setJourney([]); // Clear journey too
         setWorkspaceFiles([]); // Clear previous workspace files
         try {
             const LIMIT = 30;
             const res = await api.get<any>(`ai_chatbot?action=get_messages&conversation_id=${convId}&limit=${LIMIT}`);
-            if (fetchId !== latestMsgFetchId.current) return;
             if (res.success) {
+                if (fetchId !== latestMsgFetchId.current) return;
                 setMessages(res.data);
                 // If we got exactly LIMIT messages, there may be more older ones
                 setHasMoreMessages(res.data.length >= LIMIT);
-
-                // If in Org/Consultant mode, also fetch Workspace Files
-                if (source === 'org') {
-                    fetchWorkspaceFiles(convId);
-                }
 
                 // Find last visitor message
                 const lastVisMsg = [...res.data].reverse().find(m => m.sender === 'visitor');
@@ -664,6 +668,16 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                     setLastVisitorMsgAt(null);
                 }
             }
+            
+            // Set loading false as soon as messages are ready
+            setMsgLoading(false);
+
+            // Fetch background data in parallel without blocking UI
+            (async () => {
+                // If in Org/Consultant mode, also fetch Workspace Files
+                if (source === 'org') {
+                    fetchWorkspaceFiles(convId);
+                }
 
             // Also fetch journey based on source
             if (selectedConv && selectedConv.visitor_id) {
@@ -804,6 +818,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                 }
                 setJourney(journeyData);
             }
+            })();
         } catch (e) {
             console.error(e);
         } finally {
@@ -832,7 +847,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                 property_id: propertyId
             });
             if (res.success) {
-                toast.success('Đã gửi trả lời & Tạm dừng AI 30p');
+                toast.success('đã gửi trả lời & Tạm dừng AI 30p');
                 fetchMessages(selectedConv.id);
             } else {
                 toast.error('Gửi thất bại: ' + res.message);
@@ -968,11 +983,11 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
             (name.includes('-') && name.length > 20); // Basic check for UUID
     };
 
-    const formatDate = (dateStr: string) => {
+    const formatDate = useCallback((dateStr: string) => {
         if (!dateStr) return '';
         const d = new Date(dateStr);
         return d.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
-    };
+    }, []);
 
     const getDisplayName = (c: Conversation) => {
         let name = (source === 'org' && c.email) ? c.email : (c.first_name || c.last_name || c.zalo_name);
@@ -1031,12 +1046,12 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                 conversation_id: selectedConv.id,
                 status: status
             });
-            toast.success('Đã cập nhật trạng thái: ' + status);
+            toast.success('Đã cập nhật Trạng thái: ' + status);
             setSelectedConv({ ...selectedConv, status });
             // Update in list
             setConversations(conversations.map(c => c.id === selectedConv.id ? { ...c, status } : c));
         } catch (e) {
-            toast.error('Lỗi cập nhật trạng thái');
+            toast.error('Lỗi cập nhật Trạng thái');
         }
     };
 
@@ -1361,7 +1376,8 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                     );
                 } else if (fileExtMatch) {
                     const ext = fileExtMatch[1].toLowerCase();
-                    const fileName = label || url.split('/').pop() || 'Tài liệu';
+                    const fileName = label || url.split('/').pop() || 'Tỉ lệ'
+
                     parts.push(
                         <a key={match.index} href={url} target="_blank" rel="noopener noreferrer" className="block group mt-2 mb-2 no-underline">
                             <div className={`flex items-center gap-3 p-3 border rounded-xl transition-all ${isDarkTheme ? 'bg-slate-800 border-slate-700 hover:border-slate-500' : 'bg-slate-50 border-slate-200 hover:border-slate-300'}`}>
@@ -1696,6 +1712,39 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
             return () => clearTimeout(timer);
         }
     }, [isPageDropdownOpen]);
+
+    const memoizedMessages = useMemo(() => (
+        <>
+            {messages.map((m, idx) => (
+                <div key={m.id || idx} className={`flex ${m.sender === 'visitor' ? 'justify-start' : 'justify-end'}`}>
+                    <div className={`max-w-[85%] lg:max-w-[75%] p-3.5 rounded-2xl text-xs font-medium leading-relaxed shadow-sm ${m.sender === 'visitor'
+                        ? (isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-200 rounded-tl-none shadow-slate-950/20' : 'bg-white border-slate-100 text-slate-700 rounded-tl-none')
+                        : m.sender === 'ai'
+                            ? (isDarkTheme ? 'bg-slate-900 border-slate-800 text-slate-200 rounded-tr-none shadow-slate-950/20' : 'bg-slate-50 border border-slate-200 text-slate-800 rounded-tr-none')
+                            : 'bg-slate-800 text-white rounded-tr-none'
+                        }`}>
+                        {m.sender !== 'visitor' && (
+                            <div className="flex items-center gap-1.5 mb-1.5 opacity-70 border-b border-black/5 pb-1">
+                                {m.sender === 'ai' ? <Bot className="w-3 h-3 text-slate-500" /> : <User className="w-3 h-3" />}
+                                <span className="text-[9px] font-black uppercase tracking-widest">
+                                    {m.sender === 'ai'
+                                        ? (m.bot_name ? `AI Assistant (${m.bot_name})` : 'AI Assistant')
+                                        : 'You'}
+                                </span>
+                            </div>
+                        )}
+                        {renderContent(m.message, m.sender, (action) => setReply(action))}
+                        <div className={`text-[9px] font-bold mt-1 ${m.sender === 'visitor' ? 'text-slate-400' :
+                            m.sender === 'ai' ? 'text-slate-400' : 'text-white/50'
+                            }`}>
+                            {formatDate(m.created_at)}
+                        </div>
+                    </div>
+                </div>
+            ))}
+            {msgLoading && messages.length === 0 && <div className="p-10 text-center text-slate-300">Loading messages...</div>}
+        </>
+    ), [messages, msgLoading, isDarkTheme, formatDate, renderContent]);
 
     // identification Filter logic continues...
     return (
@@ -2054,7 +2103,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                         <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20 mb-4 animate-bounce">
                             <Download className="w-8 h-8" />
                         </div>
-                        <h3 className="text-xl font-black text-blue-600 uppercase tracking-tight">Thả tệp để gửi</h3>
+                        <h3 className="text-xl font-black text-blue-600 uppercase tracking-tight">Thả tệp đã gửi</h3>
                         <p className="text-blue-500 font-bold mt-1 text-sm">Hỗ trợ Hình ảnh, PDF, Excel...</p>
                     </div>
                 )}
@@ -2070,7 +2119,8 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                     </div>
                                     <div>
                                         <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight leading-none mb-1">Xem trước tài liệu</h4>
-                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{previewType === 'image' ? 'Hình ảnh' : 'Tài liệu'}</p>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{previewType === 'image' ? 'Hình ảnh' : 'Tỉ lệ'}</p>
+
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -2206,34 +2256,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                     )}
                                 </div>
                             )}
-                            {messages.map(m => (
-                                <div key={m.id} className={`flex ${m.sender === 'visitor' ? 'justify-start' : 'justify-end'}`}>
-                                    <div className={`max-w-[85%] lg:max-w-[75%] p-3.5 rounded-2xl text-xs font-medium leading-relaxed shadow-sm ${m.sender === 'visitor'
-                                        ? (isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-200 rounded-tl-none shadow-slate-950/20' : 'bg-white border-slate-100 text-slate-700 rounded-tl-none')
-                                        : m.sender === 'ai'
-                                            ? (isDarkTheme ? 'bg-slate-900 border-slate-800 text-slate-200 rounded-tr-none shadow-slate-950/20' : 'bg-slate-50 border border-slate-200 text-slate-800 rounded-tr-none')
-                                            : 'bg-slate-800 text-white rounded-tr-none'
-                                        }`}>
-                                        {m.sender !== 'visitor' && (
-                                            <div className="flex items-center gap-1.5 mb-1.5 opacity-70 border-b border-black/5 pb-1">
-                                                {m.sender === 'ai' ? <Bot className="w-3 h-3 text-slate-500" /> : <User className="w-3 h-3" />}
-                                                <span className="text-[9px] font-black uppercase tracking-widest">
-                                                    {m.sender === 'ai'
-                                                        ? (m.bot_name ? `AI Assistant (${m.bot_name})` : 'AI Assistant')
-                                                        : 'You'}
-                                                </span>
-                                            </div>
-                                        )}
-                                        {renderContent(m.message, m.sender, (action) => setReply(action))}
-                                        <div className={`text-[9px] font-bold mt-1 ${m.sender === 'visitor' ? 'text-slate-400' :
-                                            m.sender === 'ai' ? 'text-slate-400' : 'text-white/50'
-                                            }`}>
-                                            {formatDate(m.created_at)}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                            {msgLoading && messages.length === 0 && <div className="p-10 text-center text-slate-300">Loading messages...</div>}
+                            {memoizedMessages}
                         </div>
 
                         {/* Footer Input */}
@@ -2273,7 +2296,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                         value={reply}
                                         onChange={e => setReply(e.target.value)}
                                         onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply(); } }}
-                                        placeholder={selectedConv.status === 'human' ? "Nhập tin nhắn..." : "Cần tiếp quản để chat..."}
+                                        placeholder={selectedConv.status === 'human' ? "Nhập tin nhắn..." : "Còn tiếp quản để chat..."}
                                         disabled={(() => {
                                             if (selectedConv.status !== 'human') return true;
                                             if (!lastVisitorMsgAt) return false;
@@ -2326,7 +2349,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                 <button onClick={() => setMobileView('chat')} className="lg:hidden p-1 text-slate-400 hover:text-slate-600">
                                     <ChevronLeft className="w-4 h-4" />
                                 </button>
-                                <h4 className={`text-[10px] font-black uppercase tracking-widest ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>Tài liệu hội thoại</h4>
+                                <h4 className={`text-[10px] font-black uppercase tracking-widest ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>Tỉ lệ hội thoại</h4>
                             </div>
 
                             {/* Tabs */}
@@ -2421,7 +2444,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                 >
                                     <ChevronLeft className="w-4 h-4" />
                                 </button>
-                                <h4 className={`text-[10px] font-black uppercase tracking-widest ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>Hành trình khách hàng</h4>
+                                <h4 className={`text-[10px] font-black uppercase tracking-widest ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>Hành trình Khách hàng</h4>
                             </div>
                         </div>
                         <div className="px-6 pb-2 pt-4">
@@ -2574,7 +2597,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                         </div>
                         <div className="flex-1">
                             <h4 className={`text-sm font-bold ${isDarkTheme ? 'text-white' : 'text-slate-800'}`}>Cấu hình xuất CSV</h4>
-                            <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">Chọn phạm vi thời gian bạn muốn trích xuất dữ liệu cuộc trò chuyện.</p>
+                            <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">Chọn phạm vi Thời gian bạn muốn trích xuất dữ liệu cuộc trò chuyện.</p>
 
                             <div className={`mt-4 flex p-1 rounded-xl border ${isDarkTheme ? 'bg-slate-900 border-slate-700' : 'bg-slate-100 border-slate-200/50'}`}>
                                 {[
@@ -2608,7 +2631,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                 <Zap className="w-4 h-4" />
                             </div>
                             <div className={`font-bold text-xs uppercase tracking-tight ${isDarkTheme ? 'text-white' : 'text-slate-800'}`}>Bộ lọc hiện tại</div>
-                            <p className="text-[10px] text-slate-500 mt-1 font-medium">{filterDate ? `${filterDate}` : 'Tất cả thời gian'}</p>
+                            <p className="text-[10px] text-slate-500 mt-1 font-medium">{filterDate ? `${filterDate}` : 'Tất cả Thời gian'}</p>
                         </button>
 
                         <button
@@ -2788,7 +2811,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                         <div className="p-2 bg-red-100 text-red-600 rounded-xl">
                             <Trash2 className="w-6 h-6" />
                         </div>
-                        <span className="text-xl font-black text-slate-800 tracking-tight">Xác nhận xóa báo cáo</span>
+                        <span className="text-xl font-black text-slate-800 tracking-tight">Xác nhận xóa Báo cáo</span>
                     </div>
                 }
                 size="md"
@@ -2799,7 +2822,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                             Bạn có chắc chắn muốn xóa bản ghi phân tích này không?
                         </p>
                         <p className="text-xs text-red-600/70 mt-2 font-bold italic">
-                            * Hành động này không thể hoàn tác. Dữ liệu báo cáo sẽ bị xóa vĩnh viễn khỏi lịch sử.
+                            * Hành động này không thể hoàn tác. Dữ liệu Báo cáo sẽ bị xóa vĩnh viễn khỏi lịch sử.
                         </p>
                     </div>
 
@@ -2874,7 +2897,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                             </div>
 
                             <div className="space-y-1">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Khoảng thời gian</span>
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Khoảng Thời gian</span>
                                 <div className="flex items-center gap-2">
                                     <div className="p-1.5 bg-white rounded-lg border border-slate-200">
                                         <Clock className="w-3.5 h-3.5 text-slate-400" />
@@ -2930,7 +2953,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                 onClose={() => {
                     if (!publicMode) setShowAnalysisModal(false);
                 }}
-                title={<div className="flex items-center gap-2 text-slate-600"><Sparkles className="w-5 h-5 text-slate-400" /> <span>Trợ lý Phân tích hội thoại AI</span></div>}
+                title={<div className="flex items-center gap-2 text-slate-600"><Sparkles className="w-5 h-5 text-slate-400" /> <span>Tỉ lệ Phân tích hội thoại AI</span></div>}
                 size={analysisView === 'config' ? 'xl' : '4xl'}
                 hideCloseButton={publicMode}
                 footer={analysisView === 'report' ? (
@@ -2948,7 +2971,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                 onClick={() => {
                                     const publicUrl = window.location.origin + window.location.pathname + `#/public-report/${propertyId}/index/${currentAnalysisIndex}`;
                                     navigator.clipboard.writeText(publicUrl);
-                                    toast.success('Đã sao chép link báo cáo!');
+                                    toast.success('Đã sao chép link Báo cáo!');
                                 }}
                                 className="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-2xl text-xs font-black transition-all shadow-lg shadow-slate-200 flex items-center gap-2 group/btn active:scale-95"
                             >
@@ -2983,7 +3006,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                         <div className={`absolute inset-0 opacity-30 blur-xl group-hover:opacity-50 transition-opacity ${isGroup ? 'bg-brand' : 'bg-gradient-to-br from-amber-400 to-amber-600'}`}></div>
                                         <Bot className="w-8 h-8 text-white relative z-10 drop-shadow-sm" />
                                     </div>
-                                    <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 uppercase tracking-tight">Thấu hiểu khách hàng</h3>
+                                    <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 uppercase tracking-tight">Thấu hiểu Khách hàng</h3>
                                     <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-md mx-auto">
                                         AI sẽ phân tích các cuộc hội thoại thực tế để giúp bạn tối ưu hóa chiến dịch Marketing và nâng cao tỷ lệ chuyển đổi.
                                     </p>
@@ -3047,7 +3070,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                                             <Sparkles className="w-3 h-3 text-white animate-pulse" />
                                                         </div>
                                                         <div className="flex flex-col items-start">
-                                                            <span className="font-black text-sm tracking-widest uppercase">Đang thấu hiểu khách hàng</span>
+                                                            <span className="font-black text-sm tracking-widest uppercase">Đang thấu hiểu Khách hàng</span>
                                                             <span className="text-[10px] font-bold text-white/70 normal-case tracking-normal">
                                                                 AI đang phân tích các cuộc hội thoại...
                                                             </span>
@@ -3100,7 +3123,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                                                 { id: 'zalo', label: 'Zalo OA Message' },
                                                                 { id: 'meta', label: 'Messenger/Instagram' }
                                                             ] : []),
-                                                            { id: 'org', label: 'Tài liệu hội thoại' }
+                                                            { id: 'org', label: 'Tỉ lệ hội thoại' }
                                                         ].map(opt => (
                                                             <div
                                                                 key={opt.id}
@@ -3124,7 +3147,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                                 <div className="w-5 h-5 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center shadow-sm shadow-amber-200">
                                                     <Clock className="w-3 h-3 text-white" />
                                                 </div>
-                                                Khoảng thời gian
+                                                Khoảng Thời gian
                                             </label>
                                             <div
                                                 onClick={() => {
@@ -3204,8 +3227,8 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                         {analysisHistory.length === 0 && (
                                             <div className="py-8 px-6 bg-slate-50 rounded-2xl border border-slate-200 text-center">
                                                 <Clock className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-                                                <p className="text-xs font-bold text-slate-400 mb-1">Chưa có báo cáo nào</p>
-                                                <p className="text-[10px] text-slate-400">Nhấn "Phân tích ngay" để tạo báo cáo đầu tiên</p>
+                                                <p className="text-xs font-bold text-slate-400 mb-1">Chưa có Báo cáo nào</p>
+                                                <p className="text-[10px] text-slate-400">Nhấn "Phân tích ngay" để tạo Báo cáo đầu tiên</p>
                                             </div>
                                         )}
                                         {analysisHistory.map((item, idx) => (
@@ -3246,7 +3269,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                                             </span>
                                                             <div className="flex items-center gap-1.5">
                                                                 <span className="text-[10px] text-slate-400 font-medium">
-                                                                    Tạo lúc: {item.generated_at ? new Date(item.generated_at).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : `Bản ghi #${idx + 1}`}
+                                                                    Tỉ lệ {item.generated_at ? new Date(item.generated_at).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : `Bản ghi #${idx + 1}`}
                                                                 </span>
                                                                 <span className="text-[9px] text-amber-600 font-bold opacity-0 group-hover/item:opacity-100 transition-opacity ml-1">Click để xem lại</span>
                                                             </div>
@@ -3258,17 +3281,17 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                                                 e.stopPropagation();
                                                                 const publicUrl = window.location.origin + window.location.pathname + `#/public-report/${propertyId}/index/${idx}`;
                                                                 navigator.clipboard.writeText(publicUrl);
-                                                                toast.success('Đã sao chép link báo cáo này!');
+                                                                toast.success('Đã sao chép link Báo cáo này!');
                                                             }}
                                                             className="p-2 hover:bg-amber-100 text-amber-600 rounded-xl transition-all active:scale-90"
-                                                            title="Chia sẻ báo cáo này"
+                                                            title="Chia sẻ Báo cáo này"
                                                         >
                                                             <Share2 className="w-4 h-4" />
                                                         </button>
                                                         <button
                                                             onClick={(e) => handleDeleteAnalysis(e, idx)}
                                                             className="p-2 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-xl transition-all active:scale-90"
-                                                            title="Xóa báo cáo"
+                                                            title="Xóa Báo cáo"
                                                         >
                                                             <X className="w-4 h-4" />
                                                         </button>
@@ -3297,7 +3320,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                         </div>
                                         <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">
                                             <Clock className="w-3 h-3" />
-                                            {anFromDate || anToDate ? `${anFromDate || '...'} → ${anToDate || '...'}` : 'Toàn bộ thời gian'}
+                                            {anFromDate || anToDate ? `${anFromDate || '...'} → ${anToDate || '...'}` : 'Toàn bộ Thời gian'}
                                         </div>
                                         <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">
                                             <Globe className="w-3 h-3" />
@@ -3317,7 +3340,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                     <div className="flex items-center gap-2 justify-end">
                                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                                         <p className="text-sm font-black text-emerald-600 uppercase flex items-center gap-1.5">
-                                            <ShieldCheck className="w-4 h-4" /> Đã hoàn thành
+                                            <ShieldCheck className="w-4 h-4" /> Đã Hoàn thành
                                         </p>
                                     </div>
                                 </div>
@@ -3332,7 +3355,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                             </div>
                                             <div>
                                                 <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none">Phân tích Giờ cao điểm</h3>
-                                                <p className="text-xs font-bold text-slate-500 mt-1">Dựa trên {analysisTotalCount > analysisSampleCount ? `mẫu ${analysisSampleCount}/${analysisTotalCount}` : `tổng ${analysisTotalCount}`} tin nhắn từ {analysisVisitorCount} khách hàng</p>
+                                                <p className="text-xs font-bold text-slate-500 mt-1">Dựa trên {analysisTotalCount > analysisSampleCount ? `mẫu ${analysisSampleCount}/${analysisTotalCount}` : `tổng ${analysisTotalCount}`} tin nhắn từ {analysisVisitorCount} Khách hàng</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4">
@@ -3429,7 +3452,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                         </div>
                                         <div>
                                             <h3 className="text-xl font-bold text-slate-800">Thống kê Chủ đề & Từ khóa</h3>
-                                            <p className="text-sm text-slate-500 font-medium">Các vấn đề được khách hàng quan tâm nhất</p>
+                                            <p className="text-sm text-slate-500 font-medium">Các vấn đề được Khách hàng quan tâm nhất</p>
                                         </div>
                                     </div>
 
@@ -3440,7 +3463,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                                     <tr className="bg-slate-50 border-b border-slate-100">
                                                         <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-1/2">Chủ đề / Keyword</th>
                                                         <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider w-32">Số lượng</th>
-                                                        <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Tỷ lệ quan tâm</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Tỉ lệ quan tâm</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-100">
@@ -3573,7 +3596,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                                         <td colSpan={4} className="px-6 py-12 text-center">
                                                             <div className="flex flex-col items-center gap-3">
                                                                 <Info className="w-8 h-8 text-slate-200" />
-                                                                <p className="text-xs font-bold text-slate-400">Không tìm thấy cuộc hội thoại nào trong khoảng thời gian này</p>
+                                                                <p className="text-xs font-bold text-slate-400">Không tìm thấy cuộc hội thoại nào trong khoảng Thời gian này</p>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -3619,7 +3642,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                                                         <div className="flex flex-col items-start gap-1.5 max-w-[95%]">
                                                                             <div className="flex items-center gap-2 ml-1">
                                                                                 <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                                                                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Trợ lý AI</span>
+                                                                                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Tỉ lệ AI</span>
                                                                             </div>
                                                                             <div className="bg-gradient-to-br from-emerald-50/60 to-teal-50/40 backdrop-blur-sm border border-emerald-100/80 p-5 rounded-[24px] rounded-tl-none text-[11px] text-slate-800 leading-relaxed w-full shadow-md relative group/msg-ai">
                                                                                 <div className="max-h-[350px] overflow-y-auto custom-scrollbar pr-2">
@@ -3797,7 +3820,8 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Kênh đang chọn</label>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Kênh Đang chờ</label>
+
                                 <div className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 uppercase flex items-center gap-2">
                                     {source === 'web' ? <Globe className="w-3.5 h-3.5 text-blue-500" /> :
                                         source === 'zalo' ? <MessageSquare className="w-3.5 h-3.5 text-blue-600" /> :
@@ -3818,7 +3842,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
 
                         <div className="space-y-4 pt-2">
                             <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                                <Clock className="w-3 h-3" /> Khoảng thời gian xuất (Tùy chọn)
+                                <Clock className="w-3 h-3" /> Khoảng Thời gian xuất (Tùy chọn)
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">

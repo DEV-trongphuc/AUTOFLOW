@@ -6,6 +6,9 @@ apiHeaders();
 $method = $_SERVER['REQUEST_METHOD'];
 $path = isset($_GET['id']) ? $_GET['id'] : null;
 
+// [PERF] Giảm thiểu khoá session cho toàn bộ file vì không cần update Session
+if (session_id()) session_write_close();
+
 try {
     // --- SPECIAL ROUTES ---
     if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'sync_now') {

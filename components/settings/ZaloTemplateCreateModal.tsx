@@ -52,21 +52,21 @@ interface TemplateBuilderState {
 }
 
 const TEMPLATE_TYPES = [
-    { value: '1', label: 'Tùy chỉnh (Giao dịch)', desc: 'Thông báo đơn hàng, lịch hẹn, cập nhật trạng thái', icon: FileCheck },
+    { value: '1', label: 'Tùy chỉnh (Giao dịch)', desc: 'Thông báo đơn hàng, lịch hẹn, cập nhật Trạng thái', icon: FileCheck },
     { value: '2', label: 'Mã xác thực (OTP)', desc: 'Gửi mã OTP xác thực người dùng', icon: ShieldCheck },
     { value: '3', label: 'Yêu cầu thanh toán', desc: 'Gửi thông tin chuyển khoản, thanh toán hoá đơn', icon: Layout },
-    { value: '4', label: 'Hậu mãi (Voucher)', desc: 'Chăm sóc khách hàng, gửi mã giảm giá', icon: Tag },
-    { value: '5', label: 'Đánh giá dịch vụ', desc: 'Thu thập đánh giá từ khách hàng sau dịch vụ', icon: Check },
+    { value: '4', label: 'Hậu mãi (Voucher)', desc: 'Chăm sóc Khách hàng, gửi mã giảm giá', icon: Tag },
+    { value: '5', label: 'Đánh giá dịch vụ', desc: 'Thu thập đánh giá từ Khách hàng sau dịch vụ', icon: Check },
 ];
 
 const TAG_OPTIONS = [
     { value: '1', label: 'Giao dịch (Transaction)' },
-    { value: '2', label: 'Chăm sóc khách hàng (CSKH)' },
+    { value: '2', label: 'Chăm sóc Khách hàng (CSKH)' },
     { value: '3', label: 'Quảng cáo (Promotion)' }
 ];
 
 const PARAM_TYPES = [
-    { value: '1', label: 'Tên khách hàng (String)' },
+    { value: '1', label: 'Tên Khách hàng (String)' },
     { value: '2', label: 'Số điện thoại (Phone)' },
     { value: '3', label: 'Địa chỉ (Address)' },
     { value: '4', label: 'Mã số (Code)' },
@@ -103,7 +103,7 @@ const ZaloTemplateCreateModal: React.FC<ZaloTemplateCreateModalProps> = ({ isOpe
             content: 'Xin chào <customer_name>, đơn hàng <order_code> của bạn đã được xác nhận.',
             hasTable: false,
             tableRows: [
-                { title: 'Mã khách hàng', value: '<customer_code>' },
+                { title: 'Mã Khách hàng', value: '<customer_code>' },
                 { title: 'Tổng tiền', value: '<amount>' }
             ],
             otp: '<otp>',
@@ -336,7 +336,7 @@ const ZaloTemplateCreateModal: React.FC<ZaloTemplateCreateModalProps> = ({ isOpe
                     content: 'Xin chào <customer_name>, đơn hàng <order_code> của bạn đã được xác nhận.',
                     hasTable: false,
                     tableRows: [
-                        { title: 'Mã khách hàng', value: '<customer_code>' },
+                        { title: 'Mã Khách hàng', value: '<customer_code>' },
                         { title: 'Tổng tiền', value: '<amount>' }
                     ],
                     otp: '<otp>',
@@ -687,7 +687,7 @@ const ZaloTemplateCreateModal: React.FC<ZaloTemplateCreateModalProps> = ({ isOpe
                         {editData && (
                             <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl text-blue-700 text-xs flex items-center gap-2">
                                 <Info className="w-4 h-4" />
-                                <span>Bạn đang chỉnh sửa template <b>{editData.template_name}</b> (ID: {editData.template_id}). Sau khi lưu, template sẽ chuyển sang trạng thái chờ duyệt.</span>
+                                <span>Bạn đang sửa template <b>{editData.template_name}</b> (ID: {editData.template_id}). Sau khi lưu, template sẽ chuyển sang Trạng thái chờ duyệt.</span>
                             </div>
                         )}
 
@@ -836,7 +836,7 @@ const ZaloTemplateCreateModal: React.FC<ZaloTemplateCreateModalProps> = ({ isOpe
                                             </p>
                                             <ul className="ml-3.5 mt-1 grid grid-cols-2 gap-2">
                                                 <li className="flex items-center gap-1.5">• Định dạng: <b className="text-amber-900">JPG, PNG</b></li>
-                                                <li className="flex items-center gap-1.5">• Tỉ lệ: <b className="text-amber-900">16:9</b></li>
+                                                <li className="flex items-center gap-1.5">• Tỉ lệ <b className="text-amber-900">16:9</b></li>
                                             </ul>
                                         </div>
                                     </div>

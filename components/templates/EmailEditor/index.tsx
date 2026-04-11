@@ -453,7 +453,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
             const result = await response.json();
 
             if (result.success) {
-                toast.success(`Đã gửi email test đến ${email}`);
+                toast.success(`đã gửi email test đến ${email}`);
             } else {
                 toast.error(result.error || 'Gửi thất bại');
             }

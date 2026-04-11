@@ -156,7 +156,7 @@ const Tags: React.FC = () => {
                         </p>
                         <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-medium flex gap-3">
                             <AlertTriangle className="w-5 h-5 shrink-0" />
-                            <p>Hành động này sẽ cập nhật lại nhãn cho toàn bộ khách hàng đang sở hữu nhãn này.</p>
+                            <p>Hành động này sẽ cập nhật lại nhãn cho toàn bộ Khách hàng đang sở hữu nhãn này.</p>
                         </div>
                     </div>
                 ),
@@ -180,14 +180,14 @@ const Tags: React.FC = () => {
             messageContent = (
                 <div className="space-y-4">
                     <p className="text-center text-slate-600 text-sm">
-                        Nhãn <span className="font-bold text-slate-800">"{tag.name}"</span> đang được gắn cho <span className="font-bold text-rose-600">{subCount.toLocaleString()} khách hàng</span>.
+                        Nhãn <span className="font-bold text-slate-800">"{tag.name}"</span> đang được gắn cho <span className="font-bold text-rose-600">{subCount.toLocaleString()} Khách hàng</span>.
                     </p>
                     <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-left shadow-inner">
                         <h4 className="text-xs font-bold text-rose-800 uppercase mb-2 flex items-center gap-2">
                             <AlertTriangle className="w-3.5 h-3.5" /> Hậu quả khi xóa:
                         </h4>
                         <ul className="list-disc pl-4 space-y-1.5 text-xs text-rose-700 font-medium leading-relaxed">
-                            <li>Hệ thống sẽ <b>GỠ BỎ</b> nhãn khỏi toàn bộ {subCount.toLocaleString()} khách hàng này.</li>
+                            <li>Hệ thống sẽ <b>GỠ BỎ</b> nhãn khỏi toàn bộ {subCount.toLocaleString()} Khách hàng này.</li>
                             <li>Các <b>Automation Flow</b> có điều kiện lọc theo nhãn này sẽ bị dừng hoặc lỗi.</li>
                             <li>Bạn <b>KHÔNG THỂ</b> khôi phục lại liên kết dữ liệu cũ ngay cả khi tạo lại nhãn trùng tên.</li>
                         </ul>
@@ -198,7 +198,7 @@ const Tags: React.FC = () => {
                 </div>
             );
         } else {
-            messageContent = `Bạn có chắc chắn muốn xóa nhãn "${tag.name}"? Nhãn này hiện chưa gắn cho khách hàng nào.`;
+            messageContent = `Bạn có chắc chắn muốn xóa nhãn "${tag.name}"? Nhãn này hiện chưa gắn cho Khách hàng nào.`;
         }
 
         setConfirmModal({
@@ -294,7 +294,7 @@ const Tags: React.FC = () => {
             setTags(prev => prev.map(t => t.id === viewingTag.id ? { ...t, subscriber_count: newCount } : t));
             setViewingTag(prev => prev ? { ...prev, subscriber_count: newCount } : null);
 
-            showToast(`Đã gỡ nhãn khỏi ${res.data.affected} khách hàng`);
+            showToast(`Đã gỡ nhãn khỏi ${res.data.affected} Khách hàng`);
         } else {
             showToast(res.message || 'Lỗi khi gỡ nhãn', 'error');
         }
@@ -309,7 +309,7 @@ const Tags: React.FC = () => {
         <div className="animate-fade-in space-y-8 pb-40 px-4 lg:px-8">
             <PageHero 
                 title={<>Tag <span className="text-orange-100/80">Classifier</span></>}
-                subtitle="Phân loại khách hàng tự động để cá nhân hóa chiến dịch và luồng Automation."
+                subtitle="Phân loại Khách hàng tự động để cá nhân hóa chiến dịch và luồng Automation."
                 showStatus={true}
                 statusText="Tagging Engine Active"
                 actions={[
@@ -348,7 +348,7 @@ const Tags: React.FC = () => {
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-50/50 p-4 rounded-2xl border border-slate-100 mb-6 gap-4">
                         <div>
                             <h3 className="text-base lg:text-lg font-bold text-slate-800 uppercase tracking-tight">Danh sách Nhãn</h3>
-                            <p className="text-[10px] lg:text-xs text-slate-500 font-medium">Quản lý các nhãn phân loại khách hàng.</p>
+                            <p className="text-[10px] lg:text-xs text-slate-500 font-medium">Quản lý các nhãn phân loại Khách hàng.</p>
                         </div>
                         <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-white px-3 py-1.5 rounded-lg border border-slate-200/60 shadow-sm">
                             Tags: {filteredTags.length}
@@ -418,7 +418,7 @@ const Tags: React.FC = () => {
                         <div className="absolute top-0 right-0 p-4 opacity-10 rotate-12"><Plus className="w-24 h-24 text-white" /></div>
                         <div className="relative z-10 text-white">
                             <h3 className="font-extrabold text-lg flex items-center gap-2"><TagIcon className="w-5 h-5" /> Quy chuẩn Nhãn (Tagging)</h3>
-                            <p className="text-emerald-100 text-xs font-medium mt-1">Dùng để phân loại hành vi và tệp khách hàng tiềm năng.</p>
+                            <p className="text-emerald-100 text-xs font-medium mt-1">Dùng để phân loại hành vi và tệp Khách hàng tiềm năng.</p>
                         </div>
                     </div>
 
@@ -435,7 +435,7 @@ const Tags: React.FC = () => {
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mô tả hoặc Ghi chú</label>
                             <textarea
-                                placeholder="VD: Nhãn này dùng cho khách hàng tham gia workshop..."
+                                placeholder="VD: Nhãn này dùng cho Khách hàng tham gia workshop..."
                                 value={newTag.description}
                                 onChange={(e) => setNewTag({ ...newTag, description: e.target.value })}
                                 className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-300 outline-none focus:bg-white focus:border-emerald-500 transition-all resize-none h-24"
@@ -461,7 +461,7 @@ const Tags: React.FC = () => {
                     {editingTag?.name !== editFormData.name.trim().toUpperCase().replace(/\s+/g, '_') && (
                         <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex gap-3 text-rose-800">
                             <AlertTriangle className="w-5 h-5 shrink-0" />
-                            <p className="text-xs font-bold leading-relaxed"><b>CẢNH BÁO:</b> Bạn đang đổi tên ID nhãn. Hệ thống sẽ phải quét lại toàn bộ cơ sở dữ liệu để thay thế nhãn cũ cho khách hàng.</p>
+                            <p className="text-xs font-bold leading-relaxed"><b>CẢNH BÁO:</b> Bạn đang đổi tên ID nhãn. Hệ thống sẽ phải quét lại toàn bộ cơ sở dữ liệu để thay thế nhãn cũ cho Khách hàng.</p>
                         </div>
                     )}
                     <div className="space-y-4">

@@ -66,7 +66,7 @@ const ZaloDashboard: React.FC = () => {
                 <div id="templates-section" className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
                     <div className="flex items-center justify-between px-2">
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-indigo-600 rounded-[20px] shadow-xl shadow-indigo-600/10 flex items-center justify-center rotate-3">
+                            <div className="w-12 h-12 bg-amber-600 rounded-[20px] shadow-xl shadow-amber-600/10 flex items-center justify-center rotate-3">
                                 <Zap className="w-6 h-6 text-white" />
                             </div>
                             <div>
@@ -80,29 +80,29 @@ const ZaloDashboard: React.FC = () => {
                             className="p-3 bg-white hover:bg-slate-50 rounded-2xl border border-slate-100 shadow-sm transition-all group"
                             title="Làm mới danh sách"
                         >
-                            <RefreshCw className={`w-5 h-5 text-slate-400 group-hover:text-blue-500 ${templatesLoading ? 'animate-spin' : ''}`} />
+                            <RefreshCw className={`w-5 h-5 text-slate-400 group-hover:text-amber-600 ${templatesLoading ? 'animate-spin' : ''}`} />
                         </button>
                     </div>
 
                     <div className="bg-white rounded-[40px] border border-slate-100 p-8 shadow-sm">
                         {templatesLoading ? (
                             <div className="flex flex-col items-center justify-center py-20 gap-4">
-                                <RefreshCw className="w-10 h-10 text-indigo-500 animate-spin" />
+                                <RefreshCw className="w-10 h-10 text-amber-600 animate-spin" />
                                 <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Đang tải templates từ Zalo...</p>
                             </div>
                         ) : templates.length === 0 ? (
                             <div className="text-center py-20 bg-slate-50/50 rounded-[32px] border-2 border-dashed border-slate-100">
                                 <MessageSquare className="w-16 h-16 text-slate-100 mx-auto mb-4" />
                                 <p className="text-slate-400 text-xs font-black uppercase tracking-widest italic">Chưa có templates nào được đồng bộ</p>
-                                <button onClick={() => fetchTemplates(selectedOA)} className="mt-4 text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline px-6 py-2 bg-blue-50 rounded-full">
+                                <button onClick={() => fetchTemplates(selectedOA)} className="mt-4 text-[10px] font-black text-amber-600 uppercase tracking-widest hover:underline px-6 py-2 bg-amber-50 rounded-full">
                                     Đồng bộ ngay
                                 </button>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {templates.map(template => (
-                                    <div key={template.id} className="p-6 bg-white rounded-[32px] border border-slate-100 hover:border-indigo-100 hover:shadow-2xl transition-all group relative overflow-hidden">
-                                        <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50/30 rounded-full -mr-12 -mt-12 group-hover:bg-indigo-50 transition-colors"></div>
+                                    <div key={template.id} className="p-6 bg-white rounded-[32px] border border-slate-100 hover:border-amber-100 hover:shadow-2xl transition-all group relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50/30 rounded-full -mr-12 -mt-12 group-hover:bg-amber-50 transition-colors"></div>
 
                                         <div className="flex items-start justify-between mb-6 relative z-10">
                                             <Badge
@@ -121,7 +121,7 @@ const ZaloDashboard: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        <h3 className="text-sm font-black text-slate-800 mb-2 group-hover:text-indigo-600 transition-colors uppercase tracking-tight line-clamp-2 min-h-[2.5rem]">
+                                        <h3 className="text-sm font-black text-slate-800 mb-2 group-hover:text-amber-600 transition-colors uppercase tracking-tight line-clamp-2 min-h-[2.5rem]">
                                             {template.template_name}
                                         </h3>
 
@@ -129,7 +129,7 @@ const ZaloDashboard: React.FC = () => {
                                             <code className="text-[9px] bg-slate-50 px-2 py-1 rounded-lg text-slate-400 font-bold uppercase tracking-tighter">
                                                 ID: {template.template_id}
                                             </code>
-                                            <button className="p-2 bg-slate-50 text-slate-300 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
+                                            <button className="p-2 bg-slate-50 text-slate-300 rounded-xl group-hover:bg-amber-600 group-hover:text-white transition-all shadow-sm">
                                                 <ExternalLink className="w-4 h-4" />
                                             </button>
                                         </div>
@@ -151,3 +151,4 @@ const ExternalLink = ({ className }: any) => (
 )
 
 export default ZaloDashboard;
+

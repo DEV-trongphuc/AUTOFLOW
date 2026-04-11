@@ -7,7 +7,8 @@ $path = isset($_GET['id']) ? $_GET['id'] : null;
 
 switch ($method) {
     case 'GET':
-
+        // [PERF] Release session lock immediately to prevent "Pending" state in DevTools
+        if (session_id()) session_write_close();
 
         try {
             // NEW: Stats Route
@@ -74,8 +75,9 @@ switch ($method) {
                     'totalPages' => ceil($total / $limit)
                 ]
             ]);
-        } catch (Exception $e) {
-            jsonResponse(false, null, $e->getMessage());
+        } catch (Throwable $e) {
+            error_log("Lists Error: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
+            jsonResponse(false, null, "Lỗi khi tải danh sách: " . $e->getMessage());
         }
         break;
 
@@ -248,9 +250,10 @@ switch ($method) {
                 $pdo->commit();
                 jsonResponse(true, ['affected' => $affectedCount]);
 
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 if ($pdo->inTransaction())
                     $pdo->rollBack();
+                error_log("Lists Cleanup Error: " . $e->getMessage());
                 jsonResponse(false, null, 'Lỗi khi dọn dẹp: ' . $e->getMessage());
             }
             return;
@@ -409,10 +412,11 @@ switch ($method) {
                     ], "Đã tạo danh sách mới với " . $totalMembers . " thành viên");
                 }
 
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 if ($pdo->inTransaction()) {
                     $pdo->rollBack();
                 }
+                error_log("Lists Merge Error: " . $e->getMessage());
                 jsonResponse(false, null, 'Lỗi khi gộp danh sách: ' . $e->getMessage());
             }
             return;
@@ -439,7 +443,8 @@ switch ($method) {
             $stmt = $pdo->prepare("UPDATE lists SET name = ?, source = ?, subscriber_count = ? WHERE id = ?");
             $stmt->execute([$data['name'], $data['source'] ?? 'Manual', $data['count'], $path]);
             jsonResponse(true, $data);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
+            error_log("Lists PUT Error: " . $e->getMessage());
             jsonResponse(false, null, $e->getMessage());
         }
         break;
@@ -481,9 +486,10 @@ switch ($method) {
 
             $pdo->commit();
             jsonResponse(true, ['id' => $path]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             if ($pdo->inTransaction())
                 $pdo->rollBack();
+            error_log("Lists DELETE Error: " . $e->getMessage());
             jsonResponse(false, null, $e->getMessage());
         }
         break;

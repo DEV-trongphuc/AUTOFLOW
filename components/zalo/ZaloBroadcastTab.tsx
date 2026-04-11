@@ -214,7 +214,7 @@ const ZaloBroadcastTab: React.FC<ZaloBroadcastTabProps> = ({ initialSelectedIds,
             {/* Beautiful Hero Section with Stats (Matching Email Campaigns) */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <HeroStatCard label="Tin nhắn đã gửi" value={globalStats.sent} icon={Send} color="blue" />
-                <HeroStatCard label="Tỷ lệ xem (Read)" value={`${globalStats.openRate}%`} icon={MailOpen} color="orange" />
+                <HeroStatCard label="Tỉ lệ xem (Read)" value={`${globalStats.openRate}%`} icon={MailOpen} color="orange" />
                 <HeroStatCard label="Phản hồi / Chat" value={globalStats.reacted} icon={MessageCircle} color="green" />
                 <HeroStatCard label="Thiết bị nhận" value={globalStats.delivered} icon={CheckCircle} color="indigo" />
             </div>
@@ -375,7 +375,7 @@ const ZaloBroadcastTab: React.FC<ZaloBroadcastTabProps> = ({ initialSelectedIds,
                                         </div>
                                         <div className="space-y-2">
                                             <Select
-                                                label="Nhóm khách hàng"
+                                                label="Nhóm Khách hàng"
                                                 value={newCamp.target_group}
                                                 onChange={val => setNewCamp({ ...newCamp, target_group: val })}
                                                 disabled={!!initialSelectedIds}
@@ -531,14 +531,14 @@ const ZaloBroadcastTab: React.FC<ZaloBroadcastTabProps> = ({ initialSelectedIds,
                                     icon={Send}
                                 />
                                 <DetailBox
-                                    label="Tỷ lệ nhận"
+                                    label="Tỉ lệ nhận"
                                     value={selectedCampaign.stats_sent > 0 ? ((selectedCampaign.stats_delivered / selectedCampaign.stats_sent) * 100).toFixed(1) + '%' : '0%'}
                                     subLabel={`${selectedCampaign.stats_delivered}/${selectedCampaign.stats_sent} Thành công`}
                                     color="indigo"
                                     icon={CheckCircle}
                                 />
                                 <DetailBox
-                                    label="Tỷ lệ mở (Read)"
+                                    label="Tỉ lệ mở (Read)"
                                     value={selectedCampaign.stats_delivered > 0 ? ((selectedCampaign.stats_seen / selectedCampaign.stats_delivered) * 100).toFixed(1) + '%' : '0%'}
                                     subLabel={`${selectedCampaign.stats_seen} Người xem`}
                                     color="green"

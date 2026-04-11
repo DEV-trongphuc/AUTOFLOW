@@ -905,20 +905,20 @@ Xưng "em", gọi khách "anh/chị"
 Bạn là **{$botName}** - Chuyên viên tư vấn **{$companyName}**.
 - **Ngày hiện tại:** {$today}
 
-### THỜI GIAN
+### Thời gian
 - **QUY TẮC QUAN TRỌNG:** Khi tư vấn lịch học/sự kiện, bạn PHẢI so sánh ngày trong dữ liệu với ngày hôm nay ({\$today}).
-    - Chỉ liệt kê DUY NHẤT 1 lộ trình/thời gian gần với hôm nay nhất
+    - Chỉ liệt kê DUY NHẤT 1 lộ trình/Thời gian gần với hôm nay nhất
     - Nếu dữ liệu không có KHÔNG được bịa ngày.
 
-### HÀNH TRÌNH KHÁCH HÀNG
+### HÀNH TRÌNH Khách hàng
 Khách đang xem: {\$currentPage}
 Lịch sử hoạt động: 
 {\$activityContext}
 
 ### RULES 
 0. **NGÔN NGỮ (QUAN TRỌNG NHẤT):**
-   - **PHẢI** trả lời bằng ngôn ngữ mà khách hàng đang sử dụng.
-   - Nếu khách hỏi Tiếng Anh -> Trả lời hoàn toàn bằng Tiếng Anh (Dịch thông tin từ Knowledge Base sang Tiếng Anh).
+   - **PHẢI** trả lời bằng ngôn ngữ mà Khách hàng đang sử dụng.
+   - Nếu khách hỏi Tiếng Anh -> Tỉ lệ hoàn toàn bằng Tiếng Anh (Dịch thông tin từ Knowledge Base sang Tiếng Anh).
    - Nếu khách hỏi Tiếng Việt hoặc mơ hồ thì ưu tiên trả lời Tiếng Việt.
 
 1. **ANTI-HALLUCINATION (KHÔNG ĐƯỢC BỊA ĐẶT):**
@@ -928,18 +928,18 @@ Lịch sử hoạt động:
 
 2. **TƯ DUY TƯ VẤN:**
    - Đừng chỉ trả lời cộc lốc. Hãy cởi mở và gợi mở. Ví dụ: Khách hỏi "Học phí bao nhiêu?", đừng chỉ ném con số. Hãy nói: "Học phí khóa này là X. Đặc biệt bên em đang có ưu đãi Y cho đăng ký sớm, anh/chị có quan tâm không ạ??"
-   - Tư vấn rõ ràng, hướng khách hàng tìm hiểu sâu hơn, khách hàng không hiểu gì thì phải giải thích rõ.
+   - Tư vấn rõ ràng, hướng Khách hàng tìm hiểu sâu hơn, Khách hàng không hiểu gì thì phải giải thích rõ.
 
 3. **AN TOÀN PHÁP LÝ:**
    - Không cam kết thay mặt nhóm nếu không có văn bản khẳng định cái nào không rõ thì phải trả lời phải tùy vào trường hợp...
 
 4. **QUICK ACTIONS (ĐỀ XUẤT HÀNH ĐỘNG):**
-   - Luôn tư vấn theo hướng gợi mở thêm các tag hành động, Nếu bạn thấy khách hàng đang quan tâm đến một chủ đề cụ thể giải thích rõ ràng ra: ví dụ có cái này không thì nêu chi tiết ra chứ không phải để có rồi thôi, hãy đề xuất hành động bằng cách thêm tag ở cuối câu trả lời (Hệ thống sẽ hiển thị nút bấm).
+   - Luôn tư vấn theo hướng gợi mở thêm các tag hành động, Nếu bạn thấy Khách hàng đang quan tâm đến một chủ đề cụ thể giải thích rõ ràng ra: ví dụ có cái này không thì nêu chi tiết ra chứ không phải để có rồi thôi, hãy đề xuất hành động bằng cách thêm tag ở cuối câu trả lời (Hệ thống sẽ hiển thị nút bấm).
    - Cú pháp: [ACTIONS: Tên nút 1 | Tên nút 2 | Tên nút 3]
 
 ### RESPONSE FORMAT
 - Trên 3 ý (liệt kê) thì cho gạch đầu dòng (cái gì là liệt kê thì liệt kê cho đầy đủ, cảm thấy ko đủ thì gợi mở cho câu sau)
-- Trả lời đi thẳng vào vấn đề.`,
+- Tỉ lệ đi thẳng vào vấn đề.`,
                     fast_replies: [
                         { pattern: 'chào, hi, hello, xin chào, hé lô, chào bạn, hello ad, hi ad', reply: 'Chào bạn! Mình là trợ lý của {companyName}. Mình có thể giúp gì cho bạn hôm nay ạ?' },
                         { pattern: 'tạm biệt, bye, cám ơn, cảm ơn, thanks, kêu, iu, yêu', reply: 'Dạ, cảm ơn bạn đã quan tâm! Chúc bạn một ngày tốt lành ạ.' },
@@ -1033,7 +1033,7 @@ Lịch sử hoạt động:
                     is_active: currentStatus ? 0 : 1
                 });
                 if (res.success) {
-                    toast.success('Đã cập nhật trạng thái nhóm');
+                    toast.success('Đã cập nhật Trạng thái nhóm');
                     fetchDocs();
                 }
             } else {
@@ -1115,7 +1115,7 @@ Lịch sử hoạt động:
     }, [deleteTarget, selectedProperty, fetchDocs]);
 
     const handleAddManual = React.useCallback(async () => {
-        if (!newDoc.content) return toast.error('N?i dung không du?c d? tr?ng');
+        if (!newDoc.content) return toast.error('Nội dung không được d? tr?ng');
 
         setLoading(true);
         try {
@@ -1189,7 +1189,7 @@ Lịch sử hoạt động:
 
     const handleUpdateDoc = React.useCallback(async () => {
         if (!editingDoc) return;
-        if (!editingDoc.content) return toast.error('N?i dung không du?c d? tr?ng');
+        if (!editingDoc.content) return toast.error('Nội dung không được d? tr?ng');
 
         // Check for changes
         const originalDoc = docs.find(d => d.id === editingDoc.id);

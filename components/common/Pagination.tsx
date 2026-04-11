@@ -54,7 +54,7 @@ const Pagination: React.FC<PaginationProps> = ({
         <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/30">
             <div className="flex items-center gap-2">
                 <span className="text-[11px] font-bold text-slate-500">
-                    Hiển thị <span className="text-slate-800 font-black">{startItem}-{endItem}</span> trong tổng số <span className="text-slate-800 font-black">{totalItems.toLocaleString()}</span>
+                    Hiển thị <span className="text-slate-800 font-black">{startItem}-{endItem}</span> trong <span className="text-slate-800 font-black">{totalItems.toLocaleString()}</span>
                 </span>
             </div>
 

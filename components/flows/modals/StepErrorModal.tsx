@@ -194,7 +194,8 @@ const StepErrorModal: React.FC<StepErrorModalProps> = ({
                                     className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 transition-colors disabled:opacity-50"
                                 >
                                     <RefreshCcw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-                                    Thử lại
+                                    Tỉ lệ
+
                                 </button>
                                 <button
                                     onClick={() => setShowMoveDialog(true)}
@@ -355,7 +356,7 @@ const StepErrorModal: React.FC<StepErrorModalProps> = ({
                                 <div className="p-4 bg-orange-50 border border-orange-200 rounded-2xl flex items-start gap-3 animate-in fade-in duration-300">
                                     <AlertTriangle className="w-5 h-5 text-orange-600 shrink-0 mt-0.5" />
                                     <div className="flex-1">
-                                        <h5 className="text-[11px] font-bold text-orange-900 mb-1">Cảnh báo uy tín tên miền</h5>
+                                        <h5 className="text-[11px] font-bold text-orange-900 mb-1">Cònh báo uy tín tên miền</h5>
                                         <p className="text-[10px] text-orange-700 leading-relaxed italic">
                                             Bước bạn chọn là một bước <strong>gửi Email</strong>. Việc liên tiếp gửi email cho địa chỉ đã từng lỗi có thể làm giảm uy tín tên miền của bạn. Hãy cân nhắc <strong>Dọn dẹp</strong> nếu lỗi trước đó là do địa chỉ không tồn tại.
                                         </p>

@@ -85,8 +85,8 @@ export const SectionOverview = () => (
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[
-                    { title: 'Unified CDP', desc: 'Hợp nhất dữ liệu khách hàng từ Web, Zalo, Facebook, Offline vào một hồ sơ 360°.', icon: Users, gradient: 'from-amber-400 to-amber-600' },
-                    { title: 'Omnichannel Automation', desc: 'Kịch bản chăm sóc tự động qua Email, ZNS, Messenger theo hành vi thời gian thực.', icon: GitMerge, gradient: 'from-blue-500 to-indigo-600' },
+                    { title: 'Unified CDP', desc: 'Hợp nhất dữ liệu Khách hàng từ Web, Zalo, Facebook, Offline vào một hồ sơ 360°.', icon: Users, gradient: 'from-amber-400 to-amber-600' },
+                    { title: 'Omnichannel Automation', desc: 'Kịch bản chăm sóc tự động qua Email, ZNS, Messenger theo hành vi Thời gian thực.', icon: GitMerge, gradient: 'from-blue-500 to-indigo-600' },
                     { title: 'Enterprise AI Training', desc: 'Huấn luyện AI RAG với catalogue, FAQ, URL website để chốt đơn 24/7.', icon: Bot, gradient: 'from-emerald-500 to-teal-600' },
                     { title: 'Website Tracking', desc: 'SDK nhúng vào website để ghi nhận mọi hành vi visitor, merge vào profile CDP.', icon: Globe, gradient: 'from-violet-500 to-purple-600' },
                     { title: 'Visual Flow Builder', desc: 'Drag-drop node-based editor: Trigger → Condition → Action → Wait không giới hạn.', icon: GitBranch, gradient: 'from-rose-500 to-pink-600' },
@@ -112,8 +112,8 @@ export const SectionOverview = () => (
             <div className="grid lg:grid-cols-3 gap-8">
                 {[
                     { step: '01', title: 'Nhập dữ liệu CDP', desc: 'Import Excel, kết nối Facebook Ads, cài Tracking SDK — AI nhận diện hành vi ngay lập tức.', icon: Database, color: 'bg-indigo-500' },
-                    { step: '02', title: 'Thiết kế Flow', desc: 'Vẽ hành trình khách hàng bằng Flow Builder. Aura AI viết nội dung cá nhân hóa từng bước.', icon: GitBranch, color: 'bg-amber-600' },
-                    { step: '03', title: 'Kích hoạt & Đo lường', desc: 'Bật AI Chatbot 24/7, theo dõi Heatmap & ROAS thời gian thực, tối ưu liên tục.', icon: Rocket, color: 'bg-emerald-500' },
+                    { step: '02', title: 'Thiết kế Flow', desc: 'Vẽ hành trình Khách hàng bằng Flow Builder. Aura AI viết nội dung cá nhân hóa từng bước.', icon: GitBranch, color: 'bg-amber-600' },
+                    { step: '03', title: 'Kích hoạt & Đo lường', desc: 'Bật AI Chatbot 24/7, theo dõi Heatmap & ROAS Thời gian thực, tối ưu liên tục.', icon: Rocket, color: 'bg-emerald-500' },
                 ].map((item, i) => (
                     <div key={i} className="relative flex flex-col items-center text-center p-10 bg-white border border-slate-100 rounded-[40px] shadow-sm hover:shadow-xl transition-all group">
                         <div className={`relative w-20 h-20 rounded-[28px] ${item.color} flex items-center justify-center text-white mb-8 shadow-xl`}>
@@ -220,14 +220,14 @@ export const SectionCampaigns = () => (
 /* ─── SECTION 3: AUTOMATION FLOWS ───────────────────── */
 export const SectionAutomation = () => (
     <div className="space-y-16 animate-in fade-in duration-700">
-        <SectionHeader label="Automation" title={<>Kịch bản Tự động <span className="text-amber-600">Thông minh</span></>} desc="Visual Flow Builder drag-and-drop: thiết kế hành trình khách hàng không giới hạn." />
+        <SectionHeader label="Automation" title={<>Kịch bản Tự động <span className="text-amber-600">Thông minh</span></>} desc="Visual Flow Builder drag-and-drop: thiết kế hành trình Khách hàng không giới hạn." />
         <div className="grid lg:grid-cols-2 gap-10 items-start">
             <div className="space-y-6">
                 <div className="p-8 bg-white rounded-3xl border border-slate-100 shadow-sm">
                     <h3 className="font-black text-slate-900 mb-6 flex items-center gap-3"><Zap className="w-5 h-5 text-amber-600" />Loại Triggers</h3>
                     <div className="space-y-3">
                         {[
-                            { icon: Globe, t: 'Website Behavior', d: 'Xem sản phẩm >3 lần, rời giỏ hàng, thời gian trên trang.' },
+                            { icon: Globe, t: 'Website Behavior', d: 'Xem sản phẩm >3 lần, rời giỏ hàng, Thời gian trên trang.' },
                             { icon: Tag, t: 'Tag Changed', d: 'Khi khách được gắn / gỡ nhãn "Hot-Lead", "VIP"...' },
                             { icon: MessageSquare, t: 'AI Chatbot Intent', d: 'Khi AI nhận ra intent hỏi giá, muốn đặt hàng...' },
                             { icon: Webhook, t: 'API / Webhook', d: 'Dữ liệu từ POS, CRM, hoặc bất kỳ hệ thống ngoài.' },
@@ -299,7 +299,7 @@ export const SectionAutomation = () => (
             <h3 className="text-lg font-black text-amber-600 mb-6 flex items-center gap-2"><Clock className="w-5 h-5" /> Chế độ "Wait Until" Thông minh</h3>
             <div className="grid md:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                    <p className="text-sm text-slate-400">Thay vì chỉ chờ X ngày cố định, bạn có thể thiết lập flow chờ cho đến khi khách hàng thực hiện hành động cụ thể.</p>
+                    <p className="text-sm text-slate-400">Thay vì chỉ chờ X ngày cố định, bạn có thể thiết lập flow chờ cho đến khi Khách hàng thực hiện hành động cụ thể.</p>
                     <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
                         <p className="text-[10px] font-black uppercase text-slate-500 mb-2">Cấu hình Wait</p>
                         <div className="space-y-2">
@@ -438,7 +438,7 @@ export const SectionAudience = () => (
             <div className="p-8 bg-white border border-slate-100 rounded-3xl">
                 <h3 className="font-black text-slate-900 mb-5 flex items-center gap-3"><Filter className="w-5 h-5 text-amber-600" />Segment Builder</h3>
                 <div className="space-y-3">
-                    {[{ icon: Database, t: 'Dynamic Segments', d: 'Filter theo bất kỳ trường dữ liệu: tag, field, hành vi, ngày.' }, { icon: TrendingUp, t: 'RFM Scoring', d: 'Tự động phân loại Recency, Frequency, Monetary.' }, { icon: RefreshCw, t: 'Auto-refresh', d: 'Segment cập nhật thời gian thực khi contact thay đổi.' }].map((f, i) => <FeatureRow key={i} icon={f.icon} title={f.t} desc={f.d} />)}
+                    {[{ icon: Database, t: 'Dynamic Segments', d: 'Filter theo bất kỳ trường dữ liệu: tag, field, hành vi, ngày.' }, { icon: TrendingUp, t: 'RFM Scoring', d: 'Tự động phân loại Recency, Frequency, Monetary.' }, { icon: RefreshCw, t: 'Auto-refresh', d: 'Segment cập nhật Thời gian thực khi contact thay đổi.' }].map((f, i) => <FeatureRow key={i} icon={f.icon} title={f.t} desc={f.d} />)}
                 </div>
             </div>
             <div className="p-8 bg-slate-900 rounded-3xl text-white">
@@ -456,7 +456,7 @@ export const SectionAudience = () => (
 /* ─── SECTION 7: TAGS ───────────────────────────────── */
 export const SectionTags = () => (
     <div className="space-y-16 animate-in fade-in duration-700">
-        <SectionHeader label="Tags & Segmentation" title={<>Hệ thống <span className="text-amber-600">Phân loại</span></>} desc="Tags linh hoạt + Auto-tagging rules để phân loại khách hàng điền vào đúng flow." />
+        <SectionHeader label="Tags & Segmentation" title={<>Hệ thống <span className="text-amber-600">Phân loại</span></>} desc="Tỉ lệ hoạt + Auto-tagging rules để phân loại Khách hàng điền vào đúng flow." />
         <div className="grid lg:grid-cols-2 gap-10">
             <div className="space-y-6">
                 <div className="p-8 bg-white border border-slate-100 rounded-3xl">
@@ -506,7 +506,7 @@ export const SectionTags = () => (
 /* ─── SECTION 8: AI TRAINING ────────────────────────── */
 export const SectionAITraining = () => (
     <div className="space-y-16 animate-in fade-in duration-700">
-        <SectionHeader label="AI Training — RAG Engine" title={<>Huấn luyện <span className="text-amber-600">Chuyên gia AI</span></>} desc="Upload kiến thức, AI học và trả lời chính xác 24/7 — thay bạn chốt đơn và chăm sóc khách hàng." />
+        <SectionHeader label="AI Training — RAG Engine" title={<>Huấn luyện <span className="text-amber-600">Chuyên gia AI</span></>} desc="Upload kiến thức, AI học và trả lời chính xác 24/7 — thay bạn chốt đơn và chăm sóc Khách hàng." />
         <div className="grid lg:grid-cols-2 gap-10">
             <div className="p-8 bg-white border border-slate-200 rounded-3xl shadow-sm">
                 <div className="flex items-center gap-5 mb-8"><div className="w-14 h-14 rounded-3xl bg-amber-600 flex items-center justify-center text-white shadow-xl shadow-amber-600/20"><Cpu className="w-7 h-7" /></div><div><h3 className="text-xl font-black text-slate-900">Nguồn kiến thức</h3><p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">RAG Engine v2.4 (Active)</p></div></div>
@@ -514,7 +514,7 @@ export const SectionAITraining = () => (
                     {[
                         { icon: Globe, t: 'URL Crawl', d: 'Dán URL → AI tự crawl & học toàn bộ nội dung trang.' },
                         { icon: FileText, t: 'PDF / DOCX / TXT', d: 'Upload file quy trình, catalogue, chính sách bảo hành.' },
-                        { icon: MessageSquare, t: 'Q&A Manual', d: 'Nhập câu hỏi - đáp chuẩn xác cho từng sản phẩm.' },
+                        { icon: MessageSquare, t: 'Q&A Manual', d: 'Nhập câu hỏi - đáp chuẩn xác cho Tổng sốn phẩm.' },
                         { icon: Database, t: 'Product Database', d: 'Kết nối tồn kho, giá cả, thuộc tính qua API hoặc CSV.' },
                         { icon: Code, t: 'Custom API Source', d: 'Webhook nhận data từ hệ thống ERP/CRM nội bộ.' },
                     ].map((src, i) => (

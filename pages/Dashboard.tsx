@@ -30,7 +30,7 @@ const ALL_MODULES: Module[] = [
     {
         id: 'flows',
         title: 'Automation',
-        sub: 'Tạo luồng kịch bản dựa trên hành vi và sự kiện thực tế. Tự động hóa 100% quy trình CSKH đa kênh.',
+        sub: 'Tỉ lệ kịch bản dựa trên hành vi và sự kiện thực tế. Tự động hóa 100% quy trình CSKH đa kênh.',
         icon: Zap,
         color: 'from-blue-500 to-indigo-600',
         path: '/flows',
@@ -47,7 +47,7 @@ const ALL_MODULES: Module[] = [
     {
         id: 'ai-training',
         title: 'AI Training',
-        sub: 'Huấn luyện bộ não AI theo dữ liệu riêng của doanh nghiệp. AI phản hồi khách hàng chính xác theo ngữ cảnh.',
+        sub: 'Huấn luyện bộ não AI theo dữ liệu riêng của doanh nghiệp. AI phản hồi Khách hàng chính xác theo ngữ cảnh.',
         icon: Bot,
         color: 'from-rose-500 to-red-600',
         path: '/ai-training',
@@ -74,7 +74,7 @@ const ALL_MODULES: Module[] = [
     {
         id: 'web-tracking',
         title: 'Web Tracking',
-        sub: 'Theo dõi chính xác từng click, scroll và hành vi khách hàng trên website để phục vụ kịch bản Automation.',
+        sub: 'Theo dõi chính xác từng click, scroll và hành vi Khách hàng trên website để phục vụ kịch bản Automation.',
         icon: Globe,
         color: 'from-cyan-500 to-blue-600',
         path: '/web-tracking'
@@ -90,7 +90,7 @@ const ALL_MODULES: Module[] = [
     {
         id: 'reports',
         title: 'Analytics',
-        sub: 'Phân tích hiệu suất chi tiết theo từng chiến dịch. Theo dõi tỷ lệ chuyển đổi và tăng trưởng khách hàng.',
+        sub: 'Phân tích hiệu suất chi tiết theo từng chiến dịch. Theo dõi tỷ lệ chuyển đổi và tăng trưởng Khách hàng.',
         icon: BarChart3,
         color: 'from-slate-700 to-slate-900',
         path: '/reports'
@@ -144,7 +144,7 @@ const Dashboard: React.FC = () => {
         <div className="animate-fade-in min-h-screen pb-20">
             <PageHero
                 title={<>Ready to Scale, {userName}! 🚀</>}
-                subtitle={<>Hệ thống Automation đa thông điệp đã sẵn sàng. Tối ưu hóa trải nghiệm khách hàng với sức mạnh từ <span className="underline decoration-white/40 underline-offset-4 font-black">Email, Zalo, Meta & AI.</span></>}
+                subtitle={<>Hệ thống Automation đa thông điệp đã sẵn sàng. Tối ưu hóa trải nghiệm Khách hàng với sức mạnh từ <span className="underline decoration-white/40 underline-offset-4 font-black">Email, Zalo, Meta & AI.</span></>}
                 showStatus={true}
                 statusText="Multi-Channel Active"
                 actions={[
@@ -161,7 +161,7 @@ const Dashboard: React.FC = () => {
                         <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Truy cập gần đây</h2>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 stagger-grid">
                         {recentModules.map(module => (
                             <button
                                 key={module.id}
@@ -194,7 +194,7 @@ const Dashboard: React.FC = () => {
                     <div className="h-px flex-1 bg-slate-100 ml-6 hidden md:block" />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8 stagger-grid">
                     {ALL_MODULES.map(module => (
                         <div
                             key={module.id}
@@ -264,7 +264,7 @@ const Dashboard: React.FC = () => {
                 <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
                     <div className="text-center md:text-left">
                         <h3 className="text-2xl font-bold mb-2">Sẵn sàng để bùng nổ? 🚀</h3>
-                        <p className="text-slate-400 font-medium max-w-md">Sử dụng AI Training phối hợp với Automation Flows để tối ưu hóa tỷ lệ chuyển đổi khách hàng gấp 3 lần.</p>
+                        <p className="text-slate-400 font-medium max-w-md">Sử dụng AI Training phối hợp với Automation Flows để tối ưu hóa tỷ lệ chuyển đổi Khách hàng gấp 3 lần.</p>
                     </div>
                     <button
                         onClick={() => navigate('/docs')}

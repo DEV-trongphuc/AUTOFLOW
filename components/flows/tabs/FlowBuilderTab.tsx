@@ -246,7 +246,7 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
                 <button
                     onClick={() => centerView(1.0)}
                     className="bg-white p-3 rounded-xl border border-slate-200 shadow-xl text-slate-500 hover:text-slate-800 flow-interactive transition-all active:scale-95"
-                    title="Căn giữa kịch bản (Space)"
+                    title="Còn giữa kịch bản (Space)"
                 >
                     <Move className="w-4 h-4" />
                 </button>
@@ -299,7 +299,7 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
                         <div className="space-y-2 text-xs font-bold text-slate-700">
                             <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
                                 <span><kbd className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300">Space</kbd></span>
-                                <span className="text-slate-400">Căn giữa (Center View)</span>
+                                <span className="text-slate-400">Còn giữa (Center View)</span>
                             </div>
                             <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
                                 <span><kbd className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300">Ctrl</kbd> + <kbd className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300">Z</kbd></span>

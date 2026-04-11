@@ -237,7 +237,7 @@ const trackCustomEvent = async () => {
                         <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-100 mt-2">
                             <div>
                                 <h5 className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                                    <Bell className="w-4 h-4 text-[#ffa900]" /> Lệnh gửi email báo cáo
+                                    <Bell className="w-4 h-4 text-[#ffa900]" /> Lệnh gửi email Báo cáo
                                 </h5>
                                 <p className="text-[10px] text-slate-400 font-medium mt-1">Gửi email khi nhận sự kiện.</p>
                             </div>
@@ -284,7 +284,7 @@ const trackCustomEvent = async () => {
                                 <div className="flex items-start gap-2 p-3 bg-white rounded-xl border border-amber-100">
                                     <span className="text-base mt-0.5">📧</span>
                                     <p className="text-[11px] text-slate-500 leading-relaxed">
-                                        Email sẽ chứa toàn bộ trường dữ liệu thông tin đi kèm (thuộc tính properties và thông tin khách hàng nếu có).
+                                        Email sẽ chứa toàn bộ trường dữ liệu thông tin đi kèm (thuộc tính properties và thông tin Khách hàng nếu có).
                                     </p>
                                 </div>
                             </div>
@@ -293,7 +293,7 @@ const trackCustomEvent = async () => {
 
                     <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl flex gap-3 text-blue-700 text-xs">
                         <Info className="w-5 h-5 shrink-0" />
-                        <p>Hệ thống sẽ sinh một Event ID duy nhất. Bạn dùng ID này để gọi API mỗi khi hành động xảy ra.</p>
+                        <p>Hệ thống sẽ sinh một Event ID duy nhất. Bạn dùng ID này đã gửi API mỗi khi hành động xảy ra.</p>
                     </div>
                 </div>
             </Modal>

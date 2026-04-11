@@ -77,18 +77,37 @@ if ($method === 'GET' && $action === 'visitor_journey' && !empty($_GET['visitor_
 
 if ($method === 'GET' && $action === 'list') {
     try {
+        // OPTIMIZED: Replaced 3 correlated subqueries per row with aggregated LEFT JOINs
+        // Old: O(n*3) subqueries — New: single pass with GROUP BY aggregation
         $stmt = $pdo->query("
-            SELECT p.*, 
-                (SELECT COUNT(*) FROM ai_training_docs WHERE property_id = p.id AND source_type != 'folder' COLLATE utf8mb4_unicode_ci) as docs_count,
-                (SELECT COUNT(*) FROM ai_conversations c WHERE c.property_id = p.id COLLATE utf8mb4_unicode_ci) as queries_count,
-                EXISTS(SELECT 1 FROM ai_chatbot_settings WHERE property_id = p.id COLLATE utf8mb4_unicode_ci AND is_enabled = 1) as ai_enabled
-            FROM web_properties p 
+            SELECT p.*,
+                COALESCE(dc.docs_count, 0)  as docs_count,
+                COALESCE(cc.conv_count, 0)  as queries_count,
+                COALESCE(cs.is_enabled, 0)  as ai_enabled
+            FROM web_properties p
+            LEFT JOIN (
+                SELECT property_id, COUNT(*) as docs_count
+                FROM ai_training_docs
+                WHERE source_type != 'folder'
+                GROUP BY property_id
+            ) dc ON dc.property_id = p.id
+            LEFT JOIN (
+                SELECT property_id, COUNT(*) as conv_count
+                FROM ai_conversations
+                GROUP BY property_id
+            ) cc ON cc.property_id = p.id
+            LEFT JOIN (
+                SELECT property_id, MAX(is_enabled) as is_enabled
+                FROM ai_chatbot_settings
+                WHERE is_enabled = 1
+                GROUP BY property_id
+            ) cs ON cs.property_id = p.id
             ORDER BY p.created_at DESC
         ");
         $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($results as &$row) {
             $row['stats'] = [
-                'docs_count' => (int) $row['docs_count'],
+                'docs_count'    => (int) $row['docs_count'],
                 'queries_count' => (int) $row['queries_count']
             ];
             $row['ai_enabled'] = (bool) $row['ai_enabled'];
@@ -99,6 +118,7 @@ if ($method === 'GET' && $action === 'list') {
         sendResponse(false, [], 'Error: ' . $e->getMessage());
     }
 }
+
 
 if ($method === 'POST' && $action === 'create') {
     try {

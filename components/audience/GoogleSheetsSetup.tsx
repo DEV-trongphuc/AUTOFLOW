@@ -23,7 +23,7 @@ const SYSTEM_FIELDS = [
     { key: 'phoneNumber', label: 'Số điện thoại', required: false },
     { key: 'source', label: 'Nguồn (Source)', required: false },
     { key: 'jobTitle', label: 'Chức danh', required: false },
-    { key: 'companyName', label: 'Công ty', required: false },
+    { key: 'companyName', label: 'Còng ty', required: false },
     { key: 'info.salesperson', label: 'Sale phụ trách', required: false },
     { key: 'info.address', label: 'Địa chỉ', required: false },
     { key: 'info.website', label: 'Website', required: false },
@@ -663,7 +663,7 @@ const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onBack, onComplet
                         <img src="https://mailmeteor.com/logos/assets/PNG/Google_Sheets_Logo_512px.png" className="w-6 h-6 object-contain" alt="Google Sheets" />
                     </div>
                     <p className="text-sm text-slate-500 mt-1">
-                        {step === 1 ? 'Kết nối bảng tính của bạn để tự động nạp dữ liệu khách hàng.' : step === 2 ? 'Gán tiêu đề cột trong Sheet vào các trường của hệ thống.' : 'Đặt tên cho danh sách khách hàng mới.'}
+                        {step === 1 ? 'Kết nối bảng tính của bạn để tự động nạp dữ liệu Khách hàng.' : step === 2 ? 'Gán tiêu đề cột trong Sheet vào các trường của hệ thống.' : 'Đặt tên cho danh sách Khách hàng mới.'}
                     </p>
                 </div>
 
@@ -691,7 +691,7 @@ const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onBack, onComplet
                                             toast.error(res.message);
                                         }
                                     } catch (e) {
-                                        toast.error('Lỗi khi cập nhật trạng thái');
+                                        toast.error('Lỗi khi cập nhật Trạng thái');
                                     } finally {
                                         setLoading(false);
                                     }

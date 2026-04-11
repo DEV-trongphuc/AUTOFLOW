@@ -17,11 +17,11 @@ import IntegrationGuideModal from '../flows/modals/IntegrationGuideModal';
 
 const DB_FIELDS = [
     { value: 'email', label: 'Địa chỉ Email (Bắt buộc)', type: 'email', required: true, icon: Mail },
-    { value: 'firstName', label: 'Tên khách hàng', type: 'text', required: false, icon: Type },
-    { value: 'lastName', label: 'Họ khách hàng', type: 'text', required: false, icon: Type },
+    { value: 'firstName', label: 'Tên Khách hàng', type: 'text', required: false, icon: Type },
+    { value: 'lastName', label: 'Họ Khách hàng', type: 'text', required: false, icon: Type },
     { value: 'phoneNumber', label: 'Số điện thoại', type: 'tel', required: false, icon: Phone },
     { value: 'jobTitle', label: 'Chức danh', type: 'text', required: false, icon: Briefcase },
-    { value: 'companyName', label: 'Công ty', type: 'text', required: false, icon: Building },
+    { value: 'companyName', label: 'Còng ty', type: 'text', required: false, icon: Building },
     { value: 'country', label: 'Quốc gia', type: 'text', required: false, icon: Globe },
     { value: 'city', label: 'Thành phố', type: 'text', required: false, icon: MapPin },
     { value: 'dateOfBirth', label: 'Ngày sinh', type: 'date', required: false, icon: Calendar },
@@ -88,7 +88,7 @@ const FormsTab: React.FC = () => {
     const handleAddField = () => {
         setFormData({
             ...formData,
-            fields: [...(formData.fields || []), { id: crypto.randomUUID(), dbField: 'firstName', label: 'Tên khách hàng', required: false, type: 'text', isCustom: false }]
+            fields: [...(formData.fields || []), { id: crypto.randomUUID(), dbField: 'firstName', label: 'Tên Khách hàng', required: false, type: 'text', isCustom: false }]
         });
     };
 
@@ -173,7 +173,7 @@ const FormsTab: React.FC = () => {
             <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                 <div>
                     <h3 className="text-lg font-bold text-slate-800">Danh sách Biểu mẫu</h3>
-                    <p className="text-xs text-slate-500 font-medium">Quản lý các điểm thu thập thông tin khách hàng.</p>
+                    <p className="text-xs text-slate-500 font-medium">Quản lý các điểm thu thập thông tin Khách hàng.</p>
                 </div>
                 <Button icon={Plus} size="md" onClick={handleCreateNew}>Tạo Form mới</Button>
             </div>
@@ -187,7 +187,7 @@ const FormsTab: React.FC = () => {
                     <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 rounded-[40px] bg-slate-50/50">
                         <Code2 className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                         <h3 className="text-slate-500 font-bold text-lg">Chưa có biểu mẫu nào</h3>
-                        <p className="text-slate-400 mt-2 text-sm">Tạo form để bắt đầu thu thập khách hàng.</p>
+                        <p className="text-slate-400 mt-2 text-sm">Tạo form để bắt đầu thu thập Khách hàng.</p>
                     </div>
                 ) : forms.map(form => (
                     <div key={form.id} className="group bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-amber-600/10 hover:border-amber-200 transition-all flex flex-col justify-between gap-6 relative overflow-hidden">
@@ -262,7 +262,7 @@ const FormsTab: React.FC = () => {
                                 <h5 className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
                                     <Bell className="w-4 h-4 text-[#ffa900]" /> Thông báo Email
                                 </h5>
-                                <p className="text-[10px] text-slate-400 font-medium mt-1">Gửi email thông báo cho tư vấn viên khi có lead mới.</p>
+                                <p className="text-[10px] text-slate-400 font-medium mt-1">Gửi email thông Báo cáo tư vấn viên khi có lead mới.</p>
                             </div>
                             <div
                                 onClick={() => setFormData({ ...formData, notificationEnabled: !formData.notificationEnabled })}
@@ -320,7 +320,7 @@ const FormsTab: React.FC = () => {
                                 <div className="flex items-start gap-2 p-3 bg-white rounded-xl border border-amber-100">
                                     <span className="text-base mt-0.5">📧</span>
                                     <p className="text-[11px] text-slate-500 leading-relaxed">
-                                        Email sẽ chứa toàn bộ trường dữ liệu mà khách hàng gửi — bao gồm cả custom fields như <code className="bg-amber-100 px-1 rounded text-amber-700 text-[10px]">hoc_van</code>, <code className="bg-amber-100 px-1 rounded text-amber-700 text-[10px]">chuong_trinh</code>, v.v.
+                                        Email sẽ chứa toàn bộ trường dữ liệu mà Khách hàng gửi — bao gồm cả custom fields như <code className="bg-amber-100 px-1 rounded text-amber-700 text-[10px]">hoc_van</code>, <code className="bg-amber-100 px-1 rounded text-amber-700 text-[10px]">chuong_trinh</code>, v.v.
                                     </p>
                                 </div>
                             </div>
@@ -376,7 +376,7 @@ const FormsTab: React.FC = () => {
                                                         <input
                                                             value={field.label}
                                                             onChange={e => updateField(field.id, { label: e.target.value })}
-                                                            placeholder="VD: Nguồn khách hàng"
+                                                            placeholder="VD: Nguồn Khách hàng"
                                                             className="w-full h-[38px] px-3 bg-slate-50 border-2 border-transparent rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-[#ffa900] transition-all"
                                                         />
                                                     </div>

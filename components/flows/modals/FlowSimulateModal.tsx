@@ -164,7 +164,8 @@ const FlowSimulateModal: React.FC<FlowSimulateModalProps> = ({ isOpen, onClose, 
 
                         let condMatch = false;
                         if (Array.isArray(actualVal)) {
-                            // Tags logic
+                            // Tỉ lệ</span>
+
                             const arr = actualVal.map(v => String(v).toLowerCase());
                             if (op === 'contains') condMatch = arr.includes(val);
                             else if (op === 'not_contains') condMatch = !arr.includes(val);
@@ -462,7 +463,7 @@ const FlowSimulateModal: React.FC<FlowSimulateModalProps> = ({ isOpen, onClose, 
                                         </div>
                                         <div>
                                             <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 block">Hoàn tất mô phỏng</span>
-                                            <span className="text-[9px] text-slate-400 font-bold">Dự kiến kết thúc vào mốc thời gian trên</span>
+                                            <span className="text-[9px] text-slate-400 font-bold">Dự kiến kết thúc vào mốc Thời gian trên</span>
                                         </div>
                                     </div>
                                 </div>
@@ -479,7 +480,7 @@ const FlowSimulateModal: React.FC<FlowSimulateModalProps> = ({ isOpen, onClose, 
                                 </div>
                                 <div className="text-center space-y-1.5">
                                     <p className="text-sm font-black text-slate-800 uppercase tracking-tight">Simulator Standby</p>
-                                    <p className="text-[11px] font-medium text-slate-400 max-w-[240px]">Thiết lập hồ sơ và hành vi bên trái, sau đó nhấn "RUN TEST" để xem dòng thời gian chính xác.</p>
+                                    <p className="text-[11px] font-medium text-slate-400 max-w-[240px]">Thiết lập hồ sơ và hành vi bên trái, sau đó nhấn "RUN TEST" để xem dòng Thời gian chính xác.</p>
                                 </div>
                             </div>
                         )}

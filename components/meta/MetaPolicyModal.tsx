@@ -61,8 +61,8 @@ const MetaPolicyModal: React.FC<MetaPolicyModalProps> = ({ isOpen, onClose }) =>
                             Quy tắc vàng 24h
                         </h3>
                         <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                            Đây là khoảng thời gian tiêu chuẩn mà Meta cho phép bạn phản hồi tin nhắn khách hàng.
-                            Khi một người tương tác với Trang, bạn có <span className="text-blue-600 font-black">tối đa 24 giờ</span> để gửi tin nhắn.
+                            Đây là khoảng Thời gian tiêu chuẩn mà Meta cho phép bạn phản hồi tin nhắn Khách hàng.
+                            Khi một người tương tác với Trang, bạn có <span className="text-blue-600 font-black">tối đa 24 giờ</span> đã gửi tin nhắn.
                         </p>
                         <div className="mt-5 flex items-center gap-2 bg-white w-fit px-4 py-2 rounded-2xl border border-blue-100 shadow-sm">
                             <Megaphone className="w-4 h-4 text-orange-500" />

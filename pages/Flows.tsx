@@ -416,7 +416,7 @@ const Flows: React.FC = () => {
                 setAnalyticsPagination(pagination);
             }
         } catch (error) {
-            showToast('Lỗi khi tải danh sách khách hàng', 'error');
+            showToast('Lỗi khi tải danh sách Khách hàng', 'error');
         } finally {
             setLoadingParticipants(false);
         }
@@ -626,7 +626,10 @@ const Flows: React.FC = () => {
         }
     }, [selectedFlow, handleUpdateFlow]);
 
+    const initialLoadDone = React.useRef(false);
     useEffect(() => {
+        if (initialLoadDone.current) return;
+        initialLoadDone.current = true;
         loadData();
         setHistoryLogs(getLogs());
     }, [loadData]);
@@ -732,7 +735,7 @@ const Flows: React.FC = () => {
             const res = await api.post<any>('bulk_operations', payload);
             if (res.success) {
                 if (viewingGroup) fetchGroupMembers(viewingGroup, groupPagination.page, groupSearch);
-                showToast(`Đã gỡ ${res.data.affected} khách hàng khỏi danh sách`, 'success');
+                showToast(`Đã gỡ ${res.data.affected} Khách hàng khỏi danh sách`, 'success');
             } else {
                 showToast(res.message || 'Lỗi khi gỡ khỏi danh sách', 'error');
             }
@@ -756,7 +759,7 @@ const Flows: React.FC = () => {
             const res = await api.post<any>('bulk_operations', payload);
             if (res.success) {
                 if (viewingGroup) fetchGroupMembers(viewingGroup, groupPagination.page, groupSearch);
-                showToast(`Đã gỡ nhãn khỏi ${res.data.affected} khách hàng`, 'success');
+                showToast(`Đã gỡ nhãn khỏi ${res.data.affected} Khách hàng`, 'success');
             } else {
                 showToast(res.message || 'Lỗi khi gỡ nhãn', 'error');
             }
@@ -958,7 +961,7 @@ const Flows: React.FC = () => {
         setConfirmModal({
             isOpen: true,
             title: 'Khôi phục Flow',
-            message: `Bạn có muốn khôi phục flow "${flow.name}" về trạng thái Tạm dừng không?`,
+            message: `Bạn có muốn khôi phục flow "${flow.name}" về Trạng thái Tạm dừng không?`,
             variant: 'warning',
             confirmLabel: 'Khôi phục ngay',
             onConfirm: async () => {
@@ -1052,7 +1055,7 @@ const Flows: React.FC = () => {
             setConfirmModal({
                 isOpen: true,
                 title: '⚠️ CẢNH BÁO: Đang có người dùng',
-                message: `Hiện có ${activeCount} người đang ở trong Flow này (đang chờ hoặc đang xử lý). Bạn muốn xử lý thế nào?`,
+                message: `Hiện có ${activeCount} người đang ở trong Flow này (Đang chờ hoặc đang xử lý). Bạn muốn xử lý thế nào?`,
                 variant: 'danger',
                 confirmLabel: 'Hủy đăng ký & Xóa (Force Exit)',
                 requireConfirmText: 'CONFIRM',
@@ -1092,8 +1095,8 @@ const Flows: React.FC = () => {
 
         const isActive = flow.status === 'active';
         setConfirmModal({
-            isOpen: true, title: isActive ? 'Kịch bản đang chạy!' : 'Xóa vào thùng rác?',
-            message: isActive ? 'Nếu xóa, hệ thống sẽ ngừng xử lý các email đang chờ.' : 'Kịch bản sẽ được giữ trong thùng rác 30 ngày.',
+            isOpen: true, title: isActive ? 'Kịch bản Đang chờ' : 'Xóa vào thùng rác?',
+            message: isActive ? 'Nếu xóa, hệ thống sẽ ngừng xử lý các email Đang chờ' : 'Kịch bản sẽ được giữ trong thùng rác 30 ngày.',
             variant: isActive ? 'danger' : 'warning',
             onConfirm: async () => {
                 setLoading(true);
@@ -1137,7 +1140,7 @@ const Flows: React.FC = () => {
 
                     Object.entries(branchCounts).forEach(([stepId, count]) => {
                         const labelInfo = flowLabels[stepId];
-                        const label = labelInfo ? labelInfo.fullLabel : (stepId === 'completed' || stepId === 'main' ? 'Đã hoàn thành' : 'Không xác định');
+                        const label = labelInfo ? labelInfo.fullLabel : (stepId === 'completed' || stepId === 'main' ? 'Đã Hoàn thành' : 'Không xác định');
                         namedBranches[label] = count as number;
                     });
 
@@ -1388,7 +1391,7 @@ const Flows: React.FC = () => {
         if (warnings.length > 0) {
             setConfirmModal({
                 isOpen: true,
-                title: 'Cảnh báo cấu hình',
+                title: 'Cònh báo cấu hình',
                 message: `Phát hiện ${warnings.length} cảnh báo. Bạn có chắc chắn muốn lưu?`,
                 variant: 'warning',
                 confirmLabel: 'Xác nhận lưu',
@@ -1399,7 +1402,7 @@ const Flows: React.FC = () => {
                         // Chained modal workaround: setTimeout to allow modal close then open new one
                         setTimeout(() => {
                             setConfirmModal({
-                                isOpen: true, title: 'Xác nhận Lưu Flow đang chạy',
+                                isOpen: true, title: 'Xác nhận Lưu Flow Đang chờ',
                                 message: 'Flow đang hoạt động. Bạn có chắc luồng đã an toàn không?',
                                 variant: 'warning',
                                 confirmLabel: 'Xác nhận lưu',
@@ -1417,7 +1420,7 @@ const Flows: React.FC = () => {
         if (isActive) {
             setConfirmModal({
                 isOpen: true,
-                title: 'Flow đang chạy',
+                title: 'Flow Đang chờ',
                 message: 'Flow đang hoạt động. Bất kỳ thay đổi nào sẽ áp dụng ngay lập tức cho người dùng. Bạn có chắc luồng đã an toàn và không bị ngắt quãng?',
                 variant: 'warning',
                 confirmLabel: 'Xác nhận lưu',
@@ -1465,7 +1468,7 @@ const Flows: React.FC = () => {
                 <>
                     <PageHero 
                         title={<>Automation <span className="text-orange-100/80">Flows</span></>}
-                        subtitle="Quản lý vòng đời khách hàng tự động — nuôi dưỡng & chuyển đổi thông minh đa kênh."
+                        subtitle="Quản lý vòng đời Khách hàng tự động — nuôi dưỡng & chuyển đổi thông minh đa kênh."
                         showStatus={true}
                         statusText="Orchestrator Online"
                         actions={[
@@ -1539,7 +1542,7 @@ const Flows: React.FC = () => {
                                 className="flex-nowrap overflow-x-auto scrollbar-hide"
                                 items={[
                                     { id: 'all', label: 'Tất cả', icon: LayoutGrid },
-                                    { id: 'active', label: 'Đang chạy', icon: PlayCircle },
+                                    { id: 'active', label: 'Đang chờ', icon: PlayCircle },
                                     { id: 'paused', label: 'Tạm dừng', icon: PauseCircle },
                                     { id: 'draft', label: 'Bản nháp', icon: FileText },
                                     { id: 'archived', label: 'Thùng rác', icon: Trash2 },
@@ -1608,7 +1611,7 @@ const Flows: React.FC = () => {
                             <EmptyState
                                 icon={LayoutGrid}
                                 title="Chưa có kịch bản automation"
-                                description="Bắt đầu tạo kịch bản tự động để tối ưu hóa quy trình chăm sóc khách hàng của bạn."
+                                description="Bắt đầu tạo kịch bản tự động để tối ưu hóa quy trình chăm sóc Khách hàng của bạn."
                                 ctaLabel="Khởi tạo Flow ngay"
                                 onCtaClick={() => setIsCreateModalOpen(true)}
                             />
@@ -1699,7 +1702,7 @@ const Flows: React.FC = () => {
                                     if (warnings.length > 0) {
                                         setConfirmModal({
                                             isOpen: true,
-                                            title: 'Cảnh báo cấu hình',
+                                            title: 'Cònh báo cấu hình',
                                             message: `Flow có ${warnings.length} cảnh báo. Bạn có muốn kích hoạt không?`,
                                             variant: 'warning',
                                             confirmLabel: 'Kích hoạt ngay',
@@ -1725,24 +1728,24 @@ const Flows: React.FC = () => {
 
                                     const triggerWarnings: Record<string, string> = {
                                         form: '📋 Form submit: Người dùng mới điền form sẽ KHÔNG được enroll vào Flow này. Email xác nhận/cảm ơn sẽ không được gửi.',
-                                        purchase: '🛒 Purchase Event: Đơn hàng mới được ghi nhận sẽ KHÔNG kích hoạt Flow. Email sau mua hàng sẽ bị bỏ qua.',
+                                        purchase: '🛒 Purchase Event: Đơn hàng mới được ghi nhận sẽ KHÔNG kích hoạt Flow. Email sau mua hàng sẽ bị Bỏ qua.',
                                         custom_event: '⚡ Custom Event: Sự kiện mới kích hoạt trigger sẽ KHÔNG được xử lý. Flow sẽ không nhận thêm subscriber mới.',
                                         campaign: '📧 Campaign trigger: Flow liên kết với chiến dịch email sẽ bị ngắt. Người nhận mở/click mail sẽ không tiếp tục được dẫn vào Flow.',
                                         tag: '🏷️ Tag trigger: Subscriber được gắn tag mới sẽ KHÔNG được tự động enroll vào Flow.',
                                         list: '📋 List trigger: Subscriber được thêm vào danh sách sẽ KHÔNG được enroll tự động.',
                                         segment: '👥 Segment trigger: Subscriber mới vào phân khúc sẽ KHÔNG được xử lý tự động.',
-                                        date: '📅 Date trigger: Các lịch gửi theo ngày sinh/ngày kỷ niệm sẽ bị bỏ qua trong thời gian tạm dừng.',
+                                        date: '📅 Date trigger: Các lịch gửi theo ngày sinh/ngày kỷ niệm sẽ bị Bỏ qua trong Thời gian tạm dừng.',
                                     };
 
-                                    const specificWarning = triggerWarnings[triggerType] || '⚠️ Trigger của Flow này sẽ ngừng hoạt động trong thời gian tạm dừng.';
+                                    const specificWarning = triggerWarnings[triggerType] || '⚠️ Trigger của Flow này sẽ ngừng hoạt động trong Thời gian tạm dừng.';
                                     const activeWarning = activeCount > 0
-                                        ? `\n\n🔴 Hiện có ${activeCount} người đang chờ trong flow — tất cả sẽ bị DỪNG và không tiếp tục nhận email cho đến khi Flow được kích hoạt lại.`
+                                        ? `\n\n🔴 Hiện có ${activeCount} người Đang chờ trong flow — tất cả sẽ bị DỪNG và không tiếp tục nhận email cho đến khi Flow được kích hoạt lại.`
                                         : '\n\n✅ Hiện không có ai đang trong flow.';
 
                                     setConfirmModal({
                                         isOpen: true,
                                         title: '⏸ Tạm dừng Flow',
-                                        message: `Bạn sắp tạm dừng flow này.\n\nHậu quả:\n${specificWarning}${activeWarning}\n\nBạn có thể kích hoạt lại bất cứ lúc nào, nhưng các sự kiện/dữ liệu trong thời gian tạm dừng sẽ KHÔNG được xử lý hồi tố.`,
+                                        message: `Bạn sắp tạm dừng flow này.\n\nHậu quả:\n${specificWarning}${activeWarning}\n\nBạn có thể kích hoạt lại bất cứ lúc nào, nhưng các sự kiện/dữ liệu trong Thời gian tạm dừng sẽ KHÔNG được xử lý hồi tố.`,
                                         variant: 'warning',
                                         confirmLabel: 'Tạm dừng ngay',
                                         onConfirm: async () => {
@@ -1974,27 +1977,27 @@ const Flows: React.FC = () => {
                     {
                         icon: Clock,
                         title: "Wait Steps thông minh",
-                        description: "Đặt thời gian chờ từ 1-2 tiếng giữa các tin nhắn để tránh cảm giác bị làm phiền.",
+                        description: "Đặt Thời gian chờ từ 1-2 tiếng giữa các tin nhắn để tránh cảm giác bị làm phiền.",
                         colorClass: "bg-gradient-to-br from-amber-400 to-orange-500",
                         highlight: "Quan trọng"
                     },
                     {
                         icon: GitMerge,
                         title: "Rẽ nhánh điều kiện",
-                        description: "Sử dụng các bước Điều kiện Có/Không để lọc khách hàng đã mở hoặc click tin nhắn.",
+                        description: "Sử dụng các bước Điều kiện Có/Không để lọc Khách hàng đã mở hoặc click tin nhắn.",
                         colorClass: "bg-gradient-to-br from-emerald-400 to-teal-500"
                     },
                     {
                         icon: Split,
                         title: "Split Testing",
-                        description: "Chia tệp khách hàng để thử nghiệm 2 kịch bản khác nhau, đo lường hiệu quả thực tế.",
+                        description: "Chia tệp Khách hàng để thử nghiệm 2 kịch bản khác nhau, đo lường hiệu quả thực tế.",
                         colorClass: "bg-gradient-to-br from-purple-500 to-pink-500",
                         highlight: "Nâng cao"
                     },
                     {
                         icon: ShieldCheck,
                         title: "Exit Logic",
-                        description: "Luôn gán Tag hoàn thành để gỡ khách hàng khỏi luồng sau khi họ đã mua hàng.",
+                        description: "Luôn gán Tag Hoàn thành để gỡ Khách hàng khỏi luồng sau khi họ đã mua hàng.",
                         colorClass: "bg-gradient-to-br from-rose-400 to-rose-600"
                     }
                 ]}
@@ -2123,7 +2126,7 @@ const Flows: React.FC = () => {
 
                     handleUpdateFlow({ ...selectedFlow, steps }, false, `Thêm bước mới (Người cũ Dừng)`, true);
                     setContinuationModal({ ...continuationModal, isOpen: false });
-                    showToast('Đã thêm bước mới. Người dùng đã hoàn thành sẽ không thực hiện bước này.');
+                    showToast('Đã thêm bước mới. Người dùng đã Hoàn thành sẽ không thực hiện bước này.');
                 }}
             />
 
@@ -2174,12 +2177,12 @@ const Flows: React.FC = () => {
                         if (res.success) {
                             if (viewingGroup) fetchGroupMembers(viewingGroup, groupPagination.page, groupSearch);
                             setSelectedSubscriberForDetail(null);
-                            showToast('Đã xóa khách hàng', 'success');
+                            showToast('Đã xóa Khách hàng', 'success');
                         } else {
-                            showToast(res.message || 'Lỗi khi xóa khách hàng', 'error');
+                            showToast(res.message || 'Lỗi khi xóa Khách hàng', 'error');
                         }
                     } catch (error) {
-                        showToast('Lỗi hệ thống khi xóa khách hàng', 'error');
+                        showToast('Lỗi hệ thống khi xóa Khách hàng', 'error');
                     } finally {
                         setLoading(false);
                     }
@@ -2290,7 +2293,7 @@ const Flows: React.FC = () => {
                                 </div>
                             </div>
                             <div className="bg-rose-50 border border-rose-200 rounded-xl p-3">
-                                <p className="text-[11px] font-bold text-rose-700">⚠️ Cảnh báo: Mọi thay đổi chưa lưu hiện tại sẽ bị mất. Sau khi khôi phục, bạn cần bấm <strong>Lưu</strong> để áp dụng lên server.</p>
+                                <p className="text-[11px] font-bold text-rose-700">⚠️ Cònh báo: Mọi thay đổi chưa lưu hiện tại sẽ bị mất. Sau khi khôi phục, bạn cần bấm <strong>Lưu</strong> để áp dụng lên server.</p>
                             </div>
                         </div>
                         <div className="p-4 border-t border-slate-100 flex gap-3 justify-end">

@@ -159,7 +159,7 @@ const WorkspacePanel: React.FC<WorkspacePanelProps> = ({
                                 onClick={onUploadFile}
                                 className="mt-2 px-4 py-2 bg-brand text-white rounded-xl text-sm font-bold hover:bg-brand/90 transition-colors"
                             >
-                                Tải lên tệp đầu tiên
+                                Tỉ lệ tệp đầu tiên
                             </button>
                         </div>
                     ) : (

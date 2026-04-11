@@ -478,7 +478,7 @@ try {
                     s.last_name, COALESCE(s.avatar, zs.avatar) as avatar,
                     s.phone, s.email, s.lead_score, NULL as ip_address, NULL as subscriber_id,
                     zc.name as zalo_oa_name, zc.avatar as zalo_oa_avatar, 'zalo' as source";
-                $joins = "LEFT JOIN zalo_subscribers zs ON zs.zalo_user_id = REPLACE(c.visitor_id, 'zalo_', '')
+                $joins = "LEFT JOIN zalo_subscribers zs ON zs.zalo_user_id = SUBSTRING(c.visitor_id, 6)
                          LEFT JOIN zalo_oa_configs zc ON zs.oa_id = zc.oa_id
                          LEFT JOIN subscribers s ON s.zalo_user_id = zs.zalo_user_id
                          LEFT JOIN web_visitors v ON c.visitor_id = v.id";
@@ -493,7 +493,7 @@ try {
                     COALESCE(s.email, ms.email) as email,
                     s.lead_score, NULL as ip_address, NULL as subscriber_id,
                     mc.page_name, mc.avatar_url as page_avatar, 'meta' as source";
-                $joins = "LEFT JOIN meta_subscribers ms ON ms.psid = REPLACE(c.visitor_id, 'meta_', '')
+                $joins = "LEFT JOIN meta_subscribers ms ON ms.psid = SUBSTRING(c.visitor_id, 6)
                          LEFT JOIN meta_app_configs mc ON ms.page_id = mc.page_id
                          LEFT JOIN subscribers s ON s.meta_psid = ms.psid
                          LEFT JOIN web_visitors v ON c.visitor_id = v.id";
@@ -525,15 +525,9 @@ try {
                          LEFT JOIN zalo_oa_configs zc ON zs.oa_id = zc.oa_id";
             }
 
-            // 1. Get total count first
-            // Note: Use a simplified query for counting to avoid heavy JOINs where possible
-            $countSql = "SELECT COUNT(DISTINCT c.id) FROM ai_conversations c $joins $whereSql";
-            $totalStmt = $pdo->prepare($countSql);
-            $totalStmt->execute($params);
-            $totalItems = (int) $totalStmt->fetchColumn();
-
-            // 2. Fetch data
-            $sql = "SELECT $selectFields
+            // OPTIMIZED: Use SQL_CALC_FOUND_ROWS for single-pass COUNT + data fetch
+            // This eliminates the expensive separate COUNT query with full JOINs
+            $sql = "SELECT SQL_CALC_FOUND_ROWS $selectFields
                     FROM ai_conversations c
                     $joins
                     $whereSql
@@ -545,6 +539,8 @@ try {
             $stmt->execute($params);
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+            // Single fast query, no JOINs needed
+            $totalItems = (int) $pdo->query('SELECT FOUND_ROWS()')->fetchColumn();
             $totalPages = ceil($totalItems / $limit);
 
             echo json_encode([
@@ -868,12 +864,21 @@ try {
             $msgTable = $isOrg ? 'ai_org_messages' : 'ai_messages';
             $convTable = $isOrg ? 'ai_org_conversations' : 'ai_conversations';
 
+            // OPTIMIZED: Fetch bot_name once via single lightweight query (avoids JOIN on every message)
+            $botName = null;
+            if (!$isOrg) {
+                $stmtBot = $pdo->prepare(
+                    "SELECT b.name FROM ai_conversations c
+                     LEFT JOIN ai_chatbots b ON c.property_id = b.id
+                     WHERE c.id = ? LIMIT 1"
+                );
+                $stmtBot->execute([$convId]);
+                $botName = $stmtBot->fetchColumn() ?: null;
+            }
+
             if ($limit) {
-                $sql = "SELECT m.*, b.name as bot_name 
-                        FROM $msgTable m 
-                        LEFT JOIN $convTable c ON m.conversation_id = c.id
-                        LEFT JOIN ai_chatbots b ON c.property_id = b.id
-                        WHERE m.conversation_id = ?";
+                // OPTIMIZED: Direct query on ai_messages using idx_conversation_id_desc index
+                $sql = "SELECT m.* FROM $msgTable m WHERE m.conversation_id = ?";
                 $params = [$convId];
                 if ($beforeId) {
                     $sql .= " AND m.id < ?";
@@ -886,30 +891,21 @@ try {
                 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 $data = array_reverse($messages);
             } else {
-                $stmt = $pdo->prepare("SELECT m.*, b.name as bot_name 
-                                       FROM $msgTable m 
-                                       LEFT JOIN $convTable c ON m.conversation_id = c.id
-                                       LEFT JOIN ai_chatbots b ON c.property_id = b.id
-                                       WHERE m.conversation_id = ? 
-                                       ORDER BY m.created_at ASC");
+                $stmt = $pdo->prepare("SELECT m.* FROM $msgTable m WHERE m.conversation_id = ? ORDER BY m.id ASC");
                 $stmt->execute([$convId]);
                 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-                // If empty and we didn't have a prefix, try the other table as fallback
+                // Fallback: try org table if empty and no prefix given
                 if (empty($data) && strpos($convIdFull, 'cust_') === false && strpos($convIdFull, 'org_') === false) {
-                    $stmtOrg = $pdo->prepare("SELECT m.*, b.name as bot_name 
-                                              FROM ai_org_messages m 
-                                              LEFT JOIN ai_org_conversations c ON m.conversation_id = c.id
-                                              LEFT JOIN ai_chatbots b ON c.property_id = b.id
-                                              WHERE m.conversation_id = ? 
-                                              ORDER BY m.created_at ASC");
+                    $stmtOrg = $pdo->prepare("SELECT m.* FROM ai_org_messages m WHERE m.conversation_id = ? ORDER BY m.id ASC");
                     $stmtOrg->execute([$convId]);
                     $data = $stmtOrg->fetchAll(PDO::FETCH_ASSOC);
                 }
             }
 
-            // Normalize sender for Org messages if needed
+            // Inject bot_name + normalize sender
             foreach ($data as &$msg) {
+                $msg['bot_name'] = $botName;
                 if ($msg['sender'] === 'user')
                     $msg['sender'] = 'visitor';
                 if ($msg['sender'] === 'assistant' || $msg['sender'] === 'model')

@@ -150,8 +150,8 @@ const FlowReviewModal: React.FC<FlowReviewModalProps> = ({
                     <div className="space-y-1">
                         <p className="text-xs font-bold text-blue-800">Hành động này sẽ:</p>
                         <ul className="text-[11px] text-blue-700 list-disc pl-4 space-y-0.5">
-                            <li>Chuyển trạng thái chiến dịch sang <span className="font-bold">ĐANG GỬI</span>.</li>
-                            <li>Kích hoạt Flow <span className="font-bold">{flow?.name}</span> sang trạng thái <span className="font-bold">ACTIVE</span>.</li>
+                            <li>Chuyển Trạng thái chiến dịch sang <span className="font-bold">ĐANG GỬI</span>.</li>
+                            <li>Kích hoạt Flow <span className="font-bold">{flow?.name}</span> sang Trạng thái <span className="font-bold">ACTIVE</span>.</li>
                             <li>Bắt đầu gửi email đầu tiên ngay lập tức.</li>
                         </ul>
                     </div>

@@ -28,7 +28,7 @@ const AddStepModal: React.FC<AddStepModalProps> = ({ isOpen, onClose, onAdd, par
       // Condition requires an immediate preceding Action (Email) step OR a Campaign Trigger
       const isCampaignTrigger = parentStep?.type === 'trigger' && parentStep.config?.type === 'campaign';
       if (!parentStep || (parentStep.type !== 'action' && parentStep.type !== 'zalo_zns' && !isCampaignTrigger)) {
-        return "Cần bước Email/ZNS trước đó.";
+        return "Còn bước Email/ZNS trước đó.";
       }
     }
 

@@ -120,7 +120,7 @@ const CustomSelect: React.FC<{
         >
             {options.length === 0 ? (
                 <div className="p-4 text-center text-xs text-slate-400 italic">
-                    KhÙng cÛ d? li?u
+                    KhÔøΩng cÔøΩ d? li?u
                 </div>
             ) : (
                 options.map((option) => (
@@ -359,7 +359,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                 });
 
                 // Check for phone and validate rows
-                const phoneIdx = headers.findIndex(h => h.includes('phone') || h.includes('sdt') || h.includes('s? di?n tho?i'));
+                const phoneIdx = headers.findIndex(h => h.includes('phone') || h.includes('sdt') || h.includes('s? dƒêi·ªán tho·∫°i'));
                 let validCount = 0;
 
                 if (phoneIdx !== -1) {
@@ -426,37 +426,37 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
     // All available variables grouped by category
     const allVariableGroups = [
         {
-            label: 'ThÙng tin Contact',
+            label: 'ThÔøΩng tin Contact',
             icon: 'user',
             vars: [
-                { key: '{{first_name}}', label: 'TÍn', desc: 'First name of contact' },
+                { key: '{{first_name}}', label: 'TÔøΩn', desc: 'First name of contact' },
                 { key: '{{last_name}}', label: 'H?', desc: 'Last name of contact' },
-                { key: '{{full_name}}', label: 'H? v‡ tÍn', desc: 'Full name' },
+                { key: '{{full_name}}', label: 'H? vÔøΩ tÔøΩn', desc: 'Full name' },
                 { key: '{{email}}', label: 'Email', desc: 'Email address' },
-                { key: '{{phone_number}}', label: 'S? di?n tho?i', desc: 'Phone number' },
-                { key: '{{company_name}}', label: 'CÙng ty', desc: 'Company name' },
+                { key: '{{phone_number}}', label: 'S? dƒêi·ªán tho·∫°i', desc: 'Phone number' },
+                { key: '{{company_name}}', label: 'C√≤ng ty', desc: 'Company name' },
                 { key: '{{job_title}}', label: 'Ch?c v?', desc: 'Job title' },
-                { key: '{{city}}', label: 'Th‡nh ph?', desc: 'City' },
+                { key: '{{city}}', label: 'ThÔøΩnh ph?', desc: 'City' },
                 { key: '{{country}}', label: 'Qu?c gia', desc: 'Country' },
-                { key: '{{date_of_birth}}', label: 'Ng‡y sinh', desc: 'Date of birth' },
-                { key: '{{gender}}', label: 'Gi?i tÌnh', desc: 'Gender' },
-                { key: '{{joined_at}}', label: 'Ng‡y tham gia', desc: 'Join date (dd/mm/yyyy)' },
+                { key: '{{date_of_birth}}', label: 'NgÔøΩy sinh', desc: 'Date of birth' },
+                { key: '{{gender}}', label: 'Gi?i tÔøΩnh', desc: 'Gender' },
+                { key: '{{joined_at}}', label: 'NgÔøΩy tham gia', desc: 'Join date (dd/mm/yyyy)' },
             ]
         },
         {
-            label: 'Ng‡y & Th?i gian',
+            label: 'NgÔøΩy & Th·ªùi gian',
             icon: 'calendar',
             vars: [
-                { key: '{{today}}', label: 'HÙm nay', desc: 'Today\'s date (dd/mm/yyyy)' },
-                { key: '{{today_ymd}}', label: 'HÙm nay (yyyy-mm-dd)', desc: 'Today yyyy-mm-dd format' },
-                { key: '{{today_dmy}}', label: 'HÙm nay (dd-mm-yyyy)', desc: 'Today dd-mm-yyyy format' },
-                { key: '{{current_date}}', label: 'Ng‡y hi?n t?i', desc: 'Current date dd/mm/yyyy' },
+                { key: '{{today}}', label: 'HÔøΩm nay', desc: 'Today\'s date (dd/mm/yyyy)' },
+                { key: '{{today_ymd}}', label: 'HÔøΩm nay (yyyy-mm-dd)', desc: 'Today yyyy-mm-dd format' },
+                { key: '{{today_dmy}}', label: 'HÔøΩm nay (dd-mm-yyyy)', desc: 'Today dd-mm-yyyy format' },
+                { key: '{{current_date}}', label: 'NgÔøΩy hi?n t?i', desc: 'Current date dd/mm/yyyy' },
                 { key: '{{year}}', label: 'Nam hi?n t?i', desc: 'Current year' },
                 { key: '{{time}}', label: 'Gi? hi?n t?i', desc: 'Current time HH:mm' },
             ]
         },
         {
-            label: 'H? th?ng',
+            label: 'H·ªá th·ªëng',
             icon: 'system',
             vars: [
                 { key: '{{subscriber_id}}', label: 'ID Subscriber', desc: 'Unique ID of the contact' },
@@ -471,12 +471,12 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
     ];
 
     const personalizationTags = [
-        { label: 'TÍn', value: 'first_name' },
+        { label: 'TÔøΩn', value: 'first_name' },
         { label: 'H?', value: 'last_name' },
         { label: 'Email', value: 'email' },
-        { label: 'S–T', value: 'phone_number' },
-        { label: 'CÙng ty', value: 'company_name' },
-        { label: 'HÙm nay', value: 'today' },
+        { label: 'SÔøΩT', value: 'phone_number' },
+        { label: 'C√≤ng ty', value: 'company_name' },
+        { label: 'HÔøΩm nay', value: 'today' },
         { label: 'ID', value: 'subscriber_id' },
     ];
 
@@ -541,8 +541,8 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
         return (
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center">
                 <AlertCircle className="w-12 h-12 text-amber-600 mx-auto mb-3" />
-                <p className="text-sm font-bold text-amber-800 mb-2">Chua cÛ Zalo OA</p>
-                <p className="text-xs text-amber-600">Vui lÚng thÍm Zalo Official Account trong Settings tru?c.</p>
+                <p className="text-sm font-bold text-amber-800 mb-2">Chua cÔøΩ Zalo OA</p>
+                <p className="text-xs text-amber-600">Vui lÔøΩng thÔøΩm Zalo Official Account trong Settings tru?c.</p>
             </div>
         );
     }
@@ -556,7 +556,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
     const templateOptions: Option[] = templates.map(t => ({
         value: t.template_id,
         label: t.template_name,
-        subLabel: `ID: ${t.template_id} ï Type: ${t.template_type}`
+        subLabel: `ID: ${t.template_id} ÔøΩ Type: ${t.template_type}`
     }));
 
     const selectedTemplate = templates.find(t => t.template_id === config.template_id);
@@ -586,14 +586,14 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                     <div className="flex-1 space-y-2">
                         <div className="flex items-center justify-between">
                             <h4 className={`text-[11px] font-black uppercase tracking-widest ${isTimeInsecure ? 'text-orange-900' : 'text-emerald-900'}`}>
-                                {isTimeInsecure ? 'C?nh b·o khung gi? g?i ZNS' : 'Khung gi? Flow d„ an to‡n'}
+                                {isTimeInsecure ? 'C√≤nh bÔøΩo khung gi?ƒë√£ g·ª≠i ZNS' : 'Khung gi? Flow dÔøΩ an toÔøΩn'}
                             </h4>
                             <Clock className={`w-4 h-4 ${isTimeInsecure ? 'text-orange-400' : 'text-emerald-400'}`} />
                         </div>
                         <p className={`text-[11px] font-bold leading-relaxed ${isTimeInsecure ? 'text-orange-800' : 'text-emerald-800'}`}>
                             {isTimeInsecure
-                                ? `Theo chÌnh s·ch Zalo, tin ZNS ch? g?i du?c t? 06:00 - 22:00. Flow hi?n t?i (${flow.config.startTime} - ${flow.config.endTime}) cÛ th? khi?n tin nh?n b? t?m gi? ho?c th?t b?i.`
-                                : 'C?u hÏnh th?i gian c?a Flow n‡y d„ tu‚n th? chÌnh s·ch c?a Zalo (06:00 - 22:00). Tin nh?n ZNS s? du?c g?i di ngay l?p t?c.'
+                                ? `Theo chÔøΩnh sÔøΩch Zalo, tin ZNS ch?ƒë√£ g·ª≠i du?c t? 06:00 - 22:00. Flow hi?n t?i (${flow.config.startTime} - ${flow.config.endTime}) cÔøΩ th? khi?n tin nh?n b? t?m gi? ho?c th?t b?i.`
+                                : 'C?u hÔøΩnh Th·ªùi gian c?a Flow nÔøΩy dÔøΩ tuÔøΩn th? chÔøΩnh sÔøΩch c?a Zalo (06:00 - 22:00). Tin nh?n ZNS s? du?cƒë√£ g·ª≠i di ngay l?p t?c.'
                             }
                         </p>
 
@@ -653,7 +653,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                 options={templateOptions}
                                 onChange={handleTemplateChange}
                                 disabled={disabled || templates.length === 0}
-                                placeholder={templates.length === 0 ? "KhÙng cÛ template n‡o" : "-- Ch?n Template --"}
+                                placeholder={templates.length === 0 ? "KhÔøΩng cÔøΩ template nÔøΩo" : "-- Ch?n Template --"}
                             />
 
                             {/* [NEW] UID Support Warning */}
@@ -662,12 +662,12 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                     <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                                     <div>
                                         <p className="text-[11px] font-black text-amber-800 uppercase tracking-wide mb-1">
-                                            Luu ˝: Template khÙng h? tr? UID
+                                            Luu ÔøΩ: Template khÔøΩng h? tr? UID
                                         </p>
                                         <p className="text-[11px] text-amber-700 leading-relaxed font-medium">
-                                            M?u n‡y s? <b>t? d?ng chuy?n sang g?i qua S? di?n tho?i</b> n?u b?n nh?p UID.
+                                            M?u nÔøΩy s? <b>t? d?ng chuy?n sangƒë√£ g·ª≠i qua S? dƒêi·ªán tho·∫°i</b> n?u b?n nh?p UID.
                                             <br />
-                                            Chi phÌ d? ki?n: <b className="text-amber-900">{selectedTemplate.template_data?.price || 'theo quy d?nh Zalo'} VND/tin</b>.
+                                            Chi phÔøΩ d? ki?n: <b className="text-amber-900">{selectedTemplate.template_data?.price || 'theo quy d?nh Zalo'} VND/tin</b>.
                                         </p>
                                     </div>
                                 </div>
@@ -686,7 +686,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                     className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${config.input_mode !== 'csv' ? 'bg-white text-blue-600 shadow-md ring-1 ring-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
                                 >
                                     <HelpCircle className="w-3.5 h-3.5 inline mr-1.5" />
-                                    C· nh‚n hÛa
+                                    C√≤nhÔøΩn hÔøΩa
                                 </button>
                                 <button
                                     onClick={() => handleInputModeChange('csv')}
@@ -704,7 +704,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                     className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 border border-emerald-100 transition-all active:scale-95"
                                 >
                                     <Download className="w-3.5 h-3.5" />
-                                    T?i file m?u .CSV
+                                    T?i fileƒê√£ m·ªüu .CSV
                                 </button>
                             )}
                         </div>
@@ -712,7 +712,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                         <div className="p-8 bg-white rounded-[32px] border-2 border-slate-100 shadow-xl shadow-slate-200/20">
                             <div className="flex items-center justify-between mb-8">
                                 <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                                    C?u hÏnh Tham s? (Parameters)
+                                    C?u hÔøΩnh Tham s? (Parameters)
                                 </h4>
                                 {config.input_mode === 'manual' && (
                                     <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[9px] font-black uppercase tracking-widest">
@@ -738,10 +738,10 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                             </div>
                                             <div className="text-center px-6">
                                                 <p className="text-sm font-black text-slate-800 uppercase tracking-tight">
-                                                    {csvFile ? csvFile.name : 'Ch?n danh s·ch ngu?i nh?n (.CSV)'}
+                                                    {csvFile ? csvFile.name : 'Ch?n danh s√°ch ngu?i nh?n (.CSV)'}
                                                 </p>
                                                 <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-widest leading-relaxed">
-                                                    {csvFile ? 'File d„ s?n s‡ng x? l˝' : 'Ch? ch?p nh?n file d?nh d?ng CSV cÛ ch?a c?t S–T'}
+                                                    {csvFile ? 'File dÔøΩ s?n sÔøΩng x? lÔøΩ' : 'Ch? ch?p nh?n file d?nh d?ng CSV cÔøΩ ch?a c?t SÔøΩT'}
                                                 </p>
                                             </div>
                                         </div>
@@ -759,10 +759,10 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                                     <div className="flex items-center justify-between">
                                                         <h5 className="text-[11px] font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
                                                             <FileText className="w-4 h-4 text-blue-500" />
-                                                            B·o c·o ki?m tra File
+                                                            B√°o c√°o ki?m tra File
                                                         </h5>
                                                         <span className="text-[10px] bg-slate-200 text-slate-600 font-bold px-2 py-1 rounded-lg">
-                                                            Total: {csvStats.totalRows} h‡ng
+                                                            Total: {csvStats.totalRows} hÔøΩng
                                                         </span>
                                                     </div>
 
@@ -770,7 +770,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                                         {/* Valid Rows */}
                                                         <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-xl">
                                                             <div className="flex justify-between items-center mb-1">
-                                                                <span className="text-[10px] font-bold text-emerald-600 uppercase">H?p l? (S–T OK)</span>
+                                                                <span className="text-[10px] font-bold text-emerald-600 uppercase">H?p l? (SÔøΩT OK)</span>
                                                                 <Check className="w-4 h-4 text-emerald-500" />
                                                             </div>
                                                             <p className="text-2xl font-black text-emerald-700">{csvStats.validRows}</p>
@@ -780,7 +780,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                                         <div className={`border p-3 rounded-xl ${csvStats.totalRows - csvStats.validRows > 0 ? 'bg-orange-50 border-orange-100' : 'bg-slate-50 border-slate-100'}`}>
                                                             <div className="flex justify-between items-center mb-1">
                                                                 <span className={`text-[10px] font-bold uppercase ${csvStats.totalRows - csvStats.validRows > 0 ? 'text-orange-600' : 'text-slate-400'}`}>
-                                                                    L?i (S–T sai/tr?ng)
+                                                                    L·ªói (SÔøΩT sai/tr?ng)
                                                                 </span>
                                                                 {csvStats.totalRows - csvStats.validRows > 0 ? (
                                                                     <AlertCircle className="w-4 h-4 text-orange-500" />
@@ -801,8 +801,8 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                                             <div>
                                                                 <p className="text-[11px] font-black text-rose-700 uppercase mb-1">Thi?u c?t b?t bu?c</p>
                                                                 <p className="text-[11px] text-rose-600 leading-relaxed">
-                                                                    File CSV thi?u c·c tham s? sau: <b>{csvStats.missingRequired.join(', ')}</b>.
-                                                                    Tin nh?n cÛ th? b? Zalo t? ch?i.
+                                                                    File CSV thi?u cÔøΩc tham s? sau: <b>{csvStats.missingRequired.join(', ')}</b>.
+                                                                    Tin nh?n cÔøΩ th? b? Zalo t? ch?i.
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -813,12 +813,12 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                                         <div className="flex items-start gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl">
                                                             <HelpCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
                                                             <div>
-                                                                <p className="text-[11px] font-black text-blue-700 uppercase mb-1">X? l˝ h‡ng l?i</p>
+                                                                <p className="text-[11px] font-black text-blue-700 uppercase mb-1">X? lÔøΩ hÔøΩng l?i</p>
                                                                 <p className="text-[11px] text-blue-600 leading-relaxed">
-                                                                    CÛ <b>{csvStats.totalRows - csvStats.validRows}</b> h‡ng ch?a S–T khÙng h?p l?.
-                                                                    H? th?ng s? <span className="font-black px-1.5 py-0.5 bg-white rounded border border-blue-200">
-                                                                        {config.fallback_behavior === 'mark_failed' ? 'C?T FLOW & B¡O L?I' : 'B? QUA & TI?P T?C'}
-                                                                    </span> d?i v?i c·c liÍn h? n‡y.
+                                                                    CÔøΩ <b>{csvStats.totalRows - csvStats.validRows}</b> hÔøΩng ch?a SÔøΩT khÔøΩng h?p l?.
+                                                                    H·ªá th·ªëng s? <span className="font-black px-1.5 py-0.5 bg-white rounded border border-blue-200">
+                                                                        {config.fallback_behavior === 'mark_failed' ? 'C?T FLOW & BÔøΩO L?I' : 'B·ªè qua & TI?P T?C'}
+                                                                    </span> d?i v?i cÔøΩc liÔøΩn h? nÔøΩy.
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -890,7 +890,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                                                             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-blue-300" />
                                                                             <input
                                                                                 type="text"
-                                                                                placeholder="TÏm bi?n..."
+                                                                                placeholder="TÔøΩm bi?n..."
                                                                                 value={varPickerSearch}
                                                                                 onChange={e => setVarPickerSearch(e.target.value)}
                                                                                 className="w-full pl-7 pr-3 py-1.5 bg-white/20 text-white placeholder-blue-300 text-xs rounded-lg outline-none focus:bg-white/30"
@@ -936,7 +936,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                                                     <div className="px-3 py-2 bg-slate-50 border-t border-slate-100">
                                                                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nh?p nhanh</p>
                                                                         <div className="flex flex-wrap gap-1">
-                                                                            {[{ k: '{{today}}', l: 'HÙm nay' }, { k: '{{first_name}}', l: 'TÍn' }, { k: '{{subscriber_id}}', l: 'ID' }].map(q => (
+                                                                            {[{ k: '{{today}}', l: 'HÔøΩm nay' }, { k: '{{first_name}}', l: 'TÔøΩn' }, { k: '{{subscriber_id}}', l: 'ID' }].map(q => (
                                                                                 <button
                                                                                     key={q.k}
                                                                                     type="button"
@@ -953,10 +953,10 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                                     </div>
                                                     <div className="flex justify-between items-center px-1">
                                                         <span className="text-[9px] font-medium text-slate-400 italic">
-                                                            {param.require ? '* B?t bu?c nh?p' : 'KhÙng b?t bu?c'}
+                                                            {param.require ? '* B?t bu?c nh?p' : 'KhÔøΩng b?t bu?c'}
                                                         </span>
                                                         {param.maxLength && (
-                                                            <span className="text-[9px] font-black text-slate-300 uppercase">T?i da {param.maxLength} k˝ t?</span>
+                                                            <span className="text-[9px] font-black text-slate-300 uppercase">T?i da {param.maxLength} kÔøΩ t?</span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -966,7 +966,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                     {templateParams.length === 0 && (
                                         <div className="text-center py-10 opacity-30">
                                             <RefreshCw className="w-12 h-12 mx-auto mb-4" />
-                                            <p className="text-xs font-black uppercase tracking-widest">KhÙng cÛ tham s?</p>
+                                            <p className="text-xs font-black uppercase tracking-widest">KhÔøΩng cÔøΩ tham s?</p>
                                         </div>
                                     )}
                                 </div>
@@ -981,7 +981,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                         {/* Fallback Behavior */}
                         <div className="space-y-4">
                             <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1 px-1">
-                                H‡nh d?ng n?u d? li?u l?i
+                                HÔøΩnh d?ng n?u d? li?u l?i
                             </label>
                             <div className="grid grid-cols-2 gap-4">
                                 <label className={`flex flex-col items-center gap-2 p-3 rounded-[24px] border-2 cursor-pointer transition-all hover:shadow-xl ${(config.fallback_behavior || 'skip') === 'skip' ? 'bg-blue-600 border-blue-600 text-white shadow-blue-200' : 'bg-white border-slate-100 text-slate-500 hover:border-blue-200'}`}>
@@ -996,7 +996,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                     />
                                     <HelpCircle className={`w-6 h-6 ${(config.fallback_behavior || 'skip') === 'skip' ? 'text-white' : 'text-slate-200'}`} />
                                     <div className="text-center">
-                                        <p className="text-[10px] font-black uppercase tracking-tight">B? qua</p>
+                                        <p className="text-[10px] font-black uppercase tracking-tight">B·ªè qua</p>
                                         <p className={`text-[8px] font-bold ${(config.fallback_behavior || 'skip') === 'skip' ? 'text-blue-200' : 'text-slate-400'}`}>TI?P T?C FLOW</p>
                                     </div>
                                 </label>
@@ -1014,7 +1014,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                     <X className={`w-6 h-6 ${config.fallback_behavior === 'mark_failed' ? 'text-white' : 'text-slate-200'}`} />
                                     <div className="text-center">
                                         <p className="text-[10px] font-black uppercase tracking-tight">C?t flow</p>
-                                        <p className={`text-[8px] font-bold ${config.fallback_behavior === 'mark_failed' ? 'text-rose-200' : 'text-slate-400'}`}>–¡NH D?U L?I</p>
+                                        <p className={`text-[8px] font-bold ${config.fallback_behavior === 'mark_failed' ? 'text-rose-200' : 'text-slate-400'}`}>ÔøΩÔøΩNH D?U L?I</p>
                                     </div>
                                 </label>
                             </div>
@@ -1026,15 +1026,15 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                 <HelpCircle className="w-6 h-6" />
                             </div>
                             <div className="space-y-2 flex-1 min-w-0">
-                                <p className="text-[11px] font-black text-slate-700 uppercase tracking-widest">M·ch nh? cho b?n</p>
+                                <p className="text-[11px] font-black text-slate-700 uppercase tracking-widest">MÔøΩch nh? cho b?n</p>
                                 <ul className="space-y-3 text-[11px] text-slate-500 font-bold leading-relaxed">
                                     <li className="flex items-start gap-2.5">
                                         <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0"></div>
-                                        <p className="flex-1">D˘ng <b className="text-indigo-600">C· nh‚n hÛa</b> khi mu?n g?i t? d?ng theo s? ki?n c?a kh·ch.</p>
+                                        <p className="flex-1">DÔøΩng <b className="text-indigo-600">C√≤nhÔøΩn hÔøΩa</b> khi mu?nƒë√£ g·ª≠i t? d?ng theo s? ki?n c?a khÔøΩch.</p>
                                     </li>
                                     <li className="flex items-start gap-2.5">
                                         <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0"></div>
-                                        <p className="flex-1">D˘ng <b className="text-indigo-600">CSV</b> khi d„ cÛ s?n danh s·ch S–T trong file Excel/CSV.</p>
+                                        <p className="flex-1">DÔøΩng <b className="text-indigo-600">CSV</b> khi dÔøΩ cÔøΩ s?n danh s√°ch SÔøΩT trong file Excel/CSV.</p>
                                     </li>
                                 </ul>
                             </div>
@@ -1054,7 +1054,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                 </div>
                                 <div>
                                     <h4 className="text-base font-black text-slate-800 tracking-tight">TR?C QUAN GIAO DI?N (PREVIEW)</h4>
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">X·c nh?n n?i dung s? hi?n th? trÍn di?n tho?i</p>
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">XÔøΩc nh?n n?i dung s? hi?n th? trÔøΩn dƒêi·ªán tho·∫°i</p>
                                 </div>
                             </div>
                             {previewUrl && (
@@ -1072,7 +1072,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                             {loadingDetail ? (
                                 <div className="h-[600px] flex flex-col items-center justify-center text-slate-400 gap-4">
                                     <RefreshCw className="w-10 h-10 animate-spin text-blue-500" />
-                                    <p className="text-xs font-black uppercase tracking-[0.2em] animate-pulse">–ang n?p b? xem tru?c...</p>
+                                    <p className="text-xs font-black uppercase tracking-[0.2em] animate-pulse">ÔøΩang n?p b? xem tru?c...</p>
                                 </div>
                             ) : previewUrl ? (
                                 <div className="w-full max-w-[400px] bg-slate-900 rounded-[60px] p-2.5 shadow-2xl relative z-10 scale-100 group-hover:scale-[1.02] transition-transform duration-500">
@@ -1107,9 +1107,9 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                     <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-8 shadow-2xl border-4 border-slate-50">
                                         <AlertCircle className="w-10 h-10 text-amber-600" />
                                     </div>
-                                    <h5 className="text-lg font-black text-slate-800 tracking-tight mb-2">KH‘NG TÃM TH?Y PREVIEW</h5>
+                                    <h5 className="text-lg font-black text-slate-800 tracking-tight mb-2">KHÔøΩNG TÔøΩM TH?Y PREVIEW</h5>
                                     <p className="text-sm font-bold text-slate-400 leading-relaxed mb-8 uppercase tracking-wide px-4">
-                                        Zalo chua cung c?p b?n xem tru?c cho Template n‡y ho?c b? nh? d?m dang g?p l?i.
+                                        Zalo chua cung c?p b?n xem tru?c cho Template nÔøΩy ho?c b? nh? d?m dang g?p l?i.
                                     </p>
                                     <button
                                         onClick={() => fetchTemplateDetail(selectedTemplate?.id || '')}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Users, Shield, ShieldAlert, Trash2, CheckCircle, XCircle, Search, Mail, Calendar, UserPlus } from 'lucide-react';
 import PageHero from '../components/common/PageHero';
 import toast from 'react-hot-toast';
@@ -9,7 +9,7 @@ interface ManagedUser {
     name: string;
     role: 'admin' | 'user';
     status: 'pending' | 'approved';
-    lastLogin: string;
+    last_login?: string; lastLogin?: string;
     picture?: string;
 }
 
@@ -164,7 +164,7 @@ const AdminUsers: React.FC = () => {
                                     <td className="px-8 py-5">
                                         <div className="flex items-center gap-2 text-slate-500">
                                             <Calendar className="w-3.5 h-3.5" />
-                                            <span className="text-[11px] font-bold">{new Date(user.lastLogin).toLocaleDateString()}</span>
+                                            <span className="text-[11px] font-bold">{(user.last_login || user.lastLogin) ? new Date(user.last_login || user.lastLogin).toLocaleString('vi-VN') : 'Chưa đăng nhập'}</span>
                                         </div>
                                     </td>
                                     <td className="px-8 py-5 text-right">
@@ -186,3 +186,4 @@ const AdminUsers: React.FC = () => {
 };
 
 export default AdminUsers;
+

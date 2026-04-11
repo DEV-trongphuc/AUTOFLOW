@@ -21,8 +21,8 @@ const StatCard = ({ title, value, icon: Icon, trend, trendUp, loading }: any) =>
   const getGradient = (ttl: string) => {
     if (ttl.includes('Người đăng ký')) return 'from-blue-500 to-indigo-600 shadow-indigo-500/10';
     if (ttl.includes('Email đã gửi')) return 'from-amber-400 to-orange-500 shadow-orange-500/10';
-    if (ttl.includes('Tỷ lệ mở')) return 'from-indigo-500 to-purple-600 shadow-indigo-500/10';
-    if (ttl.includes('Lượt click')) return 'from-emerald-500 to-teal-600 shadow-emerald-500/10';
+    if (ttl.includes('Tỉ lệ mở')) return 'from-indigo-500 to-purple-600 shadow-indigo-500/10';
+    if (ttl.includes('Lượt Click')) return 'from-emerald-500 to-teal-600 shadow-emerald-500/10';
     return 'from-slate-500 to-slate-600 shadow-slate-500/10';
   };
 
@@ -66,8 +66,8 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
     <StatCard title="Người đăng ký" value={stats.totalSubscribers.toLocaleString()} icon={Users} trend="+12%" trendUp={true} loading={loading} />
     <StatCard title="Email đã gửi" value={stats.totalSent.toLocaleString()} icon={MailCheck} trend="+5.4%" trendUp={true} loading={loading} />
-    <StatCard title="Tỷ lệ mở TB" value={`${stats.avgOpenRate}%`} icon={MailOpen} trend="-2.1%" trendUp={false} loading={loading} />
-    <StatCard title="Lượt click" value="1,294" icon={MousePointerClick} trend="+8%" trendUp={true} loading={loading} />
+    <StatCard title="Tỉ lệ mở TB" value={`${stats.avgOpenRate}%`} icon={MailOpen} trend="-2.1%" trendUp={false} loading={loading} />
+    <StatCard title="Lượt Click" value="1,294" icon={MousePointerClick} trend="+8%" trendUp={true} loading={loading} />
   </div>
 );
 

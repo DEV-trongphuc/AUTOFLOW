@@ -366,7 +366,7 @@ const AIModals: React.FC<AIModalsProps> = (props) => {
                         <div className={`p-4 border rounded-2xl flex gap-3 ${isDarkTheme ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
                             <Zap className="w-5 h-5 text-emerald-500 shrink-0" />
                             <p className={`text-[10px] font-medium leading-relaxed ${isDarkTheme ? 'text-emerald-200/70' : 'text-emerald-900'}`}>
-                                Khối dữ liệu này chứa nội dung từ các trang web liệt kê phía trên. Dữ liệu này đã được AI Vector hóa để phản hồi khách hàng.
+                                Khối dữ liệu này chứa nội dung từ các trang web liệt kê phía trên. Dữ liệu này đã được AI Vector hóa để phản hồi Khách hàng.
                             </p>
                         </div>
                     </div>
@@ -391,7 +391,7 @@ const AIModals: React.FC<AIModalsProps> = (props) => {
                             <ArrowRight className="w-4 h-4 -rotate-45" />
                         </div>
                         <div>
-                            <h4 className={`text-[11px] font-bold transition-colors ${isDarkTheme ? 'text-slate-200 group-hover:text-blue-400' : 'text-slate-700 group-hover:text-blue-600'}`}>Tài liệu Prompting Strategies (Google)</h4>
+                            <h4 className={`text-[11px] font-bold transition-colors ${isDarkTheme ? 'text-slate-200 group-hover:text-blue-400' : 'text-slate-700 group-hover:text-blue-600'}`}>Tỉ lệ Prompting Strategies (Google)</h4>
                             <p className={`text-[10px] mt-0.5 ${isDarkTheme ? 'text-slate-500' : 'text-slate-500'}`}>Xem hướng dẫn chính thức để tối ưu hóa câu lệnh cho AI.</p>
                         </div>
                     </a>
@@ -564,7 +564,7 @@ const AIModals: React.FC<AIModalsProps> = (props) => {
                                 },
                                 {
                                     range: '0.5 - 0.65',
-                                    label: 'Cân bằng',
+                                    label: 'Còn bằng',
                                     desc: 'Khuyên dùng (Optimal)',
                                     color: 'emerald',
                                     bg: 'bg-emerald-500',
@@ -738,7 +738,7 @@ const AIModals: React.FC<AIModalsProps> = (props) => {
                     <div className={`p-4 rounded-2xl border flex gap-4 items-start ${isDarkTheme ? 'bg-amber-600/10 border-amber-600/20' : 'bg-amber-50 border-amber-100'}`}>
                         <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                         <p className={`text-xs leading-relaxed font-medium ${isDarkTheme ? 'text-amber-300' : 'text-amber-900'}`}>
-                            Toàn bộ dữ liệu được chọn sẽ được {bulkActionType === 'move' ? 'chuyển' : 'nhân bản'} sang chatbot đích.
+                            Toàn bộ dữ liệu được chọn sẽ được {bulkActionType === 'move' ? 'chuyển' : 'nhân bản'} sang bot đích.
                         </p>
                     </div>
 
@@ -781,7 +781,7 @@ const AIModals: React.FC<AIModalsProps> = (props) => {
                         <Trash2 className="w-8 h-8" />
                     </div>
                     <div>
-                        <h4 className={`text-sm font-bold ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`}>Cảnh báo quan trọng!</h4>
+                        <h4 className={`text-sm font-bold ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`}>Cònh báo quan trọng!</h4>
                         <p className={`text-xs mt-2 ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>Dữ liệu đã xóa không thể khôi phục. Vui lòng nhập <span className="font-black text-rose-500">DELETE</span> để xác nhận.</p>
                     </div>
 
@@ -1420,7 +1420,7 @@ const AIModals: React.FC<AIModalsProps> = (props) => {
                                 </p>
                                 <div className="flex gap-4 text-[9px] font-bold text-slate-400 uppercase tracking-wider">
                                     <span className="flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-slate-300" /> VD: "Hp" → "Học phí"</span>
-                                    <span className="flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-slate-300" /> VD: "Cty" → "Công ty"</span>
+                                    <span className="flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-slate-300" /> VD: "Cty" → "Còng ty"</span>
                                 </div>
                             </div>
                         </div>

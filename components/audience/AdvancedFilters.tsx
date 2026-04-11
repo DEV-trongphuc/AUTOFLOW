@@ -160,7 +160,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                                     value={localStatus}
                                     onChange={setLocalStatus}
                                     options={[
-                                        { value: 'all', label: 'Tất cả trạng thái' },
+                                        { value: 'all', label: 'Tất cả Trạng thái' },
                                         { value: 'active', label: 'Active' },
                                         { value: 'lead', label: 'Lead' },
                                         { value: 'customer', label: 'Customer' },

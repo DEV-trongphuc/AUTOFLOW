@@ -36,11 +36,11 @@ const MERGE_TAGS = [
     { label: 'Họ', val: '{{lastName}}' },
     { label: 'Email', val: '{{email}}' },
     { label: 'Số điện thoại', val: '{{phoneNumber}}' },
-    { label: 'Công ty', val: '{{companyName}}' },
+    { label: 'Còng ty', val: '{{companyName}}' },
     { label: 'Chức vụ', val: '{{jobTitle}}' },
     { label: 'Thành phố', val: '{{city}}' },
     { label: 'Quốc gia', val: '{{country}}' },
-    { label: 'Link hủy đăng ký', val: '{{unsubscribeLink}}' },
+    { label: 'Link Hủy đăng ký', value: '{{unsubscribeLink}}' },
     { label: 'Tên chiến dịch', val: '{{campaignName}}' },
 ];
 
@@ -50,7 +50,7 @@ const SPECIAL_MERGE_TAGS = [
     { label: 'Ngày (yyyy-mm-dd)', val: '{{today_ymd}}', desc: 'yyyy-mm-dd' },
     { label: 'ID ngắn (10 số)', val: '{{random_id}}', desc: 'Random mỗi lần gửi' },
     { label: 'Mã 6 số', val: '{{random_6}}', desc: 'Random 6 chữ số' },
-    { label: 'ID khách hàng', val: '{{subscriber_id}}', desc: 'Full ID' },
+    { label: 'ID Khách hàng', val: '{{subscriber_id}}', desc: 'Full ID' },
     { label: 'ID ngắn', val: '{{subscriber_id_short}}', desc: '10 ký tự đầu' },
 ];
 
@@ -230,10 +230,10 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
                     <Divider />
 
                     {/* Alignment — tất cả 4 nút */}
-                    <ToolbarBtn onClick={() => execCommand('justifyLeft')} title="Căn trái"><AlignLeft className="w-3.5 h-3.5" /></ToolbarBtn>
-                    <ToolbarBtn onClick={() => execCommand('justifyCenter')} title="Căn giữa"><AlignCenter className="w-3.5 h-3.5" /></ToolbarBtn>
-                    <ToolbarBtn onClick={() => execCommand('justifyRight')} title="Căn phải"><AlignRight className="w-3.5 h-3.5" /></ToolbarBtn>
-                    <ToolbarBtn onClick={() => execCommand('justifyFull')} title="Căn đều 2 bên"><AlignJustify className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarBtn onClick={() => execCommand('justifyLeft')} title="Còn trái"><AlignLeft className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarBtn onClick={() => execCommand('justifyCenter')} title="Còn giữa"><AlignCenter className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarBtn onClick={() => execCommand('justifyRight')} title="Còn phải"><AlignRight className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarBtn onClick={() => execCommand('justifyFull')} title="Còn đều 2 bên"><AlignJustify className="w-3.5 h-3.5" /></ToolbarBtn>
 
                     <Divider />
 

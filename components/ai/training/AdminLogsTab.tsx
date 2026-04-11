@@ -553,7 +553,8 @@ const AdminLogsTab: React.FC<AdminLogsTabProps> = ({ className, categoryId, init
                                                             <span className={`text-lg font-black tabular-nums ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>
                                                                 {b.doc_count || 0}
                                                             </span>
-                                                            <span className="text-[9px] font-bold text-slate-300 uppercase tracking-tighter">Tài liệu</span>
+                                                            <span className="text-[9px] font-bold text-slate-300 uppercase tracking-tighter">Tỉ lệ</span>
+
                                                         </div>
                                                     </td>
                                                     <td className="px-8 py-5">

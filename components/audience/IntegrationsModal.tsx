@@ -46,7 +46,7 @@ const IntegrationsModal: React.FC<IntegrationsModalProps> = ({ isOpen, onClose, 
             <div className="p-8 space-y-6">
                 <div>
                     <h3 className="text-xl font-bold text-slate-800">Chọn nguồn dữ liệu</h3>
-                    <p className="text-sm text-slate-500 mt-1">Kết nối với các ứng dụng bên ngoài để tự động đồng bộ khách hàng.</p>
+                    <p className="text-sm text-slate-500 mt-1">Kết nối với các ứng dụng bên ngoài để tự động đồng bộ Khách hàng.</p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
@@ -75,7 +75,7 @@ const IntegrationsModal: React.FC<IntegrationsModalProps> = ({ isOpen, onClose, 
                         </div>
                         <div className="ml-4 flex-1">
                             <h4 className="font-bold text-slate-800 group-hover:text-blue-700">MISA AMIS CRM</h4>
-                            <p className="text-xs text-slate-500">Đồng bộ khách hàng từ CRM</p>
+                            <p className="text-xs text-slate-500">Đồng bộ Khách hàng từ CRM</p>
                         </div>
                         <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-500" />
                     </div>

@@ -16,14 +16,14 @@ const RemoveActionConfig: React.FC<RemoveActionConfigProps> = ({ config, onChang
       if (disabled) return;
       
       let label = 'Dọn dẹp';
-      if (type === 'unsubscribe') label = 'Hủy đăng ký';
+      if (type === 'unsubscribe') label = 'Hủy đăng ký'
       if (type === 'delete_contact') label = 'Xóa vĩnh viễn';
 
       onChange({ ...config, actionType: type }, label);
   };
 
   const options = [
-      { id: 'unsubscribe', label: 'Hủy đăng ký (Unsubscribe)', desc: 'Chuyển trạng thái sang Unsubscribed. Khách sẽ không nhận được email nữa.', icon: UserMinus },
+      { id: 'unsubscribe', label: 'Hủy đăng kýUnsubscribe)', desc: 'Chuyển Trạng thái sang Unsubscribed. Khách sẽ không nhận được email nữa.', icon: UserMinus },
       { id: 'delete_contact', label: 'Xóa vĩnh viễn (Delete)', desc: 'Xóa hoàn toàn user khỏi hệ thống. Hành động này không thể hoàn tác.', icon: Trash2 },
   ];
 
@@ -46,7 +46,7 @@ const RemoveActionConfig: React.FC<RemoveActionConfigProps> = ({ config, onChang
 
         {actionType === 'delete_contact' && (
             <div className="p-4 border-2 border-red-100 bg-red-50 rounded-2xl animate-in slide-in-from-top-2">
-                <p className="text-xs font-bold text-red-600 uppercase tracking-widest mb-1">Cảnh báo dữ liệu</p>
+                <p className="text-xs font-bold text-red-600 uppercase tracking-widest mb-1">Cònh báo dữ liệu</p>
                 <p className="text-[11px] text-red-500">
                     Khách hàng sẽ bị xóa vĩnh viễn khỏi Database. Mọi lịch sử mở mail, click link cũng sẽ bị xóa.
                 </p>

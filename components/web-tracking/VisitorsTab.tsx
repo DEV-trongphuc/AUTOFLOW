@@ -184,7 +184,7 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
                 variant="underline"
                 items={[
                     { id: 'list', label: 'Danh sách Visitor', icon: List },
-                    { id: 'loyalty', label: 'Báo cáo Trung thành', icon: BarChart3 },
+        { id: "loyalty", label: "Báo cáo Trung thành", icon: BarChart3 },
                     { id: 'blocked', label: 'IP Đã Chặn', icon: ShieldAlert },
                 ]}
             />
@@ -304,7 +304,7 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
                         <button
                             onClick={() => fetchVisitors()}
                             className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all group"
-                            title="Tải lại danh sách"
+                            title="Tỉ lệ danh sách"
                         >
                             <RefreshCw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" />
                         </button>
@@ -569,6 +569,7 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
                                                             <Monitor className="w-4 h-4" />}
                                             </div>
                                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Thiết bị</p>
+
                                         </div>
                                         <p className="text-sm font-bold text-slate-800 pl-1">
                                             {selectedVisitor.device_type ? selectedVisitor.device_type.charAt(0).toUpperCase() + selectedVisitor.device_type.slice(1) : 'Unknown'}
@@ -682,7 +683,7 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
                                     <button
                                         onClick={() => selectedVisitor && fetchVisitorJourney(selectedVisitor)}
                                         className="pb-3 text-slate-400 hover:text-blue-600 transition-colors flex items-center gap-1.5 text-xs font-bold group"
-                                        title="Tải lại hành trình"
+                                        title="Tỉ lệ hành trình"
                                     >
                                         <RefreshCw className="w-3.5 h-3.5 group-hover:rotate-180 transition-transform duration-500" />
                                         <span>Reload</span>
@@ -882,7 +883,7 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
                                                         <div className="p-2 bg-gradient-to-br from-emerald-500 to-cyan-600 rounded-xl shadow-lg shadow-emerald-200">
                                                             <Clock className="w-4 h-4 text-white" />
                                                         </div>
-                                                        <h5 className="text-sm font-bold text-slate-800">Tương tác theo thời gian</h5>
+                                                        <h5 className="text-sm font-bold text-slate-800">Tương tác theo Thời gian</h5>
                                                     </div>
                                                     <div className="space-y-2.5">
                                                         <div className="group flex justify-between items-center p-3.5 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/50 hover:border-emerald-200 hover:shadow-md transition-all duration-300">
@@ -897,7 +898,7 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
                                                         </div>
                                                         <div className="group flex justify-between items-center p-3.5 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/50 hover:border-emerald-200 hover:shadow-md transition-all duration-300">
                                                             <div className="absolute inset-0 bg-gradient-to-r from-emerald-50/50 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                            <span className="relative text-xs font-semibold text-slate-600">Tổng thời gian onsite</span>
+                                                            <span className="relative text-xs font-semibold text-slate-600">Tổng Thời gian onsite</span>
                                                             <span className="relative text-xs font-black text-emerald-600">{formatDuration(visitorStats?.total_time || 0)}</span>
                                                         </div>
                                                     </div>

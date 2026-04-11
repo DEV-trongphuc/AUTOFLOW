@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { api } from '../../services/storageAdapter';
 import {
@@ -146,7 +146,7 @@ const ZaloAudienceTab: React.FC = () => {
             <div className="space-y-6 animate-in fade-in duration-500">
                 {/* Stats Section Sync with Meta */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <StatCard label="TỔNG KHÁCH HÀNG" value={activeList.real_count || activeList.subscriber_count || 0} icon={Users} color="blue" />
+                    <StatCard label="TỔNG Khách hàng" value={activeList.real_count || activeList.subscriber_count || 0} icon={Users} color="blue" />
                     <StatCard label="QUAN TÂM" value={activeList.followed_count || 0} icon={Heart} color="emerald" />
                     <StatCard label="TƯƠNG TÁC" value={(activeList.real_count || activeList.subscriber_count || 0) - (activeList.followed_count || 0)} icon={MessageCircle} color="amber" />
                 </div>
@@ -165,13 +165,13 @@ const ZaloAudienceTab: React.FC = () => {
                         <div className="flex gap-2 flex-wrap">
                             {selectedIds.length > 0 && (
                                 <div className="flex items-center gap-3">
-                                    <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-xl animate-bounce-subtle">
-                                        <Sparkles className="w-3 h-3 text-blue-600" />
-                                        <span className="text-[10px] font-bold text-blue-700 uppercase tracking-tighter">Mẹo: Gửi qua UID rẻ hơn & tăng 40% tương tác</span>
+                                    <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-100 rounded-xl animate-bounce-subtle">
+                                        <Sparkles className="w-3 h-3 text-amber-600" />
+                                        <span className="text-[10px] font-bold text-amber-700 uppercase tracking-tighter">Mẹo: Gửi qua UID rẻ hơn & tăng 40% tương tác</span>
                                     </div>
                                     <button
                                         onClick={() => setIsSendZBSOpen(true)}
-                                        className="h-11 px-6 rounded-xl bg-blue-600 text-white font-bold text-xs flex items-center gap-2 hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/25 border-none animate-in fade-in slide-in-from-right-4 duration-300"
+                                        className="h-11 px-6 rounded-xl bg-amber-600 text-white font-bold text-xs flex items-center gap-2 hover:bg-amber-600 transition-all shadow-lg shadow-amber-600/25 border-none animate-in fade-in slide-in-from-right-4 duration-300"
                                     >
                                         <Send className="w-3.5 h-3.5" />
                                         Gửi ZNS ({selectedIds.length})
@@ -246,7 +246,7 @@ const ZaloAudienceTab: React.FC = () => {
                                     {subscribers.map(sub => (
                                         <tr
                                             key={sub.id}
-                                            className={`hover:bg-slate-50 transition-colors group cursor-pointer ${selectedIds.includes(sub.id) ? 'bg-blue-50/20' : ''}`}
+                                            className={`hover:bg-slate-50 transition-colors group cursor-pointer ${selectedIds.includes(sub.id) ? 'bg-amber-50/20' : ''}`}
                                             onClick={() => setSelectedProfileId(sub.id)}
                                         >
                                             <td className="px-6 py-4 pl-8" onClick={e => { e.stopPropagation(); toggleSelect(sub.id); }}>
@@ -258,20 +258,20 @@ const ZaloAudienceTab: React.FC = () => {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center">
                                                     <div className="relative mr-3">
-                                                        <div className="h-10 w-10 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 group-hover:from-blue-50 group-hover:to-blue-100 transition-all shadow-sm">
+                                                        <div className="h-10 w-10 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 group-hover:from-amber-50 group-hover:to-amber-100 transition-all shadow-sm">
                                                             {sub.avatar ? (
                                                                 <img src={sub.avatar} alt="" className="w-full h-full object-cover" />
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center text-slate-600 group-hover:text-blue-600 text-[13px] font-bold">
+                                                                <div className="w-full h-full flex items-center justify-center text-slate-600 group-hover:text-amber-600 text-[13px] font-bold">
                                                                     {getInitials(sub.display_name || sub.name || 'Zalo User')}
                                                                 </div>
                                                             )}
                                                         </div>
                                                     </div>
                                                     <div>
-                                                        <div className="text-sm font-bold text-slate-800 group-hover:text-blue-600 transition-colors flex items-center gap-1">
+                                                        <div className="text-sm font-bold text-slate-800 group-hover:text-amber-600 transition-colors flex items-center gap-1">
                                                             {sub.display_name || sub.name || 'Zalo User'}
-                                                            {(sub.manual_email || sub.phone_number || sub.email) && <BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-50" />}
+                                                            {(sub.manual_email || sub.phone_number || sub.email) && <BadgeCheck className="w-3.5 h-3.5 text-amber-600 fill-amber-50" />}
                                                         </div>
                                                         <div className="text-[11px] font-medium text-slate-400 truncate w-32">UID: {sub.zalo_user_id}</div>
                                                     </div>
@@ -299,14 +299,14 @@ const ZaloAudienceTab: React.FC = () => {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex gap-1">
-                                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-600 uppercase tracking-widest border border-blue-100">Zalo</span>
+                                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-600 uppercase tracking-widest border border-amber-100">Zalo</span>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className="text-xs font-medium text-slate-500">{new Date(sub.joined_at || sub.created_at).toLocaleDateString('vi-VN')}</span>
                                             </td>
                                             <td className="px-6 py-4 text-right pr-8">
-                                                <button className="text-slate-300 hover:text-blue-600 p-1.5 hover:bg-blue-50 rounded-lg transition-colors">
+                                                <button className="text-slate-300 hover:text-amber-600 p-1.5 hover:bg-amber-50 rounded-lg transition-colors">
                                                     <MoreHorizontal className="w-4 h-4" />
                                                 </button>
                                             </td>
@@ -383,7 +383,7 @@ const ZaloAudienceTab: React.FC = () => {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="bg-slate-50/50 p-6 rounded-[32px] border border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-5">
-                    <div className="w-12 h-12 bg-blue-600 rounded-[18px] shadow-lg shadow-blue-500/20 flex items-center justify-center text-white flex-shrink-0">
+                    <div className="w-12 h-12 bg-amber-600 rounded-[18px] shadow-lg shadow-amber-600/20 flex items-center justify-center text-white flex-shrink-0">
                         <List className="w-6 h-6" />
                     </div>
                     <div>
@@ -425,20 +425,20 @@ const ZaloAudienceTab: React.FC = () => {
                                     setActiveList(list);
                                     setPagination({ page: 1, limit: itemsPerPage, total: 0, totalPages: 1 });
                                 }}
-                                className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-2xl hover:border-blue-100 transition-all cursor-pointer group relative overflow-hidden"
+                                className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-2xl hover:border-amber-100 transition-all cursor-pointer group relative overflow-hidden"
                             >
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-full -mr-16 -mt-16 group-hover:bg-blue-100 transition-colors"></div>
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50/50 rounded-full -mr-16 -mt-16 group-hover:bg-amber-100 transition-colors"></div>
 
                                 <div className="relative z-10 flex flex-col h-full">
                                     <div className="flex items-start justify-between mb-8">
-                                        <div className="w-14 h-14 bg-white rounded-2xl shadow-sm border border-slate-50 overflow-hidden flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                                        <div className="w-14 h-14 bg-white rounded-2xl shadow-sm border border-slate-50 overflow-hidden flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
                                             {oa && oa.avatar ? (
                                                 <img src={oa.avatar} alt={oa.name} className="w-full h-full object-cover" />
                                             ) : (
                                                 <Users className="w-7 h-7" />
                                             )}
                                         </div>
-                                        <span className="text-[9px] font-black px-4 py-2 bg-blue-50 text-blue-600 rounded-full border border-blue-100 uppercase tracking-widest flex items-center gap-2">
+                                        <span className="text-[9px] font-black px-4 py-2 bg-amber-50 text-amber-600 rounded-full border border-amber-100 uppercase tracking-widest flex items-center gap-2">
                                             <Plus className="w-3.5 h-3.5" /> Thêm mới
                                         </span>
                                     </div>
@@ -451,7 +451,7 @@ const ZaloAudienceTab: React.FC = () => {
                                             <span className="text-4xl font-black text-slate-800 tracking-tighter">{(list.real_count || list.subscriber_count || 0).toLocaleString()}</span>
                                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1.5 px-0.5">Thành viên</span>
                                         </div>
-                                        <div className="w-12 h-12 bg-slate-50 text-slate-300 rounded-2xl group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-xl group-hover:shadow-blue-500/20 transition-all flex items-center justify-center">
+                                        <div className="w-12 h-12 bg-slate-50 text-slate-300 rounded-2xl group-hover:bg-amber-600 group-hover:text-white group-hover:shadow-xl group-hover:shadow-amber-600/20 transition-all flex items-center justify-center">
                                             <ArrowRight className="w-6 h-6" />
                                         </div>
                                     </div>
@@ -466,8 +466,8 @@ const ZaloAudienceTab: React.FC = () => {
 };
 
 const StatCard = ({ label, value, icon: Icon, color }: any) => (
-    <div className="bg-white px-5 py-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 group hover:border-orange-200 transition-all duration-300">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-${color}-50 text-${color === 'blue' ? 'blue-600' : color === 'emerald' ? 'emerald-600' : 'amber-600'} group-hover:scale-105`}>
+    <div className="bg-white px-5 py-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 group hover:border-amber-200 transition-all duration-300">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-${color}-50 text-${color === 'blue' ? 'amber-600' : color === 'emerald' ? 'emerald-600' : 'amber-600'} group-hover:scale-105`}>
             {Icon && <Icon className="w-5 h-5" />}
         </div>
         <div>

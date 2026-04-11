@@ -44,7 +44,7 @@ const navGroups = [
         ]
     },
     {
-        title: '?? Khách hàng',
+        title: '?? KhÃ¡ch hÃ ng',
         items: [
             { id: 'audience', name: 'Audience CDP', icon: Users },
             { id: 'tags', name: 'Tags & Segments', icon: Tag },
@@ -62,10 +62,10 @@ const navGroups = [
         title: '?? Analytics',
         items: [
             { id: 'web-tracking', name: 'Website Tracking', icon: Globe },
-            { id: 'analytics', name: 'Báo cáo', icon: BarChart3 },
+            { id: 'analytics', name: 'BÃ¡o cÃ¡o', icon: BarChart3 },
             { id: 'workspace', name: 'AI Assets', icon: Database },
             { id: 'logic', name: 'Liquid Logic', icon: Code },
-            { id: 'settings', name: 'C?u hình', icon: Settings },
+            { id: 'settings', name: 'C?u hï¿½nh', icon: Settings },
         ]
     },
 ];
@@ -104,8 +104,8 @@ const sectionLabel: Record<string, string> = {
     'ai-chat': 'AI Chat Space',
     'zalo-meta': 'Zalo & Meta',
     'web-tracking': 'Web Tracking',
-    analytics: 'Báo cáo',
-    settings: 'C?u hình',
+    analytics: 'BÃ¡o cÃ¡o',
+    settings: 'C?u hï¿½nh',
     marketplace: 'Marketplace',
     workspace: 'AI Assets',
     logic: 'Liquid Logic',
@@ -194,7 +194,7 @@ const Documentation: React.FC = () => {
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-amber-600 transition-colors" />
                                 <input
                                     type="text"
-                                    placeholder="Tìm ki?m..."
+                                    placeholder="Tï¿½m ki?m..."
                                     className="w-full bg-slate-50 border border-transparent focus:border-amber-200 focus:bg-white rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium transition-all outline-none"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
@@ -251,7 +251,7 @@ const Documentation: React.FC = () => {
                             className="flex items-center gap-3 px-5 py-3.5 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all group"
                         >
                             <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                            {sidebar && <span className="text-xs font-bold uppercase tracking-wider">V? App chính</span>}
+                            {sidebar && <span className="text-xs font-bold uppercase tracking-wider">V? App chï¿½nh</span>}
                         </NavLink>
                     </div>
                 </div>

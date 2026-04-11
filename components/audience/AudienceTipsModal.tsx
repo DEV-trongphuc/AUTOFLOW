@@ -90,7 +90,7 @@ const AudienceTipsModal: React.FC<AudienceTipsModalProps> = ({ isOpen, onClose }
                         <TipCard
                             icon={BrainCircuit}
                             title="Phân tích Kịch bản AI"
-                            description="AI tự động phân tích hành vi khách hàng trong Segment để đề xuất kịch bản nuôi dưỡng (Nurture Flow) phù hợp nhất."
+                            description="AI tự động phân tích hành vi Khách hàng trong Segment để đề xuất kịch bản nuôi dưỡng (Nurture Flow) phù hợp nhất."
                             colorClass="bg-gradient-to-br from-fuchsia-500 to-purple-600 shadow-fuchsia-200"
                             highlight="Mới & Hot"
                         />
@@ -111,7 +111,7 @@ const AudienceTipsModal: React.FC<AudienceTipsModalProps> = ({ isOpen, onClose }
                         <TipCard
                             icon={Users}
                             title="List vs Segment"
-                            description="Dùng Danh sách cho chiến dịch rời rác. Dùng Phân khúc cho khách hàng có điều kiện thay đổi động."
+                            description="Dùng Danh sách cho chiến dịch rời rác. Dùng Phân khúc cho Khách hàng có điều kiện thay đổi động."
                             colorClass="bg-gradient-to-br from-indigo-500 to-purple-500 shadow-indigo-200"
                         />
                         <TipCard

@@ -59,15 +59,15 @@ const StepUnsubscribeModal: React.FC<StepUnsubscribeModalProps> = ({
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={`Hủy đăng ký tại: ${stepLabel}`} size="large">
+        <Modal isOpen={isOpen} onClose={onClose} title={`Hủy đăng kýtại: ${stepLabel}`} size="large">
             <div className="space-y-4">
                 {/* Summary */}
                 <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-3">
                     <UserMinus className="w-5 h-5 text-orange-600 shrink-0 mt-0.5" />
                     <div className="flex-1">
-                        <h4 className="text-sm font-bold text-orange-900 mb-1">Tổng quan hủy đăng ký</h4>
+                        <h4 className="text-sm font-bold text-orange-900 mb-1">Tổng quan Hủy đăng ký</h4>
                         <p className="text-xs text-orange-700">
-                            Có <strong>{users.length} người dùng</strong> đã hủy đăng ký sau khi nhận email từ bước này.
+                            Có <strong>{users.length} người dùng</strong> đã Hủy đăng kýsau khi nhận email từ bước này.
                         </p>
                     </div>
                 </div>
@@ -98,7 +98,7 @@ const StepUnsubscribeModal: React.FC<StepUnsubscribeModalProps> = ({
                             {!Array.isArray(users) || users.length === 0 ? (
                                 <tr>
                                     <td colSpan={4} className="py-8 text-center text-xs text-slate-400 italic">
-                                        Không có người dùng nào hủy đăng ký tại bước này
+                                        Không có người dùng nào Hủy đăng kýtại bước này
                                     </td>
                                 </tr>
                             ) : (

@@ -277,7 +277,7 @@ const MessageList = React.memo(({
             {
                 id: 'research',
                 title: 'Chế độ Nghiên cứu',
-                desc: 'Truy cập Internet thời gian thực để cập nhật tin tức mới nhất.',
+                desc: 'Truy cập Internet Thời gian thực để cập nhật tin tức mới nhất.',
                 icon: <Globe className="w-5 h-5 text-brand" />,
                 active: isResearchMode,
                 onClick: () => {
@@ -301,7 +301,7 @@ const MessageList = React.memo(({
             {
                 id: 'image',
                 title: 'Chế độ Hình ảnh',
-                desc: 'Tạo ảnh nghệ thuật và quản lý thư viện hình ảnh AI.',
+                desc: 'Tạo ảnh nghệ thuật và quản lý thư vận hành ảnh AI.',
                 icon: <ImageIcon className="w-5 h-5 text-brand" />,
                 active: isImageGenMode,
                 onClick: () => {

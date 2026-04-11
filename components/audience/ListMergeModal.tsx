@@ -134,7 +134,7 @@ const ListMergeModal: React.FC<ListMergeModalProps> = ({ lists, onClose: _onClos
                                 </div>
                             ))}
                             <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
-                                <span className="text-xs font-bold text-slate-600">Tổng số thành viên:</span>
+                                <span className="text-xs font-bold text-slate-600">Tổng sốthành viên:</span>
                                 <span className="text-sm font-black text-indigo-600">{totalMembers.toLocaleString()}</span>
                             </div>
                         </div>
@@ -147,7 +147,7 @@ const ListMergeModal: React.FC<ListMergeModalProps> = ({ lists, onClose: _onClos
                             <p className="text-xs font-bold text-amber-900 mb-1">Lưu ý quan trọng</p>
                             <p className="text-xs text-amber-800 leading-relaxed">
                                 Hệ thống sẽ <strong>tự động loại bỏ email trùng lặp</strong> khi gộp danh sách.
-                                Số lượng thành viên cuối cùng có thể ít hơn tổng số trên.
+                                Số lượng thành viên cuối cùng có thể ít hơn Tổng sốtrên.
                             </p>
                         </div>
                     </div>

@@ -271,7 +271,7 @@ const MetaConfig: React.FC = () => {
                             setSelectedPageIds([]);
                         }}
                         size="md"
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        className="bg-gradient-to-r from-amber-600 to-amber-600 hover:from-amber-600 hover:to-amber-700 !text-white rounded-2xl shadow-lg shadow-amber-600/25 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border-0"
                     >
                         {isAdding ? 'Hủy thêm mới' : 'Kết nối Page mới'}
                     </Button>
@@ -280,9 +280,9 @@ const MetaConfig: React.FC = () => {
 
             {/* Add Form */}
             {isAdding && (
-                <div className="bg-gradient-to-br from-blue-50 to-slate-50 border-2 border-blue-100 rounded-3xl p-6 animate-in slide-in-from-top-4 fade-in duration-300">
+                <div className="bg-gradient-to-br from-amber-50 to-slate-50 border-2 border-amber-100 rounded-3xl p-6 animate-in slide-in-from-top-4 fade-in duration-300">
                     <h4 className="font-black text-slate-800 mb-4 flex items-center gap-2">
-                        <Facebook className="w-5 h-5 text-blue-600" />
+                        <Facebook className="w-5 h-5 text-amber-600" />
                         Kết nối tự động qua User Access Token
                     </h4>
 
@@ -295,7 +295,7 @@ const MetaConfig: React.FC = () => {
                             <div className="flex gap-2">
                                 <input
                                     type="text"
-                                    className="flex-1 px-4 py-3 border-2 border-slate-200 rounded-xl text-sm focus:ring-2 ring-blue-500/30 outline-none bg-white"
+                                    className="flex-1 px-4 py-3 border-2 border-slate-200 rounded-xl text-sm focus:ring-2 ring-amber-600/30 outline-none bg-white"
                                     placeholder="Dán mã Token (EAAU...) từ Graph API Explorer..."
                                     value={userToken}
                                     onChange={e => setUserToken(e.target.value)}
@@ -305,7 +305,7 @@ const MetaConfig: React.FC = () => {
                                     isLoading={isFetchingPages}
                                     icon={RefreshCw}
                                     size="md"
-                                    className="bg-blue-600 text-white"
+                                    className="bg-amber-600 !text-white"
                                 >
                                     Lấy danh sách Pages
                                 </Button>
@@ -316,7 +316,7 @@ const MetaConfig: React.FC = () => {
                         <div className="pt-2">
                             <button
                                 onClick={() => setShowAdvanced(!showAdvanced)}
-                                className="text-xs font-bold text-slate-500 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                                className="text-xs font-bold text-slate-500 hover:text-amber-600 flex items-center gap-1 transition-colors"
                             >
                                 <span className={`transform transition-transform ${showAdvanced ? 'rotate-90' : ''}`}>▶</span>
                                 {showAdvanced ? 'Ẩn tùy chọn nâng cao' : 'Tùy chọn nâng cao (Dùng App ID / Secret để giữ quyền tốt nhất)'}
@@ -328,7 +328,7 @@ const MetaConfig: React.FC = () => {
                                         <label className="block text-[10px] font-black text-slate-500 uppercase mb-1.5 ml-1">App ID</label>
                                         <input
                                             type="text"
-                                            className="w-full px-4 py-2.5 border-2 border-slate-100 rounded-xl text-sm focus:ring-2 ring-blue-500/20 outline-none bg-white font-mono"
+                                            className="w-full px-4 py-2.5 border-2 border-slate-100 rounded-xl text-sm focus:ring-2 ring-amber-600/20 outline-none bg-white font-mono"
                                             placeholder="Nhập App ID của bạn..."
                                             value={appId}
                                             onChange={e => setAppId(e.target.value)}
@@ -338,7 +338,7 @@ const MetaConfig: React.FC = () => {
                                         <label className="block text-[10px] font-black text-slate-500 uppercase mb-1.5 ml-1">App Secret</label>
                                         <input
                                             type="password"
-                                            className="w-full px-4 py-2.5 border-2 border-slate-100 rounded-xl text-sm focus:ring-2 ring-blue-500/20 outline-none bg-white font-mono"
+                                            className="w-full px-4 py-2.5 border-2 border-slate-100 rounded-xl text-sm focus:ring-2 ring-amber-600/20 outline-none bg-white font-mono"
                                             placeholder="••••••••••••••••"
                                             value={appSecret}
                                             onChange={e => setAppSecret(e.target.value)}
@@ -358,7 +358,7 @@ const MetaConfig: React.FC = () => {
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => setSelectedPageIds(availablePages.map(p => p.page_id))}
-                                            className="text-[10px] text-blue-600 font-bold hover:underline"
+                                            className="text-[10px] text-amber-600 font-bold hover:underline"
                                         >
                                             Chọn tất cả
                                         </button>
@@ -385,12 +385,12 @@ const MetaConfig: React.FC = () => {
                                                     }
                                                 }}
                                                 className={`p-4 rounded-xl border-2 transition-all text-left relative ${isSelected
-                                                    ? 'border-blue-500 bg-blue-50 shadow-md'
-                                                    : 'border-slate-200 bg-white hover:border-blue-300'
+                                                    ? 'border-amber-600 bg-amber-50 shadow-md'
+                                                    : 'border-slate-200 bg-white hover:border-amber-300'
                                                     }`}
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-lg uppercase shrink-0">
+                                                    <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm bg-amber-50 flex items-center justify-center text-amber-600 font-bold text-lg uppercase shrink-0">
                                                         {page.page_name ? page.page_name.charAt(0) : 'F'}
                                                         {page.avatar_url && (
                                                             <img
@@ -414,7 +414,7 @@ const MetaConfig: React.FC = () => {
                                                         )}
                                                     </div>
                                                     {isSelected && (
-                                                        <CheckCircle className="w-5 h-5 text-blue-600 shrink-0" />
+                                                        <CheckCircle className="w-5 h-5 text-amber-600 shrink-0" />
                                                     )}
                                                 </div>
                                             </button>
@@ -431,7 +431,7 @@ const MetaConfig: React.FC = () => {
                                     onClick={handleSavePages}
                                     icon={CheckCircle}
                                     size="md"
-                                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                    className="bg-emerald-600 hover:bg-emerald-700 !text-white"
                                 >
                                     Lưu kết nối ({selectedPageIds.length} Page)
                                 </Button>
@@ -469,16 +469,16 @@ const MetaConfig: React.FC = () => {
                 </div>
             ) : configs.length === 0 && !isAdding ? (
                 <div className="text-center py-12 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
-                    <Facebook className="w-12 h-12 text-blue-400 mx-auto mb-3" />
+                    <Facebook className="w-12 h-12 text-amber-400 mx-auto mb-3" />
                     <p className="text-slate-500 font-medium">Chưa có Fanpage nào được kết nối</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {configs.map((cfg) => (
-                        <div key={cfg.id} className="bg-white border-2 border-slate-100 rounded-2xl p-5 shadow-sm hover:shadow-lg hover:border-blue-200 transition-all group">
+                        <div key={cfg.id} className="bg-white border-2 border-slate-100 rounded-2xl p-5 shadow-sm hover:shadow-lg hover:border-amber-200 transition-all group">
                             <div className="flex items-start justify-between mb-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xl uppercase shrink-0">
+                                    <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm bg-amber-50 flex items-center justify-center text-amber-600 font-bold text-xl uppercase shrink-0">
                                         {cfg.page_name ? cfg.page_name.charAt(0) : 'F'}
                                         {cfg.avatar_url && (
                                             <img
@@ -509,7 +509,7 @@ const MetaConfig: React.FC = () => {
                                         <code className="text-[11px] text-slate-600 font-mono truncate max-w-[150px]">{cfg.verify_token}</code>
                                         <button
                                             onClick={() => { navigator.clipboard.writeText(cfg.verify_token || ''); toast.success('Copied!') }}
-                                            className="text-[10px] text-blue-500 font-bold hover:underline"
+                                            className="text-[10px] text-amber-600 font-bold hover:underline"
                                         >
                                             Copy
                                         </button>
@@ -555,9 +555,9 @@ const MetaConfig: React.FC = () => {
             {debugModal.isOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-blue-50 to-white">
+                        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-amber-50 to-white">
                             <div className="flex items-center gap-3">
-                                <div className="p-2.5 bg-blue-600 rounded-2xl text-white">
+                                <div className="p-2.5 bg-amber-600 rounded-2xl !text-white">
                                     <ShieldCheck className="w-6 h-6" />
                                 </div>
                                 <div>
@@ -576,7 +576,7 @@ const MetaConfig: React.FC = () => {
                         <div className="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
                             {debugModal.isLoading ? (
                                 <div className="flex flex-col items-center justify-center py-12 gap-4">
-                                    <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+                                    <Loader2 className="w-10 h-10 animate-spin text-amber-600" />
                                     <p className="text-sm text-slate-500 font-bold animate-pulse">Đang truy vấn Meta API...</p>
                                 </div>
                             ) : debugModal.data ? (
@@ -596,7 +596,7 @@ const MetaConfig: React.FC = () => {
                                     {/* Permissions List */}
                                     <div>
                                         <h4 className="text-xs font-black text-slate-800 uppercase mb-3 flex items-center gap-2">
-                                            <ShieldCheck className="w-4 h-4 text-blue-500" />
+                                            <ShieldCheck className="w-4 h-4 text-amber-600" />
                                             Danh sách Quyền hạn (Permissions & Scopes)
                                         </h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -627,7 +627,7 @@ const MetaConfig: React.FC = () => {
 
                                                 return allPerms.map((p: any, i: number) => (
                                                     <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${p.status === 'active' ? 'border-emerald-100 bg-emerald-50/50' : 'border-slate-100 bg-slate-50'}`}>
-                                                        <div className={`p-1.5 rounded-lg ${p.status === 'active' ? 'bg-emerald-500 text-white' : 'bg-slate-300 text-white'}`}>
+                                                        <div className={`p-1.5 rounded-lg ${p.status === 'active' ? 'bg-emerald-500 !text-white' : 'bg-slate-300 !text-white'}`}>
                                                             <CheckCircle className="w-3.5 h-3.5" />
                                                         </div>
                                                         <div className="flex-1 overflow-hidden">
@@ -651,7 +651,7 @@ const MetaConfig: React.FC = () => {
                                                 <div className="p-4 bg-red-50 border-2 border-red-100 rounded-2xl flex items-start gap-3">
                                                     <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                                                     <div>
-                                                        <p className="text-xs font-black text-red-800">Cảnh báo: Thiếu quyền Messaging</p>
+                                                        <p className="text-xs font-black text-red-800">Cònh báo: Thiếu quyền Messaging</p>
                                                         <p className="text-[11px] text-red-600 mt-0.5">Token này chưa có quyền 'pages_messaging'. Bạn sẽ không thể nhận hoặc gửi tin nhắn cho Page này.</p>
                                                     </div>
                                                 </div>
@@ -676,7 +676,7 @@ const MetaConfig: React.FC = () => {
                         <div className="p-6 bg-slate-50 flex justify-end">
                             <Button
                                 onClick={() => setDebugModal(prev => ({ ...prev, isOpen: false }))}
-                                className="bg-slate-800 text-white hover:bg-slate-900 border-none px-8"
+                                className="bg-slate-800 !text-white hover:bg-slate-900 border-none px-8"
                             >
                                 Đóng
                             </Button>

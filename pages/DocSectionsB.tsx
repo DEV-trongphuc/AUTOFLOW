@@ -128,7 +128,7 @@ export const SectionAIChat = () => (
 /* ─── SECTION 10: ZALO & META ───────────────────────── */
 export const SectionZaloMeta = () => (
     <div className="space-y-16 animate-in fade-in duration-700">
-        <SectionHeader label="Social Channels" title={<>Zalo OA & <span className="text-amber-600">Meta Messenger</span></>} desc="Kết nối Zalo Official Account và Facebook Page để gửi ZNS, broadcast và automation Messenger." />
+        <SectionHeader label="Social Channels" title={<>Zalo OA & <span className="text-amber-600">Meta Messenger</span></>} desc="Kết nối Zalo Official Account và Facebook Page đã gửi ZNS, broadcast và automation Messenger." />
         <div className="grid lg:grid-cols-2 gap-10">
             {/* Zalo */}
             <div className="space-y-6">
@@ -232,7 +232,7 @@ export const SectionAPITriggers = () => (
                 <div className="p-8 bg-white border border-slate-100 rounded-3xl">
                     <h3 className="font-black text-slate-900 mb-5 flex items-center gap-3"><Webhook className="w-5 h-5 text-amber-600" />Outbound Webhooks</h3>
                     <div className="space-y-3">
-                        {[{ icon: UserCheck, t: 'Contact Updated', d: 'Gửi payload khi contact thay đổi trường dữ liệu.' }, { icon: Tag, t: 'Tag Assigned', d: 'Notify khi tag được gắn — tích hợp với CRM.' }, { icon: Mail, t: 'Email Opened', d: 'Tracking event gửi về server của bạn.' }, { icon: GitBranch, t: 'Flow Completed', d: 'Khi contact hoàn thành toàn bộ flow.' }].map((f, i) => <FeatureRow key={i} icon={f.icon} title={f.t} desc={f.d} />)}
+                        {[{ icon: UserCheck, t: 'Contact Updated', d: 'Gửi payload khi contact thay đổi trường dữ liệu.' }, { icon: Tag, t: 'Tag Assigned', d: 'Notify khi tag được gắn — tích hợp với CRM.' }, { icon: Mail, t: 'Email Opened', d: 'Tracking event gửi về server của bạn.' }, { icon: GitBranch, t: 'Flow Completed', d: 'Khi contact Hoàn thành toàn bộ flow.' }].map((f, i) => <FeatureRow key={i} icon={f.icon} title={f.t} desc={f.d} />)}
                     </div>
                 </div>
             </div>
@@ -338,7 +338,7 @@ afq("identify", {
                 <div className="p-8 bg-slate-900 rounded-3xl text-white">
                     <h3 className="font-black text-amber-600 uppercase tracking-widest text-xs mb-5">Heatmap & Session Replay</h3>
                     <div className="space-y-4">
-                        {[{ icon: Map, t: 'Click Heatmap', d: 'Thấy chính xác vùng nào được click nhiều nhất.' }, { icon: Eye, t: 'Scroll Map', d: 'Tỷ lệ người xem đến từng section trang.' }, { icon: Activity, t: 'Session Replay', d: 'Xem lại hành trình từng người dùng như video.' }].map((f, i) => (
+                        {[{ icon: Map, t: 'Click Heatmap', d: 'Thấy chính xác vùng nào được click nhiều nhất.' }, { icon: Eye, t: 'Scroll Map', d: 'Tỉ lệ người xem đến từng section trang.' }, { icon: Activity, t: 'Session Replay', d: 'Xem lại hành trình từng người dùng như video.' }].map((f, i) => (
                             <div key={i} className="flex items-start gap-4 p-4 bg-white/5 border border-white/10 rounded-xl">
                                 <f.icon className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                                 <div><p className="font-black text-white text-sm">{f.t}</p><p className="text-slate-400 text-xs mt-0.5">{f.d}</p></div>
@@ -363,8 +363,8 @@ export const SectionAnalytics = () => (
                 <div className="grid grid-cols-2 gap-4 mb-8 relative z-10">
                     {[
                         { label: 'Doanh thu từ AI', val: '425.8M₫', change: '+18%', icon: TrendingUp },
-                        { label: 'Tỷ lệ chốt đơn AI', val: '12.4%', change: '+3.2%', icon: Target },
-                        { label: 'Tỷ lệ mở Email', val: '24.5%', change: '+2.4%', icon: MailOpen },
+                        { label: 'Tỉ lệ chốt đơn AI', val: '12.4%', change: '+3.2%', icon: Target },
+                        { label: 'Tỉ lệ mở Email', val: '24.5%', change: '+2.4%', icon: MailOpen },
                         { label: 'Hành động trên Web', val: '8.2k', change: '+1.1%', icon: MousePointer },
                     ].map((s, i) => (
                         <div key={i} className="p-5 bg-white/5 border border-white/10 rounded-2xl hover:border-amber-600/30 transition-all">
@@ -446,7 +446,7 @@ export const SectionSettings = () => (
                 },
                 {
                     title: 'Billing & Plan', icon: Package, color: 'from-slate-500 to-slate-700',
-                    items: ['Xem usage thời gian thực', 'Nâng cấp / hạ cấp gói', 'Lịch sử thanh toán & hóa đơn', 'Top-up email credits', 'Contact limit management']
+                    items: ['Xem usage Thời gian thực', 'Nâng cấp / hạ cấp gói', 'Lịch sử thanh toán & hóa đơn', 'Top-up email credits', 'Contact limit management']
                 },
             ].map((s, i) => (
                 <div key={i} className="p-7 bg-white border border-slate-100 rounded-3xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all">
@@ -498,11 +498,11 @@ export const SectionMarketplace = () => (
         <SectionHeader label="App Marketplace" title={<>Mini App & <span className="text-amber-600">Mở rộng</span></>} desc="Khám phá kho ứng dụng, plugins và các mini-app giúp mở rộng sức mạnh cho Autoflow." />
         <div className="grid lg:grid-cols-3 gap-8">
             {[
-                { name: 'Lark Base Connector', desc: 'Đồng bộ data khách hàng 2 chiều với Lark Base.', cat: 'Integration', icon: Link2 },
+                { name: 'Lark Base Connector', desc: 'Đồng bộ data Khách hàng 2 chiều với Lark Base.', cat: 'Integration', icon: Link2 },
                 { name: 'Omnichannel Chat Widget', desc: 'Widget chat tổng hợp: Zalo, FB, Web, Telegram.', cat: 'Channels', icon: MessageSquare },
                 { name: 'AI Image Optimizer', desc: 'Tự động tối ưu dung lượng ảnh trong Email.', cat: 'Utility', icon: Image },
                 { name: 'E-commerce Tracker', desc: 'Plugin dành cho Shopify & WooCommerce.', cat: 'Tracking', icon: Globe },
-                { name: 'Customer Survey Pro', desc: 'Công cụ tạo bảng hỏi / survey chuyên sâu.', cat: 'Marketing', icon: FileEdit },
+                { name: 'Customer Survey Pro', desc: 'Còng cụ tạo bảng hỏi / survey chuyên sâu.', cat: 'Marketing', icon: FileEdit },
                 { name: 'Advanced SEO Bot', desc: 'AI phân tích & gợi ý từ khóa SEO cho content.', cat: 'AI Tools', icon: Bot },
             ].map((app, i) => (
                 <div key={i} className="group p-6 bg-white border border-slate-100 rounded-[32px] hover:shadow-xl hover:-translate-y-1 transition-all">
@@ -598,7 +598,7 @@ export const SectionWorkspace = () => (
 /* ─── SECTION 17: LOGIC & LIQUID ───────────────────── */
 export const SectionLogic = () => (
     <div className="space-y-16 animate-in fade-in duration-700">
-        <SectionHeader label="Logic & Dynamic Content" title={<>Cá nhân hóa <span className="text-amber-600">Cực hạn với Liquid</span></>} desc="Sử dụng cú pháp Logic để tạo ra những nội dung Email & Message biến đổi theo từng khách hàng." />
+        <SectionHeader label="Logic & Dynamic Content" title={<>Cònhân hóa <span className="text-amber-600">Cực hạn với Liquid</span></>} desc="Sử dụng cú pháp Logic để tạo ra những nội dung Email & Message biến đổi theo từng Khách hàng." />
         <div className="grid lg:grid-cols-2 gap-10">
             <div className="space-y-6">
                 <div className="p-8 bg-slate-950 rounded-[32px] text-white">
@@ -638,7 +638,7 @@ Hãy dùng mã {{ contact.tags | first }} để nhận ưu đãi!`} />
                         {[
                             { v: '{{ sender.name }}', d: 'Tên người gửi (trong Settings).' },
                             { v: '{{ organization.name }}', d: 'Tên công ty / Workspace.' },
-                            { v: '{{ unsubscribe_url }}', d: 'Link hủy đăng ký (bắt buộc cho Email).' },
+                            { v: '{{ unsubscribe_url }}', d: 'Link Hủy đăng kýbắt buộc cho Email).' },
                             { v: '{{ view_in_browser_url }}', d: 'Link xem bản web của email.' },
                         ].map((v, i) => (
                             <div key={i} className="flex items-start gap-4">
@@ -649,8 +649,8 @@ Hãy dùng mã {{ contact.tags | first }} để nhận ưu đãi!`} />
                     </div>
                 </div>
                 <div className="p-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-[32px] text-slate-900">
-                    <h4 className="text-2xl font-black mb-4">Cá nhân hóa 1:1</h4>
-                    <p className="font-bold text-slate-900/70 leading-relaxed">Kết hợp giữa dữ liệu CDP và Liquid Logic để đảm bảo 100,000 khách hàng nhận được 100,000 nội dung khác nhau.</p>
+                    <h4 className="text-2xl font-black mb-4">Cònhân hóa 1:1</h4>
+                    <p className="font-bold text-slate-900/70 leading-relaxed">Kết hợp giữa dữ liệu CDP và Liquid Logic để đảm bảo 100,000 Khách hàng nhận được 100,000 nội dung khác nhau.</p>
                     <button className="mt-8 px-6 py-3 bg-slate-900 text-white font-black rounded-xl text-xs hover:bg-slate-800 transition-all">Thử nghiệm Logic ngay</button>
                 </div>
             </div>

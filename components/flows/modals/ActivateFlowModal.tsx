@@ -88,7 +88,7 @@ const ActivateFlowModal: React.FC<ActivateFlowModalProps> = ({
                                     {activateCampaign && <span className="px-1.5 py-0.5 bg-orange-100 text-[#ca7900] text-[10px] font-black uppercase tracking-wider rounded">Auto</span>}
                                 </div>
                                 <p className={`text-xs transition-colors ${activateCampaign ? 'text-slate-600' : 'text-slate-400'}`}>
-                                    Tự động chuyển trạng thái chiến dịch từ <strong>Waiting Flow</strong> sang <strong>Ready/Scheduled</strong>.
+                                    Tự động chuyển Trạng thái chiến dịch từ <strong>Waiting Flow</strong> sang <strong>Ready/Scheduled</strong>.
                                 </p>
                             </div>
                             <div className={`p-2 bg-white rounded-xl shadow-sm transition-all ${activateCampaign ? 'text-orange-500' : 'text-slate-300'}`}>

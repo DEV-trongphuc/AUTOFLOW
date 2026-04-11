@@ -447,10 +447,11 @@ const ZaloTemplateModal: React.FC<ZaloTemplateModalProps> = ({ isOpen, onClose, 
                                             </div>
                                             <div>
                                                 <p className="font-bold text-slate-600">Không có bản xem trước</p>
-                                                <p className="text-xs text-slate-400 mt-2 leading-relaxed">Template này chưa được Zalo tạo bản preview. Vui lòng kiểm tra lại trạng thái duyệt.</p>
+                                                <p className="text-xs text-slate-400 mt-2 leading-relaxed">Template này chưa được Zalo tạo bản preview. Vui lòng kiểm tra lại Trạng thái duyệt.</p>
                                             </div>
                                             <Button size="sm" variant="secondary" onClick={() => handleSelectTemplate(selectedTemplate)}>
-                                                Thử lại
+                                                Tỉ lệ
+
                                             </Button>
                                         </div>
                                     )}

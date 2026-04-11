@@ -22,10 +22,10 @@ const MERGE_TAGS = [
     { label: 'Tên', value: '{{first_name}}' },
     { label: 'Họ', value: '{{last_name}}' },
     { label: 'Email', value: '{{email}}' },
-    { label: 'Công ty', value: '{{company}}' },
+    { label: 'Còng ty', value: '{{company}}' },
     { label: 'Chức danh', value: '{{job_title}}' },
     { label: 'Số điện thoại', value: '{{phone}}' },
-    { label: 'Hủy đăng ký (Bắt buộc)', value: '{{unsubscribe_url}}' },
+    { label: 'Hủy đăng kýBắt buộc)', value: '{{unsubscribe_url}}' },
 ];
 
 const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange, disabled }) => {
@@ -62,6 +62,9 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
 
             // Sync verified emails
             let currentSaved: string[] = JSON.parse(localStorage.getItem('mailflow_verified_emails') || '[]');
+            
+            // Xóa triệt để email mẫu nằm vùng nếu có tồn tại từ các phiên trước
+            currentSaved = currentSaved.filter(e => e !== 'marketing@ka-en.com.vn');
 
             if (settingRes.success && settingRes.data) {
                 const configEmail = settingRes.data.smtp_from_email || settingRes.data.smtp_user;
@@ -70,11 +73,6 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
                         currentSaved = [configEmail, ...currentSaved];
                     }
                 }
-            }
-
-            // Fallback default
-            if (currentSaved.length === 0) {
-                currentSaved = ['marketing@ka-en.com.vn'];
             }
 
             localStorage.setItem('mailflow_verified_emails', JSON.stringify(currentSaved));
@@ -236,7 +234,7 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
                     <button
                         onClick={() => setShowPersonalization({ target: showPersonalization.target === 'subject' ? null : 'subject' })}
                         className={`absolute right-4 bottom-2.5 p-1.5 transition-colors ${showPersonalization.target === 'subject' ? 'text-[#ca7900]' : 'text-slate-400 hover:text-[#ca7900]'}`}
-                        title="Cá nhân hóa tiêu đề"
+                        title="Cònhân hóa tiêu đề"
                         disabled={disabled}
                     >
                         <User className="w-4 h-4" />
@@ -244,7 +242,7 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
 
                     {showPersonalization.target === 'subject' && (
                         <div className="absolute right-0 top-20 z-50 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 animate-in zoom-in-95">
-                            <p className="text-[9px] font-black uppercase text-slate-400 p-2 tracking-widest">Cá nhân hóa tiêu đề</p>
+                            <p className="text-[9px] font-black uppercase text-slate-400 p-2 tracking-widest">Cònhân hóa tiêu đề</p>
                             <div className="grid grid-cols-1 gap-1">
                                 {MERGE_TAGS.map(tag => (
                                     <button
@@ -319,7 +317,7 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
 
                 {sourceMode === 'template' && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-                        {/* Cảnh báo khi template đã bị xóa */}
+                        {/* Cònh báo khi template đã bị xóa */}
                         {templateDeleted && (
                             <div className="flex items-start gap-3 p-4 bg-rose-50 border-2 border-rose-200 rounded-2xl animate-in fade-in">
                                 <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
@@ -463,8 +461,8 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
                                 <div className="w-4 h-4 bg-white rounded-full shadow-md"></div>
                             </div>
                             <div>
-                                <p className={`text-xs font-bold ${isPersonalizedMode ? 'text-blue-700' : 'text-slate-600'}`}>Bật để gửi file khớp cá nhân</p>
-                                {isPersonalizedMode && <p className="text-[9px] text-blue-500 font-medium mt-0.5">Tự động tìm file chứa Email khách hàng</p>}
+                                <p className={`text-xs font-bold ${isPersonalizedMode ? 'text-blue-700' : 'text-slate-600'}`}>Bật đã gửi file khớp cá nhân</p>
+                                {isPersonalizedMode && <p className="text-[9px] text-blue-500 font-medium mt-0.5">Tự động tìm file chứa Email Khách hàng</p>}
                             </div>
                         </div>
                         {isPersonalizedMode ? <Filter className="w-5 h-5 text-blue-500" /> : <Layers className="w-5 h-5 text-slate-400" />}
@@ -483,7 +481,7 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
                     {/* Upload Button */}
                     <div onClick={() => !disabled && fileInputRef.current?.click()} className={`cursor-pointer w-full py-4 border-2 border-dashed rounded-2xl flex items-center justify-center gap-2 text-slate-400 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50/30 transition-all ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
                         {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
-                        <span className="text-xs font-bold uppercase">Upload Tệp đính kèm ({isPersonalizedMode ? 'Cá nhân hóa' : 'Gửi Chung'})</span>
+                        <span className="text-xs font-bold uppercase">Upload Tệp đính kèm ({isPersonalizedMode ? 'Cònhân hóa' : 'Gửi Chung'})</span>
                         <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileUpload} disabled={isUploading || disabled} />
                     </div>
 

@@ -274,7 +274,7 @@ export const ConditionNode: React.FC<NodeProps> = ({ step, onClick, isViewMode, 
             case 'opened': return { label: 'Đã mở Email?', icon: MailOpen };
             case 'clicked': return { label: 'Đã click Link?', icon: MousePointer2 };
             case 'replied': return { label: 'Đã phản hồi?', icon: MessageSquare };
-            case 'unsubscribed': return { label: 'Hủy đăng ký?', icon: UserMinus };
+            case 'unsubscribed': return { label: 'Hủy đăng ký', icon: UserMinus };
             default: return { label: 'Đang theo dõi...', icon: Hourglass };
         }
     };

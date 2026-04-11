@@ -338,6 +338,7 @@ try {
     // --- CRUD ---
     switch ($method) {
         case 'GET':
+            if (session_id()) session_write_close();
             try {
                 $stmt = $pdo->query("SELECT c.*, 
                                     (SELECT COUNT(*) FROM subscriber_activity sa WHERE sa.type = 'custom_event' AND sa.reference_id = c.id) as count
@@ -411,7 +412,7 @@ try {
             break;
     }
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
     if (isset($pdo) && $pdo->inTransaction())
         $pdo->rollBack();
     jsonResponse(false, null, $e->getMessage());

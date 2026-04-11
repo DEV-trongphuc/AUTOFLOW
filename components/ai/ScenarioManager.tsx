@@ -1072,7 +1072,7 @@ const ScenarioManager: React.FC<Props> = ({ propertyId, isDarkTheme, brandColor 
                         Chưa có kịch bản nào
                     </h4>
                     <p className={`text-sm font-medium mb-6 max-w-sm leading-relaxed ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                        Tạo kịch bản để chatbot trả lời theo flow định sẵn với các nút bấm, giúp dẫn dắt khách hàng hiệu quả hơn.
+                        Tạo kịch bản để chatbot trả lời theo flow định sẵn với các nút bấm, giúp dẫn dắt Khách hàng hiệu quả hơn.
                     </p>
                     <button onClick={() => setIsCreating(true)}
                         className="flex items-center gap-2 h-11 px-6 rounded-xl text-sm font-bold text-white shadow-md hover:brightness-110 transition-all"

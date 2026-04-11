@@ -110,7 +110,8 @@ const renderContent = (content: string, role: string, onActionClick?: (action: s
             } else if (fileExtMatch) {
                 // RENDER AS FILE CARD
                 const ext = fileExtMatch[1].toLowerCase();
-                const fileName = label || url.split('/').pop() || 'T‡i li?u';
+                const fileName = label || url.split('/').pop() || 'T·ªâ l·ªá'
+
 
                 parts.push(
                     <a
@@ -130,7 +131,7 @@ const renderContent = (content: string, role: string, onActionClick?: (action: s
                             </div>
                             <div className="flex-1 min-w-0">
                                 <h5 className="text-[13px] font-bold text-slate-700 truncate group-hover:text-amber-600 transition-colors">{fileName}</h5>
-                                <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{ext.toUpperCase()} FILE ï B?m d? t?i</p>
+                                <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{ext.toUpperCase()} FILE ÔøΩ B?m d? t?i</p>
                             </div>
                             <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-all">
                                 <Maximize2 className="w-4 h-4 rotate-45" />
@@ -358,7 +359,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
     }, [initialConversationId]);
 
     // [FIX] Split into 2 effects:
-    // Effect 1: When SOURCE tab changes ó always reset to page 1 and clear selected conv
+    // Effect 1: When SOURCE tab changes ÔøΩ always reset to page 1 and clear selected conv
     useEffect(() => {
         if (propertyId) {
             setPage(1);
@@ -367,7 +368,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
         }
     }, [source]);
 
-    // Effect 2: When propertyId or filters change ó also reset to page 1
+    // Effect 2: When propertyId or filters change ÔøΩ also reset to page 1
     useEffect(() => {
         if (propertyId) {
             setPage(1);
@@ -428,7 +429,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                 // Auto Select First only if init and search cleared
                 if (p === 1 && !appliedFilters.search && !appliedFilters.ip && !appliedFilters.start && !appliedFilters.end && res.data.length > 0 && !selectedConv) setSelectedConv(res.data[0]);
             }
-        } catch (e) { toast.error('L?i t?i danh s·ch h?i tho?i'); }
+        } catch (e) { toast.error('L?i t?i danh s√°ch h?i tho?i'); }
         finally { setLoading(false); }
     };
 
@@ -469,7 +470,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                 setConversations(prev => prev.map(c => c.id === selectedConv.id ? { ...c, status: 'human' } : c));
                 if (selectedConv) setSelectedConv({ ...selectedConv, status: 'human' });
             }
-        } catch (e) { toast.error('L?i g?i tin nh?n'); }
+        } catch (e) { toast.error('L·ªói g·ª≠i tin nh·∫Øn'); }
     };
 
     const toggleStatus = async (status: 'ai' | 'human' | 'closed') => {
@@ -480,7 +481,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                 status: status
             });
             if (res.success) {
-                toast.success('–„ c?p nh?t tr?ng th·i');
+                toast.success('ÔøΩÔøΩ c?p nh?t Tr·∫°ng th√°i');
                 setSelectedConv({ ...selectedConv, status });
                 setConversations(prev => prev.map(c => c.id === selectedConv.id ? { ...c, status } : c));
             }
@@ -496,7 +497,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                 reason: blockReason
             });
             if (res.success) {
-                toast.success('–„ ch?n IP th‡nh cÙng');
+                toast.success('ÔøΩÔøΩ ch?n IP thÔøΩnh cÔøΩng');
                 setShowBlockIPModal(false);
                 setBlockReason('');
                 // Update local state to reflect the block immediately
@@ -571,7 +572,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
             const guestSub: any = {
                 id: selectedConv.visitor_id,
                 email: selectedConv.email || '',
-                firstName: selectedConv.first_name || 'Kh·ch v„ng lai',
+                firstName: selectedConv.first_name || 'KhÔøΩch vÔøΩng lai',
                 lastName: selectedConv.last_name || '',
                 status: selectedConv.status || 'lead',
                 tags: [],
@@ -636,7 +637,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
         try {
             const res = await api.put(`subscribers/${updated.id}`, updated);
             if (res.success) {
-                toast.success('–„ c?p nh?t liÍn h?');
+                toast.success('ÔøΩÔøΩ c?p nh?t liÔøΩn h?');
                 setCrmSubscriber(res.data);
                 // Also update local conversations if firstName or email changed
                 setConversations(prev => prev.map(c => (c.subscriber_id === updated.id || c.visitor_id === updated.visitor_id) ? {
@@ -670,14 +671,14 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
         try {
             const res = await api.delete(`subscribers/${pendingDeleteSubId}`);
             if (res.success) {
-                toast.success('–„ xÛa liÍn h?');
+                toast.success('ÔøΩÔøΩ xÔøΩa liÔøΩn h?');
                 setShowCrmModal(false);
                 setCrmSubscriber(null);
                 // Update local list
                 setConversations(prev => prev.map(c => c.subscriber_id === pendingDeleteSubId ? { ...c, subscriber_id: undefined } : c));
                 if (selectedConv?.subscriber_id === pendingDeleteSubId) setSelectedConv({ ...selectedConv, subscriber_id: undefined });
             }
-        } catch (e) { toast.error('L?i khi xÛa'); }
+        } catch (e) { toast.error('L?i khi xÔøΩa'); }
         finally { setPendingDeleteSubId(null); }
     };
 
@@ -765,7 +766,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
                                     <input
                                         type="text"
-                                        placeholder="TÏm tÍn, email, n?i dung..."
+                                        placeholder="TÔøΩm tÔøΩn, email, n?i dung..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleApplyFilters()}
@@ -785,7 +786,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <div className="flex-1 space-y-1">
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter pl-1">T? ng‡y</p>
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter pl-1">T? ngÔøΩy</p>
                                         <input
                                             type="date"
                                             value={startDate}
@@ -794,7 +795,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                         />
                                     </div>
                                     <div className="flex-1 space-y-1">
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter pl-1">–?n ng‡y</p>
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter pl-1">ÔøΩ?n ngÔøΩy</p>
                                         <input
                                             type="date"
                                             value={endDate}
@@ -810,7 +811,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                 className="w-full bg-slate-800 text-white py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
                             >
                                 {loading ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
-                                ¡p d?ng b? l?c
+                                ÔøΩp d?ng b? l?c
                             </button>
                         </div>
                     )}
@@ -829,7 +830,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                             ))}
                         </div>
                     ) : conversations.length === 0 ? (
-                        <div className="p-10 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">KhÙng tÏm th?y h?i tho?i</div>
+                        <div className="p-10 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">KhÔøΩng tÔøΩm th?y h?i tho?i</div>
                     ) : (
                         conversations.map((c) => (
                             <div
@@ -840,7 +841,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                 <div className="flex justify-between items-start mb-1">
                                     <div className="flex items-center gap-2 min-w-0">
                                         <span className="text-[11px] font-black text-slate-700 truncate max-w-[110px]">
-                                            {c.first_name || (c.zalo_name && c.zalo_name !== 'Zalo User' ? c.zalo_name : null) || c.email || (c.visitor_id.startsWith('zalo_') ? `Zalo: ${c.visitor_id.substring(5, 13)}...` : 'Kh·ch #' + (c.visitor_id ? c.visitor_id.substring(0, 6) : '???'))}
+                                            {c.first_name || (c.zalo_name && c.zalo_name !== 'Zalo User' ? c.zalo_name : null) || c.email || (c.visitor_id.startsWith('zalo_') ? `Zalo: ${c.visitor_id.substring(5, 13)}...` : 'KhÔøΩch #' + (c.visitor_id ? c.visitor_id.substring(0, 6) : '???'))}
                                         </span>
                                         {c.visitor_id.startsWith('zalo_') ? (
                                             <div className="bg-slate-100 text-slate-500 p-0.5 rounded shadow-sm scale-90">
@@ -857,7 +858,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                         {c.last_message_at ? formatDate(c.last_message_at, 'time') : ''}
                                     </span>
                                 </div>
-                                <p className="text-[10px] text-slate-500 truncate mb-1.5">{c.last_message || 'Chua cÛ tin nh?n'}</p>
+                                <p className="text-[10px] text-slate-500 truncate mb-1.5">{c.last_message || 'Chua cÔøΩ tin nh?n'}</p>
                                 <div className="flex items-center gap-2">
 
                                     {c.visitor_id.startsWith('zalo_') && (
@@ -894,7 +895,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                     <div
                                         className="w-10 h-10 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shadow-sm cursor-pointer hover:border-amber-600 hover:scale-105 transition-all overflow-hidden"
                                         onClick={handleOpenProfile}
-                                        title="Xem h? so"
+                                        title="Xem h·ªì s∆°"
                                     >
                                         {selectedConv.avatar ? (
                                             <img src={selectedConv.avatar} alt="Avatar" className="w-full h-full object-cover" />
@@ -911,7 +912,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                         </div>
                                         <div className="flex items-center gap-2 mt-0.5">
                                             <div className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></div>
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest opacity-60">–ang truy c?p ï {selectedConv.visit_count || 1} l?n xem</span>
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest opacity-60">ÔøΩang truy c?p ÔøΩ {selectedConv.visit_count || 1} l?n xem</span>
                                         </div>
                                     </div>
                                 </div>
@@ -928,7 +929,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                                 onClick={() => {
                                                     if (selectedConv.is_blocked) return;
                                                     if (!(selectedConv as any).ip_address) {
-                                                        toast.error('KhÙng tÏm th?y IP');
+                                                        toast.error('KhÔøΩng tÔøΩm th?y IP');
                                                         return;
                                                     }
                                                     setIpToBlock({
@@ -938,7 +939,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                                     setShowBlockIPModal(true);
                                                 }}
                                                 className={`p-2.5 rounded-xl transition-all border ${selectedConv.is_blocked ? 'bg-rose-600 text-white border-rose-600 shadow-md cursor-default' : 'text-rose-400 hover:text-rose-600 hover:bg-rose-50 border-transparent hover:border-rose-100'}`}
-                                                title={selectedConv.is_blocked ? "IP –„ b? ch?n" : "Ch?n IP n‡y"}
+                                                title={selectedConv.is_blocked ? "IP ÔøΩÔøΩ b? ch?n" : "Ch?n IP nÔøΩy"}
                                             >
                                                 <ShieldAlert className="w-5 h-5" />
                                             </button>
@@ -956,7 +957,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                                 'bg-slate-100 text-slate-700 rounded-tr-none'
                                                 }`}>
                                                 {m.sender === 'ai' && <div className="flex items-center gap-1.5 mb-1.5 opacity-80"><Bot className="w-3.5 h-3.5" /><span className="text-[9px] font-black uppercase tracking-widest">AI Agent</span></div>}
-                                                {m.sender === 'human' && <div className="flex items-center gap-1.5 mb-1.5 opacity-80"><User className="w-3.5 h-3.5" /><span className="text-[9px] font-black uppercase tracking-widest">Tu v?n viÍn</span></div>}
+                                                {m.sender === 'human' && <div className="flex items-center gap-1.5 mb-1.5 opacity-80"><User className="w-3.5 h-3.5" /><span className="text-[9px] font-black uppercase tracking-widest">Tu v?n viÔøΩn</span></div>}
                                                 {renderContent(m.message, m.sender === 'visitor' ? 'user' : 'assistant', (action) => setReply(action))}
                                             </div>
                                             <div className={`text-[9px] text-slate-400 font-bold px-2 ${m.sender === 'visitor' ? 'text-left' : 'text-right'}`}>
@@ -989,7 +990,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                     <textarea
                                         value={reply}
                                         onChange={e => setReply(e.target.value)}
-                                        placeholder={selectedConv.status === 'ai' ? "AI dang tr? l?i kh·ch..." : "Nh?p n?i dung tr? l?i kh·ch..."}
+                                        placeholder={selectedConv.status === 'ai' ? "AI dang tr? l?i khÔøΩch..." : "Nh?p n?i dung tr? l?i khÔøΩch..."}
                                         disabled={selectedConv.status === 'ai'}
                                         className="w-full pl-4 pr-14 py-3 bg-slate-50 border border-slate-100 rounded-[20px] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-slate-800/10 focus:bg-white focus:border-slate-800 transition-all resize-none min-h-[52px]"
                                         onKeyDown={(e) => {
@@ -1009,7 +1010,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                 </div>
                                 <div className="mt-2 flex items-center justify-between px-1">
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5 grayscale opacity-70">
-                                        Shift +Enter d? xu?ng dÚng
+                                        Shift +Enter d? xu?ng dÔøΩng
                                     </span>
                                     {selectedConv.status === 'ai' && (
                                         <button
@@ -1046,7 +1047,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                     : 'text-slate-400 hover:text-slate-600'
                                     }`}
                             >
-                                {tab === 'all' ? 'T?t c?' : tab === 'view' ? 'Views' : tab === 'click' ? 'Clicks' : 'Kh·c'}
+                                {tab === 'all' ? 'T?t c?' : tab === 'view' ? 'Views' : tab === 'click' ? 'Clicks' : 'KhÔøΩc'}
                             </button>
                         ))}
                     </div>
@@ -1054,7 +1055,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
 
                 <div className="flex-1 overflow-y-auto p-6 pt-2 space-y-6 custom-scrollbar">
                     {journey.length === 0 ? (
-                        <div className="p-10 text-center text-[10px] font-black text-slate-300 uppercase italic">Chua cÛ thÙng tin tracking</div>
+                        <div className="p-10 text-center text-[10px] font-black text-slate-300 uppercase italic">Chua cÔøΩ thÔøΩng tin tracking</div>
                     ) : (
                         <div className="space-y-6 relative ml-2">
                             <div className="absolute left-[-1.5px] top-2 bottom-2 w-[3px] bg-slate-200/50 rounded-full"></div>
@@ -1148,10 +1149,10 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                 isOpen={showBlockIPModal}
                 onClose={() => setShowBlockIPModal(false)}
                 onConfirm={handleBlockIP}
-                title="X·c nh?n ch?n IP"
+                title="XÔøΩc nh?n ch?n IP"
                 isLoading={isBlocking}
                 variant="danger"
-                confirmLabel="X·c nh?n ch?n"
+                confirmLabel="XÔøΩc nh?n ch?n"
                 message={
                     <div className="space-y-4">
                         <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100">
@@ -1159,14 +1160,14 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                 B?n dang th?c hi?n ch?n d?a ch? IP <span className="font-black underline">{ipToBlock?.ip}</span> c?a <span className="font-black">{ipToBlock?.visitorName}</span>.
                             </p>
                             <p className="text-[10px] text-rose-600 mt-2 font-bold uppercase tracking-tight">
-                                Luu ˝: M?i luu lu?ng t? IP n‡y s? b? t? ch?i (tr? Googlebot).
+                                Luu ÔøΩ: M?i luu lu?ng t? IP nÔøΩy s? b? t? ch?i (tr? Googlebot).
                             </p>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">L˝ do ch?n (khÙng b?t bu?c)</label>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">LÔøΩ do ch?n (khÔøΩng b?t bu?c)</label>
                             <textarea
                                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm focus:outline-none focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 transition-all min-h-[100px] resize-none"
-                                placeholder="VÌ d?: Spam click, Attack detection..."
+                                placeholder="VÔøΩ d?: Spam click, Attack detection..."
                                 value={blockReason}
                                 onChange={(e) => setBlockReason(e.target.value)}
                             />
@@ -1180,17 +1181,17 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                 isOpen={!!pendingDeleteSubId}
                 onClose={() => setPendingDeleteSubId(null)}
                 onConfirm={executeDeleteSubscriber}
-                title="XÛa liÍn h? vinh vi?n?"
+                title="XÔøΩa liÔøΩn h? vinh vi?n?"
                 variant="danger"
                 requireConfirmText="DELETE"
-                confirmLabel="XÛa vinh vi?n"
+                confirmLabel="XÔøΩa vinh vi?n"
                 message={
                     <div className="space-y-3">
                         <p className="text-sm text-slate-600">
-                            B?n s?p xÛa liÍn h? n‡y kh?i h? th?ng ho‡n to‡n.
+                            B?n s?p xÔøΩa liÔøΩn h? nÔøΩy kh?i h? th?ng hoÔøΩn toÔøΩn.
                         </p>
                         <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 text-xs text-rose-700 font-medium">
-                            ?? To‡n b? l?ch s?, tag v‡ d? li?u c?a liÍn h? n‡y s? b? xÛa vinh vi?n, khÙng th? khÙi ph?c.
+                            ?? ToÔøΩn b? l?ch s?, tag vÔøΩ d? li?u c?a liÔøΩn h? nÔøΩy s? b? xÔøΩa vinh vi?n, khÔøΩng th? khÔøΩi ph?c.
                         </div>
                     </div>
                 }
@@ -1216,12 +1217,12 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                     listId: listId
                                 });
                                 if (res.success) {
-                                    toast.success('–„ thÍm v‡o danh s·ch');
+                                    toast.success('ÔøΩÔøΩ thÔøΩm vÔøΩo danh s√°ch');
                                     // Refresh subscriber data
                                     const fresh = await api.get(`subscribers/${subId}`);
                                     if (fresh.success) setCrmSubscriber(fresh.data);
                                 }
-                            } catch (e) { toast.error('L?i khi thÍm v‡o danh s·ch'); }
+                            } catch (e) { toast.error('L?i khi thÔøΩm vÔøΩo danh s√°ch'); }
                         }}
                         onRemoveFromList={async (subId, listId) => {
                             try {
@@ -1231,12 +1232,12 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                     listId: listId
                                 });
                                 if (res.success) {
-                                    toast.success('–„ g? kh?i danh s·ch');
+                                    toast.success('ÔøΩÔøΩ g? kh?i danh s√°ch');
                                     // Refresh subscriber data
                                     const fresh = await api.get(`subscribers/${subId}`);
                                     if (fresh.success) setCrmSubscriber(fresh.data);
                                 }
-                            } catch (e) { toast.error('L?i khi g? kh?i danh s·ch'); }
+                            } catch (e) { toast.error('L?i khi g? kh?i danh s√°ch'); }
                         }}
                     />
                 )
@@ -1248,7 +1249,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                 onConfirm={confirmExport}
                 variant="success"
                 title="Xu?t d? li?u h?i tho?i"
-                confirmLabel="X·c nh?n xu?t CSV"
+                confirmLabel="XÔøΩc nh?n xu?t CSV"
                 message={
                     <div className="space-y-6">
                         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-start gap-4 text-left">
@@ -1256,8 +1257,8 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                 <FileText className="w-5 h-5" />
                             </div>
                             <div className="flex-1">
-                                <h4 className="text-sm font-bold text-slate-800">C?u hÏnh xu?t CSV</h4>
-                                <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">Ch?n ph?m vi th?i gian b?n mu?n trÌch xu?t d? li?u cu?c trÚ chuy?n.</p>
+                                <h4 className="text-sm font-bold text-slate-800">C?u hÔøΩnh xu?t CSV</h4>
+                                <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">Ch?n ph?m vi Th·ªùi gian b?n mu?n trÔøΩch xu?t d? li?u cu?c trÔøΩ chuy?n.</p>
 
                                 <div className="mt-4 flex bg-slate-100 p-1 rounded-xl border border-slate-200/50">
                                     {[
@@ -1288,7 +1289,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                     <Zap className="w-4 h-4" />
                                 </div>
                                 <div className="font-bold text-xs text-slate-800 uppercase tracking-tight">B? l?c hi?n t?i</div>
-                                <p className="text-[10px] text-slate-500 mt-1 font-medium">{startDate && endDate ? `${startDate} d?n ${endDate}` : 'T?t c? th?i gian'}</p>
+                                <p className="text-[10px] text-slate-500 mt-1 font-medium">{startDate && endDate ? `${startDate} d?n ${endDate}` : 'T?t c? Th·ªùi gian'}</p>
                             </button>
 
                             <button
@@ -1298,15 +1299,15 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 transition-colors ${exportRange === 'custom' ? 'bg-slate-800 text-white shadow-lg shadow-slate-800/20' : 'bg-white text-slate-400 border border-slate-200'}`}>
                                     <Clock className="w-4 h-4" />
                                 </div>
-                                <div className="font-bold text-xs text-slate-800 uppercase tracking-tight">Kho?ng t˘y ch?n</div>
-                                <p className="text-[10px] text-slate-500 mt-1 font-medium">T? ch?n ng‡y b?t d?u & k?t th˙c</p>
+                                <div className="font-bold text-xs text-slate-800 uppercase tracking-tight">Kho?ng tÔøΩy ch?n</div>
+                                <p className="text-[10px] text-slate-500 mt-1 font-medium">T? ch?n ngÔøΩy b?t d?u & k?t thÔøΩc</p>
                             </button>
                         </div>
 
                         {exportRange === 'custom' && (
                             <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 animate-in slide-in-from-top-2 duration-300">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ng‡y b?t d?u</label>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">NgÔøΩy b?t d?u</label>
                                     <input
                                         type="date"
                                         value={customExportStart}
@@ -1315,7 +1316,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ng‡y k?t th˙c</label>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">NgÔøΩy k?t thÔøΩc</label>
                                     <input
                                         type="date"
                                         value={customExportEnd}

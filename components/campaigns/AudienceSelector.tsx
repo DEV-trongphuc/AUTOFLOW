@@ -147,7 +147,7 @@ const AudienceSelector: React.FC<AudienceSelectorProps> = ({
     const downloadSampleCSV = () => {
         const headers = ['phone', 'fullname', 'email', 'tags'];
         const sampleRows = [
-            ['0912345678', 'Nguyen Van A', 'vana@example.com', 'Khach hang moi'],
+            ['0912345678', 'Nguyen Van A', 'vana@example.com', 'Khách hàng moi'],
             ['0987654321', 'Tran Thi B', 'thib@example.com', 'VIP']
         ];
         const csvContent = [headers, ...sampleRows].map(e => e.join(",")).join("\n");
@@ -501,7 +501,7 @@ const AudienceSelector: React.FC<AudienceSelectorProps> = ({
                         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                             <div>
                                 <h4 className="text-sm font-bold text-slate-800">Import Nhanh</h4>
-                                <p className="text-[10px] text-slate-500 font-medium">Thêm liên hệ vào chiến dịch qua CSV hoặc dán trực tiếp.</p>
+                                <p className="text-[10px] text-slate-500 font-medium">Tỉ lệ hệ vào chiến dịch qua CSV hoặc dán trực tiếp.</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
@@ -605,7 +605,7 @@ const AudienceSelector: React.FC<AudienceSelectorProps> = ({
 
                                             {importMode === 'new' ? (
                                                 <Input
-                                                    placeholder="VD: Data khách hàng ZNS T03..."
+                                                    placeholder="VD: Data Khách hàng ZNS T03..."
                                                     value={newListName}
                                                     onChange={e => setNewListName(e.target.value)}
                                                     autoFocus

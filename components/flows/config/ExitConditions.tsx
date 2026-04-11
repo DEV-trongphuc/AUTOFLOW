@@ -13,8 +13,8 @@ const ExitConditions: React.FC<ExitConditionsProps> = ({ conditions, bounceBehav
   const options = [
     {
       id: 'unsubscribed',
-      label: 'Hủy đăng ký (Unsubscribe)',
-      desc: 'Bắt buộc. Dừng gửi nếu khách hàng chọn hủy đăng ký.',
+      label: 'Hủy đăng kýUnsubscribe)',
+      desc: 'Bắt buộc. Dừng gửi nếu Khách hàng chọn Hủy đăng ký',
       icon: UserMinus,
       color: 'text-slate-600 bg-slate-200',
       disabled: true // Usually mandatory
@@ -22,14 +22,14 @@ const ExitConditions: React.FC<ExitConditionsProps> = ({ conditions, bounceBehav
     {
       id: 'clicked',
       label: 'Khách hàng Click Link',
-      desc: 'Ngắt flow ngay khi khách hàng tương tác (Click) vào bất kỳ link nào.',
+      desc: 'Ngắt flow ngay khi Khách hàng tương tác (Click) vào bất kỳ link nào.',
       icon: MousePointerClick,
       color: 'text-purple-600 bg-purple-100'
     },
     {
       id: 'opened',
       label: 'Khách hàng Mở Email',
-      desc: 'Dừng flow chỉ cần khách hàng mở email (Lưu ý: Pixel tracking có thể không chính xác 100%).',
+      desc: 'Dừng flow chỉ cần Khách hàng mở email (Lưu ý: Pixel tracking có thể không chính xác 100%).',
       icon: Eye,
       color: 'text-teal-600 bg-teal-100'
     },

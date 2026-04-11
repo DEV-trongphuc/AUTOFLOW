@@ -21,7 +21,7 @@ const ReminderManager: React.FC<ReminderManagerProps> = ({ reminders, templates,
 
   const add = () => {
     if (reminders.length >= MAX_REMINDERS) {
-      toast.error(`Tối đa ${MAX_REMINDERS} nhắc nhở. Quá nhiều follow-up có thể khiến khách hàng cảm thấy phiền.`);
+      toast.error(`Tối đa ${MAX_REMINDERS} nhắc nhở. Quá nhiều follow-up có thể khiến Khách hàng cảm thấy phiền.`);
       return;
     }
 
@@ -148,7 +148,7 @@ const ReminderManager: React.FC<ReminderManagerProps> = ({ reminders, templates,
                         onChange={e => update(rem.id, { scheduledAt: e.target.value })}
                         className="border-slate-200 shadow-sm"
                       />
-                      <p className="text-[10px] text-slate-400 italic px-1">{isZns ? 'Tin nhắn' : 'Email'} sẽ được gửi chính xác vào thời gian này.</p>
+                      <p className="text-[10px] text-slate-400 italic px-1">{isZns ? 'Tin nhắn' : 'Email'} sẽ được gửi chính xác vào Thời gian này.</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2">
@@ -209,7 +209,7 @@ const ReminderManager: React.FC<ReminderManagerProps> = ({ reminders, templates,
                           <img src={selectedTemplate(rem.templateId)?.thumbnail} className="w-16 h-12 object-cover rounded-lg border border-slate-100" />
                           <div className="flex-1">
                             <p className="text-sm font-bold text-slate-800">{selectedTemplate(rem.templateId)?.name}</p>
-                            <p className="text-[10px] text-slate-500 font-medium">Đang chọn mẫu riêng</p>
+                            <p className="text-[10px] text-slate-500 font-medium">Đang chờ mẫu riêng</p>
                           </div>
                         </>
                       ) : (

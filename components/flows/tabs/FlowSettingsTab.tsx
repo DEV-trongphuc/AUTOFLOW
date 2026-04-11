@@ -171,7 +171,7 @@ const FlowSettingsTab: React.FC<FlowSettingsTabProps> = ({ flow, onUpdate }) => 
                         <p className="text-xs font-black text-orange-900 uppercase tracking-tight">Chế độ ưu tiên (Real-time Transaction)</p>
                         <p className="text-[11px] font-medium text-orange-800 leading-relaxed mt-1">
                             Kịch bản này được kích hoạt bởi <b>{getPriorityLabel()}</b>.
-                            Hệ thống sẽ <b>bỏ qua</b> các giới hạn về khung giờ, ngày nghỉ và tần suất gửi để đảm bảo phản hồi ngay lập tức cho khách hàng.
+                            Hệ thống sẽ <b>Bỏ qua</b> các giới hạn về khung giờ, ngày nghỉ và tần suất gửi để đảm bảo phản hồi ngay lập tức cho Khách hàng.
                         </p>
                     </div>
                 </div>
@@ -240,7 +240,7 @@ const FlowSettingsTab: React.FC<FlowSettingsTabProps> = ({ flow, onUpdate }) => 
                                         </div>
                                         <div>
                                             <p className={`text-[10px] font-black uppercase ${localConfig.type === 'batch' ? 'text-indigo-700' : 'text-slate-600'}`}>Batch</p>
-                                            <p className="text-[9px] text-slate-400 font-medium">Theo lô</p>
+                                            <p className="text-[9px] text-slate-400 font-medium">Tỉ lệ</p>
                                         </div>
                                     </button>
                                 </div>
@@ -355,7 +355,7 @@ const FlowSettingsTab: React.FC<FlowSettingsTabProps> = ({ flow, onUpdate }) => 
                                         />
                                         <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">Lần</span>
                                     </div>
-                                    <p className="text-[9px] text-slate-400 font-medium max-w-[140px] leading-tight text-right">Tổng số lần tối đa. Để <b>0</b> nếu muốn không giới hạn.</p>
+                                    <p className="text-[9px] text-slate-400 font-medium max-w-[140px] leading-tight text-right">Tổng sốlần tối đa. Để <b>0</b> nếu muốn không giới hạn.</p>
                                 </div>
                             </div>
                         </div>

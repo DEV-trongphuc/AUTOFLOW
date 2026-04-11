@@ -76,7 +76,7 @@ const WaitConfig: React.FC<WaitConfigProps> = ({ config, onChange, disabled }) =
       {/* MODE TOGGLE */}
       <div className="flex bg-slate-100 p-1 rounded-2xl w-fit">
         {[
-          { id: 'duration', label: 'Khoảng thời gian' },
+          { id: 'duration', label: 'Khoảng Thời gian' },
           { id: 'until', label: 'Thời điểm cụ thể' },
           { id: 'until_attribute', label: 'Theo ngày kỷ niệm' },
           { id: 'until_date', label: 'Ngày cụ thể' }
@@ -105,9 +105,9 @@ const WaitConfig: React.FC<WaitConfigProps> = ({ config, onChange, disabled }) =
             {mode === 'duration'
               ? (config.unit === 'minutes' ? 'Đã chọn phút: Tối thiểu phải là 10 phút.' : 'Khách hàng sẽ đứng ở bước này trước khi sang bước tiếp theo (Tối thiểu 1 giờ).')
               : (mode === 'until'
-                ? 'Hệ thống sẽ giữ khách hàng lại cho đến khi đạt tới ngày/giờ đã thiết lập.'
+                ? 'Hệ thống sẽ giữ Khách hàng lại cho đến khi đạt tới ngày/giờ đã thiết lập.'
                 : (mode === 'until_attribute'
-                  ? 'Chờ đến một khoảng thời gian trước hoặc sau ngày sinh nhật/ngày kỷ niệm của khách hàng.'
+                  ? 'Chờ đến một khoảng Thời gian trước hoặc sau ngày sinh nhật/ngày kỷ niệm của Khách hàng.'
                   : 'Chờ đến một ngày cố định (ví dụ: ngày lễ 14/02, 08/03, Noel...) để bắt đầu khuyến mãi.'
                 )
               )
@@ -156,7 +156,7 @@ const WaitConfig: React.FC<WaitConfigProps> = ({ config, onChange, disabled }) =
             />
           </div>
           <p className="text-[10px] text-slate-400 font-medium italic">
-            * Nếu thời điểm thiết lập đã trôi qua trong ngày, khách hàng sẽ đợi đến thời điểm đó của chu kỳ kế tiếp (ví dụ: Thứ Hai tuần sau).
+            * Nếu thời điểm thiết lập đã trôi qua trong ngày, Khách hàng sẽ đợi đến thời điểm đó của chu kỳ kế tiếp (ví dụ: Thứ Hai tuần sau).
           </p>
         </div>
       )}
@@ -200,7 +200,7 @@ const WaitConfig: React.FC<WaitConfigProps> = ({ config, onChange, disabled }) =
             />
           </div>
           <div className="p-3 bg-blue-50 text-blue-700 rounded-xl text-[10px] font-medium border border-blue-100">
-            Mẹo: Thiết lập "2 ngày Trước Ngày sinh nhật" để gửi tin nhắn chúc mừng sớm hoặc chuẩn bị quà tặng.
+            Mẹo: Thiết lập "2 ngày Trước Ngày sinh nhật" đã gửi tin nhắn chúc mừng sớm hoặc chuẩn bị quà tặng.
           </div>
         </div>
       )}
@@ -224,7 +224,7 @@ const WaitConfig: React.FC<WaitConfigProps> = ({ config, onChange, disabled }) =
             />
           </div>
           <p className="text-[10px] text-slate-400 font-medium italic">
-            * Khách hàng sẽ chờ tại bước này cho đến đúng ngày và giờ bạn đã chọn. Nếu ngày đó đã trôi qua, khách hàng sẽ đi tiếp ngay lập tức.
+            * Khách hàng sẽ chờ tại bước này cho đến đúng ngày và giờ bạn đã chọn. Nếu ngày đó đã trôi qua, Khách hàng sẽ đi tiếp ngay lập tức.
           </p>
         </div>
       )}

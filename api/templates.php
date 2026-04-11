@@ -51,6 +51,7 @@ function getTemplateUsage($id, $pdo)
 try {
     switch ($method) {
         case 'GET':
+            if (session_id()) session_write_close();
             if (isset($_GET['action']) && $_GET['action'] === 'check_usage' && $path) {
                 $usage = getTemplateUsage($path, $pdo);
                 jsonResponse(true, ['in_use' => !empty($usage), 'details' => $usage]);

@@ -17,7 +17,7 @@ const BounceHandling: React.FC<BounceHandlingProps> = ({ value, onChange, disabl
         {
             id: 'stop',
             label: 'Dừng Flow ngay lập tức (Stop)',
-            desc: 'Hệ thống sẽ gắn nhãn lỗi (Hard Bounce) cho khách hàng và dừng toàn bộ Automation. Bảo vệ điểm uy tín tên miền.',
+            desc: 'Hệ thống sẽ gắn nhãn lỗi (Hard Bounce) cho Khách hàng và dừng toàn bộ Automation. Bảo vệ điểm uy tín tên miền.',
             icon: Ban,
             color: 'text-rose-600 bg-rose-50 border-rose-200',
             activeBorder: 'border-rose-500 ring-4 ring-rose-50',
@@ -25,8 +25,8 @@ const BounceHandling: React.FC<BounceHandlingProps> = ({ value, onChange, disabl
         },
         {
             id: 'continue',
-            label: 'Tự động bỏ qua & Tiếp tục (Auto Next Step)',
-            desc: 'Ghi nhận lỗi nhưng vẫn cho phép khách hàng chuyển sang bước tiếp theo (Lưu ý: Hệ thống sẽ tự động bỏ qua các bước gửi Email).',
+            label: 'Tự động Bỏ qua & Tiếp tục (Auto Next Step)',
+            desc: 'Ghi nhận lỗi nhưng vẫn cho phép Khách hàng chuyển sang bước tiếp theo (Lưu ý: Hệ thống sẽ tự động Bỏ qua các bước gửi Email).',
             icon: FastForward,
             color: 'text-amber-600 bg-amber-50 border-amber-200',
             activeBorder: 'border-amber-600 ring-4 ring-amber-50',

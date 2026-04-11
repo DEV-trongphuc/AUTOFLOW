@@ -83,7 +83,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
         if (localCampaign?.id && isVisible && activeTab === 'activity') {
             fetchLogs(logsPagination.page);
         }
-    }, [localCampaign?.id, isVisible, activeTab, logsPagination.page]);
+        }, [localCampaign?.id, isVisible, activeTab]);
 
     // Polling logic for "sending" status progress + stats update
     useEffect(() => {
@@ -171,13 +171,13 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                 setShowRefreshConfirm(false);
                 fetchAudienceStats();
                 setLocalCampaign(prev => prev ? { ...prev, status: CampaignStatus.SENDING, totalTargetAudience: res.data?.total_target_audience || prev.totalTargetAudience } : null);
-                toast.success(`B?t d?u l�m m?i chi?n d?ch! C�c th�nh vi�n m?i s? s?m nh?n du?c ${isZns ? 'tin nh?n' : 'email'}.`);
+                toast.success(`Bắt đầu làm mới chiến dịch! Các thành viên mới sẽ sớm nhận được ${isZns ? 'tin nhắn' : 'email'}.`);
             } else {
-                toast.error(res.message || "Kh�ng th? l�m m?i chi?n d?ch.");
+                toast.error(res.message || "Không thể làm mới chiến dịch.");
             }
         } catch (err) {
             console.error(err);
-            toast.error("�� x?y ra l?i khi g?i y�u c?u.");
+            toast.error("Đã xảy ra lỗi khiĐã gửi yêu cầu.");
         }
         setRefreshLoading(false);
     };
@@ -203,16 +203,16 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
     const retainedRate = (sentCount > 0 && isFinite(retainedCount / sentCount)) ? ((retainedCount / sentCount) * 100).toFixed(1) : "0.0";
 
     const funnelData = [
-        { name: isZns ? 'Tin nh?n d� g?i' : '�� g?i (Sent)', value: sentCount, fill: '#94a3b8', icon: Send },
-        { name: isZns ? '�� nh?n (Delivered)' : '�� nh?n (Delivered)', value: deliveredCount, fill: '#3b82f6', icon: CheckCircle2 },
-        { name: isZns ? 'Lu?t xem (Seen)' : '�� m? (Opened)', value: stats.opened, fill: '#ffa900', icon: isZns ? BadgeCheck : MailOpen },
-        ...(isZns ? [] : [{ name: '�� click (Unique Click)', value: stats.clicked, fill: '#10b981', icon: MousePointer2, subValue: (stats as any).total_clicked ? `Total: ${(stats as any).total_clicked}` : null }]),
+        { name: isZns ? 'Tin nhắn đãĐã gửi' : 'Đã gửi (Sent)', value: sentCount, fill: '#94a3b8', icon: Send },
+        { name: isZns ? 'Đã nhận (Delivered)' : 'Đã nhận (Delivered)', value: deliveredCount, fill: '#3b82f6', icon: CheckCircle2 },
+        { name: isZns ? 'LượtĐã xem (Seen)' : 'Đã mở (Opened)', value: stats.opened, fill: '#ffa900', icon: isZns ? BadgeCheck : MailOpen },
+        ...(isZns ? [] : [{ name: 'Đã click (Unique Click)', value: stats.clicked, fill: '#10b981', icon: MousePointer2, subValue: (stats as any).total_clicked ? `Total: ${(stats as any).total_clicked}` : null }]),
     ];
 
     const healthData = [
-        { name: isZns ? '�� nh?n' : 'H?p thu ch�nh', value: retainedCount, fill: '#10b981' },
-        { name: isZns ? 'L?i g?i' : 'Tr? l?i (Bounce)', value: stats.bounced, fill: '#f43f5e' },
-        ...(isZns ? [] : [{ name: 'H?y dang k� (Unsub)', value: stats.unsubscribed, fill: '#d97706' }])
+        { name: isZns ? 'Đã nhận' : 'Hộp thư chính', value: retainedCount, fill: '#10b981' },
+        { name: isZns ? 'Lỗi gửi' : 'Tỉ lệ (Bounce)', value: stats.bounced, fill: '#f43f5e' },
+        ...(isZns ? [] : [{ name: 'Hủy đăng ký (Unsub)', value: stats.unsubscribed, fill: '#d97706' }])
     ].filter(d => d.value > 0);
 
     const targetLists = localCampaign.target?.listIds.map(id => allLists.find(l => l.id === id)).filter(Boolean) || [];
@@ -246,7 +246,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
 
     return ReactDOM.createPortal(
         <div className={`fixed inset-0 z-[9999] flex justify-end ${isVisible ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-            <div className={`absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`} onClick={onClose}></div>
+            <div className={`absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`} onClick={onClose}>-</div>
             <div
                 className={`relative w-full lg:max-w-6xl bg-[#f8fafc] shadow-2xl h-full lg:h-screen flex flex-col transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${animateIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}
             >
@@ -267,12 +267,12 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     <span className="text-blue-600">{(localCampaign.stats?.sent || 0).toLocaleString()}</span>/{(localCampaign.totalTargetAudience || 0).toLocaleString()}
                                 </span>
                             )}
-                            <span className="text-slate-300 hidden md:inline">�</span>
+                            <span className="text-slate-300 hidden md:inline">-</span>
                             <span className="text-[9px] md:text-[11px] font-bold text-slate-400 flex items-center gap-1">
                                 <Calendar className="w-3 h-3 md:w-3.5 md:h-3.5" />
                                 {localCampaign.sentAt
-                                    ? `G?i ${!isNaN(new Date(localCampaign.sentAt).getTime()) ? new Date(localCampaign.sentAt).toLocaleString('vi-VN') : '...'}`
-                                    : `B?n nh�p`}
+                                    ? `Gợi ý${!isNaN(new Date(localCampaign.sentAt).getTime()) ? new Date(localCampaign.sentAt).toLocaleString('vi-VN') : '...'}`
+                                    : `Bản nháp`}
                             </span>
                         </div>
                         <h2 className="text-lg md:text-xl font-black text-slate-800 tracking-tight leading-tight truncate pr-4">{localCampaign.name}</h2>
@@ -284,7 +284,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                 const res = await api.get<any>(`campaigns?id=${campaign.id}`);
                                 if (res.success) {
                                     setLocalCampaign(res.data);
-                                    toast.success("�� l�m m?i d? li?u b�o c�o");
+                                    toast.success("Đã làm mới dữ liệu Báo cáo");
                                 }
                                 setRefreshLoading(false);
                             }}
@@ -294,7 +294,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                             disabled={refreshLoading}
                             className="!rounded-xl border-slate-200"
                         >
-                            <span className="hidden md:inline">{refreshLoading ? '�ang l�m m?i...' : 'L�m m?i'}</span>
+                            <span className="hidden md:inline">{refreshLoading ? 'Đang làm mới...' : 'Làm mới'}</span>
                         </Button>
                         <Button
                             onClick={() => setShowTestModal(true)}
@@ -303,7 +303,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                             icon={Send}
                             className="!rounded-xl border-slate-200"
                         >
-                            <span className="hidden md:inline">{isZns ? 'G?i Test ZNS' : 'G?i Test Email'}</span>
+                            <span className="hidden md:inline">{isZns ? 'Gợi ýTest ZNS' : 'Gợi ýTest Email'}</span>
                             <span className="md:hidden">Test</span>
                         </Button>
                         <button
@@ -321,15 +321,15 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                         activeId={activeTab}
                         onChange={setActiveTab}
                         items={[
-                            { id: 'overview', label: 'B�o c�o', icon: BarChart2 },
-                            { id: 'content', label: localCampaign.type === 'zalo_zns' ? 'N?i dung' : 'N?i dung', icon: FileText },
-                            { id: 'audience', label: '�?i tu?ng', icon: Users, count: totalAudience },
-                            { id: 'delivery', label: 'L?ch s?', icon: MailCheck },
+                            { id: 'overview', label: 'Báo cáo', icon: BarChart2 },
+                            { id: 'content', label: localCampaign.type === 'zalo_zns' ? 'Nội dung' : 'Nội dung', icon: FileText },
+                            { id: 'audience', label: 'Đối tượng', icon: Users, count: totalAudience },
+                            { id: 'delivery', label: 'Lịch sử', icon: MailCheck },
                             ...(localCampaign.type !== 'zalo_zns' ? [
                                 { id: 'links', label: 'Links', icon: ClickIcon },
-                                { id: 'tech', label: 'Thi?t b?', icon: Smartphone },
+                                { id: 'tech', label: 'Thiết bị', icon: Smartphone },
                             ] : []),
-                            { id: 'activity', label: 'Nh?t k� Live', icon: Activity },
+                            { id: 'activity', label: 'Nhật ký Live', icon: Activity },
                         ]}
                     />
                 </div>
@@ -348,8 +348,8 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                     <Send className="w-5 h-5" />
                                                 </div>
                                                 <div>
-                                                    <h5 className="text-sm font-black text-slate-800 uppercase tracking-tight">Chi?n d?ch dang du?c x? l�</h5>
-                                                    <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Vui l�ng kh�ng d�ng tr�nh duy?t d? theo d�i s�t sao</p>
+                                                    <h5 className="text-sm font-black text-slate-800 uppercase tracking-tight">Chiến dịch đang được xử lý</h5>
+                                                    <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Vui lòng không đóng trình duyệt để theo dõi sát sao</p>
                                                 </div>
                                             </div>
                                             <div className="text-right">
@@ -366,21 +366,21 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                         </div>
                                         <div className="flex justify-between text-[11px] font-bold">
                                             <div className="flex gap-4">
-                                                <span className="text-slate-500 uppercase tracking-wider">�� g?i: <span className="text-blue-600 font-black">{(localCampaign.stats?.sent || 0).toLocaleString()}</span></span>
+                                                <span className="text-slate-500 uppercase tracking-wider">Đã gửi: <span className="text-blue-600 font-black">{(localCampaign.stats?.sent || 0).toLocaleString()}</span>-</span>
                                                 {(localCampaign.stats?.failed || 0) > 0 && (
-                                                    <span className="text-rose-500 uppercase tracking-wider">Th?t b?i: <span className="font-black">{(localCampaign.stats?.failed || 0).toLocaleString()}</span></span>
+                                                    <span className="text-rose-500 uppercase tracking-wider">Th?t b?i: <span className="font-black">{(localCampaign.stats?.failed || 0).toLocaleString()}</span>-</span>
                                                 )}
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <span className="text-slate-400 uppercase tracking-widest">M?c ti�u: {localCampaign.totalTargetAudience?.toLocaleString() || '...'}</span>
+                                                <span className="text-slate-400 uppercase tracking-widest">Mục tiêu: {localCampaign.totalTargetAudience?.toLocaleString() || '...'}</span>
                                                 <button
                                                     onClick={handleTriggerRefresh}
                                                     disabled={refreshLoading}
                                                     className="ml-2 px-3 py-1 bg-slate-900 text-white text-[10px] font-black uppercase rounded-lg hover:bg-black transition-all flex items-center gap-1.5 shadow-sm"
-                                                    title="N?u ti?n d? b? k?t, nh?n d? k�ch ho?t l?i ti?n tr�nh g?i"
+                                                    title="Nếu tiến độ bị kẹt, nhấn để kích hoạt lại tiến trìnhĐã gửi"
                                                 >
                                                     {refreshLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3 text-orange-400" />}
-                                                    K�ch ho?t l?i
+                                                    Kích hoạt lại
                                                 </button>
                                             </div>
                                         </div>
@@ -402,8 +402,8 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                         <Zap className="w-6 h-6 text-orange-300" />
                                                     </div>
                                                     <div>
-                                                        <h4 className="text-sm font-black uppercase tracking-wider">K?ch b?n cham s�c li�n quan</h4>
-                                                        <p className="text-xs text-indigo-100 font-medium mt-0.5">Chi?n d?ch n�y dang k�ch ho?t Flow: <span className="font-bold underline">{associatedFlow.name}</span></p>
+                                                        <h4 className="text-sm font-black uppercase tracking-wider">Kịch bản chăm sóc liên quan</h4>
+                                                        <p className="text-xs text-indigo-100 font-medium mt-0.5">Chiến dịch này đang kích hoạt Flow: <span className="font-bold underline">{associatedFlow.name}</span>-</p>
                                                     </div>
                                                 </div>
                                                 <Button
@@ -415,7 +415,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                     className="bg-white text-indigo-600 border-none hover:bg-slate-50 shadow-md !rounded-xl px-6"
                                                     icon={ExternalLink}
                                                 >
-                                                    Xem b�o c�o Flow
+                                                    Xem Báo cáo Flow
                                                 </Button>
                                             </div>
                                         )}
@@ -427,8 +427,8 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                         <AlertOctagon className="w-6 h-6" />
                                                     </div>
                                                     <div>
-                                                        <h4 className="text-sm font-black text-rose-900 uppercase tracking-tight">Ph�t hi?n l?i khi g?i ({(localCampaign.stats?.failed || 0).toLocaleString()} {isZns ? 'tin nh?n' : 'email'})</h4>
-                                                        <p className="text-xs text-rose-700 font-medium mt-0.5">M?t s? {isZns ? 'tin nh?n' : 'email'} d� kh�ng th? g?i di do l?i h? th?ng ho?c d?a ch? kh�ng t?n t?i.</p>
+                                                        <h4 className="text-sm font-black text-rose-900 uppercase tracking-tight">Phát hiện lỗi khiĐã gửi ({(localCampaign.stats?.failed || 0).toLocaleString()} {isZns ? 'tin nhắn' : 'email'})</h4>
+                                                        <p className="text-xs text-rose-700 font-medium mt-0.5">Một số {isZns ? 'tin nhắn' : 'email'} đã không thểĐã gửi đi do lỗi hệ thống hoặc địa chỉ không tồn tại.</p>
                                                     </div>
                                                 </div>
                                                 <Button
@@ -448,25 +448,25 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                             {/* 1. KEY METRICS ROW */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                                 <StatBox
-                                    label={isZns ? "T? l? Xem (Seen Rate)" : "T? l? M? (Open Rate)"}
+                                    label={isZns ? "Tỉ lệ Xem (Seen Rate)" : "Tỉ lệ M? (Open Rate)"}
                                     value={`${openRate}%`}
-                                    subValue={`${(stats.opened || 0).toLocaleString()} ngu?i${(stats as any).total_opened && !isZns ? ` � ${(stats as any).total_opened.toLocaleString()} lu?t` : ''}`}
+                                    subValue={`${(stats.opened || 0).toLocaleString()} người${(stats as any).total_opened && !isZns ? ` - ${(stats as any).total_opened.toLocaleString()} lượt` : ''}`}
                                     icon={isZns ? BadgeCheck : MailOpen}
                                     colorClass="text-[#ffa900]"
                                 />
                                 {isZns ? (
                                     <StatBox
-                                        label="�� nh?n (Delivered)"
+                                        label="Đã nhận (Delivered)"
                                         value={(deliveredCount || 0).toLocaleString()}
-                                        subValue="Tin nh?n d?n m�y kh�ch"
+                                        subValue="Tin nhắn đến máy khách"
                                         icon={Smartphone}
                                         colorClass="text-blue-500"
                                     />
                                 ) : (
                                     <StatBox
-                                        label="T? l? Click (CTR)"
+                                        label="Tỉ lệ Click (CTR)"
                                         value={`${clickRate}%`}
-                                        subValue={`${(stats.clicked || 0).toLocaleString()} lu?t nh?n`}
+                                        subValue={`${(stats.clicked || 0).toLocaleString()} lượt nh?n`}
                                         icon={MousePointerClick}
                                         colorClass="text-emerald-500"
                                     />
@@ -475,19 +475,19 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     <StatBox
                                         label="Click / Open (CTOR)"
                                         value={`${clickToOpenRate}%`}
-                                        subValue="Ch?t lu?ng n?i dung"
+                                        subValue="Chất lượng nội dung"
                                         icon={Activity}
                                         colorClass="text-blue-500"
                                     />
                                 )}
                                 <StatBox
-                                    label={isZns ? "Chi ph� t?m t�nh" : "T? l? G?i th�nh c�ng"}
+                                    label={isZns ? "Chi phí tạm tính" : "Tỉ lệ Gợi ýthành công"}
                                     value={isZns ? (() => {
                                         const configData = typeof localCampaign.config === 'string' ? JSON.parse(localCampaign.config) : localCampaign.config;
                                         const price = configData?.price || 300;
                                         return (sentCount * price).toLocaleString() + 'd';
                                     })() : `${deliveryRate}%`}
-                                    subValue={isZns ? `D?a tr�n ${(sentCount || 0).toLocaleString()} tin` : `${(deliveredCount || 0).toLocaleString()} / ${(sentCount || 0).toLocaleString()}`}
+                                    subValue={isZns ? `Dựa trên ${(sentCount || 0).toLocaleString()} tin` : `${(deliveredCount || 0).toLocaleString()} / ${(sentCount || 0).toLocaleString()}`}
                                     icon={isZns ? PieChart : CheckCircle2}
                                     colorClass="text-indigo-500"
                                 />
@@ -500,14 +500,14 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     <Card className="border-slate-100 shadow-sm min-h-[400px]" noPadding>
                                         <div className="p-6 border-b border-slate-50 flex justify-between items-center">
                                             <div>
-                                                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide">Ph?u chuy?n d?i (Funnel)</h3>
-                                                <p className="text-[10px] text-slate-400 mt-0.5">H�nh tr�nh tuong t�c c?a kh�ch h�ng</p>
+                                                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide">Phễu chuyển đổi (Funnel)</h3>
+                                                <p className="text-[10px] text-slate-400 mt-0.5">Hành trình tương tác của Khách hàng</p>
                                             </div>
                                             <div className="flex gap-2">
                                                 {/* Legend */}
-                                                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-slate-400"></div><span className="text-[10px] font-bold text-slate-500">{isZns ? '�� g?i' : 'Sent'}</span></div>
-                                                <div className="flex items-center gap-1.5"><div className={`w-2 h-2 rounded-full bg-[#ffa900]`}></div><span className="text-[10px] font-bold text-slate-500">{isZns ? '�� xem' : 'Open'}</span></div>
-                                                {!isZns && <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500"></div><span className="text-[10px] font-bold text-slate-500">Click</span></div>}
+                                                <div className="flex items-center gap-1.5">-<div className="w-2 h-2 rounded-full bg-slate-400">-</div>-<span className="text-[10px] font-bold text-slate-500">{isZns ? 'Đã gửi' : 'Sent'}</span>-</div>
+                                                <div className="flex items-center gap-1.5">-<div className={`w-2 h-2 rounded-full bg-[#ffa900]`}>-</div>-<span className="text-[10px] font-bold text-slate-500">{isZns ? 'Đã xem' : 'Open'}</span>-</div>
+                                                {!isZns && <div className="flex items-center gap-1.5">-<div className="w-2 h-2 rounded-full bg-emerald-500">-</div>-<span className="text-[10px] font-bold text-slate-500">Click</span>-</div>}
                                             </div>
                                         </div>
                                         <div className="p-6 h-[320px]">
@@ -531,7 +531,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                             ) : (
                                                 <div className="h-full flex flex-col items-center justify-center text-slate-300">
                                                     <BarChart2 className="w-12 h-12 mb-3 opacity-50" />
-                                                    <p className="text-xs font-bold">Chua c� d? li?u</p>
+                                                    <p className="text-xs font-bold">Chưa có dữ liệu</p>
                                                 </div>
                                             )}
                                         </div>
@@ -541,7 +541,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                         {funnelData.map((item, idx) => (
                                             <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
-                                                <div className="p-2 rounded-xl bg-slate-50 text-slate-500"><item.icon className="w-4 h-4" /></div>
+                                                <div className="p-2 rounded-xl bg-slate-50 text-slate-500">-<item.icon className="w-4 h-4" />-</div>
                                                 <div>
                                                     <p className="text-[10px] text-slate-400 font-bold uppercase">{item.name.split(' (')[0]}</p>
                                                     <p className="text-sm font-black text-slate-800">{(item.value || 0).toLocaleString()}</p>
@@ -556,7 +556,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     <Card className="border-slate-100 shadow-sm" noPadding>
                                         <div className="p-6 border-b border-slate-50">
                                             <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide flex items-center gap-2">
-                                                <ShieldCheck className="w-4 h-4 text-emerald-500" /> S?c kh?e g?i tin
+                                                <ShieldCheck className="w-4 h-4 text-emerald-500" /> Sức khỏe gửi tin
                                             </h3>
                                         </div>
                                         <div className="p-6">
@@ -590,22 +590,22 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="h-40 flex items-center justify-center text-xs text-slate-400 font-medium">Chua c� d? li?u</div>
+                                                <div className="h-40 flex items-center justify-center text-xs text-slate-400 font-medium">Chưa có dữ liệu</div>
                                             )}
 
                                             <div className="space-y-4 mt-2">
                                                 <div className="flex justify-between items-center text-xs">
                                                     <div className="flex items-center gap-2">
-                                                        <div className={`w-2 h-2 rounded-full ${isZns ? 'bg-rose-500' : 'bg-rose-500'}`}></div>
-                                                        <span className="text-slate-600 font-bold">{isZns ? 'L?i g?i (Failed)' : 'Email h?ng (Bounce)'}</span>
+                                                        <div className={`w-2 h-2 rounded-full ${isZns ? 'bg-rose-500' : 'bg-rose-500'}`}>-</div>
+                                                        <span className="text-slate-600 font-bold">{isZns ? 'Lỗi gửi (Failed)' : 'Email hỏng (Bounce)'}</span>
                                                     </div>
                                                     <span className="font-mono font-bold text-rose-500">{isZns ? `${(sentCount > 0 ? ((localCampaign.stats?.failed || 0) / sentCount * 100).toFixed(2) : '0.00')}% (${localCampaign.stats?.failed || 0})` : `${bounceRate}% (${stats.bounced})`}</span>
                                                 </div>
                                                 {!isZns && (
                                                     <div className="flex justify-between items-center text-xs">
                                                         <div className="flex items-center gap-2">
-                                                            <div className="w-2 h-2 rounded-full bg-amber-600"></div>
-                                                            <span className="text-slate-600 font-bold">H?y dang k� (Unsub)</span>
+                                                            <div className="w-2 h-2 rounded-full bg-amber-600">-</div>
+                                                            <span className="text-slate-600 font-bold">Hủy đăng ký (Unsub)</span>
                                                         </div>
                                                         <span className="font-mono font-bold text-amber-600">{unsubRate}% ({stats.unsubscribed})</span>
                                                     </div>
@@ -615,8 +615,8 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     </Card>
 
                                     <div className="p-5 bg-blue-50 border border-blue-100 rounded-[24px] relative overflow-hidden">
-                                        <div className="absolute -right-4 -top-4 w-20 h-20 bg-blue-200 rounded-full opacity-20 blur-xl"></div>
-                                        <h4 className="text-xs font-black text-blue-800 uppercase tracking-widest mb-3">Th�ng tin g?i</h4>
+                                        <div className="absolute -right-4 -top-4 w-20 h-20 bg-blue-200 rounded-full opacity-20 blur-xl">-</div>
+                                        <h4 className="text-xs font-black text-blue-800 uppercase tracking-widest mb-3">Thông tin gửi</h4>
                                         <div className="space-y-2 text-[11px]">
                                             <div className="flex justify-between">
                                                 <span className="text-blue-600/70 font-bold">Subject:</span>
@@ -627,7 +627,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                 <span className="text-blue-900 font-bold">{isZns ? localCampaign.templateId : localCampaign.senderEmail}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-blue-600/70 font-bold">{isZns ? 'H? th?ng:' : 'Tracking:'}</span>
+                                                <span className="text-blue-600/70 font-bold">{isZns ? 'Hệ thống:' : 'Tracking:'}</span>
                                                 <span className="text-blue-900 font-bold">{isZns ? 'Zalo Open API' : (localCampaign.trackingEnabled ? 'ON' : 'OFF')}</span>
                                             </div>
                                         </div>
@@ -654,7 +654,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     onClick={() => setPreviewType('main')}
                                     className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${previewType === 'main' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                                 >
-                                    <Mail className="w-3.5 h-3.5" /> {localCampaign.type === 'zalo_zns' ? 'N?i dung ZNS' : 'Email ch�nh'}
+                                    <Mail className="w-3.5 h-3.5" /> {localCampaign.type === 'zalo_zns' ? 'Nội dung ZNS' : 'Email chính'}
                                 </button>
                                 {localCampaign.type !== 'zalo_zns' && localCampaign.reminders?.map((rem, idx) => (
                                     <button
@@ -662,7 +662,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                         onClick={() => setPreviewType(rem.id!)}
                                         className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${previewType === rem.id ? 'bg-[#ffa900] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
-                                        <Bell className="w-3.5 h-3.5" /> Nh?c nh? {idx + 1}
+                                        <Bell className="w-3.5 h-3.5" /> Nhắc nhở {idx + 1}
                                     </button>
                                 ))}
                             </div>
@@ -671,14 +671,14 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                 <div className="lg:col-span-2 space-y-4">
                                     <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm min-h-[950px] flex flex-col">
                                         <div className="mb-4 pb-4 border-b border-slate-50">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ti�u d? b?n tin</p>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tiêu đề bản tin</p>
                                             <h4 className="text-sm font-bold text-slate-700">{previewContent.loading ? '...' : previewContent.subject}</h4>
                                         </div>
                                         <div className="h-[900px] bg-[#fcfcfc] rounded-2xl border border-slate-50 shadow-inner overflow-hidden relative">
                                             {previewContent.loading ? (
                                                 <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-3">
                                                     <RefreshCw className="w-8 h-8 animate-spin" />
-                                                    <p className="text-[10px] font-bold uppercase tracking-widest">�ang t?i preview...</p>
+                                                    <p className="text-[10px] font-bold uppercase tracking-widest">Đang tải preview...</p>
                                                 </div>
                                             ) : (
                                                 <iframe
@@ -695,19 +695,19 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm">
                                         <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4 flex items-center gap-2">
                                             <Clock className="w-4 h-4 text-blue-500" />
-                                            {previewType === 'main' ? 'L?ch tr�nh g?i ch�nh' : 'L?ch nh?c nh?'}
+                                            {previewType === 'main' ? 'Lịch trình gửi chính' : 'Lịch nhắc nhở'}
                                         </h4>
 
                                         {previewType === 'main' ? (
                                             <div className="space-y-4">
                                                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Tr?ng th�i</p>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Trạng thái</p>
                                                     <Badge variant={isSent ? 'success' : 'info'} className="text-[10px] font-bold">{localCampaign.status}</Badge>
                                                 </div>
                                                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Th?i gian</p>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Thời gian</p>
                                                     <p className="text-xs font-bold text-slate-700">
-                                                        {localCampaign.sentAt ? new Date(localCampaign.sentAt).toLocaleString('vi-VN') : (localCampaign.scheduledAt ? new Date(localCampaign.scheduledAt).toLocaleString('vi-VN') : 'D? ki?n ngay')}
+                                                        {localCampaign.sentAt ? new Date(localCampaign.sentAt).toLocaleString('vi-VN') : (localCampaign.scheduledAt ? new Date(localCampaign.scheduledAt).toLocaleString('vi-VN') : 'Dự kiến ngay')}
                                                     </p>
                                                 </div>
                                             </div>
@@ -716,15 +716,15 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                             return rem ? (
                                                 <div className="space-y-4">
                                                     <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
-                                                        <p className="text-[10px] font-bold text-orange-400 uppercase mb-1">Lo?i k�ch ho?t</p>
+                                                        <p className="text-[10px] font-bold text-orange-400 uppercase mb-1">Loại kích hoạt</p>
                                                         <p className="text-xs font-bold text-orange-700">
-                                                            {rem.type === 'no_open' ? 'G?i n?u chua m? Mail ch�nh' : (rem.type === 'no_click' ? 'G?i n?u chua nh?n link' : 'G?i cho t?t c?')}
+                                                            {rem.type === 'no_open' ? 'Gửi nếu chưa mở Mail chính' : (rem.type === 'no_click' ? 'Gửi nếu chưa nhấn link' : 'Gửi cho tất cả')}
                                                         </p>
                                                     </div>
                                                     <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                                                        <p className="text-[10px] font-bold text-blue-400 uppercase mb-1">Th?i gian ch?</p>
+                                                        <p className="text-[10px] font-bold text-blue-400 uppercase mb-1">Thời gian chờ</p>
                                                         <p className="text-xs font-bold text-blue-700">
-                                                            {rem.triggerMode === 'delay' ? `Sau ${rem.delayDays} ng�y ${rem.delayHours} gi?` : `V�o l�c: ${rem.scheduledAt ? new Date(rem.scheduledAt).toLocaleString('vi-VN') : 'Chua d?t'}`}
+                                                            {rem.triggerMode === 'delay' ? `Sau ${rem.delayDays} ngày ${rem.delayHours} giờ` : `Vào lúc: ${rem.scheduledAt ? new Date(rem.scheduledAt).toLocaleString('vi-VN') : 'Chưa đặt'}`}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -734,8 +734,8 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
 
                                     {previewType !== 'main' && (
                                         <div className="bg-emerald-50 p-6 rounded-[24px] border border-emerald-100">
-                                            <p className="text-[10px] font-bold text-emerald-600 uppercase mb-2 flex items-center gap-1.5"><Zap className="w-3.5 h-3.5" /> G?i �</p>
-                                            <p className="text-xs text-emerald-800 leading-relaxed font-medium">Nh?c nh? n�y gi�p tang th�m **15-20%** t? l? chuy?n d?i cho nh?ng ngu?i b? l? email d?u ti�n.</p>
+                                            <p className="text-[10px] font-bold text-emerald-600 uppercase mb-2 flex items-center gap-1.5">-<Zap className="w-3.5 h-3.5" /> Gợi ý</p>
+                                            <p className="text-xs text-emerald-800 leading-relaxed font-medium">Nhắc nhở này giúp tăng thêm **15-20%** tỷ lệ chuyển đổi cho những người bỏ lỡ email đầu tiên.</p>
                                         </div>
                                     )}
                                 </div>
@@ -746,7 +746,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                     {activeTab === 'audience' && (
                         <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-6">
                             <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <Users className="w-4 h-4" /> �?i tu?ng nh?n {isZns ? 'ZNS' : 'Email'} ({(totalAudience || 0).toLocaleString()})
+                                <Users className="w-4 h-4" /> Đối tượng nhận {isZns ? 'ZNS' : 'Email'} ({(totalAudience || 0).toLocaleString()})
                             </h4>
 
                             {localCampaign.status === 'sent' && audienceStats && (
@@ -757,34 +757,34 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     <div className="p-8 flex flex-col md:flex-row md:items-center justify-between gap-8 relative z-10">
                                         <div className="space-y-1">
                                             <h5 className="text-sm font-black text-amber-900 uppercase tracking-widest flex items-center gap-2">
-                                                <Zap className={`w-4 h-4 text-orange-500 ${statsLoading ? 'animate-bounce' : ''}`} /> Ph�n t�ch d?i tu?ng
+                                                <Zap className={`w-4 h-4 text-orange-500 ${statsLoading ? 'animate-bounce' : ''}`} /> Phân tích đối tượng
                                             </h5>
-                                            <p className="text-xs text-amber-700/70 font-medium tracking-tight">�?i tu?ng m� b?n ch?n d� thay d?i k? t? l?n g?i cu?i c�ng c?a chi?n d?ch n�y.</p>
+                                            <p className="text-xs text-amber-700/70 font-medium tracking-tight">Đối tượng mà bạn chọn đã thay đổi kể từ lần gửi cuối cùng của chiến dịch này.</p>
                                         </div>
                                         {statsLoading ? (
                                             <div className="flex-1 flex justify-center items-center py-2">
                                                 <div className="flex items-center gap-3 text-amber-600/50">
                                                     <Loader2 className="w-5 h-5 animate-spin" />
-                                                    <span className="text-[10px] font-bold uppercase tracking-widest">�ang ph�n t�ch d? li?u...</span>
+                                                    <span className="text-[10px] font-bold uppercase tracking-widest">Đang phân tích dữ liệu...</span>
                                                 </div>
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-10">
                                                 <div className="text-center">
-                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">�� g?i</p>
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Đã gửi</p>
                                                     <p className="text-xl font-black text-slate-700">{(audienceStats.count_sent || 0).toLocaleString()}</p>
                                                 </div>
-                                                <div className="w-px h-10 bg-amber-100"></div>
+                                                <div className="w-px h-10 bg-amber-100">-</div>
                                                 <div className="text-center">
-                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Hi?n t?i</p>
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Hiện tại</p>
                                                     <p className="text-xl font-black text-slate-700">{(audienceStats.total_current || 0).toLocaleString()}</p>
                                                 </div>
-                                                <div className="w-px h-10 bg-amber-100"></div>
+                                                <div className="w-px h-10 bg-amber-100">-</div>
                                                 <div className="text-center">
-                                                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Ch�nh l?ch</p>
+                                                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Chênh lệch</p>
                                                     <p className="text-xl font-black text-amber-600">+{(audienceStats.gap || 0).toLocaleString()}</p>
                                                     {localCampaign.count_unsubscribed > 0 && (
-                                                        <p className="text-[10px] font-bold text-rose-500 mt-1">(-{localCampaign.count_unsubscribed} h?y dang k�)</p>
+                                                        <p className="text-[10px] font-bold text-rose-500 mt-1">(-{localCampaign.count_unsubscribed} hủy đăng ký)</p>
                                                     )}
                                                 </div>
                                             </div>
@@ -796,7 +796,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                 className="!rounded-2xl shadow-xl shadow-amber-600/20"
                                                 icon={Send}
                                             >
-                                                G?i cho {audienceStats.gap} ngu?i m?i
+                                                Gợi ýcho {audienceStats.gap} người mới
                                             </Button>
                                         )}
                                     </div>
@@ -806,14 +806,14 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                             <Card noPadding className="border border-slate-100 shadow-sm overflow-hidden">
                                 <div className="px-6 py-4 bg-slate-50 border-b border-slate-100">
                                     <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                        <List className="w-4 h-4 text-blue-500" /> Danh s�ch m?c ti�u
+                                        <List className="w-4 h-4 text-blue-500" /> Danh sách mục tiêu
                                     </h5>
                                 </div>
                                 <div className="p-6 space-y-3">
                                     {targetLists.length > 0 ? targetLists.map(list => (
                                         <div key={list.id} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center border border-indigo-100"><List className="w-5 h-5" /></div>
+                                                <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center border border-indigo-100">-<List className="w-5 h-5" />-</div>
                                                 <div>
                                                     <p className="text-sm font-bold text-slate-800">{list.name}</p>
                                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Static List</p>
@@ -822,7 +822,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                             <span className="text-sm font-black text-slate-800 bg-slate-100 px-3 py-1 rounded-full">{(list.count || 0).toLocaleString()}</span>
                                         </div>
                                     )) : (
-                                        <p className="text-xs text-slate-400 italic text-center py-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100 font-bold uppercase tracking-widest">Kh�ng c� danh s�ch n�o du?c ch?n</p>
+                                        <p className="text-xs text-slate-400 italic text-center py-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100 font-bold uppercase tracking-widest">Không có danh sách nào được chọn</p>
                                     )}
                                 </div>
                             </Card>
@@ -830,14 +830,14 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                             <Card noPadding className="border border-slate-100 shadow-sm overflow-hidden">
                                 <div className="px-6 py-4 bg-slate-50 border-b border-slate-100">
                                     <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                        <Layers className="w-4 h-4 text-orange-500" /> Ph�n kh�c m?c ti�u
+                                        <Layers className="w-4 h-4 text-orange-500" /> Phân khúc mục tiêu
                                     </h5>
                                 </div>
                                 <div className="p-6 space-y-3">
                                     {targetSegments.length > 0 ? targetSegments.map(segment => (
                                         <div key={segment.id} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-orange-50 text-[#ca7900] flex items-center justify-center border border-orange-100"><Layers className="w-5 h-5" /></div>
+                                                <div className="w-10 h-10 bg-orange-50 text-[#ca7900] flex items-center justify-center border border-orange-100">-<Layers className="w-5 h-5" />-</div>
                                                 <div>
                                                     <p className="text-sm font-bold text-slate-800">{segment.name}</p>
                                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Dynamic Segment</p>
@@ -846,7 +846,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                             <span className="text-sm font-black text-slate-800 bg-slate-100 px-3 py-1 rounded-full">{(segment.count || 0).toLocaleString()}</span>
                                         </div>
                                     )) : (
-                                        <p className="text-xs text-slate-400 italic text-center py-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100 font-bold uppercase tracking-widest">Kh�ng c� ph�n kh�c n�o du?c ch?n</p>
+                                        <p className="text-xs text-slate-400 italic text-center py-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100 font-bold uppercase tracking-widest">Không có phân khúc nào được chọn</p>
                                     )}
                                 </div>
                             </Card>
@@ -854,14 +854,14 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                             <Card noPadding className="border border-slate-100 shadow-sm overflow-hidden">
                                 <div className="px-6 py-4 bg-slate-50 border-b border-slate-100">
                                     <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                        <Tag className="w-4 h-4 text-emerald-500" /> Nh�n m?c ti�u
+                                        <Tag className="w-4 h-4 text-emerald-500" /> Nhãn mục tiêu
                                     </h5>
                                 </div>
                                 <div className="p-6 space-y-3">
                                     {targetTags.length > 0 ? targetTags.map(tag => (
                                         <div key={tag.id} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center border border-emerald-100"><Tag className="w-5 h-5" /></div>
+                                                <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center border border-emerald-100">-<Tag className="w-5 h-5" />-</div>
                                                 <div>
                                                     <p className="text-sm font-bold text-slate-800">{tag.name}</p>
                                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Tag Group</p>
@@ -870,7 +870,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                             <span className="text-sm font-black text-slate-800 bg-slate-100 px-3 py-1 rounded-full">{tag.count.toLocaleString()}</span>
                                         </div>
                                     )) : (
-                                        <p className="text-xs text-slate-400 italic text-center py-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100 font-bold uppercase tracking-widest">Kh�ng c� nh�n n�o du?c ch?n</p>
+                                        <p className="text-xs text-slate-400 italic text-center py-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100 font-bold uppercase tracking-widest">Không có nhãn nào được chọn</p>
                                     )}
                                 </div>
                             </Card>
@@ -889,7 +889,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                         <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-6">
                             <div className="flex items-center justify-between">
                                 <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                    <Activity className="w-4 h-4" /> Nh?t k� tuong t�c
+                                    <Activity className="w-4 h-4" /> Nhật ký tương tác
                                 </h4>
                                 <button onClick={fetchLogs} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors">
                                     <RefreshCw className={`w-4 h-4 ${loadingLogs ? 'animate-spin' : ''}`} />
@@ -901,21 +901,21 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     <table className="w-full text-left">
                                         <thead className="bg-slate-50 border-b border-slate-100">
                                             <tr>
-                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Kh�ch h�ng</th>
-                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">H�nh d?ng</th>
-                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Chi ti?t</th>
-                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Th?i gian</th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Khách hàng</th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Hành động</th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Chi tiết</th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Thời gian</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
                                             {loadingLogs ? (
-                                                <tr><td colSpan={4} className="py-20 text-center text-slate-400 text-xs font-medium italic">�ang t?i d? li?u...</td></tr>
+                                                <tr>-<td colSpan={4} className="py-20 text-center text-slate-400 text-xs font-medium italic">Đang tải dữ liệu...</td>-</tr>
                                             ) : activityLogs.length === 0 ? (
                                                 <tr>
                                                     <td colSpan={4} className="py-20 text-center">
                                                         <History className="w-10 h-10 mx-auto mb-3 text-slate-200" />
-                                                        <p className="text-xs font-bold text-slate-400 uppercase">Chua c� ho?t d?ng n�o</p>
-                                                        <p className="text-[10px] text-slate-300 mt-1">D? li?u s? xu?t hi?n khi kh�ch h�ng m? mail ho?c click link.</p>
+                                                        <p className="text-xs font-bold text-slate-400 uppercase">Chưa có hoạt động nào</p>
+                                                        <p className="text-[10px] text-slate-300 mt-1">Dữ liệu sẽ xuất hiện khi Khách hàng mở mail hoặc click link.</p>
                                                     </td>
                                                 </tr>
                                             ) : activityLogs.map((log, idx) => (
@@ -993,30 +993,30 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                     onClose={() => setShowRefreshConfirm(false)}
                     onConfirm={handleTriggerRefresh}
                     isLoading={refreshLoading}
-                    title={`G?i email cho ${audienceStats?.gap} th�nh vi�n m?i?`}
+                    title={`Gửi email cho ${audienceStats?.gap} thành viên mới?`}
                     variant="warning"
-                    confirmLabel="X�c nh?n g?i ngay"
+                    confirmLabel="Xác nhận gửi ngay"
                     message={
                         <div className="space-y-4">
                             <p className="text-sm text-slate-500 font-medium leading-relaxed text-left">
-                                B?n dang k�ch ho?t g?i email ch�nh cho nh?ng th�nh vi�n m?i gia nh?p danh s�ch/ph�n kh�c m?c ti�u.
+                                Bạn đang kích hoạt gửi email chính cho những thành viên mới gia nhập danh sách/phân khúc mục tiêu.
                             </p>
                             <div className="space-y-4">
                                 <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex gap-4">
                                     <Bell className="w-5 h-5 text-amber-600 shrink-0" />
                                     <div className="space-y-1 text-left">
-                                        <p className="text-xs font-black text-amber-900 uppercase tracking-wider">Luu � v? Reminders</p>
+                                        <p className="text-xs font-black text-amber-900 uppercase tracking-wider">Lưu ý về Reminders</p>
                                         <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
-                                            C�c Reminder s? du?c l?p l?ch d?a tr�n th?i di?m t?ng th�nh vi�n nh?n du?c email ch�nh n�y. Th�nh vi�n m?i s? nh?n du?c to�n b? chu?i Reminder theo d�ng kho?ng th?i gian b?n d� thi?t l?p.
+                                            Các Reminder sẽ được lập lịch dựa trên thời điểm từng thành viên nhận được email chính này. Thành viên mới sẽ nhận được toàn bộ chuỗi Reminder theo đúng khoảng thời gian bạn đã thiết lập.
                                         </p>
                                     </div>
                                 </div>
                                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex gap-4">
                                     <Clock className="w-5 h-5 text-slate-400 shrink-0" />
                                     <div className="space-y-1 text-left">
-                                        <p className="text-xs font-black text-slate-900 uppercase tracking-wider">Reminder Ng�y c? d?nh</p>
+                                        <p className="text-xs font-black text-slate-900 uppercase tracking-wider">Reminder Ngày cố định</p>
                                         <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
-                                            N?u b?n c� Reminder theo ng�y c? d?nh d� qua, c�c th�nh vi�n m?i n�y s? t? d?ng b? qua ch�ng d? d?m b?o t�nh logic.
+                                            Nếu bạn có Reminder theo ngày cố định đã qua, các thành viên mới này sẽ tự động bỏ qua chúng để đảm bảo tính logic.
                                         </p>
                                     </div>
                                 </div>

@@ -184,10 +184,10 @@ const AudienceSplitModal: React.FC<AudienceSplitModalProps> = ({ sourceId, sourc
             if (data.length === 0) return toast.error('Vui lòng nhập danh sách Email/SĐT');
         } else if (tab === 'selection') {
             data = selectedIds;
-            if (data.length === 0) return toast.error('Vui lòng chọn khách hàng');
+            if (data.length === 0) return toast.error('Vui lòng chọn Khách hàng');
         } else if (tab === 'quantity') {
             if (splitQuantity <= 0) return toast.error('Số lượng tách phải lớn hơn 0');
-            if (splitQuantity > subscriberCount) return toast.error('Số lượng tách không thể lớn hơn tổng số hiện có');
+            if (splitQuantity > subscriberCount) return toast.error('Số lượng tách không thể lớn hơn Tổng số hiện có');
         }
 
         if (destType === 'new' && !destinationName.trim()) return toast.error('Nhập tên danh sách mới');
@@ -306,7 +306,7 @@ const AudienceSplitModal: React.FC<AudienceSplitModalProps> = ({ sourceId, sourc
                                             onRequestSelection();
                                             return;
                                         }
-                                        toast.error('Vui lòng chọn khách hàng từ danh sách trước khi sử dụng tính năng này.');
+                                        toast.error('Vui lòng chọn Khách hàng từ danh sách trước khi sử dụng tính năng này.');
                                         return;
                                     }
                                     setTab('selection')
@@ -331,10 +331,10 @@ const AudienceSplitModal: React.FC<AudienceSplitModalProps> = ({ sourceId, sourc
                                 <span className="text-[10px] font-black text-slate-500">i</span>
                             </div>
                             <p className="text-xs text-slate-500 leading-relaxed">
-                                {tab === 'quantity' && <span><strong>Tách theo số lượng:</strong> Hệ thống sẽ lấy ra một số lượng khách hàng nhất định từ nguồn (Ngẫu nhiên hoặc Mới nhất).</span>}
+                                {tab === 'quantity' && <span><strong>Tách theo số lượng:</strong> Hệ thống sẽ lấy ra một số lượng Khách hàng nhất định từ nguồn (Ngẫu nhiên hoặc Mới nhất).</span>}
                                 {tab === 'list' && <span><strong>Tách theo danh sách thủ công:</strong> Nhập danh sách Email hoặc Số điện thoại để hệ thống tìm và tách những người này ra.</span>}
-                                {tab === 'selection' && <span><strong>Tách theo lựa chọn:</strong> Chỉ tách {selectedIds.length} khách hàng mà bạn đã tích chọn từ danh sách bên ngoài.</span>}
-                                {tab === 'phone' && <span><strong>Lọc theo SĐT:</strong> Tách tất cả những khách hàng đang có số điện thoại hợp lệ ({'>='} 9 số) trong nguồn dữ liệu.</span>}
+                                {tab === 'selection' && <span><strong>Tách theo lựa chọn:</strong> Chỉ tách {selectedIds.length} Khách hàng mà bạn đã tích chọn từ danh sách bên ngoài.</span>}
+                                {tab === 'phone' && <span><strong>Lọc theo SĐT:</strong> Tách tất cả những Khách hàng đang có số điện thoại hợp lệ ({'>='} 9 số) trong nguồn dữ liệu.</span>}
                             </p>
                         </div>
 

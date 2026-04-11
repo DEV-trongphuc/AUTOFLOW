@@ -64,8 +64,8 @@ const UpdateTagConfig: React.FC<UpdateTagConfigProps> = ({ config, onChange, dis
         <Sparkles className="w-6 h-6 shrink-0" />
         <p className="text-[11px] font-bold leading-relaxed">
             {action === 'remove' 
-                ? 'Hệ thống sẽ GỠ bỏ các nhãn dưới đây khỏi hồ sơ khách hàng (nếu có).' 
-                : 'Hệ thống sẽ GẮN thêm các nhãn dưới đây vào hồ sơ khách hàng để phân loại.'}
+                ? 'Hệ thống sẽ GỠ bỏ các nhãn dưới đây khỏi hồ sơ Khách hàng (nếu có).' 
+                : 'Hệ thống sẽ GẮN thêm các nhãn dưới đây vào hồ sơ Khách hàng để phân loại.'}
         </p>
       </div>
 

@@ -7,6 +7,7 @@ import {
   ExternalLink, Zap, ChevronRight, LogOut, Globe,
   LayoutDashboard, Key, Bot, PanelLeftClose, PanelLeft, Facebook
 } from 'lucide-react';
+import { api } from '../../services/storageAdapter';
 
 interface SidebarProps {
   onClose: () => void;
@@ -20,6 +21,7 @@ interface NavItemConfig {
   icon: React.ElementType;
   badge?: string;
   prefetch?: () => Promise<any>; // [PERF] chunk prefetch on hover
+  prefetchApis?: string[]; // [PERF] preload static APIs on hover
 }
 
 const updateRecentModules = (href: string) => {
@@ -54,6 +56,12 @@ const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed:
     if (item.prefetch) {
       item.prefetch().catch(() => { }); // fire-and-forget
     }
+    // [PERF] Triggers data prefetching 
+    if (item.prefetchApis && item.prefetchApis.length > 0) {
+      item.prefetchApis.forEach(endpoint => {
+        api.get(endpoint).catch(() => {});
+      });
+    }
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -74,10 +82,10 @@ const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed:
       onMouseEnter={handleMouseEnter}
       className={({ isActive }) => `
         relative flex items-center ${isCollapsed ? 'justify-center px-3' : 'justify-between px-5'} py-3.5 mx-4 rounded-xl transition-all duration-300 group
-        ${isPending ? 'opacity-70' : ''}
+        ${isPending ? 'opacity-70 scale-[0.98]' : ''}
         ${isActive
-          ? 'bg-amber-50 text-amber-900 shadow-sm border border-amber-100/50'
-          : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700 border border-transparent'
+          ? 'bg-amber-500/10 backdrop-blur-md text-amber-950 shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-amber-500/20 shadow-[inset_0_1px_rgba(255,255,255,0.7)]'
+          : 'text-slate-500 hover:bg-slate-100/50 hover:text-slate-800 border border-transparent hover:backdrop-blur-sm'
         }
       `}
       title={isCollapsed ? item.name : undefined}
@@ -134,9 +142,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
   const mainNav: NavItemConfig[] = [
     { name: 'Trang chủ', href: '/', icon: LayoutDashboard, prefetch: () => import('../../pages/Dashboard') },
     { name: 'Chiến dịch', href: '/campaigns', icon: Send, prefetch: () => import('../../pages/Campaigns') },
-    { name: 'Automation', href: '/flows', icon: GitMerge, prefetch: () => import('../../pages/Flows') },
-    { name: 'Khách hàng', href: '/audience', icon: Users, prefetch: () => import('../../pages/Audience') },
-    { name: 'Quản lý Nhãn', href: '/tags', icon: Tag, prefetch: () => import('../../pages/Tags') },
+    { name: 'Automation', href: '/flows', icon: GitMerge, prefetch: () => import('../../pages/Flows'), prefetchApis: ['flows'] },
+    { name: 'Khách hàng', href: '/audience', icon: Users, prefetch: () => import('../../pages/Audience'), prefetchApis: ['segments', 'lists', 'tags', 'integrations'] },
+    { name: 'Quản lý Nhãn', href: '/tags', icon: Tag, prefetch: () => import('../../pages/Tags'), prefetchApis: ['tags'] },
     { name: 'Mẫu Email', href: '/templates', icon: FileEdit, prefetch: () => import('../../pages/Templates') },
   ];
 
@@ -159,7 +167,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
   const isAdmin = user.role === 'admin';
 
   return (
-    <div className={`flex flex-col h-full bg-white border-r border-slate-100 shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'} group/sidebar`}>
+    <div className={`flex flex-col h-full bg-slate-50/40 backdrop-blur-3xl border-r border-white/60 shadow-[4px_0_30px_rgba(0,0,0,0.03)] transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'} group/sidebar z-20 relative`}>
 
       {/* BRAND HEADER */}
       <div className={`h-28 ${isCollapsed ? 'px-3' : 'px-6'} flex items-center justify-center shrink-0 relative`}>
@@ -235,17 +243,17 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
       </nav>
 
       {/* SIDEBAR FOOTER - PROFILE & SETTING */}
-      <div className={`${isCollapsed ? 'p-2' : 'p-4'} border-t border-slate-100 bg-white space-y-2`}>
+      <div className={`${isCollapsed ? 'p-2' : 'p-4'} border-t border-white/50 bg-transparent space-y-2`}>
         {/* Profile & Logout Unified Container */}
-        <div className={`bg-amber-50/50 border border-amber-100/60 rounded-2xl flex items-center ${isCollapsed ? 'flex-col p-2' : 'p-1.5 gap-1'}`}>
+        <div className={`bg-white/40 border border-white/60 rounded-2xl flex items-center backdrop-blur-md shadow-[0_2px_8px_rgba(0,0,0,0.02)] ${isCollapsed ? 'flex-col p-2' : 'p-1.5 gap-1'}`}>
           <NavLink
               to="/profile"
               onClick={onClose}
               className={({ isActive }) => `
                 flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 flex-1'} py-2 rounded-xl transition-all duration-300
                 ${isActive
-                  ? 'bg-white text-amber-900 shadow-sm border border-amber-200/50 scale-[1.02]'
-                  : 'text-amber-800/80 hover:bg-white/50 border border-transparent hover:border-amber-200/30'}`
+                  ? 'bg-white/80 text-amber-900 shadow-sm border border-white scale-[1.02]'
+                  : 'text-slate-600 hover:bg-white/60 border border-transparent hover:border-white'}`
               }
               title={isCollapsed ? 'Thông tin cá nhân' : undefined}
             >

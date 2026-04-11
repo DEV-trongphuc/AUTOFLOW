@@ -216,7 +216,7 @@ const AdvancedExitTrigger: React.FC<AdvancedExitTriggerProps> = ({ config, onCha
                         </div>
                         <div>
                             <h4 className={`text-sm font-black ${isEnabled ? 'text-slate-800' : 'text-slate-500'}`}>{title}</h4>
-                            <p className="text-[10px] text-slate-400 font-medium mt-0.5">Xảy ra khi khách hàng thực hiện hành động này</p>
+                            <p className="text-[10px] text-slate-400 font-medium mt-0.5">Xảy ra khi Khách hàng thực hiện hành động này</p>
                         </div>
                     </div>
                     <div className={`w-10 h-6 rounded-full transition-colors relative shrink-0 ${isEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`}>
@@ -263,7 +263,7 @@ const AdvancedExitTrigger: React.FC<AdvancedExitTriggerProps> = ({ config, onCha
                 <AlertCircle size={16} className="shrink-0 mt-0.5 text-blue-600" />
                 <p className="font-medium leading-relaxed">
                     Khách hàng sẽ bị ngắt khỏi Flow <strong>NGAY LẬP TỨC</strong> khi thực hiện bất kỳ hành động nào được chọn ở trên.
-                    <br /><span className="opacity-70 font-normal">Ví dụ: Khách hàng mua hàng → Ngắt chuỗi chăm sóc khách hàng tiềm năng.</span>
+                    <br /><span className="opacity-70 font-normal">Ví dụ: Khách hàng mua hàng → Ngắt chuỗi chăm sóc Khách hàng tiềm năng.</span>
                 </p>
             </div>
         </div>

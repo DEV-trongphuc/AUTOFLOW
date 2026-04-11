@@ -290,7 +290,7 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
 
                         <div className="flex-1 max-w-md w-full">
                             <div className="flex justify-between items-end mb-2">
-                                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Tiến độ gửi</span>
+                                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Tiến đã gửi</span>
                                 <span className="text-xl font-black text-white tabular-nums">
                                     {formData.stats?.sent?.toLocaleString() || 0}
                                     <span className="text-sm text-emerald-500/70 mx-1">/</span>
@@ -352,7 +352,7 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                             ) : (
                                 <>
                                     <p className="text-xs text-rose-700 font-medium mt-1">
-                                        Có <strong>{auditData?.total_missing}</strong> liên hệ trong tệp {formData.target?.listIds.length ? 'CSV/Danh sách' : 'Phân đoạn'} này không đủ dữ liệu để gửi ZNS. Các tin nhắn này sẽ bị <strong>tự động bỏ qua</strong> để tránh lỗi gửi từ Zalo.
+                                        Có <strong>{auditData?.total_missing}</strong> liên hệ trong tệp {formData.target?.listIds.length ? 'CSV/Danh sách' : 'Phân đoạn'} này không đủ dữ liệu đã gửi ZNS. Các tin nhắn này sẽ bị <strong>tự động Bỏ qua</strong> để tránh lỗi gửi từ Zalo.
                                     </p>
                                     <div className="mt-4 flex flex-wrap gap-2">
                                         {Object.entries(auditData?.missing_field_stats || {}).map(([field, count]) => (
@@ -403,7 +403,7 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                                         </div>
                                         <div className="flex-1">
                                             <h4 className="text-sm font-bold text-blue-900 mb-1">Unsubscribe Link (CAN-SPAM Compliance)</h4>
-                                            <p className="text-xs text-blue-700">Link hủy đăng ký sẽ tự động được thêm vào cuối mỗi email bởi hệ thống.</p>
+                                            <p className="text-xs text-blue-700">Link Hủy đăng kýsẽ tự động được thêm vào cuối mỗi email bởi hệ thống.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -507,8 +507,8 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                                         <div className="w-4 h-4 bg-white rounded-full shadow-md"></div>
                                     </div>
                                     <div>
-                                        <p className={`text-xs font-bold ${isPersonalizedMode ? 'text-blue-700' : 'text-slate-600'}`}>Bật để gửi file khớp cá nhân</p>
-                                        {isPersonalizedMode && <p className="text-[9px] text-blue-500 font-medium mt-0.5">Tự động tìm file chứa Email khách hàng</p>}
+                                        <p className={`text-xs font-bold ${isPersonalizedMode ? 'text-blue-700' : 'text-slate-600'}`}>Bật đã gửi file khớp cá nhân</p>
+                                        {isPersonalizedMode && <p className="text-[9px] text-blue-500 font-medium mt-0.5">Tự động tìm file chứa Email Khách hàng</p>}
                                     </div>
                                 </div>
                                 {isPersonalizedMode ? <Filter className="w-5 h-5 text-blue-500" /> : <Layers className="w-5 h-5 text-slate-400" />}
@@ -588,7 +588,7 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                                         <p className="text-[10px] text-rose-600/80 mt-2 font-bold italic">
                                             {scheduleMode === 'now'
                                                 ? "⚠️ Hiện tại đã quá giờ gửi. Vui lòng chọn 'Lên lịch gửi' vào sáng mai để kích hoạt chiến dịch."
-                                                : "⚠️ Giờ bạn chọn nằm ngoài khung giờ cho phép. Vui lòng điều chỉnh lại thời gian trong khoảng 06:00 - 21:00."}
+                                                : "⚠️ Giờ bạn chọn nằm ngoài khung giờ cho phép. Vui lòng điều chỉnh lại Thời gian trong khoảng 06:00 - 21:00."}
                                         </p>
                                     </div>
                                 </div>
@@ -712,7 +712,7 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                                             <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md ${activeFlow.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{activeFlow.status}</span>
                                         </div>
                                         <div className="mt-1 flex items-center gap-2 text-[11px] font-medium opacity-80">
-                                            {activeFlow.status === 'active' ? <span className="text-emerald-700 flex items-center gap-1"><Play className="w-3 h-3" /> Automation sẽ chạy ngay khi Campaign gửi.</span> : <span className="text-amber-700 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Automation đang tắt. Cần kích hoạt để chạy.</span>}
+                                            {activeFlow.status === 'active' ? <span className="text-emerald-700 flex items-center gap-1"><Play className="w-3 h-3" /> Automation sẽ chạy ngay khi Campaign gửi.</span> : <span className="text-amber-700 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Automation đang tắt. Còn kích hoạt để chạy.</span>}
                                         </div>
                                     </div>
                                 </div>
@@ -739,7 +739,7 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                                     <div>
                                         <h4 className={`text-sm font-bold transition-colors ${connectFlow ? 'text-violet-900' : 'text-slate-700'}`}>Kích hoạt chăm sóc sau chiến dịch?</h4>
                                         <p className="text-[11px] text-slate-500 mt-0.5 font-medium max-w-sm">
-                                            {isAlreadySent ? "Không thể bật automation vì chiến dịch này đã bắt đầu chạy." : "Tự động gửi email chăm sóc khi khách hàng nhận được chiến dịch này."}
+                                            {isAlreadySent ? "Không thể bật automation vì chiến dịch này đã bắt đầu chạy." : "Tự động gửi email chăm sóc khi Khách hàng nhận được chiến dịch này."}
                                         </p>
                                     </div>
                                 </div>

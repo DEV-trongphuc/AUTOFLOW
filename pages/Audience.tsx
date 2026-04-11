@@ -41,13 +41,13 @@ import AudienceTipsModal from '../components/audience/AudienceTipsModal';
 import FilterPills from '../components/audience/FilterPills';
 import { Lightbulb } from 'lucide-react';
 
-const ITEMS_PER_PAGE = 50;
+const ITEMS_PER_PAGE = 20;
 
 // Column Definitions for Customization
 const COLUMN_DEFINITIONS = [
     { id: 'name', label: 'Tên', required: true },
     { id: 'phone', label: 'Số điện thoại', required: false },
-    { id: 'company', label: 'Công ty', required: false },
+    { id: 'company', label: 'Còng ty', required: false },
     { id: 'status', label: 'Trạng thái', required: false },
     { id: 'lastActivity', label: 'Hoạt động gần nhất', required: false },
     { id: 'leadScore', label: 'Điểm Lead', required: false },
@@ -103,7 +103,7 @@ const Audience: React.FC = () => {
     const [integrations, setIntegrations] = useState<any[]>([]); // New state for integrations
     const [tags, setTags] = useState<{ id: string; name: string }[]>([]);
     const [loading, setLoading] = useState(true);
-    const [stats, setStats] = useState({ total: 0, unsubscribed: 0, customer: 0 });
+    const [stats, setStats] = useState({ total: 0, unsubscribed: 0, customer: 0, lead: 0 });
 
     // Filters
     const [searchTerm, setSearchTerm] = useState('');
@@ -124,7 +124,7 @@ const Audience: React.FC = () => {
     // NEW: Column Customization & Items Per Page
     const [itemsPerPage, setItemsPerPage] = useState<number>(() => {
         const saved = localStorage.getItem('mailflow_items_per_page');
-        return saved ? parseInt(saved) : 50;
+        return saved ? parseInt(saved) : 20;
     });
 
     const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
@@ -180,6 +180,14 @@ const Audience: React.FC = () => {
     const [reportStats, setReportStats] = useState<any>(null);
     const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
     const pendingActionsRef = useRef<Record<string, NodeJS.Timeout>>({});
+    const initialLoadDone = useRef(false); // Prevent double-fetch on mount
+
+    // Form-protection modal state
+    const [formProtectionModal, setFormProtectionModal] = useState<{
+        isOpen: boolean;
+        listName: string;
+        linkedForms: { id: string; name: string }[];
+    }>({ isOpen: false, listName: '', linkedForms: [] });
 
     const fetchReportStats = async (period: string) => {
         const res = await api.get<any>(`audience_report?period=${period}`);
@@ -189,7 +197,13 @@ const Audience: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchReportStats(reportPeriod);
+        let didCancel = false;
+        const run = async () => {
+            const res = await api.get<any>(`audience_report?period=${reportPeriod}`);
+            if (!didCancel && res.success) setReportStats(res.data);
+        };
+        run();
+        return () => { didCancel = true; };
     }, [reportPeriod]);
 
     const backToContacts = React.useCallback(() => setSelectedSubscriber(null), []);
@@ -218,7 +232,16 @@ const Audience: React.FC = () => {
 
 
     useEffect(() => {
-        fetchInitialData();
+        let didCancel = false;
+        const guardedFetch = async () => {
+            if (initialLoadDone.current) return; // Already loaded (StrictMode remount guard)
+            initialLoadDone.current = true;
+            await fetchInitialData();
+            // If StrictMode unmounted us mid-flight, mark as not done so next real mount retries
+            if (didCancel) initialLoadDone.current = false;
+        };
+        guardedFetch();
+        return () => { didCancel = true; };
     }, []);
 
     const location = useLocation();
@@ -301,8 +324,9 @@ const Audience: React.FC = () => {
         setLoading(false);
     };
 
-    // Effect to fetch tab data
+    // Effect to fetch tab data (skip first render — fetchInitialData handles mount)
     useEffect(() => {
+        if (!initialLoadDone.current) return; // Let fetchInitialData handle the first load
         if (activeTab === 'contacts') fetchSubscribers(pagination.page);
         else if (activeTab === 'lists') fetchLists(listsPagination.page);
         else if (activeTab === 'segments') fetchSegments(segmentsPagination.page);
@@ -329,26 +353,27 @@ const Audience: React.FC = () => {
     }, [viewingGroup?.id, groupPagination.page, groupSearch, groupStatus]);
 
     const fetchInitialData = async () => {
+        // Set guard FIRST so filter useEffect cannot re-enter during async gaps
+        initialLoadDone.current = true;
         setLoading(true);
         try {
-            const [segRes, listRes, flowRes, tagRes, integRes, totalSubRes, unsubRes, customerRes] = await Promise.all([
+            const [segRes, listRes, flowRes, tagRes, integRes, totalSubRes, formsRes] = await Promise.all([
                 api.get<Segment[]>('segments'),
                 api.get<any[]>('lists'),
                 api.get<Flow[]>('flows'),
                 api.get<{ id: string, name: string }[]>('tags'),
                 api.get<any[]>('integrations'),
                 api.get<any>('subscribers?limit=1'),
-                api.get<any>('subscribers?status=unsubscribed&limit=1'),
-                api.get<any>('subscribers?status=customer&limit=1')
+                api.get<any[]>('forms'),  // Moved into parallel batch
             ]);
 
             if (segRes.success) {
-                setSegments(segRes.data); // Initial set
+                setSegments(segRes.data);
                 setAllSegments(segRes.data);
                 setSegmentsPagination(prev => ({ ...prev, total: segRes.data.length }));
             }
             if (listRes.success) {
-                setStaticLists(listRes.data); // Initial set
+                setStaticLists(listRes.data);
                 setAllStaticLists(listRes.data);
                 setListsPagination(prev => ({ ...prev, total: listRes.data.length }));
             }
@@ -356,8 +381,7 @@ const Audience: React.FC = () => {
             if (tagRes.success) setTags(tagRes.data);
             if (integRes.success) setIntegrations(integRes.data);
 
-            // Load custom field keys from all forms
-            const formsRes = await api.get<any[]>('forms');
+            // Parse custom field keys from forms (now fetched in parallel)
             if (formsRes.success && Array.isArray(formsRes.data)) {
                 const keyMap = new Map<string, string>();
                 formsRes.data.forEach((form: any) => {
@@ -371,11 +395,17 @@ const Audience: React.FC = () => {
             }
 
             const total = (totalSubRes.success && totalSubRes.data.pagination) ? totalSubRes.data.pagination.total : 0;
-            const unsubscribed = (unsubRes.success && unsubRes.data.pagination) ? unsubRes.data.pagination.total : 0;
-            const customer = (customerRes.success && customerRes.data.pagination) ? customerRes.data.pagination.total : 0;
-            setStats({ total, unsubscribed, customer });
+            const apiStats = totalSubRes.data?.globalStats || { customer: 0, unsubscribed: 0, lead: 0 };
+            
+            setStats(prev => ({ 
+                ...prev, 
+                total,
+                customer: apiStats.customer,
+                unsubscribed: apiStats.unsubscribed,
+                lead: apiStats.lead
+            }));
 
-            // Initial fetch of subscribers
+            // Initial subscriber fetch
             await fetchSubscribers(1);
         } catch (error) {
             console.error("Error loading initial data", error);
@@ -630,7 +660,7 @@ const Audience: React.FC = () => {
                 const listRes = await api.get<any[]>('lists');
                 if (listRes.success) setStaticLists(listRes.data);
 
-                showToast(`Đã gỡ ${res.data.affected} khách hàng khỏi danh sách`, 'success');
+                showToast(`Đã gỡ ${res.data.affected} Khách hàng khỏi danh sách`, 'success');
             } else {
                 showToast(res.message || 'Lỗi khi gỡ khỏi danh sách', 'error');
             }
@@ -676,12 +706,12 @@ const Audience: React.FC = () => {
                             newSet.delete(id);
                             setSelectedIds(newSet);
                         }
-                        showToast('Đã xóa khách hàng hoàn toàn khỏi hệ thống', 'success');
+                        showToast('Đã xóa Khách hàng hoàn toàn khỏi hệ thống', 'success');
                     } else {
-                        showToast(res.message || 'Lỗi khi xóa khách hàng', 'error');
+                        showToast(res.message || 'Lỗi khi xóa Khách hàng', 'error');
                     }
                 } catch (error) {
-                    showToast('Đã xảy ra lỗi hệ thống khi xóa khách hàng', 'error');
+                    showToast('Đã xảy ra lỗi hệ thống khi xóa Khách hàng', 'error');
                 } finally {
                     setLoading(false);
                     setConfirmModal(prev => ({ ...prev, isOpen: false }));
@@ -693,7 +723,7 @@ const Audience: React.FC = () => {
 
     const handleBulkDelete = async (options?: { targetType: string }) => {
         const isGlobal = options?.targetType === 'all';
-        const countLabel = isGlobal ? stats.total : selectedIds.size;
+        const countLabel = isGlobal ? pagination.total : selectedIds.size;
         const currentSelectedIds = Array.from(selectedIds);
 
         setConfirmModal({
@@ -715,6 +745,13 @@ const Audience: React.FC = () => {
                         payload.targetType = 'all';
                         payload.status = filterStatus;
                         payload.tag = filterTags.join(',');
+                        payload.search = debouncedSearch;
+                        payload.verified = filterVerify;
+                        payload.has_chat = filterHasChat;
+                        if (filterCustomAttrKey) {
+                            payload.custom_attr_key = filterCustomAttrKey;
+                            payload.custom_attr_value = filterCustomAttrValue;
+                        }
                     } else {
                         payload.subscriberIds = currentSelectedIds;
                     }
@@ -928,7 +965,7 @@ const Audience: React.FC = () => {
             <div className="animate-fade-in space-y-8 pb-20">
                 <PageHero 
                     title={<>Audience <span className="text-orange-100/80">Nexus</span></>}
-                    subtitle="Quản lý vòng đời khách hàng từ lúc đăng ký đến lúc chuyển đổi đa kênh."
+                    subtitle="Quản lý vòng đời Khách hàng từ lúc đăng ký đến lúc chuyển đổi đa kênh."
                     showStatus={true}
                     statusText="Database Online"
                     actions={[
@@ -954,7 +991,7 @@ const Audience: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-white p-4 md:p-6 rounded-2xl md:rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group cursor-default">
                         <div>
-                            <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-amber-600 transition-colors">Tổng liên hệ</p>
+                            <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-amber-600 transition-colors">Tỉ lệ hệ</p>
                             {loading ? (
                                 <div style={{ width: 100, height: 32, borderRadius: 8, background: '#e2e8f0', position: 'relative', overflow: 'hidden' }}><div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)', animation: 'sk-shimmer 1.4s ease-in-out infinite', transform: 'translateX(-100%)' }} /></div>
                             ) : (
@@ -1001,7 +1038,7 @@ const Audience: React.FC = () => {
                                 <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-indigo-600" />
                                 Báo cáo tăng trưởng & Hoạt động
                             </h4>
-                            <p className="text-xs text-slate-500 font-medium">Theo dõi lượng khách hàng mới và hoạt động tương tác</p>
+                            <p className="text-xs text-slate-500 font-medium">Theo dõi lượng Khách hàng mới và hoạt động tương tác</p>
                         </div>
                         <div className="w-full sm:w-48">
                             <Select
@@ -1233,51 +1270,63 @@ const Audience: React.FC = () => {
                                     onPageChange={(p) => setListsPagination(prev => ({ ...prev, page: p }))}
                                     onView={(list) => setViewingGroup({ id: list.id, name: list.name, type: 'list', count: list.count })}
                                     onEdit={setEditingList}
-                                    onDelete={(id) => setConfirmModal({
-                                        isOpen: true,
-                                        title: 'Xóa danh sách?',
-                                        message: 'Gỡ toàn bộ khách hàng khỏi danh sách này.',
-                                        variant: 'danger',
-                                        onConfirm: async () => {
-                                            setConfirmModal(prev => ({ ...prev, isOpen: false }));
-                                            const res = await api.delete(`lists/${id}`);
-                                            if (res.success) {
-                                                fetchLists(listsPagination.page);
-                                                showToast('Đã xóa danh sách thành công', 'success');
-                                            } else {
-                                                showToast(res.message, 'error');
-                                                // Nếu lỗi do đang trong Flow, cho phép xóa cưỡng chế
-                                                if (res.message && res.message.includes('đang được sử dụng trong Flow')) {
-                                                    setTimeout(() => {
-                                                        setConfirmModal({
-                                                            isOpen: true,
-                                                            title: 'Xác nhận xóa cưỡng chế',
-                                                            message: (
-                                                                <div className="space-y-3">
-                                                                    <p className="text-sm text-slate-600 font-bold">{res.message}</p>
-                                                                    <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-xs text-rose-600 font-medium leading-relaxed">
-                                                                        ⚠️ Cảnh báo: Việc xóa này có thể khiến các Automation Flow đang chạy gặp lỗi. Bạn vẫn muốn tiếp tục xóa cưỡng chế danh sách này?
+                                    onDelete={async (id) => {
+                                        // Check if this list is linked to any form before allowing delete
+                                        const list = staticLists.find(l => l.id === id);
+                                        const checkRes = await api.get<{ id: string; name: string }[]>(`forms?list_id=${id}`);
+                                        const linkedForms = (checkRes.success && Array.isArray(checkRes.data)) ? checkRes.data : [];
+
+                                        if (linkedForms.length > 0) {
+                                            // Block deletion — show form protection modal
+                                            setFormProtectionModal({ isOpen: true, listName: list?.name || id, linkedForms });
+                                            return;
+                                        }
+
+                                        setConfirmModal({
+                                            isOpen: true,
+                                            title: 'Xóa danh sách?',
+                                            message: 'Gỡ toàn bộ Khách hàng khỏi danh sách này.',
+                                            variant: 'danger',
+                                            onConfirm: async () => {
+                                                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                                                const res = await api.delete(`lists/${id}`);
+                                                if (res.success) {
+                                                    fetchLists(listsPagination.page);
+                                                    showToast('Đã xóa danh sách thành công', 'success');
+                                                } else {
+                                                    showToast(res.message, 'error');
+                                                    if (res.message && res.message.includes('đang được sử dụng trong Flow')) {
+                                                        setTimeout(() => {
+                                                            setConfirmModal({
+                                                                isOpen: true,
+                                                                title: 'Xác nhận xóa cưỡng chế',
+                                                                message: (
+                                                                    <div className="space-y-3">
+                                                                        <p className="text-sm text-slate-600 font-bold">{res.message}</p>
+                                                                        <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-xs text-rose-600 font-medium leading-relaxed">
+                                                                            ⚠️ Cònh báo: Việc xóa này có thể khiến các Automation Flow Đang chờ gặp lỗi. Bạn vẫn muốn tiếp tục xóa cưỡng chế danh sách này?
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                            ),
-                                                            variant: 'danger',
-                                                            requireConfirmText: 'FORCE DELETE',
-                                                            onConfirm: async () => {
-                                                                setConfirmModal(prev => ({ ...prev, isOpen: false }));
-                                                                const forceRes = await api.delete(`lists/${id}?force=1`);
-                                                                if (forceRes.success) {
-                                                                    fetchLists(listsPagination.page);
-                                                                    showToast('Đã xóa danh sách thành công (Cưỡng chế)', 'success');
-                                                                } else {
-                                                                    showToast(forceRes.message || 'Lỗi khi xóa cưỡng chế', 'error');
+                                                                ),
+                                                                variant: 'danger',
+                                                                requireConfirmText: 'FORCE DELETE',
+                                                                onConfirm: async () => {
+                                                                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                                                                    const forceRes = await api.delete(`lists/${id}?force=1`);
+                                                                    if (forceRes.success) {
+                                                                        fetchLists(listsPagination.page);
+                                                                        showToast('Đã xóa danh sách thành công (Còng chế)', 'success');
+                                                                    } else {
+                                                                        showToast(forceRes.message || 'Lỗi khi xóa cưỡng chế', 'error');
+                                                                    }
                                                                 }
-                                                            }
-                                                        });
-                                                    }, 300);
+                                                            });
+                                                        }, 300);
+                                                    }
                                                 }
                                             }
-                                        }
-                                    })}
+                                        });
+                                    }}
                                     onBulkDelete={handleBulkDeleteLists}
                                     onMerge={(listIds) => {
                                         const lists = staticLists.filter(l => listIds.includes(l.id));
@@ -1624,7 +1673,7 @@ const Audience: React.FC = () => {
                         if (res.success) {
                             fetchSubscribers(pagination.page);
                             if (viewingGroup) fetchGroupMembers(viewingGroup, groupPagination.page, groupSearch);
-                            showToast(`Đã gỡ nhãn khỏi ${res.data.affected} khách hàng`, 'success');
+                            showToast(`Đã gỡ nhãn khỏi ${res.data.affected} Khách hàng`, 'success');
                         } else {
                             showToast(res.message || 'Lỗi khi gỡ nhãn', 'error');
                         }
@@ -1641,7 +1690,7 @@ const Audience: React.FC = () => {
                         if (res.success) {
                             fetchSubscribers(pagination.page);
                             if (viewingGroup) fetchGroupMembers(viewingGroup, groupPagination.page, groupSearch);
-                            showToast(`Đã gỡ vĩnh viễn ${res.data?.count || 0} khách hàng khỏi phân khúc`, 'success');
+                            showToast(`Đã gỡ vĩnh viễn ${res.data?.count || 0} Khách hàng khỏi phân khúc`, 'success');
                         } else {
                             showToast(res.message || 'Lỗi khi gỡ khỏi phân khúc', 'error');
                         }
@@ -1784,7 +1833,7 @@ const Audience: React.FC = () => {
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-6 space-y-4 animate-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-bold text-slate-800">Chọn khoảng thời gian</h3>
+                            <h3 className="text-lg font-bold text-slate-800">Chọn khoảng Thời gian</h3>
                             <button onClick={() => setIsDateRangeModalOpen(false)} className="p-1 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors">
                                 <X className="w-5 h-5" />
                             </button>
@@ -1901,6 +1950,80 @@ const Audience: React.FC = () => {
                 isOpen={isTipsModalOpen}
                 onClose={() => setIsTipsModalOpen(false)}
             />
+
+            {/* Form Protection Modal */}
+            {formProtectionModal.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setFormProtectionModal(prev => ({ ...prev, isOpen: false }))} />
+                    <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+                        {/* Header */}
+                        <div className="flex items-start gap-4 mb-5">
+                            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
+                                <span className="text-2xl">🔗</span>
+                            </div>
+                            <div>
+                                <h3 className="text-base font-black text-slate-800">Không thể xóa danh sách</h3>
+                                <p className="text-sm text-slate-500 mt-1">
+                                    Danh sách <strong className="text-slate-700">"{formProtectionModal.listName}"</strong> đang được kết nối với form thu thập dữ liệu. Hãy hủy liên kết trước khi xóa.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Linked Forms */}
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
+                            <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-3">Form đang sử dụng danh sách này</p>
+                            <div className="space-y-2">
+                                {formProtectionModal.linkedForms.map(form => (
+                                    <div key={form.id} className="flex items-center justify-between bg-white rounded-lg border border-amber-100 px-3 py-2.5">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-7 h-7 bg-amber-100 rounded-lg flex items-center justify-center">
+                                                <FileText className="w-3.5 h-3.5 text-amber-600" />
+                                            </div>
+                                            <span className="text-sm font-bold text-slate-700">{form.name}</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setFormProtectionModal(prev => ({ ...prev, isOpen: false }));
+                                                navigate(`/forms/${form.id}`);
+                                            }}
+                                            className="text-[10px] font-black text-amber-600 hover:text-amber-800 uppercase tracking-wide px-2 py-1 hover:bg-amber-50 rounded-lg transition-colors"
+                                        >
+                                            Mở Form →
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Info */}
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-500 font-medium mb-5 leading-relaxed">
+                            💡 Vào Form → Chỉnh sửa → Đổi <strong>"Danh sách nhận liên hệ"</strong> sang danh sách khác hoặc để trống, sau đó quay lại xóa danh sách này.
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-2 justify-end">
+                            <button
+                                type="button"
+                                onClick={() => setFormProtectionModal(prev => ({ ...prev, isOpen: false }))}
+                                className="px-4 py-2 text-sm font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-all"
+                            >
+                                Đóng
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setFormProtectionModal(prev => ({ ...prev, isOpen: false }));
+                                    navigate('/forms');
+                                }}
+                                className="px-4 py-2 text-sm font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition-all shadow-sm"
+                            >
+                                Đến trang Forms
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 };

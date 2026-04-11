@@ -180,7 +180,7 @@ const GlobalWorkspaceView = React.memo(({
                                                     const toPromote = globalDbAssets.filter(a => selectedGlobalDocs.includes(a.name) && a.source !== 'workspace' && a.source !== 'global_training' && !(a as any).isGlobal);
                                                     if (toPromote.length === 0) return;
 
-                                                    const tid = toast.loading(`Đang chuyển ${toPromote.length} tệp thành Global...`);
+                                                    const tid = toast.loading(`Đang chờ ${toPromote.length} tệp thành Global...`);
                                                     try {
                                                         for (const asset of toPromote) {
                                                             await api.post('ai_org_chatbot', {
@@ -260,6 +260,7 @@ const GlobalWorkspaceView = React.memo(({
                                     >
                                         <FileText className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-slate-400" />
                                         Tài liệu
+
                                     </button>
                                     <button
                                         onClick={() => setGlobalTab('images')}
@@ -370,7 +371,7 @@ const GlobalWorkspaceView = React.memo(({
                                     <Database className={`w-10 h-10 ${isDarkTheme ? 'text-slate-600' : 'text-slate-200'}`} />
                                 </div>
                                 <h4 className={`text-lg font-bold mb-2 ${isDarkTheme ? 'text-slate-100' : 'text-slate-900'}`}>Chưa có tệp tin nào</h4>
-                                <p className={`text-sm max-w-xs ${isDarkTheme ? 'text-slate-400' : 'text-slate-400'}`}>Tải lên các tài liệu hoặc hình ảnh quan trọng để sử dụng chung cho nhiều Bot khác nhau.</p>
+                                <p className={`text-sm max-w-xs ${isDarkTheme ? 'text-slate-400' : 'text-slate-400'}`}>Tỉ lệ các tài liệu hoặc hình ảnh quan trọng để sử dụng chung cho nhiều Bot khác nhau.</p>
                             </div>
                         );
 
@@ -440,7 +441,7 @@ const GlobalWorkspaceView = React.memo(({
                                                             <button
                                                                 onClick={async (e) => {
                                                                     e.stopPropagation();
-                                                                    const tid = toast.loading('Đang chuyển...');
+                                                                    const tid = toast.loading('Đang chờ...');
                                                                     try {
                                                                         const data = await api.post<any>('ai_org_chatbot', {
                                                                             action: 'workspace_save', // Sync to both local and global

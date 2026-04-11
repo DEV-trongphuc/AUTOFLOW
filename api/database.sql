@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost:3306
--- Thời gian đã tạo: Th4 11, 2026 lúc 02:56 PM
+-- Thời gian đã tạo: Th4 12, 2026 lúc 01:54 AM
 -- Phiên bản máy phục vụ: 10.6.18-MariaDB-cll-lve-log
 -- Phiên bản PHP: 8.4.19
 
@@ -292,7 +292,7 @@ CREATE TABLE `ai_org_access_tokens` (
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `last_used_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -356,7 +356,7 @@ CREATE TABLE `ai_org_refresh_tokens` (
   `ip_address` varchar(45) DEFAULT NULL,
   `last_used_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -412,7 +412,7 @@ CREATE TABLE `ai_pdf_chunk_results` (
   `error_message` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp() COMMENT 'Thời gian cập nhật trạng thái chunk'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -603,6 +603,21 @@ CREATE TABLE `ai_workspace_versions` (
 -- --------------------------------------------------------
 
 --
+-- Cấu trúc bảng cho bảng `api_rate_limits`
+--
+
+CREATE TABLE `api_rate_limits` (
+  `id` int(11) NOT NULL,
+  `ip_address` varchar(45) NOT NULL,
+  `action` varchar(50) NOT NULL,
+  `attempts` int(11) DEFAULT 1,
+  `last_attempt_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `blocked_until` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Cấu trúc bảng cho bảng `campaigns`
 --
 
@@ -760,7 +775,7 @@ CREATE TABLE `flow_snapshots` (
   `flow_data` longtext NOT NULL,
   `created_by` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -791,8 +806,7 @@ CREATE TABLE `geoip_blocks` (
   `ip_to` int(10) UNSIGNED NOT NULL,
   `country_code` char(2) DEFAULT NULL,
   `country_name` varchar(64) DEFAULT NULL,
-  `city_name` varchar(64) DEFAULT NULL,
-  PRIMARY KEY (`ip_from`,`ip_to`)
+  `city_name` varchar(64) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1408,11 +1422,15 @@ CREATE TABLE `users` (
   `id` varchar(50) NOT NULL,
   `username` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `role` varchar(50) DEFAULT 'user',
+  `role` enum('admin','user') DEFAULT 'user',
   `email` varchar(255) DEFAULT NULL,
   `full_name` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
-  `last_login` timestamp NULL DEFAULT NULL
+  `last_login` timestamp NULL DEFAULT NULL,
+  `name` varchar(100) DEFAULT NULL,
+  `picture` text DEFAULT NULL,
+  `status` enum('pending','approved') DEFAULT 'pending',
+  `google_id` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1885,7 +1903,8 @@ ALTER TABLE `ai_chatbot_scenarios`
 -- Chỉ mục cho bảng `ai_chatbot_settings`
 --
 ALTER TABLE `ai_chatbot_settings`
-  ADD PRIMARY KEY (`property_id`);
+  ADD PRIMARY KEY (`property_id`),
+  ADD KEY `idx_acs_property_enabled` (`property_id`,`is_enabled`);
 
 --
 -- Chỉ mục cho bảng `ai_chat_queries`
@@ -1910,7 +1929,11 @@ ALTER TABLE `ai_conversations`
   ADD KEY `idx_visitor_prop_status` (`visitor_id`,`property_id`,`status`),
   ADD KEY `idx_conv_updated` (`updated_at`),
   ADD KEY `idx_prop_visitor` (`property_id`,`visitor_id`),
-  ADD KEY `idx_conv_prop_time` (`property_id`,`created_at`);
+  ADD KEY `idx_conv_prop_time` (`property_id`,`created_at`),
+  ADD KEY `idx_prop_last_msg_visitor` (`property_id`,`last_message_at`,`visitor_id`),
+  ADD KEY `idx_visitor_prefix` (`visitor_id`(10)),
+  ADD KEY `idx_prop_id` (`property_id`),
+  ADD KEY `idx_last_msg_at` (`last_message_at`);
 ALTER TABLE `ai_conversations` ADD FULLTEXT KEY `ft_conv_search` (`last_message`);
 
 --
@@ -1945,7 +1968,8 @@ ALTER TABLE `ai_messages`
   ADD KEY `idx_msg_conversation` (`conversation_id`),
   ADD KEY `idx_msg_created` (`created_at`),
   ADD KEY `idx_conversation_id_desc` (`conversation_id`,`id`),
-  ADD KEY `idx_msg_conv_sender_time` (`conversation_id`,`sender`,`created_at`);
+  ADD KEY `idx_msg_conv_sender_time` (`conversation_id`,`sender`,`created_at`),
+  ADD KEY `idx_conv_id` (`conversation_id`);
 
 --
 -- Chỉ mục cho bảng `ai_org_access_tokens`
@@ -2064,7 +2088,8 @@ ALTER TABLE `ai_training_docs`
   ADD KEY `idx_chatbot_id` (`chatbot_id`),
   ADD KEY `idx_status` (`status`),
   ADD KEY `idx_docs_property` (`property_id`),
-  ADD KEY `idx_global_workspace` (`property_id`,`is_global_workspace`,`is_active`);
+  ADD KEY `idx_global_workspace` (`property_id`,`is_global_workspace`,`is_active`),
+  ADD KEY `idx_atd_property_source` (`property_id`,`source_type`);
 ALTER TABLE `ai_training_docs` ADD FULLTEXT KEY `ft_content` (`name`,`content`);
 
 --
@@ -2107,6 +2132,13 @@ ALTER TABLE `ai_workspace_files`
 ALTER TABLE `ai_workspace_versions`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_file` (`workspace_file_id`);
+
+--
+-- Chỉ mục cho bảng `api_rate_limits`
+--
+ALTER TABLE `api_rate_limits`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_ip_action` (`ip_address`,`action`);
 
 --
 -- Chỉ mục cho bảng `campaigns`
@@ -2179,6 +2211,7 @@ ALTER TABLE `forms`
 -- Chỉ mục cho bảng `geoip_blocks`
 --
 ALTER TABLE `geoip_blocks`
+  ADD PRIMARY KEY (`ip_from`,`ip_to`),
   ADD KEY `idx_ip_range` (`ip_from`,`ip_to`);
 
 --
@@ -2387,13 +2420,13 @@ ALTER TABLE `subscribers`
   ADD KEY `idx_email` (`email`),
   ADD KEY `idx_phone` (`phone_number`),
   ADD KEY `idx_zalo_user_id` (`zalo_user_id`);
+ALTER TABLE `subscribers` ADD FULLTEXT KEY `ft_subscriber_search` (`email`,`first_name`,`last_name`,`phone_number`,`company_name`);
 
 --
 -- Chỉ mục cho bảng `subscriber_activity`
 --
 ALTER TABLE `subscriber_activity`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_unique_check` (`subscriber_id`,`type`,`reference_id`),
   ADD KEY `idx_flow_activity` (`flow_id`,`created_at`),
   ADD KEY `idx_campaign_activity` (`campaign_id`,`created_at`),
   ADD KEY `idx_reminder_activity` (`reminder_id`,`created_at`),
@@ -2402,17 +2435,17 @@ ALTER TABLE `subscriber_activity`
   ADD KEY `idx_activity_type_created` (`type`,`created_at`),
   ADD KEY `idx_sa_flow_sub_type` (`flow_id`,`subscriber_id`,`type`),
   ADD KEY `idx_sa_fid_rid_type` (`flow_id`,`reference_id`,`type`),
-  ADD KEY `idx_flow_branching` (`subscriber_id`,`type`,`created_at`),
-  ADD KEY `idx_worker_check` (`subscriber_id`,`type`,`flow_id`,`created_at`),
   ADD KEY `idx_camp_type_var` (`campaign_id`,`type`,`variation`),
   ADD KEY `idx_flow_type_var` (`flow_id`,`type`,`variation`),
-  ADD KEY `idx_sub_activity_type_ref` (`subscriber_id`,`type`,`reference_id`),
   ADD KEY `idx_sub_activity_campaign_lookup` (`campaign_id`,`type`),
   ADD KEY `idx_sub_activity_flow_lookup` (`flow_id`,`type`),
   ADD KEY `idx_activity_flow_ref_type` (`flow_id`,`reference_id`,`type`),
   ADD KEY `idx_activity_flow_time` (`flow_id`,`created_at`),
-  ADD KEY `idx_sub_type_date` (`subscriber_id`,`type`,`created_at`),
-  ADD KEY `idx_flow_type_ref` (`flow_id`,`type`,`reference_id`,`created_at`);
+  ADD KEY `idx_flow_type_ref` (`flow_id`,`type`,`reference_id`,`created_at`),
+  ADD KEY `idx_subact_type_ref` (`type`,`reference_id`),
+  ADD KEY `idx_subact_feed` (`subscriber_id`,`created_at`),
+  ADD KEY `idx_subact_flow_type` (`flow_id`,`type`),
+  ADD KEY `idx_subact_ref_type` (`reference_id`,`type`);
 
 --
 -- Chỉ mục cho bảng `subscriber_flow_states`
@@ -2441,7 +2474,8 @@ ALTER TABLE `subscriber_flow_states`
   ADD KEY `idx_flow_status_sched` (`status`,`scheduled_at`),
   ADD KEY `idx_status_created` (`status`,`created_at`),
   ADD KEY `idx_sub_flow_step` (`subscriber_id`,`flow_id`,`step_id`),
-  ADD KEY `idx_flow_sub_status` (`flow_id`,`subscriber_id`,`status`);
+  ADD KEY `idx_flow_sub_status` (`flow_id`,`subscriber_id`,`status`),
+  ADD KEY `idx_flow_states_step` (`flow_id`,`step_id`,`status`);
 
 --
 -- Chỉ mục cho bảng `subscriber_lists`
@@ -2449,7 +2483,8 @@ ALTER TABLE `subscriber_flow_states`
 ALTER TABLE `subscriber_lists`
   ADD PRIMARY KEY (`subscriber_id`,`list_id`),
   ADD KEY `idx_subscriber_lists_list` (`list_id`,`subscriber_id`),
-  ADD KEY `idx_list_sub` (`list_id`,`subscriber_id`);
+  ADD KEY `idx_list_sub` (`list_id`,`subscriber_id`),
+  ADD KEY `idx_sublists_list` (`list_id`);
 
 --
 -- Chỉ mục cho bảng `subscriber_notes`
@@ -2463,7 +2498,8 @@ ALTER TABLE `subscriber_notes`
 --
 ALTER TABLE `subscriber_tags`
   ADD PRIMARY KEY (`subscriber_id`,`tag_id`),
-  ADD KEY `idx_tag_lookup` (`tag_id`,`subscriber_id`);
+  ADD KEY `idx_tag_lookup` (`tag_id`,`subscriber_id`),
+  ADD KEY `idx_subtags_tag` (`tag_id`);
 
 --
 -- Chỉ mục cho bảng `system_logs`
@@ -2522,6 +2558,8 @@ ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `username` (`username`),
   ADD UNIQUE KEY `idx_email` (`email`),
+  ADD UNIQUE KEY `google_id` (`google_id`),
+  ADD UNIQUE KEY `email` (`email`),
   ADD KEY `idx_username` (`username`);
 
 --
@@ -2553,7 +2591,9 @@ ALTER TABLE `web_events`
   ADD KEY `idx_prop_created` (`property_id`,`created_at`),
   ADD KEY `idx_event_type` (`event_type`),
   ADD KEY `idx_created_at` (`created_at`),
-  ADD KEY `idx_visitor_created` (`visitor_id`,`created_at`);
+  ADD KEY `idx_visitor_created` (`visitor_id`,`created_at`),
+  ADD KEY `idx_visitor_evt` (`visitor_id`),
+  ADD KEY `idx_evt_created` (`created_at`);
 
 --
 -- Chỉ mục cho bảng `web_page_views`
@@ -2569,7 +2609,8 @@ ALTER TABLE `web_page_views`
   ADD KEY `idx_session_id` (`session_id`),
   ADD KEY `idx_visitor_id` (`visitor_id`),
   ADD KEY `idx_url_hash` (`url_hash`),
-  ADD KEY `idx_loaded_at` (`loaded_at`);
+  ADD KEY `idx_loaded_at` (`loaded_at`),
+  ADD KEY `idx_visitor_vid` (`visitor_id`);
 
 --
 -- Chỉ mục cho bảng `web_properties`
@@ -2616,7 +2657,9 @@ ALTER TABLE `web_visitors`
   ADD KEY `idx_vis_phone` (`phone`),
   ADD KEY `idx_subscriber_lookup` (`subscriber_id`),
   ADD KEY `idx_subscriber_id` (`subscriber_id`),
-  ADD KEY `idx_id_subscriber` (`id`,`subscriber_id`);
+  ADD KEY `idx_id_subscriber` (`id`,`subscriber_id`),
+  ADD KEY `idx_wv_id` (`id`),
+  ADD KEY `idx_wv_subscriber_id` (`subscriber_id`);
 
 --
 -- Chỉ mục cho bảng `zalo_activity_buffer`
@@ -2711,7 +2754,8 @@ ALTER TABLE `zalo_subscribers`
   ADD KEY `idx_list_interaction` (`zalo_list_id`,`last_interaction_at`),
   ADD KEY `idx_user_oa` (`zalo_user_id`,`oa_id`),
   ADD KEY `idx_zalo_user_id` (`zalo_user_id`),
-  ADD KEY `idx_zalo_user_oa` (`zalo_user_id`,`oa_id`);
+  ADD KEY `idx_zalo_user_oa` (`zalo_user_id`,`oa_id`),
+  ADD KEY `idx_zalo_uid` (`zalo_user_id`);
 
 --
 -- Chỉ mục cho bảng `zalo_subscriber_activity`
@@ -2850,6 +2894,12 @@ ALTER TABLE `ai_workspace_files`
 -- AUTO_INCREMENT cho bảng `ai_workspace_versions`
 --
 ALTER TABLE `ai_workspace_versions`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT cho bảng `api_rate_limits`
+--
+ALTER TABLE `api_rate_limits`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --

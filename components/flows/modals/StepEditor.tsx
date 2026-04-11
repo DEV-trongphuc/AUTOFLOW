@@ -36,11 +36,11 @@ const SplitTestConfig = ({ config, onChange, disabled }: any) => {
     <div className="space-y-6">
       <div className="p-5 bg-violet-50 text-violet-700 rounded-2xl border border-violet-100 flex gap-4">
         <Beaker className="w-6 h-6 shrink-0" />
-        <p className="text-xs font-bold leading-relaxed">Phân chia lưu lượng khách hàng ngẫu nhiên để thử nghiệm 2 kịch bản khác nhau.</p>
+        <p className="text-xs font-bold leading-relaxed">Phân chia lưu lượng Khách hàng ngẫu nhiên để thử nghiệm 2 kịch bản khác nhau.</p>
       </div>
       <div className="grid grid-cols-2 gap-8">
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase text-slate-400">Tỷ lệ nhánh A (%)</label>
+          <label className="text-[10px] font-black uppercase text-slate-400">Tỉ lệ nhánh A (%)</label>
           <input
             type="number"
             value={config.ratioA || 50}
@@ -50,7 +50,7 @@ const SplitTestConfig = ({ config, onChange, disabled }: any) => {
           />
         </div>
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase text-slate-400">Tỷ lệ nhánh B (%)</label>
+          <label className="text-[10px] font-black uppercase text-slate-400">Tỉ lệ nhánh B (%)</label>
           <input
             type="number"
             value={config.ratioB || 50}
@@ -229,7 +229,7 @@ const StepEditor: React.FC<StepEditorProps> = ({ step, onClose, onSave, onDelete
             <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex gap-3 text-amber-800">
               <AlertCircle className="w-6 h-6 shrink-0" />
               <p className="text-sm font-medium leading-relaxed">
-                Flow này đang chạy (Active). Để đảm bảo tính toàn vẹn dữ liệu cho các liên hệ đang chạy trong luồng, bạn <b>không thể xóa bước</b> khi Flow đang hoạt động.
+                Flow này Đang chờ (Active). Để đảm bảo tính toàn vẹn dữ liệu cho các liên hệ Đang chờ trong luồng, bạn <b>không thể xóa bước</b> khi Flow đang hoạt động.
               </p>
             </div>
             <p className="text-xs text-slate-500 text-center font-bold">

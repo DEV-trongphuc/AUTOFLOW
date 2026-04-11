@@ -285,7 +285,7 @@ const MessageList = React.memo(({
             {
                 id: 'research',
                 title: 'Chế độ Nghiên cứu',
-                desc: 'Truy cập Internet thời gian thực để cập nhật tin tức mới nhất.',
+                desc: 'Truy cập Internet Thời gian thực để cập nhật tin tức mới nhất.',
                 icon: <Globe className="w-5 h-5 text-brand" />,
                 active: isResearchMode,
                 onClick: () => {
@@ -311,7 +311,7 @@ const MessageList = React.memo(({
             {
                 id: 'image',
                 title: 'Chế độ Hình ảnh',
-                desc: 'Tạo ảnh nghệ thuật và quản lý thư viện hình ảnh AI.',
+                desc: 'Tạo ảnh nghệ thuật và quản lý thư vận hành ảnh AI.',
                 icon: <ImageIcon className="w-5 h-5 text-brand" />,
                 active: isImageGenMode,
                 onClick: () => {
@@ -377,7 +377,8 @@ const MessageList = React.memo(({
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDarkTheme ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-500/10 text-blue-600'}`}>
                             <FileText className="w-4 h-4" />
                         </div>
-                        <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkTheme ? 'text-slate-400' : 'text-slate-600'}`}>Phân tích Tài liệu</span>
+                        <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkTheme ? 'text-slate-400' : 'text-slate-600'}`}>Phân tích Tỉ lệ</span>
+
                     </div>
                     <div className={`flex items-center gap-2 grayscale hover:grayscale-0 transition-all opacity-40 hover:opacity-100 cursor-default`}>
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDarkTheme ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-500/10 text-emerald-600'}`}>

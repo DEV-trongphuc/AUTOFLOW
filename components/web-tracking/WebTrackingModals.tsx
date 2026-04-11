@@ -111,7 +111,7 @@ const WebTrackingModals: React.FC<WebTrackingModalsProps> = ({
                                 </div>
                                 <div>
                                     <h4 className="text-sm font-black text-slate-700 uppercase tracking-tight">Tích hợp AI Chatbot</h4>
-                                    <p className="text-[10px] text-slate-500 font-medium">Kích hoạt cửa sổ chat hỗ trợ khách hàng ngay lập tức.</p>
+                                    <p className="text-[10px] text-slate-500 font-medium">Kích hoạt cửa sổ chat hỗ trợ Khách hàng ngay lập tức.</p>
                                 </div>
                             </div>
                             <button

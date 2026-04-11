@@ -650,7 +650,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                         onClick={() => toggleChatbotStatus(settings.is_enabled ? 0 : 1)}
                                         className={`flex items-center gap-3 px-3 lg:px-5 py-2 rounded-lg lg:rounded-xl border cursor-pointer transition-all select-none shadow-sm h-9 lg:h-11 whitespace-nowrap ${isDarkTheme ? 'bg-slate-800 border-slate-700 hover:border-slate-600' : 'bg-white border-slate-200 hover:border-slate-400'}`}
                                     >
-                                        <span className={`text-[9px] lg:text-[10px] font-black uppercase tracking-tight ${settings.is_enabled ? (isDarkTheme ? 'text-slate-200' : 'text-slate-700') : 'text-slate-400'}`}>{settings.is_enabled ? 'Đang chạy' : 'Tạm dừng'}</span>
+                                        <span className={`text-[9px] lg:text-[10px] font-black uppercase tracking-tight ${settings.is_enabled ? (isDarkTheme ? 'text-slate-200' : 'text-slate-700') : 'text-slate-400'}`}>{settings.is_enabled ? 'Đang chờ' : 'Tạm dừng'}</span>
                                         <div className={`w-8 h-4 lg:w-9 lg:h-5 rounded-full p-0.5 transition-all duration-300 flex items-center ${settings.is_enabled ? 'bg-emerald-500 justify-end' : (isDarkTheme ? 'bg-slate-700 justify-start' : 'bg-slate-300 justify-start')}`}>
                                             <div className="w-3 h-3 lg:w-4 lg:h-4 bg-white rounded-full shadow-sm"></div>
                                         </div>
@@ -666,7 +666,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                     <div className={`w-12 h-12 rounded-full border flex items-center justify-center shadow-sm shrink-0 ${isDarkTheme ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'}`} style={{ color: 'var(--brand-primary)' }}><AlertTriangle className="w-6 h-6" /></div>
                                     <div className="flex-1">
                                         <h4 className={`text-sm font-bold flex items-center gap-2 uppercase tracking-tight ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`}>
-                                            Cần Huấn Luyện Dữ Liệu Mới
+                                            Còn Huấn Luyện Dữ Liệu Mới
                                             <span style={{ backgroundColor: 'var(--brand-surface-accent)', color: 'var(--brand-text-accent)' }} className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-black ${isDarkTheme ? 'bg-slate-700 text-slate-300' : ''}`}>
                                                 {docs.filter((d: any) => d.status === 'pending' && d.source_type !== 'folder').length.toLocaleString()} MỤC
                                             </span>
@@ -862,14 +862,14 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2 flex-wrap">
                                                         <span style={{ color: isDarkTheme ? '#e2e8f0' : '#1e293b', fontSize: 12, fontWeight: 900 }} className="truncate max-w-[220px]">
-                                                            {doc.name || doc.title || 'Tài liệu PDF'}
+                                                            {doc.name || doc.title || 'Tỉ lệ PDF'}
                                                         </span>
                                                         <span className={isCooldown ? '' : 'animate-pulse'} style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', padding: '2px 8px', borderRadius: 999, color: colors.text, background: colors.labelBg, textTransform: 'uppercase', flexShrink: 0 }}>
                                                             {isEmbedding ? '🧠 Tạo Embedding' : isCooldown ? '⏳ Chờ rate limit' : processing > 0 ? '⚡ Đang trích xuất' : '📄 Trích xuất'}
                                                         </span>
                                                     </div>
                                                     <div style={{ fontSize: 10, marginTop: 2, color: isDarkTheme ? '#94a3b8' : '#64748b' }}>
-                                                        {total > 0 ? `${done}/${total} đợt hoàn thành` : 'Khởi động...'}
+                                                        {total > 0 ? `${done}/${total} đợt Hoàn thành` : 'Khởi động...'}
                                                         {processing > 0 && <span style={{ marginLeft: 4, color: colors.text }}> · {processing} đang xử lý</span>}
                                                         {total > 0 && <span style={{ margin: '0 4px' }}>·</span>}
                                                         {total > 0 && <span style={{ fontWeight: 700 }}>{pct}%</span>}
@@ -951,7 +951,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                 <div className="px-8 pt-8 pb-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${isDarkTheme ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
-                                            Tài liệu sẵn sàng
+                                            Tỉ lệ sẵn sàng
                                         </span>
                                     </div>
                                     <h3 className={`text-2xl font-black ${isDarkTheme ? 'text-white' : 'text-slate-900'}`}>
@@ -1188,7 +1188,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                 </div>
                                                 <div>
                                                     <h4 className={`text-sm font-bold ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`}>Email thông báo khi có thông tin khách</h4>
-                                                    <p className="text-[10px] text-slate-500">Thiết lập nơi nhận khách hàng để đội Telesale CSKH khai thác.</p>
+                                                    <p className="text-[10px] text-slate-500">Thiết lập nơi nhận Khách hàng để đội Telesale CSKH khai thác.</p>
                                                 </div>
                                             </div>
 
@@ -1199,7 +1199,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                         type="text"
                                                         value={settings.notification_subject || ''}
                                                         onChange={(e: any) => setSettings({ ...settings, notification_subject: e.target.value })}
-                                                        placeholder="VD: [AutoCapture] Có khách hàng mới từ Hội thoại AI..."
+                                                        placeholder="VD: [AutoCapture] Có Khách hàng mới từ Hội thoại AI..."
                                                         className={`w-full h-11 px-4 border rounded-xl text-xs font-medium outline-none transition-all ${isDarkTheme ? 'bg-slate-900 border-slate-700 text-slate-200 focus:border-emerald-500' : 'bg-white border-slate-200 text-slate-700 focus:border-emerald-500'}`}
                                                     />
                                                 </div>
@@ -1320,7 +1320,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                 {/* User Message */}
                                                 <div className="flex justify-end">
                                                     <div className={`max-w-[85%] px-5 py-3.5 text-[14px] leading-[1.6] rounded-[1.5rem] rounded-tr-none shadow-lg font-medium ${isDarkTheme ? 'bg-brand text-white' : 'bg-slate-900 text-white shadow-slate-900/10'}`}>
-                                                        Cần tư vấn dịch vụ ạ
+                                                        Còn tư vấn dịch vụ ạ
                                                     </div>
                                                 </div>
                                             </div>
@@ -1413,7 +1413,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                         />
                                     </div>
                                     <p className="text-[11px] text-slate-500 font-medium px-1 mt-3">
-                                        <span className="font-bold text-emerald-500">Lưu ý:</span> Bạn chỉ cần nhập <span className={`font-bold ${isDarkTheme ? 'text-slate-300' : 'text-slate-700'}`}>Persona (Vai trò) & Tone (Giọng văn)</span>. Hệ thống sẽ tự động ghép nối với Knowledge Base và Context khách hàng.
+                                        <span className="font-bold text-emerald-500">Lưu ý:</span> Bạn chỉ cần nhập <span className={`font-bold ${isDarkTheme ? 'text-slate-300' : 'text-slate-700'}`}>Persona (Vai trò) & Tone (Giọng văn)</span>. Hệ thống sẽ tự động ghép nối với Knowledge Base và Context Khách hàng.
                                     </p>
                                 </div>
 
@@ -1468,7 +1468,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                     <p className="text-[9px] text-slate-500 leading-relaxed font-medium bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
                                                         <strong className="text-slate-300">Giải thích:</strong> Điểm tin cậy tối thiểu để AI sử dụng thông tin tìm thấy.
                                                         <br />• <span className="text-amber-600 font-bold">Cao (0.7 - 0.9):</span> AI cực kỳ "khắt khe", chỉ trả lời khi thông tin tìm thấy gần như khớp hoàn toàn. Tránh bịa đặt nhưng dễ trả lời "Dạ em chưa rõ" nếu câu hỏi hơi khác dữ liệu.
-                                                        <br />• <span className="text-blue-400 font-bold">Cân bằng (0.4 - 0.6):</span> Mức tiêu chuẩn giúp AI linh hoạt nhưng vẫn an toàn.
+                                                        <br />• <span className="text-blue-400 font-bold">Còn bằng (0.4 - 0.6):</span> Mức tiêu chuẩn giúp AI linh hoạt nhưng vẫn an toàn.
                                                         <br />• <span className="text-orange-400 font-bold">Thấp (0.1 - 0.3):</span> AI dễ dàng chấp nhận thông tin có liên quan mờ nhạt. Dễ gây sai lệch thông tin nếu dữ liệu không chuẩn.
                                                     </p>
                                                 </div>
@@ -1582,8 +1582,8 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                     <p className="text-[9px] text-slate-500 leading-relaxed font-medium bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
                                                         <strong className="text-slate-300">Giải thích:</strong> Kiểm soát tính ngẫu nhiên và sáng tạo của AI.
                                                         <br />• <span className="text-amber-600 font-bold">Chính xác (0.1 - 0.5):</span> AI bám sát 100% dữ liệu, trả lời nhất quán và nghiêm túc. Phù hợp cho hỗ trợ kỹ thuật, y tế hoặc tra cứu thông tin chính xác.
-                                                        <br />• <span className="text-blue-400 font-bold">Cân bằng (0.6 - 1.2):</span> AI trả lời tự nhiên, linh hoạt trong cách dùng từ như người thật. Mức **khuyên dùng** cho tư vấn bán hàng và CSKH.
-                                                        <br />• <span className="text-orange-400 font-bold">Sáng tạo (1.3 - 2.0):</span> Trả lời rất "bay bổng" và đa dạng. **Lưu ý:** Dễ bị hiện tượng "ảo giác" (nói những thông tin không có trong Knowledge Base).
+                                                        <br />• <span className="text-blue-400 font-bold">Còn bằng (0.6 - 1.2):</span> AI trả lời tự nhiên, linh hoạt trong cách dùng từ như người thật. Mức **khuyên dùng** cho tư vấn bán hàng và CSKH.
+                                                        <br />• <span className="text-orange-400 font-bold">Sáng tạo (1.3 - 2.0):</span> Tỉ lệ rất "bay bổng" và đa dạng. **Lưu ý:** Dễ bị hiện tượng "ảo giác" (nói những thông tin không có trong Knowledge Base).
                                                     </p>
                                                 </div>
 
@@ -1633,7 +1633,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                         { var: '{$today}', desc: 'Ngày hiện tại (Định dạng: dd/mm/yyyy).' },
                                         { var: '{$currentPage}', desc: 'URL trang web khách đang xem.' },
                                         { var: '{$activityContext}', desc: 'Lịch sử hành vi/click của khách.' },
-                                        { var: '{$isIdentified}', desc: 'Trạng thái ĐÃ ĐỊNH DANH hoặc CHƯA ĐỊNH DANH.' },
+            { var: "{$isIdentified}", desc: "Trạng thái ĐÃ ĐọNH DANH hoặc CHƯA ĐọNH DANH." },
                                     ].map((item, idx) => (
                                         <div key={idx} className={`p-3 rounded-xl border group/var hover:border-amber-200 transition-all relative ${isDarkTheme ? 'bg-slate-800/40 border-slate-700 shadow-inner' : 'bg-slate-50 border-slate-100'}`}>
                                             <div className="flex justify-between items-start mb-1">

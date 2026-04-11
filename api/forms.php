@@ -494,6 +494,11 @@ try {
     // --- CÁC METHOD KHÁC (GET/PUT/DELETE) GIỮ NGUYÊN ---
     switch ($method) {
         case 'GET':
+            // [PERF] Release session lock immediately unless we need to write to it.
+            // This prevents "Pending" requests in browser DevTools when multiple API calls
+            // are fired at once (e.g. on page mount).
+            if (session_id()) session_write_close();
+
             try {
                 if ($path) {
                     $stmt = $pdo->prepare("SELECT * FROM forms WHERE id = ?");
@@ -506,6 +511,7 @@ try {
                         $form['notificationEmails'] = $form['notification_emails'] ?? '';
                         $form['notificationCcEmails'] = $form['notification_cc_emails'] ?? '';
                         $form['notificationSubject'] = $form['notification_subject'] ?? '';
+                        // Use specialized index for count
                         $stmtS = $pdo->prepare("SELECT COUNT(*) FROM subscriber_activity WHERE type='form_submit' AND reference_id = ?");
                         $stmtS->execute([$path]);
                         $form['stats'] = ['submissions' => (int) $stmtS->fetchColumn()];
@@ -513,21 +519,22 @@ try {
                         jsonResponse(true, $form);
                     } else
                         jsonResponse(false, null, 'Không tìm thấy Form');
+                } elseif (!empty($_GET['list_id'])) {
+                    // NEW: Check which forms are linked to this list
+                    $stmt = $pdo->prepare("SELECT id, name FROM forms WHERE target_list_id = ?");
+                    $stmt->execute([$_GET['list_id']]);
+                    jsonResponse(true, $stmt->fetchAll(PDO::FETCH_ASSOC));
                 } else {
-                    // [FIX] Replaced correlated subquery with LEFT JOIN + GROUP BY.
-                    // Old: SELECT f.*, (SELECT COUNT(*) FROM subscriber_activity WHERE ...) runs once PER FORM ROW.
-                    // With 100k activity rows and 50 forms → 50 separate index scans.
-                    // New: single pass JOIN lets MySQL aggregate all counts in one scan.
+                    // [OPTIMIZED] Use correlated subquery for small rowsets (forms).
+                    // This hits the index (type, reference_id) directly per row,
+                    // avoiding the overhead of a large GROUP BY materialization.
                     $stmt = $pdo->query(
                         "SELECT f.*,
-                                COALESCE(sa_count.cnt, 0) as submission_count
+                                (SELECT COUNT(*) 
+                                 FROM subscriber_activity sa 
+                                 WHERE sa.type = 'form_submit' 
+                                 AND sa.reference_id = f.id) as submission_count
                          FROM forms f
-                         LEFT JOIN (
-                             SELECT reference_id, COUNT(*) as cnt
-                             FROM subscriber_activity
-                             WHERE type = 'form_submit'
-                             GROUP BY reference_id
-                         ) sa_count ON sa_count.reference_id = f.id
                          ORDER BY f.created_at DESC"
                     );
                     $data = array_map(function ($f) {
@@ -543,6 +550,7 @@ try {
                     }, $stmt->fetchAll());
                     jsonResponse(true, $data);
                 }
+
             } catch (Exception $e) {
                 jsonResponse(false, null, 'Lỗi khi tải danh sách biểu mẫu: ' . $e->getMessage());
             }

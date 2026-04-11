@@ -14,7 +14,7 @@ interface RichTextProps {
     bodyLinkColor?: string;
     minHeight?: string;
     customMergeTags?: { label: string; key: string }[];
-    usedColors?: string[]; // Màu đang dùng trong email để gợi ý trong tooltip
+    usedColors?: string[]; // Màu đang dùng trong email đã gửi ý trong tooltip
     fontSize?: string; // Font size từ block style panel để sync toolbar hiển thị
 }
 
@@ -329,10 +329,10 @@ const RichText: React.FC<RichTextProps> = ({ value, onChange, className = "", bo
 
                 {/* --- Group 4: Alignment --- */}
                 <div className="flex items-center gap-0.5 bg-white/50 p-0.5 rounded-lg border border-slate-200/50 mr-1">
-                    <ToolbarBtn icon={AlignLeft} cmd="justifyLeft" title="Căn trái" />
-                    <ToolbarBtn icon={AlignCenter} cmd="justifyCenter" title="Căn giữa" />
-                    <ToolbarBtn icon={AlignRight} cmd="justifyRight" title="Căn phải" />
-                    <ToolbarBtn icon={AlignJustify} cmd="justifyFull" title="Căn đều 2 bên" />
+                    <ToolbarBtn icon={AlignLeft} cmd="justifyLeft" title="Còn trái" />
+                    <ToolbarBtn icon={AlignCenter} cmd="justifyCenter" title="Còn giữa" />
+                    <ToolbarBtn icon={AlignRight} cmd="justifyRight" title="Còn phải" />
+                    <ToolbarBtn icon={AlignJustify} cmd="justifyFull" title="Còn đều 2 bên" />
                 </div>
 
                 {/* --- Group 5: Actions --- */}
@@ -361,7 +361,7 @@ const RichText: React.FC<RichTextProps> = ({ value, onChange, className = "", bo
                                         { label: 'Email', val: '{{email}}' },
                                         { label: 'Số điện thoại', val: '{{phoneNumber}}' },
                                         { label: 'Tên công ty', val: '{{companyName}}' },
-                                        { label: 'Link Hủy đăng ký', val: '{{unsubscribe_url}}' }
+                                        { label: 'Link Hủy đăng ký', value: '{{unsubscribe_url}}' }
                                     ].map((v) => (
                                         <button
                                             key={v.val}
@@ -418,7 +418,7 @@ const RichText: React.FC<RichTextProps> = ({ value, onChange, className = "", bo
                                     <span className="text-xs font-bold text-slate-500 flex items-center gap-1.5">
                                         <Lock className="w-3 h-3" /> Link Unsubscribe (Mặc định)
                                     </span>
-                                    <span className="text-[10px] text-slate-400 italic">User click sẽ tự động hủy đăng ký. Không cần sửa.</span>
+                                    <span className="text-[10px] text-slate-400 italic">User click sẽ tự động Hủy đăng kýKhông cần sửa.</span>
                                 </div>
                             ) : (
                                 <span className="text-xs text-orange-800 font-medium truncate flex-1 pl-2">Link: {activeLinkNode?.getAttribute('href')}</span>

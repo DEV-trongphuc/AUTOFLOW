@@ -239,7 +239,7 @@ const trackPurchase = async () => {
                         <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-100 mt-2">
                             <div>
                                 <h5 className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                                    <Bell className="w-4 h-4 text-[#ffa900]" /> Lệnh gửi email báo cáo
+                                    <Bell className="w-4 h-4 text-[#ffa900]" /> Lệnh gửi email Báo cáo
                                 </h5>
                                 <p className="text-[10px] text-slate-400 font-medium mt-1">Gửi email khi nhận sự kiện.</p>
                             </div>

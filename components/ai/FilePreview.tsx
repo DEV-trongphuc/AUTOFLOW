@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
     FileText, ExternalLink, Loader2, Save, Edit3, Copy, X, History, RotateCcw,
@@ -290,7 +290,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
                         const pageText = textContent.items.map((item: any) => item.str).join(' ');
                         fullText += `[Page ${i}]\n${pageText}\n\n`;
                     }
-                    setDocContent(fullText || '[Tài liệu PDF rỗng]');
+                    setDocContent(fullText || '[Tỉ lệ PDF rỗng]');
                     // Update main workspace state with extracted text for AI context
                     onUpdateDoc({ ...file, content: fullText });
                 } else if (isDoc) {
@@ -1186,7 +1186,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
                                 <p className="text-sm text-slate-500">
                                     {isDoc
                                         ? 'Định dạng tệp này cần được đồng bộ với máy chủ để xem trước. Vui lòng tải lên lại hoặc chuyển sang định dạng .docx'
-                                        : 'Tài liệu này không hỗ trợ xem trực tiếp. Vui lòng tải xuống để xem nội dung đầy đủ.'}
+                                        : 'Tỉ lệ này không hỗ trợ xem trực tiếp. Vui lòng tải xuống để xem nội dung đầy đủ.'}
                                 </p>
                                 <a
                                     href={activeDoc.previewUrl || activeDoc.base64}

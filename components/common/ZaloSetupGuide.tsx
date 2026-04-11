@@ -198,11 +198,11 @@ const ZaloSetupGuide: React.FC<ZaloSetupGuideProps> = ({ isOpen, onClose }) => {
                         <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-black text-sm">
                             5
                         </div>
-                        <h3 className="text-base font-black text-slate-800">Cấu hình Webhook (Cập nhật trạng thái)</h3>
+                        <h3 className="text-base font-black text-slate-800">Cấu hình Webhook (Cập nhật Trạng thái)</h3>
                     </div>
                     <div className="pl-10 space-y-3">
                         <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                            <p className="text-sm font-bold text-slate-700 mb-3">Để hệ thống tự động cập nhật trạng thái Template & Gửi tin:</p>
+                            <p className="text-sm font-bold text-slate-700 mb-3">Để hệ thống tự động cập nhật Trạng thái Template & Gửi tin:</p>
                             <ol className="list-decimal list-inside space-y-2 text-sm text-slate-600">
                                 <li>Vào <strong>Zalo Developers</strong> → <strong>Ứng dụng của tôi</strong></li>
                                 <li>Chọn App → <strong>Webhook</strong></li>
@@ -225,7 +225,7 @@ const ZaloSetupGuide: React.FC<ZaloSetupGuideProps> = ({ isOpen, onClose }) => {
 
                             <p className="text-sm font-bold text-slate-700 mt-4 mb-2">Đăng ký các sự kiện:</p>
                             <ul className="list-disc list-inside space-y-1 text-sm text-slate-600">
-                                <li><code>change_template_status</code> (Thay đổi trạng thái Template)</li>
+                                <li><code>change_template_status</code> (Thay đổi Trạng thái Template)</li>
                                 <li><code>user_feedback</code> (Người dùng phản hồi/đánh giá)</li>
                             </ul>
                         </div>
@@ -234,7 +234,7 @@ const ZaloSetupGuide: React.FC<ZaloSetupGuideProps> = ({ isOpen, onClose }) => {
 
                 {/* Additional Resources */}
                 <div className="border-t border-slate-200 pt-6">
-                    <h4 className="text-sm font-black text-slate-700 mb-3 uppercase tracking-wider">Tài liệu tham khảo</h4>
+                    <h4 className="text-sm font-black text-slate-700 mb-3 uppercase tracking-wider">Tỉ lệ tham khảo</h4>
                     <div className="space-y-2">
                         <a
                             href="https://developers.zalo.me/docs/official-account/bat-dau/tao-ung-dung-post-2626"
@@ -252,7 +252,7 @@ const ZaloSetupGuide: React.FC<ZaloSetupGuideProps> = ({ isOpen, onClose }) => {
                             className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 hover:underline"
                         >
                             <ExternalLink className="w-4 h-4" />
-                            Tài liệu Zalo Notification Service (ZNS)
+                            Tỉ lệ Zalo Notification Service (ZNS)
                         </a>
                         <a
                             href="https://developers.zalo.me/docs/api/official-account-api/phu-luc/ma-loi-post-4307"

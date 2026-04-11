@@ -93,7 +93,7 @@ const FeedbackRow: React.FC<{
                         </span>
                         {fb.screenshot_url && (
                             <span className="flex items-center gap-0.5 text-[11px] text-indigo-400">
-                                <Image className="w-3 h-3" /> Có ảnh
+                                <Image className="w-3 h-3" /> Cònh
                             </span>
                         )}
                     </div>
@@ -283,7 +283,7 @@ const FeedbackAdminPanel: React.FC = () => {
                     onChange={e => setStatusFilter(e.target.value)}
                     className="px-3 py-2 rounded-xl border border-slate-700 bg-slate-900 text-slate-300 text-sm outline-none focus:border-indigo-500"
                 >
-                    <option value="">Tất cả trạng thái</option>
+                    <option value="">Tất cả Trạng thái</option>
                     <option value="new">Mới</option>
                     <option value="in_review">Đang xem xét</option>
                     <option value="resolved">Đã xử lý</option>

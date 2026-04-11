@@ -26,8 +26,8 @@ const COMMON_LABELS: Record<string, string> = {
     'email_address': 'Địa chỉ Email',
     'first_name': 'Tên',
     'last_name': 'Họ',
-    'contact_name': 'Tên liên hệ',
-    'account_name': 'Tên khách hàng',
+    'contact_name': 'Tỉ lệ hệ',
+    'account_name': 'Tên Khách hàng',
     'mobile': 'Số di động',
     'office_tel': 'ĐT văn phòng',
     'owner_name': 'Nhân viên phụ trách',
@@ -894,7 +894,7 @@ const MisaSetup: React.FC<MisaSetupProps> = ({ onBack, onComplete, initialData }
                         )}
                     </div>
                     <p className="text-sm text-slate-500 mt-1">
-                        {step === 1 ? 'Kết nối với MISA CRM để tự động đồng bộ khách hàng.' : step === 2 ? 'Gán trường MISA vào các trường của hệ thống.' : step === 3 ? 'Đặt tên cho danh sách và chu kỳ đồng bộ.' : 'Kiểm tra kết quả mapping trước khi lưu.'}
+                        {step === 1 ? 'Kết nối với MISA CRM để tự động đồng bộ Khách hàng.' : step === 2 ? 'Gán trường MISA vào các trường của hệ thống.' : step === 3 ? 'Đặt tên cho danh sách và chu kỳ đồng bộ.' : 'Kiểm tra kết quả mapping trước khi lưu.'}
                     </p>
                 </div>
 

@@ -221,7 +221,7 @@ const MetaScenarioModal: React.FC<MetaScenarioModalProps> = ({ scenario, onClose
                     attachment_id: metaRes.data.data.attachment_id,
                     image_url: imageUrl || prev.image_url
                 }));
-                toast.success('Tải lên hoàn tất! Đã tự động cấu hình ID và URL.');
+                toast.success('Tỉ lệ hoàn tất! Đã tự động cấu hình ID và URL.');
             } else {
                 // If meta fails but server succeeded, we still have the URL
                 if (imageUrl) {
@@ -378,7 +378,7 @@ const MetaScenarioModal: React.FC<MetaScenarioModalProps> = ({ scenario, onClose
                                             { value: 'welcome', label: <div className="flex items-center gap-2"><Star className="w-4 h-4 text-amber-600" /><span>Quan tâm</span></div> },
                                             { value: 'first_message', label: <div className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-rose-500" /><span>Bắt chuyện</span></div> },
                                             { value: 'keyword', label: <div className="flex items-center gap-2"><MessageCircle className="w-4 h-4 text-indigo-500" /><span>Từ khóa</span></div> },
-                                            { value: 'ai_reply', label: <div className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-emerald-500" /><span>AI Trả lời</span></div> },
+                                            { value: 'ai_reply', label: <div className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-emerald-500" /><span>AI Tỉ lệ'</span></div> },
                                             { value: 'holiday', label: <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-rose-600" /><span>Ngày nghỉ</span></div> }
                                         ]}
                                         onChange={(val) => {
@@ -455,7 +455,7 @@ const MetaScenarioModal: React.FC<MetaScenarioModalProps> = ({ scenario, onClose
                                                 <Info className="w-3.5 h-3.5" /> Cơ chế hoạt động:
                                             </div>
                                             <ul className="text-[10px] text-slate-500 font-medium space-y-1 ml-5 list-disc leading-relaxed">
-                                                <li>Hệ thống sẽ dựa trên <b>Kiến thức đã Train</b> của AI để tự động trả lời khách hàng.</li>
+                                                <li>Hệ thống sẽ dựa trên <b>Kiến thức đã Train</b> của AI để tự động trả lời Khách hàng.</li>
                                                 <li>Tự động nhận diện Link Website thành <b>Nút bấm</b>.</li>
                                                 <li>Tự động nhận diện Số điện thoại thành <b>Nút gọi</b>.</li>
                                             </ul>
@@ -478,7 +478,7 @@ const MetaScenarioModal: React.FC<MetaScenarioModalProps> = ({ scenario, onClose
                                                 <button
                                                     onClick={() => setFormData({ ...formData, schedule_type: 'full' })}
                                                     className={`px-4 py-1.5 rounded-lg text-[10px] font-black transition-all ${formData.schedule_type === 'full' ? 'bg-white text-emerald-600 shadow-sm border border-slate-100' : 'text-slate-400'}`}
-                                                >Toàn thời gian</button>
+                                                >Toàn Thời gian</button>
                                                 <button
                                                     onClick={() => setFormData({ ...formData, schedule_type: 'custom' })}
                                                     className={`px-4 py-1.5 rounded-lg text-[10px] font-black transition-all ${formData.schedule_type === 'custom' ? 'bg-white text-emerald-600 shadow-sm border border-slate-100' : 'text-slate-400'}`}

@@ -104,7 +104,7 @@ const Purchases: React.FC = () => {
 const trackPurchase = async () => {
     const payload = {
         event_id: "${evtId}",
-        email: "khach_hang@example.com", // Email khách hàng
+        email: "khach_hang@example.com", // Email Khách hàng
         firstName: "Nguyen", // (Optional)
         lastName: "Van A",   // (Optional)
         total_value: 1500000,

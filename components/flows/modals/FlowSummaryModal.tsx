@@ -69,7 +69,7 @@ const FlowSummaryModal: React.FC<FlowSummaryModalProps> = ({ isOpen, onClose, fl
                                         <Activity className="w-6 h-6" />
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tỷ lệ hoàn tất</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tỉ lệ hoàn tất</p>
                                         <h3 className="text-3xl font-black tracking-tight">{completionRate}%</h3>
                                     </div>
                                 </div>
@@ -77,7 +77,7 @@ const FlowSummaryModal: React.FC<FlowSummaryModalProps> = ({ isOpen, onClose, fl
                                     <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
                                         <div className="h-full bg-blue-500 transition-all duration-1000" style={{ width: `${completionRate}%` }}></div>
                                     </div>
-                                    <p className="text-[10px] text-slate-500 font-bold">{completed.toLocaleString()} / {enrolled.toLocaleString()} khách hàng hoàn thành</p>
+                                    <p className="text-[10px] text-slate-500 font-bold">{completed.toLocaleString()} / {enrolled.toLocaleString()} Khách hàng Hoàn thành</p>
                                 </div>
                             </div>
 
@@ -141,7 +141,7 @@ const FlowSummaryModal: React.FC<FlowSummaryModalProps> = ({ isOpen, onClose, fl
                             color="from-amber-400 to-orange-500 shadow-amber-600/20"
                         />
                         <StatCard
-                            label="Gửi lỗi"
+                            label="Gửi lại"
                             value={stats.totalFailed || 0}
                             icon={AlertOctagon}
                             color="from-rose-500 to-red-600 shadow-rose-500/20"
@@ -151,18 +151,18 @@ const FlowSummaryModal: React.FC<FlowSummaryModalProps> = ({ isOpen, onClose, fl
                             value={stats.totalUnsubscribed || 0}
                             icon={UserMinus}
                             color="from-slate-600 to-slate-800 shadow-slate-600/20"
-                        />
+/>
                     </div>
                 </div>
 
                 {/* Footer */}
                 <div className="px-8 py-5 border-t border-slate-200 bg-white flex justify-end items-center gap-4">
-                    <p className="text-[11px] font-bold text-slate-400 italic">Dữ liệu được cập nhật theo thời gian thực từ hệ thống Tracking.</p>
+                    <p className="text-[11px] font-bold text-slate-400 italic">Dữ liệu được cập nhật theo Thời gian thực từ hệ thống Tracking.</p>
                     <button
                         onClick={onClose}
                         className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg"
                     >
-                        Đóng báo cáo
+                        Đóng Báo cáo
                     </button>
                 </div>
             </div>

@@ -1,4 +1,4 @@
-import * as React from 'react';
+﻿import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, RefreshCw, CheckCircle, XCircle, AlertTriangle, ExternalLink, HelpCircle, Loader2, Users, ShieldCheck, FileText } from 'lucide-react';
 import Button from '../common/Button';
@@ -63,7 +63,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
 
         const handleMessage = (event: MessageEvent) => {
             if (event.data.type === 'ZALO_AUTH_SUCCESS') {
-                showToast('K?t n?i Zalo OA th�nh c�ng!', 'success');
+                showToast('Kết nối Zalo OA thành công!', 'success');
                 setIsConnecting(false);
                 fetchOAs();
             }
@@ -81,7 +81,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                 setOas(res.data);
             }
         } catch (error) {
-            showToast('L?i khi t?i danh s�ch OA', 'error');
+            showToast('Lỗi khi tải danh sách OA', 'error');
         } finally {
             setIsLoading(false);
         }
@@ -104,13 +104,13 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                     `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
                 );
 
-                showToast('�ang m? c?a s? dang nh?p Zalo...', 'info');
+                showToast('�ang m? c?a s? dang nh?p Zalo...', 'info');
             } else {
-                showToast(res.message || 'L?i khi t?o URL k?t n?i', 'error');
+                showToast(res.message || 'Lỗi khi tạo URL kết nối', 'error');
                 setIsConnecting(false);
             }
         } catch (error) {
-            showToast('L?i k?t n?i API', 'error');
+            showToast('Lỗi kết nối API', 'error');
             setIsConnecting(false);
         }
     };
@@ -130,10 +130,10 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                     `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
                 );
             } else {
-                showToast(res.message || 'L?i khi t?o URL authorize', 'error');
+                showToast(res.message || 'Lỗi khi tạo URL authorize', 'error');
             }
         } catch (error) {
-            showToast('L?i k?t n?i API', 'error');
+            showToast('Lỗi kết nối API', 'error');
         }
     };
 
@@ -141,13 +141,13 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
         try {
             const res = await api.post(`zalo_oa?route=refresh-token&id=${oaId}`, {});
             if (res.success) {
-                showToast('�� l�m m?i token th�nh c�ng!', 'success');
+                showToast('�� l�m mới token th�nh c�ng!', 'success');
                 fetchOAs();
             } else {
-                showToast(res.message || 'L?i khi refresh token', 'error');
+                showToast(res.message || 'Lỗi khi refresh token', 'error');
             }
         } catch (error) {
-            showToast('L?i k?t n?i API', 'error');
+            showToast('Lỗi kết nối API', 'error');
         }
     };
 
@@ -178,7 +178,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                     }
                     return o;
                 }));
-                showToast('�� c?p nh?t H?n m?c v� Ch?t lu?ng', 'success');
+                showToast('�� c?p nh?t H?n m?c v� Ch?t lu?ng', 'success');
             }
         } catch (error) {
             console.error(error);
@@ -188,8 +188,8 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
     const handleDeleteClick = (oaId: string, oaName: string) => {
         setConfirmModal({
             isOpen: true,
-            title: 'Ng?t k?t n?i Zalo OA?',
-            message: `B?n c� ch?c ch?n mu?n ng?t k?t n?i "${oaName}"? M?i chi?n d?ch v� t? d?ng h�a li�n quan d?n OA n�y s? b? ?nh hu?ng.`,
+            title: 'Ngắt kết nối Zalo OA?',
+            message: `Bạn có chắc chắn muốn ngắt kết nối "${oaName}"? Mọi chiến dịch và tự động hóa liên quan đến OA này sẽ bị ảnh hưởng.`,
             variant: 'danger',
             requireConfirmText: 'DISCONNECT',
             onConfirm: () => handleDelete(oaId)
@@ -201,13 +201,13 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
         try {
             const res = await api.delete(`zalo_oa?id=${oaId}`);
             if (res.success) {
-                showToast('�� x�a OA th�nh c�ng', 'success');
+                showToast('�� x�a OA th�nh c�ng', 'success');
                 fetchOAs();
             } else {
-                showToast(res.message || 'L?i khi x�a OA', 'error');
+                showToast(res.message || 'Lỗi khi xóa OA', 'error');
             }
         } catch (error) {
-            showToast('L?i k?t n?i API', 'error');
+            showToast('Lỗi kết nối API', 'error');
         }
     };
 
@@ -266,12 +266,12 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-7 rounded-[32px] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] mb-8 transition-all hover:shadow-[0_15px_40px_rgb(0,0,0,0.04)]">
                 <div>
                     <div className="flex items-center gap-3.5 mb-1.5">
-                        <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20 ring-4 ring-blue-50">
-                            <Users className="w-5 h-5 text-white" />
+                        <div className="w-11 h-11 bg-gradient-to-br from-amber-600 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-600/20 ring-4 ring-amber-50">
+                            <Users className="w-5 h-5 !text-white" />
                         </div>
                         <div>
                             <h3 className="text-xl font-black text-slate-900 tracking-tight">Zalo Official Accounts</h3>
-                            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-0.5 opacity-80">Qu?n l� k?t n?i OA</p>
+                            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-0.5 opacity-80">Quản lý kết nối OA</p>
                         </div>
                     </div>
                 </div>
@@ -283,7 +283,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                         size="md"
                         className="rounded-2xl border-slate-200 bg-slate-50/50 hover:bg-white transition-all"
                     >
-                        Hu?ng d?n
+                        Hướng dẫn
                     </Button>
                     <Button
                         icon={Plus}
@@ -291,9 +291,9 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                         isLoading={isConnecting}
                         size="md"
                         variant="secondary"
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl shadow-lg shadow-blue-500/25 px-8 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border-0"
+                        className="bg-gradient-to-r from-amber-600 to-amber-600 hover:from-amber-600 hover:to-amber-700 !text-white rounded-2xl shadow-lg shadow-amber-600/25 px-8 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border-0"
                     >
-                        K?t n?i ngay
+                        Kết nối ngay
                     </Button>
                 </div>
             </div>
@@ -301,31 +301,31 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
             {/* OA List */}
             {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                    <Loader2 className="w-8 h-8 animate-spin text-amber-600" />
                 </div>
             ) : oas.length === 0 ? (
                 <div className="relative overflow-hidden bg-white border border-slate-100 rounded-[40px] p-16 text-center shadow-sm">
                     {/* Background decoration */}
-                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-blue-50/50 to-transparent pointer-events-none" />
-                    <div className="absolute -top-24 -left-24 w-64 h-64 bg-blue-500/5 blur-[80px] rounded-full" />
-                    <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-indigo-500/5 blur-[80px] rounded-full" />
+                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-amber-50/50 to-transparent pointer-events-none" />
+                    <div className="absolute -top-24 -left-24 w-64 h-64 bg-amber-600/5 blur-[80px] rounded-full" />
+                    <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-amber-600/5 blur-[80px] rounded-full" />
 
                     <div className="relative z-10 max-w-sm mx-auto">
-                        <div className="w-24 h-24 bg-gradient-to-br from-white to-slate-50 rounded-[32px] flex items-center justify-center mx-auto mb-8 shadow-xl shadow-blue-500/5 border border-white relative group">
-                            <div className="absolute inset-0 bg-blue-500/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                            <ExternalLink className="w-10 h-10 text-blue-500 relative z-10 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6" />
+                        <div className="w-24 h-24 bg-gradient-to-br from-white to-slate-50 rounded-[32px] flex items-center justify-center mx-auto mb-8 shadow-xl shadow-amber-600/5 border border-white relative group">
+                            <div className="absolute inset-0 bg-amber-600/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            <ExternalLink className="w-10 h-10 text-amber-600 relative z-10 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6" />
                         </div>
-                        <h4 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">S?n s�ng k?t n?i?</h4>
-                        <p className="text-sm text-slate-500 mb-10 leading-relaxed font-medium">K?t n?i Zalo Official Account c?a b?n ngay h�m nay d? b?t d?u khai th�c s?c m?nh c?a th�ng b�o ZNS t? d?ng.</p>
+                        <h4 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Sẵn sàng kết nối?</h4>
+                        <p className="text-sm text-slate-500 mb-10 leading-relaxed font-medium">Kết nối Zalo Official Account của bạn ngay hôm nay để bắt đầu khai thác sức mạnh của thông báo ZNS tự động.</p>
                         <Button
                             icon={Plus}
                             onClick={handleConnect}
                             isLoading={isConnecting}
                             size="lg"
                             variant="secondary"
-                            className="bg-slate-900 hover:bg-black text-white rounded-2xl shadow-xl shadow-slate-900/10 px-10 py-4 transition-all hover:-translate-y-1 active:scale-95 border-0"
+                            className="bg-slate-900 hover:bg-black !text-white rounded-2xl shadow-xl shadow-slate-900/10 px-10 py-4 transition-all hover:-translate-y-1 active:scale-95 border-0"
                         >
-                            K?t n?i ngay 1 ch?m
+                            Kết nối ngay 1 ch?m
                         </Button>
                     </div>
                 </div>
@@ -337,8 +337,8 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                             className="relative group bg-white border border-slate-100/80 rounded-[32px] p-7 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.04)] hover:shadow-[0_30px_70px_-15px_rgba(59,130,246,0.15)] hover:-translate-y-1.5 transition-all duration-500 overflow-hidden"
                         >
                             {/* Decorative Background Elements */}
-                            <div className="absolute -top-12 -right-12 w-40 h-40 bg-blue-500/5 blur-[60px] rounded-full group-hover:bg-blue-500/10 transition-all duration-700" />
-                            <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-indigo-500/5 blur-[50px] rounded-full group-hover:bg-indigo-500/8 transition-all duration-700" />
+                            <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-600/5 blur-[60px] rounded-full group-hover:bg-amber-600/10 transition-all duration-700" />
+                            <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-amber-600/5 blur-[50px] rounded-full group-hover:bg-amber-600/8 transition-all duration-700" />
 
                             <div className="relative z-10">
                                 <div className="flex justify-between items-start mb-8">
@@ -354,8 +354,8 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                                                     <div className="absolute inset-0 rounded-[22px] shadow-inner" />
                                                 </div>
                                             ) : (
-                                                <div className="w-16 h-16 rounded-[22px] bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                                                    <Users className="w-8 h-8 text-white" />
+                                                <div className="w-16 h-16 rounded-[22px] bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center shadow-lg shadow-amber-600/20">
+                                                    <Users className="w-8 h-8 !text-white" />
                                                 </div>
                                             )}
                                         </div>
@@ -378,8 +378,8 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                                     <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 mb-6 flex items-start gap-3 animate-pulse">
                                         <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
                                         <div>
-                                            <p className="text-xs text-rose-800 font-bold uppercase tracking-wider mb-0.5">H?t h?n k?t n?i</p>
-                                            <p className="text-[11px] text-rose-600 font-medium">Token d� h?t h?n. Vui l�ng authorize l?i d? ti?p t?c s? d?ng d?ch v?.</p>
+                                            <p className="text-xs text-rose-800 font-bold uppercase tracking-wider mb-0.5">Hết hạn kết nối</p>
+                                            <p className="text-[11px] text-rose-600 font-medium">Token đã hết hạn. Vui lòng authorize lại để tiếp tục sử dụng dịch vụ.</p>
                                         </div>
                                     </div>
                                 )}
@@ -393,7 +393,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                                                 variant="secondary"
                                                 icon={FileText}
                                                 onClick={() => setTemplateModal({ isOpen: true, oaId: oa.id })}
-                                                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20 border-0"
+                                                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-amber-600 to-amber-600 hover:from-amber-600 hover:to-amber-700 !text-white shadow-lg shadow-amber-600/20 border-0"
                                             >
                                                 Templates
                                             </Button>
@@ -401,14 +401,14 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                                             <button
                                                 onClick={() => handleAuthorize(oa.id)}
                                                 className="px-4 py-2.5 bg-slate-50 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-wider hover:bg-slate-100 hover:text-slate-700 transition-all border border-slate-100 active:scale-95"
-                                                title="C?p nh?t quy?n/Authorize l?i"
+                                                title="Cập nhật quyền/Authorize lại"
                                             >
                                                 <ShieldCheck className="w-3.5 h-3.5" />
                                             </button>
 
                                             <button
                                                 onClick={() => handleRefreshToken(oa.id)}
-                                                className="p-2.5 bg-white border border-slate-100 text-slate-400 rounded-2xl hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/30 transition-all shadow-sm active:scale-95"
+                                                className="p-2.5 bg-white border border-slate-100 text-slate-400 rounded-2xl hover:text-amber-600 hover:border-amber-200 hover:bg-amber-50/30 transition-all shadow-sm active:scale-95"
                                                 title="Refresh Token"
                                             >
                                                 <RefreshCw className="w-4 h-4" />
@@ -421,9 +421,9 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                                                 variant="secondary"
                                                 icon={ExternalLink}
                                                 onClick={() => handleAuthorize(oa.id)}
-                                                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0 shadow-lg shadow-amber-600/20"
+                                                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-amber-600 to-amber-600 hover:from-amber-600 hover:to-amber-700 !text-white border-0 shadow-lg shadow-amber-600/20"
                                             >
-                                                K�ch ho?t ngay
+                                                Kích hoạt ngay
                                             </Button>
 
                                             <Button
@@ -431,7 +431,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                                                 variant="secondary"
                                                 icon={FileText}
                                                 onClick={() => setTemplateModal({ isOpen: true, oaId: oa.id })}
-                                                className="px-5 py-3 rounded-2xl border-slate-100 bg-slate-50 text-slate-400 hover:bg-white hover:border-blue-200 hover:text-blue-600 shadow-sm"
+                                                className="px-5 py-3 rounded-2xl border-slate-100 bg-slate-50 text-slate-400 hover:bg-white hover:border-amber-200 hover:text-amber-600 shadow-sm"
                                             >
                                                 Templates
                                             </Button>
@@ -441,7 +441,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                                     <button
                                         onClick={() => handleDeleteClick(oa.id, oa.name)}
                                         className="p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all active:scale-95"
-                                        title="Ng?t k?t n?i"
+                                        title="Ngắt kết nối"
                                     >
                                         <Trash2 className="w-5 h-5" />
                                     </button>
@@ -476,10 +476,11 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                 message={confirmModal.message}
                 variant={confirmModal.variant}
                 requireConfirmText={confirmModal.requireConfirmText}
-                confirmLabel="Ng?t k?t n?i"
+                confirmLabel="Ngắt kết nối"
             />
         </div>
     );
 };
 
 export default ZaloOAManager;
+

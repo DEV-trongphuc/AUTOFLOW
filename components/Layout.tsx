@@ -3,6 +3,8 @@ import { useState } from 'react';
 import Sidebar from './Layout/Sidebar';
 import Header from './Layout/Header';
 import CommandPalette from './Layout/CommandPalette';
+import './Layout/particles.css';
+import './Layout/stagger.css';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -25,7 +27,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden font-sans text-slate-800 antialiased">
+    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden font-sans text-slate-800 antialiased bg-noise">
+      <div className="particle-container">
+        <div className="particle" />
+        <div className="particle" />
+        <div className="particle" />
+      </div>
       <CommandPalette />
 
       {/* Mobile Sidebar Backdrop */}

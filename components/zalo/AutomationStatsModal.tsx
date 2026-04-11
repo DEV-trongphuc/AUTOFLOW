@@ -95,7 +95,7 @@ const AutomationStatsModal: React.FC<AutomationStatsModalProps> = ({ scenario, o
                                 <Send className="w-6 h-6" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Đã gửi</p>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">đã gửi</p>
                                 <p className="text-2xl font-black text-slate-800">{summary.sent}</p>
                             </div>
                         </div>
@@ -104,7 +104,7 @@ const AutomationStatsModal: React.FC<AutomationStatsModalProps> = ({ scenario, o
                                 <MousePointer className="w-6 h-6" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lượt click</p>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lượt Click</p>
                                 <p className="text-2xl font-black text-slate-800">{summary.clicks}</p>
                             </div>
                         </div>
@@ -170,7 +170,7 @@ const AutomationStatsModal: React.FC<AutomationStatsModalProps> = ({ scenario, o
                             </h3>
                             <div className="w-full md:w-64">
                                 <Input
-                                    placeholder="Tìm theo tên khách hàng..."
+                                    placeholder="Tìm theo tên Khách hàng..."
                                     value={searchTerm}
                                     onChange={(e) => {
                                         setSearchTerm(e.target.value);

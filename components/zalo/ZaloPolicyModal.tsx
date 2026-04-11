@@ -13,7 +13,7 @@ const ZaloPolicyModal: React.FC<ZaloPolicyModalProps> = ({ isOpen, onClose }) =>
             <div className="space-y-6">
                 {/* Introduction */}
                 <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 italic text-slate-600 text-sm">
-                    Đây là loại tin nhắn Zalo Customer Service (CS) - công cụ tư vấn khách hàng chủ động thông qua Zalo ID, giúp tối ưu hóa chuyển đổi mà không tốn chi phí tin nhắn ZNS.
+                    Đây là loại tin nhắn Zalo Customer Service (CS) - công cụ tư vấn Khách hàng chủ động thông qua Zalo ID, giúp tối ưu hóa chuyển đổi mà không tốn chi phí tin nhắn ZNS.
                 </div>
 
                 <div className="space-y-4">
@@ -32,11 +32,11 @@ const ZaloPolicyModal: React.FC<ZaloPolicyModalProps> = ({ isOpen, onClose }) =>
                             </li>
                             <li className="flex gap-2 text-xs font-semibold text-slate-600 leading-relaxed">
                                 <span className="text-emerald-500 font-bold text-sm leading-none shrink-0 mt-0.5">✔</span>
-                                <span>Gửi qua Zalo ID (dành cho khách hàng <strong>đã tương tác OA</strong>).</span>
+                                <span>Gửi qua Zalo ID (dành cho Khách hàng <strong>đã tương tác OA</strong>).</span>
                             </li>
                             <li className="flex gap-2 text-xs font-semibold text-slate-600 leading-relaxed">
                                 <span className="text-emerald-500 font-bold text-sm leading-none shrink-0 mt-0.5">✔</span>
-                                <span>Tự động kích hoạt khi khách hàng nhấn Menu hoặc nhắn tin cho OA.</span>
+                                <span>Tự động kích hoạt khi Khách hàng nhấn Menu hoặc nhắn tin cho OA.</span>
                             </li>
                         </ul>
                     </div>
@@ -56,7 +56,7 @@ const ZaloPolicyModal: React.FC<ZaloPolicyModalProps> = ({ isOpen, onClose }) =>
                             </li>
                             <li className="flex gap-2 text-xs font-semibold text-slate-600 leading-relaxed">
                                 <span className="text-blue-500 font-bold text-sm leading-none shrink-0 mt-0.5">ℹ</span>
-                                <span>Cần được Zalo xét duyệt Template trước khi gửi.</span>
+                                <span>Còn được Zalo xét duyệt Template trước khi gửi.</span>
                             </li>
                             <li className="flex gap-2 text-xs font-semibold text-slate-600 leading-relaxed">
                                 <span className="text-blue-500 font-bold text-sm leading-none shrink-0 mt-0.5">ℹ</span>
@@ -74,7 +74,7 @@ const ZaloPolicyModal: React.FC<ZaloPolicyModalProps> = ({ isOpen, onClose }) =>
                     <div>
                         <h5 className="text-sm font-black text-amber-900 mb-1 tracking-tight">Cập nhật Quy định 2026</h5>
                         <p className="text-xs text-amber-800 font-medium leading-relaxed">
-                            Từ ngày 1/1/2026, đối tác có thể gửi tin Tư vấn - CS <strong>miễn phí không giới hạn</strong> trong khung 48h và tối đa khách hàng có tương tác với OA trong vòng 7 ngày.
+                            Từ ngày 1/1/2026, đối tác có thể gửi tin Tư vấn - CS <strong>miễn phí không giới hạn</strong> trong khung 48h và tối đa Khách hàng có tương tác với OA trong vòng 7 ngày.
                         </p>
                     </div>
                 </div>
@@ -91,7 +91,7 @@ const ZaloPolicyModal: React.FC<ZaloPolicyModalProps> = ({ isOpen, onClose }) =>
                         </div>
                         <div className="bg-white/50 p-3 rounded-xl border border-rose-200/50 flex flex-col gap-1">
                             <span className="text-[10px] font-black text-rose-500 uppercase">Tránh làm phiền</span>
-                            <span className="text-[11px] font-bold text-slate-700 leading-tight">Đảm bảo tần suất gửi hợp lý, đừng khiến khách hàng khó chịu và nhấn Report.</span>
+                            <span className="text-[11px] font-bold text-slate-700 leading-tight">Đảm bảo tần suất gửi hợp lý, đừng khiến Khách hàng khó chịu và nhấn Report.</span>
                         </div>
                     </div>
                 </div>

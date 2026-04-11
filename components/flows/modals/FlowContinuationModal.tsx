@@ -54,7 +54,7 @@ const FlowContinuationModal: React.FC<FlowContinuationModalProps> = ({
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={isAffected ? "Flow đang chạy - Quyết định tiếp tục" : "Thông báo thêm bước"}>
+        <Modal isOpen={isOpen} onClose={onClose} title={isAffected ? "Flow Đang chờ - Quyết định tiếp tục" : "Thông báo thêm bước"}>
             <div className="space-y-6">
                 {/* Warning/Info Banner */}
                 {isAffected ? (
@@ -63,7 +63,7 @@ const FlowContinuationModal: React.FC<FlowContinuationModalProps> = ({
                         <div>
                             <h4 className="text-sm font-bold text-amber-900 mb-1">Flow đang hoạt động</h4>
                             <p className="text-xs text-amber-700 leading-relaxed">
-                                Bạn đang thêm bước mới vào flow đang chạy. Hiện có <strong>{completedUsers.total} người dùng</strong> đã hoàn thành flow cũ.
+                                Bạn đang thêm bước mới vào flow Đang chờ Hiện có <strong>{completedUsers.total} người dùng</strong> đã Hoàn thành flow cũ.
                                 Họ có nên tiếp tục thực hiện các bước mới không?
                             </p>
                         </div>
@@ -74,7 +74,7 @@ const FlowContinuationModal: React.FC<FlowContinuationModalProps> = ({
                         <div>
                             <h4 className="text-sm font-bold text-emerald-900 mb-1">Không ảnh hưởng người dùng cũ</h4>
                             <p className="text-xs text-emerald-700 leading-relaxed">
-                                Có <strong>{completedUsers.total} người dùng</strong> đã hoàn thành, nhưng họ kết thúc ở nhánh khác.
+                                Có <strong>{completedUsers.total} người dùng</strong> đã Hoàn thành, nhưng họ kết thúc ở nhánh khác.
                                 Việc thêm bước này sẽ <strong>không ảnh hưởng</strong> đến họ.
                             </p>
                         </div>
@@ -101,7 +101,7 @@ const FlowContinuationModal: React.FC<FlowContinuationModalProps> = ({
                     <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
                         <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide mb-3 flex items-center gap-2">
                             <GitBranch className="w-4 h-4" />
-                            Người dùng đã hoàn thành theo nhánh
+                            Người dùng đã Hoàn thành theo nhánh
                         </h4>
                         <div className="space-y-2">
                             {Object.entries(completedUsers.byBranch).map(([branch, count]) => (
@@ -140,7 +140,7 @@ const FlowContinuationModal: React.FC<FlowContinuationModalProps> = ({
                                         <h5 className="text-sm font-bold text-slate-800">Tiếp tục tất cả</h5>
                                     </div>
                                     <p className="text-xs text-slate-600">
-                                        Tất cả {completedUsers.total} người dùng đã hoàn thành sẽ tiếp tục thực hiện các bước mới từ nhánh họ đã hoàn thành.
+                                        Tất cả {completedUsers.total} người dùng đã Hoàn thành sẽ tiếp tục thực hiện các bước mới từ nhánh họ đã Hoàn thành.
                                     </p>
                                 </div>
                             </div>
@@ -165,7 +165,7 @@ const FlowContinuationModal: React.FC<FlowContinuationModalProps> = ({
                                         <h5 className="text-sm font-bold text-slate-800">Dừng tại đây</h5>
                                     </div>
                                     <p className="text-xs text-slate-600">
-                                        Giữ báo cáo những người đã hoàn thành flow cũ. Họ sẽ không thực hiện các bước mới.
+                                        Giữ Báo cáo những người đã Hoàn thành flow cũ. Họ sẽ không thực hiện các bước mới.
                                         Chỉ người dùng mới sẽ chạy flow đầy đủ.
                                     </p>
                                 </div>

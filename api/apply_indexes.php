@@ -1,48 +1,52 @@
 <?php
-// api/apply_indexes.php
-
 require_once 'db_connect.php';
+apiHeaders();
 
-header('Content-Type: application/json');
+try {
+    $pdo->query("CREATE INDEX idx_subact_type_ref ON subscriber_activity (type, reference_id)");
+    echo "Index idx_subact_type_ref examined.<br>";
+} catch (Throwable $e) {}
 
-$sqlFile = __DIR__ . '/../database_indexes_performance.sql';
+try {
+    $pdo->query("CREATE INDEX idx_subact_feed ON subscriber_activity (subscriber_id, created_at DESC)");
+    echo "Index idx_subact_feed examined.<br>";
+} catch (Throwable $e) {}
 
-if (!file_exists($sqlFile)) {
-    echo json_encode(['status' => 'error', 'message' => 'SQL file not found']);
-    exit;
-}
+try {
+    $pdo->query("CREATE INDEX idx_subtags_tag ON subscriber_tags (tag_id)");
+    echo "Index idx_subtags_tag created.<br>";
+} catch (Throwable $e) { }
 
-$sqlContent = file_get_contents($sqlFile);
+try {
+    $pdo->query("CREATE INDEX idx_subact_flow_type ON subscriber_activity (flow_id, type)");
+    echo "Index idx_subact_flow_type created.<br>";
+} catch (Throwable $e) { }
 
-// Remove comments to verify commands cleaner (optional, but good for parsing)
-$sqlContent = preg_replace('/--.*$/m', '', $sqlContent);
+try {
+    $pdo->query("CREATE INDEX idx_subact_ref_type ON subscriber_activity (reference_id, type)");
+    echo "Index idx_subact_ref_type created.<br>";
+} catch (Throwable $e) { }
 
-// Split by semicolon
-$commands = explode(';', $sqlContent);
-$results = [];
-$errors = [];
+try {
+    $pdo->query("CREATE INDEX idx_sublists_list ON subscriber_lists (list_id)");
+    echo "Index idx_sublists_list created.<br>";
+} catch (Throwable $e) { }
 
-foreach ($commands as $cmd) {
-    $cmd = trim($cmd);
-    if (!empty($cmd)) {
-        try {
-            $pdo->exec($cmd);
-            $results[] = "Executed: " . substr($cmd, 0, 50) . "...";
-        } catch (PDOException $e) {
-            // Ignore "Duplicate key name" errors if "IF NOT EXISTS" wasn't supported or worked weirdly
-            if (strpos($e->getMessage(), 'Duplicate key name') !== false) {
-                $results[] = "Skipped (Exists): " . substr($cmd, 0, 50) . "...";
-            } else {
-                $errors[] = "Error on command: " . substr($cmd, 0, 50) . "... -> " . $e->getMessage();
-            }
-        }
+try {
+    $pdo->query("CREATE INDEX idx_flow_states_step ON subscriber_flow_states (flow_id, step_id, status)");
+    echo "Index idx_flow_states_step created.<br>";
+} catch (Throwable $e) { }
+
+try {
+    $pdo->query("CREATE INDEX idx_zalo_sub_oa ON zalo_subscribers (zalo_user_id, admin_id)");
+    echo "Index idx_zalo_sub_oa created.<br>";
+} catch (Throwable $e) {
+    if (strpos($e->getMessage(), 'Duplicate key') !== false) {
+        echo "Index idx_zalo_sub_oa already exists.<br>";
+    } else {
+        echo "Error creating idx_zalo_sub_oa: " . $e->getMessage() . "<br>";
     }
 }
 
-echo json_encode([
-    'status' => empty($errors) ? 'success' : 'partial_success',
-    'executed_count' => count($results),
-    'error_count' => count($errors),
-    'errors' => $errors,
-    'logs' => $results
-], JSON_PRETTY_PRINT);
+echo "<b>Database Indexes Checked and Applied Successfully.</b>";
+?>

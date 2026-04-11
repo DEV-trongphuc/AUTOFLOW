@@ -167,8 +167,8 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
         const isSegment = group.type === 'segment';
         const actionName = isList ? 'gỡ khỏi danh sách' : (isSegment ? 'gỡ khỏi phân khúc vĩnh viễn' : 'gỡ nhãn');
         const msg = ids.length === 1
-            ? `Bạn có chắc chắn muốn ${actionName} "${group.name}" khách hàng này?`
-            : `Bạn có chắc chắn muốn ${actionName} "${group.name}" cho ${ids.length} khách hàng đã chọn?`;
+            ? `Bạn có chắc chắn muốn ${actionName} "${group.name}" Khách hàng này?`
+            : `Bạn có chắc chắn muốn ${actionName} "${group.name}" cho ${ids.length} Khách hàng đã chọn?`;
 
         setConfirmState({
             isOpen: true,
@@ -205,7 +205,7 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
         setConfirmState({
             isOpen: true,
             ids: [],
-            message: `Hệ thống tìm thấy ${invalidCount} khách hàng bị lỗi (Bounced/Error) hoặc đã Hủy đăng ký trong phân khúc này. Bạn có muốn dọn dẹp (loại bỏ hoàn toàn) họ khỏi phân khúc không?`,
+            message: `Hệ thống tìm thấy ${invalidCount} Khách hàng bị lỗi (Bounced/Error) hoặc đã Hủy đăng kýtrong phân khúc này. Bạn có muốn dọn dẹp (loại bỏ hoàn toàn) họ khỏi phân khúc không?`,
             type: 'cleanup'
         });
     };
@@ -401,7 +401,7 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
             </head><body>
             <div class="report-header">Báo cáo Phân tích Chiến lược AI - Phân khúc: ${group.name}</div>
             
-            <div class="meta-info"><span class="meta-label">BÁO CÁO PHÂN TÍCH CHUYÊN SÂU PHÂN KHÚC</span> '${group.name}'</div>
+            <div class="meta-info"><span class="meta-label">Báo cáo PHÂN TÍCH CHUYÊN SÂU PHÂN KHÚC</span> '${group.name}'</div>
             <div class="meta-info"><span class="meta-label">Ngày:</span> ${formattedDate}</div>
             <div class="meta-info"><span class="meta-label">Người thực hiện:</span> Chuyên gia Marketing Strategy & AI Data Analyst</div>
         `;
@@ -869,7 +869,7 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                                                         size="sm"
                                                     />
                                                     <span className="text-xs font-bold text-slate-700">
-                                                        Đã chọn <span className="text-orange-600 font-black text-sm">{selectedIds.size}</span> khách hàng
+                                                        Đã chọn <span className="text-orange-600 font-black text-sm">{selectedIds.size}</span> Khách hàng
                                                     </span>
                                                 </div>
 
@@ -927,7 +927,7 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                                                 </p>
                                             ) : (
                                                 <p className="text-xs font-medium text-slate-600">
-                                                    Đã chọn {members.length} khách hàng trên trang này.
+                                                    Đã chọn {members.length} Khách hàng trên trang này.
                                                     <button onClick={() => setIsGlobalSelected(true)} className="ml-1 text-orange-600 font-bold hover:underline italic underline-offset-2">Chọn tất cả {totalCount.toLocaleString()} thành viên?</button>
                                                 </p>
                                             )}
@@ -1161,10 +1161,10 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                         }
 
                         const tagMetas: Record<string, { label: string; bg: string; text: string; icon: any }> = {
-                            INTRO: { label: 'Tổng quan & Thông số', bg: 'bg-slate-100', text: 'text-slate-600', icon: Sparkles },
+                            INTRO: { label: 'Tổng quan & Tổng số', bg: 'bg-slate-100', text: 'text-slate-600', icon: Sparkles },
                             SUMMARY: { label: 'Tóm tắt chiến lược AI', bg: 'bg-blue-50', text: 'text-blue-600', icon: Tags },
                             CHARACTERISTICS: { label: 'Đặc điểm & Hành vi', bg: 'bg-amber-50', text: 'text-amber-600', icon: BrainCircuit },
-                            PERSONAS: { label: 'Chân dung khách hàng', bg: 'bg-purple-50', text: 'text-purple-600', icon: Mail },
+                            PERSONAS: { label: 'Chân dung Khách hàng', bg: 'bg-purple-50', text: 'text-purple-600', icon: Mail },
                             STRATEGY: { label: 'Giải pháp tiếp cận', bg: 'bg-emerald-50', text: 'text-emerald-600', icon: Check },
                             SCENARIOS: { label: 'Kịch bản Campaign', bg: 'bg-rose-50', text: 'text-rose-600', icon: FileText },
                             SCORE_GROUPS: { label: 'Tối ưu hóa Lead Score', bg: 'bg-emerald-50', text: 'text-emerald-600', icon: Lightbulb }
@@ -1381,7 +1381,7 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                                 <div className={`p-2 rounded-xl ${saveMode === 'new' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-500'}`}>
                                     <FolderPlus className="w-5 h-5" />
                                 </div>
-                                <span className={`text-xs font-bold ${saveMode === 'new' ? 'text-amber-900' : 'text-slate-600'}`}>Tạo list mới</span>
+                                <span className={`text-xs font-bold ${saveMode === 'new' ? 'text-amber-900' : 'text-slate-600'}`}>Tỉ lệ mới</span>
                             </button>
                             <button
                                 onClick={() => setSaveMode('existing')}

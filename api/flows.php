@@ -1984,6 +1984,8 @@ if (isset($_GET['route']) && $_GET['route'] === 'inactive-users') {
 
 switch ($method) {
     case 'GET':
+        // [PERF] Release session lock immediately to prevent "Pending" state in DevTools
+        if (session_id()) session_write_close();
         try {
             if ($path) {
                 $stmt = $pdo->prepare("SELECT * FROM flows WHERE id = ?");
@@ -2159,7 +2161,7 @@ switch ($method) {
                 $flows = $stmt->fetchAll();
                 jsonResponse(true, array_map('formatFlow', $flows));
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             jsonResponse(false, null, 'Lỗi khi tải dữ liệu automation: ' . $e->getMessage());
         }
         break;
@@ -2189,7 +2191,7 @@ switch ($method) {
             $sql = "INSERT INTO flows (id, name, description, status, steps, config, trigger_type, created_at, stat_enrolled, stat_completed, stat_total_sent, stat_total_opened, stat_unique_opened, stat_total_clicked, stat_unique_clicked, stat_total_failed, stat_total_unsubscribed) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), 0, 0, 0, 0, 0, 0, 0, 0, 0)";
             $pdo->prepare($sql)->execute([$id, $data['name'] ?? 'Flow mới', $data['description'] ?? '', $data['status'] ?? 'draft', $steps, $config, $triggerType]);
             jsonResponse(true, ['id' => $id]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             jsonResponse(false, null, 'Lỗi khi tạo automation: ' . $e->getMessage());
         }
         break;

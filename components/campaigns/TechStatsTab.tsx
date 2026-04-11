@@ -62,8 +62,8 @@ const TechStatsTab: React.FC<TechStatsTabProps> = ({ type = 'campaign', id, step
                 <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4">
                     <Smartphone className="w-8 h-8 opacity-20" />
                 </div>
-                <p className="text-sm font-bold uppercase tracking-widest opacity-50">Chua có d? li?u phân tích</p>
-                <p className="text-[10px] mt-1">{isZns ? 'D? li?u s? xu?t hi?n khi có ngu?i xem tin nh?n zalo c?a b?n' : 'D? li?u s? xu?t hi?n khi có ngu?i dùng m? email ho?c nh?p vào liên k?t'}</p>
+                <p className="text-sm font-bold uppercase tracking-widest opacity-50">Chua cï¿½ d? li?u phï¿½n tï¿½ch</p>
+                <p className="text-[10px] mt-1">{isZns ? 'D? li?u s? xu?t hi?n khi cï¿½ ngu?i xem tin nh?n zalo c?a b?n' : 'D? li?u s? xu?t hi?n khi cï¿½ ngu?i dï¿½ng m? email ho?c nh?p vï¿½o liï¿½n k?t'}</p>
             </div>
         );
     }
@@ -75,7 +75,7 @@ const TechStatsTab: React.FC<TechStatsTabProps> = ({ type = 'campaign', id, step
     return (
         <TabTransition className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Device Breakdown */}
-            <Card title="Phân tích Thi?t b?" icon={Smartphone} className="border-slate-100 shadow-xl shadow-slate-200/50 rounded-[32px] overflow-hidden">
+            <Card title="PhÃ¢n tÃ­ch Thiáº¿t bá»‹" icon={Smartphone} className="border-slate-100 shadow-xl shadow-slate-200/50 rounded-[32px] overflow-hidden">
                 <div className="h-64 relative pt-2">
                     {deviceData.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
@@ -107,7 +107,7 @@ const TechStatsTab: React.FC<TechStatsTabProps> = ({ type = 'campaign', id, step
                                 />
                             </PieChart>
                         </ResponsiveContainer>
-                    ) : <p className="text-center text-slate-400 py-10">Chua có d? li?u</p>}
+                    ) : <p className="text-center text-slate-400 py-10">Chua cï¿½ d? li?u</p>}
                     <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center pointer-events-none">
                         <Monitor className="w-8 h-8 text-slate-100" />
                         <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">Platform</span>
@@ -116,7 +116,7 @@ const TechStatsTab: React.FC<TechStatsTabProps> = ({ type = 'campaign', id, step
             </Card>
 
             {/* OS Breakdown */}
-            <Card title="H? di?u hành ph? bi?n" icon={Laptop} className="border-slate-100 shadow-xl shadow-slate-200/50 rounded-[32px]">
+            <Card title="H? di?u hï¿½nh ph? bi?n" icon={Laptop} className="border-slate-100 shadow-xl shadow-slate-200/50 rounded-[32px]">
                 <div className="h-64 pt-2">
                     {osData.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
@@ -141,12 +141,12 @@ const TechStatsTab: React.FC<TechStatsTabProps> = ({ type = 'campaign', id, step
                                 </Bar>
                             </BarChart>
                         </ResponsiveContainer>
-                    ) : <p className="text-center text-slate-400 py-10">Chua có d? li?u</p>}
+                    ) : <p className="text-center text-slate-400 py-10">Chua cï¿½ d? li?u</p>}
                 </div>
             </Card>
 
             {/* Location Map (List) */}
-            <Card title="V? trí d?a lý hàng d?u" icon={MapPin} className="border-slate-100 shadow-xl shadow-slate-200/50 rounded-[32px] md:col-span-2">
+            <Card title="V? trï¿½ d?a lï¿½ hï¿½ng d?u" icon={MapPin} className="border-slate-100 shadow-xl shadow-slate-200/50 rounded-[32px] md:col-span-2">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {locationData.length > 0 ? locationData.map((loc: any, idx: number) => {
                         const iconColor = COLORS[idx % COLORS.length];
@@ -170,7 +170,7 @@ const TechStatsTab: React.FC<TechStatsTabProps> = ({ type = 'campaign', id, step
                         );
                     }) : (
                         <div className="col-span-4 py-16 text-center bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
-                            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Không tìm th?y d? li?u v? trí</p>
+                            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Khï¿½ng tï¿½m th?y d? li?u v? trï¿½</p>
                         </div>
                     )}
                 </div>

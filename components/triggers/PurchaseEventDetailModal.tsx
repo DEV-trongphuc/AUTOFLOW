@@ -30,14 +30,14 @@ const PurchaseEventDetailModal: React.FC<PurchaseEventDetailModalProps> = ({ eve
   window.mailflowTrack.push({
     event: 'purchase',
     eventId: '${event.id}',
-    email: 'customer@example.com', // Email khách hàng
+    email: 'customer@example.com', // Email Khách hàng
     data: {
       orderId: 'ORDER_123',
       amount: 1500000,
       currency: 'VND',
       items: [
         { name: 'Sản phẩm A', quantity: 2, price: 500000 },
-        { name: 'Sản phẩm B', quantity: 1, price: 500000 }
+        { name: 'Sản phẩm Bỏ quantity: 1, price: 500000 }
       ]
     }
   });

@@ -25,22 +25,22 @@ const Button: React.FC<ButtonProps> = ({
   fullWidth = false,
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-bold rounded-xl transition-all duration-500 active:scale-95 disabled:opacity-60 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-offset-1 tracking-tight';
+  const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-300 active:scale-[0.97] disabled:opacity-60 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:ring-offset-1 tracking-tight select-none';
 
   const variants = {
-    primary: 'h-10 px-5 bg-gradient-to-br from-amber-400 to-amber-600 text-white rounded-xl text-xs font-bold hover:from-amber-600 hover:to-amber-700 shadow-lg shadow-amber-600/20 transition-all duration-500 flex items-center gap-2',
+    primary: 'bg-gradient-to-b from-amber-400 to-amber-500 text-amber-950 font-bold border border-amber-400 shadow-[0_4px_14px_0_rgba(251,191,36,0.25)] hover:shadow-amber-500/40 hover:from-amber-400 hover:to-amber-500 hover:brightness-105 shadow-[inset_0_1px_rgba(255,255,255,0.4)]',
     secondary: isDarkTheme
-      ? 'bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:border-slate-600 hover:text-slate-100'
-      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-800',
+      ? 'bg-slate-800/80 backdrop-blur-md text-slate-200 border border-slate-700/80 hover:bg-slate-700 hover:border-slate-600 hover:text-white shadow-sm shadow-[inset_0_1px_rgba(255,255,255,0.05)]'
+      : 'bg-white/90 backdrop-blur-md text-slate-700 border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 shadow-[0_2px_8px_rgba(0,0,0,0.04)] shadow-[inset_0_1px_rgba(255,255,255,1)]',
     outline: isDarkTheme
-      ? 'bg-transparent border-2 border-slate-700 text-slate-300 hover:border-slate-600 hover:bg-slate-800'
-      : 'bg-transparent border-2 border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50',
+      ? 'bg-transparent border border-slate-700 text-slate-300 hover:border-slate-600 hover:bg-slate-800/50'
+      : 'bg-transparent border border-slate-300 text-slate-600 hover:border-slate-400 hover:bg-slate-50/50 hover:text-slate-900',
     ghost: isDarkTheme
-      ? 'bg-transparent text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-      : 'bg-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800',
+      ? 'bg-transparent text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+      : 'bg-transparent text-slate-500 hover:bg-slate-100/50 hover:text-slate-900',
     danger: isDarkTheme
-      ? 'bg-rose-950/30 text-rose-400 hover:bg-rose-900/50 border border-rose-900/50 hover:border-rose-800'
-      : 'bg-rose-50 text-rose-600 hover:bg-rose-100 border border-transparent hover:border-rose-200',
+      ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30 hover:border-rose-500/50'
+      : 'bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-100 hover:border-rose-200',
   };
 
   const sizes = {

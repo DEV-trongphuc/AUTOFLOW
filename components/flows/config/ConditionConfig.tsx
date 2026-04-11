@@ -30,7 +30,7 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
 
     const unitOptions = [
         { value: 'hours', label: 'Gi?' },
-        { value: 'days', label: 'Ngày' },
+        { value: 'days', label: 'Ngï¿½y' },
         { value: 'weeks', label: 'Tu?n' },
     ];
 
@@ -194,8 +194,8 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
             case 'opened': return 'm? mail';
             case 'clicked': return 'click link';
             case 'delivered': return 'nh?n du?c mail/tin';
-            case 'unsubscribed': return 'h?y dang kı';
-            default: return 'tuong tác';
+            case 'unsubscribed': return 'Há»§y Ä‘Äƒng kÃ½';
+            default: return 'tuong tï¿½c';
         }
     };
 
@@ -205,14 +205,14 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
                 <div className="p-8 bg-rose-50 border-2 border-dashed border-rose-200 rounded-[32px] text-center space-y-4">
                     <Unlink className="w-8 h-8 mx-auto text-rose-500" />
                     <p className="text-sm font-black text-rose-700 uppercase">Thi?u ngu?n Email/ZNS</p>
-                    <p className="text-xs text-rose-500">Vui lòng n?i bu?c này SAU m?t bu?c "G?i Email" ho?c "Zalo ZNS".</p>
+                    <p className="text-xs text-rose-500">Vui lï¿½ng n?i bu?c nï¿½y SAUÄÃ£ má»Ÿt bu?c "G?i Email" ho?c "Zalo ZNS".</p>
                 </div>
             ) : (
                 <>
                     <div className="flex items-center justify-between mb-2 px-1">
                         <div className="flex items-center gap-2">
                             <GitMerge className="w-4 h-4 text-indigo-500" />
-                            <span className="text-[10px] font-black uppercase text-indigo-500 tracking-widest">Ngu?n theo dõi:</span>
+                            <span className="text-[10px] font-black uppercase text-indigo-500 tracking-widest">Ngu?n theo dï¿½i:</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg font-bold text-[10px] border border-indigo-100 shadow-sm">
                             <Link className="w-3 h-3" />
@@ -221,21 +221,21 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
                     </div>
 
                     <Radio
-                        label="Hành d?ng ki?m tra:"
+                        label="Hï¿½nh d?ng ki?m tra:"
                         options={parentEmailStep?.type === 'zalo_zns' ? [
-                            { id: 'zns_delivered', label: 'Ğã nh?n (G?i thành công)', icon: CheckSquare, desc: 'Tin nh?n dã g?i thành công' },
-                            { id: 'zns_clicked', label: 'Khách Click Link', icon: MousePointer2, desc: 'Theo dõi chuy?n d?i link ZNS' },
-                            { id: 'zns_replied', label: 'Khách Ph?n h?i', icon: MessageSquare, desc: 'Khách chat l?i v?i OA' },
-                            { id: 'zns_failed', label: 'G?i th?t b?i', icon: AlertTriangle, desc: 'G?i l?i (H?t quota, sai s?...)' },
+                            { id: 'zns_delivered', label: 'ï¿½ï¿½ nh?n (G?i thï¿½nh cï¿½ng)', icon: CheckSquare, desc: 'Tin nh?n dï¿½Ä‘Ã£ gá»­i thï¿½nh cï¿½ng' },
+                            { id: 'zns_clicked', label: 'Khï¿½ch Click Link', icon: MousePointer2, desc: 'Theo dï¿½i chuy?n d?i link ZNS' },
+                            { id: 'zns_replied', label: 'Khï¿½ch Pháº£n há»“i', icon: MessageSquare, desc: 'Khï¿½ch chat l?i v?i OA' },
+                            { id: 'zns_failed', label: 'G?i th?t b?i', icon: AlertTriangle, desc: 'Gá»­i láº¡i (H?t quota, sai s?...)' },
                         ] : [
-                            { id: 'delivered', label: 'Ğã nh?n (Delivered)', icon: MailCheck, desc: 'N?u KHÔNG -> Chuy?n nhánh ELSE' },
-                            { id: 'opened', label: 'Khách m? Email', icon: MailOpen, desc: 'Theo dõi t? l? d?c' },
-                            { id: 'clicked', label: 'Khách Click Link', icon: MousePointer2, desc: 'Theo dõi chuy?n d?i' },
+                            { id: 'delivered', label: 'ï¿½ï¿½ nh?n (Delivered)', icon: MailCheck, desc: 'Ná»¯u KHï¿½NG -> Chuy?n nhï¿½nh ELSE' },
+                            { id: 'opened', label: 'Khï¿½chÄÃ£ má»Ÿ Email', icon: MailOpen, desc: 'Theo dï¿½i t? l? d?c' },
+                            { id: 'clicked', label: 'Khï¿½ch Click Link', icon: MousePointer2, desc: 'Theo dï¿½i chuy?n d?i' },
                             ...((parentEmailStep?.type === 'trigger' && parentEmailStep?.config?.type === 'campaign') ? [
-                                { id: 'received_reminder', label: 'Ğã nh?n Reminder', icon: Bell, desc: 'Ğã nh?n Email Nh?c nh?' },
-                                { id: 'opened_reminder', label: 'Ğã m? Reminder', icon: MailOpen, desc: 'Ğã m? Email Nh?c nh?' }
+                                { id: 'received_reminder', label: 'ï¿½ï¿½ nh?n Reminder', icon: Bell, desc: 'ï¿½ï¿½ nh?n Email Nh?c nh?' },
+                                { id: 'opened_reminder', label: 'ÄÃ£ má»Ÿ Reminder', icon: MailOpen, desc: 'ÄÃ£ má»Ÿ Email Nh?c nh?' }
                             ] : []),
-                            { id: 'unsubscribed', label: 'H?y dang kı', icon: UserMinus, desc: 'Phân lo?i khách r?i di' },
+                            { id: 'unsubscribed', label: 'Há»§y Ä‘Äƒng kÃ½', icon: UserMinus, desc: 'Phï¿½n lo?i khï¿½ch r?i di' },
                         ]}
                         value={config.conditionType || (parentEmailStep?.type === 'zalo_zns' ? 'zns_delivered' : 'opened')}
                         onChange={handleTypeChange}
@@ -252,7 +252,7 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
                                 onChange={(e) => onChange({ ...config, reminderId: e.target.value })}
                                 disabled={disabled}
                             />
-                            <p className="text-[10px] text-amber-600 italic">ID này n?m trong cài d?t Reminder c?a Chi?n d?ch.</p>
+                            <p className="text-[10px] text-amber-600 italic">ID nï¿½y n?m trong cï¿½i d?t Reminder c?a Chi?n d?ch.</p>
                         </div>
                     )}
 
@@ -262,7 +262,7 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
                             <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Th?i h?n ki?m tra (Timeout)</span>
                         </div>
                         <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-                            N?u sau th?i gian này khách v?n chua {getActionDescription()}, h? th?ng s? dua khách vào nhánh "ELSE".
+                            Ná»¯u sau Thá»i gian nï¿½y khï¿½ch v?n chua {getActionDescription()}, h? th?ng s? dua khï¿½ch vï¿½o nhï¿½nh "ELSE".
                         </p>
                         <div className="grid grid-cols-2 gap-3">
                             <Input
@@ -284,7 +284,7 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
                     {(config.conditionType === 'clicked' || config.conditionType === 'zns_clicked') && (
                         <div className="space-y-4 pt-4 animate-in fade-in slide-in-from-top-4 duration-500" ref={linkContainerRef}>
                             <div className="flex items-center justify-between px-1">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ch?n Link c?n theo dõi (OR Logic)</p>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ch?n Link c?n theo dï¿½i (OR Logic)</p>
                                 {scanning && <RefreshCw className="w-3 h-3 animate-spin text-slate-400" />}
                             </div>
 
@@ -298,8 +298,8 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
                                     {/* Option for ANY Link using a Toggle Switch */}
                                     <div className={`p-4 rounded-2xl border-2 transition-all flex items-center justify-between ${selectedLinks.length === 0 ? 'border-indigo-500 bg-indigo-50/50 shadow-sm ring-4 ring-indigo-500/5' : 'border-slate-100 bg-slate-50/30'}`}>
                                         <div className="flex-1">
-                                            <p className="text-xs font-black text-slate-800">Theo dõi B?T K? Link nào (Any)</p>
-                                            <p className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">H?p l? n?u khách click vào b?t c? link nào có trong n?i dung.</p>
+                                            <p className="text-xs font-black text-slate-800">Theo dï¿½i B?T K? Link nï¿½o (Any)</p>
+                                            <p className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">H?p l? n?u khï¿½ch click vï¿½o b?t c? link nï¿½o cï¿½ trong n?i dung.</p>
                                         </div>
                                         <button
                                             onClick={() => {
@@ -325,7 +325,7 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
                                     {!disabled && selectedLinks.length === availableLinks.length && (
                                         <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 animate-in fade-in zoom-in duration-300">
                                             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                                            <p className="text-[10px] text-amber-700 font-bold leading-relaxed lowercase first-letter:uppercase">Ğang ? ch? d? "B?t k? Link nào". B? ch?n m?t link b?t k? n?u b?n ch? mu?n theo dõi danh sách c? th?.</p>
+                                            <p className="text-[10px] text-amber-700 font-bold leading-relaxed lowercase first-letter:uppercase">ï¿½ang ? ch? d? "B?t k? Link nï¿½o". B? ch?nÄÃ£ má»Ÿt link b?t k? n?u b?n ch? mu?n theo dï¿½i danh sÃ¡ch c? th?.</p>
                                         </div>
                                     )}
 
@@ -359,12 +359,12 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
                                 parentEmailStep.type === 'zalo_zns' ? (
                                     <div className="p-4 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-2xl text-xs font-bold flex items-center gap-2">
                                         <CheckSquare className="w-4 h-4" />
-                                        M?c d?nh theo dõi B?T K? LINK nào trong tin ZNS (Do không th? quét tru?c n?i dung ZNS).
+                                        M?c d?nh theo dï¿½i B?T K? LINK nï¿½o trong tin ZNS (Do khï¿½ng th? quï¿½t tru?c n?i dung ZNS).
                                     </div>
                                 ) : (
                                     <div className="p-4 bg-amber-50 text-amber-700 border border-amber-200 rounded-2xl text-xs font-bold flex items-center gap-2">
                                         <AlertTriangle className="w-4 h-4" />
-                                        Không tìm th?y Link nào trong n?i dung tru?c dó.
+                                        Khï¿½ng tï¿½m th?y Link nï¿½o trong n?i dung tru?c dï¿½.
                                     </div>
                                 )
                             )}

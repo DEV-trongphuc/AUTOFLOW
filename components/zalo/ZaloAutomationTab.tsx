@@ -80,16 +80,16 @@ const ZaloAutomationTab: React.FC = () => {
     const handleDelete = async (id: string) => {
         setConfirmModal({
             isOpen: true,
-            title: 'Xóa k?ch b?n?',
-            message: 'B?n có ch?c ch?n mu?n xóa k?ch b?n này? Hành d?ng này không th? hoàn tác.',
+            title: 'Xï¿½a k?ch b?n?',
+            message: 'B?n cï¿½ ch?c ch?n mu?n xï¿½a k?ch b?n nï¿½y? Hï¿½nh d?ng nï¿½y khï¿½ng th? hoï¿½n tï¿½c.',
             onConfirm: async () => {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 try {
                     await axios.delete(`https://automation.ideas.edu.vn/mail_api/zalo_automation.php?route=delete&id=${id}`);
-                    toast.success('Ðã xóa k?ch b?n');
+                    toast.success('ï¿½ï¿½ xï¿½a k?ch b?n');
                     fetchScenarios();
                 } catch (error) {
-                    toast.error('L?i khi xóa');
+                    toast.error('Lá»—i khi xï¿½a');
                 }
             }
         });
@@ -102,10 +102,10 @@ const ZaloAutomationTab: React.FC = () => {
                 ...scenario,
                 status: newStatus
             });
-            toast.success(`Ðã ${newStatus === 'active' ? 'kích ho?t' : 't?m d?ng'}`);
+            toast.success(`ï¿½ï¿½ ${newStatus === 'active' ? 'kï¿½ch ho?t' : 't?m d?ng'}`);
             fetchScenarios();
         } catch (error) {
-            toast.error('L?i khi c?p nh?t tr?ng thái');
+            toast.error('Lá»—i khi c?p nh?t Tráº¡ng thÃ¡i');
         }
     };
 
@@ -173,7 +173,7 @@ const ZaloAutomationTab: React.FC = () => {
 
                 <div className="flex items-center gap-4 flex-1 w-full max-w-md">
                     <Input
-                        placeholder="Tìm ki?m k?ch b?n..."
+                        placeholder="Tï¿½m ki?m k?ch b?n..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         icon={Search}
@@ -202,12 +202,12 @@ const ZaloAutomationTab: React.FC = () => {
                     <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4 text-slate-300">
                         <Zap className="w-8 h-8" />
                     </div>
-                    <p className="text-slate-500 font-medium">Chua có k?ch b?n nào du?c t?o</p>
+                    <p className="text-slate-500 font-medium">Chua cï¿½ k?ch b?n nï¿½o du?c t?o</p>
                     <button
                         onClick={() => setIsModalOpen(true)}
                         className="mt-4 text-emerald-500 font-bold hover:underline"
                     >
-                        B?t d?u t?o k?ch b?n d?u tiên
+                        B?t d?u t?o k?ch b?n d?u tiï¿½n
                     </button>
                 </div>
             ) : (
@@ -233,14 +233,14 @@ const ZaloAutomationTab: React.FC = () => {
                                     <button
                                         onClick={() => setViewingStatsScenario(scenario)}
                                         className="p-2.5 bg-blue-50 text-blue-500 hover:bg-blue-100 rounded-xl transition-all"
-                                        title="Báo cáo hi?u qu?"
+                                        title="BÃ¡o cÃ¡o hi?u qu?"
                                     >
                                         <BarChart className="w-4 h-4" />
                                     </button>
                                     <button
                                         onClick={() => toggleStatus(scenario)}
                                         className={`p-2.5 rounded-xl transition-all ${scenario.status === 'active' ? 'bg-emerald-50 text-emerald-500 hover:bg-emerald-100' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
-                                        title={scenario.status === 'active' ? 'D?ng' : 'Kích ho?t'}
+                                        title={scenario.status === 'active' ? 'D?ng' : 'Kï¿½ch ho?t'}
                                     >
                                         <Play className={`w-4 h-4 ${scenario.status === 'active' ? 'hidden' : ''}`} />
                                         <Pause className={`w-4 h-4 ${scenario.status === 'active' ? '' : 'hidden'}`} />
@@ -260,10 +260,10 @@ const ZaloAutomationTab: React.FC = () => {
                                         scenario.type === 'ai_reply' ? 'bg-purple-50 text-purple-600 border-purple-100' :
                                             scenario.type === 'holiday' ? 'bg-rose-50 text-rose-600 border-rose-100' :
                                                 'bg-blue-50 text-blue-600 border-blue-100'}`}>
-                                        {scenario.type === 'welcome' ? 'Chào m?ng' :
-                                            scenario.type === 'ai_reply' ? 'AI Ph?n h?i' :
-                                                scenario.type === 'holiday' ? 'Ngày ngh?' :
-                                                    'T? khóa'}
+                                        {scenario.type === 'welcome' ? 'Chï¿½o m?ng' :
+                                            scenario.type === 'ai_reply' ? 'AI Pháº£n há»“i' :
+                                                scenario.type === 'holiday' ? 'NgÃ y nghá»‰' :
+                                                    'T? khï¿½a'}
                                     </span>
                                     {scenario.status === 'inactive' && (
                                         <span className="text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest bg-slate-100 text-slate-500 border border-slate-200">
@@ -285,11 +285,11 @@ const ZaloAutomationTab: React.FC = () => {
                                         <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-2">
                                             <Bot className="w-3.5 h-3.5 text-purple-500" />
                                             <span>Chatbot: </span>
-                                            <span className="font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded text-[11px]">{scenario.ai_bot_name || 'H? th?ng'}</span>
+                                            <span className="font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded text-[11px]">{scenario.ai_bot_name || 'Há»‡ thá»‘ng'}</span>
                                         </div>
                                     )}
                                     <p className="text-sm text-slate-400 line-clamp-2 leading-relaxed h-10 font-medium">
-                                        {scenario.type === 'ai_reply' ? 'T? d?ng ph?n h?i d?a trên ki?n th?c du?c dào t?o c?a AI Chatbot.' : scenario.content}
+                                        {scenario.type === 'ai_reply' ? 'T? d?ng ph?n h?i d?a trï¿½n ki?n th?c du?c dï¿½o t?o c?a AI Chatbot.' : scenario.content}
                                     </p>
                                 </div>
                             </div>

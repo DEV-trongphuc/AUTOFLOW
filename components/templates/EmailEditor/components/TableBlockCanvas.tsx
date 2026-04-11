@@ -350,9 +350,9 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
                 <button
                     onMouseDown={autoEqualize}
                     className="absolute -top-7 right-0 flex items-center gap-1 px-2 py-1 bg-slate-700 text-white text-[9px] font-bold rounded-lg shadow z-20 hover:bg-slate-600"
-                    title="Căn đều tất cả cột"
+                    title="Còn đều tất cả cột"
                 >
-                    <ChevronsLeftRight className="w-3 h-3" /> Căn đều
+                    <ChevronsLeftRight className="w-3 h-3" /> Còn đều
                 </button>
             )}
 

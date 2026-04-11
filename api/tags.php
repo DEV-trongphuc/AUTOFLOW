@@ -8,6 +8,8 @@ $path = isset($_GET['id']) ? $_GET['id'] : null;
 
 switch ($method) {
     case 'GET':
+        // [PERF] Release session lock immediately to prevent "Pending" state in DevTools
+        if (session_id()) session_write_close();
         try {
             // NEW: Stats Route
             if (isset($_GET['route']) && $_GET['route'] === 'stats' && $path) {

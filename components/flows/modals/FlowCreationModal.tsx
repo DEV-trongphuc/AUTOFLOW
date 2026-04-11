@@ -18,7 +18,7 @@ const FLOW_TEMPLATES = [
   {
     id: 'welcome_segment',
     name: 'Phân khúc động (Smart)',
-    desc: 'Tự động chạy khi khách hàng thỏa mãn bộ lọc (VD: VIP, Mới mua hàng).',
+    desc: 'Tự động chạy khi Khách hàng thỏa mãn bộ lọc (VD: VIP, Mới mua hàng).',
     icon: Layers,
     theme: 'orange',
     gradient: 'from-orange-500 to-[#ca7900]',
@@ -30,7 +30,7 @@ const FLOW_TEMPLATES = [
   {
     id: 'welcome_list',
     name: 'Gia nhập Danh sách',
-    desc: 'Kích hoạt khi khách hàng được thêm vào một danh sách tĩnh (VD: Import, API).',
+    desc: 'Kích hoạt khi Khách hàng được thêm vào một danh sách tĩnh (VD: Import, API).',
     icon: ListPlus,
     theme: 'indigo',
     gradient: 'from-indigo-500 to-blue-600',
@@ -42,7 +42,7 @@ const FLOW_TEMPLATES = [
   {
     id: 'purchase_success',
     name: 'Cảm ơn Mua hàng',
-    desc: 'Gửi thư cảm ơn xác nhận ngay khi khách hàng phát sinh đơn hàng mới.',
+    desc: 'Gửi thư cảm ơn xác nhận ngay khi Khách hàng phát sinh đơn hàng mới.',
     icon: ShoppingCart,
     theme: 'pink',
     gradient: 'from-pink-500 to-rose-500',
@@ -66,7 +66,7 @@ const FLOW_TEMPLATES = [
   {
     id: 'tag_added',
     name: 'Khi được gắn Tag',
-    desc: 'Kích hoạt ngay khi hồ sơ khách hàng được gắn một nhãn cụ thể.',
+    desc: 'Kích hoạt ngay khi hồ sơ Khách hàng được gắn một nhãn cụ thể.',
     icon: Tag,
     theme: 'emerald',
     gradient: 'from-emerald-500 to-teal-600',
@@ -78,13 +78,13 @@ const FLOW_TEMPLATES = [
   {
     id: 'welcome_form',
     name: 'Chào mừng gửi Form',
-    desc: 'Tự động phản hồi khách hàng ngay sau khi họ điền Form đăng ký.',
+    desc: 'Tự động phản hồi Khách hàng ngay sau khi họ điền Form đăng ký.',
     icon: FileInput,
     theme: 'amber',
     gradient: 'from-amber-400 to-orange-500',
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi khách gửi Form', iconName: 'zap', config: { type: 'form', targetId: '' }, nextStepId: 'a1' },
-      { id: 'a1', type: 'action', label: 'Email Phản hồi Form', iconName: 'mail', config: { subject: 'Cảm ơn bạn đã quan tâm! Tài liệu của bạn đây' } }
+      { id: 'a1', type: 'action', label: 'Email Phản hồi Form', iconName: 'mail', config: { subject: 'Cảm ơn bạn đã quan tâm! Tỉ lệ của bạn đây' } }
     ]
   },
   {
@@ -103,7 +103,7 @@ const FLOW_TEMPLATES = [
   {
     id: 'winback',
     name: 'Khách hàng ngủ đông',
-    desc: 'Kích hoạt khi khách hàng KHÔNG có tương tác (Mở/Click) trong 30 ngày.',
+    desc: 'Kích hoạt khi Khách hàng KHÔNG có tương tác (Mở/Click) trong 30 ngày.',
     icon: Snowflake,
     theme: 'blue',
     gradient: 'from-blue-500 to-indigo-600',
@@ -126,7 +126,7 @@ const FLOW_TEMPLATES = [
   {
     id: 'birthday',
     name: 'Chúc mừng Sinh nhật',
-    desc: 'Tự động gửi quà tặng đúng ngày sinh nhật của khách hàng.',
+    desc: 'Tự động gửi quà tặng đúng ngày sinh nhật của Khách hàng.',
     icon: Cake,
     theme: 'pink',
     gradient: 'from-pink-400 to-rose-500',
@@ -138,7 +138,7 @@ const FLOW_TEMPLATES = [
   {
     id: 'google_sheets_sync',
     name: 'Đồng bộ Google Sheets',
-    desc: 'Tự động gửi email khi có khách hàng mới từ Google Sheets.',
+    desc: 'Tự động gửi email khi có Khách hàng mới từ Google Sheets.',
     icon: FileSpreadsheet,
     theme: 'emerald',
     gradient: 'from-emerald-400 to-green-600',
@@ -150,7 +150,7 @@ const FLOW_TEMPLATES = [
   {
     id: 'appointment_reminder',
     name: 'Nhắc lịch hẹn',
-    desc: 'Tự động nhắc nhở khách hàng trước ngày hẹn/lịch đặt được lưu trong Custom Field.',
+    desc: 'Tự động nhắc nhở Khách hàng trước ngày hẹn/lịch đặt được lưu trong Custom Field.',
     icon: BellRing,
     theme: 'violet',
     gradient: 'from-violet-500 to-purple-700',
@@ -336,7 +336,7 @@ const FlowCreationModal: React.FC<FlowCreationModalProps> = ({
 
       {step === 2 && (
         <div className="space-y-6 animate-in slide-in-from-right-8 duration-500 p-1">
-          <Input label="Tên kịch bản nội bộ" placeholder="VD: Chào mừng khách hàng từ Form Landing Page" value={flowName} onChange={(e) => setFlowName(e.target.value)} autoFocus />
+          <Input label="Tên kịch bản nội bộ" placeholder="VD: Chào mừng Khách hàng từ Form Landing Page" value={flowName} onChange={(e) => setFlowName(e.target.value)} autoFocus />
           <div className="p-5 bg-blue-50 border border-blue-100 rounded-2xl flex gap-3 shadow-inner">
             <Info className="w-4 h-4 text-blue-600 mt-1" />
             <p className="text-[11px] text-blue-700 font-semibold leading-relaxed">Hệ thống sẽ tự động cấu hình các bước cơ bản theo logic của kịch bản "{selectedTemplate?.name}". Bạn có thể chỉnh sửa chi tiết sau khi tạo.</p>

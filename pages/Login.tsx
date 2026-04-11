@@ -32,7 +32,7 @@ const Login: React.FC = () => {
                     window.location.reload();
                 } else {
                     setIsPending(true);
-                    toast.error('Tài khoản của bạn đang chờ phê duyệt từ Admin.');
+                    toast.error('Tài khoản của bạn Đang chờ phê duyệt từ Admin.');
                 }
             } else {
                 toast.error(result.message || 'Lỗi đăng nhập');
@@ -64,7 +64,7 @@ const Login: React.FC = () => {
         {
             icon: Globe,
             title: 'Live Tracking',
-            desc: 'Theo dõi hành trình khách hàng thời gian thực',
+            desc: 'Theo dõi hành trình Khách hàng Thời gian thực',
             color: 'from-purple-500 to-pink-600'
         }
     ];
@@ -89,7 +89,7 @@ const Login: React.FC = () => {
                         </div>
                         <div className="flex gap-2 mt-2">
                              <div className="w-1 h-1 bg-amber-500 rounded-full mt-1.5 shrink-0" />
-                             <span>Chúng tôi đã thông báo cho quản trị viên.</span>
+                             <span>Chúng tôi đã thông Báo cáo quản trị viên.</span>
                         </div>
                     </div>
                     <button 
@@ -129,7 +129,7 @@ const Login: React.FC = () => {
                             </span>
                         </h1>
                         <p className="max-w-md text-lg text-slate-400 font-medium leading-relaxed">
-                            Thế hệ tiếp theo của Marketing Automation. Tự động hóa điểm chạm, thấu hiểu khách hàng và chuyển đổi doanh thu 24/7.
+                            Thế hệ tiếp theo của Marketing Automation. Tự động hóa điểm chạm, thấu hiểu Khách hàng và chuyển đổi doanh thu 24/7.
                         </p>
                     </div>
 

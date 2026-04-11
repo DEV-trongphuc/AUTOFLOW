@@ -131,7 +131,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
     const handleClose = () => {
         setVisible(false);
         setTimeout(() => { onClose(); }, 280);
-        // State được giữ nguyên — mở lại sẽ thấy đúng trạng thái cũ
+        // State được giữ nguyên — mở lại sẽ thấy đúng Trạng thái cũ
     };
 
     /* ── image handlers ──────────────────────────────────────────────────── */
@@ -186,7 +186,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                 setPreviewTab('new');
                 setStep('preview');
             } else {
-                setError(data.message || 'AI không thể tạo email. Thử lại với prompt rõ hơn!');
+                setError(data.message || 'AI không thể tạo email. Tỉ lệ với prompt rõ hơn!');
                 setStep('prompt');
             }
         } catch {
@@ -338,7 +338,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                             Gợi ý tùy chỉnh (không bắt buộc)
                                         </p>
                                         <textarea value={prompt} onChange={e => setPrompt(e.target.value)}
-                                            placeholder="VD: Làm màu trẻ trung hơn, thêm section đánh giá khách hàng, dùng font sans-serif..."
+                                            placeholder="VD: Làm màu trẻ trung hơn, thêm section đánh giá Khách hàng, dùng font sans-serif..."
                                             style={{
                                                 width: '100%', height: '80px', border: '1.5px solid #e2e8f0',
                                                 borderRadius: '10px', padding: '10px 12px', fontSize: '13px',
@@ -396,7 +396,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                             </label>
                                             <div style={{ display: 'flex', gap: '6px' }}>
                                                 {[
-                                                    { icon: <Upload style={{ width: 11, height: 11 }} />, label: 'Tải lên', action: () => fileInputRef.current?.click(), amber: true },
+                                                    { icon: <Upload style={{ width: 11, height: 11 }} />, label: 'Tỉ lệ', action: () => fileInputRef.current?.click(), amber: true },
                                                     { icon: <Library style={{ width: 11, height: 11 }} />, label: 'Thư viện', action: () => setShowLibrary(true), amber: false },
                                                     { icon: <Link2 style={{ width: 11, height: 11 }} />, label: 'URL', action: () => setShowUrlInput(!showUrlInput), amber: false },
                                                 ].map(b => (
@@ -676,7 +676,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                     </button>
                                 </div>
 
-                                {/* Tab label banner */}
+                                {/* Tỉ lệ banner */}
                                 {previewTab === 'old' && (
                                     <div style={{ padding: '6px 16px', background: '#1e293b', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                                         <Eye style={{ width: 12, height: 12, color: '#94a3b8' }} />

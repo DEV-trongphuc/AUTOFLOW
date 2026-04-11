@@ -72,7 +72,7 @@ const ManualTriggerFlowModal: React.FC<ManualTriggerFlowModalProps> = ({
                             Ghi danh <span className="text-blue-600">"{subscriber.firstName}"</span> vào quy trình tự động.
                         </p>
                         <p className="text-[11px] text-blue-700 font-medium mt-0.5">
-                            Hành động này sẽ ghi danh khách hàng ngay lập tức và bắt đầu thực hiện các bước Instant.
+                            Hành động này sẽ ghi danh Khách hàng ngay lập tức và bắt đầu thực hiện các bước Instant.
                         </p>
                     </div>
                 </div>

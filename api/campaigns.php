@@ -726,6 +726,10 @@ if ($method === 'POST' && $route === 'send_test') {
 
 switch ($method) {
     case 'GET':
+        // [PERF] Release session lock immediately to prevent "Pending" state in DevTools
+        // when Frontend sends multiple parallel requests (Campaigns, Flows, etc. load simultaneously)
+        if (session_id()) session_write_close();
+
         try {
             if ($path) {
                 if ($route === 'recipients') {
@@ -1040,7 +1044,7 @@ switch ($method) {
                     ]
                 ]);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             jsonResponse(false, null, $e->getMessage());
         }
         break;
@@ -1155,8 +1159,10 @@ switch ($method) {
                 dispatchCampaignWorker($pdo, $id);
             }
             jsonResponse(true, $data);
-        } catch (Exception $e) {
-            jsonResponse(false, null, $e->getMessage());
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction())
+                $pdo->rollBack();
+            jsonResponse(false, null, 'Error: ' . $e->getMessage());
         }
         break;
 

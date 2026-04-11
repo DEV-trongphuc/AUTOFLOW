@@ -144,7 +144,7 @@ const FlowHeader: React.FC<FlowHeaderProps> = ({
               <button
                 onClick={onToggleReportMode}
                 className={`p-2 lg:p-2.5 rounded-xl transition-all flex items-center gap-2 border active:scale-95 ${isReportMode ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'border-transparent text-slate-400 hover:text-slate-900 hover:bg-slate-50'}`}
-                title={isReportMode ? "Tắt báo cáo nhanh" : "Xem báo cáo nhanh"}
+                title={isReportMode ? "Tắt Báo cáo nhanh" : "Xem Báo cáo nhanh"}
               >
                 <BarChart3 className="w-4 h-4 lg:w-5 h-5" />
               </button>

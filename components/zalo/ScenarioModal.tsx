@@ -42,7 +42,7 @@ const CustomSelect = ({ label, value, options, onChange }: { label?: string, val
                 className={`w-full px-2.5 py-2.5 bg-white border cursor-pointer flex items-center justify-between rounded-xl text-[11px] font-bold transition-all shadow-sm ${isOpen ? 'border-blue-500 ring-4 ring-blue-500/10' : 'border-slate-100 hover:border-blue-200'}`}
                 onClick={() => setIsOpen(!isOpen)}
             >
-                <span className="text-slate-700">{selectedOption?.label || 'Ch?n...'}</span>
+                <span className="text-slate-700">{selectedOption?.label || 'Ch·ªçn...'}</span>
                 {isOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
             </div>
 
@@ -207,10 +207,10 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        if (!formData.oa_config_id) return toast.error('Vui lÚng ch?n Zalo OA tru?c khi upload ?nh');
+        if (!formData.oa_config_id) return toast.error('Vui lÔøΩng ch?n Zalo OA tru?c khi upload ?nh');
 
         setUploading(true);
-        const uploadToast = toast.loading('–ang t?i ?nh lÍn...');
+        const uploadToast = toast.loading('ÔøΩang t?i ?nh lÔøΩn...');
 
         try {
             const formDataUpload = new FormData();
@@ -226,19 +226,19 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                     image_url: res.data.data.image_url,
                     attachment_id: res.data.data.attachment_id
                 }));
-                toast.success('Upload th‡nh cÙng', { id: uploadToast });
+                toast.success('Upload thÔøΩnh cÔøΩng', { id: uploadToast });
             } else {
                 toast.error(res.data.message || 'Upload th?t b?i', { id: uploadToast });
             }
         } catch (error) {
-            toast.error('L?i k?t n?i khi upload', { id: uploadToast });
+            toast.error('L·ªói k?t n?i khi upload', { id: uploadToast });
         } finally {
             setUploading(false);
         }
     };
 
     const handleAddButton = () => {
-        if (formData.buttons.length >= 4) return toast.error('T?i da 4 n˙t b?m cho m?i tin nh?n');
+        if (formData.buttons.length >= 4) return toast.error('T?i da 4 nÔøΩt b?m cho m·ªõi tin nh?n');
         setFormData({
             ...formData,
             buttons: [...formData.buttons, { title: '', type: 'oa.query.show', payload: '', image_icon: '' }]
@@ -265,10 +265,10 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
         const kws = text.split(',').map(k => k.trim()).filter(k => k !== '');
         for (const kw of kws) {
             if (kw.split(/\s+/).length < 2) {
-                return `T? khÛa "${kw}" ph?i cÛ Ìt nh?t 2 t? tr? lÍn.`;
+                return `T? khÔøΩa "${kw}" ph?i cÔøΩ ÔøΩt nh?t 2 t? tr? lÔøΩn.`;
             }
             if (/^\d+$/.test(kw)) {
-                return `T? khÛa "${kw}" khÙng du?c l‡ m?t con s?.`;
+                return `T? khÔøΩa "${kw}" khÔøΩng du?c lÔøΩ m?t con s?.`;
             }
         }
         return null;
@@ -276,13 +276,13 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.oa_config_id) return toast.error('Vui lÚng ch?n OA');
-        if (!formData.title) return toast.error('Vui lÚng nh?p tÍn k?ch b?n');
-        if (formData.type !== 'ai_reply' && !formData.content) return toast.error('Vui lÚng nh?p n?i dung tin nh?n');
-        if (formData.type === 'ai_reply' && !formData.ai_chatbot_id) return toast.error('Vui lÚng ch?n AI Chatbot');
+        if (!formData.oa_config_id) return toast.error('Vui lÔøΩng ch?n OA');
+        if (!formData.title) return toast.error('Vui lÔøΩng nh?p tÔøΩn k?ch b?n');
+        if (formData.type !== 'ai_reply' && !formData.content) return toast.error('Vui lÔøΩng nh?p n?i dung tin nh?n');
+        if (formData.type === 'ai_reply' && !formData.ai_chatbot_id) return toast.error('Vui lÔøΩng ch?n AI Chatbot');
 
         if (formData.type === 'keyword') {
-            if (!formData.trigger_text) return toast.error('Vui lÚng nh?p t? khÛa kÌch ho?t');
+            if (!formData.trigger_text) return toast.error('Vui lÔøΩng nh?p t? khÔøΩa kÔøΩch ho?t');
             const error = validateKeyword(formData.trigger_text);
             if (error) return toast.error(error);
         }
@@ -303,13 +303,13 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
 
             const res = await axios.post(`${API_BASE}/zalo_automation.php?route=save`, payload, { headers: getHeaders() });
             if (res.data.success) {
-                toast.success('–„ luu k?ch b?n');
+                toast.success('ÔøΩÔøΩ luu k?ch b?n');
                 onSave();
             } else {
-                toast.error(res.data.message || 'L?i khi luu');
+                toast.error(res.data.message || 'L·ªói khi luu');
             }
         } catch (error) {
-            toast.error('L?i k?t n?i');
+            toast.error('L·ªói k?t n?i');
         } finally {
             setLoading(false);
         }
@@ -374,7 +374,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                             <h2 className="text-2xl font-black text-slate-800 tracking-tight">
                                 {scenario ? 'C?p Nh?t K?ch B?n' : 'T?o Automation M?i'}
                             </h2>
-                            <p className="text-sm font-medium text-slate-500">Thi?t l?p ph?n h?i v‡ tuong t·c t? d?ng</p>
+                            <p className="text-sm font-medium text-slate-500">Thi?t l?p ph?n h?i vÔøΩ tuong tÔøΩc t? d?ng</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="relative z-10 p-3 hover:bg-white rounded-full transition-all text-slate-400 hover:text-slate-600 shadow-sm"><X className="w-6 h-6" /></button>
@@ -395,14 +395,14 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                 </div>
                                 <div className="space-y-2">
                                     <CustomSelect
-                                        label="Lo?i kÌch ho?t"
+                                        label="Lo?i kÔøΩch ho?t"
                                         value={formData.type}
                                         options={[
-                                            { value: 'welcome', label: <div className="flex items-center gap-2"><Star className="w-4 h-4 text-amber-600" /><span>Quan t‚m</span></div> },
+                                            { value: 'welcome', label: <div className="flex items-center gap-2"><Star className="w-4 h-4 text-amber-600" /><span>Quan tÔøΩm</span></div> },
                                             { value: 'first_message', label: <div className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-rose-500" /><span>B?t chuy?n</span></div> },
-                                            { value: 'keyword', label: <div className="flex items-center gap-2"><MessageCircle className="w-4 h-4 text-indigo-500" /><span>T? khÛa</span></div> },
-                                            { value: 'ai_reply', label: <div className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-emerald-500" /><span>AI Tr? l?i</span></div> },
-                                            { value: 'holiday', label: <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-rose-600" /><span>Ng‡y ngh?</span></div> }
+                                            { value: 'keyword', label: <div className="flex items-center gap-2"><MessageCircle className="w-4 h-4 text-indigo-500" /><span>T? khÔøΩa</span></div> },
+                                            { value: 'ai_reply', label: <div className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-emerald-500" /><span>AI T·ªâ l·ªá'</span></div> },
+                                            { value: 'holiday', label: <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-rose-600" /><span>Ng√†y ngh·ªâ</span></div> }
                                         ]}
                                         onChange={(val) => {
                                             const updates: any = { type: val };
@@ -419,8 +419,8 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
 
                             <div className="space-y-2">
                                 <Input
-                                    label="TiÍu d? k?ch b?n (N?i b?)"
-                                    placeholder="VD: Ch‡o m?ng kh·ch m?i, Tu v?n gi·..."
+                                    label="TiÔøΩu d? k?ch b?n (N·ªØi b?)"
+                                    placeholder="VD: ChÔøΩo m?ng khÔøΩch m·ªõi, Tu v?n giÔøΩ..."
                                     value={formData.title}
                                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                 />
@@ -430,7 +430,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                 <div className="space-y-4 p-6 bg-emerald-50/50 rounded-[32px] border border-emerald-100 animate-in slide-in-from-top-2">
                                     <div className="flex items-center justify-between">
                                         <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2">
-                                            <Sparkles className="w-4 h-4" /> KÌch ho?t TrÌ Tu? Nh‚n T?o (AI)
+                                            <Sparkles className="w-4 h-4" /> KÔøΩch ho?t TrÔøΩ Tu? NhÔøΩn T?o (AI)
                                         </label>
                                     </div>
                                     <div className="space-y-4">
@@ -448,10 +448,10 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                                 <Info className="w-3.5 h-3.5" /> Co ch? ho?t d?ng:
                                             </div>
                                             <ul className="text-[10px] text-slate-500 font-medium space-y-1 ml-5 list-disc leading-relaxed">
-                                                <li>H? th?ng s? d?a trÍn <b>Ki?n th?c d„ Train</b> c?a AI d? t? d?ng tr? l?i kh·ch h‡ng.</li>
-                                                <li>T? d?ng nh?n di?n Website Link th‡nh <b>N˙t b?m</b>.</li>
-                                                <li>T? d?ng nh?n di?n Phone Number th‡nh <b>N˙t g?i</b>.</li>
-                                                <li>T? d?ng g?i <b>?nh</b> n?u trong c‚u tr? l?i cÛ ch?a link ?nh h?p l?.</li>
+                                                <li>H·ªá th·ªëng s? d?a trÔøΩn <b>Ki?n th?c dÔøΩ Train</b> c?a AI d? t? d?ng tr? l?i Kh√°ch h√†ng.</li>
+                                                <li>T? d?ng nh?n di?n Website Link thÔøΩnh <b>NÔøΩt b?m</b>.</li>
+                                                <li>T? d?ng nh?n di?n Phone Number thÔøΩnh <b>NÔøΩt g·ª≠i</b>.</li>
+                                                <li>T? d?ng g·ª≠i <b>?nh</b> n?u trong cÔøΩu tr? l?i cÔøΩ ch?a link ?nh h?p l?.</li>
                                             </ul>
                                         </div>
                                     </div>
@@ -462,17 +462,17 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                 <div className="space-y-4 p-6 bg-indigo-50/50 rounded-[32px] border border-indigo-100 animate-in slide-in-from-top-2">
                                     <div className="flex items-center justify-between">
                                         <label className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-2">
-                                            <MessageCircle className="w-4 h-4" /> T? khÛa kÌch ho?t
+                                            <MessageCircle className="w-4 h-4" /> T? khÔøΩa kÔøΩch ho?t
                                         </label>
                                         <div className="flex items-center gap-2 bg-white p-1 rounded-xl shadow-sm border border-slate-100">
                                             <button
                                                 onClick={() => setFormData({ ...formData, match_type: 'exact' })}
                                                 className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${formData.match_type === 'exact' ? 'bg-indigo-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
-                                            >Kh?p ho‡n to‡n</button>
+                                            >Kh?p hoÔøΩn toÔøΩn</button>
                                             <button
                                                 onClick={() => setFormData({ ...formData, match_type: 'contains' })}
                                                 className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${formData.match_type === 'contains' ? 'bg-indigo-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
-                                            >Ch?a t? khÛa</button>
+                                            >Ch?a t? khÔøΩa</button>
                                         </div>
                                     </div>
                                     <Input
@@ -483,12 +483,12 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                     />
                                     <div className="bg-white/50 p-4 rounded-2xl border border-indigo-100 space-y-2">
                                         <div className="flex items-center gap-2 text-[10px] font-bold text-indigo-400 uppercase tracking-tight">
-                                            <AlertCircle className="w-3.5 h-3.5" /> Quy d?nh t? khÛa:
+                                            <AlertCircle className="w-3.5 h-3.5" /> Quy d?nh t? khÔøΩa:
                                         </div>
                                         <ul className="text-[10px] text-slate-500 font-medium space-y-1 ml-5 list-disc leading-relaxed">
-                                            <li>T? khÛa ph?i cÛ Ìt nh?t <b>2 t? tr? lÍn</b> (VD: "xin ch‡o" thay vÏ "hi").</li>
-                                            <li>KhÙng d˘ng t? khÛa l‡ <b>con s?</b> (VD: "123", "090").</li>
-                                            <li>D˘ng d?u ph?y (`,`) d? ngan c·ch nhi?u t? khÛa.</li>
+                                            <li>T? khÔøΩa ph?i cÔøΩ ÔøΩt nh?t <b>2 t? tr? lÔøΩn</b> (VD: "xin chÔøΩo" thay vÔøΩ "hi").</li>
+                                            <li>KhÔøΩng dÔøΩng t? khÔøΩa lÔøΩ <b>con s?</b> (VD: "123", "090").</li>
+                                            <li>DÔøΩng d?u ph?y (`,`) d? ngan cÔøΩch nhi?u t? khÔøΩa.</li>
                                         </ul>
                                     </div>
                                 </div>
@@ -500,7 +500,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                     <div className="flex items-center justify-between">
                                         <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
                                             <Clock className={`w-4 h-4 ${formData.type === 'holiday' ? 'text-rose-500' : 'text-emerald-500'}`} />
-                                            {formData.type === 'holiday' ? 'Th?i gian ngh? & Uu tiÍn' : 'Th?i gian ho?t d?ng'}
+                                            {formData.type === 'holiday' ? 'Th·ªùi gian ngh? & Uu tiÔøΩn' : 'Th·ªùi gian ho?t d?ng'}
                                         </h3>
 
                                         {formData.type !== 'holiday' && (
@@ -508,11 +508,11 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                                 <button
                                                     onClick={() => setFormData({ ...formData, schedule_type: 'full' })}
                                                     className={`px-4 py-1.5 rounded-lg text-[10px] font-black transition-all ${formData.schedule_type === 'full' ? 'bg-white text-emerald-600 shadow-sm border border-slate-100' : 'text-slate-400'}`}
-                                                >To‡n th?i gian</button>
+                                                >ToÔøΩn Th·ªùi gian</button>
                                                 <button
                                                     onClick={() => setFormData({ ...formData, schedule_type: 'custom' })}
                                                     className={`px-4 py-1.5 rounded-lg text-[10px] font-black transition-all ${formData.schedule_type === 'custom' ? 'bg-white text-emerald-600 shadow-sm border border-slate-100' : 'text-slate-400'}`}
-                                                >T˘y ch?nh</button>
+                                                >TÔøΩy ch?nh</button>
                                             </div>
                                         )}
                                     </div>
@@ -525,10 +525,10 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                                     onClick={() => setFormData({ ...formData, priority_override: formData.priority_override == 1 ? 0 : 1 })}
                                                     className="text-xs font-bold text-rose-700 cursor-pointer select-none block mb-1"
                                                 >
-                                                    Ch? d? uu tiÍn tuy?t d?i (Priority Override)
+                                                    Ch? d? uu tiÔøΩn tuy?t d?i (Priority Override)
                                                 </div>
                                                 <p className="text-[10px] text-slate-500 leading-relaxed">
-                                                    Khi b?t: N?u dang trong gi? ngh?, h? th?ng s? <b>CH?N</b> t?t c? c·c k?ch b?n t? khÛa kh·c tr˘ng l?p. Ch? g?i duy nh?t tin nh?n ngh? n‡y (T?i da 1 l?n/ng‡y/kh·ch).
+                                                    Khi b?t: N·ªØu dang trong gi? ngh?, h? th?ng s? <b>CH?N</b> t?t c? cÔøΩc k?ch b?n t? khÔøΩa khÔøΩc trÔøΩng l?p. Ch? g·ª≠i duy nh?t tin nh?n ngh? nÔøΩy (T?i da 1 l?n/ngÔøΩy/khÔøΩch).
                                                 </p>
                                             </div>
                                             <div className="flex-shrink-0">
@@ -565,14 +565,14 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                                     onClick={() => setFormData({ ...formData, schedule_type: 'daily_range' })}
                                                     className={`p-3 rounded-xl border text-left transition-all ${formData.schedule_type === 'daily_range' ? 'bg-rose-50 border-rose-200 ring-1 ring-rose-500/20' : 'bg-white border-slate-200 opacity-60 hover:opacity-100'}`}
                                                 >
-                                                    <div className="text-xs font-bold text-slate-700 mb-1">Khung gi? m?i ng‡y</div>
-                                                    <div className="text-[10px] text-slate-400">VD: 22h t?i d?n 5h s·ng (l?p l?i h‡ng ng‡y)</div>
+                                                    <div className="text-xs font-bold text-slate-700 mb-1">Khung gi? m·ªõi ngÔøΩy</div>
+                                                    <div className="text-[10px] text-slate-400">VD: 22h t?i d?n 5h sÔøΩng (l?p l?i hÔøΩng ngÔøΩy)</div>
                                                 </button>
                                                 <button
                                                     onClick={() => setFormData({ ...formData, schedule_type: 'date_range' })}
                                                     className={`p-3 rounded-xl border text-left transition-all ${formData.schedule_type === 'date_range' ? 'bg-rose-50 border-rose-200 ring-1 ring-rose-500/20' : 'bg-white border-slate-200 opacity-60 hover:opacity-100'}`}
                                                 >
-                                                    <div className="text-xs font-bold text-slate-700 mb-1">Kho?ng ng‡y c? th?</div>
+                                                    <div className="text-xs font-bold text-slate-700 mb-1">Kho?ng ngÔøΩy c? th?</div>
                                                     <div className="text-[10px] text-slate-400">VD: Ngh? T?t t? 01/02 d?n 05/02</div>
                                                 </button>
                                             </div>
@@ -592,7 +592,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                             </div>
                                             <div className="space-y-2">
                                                 <Input
-                                                    label="–?n gi?"
+                                                    label="ÔøΩ?n gi?"
                                                     type="time"
                                                     value={formData.end_time}
                                                     onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
@@ -614,7 +614,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                             </div>
                                             <div className="space-y-2">
                                                 <Input
-                                                    label="Ho?t d?ng v‡o l˙c"
+                                                    label="Ho·∫°t ƒë·ªông vÔøΩo lÔøΩc"
                                                     type="datetime-local"
                                                     value={formData.holiday_end_at || ''}
                                                     onChange={(e) => setFormData({ ...formData, holiday_end_at: e.target.value })}
@@ -628,7 +628,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                         <div className="space-y-4">
                                             <div className="flex items-center justify-between">
                                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                                                    <Calendar className="w-3.5 h-3.5" /> ¡p d?ng ng‡y trong tu?n
+                                                    <Calendar className="w-3.5 h-3.5" /> ÔøΩp d?ng ngÔøΩy trong tu?n
                                                 </label>
                                                 {/* Hide per-day toggle when full schedule */}
                                                 {formData.schedule_type !== 'full' && (
@@ -648,7 +648,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                                         }}
                                                         className={`text-[10px] font-bold px-3 py-1 rounded-full border transition-all ${isPerDay ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-white border-slate-200 text-slate-400'}`}
                                                     >
-                                                        {isPerDay ? '? Gi? riÍng t?ng ng‡y: B?T' : 'Gi? riÍng t?ng ng‡y: T?T'}
+                                                        {isPerDay ? '? Gi? riÔøΩng t?ng ngÔøΩy: B?T' : 'Gi? riÔøΩng t?ng ngÔøΩy: T?T'}
                                                     </button>
                                                 )}
                                             </div>
@@ -689,7 +689,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                                                         />
                                                                     </div>
                                                                     <div className="flex items-center gap-2">
-                                                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">–?n</span>
+                                                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">ÔøΩ?n</span>
                                                                         <input
                                                                             type="time"
                                                                             value={perDaySchedule[day.id].end}
@@ -713,10 +713,10 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                 <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm space-y-6">
                                     <div className="flex items-center justify-between">
                                         <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                                            <Smile className="w-4 h-4 text-emerald-500" /> N?i dung ph?n h?i (Output)
+                                            <Smile className="w-4 h-4 text-emerald-500" /> N·ªôi dung ph?n h?i (Output)
                                         </h3>
                                         {formData.type === 'welcome' && (
-                                            <span className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-100">Ch? g?i 1 tin</span>
+                                            <span className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-100">Ch? g·ª≠i 1 tin</span>
                                         )}
                                     </div>
 
@@ -731,9 +731,9 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
 
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">HÏnh ?nh dÌnh kËm</label>
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">HÔøΩnh ?nh dÔøΩnh kÔøΩm</label>
                                                 {formData.image_url && (
-                                                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, image_url: '', attachment_id: '', message_type: 'text' }))} className="text-[10px] text-rose-500 hover:underline font-bold">XÛa ?nh</button>
+                                                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, image_url: '', attachment_id: '', message_type: 'text' }))} className="text-[10px] text-rose-500 hover:underline font-bold">XÔøΩa ?nh</button>
                                                 )}
                                             </div>
 
@@ -754,7 +754,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                                             {uploading ? <div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /> : <UploadCloud className="w-6 h-6" />}
                                                         </div>
                                                         <div className="text-center">
-                                                            <p className="text-xs font-bold text-slate-600">Click d? t?i ?nh lÍn</p>
+                                                            <p className="text-xs font-bold text-slate-600">Click d? t?i ?nh lÔøΩn</p>
                                                             <p className="text-[10px] text-slate-400 mt-1">JPEG, PNG, JPG (Max 5MB)</p>
                                                         </div>
                                                     </div>
@@ -771,9 +771,9 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
                                         <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                                            <Plus className="w-4 h-4 text-blue-500" /> Thi?t l?p n˙t b?m
+                                            <Plus className="w-4 h-4 text-blue-500" /> Thi?t l?p nÔøΩt b?m
                                         </h3>
-                                        <span className="text-[10px] font-bold text-slate-400">{formData.buttons.length}/4 n˙t</span>
+                                        <span className="text-[10px] font-bold text-slate-400">{formData.buttons.length}/4 nÔøΩt</span>
                                     </div>
 
                                     <div className="space-y-3">
@@ -796,8 +796,8 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                                         </div>
                                                         <div className="flex-1 space-y-1">
                                                             <Input
-                                                                label="TÍn n˙t"
-                                                                placeholder="Nh?p tÍn n˙t..."
+                                                                label="TÔøΩn nÔøΩt"
+                                                                placeholder="Nh?p tÔøΩn nÔøΩt..."
                                                                 value={btn.title}
                                                                 onChange={(e) => handleButtonChange(idx, 'title', e.target.value)}
                                                             />
@@ -811,7 +811,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                                     {btn.type !== 'oa.query.show' && (
                                                         <div className="space-y-1 animate-in slide-in-from-top-1">
                                                             <Input
-                                                                label={btn.type === 'oa.open.url' ? '–u?ng d?n (URL)' : 'S? di?n tho?i'}
+                                                                label={btn.type === 'oa.open.url' ? 'ÔøΩu?ng d?n (URL)' : 'S? dƒêi·ªán tho·∫°i'}
                                                                 placeholder={btn.type === 'oa.open.url' ? "https://..." : "849..."}
                                                                 value={btn.payload || ''}
                                                                 onChange={(e) => handleButtonChange(idx, 'payload', e.target.value)}
@@ -840,10 +840,10 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                                         {btn.show_response_config && (
                                                             <div className="animate-in slide-in-from-top-2 space-y-2 pt-2">
                                                                 <p className="text-[10px] text-slate-500 italic">
-                                                                    Tin nh?n ph?n h?i nhanh khi kh·ch b?m nh?n "<strong>{btn.payload || '...'}</strong>". N?u mu?n thÍm n˙t b?m v‡ hÏnh ?nh xin h„y t?o thÍm k?ch b?n m?i.
+                                                                    Tin nh?n ph?n h?i nhanh khi khÔøΩch b?m nh?n "<strong>{btn.payload || '...'}</strong>". N·ªØu mu?n thÔøΩm nÔøΩt b?m vÔøΩ hÔøΩnh ?nh xin hÔøΩy t?o thÔøΩm k?ch b?n m·ªõi.
                                                                 </p>
                                                                 <textarea
-                                                                    placeholder="Nh?p c‚u tr? l?i..."
+                                                                    placeholder="Nh?p cÔøΩu tr? l?i..."
                                                                     rows={3}
                                                                     className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-indigo-500 transition-all"
                                                                     value={btn.auto_response || ''}
@@ -864,7 +864,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                             <div className="w-6 h-6 bg-slate-50 rounded-lg flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-all">
                                                 <Plus className="w-4 h-4" />
                                             </div>
-                                            ThÍm n˙t b?m m?i
+                                            ThÔøΩm nÔøΩt b?m m·ªõi
                                         </button>
                                     </div>
                                 </div>
@@ -899,7 +899,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                                     <div className="border-t border-slate-50">
                                                         {formData.buttons.map((btn: any, i: number) => (
                                                             <div key={i} className="py-2.5 text-center border-t border-slate-50 first:border-t-0">
-                                                                <span className="text-[11px] font-bold text-blue-600">{btn.title || 'N˙t b?m'}</span>
+                                                                <span className="text-[11px] font-bold text-blue-600">{btn.title || 'NÔøΩt b?m'}</span>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -931,14 +931,14 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                     <button
                         onClick={onClose}
                         className="px-8 py-3.5 rounded-2xl text-xs font-black text-slate-500 hover:bg-slate-50 active:scale-95 transition-all"
-                    >H?y b?</button>
+                    >H·ªßy b?</button>
                     <button
                         onClick={handleSave}
                         disabled={loading}
                         className="px-10 py-3.5 bg-slate-900 hover:bg-black text-white rounded-2xl text-xs font-black shadow-xl shadow-slate-200 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
                     >
                         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                        {scenario ? 'C?p nh?t k?ch b?n' : 'KÌch ho?t ngay'}
+                        {scenario ? 'C?p nh?t k?ch b?n' : 'KÔøΩch ho?t ngay'}
                     </button>
                 </div>
             </div>

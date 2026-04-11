@@ -554,12 +554,7 @@ const WebTracking: React.FC = () => {
             {view === 'report' && selectedWebsite && (
                 <div className="animate-fade-in space-y-8">
                     <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => setView('list')}
-                            className="p-2 bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-all shadow-sm"
-                        >
-                            <ArrowLeft className="w-5 h-5" />
-                        </button>
+                        
                         <div className="flex-1 w-full">
                             <PageHero
                                 title={<>Website: <span className="text-amber-100/80">{selectedWebsite.name}</span></>}
@@ -608,6 +603,7 @@ const WebTracking: React.FC = () => {
                             <div className="bg-slate-50/50 p-6 rounded-[24px] border border-slate-100 mb-10 flex flex-wrap items-center gap-6 animate-in slide-in-from-top-2 duration-300">
                                 <div className="space-y-2">
                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Thiết bị</label>
+
                                     <div className="flex bg-white p-1 rounded-xl border border-slate-200/60 shadow-sm">
                                         <button
                                             onClick={() => setReportDevice('all')}
@@ -643,7 +639,7 @@ const WebTracking: React.FC = () => {
                                 <div className="h-12 w-px bg-slate-200 hidden lg:block self-end mb-1"></div>
 
                                 <div className="space-y-2 flex-1 min-w-[200px]">
-                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Khoảng thời gian</label>
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Khoảng Thời gian</label>
                                     <div className="flex flex-wrap items-center gap-3">
                                         <div className="w-44">
                                             <Select

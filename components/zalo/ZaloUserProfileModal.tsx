@@ -36,7 +36,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
     // Form fields
     const [formData, setFormData] = useState({
         displayName: '',
-        gender: 'Chua ch?n',
+        gender: 'Ch∆∞a ch·ªçn',
         phone: '',
         birthday: '',
         email: '',
@@ -70,7 +70,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
 
             setFormData({
                 displayName: userData.display_name || '',
-                gender: userData.gender || 'Chua ch?n',
+                gender: userData.gender || 'Ch∆∞a ch·ªçn',
                 phone: userData.phone_number || '',
                 birthday: userData.birthday ? formatDateForInput(userData.birthday) : '',
                 email: userData.manual_email || userData.user_email || '',
@@ -140,7 +140,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
                 <div className="bg-white rounded-[24px] p-12 flex flex-col items-center gap-4 shadow-2xl">
                     <History className="w-8 h-8 animate-spin text-blue-600" />
-                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">–ang t?i h? so...</p>
+                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">ÔøΩƒêang t·∫£i h·ªì s∆°...</p>
                 </div>
             </div>
         );
@@ -162,7 +162,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                 {/* Header */}
                 <div className="px-6 py-5 flex justify-between items-center bg-white border-b border-slate-100 shrink-0">
                     <div>
-                        <h3 className="text-lg font-bold text-slate-800 tracking-tight">H? so chi ti?t</h3>
+                        <h3 className="text-lg font-bold text-slate-800 tracking-tight">H·ªì s∆° chi ti·∫øt</h3>
                     </div>
                     <button
                         onClick={handleClose}
@@ -188,7 +188,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                 <div className="flex items-center gap-3">
                                     <h2 className="text-2xl font-black text-slate-800 truncate tracking-tight">{formData.displayName}</h2>
                                     <span className="px-2.5 py-1 inline-flex items-center gap-1.5 rounded-lg border bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm text-[9px] transition-all duration-300 uppercase tracking-wide font-bold">
-                                        Ho?t d?ng
+                                        Ho·∫°t ƒë·ªông
                                     </span>
                                     <div className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg border border-blue-100 flex items-center gap-1.5 shadow-sm ml-auto">
                                         <Star className="w-4 h-4 fill-current" />
@@ -210,7 +210,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                 className={`px-4 py-2 bg-white hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-black border border-slate-200 transition-all duration-500 flex items-center gap-2 hover:shadow-sm ${editMode ? 'border-blue-500 text-blue-600' : ''}`}
                             >
                                 <PenLine className="w-3.5 h-3.5" />
-                                {editMode ? '–ang s?a...' : 'S?a h? so'}
+                                {editMode ? 'ÔøΩƒêang s·ª≠a...' : 'S·ª≠a h·ªì s∆°'}
                             </button>
                         </div>
 
@@ -219,26 +219,26 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                 <ProfileTab
                                     active={activeTab === 'personal'}
                                     onClick={() => setActiveTab('personal')}
-                                    label="C· nh‚n"
+                                    label="C√≤nhÔøΩn"
                                     icon={User}
                                 />
                                 <ProfileTab
                                     active={activeTab === 'interaction'}
                                     onClick={() => setActiveTab('interaction')}
-                                    label="Tuong t·c"
+                                    label="Tuong tÔøΩc"
                                     icon={Activity}
                                     count={user.messages?.length || 0}
                                 />
                                 <ProfileTab
                                     active={activeTab === 'journey'}
                                     onClick={() => setActiveTab('journey')}
-                                    label="H‡nh trÏnh"
+                                    label="HÔøΩnh trÔøΩnh"
                                     icon={History}
                                 />
                                 <ProfileTab
                                     active={activeTab === 'notes'}
                                     onClick={() => setActiveTab('notes')}
-                                    label="Ghi ch˙"
+                                    label="Ghi chÔøΩ"
                                     icon={FileText}
                                     count={formData.notes ? 1 : 0}
                                 />
@@ -254,12 +254,12 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                         {/* Identity Section */}
                                         <section className="space-y-4">
                                             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
-                                                <div className="w-4 h-px bg-slate-200"></div> ThÙng tin d?nh danh
+                                                <div className="w-4 h-px bg-slate-200"></div> ThÔøΩng tin d?nh danh
                                             </h4>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 bg-white p-6 rounded-[28px] border border-slate-100 shadow-sm">
                                                 <div className="col-span-1 md:col-span-2">
                                                     <Input
-                                                        label="H? v‡ tÍn"
+                                                        label="H? vÔøΩ tÔøΩn"
                                                         required
                                                         value={formData.displayName}
                                                         onChange={e => setFormData({ ...formData, displayName: e.target.value })}
@@ -269,21 +269,21 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
 
                                                 <div className="space-y-1.5">
                                                     <Select
-                                                        label="Gi?i tÌnh"
+                                                        label="Gi?i tÔøΩnh"
                                                         value={formData.gender}
                                                         onChange={val => setFormData({ ...formData, gender: val })}
                                                         disabled={!editMode}
                                                         options={[
-                                                            { value: 'Ch?n...', label: 'Ch?n...' },
+                                                            { value: 'Ch·ªçn...', label: 'Ch·ªçn...' },
                                                             { value: 'Nam', label: 'Nam' },
-                                                            { value: 'N?', label: 'N?' },
-                                                            { value: 'Kh·c', label: 'Kh·c' }
+                                                            { value: 'N·ªØ', label: 'N·ªØ' },
+                                                            { value: 'KhÔøΩc', label: 'KhÔøΩc' }
                                                         ]}
                                                     />
                                                 </div>
 
                                                 <Input
-                                                    label="–i?n tho?i"
+                                                    label="ÔøΩƒêi·ªán tho·∫°i"
                                                     icon={Phone}
                                                     value={formData.phone}
                                                     onChange={e => setFormData({ ...formData, phone: e.target.value })}
@@ -291,7 +291,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                                 />
 
                                                 <Input
-                                                    label="Ng‡y sinh"
+                                                    label="NgÔøΩy sinh"
                                                     type="date"
                                                     value={formData.birthday}
                                                     onChange={e => setFormData({ ...formData, birthday: e.target.value })}
@@ -317,10 +317,10 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                 <div className="animate-in fade-in slide-in-from-right-2 duration-300 pb-10">
                                     <div className="flex items-center justify-between mb-6 px-1">
                                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                                            <div className="w-4 h-px bg-slate-200"></div> L?ch s? trÚ chuy?n
+                                            <div className="w-4 h-px bg-slate-200"></div> L·ªãch s·ª≠ trÔøΩ chuy?n
                                         </h4>
                                         <span className="text-[9px] font-bold text-slate-400 italic bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
-                                            Hi?n th? t?i da 20 tin nh?n g?n nh?t
+                                            Hi·ªÉn th·ªã t·ªëi ƒëa 20 tin nh·∫Øn g·∫ßn nh·∫•t
                                         </span>
                                     </div>
                                     <div className="space-y-4">
@@ -336,7 +336,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                         )) : (
                                             <div className="py-20 text-center bg-slate-50/50 rounded-[28px] border border-dashed border-slate-200">
                                                 <Activity className="w-10 h-10 text-slate-200 mx-auto mb-3" />
-                                                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">KhÙng cÛ tuong t·c n‡o</p>
+                                                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">KhÔøΩng cÔøΩ tuong tÔøΩc nÔøΩo</p>
                                             </div>
                                         )}
                                     </div>
@@ -358,7 +358,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                                     </div>
                                                     <div className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm group hover:border-blue-200 transition-all">
                                                         <div className="flex justify-between items-start mb-1">
-                                                            <h5 className="text-sm font-black text-slate-800">{getEventLabel(act.type)}: {act.reference_name || 'H? th?ng'}</h5>
+                                                            <h5 className="text-sm font-black text-slate-800">{getEventLabel(act.type)}: {act.reference_name || 'H·ªá th·ªëng'}</h5>
                                                             <span className="text-[10px] font-bold text-slate-300 uppercase">{formatTimeAgoShort(act.created_at)}</span>
                                                         </div>
                                                         <div className="text-xs text-slate-500 font-medium leading-relaxed">
@@ -426,7 +426,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                                                         </div>
                                                                     );
                                                                 } catch (e) {
-                                                                    return act.details || 'KhÙng cÛ chi ti?t';
+                                                                    return act.details || 'KhÔøΩng cÔøΩ chi ti?t';
                                                                 }
                                                             })()}
                                                         </div>
@@ -435,7 +435,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                             )) : (
                                                 <div className="py-20 text-center bg-slate-50/50 rounded-[28px] border border-dashed border-slate-200 mr-12 -ml-12 pl-12">
                                                     <History className="w-10 h-10 text-slate-200 mx-auto mb-3" />
-                                                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">H‡nh trÏnh dang tr?ng</p>
+                                                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">HÔøΩnh trÔøΩnh dang tr?ng</p>
                                                 </div>
                                             )}
                                     </div>
@@ -465,12 +465,12 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                         })()}
 
                                         <div className="relative pt-4">
-                                            <div className="absolute top-0 left-4 px-2 bg-white text-[9px] font-black text-slate-400 uppercase tracking-widest z-10">Ghi ch˙ c· nh‚n</div>
+                                            <div className="absolute top-0 left-4 px-2 bg-white text-[9px] font-black text-slate-400 uppercase tracking-widest z-10">Ghi chÔøΩ cÔøΩ nhÔøΩn</div>
                                             <textarea
                                                 value={formData.notes}
                                                 onChange={e => setFormData({ ...formData, notes: e.target.value })}
                                                 className="w-full min-h-[150px] p-6 bg-slate-50/50 border border-slate-200 rounded-[28px] text-sm font-medium text-slate-600 focus:outline-none focus:border-blue-500 transition-all resize-none shadow-inner mt-2"
-                                                placeholder="Nh?p ghi ch˙ quan tr?ng v? kh·ch h‡ng n‡y..."
+                                                placeholder="Nh?p ghi chÔøΩ quan tr?ng v? Kh√°ch h√†ng nÔøΩy..."
                                             />
                                             <div className="absolute top-[260px] right-2 z-10 flex gap-2">
                                                 <button
@@ -479,13 +479,13 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                                     className="px-6 py-2.5 bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2"
                                                 >
                                                     <Send className="w-3.5 h-3.5" />
-                                                    Luu ghi ch˙
+                                                    Luu ghi chÔøΩ
                                                 </button>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 px-2 text-slate-400">
                                             <Info className="w-3 h-3" />
-                                            <p className="text-[10px] font-bold">ThÙng tin n‡y du?c b?o m?t v‡ ch? b?n m?i th?y.</p>
+                                            <p className="text-[10px] font-bold">ThÔøΩng tin nÔøΩy du?c b?o m?t vÔøΩ ch? b?n m·ªõi th?y.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -499,7 +499,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                     <div className="flex justify-between w-full items-center">
                         <button className="inline-flex items-center justify-center font-bold rounded-xl transition-all duration-300 active:scale-95 tracking-tight bg-rose-50 text-rose-600 hover:bg-rose-100 px-4 py-2.5 text-sm gap-2 border-none shadow-none">
                             <Trash2 className="w-4 h-4" />
-                            XÛa
+                            XÔøΩa
                         </button>
 
                         <div className="flex gap-3">
@@ -509,14 +509,14 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                     disabled={updating}
                                     className="inline-flex items-center justify-center font-bold rounded-xl transition-all duration-300 active:scale-95 bg-blue-600 text-white px-6 py-2.5 text-sm gap-2 shadow-lg shadow-blue-500/20"
                                 >
-                                    {updating ? '–ang luu...' : 'Luu thay d?i'}
+                                    {updating ? 'ÔøΩƒêang l∆∞u...' : 'L∆∞u thay ƒë·ªïi'}
                                 </button>
                             )}
                             <button
                                 onClick={handleClose}
                                 className="inline-flex items-center justify-center font-bold rounded-xl transition-all duration-500 active:scale-95 bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-amber-600 hover:text-amber-600 px-5 py-2.5 text-sm gap-2"
                             >
-                                –Ûng
+                                ÔøΩÔøΩng
                             </button>
                         </div>
                     </div>
@@ -562,16 +562,16 @@ const TimelineIcon = ({ type }: { type: string }) => {
 
 const getEventLabel = (type: string) => {
     switch (type) {
-        case 'follow': return 'Quan t‚m OA';
-        case 'unfollow': return 'B? quan t‚m';
-        case 'user_send_text': return 'KH g?i tin';
-        case 'sent_message': return 'Ph?n h?i';
-        case 'receive_broadcast': return 'Nh?n tin';
-        case 'seen_broadcast': return '–„ xem';
-        case 'reacted_broadcast': return 'Tuong t·c';
-        case 'user_submit_info': return 'G?i Form';
-        case 'lead_score_reward': return 'Nh?n di?m';
-        case 'lead_score_sync': return '–?ng b? di?m';
+        case 'follow': return 'Quan tÔøΩm OA';
+        case 'unfollow': return 'B·ªè quan tÔøΩm';
+        case 'user_send_text': return 'KH g·ª≠i tin';
+        case 'sent_message': return 'Ph·∫£n h·ªìi';
+        case 'receive_broadcast': return 'Nh·∫≠n tin';
+        case 'seen_broadcast': return 'ÔøΩÔøΩ xem';
+        case 'reacted_broadcast': return 'Tuong tÔøΩc';
+        case 'user_submit_info': return 'G·ª≠i Form';
+        case 'lead_score_reward': return 'Nh·∫≠n ƒëi·ªÉm';
+        case 'lead_score_sync': return 'ÔøΩƒê·ªìng b·ªô ƒëi·ªÉm';
         default: return type.toUpperCase();
     }
 };
@@ -581,11 +581,11 @@ const formatTimeAgoShort = (date: string) => {
     const then = new Date(date);
     const diff = now.getTime() - then.getTime();
 
-    if (diff < 60000) return 'v?a xong';
-    if (diff < 3600000) return `${Math.floor(diff / 60000)} ph˙t tru?c`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)} gi? tru?c`;
+    if (diff < 60000) return 'v·ª´a xong';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} phÔøΩt tru?c`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} gi·ªù tr∆∞·ªõc`;
     const days = Math.floor(diff / 86400000);
-    if (days < 30) return `${days} ng‡y tru?c`;
+    if (days < 30) return `${days} ngÔøΩy tru?c`;
     return then.toLocaleDateString('vi-VN');
 };
 

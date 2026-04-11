@@ -13,11 +13,11 @@ import toast from 'react-hot-toast';
 
 const DB_FIELDS = [
     { value: 'email', label: 'Địa chỉ Email (Bắt buộc)', type: 'email', required: true, icon: Mail },
-    { value: 'firstName', label: 'Tên khách hàng', type: 'text', required: false, icon: Type },
-    { value: 'lastName', label: 'Họ khách hàng', type: 'text', required: false, icon: Type },
+    { value: 'firstName', label: 'Tên Khách hàng', type: 'text', required: false, icon: Type },
+    { value: 'lastName', label: 'Họ Khách hàng', type: 'text', required: false, icon: Type },
     { value: 'phoneNumber', label: 'Số điện thoại', type: 'tel', required: false, icon: Phone },
     { value: 'jobTitle', label: 'Chức danh', type: 'text', required: false, icon: Briefcase },
-    { value: 'companyName', label: 'Công ty', type: 'text', required: false, icon: Building },
+    { value: 'companyName', label: 'Còng ty', type: 'text', required: false, icon: Building },
     { value: 'country', label: 'Quốc gia', type: 'text', required: false, icon: Globe },
     { value: 'city', label: 'Thành phố', type: 'text', required: false, icon: MapPin },
     { value: 'dateOfBirth', label: 'Ngày sinh', type: 'date', required: false, icon: Calendar },
@@ -69,7 +69,7 @@ const FormEditorModal: React.FC<FormEditorModalProps> = ({
     const handleAddField = () => {
         setFormData({
             ...formData,
-            fields: [...(formData.fields || []), { id: crypto.randomUUID(), dbField: 'firstName', label: 'Tên khách hàng', required: false, type: 'text' }]
+            fields: [...(formData.fields || []), { id: crypto.randomUUID(), dbField: 'firstName', label: 'Tên Khách hàng', required: false, type: 'text' }]
         });
     };
 
@@ -156,7 +156,7 @@ const FormEditorModal: React.FC<FormEditorModalProps> = ({
                                 <h5 className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
                                     <Bell className="w-4 h-4 text-[#ffa900]" /> Thông báo Email
                                 </h5>
-                                <p className="text-[10px] text-slate-400 font-medium mt-1">Gửi email thông báo cho tư vấn viên khi có lead mới.</p>
+                                <p className="text-[10px] text-slate-400 font-medium mt-1">Gửi email thông Báo cáo tư vấn viên khi có lead mới.</p>
                             </div>
                             <div
                                 onClick={() => setFormData({ ...formData, notificationEnabled: !formData.notificationEnabled })}
@@ -214,7 +214,7 @@ const FormEditorModal: React.FC<FormEditorModalProps> = ({
                                 <div className="flex items-start gap-2 p-3 bg-white rounded-xl border border-amber-100">
                                     <span className="text-base mt-0.5">📧</span>
                                     <p className="text-[11px] text-slate-500 leading-relaxed">
-                                        Email sẽ chứa toàn bộ trường dữ liệu mà khách hàng gửi — bao gồm cả custom fields như <code className="bg-amber-100 px-1 rounded text-amber-700 text-[10px]">hoc_van</code>, <code className="bg-amber-100 px-1 rounded text-amber-700 text-[10px]">chuong_trinh</code>, v.v.
+                                        Email sẽ chứa toàn bộ trường dữ liệu mà Khách hàng gửi — bao gồm cả custom fields như <code className="bg-amber-100 px-1 rounded text-amber-700 text-[10px]">hoc_van</code>, <code className="bg-amber-100 px-1 rounded text-amber-700 text-[10px]">chuong_trinh</code>, v.v.
                                     </p>
                                 </div>
                             </div>
@@ -228,7 +228,7 @@ const FormEditorModal: React.FC<FormEditorModalProps> = ({
                                 <h5 className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
                                     <Braces className="w-4 h-4 text-[#ffa900]" /> Cấu trúc trường dữ liệu
                                 </h5>
-                                <p className="text-[10px] text-slate-400 font-medium mt-1">Định nghĩa các trường thông tin bạn muốn thu thập từ khách hàng.</p>
+                                <p className="text-[10px] text-slate-400 font-medium mt-1">Định nghĩa các trường thông tin bạn muốn thu thập từ Khách hàng.</p>
                             </div>
                             <button onClick={handleAddField} className="text-[10px] font-black text-blue-600 hover:text-white flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-600 rounded-lg transition-all border border-blue-100 active:scale-95 shadow-sm">
                                 <Plus className="w-3.5 h-3.5" /> THÊM TRƯỜNG
@@ -290,7 +290,7 @@ const FormEditorModal: React.FC<FormEditorModalProps> = ({
                             })}
                             <div className="p-4 bg-white/40 border-2 border-dashed border-slate-200 rounded-2xl text-center">
                                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide flex items-center justify-center gap-2">
-                                    <Sparkles className="w-3.5 h-3.5" /> Dữ liệu sẽ tự động đồng bộ vào hồ sơ khách hàng.
+                                    <Sparkles className="w-3.5 h-3.5" /> Dữ liệu sẽ tự động đồng bộ vào hồ sơ Khách hàng.
                                 </p>
                             </div>
                         </div>

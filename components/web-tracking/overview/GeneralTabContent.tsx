@@ -256,7 +256,7 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                 <div className="p-2 bg-rose-50 text-rose-600 rounded-xl">
                                     <Activity className="w-5 h-5" />
                                 </div>
-                                <span className="text-xl font-black text-slate-800 tracking-tight">V? T? l? thoát (Bounce Rate)</span>
+                                <span className="text-xl font-black text-slate-800 tracking-tight">V? Tá»‰ lá»‡ thoï¿½t (Bounce Rate)</span>
                             </div>
                         }
                         size="xl"
@@ -267,10 +267,10 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                     <div className="p-2 bg-rose-600 text-white rounded-xl">
                                         <BookOpen className="w-5 h-5" />
                                     </div>
-                                    Bounce Rate là gì?
+                                    Bounce Rate lï¿½ gï¿½?
                                 </h4>
                                 <p className="text-sm text-slate-500 leading-relaxed font-medium">
-                                    Bounce rate hay T? l? thoát là ph?n tram s? lu?t truy c?p trang web ch? xem duy nh?t m?t trang và r?i di ngay l?p t?c mà không có thêm tuong tác nào khác (nhu nh?n vào link ho?c xem trang th? hai). Nó do lu?ng m?c d? tuong tác và tính h?p d?n c?a trang dích.
+                                    Bounce rate hay Tá»‰ lá»‡ thoï¿½t lï¿½ ph?n tram s? lu?t truy c?p trang web ch? xem duy nh?t m?t trang vï¿½ r?i di ngay l?p t?c mï¿½ khï¿½ng cï¿½ thï¿½m tuong tï¿½c nï¿½o khï¿½c (nhu nh?n vï¿½o link ho?c xem trang th? hai). Nï¿½ do lu?ng m?c d? tuong tï¿½c vï¿½ tï¿½nh h?p d?n c?a trang dï¿½ch.
                                 </p>
                             </div>
 
@@ -280,13 +280,13 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                         <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
                                             <TrendingUp className="w-4 h-4" />
                                         </div>
-                                        T? l? bao nhiêu là t?t?
+                                        Tá»‰ lá»‡ bao nhiï¿½u lï¿½ t?t?
                                     </h5>
                                     <p className="text-xs text-slate-500 leading-relaxed font-medium mb-4">
-                                        Không có con s? "chu?n" cho m?i linh v?c. T? l? thoát ph? thu?c r?t l?n vào lo?i trang web và m?c dích c?a trang.
+                                        Khï¿½ng cï¿½ con s? "chu?n" cho má»›i linh v?c. Tá»‰ lá»‡ thoï¿½t ph? thu?c r?t l?n vï¿½o lo?i trang web vï¿½ m?c dï¿½ch c?a trang.
                                     </p>
                                     <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl italic text-[11px] text-orange-800 font-bold">
-                                        "Ví d?: M?t trang blog tr? l?i dúng câu h?i ngu?i dùng tìm ki?m có th? có t? l? thoát 90%+ nhung v?n là trang ch?t lu?ng t?t."
+                                        "Vï¿½ d?: M?t trang blog tr? l?i dï¿½ng cï¿½u h?i ngu?i dï¿½ng tï¿½m ki?m cï¿½ th? cï¿½ t? l? thoï¿½t 90%+ nhung v?n lï¿½ trá»Ÿ lÆ°u?ng t?t."
                                     </div>
                                 </div>
 
@@ -295,14 +295,14 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                         <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
                                             <Table className="w-4 h-4" />
                                         </div>
-                                        Trung bình theo ngành
+                                        Trung bï¿½nh theo ngï¿½nh
                                     </h5>
                                     <div className="space-y-3">
                                         {[
-                                            { label: 'Bán l? / TMĞT', range: '20% - 40%', color: 'text-emerald-500' },
+                                            { label: 'Bï¿½n l? / TMï¿½T', range: '20% - 40%', color: 'text-emerald-500' },
                                             { label: 'D?ch v?', range: '10% - 30%', color: 'text-emerald-500' },
-                                            { label: 'T?o khách hàng ti?m nang', range: '30% - 50%', color: 'text-blue-500' },
-                                            { label: 'N?i dung (Content site)', range: '40% - 60%', color: 'text-amber-600' },
+                                            { label: 'T?o KhÃ¡ch hÃ ng ti?m nang', range: '30% - 50%', color: 'text-blue-500' },
+                                            { label: 'Ná»™i dung (Content site)', range: '40% - 60%', color: 'text-amber-600' },
                                             { label: 'Blog / Landing Page', range: '70% - 90%', color: 'text-rose-500' }
                                         ].map((item, i) => (
                                             <div key={i} className="flex items-center justify-between text-[11px] font-bold py-2 border-b border-slate-50 last:border-0">
@@ -326,7 +326,7 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                     </div>
                                     Traffic Trend Analytics
                                 </h3>
-                                <p className="text-[10px] text-slate-500 mt-1.5 font-semibold ml-11">Th?ng kê luu lu?ng truy c?p theo th?i gian</p>
+                                <p className="text-[10px] text-slate-500 mt-1.5 font-semibold ml-11">Th?ng kï¿½ luu lu?ng truy c?p theo Thá»i gian</p>
                             </div>
                         </div>
                         <div className="min-h-[350px] bg-white rounded-2xl p-4 border border-slate-100">
@@ -337,7 +337,7 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                     <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
                                         <BarChart2 className="w-8 h-8 opacity-20" />
                                     </div>
-                                    <p className="font-bold">Chua có d? li?u bi?u d? cho kho?ng th?i gian này</p>
+                                    <p className="font-bold">Chua cï¿½ d? li?u bi?u d? cho kho?ng Thá»i gian nï¿½y</p>
                                 </div>
                             )}
                         </div>

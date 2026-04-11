@@ -66,7 +66,7 @@ const SegmentCleanupModal: React.FC<SegmentCleanupModalProps> = ({ segment, onCl
                     <div className="p-4 bg-amber-50 rounded-xl border border-amber-100 flex gap-3 text-amber-800 text-sm">
                         <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600" />
                         <div>
-                            Bạn đang dọn dẹp phân khúc <strong>{segment.name}</strong>. Hành động này sẽ lọc những người dùng không tương tác trong thời gian dài.
+                            Bạn đang dọn dẹp phân khúc <strong>{segment.name}</strong>. Hành động này sẽ lọc những người dùng không tương tác trong Thời gian dài.
                         </div>
                     </div>
 
