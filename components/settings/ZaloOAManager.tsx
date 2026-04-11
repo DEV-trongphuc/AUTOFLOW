@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, RefreshCw, CheckCircle, XCircle, AlertTriangle, ExternalLink, HelpCircle, Loader2, Users, ShieldCheck, FileText } from 'lucide-react';
 import Button from '../common/Button';
@@ -63,7 +63,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
 
         const handleMessage = (event: MessageEvent) => {
             if (event.data.type === 'ZALO_AUTH_SUCCESS') {
-                showToast('Kết nối Zalo OA thành công!', 'success');
+                showToast('K?t n?i Zalo OA th�nh c�ng!', 'success');
                 setIsConnecting(false);
                 fetchOAs();
             }
@@ -81,7 +81,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                 setOas(res.data);
             }
         } catch (error) {
-            showToast('Lỗi khi tải danh sách OA', 'error');
+            showToast('L?i khi t?i danh s�ch OA', 'error');
         } finally {
             setIsLoading(false);
         }
@@ -104,13 +104,13 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                     `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
                 );
 
-                showToast('Đang mở cửa sổ đăng nhập Zalo...', 'info');
+                showToast('�ang m? c?a s? dang nh?p Zalo...', 'info');
             } else {
-                showToast(res.message || 'Lỗi khi tạo URL kết nối', 'error');
+                showToast(res.message || 'L?i khi t?o URL k?t n?i', 'error');
                 setIsConnecting(false);
             }
         } catch (error) {
-            showToast('Lỗi kết nối API', 'error');
+            showToast('L?i k?t n?i API', 'error');
             setIsConnecting(false);
         }
     };
@@ -130,10 +130,10 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                     `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
                 );
             } else {
-                showToast(res.message || 'Lỗi khi tạo URL authorize', 'error');
+                showToast(res.message || 'L?i khi t?o URL authorize', 'error');
             }
         } catch (error) {
-            showToast('Lỗi kết nối API', 'error');
+            showToast('L?i k?t n?i API', 'error');
         }
     };
 
@@ -141,13 +141,13 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
         try {
             const res = await api.post(`zalo_oa?route=refresh-token&id=${oaId}`, {});
             if (res.success) {
-                showToast('Đã làm mới token thành công!', 'success');
+                showToast('�� l�m m?i token th�nh c�ng!', 'success');
                 fetchOAs();
             } else {
-                showToast(res.message || 'Lỗi khi refresh token', 'error');
+                showToast(res.message || 'L?i khi refresh token', 'error');
             }
         } catch (error) {
-            showToast('Lỗi kết nối API', 'error');
+            showToast('L?i k?t n?i API', 'error');
         }
     };
 
@@ -178,7 +178,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                     }
                     return o;
                 }));
-                showToast('Đã cập nhật Hạn mức và Chất lượng', 'success');
+                showToast('�� c?p nh?t H?n m?c v� Ch?t lu?ng', 'success');
             }
         } catch (error) {
             console.error(error);
@@ -188,8 +188,8 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
     const handleDeleteClick = (oaId: string, oaName: string) => {
         setConfirmModal({
             isOpen: true,
-            title: 'Ngắt kết nối Zalo OA?',
-            message: `Bạn có chắc chắn muốn ngắt kết nối "${oaName}"? Mọi chiến dịch và tự động hóa liên quan đến OA này sẽ bị ảnh hưởng.`,
+            title: 'Ng?t k?t n?i Zalo OA?',
+            message: `B?n c� ch?c ch?n mu?n ng?t k?t n?i "${oaName}"? M?i chi?n d?ch v� t? d?ng h�a li�n quan d?n OA n�y s? b? ?nh hu?ng.`,
             variant: 'danger',
             requireConfirmText: 'DISCONNECT',
             onConfirm: () => handleDelete(oaId)
@@ -201,13 +201,13 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
         try {
             const res = await api.delete(`zalo_oa?id=${oaId}`);
             if (res.success) {
-                showToast('Đã xóa OA thành công', 'success');
+                showToast('�� x�a OA th�nh c�ng', 'success');
                 fetchOAs();
             } else {
-                showToast(res.message || 'Lỗi khi xóa OA', 'error');
+                showToast(res.message || 'L?i khi x�a OA', 'error');
             }
         } catch (error) {
-            showToast('Lỗi kết nối API', 'error');
+            showToast('L?i k?t n?i API', 'error');
         }
     };
 
@@ -232,7 +232,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
             return (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-500/10 text-slate-500 rounded-xl text-[10px] font-black uppercase tracking-wider border border-slate-500/10">
                     <AlertTriangle className="w-3 h-3" />
-                    Chưa authorize
+                    Chua authorize
                 </div>
             );
         } else {
@@ -271,7 +271,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                         </div>
                         <div>
                             <h3 className="text-xl font-black text-slate-900 tracking-tight">Zalo Official Accounts</h3>
-                            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-0.5 opacity-80">Quản lý kết nối OA</p>
+                            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-0.5 opacity-80">Qu?n l� k?t n?i OA</p>
                         </div>
                     </div>
                 </div>
@@ -283,7 +283,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                         size="md"
                         className="rounded-2xl border-slate-200 bg-slate-50/50 hover:bg-white transition-all"
                     >
-                        Hướng dẫn
+                        Hu?ng d?n
                     </Button>
                     <Button
                         icon={Plus}
@@ -293,7 +293,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                         variant="secondary"
                         className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl shadow-lg shadow-blue-500/25 px-8 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border-0"
                     >
-                        Kết nối ngay
+                        K?t n?i ngay
                     </Button>
                 </div>
             </div>
@@ -315,8 +315,8 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                             <div className="absolute inset-0 bg-blue-500/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                             <ExternalLink className="w-10 h-10 text-blue-500 relative z-10 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6" />
                         </div>
-                        <h4 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Sẵn sàng kết nối?</h4>
-                        <p className="text-sm text-slate-500 mb-10 leading-relaxed font-medium">Kết nối Zalo Official Account của bạn ngay hôm nay để bắt đầu khai thác sức mạnh của thông báo ZNS tự động.</p>
+                        <h4 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">S?n s�ng k?t n?i?</h4>
+                        <p className="text-sm text-slate-500 mb-10 leading-relaxed font-medium">K?t n?i Zalo Official Account c?a b?n ngay h�m nay d? b?t d?u khai th�c s?c m?nh c?a th�ng b�o ZNS t? d?ng.</p>
                         <Button
                             icon={Plus}
                             onClick={handleConnect}
@@ -325,7 +325,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                             variant="secondary"
                             className="bg-slate-900 hover:bg-black text-white rounded-2xl shadow-xl shadow-slate-900/10 px-10 py-4 transition-all hover:-translate-y-1 active:scale-95 border-0"
                         >
-                            Kết nối ngay 1 chạm
+                            K?t n?i ngay 1 ch?m
                         </Button>
                     </div>
                 </div>
@@ -378,8 +378,8 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                                     <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 mb-6 flex items-start gap-3 animate-pulse">
                                         <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
                                         <div>
-                                            <p className="text-xs text-rose-800 font-bold uppercase tracking-wider mb-0.5">Hết hạn kết nối</p>
-                                            <p className="text-[11px] text-rose-600 font-medium">Token đã hết hạn. Vui lòng authorize lại để tiếp tục sử dụng dịch vụ.</p>
+                                            <p className="text-xs text-rose-800 font-bold uppercase tracking-wider mb-0.5">H?t h?n k?t n?i</p>
+                                            <p className="text-[11px] text-rose-600 font-medium">Token d� h?t h?n. Vui l�ng authorize l?i d? ti?p t?c s? d?ng d?ch v?.</p>
                                         </div>
                                     </div>
                                 )}
@@ -401,7 +401,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                                             <button
                                                 onClick={() => handleAuthorize(oa.id)}
                                                 className="px-4 py-2.5 bg-slate-50 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-wider hover:bg-slate-100 hover:text-slate-700 transition-all border border-slate-100 active:scale-95"
-                                                title="Cập nhật quyền/Authorize lại"
+                                                title="C?p nh?t quy?n/Authorize l?i"
                                             >
                                                 <ShieldCheck className="w-3.5 h-3.5" />
                                             </button>
@@ -421,9 +421,9 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                                                 variant="secondary"
                                                 icon={ExternalLink}
                                                 onClick={() => handleAuthorize(oa.id)}
-                                                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0 shadow-lg shadow-amber-500/20"
+                                                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0 shadow-lg shadow-amber-600/20"
                                             >
-                                                Kích hoạt ngay
+                                                K�ch ho?t ngay
                                             </Button>
 
                                             <Button
@@ -441,7 +441,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                                     <button
                                         onClick={() => handleDeleteClick(oa.id, oa.name)}
                                         className="p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all active:scale-95"
-                                        title="Ngắt kết nối"
+                                        title="Ng?t k?t n?i"
                                     >
                                         <Trash2 className="w-5 h-5" />
                                     </button>
@@ -476,7 +476,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                 message={confirmModal.message}
                 variant={confirmModal.variant}
                 requireConfirmText={confirmModal.requireConfirmText}
-                confirmLabel="Ngắt kết nối"
+                confirmLabel="Ng?t k?t n?i"
             />
         </div>
     );

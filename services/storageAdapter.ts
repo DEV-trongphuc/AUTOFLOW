@@ -12,8 +12,8 @@ const isLocal = typeof window !== 'undefined' && (
 );
 const DEFAULT_API_URL = isLocal ? '/mail_api' : 'https://automation.ideas.edu.vn/mail_api';
 
-const SIMULATE_DELAY = 400;
-const CACHE_TTL = 5000; // 5 seconds
+const SIMULATE_DELAY = 0;
+const CACHE_TTL = 60000; // 60 seconds — [PERF] increased for instant tab switching
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 

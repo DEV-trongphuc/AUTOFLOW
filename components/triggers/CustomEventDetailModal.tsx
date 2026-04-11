@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Zap, Code2, Copy, CheckCircle2, X } from 'lucide-react';
 import { CustomEvent } from '../../types';
@@ -40,7 +40,7 @@ const CustomEventDetailModal: React.FC<CustomEventDetailModalProps> = ({ event, 
   });
 </script>`;
 
-    const curlSnippet = `curl -X POST https://your-domain.com/api/webhook.php \\
+    const curlSnippet = `curl -X POST https://automation.ideas.edu.vn/mail_api/webhook.php \\
   -H "Content-Type: application/json" \\
   -d '{
     "type": "custom_event",
@@ -107,7 +107,9 @@ const CustomEventDetailModal: React.FC<CustomEventDetailModalProps> = ({ event, 
                             </div>
                             <div>
                                 <span className="text-slate-500 font-semibold">Ngày tạo:</span>
-                                <p className="text-slate-700 mt-1">{new Date(event.createdAt).toLocaleDateString('vi-VN')}</p>
+                                <p className="text-slate-700 mt-1">
+                                    {event.createdAt ? new Date(event.createdAt).toLocaleDateString('vi-VN') : '—'}
+                                </p>
                             </div>
                         </div>
                     </div>

@@ -186,7 +186,7 @@ const MemberRow = React.memo(({ member, isLast, isSelected, onToggleSelect, hand
                             }}
                             className={`
                                 w-8 h-4 rounded-full p-0.5 transition-all duration-300
-                                ${member.is_global_workspace ? 'bg-amber-500 cursor-pointer' : (isDarkTheme ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-200 hover:bg-slate-300') + ' cursor-pointer'}
+                                ${member.is_global_workspace ? 'bg-amber-600 cursor-pointer' : (isDarkTheme ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-200 hover:bg-slate-300') + ' cursor-pointer'}
                             `}
                         >
                             <div className={`
@@ -282,7 +282,7 @@ const TrainingRow = React.memo(({ row, index, isExpanded, isSelected, dragOverIn
                     )}
                 </div>
                 <div className="flex items-center gap-2 lg:gap-4 pl-0 lg:pl-2 overflow-hidden">
-                    <div className={`relative w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg lg:rounded-xl transition-all duration-200 shrink-0 ${row.source_type === 'folder' ? (isDarkTheme ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-50 text-amber-500') : (isDarkTheme ? (getFileInfo(row.name, row.source_type).darkBgColor + ' ' + getFileInfo(row.name, row.source_type).darkColor) : (getFileInfo(row.name, row.source_type).bgColor + ' ' + getFileInfo(row.name, row.source_type).color))}`}>
+                    <div className={`relative w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg lg:rounded-xl transition-all duration-200 shrink-0 ${row.source_type === 'folder' ? (isDarkTheme ? 'bg-amber-600/20 text-amber-400' : 'bg-amber-50 text-amber-600') : (isDarkTheme ? (getFileInfo(row.name, row.source_type).darkBgColor + ' ' + getFileInfo(row.name, row.source_type).darkColor) : (getFileInfo(row.name, row.source_type).bgColor + ' ' + getFileInfo(row.name, row.source_type).color))}`}>
                         {row.source_type === 'folder' ? <Folder className="w-4 h-4 lg:w-5 lg:h-5 fill-current" /> : React.createElement(getFileInfo(row.name, row.source_type).icon, { className: "w-4 h-4 lg:w-5 lg:h-5" })}
                     </div>
                     <div className="flex flex-col min-w-0">
@@ -356,7 +356,7 @@ const TrainingRow = React.memo(({ row, index, isExpanded, isSelected, dragOverIn
                                 onClick={() => {
                                     toggleWorkspace(row.id, row.is_global_workspace);
                                 }}
-                                className={`w-9 h-5 rounded-full p-0.5 transition-all duration-300 ease-out ${row.is_global_workspace ? 'bg-amber-500 cursor-pointer' : (isDarkTheme ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-300 hover:bg-slate-400') + ' cursor-pointer'}`}
+                                className={`w-9 h-5 rounded-full p-0.5 transition-all duration-300 ease-out ${row.is_global_workspace ? 'bg-amber-600 cursor-pointer' : (isDarkTheme ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-300 hover:bg-slate-400') + ' cursor-pointer'}`}
                             >
                                 <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300 ${row.is_global_workspace ? 'translate-x-4' : 'translate-x-0'}`}></div>
                             </div>

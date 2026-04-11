@@ -15,12 +15,13 @@ interface EmailToolboxProps {
     onLoadTemplate?: (blocks: EmailBlock[]) => void;
     selectedBlockId: string | null;
     savedSections?: { id: string, name: string, data: EmailBlock }[];
+    onDeleteSavedSection?: (id: string) => void;
 }
 
 // Dynamic Icon mapping
 const IconMap: Record<string, any> = LucideIcons;
 
-const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSelectBlock, selectedBlockId, savedSections = [], onLoadTemplate }) => {
+const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSelectBlock, selectedBlockId, savedSections = [], onLoadTemplate, onDeleteSavedSection }) => {
     const [activeTab, setActiveTab] = useState<'blocks' | 'layers' | 'saved' | 'templates'>('blocks');
     const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
     const [searchTerm, setSearchTerm] = useState('');
@@ -57,10 +58,10 @@ const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSele
             <div
                 draggable
                 onDragStart={(e) => onDragStart(e, type, layout)}
-                className="bg-white border border-slate-100 rounded-3xl p-3 flex flex-col gap-2.5 cursor-grab active:cursor-grabbing hover:border-amber-500/30 hover:shadow-[0_12px_24px_-10px_rgba(245,158,11,0.25)] transition-all group h-[100px] justify-center items-center text-center shadow-[0_4px_10px_rgba(0,0,0,0.03)] active:scale-95 duration-300 relative overflow-hidden"
+                className="bg-white border border-slate-100 rounded-3xl p-3 flex flex-col gap-2.5 cursor-grab active:cursor-grabbing hover:border-amber-600/30 hover:shadow-[0_12px_24px_-10px_rgba(245,158,11,0.25)] transition-all group h-[100px] justify-center items-center text-center shadow-[0_4px_10px_rgba(0,0,0,0.03)] active:scale-95 duration-300 relative overflow-hidden"
             >
-                <div className="absolute top-0 left-0 w-full h-1 bg-amber-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="p-3 bg-slate-50 rounded-2xl group-hover:bg-amber-500/10 group-hover:text-amber-600 transition-all duration-300 text-slate-400 group-hover:scale-110">
+                <div className="absolute top-0 left-0 w-full h-1 bg-amber-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="p-3 bg-slate-50 rounded-2xl group-hover:bg-amber-600/10 group-hover:text-amber-600 transition-all duration-300 text-slate-400 group-hover:scale-110">
                     {type === 'layout' ? <LayoutVisual layout={layout} /> : <Icon className="w-5 h-5 transition-all" />}
                 </div>
                 <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest leading-none group-hover:text-slate-900 transition-colors">{label}</span>
@@ -140,12 +141,12 @@ const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSele
                 </div>
                 {activeTab === 'blocks' && (
                     <div className="relative group">
-                        <IconMap.Search as LucideIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-amber-500 transition-colors" />
+                        <IconMap.Search as LucideIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-amber-600 transition-colors" />
                         <input
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             placeholder="Tìm kiếm block..."
-                            className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-8 py-2 text-xs font-bold outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all placeholder:text-slate-300"
+                            className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-8 py-2 text-xs font-bold outline-none focus:border-amber-600 focus:ring-4 focus:ring-amber-600/10 transition-all placeholder:text-slate-300"
                         />
                         {searchTerm && <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-300 hover:text-slate-500"><IconMap.X as LucideIcon className="w-3 h-3" /></button>}
                     </div>
@@ -186,7 +187,7 @@ const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSele
                     <div className="space-y-3 animate-in fade-in slide-in-from-left-2 duration-300">
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Mẫu đã lưu</p>
                         {savedSections.length > 0 ? (
-                            savedSections.map(item => <ToolboxSavedItem key={item.id} item={item} onDragStart={onDragStart} />)
+                            savedSections.map(item => <ToolboxSavedItem key={item.id} item={item} onDragStart={onDragStart} onDelete={onDeleteSavedSection} />)
                         ) : (
                             <div className="text-center py-10 opacity-40">
                                 <IconMap.Bookmark as LucideIcon className="w-8 h-8 mx-auto mb-2 text-slate-300" />

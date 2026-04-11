@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { X, Search, RefreshCcw, Check, MailOpen, Clock, Download, MousePointer2, MessageSquare, AlertOctagon, Reply, MousePointerClick, Monitor, Smartphone, Tablet, Globe, FastForward, Trash2, Play, SkipForward, UserPlus, Send, Loader2, ChevronDown, Tag, List } from 'lucide-react';
 import { api } from '../../../services/storageAdapter';
@@ -143,7 +143,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
         }
 
         // If time has passed or is within 30 seconds
-        if (diff <= 30000) return { text: 'Sắp chạy ngay', isUrgent: true };
+        if (diff <= 30000) return { text: 'S?p ch?y ngay', isUrgent: true };
 
         const totalMinutes = Math.floor(diff / (1000 * 60));
         const days = Math.floor(totalMinutes / (60 * 24));
@@ -151,10 +151,10 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
         const minutes = totalMinutes % 60;
 
         if (days > 0) {
-            return { text: `Còn ${days} ngày ${hours}h ${minutes}p`, isUrgent: false };
+            return { text: `C�n ${days} ng�y ${hours}h ${minutes}p`, isUrgent: false };
         }
-        if (hours > 0) return { text: `Còn ${hours}h ${minutes}p`, isUrgent: false };
-        return { text: `Còn ${minutes} phút`, isUrgent: totalMinutes <= 5 };
+        if (hours > 0) return { text: `C�n ${hours}h ${minutes}p`, isUrgent: false };
+        return { text: `C�n ${minutes} ph�t`, isUrgent: totalMinutes <= 5 };
     };
 
     // Bulk Actions Handlers
@@ -240,13 +240,13 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
 
                     if (type === 'condition') {
                         branches.push(
-                            { id: currentStep.yesStepId || currentStep.yesStepID, label: '✓ YES', description: 'Điều kiện đúng' },
-                            { id: currentStep.noStepId || currentStep.noStepID, label: '✗ NO', description: 'Điều kiện sai' }
+                            { id: currentStep.yesStepId || currentStep.yesStepID, label: '? YES', description: '�i?u ki?n d�ng' },
+                            { id: currentStep.noStepId || currentStep.noStepID, label: '? NO', description: '�i?u ki?n sai' }
                         );
                     } else if (type === 'advanced_condition') {
                         branches.push(
-                            { id: currentStep.yesStepId || currentStep.yesStepID, label: '✓ YES', description: 'Điều kiện đúng' },
-                            { id: currentStep.noStepId || currentStep.noStepID, label: '✗ NO', description: 'Điều kiện sai' }
+                            { id: currentStep.yesStepId || currentStep.yesStepID, label: '? YES', description: '�i?u ki?n d�ng' },
+                            { id: currentStep.noStepId || currentStep.noStepID, label: '? NO', description: '�i?u ki?n sai' }
                         );
                     } else if (type === 'split_test') {
                         const config = currentStep.config || {};
@@ -287,17 +287,17 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
 
             if (res.success) {
                 const count = isGlobalSelected ? pagination.total : selectedIds.size;
-                const action = executeAction ? 'hoàn thành bước này' : 'bỏ qua';
-                toast.success(`Đã ${action} cho ${count} khách hàng`);
+                const action = executeAction ? 'ho�n th�nh bu?c n�y' : 'b? qua';
+                toast.success(`�� ${action} cho ${count} kh�ch h�ng`);
                 setSelectedIds(new Set());
                 setIsGlobalSelected(false);
                 onRefresh();
                 onActionComplete?.();
             } else {
-                toast.error(res.message || 'Có lỗi xảy ra');
+                toast.error(res.message || 'C� l?i x?y ra');
             }
         } catch (error) {
-            toast.error('Không thể thực hiện thao tác');
+            toast.error('Kh�ng th? th?c hi?n thao t�c');
         } finally {
             setBulkActionLoading(false);
         }
@@ -332,18 +332,18 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
 
             if (res.success) {
                 const actualCount = (res.data as any)?.count || count;
-                toast.success(`Đã loại ${actualCount} khách hàng ra khỏi flow`);
+                toast.success(`�� lo?i ${actualCount} kh�ch h�ng ra kh?i flow`);
                 setSelectedIds(new Set());
                 setIsGlobalSelected(false);
                 onRefresh();
                 onActionComplete?.();
             } else {
-                toast.error(res.message || 'Có lỗi xảy ra');
+                toast.error(res.message || 'C� l?i x?y ra');
                 console.error('Bulk remove failed:', res);
             }
         } catch (error) {
             console.error('Bulk remove error:', error);
-            toast.error('Không thể thực hiện thao tác');
+            toast.error('Kh�ng th? th?c hi?n thao t�c');
         } finally {
             setBulkActionLoading(false);
             setConfirmModalOpen(false);
@@ -363,10 +363,10 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                 target_email: resendingParticipant.email,
                 step_id: stepId
             });
-            if (res.success) toast.success(res.message || 'Đã gửi lại thành công');
-            else toast.error(res.message || 'Lỗi gửi lại');
+            if (res.success) toast.success(res.message || '�� g?i l?i th�nh c�ng');
+            else toast.error(res.message || 'L?i g?i l?i');
         } catch (error) {
-            toast.error('Lỗi kết nối');
+            toast.error('L?i k?t n?i');
         } finally {
             setBulkActionLoading(false);
             setResendingParticipant(null);
@@ -377,7 +377,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
     // NEW: Quick Actions Handlers
     const handleBulkAddTag = async () => {
         if (!selectedTag || (selectedIds.size === 0 && !isGlobalSelected)) {
-            toast.error('Vui lòng chọn tag');
+            toast.error('Vui l�ng ch?n tag');
             return;
         }
 
@@ -394,17 +394,17 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
             const res = await api.post(`subscribers?route=bulk-add-tag`, payload);
             if (res.success) {
                 const count = isGlobalSelected ? pagination.total : selectedIds.size;
-                toast.success(`Đã gắn tag cho ${count} khách hàng`);
+                toast.success(`�� g?n tag cho ${count} kh�ch h�ng`);
                 setSelectedIds(new Set());
                 setIsGlobalSelected(false);
                 setTagModalOpen(false);
                 setSelectedTag('');
                 onRefresh();
             } else {
-                toast.error(res.message || 'Có lỗi xảy ra');
+                toast.error(res.message || 'C� l?i x?y ra');
             }
         } catch (error) {
-            toast.error('Không thể thực hiện thao tác');
+            toast.error('Kh�ng th? th?c hi?n thao t�c');
         } finally {
             setBulkActionLoading(false);
         }
@@ -412,7 +412,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
 
     const handleBulkAddToList = async () => {
         if (!selectedList || (selectedIds.size === 0 && !isGlobalSelected)) {
-            toast.error('Vui lòng chọn danh sách');
+            toast.error('Vui l�ng ch?n danh s�ch');
             return;
         }
 
@@ -429,17 +429,17 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
             const res = await api.post(`subscribers?route=bulk-add-to-list`, payload);
             if (res.success) {
                 const count = isGlobalSelected ? pagination.total : selectedIds.size;
-                toast.success(`Đã thêm ${count} khách hàng vào danh sách`);
+                toast.success(`�� th�m ${count} kh�ch h�ng v�o danh s�ch`);
                 setSelectedIds(new Set());
                 setIsGlobalSelected(false);
                 setListModalOpen(false);
                 setSelectedList('');
                 onRefresh();
             } else {
-                toast.error(res.message || 'Có lỗi xảy ra');
+                toast.error(res.message || 'C� l?i x?y ra');
             }
         } catch (error) {
-            toast.error('Không thể thực hiện thao tác');
+            toast.error('Kh�ng th? th?c hi?n thao t�c');
         } finally {
             setBulkActionLoading(false);
         }
@@ -447,7 +447,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
 
     const handleBulkChangeStatus = async () => {
         if (!selectedStatus || (selectedIds.size === 0 && !isGlobalSelected)) {
-            toast.error('Vui lòng chọn trạng thái');
+            toast.error('Vui l�ng ch?n tr?ng th�i');
             return;
         }
 
@@ -464,17 +464,17 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
             const res = await api.post(`subscribers?route=bulk-change-status`, payload);
             if (res.success) {
                 const count = isGlobalSelected ? pagination.total : selectedIds.size;
-                toast.success(`Đã cập nhật trạng thái cho ${count} khách hàng`);
+                toast.success(`�� c?p nh?t tr?ng th�i cho ${count} kh�ch h�ng`);
                 setSelectedIds(new Set());
                 setIsGlobalSelected(false);
                 setStatusModalOpen(false);
                 setSelectedStatus('');
                 onRefresh();
             } else {
-                toast.error(res.message || 'Có lỗi xảy ra');
+                toast.error(res.message || 'C� l?i x?y ra');
             }
         } catch (error) {
-            toast.error('Không thể thực hiện thao tác');
+            toast.error('Kh�ng th? th?c hi?n thao t�c');
         } finally {
             setBulkActionLoading(false);
         }
@@ -538,8 +538,8 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                         <div>
                             <h3 className="text-base font-bold text-slate-800">{title}</h3>
                             <p className="text-xs text-slate-500 font-medium">
-                                Tổng số: {pagination.total} {['clicks', 'zns_clicked'].includes(activeTab) ? 'lượt click' : 'khách hàng'}
-                                {selectedIds.size > 0 && ` • ${selectedIds.size} đã chọn`}
+                                T?ng s?: {pagination.total} {['clicks', 'zns_clicked'].includes(activeTab) ? 'lu?t click' : 'kh�ch h�ng'}
+                                {selectedIds.size > 0 && ` � ${selectedIds.size} d� ch?n`}
                             </p>
                         </div>
                     </div>
@@ -558,8 +558,8 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
 
                                         if (type === 'condition' || type === 'advanced_condition') {
                                             branches.push(
-                                                { id: stepData.yesStepId || stepData.yesStepID, label: 'Nhánh YES (Điều kiện đúng)' },
-                                                { id: stepData.noStepId || stepData.noStepID, label: 'Nhánh NO (Điều kiện sai)' }
+                                                { id: stepData.yesStepId || stepData.yesStepID, label: 'Nh�nh YES (�i?u ki?n d�ng)' },
+                                                { id: stepData.noStepId || stepData.noStepID, label: 'Nh�nh NO (�i?u ki?n sai)' }
                                             );
                                         } else if (type === 'split_test') {
                                             const variants = stepData.config?.variants || [];
@@ -587,7 +587,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                 className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-xs font-bold transition-all"
                             >
                                 <UserPlus className="w-3.5 h-3.5" />
-                                <span>Thêm User</span>
+                                <span>Th�m User</span>
                             </button>
                         )}
                         <button onClick={onClose} className="p-2 hover:bg-white hover:shadow-md rounded-full text-slate-400 transition-all">
@@ -602,7 +602,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <input
                             type="text"
-                            placeholder="Tìm kiếm email..."
+                            placeholder="T�m ki?m email..."
                             value={searchTerm}
                             onChange={(e) => onSearchChange(e.target.value)}
                             className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
@@ -618,10 +618,10 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                     }`}
                             >
                                 <MailOpen className="w-4 h-4" />
-                                <span>{activeTab === 'preview' ? 'Đóng Xem Mail' : 'XEM MAIL'}</span>
+                                <span>{activeTab === 'preview' ? '��ng Xem Mail' : 'XEM MAIL'}</span>
                             </button>
                         )}
-                        <button onClick={onRefresh} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Làm mới">
+                        <button onClick={onRefresh} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="L�m m?i">
                             <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                         </button>
                     </div>
@@ -634,55 +634,55 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                             onClick={() => onTabChange('all_touched')}
                             className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'all_touched' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}
                         >
-                            Đã đi qua
+                            �� di qua
                         </button>
                         <button
                             onClick={() => onTabChange('waiting')}
                             className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'waiting' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}
                         >
-                            Đang chờ gửi
+                            �ang ch? g?i
                         </button>
                         <button
                             onClick={() => onTabChange('opened')}
                             className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'opened' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}
                         >
-                            Đã mở mail
+                            �� m? mail
                         </button>
                         <button
                             onClick={() => onTabChange('failed')}
                             className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'failed' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}
                         >
-                            Gửi lỗi
+                            G?i l?i
                         </button>
                         <button
                             onClick={() => onTabChange('unsubscribed')}
                             className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'unsubscribed' ? 'bg-orange-50 text-orange-600 border-orange-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}
                         >
-                            Hủy đăng ký
+                            H?y dang k�
                         </button>
                         <button
                             onClick={() => onTabChange('clicks')}
                             className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'clicks' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}
                         >
-                            Lượt Click
+                            Lu?t Click
                         </button>
                         <button
                             onClick={() => onTabChange('report')}
                             className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'report' ? 'bg-violet-50 text-violet-600 border-violet-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}
                         >
-                            Báo cáo
+                            B�o c�o
                         </button>
                     </div>
                 )}
 
                 {stepType === 'zalo_zns' && (
                     <div className="px-6 py-3 border-b border-slate-50 flex gap-2 overflow-x-auto" style={{ minHeight: '56px' }}>
-                        <button onClick={() => onTabChange('zns_sent')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'zns_sent' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>Gửi thành công</button>
-                        <button onClick={() => onTabChange('waiting')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'waiting' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>Đang chờ</button>
-                        <button onClick={() => onTabChange('zns_clicked')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'zns_clicked' ? 'bg-cyan-50 text-cyan-600 border-cyan-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>Đã Click Link</button>
-                        <button onClick={() => onTabChange('zns_replied')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'zns_replied' ? 'bg-violet-50 text-violet-600 border-violet-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>Đã Phản hồi</button>
-                        <button onClick={() => onTabChange('zns_failed')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'zns_failed' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>Gửi lỗi</button>
-                        <button onClick={() => onTabChange('zns_skipped')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'zns_skipped' ? 'bg-slate-50 text-slate-600 border-slate-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>Bỏ qua</button>
+                        <button onClick={() => onTabChange('zns_sent')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'zns_sent' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>G?i th�nh c�ng</button>
+                        <button onClick={() => onTabChange('waiting')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'waiting' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>�ang ch?</button>
+                        <button onClick={() => onTabChange('zns_clicked')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'zns_clicked' ? 'bg-cyan-50 text-cyan-600 border-cyan-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>�� Click Link</button>
+                        <button onClick={() => onTabChange('zns_replied')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'zns_replied' ? 'bg-violet-50 text-violet-600 border-violet-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>�� Ph?n h?i</button>
+                        <button onClick={() => onTabChange('zns_failed')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'zns_failed' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>G?i l?i</button>
+                        <button onClick={() => onTabChange('zns_skipped')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'zns_skipped' ? 'bg-slate-50 text-slate-600 border-slate-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>B? qua</button>
                     </div>
                 )}
 
@@ -693,13 +693,13 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                             onClick={() => onTabChange('all_touched')}
                             className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'all_touched' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}
                         >
-                            Đã đi qua
+                            �� di qua
                         </button>
                         <button
                             onClick={() => onTabChange('waiting')}
                             className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'waiting' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}
                         >
-                            Đang chờ
+                            �ang ch?
                         </button>
                     </div>
                 )}
@@ -732,13 +732,13 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                         <th colSpan={['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive'].includes(activeTab) ? 5 : 4} className="px-6 py-3">
                                             <div className="flex items-center justify-between w-full">
                                                 <div className="flex items-center gap-3">
-                                                    <button onClick={handleSelectAll} className="p-1 hover:bg-orange-100 rounded text-orange-600 transition-colors" title="Bỏ chọn tất cả">
+                                                    <button onClick={handleSelectAll} className="p-1 hover:bg-orange-100 rounded text-orange-600 transition-colors" title="B? ch?n t?t c?">
                                                         <div className="relative flex items-center justify-center">
                                                             <input type="checkbox" checked readOnly className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-orange-400 bg-orange-400" />
                                                             <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none" />
                                                         </div>
                                                     </button>
-                                                    <span className="text-xs font-bold text-slate-700">Đã chọn <span className="text-orange-600 font-black text-sm">{selectedIds.size}</span> khách hàng</span>
+                                                    <span className="text-xs font-bold text-slate-700">�� ch?n <span className="text-orange-600 font-black text-sm">{selectedIds.size}</span> kh�ch h�ng</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     {stepType !== 'inactive' && (
@@ -749,7 +749,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-emerald-100 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 rounded-lg text-xs font-bold shadow-sm transition-all disabled:opacity-50"
                                                             >
                                                                 <Play className="w-3.5 h-3.5" />
-                                                                <span>{bulkActionLoading ? 'Đang gửi...' : 'Complete & Next'}</span>
+                                                                <span>{bulkActionLoading ? '�ang g?i...' : 'Complete & Next'}</span>
                                                             </button>
                                                             <button
                                                                 onClick={handleBulkSkip}
@@ -757,7 +757,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-100 text-blue-600 hover:bg-blue-50 hover:border-blue-200 rounded-lg text-xs font-bold shadow-sm transition-all disabled:opacity-50"
                                                             >
                                                                 <SkipForward className="w-3.5 h-3.5" />
-                                                                <span>{bulkActionLoading ? 'Đang gửi...' : 'Bỏ qua & Next'}</span>
+                                                                <span>{bulkActionLoading ? '�ang g?i...' : 'B? qua & Next'}</span>
                                                             </button>
                                                             <div className="h-4 w-px bg-orange-200 mx-1"></div>
                                                         </>
@@ -772,7 +772,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700 rounded-lg text-xs font-bold shadow-sm transition-all disabled:opacity-50"
                                                             >
                                                                 <Tag className="w-3.5 h-3.5" />
-                                                                <span>Hành động nhanh</span>
+                                                                <span>H�nh d?ng nhanh</span>
                                                                 <ChevronDown className={`w-3.5 h-3.5 transition-transform ${quickActionsOpen ? 'rotate-180' : ''}`} />
                                                             </button>
 
@@ -789,8 +789,8 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                                             <Tag className="w-4 h-4 text-violet-600" />
                                                                         </div>
                                                                         <div>
-                                                                            <p className="text-xs font-bold text-slate-700">Gắn Tag</p>
-                                                                            <p className="text-[10px] text-slate-400">Thêm nhãn cho khách hàng</p>
+                                                                            <p className="text-xs font-bold text-slate-700">G?n Tag</p>
+                                                                            <p className="text-[10px] text-slate-400">Th�m nh�n cho kh�ch h�ng</p>
                                                                         </div>
                                                                     </button>
                                                                     <button
@@ -804,8 +804,8 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                                             <List className="w-4 h-4 text-blue-600" />
                                                                         </div>
                                                                         <div>
-                                                                            <p className="text-xs font-bold text-slate-700">Thêm vào List</p>
-                                                                            <p className="text-[10px] text-slate-400">Thêm vào danh sách</p>
+                                                                            <p className="text-xs font-bold text-slate-700">Th�m v�o List</p>
+                                                                            <p className="text-[10px] text-slate-400">Th�m v�o danh s�ch</p>
                                                                         </div>
                                                                     </button>
                                                                     <button
@@ -819,8 +819,8 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                                             <Check className="w-4 h-4 text-emerald-600" />
                                                                         </div>
                                                                         <div>
-                                                                            <p className="text-xs font-bold text-slate-700">Đổi Trạng thái</p>
-                                                                            <p className="text-[10px] text-slate-400">Cập nhật trạng thái</p>
+                                                                            <p className="text-xs font-bold text-slate-700">�?i Tr?ng th�i</p>
+                                                                            <p className="text-[10px] text-slate-400">C?p nh?t tr?ng th�i</p>
                                                                         </div>
                                                                     </button>
                                                                 </div>
@@ -834,7 +834,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                         className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-100 text-rose-600 hover:bg-rose-50 hover:border-rose-200 rounded-lg text-xs font-bold shadow-sm transition-all disabled:opacity-50"
                                                     >
                                                         <Trash2 className="w-3.5 h-3.5" />
-                                                        <span>{isGlobalSelected ? 'Loại bỏ TẤT CẢ' : 'Loại bỏ'}</span>
+                                                        <span>{isGlobalSelected ? 'Lo?i b? T?T C?' : 'Lo?i b?'}</span>
                                                     </button>
                                                 </div>
                                             </div>
@@ -857,41 +857,41 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                             </th>
                                         )}
                                         <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-[320px]">
-                                            Khách hàng
+                                            Kh�ch h�ng
                                         </th>
                                         {(stepType === 'action' || stepType === 'zalo_zns') && activeTab !== 'waiting' && (
                                             <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider w-[120px]">
-                                                GỬI LẠI
+                                                G?I L?I
                                             </th>
                                         )}
                                         {stepType === 'completed' ? (
                                             <>
-                                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Bước cuối cùng</th>
-                                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Trạng thái</th>
-                                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Số lần</th>
-                                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Thời gian</th>
+                                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Bu?c cu?i c�ng</th>
+                                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Tr?ng th�i</th>
+                                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">S? l?n</th>
+                                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Th?i gian</th>
                                             </>
                                         ) : (
                                             <>
-                                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-[200px]">Trạng thái</th>
+                                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-[200px]">Tr?ng th�i</th>
                                                 {activeTab === 'opened' && (
                                                     <>
-                                                        <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">SỐ LẦN</th>
-                                                        <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">THỜI GIAN</th>
+                                                        <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">S? L?N</th>
+                                                        <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">TH?I GIAN</th>
                                                     </>
                                                 )}
                                                 {activeTab === 'waiting' ? (
                                                     <>
-                                                        <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">THỜI GIAN VÀO</th>
-                                                        <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">THỜI GIAN CHỜ</th>
+                                                        <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">TH?I GIAN V�O</th>
+                                                        <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">TH?I GIAN CH?</th>
                                                     </>
                                                 ) : activeTab !== 'opened' ? (
-                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-left">Thời gian</th>
+                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-left">Th?i gian</th>
                                                 ) : null}
 
                                                 {activeTab !== 'opened' && activeTab !== 'all_touched' && activeTab !== 'waiting' && activeTab !== 'failed' && stepType !== 'zalo_zns' && (
                                                     <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
-                                                        ĐỊA CHỈ IP
+                                                        �?A CH? IP
                                                     </th>
                                                 )}
                                             </>
@@ -905,9 +905,9 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                     <tr className="bg-orange-50/50">
                                         <td colSpan={['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive', 'zns_skipped'].includes(activeTab) ? 5 : 4} className="px-6 py-2.5 text-center">
                                             {isGlobalSelected ? (
-                                                <p className="text-xs font-medium text-slate-600">Đã chọn tất cả <span className="font-bold text-orange-600">{pagination.total.toLocaleString()}</span> khách hàng. <button onClick={() => setIsGlobalSelected(false)} className="ml-2 text-blue-600 font-bold hover:underline">Bỏ chọn</button></p>
+                                                <p className="text-xs font-medium text-slate-600">�� ch?n t?t c? <span className="font-bold text-orange-600">{pagination.total.toLocaleString()}</span> kh�ch h�ng. <button onClick={() => setIsGlobalSelected(false)} className="ml-2 text-blue-600 font-bold hover:underline">B? ch?n</button></p>
                                             ) : (
-                                                <p className="text-xs font-medium text-slate-600">Đã chọn {participants.length} khách hàng. <button onClick={() => setIsGlobalSelected(true)} className="ml-1 text-orange-600 font-bold hover:underline italic underline-offset-2">Chọn tất cả {pagination.total.toLocaleString()} khách hàng?</button></p>
+                                                <p className="text-xs font-medium text-slate-600">�� ch?n {participants.length} kh�ch h�ng. <button onClick={() => setIsGlobalSelected(true)} className="ml-1 text-orange-600 font-bold hover:underline italic underline-offset-2">Ch?n t?t c? {pagination.total.toLocaleString()} kh�ch h�ng?</button></p>
                                             )}
                                         </td>
                                     </tr>
@@ -935,7 +935,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                     ))
                                 ) : participants.length === 0 ? (
                                     <tr><td colSpan={['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive', 'zns_skipped'].includes(activeTab) ? 6 : 5} className="py-20 text-center">
-                                        <p className="text-xs font-bold text-slate-400">Không tìm thấy dữ liệu nào.</p>
+                                        <p className="text-xs font-bold text-slate-400">Kh�ng t�m th?y d? li?u n�o.</p>
                                     </td></tr>
                                 ) : participants.map((p, i) => {
                                     const participantId = p.subscriber_id || p.id;
@@ -979,7 +979,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                         }}
                                                         disabled={bulkActionLoading && (resendingParticipant?.id === participantId || resendingParticipant?.subscriber_id === participantId)}
                                                         className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all inline-flex items-center justify-center border border-slate-100 shadow-sm bg-white disabled:opacity-50"
-                                                        title="Gửi lại cho người này"
+                                                        title="G?i l?i cho ngu?i n�y"
                                                     >
                                                         {bulkActionLoading && (resendingParticipant?.id === participantId || resendingParticipant?.subscriber_id === participantId) ? (
                                                             <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
@@ -997,7 +997,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                     </td>
                                                     <td className="px-6 py-3 text-center">
                                                         <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md text-[10px] font-bold border border-emerald-100 inline-flex items-center gap-1">
-                                                            <Check className="w-3 h-3" /> Hoàn thành
+                                                            <Check className="w-3 h-3" /> Ho�n th�nh
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-3 text-center">
@@ -1017,19 +1017,19 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                     <td className="px-6 py-3">
                                                         {p.status === 'completed' ? (
                                                             <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md text-[10px] font-bold border border-emerald-100 inline-flex items-center gap-1">
-                                                                <Check className="w-3 h-3" /> Hoàn thành
+                                                                <Check className="w-3 h-3" /> Ho�n th�nh
                                                             </span>
                                                         ) : p.status === 'opened' ? (
                                                             <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-md text-[10px] font-bold border border-blue-100 inline-flex items-center gap-1">
-                                                                <MailOpen className="w-3 h-3" /> Mở email
+                                                                <MailOpen className="w-3 h-3" /> M? email
                                                             </span>
                                                         ) : (activeTab === 'failed' || p.status?.toLowerCase().includes('failed') || p.status?.toLowerCase().includes('error') || p.status?.toLowerCase() === 'fail') ? (
                                                             <span className="bg-rose-50 text-rose-600 px-2 py-1 rounded-md text-[10px] font-bold border border-rose-100 inline-flex items-center gap-1">
-                                                                <AlertOctagon className="w-3 h-3" /> Lỗi
+                                                                <AlertOctagon className="w-3 h-3" /> L?i
                                                             </span>
                                                         ) : p.status === 'zns_sent' ? (
                                                             <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-md text-[10px] font-bold border border-blue-100 inline-flex items-center gap-1">
-                                                                <MessageSquare className="w-3 h-3" /> ZNS đã gửi
+                                                                <MessageSquare className="w-3 h-3" /> ZNS d� g?i
                                                             </span>
                                                         ) : p.status === 'zns_clicked' ? (
                                                             <span className="bg-cyan-50 text-cyan-600 px-2 py-1 rounded-md text-[10px] font-bold border border-cyan-200 inline-flex items-center gap-1">
@@ -1041,31 +1041,31 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                             </span>
                                                         ) : p.status === 'zns_failed' ? (
                                                             <span className="bg-rose-50 text-rose-600 px-2 py-1 rounded-md text-[10px] font-bold border border-rose-100 inline-flex items-center gap-1">
-                                                                <AlertOctagon className="w-3 h-3" /> ZNS Lỗi
+                                                                <AlertOctagon className="w-3 h-3" /> ZNS L?i
                                                             </span>
                                                         ) : p.status === 'zns_skipped' ? (
                                                             <span className="bg-slate-50 text-slate-600 px-2 py-1 rounded-md text-[10px] font-bold border border-slate-200 inline-flex items-center gap-1">
-                                                                <SkipForward className="w-3 h-3" /> Bỏ qua
+                                                                <SkipForward className="w-3 h-3" /> B? qua
                                                             </span>
                                                         ) : p.status === 'unsubscribed' ? (
                                                             <span className="bg-orange-50 text-orange-600 px-2 py-1 rounded-md text-[10px] font-bold border border-orange-100 inline-flex items-center gap-1">
-                                                                Hủy đăng ký
+                                                                H?y dang k�
                                                             </span>
                                                         ) : p.status === 'condition_true' ? (
                                                             <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md text-[10px] font-bold border border-emerald-100 inline-flex items-center gap-1">
-                                                                <Check className="w-3 h-3" /> Đã khớp
+                                                                <Check className="w-3 h-3" /> �� kh?p
                                                             </span>
                                                         ) : p.status === 'condition_false' ? (
                                                             <span className="bg-rose-50 text-rose-600 px-2 py-1 rounded-md text-[10px] font-bold border border-rose-100 inline-flex items-center gap-1">
-                                                                <X className="w-3 h-3" /> Không khớp
+                                                                <X className="w-3 h-3" /> Kh�ng kh?p
                                                             </span>
                                                         ) : (p.status === 'processed' || p.status === 'success') ? (
                                                             <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md text-[10px] font-bold border border-emerald-100 inline-flex items-center gap-1">
-                                                                <Check className="w-3 h-3" /> Hoàn thành
+                                                                <Check className="w-3 h-3" /> Ho�n th�nh
                                                             </span>
                                                         ) : p.status === 'processing' ? (
                                                             <span className="bg-violet-50 text-violet-600 px-2 py-1 rounded-md text-[10px] font-bold border border-violet-100 inline-flex items-center gap-1">
-                                                                <RefreshCcw className="w-3 h-3 animate-spin" /> Đang xử lý
+                                                                <RefreshCcw className="w-3 h-3 animate-spin" /> �ang x? l�
                                                             </span>
                                                         ) : (p.lastError || p.last_error) && p.status === 'waiting' ? (
                                                             <span className="bg-orange-50 text-orange-600 px-2 py-1 rounded-md text-[10px] font-bold border border-orange-200 inline-flex items-center gap-1" title={p.lastError || p.last_error}>
@@ -1073,7 +1073,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                             </span>
                                                         ) : (
                                                             <span className="bg-amber-50 text-amber-600 px-2 py-1 rounded-md text-[10px] font-bold border border-amber-100 inline-flex items-center gap-1">
-                                                                <Clock className="w-3 h-3" /> Đang đợi
+                                                                <Clock className="w-3 h-3" /> �ang d?i
                                                             </span>
                                                         )}
                                                     </td>
@@ -1097,7 +1097,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                                             </span>
                                                                             {firstOpen && lastOpen && firstOpen !== lastOpen && (
                                                                                 <span className="text-[9px] text-slate-400 mt-0.5">
-                                                                                    Lần đầu: {formatTime(firstOpen)}
+                                                                                    L?n d?u: {formatTime(firstOpen)}
                                                                                 </span>
                                                                             )}
                                                                         </div>
@@ -1138,14 +1138,14 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                                             return (
                                                                                 <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600">
                                                                                     <Clock className="w-3.5 h-3.5" />
-                                                                                    Còn {d > 0 ? `${d}d ` : ''}{h > 0 ? `${h}h ` : ''}{m}m
+                                                                                    C�n {d > 0 ? `${d}d ` : ''}{h > 0 ? `${h}h ` : ''}{m}m
                                                                                 </span>
                                                                             );
                                                                         } else {
                                                                             return (
                                                                                 <span className="inline-flex items-center gap-1 text-[11px] font-bold text-violet-600">
                                                                                     <Clock className="w-3.5 h-3.5" />
-                                                                                    Sắp chạy ngay
+                                                                                    S?p ch?y ngay
                                                                                 </span>
                                                                             );
                                                                         }
@@ -1180,7 +1180,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                             ) : p.status === 'opened' ? (
                                                                 <span className="inline-flex items-center gap-1">
                                                                     <Clock className="w-3 h-3" />
-                                                                    Lần đầu: {p.firstOpenAt ? formatTime(p.firstOpenAt) : '--:--'}
+                                                                    L?n d?u: {p.firstOpenAt ? formatTime(p.firstOpenAt) : '--:--'}
                                                                 </span>
                                                             ) : (
                                                                 (() => {
@@ -1203,9 +1203,9 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                                             const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                                                                             const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                                                                             return (
-                                                                                <span className="inline-flex items-center gap-1 font-bold text-blue-600" title={`Kiểm tra mỗi 1 phút. Hết hạn lúc: ${new Date(deadline).toLocaleString()}`}>
+                                                                                <span className="inline-flex items-center gap-1 font-bold text-blue-600" title={`Ki?m tra m?i 1 ph�t. H?t h?n l�c: ${new Date(deadline).toLocaleString()}`}>
                                                                                     <Clock className="w-3.5 h-3.5" />
-                                                                                    Chờ {d > 0 ? `${d}d ` : ''}{h > 0 ? `${h}h ` : ''}{m}m (Deadline)
+                                                                                    Ch? {d > 0 ? `${d}d ` : ''}{h > 0 ? `${h}h ` : ''}{m}m (Deadline)
                                                                                 </span>
                                                                             );
                                                                         }
@@ -1250,7 +1250,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                 onClick={() => onPageChange(pagination.page - 1)}
                                 className="px-4 py-2 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                             >
-                                Trước
+                                Tru?c
                             </button>
                             <span className="text-xs font-bold text-slate-600 bg-white px-3 py-1 rounded-lg border border-slate-200">
                                 Trang {pagination.page} / {pagination.totalPages}
@@ -1272,10 +1272,10 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                 isOpen={confirmModalOpen}
                 onClose={() => setConfirmModalOpen(false)}
                 onConfirm={executeRemove}
-                title="Xác nhận loại bỏ"
-                message={`Bạn có chắc muốn loại ${isGlobalSelected ? pagination.total : selectedIds.size} khách hàng ra khỏi flow?`}
-                confirmText="Loại bỏ"
-                cancelText="Hủy"
+                title="X�c nh?n lo?i b?"
+                message={`B?n c� ch?c mu?n lo?i ${isGlobalSelected ? pagination.total : selectedIds.size} kh�ch h�ng ra kh?i flow?`}
+                confirmText="Lo?i b?"
+                cancelText="H?y"
                 variant="danger"
                 isLoading={bulkActionLoading}
             />
@@ -1286,7 +1286,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                 onClose={() => setBranchModalOpen(false)}
                 onConfirm={(branchId) => executeBulkAction(branchId, actionMode === 'execute')}
                 branches={branches}
-                title="Chọn nhánh tiếp theo"
+                title="Ch?n nh�nh ti?p theo"
                 stepType={stepType || ''}
             />
 
@@ -1297,7 +1297,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-2xl">
                             <h3 className="font-bold text-slate-800 flex items-center gap-2">
                                 <UserPlus className="w-5 h-5 text-blue-600" />
-                                Thêm người dùng vào bước này
+                                Th�m ngu?i d�ng v�o bu?c n�y
                             </h3>
                             <button onClick={() => setIsAddModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
                                 <X className="w-5 h-5" />
@@ -1306,7 +1306,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                         <div className="p-6 space-y-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wide">
-                                    Danh sách Email / SĐT / Zalo UID (Mỗi dòng 1 thông tin)
+                                    Danh s�ch Email / S�T / Zalo UID (M?i d�ng 1 th�ng tin)
                                 </label>
                                 <textarea
                                     className="w-full h-32 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-mono text-slate-700 resize-none"
@@ -1315,7 +1315,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                     onChange={e => setAddEmails(e.target.value)}
                                 ></textarea>
                                 <p className="mt-2 text-xs text-slate-400">
-                                    * Những liên hệ chưa có trong hệ thống sẽ được tự động tạo mới.
+                                    * Nh?ng li�n h? chua c� trong h? th?ng s? du?c t? d?ng t?o m?i.
                                 </p>
                             </div>
 
@@ -1323,7 +1323,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                             {availableBranches.length > 0 && (
                                 <div>
                                     <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wide">
-                                        Vị trí bắt đầu
+                                        V? tr� b?t d?u
                                     </label>
                                     <div className="relative z-50">
                                         <button
@@ -1337,8 +1337,8 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                     if (targetAddStepId === stepId || !targetAddStepId) {
                                                         return (
                                                             <>
-                                                                <span className="text-amber-500">●</span>
-                                                                <span>Mặc định (Kiểm tra Logic/Random)</span>
+                                                                <span className="text-amber-600">?</span>
+                                                                <span>M?c d?nh (Ki?m tra Logic/Random)</span>
                                                             </>
                                                         );
                                                     }
@@ -1346,7 +1346,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                     return (
                                                         <>
                                                             <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                                                            <span className="text-blue-700">{selectedBranch?.label || 'Đã chọn nhánh'}</span>
+                                                            <span className="text-blue-700">{selectedBranch?.label || '�� ch?n nh�nh'}</span>
                                                         </>
                                                     );
                                                 })()}
@@ -1373,8 +1373,8 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                             : 'hover:bg-slate-50 text-slate-600'
                                                             }`}
                                                     >
-                                                        <span className={(!targetAddStepId || targetAddStepId === stepId) ? 'text-blue-200' : 'text-slate-400'}>●</span>
-                                                        <span className="text-sm font-bold">Mặc định (Kiểm tra Logic/Random)</span>
+                                                        <span className={(!targetAddStepId || targetAddStepId === stepId) ? 'text-blue-200' : 'text-slate-400'}>?</span>
+                                                        <span className="text-sm font-bold">M?c d?nh (Ki?m tra Logic/Random)</span>
                                                         {(!targetAddStepId || targetAddStepId === stepId) && <Check className="w-4 h-4 ml-auto text-white" />}
                                                     </div>
 
@@ -1382,7 +1382,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
 
                                                     <div className="px-3 pb-2 pt-1">
                                                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                                            Bắt buộc vào nhánh (Bỏ qua logic)
+                                                            B?t bu?c v�o nh�nh (B? qua logic)
                                                         </span>
                                                     </div>
 
@@ -1415,7 +1415,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                     <p className="mt-2 text-xs text-amber-600 bg-amber-50 p-2 rounded-lg border border-amber-100 flex gap-2">
                                         <AlertOctagon className="w-4 h-4 shrink-0" />
                                         <span>
-                                            Nếu chọn nhánh cụ thể, người dùng sẽ <b>bỏ qua</b> logic của bước này và đi thẳng vào nhánh đã chọn.
+                                            N?u ch?n nh�nh c? th?, ngu?i d�ng s? <b>b? qua</b> logic c?a bu?c n�y v� di th?ng v�o nh�nh d� ch?n.
                                         </span>
                                     </p>
                                 </div>
@@ -1427,11 +1427,11 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                 onClick={() => setIsAddModalOpen(false)}
                                 className="px-4 py-2 text-slate-600 font-semibold text-sm hover:bg-white hover:shadow-sm rounded-lg transition-all border border-transparent hover:border-slate-200"
                             >
-                                Hủy bỏ
+                                H?y b?
                             </button>
                             <button
                                 onClick={() => {
-                                    if (!addEmails.trim()) return toast.error('Vui lòng nhập ít nhất 1 liên hệ');
+                                    if (!addEmails.trim()) return toast.error('Vui l�ng nh?p �t nh?t 1 li�n h?');
                                     setAddingUsers(true);
 
                                     // Split and cleanup
@@ -1443,20 +1443,20 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                     }).then(res => {
                                         const data = res.data as any; // Cast to any to access dynamic props
                                         if (res.success) {
-                                            toast.success(res.message || `Đã thêm ${data?.added || 0} khách hàng`);
+                                            toast.success(res.message || `�� th�m ${data?.added || 0} kh�ch h�ng`);
                                             setAddEmails(''); // Clear input
                                             setIsAddModalOpen(false); // Close modal
                                             onRefresh(); // Refresh list AND stats
                                         } else {
-                                            toast.error(res.message || 'Lỗi thêm khách hàng');
+                                            toast.error(res.message || 'L?i th�m kh�ch h�ng');
                                             // Provide more detail if errors array exists
                                             if (data?.errors && data.errors.length > 0) {
                                                 console.error(data.errors);
-                                                toast.error(`Chi tiết lỗi: ${data.errors[0]}...`);
+                                                toast.error(`Chi ti?t l?i: ${data.errors[0]}...`);
                                             }
                                         }
                                     }).catch(err => {
-                                        toast.error('Lỗi kết nối server');
+                                        toast.error('L?i k?t n?i server');
                                         console.error(err);
                                     }).finally(() => setAddingUsers(false));
                                 }}
@@ -1464,7 +1464,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                 className="px-4 py-2 bg-blue-600 text-white font-bold text-sm rounded-lg hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                             >
                                 {addingUsers ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
-                                {addingUsers ? 'Đang thêm...' : 'Thêm ngay'}
+                                {addingUsers ? '�ang th�m...' : 'Th�m ngay'}
                             </button>
                         </div>
                     </div>
@@ -1479,9 +1479,9 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                     setResendingParticipant(null);
                 }}
                 onConfirm={executeResend}
-                title="Xác nhận gửi lại?"
-                message={`Bạn có chắc chắn muốn gửi lại nội dung bước này cho ${(resendingParticipant?.phone || resendingParticipant?.phone_number || resendingParticipant?.phoneNumber) ? `${resendingParticipant?.email || ''} - ${resendingParticipant?.phone || resendingParticipant?.phone_number || resendingParticipant?.phoneNumber}` : (resendingParticipant?.email || 'khách hàng này')}?`}
-                confirmText="Gửi ngay"
+                title="X�c nh?n g?i l?i?"
+                message={`B?n c� ch?c ch?n mu?n g?i l?i n?i dung bu?c n�y cho ${(resendingParticipant?.phone || resendingParticipant?.phone_number || resendingParticipant?.phoneNumber) ? `${resendingParticipant?.email || ''} - ${resendingParticipant?.phone || resendingParticipant?.phone_number || resendingParticipant?.phoneNumber}` : (resendingParticipant?.email || 'kh�ch h�ng n�y')}?`}
+                confirmText="G?i ngay"
                 variant="info"
                 isLoading={bulkActionLoading}
             />
@@ -1495,20 +1495,20 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                 <Tag className="w-5 h-5" />
                             </div>
                             <div>
-                                <h3 className="text-base font-bold text-slate-800">Gắn Tag khách hàng</h3>
-                                <p className="text-xs text-slate-500">Chọn tag muốn gắn cho {isGlobalSelected ? pagination.total : selectedIds.size} khách hàng</p>
+                                <h3 className="text-base font-bold text-slate-800">G?n Tag kh�ch h�ng</h3>
+                                <p className="text-xs text-slate-500">Ch?n tag mu?n g?n cho {isGlobalSelected ? pagination.total : selectedIds.size} kh�ch h�ng</p>
                             </div>
                         </div>
 
                         <div className="space-y-4">
                             <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Chọn Tag</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Ch?n Tag</label>
                                 <select
                                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none transition-all font-medium"
                                     value={selectedTag}
                                     onChange={(e) => setSelectedTag(e.target.value)}
                                 >
-                                    <option value="">-- Chọn một Tag --</option>
+                                    <option value="">-- Ch?n m?t Tag --</option>
                                     {availableTags.map(tag => (
                                         <option key={tag.id} value={tag.id}>{tag.name}</option>
                                     ))}
@@ -1520,7 +1520,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                     onClick={() => setTagModalOpen(false)}
                                     className="flex-1 py-2.5 px-4 bg-slate-50 text-slate-600 font-bold text-sm rounded-xl hover:bg-slate-100 transition-all border border-slate-200"
                                 >
-                                    Hủy bỏ
+                                    H?y b?
                                 </button>
                                 <button
                                     onClick={handleBulkAddTag}
@@ -1528,7 +1528,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                     className="flex-[2] py-2.5 px-4 bg-violet-600 text-white font-bold text-sm rounded-xl hover:bg-violet-700 shadow-lg shadow-violet-500/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                     {bulkActionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                                    <span>Xác nhận gắn Tag</span>
+                                    <span>X�c nh?n g?n Tag</span>
                                 </button>
                             </div>
                         </div>
@@ -1545,20 +1545,20 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                 <List className="w-5 h-5" />
                             </div>
                             <div>
-                                <h3 className="text-base font-bold text-slate-800">Thêm vào Danh sách</h3>
-                                <p className="text-xs text-slate-500">Chọn list muốn thêm {isGlobalSelected ? pagination.total : selectedIds.size} khách hàng vào</p>
+                                <h3 className="text-base font-bold text-slate-800">Th�m v�o Danh s�ch</h3>
+                                <p className="text-xs text-slate-500">Ch?n list mu?n th�m {isGlobalSelected ? pagination.total : selectedIds.size} kh�ch h�ng v�o</p>
                             </div>
                         </div>
 
                         <div className="space-y-4">
                             <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Chọn Danh sách</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Ch?n Danh s�ch</label>
                                 <select
                                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
                                     value={selectedList}
                                     onChange={(e) => setSelectedList(e.target.value)}
                                 >
-                                    <option value="">-- Chọn một List --</option>
+                                    <option value="">-- Ch?n m?t List --</option>
                                     {availableLists.map(list => (
                                         <option key={list.id} value={list.id}>{list.name} ({list.subscribers_count || 0} user)</option>
                                     ))}
@@ -1570,7 +1570,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                     onClick={() => setListModalOpen(false)}
                                     className="flex-1 py-2.5 px-4 bg-slate-50 text-slate-600 font-bold text-sm rounded-xl hover:bg-slate-100 transition-all border border-slate-200"
                                 >
-                                    Hủy bỏ
+                                    H?y b?
                                 </button>
                                 <button
                                     onClick={handleBulkAddToList}
@@ -1578,7 +1578,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                     className="flex-[2] py-2.5 px-4 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                     {bulkActionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                                    <span>Xác nhận thêm vào List</span>
+                                    <span>X�c nh?n th�m v�o List</span>
                                 </button>
                             </div>
                         </div>
@@ -1595,20 +1595,20 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                 <Check className="w-5 h-5" />
                             </div>
                             <div>
-                                <h3 className="text-base font-bold text-slate-800">Đổi trạng thái liên hệ</h3>
-                                <p className="text-xs text-slate-500">Cập nhận trạng thái cho {isGlobalSelected ? pagination.total : selectedIds.size} khách hàng</p>
+                                <h3 className="text-base font-bold text-slate-800">�?i tr?ng th�i li�n h?</h3>
+                                <p className="text-xs text-slate-500">C?p nh?n tr?ng th�i cho {isGlobalSelected ? pagination.total : selectedIds.size} kh�ch h�ng</p>
                             </div>
                         </div>
 
                         <div className="space-y-4">
                             <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Chọn trạng thái mới</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Ch?n tr?ng th�i m?i</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     {[
-                                        { value: 'active', label: 'Hoạt động', bg: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
-                                        { value: 'unsubscribed', label: 'Hủy đăng ký', bg: 'bg-orange-50 text-orange-600 border-orange-100' },
+                                        { value: 'active', label: 'Ho?t d?ng', bg: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
+                                        { value: 'unsubscribed', label: 'H?y dang k�', bg: 'bg-orange-50 text-orange-600 border-orange-100' },
                                         { value: 'bounced', label: 'Bounced', bg: 'bg-rose-50 text-rose-600 border-rose-100' },
-                                        { value: 'complained', label: 'Khiếu nại', bg: 'bg-slate-100 text-slate-600 border-slate-200' }
+                                        { value: 'complained', label: 'Khi?u n?i', bg: 'bg-slate-100 text-slate-600 border-slate-200' }
                                     ].map(status => (
                                         <button
                                             key={status.value}
@@ -1627,7 +1627,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                     onClick={() => setStatusModalOpen(false)}
                                     className="flex-1 py-2.5 px-4 bg-slate-50 text-slate-600 font-bold text-sm rounded-xl hover:bg-slate-100 transition-all border border-slate-200"
                                 >
-                                    Hủy bỏ
+                                    H?y b?
                                 </button>
                                 <button
                                     onClick={handleBulkChangeStatus}
@@ -1635,7 +1635,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                     className="flex-[2] py-2.5 px-4 bg-emerald-600 text-white font-bold text-sm rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                     {bulkActionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                                    <span>Xác nhận đổi trạng thái</span>
+                                    <span>X�c nh?n d?i tr?ng th�i</span>
                                 </button>
                             </div>
                         </div>

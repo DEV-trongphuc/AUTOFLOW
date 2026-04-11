@@ -15,7 +15,7 @@ const Badge = ({ color, children }: { color: string; children: React.ReactNode }
 );
 const SectionHeader = ({ label, title, desc }: { label: string; title: React.ReactNode; desc?: string }) => (
     <div className="max-w-4xl mb-14">
-        <p className="text-[11px] font-black text-amber-500 uppercase tracking-[0.4em] mb-3">{label}</p>
+        <p className="text-[11px] font-black text-amber-600 uppercase tracking-[0.4em] mb-3">{label}</p>
         <h2 className="text-4xl lg:text-5xl font-black text-slate-900 tracking-tight mb-5">{title}</h2>
         {desc && <p className="text-lg text-slate-500 leading-relaxed">{desc}</p>}
     </div>
@@ -24,14 +24,14 @@ const CodeBlock = ({ code, lang = 'js' }: { code: string; lang?: string }) => (
     <div className="rounded-2xl bg-slate-950 border border-white/5 overflow-hidden">
         <div className="flex items-center justify-between px-5 py-3 bg-white/5 border-b border-white/5">
             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{lang}</span>
-            <div className="flex gap-1.5"><div className="w-2 h-2 rounded-full bg-rose-500/60" /><div className="w-2 h-2 rounded-full bg-amber-500/60" /><div className="w-2 h-2 rounded-full bg-emerald-500/60" /></div>
+            <div className="flex gap-1.5"><div className="w-2 h-2 rounded-full bg-rose-500/60" /><div className="w-2 h-2 rounded-full bg-amber-600/60" /><div className="w-2 h-2 rounded-full bg-emerald-500/60" /></div>
         </div>
         <pre className="p-5 text-[12px] text-emerald-400 font-mono leading-relaxed overflow-x-auto whitespace-pre-wrap">{code}</pre>
     </div>
 );
 const FeatureRow = ({ icon: Icon, title, desc }: { icon: any; title: string; desc: string }) => (
     <div className="flex items-start gap-4 p-5 bg-white border border-slate-100 rounded-2xl hover:shadow-md hover:border-amber-200 transition-all">
-        <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500 shrink-0"><Icon className="w-5 h-5" /></div>
+        <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0"><Icon className="w-5 h-5" /></div>
         <div><p className="font-black text-slate-900 text-sm">{title}</p><p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{desc}</p></div>
     </div>
 );
@@ -39,11 +39,11 @@ const FeatureRow = ({ icon: Icon, title, desc }: { icon: any; title: string; des
 /* ─── SECTION 9: AI CHAT SPACE ──────────────────────── */
 export const SectionAIChat = () => (
     <div className="space-y-16 animate-in fade-in duration-700">
-        <SectionHeader label="AI Chat Space" title={<>Multi-Chatbot <span className="text-amber-500">Platform</span></>} desc="Quản lý nhiều chatbot AI trong một workspace, phân quyền tổ chức, widget nhúng web, slug tùy chỉnh." />
+        <SectionHeader label="AI Chat Space" title={<>Multi-Chatbot <span className="text-amber-600">Platform</span></>} desc="Quản lý nhiều chatbot AI trong một workspace, phân quyền tổ chức, widget nhúng web, slug tùy chỉnh." />
         <div className="grid lg:grid-cols-2 gap-10">
             <div className="space-y-6">
                 <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm">
-                    <h3 className="font-black text-slate-900 mb-6 flex items-center gap-3"><Bot className="w-5 h-5 text-amber-500" />Cấu trúc AI Space</h3>
+                    <h3 className="font-black text-slate-900 mb-6 flex items-center gap-3"><Bot className="w-5 h-5 text-amber-600" />Cấu trúc AI Space</h3>
                     <div className="space-y-3">
                         {[
                             { icon: Globe, t: 'Category (Tổ chức)', d: 'Mỗi tổ chức có một AI Space riêng với custom domain & branding.' },
@@ -71,13 +71,13 @@ export const SectionAIChat = () => (
             </div>
             <div className="space-y-6">
                 <div className="p-8 bg-slate-950 rounded-3xl text-white shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-[80px]" />
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-amber-600/10 rounded-full blur-[80px]" />
                     <div className="relative z-10">
-                        <h3 className="font-black text-amber-500 uppercase tracking-widest text-xs mb-6">AI Space — Live Preview</h3>
+                        <h3 className="font-black text-amber-600 uppercase tracking-widest text-xs mb-6">AI Space — Live Preview</h3>
                         {/* Sidebar mock */}
                         <div className="flex rounded-2xl overflow-hidden border border-white/10 min-h-[320px]">
                             <div className="w-16 bg-white/5 flex flex-col items-center py-5 gap-4 border-r border-white/10">
-                                <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center"><Zap className="w-4 h-4 text-white" /></div>
+                                <div className="w-9 h-9 rounded-xl bg-amber-600 flex items-center justify-center"><Zap className="w-4 h-4 text-white" /></div>
                                 {[MessageSquare, Users, Settings].map((Icon, i) => <div key={i} className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-slate-500"><Icon className="w-4 h-4" /></div>)}
                             </div>
                             <div className="flex-1 flex flex-col">
@@ -87,11 +87,11 @@ export const SectionAIChat = () => (
                                 </div>
                                 <div className="flex-1 p-4 space-y-3">
                                     <div className="flex justify-end"><div className="bg-slate-700 text-white text-[10px] px-3 py-2 rounded-xl rounded-tr-none max-w-[75%]">Sản phẩm nào phù hợp cho startup?</div></div>
-                                    <div className="flex gap-2"><div className="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center shrink-0"><Bot className="w-3 h-3 text-slate-900" /></div><div className="bg-amber-500 text-slate-900 text-[10px] px-3 py-2 rounded-xl rounded-tl-none font-bold max-w-[75%]">Chào bạn! Gói Starter phù hợp nhất với startup — 3 flows, 5.000 contacts, AI chat không giới hạn.</div></div>
+                                    <div className="flex gap-2"><div className="w-6 h-6 rounded-full bg-amber-600 flex items-center justify-center shrink-0"><Bot className="w-3 h-3 text-slate-900" /></div><div className="bg-amber-600 text-slate-900 text-[10px] px-3 py-2 rounded-xl rounded-tl-none font-bold max-w-[75%]">Chào bạn! Gói Starter phù hợp nhất với startup — 3 flows, 5.000 contacts, AI chat không giới hạn.</div></div>
                                 </div>
                                 <div className="p-3 border-t border-white/10 flex gap-2">
                                     <div className="flex-1 bg-white/5 rounded-xl h-9 border border-white/10" />
-                                    <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center"><Send className="w-4 h-4 text-slate-900" /></div>
+                                    <div className="w-9 h-9 rounded-xl bg-amber-600 flex items-center justify-center"><Send className="w-4 h-4 text-slate-900" /></div>
                                 </div>
                             </div>
                         </div>
@@ -128,7 +128,7 @@ export const SectionAIChat = () => (
 /* ─── SECTION 10: ZALO & META ───────────────────────── */
 export const SectionZaloMeta = () => (
     <div className="space-y-16 animate-in fade-in duration-700">
-        <SectionHeader label="Social Channels" title={<>Zalo OA & <span className="text-amber-500">Meta Messenger</span></>} desc="Kết nối Zalo Official Account và Facebook Page để gửi ZNS, broadcast và automation Messenger." />
+        <SectionHeader label="Social Channels" title={<>Zalo OA & <span className="text-amber-600">Meta Messenger</span></>} desc="Kết nối Zalo Official Account và Facebook Page để gửi ZNS, broadcast và automation Messenger." />
         <div className="grid lg:grid-cols-2 gap-10">
             {/* Zalo */}
             <div className="space-y-6">
@@ -208,11 +208,11 @@ export const SectionZaloMeta = () => (
 /* ─── SECTION 11: API TRIGGERS ──────────────────────── */
 export const SectionAPITriggers = () => (
     <div className="space-y-16 animate-in fade-in duration-700">
-        <SectionHeader label="API & Integrations" title={<>API Triggers <span className="text-amber-500">& Webhooks</span></>} desc="Kết nối Autoflow với bất kỳ hệ thống nào qua REST API và real-time Webhooks." />
+        <SectionHeader label="API & Integrations" title={<>API Triggers <span className="text-amber-600">& Webhooks</span></>} desc="Kết nối Autoflow với bất kỳ hệ thống nào qua REST API và real-time Webhooks." />
         <div className="grid lg:grid-cols-2 gap-10">
             <div className="space-y-6">
                 <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm">
-                    <h3 className="font-black text-slate-900 mb-6 flex items-center gap-3"><Key className="w-5 h-5 text-amber-500" />API Endpoints</h3>
+                    <h3 className="font-black text-slate-900 mb-6 flex items-center gap-3"><Key className="w-5 h-5 text-amber-600" />API Endpoints</h3>
                     <div className="space-y-3">
                         {[
                             { method: 'POST', path: '/api/contacts', desc: 'Tạo / cập nhật contact trong CDP.' },
@@ -230,7 +230,7 @@ export const SectionAPITriggers = () => (
                     </div>
                 </div>
                 <div className="p-8 bg-white border border-slate-100 rounded-3xl">
-                    <h3 className="font-black text-slate-900 mb-5 flex items-center gap-3"><Webhook className="w-5 h-5 text-amber-500" />Outbound Webhooks</h3>
+                    <h3 className="font-black text-slate-900 mb-5 flex items-center gap-3"><Webhook className="w-5 h-5 text-amber-600" />Outbound Webhooks</h3>
                     <div className="space-y-3">
                         {[{ icon: UserCheck, t: 'Contact Updated', d: 'Gửi payload khi contact thay đổi trường dữ liệu.' }, { icon: Tag, t: 'Tag Assigned', d: 'Notify khi tag được gắn — tích hợp với CRM.' }, { icon: Mail, t: 'Email Opened', d: 'Tracking event gửi về server của bạn.' }, { icon: GitBranch, t: 'Flow Completed', d: 'Khi contact hoàn thành toàn bộ flow.' }].map((f, i) => <FeatureRow key={i} icon={f.icon} title={f.t} desc={f.d} />)}
                     </div>
@@ -238,7 +238,7 @@ export const SectionAPITriggers = () => (
             </div>
             <div className="space-y-6">
                 <div className="p-8 bg-slate-950 rounded-3xl text-white shadow-xl">
-                    <h3 className="font-black text-amber-500 uppercase tracking-widest text-xs mb-5">Ví dụ: Trigger Flow từ CRM/POS</h3>
+                    <h3 className="font-black text-amber-600 uppercase tracking-widest text-xs mb-5">Ví dụ: Trigger Flow từ CRM/POS</h3>
                     <CodeBlock lang="JavaScript" code={`// Gửi event từ hệ thống ngoài để kích hoạt Automation
 const response = await fetch("https://api.autoflow.io/v1/events", {
   method: "POST",
@@ -267,7 +267,7 @@ const response = await fetch("https://api.autoflow.io/v1/events", {
                     <h3 className="font-black text-amber-900 mb-5">Authentication</h3>
                     <div className="space-y-3">
                         {['Bearer Token trong header Authorization', 'Mỗi workspace có API Key riêng', 'Rate limit: 1000 req/phút per key', 'IP Whitelist có thể bật trong Settings'].map((s, i) => (
-                            <div key={i} className="flex items-center gap-3"><ArrowRight className="w-4 h-4 text-amber-500 shrink-0" /><p className="text-sm font-bold text-amber-900">{s}</p></div>
+                            <div key={i} className="flex items-center gap-3"><ArrowRight className="w-4 h-4 text-amber-600 shrink-0" /><p className="text-sm font-bold text-amber-900">{s}</p></div>
                         ))}
                     </div>
                 </div>
@@ -279,7 +279,7 @@ const response = await fetch("https://api.autoflow.io/v1/events", {
 /* ─── SECTION 12: WEB TRACKING ──────────────────────── */
 export const SectionWebTracking = () => (
     <div className="space-y-16 animate-in fade-in duration-700">
-        <SectionHeader label="Website Tracking" title={<>Theo dõi Hành vi <span className="text-amber-500">Người dùng</span></>} desc="SDK nhẹ (<5 KB) nhúng vào website, ghi lại mọi sự kiện và merge data vào CDP." />
+        <SectionHeader label="Website Tracking" title={<>Theo dõi Hành vi <span className="text-amber-600">Người dùng</span></>} desc="SDK nhẹ (<5 KB) nhúng vào website, ghi lại mọi sự kiện và merge data vào CDP." />
         <div className="grid lg:grid-cols-2 gap-10">
             <div className="space-y-6">
                 <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm">
@@ -316,7 +316,7 @@ afq("identify", {
             </div>
             <div className="space-y-6">
                 <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm">
-                    <h3 className="font-black text-slate-900 mb-6 flex items-center gap-3"><Eye className="w-5 h-5 text-amber-500" />Loại sự kiện tự động</h3>
+                    <h3 className="font-black text-slate-900 mb-6 flex items-center gap-3"><Eye className="w-5 h-5 text-amber-600" />Loại sự kiện tự động</h3>
                     <div className="grid grid-cols-2 gap-3">
                         {[
                             { icon: Globe, t: 'Page View', c: 'blue' },
@@ -336,7 +336,7 @@ afq("identify", {
                     </div>
                 </div>
                 <div className="p-8 bg-slate-900 rounded-3xl text-white">
-                    <h3 className="font-black text-amber-500 uppercase tracking-widest text-xs mb-5">Heatmap & Session Replay</h3>
+                    <h3 className="font-black text-amber-600 uppercase tracking-widest text-xs mb-5">Heatmap & Session Replay</h3>
                     <div className="space-y-4">
                         {[{ icon: Map, t: 'Click Heatmap', d: 'Thấy chính xác vùng nào được click nhiều nhất.' }, { icon: Eye, t: 'Scroll Map', d: 'Tỷ lệ người xem đến từng section trang.' }, { icon: Activity, t: 'Session Replay', d: 'Xem lại hành trình từng người dùng như video.' }].map((f, i) => (
                             <div key={i} className="flex items-start gap-4 p-4 bg-white/5 border border-white/10 rounded-xl">
@@ -354,12 +354,12 @@ afq("identify", {
 /* ─── SECTION 13: ANALYTICS ─────────────────────────── */
 export const SectionAnalytics = () => (
     <div className="space-y-16 animate-in fade-in duration-700">
-        <SectionHeader label="Reports & Analytics" title={<>Báo cáo <span className="text-amber-500">Thông minh</span></>} desc="Dashboards đa chiều — Campaign, Flow, AI Chat, Tracking — mọi thứ trên một màn hình." />
+        <SectionHeader label="Reports & Analytics" title={<>Báo cáo <span className="text-amber-600">Thông minh</span></>} desc="Dashboards đa chiều — Campaign, Flow, AI Chat, Tracking — mọi thứ trên một màn hình." />
         <div className="grid lg:grid-cols-2 gap-10">
             {/* Main stats */}
             <div className="p-8 bg-slate-900 rounded-3xl text-white shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/5 rounded-full blur-[80px]" />
-                <h3 className="text-xl font-black mb-8 flex items-center gap-3 relative z-10"><BarChart3 className="w-6 h-6 text-amber-500" />Hiệu suất Tổng quan</h3>
+                <div className="absolute top-0 right-0 w-48 h-48 bg-amber-600/5 rounded-full blur-[80px]" />
+                <h3 className="text-xl font-black mb-8 flex items-center gap-3 relative z-10"><BarChart3 className="w-6 h-6 text-amber-600" />Hiệu suất Tổng quan</h3>
                 <div className="grid grid-cols-2 gap-4 mb-8 relative z-10">
                     {[
                         { label: 'Doanh thu từ AI', val: '425.8M₫', change: '+18%', icon: TrendingUp },
@@ -367,8 +367,8 @@ export const SectionAnalytics = () => (
                         { label: 'Tỷ lệ mở Email', val: '24.5%', change: '+2.4%', icon: MailOpen },
                         { label: 'Hành động trên Web', val: '8.2k', change: '+1.1%', icon: MousePointer },
                     ].map((s, i) => (
-                        <div key={i} className="p-5 bg-white/5 border border-white/10 rounded-2xl hover:border-amber-500/30 transition-all">
-                            <div className="flex items-center justify-between mb-3"><s.icon className="w-4 h-4 text-amber-500" /><span className="text-[10px] font-black text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-lg">{s.change}</span></div>
+                        <div key={i} className="p-5 bg-white/5 border border-white/10 rounded-2xl hover:border-amber-600/30 transition-all">
+                            <div className="flex items-center justify-between mb-3"><s.icon className="w-4 h-4 text-amber-600" /><span className="text-[10px] font-black text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-lg">{s.change}</span></div>
                             <div className="text-2xl font-black">{s.val}</div>
                             <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{s.label}</div>
                         </div>
@@ -377,7 +377,7 @@ export const SectionAnalytics = () => (
                 <div className="h-40 flex items-end gap-2 px-1 relative z-10">
                     {[40, 60, 45, 90, 65, 80, 55, 100, 75, 85].map((h, i) => (
                         <div key={i} className="flex-1 bg-white/10 rounded-t-lg relative group overflow-hidden" style={{ height: `${h}%` }}>
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-amber-500 to-amber-300 h-0 group-hover:h-full transition-all duration-700" />
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-amber-600 to-amber-300 h-0 group-hover:h-full transition-all duration-700" />
                         </div>
                     ))}
                 </div>
@@ -387,9 +387,9 @@ export const SectionAnalytics = () => (
             </div>
             <div className="space-y-6">
                 <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm">
-                    <h3 className="font-black text-slate-900 mb-6 flex items-center gap-3"><Smartphone className="w-5 h-5 text-amber-500" />Device Distribution</h3>
+                    <h3 className="font-black text-slate-900 mb-6 flex items-center gap-3"><Smartphone className="w-5 h-5 text-amber-600" />Device Distribution</h3>
                     <div className="space-y-5">
-                        {[{ label: 'iOS Mobile', pct: 64, color: 'bg-amber-500' }, { label: 'Windows Desktop', pct: 22, color: 'bg-slate-400' }, { label: 'Android', pct: 14, color: 'bg-slate-200' }].map((d, i) => (
+                        {[{ label: 'iOS Mobile', pct: 64, color: 'bg-amber-600' }, { label: 'Windows Desktop', pct: 22, color: 'bg-slate-400' }, { label: 'Android', pct: 14, color: 'bg-slate-200' }].map((d, i) => (
                             <div key={i}>
                                 <div className="flex justify-between mb-2"><span className="text-xs font-black text-slate-800">{d.label}</span><span className="text-sm font-black text-amber-600">{d.pct}%</span></div>
                                 <div className="h-2 bg-slate-50 rounded-full overflow-hidden border border-slate-100"><div className={`h-full ${d.color} transition-all duration-1000`} style={{ width: `${d.pct}%` }} /></div>
@@ -401,8 +401,8 @@ export const SectionAnalytics = () => (
                     <h3 className="font-black text-amber-900 mb-5">AI Predictive Analytics</h3>
                     <p className="text-sm text-amber-800/70 leading-relaxed mb-5">Hệ thống phân tích xu hướng để dự báo sản phẩm hot và thời điểm tối ưu cho chiến dịch tiếp theo.</p>
                     <div className="p-4 bg-white rounded-2xl border border-amber-200 flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-white shrink-0"><Bot className="w-5 h-5" /></div>
-                        <div><p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">AI Recommendation</p><p className="text-xs font-bold text-slate-800">Tăng ngân sách Ads cuối tuần → ROAS dự báo 4.5x</p></div>
+                        <div className="w-10 h-10 rounded-xl bg-amber-600 flex items-center justify-center text-white shrink-0"><Bot className="w-5 h-5" /></div>
+                        <div><p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">AI Recommendation</p><p className="text-xs font-bold text-slate-800">Tăng ngân sách Ads cuối tuần → ROAS dự báo 4.5x</p></div>
                     </div>
                 </div>
                 <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
@@ -421,7 +421,7 @@ export const SectionAnalytics = () => (
 /* ─── SECTION 14: SETTINGS ──────────────────────────── */
 export const SectionSettings = () => (
     <div className="space-y-16 animate-in fade-in duration-700">
-        <SectionHeader label="Platform Settings" title={<>Cấu hình <span className="text-amber-500">Hệ thống</span></>} desc="Quản lý SMTP, người gửi, tích hợp, phân quyền và cấu hình AI model cho toàn workspace." />
+        <SectionHeader label="Platform Settings" title={<>Cấu hình <span className="text-amber-600">Hệ thống</span></>} desc="Quản lý SMTP, người gửi, tích hợp, phân quyền và cấu hình AI model cho toàn workspace." />
         <div className="grid lg:grid-cols-3 gap-8">
             {[
                 {
@@ -461,7 +461,7 @@ export const SectionSettings = () => (
         {/* Advanced config panel */}
         <div className="grid lg:grid-cols-2 gap-8">
             <div className="p-8 bg-slate-950 rounded-3xl text-white">
-                <h3 className="font-black text-amber-500 uppercase tracking-widest text-xs mb-5">SMTP Configuration (Mailgun)</h3>
+                <h3 className="font-black text-amber-600 uppercase tracking-widest text-xs mb-5">SMTP Configuration (Mailgun)</h3>
                 <CodeBlock lang="Settings" code={`Host:     smtp.mailgun.org
 Port:     587 (TLS)
 User:     postmaster@mg.autoflow.vn
@@ -495,7 +495,7 @@ DKIM: k=rsa; p=MIGfMA0GCSqGSIb3DQE...`} />
 /* ─── SECTION 15: MARKETPLACE ──────────────────────── */
 export const SectionMarketplace = () => (
     <div className="space-y-16 animate-in fade-in duration-700">
-        <SectionHeader label="App Marketplace" title={<>Mini App & <span className="text-amber-500">Mở rộng</span></>} desc="Khám phá kho ứng dụng, plugins và các mini-app giúp mở rộng sức mạnh cho Autoflow." />
+        <SectionHeader label="App Marketplace" title={<>Mini App & <span className="text-amber-600">Mở rộng</span></>} desc="Khám phá kho ứng dụng, plugins và các mini-app giúp mở rộng sức mạnh cho Autoflow." />
         <div className="grid lg:grid-cols-3 gap-8">
             {[
                 { name: 'Lark Base Connector', desc: 'Đồng bộ data khách hàng 2 chiều với Lark Base.', cat: 'Integration', icon: Link2 },
@@ -506,7 +506,7 @@ export const SectionMarketplace = () => (
                 { name: 'Advanced SEO Bot', desc: 'AI phân tích & gợi ý từ khóa SEO cho content.', cat: 'AI Tools', icon: Bot },
             ].map((app, i) => (
                 <div key={i} className="group p-6 bg-white border border-slate-100 rounded-[32px] hover:shadow-xl hover:-translate-y-1 transition-all">
-                    <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500 mb-6 group-hover:scale-110 transition-transform"><app.icon className="w-7 h-7" /></div>
+                    <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 mb-6 group-hover:scale-110 transition-transform"><app.icon className="w-7 h-7" /></div>
                     <Badge color="bg-slate-100 text-slate-500 mb-3">{app.cat}</Badge>
                     <h3 className="text-lg font-black text-slate-900 mb-2">{app.name}</h3>
                     <p className="text-sm text-slate-500 leading-relaxed mb-6">{app.desc}</p>
@@ -515,18 +515,18 @@ export const SectionMarketplace = () => (
             ))}
         </div>
         <div className="p-10 bg-slate-950 rounded-[40px] text-white relative overflow-hidden shadow-2xl">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-[100px]" />
+            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-600/10 rounded-full blur-[100px]" />
             <div className="relative z-10 grid lg:grid-cols-2 gap-12 items-center">
                 <div>
                     <h3 className="text-3xl font-black mb-6">Bạn là Developer?</h3>
                     <p className="text-slate-400 leading-relaxed mb-8">Xây dựng Mini App của riêng bạn và chia sẻ/bán trên Autoflow Marketplace. Chúng lôi hỗ trợ đầy đủ SDK, Hosting và Sandbox để bạn phát triển nhanh nhất.</p>
                     <div className="flex gap-4">
-                        <button className="px-6 py-3 bg-amber-500 text-slate-900 font-black rounded-xl text-sm">Xem Document SDK</button>
+                        <button className="px-6 py-3 bg-amber-600 text-slate-900 font-black rounded-xl text-sm">Xem Document SDK</button>
                         <button className="px-6 py-3 bg-white/5 border border-white/10 text-white font-black rounded-xl text-sm hover:bg-white/10">Đăng ký Partner</button>
                     </div>
                 </div>
                 <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-4">Marketplace API example</p>
+                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-4">Marketplace API example</p>
                     <CodeBlock lang="JSON" code={`{
   "app_id": "lark-connector-001",
   "permissions": [
@@ -545,11 +545,11 @@ export const SectionMarketplace = () => (
 /* ─── SECTION 16: WORKSPACE ASSETS ─────────────────── */
 export const SectionWorkspace = () => (
     <div className="space-y-16 animate-in fade-in duration-700">
-        <SectionHeader label="Workspace Management" title={<>Quản lý <span className="text-amber-500">Tài sản & Assets</span></>} desc="Quản lý tập trung hình ảnh, tài liệu và mã nguồn cho toàn bộ tổ chức của bạn." />
+        <SectionHeader label="Workspace Management" title={<>Quản lý <span className="text-amber-600">Tài sản & Assets</span></>} desc="Quản lý tập trung hình ảnh, tài liệu và mã nguồn cho toàn bộ tổ chức của bạn." />
         <div className="grid lg:grid-cols-2 gap-10">
             <div className="space-y-6">
                 <div className="p-8 bg-white border border-slate-100 rounded-[32px] shadow-sm">
-                    <h3 className="font-black text-slate-900 mb-6 flex items-center gap-3"><Database className="w-5 h-5 text-amber-500" />Thư viện tài sản</h3>
+                    <h3 className="font-black text-slate-900 mb-6 flex items-center gap-3"><Database className="w-5 h-5 text-amber-600" />Thư viện tài sản</h3>
                     <div className="space-y-3">
                         {[
                             { icon: Image, t: 'AI Image Gallery', d: 'Lưu trữ toàn bộ ảnh được tạo bởi DALL·E 3 trong chat.' },
@@ -571,11 +571,11 @@ export const SectionWorkspace = () => (
             <div className="space-y-6">
                 <div className="p-8 bg-slate-900 rounded-[32px] text-white shadow-xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl" />
-                    <h3 className="font-black text-amber-500 uppercase tracking-widest text-[10px] mb-6">Asset Preview</h3>
+                    <h3 className="font-black text-amber-600 uppercase tracking-widest text-[10px] mb-6">Asset Preview</h3>
                     <div className="grid grid-cols-2 gap-4">
                         {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="aspect-square bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center group cursor-pointer hover:border-amber-500/50 transition-all">
-                                <Image className="w-8 h-8 text-slate-600 group-hover:text-amber-500 transition-colors" />
+                            <div key={i} className="aspect-square bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center group cursor-pointer hover:border-amber-600/50 transition-all">
+                                <Image className="w-8 h-8 text-slate-600 group-hover:text-amber-600 transition-colors" />
                             </div>
                         ))}
                     </div>
@@ -598,11 +598,11 @@ export const SectionWorkspace = () => (
 /* ─── SECTION 17: LOGIC & LIQUID ───────────────────── */
 export const SectionLogic = () => (
     <div className="space-y-16 animate-in fade-in duration-700">
-        <SectionHeader label="Logic & Dynamic Content" title={<>Cá nhân hóa <span className="text-amber-500">Cực hạn với Liquid</span></>} desc="Sử dụng cú pháp Logic để tạo ra những nội dung Email & Message biến đổi theo từng khách hàng." />
+        <SectionHeader label="Logic & Dynamic Content" title={<>Cá nhân hóa <span className="text-amber-600">Cực hạn với Liquid</span></>} desc="Sử dụng cú pháp Logic để tạo ra những nội dung Email & Message biến đổi theo từng khách hàng." />
         <div className="grid lg:grid-cols-2 gap-10">
             <div className="space-y-6">
                 <div className="p-8 bg-slate-950 rounded-[32px] text-white">
-                    <h3 className="font-black text-amber-500 uppercase tracking-widest text-xs mb-6">Liquid Logic Example</h3>
+                    <h3 className="font-black text-amber-600 uppercase tracking-widest text-xs mb-6">Liquid Logic Example</h3>
                     <CodeBlock lang="Liquid" code={`{% if contact.gender == 'male' %}
   Chào Anh {{ contact.last_name }},
 {% elsif contact.gender == 'female' %}
@@ -633,7 +633,7 @@ Hãy dùng mã {{ contact.tags | first }} để nhận ưu đãi!`} />
             </div>
             <div className="space-y-6">
                 <div className="p-8 bg-white border border-slate-100 rounded-[32px] shadow-sm">
-                    <h3 className="font-black text-slate-900 mb-6 flex items-center gap-3"><Cpu className="w-5 h-5 text-amber-500" />Biến hệ thống (System Vars)</h3>
+                    <h3 className="font-black text-slate-900 mb-6 flex items-center gap-3"><Cpu className="w-5 h-5 text-amber-600" />Biến hệ thống (System Vars)</h3>
                     <div className="space-y-4">
                         {[
                             { v: '{{ sender.name }}', d: 'Tên người gửi (trong Settings).' },
@@ -642,7 +642,7 @@ Hãy dùng mã {{ contact.tags | first }} để nhận ưu đãi!`} />
                             { v: '{{ view_in_browser_url }}', d: 'Link xem bản web của email.' },
                         ].map((v, i) => (
                             <div key={i} className="flex items-start gap-4">
-                                <div className="w-2 h-2 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                                <div className="w-2 h-2 rounded-full bg-amber-600 mt-1.5 shrink-0" />
                                 <div><p className="text-xs font-black text-slate-800">{v.v}</p><p className="text-[10px] text-slate-400 font-bold uppercase">{v.d}</p></div>
                             </div>
                         ))}

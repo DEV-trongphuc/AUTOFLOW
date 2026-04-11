@@ -32,7 +32,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
                 </div>
 
                 <div className="p-8 pb-0 flex flex-col items-center text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white shadow-lg shadow-amber-500/30 mb-6 animate-bounce-slow">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white shadow-lg shadow-amber-600/30 mb-6 animate-bounce-slow">
                         <Share2 className="w-8 h-8" />
                     </div>
                     <h3 className={`text-xl font-black mb-2 ${isDarkTheme ? 'text-slate-100' : 'text-slate-800'}`}>Chia sẻ cuộc trò chuyện</h3>

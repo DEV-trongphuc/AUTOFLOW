@@ -151,11 +151,9 @@ try {
                     $pdo->prepare("UPDATE subscribers SET " . implode(', ', $updateSqlParts) . " WHERE id = ?")->execute(array_merge($updateValues, [$sid]));
                 }
 
-                // Merge custom attributes
+                // Merge custom attributes atomically to prevent race condition data loss (Vòng 93)
                 if (!empty($newCustomAttrs)) {
-                    $existingAttrs = json_decode($sub['custom_attributes'] ?? '{}', true) ?: [];
-                    $mergedAttrs = array_merge($existingAttrs, $newCustomAttrs);
-                    $pdo->prepare("UPDATE subscribers SET custom_attributes = ? WHERE id = ?")->execute([json_encode($mergedAttrs, JSON_UNESCAPED_UNICODE), $sid]);
+                    $pdo->prepare("UPDATE subscribers SET custom_attributes = JSON_MERGE_PATCH(COALESCE(custom_attributes, '{}'), ?) WHERE id = ?")->execute([json_encode($newCustomAttrs, JSON_UNESCAPED_UNICODE), $sid]);
                 }
 
                 // [FIX] Tag N+1 eliminated: bulk-lookup all submitted tags in ONE query,
@@ -212,7 +210,7 @@ try {
                 if (!empty($newCustomAttrs)) {
                     $upsertFields .= ', custom_attributes';
                     $upsertValues[] = json_encode($newCustomAttrs, JSON_UNESCAPED_UNICODE);
-                    $upsertSet .= ', custom_attributes = VALUES(custom_attributes)';
+                    $upsertSet .= ", custom_attributes = JSON_MERGE_PATCH(COALESCE(custom_attributes, '{}'), VALUES(custom_attributes))";
                 }
 
                 $phList = implode(', ', array_fill(0, count($upsertValues), '?'));
@@ -406,11 +404,11 @@ try {
         <!-- HEADER -->
         <tr><td style='background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);border-radius:16px 16px 0 0;padding:28px 32px;text-align:center'>
           <div style='display:inline-flex;align-items:center;gap:10px'>
-            <div style='width:40px;height:40px;background:#f59e0b;border-radius:10px;display:inline-flex;align-items:center;justify-content:center'>
+            <div style='width:40px;height:40px;background:#d97706;border-radius:10px;display:inline-flex;align-items:center;justify-content:center'>
               <span style='font-size:20px'>📩</span>
             </div>
             <div style='text-align:left'>
-              <div style='color:#f59e0b;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase'>AUTOFLOW</div>
+              <div style='color:#d97706;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase'>AUTOFLOW</div>
               <div style='color:#ffffff;font-size:18px;font-weight:800'>Lead mới vừa đến!</div>
             </div>
           </div>

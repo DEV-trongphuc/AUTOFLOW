@@ -12,7 +12,7 @@ const COLORS = [
     '#10b981', // Emerald-500
     '#6366f1', // Indigo-500
     '#f43f5e', // Rose-500
-    '#fbbf24', // Amber-500
+    '#fbbf24', // amber-600
     '#8b5cf6'  // Violet-500
 ];
 

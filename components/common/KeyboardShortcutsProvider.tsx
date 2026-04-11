@@ -33,6 +33,7 @@ export const KeyboardShortcutsProvider: React.FC<{ children: React.ReactNode }> 
         'alt+f': () => navigate('/flows'),
         'alt+s': () => navigate('/settings'),
         'alt+t': () => navigate('/templates'),
+        'ctrl+k': () => window.dispatchEvent(new CustomEvent('open-command-palette')),
     }, [navigate, toggleHelp]);
 
     const ShortcutItem = ({ keys, label }: { keys: string[], label: string }) => (

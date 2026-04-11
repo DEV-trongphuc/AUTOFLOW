@@ -28,6 +28,7 @@ import { KeyboardShortcutsProvider } from './components/common/KeyboardShortcuts
 import { apiEvents } from './services/storageAdapter';
 
 // Lazy load heavy pages for code splitting
+const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Campaigns = lazy(() => import('./pages/Campaigns'));
 const Templates = lazy(() => import('./pages/Templates'));
 const Audience = lazy(() => import('./pages/Audience'));
@@ -45,6 +46,8 @@ const MetaMessenger = lazy(() => import('./pages/MetaMessenger'));
 const Documentation = lazy(() => import('./pages/Documentation'));
 const PublicReport = lazy(() => import('./pages/PublicReport'));
 const LoginPage = lazy(() => import('./pages/CategoryChat/LoginPage'));
+const AdminUsers = lazy(() => import('./pages/AdminUsers'));
+const Profile = lazy(() => import('./pages/Profile'));
 
 import PremiumLoader from './components/common/PremiumLoader';
 
@@ -53,12 +56,12 @@ const PageLoader = () => <PremiumLoader title="AI-SPACE" subtitle="Đang tải �
 
 // [PERF] Full-width amber progress bar for tab switches
 const TabLoader = () => (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 99999, height: '5px', background: '#fef3c7', overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 99999, height: '4px', background: '#fef3c7', overflow: 'hidden' }}>
         <div style={{
             position: 'absolute', top: 0, left: '-100%', bottom: 0, width: '100%',
-            background: '#f59e0b',
-            boxShadow: '0 0 20px 6px #fbbf24, 0 2px 8px rgba(245,158,11,0.8)',
-            animation: 'tlbar 0.9s cubic-bezier(0.4,0,0.2,1) infinite',
+            background: '#d97706',
+            boxShadow: '0 0 15px 4px #fbbf24',
+            animation: 'tlbar 0.6s cubic-bezier(0.4,0,0.2,1) infinite',
         }} />
         <style>{`@keyframes tlbar { 0%{left:-100%} 100%{left:100%} }`}</style>
     </div>
@@ -128,6 +131,30 @@ const App: React.FC = () => {
     }, []);
     // ─────────────────────────────────────────────────────────────────────────
 
+    // ── Eager Loading ────────────────────────────────────────────────────────
+    // [PERF] Background-load all major route chunks after 3s of idle time
+    // This removes the "loading" state when user clicks a menu item for the first time.
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            const chunks = [
+                () => import('./pages/Dashboard'),
+                () => import('./pages/Campaigns'),
+                () => import('./pages/Flows'),
+                () => import('./pages/Audience'),
+                () => import('./pages/Templates'),
+                () => import('./pages/Reports'),
+                () => import('./pages/Settings'),
+                () => import('./pages/AITraining'),
+                () => import('./pages/WebTracking'),
+                () => import('./pages/Tags'),
+            ];
+            chunks.forEach(c => c().catch(() => {}));
+            console.log('[PERF] All major route chunks eager-loaded.');
+        }, 3000);
+        return () => clearTimeout(timer);
+    }, []);
+    // ─────────────────────────────────────────────────────────────────────────
+
     return (
         <QueryClientProvider client={queryClient}>
             <Toaster
@@ -183,7 +210,7 @@ const App: React.FC = () => {
 
                                 {/* Protected Routes — each has its own Suspense via P */}
                                 <Route path="/" element={
-                                    <ProtectedRoute><Layout><Navigate to="/campaigns" replace /></Layout></ProtectedRoute>
+                                    <ProtectedRoute><Layout><P c={Dashboard} /></Layout></ProtectedRoute>
                                 } />
                                 <Route path="/campaigns" element={
                                     <ProtectedRoute><Layout><P c={Campaigns} /></Layout></ProtectedRoute>
@@ -222,6 +249,12 @@ const App: React.FC = () => {
                                 } />
                                 <Route path="/reports" element={
                                     <ProtectedRoute><Layout><P c={Reports} /></Layout></ProtectedRoute>
+                                } />
+                                <Route path="/admin/users" element={
+                                    <ProtectedRoute><Layout><P c={AdminUsers} /></Layout></ProtectedRoute>
+                                } />
+                                <Route path="/profile" element={
+                                    <ProtectedRoute><Layout><P c={Profile} /></Layout></ProtectedRoute>
                                 } />
 
                                 {/* Fallback */}

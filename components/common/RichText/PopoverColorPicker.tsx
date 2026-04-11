@@ -117,7 +117,7 @@ const PopoverColorPicker: React.FC<PopoverColorPickerProps> = ({ onSelect, onClo
                         <button
                             onClick={handleApply}
                             disabled={!isValidHex(hexInput.startsWith('#') ? hexInput : `#${hexInput}`)}
-                            className="bg-amber-500 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-xl px-2 py-1.5 text-[10px] font-black transition-all hover:bg-amber-400"
+                            className="bg-amber-600 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-xl px-2 py-1.5 text-[10px] font-black transition-all hover:bg-amber-400"
                         >
                             OK
                         </button>

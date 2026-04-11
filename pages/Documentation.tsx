@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import {
     Send, Users, FileEdit, BarChart3, GitMerge, Tag, Webhook, Zap, Bot,
@@ -19,39 +19,39 @@ import {
     SectionMarketplace, SectionWorkspace, SectionLogic
 } from './DocSectionsB';
 
-/* ─── Nav structure ─────────────────────────────────── */
+/* --- Nav structure ----------------------------------- */
 const navGroups = [
     {
-        title: '🚀 Bắt đầu',
+        title: '?? B?t d?u',
         items: [
-            { id: 'overview', name: 'Tổng quan hệ thống', icon: Home },
+            { id: 'overview', name: 'T?ng quan h? th?ng', icon: Home },
         ]
     },
     {
-        title: '📧 Marketing',
+        title: '?? Marketing',
         items: [
-            { id: 'campaigns', name: 'Chiến dịch', icon: Send },
+            { id: 'campaigns', name: 'Chi?n d?ch', icon: Send },
             { id: 'email-builder', name: 'Email Builder', icon: FileEdit },
             { id: 'templates', name: 'Templates', icon: BookOpen },
             { id: 'marketplace', name: 'Marketplace', icon: Package },
         ]
     },
     {
-        title: '⚙️ Automation',
+        title: '?? Automation',
         items: [
             { id: 'automation', name: 'Automation Flows', icon: GitMerge },
             { id: 'api-triggers', name: 'API Triggers', icon: Webhook },
         ]
     },
     {
-        title: '👥 Khách hàng',
+        title: '?? Kh�ch h�ng',
         items: [
             { id: 'audience', name: 'Audience CDP', icon: Users },
             { id: 'tags', name: 'Tags & Segments', icon: Tag },
         ]
     },
     {
-        title: '🧠 AI & Chat',
+        title: '?? AI & Chat',
         items: [
             { id: 'ai-training', name: 'AI Training (RAG)', icon: Bot },
             { id: 'ai-chat', name: 'AI Chat Space', icon: MessageSquare },
@@ -59,18 +59,18 @@ const navGroups = [
         ]
     },
     {
-        title: '📊 Analytics',
+        title: '?? Analytics',
         items: [
             { id: 'web-tracking', name: 'Website Tracking', icon: Globe },
-            { id: 'analytics', name: 'Báo cáo', icon: BarChart3 },
+            { id: 'analytics', name: 'B�o c�o', icon: BarChart3 },
             { id: 'workspace', name: 'AI Assets', icon: Database },
             { id: 'logic', name: 'Liquid Logic', icon: Code },
-            { id: 'settings', name: 'Cấu hình', icon: Settings },
+            { id: 'settings', name: 'C?u h�nh', icon: Settings },
         ]
     },
 ];
 
-/* ─── Section map ───────────────────────────────────── */
+/* --- Section map ------------------------------------- */
 const sectionMap: Record<string, React.FC> = {
     overview: SectionOverview,
     campaigns: SectionCampaigns,
@@ -92,8 +92,8 @@ const sectionMap: Record<string, React.FC> = {
 };
 
 const sectionLabel: Record<string, string> = {
-    overview: 'Tổng quan',
-    campaigns: 'Chiến dịch',
+    overview: 'T?ng quan',
+    campaigns: 'Chi?n d?ch',
     'email-builder': 'Email Builder',
     templates: 'Templates',
     automation: 'Automation Flows',
@@ -104,14 +104,14 @@ const sectionLabel: Record<string, string> = {
     'ai-chat': 'AI Chat Space',
     'zalo-meta': 'Zalo & Meta',
     'web-tracking': 'Web Tracking',
-    analytics: 'Báo cáo',
-    settings: 'Cấu hình',
+    analytics: 'B�o c�o',
+    settings: 'C?u h�nh',
     marketplace: 'Marketplace',
     workspace: 'AI Assets',
     logic: 'Liquid Logic',
 };
 
-/* ─── Main component ────────────────────────────────── */
+/* --- Main component ---------------------------------- */
 const Documentation: React.FC = () => {
     const [active, setActive] = useState('overview');
     const [sidebar, setSidebar] = useState(true);
@@ -161,7 +161,7 @@ const Documentation: React.FC = () => {
     const ActiveSection = sectionMap[active] ?? SectionOverview;
 
     return (
-        <div className="fixed inset-0 bg-white flex overflow-hidden selection:bg-amber-500 selection:text-white" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+        <div className="fixed inset-0 bg-white flex overflow-hidden selection:bg-amber-600 selection:text-white" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
 
             {/* Sidebar */}
             <aside className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-100 transition-all duration-300 lg:static lg:translate-x-0 ${sidebar ? 'w-72 translate-x-0' : 'w-0 -translate-x-full lg:w-20'}`}>
@@ -191,10 +191,10 @@ const Documentation: React.FC = () => {
                     {sidebar && (
                         <div className="px-6 py-4">
                             <div className="relative group">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-amber-500 transition-colors" />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-amber-600 transition-colors" />
                                 <input
                                     type="text"
-                                    placeholder="Tìm kiếm..."
+                                    placeholder="T�m ki?m..."
                                     className="w-full bg-slate-50 border border-transparent focus:border-amber-200 focus:bg-white rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium transition-all outline-none"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
@@ -236,7 +236,7 @@ const Documentation: React.FC = () => {
                                             )}
                                         </div>
                                         {active === item.id && (
-                                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-9 bg-amber-500 rounded-r-full" />
+                                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-9 bg-amber-600 rounded-r-full" />
                                         )}
                                     </button>
                                 ))}
@@ -251,7 +251,7 @@ const Documentation: React.FC = () => {
                             className="flex items-center gap-3 px-5 py-3.5 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all group"
                         >
                             <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                            {sidebar && <span className="text-xs font-bold uppercase tracking-wider">Về App chính</span>}
+                            {sidebar && <span className="text-xs font-bold uppercase tracking-wider">V? App ch�nh</span>}
                         </NavLink>
                     </div>
                 </div>
@@ -262,7 +262,7 @@ const Documentation: React.FC = () => {
                 {/* Progress bar */}
                 <div className="fixed top-0 left-0 right-0 h-1 z-[60] pointer-events-none">
                     <div
-                        className="h-full bg-amber-500 transition-all duration-200"
+                        className="h-full bg-amber-600 transition-all duration-200"
                         style={{ width: `${scroll}%` }}
                     />
                 </div>
@@ -294,9 +294,9 @@ const Documentation: React.FC = () => {
                                     <>
                                         {prev ? (
                                             <button onClick={() => navigate(prev.id)} className="flex items-center gap-3 px-6 py-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md hover:border-amber-200 transition-all group">
-                                                <ArrowLeft className="w-4 h-4 text-slate-300 group-hover:text-amber-500 transition-colors" />
+                                                <ArrowLeft className="w-4 h-4 text-slate-300 group-hover:text-amber-600 transition-colors" />
                                                 <div className="text-left">
-                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Trước</p>
+                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Tru?c</p>
                                                     <p className="text-sm font-black text-slate-800">{prev.name}</p>
                                                 </div>
                                             </button>
@@ -304,10 +304,10 @@ const Documentation: React.FC = () => {
                                         {next ? (
                                             <button onClick={() => navigate(next.id)} className="flex items-center gap-3 px-6 py-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md hover:border-amber-200 transition-all group ml-auto">
                                                 <div className="text-right">
-                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Tiếp theo</p>
+                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Ti?p theo</p>
                                                     <p className="text-sm font-black text-slate-800">{next.name}</p>
                                                 </div>
-                                                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-amber-500 transition-colors" />
+                                                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-amber-600 transition-colors" />
                                             </button>
                                         ) : <div />}
                                     </>

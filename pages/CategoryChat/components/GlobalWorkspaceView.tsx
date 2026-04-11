@@ -118,7 +118,7 @@ const GlobalWorkspaceView = React.memo(({
                             className="h-11 px-6 bg-white text-slate-500 border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2 active:scale-95 shadow-sm"
                             title="Mẹo sử dụng Workspace"
                         >
-                            <Lightbulb className="w-4 h-4 text-amber-500" />
+                            <Lightbulb className="w-4 h-4 text-amber-600" />
                             Mẹo
                         </button>
                         <button
@@ -465,7 +465,7 @@ const GlobalWorkspaceView = React.memo(({
                                                     {doc.source && (
                                                         <div className="absolute bottom-2 left-2 z-10">
                                                             <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-lg backdrop-blur-md border shadow-sm ${(doc.source === 'global_training' || (doc as any).isGlobal)
-                                                                ? 'bg-amber-500/80 text-white border-amber-300/20'
+                                                                ? 'bg-amber-600/80 text-white border-amber-300/20'
                                                                 : doc.source.includes('user')
                                                                     ? 'bg-blue-700/70 text-white border-blue-400/20'
                                                                     : (doc.source.includes('assistant') || doc.source.includes('ai') ? 'bg-red-800/70 text-white border-red-400/20' : 'bg-slate-800/60 text-white border-slate-500/30')
@@ -501,7 +501,7 @@ const GlobalWorkspaceView = React.memo(({
                                                     {doc.conversationTitle && (
                                                         <p className="text-[9px] text-slate-400 font-medium truncate mb-1" title={doc.conversationTitle}>
                                                             {(doc.source === 'global_training' || (doc as any).isGlobal)
-                                                                ? <Bot className="w-2.5 h-2.5 inline mr-1 text-amber-500" />
+                                                                ? <Bot className="w-2.5 h-2.5 inline mr-1 text-amber-600" />
                                                                 : <MessageSquare className="w-2.5 h-2.5 inline mr-1" />}
                                                             {doc.conversationTitle}
                                                         </p>

@@ -610,7 +610,7 @@ try {
             }
         } else {
             $otherEvents[] = $event;
-            if (in_array($type, ['click', 'form']))
+            if (in_array($type, ['click', 'form', 'copy', 'select']))
                 $hasInteraction = true;
         }
     }

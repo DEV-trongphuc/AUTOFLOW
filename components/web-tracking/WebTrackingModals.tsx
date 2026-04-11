@@ -116,7 +116,7 @@ const WebTrackingModals: React.FC<WebTrackingModalsProps> = ({
                             </div>
                             <button
                                 onClick={() => setIncludeAiChat(!includeAiChat)}
-                                className={`relative w-12 h-6 rounded-full transition-colors duration-200 outline-none ${includeAiChat ? 'bg-amber-500' : 'bg-slate-200'}`}
+                                className={`relative w-12 h-6 rounded-full transition-colors duration-200 outline-none ${includeAiChat ? 'bg-amber-600' : 'bg-slate-200'}`}
                             >
                                 <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 shadow-sm ${includeAiChat ? 'translate-x-6' : 'translate-x-0'}`} />
                             </button>

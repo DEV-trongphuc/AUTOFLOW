@@ -15,7 +15,7 @@ export const STEP_DEFINITIONS = [
         desc: 'Tạm dừng quy trình.',
         icon: Clock,
         iconName: 'clock',
-        color: 'bg-amber-500 text-white shadow-amber-200'
+        color: 'bg-amber-600 text-white shadow-amber-200'
     },
     {
         id: 'condition',

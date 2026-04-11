@@ -758,7 +758,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                         {selectedIds.length > 0 && (
                             <div className="sticky top-20 z-30 flex items-center justify-between bg-amber-50/90 backdrop-blur-md px-6 py-3 rounded-2xl shadow-sm border border-amber-100 animate-in slide-in-from-top-4 duration-300 mb-6 font-medium">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-7 h-7 bg-amber-500 rounded-lg flex items-center justify-center text-white shadow-sm">
+                                    <div className="w-7 h-7 bg-amber-600 rounded-lg flex items-center justify-center text-white shadow-sm">
                                         <Check className="w-4 h-4 stroke-[4]" />
                                     </div>
                                     <div className="text-sm font-bold text-slate-700">
@@ -832,7 +832,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                 text: isDarkTheme ? '#fbbf24' : '#d97706',
                                                 bg: isDarkTheme ? 'rgba(251,191,36,0.08)' : '#fffbeb',
                                                 border: isDarkTheme ? '#92400e' : '#fde68a',
-                                                barFrom: '#fcd34d', barTo: '#f59e0b',
+                                                barFrom: '#fcd34d', barTo: '#d97706',
                                                 labelBg: isDarkTheme ? 'rgba(251,191,36,0.12)' : '#fef3c7',
                                             }
                                             : {
@@ -1072,7 +1072,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                     Màu thương hiệu (UI)
                                                 </label>
                                                 <div className="relative group">
-                                                    <div className={`flex items-center gap-3 border rounded-xl h-[42px] px-3 transition-all duration-200 shadow-sm ${isDarkTheme ? 'bg-slate-800 border-slate-700 hover:border-slate-600 focus-within:border-brand focus-within:ring-brand/5' : 'bg-white border-slate-200 hover:border-slate-300 focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-500/10'}`}>
+                                                    <div className={`flex items-center gap-3 border rounded-xl h-[42px] px-3 transition-all duration-200 shadow-sm ${isDarkTheme ? 'bg-slate-800 border-slate-700 hover:border-slate-600 focus-within:border-brand focus-within:ring-brand/5' : 'bg-white border-slate-200 hover:border-slate-300 focus-within:border-amber-600 focus-within:ring-4 focus-within:ring-amber-600/10'}`}>
                                                         <div className={`relative w-6 h-6 rounded-full overflow-hidden border shrink-0 shadow-sm ${isDarkTheme ? 'border-slate-700' : 'border-slate-200'}`}>
                                                             <input
                                                                 type="color"
@@ -1089,7 +1089,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                             placeholder={settings.cat_brand_color ? `${settings.cat_brand_color} (Nhóm)` : "#000000"}
                                                         />
                                                         {!settings.brand_color && settings.cat_brand_color && (
-                                                            <Users className="w-4 h-4 text-amber-500" />
+                                                            <Users className="w-4 h-4 text-amber-600" />
                                                         )}
                                                         <Palette className="w-4 h-4 text-slate-400" />
                                                     </div>
@@ -1164,7 +1164,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                             <textarea
                                                 value={settings.welcome_msg}
                                                 onChange={(e: any) => setSettings({ ...settings, welcome_msg: e.target.value })}
-                                                className={`w-full p-5 border-2 rounded-[20px] text-xs font-bold outline-none transition-all resize-none h-24 shadow-inner ${isDarkTheme ? 'bg-slate-800/50 border-slate-700 text-slate-200 focus:border-brand shadow-none' : 'bg-white border-slate-200 text-slate-700 focus:border-amber-500'}`}
+                                                className={`w-full p-5 border-2 rounded-[20px] text-xs font-bold outline-none transition-all resize-none h-24 shadow-inner ${isDarkTheme ? 'bg-slate-800/50 border-slate-700 text-slate-200 focus:border-brand shadow-none' : 'bg-white border-slate-200 text-slate-700 focus:border-amber-600'}`}
                                             />
                                         </div>
 
@@ -1175,7 +1175,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                 value={localTeaser}
                                                 onChange={(e: any) => setLocalTeaser(e.target.value)}
                                                 placeholder="VD: Chat với AI ngay!"
-                                                className={`w-full h-12 px-5 border-2 rounded-xl text-xs font-bold outline-none transition-all shadow-inner ${isDarkTheme ? 'bg-slate-800/50 border-slate-700 text-slate-200 focus:border-brand shadow-none' : 'bg-white border-slate-200 text-slate-700 focus:border-amber-500'}`}
+                                                className={`w-full h-12 px-5 border-2 rounded-xl text-xs font-bold outline-none transition-all shadow-inner ${isDarkTheme ? 'bg-slate-800/50 border-slate-700 text-slate-200 focus:border-brand shadow-none' : 'bg-white border-slate-200 text-slate-700 focus:border-amber-600'}`}
                                             />
                                             <p className="text-[9px] text-slate-400 font-medium px-1">Câu chào này sẽ hiện ra bên cạnh nút Chat khi khách chưa bấm mở.</p>
                                         </div>
@@ -1246,7 +1246,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                     <div className={`p-8 rounded-[40px] border shadow-xl space-y-6 relative overflow-hidden transition-all duration-500 ${isDarkTheme ? 'bg-slate-800/20 border-slate-700 shadow-none' : 'bg-white border-slate-100'}`}>
                                         <div className="absolute top-0 right-0 p-10 opacity-50"><Bot className={`w-40 h-40 ${isDarkTheme ? 'text-slate-800' : 'text-slate-50'}`} /></div>
                                         <h3 className={`text-lg font-black tracking-tight flex items-center gap-2 ${isDarkTheme ? 'text-slate-100' : 'text-slate-800'}`}>
-                                            <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-white"><Zap className="w-5 h-5" /></div>
+                                            <div className="w-8 h-8 rounded-lg bg-amber-600 flex items-center justify-center text-white"><Zap className="w-5 h-5" /></div>
                                             Chat Preview
                                         </h3>
 
@@ -1345,7 +1345,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
 <script src="https://automation.ideas.edu.vn/mail_api/tracker.js?v=${v}" async></script>`);
                                                     toast.success('Đã copy mã nhúng (Version mới nhất)');
                                                 }}
-                                                className="p-2 bg-white/10 hover:bg-amber-500 text-white rounded-lg transition-all"
+                                                className="p-2 bg-white/10 hover:bg-amber-600 text-white rounded-lg transition-all"
                                                 title="Copy mã nhúng"
                                             >
                                                 <FileInput className="w-3.5 h-3.5" />
@@ -1424,7 +1424,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                         className={`flex items-center justify-between cursor-pointer group select-none bg-slate-900 p-4 border border-slate-800 shadow-lg transition-all relative z-20 ${showAdvanced ? 'rounded-t-[20px] border-b-0' : 'rounded-[20px] hover:shadow-xl'}`}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className={`p-2 rounded-lg transition-colors ${showAdvanced ? 'bg-amber-500 text-slate-900' : 'bg-slate-800 text-slate-400 group-hover:text-amber-500'}`}>
+                                            <div className={`p-2 rounded-lg transition-colors ${showAdvanced ? 'bg-amber-600 text-slate-900' : 'bg-slate-800 text-slate-400 group-hover:text-amber-600'}`}>
                                                 <Settings className="w-4 h-4" />
                                             </div>
                                             <div>
@@ -1449,7 +1449,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                             <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
                                                             Độ chính xác (Min Score)
                                                         </label>
-                                                        <span className="text-xs font-bold text-amber-500 font-mono bg-slate-800 px-2 py-0.5 rounded border border-slate-700 shadow-sm">{settings.similarity_threshold || 0.45}</span>
+                                                        <span className="text-xs font-bold text-amber-600 font-mono bg-slate-800 px-2 py-0.5 rounded border border-slate-700 shadow-sm">{settings.similarity_threshold || 0.45}</span>
                                                     </div>
                                                     <div className="relative group/slider">
                                                         <input
@@ -1459,15 +1459,15 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                             step="0.05"
                                                             value={settings.similarity_threshold || 0.45}
                                                             onChange={(e: any) => setSettings({ ...settings, similarity_threshold: parseFloat(e.target.value) })}
-                                                            className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500 relative z-10"
+                                                            className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-600 relative z-10"
                                                         />
                                                         <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-1.5 bg-slate-800 rounded-lg overflow-hidden pointer-events-none">
-                                                            <div className="h-full bg-gradient-to-r from-blue-500 to-amber-500 opacity-30" style={{ width: `${((settings.similarity_threshold || 0.45) - 0.1) / 0.8 * 100}%` }}></div>
+                                                            <div className="h-full bg-gradient-to-r from-blue-500 to-amber-600 opacity-30" style={{ width: `${((settings.similarity_threshold || 0.45) - 0.1) / 0.8 * 100}%` }}></div>
                                                         </div>
                                                     </div>
                                                     <p className="text-[9px] text-slate-500 leading-relaxed font-medium bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
                                                         <strong className="text-slate-300">Giải thích:</strong> Điểm tin cậy tối thiểu để AI sử dụng thông tin tìm thấy.
-                                                        <br />• <span className="text-amber-500 font-bold">Cao (0.7 - 0.9):</span> AI cực kỳ "khắt khe", chỉ trả lời khi thông tin tìm thấy gần như khớp hoàn toàn. Tránh bịa đặt nhưng dễ trả lời "Dạ em chưa rõ" nếu câu hỏi hơi khác dữ liệu.
+                                                        <br />• <span className="text-amber-600 font-bold">Cao (0.7 - 0.9):</span> AI cực kỳ "khắt khe", chỉ trả lời khi thông tin tìm thấy gần như khớp hoàn toàn. Tránh bịa đặt nhưng dễ trả lời "Dạ em chưa rõ" nếu câu hỏi hơi khác dữ liệu.
                                                         <br />• <span className="text-blue-400 font-bold">Cân bằng (0.4 - 0.6):</span> Mức tiêu chuẩn giúp AI linh hoạt nhưng vẫn an toàn.
                                                         <br />• <span className="text-orange-400 font-bold">Thấp (0.1 - 0.3):</span> AI dễ dàng chấp nhận thông tin có liên quan mờ nhạt. Dễ gây sai lệch thông tin nếu dữ liệu không chuẩn.
                                                     </p>
@@ -1489,7 +1489,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                                     step="50"
                                                                     value={settings.chunk_size || 1000}
                                                                     onChange={(e: any) => setSettings({ ...settings, chunk_size: parseInt(e.target.value) })}
-                                                                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-[11px] font-bold text-slate-200 outline-none focus:border-amber-500 shadow-inner font-mono"
+                                                                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-[11px] font-bold text-slate-200 outline-none focus:border-amber-600 shadow-inner font-mono"
                                                                 />
                                                             </div>
                                                             <div>
@@ -1500,7 +1500,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                                     max="500"
                                                                     value={settings.chunk_overlap || 150}
                                                                     onChange={(e: any) => setSettings({ ...settings, chunk_overlap: parseInt(e.target.value) })}
-                                                                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-[11px] font-bold text-slate-200 outline-none focus:border-amber-500 shadow-inner font-mono"
+                                                                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-[11px] font-bold text-slate-200 outline-none focus:border-amber-600 shadow-inner font-mono"
                                                                 />
                                                             </div>
                                                         </div>
@@ -1508,7 +1508,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                             <strong className="text-slate-300">Hướng dẫn:</strong>
                                                             <br />• <span className="text-slate-300">Chunk Size:</span> Độ dài 1 đoạn văn bản AI "cắt nhỏ" để học. Chunk nhỏ giúp tìm kiếm chính xác, Chunk lớn giúp AI có ngữ cảnh rộng hơn.
                                                             <br />• <span className="text-slate-300">Overlap:</span> Đoạn văn bản gối đầu giữa các đoạn cắt để không làm mất mạch nội dung ở các khe cắt.
-                                                            <br /><span className="text-amber-500 italic">* Lưu ý: Chỉ áp dụng cho các dữ liệu được nạp MỚI sau khi chỉnh.</span>
+                                                            <br /><span className="text-amber-600 italic">* Lưu ý: Chỉ áp dụng cho các dữ liệu được nạp MỚI sau khi chỉnh.</span>
                                                         </p>
                                                     </div>
                                                 </div>
@@ -1527,7 +1527,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                         max="50"
                                                         value={settings.top_k || 12}
                                                         onChange={(e: any) => setSettings({ ...settings, top_k: parseInt(e.target.value) })}
-                                                        className="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-[11px] font-bold text-slate-200 outline-none focus:border-amber-500 focus:bg-slate-800/80 transition-all shadow-inner font-mono"
+                                                        className="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-[11px] font-bold text-slate-200 outline-none focus:border-amber-600 focus:bg-slate-800/80 transition-all shadow-inner font-mono"
                                                     />
                                                     <p className="text-[9px] text-slate-500 leading-relaxed font-medium bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
                                                         <strong className="text-slate-300">Giải thích:</strong> Số lượng "mảnh kiến thức" AI sẽ đọc để trả lời 1 câu hỏi.
@@ -1549,7 +1549,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                         max="100"
                                                         value={settings.history_limit || 10}
                                                         onChange={(e: any) => setSettings({ ...settings, history_limit: parseInt(e.target.value) })}
-                                                        className="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-[11px] font-bold text-slate-200 outline-none focus:border-amber-500 focus:bg-slate-800/80 transition-all shadow-inner font-mono"
+                                                        className="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-[11px] font-bold text-slate-200 outline-none focus:border-amber-600 focus:bg-slate-800/80 transition-all shadow-inner font-mono"
                                                     />
                                                     <p className="text-[9px] text-slate-500 leading-relaxed font-medium bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
                                                         <strong className="text-slate-300">Giải thích:</strong> Số lượng tin nhắn gần nhất AI sẽ ghi nhớ để duy trì mạch hội thoại (Context).
@@ -1573,15 +1573,15 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                             step="0.1"
                                                             value={settings.temperature || 0.9}
                                                             onChange={(e: any) => setSettings({ ...settings, temperature: parseFloat(e.target.value) })}
-                                                            className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500 relative z-10"
+                                                            className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-600 relative z-10"
                                                         />
                                                         <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-1.5 bg-slate-800 rounded-lg overflow-hidden pointer-events-none">
-                                                            <div className="h-full bg-gradient-to-r from-orange-400 to-amber-500 opacity-30" style={{ width: `${(settings.temperature || 0.9) / 2 * 100}%` }}></div>
+                                                            <div className="h-full bg-gradient-to-r from-orange-400 to-amber-600 opacity-30" style={{ width: `${(settings.temperature || 0.9) / 2 * 100}%` }}></div>
                                                         </div>
                                                     </div>
                                                     <p className="text-[9px] text-slate-500 leading-relaxed font-medium bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
                                                         <strong className="text-slate-300">Giải thích:</strong> Kiểm soát tính ngẫu nhiên và sáng tạo của AI.
-                                                        <br />• <span className="text-amber-500 font-bold">Chính xác (0.1 - 0.5):</span> AI bám sát 100% dữ liệu, trả lời nhất quán và nghiêm túc. Phù hợp cho hỗ trợ kỹ thuật, y tế hoặc tra cứu thông tin chính xác.
+                                                        <br />• <span className="text-amber-600 font-bold">Chính xác (0.1 - 0.5):</span> AI bám sát 100% dữ liệu, trả lời nhất quán và nghiêm túc. Phù hợp cho hỗ trợ kỹ thuật, y tế hoặc tra cứu thông tin chính xác.
                                                         <br />• <span className="text-blue-400 font-bold">Cân bằng (0.6 - 1.2):</span> AI trả lời tự nhiên, linh hoạt trong cách dùng từ như người thật. Mức **khuyên dùng** cho tư vấn bán hàng và CSKH.
                                                         <br />• <span className="text-orange-400 font-bold">Sáng tạo (1.3 - 2.0):</span> Trả lời rất "bay bổng" và đa dạng. **Lưu ý:** Dễ bị hiện tượng "ảo giác" (nói những thông tin không có trong Knowledge Base).
                                                     </p>
@@ -1602,7 +1602,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                         step="256"
                                                         value={settings.max_output_tokens || 16384}
                                                         onChange={(e: any) => setSettings({ ...settings, max_output_tokens: parseInt(e.target.value) })}
-                                                        className="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-[11px] font-bold text-slate-200 outline-none focus:border-amber-500 shadow-inner font-mono"
+                                                        className="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-[11px] font-bold text-slate-200 outline-none focus:border-amber-600 shadow-inner font-mono"
                                                     />
                                                     <p className="text-[9px] text-slate-500 leading-relaxed font-medium bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
                                                         <strong className="text-slate-300">Giải thích:</strong> Giới hạn độ dài tối đa của 1 câu trả lời.
@@ -1637,7 +1637,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                     ].map((item, idx) => (
                                         <div key={idx} className={`p-3 rounded-xl border group/var hover:border-amber-200 transition-all relative ${isDarkTheme ? 'bg-slate-800/40 border-slate-700 shadow-inner' : 'bg-slate-50 border-slate-100'}`}>
                                             <div className="flex justify-between items-start mb-1">
-                                                <code className={`font-black text-[10px] group-hover/var:text-amber-500 transition-colors ${isDarkTheme ? 'text-slate-200' : 'text-slate-900'}`}>{item.var}</code>
+                                                <code className={`font-black text-[10px] group-hover/var:text-amber-600 transition-colors ${isDarkTheme ? 'text-slate-200' : 'text-slate-900'}`}>{item.var}</code>
                                                 <button
                                                     onClick={() => {
                                                         navigator.clipboard.writeText(item.var);

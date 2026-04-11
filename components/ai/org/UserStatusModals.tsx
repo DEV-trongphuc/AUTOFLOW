@@ -89,7 +89,7 @@ export const WarningUserModal = ({ onContentClick, isDarkTheme }: { onContentCli
         <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-lg animate-in fade-in duration-500 ${isDarkTheme ? 'bg-black/60' : 'bg-slate-900/60'}`}>
             <div className={`max-w-md w-full rounded-[40px] p-10 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.3)] border relative overflow-hidden transition-colors duration-500 ${isDarkTheme ? 'bg-[#1E2532] border-slate-700' : 'bg-white border-white'}`}>
                 <div className="absolute top-0 right-0 p-8">
-                    <div className={`w-24 h-24 rounded-full blur-3xl ${isDarkTheme ? 'bg-amber-500/10' : 'bg-amber-500/5'}`} />
+                    <div className={`w-24 h-24 rounded-full blur-3xl ${isDarkTheme ? 'bg-amber-600/10' : 'bg-amber-600/5'}`} />
                 </div>
 
                 <div className="relative z-10 flex flex-col items-center text-center">
@@ -110,7 +110,7 @@ export const WarningUserModal = ({ onContentClick, isDarkTheme }: { onContentCli
                             <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-1">Observation:</p>
                             <p className={`text-[11px] font-bold italic leading-relaxed ${isDarkTheme ? 'text-slate-300' : 'text-slate-600'}`}>"{useChatPage().orgUser?.status_reason}"</p>
                             {useChatPage().orgUser?.status_expiry && (
-                                <p className={`mt-2 text-[9px] font-bold border-t pt-2 uppercase ${isDarkTheme ? 'text-amber-500/40 border-amber-900/30' : 'text-amber-500/60 border-amber-100'}`}>
+                                <p className={`mt-2 text-[9px] font-bold border-t pt-2 uppercase ${isDarkTheme ? 'text-amber-600/40 border-amber-900/30' : 'text-amber-600/60 border-amber-100'}`}>
                                     Valid until: {new Date(useChatPage().orgUser!.status_expiry!).toLocaleString('vi-VN')}
                                 </p>
                             )}

@@ -25,7 +25,7 @@ interface NodeProps {
 
 const QuickEdit = ({ onClick }: { onClick: () => void }) => (
     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 z-50">
-        <button onClick={(e) => { e.stopPropagation(); onClick(); }} className="p-1.5 bg-white/80 backdrop-blur-md border border-slate-100 rounded-full shadow-sm text-slate-400 hover:text-amber-500 hover:shadow-md transform hover:scale-110 transition-all">
+        <button onClick={(e) => { e.stopPropagation(); onClick(); }} className="p-1.5 bg-white/80 backdrop-blur-md border border-slate-100 rounded-full shadow-sm text-slate-400 hover:text-amber-600 hover:shadow-md transform hover:scale-110 transition-all">
             <MoreHorizontal className="w-4 h-4" />
         </button>
     </div>
@@ -56,7 +56,7 @@ const ReportOverlay = ({ stats }: { stats: { total: number, waiting: number, pro
             </div>
             <div className="w-px h-5 bg-slate-50"></div>
             <div className="flex flex-col items-center">
-                <Clock className="w-3 h-3 text-amber-500 mb-1" />
+                <Clock className="w-3 h-3 text-amber-600 mb-1" />
                 <span className="text-[11px] font-black text-slate-800 leading-none">{stats.waiting.toLocaleString()}</span>
             </div>
             <div className="w-px h-5 bg-slate-50"></div>
@@ -313,7 +313,7 @@ export const ConditionNode: React.FC<NodeProps> = ({ step, onClick, isViewMode, 
                     </div>
                     {!incomplete ? (
                         <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
-                            <Hourglass className="w-3 h-3 text-amber-500" />
+                            <Hourglass className="w-3 h-3 text-amber-600" />
                             <span>Wait: {step.config.waitDuration} {unitMap[step.config.waitUnit] || 'giờ'}</span>
                         </div>
                     ) : (

@@ -137,8 +137,7 @@ if (!function_exists('runIntegrationSync')) {
                                 $res = $misa->getRecords($entity, $page, $pageSize);
 
                                 if (!$res['success']) {
-                                    logIntegrationSync("MISA API Page $page Failed: " . ($res['message'] ?? 'Unknown error'));
-                                    break;
+                                    throw new Exception("MISA API Page $page Failed: " . ($res['message'] ?? 'Unknown error'));
                                 }
 
                                 $rows = $res['data'];

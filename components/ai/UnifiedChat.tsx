@@ -2518,7 +2518,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                             selectedConv?.email && (
                                 <div className={`p-6 border-t ${isDarkTheme ? 'bg-amber-950/20 border-amber-900/50' : 'bg-amber-50 border-t border-amber-100'}`}>
                                     <div className="flex items-center gap-3 mb-3">
-                                        <div className="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/30">
+                                        <div className="w-8 h-8 rounded-xl bg-amber-600 flex items-center justify-center text-white shadow-lg shadow-amber-600/30">
                                             <UserCheck className="w-4 h-4" />
                                         </div>
                                         <div>
@@ -2865,7 +2865,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                         {anSource === 'web' ? <Globe className="w-3.5 h-3.5 text-blue-500" /> :
                                             anSource === 'zalo' ? <MessageSquare className="w-3.5 h-3.5 text-blue-600" /> :
                                                 anSource === 'meta' ? <Facebook className="w-3.5 h-3.5 text-indigo-600" /> :
-                                                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />}
+                                                    <Sparkles className="w-3.5 h-3.5 text-amber-600" />}
                                     </div>
                                     <span className="text-sm font-bold text-slate-800 uppercase">
                                         {anSource === 'web' ? 'Website' : anSource === 'zalo' ? 'Zalo OA' : anSource === 'meta' ? 'Meta' : anSource === 'org' ? 'Consultant' : 'Đa kênh'}
@@ -3229,7 +3229,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                                 >
                                                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-400 opacity-0 group-hover/item:opacity-100 transition-opacity"></div>
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover/item:bg-amber-50 group-hover/item:text-amber-500 transition-colors">
+                                                        <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover/item:bg-amber-50 group-hover/item:text-amber-600 transition-colors">
                                                             <Clock className="w-4 h-4" />
                                                         </div>
                                                         <div className="flex flex-col gap-0.5">
@@ -3248,7 +3248,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                                                 <span className="text-[10px] text-slate-400 font-medium">
                                                                     Tạo lúc: {item.generated_at ? new Date(item.generated_at).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : `Bản ghi #${idx + 1}`}
                                                                 </span>
-                                                                <span className="text-[9px] text-amber-500 font-bold opacity-0 group-hover/item:opacity-100 transition-opacity ml-1">Click để xem lại</span>
+                                                                <span className="text-[9px] text-amber-600 font-bold opacity-0 group-hover/item:opacity-100 transition-opacity ml-1">Click để xem lại</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -3260,7 +3260,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                                                 navigator.clipboard.writeText(publicUrl);
                                                                 toast.success('Đã sao chép link báo cáo này!');
                                                             }}
-                                                            className="p-2 hover:bg-amber-100 text-amber-500 rounded-xl transition-all active:scale-90"
+                                                            className="p-2 hover:bg-amber-100 text-amber-600 rounded-xl transition-all active:scale-90"
                                                             title="Chia sẻ báo cáo này"
                                                         >
                                                             <Share2 className="w-4 h-4" />
@@ -3292,7 +3292,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chiến dịch phân tích</p>
                                     <div className="flex items-center gap-2">
-                                        <div className="px-2 py-1 bg-gradient-to-r from-amber-500 to-orange-500 rounded text-[10px] font-black text-white uppercase italic shadow-sm shadow-orange-100 flex items-center gap-1.5">
+                                        <div className="px-2 py-1 bg-gradient-to-r from-amber-600 to-orange-500 rounded text-[10px] font-black text-white uppercase italic shadow-sm shadow-orange-100 flex items-center gap-1.5">
                                             <Zap className="w-3 h-3 fill-current" /> Dữ liệu chất lượng cao
                                         </div>
                                         <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">
@@ -3384,7 +3384,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                                             {/* Bar */}
                                                             <div
                                                                 className={`w-full rounded-t-md mx-[1px] transition-all duration-500 ease-out cursor-pointer relative overflow-hidden ${isPeak
-                                                                    ? 'bg-gradient-to-t from-amber-500 to-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.3)] z-10 scale-x-110'
+                                                                    ? 'bg-gradient-to-t from-amber-600 to-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.3)] z-10 scale-x-110'
                                                                     : isHighActivity
                                                                         ? 'bg-gradient-to-t from-blue-500 to-cyan-400 hover:from-blue-400 hover:to-cyan-300'
                                                                         : 'bg-gradient-to-t from-slate-200 to-slate-100 hover:from-slate-300 hover:to-slate-200'

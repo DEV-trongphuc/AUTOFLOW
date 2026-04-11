@@ -138,7 +138,7 @@ const GlobalWorkspaceView = React.memo(({
                                 className={`h-10 md:h-11 px-6 border rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 active:scale-95 shadow-sm ${isDarkTheme ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
                                 title="Mẹo sử dụng Workspace"
                             >
-                                <Lightbulb className="w-4 h-4 text-amber-500" />
+                                <Lightbulb className="w-4 h-4 text-amber-600" />
                                 <span className="hidden sm:inline">Mẹo</span>
                             </button>
                             <button
@@ -520,7 +520,7 @@ const GlobalWorkspaceView = React.memo(({
                                                         <div className="absolute bottom-2 left-2 z-10">
                                                             <span className={`text-[7px] px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter backdrop-blur-md border shadow-sm ${(() => {
                                                                 const src = doc.source.toLowerCase();
-                                                                if (src === 'global_training' || (doc as any).isGlobal) return 'bg-amber-500/80 text-white border-amber-300/20';
+                                                                if (src === 'global_training' || (doc as any).isGlobal) return 'bg-amber-600/80 text-white border-amber-300/20';
                                                                 if (src.includes('user') || src === 'file_upload') return 'bg-blue-600/70 text-white border-blue-400/20';
                                                                 if (src.includes('assistant') || src.includes('ai')) return 'bg-red-800/70 text-white border-red-400/20';
                                                                 return 'bg-slate-800/60 text-white border-slate-500/30';
@@ -567,7 +567,7 @@ const GlobalWorkspaceView = React.memo(({
                                                     {doc.conversationTitle && (
                                                         <p className="text-[9px] text-slate-400 font-medium truncate mb-1" title={doc.conversationTitle}>
                                                             {(doc.source === 'global_training' || (doc as any).isGlobal)
-                                                                ? <Bot className="w-2.5 h-2.5 inline mr-1 text-amber-500" />
+                                                                ? <Bot className="w-2.5 h-2.5 inline mr-1 text-amber-600" />
                                                                 : <MessageSquare className="w-2.5 h-2.5 inline mr-1" />}
                                                             {doc.conversationTitle}
                                                         </p>

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, X, Loader2 } from 'lucide-react';
 
 interface ConfirmModalProps {
@@ -82,7 +83,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
     const styles = variantStyles[variant];
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100001] flex items-center justify-center p-4">
             {/* Backdrop */}
             <div
@@ -156,7 +157,8 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

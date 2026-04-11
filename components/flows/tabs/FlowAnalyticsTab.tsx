@@ -1,4 +1,4 @@
-﻿
+
 import React, { useState, useMemo, useEffect, memo } from 'react';
 import {
     Users, CheckCircle2, Mail, MousePointerClick, Activity, Filter,
@@ -136,7 +136,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         }
     };
 
-    // CHUYỂN ĐỔI DỮ LIỆU THỰC TẾ SANG FUNNEL (REAL-TIME LOGIC)
+    // CHUY?N �?I D? LI?U TH?C T? SANG FUNNEL (REAL-TIME LOGIC)
     const funnelData = useMemo(() => {
         // 1. TOPOLOGICAL SORT: Get steps in execution order (Start -> End)
         const sortedSteps: any[] = [];
@@ -170,7 +170,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         // Filter for Action Steps from the SORTED list - ADD zalo_zns
         const actionSteps = sortedSteps.filter(s => ['action', 'zalo_zns', 'update_tag', 'condition', 'wait', 'list_action', 'remove_action'].includes(s.type));
 
-        // 2. Tạo Map index để biết thứ tự bước
+        // 2. T?o Map index d? bi?t th? t? bu?c
         const stepIndexMap: Record<string, number> = {};
         actionSteps.forEach((s, idx) => { stepIndexMap[s.id] = idx; });
 
@@ -361,13 +361,13 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                 finalFunnel.push({
                     id: `end_${step.id}`,
                     type: 'completed',
-                    stepLabel: 'Kết thúc',
+                    stepLabel: 'K?t th�c',
                     stepNumberLabel: 'END',
-                    label: 'Hoàn thành Flow',
+                    label: 'Ho�n th�nh Flow',
                     users: completedCount,
                     waiting: 0,
                     rate: 100,
-                    detailStat: `Hoàn tất: ${completedCount}`,
+                    detailStat: `Ho�n t?t: ${completedCount}`,
                     config: {},
                     style: { icon: CheckCircle2, gradient: 'from-emerald-500 to-teal-600', text: 'text-emerald-600', bg: 'bg-emerald-50', label: 'Completed' }
                 });
@@ -715,7 +715,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         const now = new Date().getTime();
         const diff = target - now;
 
-        if (diff <= 0) return 'Sắp chạy ngay';
+        if (diff <= 0) return 'S?p ch?y ngay';
 
         const totalMinutes = Math.floor(diff / (1000 * 60));
         const days = Math.floor(totalMinutes / (60 * 24));
@@ -723,10 +723,10 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         const minutes = totalMinutes % 60;
 
         if (days > 0) {
-            return `Còn ${days} ngày ${hours}h ${minutes}p`;
+            return `C�n ${days} ng�y ${hours}h ${minutes}p`;
         }
-        if (hours > 0) return `Còn ${hours}h ${minutes}p`;
-        return `Còn ${minutes} phút`;
+        if (hours > 0) return `C�n ${hours}h ${minutes}p`;
+        return `C�n ${minutes} ph�t`;
     };
 
     // Grouping Logic: Group consecutive logs from the same user
@@ -799,12 +799,12 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
 
     // Quick Actions
     const handleExportReport = async () => {
-        showToast('Đang xuất báo cáo...', 'info');
+        showToast('�ang xu?t b�o c�o...', 'info');
         const res = await api.post(`flows?id=${flow.id}&route=export-analytics`, {});
         if (res.success) {
-            showToast('Xuất báo cáo thành công!');
+            showToast('Xu?t b�o c�o th�nh c�ng!');
         } else {
-            showToast('Lỗi khi xuất báo cáo', 'error');
+            showToast('L?i khi xu?t b�o c�o', 'error');
         }
     };
 
@@ -819,11 +819,11 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                     setInactivePagination((res.data as any).pagination);
                 }
             } else {
-                showToast('Không thể tải danh sách', 'error');
+                showToast('Kh�ng th? t?i danh s�ch', 'error');
             }
         } catch (err) {
             console.error(err);
-            showToast('Lỗi kết nối', 'error');
+            showToast('L?i k?t n?i', 'error');
         } finally {
             setLoadingInactive(false);
         }
@@ -832,17 +832,17 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
     const handleCleanFailedUsers = () => {
         setConfirmModal({
             isOpen: true,
-            title: 'Xác nhận dọn dẹp',
-            message: 'Bạn có chắc muốn xóa tất cả người dùng bị lỗi khỏi flow này?',
+            title: 'X�c nh?n d?n d?p',
+            message: 'B?n c� ch?c mu?n x�a t?t c? ngu?i d�ng b? l?i kh?i flow n�y?',
             onConfirm: async () => {
                 setConfirmModal({ ...confirmModal, isOpen: false });
-                showToast('Đang dọn dẹp...', 'info');
+                showToast('�ang d?n d?p...', 'info');
                 const res = await api.post(`flows?id=${flow.id}&route=clean-failed`, {});
                 if (res.success) {
-                    showToast('Đã dọn dẹp người dùng bị lỗi!');
+                    showToast('�� d?n d?p ngu?i d�ng b? l?i!');
                     refreshFlow();
                 } else {
-                    showToast('Lỗi khi dọn dẹp', 'error');
+                    showToast('L?i khi d?n d?p', 'error');
                 }
             }
         });
@@ -873,7 +873,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
     const BottleneckBadge = ({ type, value, tooltip }: { type: 'time' | 'drop', value: string, tooltip?: string }) => (
         <div
             title={tooltip}
-            className={`absolute -top-3 -right-3 z-50 px-3 py-1.5 rounded-full shadow-lg border flex items-center gap-2 animate-pulse cursor-help ${type === 'time' ? 'bg-amber-500 border-amber-400 text-white' : 'bg-orange-500 border-orange-400 text-white'
+            className={`absolute -top-3 -right-3 z-50 px-3 py-1.5 rounded-full shadow-lg border flex items-center gap-2 animate-pulse cursor-help ${type === 'time' ? 'bg-amber-600 border-amber-400 text-white' : 'bg-orange-500 border-orange-400 text-white'
                 }`}
         >
             <AlertOctagon className="w-4 h-4" />
@@ -898,11 +898,11 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                     <Activity className="w-5 h-5 md:w-6 md:h-6 text-white" />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg md:text-2xl font-bold tracking-tight">Hiệu suất vận hành</h3>
+                                    <h3 className="text-lg md:text-2xl font-bold tracking-tight">Hi?u su?t v?n h�nh</h3>
                                     <div className="flex items-center gap-2 mt-0.5 md:mt-1">
                                         <span className={`w-1.5 h-1.5 rounded-full ${currentFlow.status === 'active' ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`}></span>
                                         <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                            Automation {currentFlow.status === 'active' ? 'đang chạy' : 'đã dừng'}
+                                            Automation {currentFlow.status === 'active' ? 'dang ch?y' : 'd� d?ng'}
                                         </span>
                                     </div>
                                 </div>
@@ -920,14 +920,14 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                         <div className="space-y-4 md:space-y-6">
                             <div className="flex justify-between items-end">
                                 <div>
-                                    <p className="text-[9px] md:text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1">Tỷ lệ hoàn tất</p>
+                                    <p className="text-[9px] md:text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1">T? l? ho�n t?t</p>
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-2xl md:text-4xl font-black text-white tracking-tighter">{completionRate}%</span>
                                         <span className="text-[10px] md:text-xs text-slate-400 font-medium">({stats.completed}/{stats.enrolled})</span>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[9px] md:text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1">Tỷ lệ mở TB</p>
+                                    <p className="text-[9px] md:text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1">T? l? m? TB</p>
                                     <span className="text-xl md:text-2xl font-black text-emerald-400 tracking-tighter">{realOpenRate}%</span>
                                 </div>
                             </div>
@@ -946,7 +946,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                     <div className="lg:col-span-7 flex flex-col gap-6">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
                             <div className="bg-white/5 p-3 rounded-xl border border-white/5 lg:bg-transparent lg:p-0 lg:border-0">
-                                <p className="text-[8px] md:text-[9px] font-bold uppercase text-slate-500 tracking-widest mb-1.5 md:mb-2 text-center lg:text-left">Đã gửi</p>
+                                <p className="text-[8px] md:text-[9px] font-bold uppercase text-slate-500 tracking-widest mb-1.5 md:mb-2 text-center lg:text-left">�� g?i</p>
                                 <div className="flex items-center justify-center lg:justify-start gap-2">
                                     <div className="p-1 px-1.5 bg-white/5 rounded-lg border border-white/5 hidden md:block">
                                         <Mail className="w-3 h-3 text-blue-400" />
@@ -955,7 +955,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                 </div>
                             </div>
                             <div className="bg-white/5 p-3 rounded-xl border border-white/5 lg:bg-transparent lg:p-0 lg:border-0">
-                                <p className="text-[8px] md:text-[9px] font-bold uppercase text-slate-500 tracking-widest mb-1.5 md:mb-2 text-center lg:text-left">Đã mở</p>
+                                <p className="text-[8px] md:text-[9px] font-bold uppercase text-slate-500 tracking-widest mb-1.5 md:mb-2 text-center lg:text-left">�� m?</p>
                                 <div className="flex items-center justify-center lg:justify-start gap-2">
                                     <div className="p-1 px-1.5 bg-white/5 rounded-lg border border-white/5 hidden md:block">
                                         <MailOpen className="w-3 h-3 text-emerald-400" />
@@ -964,7 +964,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                 </div>
                             </div>
                             <div className="bg-white/5 p-3 rounded-xl border border-white/5 lg:bg-transparent lg:p-0 lg:border-0">
-                                <p className="text-[8px] md:text-[9px] font-bold uppercase text-slate-500 tracking-widest mb-1.5 md:mb-2 text-center lg:text-left">Gửi lỗi</p>
+                                <p className="text-[8px] md:text-[9px] font-bold uppercase text-slate-500 tracking-widest mb-1.5 md:mb-2 text-center lg:text-left">G?i l?i</p>
                                 <div className="flex items-center justify-center lg:justify-start gap-2">
                                     <div className="p-1 px-1.5 bg-white/5 rounded-lg border border-white/5 hidden md:block">
                                         <AlertOctagon className={`w-3 h-3 ${(stats.totalFailed || 0) > 0 ? 'text-rose-400' : 'text-slate-600'}`} />
@@ -975,7 +975,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                 </div>
                             </div>
                             <div className="bg-white/5 p-3 rounded-xl border border-white/5 lg:bg-transparent lg:p-0 lg:border-0">
-                                <p className="text-[8px] md:text-[9px] font-bold uppercase text-slate-500 tracking-widest mb-1.5 md:mb-2 text-center lg:text-left">Hủy ĐK</p>
+                                <p className="text-[8px] md:text-[9px] font-bold uppercase text-slate-500 tracking-widest mb-1.5 md:mb-2 text-center lg:text-left">H?y �K</p>
                                 <div className="flex items-center justify-center lg:justify-start gap-2">
                                     <div className="p-1 px-1.5 bg-white/5 rounded-lg border border-white/5 hidden md:block">
                                         <UserMinus className={`w-3 h-3 ${(stats.totalUnsubscribed || 0) > 0 ? 'text-orange-400' : 'text-slate-600'}`} />
@@ -994,14 +994,14 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                     <Send className="w-5 h-5 text-violet-300" />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Chiến dịch gốc</p>
-                                    <p className="text-[10px] md:text-xs font-bold text-slate-200">Truy cập báo cáo chi tiết</p>
+                                    <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Chi?n d?ch g?c</p>
+                                    <p className="text-[10px] md:text-xs font-bold text-slate-200">Truy c?p b�o c�o chi ti?t</p>
                                 </div>
                                 <button
                                     onClick={() => navigate('/campaigns', { state: { openCampaignId: triggerStep.config.targetId } })}
                                     className="px-3 md:px-4 py-2 bg-white text-[#0f172a] hover:bg-slate-100 rounded-lg md:rounded-xl text-[10px] md:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1.5 md:gap-2"
                                 >
-                                    <span className="hidden xs:inline">Báo cáo</span><span className="xs:hidden">Xem</span> <ExternalLink className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                                    <span className="hidden xs:inline">B�o c�o</span><span className="xs:hidden">Xem</span> <ExternalLink className="w-3 h-3 md:w-3.5 md:h-3.5" />
                                 </button>
                             </div>
                         )}
@@ -1010,9 +1010,9 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                <StatItem label="Khách hàng" value={(stats.enrolled || 0).toLocaleString()} icon={Users} color="bg-blue-600" />
+                <StatItem label="Kh�ch h�ng" value={(stats.enrolled || 0).toLocaleString()} icon={Users} color="bg-blue-600" />
                 <StatItem
-                    label="Lượt mở duy nhất"
+                    label="Lu?t m? duy nh?t"
                     value={(stats.uniqueOpened || 0).toLocaleString()}
                     icon={UserCheck}
                     color="bg-indigo-600"
@@ -1023,7 +1023,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                     }}
                 />
                 <StatItem
-                    label="Lượt Click"
+                    label="Lu?t Click"
                     value={(stats.totalClicked || 0).toLocaleString()}
                     icon={MousePointerClick}
                     color="bg-[#ffa900]"
@@ -1034,7 +1034,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                     }}
                 />
                 <StatItem
-                    label="Tỷ lệ lỗi"
+                    label="T? l? l?i"
                     value={errorRate + '%'}
                     icon={AlertOctagon}
                     color="bg-rose-500"
@@ -1050,7 +1050,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                     <Card className="rounded-[24px] md:rounded-[32px] border border-slate-100 shadow-sm overflow-hidden bg-white" noPadding>
                         <div className="px-5 md:px-8 py-4 md:py-6 border-b border-slate-50 flex flex-col md:flex-row md:justify-between md:items-center bg-slate-50/30 gap-3">
                             <div>
-                                <h3 className="text-xs md:text-sm font-black text-slate-800">Hành trình khách hàng</h3>
+                                <h3 className="text-xs md:text-sm font-black text-slate-800">H�nh tr�nh kh�ch h�ng</h3>
                                 <p className="text-[9px] md:text-[10px] text-slate-400 mt-0.5 uppercase tracking-widest">Cumulative Flow Analytics</p>
                             </div>
                             <button
@@ -1058,7 +1058,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                 className="px-3 py-2 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2"
                             >
                                 <UserMinus className="w-3.5 h-3.5 text-slate-400" />
-                                KHÔNG TƯƠNG TÁC
+                                KH�NG TUONG T�C
                             </button>
                         </div>
 
@@ -1097,8 +1097,8 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                                     </span>
                                                                     {item.waiting > 0 && (
                                                                         <span className="flex items-center gap-1 text-[8px] md:text-[9px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-md animate-pulse">
-                                                                            <div className="w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-amber-500"></div>
-                                                                            Chờ: {item.waiting}
+                                                                            <div className="w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-amber-600"></div>
+                                                                            Ch?: {item.waiting}
                                                                         </span>
                                                                     )}
                                                                 </div>
@@ -1111,14 +1111,14 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                             <BottleneckBadge
                                                                 type="time"
                                                                 value="Stuck > 24h"
-                                                                tooltip="Cảnh báo: Khách hàng đang bị nghẽn tại bước này quá 24h so với thời gian xử lý dự kiến. Bỏ qua cảnh báo này nếu logic của bạn là đúng."
+                                                                tooltip="C?nh b�o: Kh�ch h�ng dang b? ngh?n t?i bu?c n�y qu� 24h so v?i th?i gian x? l� d? ki?n. B? qua c?nh b�o n�y n?u logic c?a b?n l� d�ng."
                                                             />
                                                         )}
                                                         {item.dropOffRate > 0.7 && (
                                                             <BottleneckBadge
                                                                 type="drop"
                                                                 value={`Drop-off ${Math.round(item.dropOffRate * 100)}%`}
-                                                                tooltip="Cảnh báo: Tỷ lệ thoát/dừng tại bước này cao (>70%). Bạn nên tối ưu nội dung hoặc điều kiện lọc."
+                                                                tooltip="C?nh b�o: T? l? tho�t/d?ng t?i bu?c n�y cao (>70%). B?n n�n t?i uu n?i dung ho?c di?u ki?n l?c."
                                                             />
                                                         )}
 
@@ -1127,17 +1127,17 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                             <div className="flex gap-4 md:gap-6">
                                                                 {item.type === 'completed' ? (
                                                                     <div>
-                                                                        <p className="text-[8px] md:text-[9px] text-emerald-500 font-bold uppercase tracking-wide whitespace-nowrap">Hoàn thành</p>
+                                                                        <p className="text-[8px] md:text-[9px] text-emerald-500 font-bold uppercase tracking-wide whitespace-nowrap">Ho�n th�nh</p>
                                                                         <p className="text-base md:text-lg font-black text-emerald-600">{(item as any).users?.toLocaleString() || 0}</p>
                                                                     </div>
                                                                 ) : (
                                                                     <>
                                                                         <div>
-                                                                            <p className="text-[8px] md:text-[9px] text-slate-400 font-bold uppercase tracking-wide whitespace-nowrap">Đang ở đây</p>
+                                                                            <p className="text-[8px] md:text-[9px] text-slate-400 font-bold uppercase tracking-wide whitespace-nowrap">�ang ? d�y</p>
                                                                             <p className="text-base md:text-lg font-black text-slate-800">{(item as any).waiting?.toLocaleString() || 0}</p>
                                                                         </div>
                                                                         <div>
-                                                                            <p className="text-[8px] md:text-[9px] text-slate-400 font-bold uppercase tracking-wide whitespace-nowrap">Đã đi qua</p>
+                                                                            <p className="text-[8px] md:text-[9px] text-slate-400 font-bold uppercase tracking-wide whitespace-nowrap">�� di qua</p>
                                                                             <p className="text-base md:text-lg font-black text-slate-800">{(item as any).processedHere?.toLocaleString() || 0}</p>
                                                                         </div>
                                                                     </>
@@ -1201,7 +1201,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                                 return (
                                                                     <div className="flex items-center gap-1.5 mt-2 ml-16 text-[10px] font-bold text-emerald-600 opacity-60">
                                                                         <CheckCircle2 className="w-3.5 h-3.5" />
-                                                                        <span>Hoạt động tốt</span>
+                                                                        <span>Ho?t d?ng t?t</span>
                                                                     </div>
                                                                 );
                                                             }
@@ -1217,7 +1217,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                                             className="flex items-center gap-1 px-2 py-1 text-[9px] font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-md border border-rose-200 transition-colors"
                                                                         >
                                                                             <AlertOctagon className="w-3 h-3" />
-                                                                            Lỗi ({failed})
+                                                                            L?i ({failed})
                                                                         </button>
                                                                     )}
                                                                     {unsubscribed > 0 && (
@@ -1229,7 +1229,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                                             className="flex items-center gap-1 px-2 py-1 text-[9px] font-bold text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-md border border-orange-200 transition-colors"
                                                                         >
                                                                             <UserMinus className="w-3 h-3" />
-                                                                            Hủy ({unsubscribed})
+                                                                            H?y ({unsubscribed})
                                                                         </button>
                                                                     )}
                                                                 </div>
@@ -1257,7 +1257,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                                     onClick={(e) => { e.stopPropagation(); setActiveBranches(prev => ({ ...prev, [item.id]: 'fallback' })); }}
                                                                     className={`px-2 py-0.5 text-[9px] font-bold rounded-full transition-colors whitespace-nowrap ${item.activeBranch === 'fallback' ? 'bg-slate-200 text-slate-700' : 'text-slate-400 hover:text-indigo-600'}`}
                                                                 >
-                                                                    Mặc định (Fallback)
+                                                                    M?c d?nh (Fallback)
                                                                 </button>
                                                             </div>
                                                         ) : (
@@ -1285,7 +1285,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                             ) : (
                                 <div className="text-center py-20 opacity-40">
                                     <Activity className="w-12 h-12 mx-auto mb-4" />
-                                    <p className="text-xs font-bold uppercase tracking-widest">Chưa có dữ liệu vận hành</p>
+                                    <p className="text-xs font-bold uppercase tracking-widest">Chua c� d? li?u v?n h�nh</p>
                                 </div>
                             )}
                         </div>
@@ -1302,14 +1302,14 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                     <div className="p-1 bg-indigo-50 text-indigo-600 rounded-lg">
                                         <Activity className="w-3.5 h-3.5" />
                                     </div>
-                                    <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Nhật ký</span>
+                                    <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Nh?t k�</span>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <div className="relative group/search">
                                         <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-2.5 h-2.5 text-slate-400 group-focus-within/search:text-indigo-500 transition-colors" />
                                         <input
                                             type="text"
-                                            placeholder="Tìm email..."
+                                            placeholder="Ti`m email..."
                                             value={logSearchTerm}
                                             onChange={(e) => setLogSearchTerm(e.target.value)}
                                             className="pl-7 pr-3 py-1 bg-white border border-slate-200 rounded-lg text-[9px] w-28 focus:w-44 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-400 transition-all outline-none"
@@ -1342,7 +1342,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                     <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
                                         <History className="w-6 h-6 text-slate-300" />
                                     </div>
-                                    <p className="text-[10px] font-bold uppercase text-slate-400">Chưa có sự kiện nào</p>
+                                    <p className="text-[10px] font-bold uppercase text-slate-400">Chua c� s? ki?n n�o</p>
                                 </div>
                             ) : (
                                 <div className="divide-y divide-slate-50">
@@ -1375,7 +1375,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                             <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/30">
                                 <div className="flex items-center justify-between">
                                     <div className="text-[9px] text-slate-500 font-bold">
-                                        Trang {logPagination.page} / {logPagination.totalPages} • Tổng {logPagination.total} sự kiện
+                                        Trang {logPagination.page} / {logPagination.totalPages} � T?ng {logPagination.total} s? ki?n
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <button
@@ -1384,7 +1384,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                             className="px-3 py-1.5 text-[9px] font-bold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1"
                                         >
                                             <ChevronDown className="w-3 h-3 rotate-90" />
-                                            Trước
+                                            Tru?c
                                         </button>
                                         <button
                                             onClick={() => fetchLogs(logPagination.page + 1, true, debouncedLogSearch)}
@@ -1417,7 +1417,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                     // Refresh the error list too
                     fetchStepErrors(errorModal.stepId, errorModal.stepLabel);
                 }}
-                onExport={() => showToast('Đã xuất danh sách lỗi')}
+                onExport={() => showToast('�� xu?t danh s�ch l?i')}
             />
 
             {/* Unsubscribe Modal */}
@@ -1427,7 +1427,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                 stepLabel={unsubscribeModal.stepLabel}
                 stepId={unsubscribeModal.stepId}
                 users={unsubscribeModal.users}
-                onExport={() => showToast('Đã xuất danh sách hủy đăng ký')}
+                onExport={() => showToast('�� xu?t danh s�ch h?y dang k�')}
             />
 
             {/* Confirmation Modal */}
@@ -1446,7 +1446,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                 onClose={() => {
                     setIsParticipantsModalOpen(false);
                 }}
-                title={selectedStatus === 'completed' ? 'Danh sách hoàn thành' : `Danh sách tại: ${selectedStepId ? getStepName(selectedStepId) : '...'}`}
+                title={selectedStatus === 'completed' ? 'Danh s�ch ho�n th�nh' : `Danh s�ch t?i: ${selectedStepId ? getStepName(selectedStepId) : '...'}`}
                 participants={modalParticipants}
                 loading={loadingList}
                 pagination={pagination}
@@ -1504,7 +1504,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
             <StepParticipantsModal
                 isOpen={isInactiveModalOpen}
                 onClose={() => setIsInactiveModalOpen(false)}
-                title="KHÔNG TƯƠNG TÁC (Inactive)"
+                title="KH�NG TUONG T�C (Inactive)"
                 participants={inactiveUsers}
                 loading={loadingInactive}
                 pagination={inactivePagination}
@@ -1593,7 +1593,7 @@ const LogItem: React.FC<{
                         </span>
                         {log.details && (
                             <span className="text-[9px] text-slate-400 truncate opacity-0 group-hover:opacity-100 transition-opacity max-w-[120px]" title={log.details}>
-                                • {log.details.replace('Clicked link:', 'Click:')}
+                                � {log.details.replace('Clicked link:', 'Click:')}
                             </span>
                         )}
                     </div>

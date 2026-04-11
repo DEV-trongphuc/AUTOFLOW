@@ -492,7 +492,7 @@ const Sidebar = React.memo(({
                                 </div>
                                 {orgUser?.role && (
                                     <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded shadow-sm border shrink-0 ${orgUser.role === 'admin'
-                                        ? 'bg-amber-500 text-white border-amber-400'
+                                        ? 'bg-amber-600 text-white border-amber-400'
                                         : orgUser.role === 'assistant'
                                             ? 'bg-blue-500 text-white border-blue-400'
                                             : (isDarkTheme ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-100 text-slate-500 border-slate-200')

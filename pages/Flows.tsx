@@ -1,7 +1,9 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Plus, Trash2, RotateCcw, AlertTriangle, FileText, PauseCircle, PlayCircle, LayoutGrid, Clock, Filter, ChevronDown, Check } from 'lucide-react';
+import { 
+    Plus, Trash2, RotateCcw, AlertTriangle, FileText, PauseCircle, PlayCircle, LayoutGrid, Clock, Filter, ChevronDown, Check,
+    Zap, Users, Sparkles, CheckCircle2, BarChart3, ShieldCheck, GitMerge, Split, Lightbulb, Target
+} from 'lucide-react';
 import { api } from '../services/storageAdapter';
 import { logAction, getLogs, HistoryLog } from '../services/historyService';
 import { validateFlow, validateFlowAsync, ValidationError } from '../services/flowValidationService';
@@ -9,7 +11,7 @@ import { calculateFlowDuration, formatDuration } from '../services/flowAnalysis'
 
 import { Flow, FlowStep, Campaign, Segment, FormDefinition, PurchaseEvent, CustomEvent } from '../types';
 
-import PageHeader from '../components/common/PageHeader';
+import PageHero from '../components/common/PageHero';
 import Button from '../components/common/Button';
 import Skeleton from '../components/common/Skeleton';
 import FlowCard from '../components/flows/FlowCard';
@@ -44,7 +46,6 @@ import EmptyState from '../components/common/EmptyState';
 import Tabs from '../components/common/Tabs';
 import TabTransition from '../components/common/TabTransition';
 import TipsModal from '../components/common/TipsModal';
-import { Lightbulb, Target, Sparkles, Zap, ShieldCheck, GitMerge, Split } from 'lucide-react';
 
 type FlowFilter = 'all' | 'active' | 'draft' | 'paused' | 'archived';
 type TriggerTypeFilter = 'all' | 'segment' | 'date' | 'campaign' | 'form' | 'tag';
@@ -1459,196 +1460,76 @@ const Flows: React.FC = () => {
     }), [flows]);
 
     return (
-        <>
-            <div className="pb-24">
+        <div className="animate-fade-in space-y-8 pb-20">
+            {!selectedFlow && (
+                <>
+                    <PageHero 
+                        title={<>Automation <span className="text-orange-100/80">Flows</span></>}
+                        subtitle="Quản lý vòng đời khách hàng tự động — nuôi dưỡng & chuyển đổi thông minh đa kênh."
+                        showStatus={true}
+                        statusText="Orchestrator Online"
+                        actions={[
+                            { 
+                                label: 'Tạo kịch bản', 
+                                icon: Plus, 
+                                onClick: () => setIsCreateModalOpen(true),
+                                primary: true 
+                            },
+                            { 
+                                label: 'Mẹo Automation', 
+                                icon: Lightbulb, 
+                                onClick: () => setIsTipsModalOpen(true) 
+                            }
+                        ]}
+                    />
 
-                {/* ── Keyframes ── */}
-                <style>{`
-                    @keyframes _shimmer-x { 0%{transform:translateX(-100%)} 100%{transform:translateX(300%)} }
-                    @keyframes _blink-dot { 0%,100%{opacity:1} 50%{opacity:0.15} }
-                    @keyframes _float-up { 0%{transform:translateY(0) scale(1);opacity:0.5} 100%{transform:translateY(-70px) scale(0);opacity:0} }
-                    @keyframes _count-up { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-                    @keyframes _pulse-ring2 { 0%,100%{opacity:0.25;transform:scale(1)} 50%{opacity:0.6;transform:scale(1.14)} }
-                    @keyframes _slide-in-badge { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
-                `}</style>
-
-                {/* ── Single seamless block: dark hero + white content ── */}
-                <div className="rounded-[28px] lg:rounded-[40px] overflow-hidden shadow-2xl border border-white/10" style={{boxShadow:'0 25px 60px rgba(0,0,0,0.18), 0 0 0 1px rgba(255,255,255,0.06)'}}>
-
-                    {/* DARK HERO */}
-                    <div className="relative overflow-hidden" style={{background:'linear-gradient(135deg, #09101f 0%, #0f1729 25%, #161042 55%, #0d1525 80%, #07101e 100%)'}}>
-                        {/* Atmospheric glow orbs */}
-                        <div className="absolute -top-32 -left-20 w-96 h-96 bg-amber-500/8 rounded-full blur-[120px] pointer-events-none" />
-                        <div className="absolute -bottom-28 -right-12 w-[360px] h-[360px] bg-violet-600/12 rounded-full blur-[110px] pointer-events-none" />
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-28 bg-indigo-500/6 rounded-full blur-[80px] pointer-events-none" />
-                        <div className="absolute top-0 right-1/4 w-40 h-40 bg-amber-400/5 rounded-full blur-[60px] pointer-events-none" />
-                        {/* Subtle dot grid */}
-                        <div className="absolute inset-0 opacity-[0.035]" style={{backgroundImage:'radial-gradient(circle,#94a3b8 0.7px,transparent 0.7px)',backgroundSize:'20px 20px'}} />
-                        {/* Top shimmer line */}
-                        <div className="absolute top-0 left-0 right-0 h-px" style={{background:'linear-gradient(90deg,transparent 0%,rgba(245,158,11,0.5) 30%,rgba(251,191,36,0.8) 50%,rgba(245,158,11,0.5) 70%,transparent 100%)'}} />
-                        {/* Floating particles — amber + violet mix */}
-                        {[...Array(8)].map((_,i) => (
-                            <div key={i} className="absolute w-[3px] h-[3px] rounded-full pointer-events-none"
-                                style={{background: i%2===0 ? 'rgba(251,191,36,0.55)' : 'rgba(167,139,250,0.45)', left:`${6+i*12}%`,bottom:`${20+(i%3)*14}%`,animation:`_float-up ${2.6+i*0.45}s ease-out ${i*0.3}s infinite`}} />
-                        ))}
-                        {/* Corner brackets */}
-                        <div className="absolute top-4 left-4 pointer-events-none">
-                            <div className="w-8 h-px bg-gradient-to-r from-amber-400/70 to-transparent" />
-                            <div className="h-8 w-px bg-gradient-to-b from-amber-400/70 to-transparent" />
-                        </div>
-                        <div className="absolute bottom-4 right-4 pointer-events-none flex flex-col items-end">
-                            <div className="h-8 w-px bg-gradient-to-t from-violet-400/50 to-transparent" />
-                            <div className="w-8 h-px bg-gradient-to-l from-violet-400/50 to-transparent" />
-                        </div>
-
-                        <div className="relative z-10 px-6 lg:px-10 pt-8 lg:pt-10 pb-10 lg:pb-12">
-                            {/* Title row */}
-                            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5 mb-8">
-                                <div className="flex-1 min-w-0">
-                                    <div className="inline-flex items-center gap-2 mb-4 pl-3 pr-4 py-1.5 rounded-full border" style={{background:'rgba(245,158,11,0.08)', borderColor:'rgba(245,158,11,0.22)', animation:'_slide-in-badge 0.5s ease-out both'}}>
-                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400" style={{animation:'_blink-dot 1.2s ease-in-out infinite'}} />
-                                        <span className="text-[9px] font-black text-amber-400 uppercase tracking-[0.22em]">AI-Powered Automation Engine</span>
-                                    </div>
-                                    <h1 className="text-2xl lg:text-[2.2rem] font-black text-white tracking-tight leading-[1.1] mb-3">
-                                        Automation{' '}
-                                        <span style={{background:'linear-gradient(90deg,#f59e0b 0%,#fbbf24 45%,#fde68a 75%,#fbbf24 100%)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>Pro</span>
-                                    </h1>
-                                    <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
-                                        Quản lý vòng đời khách hàng tự động — nuôi dưỡng &amp; chuyển đổi{' '}
-                                        <span className="text-amber-400 font-semibold">thông minh</span>
-                                    </p>
+                    <div className="space-y-8">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group">
+                                <div>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-amber-600 transition-colors">Tổng kịch bản</p>
+                                    <h3 className="text-2xl font-black text-slate-800 tracking-tight">{flowStats.total}</h3>
                                 </div>
-                                {!selectedFlow && (
-                                    <div className="flex items-center gap-3 shrink-0 lg:mt-1">
-                                        <button
-                                            onClick={() => setIsTipsModalOpen(true)}
-                                            className="group flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300"
-                                            style={{background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)', color:'rgba(255,255,255,0.7)'}}
-                                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background='rgba(255,255,255,0.11)'; (e.currentTarget as HTMLButtonElement).style.borderColor='rgba(245,158,11,0.4)'; (e.currentTarget as HTMLButtonElement).style.color='white'; }}
-                                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background='rgba(255,255,255,0.06)'; (e.currentTarget as HTMLButtonElement).style.borderColor='rgba(255,255,255,0.1)'; (e.currentTarget as HTMLButtonElement).style.color='rgba(255,255,255,0.7)'; }}
-                                        >
-                                            <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
-                                            Mẹo tăng trưởng
-                                        </button>
-                                        <button
-                                            onClick={() => setIsCreateModalOpen(true)}
-                                            className="relative flex items-center gap-2 px-5 py-2.5 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 hover:scale-[1.04] active:scale-[0.97] overflow-hidden"
-                                            style={{background:'linear-gradient(135deg,#f59e0b,#f97316)',boxShadow:'0 4px 24px rgba(245,158,11,0.45), 0 0 0 1px rgba(249,115,22,0.3)'}}
-                                        >
-                                            <span className="absolute inset-0 pointer-events-none" style={{background:'linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent)',animation:'_shimmer-x 2.2s ease-in-out infinite'}} />
-                                            <Plus className="w-3.5 h-3.5 relative z-10" />
-                                            <span className="relative z-10">Tạo kịch bản</span>
-                                        </button>
-                                    </div>
-                                )}
+                                <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 text-white rounded-2xl shadow-lg shadow-amber-600/10 flex items-center justify-center transition-all group-hover:scale-110">
+                                    <LayoutGrid className="w-6 h-6" />
+                                </div>
                             </div>
 
-                            {/* 3 Stat Cards — glassmorphism on dark */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                {/* Card 1 — Tổng kịch bản */}
-                                <div className="group relative rounded-2xl p-5 flex items-center gap-4 overflow-hidden cursor-default transition-all duration-300 hover:-translate-y-0.5"
-                                    style={{background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.1)', backdropFilter:'blur(12px)', boxShadow:'0 4px 20px rgba(0,0,0,0.25)'}}>
-                                    <div className="absolute top-0 left-4 right-4 h-px" style={{background:'linear-gradient(90deg,transparent,rgba(167,139,250,0.6),transparent)'}} />
-                                    <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                                        style={{background:'linear-gradient(135deg,rgba(167,139,250,0.06) 0%,transparent 60%)'}} />
-                                    <div className="relative shrink-0">
-                                        <div className="w-12 h-12 rounded-[14px] flex items-center justify-center"
-                                            style={{background:'linear-gradient(135deg,rgba(167,139,250,0.25),rgba(124,58,237,0.35))', border:'1px solid rgba(167,139,250,0.3)', boxShadow:'0 4px 16px rgba(167,139,250,0.2)'}}>
-                                            <LayoutGrid className="w-5 h-5" style={{color:'rgba(221,214,254,1)'}} />
-                                        </div>
-                                        <div className="absolute inset-0 rounded-[14px] border border-violet-400/20" style={{animation:'_pulse-ring2 2.5s ease-in-out infinite'}} />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <p className="text-[9px] font-black uppercase tracking-[0.18em]" style={{color:'rgba(148,163,184,0.8)'}}>Tổng kịch bản</p>
-                                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md" style={{background:'rgba(167,139,250,0.15)', border:'1px solid rgba(167,139,250,0.25)'}}>
-                                                <div className="w-1 h-1 rounded-full bg-violet-400" style={{animation:'_blink-dot 1.5s infinite'}} />
-                                                <span className="text-[7px] font-black text-violet-300 uppercase">All</span>
-                                            </div>
-                                        </div>
-                                        <p className="text-[1.9rem] font-black text-white tracking-tight leading-none" style={{animation:'_count-up 0.6s ease-out both', textShadow:'0 0 20px rgba(167,139,250,0.3)'}}>{flowStats.total}</p>
-                                        <div className="mt-2.5 h-[3px] w-full rounded-full overflow-hidden" style={{background:'rgba(255,255,255,0.08)'}}>
-                                            <div className="h-full rounded-full" style={{background:'linear-gradient(90deg,#a78bfa,#7c3aed)',width:flowStats.total>0?'80%':'0%',transition:'width 1.6s cubic-bezier(0.4,0,0.2,1)'}} />
-                                        </div>
-                                    </div>
-                                    <div className="shrink-0 hidden lg:flex flex-col items-center gap-1 opacity-50">
-                                        <GitMerge className="w-4 h-4 text-violet-300" />
-                                        <p className="text-[8px] font-black text-violet-300 uppercase tracking-wider">Total</p>
-                                    </div>
+                            <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group">
+                                <div>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-emerald-500 transition-colors">Đang hoạt động</p>
+                                    <h3 className="text-2xl font-black text-slate-800 tracking-tight">{flowStats.active}</h3>
                                 </div>
-
-                                {/* Card 2 — Đang chạy */}
-                                <div className="group relative rounded-2xl p-5 flex items-center gap-4 overflow-hidden cursor-default transition-all duration-300 hover:-translate-y-0.5"
-                                    style={{background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.1)', backdropFilter:'blur(12px)', boxShadow:'0 4px 20px rgba(0,0,0,0.25)'}}>
-                                    <div className="absolute top-0 left-4 right-4 h-px" style={{background:'linear-gradient(90deg,transparent,rgba(52,211,153,0.6),transparent)'}} />
-                                    <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                                        style={{background:'linear-gradient(135deg,rgba(52,211,153,0.06) 0%,transparent 60%)'}} />
-                                    <div className="relative shrink-0">
-                                        <div className="w-12 h-12 rounded-[14px] flex items-center justify-center"
-                                            style={{background:'linear-gradient(135deg,rgba(52,211,153,0.25),rgba(13,148,136,0.35))', border:'1px solid rgba(52,211,153,0.3)', boxShadow:'0 4px 16px rgba(52,211,153,0.2)'}}>
-                                            <PlayCircle className="w-5 h-5" style={{color:'rgba(167,243,208,1)'}} />
-                                        </div>
-                                        <div className="absolute inset-0 rounded-[14px] border border-emerald-400/20" style={{animation:'_pulse-ring2 2.5s 0.5s ease-in-out infinite'}} />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <p className="text-[9px] font-black uppercase tracking-[0.18em]" style={{color:'rgba(148,163,184,0.8)'}}>Đang chạy</p>
-                                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md" style={{background:'rgba(52,211,153,0.15)', border:'1px solid rgba(52,211,153,0.25)'}}>
-                                                <div className="w-1 h-1 rounded-full bg-emerald-400" style={{animation:'_blink-dot 1.3s infinite'}} />
-                                                <span className="text-[7px] font-black text-emerald-300 uppercase">Live</span>
-                                            </div>
-                                        </div>
-                                        <p className="text-[1.9rem] font-black text-white tracking-tight leading-none" style={{animation:'_count-up 0.6s 0.1s ease-out both', textShadow:'0 0 20px rgba(52,211,153,0.25)'}}>{flowStats.active}</p>
-                                        <div className="mt-2.5 h-[3px] w-full rounded-full overflow-hidden" style={{background:'rgba(255,255,255,0.08)'}}>
-                                            <div className="h-full rounded-full" style={{background:'linear-gradient(90deg,#34d399,#0d9488)',width:flowStats.total>0?`${Math.round(flowStats.active/flowStats.total*100)}%`:'0%',transition:'width 1.6s cubic-bezier(0.4,0,0.2,1) 0.2s'}} />
-                                        </div>
-                                    </div>
-                                    <div className="shrink-0 hidden lg:flex flex-col items-center gap-1 opacity-50">
-                                        <PlayCircle className="w-4 h-4 text-emerald-300" />
-                                        <p className="text-[8px] font-black text-emerald-300 uppercase tracking-wider">Active</p>
-                                    </div>
+                                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-2xl shadow-lg shadow-emerald-500/10 flex items-center justify-center transition-all group-hover:scale-110">
+                                    <Zap className="w-6 h-6" />
                                 </div>
+                            </div>
 
-                                {/* Card 3 — Lượt vào flow */}
-                                <div className="group relative rounded-2xl p-5 flex items-center gap-4 overflow-hidden cursor-default transition-all duration-300 hover:-translate-y-0.5"
-                                    style={{background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.1)', backdropFilter:'blur(12px)', boxShadow:'0 4px 20px rgba(0,0,0,0.25)'}}>
-                                    <div className="absolute top-0 left-4 right-4 h-px" style={{background:'linear-gradient(90deg,transparent,rgba(56,189,248,0.6),transparent)'}} />
-                                    <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                                        style={{background:'linear-gradient(135deg,rgba(56,189,248,0.06) 0%,transparent 60%)'}} />
-                                    <div className="relative shrink-0">
-                                        <div className="w-12 h-12 rounded-[14px] flex items-center justify-center"
-                                            style={{background:'linear-gradient(135deg,rgba(56,189,248,0.25),rgba(37,99,235,0.35))', border:'1px solid rgba(56,189,248,0.3)', boxShadow:'0 4px 16px rgba(56,189,248,0.2)'}}>
-                                            <Clock className="w-5 h-5" style={{color:'rgba(186,230,253,1)'}} />
-                                        </div>
-                                        <div className="absolute inset-0 rounded-[14px] border border-sky-400/20" style={{animation:'_pulse-ring2 2.5s 1s ease-in-out infinite'}} />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <p className="text-[9px] font-black uppercase tracking-[0.18em]" style={{color:'rgba(148,163,184,0.8)'}}>Lượt vào flow</p>
-                                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md" style={{background:'rgba(56,189,248,0.15)', border:'1px solid rgba(56,189,248,0.25)'}}>
-                                                <div className="w-1 h-1 rounded-full bg-sky-400" style={{animation:'_blink-dot 1.8s infinite'}} />
-                                                <span className="text-[7px] font-black text-sky-300 uppercase">Users</span>
-                                            </div>
-                                        </div>
-                                        <p className="text-[1.9rem] font-black text-white tracking-tight leading-none" style={{animation:'_count-up 0.6s 0.2s ease-out both', textShadow:'0 0 20px rgba(56,189,248,0.25)'}}>{flowStats.totalUsers.toLocaleString()}</p>
-                                        <div className="mt-2.5 h-[3px] w-full rounded-full overflow-hidden" style={{background:'rgba(255,255,255,0.08)'}}>
-                                            <div className="h-full rounded-full" style={{background:'linear-gradient(90deg,#38bdf8,#2563eb)',width:flowStats.totalUsers>0?'70%':'0%',transition:'width 1.6s cubic-bezier(0.4,0,0.2,1) 0.4s'}} />
-                                        </div>
-                                    </div>
-                                    <div className="shrink-0 hidden lg:flex flex-col items-center gap-1 opacity-50">
-                                        <Clock className="w-4 h-4 text-sky-300" />
-                                        <p className="text-[8px] font-black text-sky-300 uppercase tracking-wider">Enrolled</p>
-                                    </div>
+                            <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group">
+                                <div>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-indigo-500 transition-colors">Đang tham gia</p>
+                                    <h3 className="text-2xl font-black text-slate-800 tracking-tight">{flowStats.totalUsers.toLocaleString()}</h3>
+                                </div>
+                                <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-2xl shadow-lg shadow-indigo-500/10 flex items-center justify-center transition-all group-hover:scale-110">
+                                    <Users className="w-6 h-6" />
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group">
+                                <div>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-rose-500 transition-colors">Hoàn thành</p>
+                                    <h3 className="text-2xl font-black text-slate-800 tracking-tight">
+                                        {flows.reduce((sum, f) => sum + (f.stats?.completed || 0), 0).toLocaleString()}
+                                    </h3>
+                                </div>
+                                <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-rose-700 text-white rounded-2xl shadow-lg shadow-rose-500/10 flex items-center justify-center transition-all group-hover:scale-110">
+                                    <CheckCircle2 className="w-6 h-6" />
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Seamless fade divider */}
-                    <div className="h-px" style={{background:'linear-gradient(90deg, transparent, rgba(148,163,184,0.15) 20%, rgba(148,163,184,0.15) 80%, transparent)'}} />
-
-                    {/* WHITE CONTENT AREA */}
-                    <div className="bg-white p-4 lg:p-6 min-h-[400px]">
+                        {/* WHITE CONTENT AREA */}
+                        <div className="bg-white rounded-[32px] border border-slate-200 shadow-sm p-4 lg:p-6 min-h-[400px] overflow-hidden">
                         {/* Toolbar */}
                         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                             <Tabs
@@ -1767,9 +1648,10 @@ const Flows: React.FC = () => {
                             </div>
                         )}
                     </div>
-                    </div>{/* end white content */}
-                </div>{/* end seamless block */}
-            </div>
+                    </div>
+                    </div>{/* close space-y-8 */}
+                </>
+            )}
 
             {
                 selectedFlow && (
@@ -1887,6 +1769,7 @@ const Flows: React.FC = () => {
                             isSyncing={isSyncing}
                             isReportMode={isReportMode}
                             onToggleReportMode={() => setIsReportMode(!isReportMode)}
+                            onRename={(newName) => { if (selectedFlow) { setSelectedFlow({ ...selectedFlow, name: newName }); setHasUnsavedChanges(true); } }}
                         />
                         <div className="flex-1 flex overflow-hidden relative">
                             {/* MAIN CONTENT AREA */}
@@ -2433,7 +2316,7 @@ const Flows: React.FC = () => {
                     </div>
                 </div>
             )}
-        </>
+        </div>
     );
 };
 

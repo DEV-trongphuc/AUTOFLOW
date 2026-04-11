@@ -218,7 +218,7 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
                 {/* Live Count Badge */}
                 <button
                     onClick={() => setLiveModalOpen(true)}
-                    className="group relative overflow-hidden flex items-center gap-3 px-4 h-11 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl hover:shadow-lg hover:shadow-amber-300/50 transition-all cursor-pointer shadow-md"
+                    className="group relative overflow-hidden flex items-center gap-3 px-4 h-11 bg-gradient-to-br from-amber-600 to-amber-600 rounded-2xl hover:shadow-lg hover:shadow-amber-300/50 transition-all cursor-pointer shadow-md"
                 >
                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="relative flex h-2.5 w-2.5">
@@ -338,7 +338,7 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
                                                     <td className="px-3 py-2.5">
                                                         <div className="flex items-center gap-2">
                                                             <div className="relative flex-shrink-0">
-                                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center border border-white shadow-sm overflow-hidden ${visitor.device_type === 'bot' ? 'bg-white' : (visitor.subscriber_id || visitor.zalo_user_id || visitor.email || visitor.phone) ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center border border-white shadow-sm overflow-hidden ${visitor.device_type === 'bot' ? 'bg-white' : (visitor.subscriber_id || visitor.zalo_user_id || visitor.email || visitor.phone) ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
                                                                     {visitor.device_type === 'bot' ? (
                                                                         (() => {
                                                                             const b = (visitor.browser || '').toLowerCase();
@@ -364,7 +364,7 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
                                                                     )}
                                                                 </div>
                                                                 {((visitor as any).is_blocked || visitor.subscriber_id || visitor.zalo_user_id || visitor.email || visitor.phone || visitor.device_type === 'bot') && (
-                                                                    <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${(visitor as any).is_blocked ? 'bg-rose-600' : (visitor.device_type === 'bot' ? 'bg-amber-500' : 'bg-emerald-500')} rounded-full flex items-center justify-center border-2 border-white`} title={(visitor as any).is_blocked ? 'Blocked' : (visitor.device_type === 'bot' ? 'Verified Bot' : 'Identified Customer')}>
+                                                                    <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${(visitor as any).is_blocked ? 'bg-rose-600' : (visitor.device_type === 'bot' ? 'bg-amber-600' : 'bg-emerald-500')} rounded-full flex items-center justify-center border-2 border-white`} title={(visitor as any).is_blocked ? 'Blocked' : (visitor.device_type === 'bot' ? 'Verified Bot' : 'Identified Customer')}>
                                                                         {(visitor as any).is_blocked ? <ShieldAlert className="w-1.5 h-1.5 text-white" /> : (
                                                                             <svg className="w-1.5 h-1.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="5">
                                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -501,7 +501,7 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
                                 <div className="flex items-start justify-between mb-6">
                                     <div className="flex items-center gap-4">
                                         <div className="relative">
-                                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg border-2 border-white ${selectedVisitor.device_type === 'bot' ? 'bg-white' : (selectedVisitor.subscriber_id || selectedVisitor.zalo_user_id || selectedVisitor.email || selectedVisitor.phone) ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg border-2 border-white ${selectedVisitor.device_type === 'bot' ? 'bg-white' : (selectedVisitor.subscriber_id || selectedVisitor.zalo_user_id || selectedVisitor.email || selectedVisitor.phone) ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
                                                 {selectedVisitor.device_type === 'bot' ? (
                                                     (() => {
                                                         const b = (selectedVisitor.browser || '').toLowerCase();
@@ -527,7 +527,7 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
                                                 )}
                                             </div>
                                             {((selectedVisitor as any).is_blocked || selectedVisitor.subscriber_id || selectedVisitor.zalo_user_id || selectedVisitor.email || selectedVisitor.phone || selectedVisitor.device_type === 'bot') && (
-                                                <div className={`absolute -bottom-1 -right-1 w-5 h-5 ${(selectedVisitor as any).is_blocked ? 'bg-rose-600' : (selectedVisitor.device_type === 'bot' ? 'bg-amber-500' : 'bg-emerald-500')} rounded-full flex items-center justify-center border-2 border-white shadow-sm`} title={(selectedVisitor as any).is_blocked ? 'Blocked' : (selectedVisitor.device_type === 'bot' ? 'Verified Bot' : 'Identified Customer')}>
+                                                <div className={`absolute -bottom-1 -right-1 w-5 h-5 ${(selectedVisitor as any).is_blocked ? 'bg-rose-600' : (selectedVisitor.device_type === 'bot' ? 'bg-amber-600' : 'bg-emerald-500')} rounded-full flex items-center justify-center border-2 border-white shadow-sm`} title={(selectedVisitor as any).is_blocked ? 'Blocked' : (selectedVisitor.device_type === 'bot' ? 'Verified Bot' : 'Identified Customer')}>
                                                     {(selectedVisitor as any).is_blocked ? <ShieldAlert className="w-3 h-3 text-white" /> : (
                                                         <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="5">
                                                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -757,7 +757,7 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
                                                     return filteredJourneyEvents.map((ev, idx) => (
                                                         <div key={idx} className="flex gap-4 items-start group">
                                                             <div className="mt-1 relative">
-                                                                <div className="relative z-10 bg-white p-1 rounded-full border border-slate-100 shadow-sm text-slate-500 group-hover:text-amber-500 group-hover:border-amber-100 transition-colors">
+                                                                <div className="relative z-10 bg-white p-1 rounded-full border border-slate-100 shadow-sm text-slate-500 group-hover:text-amber-600 group-hover:border-amber-100 transition-colors">
                                                                     {renderEventIcon(ev.type)}
                                                                 </div>
                                                                 {idx !== filteredJourneyEvents.length - 1 && (

@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { Navigate } from 'react-router-dom';
 
 interface ProtectedRouteProps {
@@ -9,13 +9,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     // [PERF FIX] Synchronous auth check via useState lazy initializer.
     // Previously: useEffect + null state → spinner flash on EVERY tab switch.
     // Now: reads localStorage synchronously at first render → zero spinner delay.
-    const isAuthenticated = React.useMemo(() => {
+    const authData = React.useMemo(() => {
         const authStatus = localStorage.getItem('isAuthenticated');
-        const user = localStorage.getItem('user');
-        return authStatus === 'true' && !!user;
-    }, []); // stable — localStorage doesn't change between renders
+        const userStr = localStorage.getItem('user');
+        if (authStatus !== 'true' || !userStr) return { isAuthenticated: false };
+        
+        try {
+            const user = JSON.parse(userStr);
+            return {
+                isAuthenticated: true,
+                isApproved: user.status === 'approved'
+            };
+        } catch (e) {
+            return { isAuthenticated: false };
+        }
+    }, []);
 
-    if (!isAuthenticated) {
+    if (!authData.isAuthenticated || !authData.isApproved) {
         return <Navigate to="/login" replace />;
     }
 

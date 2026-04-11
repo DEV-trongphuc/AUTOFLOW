@@ -27,7 +27,7 @@ if (isset($_POST['migrate']) && !empty($_POST['from_user']) && !empty($_POST['to
         }
 
         h2 {
-            color: #f59e0b;
+            color: #d97706;
             border-bottom: 1px solid #334155;
             padding-bottom: 8px;
         }
@@ -174,7 +174,7 @@ if (isset($_POST['migrate']) && !empty($_POST['from_user']) && !empty($_POST['to
     ORDER BY created_at DESC LIMIT 30");
     $stmt->execute([$targetUserId]);
     $convs = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    echo '<p class="label">Tổng: <strong style="color:#f59e0b">' . count($convs) . '</strong> conversations</p>';
+    echo '<p class="label">Tổng: <strong style="color:#d97706">' . count($convs) . '</strong> conversations</p>';
     if ($convs) {
         echo '<table>';
         echo '<tr><th>ID</th><th>user_id</th><th>visitor_id</th><th>property_id</th><th>title</th><th>status</th><th>created_at</th></tr>';
@@ -225,7 +225,7 @@ if (isset($_POST['migrate']) && !empty($_POST['from_user']) && !empty($_POST['to
     $stmt->execute($params);
     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    echo '<p class="label">Kết quả: <strong style="color:#f59e0b">' . count($results) . '</strong> conversations</p>';
+    echo '<p class="label">Kết quả: <strong style="color:#d97706">' . count($results) . '</strong> conversations</p>';
     if ($results) {
         echo '<table>';
         echo '<tr><th>ID</th><th>user_id</th><th>title</th><th>property_id</th><th>created_at</th></tr>';
@@ -278,7 +278,7 @@ if (isset($_POST['migrate']) && !empty($_POST['from_user']) && !empty($_POST['to
     echo '<form method="POST" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">';
     echo '<div><label class="label">Từ user_id:</label><br><input name="from_user" value="admin-001" style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:6px;width:150px"></div>';
     echo '<div><label class="label">→ Sang user_id:</label><br><input name="to_user" value="2" style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:6px;width:150px"></div>';
-    echo '<div style="padding-top:18px"><button type="submit" name="migrate" value="1" style="background:#f59e0b;color:#000;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold">Migrate</button></div>';
+    echo '<div style="padding-top:18px"><button type="submit" name="migrate" value="1" style="background:#d97706;color:#000;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold">Migrate</button></div>';
     echo '</form>';
     echo '<p class="label" style="margin-top:8px">⚠️ Chú ý: Chỉ migrate nếu chắc chắn những conversations của admin-001 thực sự thuộc về user đó</p>';
     echo '</div>';
@@ -302,7 +302,7 @@ if (isset($_POST['migrate']) && !empty($_POST['from_user']) && !empty($_POST['to
     <div class="section">
         <h3>🛠️ Quick Fix Links</h3>
         <p><a href="?user_id=2" style="color:#38bdf8">Debug user_id=2</a> |
-            <a href="?user_id=admin-001" style="color:#f59e0b">Debug admin-001</a> |
+            <a href="?user_id=admin-001" style="color:#d97706">Debug admin-001</a> |
             <a href="fix_admin_role.php" style="color:#34d399">Fix Admin Role</a>
         </p>
     </div>

@@ -227,16 +227,16 @@ COUNT(DISTINCT pv.visitor_id) as visitors,
 COUNT(DISTINCT pv.session_id) as sessions
 FROM web_page_views pv
 JOIN web_sessions s ON pv.session_id = s.id
-WHERE pv.property_id = ? AND DATE(pv.loaded_at) = ?
+WHERE pv.property_id = ? AND pv.loaded_at >= ? AND pv.loaded_at < ? + INTERVAL 1 DAY
 GROUP BY s.device_type
 ");
-    $stmtGlobal->execute([$propertyId, $date]);
+    $stmtGlobal->execute([$propertyId, $date, $date]);
     $globalRows = $stmtGlobal->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($globalRows as $row) {
         $stmtSess = $pdo->prepare("SELECT SUM(is_bounce) as bounces, AVG(duration_seconds) as avg_duration FROM web_sessions
-WHERE property_id = ? AND DATE(started_at) = ? AND device_type = ?");
-        $stmtSess->execute([$propertyId, $date, $row['device_type']]);
+WHERE property_id = ? AND started_at >= ? AND started_at < ? + INTERVAL 1 DAY AND device_type = ?");
+        $stmtSess->execute([$propertyId, $date, $date, $row['device_type']]);
         $sessStats = $stmtSess->fetch(PDO::FETCH_ASSOC);
 
         $sqlUpsert = "
@@ -275,11 +275,11 @@ AVG(pv.scroll_depth) as avg_scroll,
 COUNT(DISTINCT CASE WHEN s.is_bounce = 1 AND pv.is_entrance = 1 THEN s.id END) as bounces
 FROM web_page_views pv
 JOIN web_sessions s ON pv.session_id = s.id
-WHERE pv.property_id = ? AND DATE(pv.loaded_at) = ?
+WHERE pv.property_id = ? AND pv.loaded_at >= ? AND pv.loaded_at < ? + INTERVAL 1 DAY
 GROUP BY pv.url_hash, s.device_type
 ";
     $stmtUrls = $pdo->prepare($sqlUrls);
-    $stmtUrls->execute([$propertyId, $date]);
+    $stmtUrls->execute([$propertyId, $date, $date]);
     $urlStats = $stmtUrls->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($urlStats as $row) {
@@ -320,11 +320,11 @@ COUNT(*) as sessions,
 COUNT(DISTINCT visitor_id) as visitors,
 SUM(is_bounce) as bounces
 FROM web_sessions
-WHERE property_id = ? AND DATE(started_at) = ?
+WHERE property_id = ? AND started_at >= ? AND started_at < ? + INTERVAL 1 DAY
 GROUP BY utm_source, utm_medium, device_type
 ";
     $stmtSrc = $pdo->prepare($sqlSrc);
-    $stmtSrc->execute([$propertyId, $date]);
+    $stmtSrc->execute([$propertyId, $date, $date]);
     $srcStats = $stmtSrc->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($srcStats as $row) {

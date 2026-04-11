@@ -42,7 +42,7 @@ register_shutdown_function(function () use ($workerLock, $isPriority) {
     }
 });
 
-require_once 'db_connect.php';
+require_once __DIR__ . '/db_connect.php';
 // RELEASE SESSION LOCK: Workers don't need to hold the user's session lock.
 if (session_id())
     session_write_close();

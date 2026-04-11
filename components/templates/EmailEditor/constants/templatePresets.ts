@@ -76,9 +76,9 @@ export const TEMPLATE_PRESETS = [
                                     { id: createId(), title: 'Báo cáo chi tiết', description: 'Phân tích dữ liệu theo thời gian thực.' },
                                     { id: createId(), title: 'Tiết kiệm 80% thời gian', description: 'Tập trung vào việc chốt đơn hàng.' }
                                 ],
-                                style: { textAlign: 'left', checkIconColor: '#f59e0b', color: '#1e293b' }
+                                style: { textAlign: 'left', checkIconColor: '#d97706', color: '#1e293b' }
                             },
-                            { id: createId(), type: 'button', content: 'Khám phá ngay', style: { contentBackgroundColor: '#f59e0b', color: '#ffffff', borderRadius: '30px', marginTop: '30px' } }
+                            { id: createId(), type: 'button', content: 'Khám phá ngay', style: { contentBackgroundColor: '#d97706', color: '#ffffff', borderRadius: '30px', marginTop: '30px' } }
                         ]
                     }]
                 }]
@@ -103,7 +103,7 @@ export const TEMPLATE_PRESETS = [
                         type: 'column',
                         style: { width: '100%' },
                         children: [
-                            { id: createId(), type: 'text', content: '<span style="color: #f59e0b; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">New Arrival</span><h1 style="color: #ffffff; font-size: 42px; margin: 10px 0;">Product X: The Future</h1>', style: { textAlign: 'center' } },
+                            { id: createId(), type: 'text', content: '<span style="color: #d97706; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">New Arrival</span><h1 style="color: #ffffff; font-size: 42px; margin: 10px 0;">Product X: The Future</h1>', style: { textAlign: 'center' } },
                             { id: createId(), type: 'image', content: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800&auto=format&fit=crop', style: { width: '100%', marginTop: '30px', borderRadius: '24px' } }
                         ]
                     }]
@@ -131,7 +131,7 @@ export const TEMPLATE_PRESETS = [
                                     { id: createId(), title: 'Hiệu năng mạnh mẽ', description: 'Xử lý mọi tác vụ chỉ trong nháy mắt.' },
                                     { id: createId(), title: 'Pin 48 giờ', description: 'Sử dụng thoải mái không lo sạc.' }
                                 ],
-                                style: { textAlign: 'left', checkIcon: 'Zap', checkIconColor: '#f59e0b' }
+                                style: { textAlign: 'left', checkIcon: 'Zap', checkIconColor: '#d97706' }
                             }
                         ]
                     }]
@@ -291,7 +291,7 @@ export const TEMPLATE_PRESETS = [
                                     { id: createId(), title: '50k Lead mới', description: 'Xây dựng phễu thu hút khách hàng tiềm năng.' },
                                     { id: createId(), title: '95% Khách hàng hài lòng', description: 'Dịch vụ chăm sóc khách hàng tự động.' }
                                 ],
-                                style: { textAlign: 'left', checkIcon: 'Sparkles', checkIconColor: '#f59e0b' }
+                                style: { textAlign: 'left', checkIcon: 'Sparkles', checkIconColor: '#d97706' }
                             }
                         ]
                     }]
@@ -361,7 +361,7 @@ export const TEMPLATE_PRESETS = [
                         style: { width: '100%' },
                         children: [
                             { id: createId(), type: 'social', style: { textAlign: 'center', iconMode: 'light', iconSize: '24' }, socialLinks: [{ id: createId(), network: 'facebook', url: '#' }, { id: createId(), network: 'twitter', url: '#' }, { id: createId(), network: 'instagram', url: '#' }] },
-                            { id: createId(), type: 'text', content: '<p style="color: #94a3b8; font-size: 11px; margin-top: 20px;">Bạn nhận được email này vì đã đăng ký bản tin của chúng tôi.<br>© 2024 Tech News Inc. <a href="#" style="color: #f59e0b;">Hủy đăng ký</a></p>', style: { textAlign: 'center' } }
+                            { id: createId(), type: 'text', content: '<p style="color: #94a3b8; font-size: 11px; margin-top: 20px;">Bạn nhận được email này vì đã đăng ký bản tin của chúng tôi.<br>© 2024 Tech News Inc. <a href="#" style="color: #d97706;">Hủy đăng ký</a></p>', style: { textAlign: 'center' } }
                         ]
                     }]
                 }]

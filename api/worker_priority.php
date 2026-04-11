@@ -29,13 +29,13 @@ try {
     error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
     ini_set('display_errors', 0); // Disable for production
 
-    require_once 'db_connect.php';
+    require_once __DIR__ . '/db_connect.php';
     traceLog("[Priority] DB Connected");
     file_put_contents($debugLogFile, "DB connected\n", FILE_APPEND | LOCK_EX);
 
-    require_once 'Mailer.php'; // Mailer is required here for sending emails within the priority chain
-    require_once 'trigger_helper.php'; // Required for Propagation
-    require_once 'FlowExecutor.php';
+    require_once __DIR__ . '/Mailer.php'; // Mailer is required here for sending emails within the priority chain
+    require_once __DIR__ . '/trigger_helper.php'; // Required for Propagation
+    require_once __DIR__ . '/FlowExecutor.php';
     traceLog("[Priority] Deps Loaded");
     file_put_contents($debugLogFile, "Mailer loaded\n", FILE_APPEND | LOCK_EX);
 
@@ -780,6 +780,12 @@ try {
             }
             $shouldContinueChain = false;
         }
+    }
+
+    // NEW: Prevent infinite priority loops
+    if ($shouldContinueChain && $stepsProcessedInRun >= $MAX_STEPS) {
+        $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = NOW(), step_id = ?, updated_at = NOW() WHERE id = ?")->execute([$currentStepId, $queueId]);
+        $logs[] = "  -> Reached limit ($MAX_STEPS). Pausing chain to prevent priority loop.";
     }
 
     if ($pdo->inTransaction())

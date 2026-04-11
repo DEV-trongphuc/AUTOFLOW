@@ -29,7 +29,7 @@ const Reports: React.FC = () => {
     ];
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-6 pb-20 px-2">
+        <div className="animate-fade-in space-y-8 pb-20">
             {/* Header */}
             <PageHeader
                 title="Trung tâm Phân tích"
@@ -41,7 +41,7 @@ const Reports: React.FC = () => {
                             className="flex items-center gap-4 bg-white border border-slate-200 px-4 lg:px-6 py-2.5 lg:py-3 rounded-xl lg:rounded-2xl shadow-sm hover:border-amber-400 hover:shadow-lg transition-all group w-full lg:w-auto"
                         >
                             <div className="w-9 h-9 lg:w-10 lg:h-10 bg-amber-50 rounded-lg lg:rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                                <Calendar className="w-5 h-5 text-amber-500" />
+                                <Calendar className="w-5 h-5 text-amber-600" />
                             </div>
                             <div className="text-left">
                                 <p className="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Thời gian</p>
@@ -59,11 +59,11 @@ const Reports: React.FC = () => {
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Từ ngày</label>
-                            <input type="date" value={dateRange.start} onChange={e => setDateRange({ ...dateRange, start: e.target.value })} className="w-full text-xs font-bold p-3 bg-slate-50 rounded-xl border-transparent focus:bg-white focus:border-amber-500 transition-all outline-none border-2" />
+                            <input type="date" value={dateRange.start} onChange={e => setDateRange({ ...dateRange, start: e.target.value })} className="w-full text-xs font-bold p-3 bg-slate-50 rounded-xl border-transparent focus:bg-white focus:border-amber-600 transition-all outline-none border-2" />
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Đến ngày</label>
-                            <input type="date" value={dateRange.end} onChange={e => setDateRange({ ...dateRange, end: e.target.value })} className="w-full text-xs font-bold p-3 bg-slate-50 rounded-xl border-transparent focus:bg-white focus:border-amber-500 transition-all outline-none border-2" />
+                            <input type="date" value={dateRange.end} onChange={e => setDateRange({ ...dateRange, end: e.target.value })} className="w-full text-xs font-bold p-3 bg-slate-50 rounded-xl border-transparent focus:bg-white focus:border-amber-600 transition-all outline-none border-2" />
                         </div>
                         <button onClick={() => setShowDatePicker(false)} className="w-full bg-slate-900 text-white font-black text-xs py-3.5 rounded-xl mt-2 hover:bg-black transition-colors shadow-lg shadow-slate-200 uppercase tracking-widest">Áp dụng</button>
                     </div>

@@ -168,18 +168,30 @@ const scanBlocks = (blocks: EmailBlock[]): ValidationIssue[] => {
     // Emit one issue per duplicate group (keyed by the first blockId in the group)
     byUrl.forEach((group, normalizedUrl) => {
         if (group.length < 2) return;
-        // For each member of the group, emit an issue so panel can show them
-        // (panel deduplicates by currentUrl to show one row per group)
+        
+        // Count occurrences of each FULL URL string within this group.
+        // If all members of the group have unique full URL strings (because they have different tracking params),
+        // then we don't consider them "identical" duplicates anymore.
+        const fullUrlCounts = new Map<string, number>();
         group.forEach(link => {
-            issues.push({
-                blockId: link.id,
-                type: 'duplicate_link',
-                label: `${group.length} phần tử cùng link — cần phân biệt để tracking`,
-                preview: link.label,
-                currentUrl: normalizedUrl,
-                duplicateGroupIds: group.map(g => g.id),
-            });
+            fullUrlCounts.set(link.url, (fullUrlCounts.get(link.url) || 0) + 1);
         });
+
+        // Only flag blocks that share an EXACT full URL string with at least one other block in the group.
+        const identicalMembers = group.filter(link => (fullUrlCounts.get(link.url) || 0) > 1);
+
+        if (identicalMembers.length > 1) {
+            identicalMembers.forEach(link => {
+                issues.push({
+                    blockId: link.id,
+                    type: 'duplicate_link',
+                    label: `${identicalMembers.length} phần tử có link giống hệt — cần phân biệt để tracking`,
+                    preview: link.label,
+                    currentUrl: normalizedUrl, // base URL for grouping in UI
+                    duplicateGroupIds: identicalMembers.map(g => g.id),
+                });
+            });
+        }
     });
 
     return issues;
@@ -238,13 +250,16 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
     const runValidation = useCallback(() => {
         const issues = scanBlocks(blocks);
         setValidationIssues(issues);
-        setShowValidation(true);
-        setSelectedBlockId(null);
+        
         if (issues.length === 0) {
-            toast.success('Email đã sẵn sàng! Không có vấn đề nào.', { icon: '✅' });
+            setShowValidation(false);
+            toast.success('Email đã sẵn sàng! Không có vấn đề nào.', { icon: '✅', id: 'validation-toast' });
         } else {
-            toast(`Tìm thấy ${issues.length} vấn đề cần xem lại`, { icon: '⚠️' });
+            setShowValidation(true);
+            toast(`Tìm thấy ${issues.length} vấn đề cần xem lại`, { icon: '⚠️', id: 'validation-toast' });
         }
+        
+        setSelectedBlockId(null);
     }, [blocks]);
 
     /** Silent scan: update badge count only, no panel open, no toast */
@@ -313,7 +328,13 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
         const idxMap = new Map(groupIds.map((id, i) => [id, i]));
         const newBlocks = applyDeep(blocks, idxMap);
         addToHistory(newBlocks);
-        toast.success(`Da gan tracking mc_cta cho ${groupIds.length} phan tu.`, { icon: '🔗' });
+        
+        // Auto re-scan issues with the new blocks
+        const newIssues = scanBlocks(newBlocks);
+        setValidationIssues(newIssues);
+        if (newIssues.length === 0) setShowValidation(false);
+
+        toast.success(`Đã tự động gắn tracking (mc_cta) cho ${groupIds.length} liên kết trùng.`, { icon: '🔗' });
     }, [blocks, addToHistory]);
 
     const handleUndo = useCallback(() => {
@@ -407,6 +428,13 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
         }
     };
 
+    const handleDeleteSavedSection = (id: string) => {
+        const updatedList = savedSections.filter(s => s.id !== id);
+        setSavedSections(updatedList);
+        localStorage.setItem('mailflow_saved_sections', JSON.stringify(updatedList));
+        toast.success('Đã xóa mẫu khỏi thư viện.');
+    };
+
     const handleSendTest = async (email: string) => {
         try {
             const finalHtml = editorMode === 'code' ? customHtml : compileHTML(blocks, bodyStyle, name);
@@ -458,6 +486,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
                         onSelectBlock={setSelectedBlockId}
                         savedSections={savedSections}
                         onLoadTemplate={updateBlocks}
+                        onDeleteSavedSection={handleDeleteSavedSection}
                         onDragStart={(e, type, layout) => {
                             if (type === 'saved' && layout) {
                                 e.dataTransfer.setData('type', 'saved');
@@ -499,7 +528,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
                                 width: '52px',
                                 height: '52px',
                                 borderRadius: '50%',
-                                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                                background: 'linear-gradient(135deg, #d97706, #d97706)',
                                 boxShadow: '0 8px 28px rgba(217,119,6,0.45), 0 2px 8px rgba(0,0,0,0.15)',
                                 border: 'none',
                                 cursor: 'pointer',
@@ -512,7 +541,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
                             {/* Tooltip */}
                             <span
                                 className="absolute right-full mr-3 px-3 py-1.5 rounded-xl text-xs font-bold text-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 -translate-x-1 group-hover:translate-x-0"
-                                style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 4px 14px rgba(217,119,6,0.35)' }}
+                                style={{ background: 'linear-gradient(135deg, #d97706, #d97706)', boxShadow: '0 4px 14px rgba(217,119,6,0.35)' }}
                             >
                                 AI Generate
                             </span>
@@ -624,6 +653,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
             <AIEmailGeneratorModal
                 isOpen={showAIModal}
                 onClose={() => setShowAIModal(false)}
+                onSaveSection={handleSaveSection}
                 onApply={(newBlocks) => {
                     setShowAIModal(false);
                     // Samsung AI fade effect

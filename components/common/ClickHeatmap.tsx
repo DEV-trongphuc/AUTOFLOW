@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { MousePointer2, Info, Eye, Download, Smartphone, Monitor } from 'lucide-react';
 
@@ -168,7 +168,7 @@ const ClickHeatmap: React.FC<ClickHeatmapProps> = ({ html, clickData, deviceFilt
 
     const getBubbleColor = (intensity: number) => {
         if (intensity > 0.8) return 'rgba(239, 68, 68, 0.85)'; // Rose-500
-        if (intensity > 0.4) return 'rgba(245, 158, 11, 0.85)'; // Amber-500
+        if (intensity > 0.4) return 'rgba(245, 158, 11, 0.85)'; // amber-600
         return 'rgba(16, 185, 129, 0.85)'; // Emerald-500
     };
 
@@ -294,7 +294,7 @@ const ClickHeatmap: React.FC<ClickHeatmapProps> = ({ html, clickData, deviceFilt
                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Low Impact</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-amber-600"></div>
                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Medium</span>
                     </div>
                     <div className="flex items-center gap-2">

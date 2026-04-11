@@ -286,7 +286,7 @@ const AIModals: React.FC<AIModalsProps> = (props) => {
                 title="Đổi Tên Thư Mục"
                 size="sm"
                 isDarkTheme={isDarkTheme}
-                footer={<div className="flex justify-between w-full"><Button variant="ghost" onClick={() => { setIsEditFolderModalOpen(false); setEditingFolder(null); setFolderName(''); }} isDarkTheme={isDarkTheme}>Hủy</Button><Button className={`font-bold border-none shadow-md hover:shadow-lg transition-all duration-500 ${isDarkTheme ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white' : 'bg-gradient-to-r from-amber-500 to-amber-600 text-white'}`} icon={Save} onClick={handleUpdateFolder} isLoading={loading} isDarkTheme={isDarkTheme}>Lưu Thay Đổi</Button></div>}
+                footer={<div className="flex justify-between w-full"><Button variant="ghost" onClick={() => { setIsEditFolderModalOpen(false); setEditingFolder(null); setFolderName(''); }} isDarkTheme={isDarkTheme}>Hủy</Button><Button className={`font-bold border-none shadow-md hover:shadow-lg transition-all duration-500 ${isDarkTheme ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white' : 'bg-gradient-to-r from-amber-600 to-amber-600 text-white'}`} icon={Save} onClick={handleUpdateFolder} isLoading={loading} isDarkTheme={isDarkTheme}>Lưu Thay Đổi</Button></div>}
             >
                 <div className="py-4 space-y-4">
                     <Input
@@ -735,8 +735,8 @@ const AIModals: React.FC<AIModalsProps> = (props) => {
                 isDarkTheme={isDarkTheme}
             >
                 <div className="space-y-6">
-                    <div className={`p-4 rounded-2xl border flex gap-4 items-start ${isDarkTheme ? 'bg-amber-500/10 border-amber-500/20' : 'bg-amber-50 border-amber-100'}`}>
-                        <Info className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <div className={`p-4 rounded-2xl border flex gap-4 items-start ${isDarkTheme ? 'bg-amber-600/10 border-amber-600/20' : 'bg-amber-50 border-amber-100'}`}>
+                        <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                         <p className={`text-xs leading-relaxed font-medium ${isDarkTheme ? 'text-amber-300' : 'text-amber-900'}`}>
                             Toàn bộ dữ liệu được chọn sẽ được {bulkActionType === 'move' ? 'chuyển' : 'nhân bản'} sang chatbot đích.
                         </p>
@@ -747,7 +747,7 @@ const AIModals: React.FC<AIModalsProps> = (props) => {
                         <select
                             value={targetPropertyId}
                             onChange={(e) => setTargetPropertyId(e.target.value)}
-                            className={`w-full h-12 px-4 border-2 rounded-xl text-xs font-bold outline-none transition-colors appearance-none cursor-pointer ${isDarkTheme ? 'bg-slate-900 border-slate-800 text-slate-200 focus:bg-slate-950 focus:border-amber-500/50' : 'bg-slate-50 border-slate-100 text-slate-700 focus:bg-white focus:border-amber-500'}`}
+                            className={`w-full h-12 px-4 border-2 rounded-xl text-xs font-bold outline-none transition-colors appearance-none cursor-pointer ${isDarkTheme ? 'bg-slate-900 border-slate-800 text-slate-200 focus:bg-slate-950 focus:border-amber-600/50' : 'bg-slate-50 border-slate-100 text-slate-700 focus:bg-white focus:border-amber-600'}`}
                         >
                             <option value="">-- Chọn AI Chatbot --</option>
                             {chatbots.map(c => (

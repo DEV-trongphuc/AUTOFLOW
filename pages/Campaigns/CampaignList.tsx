@@ -170,7 +170,7 @@ const CampaignTableRow = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, on
                             disabled={c.linkedFlow?.status !== 'active'}
                             className={`p-2 rounded-xl transition-all shadow-sm border ${c.linkedFlow?.status !== 'active'
                                 ? 'text-slate-300 bg-slate-50 border-slate-100 cursor-not-allowed'
-                                : 'text-amber-600 hover:text-white bg-amber-50 hover:bg-amber-500 hover:shadow-md border-amber-100'
+                                : 'text-amber-600 hover:text-white bg-amber-50 hover:bg-amber-600 hover:shadow-md border-amber-100'
                                 }`}
                             title={c.linkedFlow?.status !== 'active' ? `Flow "${c.linkedFlow?.name}" chưa Active` : "Khởi chạy ngay"}
                         >

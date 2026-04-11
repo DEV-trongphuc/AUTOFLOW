@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { ShoppingCart, Code2, Copy, CheckCircle2, X } from 'lucide-react';
 import { PurchaseEvent } from '../../types';
@@ -43,7 +43,7 @@ const PurchaseEventDetailModal: React.FC<PurchaseEventDetailModalProps> = ({ eve
   });
 </script>`;
 
-    const curlSnippet = `curl -X POST https://your-domain.com/api/webhook.php \\
+    const curlSnippet = `curl -X POST https://automation.ideas.edu.vn/mail_api/webhook.php \\
   -H "Content-Type: application/json" \\
   -d '{
     "type": "purchase",
@@ -110,7 +110,9 @@ const PurchaseEventDetailModal: React.FC<PurchaseEventDetailModalProps> = ({ eve
                             </div>
                             <div>
                                 <span className="text-slate-500 font-semibold">Ngày tạo:</span>
-                                <p className="text-slate-700 mt-1">{new Date(event.createdAt).toLocaleDateString('vi-VN')}</p>
+                                <p className="text-slate-700 mt-1">
+                                    {event.createdAt ? new Date(event.createdAt).toLocaleDateString('vi-VN') : '—'}
+                                </p>
                             </div>
                         </div>
                     </div>

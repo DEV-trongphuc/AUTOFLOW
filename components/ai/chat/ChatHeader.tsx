@@ -100,7 +100,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
                 {/* Feedback button */}
                 <button
                     onClick={onOpenFeedback}
-                    className={`p-2 rounded-xl transition-all active:scale-95 ${isDarkTheme ? 'text-slate-500 hover:text-amber-400 hover:bg-slate-800' : 'text-slate-400 hover:text-amber-500 hover:bg-amber-50'}`}
+                    className={`p-2 rounded-xl transition-all active:scale-95 ${isDarkTheme ? 'text-slate-500 hover:text-amber-400 hover:bg-slate-800' : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50'}`}
                     title="Gửi feedback / báo lỗi"
                 >
                     <Flag className="w-4 h-4" />

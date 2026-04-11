@@ -1,8 +1,8 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import {
     X, Check, Loader2, Smartphone, Plus, Trash2,
-    Image as ImageIcon, Type, Link as LinkIcon,
+    Image as ImageIcon, Type, Link as LinkIcon, BrainCircuit,
     AlertCircle, Info, ShieldCheck, FileCheck, Tag,
     Layout, MousePointerClick, AlignLeft
 } from 'lucide-react';
@@ -123,6 +123,7 @@ const ZaloTemplateCreateModal: React.FC<ZaloTemplateCreateModalProps> = ({ isOpe
     const [isLoading, setIsLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [previewUrls, setPreviewUrls] = useState<{ logo?: string; banner?: string }>({});
 
     useEffect(() => {
         // Auto-select correct Tag base on Template Type rules
@@ -495,6 +496,13 @@ const ZaloTemplateCreateModal: React.FC<ZaloTemplateCreateModalProps> = ({ isOpe
             return;
         }
 
+        // Validate Param names length (min 3 chars as per Zalo rules)
+        const invalidParams = detectedParams.filter(p => p.name.length < 3);
+        if (invalidParams.length > 0) {
+            setError(`Tham số <${invalidParams[0].name}> quá ngắn. Zalo yêu cầu tên tham số phải từ 3 đến 36 ký tự. Vui lòng đổi tên biến trong nội dung.`);
+            return;
+        }
+
         setIsLoading(true);
 
         try {
@@ -508,7 +516,7 @@ const ZaloTemplateCreateModal: React.FC<ZaloTemplateCreateModalProps> = ({ isOpe
                 tag: tag,
                 layout: payloadData.layout,
                 params: payloadData.params,
-                note: note,
+                note: note || "Tạo từ hệ thống Autoflow",
                 tracking_id: (editData ? "edit_" : "create_") + Date.now()
             };
 
@@ -550,18 +558,21 @@ const ZaloTemplateCreateModal: React.FC<ZaloTemplateCreateModalProps> = ({ isOpe
             return;
         }
 
+        // Generate local preview URL immediately
+        const localUrl = URL.createObjectURL(file);
+        if (builder.header.type === 'LOGO') {
+            setPreviewUrls(prev => ({ ...prev, logo: localUrl }));
+        } else {
+            setPreviewUrls(prev => ({ ...prev, banner: localUrl }));
+        }
+
         setIsUploading(true);
         try {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('oa_config_id', oaId);
 
-            const response = await fetch('/api/zalo_templates.php?route=upload_image', {
-                method: 'POST',
-                body: formData
-            });
-
-            const res = await response.json();
+            const res = await api.post<{ media_id: string }>('zalo_templates?route=upload_image', formData);
 
             if (res.success && res.data && res.data.media_id) {
                 setBuilder(prev => ({
@@ -793,10 +804,48 @@ const ZaloTemplateCreateModal: React.FC<ZaloTemplateCreateModalProps> = ({ isOpe
                                     </div>
                                 </div>
 
+                                {/* Zalo Image Guidelines */}
+                                <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl mb-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <AlertCircle className="w-4 h-4 text-amber-600" />
+                                        <span className="text-xs font-bold text-amber-700 uppercase tracking-wider">Lưu ý QUY ĐỊNH HÌNH ẢNH:</span>
+                                    </div>
+                                    <div className="space-y-3 text-[11px] text-amber-800/90 leading-relaxed font-medium">
+                                        <div>
+                                            <p className="font-bold flex items-center gap-1.5 text-amber-900">
+                                                <div className="w-1 h-1 rounded-full bg-amber-400" />
+                                                Quy định về Logo (
+                                                <a href="https://developers.zalo.me/docs/business-messages/zalo-notification-service/zns-guidelines/quy-dinh-chung-khi-kiem-duyet-mau-zns-template-message"
+                                                    target="_blank" rel="noopener noreferrer" className="underline hover:text-amber-950 transition-colors">
+                                                    Xem chi tiết
+                                                </a>):
+                                            </p>
+                                            <ul className="ml-3.5 mt-1 grid grid-cols-2 gap-2">
+                                                <li className="flex items-center gap-1.5">• Định dạng: <b className="text-amber-900">PNG</b></li>
+                                                <li className="flex items-center gap-1.5">• Kích thước: <b className="text-amber-900">400x96 px</b></li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <p className="font-bold flex items-center gap-1.5 text-amber-900">
+                                                <div className="w-1 h-1 rounded-full bg-amber-400" />
+                                                Quy định về hình ảnh (
+                                                <a href="https://developers.zalo.me/docs/business-messages/zalo-notification-service/zns-guidelines/quy-dinh-chung-khi-kiem-duyet-mau-zns-template-message"
+                                                    target="_blank" rel="noopener noreferrer" className="underline hover:text-amber-950 transition-colors">
+                                                    Xem chi tiết
+                                                </a>):
+                                            </p>
+                                            <ul className="ml-3.5 mt-1 grid grid-cols-2 gap-2">
+                                                <li className="flex items-center gap-1.5">• Định dạng: <b className="text-amber-900">JPG, PNG</b></li>
+                                                <li className="flex items-center gap-1.5">• Tỉ lệ: <b className="text-amber-900">16:9</b></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {/* Image Upload */}
                                 <div>
                                     <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
-                                        {builder.header.type === 'LOGO' ? 'Logo (Dạng PNG, 400x96px)' : 'Banner (Dạng JPG/PNG, Tỉ lệ 16:9)'}
+                                        {builder.header.type === 'LOGO' ? 'Logo Doanh nghiệp' : 'Banner Ảnh bìa'}
                                     </label>
 
                                     <div className="flex gap-2 items-start">
@@ -1021,11 +1070,17 @@ const ZaloTemplateCreateModal: React.FC<ZaloTemplateCreateModalProps> = ({ isOpe
                                     <p className="text-xs text-slate-500">
                                         Hệ thống tự động phát hiện <b>{detectedParams.length} biến</b> trong nội dung.
                                         Vui lòng định nghĩa loại dữ liệu và giá trị mẫu để Zalo duyệt nhanh hơn.
+                                        {detectedParams.some(p => p.name.length < 3) && (
+                                            <span className="block mt-2 font-bold text-rose-500 flex items-center gap-1.5 animate-pulse">
+                                                <AlertCircle className="w-3.5 h-3.5" />
+                                                Lưu ý: Tên biến (VD: {detectedParams.find(p => p.name.length < 3)?.name}) phải từ 3 ký tự trở lên.
+                                            </span>
+                                        )}
                                     </p>
                                     <div className="space-y-3">
                                         {detectedParams.map((p, idx) => (
                                             <div key={idx} className="flex gap-3 items-center p-3 bg-indigo-50/50 rounded-xl border border-indigo-100">
-                                                <div className="w-32 shrink-0 font-mono text-xs font-bold text-indigo-600 bg-indigo-100 px-3 py-1.5 rounded-lg text-center truncate" title={p.name}>
+                                                <div className={`w-32 shrink-0 font-mono text-xs font-bold px-3 py-1.5 rounded-lg text-center truncate ${p.name.length < 3 ? 'bg-rose-100 text-rose-600 ring-2 ring-rose-500' : 'bg-indigo-100 text-indigo-600'}`} title={p.name}>
                                                     {p.name}
                                                 </div>
                                                 <div className="w-[180px] shrink-0">
@@ -1103,14 +1158,31 @@ const ZaloTemplateCreateModal: React.FC<ZaloTemplateCreateModalProps> = ({ isOpe
                                 <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.05)] max-w-[88%] overflow-hidden text-sm ring-1 ring-slate-100">
                                     {/* 1. Header Img */}
                                     {builder.header.type === 'LOGO' ? (
-                                        <div className="h-14 border-b border-slate-50 flex items-center px-4 gap-3 bg-slate-50/50">
-                                            <div className="w-9 h-9 bg-slate-200 rounded-full shrink-0 animate-pulse" />
-                                            <span className="font-bold text-xs text-slate-800">Tên Doanh Nghiệp</span>
+                                        <div className="h-16 border-b border-slate-50 flex items-center px-4 gap-3 bg-slate-50/50">
+                                            {previewUrls.logo ? (
+                                                <img src={previewUrls.logo} className="w-10 h-10 rounded-full object-contain bg-white shadow-sm ring-1 ring-slate-100" />
+                                            ) : (
+                                                <div className="w-10 h-10 bg-slate-200 rounded-full shrink-0 flex items-center justify-center">
+                                                    <BrainCircuit className="w-5 h-5 text-slate-400 opacity-50" />
+                                                </div>
+                                            )}
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-xs text-slate-800 leading-none">Tên Doanh Nghiệp</span>
+                                                <span className="text-[10px] text-slate-400 mt-1">Official Account</span>
+                                            </div>
                                         </div>
                                     ) : (
-                                        <div className="aspect-video bg-slate-100 w-full flex flex-col items-center justify-center text-slate-400 gap-2 border-b border-slate-50">
-                                            <ImageIcon className="w-6 h-6 opacity-50" />
-                                            <span className="text-[10px] font-medium">{builder.header.light_image ? 'Đã có Banner' : 'Chưa có Banner'}</span>
+                                        <div className="aspect-video bg-slate-100 w-full flex flex-col items-center justify-center overflow-hidden border-b border-slate-50 relative group">
+                                            {previewUrls.banner ? (
+                                                <img src={previewUrls.banner} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <>
+                                                    <ImageIcon className="w-6 h-6 text-slate-400 opacity-50" />
+                                                    <span className="text-[10px] font-medium text-slate-400">
+                                                        {builder.header.light_image ? 'Đã có Banner' : 'Chưa có Banner'}
+                                                    </span>
+                                                </>
+                                            )}
                                         </div>
                                     )}
 

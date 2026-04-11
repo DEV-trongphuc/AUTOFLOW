@@ -13,7 +13,7 @@
         endpoint: endpoint,
         propertyId: propertyId,
         heartbeat: 10000,
-        batchInterval: 5000
+        batchInterval: 3000
     };
 
     // --- UTILS ---
@@ -282,9 +282,30 @@
         var upLevel = 0;
         var maxUp = 5;
 
+        // Strategy: 
+        // 1. Check current element and its children (via findMeaningfulText)
+        // 2. If nothing found, check immediate siblings (common for labels next to icons)
+        // 3. If still nothing, move up to parent and repeat
+
         while (el && upLevel < maxUp && el.tagName !== 'BODY' && el.tagName !== 'HTML') {
+            // Check self and children
             var text = findMeaningfulText(el, 0);
-            if (text && text.length < 200) return text.trim();
+            if (text && text.length > 1 && text.length < 200) return text.trim();
+
+            // Check immediate siblings (only for original target or 1st level parent)
+            if (upLevel <= 1) {
+                var prev = el.previousElementSibling;
+                if (prev) {
+                    var pText = findMeaningfulText(prev, 1);
+                    if (pText && pText.length > 1 && pText.length < 100) return pText.trim() + ' (near)';
+                }
+                var next = el.nextElementSibling;
+                if (next) {
+                    var nText = findMeaningfulText(next, 1);
+                    if (nText && nText.length > 1 && nText.length < 100) return nText.trim() + ' (near)';
+                }
+            }
+
             el = el.parentElement;
             upLevel++;
         }
@@ -301,7 +322,17 @@
 
         var target = e.target;
         // Prioritize interactive elements, but also track containers with class 'trackable' or pointers
-        var element = target.closest('a, button, input[type="submit"], [role="button"], .trackable');
+        var element = target.closest('a, button, input[type="submit"], [role="button"], [onclick], .trackable');
+
+        // Fallback: If no interactive element found but target has pointer cursor, treat as click
+        if (!element && target && target.tagName !== 'BODY') {
+            try {
+                var style = window.getComputedStyle(target);
+                if (style && style.cursor === 'pointer') {
+                    element = target;
+                }
+            } catch (err) {}
+        }
 
         var meta = {
             x: e.pageX, y: e.pageY,
@@ -334,6 +365,8 @@
                 selector: getSelector(element),
                 ...meta
             });
+            // If it's a link, flush immediately to avoid missing data during fast navigation
+            if (element.tagName === 'A') flush(true);
         } else {
             // For canvas clicks, try to gather surrounding context
             var contextTexts = [];
@@ -375,6 +408,33 @@
         }
 
     }, true);
+
+    // --- SELECTION & COPY TRACKING ---
+    document.addEventListener('copy', function () {
+        var selection = window.getSelection().toString().trim();
+        if (selection && selection.length > 0) {
+            track('copy', {
+                text: selection.substring(0, 500),
+                path: window.location.pathname
+            });
+            flush(true); // Important to catch before they might leave
+        }
+    });
+
+    var selectionTimer = null;
+    document.addEventListener('mouseup', function () {
+        // Use mouseup because selectionchange fires too frequently during typing/dragging
+        clearTimeout(selectionTimer);
+        selectionTimer = setTimeout(function () {
+            var selection = window.getSelection().toString().trim();
+            if (selection.length > 3) {
+                track('select', {
+                    text: selection.substring(0, 300),
+                    path: window.location.pathname
+                });
+            }
+        }, 1500);
+    });
 
     // --- OTHER LISTENERS ---
     var scrollTimer = null;

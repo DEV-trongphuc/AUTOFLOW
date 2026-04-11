@@ -9,7 +9,7 @@ import {
     Monitor, Smartphone, Tablet,
     Copy, MousePointer, MessageSquare, Sparkles, ArrowLeft, Search, ShieldCheck, Filter
 } from 'lucide-react';
-import PageHeader from '../components/common/PageHeader';
+import PageHero from '../components/common/PageHero';
 import Button from '../components/common/Button';
 import Tabs from '../components/common/Tabs';
 import Select from '../components/common/Select';
@@ -329,7 +329,7 @@ const WebTracking: React.FC = () => {
             case 'scroll': return <ArrowUpRight className="w-4 h-4 text-orange-400" />;
             case 'identify': return <Users className="w-4 h-4 text-purple-500" />;
             case 'copy': return <Copy className="w-4 h-4 text-rose-500" />;
-            case 'select': return <MousePointer className="w-4 h-4 text-amber-500" />;
+            case 'select': return <MousePointer className="w-4 h-4 text-amber-600" />;
             case 'form': return <Sparkles className="w-4 h-4 text-[#ffa900]" />;
             default: return <Activity className="w-4 h-4 text-slate-400" />;
         }
@@ -381,9 +381,14 @@ const WebTracking: React.FC = () => {
         <div className="space-y-8 animate-in fade-in duration-500 pb-20  mx-auto">
             {view === 'list' && (
                 <>
-                    <PageHeader
-                        title="Website Tracking"
-                        description="Theo dõi toàn diện hành trình người dùng: Visitors, Sessions, Heatmaps."
+                    <PageHero
+                        title={<>Web <span className="text-amber-100/80">Tracking</span></>}
+                        subtitle="Theo dõi toàn diện hành trình người dùng: Visitors, Sessions, Heatmaps."
+                        showStatus={true}
+                        statusText="Realtime Engine Active"
+                        actions={[
+                            { label: 'Thêm Website', icon: Plus, onClick: () => setIsAddOpen(true), primary: true }
+                        ]}
                     />
 
                     {loading ? (
@@ -483,7 +488,7 @@ const WebTracking: React.FC = () => {
 
                                             <div className="flex justify-between items-start relative z-10">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br flex items-center justify-center text-white shadow-lg group-hover:rotate-6 transition-transform from-amber-400 to-amber-600 shadow-amber-500/30">
+                                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br flex items-center justify-center text-white shadow-lg group-hover:rotate-6 transition-transform from-amber-400 to-amber-600 shadow-amber-600/30">
                                                         <Globe className="w-6 h-6" />
                                                     </div>
                                                     <div className="min-w-0">
@@ -556,9 +561,11 @@ const WebTracking: React.FC = () => {
                             <ArrowLeft className="w-5 h-5" />
                         </button>
                         <div className="flex-1 w-full">
-                            <PageHeader
-                                title={`Website: ${selectedWebsite.name}`}
-                                description={`Báo cáo chi tiết và phân tích hành trình người dùng cho tên miền ${selectedWebsite.domain}`}
+                            <PageHero
+                                title={<>Website: <span className="text-amber-100/80">{selectedWebsite.name}</span></>}
+                                subtitle={`Báo cáo chi tiết cho tên miền ${selectedWebsite.domain}. Phân tích hành trình người dùng và đo lường chuyển đổi.`}
+                                showStatus={true}
+                                statusText="Analytics Active"
                             />
                         </div>
                     </div>

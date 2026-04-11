@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { Bot, Globe, FolderPlus, Plus, Building, Edit2, Trash2, ChevronRight, ArrowLeft, Lightbulb, BookOpen, ChevronDown, Sparkles, Zap, Search, Users, Shield, Settings, Activity, MessageSquare, ExternalLink } from 'lucide-react';
-import PageHeader from '../../common/PageHeader';
+import PageHero from '../../common/PageHero';
+
 import Tabs from '../../common/Tabs';
 import { useChatPage } from '../../../contexts/ChatPageContext';
 import OrgUserManager from '../org/OrgUserManager';
@@ -145,19 +146,24 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
                 .from-brand { --tw-gradient-from: var(--brand-primary) !important; --tw-gradient-to: var(--brand-primary-dark) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
                 .shadow-brand { box-shadow: 0 4px 12px -2px var(--brand-shadow) !important; }
             `}} />
-            <div className="absolute -top-12 -right-6 z-10 animate-bounce-slow hidden lg:block">
-                <img
-                    src="https://pngfile.net/files/preview/960x960/11741189725reo9wbrtum5xxfbhubjnxavgk71sl6ptkgksc801wvj0l5pjgdch8arnleln7oqh0kzvi0wrniegc642iks8woshwo14pifdaq67.png"
-                    alt="AI Mascot"
-                    style={{ transform: 'scaleX(-1)' }}
-                    className="w-40 h-auto drop-shadow-2xl opacity-90"
-                />
-            </div>
-            <PageHeader
-                title="AI Training"
-                description="Quản lý và nạp kiến thức AI cho từng website hoặc các kênh chatbot tập trung của bạn."
-                brandColor={brandColor}
-                isDarkTheme={props.isDarkTheme}
+            <PageHero 
+                title={<>AI <span className="text-orange-100/80">Training Center</span></>}
+                subtitle="Nạp kiến thức và huấn luyện bộ não AI cho từng website hoặc các kênh chatbot tập trung của bạn."
+                showStatus={true}
+                statusText="Neural Engine Ready"
+                actions={[
+                    { 
+                        label: 'Mẹo Training', 
+                        icon: Sparkles, 
+                        onClick: () => setIsOptimizationModalOpen(true),
+                        primary: true 
+                    },
+                    { 
+                        label: 'Hướng dẫn AI', 
+                        icon: BookOpen, 
+                        onClick: () => setIsTipsModalOpen(true) 
+                    }
+                ]}
             />
 
             <div className={`w-full rounded-[24px] md:rounded-[32px] border shadow-sm p-4 md:p-8 min-h-[600px] animate-in fade-in slide-in-from-bottom-5 duration-1000 delay-200 transition-colors ${isDarkTheme ? 'bg-[rgba(13,17,23,0.6)] backdrop-blur-md border-slate-800' : 'bg-white border-slate-200'}`}>

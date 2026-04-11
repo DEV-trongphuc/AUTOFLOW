@@ -1,258 +1,228 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, Sparkles, Zap, TrendingUp, Bot } from 'lucide-react';
-import { api } from '../services/storageAdapter';
+import { GoogleLogin } from '@react-oauth/google';
+import { Mail, Sparkles, Zap, Bot, Globe, Users, ShieldCheck, Clock, CheckCircle2, History, User } from 'lucide-react';
+import toast from 'react-hot-toast';
+
+const ADMIN_EMAIL = 'dom.marketing.vn@gmail.com';
 
 const Login: React.FC = () => {
     const navigate = useNavigate();
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    const [isPending, setIsPending] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
-
+    const handleGoogleSuccess = async (credentialResponse: any) => {
         try {
-            const response = await api.post<any>('auth?action=login', {
-                username,
-                password
+            const response = await fetch('/mail_api/login_google.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ credential: credentialResponse.credential })
             });
 
-            if (response.success) {
-                // Store user data in localStorage
-                localStorage.setItem('user', JSON.stringify(response.data));
+            const result = await response.json();
+
+            if (result.success) {
+                const userData = result.data;
+                localStorage.setItem('user', JSON.stringify(userData));
                 localStorage.setItem('isAuthenticated', 'true');
 
-                // Redirect to dashboard
-                navigate('/');
-                window.location.reload(); // Reload to update app state
+                if (userData.status === 'approved') {
+                    toast.success(`Chào mừng trở lại, ${userData.name}!`);
+                    navigate('/');
+                    window.location.reload();
+                } else {
+                    setIsPending(true);
+                    toast.error('Tài khoản của bạn đang chờ phê duyệt từ Admin.');
+                }
             } else {
-                setError(response.message || 'Đăng nhập thất bại');
+                toast.error(result.message || 'Lỗi đăng nhập');
             }
-        } catch (err: any) {
-            setError(err.message || 'Lỗi kết nối. Vui lòng thử lại.');
-        } finally {
-            setLoading(false);
+        } catch (error) {
+            toast.error('Lỗi kết nối máy chủ. Vui lòng thử lại.');
         }
     };
 
-    return (
-        <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-amber-950 to-slate-900">
-            {/* Animated Gradient Background */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,169,0,0.15),transparent_50%),radial-gradient(circle_at_80%_0%,rgba(251,191,36,0.1),transparent_50%)]"></div>
+    const features = [
+        {
+            icon: Mail,
+            title: 'Email Marketing',
+            desc: 'Gửi kịch bản hàng loạt, tỷ lệ vào inbox 99.9%',
+            color: 'from-amber-400 to-orange-500'
+        },
+        {
+            icon: Zap,
+            title: 'Multichannel Flows',
+            desc: 'Kịch bản tự động trên Zalo, Meta, Instagram',
+            color: 'from-blue-500 to-indigo-600'
+        },
+        {
+            icon: Bot,
+            title: 'AI Vision Brain',
+            desc: 'Phản hồi thông minh theo ngữ cảnh dữ liệu',
+            color: 'from-emerald-500 to-teal-600'
+        },
+        {
+            icon: Globe,
+            title: 'Live Tracking',
+            desc: 'Theo dõi hành trình khách hàng thời gian thực',
+            color: 'from-purple-500 to-pink-600'
+        }
+    ];
 
-            {/* Animated Grid Pattern */}
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,169,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,169,0,0.03)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]"></div>
-
-            {/* Floating Particles */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                {[...Array(20)].map((_, i) => (
-                    <div
-                        key={i}
-                        className="absolute w-1 h-1 bg-amber-400/30 rounded-full animate-float"
-                        style={{
-                            left: `${Math.random() * 100}%`,
-                            top: `${Math.random() * 100}%`,
-                            animationDelay: `${Math.random() * 5}s`,
-                            animationDuration: `${10 + Math.random() * 20}s`
-                        }}
-                    />
-                ))}
-            </div>
-
-            {/* Glowing Orbs */}
-            <div className="absolute top-1/4 -left-20 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl animate-pulse-slow"></div>
-            <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-orange-500/15 rounded-full blur-3xl animate-pulse-slow animation-delay-2000"></div>
-
-            {/* Main Content */}
-            <div className="relative min-h-screen flex items-center justify-center p-4">
-                <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
-
-                    {/* Left Side - Branding */}
-                    <div className="hidden lg:block space-y-8 text-white">
-                        <div className="space-y-4">
-                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 backdrop-blur-sm border border-amber-500/30 rounded-full">
-                                <Sparkles className="w-4 h-4 text-amber-400" />
-                                <span className="text-sm font-bold text-amber-100">DOM Marketing Automation Platform</span>
-                            </div>
-                            <h1 className="text-6xl font-black leading-tight">
-                                <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 bg-clip-text text-transparent">
-                                    AutoFlow Pro
-                                </span>
-                            </h1>
-                            <p className="text-xl text-slate-300 font-medium leading-relaxed">
-                                Nền tảng tự động hóa marketing thông minh, giúp doanh nghiệp tăng trưởng vượt bậc
-                            </p>
-                        </div>
-
-                        {/* Feature Cards */}
-                        <div className="grid gap-4">
-                            {[
-                                {
-                                    icon: Bot,
-                                    title: 'Đồng bộ Trợ lý AI',
-                                    desc: 'Tự động đồng bộ Web, Messenger, Zalo'
-                                },
-                                {
-                                    icon: Zap,
-                                    title: 'Automation Flow',
-                                    desc: 'Tự động hóa quy trình chăm sóc đa kênh'
-                                },
-                                {
-                                    icon: TrendingUp,
-                                    title: 'Phân tích hành vi',
-                                    desc: 'Theo dõi hành trình khách hàng 360°'
-                                }
-                            ].map((feature, idx) => (
-                                <div
-                                    key={idx}
-                                    className="flex items-start gap-4 p-4 bg-white/5 backdrop-blur-sm border border-amber-500/20 rounded-2xl hover:bg-amber-500/10 hover:border-amber-500/30 transition-all group"
-                                >
-                                    <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg shadow-amber-500/30 group-hover:scale-110 group-hover:shadow-amber-500/50 transition-all">
-                                        <feature.icon className="w-5 h-5 text-white" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-white mb-1">{feature.title}</h3>
-                                        <p className="text-sm text-slate-400">{feature.desc}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+    if (isPending) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-[#0f172a] p-4 text-white">
+                <div className="max-w-md w-full bg-white/5 backdrop-blur-xl border border-white/10 p-10 rounded-[40px] text-center space-y-8 animate-in zoom-in-95 duration-500 shadow-2xl">
+                    <div className="w-24 h-24 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto border-2 border-amber-500/50 animate-pulse">
+                        <Clock className="w-12 h-12 text-amber-500" />
                     </div>
-
-                    {/* Right Side - Login Form */}
-                    <div className="relative">
-                        {/* Glow Effect */}
-                        <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-3xl blur-2xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
-
-                        <div className="relative bg-white/10 backdrop-blur-xl border border-amber-500/20 rounded-3xl shadow-2xl p-8 lg:p-10">
-                            {/* Logo */}
-                            <div className="text-center mb-8">
-                                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl mb-6 shadow-2xl shadow-amber-500/50 relative group">
-                                    <Mail className="w-10 h-10 text-white relative z-10" />
-                                    <div className="absolute inset-0 bg-gradient-to-br from-amber-400 to-orange-500 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity"></div>
-                                </div>
-                                <h2 className="text-3xl font-black text-white mb-2">Chào mừng trở lại</h2>
-                                <p className="text-slate-300 font-medium">Đăng nhập để tiếp tục quản lý</p>
-                            </div>
-
-                            {/* Error Message */}
-                            {error && (
-                                <div className="mb-6 p-4 bg-rose-500/20 backdrop-blur-sm border border-rose-500/30 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                                    <AlertCircle className="w-5 h-5 text-rose-300 flex-shrink-0 mt-0.5" />
-                                    <p className="text-sm text-rose-200 font-medium">{error}</p>
-                                </div>
-                            )}
-
-                            {/* Login Form */}
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                {/* Username Input */}
-                                <div className="group">
-                                    <label className="block text-xs font-black text-amber-200 mb-3 uppercase tracking-widest">
-                                        Tên đăng nhập
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            value={username}
-                                            onChange={(e) => setUsername(e.target.value)}
-                                            placeholder="admin"
-                                            required
-                                            className="w-full h-14 pl-5 pr-5 bg-white/10 backdrop-blur-sm border-2 border-white/20 rounded-2xl text-base font-bold text-white placeholder:text-slate-400 focus:border-amber-500 focus:bg-white/20 focus:ring-4 focus:ring-amber-500/20 outline-none transition-all"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Password Input */}
-                                <div className="group">
-                                    <label className="block text-xs font-black text-amber-200 mb-3 uppercase tracking-widest">
-                                        Mật khẩu
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type={showPassword ? 'text' : 'password'}
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            placeholder="••••••••"
-                                            required
-                                            className="w-full h-14 pl-5 pr-14 bg-white/10 backdrop-blur-sm border-2 border-white/20 rounded-2xl text-base font-bold text-white placeholder:text-slate-400 focus:border-amber-500 focus:bg-white/20 focus:ring-4 focus:ring-amber-500/20 outline-none transition-all"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-amber-300 transition-colors"
-                                        >
-                                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Submit Button */}
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="relative w-full h-14 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:via-orange-600 hover:to-amber-700 text-white font-black text-base rounded-2xl shadow-2xl shadow-amber-500/50 hover:shadow-amber-600/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 group overflow-hidden"
-                                >
-                                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                                    {loading ? (
-                                        <>
-                                            <Loader2 className="w-6 h-6 animate-spin" />
-                                            Đang đăng nhập...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Lock className="w-6 h-6" />
-                                            Đăng nhập
-                                        </>
-                                    )}
-                                </button>
-                            </form>
-
-                            {/* Info Badge */}
-                            <div className="mt-8 p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 backdrop-blur-sm border border-amber-500/20 rounded-2xl">
-                                <p className="text-xs text-amber-100 font-bold text-center leading-relaxed">
-                                    🔐 Khu vực dành cho Quản trị viên
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Footer */}
-                        <p className="text-center text-sm text-slate-400 mt-6 font-medium">
-                            © 2026 MailFlow Pro • Powered by AI
+                    <div className="space-y-4">
+                        <h2 className="text-3xl font-black tracking-tight">Access Locked 🔒</h2>
+                        <p className="text-slate-400 font-medium leading-relaxed">
+                            Chào <span className="text-white font-bold">{JSON.parse(localStorage.getItem('user') || '{}').name}</span>! Tài khoản của bạn đã được đăng ký thành công nhưng cần Admin phê duyệt để truy cập hệ thống.
                         </p>
                     </div>
+                    <div className="p-4 bg-amber-500/5 rounded-2xl border border-amber-500/20 text-xs font-bold text-amber-500/80 uppercase tracking-widest text-left">
+                        <div className="flex gap-2">
+                             <div className="w-1 h-1 bg-amber-500 rounded-full mt-1.5 shrink-0" />
+                             <span>Hệ thống bảo mật đa lớp chặn truy cập trái phép.</span>
+                        </div>
+                        <div className="flex gap-2 mt-2">
+                             <div className="w-1 h-1 bg-amber-500 rounded-full mt-1.5 shrink-0" />
+                             <span>Chúng tôi đã thông báo cho quản trị viên.</span>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={() => {
+                            localStorage.clear();
+                            setIsPending(false);
+                        }}
+                        className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-sm font-black uppercase tracking-widest transition-all"
+                    >
+                        Quay lại trang đăng nhập
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen relative flex flex-col lg:flex-row bg-[#0f172a] overflow-hidden">
+            {/* Background Effects */}
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-600/10 blur-[100px] rounded-full -mr-64 -mt-64" />
+            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/10 blur-[100px] rounded-full -ml-64 -mb-64" />
+            
+            {/* Left Side: Brand & Visuals */}
+            <div className="relative flex-1 p-8 lg:p-20 flex flex-col justify-center min-h-[50vh] lg:min-h-screen overflow-hidden">
+                <div className="relative z-10 space-y-12">
+                    {/* Header Badge */}
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 backdrop-blur-sm border border-amber-500/30 rounded-full">
+                        <Sparkles className="w-4 h-4 text-amber-500" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">Digital Marketing Ecosystem</span>
+                    </div>
+
+                    <div className="space-y-6">
+                        <h1 className="text-5xl lg:text-7xl font-black text-white leading-[1.1] tracking-tighter">
+                            AUTOFLOW <br /> 
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">
+                                VISION 2026.
+                            </span>
+                        </h1>
+                        <p className="max-w-md text-lg text-slate-400 font-medium leading-relaxed">
+                            Thế hệ tiếp theo của Marketing Automation. Tự động hóa điểm chạm, thấu hiểu khách hàng và chuyển đổi doanh thu 24/7.
+                        </p>
+                    </div>
+
+                    {/* Features Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl">
+                        {features.map((f, i) => (
+                            <div key={i} className="group p-6 bg-white/5 backdrop-blur-sm border border-white/5 rounded-[32px] hover:bg-white/[0.08] hover:border-white/10 transition-all duration-300">
+                                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${f.color} flex items-center justify-center mb-5 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 shadow-lg shadow-black/20`}>
+                                    <f.icon className={`w-7 h-7 text-white`} />
+                                </div>
+                                <h3 className="text-white font-bold mb-1">{f.title}</h3>
+                                <p className="text-xs text-slate-400 font-medium leading-relaxed">{f.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Animated Circles Decor */}
+                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[800px] h-[800px] border border-white/[0.03] rounded-full pointer-events-none" />
+                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[600px] h-[600px] border border-white/[0.03] rounded-full pointer-events-none translate-x-10" />
+                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[400px] h-[400px] border border-white/[0.05] rounded-full pointer-events-none translate-x-20" />
+            </div>
+
+            {/* Right Side: Identity Check */}
+            <div className="relative w-full lg:w-[600px] bg-white/5 backdrop-blur-2xl border-l border-white/5 p-8 lg:p-20 flex flex-col justify-center items-center overflow-hidden">
+                <div className="relative z-10 w-full max-w-sm space-y-12">
+                    <div className="text-center space-y-4">
+                        <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-amber-600 rounded-[28px] flex items-center justify-center mx-auto shadow-2xl shadow-amber-600/30 rotate-3 overflow-hidden p-2">
+                             <img src="/imgs/ICON.png" className="w-full h-full object-contain" alt="Brand Icon" />
+                        </div>
+                        <div className="pt-4">
+                            <h2 className="text-3xl font-black text-white tracking-tight">Identity Check</h2>
+                            <p className="text-slate-400 font-medium mt-2">Duy nhất Google Login để tiếp tục</p>
+                        </div>
+                    </div>
+
+                    <div className="p-8 bg-white/5 border border-white/5 rounded-[40px] shadow-inner">
+                        <div className="flex justify-center flex-col items-center gap-6">
+                            <GoogleLogin 
+                                onSuccess={handleGoogleSuccess}
+                                onError={() => toast.error('Google Sign In failed')}
+                                useOneTap
+                                theme="filled_black"
+                                shape="pill"
+                                size="large"
+                                width="320"
+                            />
+                            
+                            <div className="flex items-center gap-4 w-full">
+                                <div className="h-px flex-1 bg-white/5" />
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Enterprise Only</span>
+                                <div className="h-px flex-1 bg-white/5" />
+                            </div>
+
+                            <p className="text-[11px] text-slate-500 font-bold text-center leading-relaxed">
+                                Bằng cách đăng nhập, bạn đồng ý với các chính sách bảo mật và điều khoản sử dụng của hệ thống.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Trust Badges */}
+                    <div className="flex items-center justify-center gap-8 pt-8 opacity-40">
+                         <div className="flex flex-col items-center gap-2">
+                             <History className="w-5 h-5 text-white" />
+                             <span className="text-[8px] font-black uppercase tracking-tighter text-white">Log Tracking</span>
+                         </div>
+                         <div className="flex flex-col items-center gap-2">
+                             <CheckCircle2 className="w-5 h-5 text-white" />
+                             <span className="text-[8px] font-black uppercase tracking-tighter text-white">Verified Users</span>
+                         </div>
+                         <div className="flex flex-col items-center gap-2">
+                             <Zap className="w-5 h-5 text-white" />
+                             <span className="text-[8px] font-black uppercase tracking-tighter text-white">Quick Access</span>
+                         </div>
+                    </div>
+                </div>
+
+                {/* Subtle Text BG */}
+                <div className="absolute bottom-10 right-10 text-white/5 text-[120px] font-black pointer-events-none select-none rotate-3 translate-y-20">
+                    SECURE.
                 </div>
             </div>
 
             <style>{`
                 @keyframes float {
-                    0%, 100% { 
-                        transform: translateY(0) translateX(0); 
-                        opacity: 0;
-                    }
-                    10% { opacity: 1; }
-                    90% { opacity: 1; }
-                    50% { 
-                        transform: translateY(-100vh) translateX(50px); 
-                    }
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-10px); }
                 }
                 .animate-float {
-                    animation: float linear infinite;
+                    animation: float 4s ease-in-out infinite;
                 }
-                @keyframes pulse-slow {
-                    0%, 100% { opacity: 0.15; transform: scale(1); }
-                    50% { opacity: 0.25; transform: scale(1.1); }
-                }
-                .animate-pulse-slow {
-                    animation: pulse-slow 8s ease-in-out infinite;
-                }
-                .animation-delay-2000 {
-                    animation-delay: 2s;
+                .google-btn-wrapper svg {
+                    display: inline !important;
                 }
             `}</style>
         </div>

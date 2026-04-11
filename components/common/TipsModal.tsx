@@ -69,7 +69,7 @@ const TipsModal: React.FC<TipsModalProps> = ({
     };
 
     const iconBgVariants: Record<string, string> = {
-        amber: 'from-amber-400 to-amber-600 shadow-amber-500/20 border-amber-300/20',
+        amber: 'from-amber-400 to-amber-600 shadow-amber-600/20 border-amber-300/20',
         blue: 'from-blue-400 to-blue-600 shadow-blue-500/20 border-blue-300/20',
         emerald: 'from-emerald-400 to-emerald-600 shadow-emerald-500/20 border-emerald-300/20',
         indigo: 'from-indigo-400 to-indigo-600 shadow-indigo-500/20 border-indigo-300/20',

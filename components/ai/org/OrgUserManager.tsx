@@ -183,7 +183,7 @@ const OrgUserManager: React.FC<OrgUserManagerProps> = ({ initialEditUserId, cate
                         {[
                             { label: 'Total Users', value: users.length, icon: Users, color: 'text-blue-500', bg: 'bg-blue-50' },
                             { label: 'Active', value: users.filter(u => u.status === 'active').length, icon: UserCheck, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-                            { label: 'Warning', value: users.filter(u => u.status === 'warning').length, icon: AlertTriangle, color: 'text-amber-500', bg: 'bg-amber-50' },
+                            { label: 'Warning', value: users.filter(u => u.status === 'warning').length, icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50' },
                             { label: 'Banned', value: users.filter(u => u.status === 'banned').length, icon: Ban, color: 'text-rose-500', bg: 'bg-rose-50' }
                         ].map((stat, idx) => (
                             <div key={idx} className={`p-4 rounded-xl border transition-all ${isDarkTheme ? 'bg-[#1E2532] border-slate-800 shadow-inner shadow-slate-950/20' : 'bg-white border-slate-100 shadow-sm'}`}>
@@ -250,7 +250,7 @@ const OrgUserManager: React.FC<OrgUserManagerProps> = ({ initialEditUserId, cate
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-4">
                                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-bold shadow-inner border-2 ${user.status === 'banned' ? (isDarkTheme ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' : 'bg-rose-50 text-rose-500 border-rose-100') :
-                                                    user.status === 'warning' ? (isDarkTheme ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-amber-50 text-amber-500 border-amber-100') :
+                                                    user.status === 'warning' ? (isDarkTheme ? 'bg-amber-600/10 text-amber-600 border-amber-600/20' : 'bg-amber-50 text-amber-600 border-amber-100') :
                                                         (isDarkTheme ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-50 text-slate-600 border-white')
                                                     }`}>
                                                     {user.full_name.substring(0, 2).toUpperCase()}
@@ -286,7 +286,7 @@ const OrgUserManager: React.FC<OrgUserManagerProps> = ({ initialEditUserId, cate
                                                     }`}>
                                                     <div className={`w-1.5 h-1.5 rounded-full ${user.status === 'active' ? 'bg-emerald-500 animate-pulse' :
                                                         user.status === 'banned' ? 'bg-rose-500' :
-                                                            'bg-amber-500'
+                                                            'bg-amber-600'
                                                         }`} />
                                                     {user.status}
                                                 </div>

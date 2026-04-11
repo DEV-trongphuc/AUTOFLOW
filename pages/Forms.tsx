@@ -244,13 +244,13 @@ const Forms: React.FC = () => {
                         <Button variant="outline" className="mt-8 lg:mt-10 px-8 lg:px-10 h-10 lg:h-12 rounded-xl lg:rounded-2xl" onClick={handleCreateNew}>Bắt đầu ngay</Button>
                     </div>
                 ) : forms.map(form => (
-                    <div key={form.id} className="group bg-white p-4 lg:p-6 rounded-2xl lg:rounded-[32px] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-amber-500/10 hover:border-amber-200 transition-all flex flex-col justify-between gap-4 lg:gap-6 relative overflow-hidden">
+                    <div key={form.id} className="group bg-white p-4 lg:p-6 rounded-2xl lg:rounded-[32px] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-amber-600/10 hover:border-amber-200 transition-all flex flex-col justify-between gap-4 lg:gap-6 relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4 lg:p-8 opacity-[0.03] text-amber-600 group-hover:scale-125 transition-transform"><Globe className="w-24 h-24 lg:w-32 lg:h-32" /></div>
 
                         <div className="flex justify-between items-start relative z-10">
                             <div className="flex items-center gap-3 lg:gap-4">
                                 {/* Changed to Amber Gradient & FileInput Icon to match Flow Creation Modal */}
-                                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/30 group-hover:rotate-6 transition-transform">
+                                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-amber-600/30 group-hover:rotate-6 transition-transform">
                                     <FileInput className="w-5 h-5 lg:w-6 lg:h-6" />
                                 </div>
                                 <div className="min-w-0">
@@ -345,7 +345,7 @@ const Forms: React.FC = () => {
                                 className="flex items-center gap-2 cursor-pointer select-none"
                             >
                                 <div className={`w-11 h-6 rounded-full p-0.5 transition-all duration-300 flex items-center ${
-                                    formData.notificationEnabled ? 'bg-amber-500 justify-end' : 'bg-slate-300 justify-start'
+                                    formData.notificationEnabled ? 'bg-amber-600 justify-end' : 'bg-slate-300 justify-start'
                                 }`}>
                                     <div className="w-4.5 h-4.5 w-5 h-5 bg-white rounded-full shadow-sm" />
                                 </div>
@@ -359,7 +359,7 @@ const Forms: React.FC = () => {
                             <div className="space-y-4 bg-amber-50/50 border border-amber-100 rounded-2xl p-4 animate-in slide-in-from-top-2 duration-300">
                                 <div>
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">
-                                        <BellRing className="w-3 h-3 inline mr-1 text-amber-500" />
+                                        <BellRing className="w-3 h-3 inline mr-1 text-amber-600" />
                                         Email nhận thông báo <span className="text-slate-400 font-normal lowercase normal-case tracking-normal">(nhiều email cách nhau bằng dấu phẩy)</span>
                                     </label>
                                     <textarea

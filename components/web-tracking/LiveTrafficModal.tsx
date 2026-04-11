@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, User, Clock, Monitor, Smartphone, Tablet, Globe, ExternalLink, Activity, Bot } from 'lucide-react';
@@ -128,7 +128,7 @@ const LiveTrafficModal: React.FC<LiveTrafficModalProps> = ({ isOpen, onClose: _o
                                         {/* Visitor Info */}
                                         <div className="flex items-center gap-4 min-w-[200px]">
                                             <div className="relative">
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 border-white shadow-sm overflow-hidden flex-shrink-0 ${(v.subscriber_id || v.zalo_user_id || v.email || v.phone) ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 border-white shadow-sm overflow-hidden flex-shrink-0 ${(v.subscriber_id || v.zalo_user_id || v.email || v.phone) ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
                                                     {v.avatar_url ? (
                                                         <img src={v.avatar_url} alt="" className="w-full h-full object-cover" />
                                                     ) : (
@@ -153,7 +153,7 @@ const LiveTrafficModal: React.FC<LiveTrafficModalProps> = ({ isOpen, onClose: _o
                                                         {v.first_name && v.first_name !== 'Visitor' ? v.first_name : (v.email || (v.phone ? 'Phone Visitor' : 'Anonymous'))}
                                                     </p>
                                                     {(v.time_on_page > 300 || v.last_visit_at) && ( // Simple heuristic for live or returning
-                                                        <span className="text-[8px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded-lg font-bold uppercase tracking-wider">Quay lại</span>
+                                                        <span className="text-[8px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded-lg font-bold uppercase tracking-wider">Quay l?i</span>
                                                     )}
                                                 </div>
                                                 <div className="flex flex-col gap-0.5 mt-0.5">

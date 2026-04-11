@@ -119,7 +119,7 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                 );
 
             case 'button': {
-                const btnBg = block.style.contentBackgroundColor || (block.style as any).buttonBackgroundColor || block.style.backgroundColor || '#f59e0b';
+                const btnBg = block.style.contentBackgroundColor || (block.style as any).buttonBackgroundColor || block.style.backgroundColor || '#d97706';
                 const containerBg = 'transparent';
                 const btnColor = css.color ?? '#ffffff';
                 const align = css.textAlign ?? 'center';
@@ -184,14 +184,14 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
             }
 
             case 'quote': {
-                const quoteBorderLeft = `${css.borderLeftWidth ?? '4px'} ${css.borderStyle ?? 'solid'} ${css.borderColor ?? '#f59e0b'}`;
+                const quoteBorderLeft = `${css.borderLeftWidth ?? '4px'} ${css.borderStyle ?? 'solid'} ${css.borderColor ?? '#d97706'}`;
                 const quoteHasOtherBorders = css.borderTopWidth || css.borderRightWidth || css.borderBottomWidth;
                 return (
                     <div style={{
                         borderLeft: quoteBorderLeft,
-                        borderTop: quoteHasOtherBorders ? `${css.borderTopWidth ?? '0'} ${css.borderStyle ?? 'solid'} ${css.borderColor ?? '#f59e0b'}` : undefined,
-                        borderRight: quoteHasOtherBorders ? `${css.borderRightWidth ?? '0'} ${css.borderStyle ?? 'solid'} ${css.borderColor ?? '#f59e0b'}` : undefined,
-                        borderBottom: quoteHasOtherBorders ? `${css.borderBottomWidth ?? '0'} ${css.borderStyle ?? 'solid'} ${css.borderColor ?? '#f59e0b'}` : undefined,
+                        borderTop: quoteHasOtherBorders ? `${css.borderTopWidth ?? '0'} ${css.borderStyle ?? 'solid'} ${css.borderColor ?? '#d97706'}` : undefined,
+                        borderRight: quoteHasOtherBorders ? `${css.borderRightWidth ?? '0'} ${css.borderStyle ?? 'solid'} ${css.borderColor ?? '#d97706'}` : undefined,
+                        borderBottom: quoteHasOtherBorders ? `${css.borderBottomWidth ?? '0'} ${css.borderStyle ?? 'solid'} ${css.borderColor ?? '#d97706'}` : undefined,
                         backgroundColor: css.backgroundColor ?? 'transparent',
                         padding: `${css.paddingTop ?? '15px'} ${css.paddingRight ?? '25px'} ${css.paddingBottom ?? '15px'} ${css.paddingLeft ?? '25px'}`,
                         color: css.color ?? '#334155',
@@ -235,7 +235,7 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
             }
 
             case 'timeline': {
-                const dotColor = cssAny.timelineDotColor || '#f59e0b';
+                const dotColor = cssAny.timelineDotColor || '#d97706';
                 const lineColor = cssAny.timelineLineColor || '#e2e8f0';
                 const timelineFontFamily = css.fontFamily;
                 const titleClr = css.color || '#1e293b';
@@ -246,7 +246,7 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                             const isLast = i === (block.items?.length || 0) - 1;
                             return (
                                 <div key={item.id || i} style={{ position: 'relative', paddingBottom: isLast ? '0' : '30px', display: 'flex' }}>
-                                    <div style={{ width: '80px', flexShrink: 0, paddingRight: '15px', textAlign: 'right', paddingTop: '4px' }}>
+                                    <div style={{ width: item.date ? (viewMode === 'mobile' ? '60px' : '80px') : '0px', flexShrink: 0, paddingRight: item.date ? '15px' : '0px', textAlign: 'right', paddingTop: '4px', overflow: 'hidden' }}>
                                         <strong style={{ color: titleClr, fontSize: css.fontSize || '12px', fontFamily: timelineFontFamily }}>{item.date}</strong>
                                     </div>
                                     <div style={{ width: '24px', flexShrink: 0, position: 'relative' }}>
@@ -276,7 +276,7 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
             }
 
             case 'check_list': {
-                const checkColor = cssAny.checkIconColor ?? '#f59e0b';
+                const checkColor = cssAny.checkIconColor ?? '#d97706';
                 const checkSize = parseInt(cssAny.checkIconSize ?? '20');
                 const showTitle = cssAny.showCheckListTitle !== false;
                 const checklistIcon = block.style.checkIcon || 'CheckCircle';
@@ -437,7 +437,7 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
 
             case 'video': {
                 const videoAlign = css.textAlign as any || 'center';
-                const playBtnColor = cssAny.playButtonColor || '#f59e0b';
+                const playBtnColor = cssAny.playButtonColor || '#d97706';
                 return (
                     <div style={{ textAlign: videoAlign }}>
                         {block.videoUrl ? (
@@ -628,9 +628,9 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
             key={block.id} id={`block-${block.id}`}
             draggable onDragStart={(e) => onDragStart(e, block.id)} onDragOver={(e) => onDragOver(e, block.id, block.type)} onDrop={(e) => onDrop(e, block.id)} onClick={(e) => { e.stopPropagation(); onSelectBlock(block.id); }}
         >
-            <td className={`relative transition-all w-full ${!isSelected ? 'hover:ring-2 hover:ring-amber-500 hover:ring-dashed hover:bg-amber-500/5' : ''}`} style={wrapperTdStyles}>
+            <td className={`relative transition-all w-full ${!isSelected ? 'hover:ring-2 hover:ring-amber-600 hover:ring-dashed hover:bg-amber-600/5' : ''}`} style={wrapperTdStyles}>
                 {dragOverId === block.id && dropPosition && <CanvasDropIndicator dropPosition={dropPosition} />}
-                <CanvasHandleOverlay block={block} color="ring-amber-500" isSelected={isSelected} onDragStart={onDragStart} onMoveOrder={onMoveOrder} onSwapColumns={onSwapColumns} onDuplicateBlock={onDuplicateBlock} onDeleteBlock={onDeleteBlock} onSelectParent={onSelectParent} onSaveSection={onSaveSection} />
+                <CanvasHandleOverlay block={block} color="ring-amber-600" isSelected={isSelected} onDragStart={onDragStart} onMoveOrder={onMoveOrder} onSwapColumns={onSwapColumns} onDuplicateBlock={onDuplicateBlock} onDeleteBlock={onDeleteBlock} onSelectParent={onSelectParent} onSaveSection={onSaveSection} />
 
                 <div style={{
                     ...decorativeStyles,

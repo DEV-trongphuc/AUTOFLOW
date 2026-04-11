@@ -2,8 +2,10 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { api } from '../services/storageAdapter';
 import { Template, TemplateGroup } from '../types';
-import { Edit3, Copy, Trash2, Plus, Layout, Eye, Sparkles, FolderOpen, Globe, Search, FolderPlus, Check, X, AlertCircle, ChevronRight } from 'lucide-react';
-import PageHeader from '../components/common/PageHeader';
+import { Edit3, Copy, Trash2, Plus, Layout, Eye, Sparkles, FolderOpen, Globe, Search, FolderPlus, Check, X, AlertCircle, ChevronRight, ChevronLeft, Image as ImageIcon } from 'lucide-react';
+import PageHero from '../components/common/PageHero';
+import ImageLibraryModal from '../components/templates/EmailEditor/components/Properties/ImageLibraryModal';
+
 import Button from '../components/common/Button';
 import EmailEditor from '../components/templates/EmailEditor/index';
 // @ts-ignore: `compileHTML` is a named export from `htmlCompiler`
@@ -70,6 +72,7 @@ const Templates: React.FC = () => {
     const [groups, setGroups] = useState<TemplateGroup[]>([]);
     const [loading, setLoading] = useState(true);
     const [customMergeTags, setCustomMergeTags] = useState<{ label: string; key: string }[]>([]);
+    const [isImageLibraryOpen, setIsImageLibraryOpen] = useState(false);
 
     // Editor State
     const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -96,6 +99,19 @@ const Templates: React.FC = () => {
     const [isMovingGroups, setIsMovingGroups] = useState(false);
     // Modal hiển thị khi xóa bị block do template đang dùng trong flow/campaign
     const [usageBlockModal, setUsageBlockModal] = useState<{ isOpen: boolean, errors: string[] }>({ isOpen: false, errors: [] });
+    
+    // Category scroll ref
+    const categoryScrollRef = React.useRef<HTMLDivElement>(null);
+
+    const scrollCategories = (direction: 'left' | 'right') => {
+        if (categoryScrollRef.current) {
+            const scrollAmount = 300;
+            categoryScrollRef.current.scrollBy({
+                left: direction === 'left' ? -scrollAmount : scrollAmount,
+                behavior: 'smooth'
+            });
+        }
+    };
 
     const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
         if (type === 'success') toast.success(message);
@@ -340,6 +356,8 @@ const Templates: React.FC = () => {
     };
 
 
+
+
     const getGroupName = (groupId?: string) => {
         const group = groups.find(g => g.id === groupId);
         return group ? group.name : 'Chưa phân loại';
@@ -358,39 +376,39 @@ const Templates: React.FC = () => {
                 />
             ) : (
                 <>
-                    <PageHeader
-                        title="Kho giao diện (Templates)"
-                        description="Thư viện mẫu email chuyên nghiệp & thiết kế cá nhân."
-                        action={
-                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto mt-4 lg:mt-0">
-                                <Button
-                                    variant="secondary"
-                                    onClick={fetchUserTemplates}
-                                    isLoading={loading}
-                                    className="w-full sm:w-auto order-2 sm:order-1"
-                                >
-                                    Làm mới
-                                </Button>
-                                <Button
-                                    icon={Plus}
-                                    size="lg"
-                                    onClick={() => { setEditingTemplate(undefined); setIsEditorOpen(true); }}
-                                    className="whitespace-nowrap w-full sm:w-auto order-1 sm:order-2 bg-slate-900 text-white hover:bg-black"
-                                >
-                                    Thiết kế mới
-                                </Button>
-                            </div>
-                        }
+                    <PageHero 
+                        title={<>Email <span className="text-orange-100/80">Templates</span></>}
+                        subtitle="Thư viện mẫu email chuyên nghiệp & bộ sưu tập thiết kế cá nhân của bạn."
+                        showStatus={true}
+                        statusText="Library Synced"
+                        actions={[
+                            { 
+                                label: 'Thiết kế mới', 
+                                icon: Plus, 
+                                onClick: () => { setEditingTemplate(undefined); setIsEditorOpen(true); },
+                                primary: true 
+                            },
+                            { 
+                                label: 'Thư viện Ảnh', 
+                                icon: ImageIcon, 
+                                onClick: () => setIsImageLibraryOpen(true) 
+                            }
+                        ]}
+                    />
+
+                    <ImageLibraryModal 
+                        isOpen={isImageLibraryOpen} 
+                        onClose={() => setIsImageLibraryOpen(false)} 
                     />
 
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 py-2">
                         <div className="relative group w-full md:w-80">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-amber-500 transition-colors" />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-amber-600 transition-colors" />
                             <input
                                 value={searchTerm}
                                 onChange={(e) => handleSearchChange(e.target.value)}
                                 placeholder="Tìm kiếm mẫu..."
-                                className="w-full bg-white border border-slate-200 rounded-2xl pl-11 pr-4 py-2.5 text-sm font-bold outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all shadow-sm"
+                                className="w-full bg-white border border-slate-200 rounded-2xl pl-11 pr-4 py-2.5 text-sm font-bold outline-none focus:border-amber-600 focus:ring-4 focus:ring-amber-600/10 transition-all shadow-sm"
                             />
                         </div>
                         <p className="text-xs text-slate-400 font-medium shrink-0">{filteredTemplates.length} mẫu</p>
@@ -398,11 +416,21 @@ const Templates: React.FC = () => {
 
 
                     <div className="space-y-8">
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex-1 bg-white rounded-2xl lg:rounded-full p-1.5 lg:p-2 shadow-sm border border-slate-200 flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth">
+                        <div className="flex items-center gap-4 relative group/categories">
+                            <button 
+                                onClick={() => scrollCategories('left')}
+                                className="hidden group-hover/categories:flex absolute -left-4 z-10 w-10 h-10 bg-white shadow-xl border border-slate-100 rounded-full items-center justify-center text-slate-400 hover:text-amber-600 hover:scale-110 transition-all active:scale-95"
+                            >
+                                <ChevronLeft className="w-5 h-5" />
+                            </button>
+
+                            <div 
+                                ref={categoryScrollRef}
+                                className="flex-1 bg-white rounded-2xl lg:rounded-full p-1.5 lg:p-2 shadow-sm border border-slate-200 flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth"
+                            >
                                 <button
                                     onClick={() => handleFilterGroupChange('all')}
-                                    className={`whitespace-nowrap flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 rounded-xl lg:rounded-full text-xs lg:text-sm font-bold transition-all duration-300 ${filterGroupId === 'all' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                                    className={`whitespace-nowrap flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 rounded-xl lg:rounded-full text-xs lg:text-sm font-bold transition-all duration-300 ${filterGroupId === 'all' ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
                                 >
                                     <Globe className={`w-3.5 h-3.5 lg:w-4 h-4 transition-transform duration-500 ${filterGroupId === 'all' ? 'rotate-12 scale-110' : ''}`} />
                                     Tất cả mẫu
@@ -413,7 +441,7 @@ const Templates: React.FC = () => {
                                     <div key={group.id} className="group/item relative flex items-center shrink-0">
                                         <button
                                             onClick={() => handleFilterGroupChange(group.id)}
-                                            className={`flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 rounded-xl lg:rounded-full text-xs lg:text-sm font-bold transition-all duration-300 ${filterGroupId === group.id ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                                            className={`flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 rounded-xl lg:rounded-full text-xs lg:text-sm font-bold transition-all duration-300 ${filterGroupId === group.id ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
                                         >
                                             <FolderOpen className={`w-3.5 h-3.5 lg:w-4 h-4 transition-transform duration-500 ${filterGroupId === group.id ? 'rotate-12 scale-110' : 'opacity-50'}`} />
                                             <span className="truncate max-w-[120px] lg:max-w-[150px]">{group.name}</span>
@@ -442,12 +470,19 @@ const Templates: React.FC = () => {
 
                                 <button
                                     onClick={() => { setEditingGroup(null); setNewGroupName(''); setIsGroupModalOpen(true); }}
-                                    className="p-3 bg-slate-50 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-all group shrink-0"
+                                    className="p-3 bg-slate-50 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-all group shrink-0"
                                     title="Tạo nhóm mới"
                                 >
                                     <FolderPlus className="w-5 h-5 group-hover:scale-110 transition-transform" />
                                 </button>
                             </div>
+
+                            <button 
+                                onClick={() => scrollCategories('right')}
+                                className="hidden group-hover/categories:flex absolute -right-4 z-10 w-10 h-10 bg-white shadow-xl border border-slate-100 rounded-full items-center justify-center text-slate-400 hover:text-amber-600 hover:scale-110 transition-all active:scale-95"
+                            >
+                                <ChevronRight className="w-5 h-5" />
+                            </button>
                         </div>
 
                         {/* Main Grid */}
@@ -459,24 +494,24 @@ const Templates: React.FC = () => {
                                     {filterGroupId === 'all' && currentPage === 1 && (
                                         <button
                                             onClick={() => { setEditingTemplate(undefined); setIsEditorOpen(true); }}
-                                            className="border-2 border-dashed border-slate-200 rounded-[32px] h-[380px] flex flex-col items-center justify-center text-slate-400 hover:text-amber-600 hover:border-amber-500 hover:bg-amber-50/50 transition-all group bg-white hover:shadow-2xl hover:shadow-amber-500/5"
+                                            className="border-2 border-dashed border-slate-200 rounded-[32px] h-[380px] flex flex-col items-center justify-center text-slate-400 hover:text-amber-600 hover:border-amber-600 hover:bg-amber-50/50 transition-all group bg-white hover:shadow-2xl hover:shadow-amber-600/5"
                                         >
-                                            <div className="p-8 bg-slate-50 rounded-full mb-6 shadow-sm group-hover:scale-110 transition-transform group-hover:shadow-lg group-hover:bg-white border border-slate-100">
-                                                <Plus className="w-10 h-10 text-amber-500" />
+                                            <div className="p-6 bg-slate-50 rounded-full mb-6 shadow-sm group-hover:scale-110 transition-transform group-hover:shadow-lg group-hover:bg-white border border-slate-100">
+                                                <Plus className="w-7 h-7 text-amber-600" />
                                             </div>
-                                            <span className="font-bold text-xl text-[#333333] tracking-tight">Tạo thiết kế mới</span>
+                                            <span className="font-bold text-lg text-[#333333] tracking-tight">Tạo thiết kế mới</span>
                                             <span className="text-[10px] mt-2 opacity-50 font-bold uppercase tracking-[0.2em]">Bắt đầu tạo mẫu của bạn</span>
                                         </button>
                                     )}
 
                                     {paginatedTemplates.map((template) => (
-                                        <div key={template.id} className={`bg-white rounded-[24px] shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] border-2 overflow-hidden group hover:shadow-[0_20px_40px_-12px_rgba(245,158,11,0.15)] hover:-translate-y-1.5 transition-all duration-500 flex flex-col h-[380px] relative ${selectedIds.includes(template.id) ? 'border-amber-500 shadow-xl ring-4 ring-amber-500/10' : 'border-white hover:border-amber-200'}`}>
+                                        <div key={template.id} className={`bg-white rounded-[24px] shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] border-2 overflow-hidden group hover:shadow-[0_20px_40px_-12px_rgba(245,158,11,0.15)] hover:-translate-y-1.5 transition-all duration-500 flex flex-col h-[380px] relative ${selectedIds.includes(template.id) ? 'border-amber-600 shadow-xl ring-4 ring-amber-600/10' : 'border-white hover:border-amber-200'}`}>
 
                                             {/* Selection Checkbox */}
                                             {!template.id.startsWith('sys_') && (
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); toggleSelect(template.id); }}
-                                                    className={`absolute top-5 left-5 z-20 w-10 h-10 rounded-2xl border-2 flex items-center justify-center transition-all duration-300 ${selectedIds.includes(template.id) ? 'bg-amber-500 border-amber-500 text-white scale-110 shadow-lg' : 'bg-white/90 backdrop-blur border-slate-100 text-slate-400 opacity-0 group-hover:opacity-100 hover:border-amber-400 hover:scale-105'}`}
+                                                    className={`absolute top-5 left-5 z-20 w-10 h-10 rounded-2xl border-2 flex items-center justify-center transition-all duration-300 ${selectedIds.includes(template.id) ? 'bg-amber-600 border-amber-600 text-white scale-110 shadow-lg' : 'bg-white/90 backdrop-blur border-slate-100 text-slate-400 opacity-0 group-hover:opacity-100 hover:border-amber-400 hover:scale-105'}`}
                                                 >
                                                     <Check className={`w-5 h-5 transition-transform duration-500 ${selectedIds.includes(template.id) ? 'scale-100 rotate-0' : 'scale-0 rotate-12'}`} />
                                                 </button>
@@ -494,7 +529,7 @@ const Templates: React.FC = () => {
 
                                                 {/* Overlay Actions */}
                                                 <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[4px] opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center gap-4">
-                                                    <button onClick={(e) => { e.stopPropagation(); setPreviewTemplate(template); }} className="px-5 py-2.5 bg-white text-slate-900 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all shadow-2xl flex items-center gap-2 transform translate-y-8 group-hover:translate-y-0 duration-500 ease-out">
+                                                    <button onClick={(e) => { e.stopPropagation(); setPreviewTemplate(template); }} className="px-5 py-2.5 bg-white text-slate-900 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-amber-600 hover:text-white transition-all shadow-2xl flex items-center gap-2 transform translate-y-8 group-hover:translate-y-0 duration-500 ease-out">
                                                         <Eye className="w-3.5 h-3.5" /> Xem chi tiết
                                                     </button>
 
@@ -504,7 +539,7 @@ const Templates: React.FC = () => {
                                                         </button>
                                                     ) : (
                                                         <div className="flex gap-2 transform translate-y-8 group-hover:translate-y-0 duration-500 delay-100 ease-out">
-                                                            <button onClick={(e) => { e.stopPropagation(); setEditingTemplate(template); setIsEditorOpen(true); }} className="p-2.5 bg-white text-amber-600 rounded-xl hover:bg-amber-500 hover:text-white shadow-xl transition-all" title="Chỉnh sửa">
+                                                            <button onClick={(e) => { e.stopPropagation(); setEditingTemplate(template); setIsEditorOpen(true); }} className="p-2.5 bg-white text-amber-600 rounded-xl hover:bg-amber-600 hover:text-white shadow-xl transition-all" title="Chỉnh sửa">
                                                                 <Edit3 className="w-4 h-4" />
                                                             </button>
                                                             <button onClick={(e) => { e.stopPropagation(); handleDuplicate(template); }} className="p-2.5 bg-white text-blue-600 rounded-xl hover:bg-blue-500 hover:text-white shadow-xl transition-all" title="Nhân bản">
@@ -526,7 +561,7 @@ const Templates: React.FC = () => {
                                                     )}
                                                     <span className="bg-white/95 backdrop-blur px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-widest text-slate-700 shadow-md flex items-center gap-1.5 border border-slate-100">
                                                         {template.blocks && template.blocks.length > 0 ? (
-                                                            <><Sparkles className="w-3.5 h-3.5 text-amber-500" /> Editor</>
+                                                            <><Sparkles className="w-3.5 h-3.5 text-amber-600" /> Editor</>
                                                         ) : (
                                                             <><Layout className="w-3.5 h-3.5 text-blue-500" /> HTML</>
                                                         )}
@@ -571,7 +606,7 @@ const Templates: React.FC = () => {
                                         <Search className="w-16 h-16 text-slate-200" />
                                     </div>
                                     <h4 className="text-2xl font-black text-slate-800 tracking-tight">Không tìm thấy mẫu phù hợp</h4>
-                                    <button onClick={() => { setSearchTerm(''); handleFilterGroupChange('all'); }} className="mt-8 px-8 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-amber-500 transition-all active:scale-95 shadow-xl">Xóa bộ lọc</button>
+                                    <button onClick={() => { setSearchTerm(''); handleFilterGroupChange('all'); }} className="mt-8 px-8 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-amber-600 transition-all active:scale-95 shadow-xl">Xóa bộ lọc</button>
                                 </div>
                             )}
 
@@ -591,7 +626,7 @@ const Templates: React.FC = () => {
                                                 key={page}
                                                 onClick={() => setCurrentPage(page)}
                                                 className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${page === currentPage
-                                                    ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20 scale-110'
+                                                    ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20 scale-110'
                                                     : 'bg-white border border-slate-200 text-slate-500 hover:border-amber-300 hover:text-amber-600'
                                                     }`}
                                             >
@@ -617,7 +652,7 @@ const Templates: React.FC = () => {
                             <div className="bg-slate-900/90 backdrop-blur-xl border border-white/10 p-4 lg:px-6 lg:py-4 rounded-2xl lg:rounded-[32px] shadow-2xl flex flex-col lg:flex-row items-center gap-4 lg:gap-6 w-full lg:min-w-[500px]">
                                 <div className="flex items-center justify-between lg:justify-start w-full lg:w-auto lg:pr-6 lg:border-r lg:border-white/10">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 lg:w-10 lg:h-10 bg-amber-500 rounded-xl lg:rounded-2xl flex items-center justify-center font-black text-white text-sm lg:text-base shadow-lg shadow-amber-500/20">
+                                        <div className="w-8 h-8 lg:w-10 lg:h-10 bg-amber-600 rounded-xl lg:rounded-2xl flex items-center justify-center font-black text-white text-sm lg:text-base shadow-lg shadow-amber-600/20">
                                             {selectedIds.length}
                                         </div>
                                         <div className="flex flex-col">
@@ -741,7 +776,7 @@ const Templates: React.FC = () => {
                         <p className="text-xs font-black text-slate-500 uppercase tracking-widest">Đang được dùng tại:</p>
                         {usageBlockModal.errors.map((err, i) => (
                             <div key={i} className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-100 rounded-xl">
-                                <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                                 <p className="text-xs text-amber-800 font-medium">{err}</p>
                             </div>
                         ))}
@@ -756,8 +791,15 @@ const Templates: React.FC = () => {
                     htmlContent={getPreviewHTML(previewTemplate)}
                     isOpen={!!previewTemplate}
                     onClose={() => setPreviewTemplate(null)}
-                    onAction={() => { handleDuplicate(previewTemplate); setPreviewTemplate(null); }}
-                    actionLabel="Sử dụng mẫu này"
+                    onEdit={() => { 
+                        setEditingTemplate(previewTemplate); 
+                        setIsEditorOpen(true); 
+                        setPreviewTemplate(null); 
+                    }}
+                    onDuplicate={() => { 
+                        handleDuplicate(previewTemplate); 
+                        setPreviewTemplate(null); 
+                    }}
                 />
             )}
 

@@ -138,7 +138,7 @@ const FlowSummaryModal: React.FC<FlowSummaryModalProps> = ({ isOpen, onClose, fl
                             label="Unique Clicks"
                             value={stats.uniqueClicked || 0}
                             icon={TrendingUp}
-                            color="from-amber-400 to-orange-500 shadow-amber-500/20"
+                            color="from-amber-400 to-orange-500 shadow-amber-600/20"
                         />
                         <StatCard
                             label="Gửi lỗi"

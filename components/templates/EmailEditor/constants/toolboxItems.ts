@@ -22,7 +22,6 @@ export const TOOLBOX_ITEMS = [
     { id: '1-2', type: 'layout', layout: '1-2', label: 'Trái nhỏ', cat: 'layout' },
     { id: '2-1', type: 'layout', layout: '2-1', label: 'Phải nhỏ', cat: 'layout' },
     // Presets (Moved to separate tab)
-    { id: 'job_card', label: 'Job Card', icon: 'Briefcase', cat: 'template_tab' },
     { id: 'double_card', label: 'Double Card', icon: 'Columns', cat: 'template_tab' },
     { id: 'review_card', label: 'Review Pro', icon: 'Star', cat: 'template_tab' },
     { id: 'feature_card', label: 'Feature Card', icon: 'Sparkles', cat: 'template_tab' },

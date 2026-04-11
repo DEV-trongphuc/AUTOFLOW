@@ -34,6 +34,7 @@ const RichText: React.FC<RichTextProps> = ({ value, onChange, className = "", bo
     const [showVariablePicker, setShowVariablePicker] = useState(false);
 
     const FONT_FAMILIES = [
+        { label: 'Roboto', val: "'Roboto', sans-serif" },
         { label: 'Arial', val: 'Arial, sans-serif' },
         { label: 'Helvetica', val: 'Helvetica, sans-serif' },
         { label: 'Times New Roman', val: "'Times New Roman', Times, serif" },

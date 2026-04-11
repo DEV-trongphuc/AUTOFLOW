@@ -26,14 +26,14 @@ interface FeedbackItem {
 
 const TYPE_META: Record<FeedbackType, { label: string; icon: React.ReactNode; color: string; bg: string }> = {
     bug: { label: 'Lỗi', icon: <Bug className="w-3.5 h-3.5" />, color: '#ef4444', bg: 'bg-red-500/10 text-red-400' },
-    suggestion: { label: 'Góp ý', icon: <Lightbulb className="w-3.5 h-3.5" />, color: '#f59e0b', bg: 'bg-amber-500/10 text-amber-400' },
+    suggestion: { label: 'Góp ý', icon: <Lightbulb className="w-3.5 h-3.5" />, color: '#d97706', bg: 'bg-amber-600/10 text-amber-400' },
     praise: { label: 'Khen ngợi', icon: <Heart className="w-3.5 h-3.5" />, color: '#10b981', bg: 'bg-emerald-500/10 text-emerald-400' },
     other: { label: 'Khác', icon: <MessageSquare className="w-3.5 h-3.5" />, color: '#6366f1', bg: 'bg-indigo-500/10 text-indigo-400' },
 };
 
 const STATUS_META: Record<FeedbackStatus, { label: string; icon: React.ReactNode; cls: string }> = {
     new: { label: 'Mới', icon: <AlertCircle className="w-3.5 h-3.5" />, cls: 'bg-blue-500/10 text-blue-400 border-blue-500/30' },
-    in_review: { label: 'Đang xem xét', icon: <Clock className="w-3.5 h-3.5" />, cls: 'bg-amber-500/10 text-amber-400 border-amber-500/30' },
+    in_review: { label: 'Đang xem xét', icon: <Clock className="w-3.5 h-3.5" />, cls: 'bg-amber-600/10 text-amber-400 border-amber-600/30' },
     resolved: { label: 'Đã xử lý', icon: <CheckCircle className="w-3.5 h-3.5" />, cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
     closed: { label: 'Đã đóng', icon: <XCircle className="w-3.5 h-3.5" />, cls: 'bg-slate-500/10 text-slate-400 border-slate-500/30' },
 };

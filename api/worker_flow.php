@@ -7,11 +7,11 @@ ini_set('display_errors', 0);
 ignore_user_abort(true);
 set_time_limit(300);
 
-require_once 'db_connect.php';
+require_once __DIR__ . '/db_connect.php';
 // RELEASE SESSION LOCK: Workers don't need to hold the user's session lock.
 if (session_id())
     session_write_close();
-require_once 'Mailer.php';
+require_once __DIR__ . '/Mailer.php';
 require_once 'FlowExecutor.php';
 require_once 'flow_helpers.php';
 require_once 'trigger_helper.php';
@@ -421,9 +421,17 @@ if (!function_exists('runWorkerFlow')) {
                         }
                         $shouldContinueChain = false;
                     }
+                } // End of while loop
+
+                // NEW: Prevent infinite loop if steps exceed MAX_STEPS without terminating explicitly
+                if ($shouldContinueChain && $stepsProcessedInRun >= $MAX_STEPS) {
+                    $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = NOW(), step_id = ?, updated_at = NOW() WHERE id = ?")->execute([$currentStepId, $queueId]);
+                    $logs[] = "  -> Reached limit ($MAX_STEPS). Pausing chain to prevent infinite loop.";
                 }
+
                 $pdo->commit();
             } catch (Throwable $e) {
+
                 if ($pdo->inTransaction())
                     $pdo->rollBack();
                 $logs[] = "[ERROR] Subscriber chain failed: " . $e->getMessage();

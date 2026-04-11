@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { ChevronDown, Check, Search, X } from 'lucide-react';
 
@@ -66,13 +66,13 @@ const Select: React.FC<SelectProps> = ({
     const base = `flex items-center justify-between px-4 ${heightClass} cursor-pointer transition-all duration-300 text-sm font-bold group relative overflow-hidden select-none`;
 
     if (variant === 'premium') {
-      return `${base} bg-slate-900/50 backdrop-blur-md border border-white/10 hover:border-amber-500/50 text-white rounded-2xl ${isOpen ? 'ring-4 ring-amber-500/20 border-amber-500/50 bg-slate-900' : ''}`;
+      return `${base} bg-slate-900/50 backdrop-blur-md border border-white/10 hover:border-amber-600/50 text-white rounded-2xl ${isOpen ? 'ring-4 ring-amber-600/20 border-amber-600/50 bg-slate-900' : ''}`;
     }
     if (variant === 'outline') {
-      return `${base} rounded-xl ${disabled ? 'bg-slate-50' : 'bg-white'} border border-slate-200 hover:border-slate-300 text-slate-700 ${isOpen ? 'border-amber-500 ring-4 ring-amber-500/10' : ''} shadow-sm`;
+      return `${base} rounded-xl ${disabled ? 'bg-slate-50' : 'bg-white'} border border-slate-200 hover:border-slate-300 text-slate-700 ${isOpen ? 'border-amber-600 ring-4 ring-amber-600/10' : ''} shadow-sm`;
     }
     if (variant === 'filled') {
-      return `${base} rounded-xl bg-slate-50 border border-transparent hover:bg-slate-100 text-slate-700 ${isOpen ? 'bg-white border-amber-500 shadow-md ring-4 ring-amber-500/10' : ''}`;
+      return `${base} rounded-xl bg-slate-50 border border-transparent hover:bg-slate-100 text-slate-700 ${isOpen ? 'bg-white border-amber-600 shadow-md ring-4 ring-amber-600/10' : ''}`;
     }
     if (variant === 'ghost') {
       return `${base} rounded-xl border border-transparent hover:bg-slate-100/50 text-slate-600 hover:text-slate-900 ${isOpen ? 'bg-white shadow-sm text-slate-800' : 'bg-transparent'}`;
@@ -96,7 +96,7 @@ const Select: React.FC<SelectProps> = ({
       >
         <div className="flex items-center gap-2.5 overflow-hidden z-10 w-full">
           {Icon && (
-            <div className={`transition-colors duration-300 shrink-0 ${variant === 'premium' ? 'text-amber-400' : (isOpen ? 'text-amber-500' : 'text-slate-400')}`}>
+            <div className={`transition-colors duration-300 shrink-0 ${variant === 'premium' ? 'text-amber-400' : (isOpen ? 'text-amber-600' : 'text-slate-400')}`}>
               <Icon className={size === 'xs' ? "w-3.5 h-3.5" : "w-4 h-4"} />
             </div>
           )}
@@ -104,7 +104,7 @@ const Select: React.FC<SelectProps> = ({
             {selectedOption?.label || placeholder}
           </span>
         </div>
-        <ChevronDown className={`shrink-0 w-3.5 h-3.5 ml-2 transition-transform duration-500 z-10 ${isOpen ? 'rotate-180 text-amber-500' : 'text-slate-400'}`} />
+        <ChevronDown className={`shrink-0 w-3.5 h-3.5 ml-2 transition-transform duration-500 z-10 ${isOpen ? 'rotate-180 text-amber-600' : 'text-slate-400'}`} />
       </div>
 
       {isOpen && !disabled && (
@@ -126,7 +126,7 @@ const Select: React.FC<SelectProps> = ({
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={`w-full py-2.5 pl-10 pr-4 text-xs font-bold outline-none rounded-xl transition-all ${variant === 'premium'
                     ? 'bg-white/5 text-white placeholder:text-white/30 focus:bg-white/10'
-                    : 'bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-amber-500/10'
+                    : 'bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-amber-600/10'
                   }`}
               />
               {searchTerm && (
@@ -150,7 +150,7 @@ const Select: React.FC<SelectProps> = ({
                   className={`
                     px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer group/opt select-none
                     ${isActive
-                      ? (variant === 'premium' ? 'bg-amber-500 text-white' : 'bg-amber-100 text-amber-600')
+                      ? (variant === 'premium' ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-600')
                       : (variant === 'premium' ? 'text-white/60 hover:bg-white/5 hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900')}
                   `}
                 >

@@ -7,10 +7,10 @@ import {
 
     Plus, TrendingUp, MousePointerClick,
     CheckCircle2, GitMerge, RefreshCw, FileText, CalendarClock, PieChart, Send, MailOpen,
-    Search, ChevronLeft, ChevronRight, X
+    Search, ChevronLeft, ChevronRight, X, Lightbulb, ShieldCheck, Zap, Target, Sparkles, Clock
 } from 'lucide-react';
 import Button from '../components/common/Button';
-import PageHeader from '../components/common/PageHeader';
+import PageHero from '../components/common/PageHero';
 import toast from 'react-hot-toast';
 import CampaignList from './Campaigns/CampaignList';
 import CampaignDetailDrawer from '../components/campaigns/CampaignDetailDrawer';
@@ -24,7 +24,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { SYSTEM_TEMPLATES } from '../services/systemTemplates';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import TipsModal from '../components/common/TipsModal';
-import { Lightbulb, Target, Sparkles, Zap, Clock, ShieldCheck } from 'lucide-react';
 
 const Campaigns: React.FC = () => {
     const navigate = useNavigate();
@@ -392,225 +391,73 @@ const Campaigns: React.FC = () => {
         }
     };
     return (
-        <div className="animate-in fade-in duration-500 pb-20 max-w-full mx-auto">
+        <div className="animate-fade-in space-y-8 pb-20">
 
-            {/* Keyframes */}
-            <style>{`
-                @keyframes shimmer-x { 0%{transform:translateX(-100%)} 100%{transform:translateX(300%)} }
-                @keyframes blink-dot { 0%,100%{opacity:1} 50%{opacity:0.15} }
-                @keyframes float-up { 0%{transform:translateY(0) scale(1);opacity:0.5} 100%{transform:translateY(-70px) scale(0);opacity:0} }
-                @keyframes count-up { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-                @keyframes pulse-ring { 0%,100%{opacity:0.25;transform:scale(1)} 50%{opacity:0.6;transform:scale(1.14)} }
-                @keyframes spin-slow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-                @keyframes slide-in-badge { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
-                @keyframes bar-grow { from{width:0%} to{width:var(--bar-w)} }
-            `}</style>
+            <PageHero 
+                title={<>Campaign <span className="text-orange-100/80">Marketing</span></>}
+                subtitle="Gửi Email & Zalo ZNS · theo dõi hiệu suất thời gian thực với sức mạnh từ Trí tuệ nhân tạo."
+                showStatus={true}
+                statusText="AI Engine Active"
+                actions={[
+                    { 
+                        label: 'Chiến dịch mới', 
+                        icon: Plus, 
+                        onClick: () => { setSelectedDetailCampaign(null); setWizardInitialData(undefined); setIsWizardOpen(true); },
+                        primary: true 
+                    },
+                    { 
+                        label: 'Mẹo tăng trưởng', 
+                        icon: Lightbulb, 
+                        onClick: () => setIsTipsModalOpen(true) 
+                    }
+                ]}
+            />
 
-            {/* ── Single seamless card: dark hero + white table ── */}
-            <div className="rounded-[28px] lg:rounded-[40px] overflow-hidden shadow-2xl border border-white/10" style={{boxShadow:'0 25px 60px rgba(0,0,0,0.18), 0 0 0 1px rgba(255,255,255,0.06)'}}>
-
-                {/* ── DARK HERO ── */}
-                <div className="relative overflow-hidden" style={{background:'linear-gradient(135deg, #09101f 0%, #0f1729 25%, #161042 55%, #0d1525 80%, #07101e 100%)'}}>
-
-                    {/* Atmospheric glow orbs */}
-                    <div className="absolute -top-32 -left-20 w-96 h-96 bg-amber-500/8 rounded-full blur-[120px] pointer-events-none" />
-                    <div className="absolute -bottom-28 -right-12 w-[360px] h-[360px] bg-violet-600/12 rounded-full blur-[110px] pointer-events-none" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-28 bg-indigo-500/6 rounded-full blur-[80px] pointer-events-none" />
-                    <div className="absolute top-0 right-1/4 w-40 h-40 bg-amber-400/5 rounded-full blur-[60px] pointer-events-none" />
-
-                    {/* Subtle dot grid */}
-                    <div className="absolute inset-0 opacity-[0.035]" style={{backgroundImage:'radial-gradient(circle, #94a3b8 0.7px, transparent 0.7px)', backgroundSize:'20px 20px'}} />
-
-                    {/* Top shimmer line */}
-                    <div className="absolute top-0 left-0 right-0 h-px" style={{background:'linear-gradient(90deg,transparent 0%,rgba(245,158,11,0.5) 30%,rgba(251,191,36,0.8) 50%,rgba(245,158,11,0.5) 70%,transparent 100%)'}} />
-
-                    {/* Floating amber particles */}
-                    {[...Array(8)].map((_, i) => (
-                        <div key={i} className="absolute w-[3px] h-[3px] rounded-full pointer-events-none"
-                            style={{background: i%2===0 ? 'rgba(251,191,36,0.55)' : 'rgba(167,139,250,0.45)', left:`${6+i*12}%`, bottom:`${20+(i%3)*14}%`, animation:`float-up ${2.6+i*0.45}s ease-out ${i*0.3}s infinite`}} />
-                    ))}
-
-                    {/* Corner brackets */}
-                    <div className="absolute top-4 left-4 pointer-events-none">
-                        <div className="w-8 h-px bg-gradient-to-r from-amber-400/70 to-transparent" />
-                        <div className="h-8 w-px bg-gradient-to-b from-amber-400/70 to-transparent" />
-                    </div>
-                    <div className="absolute bottom-4 right-4 pointer-events-none flex flex-col items-end">
-                        <div className="h-8 w-px bg-gradient-to-t from-violet-400/50 to-transparent" />
-                        <div className="w-8 h-px bg-gradient-to-l from-violet-400/50 to-transparent" />
-                    </div>
-
-                    <div className="relative z-10 px-6 lg:px-10 pt-8 lg:pt-10 pb-10 lg:pb-12">
-
-                        {/* Title row */}
-                        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5 mb-8">
-                            <div className="flex-1 min-w-0">
-                                {/* Live badge */}
-                                <div className="inline-flex items-center gap-2 mb-4 pl-3 pr-4 py-1.5 rounded-full border" style={{background:'rgba(245,158,11,0.08)', borderColor:'rgba(245,158,11,0.22)', animation:'slide-in-badge 0.5s ease-out both'}}>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400" style={{animation:'blink-dot 1.2s ease-in-out infinite'}} />
-                                    <span className="text-[9px] font-black text-amber-400 uppercase tracking-[0.22em]">AI-Powered Campaign Engine</span>
-                                </div>
-
-                                <h1 className="text-2xl lg:text-[2.2rem] font-black text-white tracking-tight leading-[1.1] mb-3">
-                                    Campaign{' '}
-                                    <span style={{
-                                        background:'linear-gradient(90deg,#f59e0b 0%,#fbbf24 45%,#fde68a 75%,#fbbf24 100%)',
-                                        WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
-                                        backgroundClip:'text'
-                                    }}>Marketing</span>
-                                </h1>
-                                <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
-                                    Gửi Email &amp; Zalo ZNS · theo dõi hiệu suất{' '}
-                                    <span className="text-amber-400 font-semibold">thời gian thực</span>
-                                </p>
-                            </div>
-
-                            <div className="flex items-center gap-3 shrink-0 lg:mt-1">
-                                <button
-                                    onClick={() => setIsTipsModalOpen(true)}
-                                    className="group flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300"
-                                    style={{background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)', color:'rgba(255,255,255,0.7)'}}
-                                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background='rgba(255,255,255,0.11)'; (e.currentTarget as HTMLButtonElement).style.borderColor='rgba(245,158,11,0.4)'; (e.currentTarget as HTMLButtonElement).style.color='white'; }}
-                                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background='rgba(255,255,255,0.06)'; (e.currentTarget as HTMLButtonElement).style.borderColor='rgba(255,255,255,0.1)'; (e.currentTarget as HTMLButtonElement).style.color='rgba(255,255,255,0.7)'; }}
-                                >
-                                    <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
-                                    Mẹo tăng trưởng
-                                </button>
-                                <button
-                                    onClick={() => { setSelectedDetailCampaign(null); setWizardInitialData(undefined); setIsWizardOpen(true); }}
-                                    className="relative flex items-center gap-2 px-5 py-2.5 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 hover:scale-[1.04] active:scale-[0.97] overflow-hidden"
-                                    style={{background:'linear-gradient(135deg,#f59e0b,#f97316)', boxShadow:'0 4px 24px rgba(245,158,11,0.45), 0 0 0 1px rgba(249,115,22,0.3)'}}
-                                >
-                                    <span className="absolute inset-0 pointer-events-none" style={{background:'linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent)', animation:'shimmer-x 2.2s ease-in-out infinite'}} />
-                                    <Plus className="w-3.5 h-3.5 relative z-10" />
-                                    <span className="relative z-10">Chiến dịch mới</span>
-                                </button>
-                            </div>
+            <div className="space-y-8">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group">
+                        <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-amber-600 transition-colors">Tổng chiến dịch</p>
+                            <h3 className="text-2xl font-black text-slate-800 tracking-tight">{campaigns.length}</h3>
                         </div>
+                        <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 text-white rounded-2xl shadow-lg shadow-amber-600/10 flex items-center justify-center transition-all group-hover:scale-110">
+                            <PieChart className="w-6 h-6" />
+                        </div>
+                    </div>
 
-                        {/* 3 Stat Cards — glassmorphism on dark */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group">
+                        <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-indigo-500 transition-colors">Tổng gửi (Email/ZNS)</p>
+                            <h3 className="text-2xl font-black text-slate-800 tracking-tight">{stats.totalSent.toLocaleString()}</h3>
+                        </div>
+                        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded-2xl shadow-lg shadow-indigo-500/10 flex items-center justify-center transition-all group-hover:scale-110">
+                            <Send className="w-6 h-6" />
+                        </div>
+                    </div>
 
-                            {/* Card 1 — Email đã gửi */}
-                            <div className="group relative rounded-2xl p-5 flex items-center gap-4 overflow-hidden cursor-default transition-all duration-300 hover:-translate-y-0.5"
-                                style={{background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.1)', backdropFilter:'blur(12px)', boxShadow:'0 4px 20px rgba(0,0,0,0.25)'}}>
-                                {/* Top accent bar */}
-                                <div className="absolute top-0 left-4 right-4 h-px" style={{background:'linear-gradient(90deg,transparent,rgba(168,85,247,0.6),transparent)'}} />
-                                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                                    style={{background:'linear-gradient(135deg,rgba(168,85,247,0.06) 0%,transparent 60%)'}} />
+                    <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group">
+                        <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-emerald-500 transition-colors">Tỷ lệ mở trung bình</p>
+                            <h3 className="text-2xl font-black text-slate-800 tracking-tight">{stats.openRate}%</h3>
+                        </div>
+                        <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-2xl shadow-lg shadow-emerald-500/10 flex items-center justify-center transition-all group-hover:scale-110">
+                            <MailOpen className="w-6 h-6" />
+                        </div>
+                    </div>
 
-                                <div className="relative shrink-0">
-                                    <div className="w-12 h-12 rounded-[14px] flex items-center justify-center"
-                                        style={{background:'linear-gradient(135deg,rgba(168,85,247,0.25),rgba(124,58,237,0.35))', border:'1px solid rgba(168,85,247,0.3)', boxShadow:'0 4px 16px rgba(168,85,247,0.2)'}}>
-                                        <Send className="w-5 h-5" style={{color:'rgba(216,180,254,1)'}} />
-                                    </div>
-                                    <div className="absolute inset-0 rounded-[14px] border border-purple-400/20" style={{animation:'pulse-ring 2.5s ease-in-out infinite'}} />
-                                </div>
-
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <p className="text-[9px] font-black uppercase tracking-[0.18em]" style={{color:'rgba(148,163,184,0.8)'}}>Email đã gửi</p>
-                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md" style={{background:'rgba(168,85,247,0.15)', border:'1px solid rgba(168,85,247,0.25)'}}>
-                                            <div className="w-1 h-1 rounded-full bg-purple-400" style={{animation:'blink-dot 1.5s infinite'}} />
-                                            <span className="text-[7px] font-black text-purple-300 uppercase">Live</span>
-                                        </div>
-                                    </div>
-                                    <p className="text-[1.9rem] font-black text-white tracking-tight leading-none" style={{animation:'count-up 0.6s ease-out both', textShadow:'0 0 20px rgba(168,85,247,0.3)'}}>
-                                        {stats.totalSent.toLocaleString()}
-                                    </p>
-                                    <div className="mt-2.5 h-[3px] w-full rounded-full overflow-hidden" style={{background:'rgba(255,255,255,0.08)'}}>
-                                        <div className="h-full rounded-full" style={{background:'linear-gradient(90deg,#a855f7,#7c3aed)', width:stats.totalSent>0?'78%':'0%', transition:'width 1.6s cubic-bezier(0.4,0,0.2,1)'}} />
-                                    </div>
-                                </div>
-
-                                <div className="shrink-0 hidden lg:flex flex-col items-center gap-1 opacity-50">
-                                    <TrendingUp className="w-4 h-4 text-purple-300" />
-                                    <p className="text-[8px] font-black text-purple-300 uppercase tracking-wider">Total</p>
-                                </div>
-                            </div>
-
-                            {/* Card 2 — Tỷ lệ mở */}
-                            <div className="group relative rounded-2xl p-5 flex items-center gap-4 overflow-hidden cursor-default transition-all duration-300 hover:-translate-y-0.5"
-                                style={{background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.1)', backdropFilter:'blur(12px)', boxShadow:'0 4px 20px rgba(0,0,0,0.25)'}}>
-                                <div className="absolute top-0 left-4 right-4 h-px" style={{background:'linear-gradient(90deg,transparent,rgba(56,189,248,0.6),transparent)'}} />
-                                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                                    style={{background:'linear-gradient(135deg,rgba(56,189,248,0.06) 0%,transparent 60%)'}} />
-
-                                <div className="relative shrink-0">
-                                    <div className="w-12 h-12 rounded-[14px] flex items-center justify-center"
-                                        style={{background:'linear-gradient(135deg,rgba(56,189,248,0.25),rgba(37,99,235,0.35))', border:'1px solid rgba(56,189,248,0.3)', boxShadow:'0 4px 16px rgba(56,189,248,0.2)'}}>
-                                        <MailOpen className="w-5 h-5" style={{color:'rgba(186,230,253,1)'}} />
-                                    </div>
-                                    <div className="absolute inset-0 rounded-[14px] border border-sky-400/20" style={{animation:'pulse-ring 2.5s 0.5s ease-in-out infinite'}} />
-                                </div>
-
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <p className="text-[9px] font-black uppercase tracking-[0.18em]" style={{color:'rgba(148,163,184,0.8)'}}>Tỷ lệ mở</p>
-                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md" style={{background:'rgba(56,189,248,0.15)', border:'1px solid rgba(56,189,248,0.25)'}}>
-                                            <div className="w-1 h-1 rounded-full bg-sky-400" style={{animation:'blink-dot 1.8s infinite'}} />
-                                            <span className="text-[7px] font-black text-sky-300 uppercase">Rate</span>
-                                        </div>
-                                    </div>
-                                    <p className="text-[1.9rem] font-black text-white tracking-tight leading-none" style={{animation:'count-up 0.6s 0.1s ease-out both', textShadow:'0 0 20px rgba(56,189,248,0.25)'}}>
-                                        {stats.openRate}<span className="text-lg font-bold" style={{color:'rgba(148,163,184,0.7)'}}>%</span>
-                                    </p>
-                                    <div className="mt-2.5 h-[3px] w-full rounded-full overflow-hidden" style={{background:'rgba(255,255,255,0.08)'}}>
-                                        <div className="h-full rounded-full" style={{background:'linear-gradient(90deg,#38bdf8,#2563eb)', width:`${Math.min(Number(stats.openRate)*4,100)}%`, transition:'width 1.6s cubic-bezier(0.4,0,0.2,1) 0.2s'}} />
-                                    </div>
-                                </div>
-
-                                <div className="shrink-0 hidden lg:flex flex-col items-center gap-1 opacity-50">
-                                    <MailOpen className="w-4 h-4 text-sky-300" />
-                                    <p className="text-[8px] font-black text-sky-300 uppercase tracking-wider">Open</p>
-                                </div>
-                            </div>
-
-                            {/* Card 3 — Lượt click */}
-                            <div className="group relative rounded-2xl p-5 flex items-center gap-4 overflow-hidden cursor-default transition-all duration-300 hover:-translate-y-0.5"
-                                style={{background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.1)', backdropFilter:'blur(12px)', boxShadow:'0 4px 20px rgba(0,0,0,0.25)'}}>
-                                <div className="absolute top-0 left-4 right-4 h-px" style={{background:'linear-gradient(90deg,transparent,rgba(52,211,153,0.6),transparent)'}} />
-                                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                                    style={{background:'linear-gradient(135deg,rgba(52,211,153,0.06) 0%,transparent 60%)'}} />
-
-                                <div className="relative shrink-0">
-                                    <div className="w-12 h-12 rounded-[14px] flex items-center justify-center"
-                                        style={{background:'linear-gradient(135deg,rgba(52,211,153,0.25),rgba(13,148,136,0.35))', border:'1px solid rgba(52,211,153,0.3)', boxShadow:'0 4px 16px rgba(52,211,153,0.2)'}}>
-                                        <MousePointerClick className="w-5 h-5" style={{color:'rgba(167,243,208,1)'}} />
-                                    </div>
-                                    <div className="absolute inset-0 rounded-[14px] border border-emerald-400/20" style={{animation:'pulse-ring 2.5s 1s ease-in-out infinite'}} />
-                                </div>
-
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <p className="text-[9px] font-black uppercase tracking-[0.18em]" style={{color:'rgba(148,163,184,0.8)'}}>Lượt click link</p>
-                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md" style={{background:'rgba(52,211,153,0.15)', border:'1px solid rgba(52,211,153,0.25)'}}>
-                                            <div className="w-1 h-1 rounded-full bg-emerald-400" style={{animation:'blink-dot 1.3s infinite'}} />
-                                            <span className="text-[7px] font-black text-emerald-300 uppercase">CTR</span>
-                                        </div>
-                                    </div>
-                                    <p className="text-[1.9rem] font-black text-white tracking-tight leading-none" style={{animation:'count-up 0.6s 0.2s ease-out both', textShadow:'0 0 20px rgba(52,211,153,0.25)'}}>
-                                        {stats.totalClicked.toLocaleString()}
-                                    </p>
-                                    <div className="mt-2.5 h-[3px] w-full rounded-full overflow-hidden" style={{background:'rgba(255,255,255,0.08)'}}>
-                                        <div className="h-full rounded-full" style={{background:'linear-gradient(90deg,#34d399,#0d9488)', width:stats.totalClicked>0?'60%':'0%', transition:'width 1.6s cubic-bezier(0.4,0,0.2,1) 0.4s'}} />
-                                    </div>
-                                </div>
-
-                                <div className="shrink-0 hidden lg:flex flex-col items-center gap-1 opacity-50">
-                                    <MousePointerClick className="w-4 h-4 text-emerald-300" />
-                                    <p className="text-[8px] font-black text-emerald-300 uppercase tracking-wider">Clicks</p>
-                                </div>
-                            </div>
+                    <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group">
+                        <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-rose-500 transition-colors">Lượt Click</p>
+                            <h3 className="text-2xl font-black text-slate-800 tracking-tight">{stats.totalClicked.toLocaleString()}</h3>
+                        </div>
+                        <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-rose-700 text-white rounded-2xl shadow-lg shadow-rose-500/10 flex items-center justify-center transition-all group-hover:scale-110">
+                            <MousePointerClick className="w-6 h-6" />
                         </div>
                     </div>
                 </div>
 
-                {/* Seamless fade divider */}
-                <div className="h-px" style={{background:'linear-gradient(90deg, transparent, rgba(148,163,184,0.15) 20%, rgba(148,163,184,0.15) 80%, transparent)'}} />
-
-            {/* Table section */}
-            <div className="bg-white overflow-hidden">
+                {/* Table section */}
+                <div className="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden">
                 {/* Tabs + Search + Filter — single clean row */}
                 <div className="px-4 lg:px-6 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
                     {/* Left: Status tabs */}
@@ -637,7 +484,7 @@ const Campaigns: React.FC = () => {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 placeholder="Tìm chiến dịch..."
-                                className="w-44 pl-8 pr-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400/50 transition-all outline-none"
+                                className="w-44 pl-8 pr-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs focus:bg-white focus:ring-2 focus:ring-amber-600/20 focus:border-amber-400/50 transition-all outline-none"
                             />
                         </div>
 
@@ -707,7 +554,7 @@ const Campaigns: React.FC = () => {
 
                 )}
             </div>{/* close overflow-hidden */}
-            </div>{/* close seamless bg-white wrapper */}
+        </div>{/* close space-y-8 */}
 
             {/* Modals */}
             <CampaignWizard

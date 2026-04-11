@@ -28,9 +28,10 @@ $stmt->execute([$email]);
 $userId = $stmt->fetchColumn();
 
 if (!$userId) {
-    $stmt = $pdo->prepare("INSERT INTO users (tenant_id, email, password, role, first_name, last_name, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
-    $stmt->execute([$tenantId, $email, $hashedPassword, $role, 'Turnio', 'Dev']);
-    echo "Created User: $email\n";
+    $userId = bin2hex(random_bytes(16));
+    $stmt = $pdo->prepare("INSERT INTO users (id, username, tenant_id, email, password, role, first_name, last_name, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+    $stmt->execute([$userId, $email, $tenantId, $email, $hashedPassword, $role, 'Turnio', 'Dev']);
+    echo "Created User: $email (ID: $userId)\n";
 } else {
     // Valid logic implies we might want to reset password or tenant if requested, but for now just link
     $stmt = $pdo->prepare("UPDATE users SET tenant_id = ?, password = ?, role = ? WHERE id = ?");

@@ -31,13 +31,13 @@ const InstructionSettings: React.FC<InstructionSettingsProps> = ({
                     </div>
 
                     <div className="space-y-1.5">
-                        <div className="relative w-full group overflow-hidden rounded-[20px] border-2 border-slate-800 bg-[#1e1e1e] focus-within:border-amber-500 transition-all shadow-inner">
+                        <div className="relative w-full group overflow-hidden rounded-[20px] border-2 border-slate-800 bg-[#1e1e1e] focus-within:border-amber-600 transition-all shadow-inner">
                             <textarea
                                 value={settings.system_instruction || ''}
                                 onChange={e => setSettings({ ...settings, system_instruction: e.target.value })}
                                 rows={35}
                                 placeholder={`Bạn là tư vấn viên chuyên nghiệp về lĩnh vực ...\nTONE: Chuyên nghiệp, lịch sự, tư vấn đầy đủ nhưng đúng trọng tâm, KHÔNG emoji, KHÔNG nói kiểu ("theo dữ liệu...").\nXưng 'em', gọi khách 'anh/chị'`}
-                                className="relative w-full p-5 bg-transparent text-[11px] font-mono text-slate-300 caret-white outline-none resize-none leading-relaxed z-10 block focus:border-amber-500"
+                                className="relative w-full p-5 bg-transparent text-[11px] font-mono text-slate-300 caret-white outline-none resize-none leading-relaxed z-10 block focus:border-amber-600"
                                 style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
                             />
                         </div>
@@ -49,7 +49,7 @@ const InstructionSettings: React.FC<InstructionSettingsProps> = ({
                             className={`flex items-center justify-between cursor-pointer group select-none bg-slate-900 p-4 border border-slate-800 shadow-lg transition-all relative z-20 ${showAdvanced ? 'rounded-t-[20px] border-b-0' : 'rounded-[20px] hover:shadow-xl'}`}
                         >
                             <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-lg transition-colors ${showAdvanced ? 'bg-amber-500 text-slate-900' : 'bg-slate-800 text-slate-400 group-hover:text-amber-500'}`}>
+                                <div className={`p-2 rounded-lg transition-colors ${showAdvanced ? 'bg-amber-600 text-slate-900' : 'bg-slate-800 text-slate-400 group-hover:text-amber-600'}`}>
                                     <Settings className="w-4 h-4" />
                                 </div>
                                 <div>
@@ -70,7 +70,7 @@ const InstructionSettings: React.FC<InstructionSettingsProps> = ({
                                                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
                                                 Độ chính xác (Min Score)
                                             </label>
-                                            <span className="text-xs font-bold text-amber-500 font-mono bg-slate-800 px-2 py-0.5 rounded border border-slate-700 shadow-sm">{settings.similarity_threshold || 0.45}</span>
+                                            <span className="text-xs font-bold text-amber-600 font-mono bg-slate-800 px-2 py-0.5 rounded border border-slate-700 shadow-sm">{settings.similarity_threshold || 0.45}</span>
                                         </div>
                                         <input
                                             type="range"
@@ -79,7 +79,7 @@ const InstructionSettings: React.FC<InstructionSettingsProps> = ({
                                             step="0.05"
                                             value={settings.similarity_threshold || 0.45}
                                             onChange={e => setSettings({ ...settings, similarity_threshold: parseFloat(e.target.value) })}
-                                            className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500 relative z-10"
+                                            className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-600 relative z-10"
                                         />
                                     </div>
                                     <div className="space-y-2">
@@ -88,7 +88,7 @@ const InstructionSettings: React.FC<InstructionSettingsProps> = ({
                                                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
                                                 Số lượng kết quả (Top K)
                                             </label>
-                                            <span className="text-xs font-bold text-amber-500 font-mono bg-slate-800 px-2 py-0.5 rounded border border-slate-700 shadow-sm">{settings.top_k || 12}</span>
+                                            <span className="text-xs font-bold text-amber-600 font-mono bg-slate-800 px-2 py-0.5 rounded border border-slate-700 shadow-sm">{settings.top_k || 12}</span>
                                         </div>
                                         <input
                                             type="range"
@@ -97,7 +97,7 @@ const InstructionSettings: React.FC<InstructionSettingsProps> = ({
                                             step="1"
                                             value={settings.top_k || 12}
                                             onChange={e => setSettings({ ...settings, top_k: parseInt(e.target.value) })}
-                                            className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500 relative z-10"
+                                            className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-600 relative z-10"
                                         />
                                     </div>
                                 </div>

@@ -255,6 +255,27 @@ try {
     }
 
     // ============================================
+    // 6. LOG ROTATION (Prevent Disk Full)
+    // ============================================
+    echo "$logPrefix [6/6] Rotating large log files...\n";
+    $logRotated = 0;
+    $logDirs = [__DIR__, __DIR__ . '/_debug', __DIR__ . '/logs'];
+    foreach ($logDirs as $ldir) {
+        if (!is_dir($ldir)) continue;
+        $files = glob($ldir . '/*.log');
+        foreach ($files as $file) {
+            if (filesize($file) > 20 * 1024 * 1024) { // 20 MB Limit
+                @rename($file, $file . '.old');
+                echo "$logPrefix   Rotated: " . basename($file) . "\n";
+                $logRotated++;
+                $totalFreed += 20;
+            }
+        }
+        // Delete extremely old log backups (.old.old if exists or just let .old overwritten)
+    }
+    echo "$logPrefix   Rotated $logRotated log files.\n";
+
+    // ============================================
     // SUMMARY
     // ============================================
     echo "\n$logPrefix ========================================\n";

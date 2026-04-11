@@ -192,7 +192,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                         icon = FileText; color = 'text-slate-500 bg-slate-50'; label = 'Ghi chú';
                         break;
                     case 'form_submit': // Added for Form Submissions
-                        icon = FileText; color = 'text-amber-500 bg-amber-50'; label = 'Gửi Form';
+                        icon = FileText; color = 'text-amber-600 bg-amber-50'; label = 'Gửi Form';
                         break;
                     case 'purchase': // Added for Purchase Events
                         // @ts-ignore: ShoppingCart is now imported
@@ -218,7 +218,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                         }
                         break;
                     case 'lead_score_sync':
-                        icon = Star; color = 'text-amber-500 bg-amber-50'; label = 'Lead Scoring';
+                        icon = Star; color = 'text-amber-600 bg-amber-50'; label = 'Lead Scoring';
                         break;
                     case 'zns_sent':
                     case 'sent_zns': // Added sent_zns Alias
@@ -242,7 +242,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                         icon = Heart; color = 'text-pink-500 bg-pink-50'; label = 'Zalo Heart';
                         break;
                     case 'user_feedback':
-                        icon = Star; color = 'text-amber-500 bg-amber-50'; label = 'Zalo Feedback';
+                        icon = Star; color = 'text-amber-600 bg-amber-50'; label = 'Zalo Feedback';
                         break;
                     case 'click_zns':
                     case 'zns_clicked':
@@ -258,7 +258,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                         break;
                     case 'web_form':
                     case 'web_lead_capture':
-                        icon = FileText; color = 'text-amber-500 bg-amber-50'; label = 'Website Lead';
+                        icon = FileText; color = 'text-amber-600 bg-amber-50'; label = 'Website Lead';
                         break;
                     case 'web_scroll':
                     case 'scroll':
@@ -591,7 +591,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                             {formData.avatar ? (
                                 <img src={formData.avatar} alt="Avatar" className="w-14 h-14 md:w-16 md:h-16 rounded-[22px] md:rounded-[24px] object-cover border-2 border-slate-100 shadow-xl shadow-orange-500/10 shrink-0" />
                             ) : (
-                                <div className="w-14 h-14 md:w-16 md:h-16 rounded-[22px] md:rounded-[24px] bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-lg md:text-xl font-bold text-white shadow-xl shadow-amber-500/20 shrink-0">
+                                <div className="w-14 h-14 md:w-16 md:h-16 rounded-[22px] md:rounded-[24px] bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-lg md:text-xl font-bold text-white shadow-xl shadow-amber-600/20 shrink-0">
                                     {(formData.firstName || '?')[0]}{(formData.lastName || '')[0]}
                                 </div>
                             )}
@@ -606,12 +606,12 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                 <div className="flex items-center gap-1.5 min-w-0">
                                     <h2 className="text-xl md:text-2xl font-black text-slate-800 truncate tracking-tight">{(formData.firstName || formData.lastName) ? `${formData.firstName || ''} ${formData.lastName || ''}`.trim() : 'Chưa đặt tên'}</h2>
                                     {(Number(formData.verified) === 1) && <BadgeCheck className="w-5 h-5 md:w-6 md:h-6 text-blue-500 fill-blue-50 flex-shrink-0" />}
-                                    {formData.status === 'customer' && <BadgeCheck className="w-5 h-5 md:w-6 md:h-6 text-amber-500 fill-amber-50 flex-shrink-0" />}
+                                    {formData.status === 'customer' && <BadgeCheck className="w-5 h-5 md:w-6 md:h-6 text-amber-600 fill-amber-50 flex-shrink-0" />}
                                 </div>
                                 <Badge
                                     variant={
                                         formData.status === "active" ? "success" :
-                                            (formData.status === "unsubscribed" || formData.status === "unsub" || formData.status === "bounced" || formData.status === "complained") ? "danger" :
+                                            (formData.status === "unsubscribed" || formData.status === "bounced" || formData.status === "complained") ? "danger" :
                                                 formData.status === "lead" ? "pink" :
                                                     formData.status === "customer" ? "amber" : "neutral"
                                     }

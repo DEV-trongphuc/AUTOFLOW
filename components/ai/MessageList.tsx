@@ -598,7 +598,7 @@ const MessageList = React.memo(({
                                                                     <Loader2 className="w-2 h-2 animate-spin" />
                                                                     {/* Est. {isExpertMode ? '~5-10s' : '~2-3s'} */}
                                                                 </span>
-                                                                <span className={`text-[11px] font-medium uppercase tracking-wider ${isExpertMode ? 'text-amber-500' : 'text-brand'}`}>
+                                                                <span className={`text-[11px] font-medium uppercase tracking-wider ${isExpertMode ? 'text-amber-600' : 'text-brand'}`}>
                                                                     {isExpertMode ? 'Expert Mode' : 'Auto Mode'}
                                                                 </span>
                                                             </div>

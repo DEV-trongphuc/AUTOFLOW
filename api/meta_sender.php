@@ -98,6 +98,10 @@ function sendMetaMessage($pdo, $pageId, $psid, $messageConfig, $flowId = null, $
         return ['success' => false, 'message' => 'Empty message content'];
     }
 
+    // [FIX] Inject Custom Metadata so Webhook can 100% identify our outbound echoes
+    // (Prevents AI from accidentally pausing itself if DB App ID misconfiguration exists)
+    $payload['message']['metadata'] = "autoflow_ai_bot";
+
     // Send Request (using meta_helpers)
     $res = callMetaApi($url, 'POST', $payload);
 
@@ -119,6 +123,13 @@ function sendMetaMessage($pdo, $pageId, $psid, $messageConfig, $flowId = null, $
         // Error
         $error = $res['error']['message'] ?? 'Unknown Error';
         $code = $res['error']['code'] ?? 0;
+        
+        // [Vòng 33 FIX] Automatically suspend dead Meta tokens (Error 190 = OAuthException)
+        if ($code == 190 || $code == 10 || $code == 102) {
+            $pdo->prepare("UPDATE meta_app_configs SET status = 'inactive', updated_at = NOW() WHERE page_id = ?")->execute([$pageId]);
+            error_log("Meta Token Suspended for Page: $pageId due to API Error: $code - $error");
+        }
+
         return ['success' => false, 'message' => $error, 'code' => $code];
     }
 }

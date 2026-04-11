@@ -48,7 +48,7 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
     const [templateDeleted, setTemplateDeleted] = useState(false);
 
     // 'template' or 'html'
-    const sourceMode = config.sourceMode || (config.templateId ? 'template' : 'html');
+    const sourceMode = config.sourceMode || (config.templateId ? 'template' : (config.customHtml ? 'html' : 'template'));
 
     useEffect(() => {
         Promise.all([

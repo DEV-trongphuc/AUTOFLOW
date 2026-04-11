@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { Tag as TagIcon, Search, Trash2, Users, RefreshCw, Filter, ArrowRight, FileText, Info, Edit3, Check, X, AlertTriangle, Save, Plus, Codesandbox, Plug, Layers, Target } from 'lucide-react';
+import { Tag as TagIcon, Search, Trash2, Users, RefreshCw, Filter, ArrowRight, FileText, Info, Edit3, Check, X, AlertTriangle, Save, Plus, Codesandbox, Plug, Layers, Target, Lightbulb } from 'lucide-react';
 import { api } from '../services/storageAdapter';
 import { Subscriber } from '../types';
-import PageHeader from '../components/common/PageHeader';
+import PageHero from '../components/common/PageHero';
 import Button from '../components/common/Button';
 import toast from 'react-hot-toast';
 import Modal from '../components/common/Modal';
@@ -11,6 +11,7 @@ import ConfirmModal from '../components/common/ConfirmModal';
 import GroupDetailModal from '../components/audience/GroupDetailModal';
 import CustomerProfileModal from '../components/audience/CustomerProfileModal';
 import { CardGridSkeleton } from '../components/common/PageSkeleton';
+import { useNavigation } from '../contexts/NavigationContext';
 
 interface Tag {
     id: string;
@@ -18,8 +19,6 @@ interface Tag {
     description?: string;
     subscriber_count?: number;
 }
-
-import { useNavigation } from '../contexts/NavigationContext';
 
 const Tags: React.FC = () => {
     const { setCustomBackAction } = useNavigation();
@@ -307,21 +306,30 @@ const Tags: React.FC = () => {
     );
 
     return (
-        <div className="animate-fade-in space-y-8  mx-auto pb-40 px-4">
-            <PageHeader
-                title="Quản lý Tags"
-                description="Phân loại khách hàng tự động để cá nhân hóa chiến dịch."
-                action={
-                    <div className="flex items-center gap-3 w-full lg:w-auto">
-                        <Button onClick={fetchTags} variant="secondary" size="md" icon={RefreshCw} className={`flex-1 lg:flex-none ${loading ? 'animate-spin' : ''}`}>Đồng bộ</Button>
-                        <Button onClick={() => setIsCreateModalOpen(true)} size="md" icon={Plus} className="flex-1 lg:flex-none">Tạo nhãn</Button>
-                    </div>
-                }
+        <div className="animate-fade-in space-y-8 pb-40 px-4 lg:px-8">
+            <PageHero 
+                title={<>Tag <span className="text-orange-100/80">Classifier</span></>}
+                subtitle="Phân loại khách hàng tự động để cá nhân hóa chiến dịch và luồng Automation."
+                showStatus={true}
+                statusText="Tagging Engine Active"
+                actions={[
+                    { 
+                        label: 'Tạo nhãn', 
+                        icon: Plus, 
+                        onClick: () => setIsCreateModalOpen(true),
+                        primary: true 
+                    },
+                    { 
+                        label: 'Đồng bộ', 
+                        icon: RefreshCw, 
+                        onClick: fetchTags 
+                    }
+                ]}
             />
 
             <div className="space-y-6">
                 {/* MAIN CONTENT CONTAINER */}
-                <div className="bg-white rounded-3xl lg:rounded-[32px] border border-slate-200 shadow-sm p-4 lg:p-6 min-h-[600px]">
+                <div className="bg-white rounded-[32px] border border-slate-200 shadow-sm p-5 md:p-8 min-h-[600px]">
 
                     {/* SEARCH & STATS BAR */}
                     <div className="flex items-center justify-between gap-4 mb-8">

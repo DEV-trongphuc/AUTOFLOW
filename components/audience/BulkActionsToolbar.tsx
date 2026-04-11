@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Copy, Download, Mail, Tag, List, Trash2, Check, X } from 'lucide-react';
+import { Copy, Download, Mail, Tag, List, Trash2, Check } from 'lucide-react';
 import { Subscriber } from '../../types';
 import toast from 'react-hot-toast';
 
@@ -72,7 +72,7 @@ const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
             <th colSpan={visibleColumnsCount + 2} className="px-6 py-3">
                 <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-3">
-                        <button onClick={onToggleSelectAll} className="p-1 hover:bg-orange-100 rounded text-orange-600 transition-colors" title="Bỏ chọn tất cả">
+                        <button type="button" onClick={onToggleSelectAll} className="p-1 hover:bg-orange-100 rounded text-orange-600 transition-colors" title="Bỏ chọn tất cả">
                             <div className="relative flex items-center justify-center">
                                 <input type="checkbox" checked readOnly className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-orange-400 bg-orange-400" />
                                 <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none" />
@@ -81,13 +81,13 @@ const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
                         <span className="text-xs font-bold text-slate-700">Đã chọn <span className="text-orange-600 font-black text-sm">{selectedIds.size.toLocaleString()}</span> liên hệ</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button onClick={handleCopyEmails} className="p-2 hover:bg-white rounded-lg text-slate-500 hover:text-blue-600 hover:shadow-sm transition-all" title="Sao chép Email"><Copy className="w-4 h-4" /></button>
-                        <button onClick={handleExportCSV} className="p-2 hover:bg-white rounded-lg text-slate-500 hover:text-emerald-600 hover:shadow-sm transition-all" title="Xuất CSV"><Download className="w-4 h-4" /></button>
-                        <button onClick={handleSendEmail} className="p-2 hover:bg-white rounded-lg text-slate-500 hover:text-indigo-600 hover:shadow-sm transition-all" title="Gửi Email"><Mail className="w-4 h-4" /></button>
-                        <button onClick={onBulkTag} className="p-2 hover:bg-white rounded-lg text-slate-500 hover:text-amber-600 hover:shadow-sm transition-all" title="Gắn Tag"><Tag className="w-4 h-4" /></button>
-                        <button onClick={onBulkAddToList} className="p-2 hover:bg-white rounded-lg text-slate-500 hover:text-emerald-600 hover:shadow-sm transition-all" title="Thêm vào danh sách"><List className="w-4 h-4" /></button>
+                        <button type="button" onClick={handleCopyEmails} className="p-2 hover:bg-white rounded-lg text-slate-500 hover:text-blue-600 hover:shadow-sm transition-all" title="Sao chép Email"><Copy className="w-4 h-4" /></button>
+                        <button type="button" onClick={handleExportCSV} className="p-2 hover:bg-white rounded-lg text-slate-500 hover:text-emerald-600 hover:shadow-sm transition-all" title="Xuất CSV"><Download className="w-4 h-4" /></button>
+                        <button type="button" onClick={handleSendEmail} className="p-2 hover:bg-white rounded-lg text-slate-500 hover:text-indigo-600 hover:shadow-sm transition-all" title="Gửi Email"><Mail className="w-4 h-4" /></button>
+                        <button type="button" onClick={onBulkTag} className="p-2 hover:bg-white rounded-lg text-slate-500 hover:text-amber-600 hover:shadow-sm transition-all" title="Gắn Tag"><Tag className="w-4 h-4" /></button>
+                        <button type="button" onClick={onBulkAddToList} className="p-2 hover:bg-white rounded-lg text-slate-500 hover:text-emerald-600 hover:shadow-sm transition-all" title="Thêm vào danh sách"><List className="w-4 h-4" /></button>
                         <div className="h-4 w-px bg-orange-200 mx-1"></div>
-                        <button onClick={onBulkDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-100 text-rose-600 hover:bg-rose-50 hover:border-rose-200 rounded-lg text-xs font-bold shadow-sm transition-all">
+                        <button type="button" onClick={onBulkDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-100 text-rose-600 hover:bg-rose-50 hover:border-rose-200 rounded-lg text-xs font-bold shadow-sm transition-all">
                             <Trash2 className="w-3.5 h-3.5" />
                             <span>{isGlobalSelected ? 'Xóa TẤT CẢ' : 'Xóa nhanh'}</span>
                         </button>

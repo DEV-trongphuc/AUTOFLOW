@@ -4434,7 +4434,7 @@ const CategoryChatPage: React.FC = () => {
                                 <div className={`p-4 border-b flex items-center justify-between ${isDarkTheme ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
                                     <div className="flex items-center gap-3">
                                         <div className={`p-2 border rounded-lg ${isDarkTheme ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
-                                            <FileText className="w-5 h-5 text-amber-500" />
+                                            <FileText className="w-5 h-5 text-amber-600" />
                                         </div>
                                         <div>
                                             <h3 className={`font-bold text-sm ${isDarkTheme ? 'text-slate-100' : 'text-slate-800'}`}>{quickLookDoc.name}</h3>
@@ -4450,7 +4450,7 @@ const CategoryChatPage: React.FC = () => {
                                                 setActiveDoc(quickLookDoc);
                                                 setQuickLookDoc(null);
                                             }}
-                                            className="px-4 py-2 bg-amber-500 text-white text-xs font-bold rounded-xl hover:bg-amber-600 transition-colors"
+                                            className="px-4 py-2 bg-amber-600 text-white text-xs font-bold rounded-xl hover:bg-amber-600 transition-colors"
                                         >
                                             M? ch?nh s?a
                                         </button>

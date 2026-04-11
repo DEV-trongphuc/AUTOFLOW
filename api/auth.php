@@ -48,16 +48,42 @@ if ($method === 'POST' && $action === 'login') {
     }
 }
 
-// Check session
+// Check session/current user
 if ($method === 'GET' && $action === 'check') {
     if (isset($_SESSION['user_id'])) {
-        jsonResponse(true, [
-            'id' => $_SESSION['user_id'],
-            'username' => $_SESSION['username'],
-            'full_name' => $_SESSION['full_name']
-        ]);
+        try {
+            // Lấy dữ liệu mới nhất từ DB để đảm bảo Avatar/Role luôn đúng
+            $stmt = $pdo->prepare("SELECT id, email, name, picture, role, status FROM users WHERE id = ?");
+            $stmt->execute([$_SESSION['user_id']]);
+            $user = $stmt->fetch();
+
+            if ($user) {
+                jsonResponse(true, $user);
+            } else {
+                session_destroy();
+                jsonResponse(false, null, 'User not found');
+            }
+        } catch (Exception $e) {
+            jsonResponse(false, null, $e->getMessage());
+        }
     } else {
         jsonResponse(false, null, 'Chưa đăng nhập');
+    }
+}
+
+// Get access logs for current user (Sync real history)
+if ($method === 'GET' && $action === 'logs') {
+    if (!isset($_SESSION['user_id'])) {
+        jsonResponse(false, null, 'Unauthorized');
+    }
+    
+    try {
+        $stmt = $pdo->prepare("SELECT ip_address, device, created_at FROM user_access_logs WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
+        $stmt->execute([$_SESSION['user_id']]);
+        $logs = $stmt->fetchAll();
+        jsonResponse(true, $logs);
+    } catch (Exception $e) {
+        jsonResponse(false, null, $e->getMessage());
     }
 }
 

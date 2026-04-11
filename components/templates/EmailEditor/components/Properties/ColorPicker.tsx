@@ -167,7 +167,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange, block
                 )}
             </div>
 
-            <div className={`relative border rounded-xl p-1.5 transition-all ${isOpen ? 'ring-2 ring-amber-500 border-amber-500' : 'border-slate-200'}`}>
+            <div className={`relative border rounded-xl p-1.5 transition-all ${isOpen ? 'ring-2 ring-amber-600 border-amber-600' : 'border-slate-200'}`}>
                 {mode === 'solid' ? (
                     <div ref={triggerRef} className="flex items-center gap-2 cursor-pointer" onClick={toggleOpen}>
                         {/* Color swatch - always shows border so white is visible */}
@@ -244,7 +244,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange, block
                                             </div>
                                             <button
                                                 onClick={handleHexApply}
-                                                className="bg-amber-500 hover:bg-amber-600 text-white rounded-2xl px-4 py-2 text-[11px] font-black transition-all shadow-md active:scale-95 shrink-0"
+                                                className="bg-amber-600 hover:bg-amber-600 text-white rounded-2xl px-4 py-2 text-[11px] font-black transition-all shadow-md active:scale-95 shrink-0"
                                             >OK</button>
                                         </div>
                                         {/* Native color picker */}

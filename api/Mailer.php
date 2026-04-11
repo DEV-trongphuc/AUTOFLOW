@@ -91,7 +91,7 @@ class Mailer
                     $qaSubject .= " (Campaign ID: $campaignId)";
 
                 $qaBanner = "
-                    <div style='background-color: #fef3c7; border: 2px solid #f59e0b; padding: 15px; margin-bottom: 20px; border-radius: 8px; font-family: sans-serif; text-align: center;'>
+                    <div style='background-color: #fef3c7; border: 2px solid #d97706; padding: 15px; margin-bottom: 20px; border-radius: 8px; font-family: sans-serif; text-align: center;'>
                         <strong style='color: #92400e; font-size: 14px;'>Đây là email kiểm tra chất lượng (QA)</strong><br/>
                         <span style='color: #b45309; font-size: 11px;'>Người nhận gốc: <b>{$toEmail}</b> | " . ($flowName ? "Flow: <b>$flowName</b>" : "Campaign ID: <b>$campaignId</b>") . "</span>
                     </div>";
@@ -250,6 +250,15 @@ class Mailer
 
             $finalUrl = $originalUrl;
             $parsedUrl = parse_url($originalUrl);
+            
+            // [FIX-54] Ensure URL has a valid scheme before tracking injection.
+            // If the user entered 'www.google.com' in the email builder, parse_url 
+            // won't find a scheme. Webhook.php will later reject it as a malicious path.
+            if (empty($parsedUrl['scheme']) && strpos($finalUrl, '/') !== 0) {
+                $finalUrl = 'https://' . ltrim($finalUrl, '/');
+                $parsedUrl = parse_url($finalUrl);
+            }
+            
             $host = isset($parsedUrl['host']) ? strtolower($parsedUrl['host']) : '';
 
             $isVerified = false;

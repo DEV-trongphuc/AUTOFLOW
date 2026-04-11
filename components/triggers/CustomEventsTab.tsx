@@ -246,7 +246,7 @@ const trackCustomEvent = async () => {
                                 className="flex items-center gap-2 cursor-pointer select-none"
                             >
                                 <div className={`w-11 h-6 rounded-full p-0.5 transition-all duration-300 flex items-center ${
-                                    notificationEnabled ? 'bg-amber-500 justify-end' : 'bg-slate-300 justify-start'
+                                    notificationEnabled ? 'bg-amber-600 justify-end' : 'bg-slate-300 justify-start'
                                 }`}>
                                     <div className="w-4.5 h-4.5 w-5 h-5 bg-white rounded-full shadow-sm" />
                                 </div>
@@ -260,7 +260,7 @@ const trackCustomEvent = async () => {
                             <div className="space-y-4 bg-amber-50/50 border border-amber-100 rounded-2xl p-4 animate-in slide-in-from-top-2 duration-300">
                                 <div>
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">
-                                        <BellRing className="w-3 h-3 inline mr-1 text-amber-500" />
+                                        <BellRing className="w-3 h-3 inline mr-1 text-amber-600" />
                                         Email nhận thông báo <span className="text-slate-400 font-normal lowercase normal-case tracking-normal">(viết cách nhau bởi dấu phẩy)</span>
                                     </label>
                                     <textarea

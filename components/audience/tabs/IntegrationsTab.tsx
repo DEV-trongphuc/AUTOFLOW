@@ -22,11 +22,11 @@ const IntegrationsTab: React.FC<IntegrationsTabProps> = ({ integrations, onEdit,
                 <table className="w-full">
                     <thead className="bg-slate-50/80 border-b border-slate-200 text-left">
                         <tr>
-                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest pl-6">Tên kết nối</th>
-                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Trạng thái</th>
-                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Đồng bộ lần cuối</th>
-                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Thành viên</th>
-                            <th className="px-6 py-4 w-36 text-right pr-6">Thao tác</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest pl-6">{"T\u00EAn k\u1EBFt n\u1ED1i"}</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{"Tr\u1EA1ng th\u00E1i"}</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{"\u0110\u1ED3ng b\u1ED9 l\u1EA7n cu\u1ED1i"}</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{"Th\u00E0nh vi\u00EAn"}</th>
+                            <th className="px-6 py-4 w-36 text-right pr-6">{"Thao t\u00E1c"}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
@@ -36,8 +36,8 @@ const IntegrationsTab: React.FC<IntegrationsTabProps> = ({ integrations, onEdit,
                                     <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
                                         <Database className="w-6 h-6 text-slate-300" />
                                     </div>
-                                    <p className="text-slate-500 font-medium">Chưa có kết nối nào.</p>
-                                    <p className="text-xs text-slate-400 mt-1">Bấm "Connect App" để thêm kết nối mới.</p>
+                                    <p className="text-slate-500 font-medium">{"Ch\u01B0a c\u00F3 k\u1EBFt n\u1ED1i n\u00E0o."}</p>
+                                    <p className="text-xs text-slate-400 mt-1">{"B\u1EA5m \"Connect App\" \u0111\u1EC3 th\u00EAm k\u1EBFt n\u1ED1i m\u1EDBi."}</p>
                                 </td>
                             </tr>
                         ) : (
@@ -70,7 +70,7 @@ const IntegrationsTab: React.FC<IntegrationsTabProps> = ({ integrations, onEdit,
                                             {item.sync_status === 'syncing' ? (
                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border bg-blue-50 text-blue-600 border-blue-100">
                                                     <Loader2 className="w-3 h-3 animate-spin" />
-                                                    Đang đồng bộ
+                                                    {"\u0110\u00E3ng \u0111\u1ED3ng b\u1ED9"}
                                                 </span>
                                             ) : (
                                                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${item.status === 'active'
@@ -85,7 +85,7 @@ const IntegrationsTab: React.FC<IntegrationsTabProps> = ({ integrations, onEdit,
                                         <td className="px-6 py-5">
                                             <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
                                                 <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
-                                                {item.last_sync_at ? new Date(item.last_sync_at).toLocaleString('vi-VN') : 'Chưa đồng bộ'}
+                                                {item.last_sync_at ? new Date(item.last_sync_at).toLocaleString('vi-VN') : 'Ch\u01B0a \u0111\u1ED3ng b\u1ED9'}
                                             </div>
                                         </td>
                                         <td className="px-6 py-5 text-right font-bold text-slate-700">
@@ -105,7 +105,7 @@ const IntegrationsTab: React.FC<IntegrationsTabProps> = ({ integrations, onEdit,
                                                         ? 'text-blue-600 bg-blue-50 border border-blue-100'
                                                         : 'text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 border border-transparent'
                                                         }`}
-                                                    title={item.sync_status === 'syncing' ? 'Đang đồng bộ...' : "Chạy đồng bộ ngay (Sync Now)"}
+                                                    title={item.sync_status === 'syncing' ? '{"\u0110\u00E3ng \u0111\u1ED3ng b\u1ED9..."}' : '{"Ch\u1EA1y \u0111\u1ED3ng b\u1ED9 ngay (Sync Now)"}'}
                                                 >
                                                     {item.sync_status === 'syncing' ? (
                                                         <>
@@ -119,7 +119,7 @@ const IntegrationsTab: React.FC<IntegrationsTabProps> = ({ integrations, onEdit,
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); onCleanup(item); }}
                                                     className="p-2 text-slate-300 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-all"
-                                                    title="Dọn dẹp danh sách"
+                                                    title='{"D\u1ECDn d\u1EB9p danh s\u00E1ch"}'
                                                 >
                                                     <Eraser className="w-4 h-4" />
                                                 </button>
@@ -127,14 +127,14 @@ const IntegrationsTab: React.FC<IntegrationsTabProps> = ({ integrations, onEdit,
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); onEdit(item); }}
                                                     className="p-2 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all"
-                                                    title="Cấu hình"
+                                                    title='{"C\u1EA5u h\u00ECnh"}'
                                                 >
                                                     <Edit3 className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}
                                                     className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all"
-                                                    title="Xóa kết nối"
+                                                    title='{"X\u00F3a k\u1EBFt n\u1ED1i"}'
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>

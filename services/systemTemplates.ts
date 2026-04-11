@@ -35,7 +35,7 @@ const THEMES = {
         font: 'Helvetica, sans-serif', radius: '12px'
     },
     dark_luxury: {
-        bg: '#0F172A', card: '#1E293B', primary: '#F59E0B', text: '#F9FAFB', secText: '#9CA3AF',
+        bg: '#0F172A', card: '#1E293B', primary: '#d97706', text: '#F9FAFB', secText: '#9CA3AF',
         font: "'Playfair Display', serif", radius: '0px'
     },
     vibrant: {

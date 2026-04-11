@@ -763,7 +763,7 @@ const BadgeAction = ({ action, isDarkTheme }: { action: string; isDarkTheme?: bo
     let color = isDarkTheme ? 'bg-white/5 text-slate-400 border-slate-800' : 'bg-slate-100 text-slate-600 border-slate-200';
     if (action.includes('create')) color = isDarkTheme ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-emerald-50 text-emerald-700 border-emerald-100';
     if (action.includes('delete')) color = isDarkTheme ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-rose-50 text-rose-700 border-rose-100';
-    if (action.includes('update')) color = isDarkTheme ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-amber-50 text-amber-700 border-amber-100';
+    if (action.includes('update')) color = isDarkTheme ? 'bg-amber-600/10 text-amber-400 border-amber-600/20' : 'bg-amber-50 text-amber-700 border-amber-100';
     if (action.includes('train')) color = isDarkTheme ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : 'bg-indigo-50 text-indigo-700 border-indigo-100';
 
     return (

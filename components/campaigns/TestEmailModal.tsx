@@ -90,7 +90,7 @@ const TestEmailModal: React.FC<TestEmailModalProps> = ({
         >
             <div className="space-y-6">
                 <div className="flex flex-col items-center text-center space-y-3">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${isZns ? 'bg-blue-50 text-blue-500' : 'bg-amber-50 text-amber-500'}`}>
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${isZns ? 'bg-blue-50 text-blue-500' : 'bg-amber-50 text-amber-600'}`}>
                         {isZns ? <Smartphone className="w-8 h-8" /> : <Mail className="w-8 h-8" />}
                     </div>
                     <div>
@@ -106,7 +106,7 @@ const TestEmailModal: React.FC<TestEmailModalProps> = ({
                         value={recipient}
                         onChange={(e) => setRecipient(e.target.value)}
                         placeholder={isZns ? "84912345678" : "example@gmail.com"}
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all placeholder:text-slate-300"
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all placeholder:text-slate-300"
                         autoFocus
                     />
                 </div>

@@ -10,7 +10,7 @@ import { useEditorContext } from '../contexts/EditorContext';
 // Fallback swatches nếu usedColors chưa có giá trị
 const FALLBACK_SWATCHES = [
     '#ffffff', '#f1f5f9', '#1e293b', '#475569',
-    '#f59e0b', '#22c55e', '#3b82f6', '#ec4899',
+    '#d97706', '#22c55e', '#3b82f6', '#ec4899',
 ];
 
 interface Props {
@@ -55,7 +55,7 @@ const ColorPanel: React.FC<{
                         style={{
                             width: 14, height: 14, borderRadius: '50%',
                             background: sw,
-                            border: current === sw ? '2px solid #f59e0b' : '1px solid rgba(255,255,255,0.3)',
+                            border: current === sw ? '2px solid #d97706' : '1px solid rgba(255,255,255,0.3)',
                             cursor: 'pointer', flexShrink: 0, padding: 0,
                         }}
                         title={sw}
@@ -394,8 +394,8 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
                                             <button onClick={() => insertRow(rIdx, true)} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700"><ChevronUp className="w-3 h-3 text-slate-400" /> Chèn hàng trên</button>
                                             <button onClick={() => insertRow(rIdx, false)} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700"><ChevronDown className="w-3 h-3 text-slate-400" /> Chèn hàng dưới</button>
                                             <div className="border-t border-slate-100 my-0.5" />
-                                            <button onClick={() => moveRow(rIdx, 'up')} disabled={rIdx === 0} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronUp className="w-3 h-3 text-amber-500" /> Lên trên</button>
-                                            <button onClick={() => moveRow(rIdx, 'down')} disabled={rIdx === effectiveRows - 1} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronDown className="w-3 h-3 text-amber-500" /> Xuống dưới</button>
+                                            <button onClick={() => moveRow(rIdx, 'up')} disabled={rIdx === 0} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronUp className="w-3 h-3 text-amber-600" /> Lên trên</button>
+                                            <button onClick={() => moveRow(rIdx, 'down')} disabled={rIdx === effectiveRows - 1} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronDown className="w-3 h-3 text-amber-600" /> Xuống dưới</button>
                                             <div className="border-t border-slate-100 my-0.5" />
                                             <button onClick={() => deleteRow(rIdx)} disabled={effectiveRows <= 2} className="w-full text-left px-3 py-1.5 hover:bg-rose-50 flex items-center gap-2 text-rose-600 disabled:opacity-30"><Trash2 className="w-3 h-3" /> Xóa hàng này</button>
                                         </div>
@@ -452,7 +452,7 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
                                                             onMouseDown={e => { e.preventDefault(); e.stopPropagation(); patchCell(rIdx, cIdx, { align: a }); }}
                                                             style={{
                                                                 padding: '3px 5px', borderRadius: 6, border: 'none', cursor: 'pointer',
-                                                                background: effectiveAlign === a ? '#f59e0b' : 'transparent',
+                                                                background: effectiveAlign === a ? '#d97706' : 'transparent',
                                                                 color: effectiveAlign === a ? '#fff' : '#94a3b8',
                                                                 display: 'flex', alignItems: 'center',
                                                             }}
@@ -467,7 +467,7 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
                                                     onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setColorCell(v => !v); }}
                                                     style={{
                                                         padding: '3px 5px', borderRadius: 6, border: 'none', cursor: 'pointer',
-                                                        background: colorCell ? '#f59e0b' : 'transparent',
+                                                        background: colorCell ? '#d97706' : 'transparent',
                                                         color: colorCell ? '#fff' : '#94a3b8',
                                                         display: 'flex', alignItems: 'center',
                                                     }}
@@ -648,8 +648,8 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
                                             <button onClick={() => insertCol(cIdx, true)} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700"><ChevronLeft className="w-3 h-3 text-slate-400" /> Chèn cột trái</button>
                                             <button onClick={() => insertCol(cIdx, false)} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700"><ChevronRight className="w-3 h-3 text-slate-400" /> Chèn cột phải</button>
                                             <div className="border-t border-slate-100 my-0.5" />
-                                            <button onClick={() => moveCol(cIdx, 'left')} disabled={cIdx === 0} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronLeft className="w-3 h-3 text-amber-500" /> Sang trái</button>
-                                            <button onClick={() => moveCol(cIdx, 'right')} disabled={cIdx === effectiveCols - 1} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronRight className="w-3 h-3 text-amber-500" /> Sang phải</button>
+                                            <button onClick={() => moveCol(cIdx, 'left')} disabled={cIdx === 0} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronLeft className="w-3 h-3 text-amber-600" /> Sang trái</button>
+                                            <button onClick={() => moveCol(cIdx, 'right')} disabled={cIdx === effectiveCols - 1} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronRight className="w-3 h-3 text-amber-600" /> Sang phải</button>
                                             <div className="border-t border-slate-100 my-0.5" />
                                             <button onClick={() => deleteCol(cIdx)} disabled={effectiveCols <= 2} className="w-full text-left px-3 py-1.5 hover:bg-rose-50 flex items-center gap-2 text-rose-600 disabled:opacity-30"><Trash2 className="w-3 h-3" /> Xóa cột này</button>
                                         </div>
@@ -661,7 +661,7 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
                             <td colSpan={effectiveCols + 1} style={{ padding: 0, border: 'none' }}>
                                 <button
                                     onMouseDown={e => { e.stopPropagation(); insertRow(effectiveRows - 1, false); }}
-                                    className="w-full py-1 flex items-center justify-center gap-1 text-slate-400 hover:text-amber-500 hover:bg-amber-50 transition-colors text-[9px] font-bold"
+                                    className="w-full py-1 flex items-center justify-center gap-1 text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors text-[9px] font-bold"
                                 >
                                     <Plus className="w-3 h-3" /> Thêm hàng
                                 </button>

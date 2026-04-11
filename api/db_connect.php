@@ -17,13 +17,13 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
 if (!empty($origin)) {
-    // Reflect chính xác origin của request — bắt buộc khi credentials:include
     header("Access-Control-Allow-Origin: $origin");
-    header("Vary: Origin"); // Báo CDN/proxy không cache response này cho origin khác
 } else {
-    // Không có Origin header = server-to-server request, không cần credentials
-    header("Access-Control-Allow-Origin: *");
+    // Nếu cùng domain thì dùng host hiện tại
+    $currentHost = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://') . ($_SERVER['HTTP_HOST'] ?? 'localhost');
+    header("Access-Control-Allow-Origin: $currentHost");
 }
+header('Vary: Origin');
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
 header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Admin-Token');
@@ -76,7 +76,7 @@ $options = [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     PDO::ATTR_EMULATE_PREPARES => false,
-    PDO::ATTR_PERSISTENT => true, // ENABLE PERSISTENT CONNECTIONS FOR 10M SCALING
+    PDO::ATTR_PERSISTENT => false, // Tạm tắt persistent để tránh chiếm dụng connection ở hosting
     PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci; SET time_zone = '+07:00';"
 ];
 
@@ -98,11 +98,21 @@ function ensure_pdo_alive(&$pdo)
         // at the top of this file, the reconnect would silently use a different encoding,
         // causing garbled UTF-8 data (tiếng Việt có dấu) for any subsequent writes.
         global $dsn, $user, $pass, $options;
-        try {
-            $pdo = new PDO($dsn, $user, $pass, $options);
-        } catch (PDOException $ex) {
-            error_log("RECONNECT FAILED: " . $ex->getMessage());
+        $attempts = 0;
+        while ($attempts < 3) {
+            try {
+                $pdo = new PDO($dsn, $user, $pass, $options);
+                return; // Reconnected successfully
+            } catch (PDOException $ex) {
+                $attempts++;
+                error_log("RECONNECT FAILED (Attempt $attempts): " . $ex->getMessage());
+                sleep(2); // Wait 2s before retry
+            }
         }
+        // If all 3 attempts fail, kill the process to allow Supervisor/Cron to restart cleanly
+        // and prevent the worker from spamming the error log with 1000s of "PDO is null" errors.
+        error_log("FATAL: MySQL server has gone away. Killing worker process.");
+        exit(1); 
     }
 }
 

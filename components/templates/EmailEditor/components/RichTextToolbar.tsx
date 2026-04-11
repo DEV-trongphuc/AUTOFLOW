@@ -56,7 +56,7 @@ const SPECIAL_MERGE_TAGS = [
 
 const COLORS = [
     '#000000', '#1e293b', '#64748b', '#94a3b8', '#ffffff',
-    '#ef4444', '#f97316', '#f59e0b', '#22c55e', '#3b82f6',
+    '#ef4444', '#f97316', '#d97706', '#22c55e', '#3b82f6',
     '#6366f1', '#a855f7', '#ec4899', '#06b6d4', '#14b8a6',
 ];
 
@@ -66,7 +66,7 @@ const ToolbarBtn: React.FC<{ onClick: () => void; title: string; active?: boolea
     <button
         onMouseDown={(e) => { e.preventDefault(); onClick(); }}
         title={title}
-        className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${active ? 'bg-amber-500 text-white' : 'hover:bg-slate-700 text-slate-300 hover:text-white'}`}
+        className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${active ? 'bg-amber-600 text-white' : 'hover:bg-slate-700 text-slate-300 hover:text-white'}`}
     >
         {children}
     </button>
@@ -290,7 +290,7 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
                                                 setPreviewColor('');
                                             }
                                         }}
-                                        className="bg-amber-500 text-white rounded-lg px-2 py-1.5 text-[10px] font-bold hover:bg-amber-400 transition-colors flex-shrink-0"
+                                        className="bg-amber-600 text-white rounded-lg px-2 py-1.5 text-[10px] font-bold hover:bg-amber-400 transition-colors flex-shrink-0"
                                     >OK</button>
                                 </div>
                                 {/* Native color picker - apply ngay khi chọn, không dùng onBlur gây bug */}
@@ -334,7 +334,7 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
                         <button
                             onClick={() => { saveSelection(); closeAllDropdowns(); setShowMergeTags(v => !v); }}
                             title="Chèn biến"
-                            className="px-2 py-1 rounded-lg transition-colors text-[9px] font-black text-amber-400 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-500 flex-shrink-0"
+                            className="px-2 py-1 rounded-lg transition-colors text-[9px] font-black text-amber-400 hover:bg-amber-600/20 border border-amber-600/30 hover:border-amber-600 flex-shrink-0"
                         >BIẾN</button>
                         {showMergeTags && (
                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-slate-900 border border-slate-700 rounded-xl shadow-xl p-1 w-56 z-50 animate-in slide-in-from-bottom-2 max-h-72 overflow-y-auto">

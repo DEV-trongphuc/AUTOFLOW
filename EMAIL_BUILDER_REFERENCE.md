@@ -157,7 +157,7 @@
   content: 'Click Me',
   url: 'https://example.com',
   style: {
-    contentBackgroundColor: '#f59e0b',  // Button background
+    contentBackgroundColor: '#d97706',  // Button background
     color: '#ffffff',                   // Text color
     fontSize: '16px',
     fontWeight: 'bold',
@@ -177,13 +177,13 @@
 <tr>
   <td align="center">
     <!--[if mso]>
-    <table><tr><td align="center" style="background: #f59e0b; border-radius: 8px;">
+    <table><tr><td align="center" style="background: #d97706; border-radius: 8px;">
     <![endif]-->
     <table style="display: inline-table; width: auto;">
       <tr>
         <td style="border-radius: 8px;">
           <a href="https://example.com" 
-             style="display: block; background: #f59e0b; color: #ffffff; 
+             style="display: block; background: #d97706; color: #ffffff; 
                     padding: 12px 24px; font-size: 16px; font-weight: bold;
                     border-radius: 8px; text-decoration: none;">
             Click Me
@@ -260,7 +260,7 @@
     // ...
   ],
   style: {
-    checkIconColor: '#f59e0b',
+    checkIconColor: '#d97706',
     checkIconSize: '20',
     checkIcon: 'CheckCircle',  // CheckCircle | Star | Check | ...
     showCheckListTitle: true,
@@ -437,7 +437,7 @@
     backgroundColor: '#f8fafc',
     borderLeftWidth: '4px',
     borderStyle: 'solid',
-    borderColor: '#f59e0b',
+    borderColor: '#d97706',
     fontStyle: 'italic',
     color: '#334155',
     paddingTop: '20px',
@@ -452,7 +452,7 @@
 ```html
 <tr>
   <td>
-    <div style="border-left: 4px solid #f59e0b; 
+    <div style="border-left: 4px solid #d97706; 
                 background-color: #f8fafc; 
                 padding: 20px 25px; 
                 font-style: italic; 
@@ -513,7 +513,7 @@
   thumbnailUrl: 'https://img.youtube.com/vi/.../maxresdefault.jpg',
   style: {
     borderRadius: '12px',
-    playButtonColor: '#f59e0b'
+    playButtonColor: '#d97706'
   }
 }
 ```
@@ -534,7 +534,7 @@
           <td align="center" style="margin-top: -80px;">
             <table>
               <tr>
-                <td bgcolor="#f59e0b" 
+                <td bgcolor="#d97706" 
                     style="width: 60px; height: 60px; border-radius: 50%;">
                   <img src="https://cdn-icons-png.flaticon.com/.../375.png" 
                        width="30" height="30" style="filter: invert(1);" />
@@ -683,7 +683,7 @@ sanitizeRadius('10 20')    // → '10px 20px'
 ### 2. getIconUrl()
 ```typescript
 // Generate icon URL from icons8.com
-getIconUrl('CheckCircle', '#f59e0b')
+getIconUrl('CheckCircle', '#d97706')
 // → 'https://img.icons8.com/ios-filled/100/f59e0b/checked.png'
 
 // Supported icons: 50+ icons

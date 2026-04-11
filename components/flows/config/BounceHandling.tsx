@@ -29,7 +29,7 @@ const BounceHandling: React.FC<BounceHandlingProps> = ({ value, onChange, disabl
             desc: 'Ghi nhận lỗi nhưng vẫn cho phép khách hàng chuyển sang bước tiếp theo (Lưu ý: Hệ thống sẽ tự động bỏ qua các bước gửi Email).',
             icon: FastForward,
             color: 'text-amber-600 bg-amber-50 border-amber-200',
-            activeBorder: 'border-amber-500 ring-4 ring-amber-50',
+            activeBorder: 'border-amber-600 ring-4 ring-amber-50',
             subtext: 'Sử dụng nếu bạn có bước kiểm tra điều kiện sau đó'
         }
     ];

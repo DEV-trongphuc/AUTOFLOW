@@ -444,7 +444,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                                             Hành động này sẽ <span className="text-rose-500 font-black">XÓA TOÀN BỘ</span> lịch sử hội thoại và tin nhắn của bạn. Dữ liệu Workspace Global sẽ được giữ lại.
                                         </p>
                                     </div>
-                                    <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs font-bold text-amber-500 text-left flex items-start gap-3">
+                                    <div className="p-4 rounded-2xl bg-amber-600/10 border border-amber-600/20 text-xs font-bold text-amber-600 text-left flex items-start gap-3">
                                         <CheckCircle2 className="w-4 h-4 shrink-0" />
                                         <span>Hãy sử dụng nút "Make Global" cho các file quan trọng trong Workspace trước khi thực hiện làm mới!</span>
                                     </div>

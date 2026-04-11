@@ -17,7 +17,7 @@ type FeedbackType = 'bug' | 'suggestion' | 'praise' | 'other';
 
 const FEEDBACK_TYPES: { id: FeedbackType; label: string; icon: React.ReactNode; desc: string; color: string }[] = [
     { id: 'bug', label: 'Báo lỗi', icon: <Bug className="w-4 h-4" />, desc: 'Chức năng bị hỏng hoặc hoạt động sai', color: '#ef4444' },
-    { id: 'suggestion', label: 'Góp ý', icon: <Lightbulb className="w-4 h-4" />, desc: 'Ý tưởng cải thiện sản phẩm', color: '#f59e0b' },
+    { id: 'suggestion', label: 'Góp ý', icon: <Lightbulb className="w-4 h-4" />, desc: 'Ý tưởng cải thiện sản phẩm', color: '#d97706' },
     { id: 'praise', label: 'Khen ngợi', icon: <Heart className="w-4 h-4" />, desc: 'Điều bạn thích ở sản phẩm', color: '#10b981' },
     { id: 'other', label: 'Khác', icon: <MessageSquare className="w-4 h-4" />, desc: 'Bất kỳ phản hồi nào khác', color: '#6366f1' },
 ];

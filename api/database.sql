@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost:3306
--- Thời gian đã tạo: Th2 17, 2026 lúc 12:51 PM
+-- Thời gian đã tạo: Th4 11, 2026 lúc 02:56 PM
 -- Phiên bản máy phục vụ: 10.6.18-MariaDB-cll-lve-log
--- Phiên bản PHP: 8.4.17
+-- Phiên bản PHP: 8.4.19
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -29,7 +29,7 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `activity_buffer` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `subscriber_id` varchar(50) NOT NULL,
+  `subscriber_id` char(36) NOT NULL,
   `type` varchar(50) NOT NULL,
   `details` text DEFAULT NULL,
   `reference_id` varchar(100) DEFAULT NULL,
@@ -48,14 +48,13 @@ CREATE TABLE `activity_buffer` (
 
 CREATE TABLE `admin_logs` (
   `id` int(11) NOT NULL,
-  `admin_id` int(11) NOT NULL,
+  `admin_id` varchar(100) NOT NULL,
   `action` varchar(50) NOT NULL,
   `target_type` varchar(50) NOT NULL,
   `target_id` varchar(255) DEFAULT NULL,
   `details` text DEFAULT NULL,
   `ip_address` varchar(45) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  KEY `idx_admin_logs_target` (`target_type`, `target_id`, `created_at`)
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -84,6 +83,7 @@ CREATE TABLE `ai_chatbots` (
   `name` varchar(255) NOT NULL,
   `description` text DEFAULT NULL,
   `category_id` varchar(100) DEFAULT NULL,
+  `slug` varchar(100) DEFAULT NULL,
   `is_enabled` tinyint(1) DEFAULT 0,
   `created_at` datetime DEFAULT current_timestamp(),
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -99,12 +99,49 @@ CREATE TABLE `ai_chatbots` (
 CREATE TABLE `ai_chatbot_categories` (
   `id` varchar(100) NOT NULL,
   `name` varchar(255) NOT NULL,
-  `slug` varchar(100) DEFAULT NULL UNIQUE,
+  `slug` varchar(100) DEFAULT NULL,
+  `admin_id` varchar(100) DEFAULT NULL,
   `description` text DEFAULT NULL,
   `brand_color` varchar(50) DEFAULT '#ffa900',
   `gemini_api_key` varchar(255) DEFAULT '',
+  `bot_avatar` text DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `ai_chatbot_meta_settings`
+--
+
+CREATE TABLE `ai_chatbot_meta_settings` (
+  `id` int(11) NOT NULL,
+  `property_id` varchar(100) NOT NULL,
+  `settings_key` varchar(100) NOT NULL,
+  `settings_value` text DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `ai_chatbot_scenarios`
+--
+
+CREATE TABLE `ai_chatbot_scenarios` (
+  `id` varchar(60) NOT NULL,
+  `property_id` varchar(100) NOT NULL,
+  `title` varchar(255) NOT NULL DEFAULT '',
+  `trigger_keywords` text NOT NULL,
+  `match_mode` enum('contains','exact','regex') NOT NULL DEFAULT 'contains',
+  `reply_text` mediumtext NOT NULL,
+  `buttons` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`buttons`)),
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `priority` int(11) NOT NULL DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `flow_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`flow_data`))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -114,34 +151,44 @@ CREATE TABLE `ai_chatbot_categories` (
 --
 
 CREATE TABLE `ai_chatbot_settings` (
-  `property_id` char(36) NOT NULL,
-  `is_enabled` tinyint(1) DEFAULT 0,
+  `property_id` varchar(100) NOT NULL,
+  `is_enabled` tinyint(1) DEFAULT 1,
   `bot_name` varchar(255) DEFAULT 'AI Assistant',
   `company_name` varchar(255) DEFAULT '',
-  `brand_color` varchar(20) DEFAULT '#ffa900',
+  `brand_color` varchar(50) DEFAULT '#ffa900',
   `bot_avatar` text DEFAULT NULL,
   `welcome_msg` text DEFAULT NULL,
+  `teaser_msg` text DEFAULT NULL,
   `persona_prompt` text DEFAULT NULL,
   `gemini_api_key` varchar(255) DEFAULT NULL,
+  `model_id` varchar(100) DEFAULT 'gemini-2.0-flash',
   `quick_actions` longtext DEFAULT NULL CHECK (json_valid(`quick_actions`)),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `gemini_cache_name` varchar(255) DEFAULT NULL,
   `gemini_cache_expires_at` datetime DEFAULT NULL,
-  `chunk_size` int(11) DEFAULT 400,
-  `chunk_overlap` int(11) DEFAULT 60,
+  `chunk_size` int(11) DEFAULT 1000,
+  `chunk_overlap` int(11) DEFAULT 120,
   `system_instruction` longtext DEFAULT NULL,
   `fast_replies` longtext DEFAULT NULL CHECK (json_valid(`fast_replies`)),
-  `similarity_threshold` float DEFAULT 0.45,
+  `similarity_threshold` float DEFAULT 0.55,
   `top_k` int(11) DEFAULT 12,
-  `history_limit` int(11) DEFAULT 20,
+  `history_limit` int(11) DEFAULT 15,
   `temperature` float DEFAULT 1,
-  `max_output_tokens` int(11) DEFAULT 2048,
+  `max_output_tokens` int(11) DEFAULT 4096,
   `widget_position` varchar(50) DEFAULT 'bottom-right',
   `excluded_pages` longtext DEFAULT NULL CHECK (json_valid(`excluded_pages`)),
   `excluded_paths` longtext DEFAULT NULL CHECK (json_valid(`excluded_paths`)),
+  `auto_open_excluded_pages` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`auto_open_excluded_pages`)),
+  `auto_open_excluded_paths` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`auto_open_excluded_paths`)),
   `auto_open` tinyint(1) DEFAULT 0,
+  `notification_emails` text DEFAULT NULL,
+  `notification_cc_emails` text DEFAULT NULL,
+  `notification_subject` varchar(255) DEFAULT NULL,
   `ai_version` int(11) DEFAULT 1,
-  `intent_configs` longtext DEFAULT NULL
+  `intent_configs` longtext DEFAULT NULL,
+  `webhook_url` varchar(500) DEFAULT NULL,
+  `webhook_secret` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -152,7 +199,7 @@ CREATE TABLE `ai_chatbot_settings` (
 
 CREATE TABLE `ai_chat_queries` (
   `id` varchar(100) NOT NULL,
-  `property_id` char(36) NOT NULL,
+  `property_id` varchar(100) NOT NULL,
   `session_id` varchar(100) DEFAULT NULL,
   `query_text` text DEFAULT NULL,
   `response_text` text DEFAULT NULL,
@@ -166,15 +213,41 @@ CREATE TABLE `ai_chat_queries` (
 --
 
 CREATE TABLE `ai_conversations` (
-  `id` varchar(50) NOT NULL,
-  `visitor_id` varchar(50) DEFAULT NULL,
-  `property_id` char(36) DEFAULT NULL,
+  `id` varchar(100) NOT NULL,
+  `visitor_id` varchar(100) DEFAULT NULL,
+  `property_id` varchar(100) DEFAULT NULL,
   `status` enum('ai','human','closed') DEFAULT 'ai',
   `metadata` longtext DEFAULT NULL CHECK (json_valid(`metadata`)),
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `last_message` text DEFAULT NULL,
-  `last_message_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `last_message_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `active_scenario_id` varchar(60) DEFAULT NULL,
+  `active_node_id` varchar(100) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `ai_feedback`
+--
+
+CREATE TABLE `ai_feedback` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `org_user_id` int(10) UNSIGNED DEFAULT NULL COMMENT 'Who submitted (NULL = anonymous/guest)',
+  `category_id` varchar(64) DEFAULT NULL COMMENT 'Which AI Space category',
+  `property_id` varchar(64) DEFAULT NULL COMMENT 'Which bot/chatbot',
+  `conversation_id` varchar(128) DEFAULT NULL COMMENT 'Conversation context',
+  `type` enum('bug','suggestion','praise','other') NOT NULL DEFAULT 'other',
+  `title` varchar(255) NOT NULL,
+  `description` text NOT NULL,
+  `screenshot_url` varchar(512) DEFAULT NULL COMMENT 'Uploaded screenshot path',
+  `page_url` varchar(512) DEFAULT NULL COMMENT 'URL where feedback was submitted',
+  `user_agent` varchar(512) DEFAULT NULL,
+  `status` enum('new','in_review','resolved','closed') NOT NULL DEFAULT 'new',
+  `admin_note` text DEFAULT NULL COMMENT 'Internal admin notes',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -198,7 +271,7 @@ CREATE TABLE `ai_group_permissions` (
 
 CREATE TABLE `ai_messages` (
   `id` int(11) NOT NULL,
-  `conversation_id` varchar(50) DEFAULT NULL,
+  `conversation_id` varchar(100) DEFAULT NULL,
   `sender` enum('visitor','ai','human','system') NOT NULL DEFAULT 'visitor',
   `message` text DEFAULT NULL,
   `metadata` longtext DEFAULT NULL CHECK (json_valid(`metadata`)),
@@ -208,15 +281,31 @@ CREATE TABLE `ai_messages` (
 -- --------------------------------------------------------
 
 --
+-- Cấu trúc bảng cho bảng `ai_org_access_tokens`
+--
+
+CREATE TABLE `ai_org_access_tokens` (
+  `id` int(11) NOT NULL,
+  `user_id` varchar(36) NOT NULL,
+  `token` char(64) NOT NULL,
+  `expires_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `last_used_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Cấu trúc bảng cho bảng `ai_org_conversations`
 --
 
 CREATE TABLE `ai_org_conversations` (
-  `id` varchar(50) NOT NULL,
-  `visitor_id` varchar(50) DEFAULT NULL,
-  `user_id` varchar(50) DEFAULT NULL,
+  `id` varchar(100) NOT NULL,
+  `visitor_id` varchar(100) DEFAULT NULL,
+  `user_id` varchar(100) DEFAULT NULL,
   `user_email` varchar(191) DEFAULT NULL,
-  `property_id` char(36) DEFAULT NULL,
+  `property_id` varchar(100) DEFAULT NULL,
   `status` enum('ai','human','closed') DEFAULT 'ai',
   `is_pinned` tinyint(1) DEFAULT 0,
   `tags` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Array of strings' CHECK (json_valid(`tags`)),
@@ -226,7 +315,9 @@ CREATE TABLE `ai_org_conversations` (
   `metadata` longtext DEFAULT NULL CHECK (json_valid(`metadata`)),
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `title` varchar(255) DEFAULT NULL
+  `title` varchar(255) DEFAULT NULL,
+  `summary` text DEFAULT NULL,
+  `is_public` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -237,8 +328,8 @@ CREATE TABLE `ai_org_conversations` (
 
 CREATE TABLE `ai_org_messages` (
   `id` int(11) NOT NULL,
-  `conversation_id` varchar(50) DEFAULT NULL,
-  `sender` enum('visitor','ai','human') NOT NULL,
+  `conversation_id` varchar(100) DEFAULT NULL,
+  `sender` enum('visitor','ai','human','system') NOT NULL,
   `model` varchar(100) DEFAULT NULL,
   `tokens` int(11) DEFAULT 0,
   `processing_time` float DEFAULT NULL COMMENT 'Seconds taken',
@@ -252,15 +343,35 @@ CREATE TABLE `ai_org_messages` (
 -- --------------------------------------------------------
 
 --
+-- Cấu trúc bảng cho bảng `ai_org_refresh_tokens`
+--
+
+CREATE TABLE `ai_org_refresh_tokens` (
+  `id` int(11) NOT NULL,
+  `user_id` varchar(36) NOT NULL,
+  `token` char(64) NOT NULL,
+  `expires_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `device_info` varchar(255) DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `last_used_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Cấu trúc bảng cho bảng `ai_org_users`
 --
 
 CREATE TABLE `ai_org_users` (
   `id` int(11) NOT NULL,
-  `user_id` int(11) DEFAULT NULL COMMENT 'Link to main users table if applicable',
+  `user_id` varchar(100) DEFAULT NULL,
+  `admin_id` varchar(100) DEFAULT NULL COMMENT 'Autoflow platform owner/admin ID — used for org isolation',
   `email` varchar(191) NOT NULL,
   `password_hash` varchar(255) DEFAULT NULL,
   `full_name` varchar(255) DEFAULT NULL,
+  `gender` enum('male','female','other') DEFAULT NULL,
   `role` enum('admin','assistant','user') DEFAULT 'user',
   `status` enum('active','banned','warning') DEFAULT 'active',
   `status_reason` text DEFAULT NULL,
@@ -274,42 +385,46 @@ CREATE TABLE `ai_org_users` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `ai_rag_search_cache`
+-- Cấu trúc bảng cho bảng `ai_org_user_categories`
 --
 
-CREATE TABLE `ai_rag_search_cache` (
-  `query_hash` char(32) NOT NULL,
-  `property_id` char(36) DEFAULT NULL,
-  `results` longtext DEFAULT NULL CHECK (json_valid(`results`)),
+CREATE TABLE `ai_org_user_categories` (
+  `id` int(11) NOT NULL,
+  `user_id` varchar(100) NOT NULL,
+  `category_id` varchar(100) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `ai_settings`
+-- Cấu trúc bảng cho bảng `ai_pdf_chunk_results`
 --
 
-CREATE TABLE `ai_settings` (
-  `property_id` char(36) NOT NULL,
-  `is_enabled` tinyint(1) DEFAULT 0,
-  `bot_name` varchar(255) DEFAULT '',
-  `company_name` varchar(255) DEFAULT '',
-  `brand_color` varchar(50) DEFAULT '#ffa900',
-  `bot_avatar` text DEFAULT NULL,
-  `welcome_msg` text DEFAULT NULL,
-  `persona_prompt` text DEFAULT NULL,
-  `gemini_api_key` varchar(255) DEFAULT '',
-  `quick_actions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`quick_actions`)),
-  `system_instruction` text DEFAULT NULL,
-  `fast_replies` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`fast_replies`)),
-  `similarity_threshold` float DEFAULT 0.55,
-  `top_k` int(11) DEFAULT 12,
-  `history_limit` int(11) DEFAULT 15,
-  `chunk_size` int(11) DEFAULT 1000,
-  `chunk_overlap` int(11) DEFAULT 120,
-  `gemini_cache_name` varchar(255) DEFAULT NULL,
-  `gemini_cache_expires_at` datetime DEFAULT NULL
+CREATE TABLE `ai_pdf_chunk_results` (
+  `id` varchar(50) NOT NULL,
+  `doc_id` varchar(50) NOT NULL,
+  `chunk_index` int(11) NOT NULL,
+  `page_start` int(11) NOT NULL,
+  `page_end` int(11) NOT NULL,
+  `chapters_json` mediumtext DEFAULT NULL,
+  `status` enum('pending','done','error') DEFAULT 'pending',
+  `error_message` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp() COMMENT 'Thời gian cập nhật trạng thái chunk'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `ai_rag_search_cache`
+--
+
+CREATE TABLE `ai_rag_search_cache` (
+  `query_hash` char(32) NOT NULL,
+  `property_id` varchar(100) DEFAULT NULL,
+  `results` longtext DEFAULT NULL CHECK (json_valid(`results`)),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -320,7 +435,7 @@ CREATE TABLE `ai_settings` (
 
 CREATE TABLE `ai_suggested_links` (
   `id` int(11) NOT NULL,
-  `property_id` char(36) DEFAULT NULL,
+  `property_id` varchar(100) DEFAULT NULL,
   `url` text DEFAULT NULL,
   `source_url` text DEFAULT NULL,
   `title` text DEFAULT NULL,
@@ -336,7 +451,7 @@ CREATE TABLE `ai_suggested_links` (
 
 CREATE TABLE `ai_term_stats` (
   `term` varchar(100) NOT NULL,
-  `property_id` char(36) NOT NULL,
+  `property_id` varchar(100) NOT NULL,
   `df` int(11) DEFAULT 0,
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -348,25 +463,28 @@ CREATE TABLE `ai_term_stats` (
 --
 
 CREATE TABLE `ai_training_chunks` (
-  `id` char(36) NOT NULL,
-  `property_id` char(36) DEFAULT NULL,
-  `doc_id` char(36) NOT NULL,
+  `id` varchar(100) NOT NULL,
+  `property_id` varchar(100) DEFAULT NULL,
+  `doc_id` varchar(100) NOT NULL,
   `content` longtext DEFAULT NULL,
   `metadata_text` longtext DEFAULT NULL,
-  `embedding` longtext NOT NULL COMMENT 'JSON array of float embeddings',
+  `embedding` longtext DEFAULT NULL COMMENT 'JSON array of float embeddings',
   `embedding_binary` longblob DEFAULT NULL,
   `section_name` varchar(255) DEFAULT NULL,
   `sub_section_name` varchar(255) DEFAULT NULL,
-  `chapter_title` varchar(255) DEFAULT NULL,
-  `section_title` varchar(255) DEFAULT NULL,
-  `page_start` int(11) DEFAULT NULL,
-  `page_end` int(11) DEFAULT NULL,
   `tags` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `priority_level` int(11) DEFAULT 0,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `vector_norm` double DEFAULT 0,
   `relevance_boost` int(11) DEFAULT 0,
-  `token_count` varchar(255) DEFAULT NULL
+  `token_count` int(11) DEFAULT 0,
+  `page_start` int(11) DEFAULT NULL,
+  `page_end` int(11) DEFAULT NULL,
+  `chapter_index` int(11) DEFAULT NULL,
+  `chapter_title` varchar(500) DEFAULT NULL,
+  `section_title` varchar(500) DEFAULT NULL,
+  `chunk_index` int(11) DEFAULT 0,
+  `total_chunks` int(11) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -376,24 +494,29 @@ CREATE TABLE `ai_training_chunks` (
 --
 
 CREATE TABLE `ai_training_docs` (
-  `id` char(36) NOT NULL,
-  `parent_id` varchar(50) DEFAULT '0',
-  `property_id` char(36) DEFAULT NULL,
+  `id` varchar(100) NOT NULL,
+  `parent_id` varchar(100) DEFAULT '0',
+  `property_id` varchar(100) DEFAULT NULL,
   `name` varchar(255) NOT NULL,
   `source_type` varchar(50) DEFAULT 'manual',
   `version` int(11) DEFAULT 1,
   `is_active` tinyint(1) DEFAULT 1,
-  `status` enum('pending','processing','trained','error') DEFAULT 'pending',
+  `status` enum('pending','processing','trained','error') NOT NULL DEFAULT 'pending',
   `priority` int(11) DEFAULT 0,
   `content` longtext DEFAULT NULL,
   `tags` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`tags`)),
   `metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  `book_title` varchar(255) DEFAULT NULL,
-  `book_author` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `chatbot_id` varchar(255) DEFAULT NULL,
-  `filename` varchar(255) DEFAULT NULL
+  `chatbot_id` varchar(100) DEFAULT NULL,
+  `filename` varchar(255) DEFAULT NULL,
+  `error_message` text DEFAULT NULL,
+  `type` enum('url','text','file','folder','sitemap') DEFAULT 'text',
+  `book_title` varchar(500) DEFAULT NULL,
+  `book_author` varchar(255) DEFAULT NULL,
+  `total_pages` int(11) DEFAULT NULL,
+  `is_global_workspace` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Dùng file này làm knowledge base toàn cục cho mọi cuộc chat',
+  `uploaded_by` varchar(100) DEFAULT NULL COMMENT 'Email/tên người upload'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -459,6 +582,7 @@ CREATE TABLE `ai_workspace_files` (
   `file_type` varchar(100) NOT NULL,
   `file_size` int(11) NOT NULL,
   `file_url` text NOT NULL,
+  `source` varchar(50) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -472,7 +596,8 @@ CREATE TABLE `ai_workspace_versions` (
   `id` int(11) NOT NULL,
   `workspace_file_id` int(11) NOT NULL,
   `content` longtext NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `version_name` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -534,7 +659,9 @@ CREATE TABLE `campaign_reminders` (
   `delay_hours` int(11) DEFAULT 0,
   `scheduled_at` datetime DEFAULT NULL,
   `subject` varchar(255) DEFAULT NULL,
-  `template_id` char(36) DEFAULT NULL
+  `template_id` char(36) DEFAULT NULL,
+  `sender_email` varchar(191) DEFAULT NULL COMMENT 'Email người gửi cho reminder (fallback từ campaign nếu NULL)',
+  `sender_name` varchar(255) DEFAULT NULL COMMENT 'Tên người gửi cho reminder (fallback từ campaign nếu NULL)'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -546,7 +673,10 @@ CREATE TABLE `campaign_reminders` (
 CREATE TABLE `custom_events` (
   `id` char(36) NOT NULL,
   `name` varchar(255) NOT NULL,
-  `created_at` timestamp NULL DEFAULT current_timestamp()
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `notification_enabled` tinyint(1) DEFAULT 0,
+  `notification_emails` text DEFAULT NULL,
+  `notification_subject` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -578,7 +708,8 @@ CREATE TABLE `flows` (
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `stat_zns_sent` int(11) DEFAULT 0 COMMENT 'Total ZNS messages sent',
   `stat_zns_failed` int(11) DEFAULT 0 COMMENT 'Total ZNS messages failed',
-  `trigger_type` varchar(50) DEFAULT NULL
+  `trigger_type` varchar(50) DEFAULT NULL,
+  `stat_zalo_sent` int(11) NOT NULL DEFAULT 0 COMMENT 'Total Zalo CS messages sent'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -597,7 +728,7 @@ CREATE TABLE `flow_enrollments` (
   `context` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`context`)),
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `enrolled_at` varchar(255) DEFAULT NULL
+  `enrolled_at` datetime DEFAULT NULL COMMENT 'Thời gian subscriber vào flow'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -619,6 +750,21 @@ CREATE TABLE `flow_event_queue` (
 -- --------------------------------------------------------
 
 --
+-- Cấu trúc bảng cho bảng `flow_snapshots`
+--
+
+CREATE TABLE `flow_snapshots` (
+  `id` varchar(36) NOT NULL,
+  `flow_id` varchar(255) NOT NULL,
+  `label` varchar(500) NOT NULL,
+  `flow_data` longtext NOT NULL,
+  `created_by` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Cấu trúc bảng cho bảng `forms`
 --
 
@@ -627,7 +773,11 @@ CREATE TABLE `forms` (
   `name` varchar(255) NOT NULL,
   `target_list_id` char(36) DEFAULT NULL,
   `fields_json` longtext DEFAULT NULL CHECK (json_valid(`fields_json`)),
-  `created_at` timestamp NULL DEFAULT current_timestamp()
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `notification_enabled` tinyint(1) DEFAULT 0,
+  `notification_emails` text DEFAULT NULL,
+  `notification_cc_emails` text DEFAULT NULL,
+  `notification_subject` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -641,7 +791,8 @@ CREATE TABLE `geoip_blocks` (
   `ip_to` int(10) UNSIGNED NOT NULL,
   `country_code` char(2) DEFAULT NULL,
   `country_name` varchar(64) DEFAULT NULL,
-  `city_name` varchar(64) DEFAULT NULL
+  `city_name` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`ip_from`,`ip_to`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -651,7 +802,7 @@ CREATE TABLE `geoip_blocks` (
 --
 
 CREATE TABLE `global_assets` (
-  `id` int(11) NOT NULL,
+  `id` varchar(100) NOT NULL,
   `name` varchar(255) NOT NULL,
   `unique_name` varchar(255) NOT NULL,
   `url` text NOT NULL,
@@ -663,7 +814,7 @@ CREATE TABLE `global_assets` (
   `property_id` varchar(100) DEFAULT NULL,
   `conversation_id` varchar(100) DEFAULT NULL,
   `session_id` varchar(100) DEFAULT NULL,
-  `admin_id` int(11) DEFAULT NULL,
+  `admin_id` varchar(100) DEFAULT NULL,
   `metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`metadata`)),
   `is_deleted` tinyint(1) DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -700,6 +851,7 @@ CREATE TABLE `lists` (
   `source` varchar(100) DEFAULT 'Manual',
   `type` enum('static','sync') DEFAULT 'static',
   `subscriber_count` int(11) DEFAULT 0,
+  `phone_count` int(11) DEFAULT 0,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -711,7 +863,7 @@ CREATE TABLE `lists` (
 --
 
 CREATE TABLE `mail_delivery_logs` (
-  `id` int(11) NOT NULL,
+  `id` bigint(20) UNSIGNED NOT NULL,
   `recipient` varchar(191) DEFAULT NULL,
   `subject` varchar(255) DEFAULT NULL,
   `campaign_id` char(36) DEFAULT NULL,
@@ -720,7 +872,7 @@ CREATE TABLE `mail_delivery_logs` (
   `status` enum('success','failed') DEFAULT NULL,
   `error_message` text DEFAULT NULL,
   `sent_at` timestamp NULL DEFAULT current_timestamp(),
-  `subscriber_id` varchar(255) DEFAULT NULL
+  `subscriber_id` char(36) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -877,7 +1029,10 @@ CREATE TABLE `meta_subscribers` (
 CREATE TABLE `purchase_events` (
   `id` char(36) NOT NULL,
   `name` varchar(255) NOT NULL,
-  `created_at` timestamp NULL DEFAULT current_timestamp()
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `notification_enabled` tinyint(1) DEFAULT 0,
+  `notification_emails` text DEFAULT NULL,
+  `notification_subject` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -887,7 +1042,7 @@ CREATE TABLE `purchase_events` (
 --
 
 CREATE TABLE `queue_jobs` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+  `id` varchar(64) NOT NULL,
   `queue` varchar(50) NOT NULL DEFAULT 'default',
   `payload` longtext NOT NULL,
   `attempts` tinyint(3) UNSIGNED NOT NULL DEFAULT 0,
@@ -929,7 +1084,8 @@ CREATE TABLE `segments` (
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `ai_analysis` longtext DEFAULT NULL,
-  `ai_analysis_at` timestamp NULL DEFAULT NULL
+  `ai_analysis_at` timestamp NULL DEFAULT NULL,
+  `synced_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -952,7 +1108,7 @@ CREATE TABLE `segment_count_update_queue` (
 CREATE TABLE `segment_exclusions` (
   `id` int(11) NOT NULL,
   `segment_id` varchar(50) NOT NULL,
-  `subscriber_id` varchar(50) NOT NULL,
+  `subscriber_id` char(36) NOT NULL,
   `excluded_at` timestamp NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -968,7 +1124,7 @@ CREATE TABLE `spam_cooldown` (
   `cooldown_until` datetime DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -978,7 +1134,7 @@ CREATE TABLE `spam_cooldown` (
 
 CREATE TABLE `stats_update_buffer` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `target_table` enum('campaigns','flows','subscribers') NOT NULL,
+  `target_table` varchar(50) NOT NULL,
   `target_id` char(36) NOT NULL,
   `column_name` varchar(50) NOT NULL,
   `increment` int(11) DEFAULT 1,
@@ -1045,7 +1201,7 @@ CREATE TABLE `subscribers` (
 --
 
 CREATE TABLE `subscriber_activity` (
-  `id` int(11) NOT NULL,
+  `id` bigint(20) UNSIGNED NOT NULL,
   `subscriber_id` char(36) NOT NULL,
   `type` varchar(50) NOT NULL,
   `reference_id` char(36) DEFAULT NULL,
@@ -1061,7 +1217,8 @@ CREATE TABLE `subscriber_activity` (
   `os` varchar(50) DEFAULT NULL,
   `browser` varchar(50) DEFAULT NULL,
   `location` varchar(255) DEFAULT NULL,
-  `points_awarded` int(11) DEFAULT 0
+  `points_awarded` int(11) DEFAULT 0,
+  `variation` varchar(10) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1075,7 +1232,7 @@ CREATE TABLE `subscriber_flow_states` (
   `subscriber_id` char(36) NOT NULL,
   `flow_id` char(36) NOT NULL,
   `step_id` char(36) NOT NULL,
-  `status` enum('waiting','processing','completed','failed') DEFAULT 'waiting',
+  `status` enum('waiting','processing','completed','failed','unsubscribed') DEFAULT 'waiting',
   `scheduled_at` datetime NOT NULL,
   `last_error` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
@@ -1159,7 +1316,7 @@ CREATE TABLE `system_logs` (
 
 CREATE TABLE `system_settings` (
   `key` varchar(255) NOT NULL,
-  `value` text DEFAULT NULL,
+  `value` mediumtext DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -1218,7 +1375,7 @@ CREATE TABLE `template_groups` (
 
 CREATE TABLE `timestamp_buffer` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `subscriber_id` varchar(50) NOT NULL,
+  `subscriber_id` char(36) NOT NULL,
   `column_name` varchar(50) NOT NULL,
   `timestamp_value` datetime NOT NULL,
   `processed` tinyint(1) DEFAULT 0,
@@ -1237,7 +1394,8 @@ CREATE TABLE `tracking_unique_cache` (
   `target_type` enum('campaign','flow','reminder') NOT NULL,
   `target_id` char(36) NOT NULL,
   `event_type` enum('open','click') NOT NULL,
-  `created_at` timestamp NULL DEFAULT current_timestamp()
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `reference_key` varchar(500) NOT NULL DEFAULT 'general'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1405,6 +1563,24 @@ CREATE TABLE `web_visitors` (
 -- --------------------------------------------------------
 
 --
+-- Cấu trúc bảng cho bảng `zalo_activity_buffer`
+--
+
+CREATE TABLE `zalo_activity_buffer` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `subscriber_id` char(36) NOT NULL,
+  `type` varchar(50) NOT NULL,
+  `reference_id` varchar(100) DEFAULT NULL,
+  `reference_name` varchar(255) DEFAULT NULL,
+  `details` text DEFAULT NULL,
+  `zalo_msg_id` varchar(100) DEFAULT NULL,
+  `processed` tinyint(1) DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Cấu trúc bảng cho bảng `zalo_automation_scenarios`
 --
 
@@ -1441,7 +1617,7 @@ CREATE TABLE `zalo_automation_scenarios` (
 
 CREATE TABLE `zalo_broadcasts` (
   `id` varchar(32) NOT NULL,
-  `oa_config_id` int(11) NOT NULL,
+  `oa_config_id` varchar(36) NOT NULL COMMENT 'Reference to zalo_oa_configs.id',
   `title` varchar(255) DEFAULT NULL,
   `content` text DEFAULT NULL,
   `image_url` text DEFAULT NULL,
@@ -1492,7 +1668,7 @@ CREATE TABLE `zalo_delivery_logs` (
   `subscriber_id` varchar(36) NOT NULL COMMENT 'Reference to subscriber',
   `oa_config_id` varchar(36) NOT NULL COMMENT 'Reference to OA config',
   `template_id` varchar(255) DEFAULT NULL COMMENT 'Zalo template ID used',
-  `phone_number` varchar(20) NOT NULL COMMENT 'Recipient phone number',
+  `phone_number` varchar(20) DEFAULT NULL COMMENT 'Recipient phone number',
   `template_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Actual data sent in the message' CHECK (json_valid(`template_data`)),
   `status` enum('pending','sent','failed','invalid_phone','quota_exceeded','time_restricted','delivered','seen') DEFAULT 'pending',
   `zalo_msg_id` varchar(255) DEFAULT NULL COMMENT 'Zalo message ID from API response',
@@ -1541,7 +1717,7 @@ CREATE TABLE `zalo_oa_configs` (
   `id` varchar(36) NOT NULL,
   `name` varchar(255) NOT NULL COMMENT 'Friendly name for the OA',
   `avatar` varchar(255) DEFAULT NULL,
-  `oa_id` varchar(255) NOT NULL COMMENT 'Zalo Official Account ID',
+  `oa_id` varchar(255) DEFAULT NULL COMMENT 'Zalo Official Account ID',
   `app_id` varchar(255) NOT NULL COMMENT 'Zalo App ID',
   `app_secret` text NOT NULL COMMENT 'Zalo App Secret (encrypted)',
   `pkce_verifier` varchar(255) DEFAULT NULL,
@@ -1575,7 +1751,7 @@ CREATE TABLE `zalo_subscribers` (
   `zalo_list_id` char(36) NOT NULL,
   `zalo_user_id` varchar(100) NOT NULL,
   `oa_id` varchar(100) DEFAULT NULL,
-  `subscriber_id` int(11) DEFAULT NULL,
+  `subscriber_id` char(36) DEFAULT NULL,
   `display_name` varchar(100) DEFAULT 'Zalo User',
   `avatar` varchar(500) DEFAULT NULL,
   `phone_number` varchar(20) DEFAULT NULL,
@@ -1675,17 +1851,35 @@ ALTER TABLE `ai_allowed_emails`
 --
 ALTER TABLE `ai_chatbots`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_slug` (`slug`),
   ADD KEY `idx_enabled` (`is_enabled`),
   ADD KEY `idx_created` (`created_at`),
   ADD KEY `idx_category` (`category_id`),
-  ADD KEY `idx_status` (`status`);
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_chatbot_slug` (`slug`);
 
 --
 -- Chỉ mục cho bảng `ai_chatbot_categories`
 --
 ALTER TABLE `ai_chatbot_categories`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `slug` (`slug`);
+  ADD UNIQUE KEY `slug` (`slug`),
+  ADD KEY `idx_slug_admin` (`slug`,`admin_id`);
+
+--
+-- Chỉ mục cho bảng `ai_chatbot_meta_settings`
+--
+ALTER TABLE `ai_chatbot_meta_settings`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_prop_key` (`property_id`,`settings_key`);
+
+--
+-- Chỉ mục cho bảng `ai_chatbot_scenarios`
+--
+ALTER TABLE `ai_chatbot_scenarios`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_property` (`property_id`),
+  ADD KEY `idx_active` (`property_id`,`is_active`,`priority`);
 
 --
 -- Chỉ mục cho bảng `ai_chatbot_settings`
@@ -1715,11 +1909,20 @@ ALTER TABLE `ai_conversations`
   ADD KEY `idx_last_message_at` (`last_message_at`),
   ADD KEY `idx_visitor_prop_status` (`visitor_id`,`property_id`,`status`),
   ADD KEY `idx_conv_updated` (`updated_at`),
-  ADD KEY `idx_conv_property` (`property_id`),
   ADD KEY `idx_prop_visitor` (`property_id`,`visitor_id`),
-  ADD KEY `idx_last_msg_at` (`last_message_at`),
-  ADD KEY `idx_property_last_message` (`property_id`,`last_message_at`),
-  ADD KEY `idx_visitor_id` (`visitor_id`(20));
+  ADD KEY `idx_conv_prop_time` (`property_id`,`created_at`);
+ALTER TABLE `ai_conversations` ADD FULLTEXT KEY `ft_conv_search` (`last_message`);
+
+--
+-- Chỉ mục cho bảng `ai_feedback`
+--
+ALTER TABLE `ai_feedback`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_type` (`type`),
+  ADD KEY `idx_category` (`category_id`),
+  ADD KEY `idx_org_user` (`org_user_id`),
+  ADD KEY `idx_created` (`created_at`);
 
 --
 -- Chỉ mục cho bảng `ai_group_permissions`
@@ -1741,7 +1944,17 @@ ALTER TABLE `ai_messages`
   ADD KEY `idx_conv_created` (`conversation_id`,`created_at`),
   ADD KEY `idx_msg_conversation` (`conversation_id`),
   ADD KEY `idx_msg_created` (`created_at`),
-  ADD KEY `idx_conversation_id_desc` (`conversation_id`,`id`);
+  ADD KEY `idx_conversation_id_desc` (`conversation_id`,`id`),
+  ADD KEY `idx_msg_conv_sender_time` (`conversation_id`,`sender`,`created_at`);
+
+--
+-- Chỉ mục cho bảng `ai_org_access_tokens`
+--
+ALTER TABLE `ai_org_access_tokens`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `token` (`token`),
+  ADD KEY `idx_user_id` (`user_id`),
+  ADD KEY `idx_expires_at` (`expires_at`);
 
 --
 -- Chỉ mục cho bảng `ai_org_conversations`
@@ -1758,8 +1971,9 @@ ALTER TABLE `ai_org_conversations`
   ADD KEY `idx_updated_at` (`updated_at`),
   ADD KEY `idx_user_updated` (`user_id`,`updated_at`),
   ADD KEY `idx_prop_status` (`property_id`,`status`),
-  ADD KEY `idx_property_updated` (`property_id`,`updated_at`),
-  ADD KEY `idx_status_updated` (`status`,`updated_at`);
+  ADD KEY `idx_status_updated` (`status`,`updated_at`),
+  ADD KEY `idx_org_conv_prop_time` (`property_id`,`created_at`);
+ALTER TABLE `ai_org_conversations` ADD FULLTEXT KEY `ft_org_conv_search` (`title`,`last_message`);
 
 --
 -- Chỉ mục cho bảng `ai_org_messages`
@@ -1768,7 +1982,18 @@ ALTER TABLE `ai_org_messages`
   ADD PRIMARY KEY (`id`),
   ADD KEY `conversation_id` (`conversation_id`),
   ADD KEY `idx_conv_created` (`conversation_id`,`created_at`),
-  ADD KEY `idx_conversation_id_desc` (`conversation_id`,`id`);
+  ADD KEY `idx_conversation_id_desc` (`conversation_id`,`id`),
+  ADD KEY `idx_org_msg_conv_time` (`conversation_id`,`created_at`);
+ALTER TABLE `ai_org_messages` ADD FULLTEXT KEY `ft_message_search` (`message`);
+
+--
+-- Chỉ mục cho bảng `ai_org_refresh_tokens`
+--
+ALTER TABLE `ai_org_refresh_tokens`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `token` (`token`),
+  ADD KEY `idx_user_id` (`user_id`),
+  ADD KEY `idx_expires_at` (`expires_at`);
 
 --
 -- Chỉ mục cho bảng `ai_org_users`
@@ -1776,7 +2001,23 @@ ALTER TABLE `ai_org_messages`
 ALTER TABLE `ai_org_users`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `email` (`email`),
-  ADD KEY `user_id` (`user_id`);
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `idx_admin_id` (`admin_id`);
+
+--
+-- Chỉ mục cho bảng `ai_org_user_categories`
+--
+ALTER TABLE `ai_org_user_categories`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `idx_user_cat` (`user_id`,`category_id`);
+
+--
+-- Chỉ mục cho bảng `ai_pdf_chunk_results`
+--
+ALTER TABLE `ai_pdf_chunk_results`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_doc_chunk` (`doc_id`,`chunk_index`),
+  ADD KEY `idx_doc_id` (`doc_id`);
 
 --
 -- Chỉ mục cho bảng `ai_rag_search_cache`
@@ -1785,13 +2026,8 @@ ALTER TABLE `ai_rag_search_cache`
   ADD PRIMARY KEY (`query_hash`),
   ADD KEY `property_id` (`property_id`),
   ADD KEY `idx_rag_hash` (`query_hash`),
-  ADD KEY `idx_rag_created` (`created_at`);
-
---
--- Chỉ mục cho bảng `ai_settings`
---
-ALTER TABLE `ai_settings`
-  ADD PRIMARY KEY (`property_id`);
+  ADD KEY `idx_rag_created` (`created_at`),
+  ADD KEY `idx_rag_perf` (`property_id`,`created_at`);
 
 --
 -- Chỉ mục cho bảng `ai_suggested_links`
@@ -1815,10 +2051,9 @@ ALTER TABLE `ai_training_chunks`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_doc_id` (`doc_id`),
   ADD KEY `idx_property_chunks` (`property_id`),
-  ADD KEY `idx_chunks_prop` (`property_id`),
-  ADD KEY `idx_chunks_doc` (`doc_id`),
-  ADD KEY `idx_chunks_property` (`property_id`);
+  ADD KEY `idx_book_meta` (`page_start`,`chapter_index`);
 ALTER TABLE `ai_training_chunks` ADD FULLTEXT KEY `content_fts` (`content`);
+ALTER TABLE `ai_training_chunks` ADD FULLTEXT KEY `ft_chunk_search` (`content`,`metadata_text`);
 
 --
 -- Chỉ mục cho bảng `ai_training_docs`
@@ -1829,7 +2064,7 @@ ALTER TABLE `ai_training_docs`
   ADD KEY `idx_chatbot_id` (`chatbot_id`),
   ADD KEY `idx_status` (`status`),
   ADD KEY `idx_docs_property` (`property_id`),
-  ADD KEY `idx_docs_status` (`status`);
+  ADD KEY `idx_global_workspace` (`property_id`,`is_global_workspace`,`is_active`);
 ALTER TABLE `ai_training_docs` ADD FULLTEXT KEY `ft_content` (`name`,`content`);
 
 --
@@ -1859,9 +2094,12 @@ ALTER TABLE `ai_vector_cache`
 --
 ALTER TABLE `ai_workspace_files`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_conv_file` (`conversation_id`,`file_name`),
   ADD KEY `idx_conv` (`conversation_id`),
   ADD KEY `idx_property` (`property_id`),
-  ADD KEY `idx_admin` (`admin_id`);
+  ADD KEY `idx_admin` (`admin_id`),
+  ADD KEY `idx_work_conv` (`conversation_id`),
+  ADD KEY `idx_work_prop_name` (`property_id`,`file_name`);
 
 --
 -- Chỉ mục cho bảng `ai_workspace_versions`
@@ -1924,6 +2162,14 @@ ALTER TABLE `flow_event_queue`
   ADD KEY `fk_feq_subscriber` (`subscriber_id`);
 
 --
+-- Chỉ mục cho bảng `flow_snapshots`
+--
+ALTER TABLE `flow_snapshots`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_flow_snapshots_flow` (`flow_id`),
+  ADD KEY `idx_flow_snapshots_created` (`created_at`);
+
+--
 -- Chỉ mục cho bảng `forms`
 --
 ALTER TABLE `forms`
@@ -1948,7 +2194,8 @@ ALTER TABLE `global_assets`
   ADD KEY `idx_deleted` (`is_deleted`),
   ADD KEY `idx_admin` (`admin_id`),
   ADD KEY `idx_property_deleted` (`property_id`,`is_deleted`),
-  ADD KEY `idx_conv_deleted` (`conversation_id`,`is_deleted`);
+  ADD KEY `idx_conv_deleted` (`conversation_id`,`is_deleted`),
+  ADD KEY `idx_assets_conv` (`conversation_id`);
 
 --
 -- Chỉ mục cho bảng `integrations`
@@ -2028,7 +2275,9 @@ ALTER TABLE `meta_message_logs`
   ADD KEY `idx_page_psid_msg` (`page_id`,`psid`),
   ADD KEY `idx_direction` (`direction`),
   ADD KEY `idx_report_opt` (`page_id`,`direction`,`created_at`,`psid`),
-  ADD KEY `idx_psid_page_created` (`psid`,`page_id`,`created_at`);
+  ADD KEY `idx_psid_page_created` (`psid`,`page_id`,`created_at`),
+  ADD KEY `idx_psid` (`psid`),
+  ADD KEY `idx_status` (`status`);
 
 --
 -- Chỉ mục cho bảng `meta_subscribers`
@@ -2040,7 +2289,9 @@ ALTER TABLE `meta_subscribers`
   ADD KEY `idx_last_active` (`last_active_at`),
   ADD KEY `idx_ai_paused` (`ai_paused_until`),
   ADD KEY `idx_page_created` (`page_id`,`created_at`),
-  ADD KEY `idx_psid_page` (`psid`,`page_id`);
+  ADD KEY `idx_psid_page` (`psid`,`page_id`),
+  ADD KEY `idx_email` (`email`),
+  ADD KEY `idx_phone` (`phone`);
 
 --
 -- Chỉ mục cho bảng `purchase_events`
@@ -2056,7 +2307,8 @@ ALTER TABLE `queue_jobs`
   ADD KEY `idx_queue_lookup` (`queue`,`status`,`available_at`),
   ADD KEY `idx_status_cleanup` (`status`,`created_at`),
   ADD KEY `idx_queue_run` (`status`,`queue`,`available_at`),
-  ADD KEY `idx_status_queue_avail` (`status`,`queue`,`available_at`);
+  ADD KEY `idx_status_queue_avail` (`status`,`queue`,`available_at`),
+  ADD KEY `idx_retry_pending` (`status`,`available_at`,`attempts`);
 
 --
 -- Chỉ mục cho bảng `raw_event_buffer`
@@ -2102,7 +2354,9 @@ ALTER TABLE `stats_update_buffer`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_processing` (`processed`,`target_table`,`target_id`),
   ADD KEY `idx_proc_batch` (`processed`,`batch_id`),
-  ADD KEY `idx_created_at` (`created_at`);
+  ADD KEY `idx_created_at` (`created_at`),
+  ADD KEY `idx_batch` (`batch_id`),
+  ADD KEY `idx_processed` (`processed`);
 
 --
 -- Chỉ mục cho bảng `subscribers`
@@ -2139,40 +2393,26 @@ ALTER TABLE `subscribers`
 --
 ALTER TABLE `subscriber_activity`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_sub_history` (`subscriber_id`,`created_at`),
   ADD KEY `idx_unique_check` (`subscriber_id`,`type`,`reference_id`),
   ADD KEY `idx_flow_activity` (`flow_id`,`created_at`),
   ADD KEY `idx_campaign_activity` (`campaign_id`,`created_at`),
   ADD KEY `idx_reminder_activity` (`reminder_id`,`created_at`),
   ADD KEY `idx_subscriber_activity_campaign_lookup` (`campaign_id`,`subscriber_id`,`type`),
-  ADD KEY `idx_subscriber_activity_campaign_type` (`campaign_id`,`type`,`subscriber_id`),
   ADD KEY `idx_subscriber_activity_created` (`created_at`),
-  ADD KEY `idx_subscriber_activity_flow_type` (`flow_id`,`type`,`created_at`),
-  ADD KEY `idx_subscriber_activity_subscriber` (`subscriber_id`,`created_at`) USING BTREE,
-  ADD KEY `idx_sub_type_created` (`subscriber_id`,`type`,`created_at`),
-  ADD KEY `idx_activity_campaign_lookup` (`campaign_id`,`subscriber_id`,`type`),
   ADD KEY `idx_activity_type_created` (`type`,`created_at`),
-  ADD KEY `idx_activity_sub_type_created` (`subscriber_id`,`type`,`created_at`),
-  ADD KEY `idx_perf_recent` (`subscriber_id`,`type`,`created_at`),
-  ADD KEY `idx_flow_lookup` (`flow_id`,`subscriber_id`,`type`),
-  ADD KEY `idx_flow_activity_log` (`flow_id`,`created_at`),
-  ADD KEY `idx_flow_step_activity` (`flow_id`,`reference_id`,`type`),
-  ADD KEY `idx_subscriber_activity_lookup` (`subscriber_id`,`flow_id`),
-  ADD KEY `idx_sa_flow_ref` (`flow_id`,`reference_id`),
   ADD KEY `idx_sa_flow_sub_type` (`flow_id`,`subscriber_id`,`type`),
   ADD KEY `idx_sa_fid_rid_type` (`flow_id`,`reference_id`,`type`),
   ADD KEY `idx_flow_branching` (`subscriber_id`,`type`,`created_at`),
+  ADD KEY `idx_worker_check` (`subscriber_id`,`type`,`flow_id`,`created_at`),
+  ADD KEY `idx_camp_type_var` (`campaign_id`,`type`,`variation`),
+  ADD KEY `idx_flow_type_var` (`flow_id`,`type`,`variation`),
+  ADD KEY `idx_sub_activity_type_ref` (`subscriber_id`,`type`,`reference_id`),
+  ADD KEY `idx_sub_activity_campaign_lookup` (`campaign_id`,`type`),
+  ADD KEY `idx_sub_activity_flow_lookup` (`flow_id`,`type`),
   ADD KEY `idx_activity_flow_ref_type` (`flow_id`,`reference_id`,`type`),
   ADD KEY `idx_activity_flow_time` (`flow_id`,`created_at`),
-  ADD KEY `idx_worker_check` (`subscriber_id`,`type`,`flow_id`,`created_at`),
-  ADD KEY `idx_subscriber_type_created` (`subscriber_id`,`type`,`created_at`),
-  ADD KEY `idx_campaign_type` (`campaign_id`,`type`),
-  ADD KEY `idx_activity_freq` (`subscriber_id`,`type`,`created_at`),
   ADD KEY `idx_sub_type_date` (`subscriber_id`,`type`,`created_at`),
-  ADD KEY `idx_sub` (`subscriber_id`),
-  ADD KEY `idx_flow` (`flow_id`),
-  ADD KEY `idx_camp` (`campaign_id`),
-  ADD KEY `idx_type` (`type`);
+  ADD KEY `idx_flow_type_ref` (`flow_id`,`type`,`reference_id`,`created_at`);
 
 --
 -- Chỉ mục cho bảng `subscriber_flow_states`
@@ -2200,14 +2440,16 @@ ALTER TABLE `subscriber_flow_states`
   ADD KEY `idx_status_updated` (`status`,`updated_at`),
   ADD KEY `idx_flow_status_sched` (`status`,`scheduled_at`),
   ADD KEY `idx_status_created` (`status`,`created_at`),
-  ADD KEY `idx_sub_flow_step` (`subscriber_id`,`flow_id`,`step_id`);
+  ADD KEY `idx_sub_flow_step` (`subscriber_id`,`flow_id`,`step_id`),
+  ADD KEY `idx_flow_sub_status` (`flow_id`,`subscriber_id`,`status`);
 
 --
 -- Chỉ mục cho bảng `subscriber_lists`
 --
 ALTER TABLE `subscriber_lists`
   ADD PRIMARY KEY (`subscriber_id`,`list_id`),
-  ADD KEY `idx_subscriber_lists_list` (`list_id`,`subscriber_id`);
+  ADD KEY `idx_subscriber_lists_list` (`list_id`,`subscriber_id`),
+  ADD KEY `idx_list_sub` (`list_id`,`subscriber_id`);
 
 --
 -- Chỉ mục cho bảng `subscriber_notes`
@@ -2271,7 +2513,7 @@ ALTER TABLE `timestamp_buffer`
 --
 ALTER TABLE `tracking_unique_cache`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `idx_unique_hit` (`subscriber_id`,`target_type`,`target_id`,`event_type`);
+  ADD UNIQUE KEY `uq_track_cache` (`subscriber_id`,`target_type`,`target_id`,`event_type`,`reference_key`(200));
 
 --
 -- Chỉ mục cho bảng `users`
@@ -2294,8 +2536,7 @@ ALTER TABLE `web_blacklist`
 -- Chỉ mục cho bảng `web_daily_stats`
 --
 ALTER TABLE `web_daily_stats`
-  ADD PRIMARY KEY (`date`,`property_id`,`url_hash`,`device_type`),
-  ADD UNIQUE KEY `idx_prop_date` (`property_id`,`date`);
+  ADD PRIMARY KEY (`date`,`property_id`,`url_hash`,`device_type`);
 
 --
 -- Chỉ mục cho bảng `web_events`
@@ -2378,6 +2619,13 @@ ALTER TABLE `web_visitors`
   ADD KEY `idx_id_subscriber` (`id`,`subscriber_id`);
 
 --
+-- Chỉ mục cho bảng `zalo_activity_buffer`
+--
+ALTER TABLE `zalo_activity_buffer`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_processed` (`processed`);
+
+--
 -- Chỉ mục cho bảng `zalo_automation_scenarios`
 --
 ALTER TABLE `zalo_automation_scenarios`
@@ -2433,7 +2681,8 @@ ALTER TABLE `zalo_lists`
 --
 ALTER TABLE `zalo_message_queue`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_zalo_user_processed` (`zalo_user_id`,`processed`);
+  ADD KEY `idx_zalo_user_processed` (`zalo_user_id`,`processed`),
+  ADD KEY `idx_queue_user_proc` (`zalo_user_id`,`processed`);
 
 --
 -- Chỉ mục cho bảng `zalo_oa_configs`
@@ -2520,6 +2769,18 @@ ALTER TABLE `ai_allowed_emails`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT cho bảng `ai_chatbot_meta_settings`
+--
+ALTER TABLE `ai_chatbot_meta_settings`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT cho bảng `ai_feedback`
+--
+ALTER TABLE `ai_feedback`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT cho bảng `ai_group_permissions`
 --
 ALTER TABLE `ai_group_permissions`
@@ -2532,15 +2793,33 @@ ALTER TABLE `ai_messages`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT cho bảng `ai_org_access_tokens`
+--
+ALTER TABLE `ai_org_access_tokens`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT cho bảng `ai_org_messages`
 --
 ALTER TABLE `ai_org_messages`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT cho bảng `ai_org_refresh_tokens`
+--
+ALTER TABLE `ai_org_refresh_tokens`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT cho bảng `ai_org_users`
 --
 ALTER TABLE `ai_org_users`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT cho bảng `ai_org_user_categories`
+--
+ALTER TABLE `ai_org_user_categories`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -2580,16 +2859,10 @@ ALTER TABLE `flow_event_queue`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT cho bảng `global_assets`
---
-ALTER TABLE `global_assets`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
 -- AUTO_INCREMENT cho bảng `mail_delivery_logs`
 --
 ALTER TABLE `mail_delivery_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT cho bảng `meta_customer_journey`
@@ -2601,12 +2874,6 @@ ALTER TABLE `meta_customer_journey`
 -- AUTO_INCREMENT cho bảng `meta_message_logs`
 --
 ALTER TABLE `meta_message_logs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT cho bảng `queue_jobs`
---
-ALTER TABLE `queue_jobs`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
@@ -2631,7 +2898,7 @@ ALTER TABLE `stats_update_buffer`
 -- AUTO_INCREMENT cho bảng `subscriber_activity`
 --
 ALTER TABLE `subscriber_activity`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT cho bảng `subscriber_flow_states`
@@ -2676,6 +2943,12 @@ ALTER TABLE `web_sessions`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT cho bảng `zalo_activity_buffer`
+--
+ALTER TABLE `zalo_activity_buffer`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT cho bảng `zalo_message_queue`
 --
 ALTER TABLE `zalo_message_queue`
@@ -2708,9 +2981,7 @@ ALTER TABLE `campaign_reminders`
 --
 ALTER TABLE `flow_enrollments`
   ADD CONSTRAINT `fk_fe_flow` FOREIGN KEY (`flow_id`) REFERENCES `flows` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_fe_subscriber` FOREIGN KEY (`subscriber_id`) REFERENCES `subscribers` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `flow_enrollments_ibfk_1` FOREIGN KEY (`flow_id`) REFERENCES `flows` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `flow_enrollments_ibfk_2` FOREIGN KEY (`subscriber_id`) REFERENCES `subscribers` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_fe_subscriber` FOREIGN KEY (`subscriber_id`) REFERENCES `subscribers` (`id`) ON DELETE CASCADE;
 
 --
 -- Ràng buộc cho bảng `flow_event_queue`
@@ -2799,72 +3070,12 @@ ALTER TABLE `zalo_subscriber_activity`
   ADD CONSTRAINT `zalo_subscriber_activity_ibfk_1` FOREIGN KEY (`subscriber_id`) REFERENCES `zalo_subscribers` (`id`) ON DELETE CASCADE;
 
 --
--- Chỉ mục cho bảng `zalo_templates`
+-- Ràng buộc cho bảng `zalo_templates`
 --
 ALTER TABLE `zalo_templates`
   ADD CONSTRAINT `zalo_templates_ibfk_1` FOREIGN KEY (`oa_config_id`) REFERENCES `zalo_oa_configs` (`id`) ON DELETE CASCADE;
-
---
--- Chỉ mục cho bảng `ai_org_messages`
---
-ALTER TABLE `ai_org_messages`
-  ADD KEY `idx_conversation_created` (`conversation_id`, `created_at`),
-  ADD KEY `idx_sender` (`sender`);
-
---
--- Chỉ mục cho bảng `ai_org_users`
---
-ALTER TABLE `ai_org_users`
-  ADD KEY `idx_email` (`email`),
-  ADD KEY `idx_status` (`status`);
-
---
--- Chỉ mục cho bảng `ai_training_chunks`
---
-ALTER TABLE `ai_training_chunks`
-  ADD KEY `idx_doc_id` (`doc_id`),
-  ADD KEY `idx_property_id` (`property_id`);
-
---
--- Chỉ mục cho bảng `ai_chat_queries`
---
-ALTER TABLE `ai_chat_queries`
-  ADD KEY `idx_property_created` (`property_id`, `created_at`);
-
---
--- Chỉ mục cho bảng `ai_org_conversations`
---
-ALTER TABLE `ai_org_conversations`
-  ADD KEY `idx_user_updated` (`user_id`, `updated_at`),
-  ADD KEY `idx_visitor_updated` (`visitor_id`, `updated_at`),
-  ADD KEY `idx_property` (`property_id`),
-  ADD KEY `idx_updated_at` (`updated_at`);
-
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-
--- ============================================================
--- MIGRATION: Bug Fixes (run on existing production DB)
--- ============================================================
-
--- [BUG FIX 1] Add 'processing' to ai_training_docs.status enum
--- Without this, code writing status='processing' stores '' in strict mode
-ALTER TABLE `ai_training_docs`
-  MODIFY COLUMN `status` enum('pending','processing','trained','error') NOT NULL DEFAULT 'pending';
-
--- [BUG FIX 4a] Add missing columns to ai_training_chunks
--- chat_rag.php SELECTs these for citation/cite mode display
-ALTER TABLE `ai_training_chunks`
-  ADD COLUMN IF NOT EXISTS `chapter_title` varchar(255) DEFAULT NULL AFTER `sub_section_name`,
-  ADD COLUMN IF NOT EXISTS `section_title` varchar(255) DEFAULT NULL AFTER `chapter_title`,
-  ADD COLUMN IF NOT EXISTS `page_start` int(11) DEFAULT NULL AFTER `section_title`,
-  ADD COLUMN IF NOT EXISTS `page_end` int(11) DEFAULT NULL AFTER `page_start`;
-
--- [BUG FIX 4b] Add missing columns to ai_training_docs
--- chat_rag.php SELECTs d.book_title, d.book_author via JOIN
-ALTER TABLE `ai_training_docs`
-  ADD COLUMN IF NOT EXISTS `book_title` varchar(255) DEFAULT NULL AFTER `metadata`,
-  ADD COLUMN IF NOT EXISTS `book_author` varchar(255) DEFAULT NULL AFTER `book_title`;

@@ -598,6 +598,16 @@ function processMetaAIMessage($pdo, $pageId, $senderId, $userMsg, $scenario)
         return;
     }
 
+    // [FIX] Race condition check: Verify if AI is paused AGAIN right before sending.
+    // A human agent might have replied while Gemini was generating this response.
+    $stmtCheckPause = $pdo->prepare("SELECT ai_paused_until FROM meta_subscribers WHERE page_id = ? AND psid = ?");
+    $stmtCheckPause->execute([$pageId, $senderId]);
+    $finalCheck = $stmtCheckPause->fetchColumn();
+    if ($finalCheck && strtotime($finalCheck) > time()) {
+        logMetaDebug("AI Step 6.5: Aborting send! Human agent replied while generating. Paused until $finalCheck");
+        return;
+    }
+
     if ($botMsg) {
         $foundImageUrl = null;
         if (preg_match('/\[IMAGE:\s*(https?:\/\/[^\s\]]+)\]/iu', $botMsg, $matchesImg)) {

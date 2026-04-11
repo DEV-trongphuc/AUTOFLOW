@@ -270,7 +270,7 @@ const MetaAutomation: React.FC = () => {
                     <button
                         onClick={() => { setEditingScenario(null); setIsModalOpen(true); }}
                         disabled={!selectedConfigId}
-                        className="h-11 px-6 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg shadow-orange-500/30 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shrink-0 w-full md:w-auto disabled:opacity-50 disabled:shadow-none hover:-translate-y-0.5"
+                        className="h-11 px-6 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg shadow-orange-500/30 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shrink-0 w-full md:w-auto disabled:opacity-50 disabled:shadow-none hover:-translate-y-0.5"
                     >
                         <Plus className="w-4 h-4" />
                         Tạo kịch bản
@@ -300,7 +300,7 @@ const MetaAutomation: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredScenarios.map((scenario) => (
                         <div key={scenario.id} className="group bg-white rounded-[28px] border border-slate-100 shadow-sm hover:shadow-xl transition-all p-6 relative overflow-hidden cursor-pointer hover:-translate-y-1" onClick={() => { setEditingScenario(scenario); setIsModalOpen(true); }}>
-                            <div className={`absolute top-0 right-0 w-40 h-40 -mr-12 -mt-12 rounded-full opacity-[0.03] transition-transform group-hover:scale-125 ${scenario.type === 'welcome' ? 'bg-amber-500' :
+                            <div className={`absolute top-0 right-0 w-40 h-40 -mr-12 -mt-12 rounded-full opacity-[0.03] transition-transform group-hover:scale-125 ${scenario.type === 'welcome' ? 'bg-amber-600' :
                                 scenario.type === 'ai_reply' ? 'bg-purple-500' :
                                     scenario.type === 'holiday' ? 'bg-rose-500' :
                                         'bg-blue-500'}`}></div>

@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState } from 'react';
 import { ChevronLeft, Undo2, Redo2, Layout, Code, Monitor, Smartphone, Eye, Save, Loader2, Send, FolderOpen, ShieldCheck } from 'lucide-react';
 import Button from '../../common/Button';
@@ -59,11 +59,11 @@ const EmailTopBar: React.FC<EmailTopBarProps> = ({
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div className="flex flex-col">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 h-8">
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="text-base font-bold text-slate-800 outline-none bg-transparent hover:bg-slate-50 focus:bg-slate-100 px-2 py-0.5 rounded transition-all border border-transparent hover:border-slate-200 focus:border-amber-500 truncate max-w-[150px] sm:max-w-xs"
+              className="h-8 text-base font-bold text-slate-800 outline-none bg-transparent hover:bg-slate-50 focus:bg-slate-100 px-2 rounded transition-all border border-transparent hover:border-slate-200 focus:border-amber-600 truncate max-w-[150px] sm:max-w-xs flex items-center"
             />
             <div className="w-48">
               <Select
@@ -146,7 +146,7 @@ const EmailTopBar: React.FC<EmailTopBarProps> = ({
                 <input
                   type="email"
                   placeholder="nhập email..."
-                  className="flex-1 text-xs border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-amber-500 transition-all"
+                  className="flex-1 text-xs border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-amber-600 transition-all"
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendTest()}
@@ -155,7 +155,7 @@ const EmailTopBar: React.FC<EmailTopBarProps> = ({
                 <button
                   onClick={handleSendTest}
                   disabled={isSendingTest || !testEmail}
-                  className="bg-amber-500 text-white rounded-lg p-2 hover:bg-amber-600 transition-colors disabled:opacity-50"
+                  className="bg-amber-600 text-white rounded-lg p-2 hover:bg-amber-600 transition-colors disabled:opacity-50"
                 >
                   {isSendingTest ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </button>
@@ -167,7 +167,7 @@ const EmailTopBar: React.FC<EmailTopBarProps> = ({
         </div>
 
         <Button variant="secondary" onClick={onPreview} icon={Eye} className="hidden sm:flex h-10 px-4 text-xs">Xem trước</Button>
-        <Button icon={isSaving ? Loader2 : Save} onClick={handleSave} isLoading={isSaving} className="bg-gradient-to-r from-amber-400 to-amber-500 text-white border-transparent hover:from-amber-500 hover:to-amber-600 shadow-lg shadow-amber-500/20 h-10 px-6 text-xs transition-all duration-300">Lưu mẫu</Button>
+        <Button icon={isSaving ? Loader2 : Save} onClick={handleSave} isLoading={isSaving} className="bg-gradient-to-r from-amber-400 to-amber-600 text-white border-transparent hover:from-amber-600 hover:to-amber-600 shadow-lg shadow-amber-600/20 h-10 px-6 text-xs transition-all duration-300">Lưu mẫu</Button>
       </div>
     </div>
   );

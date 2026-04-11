@@ -1,7 +1,8 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState } from 'react';
 import Sidebar from './Layout/Sidebar';
 import Header from './Layout/Header';
+import CommandPalette from './Layout/CommandPalette';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,10 +10,11 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] overflow-hidden font-sans text-slate-800 antialiased">
+      <CommandPalette />
 
       {/* Mobile Sidebar Backdrop */}
       {sidebarOpen && (
@@ -42,7 +44,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {/* Golden glow decor — top-right corner accent */}
           <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[400px] z-0" style={{ background: 'radial-gradient(ellipse at 100% 0%, rgba(251,191,36,0.13) 0%, transparent 65%)' }} />
           {/* [PERF] Reduced from 700ms slide-in to 200ms fade-in — faster tab switching */}
-          <div className="max-w-[1400px] mx-auto animate-in fade-in duration-200">
+          <div className="max-w-[1400px] mx-auto animate-in fade-in duration-150">
             {children}
           </div>
         </main>

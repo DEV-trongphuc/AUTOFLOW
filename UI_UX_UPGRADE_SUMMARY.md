@@ -90,7 +90,7 @@
       {activeTab === tab.id && (
         <motion.div
           layoutId="activeTab"
-          className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500 to-orange-500"
+          className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-600 to-orange-500"
         />
       )}
     </button>

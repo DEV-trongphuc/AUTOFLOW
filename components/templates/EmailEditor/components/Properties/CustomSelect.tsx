@@ -62,7 +62,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, l
                                 style={{ fontFamily: option.value }}
                             >
                                 <span className="truncate">{option.label}</span>
-                                {value === option.value && <Check className="w-3.5 h-3.5 text-amber-500" />}
+                                {value === option.value && <Check className="w-3.5 h-3.5 text-amber-600" />}
                             </button>
                         ))}
                     </div>

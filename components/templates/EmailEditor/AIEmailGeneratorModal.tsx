@@ -15,6 +15,7 @@ interface AIEmailGeneratorModalProps {
     isOpen: boolean;
     onClose: () => void;
     onApply: (blocks: EmailBlock[]) => void;
+    onSaveSection?: (block: EmailBlock) => void;
     currentBlocks?: EmailBlock[];
     bodyStyle?: EmailBodyStyle;
     templateName?: string;
@@ -71,7 +72,7 @@ const S = {
     btn: (active: boolean): React.CSSProperties => ({
         flex: 1, padding: '8px 12px', border: 'none', borderRadius: '10px',
         fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
-        background: active ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'transparent',
+        background: active ? 'linear-gradient(135deg, #d97706, #d97706)' : 'transparent',
         color: active ? '#fff' : '#94a3b8',
         boxShadow: active ? '0 2px 8px rgba(217,119,6,0.3)' : 'none',
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
@@ -79,7 +80,7 @@ const S = {
 };
 
 const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
-    isOpen, onClose, onApply, currentBlocks, bodyStyle = DEFAULT_BODY_STYLE, templateName = 'Email', emailId
+    isOpen, onClose, onApply, onSaveSection, currentBlocks, bodyStyle = DEFAULT_BODY_STYLE, templateName = 'Email', emailId
 }) => {
     const [mode, setMode] = useState<Mode>('redesign');
     const [step, setStep] = useState<Step>('prompt');
@@ -242,7 +243,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                     {/* Shimmer top bar */}
                     <div style={{
                         height: '4px', flexShrink: 0,
-                        background: 'linear-gradient(90deg, #f59e0b, #d97706, #f59e0b, #d97706)',
+                        background: 'linear-gradient(90deg, #d97706, #d97706, #d97706, #d97706)',
                         backgroundSize: '600px 100%',
                         animation: 'shimmerBar 2.5s linear infinite',
                     }} />
@@ -326,7 +327,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                             </p>
                                         </div>
                                         {improveContent
-                                            ? <ToggleRight style={{ width: 28, height: 28, color: '#f59e0b', flexShrink: 0 }} />
+                                            ? <ToggleRight style={{ width: 28, height: 28, color: '#d97706', flexShrink: 0 }} />
                                             : <ToggleLeft style={{ width: 28, height: 28, color: '#cbd5e1', flexShrink: 0 }} />
                                         }
                                     </button>
@@ -344,14 +345,14 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                                 resize: 'none', outline: 'none', background: '#fff',
                                                 color: '#1e293b', fontFamily: 'inherit', boxSizing: 'border-box',
                                             }}
-                                            onFocus={e => e.currentTarget.style.borderColor = '#f59e0b'}
+                                            onFocus={e => e.currentTarget.style.borderColor = '#d97706'}
                                             onBlur={e => e.currentTarget.style.borderColor = '#e2e8f0'}
                                         />
                                     </div>
 
                                     <button onClick={() => handleGenerate(true)} style={{
                                         height: '50px', border: 'none', borderRadius: '14px', cursor: 'pointer',
-                                        background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                                        background: 'linear-gradient(135deg, #d97706, #d97706)',
                                         color: '#fff', fontSize: '14px', fontWeight: 800, fontFamily: 'inherit',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                                         boxShadow: '0 8px 24px rgba(217,119,6,0.35)', transition: 'transform 0.15s',
@@ -380,7 +381,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                                 color: '#1e293b', fontFamily: 'inherit', lineHeight: 1.6,
                                                 background: '#f8fafc', boxSizing: 'border-box', transition: 'border-color 0.2s',
                                             }}
-                                            onFocus={e => e.currentTarget.style.borderColor = '#f59e0b'}
+                                            onFocus={e => e.currentTarget.style.borderColor = '#d97706'}
                                             onBlur={e => e.currentTarget.style.borderColor = '#e2e8f0'}
                                             onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleGenerate(false); }}
                                         />
@@ -425,13 +426,13 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                                         padding: '8px 12px', fontSize: '12px', outline: 'none',
                                                         color: '#1e293b', fontFamily: 'inherit', background: '#f8fafc',
                                                     }}
-                                                    onFocus={e => e.currentTarget.style.borderColor = '#f59e0b'}
+                                                    onFocus={e => e.currentTarget.style.borderColor = '#d97706'}
                                                     onBlur={e => e.currentTarget.style.borderColor = '#e2e8f0'}
                                                     onKeyDown={e => { if (e.key === 'Enter') handleAddUrl(); }}
                                                 />
                                                 <button onClick={handleAddUrl} style={{
                                                     padding: '8px 14px', border: 'none', borderRadius: '10px',
-                                                    background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                                                    background: 'linear-gradient(135deg, #d97706, #d97706)',
                                                     cursor: 'pointer', color: '#fff',
                                                 }}>
                                                     <Plus style={{ width: 14, height: 14 }} />
@@ -457,7 +458,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                                     background: '#f8fafc', cursor: 'pointer', display: 'flex', flexDirection: 'column',
                                                     alignItems: 'center', justifyContent: 'center', gap: '3px',
                                                 }}
-                                                    onMouseEnter={e => e.currentTarget.style.borderColor = '#f59e0b'}
+                                                    onMouseEnter={e => e.currentTarget.style.borderColor = '#d97706'}
                                                     onMouseLeave={e => e.currentTarget.style.borderColor = '#cbd5e1'}>
                                                     <ImagePlus style={{ width: 15, height: 15, color: '#94a3b8' }} />
                                                     <span style={{ fontSize: '9px', color: '#94a3b8', fontWeight: 600 }}>Thêm</span>
@@ -469,7 +470,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                                 background: '#f8fafc', cursor: 'pointer', display: 'flex', flexDirection: 'column',
                                                 alignItems: 'center', gap: '5px', boxSizing: 'border-box', transition: 'all 0.2s',
                                             }}
-                                                onMouseEnter={e => { e.currentTarget.style.borderColor = '#f59e0b'; e.currentTarget.style.background = '#fffbeb'; }}
+                                                onMouseEnter={e => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.background = '#fffbeb'; }}
                                                 onMouseLeave={e => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.background = '#f8fafc'; }}>
                                                 <ImagePlus style={{ width: 20, height: 20, color: '#cbd5e1' }} />
                                                 <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500 }}>Kéo thả hoặc click để chọn ảnh</span>
@@ -482,7 +483,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                     <button onClick={() => handleGenerate(false)} disabled={!prompt.trim()} style={{
                                         height: '52px', border: 'none', borderRadius: '16px',
                                         cursor: prompt.trim() ? 'pointer' : 'not-allowed',
-                                        background: prompt.trim() ? 'linear-gradient(135deg, #f59e0b, #d97706)' : '#f1f5f9',
+                                        background: prompt.trim() ? 'linear-gradient(135deg, #d97706, #d97706)' : '#f1f5f9',
                                         color: prompt.trim() ? '#fff' : '#94a3b8',
                                         fontSize: '14px', fontWeight: 800, fontFamily: 'inherit',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
@@ -508,7 +509,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                             {/* Spinning rings */}
                             <div style={{ position: 'relative', width: '96px', height: '96px' }}>
                                 <div style={{ position: 'absolute', inset: '-14px', borderRadius: '50%', border: '2px solid rgba(217,119,6,0.12)', animation: 'pulseRing 2s ease-in-out infinite' }} />
-                                <div style={{ position: 'absolute', inset: '4px', borderRadius: '50%', border: '2.5px solid transparent', borderTopColor: '#f59e0b', borderRightColor: 'rgba(245,158,11,0.25)', animation: 'spin2 1.1s linear infinite' }} />
+                                <div style={{ position: 'absolute', inset: '4px', borderRadius: '50%', border: '2.5px solid transparent', borderTopColor: '#d97706', borderRightColor: 'rgba(245,158,11,0.25)', animation: 'spin2 1.1s linear infinite' }} />
                                 <div style={{ position: 'absolute', inset: '15px', borderRadius: '50%', border: '2px solid transparent', borderBottomColor: '#d97706', borderLeftColor: 'rgba(217,119,6,0.2)', animation: 'spin2rev 0.75s linear infinite' }} />
                                 <div style={{ position: 'absolute', inset: '26px', borderRadius: '50%', background: 'linear-gradient(135deg, #fff7ed, #fef3c7)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 16px rgba(217,119,6,0.15)' }}>
                                     <Sparkles style={{ width: 17, height: 17, color: '#d97706' }} />
@@ -525,7 +526,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                 {[0, 1, 2, 3, 4].map(i => (
                                     <div key={i} style={{
                                         width: i === 2 ? '26px' : '7px', height: '7px', borderRadius: '4px',
-                                        background: i === 2 ? 'linear-gradient(90deg, #f59e0b, #d97706)' : '#e2e8f0',
+                                        background: i === 2 ? 'linear-gradient(90deg, #d97706, #d97706)' : '#e2e8f0',
                                         animation: 'dotBounce 1.2s ease-in-out infinite',
                                         animationDelay: `${i * 0.12}s`,
                                     }} />
@@ -570,14 +571,14 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                     <textarea value={prompt} onChange={e => setPrompt(e.target.value)}
                                         placeholder="Thay đổi yêu cầu..." rows={4}
                                         style={{ width: '100%', border: '1.5px solid #e2e8f0', borderRadius: '10px', padding: '8px 10px', fontSize: '11px', resize: 'none', outline: 'none', color: '#1e293b', fontFamily: 'inherit', background: '#fff', boxSizing: 'border-box' }}
-                                        onFocus={e => e.currentTarget.style.borderColor = '#f59e0b'}
+                                        onFocus={e => e.currentTarget.style.borderColor = '#d97706'}
                                         onBlur={e => e.currentTarget.style.borderColor = '#e2e8f0'}
                                     />
                                 </div>
 
                                 <button onClick={() => handleGenerate(mode === 'redesign')} style={{
                                     height: '34px', border: 'none', borderRadius: '10px', cursor: 'pointer',
-                                    background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff',
+                                    background: 'linear-gradient(135deg, #d97706, #d97706)', color: '#fff',
                                     fontSize: '11px', fontWeight: 800, fontFamily: 'inherit',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                                     boxShadow: '0 4px 12px rgba(217,119,6,0.3)',
@@ -598,9 +599,23 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                 <div style={{ paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
                                     <p style={{ margin: '0 0 8px', fontSize: '10px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Cấu trúc</p>
                                     {generatedBlocks.map((b, i) => (
-                                        <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                            <span style={{ width: '18px', height: '18px', borderRadius: '5px', flexShrink: 0, background: 'linear-gradient(135deg, #f59e0b, #d97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 900, color: '#fff' }}>{i + 1}</span>
-                                            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500, textTransform: 'capitalize' }}>{b.type}</span>
+                                        <div key={b.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px', group: 'true' } as any}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                                                <span style={{ width: '18px', height: '18px', borderRadius: '5px', flexShrink: 0, background: 'linear-gradient(135deg, #d97706, #d97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 900, color: '#fff' }}>{i + 1}</span>
+                                                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500, textTransform: 'capitalize', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.type}</span>
+                                            </div>
+                                            <button 
+                                                onClick={() => onSaveSection?.(b)}
+                                                style={{ 
+                                                    padding: '4px', border: 'none', background: 'transparent', cursor: 'pointer', color: '#cbd5e1', 
+                                                    transition: 'all 0.2s', display: 'flex', alignItems: 'center' 
+                                                }}
+                                                title="Lưu vào thư viện"
+                                                onMouseEnter={e => e.currentTarget.style.color = '#d97706'}
+                                                onMouseLeave={e => e.currentTarget.style.color = '#cbd5e1'}
+                                            >
+                                                <Library style={{ width: 12, height: 12 }} />
+                                            </button>
                                         </div>
                                     ))}
                                 </div>
@@ -615,7 +630,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                     <div style={{ display: 'flex', gap: '4px', padding: '3px', background: '#f1f5f9', borderRadius: '10px' }}>
                                         <button onClick={() => setPreviewTab('new')} style={{
                                             padding: '5px 14px', border: 'none', borderRadius: '7px', cursor: 'pointer', fontSize: '11px', fontWeight: 700,
-                                            background: previewTab === 'new' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'transparent',
+                                            background: previewTab === 'new' ? 'linear-gradient(135deg, #d97706, #d97706)' : 'transparent',
                                             color: previewTab === 'new' ? '#fff' : '#94a3b8', transition: 'all 0.2s',
                                             display: 'flex', alignItems: 'center', gap: '5px',
                                         }}>
@@ -637,7 +652,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                         {(['desktop', 'mobile'] as const).map(v => (
                                             <button key={v} onClick={() => setViewMode(v)} style={{
                                                 padding: '5px 10px', border: 'none', borderRadius: '7px', cursor: 'pointer',
-                                                background: viewMode === v ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'transparent',
+                                                background: viewMode === v ? 'linear-gradient(135deg, #d97706, #d97706)' : 'transparent',
                                                 color: viewMode === v ? '#fff' : '#94a3b8', transition: 'all 0.2s',
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                             }}>
@@ -649,7 +664,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                     {/* Apply button */}
                                     <button onClick={handleApply} style={{
                                         height: '34px', padding: '0 18px', border: 'none', borderRadius: '10px', cursor: 'pointer',
-                                        background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                                        background: 'linear-gradient(135deg, #d97706, #d97706)',
                                         color: '#fff', fontSize: '12px', fontWeight: 800, fontFamily: 'inherit',
                                         display: 'flex', alignItems: 'center', gap: '6px',
                                         boxShadow: '0 4px 16px rgba(217,119,6,0.35)', transition: 'transform 0.15s', marginLeft: 'auto',

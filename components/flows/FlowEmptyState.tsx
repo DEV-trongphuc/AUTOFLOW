@@ -14,7 +14,7 @@ const FlowEmptyState: React.FC<FlowEmptyStateProps> = ({ onCreateClick }) => (
     </div>
     <h3 className="text-xl font-bold text-slate-800 uppercase tracking-tight">Chưa có kịch bản automation</h3>
     <p className="text-slate-400 mt-2 max-w-xs mx-auto">Bắt đầu tạo luồng làm việc tự động để tối ưu hóa quy trình chăm sóc khách hàng của bạn.</p>
-    <Button icon={Plus} className="mt-8 shadow-xl shadow-amber-500/20 transition-all duration-500" onClick={onCreateClick}>Tạo ngay kịch bản đầu tiên</Button>
+    <Button icon={Plus} className="mt-8 shadow-xl shadow-amber-600/20 transition-all duration-500" onClick={onCreateClick}>Tạo ngay kịch bản đầu tiên</Button>
   </div>
 );
 

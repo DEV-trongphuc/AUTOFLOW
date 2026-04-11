@@ -64,7 +64,7 @@ const AudienceTipsModal: React.FC<AudienceTipsModalProps> = ({ isOpen, onClose }
                         <div className="flex items-center gap-6">
                             <div className="relative">
                                 <div className="absolute inset-0 bg-amber-400 blur-lg opacity-10 animate-pulse" />
-                                <div className="relative w-16 h-16 rounded-[24px] bg-gradient-to-br from-amber-400 to-amber-500 text-white flex items-center justify-center shadow-lg shadow-amber-500/10 group transition-transform hover:rotate-3 border border-amber-300/20">
+                                <div className="relative w-16 h-16 rounded-[24px] bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center shadow-lg shadow-amber-600/10 group transition-transform hover:rotate-3 border border-amber-300/20">
                                     <Lightbulb className="w-8 h-8 fill-white/20" strokeWidth={2.5} />
                                 </div>
                             </div>
@@ -124,7 +124,7 @@ const AudienceTipsModal: React.FC<AudienceTipsModalProps> = ({ isOpen, onClose }
                             icon={Target}
                             title="Tagging thông minh"
                             description="Gán nhãn sở thích ngay khi import để chuẩn bị cho các kịch bản Re-marketing đa kênh."
-                            colorClass="bg-gradient-to-br from-orange-400 to-amber-500 shadow-amber-200"
+                            colorClass="bg-gradient-to-br from-orange-400 to-amber-600 shadow-amber-200"
                         />
                         <TipCard
                             icon={FileSpreadsheet}

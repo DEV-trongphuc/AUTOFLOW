@@ -429,8 +429,10 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
 
             // Search
             if (!empty($search)) {
-                $whereClauses[] = "(s.email LIKE ? OR s.first_name LIKE ? OR s.last_name LIKE ?)";
+                $whereClauses[] = "(s.email LIKE ? OR s.first_name LIKE ? OR s.last_name LIKE ? OR s.phone_number LIKE ? OR s.company_name LIKE ?)";
                 $wildcard = "%$search%";
+                $params[] = $wildcard;
+                $params[] = $wildcard;
                 $params[] = $wildcard;
                 $params[] = $wildcard;
                 $params[] = $wildcard;
@@ -717,7 +719,7 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
             jsonResponse(false, null, 'Email đã tồn tại trong hệ thống (Email already exists). Vui lòng sử dụng email khác hoặc
     cập nhật subscriber hiện tại.');
         }
-        $id = $data['id'] ?? uniqid();
+        $id = (!empty($data['id'])) ? $data['id'] : bin2hex(random_bytes(16));
         $attrs = json_encode($data['customAttributes'] ?? (object) []);
         $notes = json_encode($data['notes'] ?? []); // Save notes on POST
 

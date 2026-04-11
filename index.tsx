@@ -1,6 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import App from './App';
+
+const GOOGLE_CLIENT_ID = '641158233158-nsg8a8tdsj3fdgb34dc9tugm8god7tho.apps.googleusercontent.com';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -10,6 +13,8 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <App />
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <App />
+    </GoogleOAuthProvider>
   </React.StrictMode>
 );

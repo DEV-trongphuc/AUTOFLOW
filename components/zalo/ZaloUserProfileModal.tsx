@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import {
     X, User, History, Edit2, Check,
@@ -36,7 +36,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
     // Form fields
     const [formData, setFormData] = useState({
         displayName: '',
-        gender: 'Chưa chọn',
+        gender: 'Chua ch?n',
         phone: '',
         birthday: '',
         email: '',
@@ -70,7 +70,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
 
             setFormData({
                 displayName: userData.display_name || '',
-                gender: userData.gender || 'Chưa chọn',
+                gender: userData.gender || 'Chua ch?n',
                 phone: userData.phone_number || '',
                 birthday: userData.birthday ? formatDateForInput(userData.birthday) : '',
                 email: userData.manual_email || userData.user_email || '',
@@ -140,7 +140,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
                 <div className="bg-white rounded-[24px] p-12 flex flex-col items-center gap-4 shadow-2xl">
                     <History className="w-8 h-8 animate-spin text-blue-600" />
-                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Đang tải hồ sơ...</p>
+                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">�ang t?i h? so...</p>
                 </div>
             </div>
         );
@@ -162,7 +162,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                 {/* Header */}
                 <div className="px-6 py-5 flex justify-between items-center bg-white border-b border-slate-100 shrink-0">
                     <div>
-                        <h3 className="text-lg font-bold text-slate-800 tracking-tight">Hồ sơ chi tiết</h3>
+                        <h3 className="text-lg font-bold text-slate-800 tracking-tight">H? so chi ti?t</h3>
                     </div>
                     <button
                         onClick={handleClose}
@@ -188,7 +188,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                 <div className="flex items-center gap-3">
                                     <h2 className="text-2xl font-black text-slate-800 truncate tracking-tight">{formData.displayName}</h2>
                                     <span className="px-2.5 py-1 inline-flex items-center gap-1.5 rounded-lg border bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm text-[9px] transition-all duration-300 uppercase tracking-wide font-bold">
-                                        Hoạt động
+                                        Ho?t d?ng
                                     </span>
                                     <div className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg border border-blue-100 flex items-center gap-1.5 shadow-sm ml-auto">
                                         <Star className="w-4 h-4 fill-current" />
@@ -210,7 +210,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                 className={`px-4 py-2 bg-white hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-black border border-slate-200 transition-all duration-500 flex items-center gap-2 hover:shadow-sm ${editMode ? 'border-blue-500 text-blue-600' : ''}`}
                             >
                                 <PenLine className="w-3.5 h-3.5" />
-                                {editMode ? 'Đang sửa...' : 'Sửa hồ sơ'}
+                                {editMode ? '�ang s?a...' : 'S?a h? so'}
                             </button>
                         </div>
 
@@ -219,26 +219,26 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                 <ProfileTab
                                     active={activeTab === 'personal'}
                                     onClick={() => setActiveTab('personal')}
-                                    label="Cá nhân"
+                                    label="C� nh�n"
                                     icon={User}
                                 />
                                 <ProfileTab
                                     active={activeTab === 'interaction'}
                                     onClick={() => setActiveTab('interaction')}
-                                    label="Tương tác"
+                                    label="Tuong t�c"
                                     icon={Activity}
                                     count={user.messages?.length || 0}
                                 />
                                 <ProfileTab
                                     active={activeTab === 'journey'}
                                     onClick={() => setActiveTab('journey')}
-                                    label="Hành trình"
+                                    label="H�nh tr�nh"
                                     icon={History}
                                 />
                                 <ProfileTab
                                     active={activeTab === 'notes'}
                                     onClick={() => setActiveTab('notes')}
-                                    label="Ghi chú"
+                                    label="Ghi ch�"
                                     icon={FileText}
                                     count={formData.notes ? 1 : 0}
                                 />
@@ -254,12 +254,12 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                         {/* Identity Section */}
                                         <section className="space-y-4">
                                             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
-                                                <div className="w-4 h-px bg-slate-200"></div> Thông tin định danh
+                                                <div className="w-4 h-px bg-slate-200"></div> Th�ng tin d?nh danh
                                             </h4>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 bg-white p-6 rounded-[28px] border border-slate-100 shadow-sm">
                                                 <div className="col-span-1 md:col-span-2">
                                                     <Input
-                                                        label="Họ và tên"
+                                                        label="H? v� t�n"
                                                         required
                                                         value={formData.displayName}
                                                         onChange={e => setFormData({ ...formData, displayName: e.target.value })}
@@ -269,21 +269,21 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
 
                                                 <div className="space-y-1.5">
                                                     <Select
-                                                        label="Giới tính"
+                                                        label="Gi?i t�nh"
                                                         value={formData.gender}
                                                         onChange={val => setFormData({ ...formData, gender: val })}
                                                         disabled={!editMode}
                                                         options={[
-                                                            { value: 'Chọn...', label: 'Chọn...' },
+                                                            { value: 'Ch?n...', label: 'Ch?n...' },
                                                             { value: 'Nam', label: 'Nam' },
-                                                            { value: 'Nữ', label: 'Nữ' },
-                                                            { value: 'Khác', label: 'Khác' }
+                                                            { value: 'N?', label: 'N?' },
+                                                            { value: 'Kh�c', label: 'Kh�c' }
                                                         ]}
                                                     />
                                                 </div>
 
                                                 <Input
-                                                    label="Điện thoại"
+                                                    label="�i?n tho?i"
                                                     icon={Phone}
                                                     value={formData.phone}
                                                     onChange={e => setFormData({ ...formData, phone: e.target.value })}
@@ -291,7 +291,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                                 />
 
                                                 <Input
-                                                    label="Ngày sinh"
+                                                    label="Ng�y sinh"
                                                     type="date"
                                                     value={formData.birthday}
                                                     onChange={e => setFormData({ ...formData, birthday: e.target.value })}
@@ -317,10 +317,10 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                 <div className="animate-in fade-in slide-in-from-right-2 duration-300 pb-10">
                                     <div className="flex items-center justify-between mb-6 px-1">
                                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                                            <div className="w-4 h-px bg-slate-200"></div> Lịch sử trò chuyện
+                                            <div className="w-4 h-px bg-slate-200"></div> L?ch s? tr� chuy?n
                                         </h4>
                                         <span className="text-[9px] font-bold text-slate-400 italic bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
-                                            Hiển thị tối đa 20 tin nhắn gần nhất
+                                            Hi?n th? t?i da 20 tin nh?n g?n nh?t
                                         </span>
                                     </div>
                                     <div className="space-y-4">
@@ -336,7 +336,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                         )) : (
                                             <div className="py-20 text-center bg-slate-50/50 rounded-[28px] border border-dashed border-slate-200">
                                                 <Activity className="w-10 h-10 text-slate-200 mx-auto mb-3" />
-                                                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Không có tương tác nào</p>
+                                                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Kh�ng c� tuong t�c n�o</p>
                                             </div>
                                         )}
                                     </div>
@@ -358,7 +358,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                                     </div>
                                                     <div className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm group hover:border-blue-200 transition-all">
                                                         <div className="flex justify-between items-start mb-1">
-                                                            <h5 className="text-sm font-black text-slate-800">{getEventLabel(act.type)}: {act.reference_name || 'Hệ thống'}</h5>
+                                                            <h5 className="text-sm font-black text-slate-800">{getEventLabel(act.type)}: {act.reference_name || 'H? th?ng'}</h5>
                                                             <span className="text-[10px] font-bold text-slate-300 uppercase">{formatTimeAgoShort(act.created_at)}</span>
                                                         </div>
                                                         <div className="text-xs text-slate-500 font-medium leading-relaxed">
@@ -426,7 +426,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                                                         </div>
                                                                     );
                                                                 } catch (e) {
-                                                                    return act.details || 'Không có chi tiết';
+                                                                    return act.details || 'Kh�ng c� chi ti?t';
                                                                 }
                                                             })()}
                                                         </div>
@@ -435,7 +435,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                             )) : (
                                                 <div className="py-20 text-center bg-slate-50/50 rounded-[28px] border border-dashed border-slate-200 mr-12 -ml-12 pl-12">
                                                     <History className="w-10 h-10 text-slate-200 mx-auto mb-3" />
-                                                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Hành trình đang trống</p>
+                                                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">H�nh tr�nh dang tr?ng</p>
                                                 </div>
                                             )}
                                     </div>
@@ -454,7 +454,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
 
                                                     return infoNotes.map((item: any, i: number) => (
                                                         <div key={i} className="p-5 bg-amber-50/30 rounded-[24px] border border-amber-100/30 animate-in slide-in-from-left duration-500">
-                                                            <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.15em] mb-2 px-1">Zalo Form Info</p>
+                                                            <p className="text-[10px] font-black text-amber-600 uppercase tracking-[0.15em] mb-2 px-1">Zalo Form Info</p>
                                                             <p className="text-sm font-bold text-slate-700 leading-relaxed shadow-sm bg-white p-4 rounded-2xl">{item.content}</p>
                                                             {item.created_at && <p className="text-[9px] text-slate-300 mt-3 font-bold uppercase tracking-widest px-1">{formatTimeAgoShort(item.created_at)}</p>}
                                                         </div>
@@ -465,12 +465,12 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                         })()}
 
                                         <div className="relative pt-4">
-                                            <div className="absolute top-0 left-4 px-2 bg-white text-[9px] font-black text-slate-400 uppercase tracking-widest z-10">Ghi chú cá nhân</div>
+                                            <div className="absolute top-0 left-4 px-2 bg-white text-[9px] font-black text-slate-400 uppercase tracking-widest z-10">Ghi ch� c� nh�n</div>
                                             <textarea
                                                 value={formData.notes}
                                                 onChange={e => setFormData({ ...formData, notes: e.target.value })}
                                                 className="w-full min-h-[150px] p-6 bg-slate-50/50 border border-slate-200 rounded-[28px] text-sm font-medium text-slate-600 focus:outline-none focus:border-blue-500 transition-all resize-none shadow-inner mt-2"
-                                                placeholder="Nhập ghi chú quan trọng về khách hàng này..."
+                                                placeholder="Nh?p ghi ch� quan tr?ng v? kh�ch h�ng n�y..."
                                             />
                                             <div className="absolute top-[260px] right-2 z-10 flex gap-2">
                                                 <button
@@ -479,13 +479,13 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                                     className="px-6 py-2.5 bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2"
                                                 >
                                                     <Send className="w-3.5 h-3.5" />
-                                                    Lưu ghi chú
+                                                    Luu ghi ch�
                                                 </button>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 px-2 text-slate-400">
                                             <Info className="w-3 h-3" />
-                                            <p className="text-[10px] font-bold">Thông tin này được bảo mật và chỉ bạn mới thấy.</p>
+                                            <p className="text-[10px] font-bold">Th�ng tin n�y du?c b?o m?t v� ch? b?n m?i th?y.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -499,7 +499,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                     <div className="flex justify-between w-full items-center">
                         <button className="inline-flex items-center justify-center font-bold rounded-xl transition-all duration-300 active:scale-95 tracking-tight bg-rose-50 text-rose-600 hover:bg-rose-100 px-4 py-2.5 text-sm gap-2 border-none shadow-none">
                             <Trash2 className="w-4 h-4" />
-                            Xóa
+                            X�a
                         </button>
 
                         <div className="flex gap-3">
@@ -509,14 +509,14 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                     disabled={updating}
                                     className="inline-flex items-center justify-center font-bold rounded-xl transition-all duration-300 active:scale-95 bg-blue-600 text-white px-6 py-2.5 text-sm gap-2 shadow-lg shadow-blue-500/20"
                                 >
-                                    {updating ? 'Đang lưu...' : 'Lưu thay đổi'}
+                                    {updating ? '�ang luu...' : 'Luu thay d?i'}
                                 </button>
                             )}
                             <button
                                 onClick={handleClose}
-                                className="inline-flex items-center justify-center font-bold rounded-xl transition-all duration-500 active:scale-95 bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-amber-500 hover:text-amber-600 px-5 py-2.5 text-sm gap-2"
+                                className="inline-flex items-center justify-center font-bold rounded-xl transition-all duration-500 active:scale-95 bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-amber-600 hover:text-amber-600 px-5 py-2.5 text-sm gap-2"
                             >
-                                Đóng
+                                ��ng
                             </button>
                         </div>
                     </div>
@@ -554,7 +554,7 @@ const TimelineIcon = ({ type }: { type: string }) => {
         case 'seen_broadcast': return <div className="w-full h-full flex items-center justify-center rounded-full text-emerald-500 bg-emerald-50"><MailOpen className="w-4 h-4" /></div>;
         case 'reacted_broadcast': return <div className="w-full h-full flex items-center justify-center rounded-full text-blue-500 bg-blue-50"><Activity className="w-4 h-4" /></div>;
         case 'user_submit_info': return <div className="w-full h-full flex items-center justify-center rounded-full text-purple-500 bg-purple-50"><FileText className="w-4 h-4" /></div>;
-        case 'lead_score_reward': return <div className="w-full h-full flex items-center justify-center rounded-full text-amber-500 bg-amber-50"><Star className="w-4 h-4 fill-current" /></div>;
+        case 'lead_score_reward': return <div className="w-full h-full flex items-center justify-center rounded-full text-amber-600 bg-amber-50"><Star className="w-4 h-4 fill-current" /></div>;
         case 'lead_score_sync': return <div className="w-full h-full flex items-center justify-center rounded-full text-amber-600 bg-amber-50 border border-amber-100"><Star className="w-4 h-4 fill-current" /></div>;
         default: return <div className="w-full h-full flex items-center justify-center rounded-full text-slate-400 bg-slate-50"><Clock className="w-4 h-4" /></div>;
     }
@@ -562,16 +562,16 @@ const TimelineIcon = ({ type }: { type: string }) => {
 
 const getEventLabel = (type: string) => {
     switch (type) {
-        case 'follow': return 'Quan tâm OA';
-        case 'unfollow': return 'Bỏ quan tâm';
-        case 'user_send_text': return 'KH gửi tin';
-        case 'sent_message': return 'Phản hồi';
-        case 'receive_broadcast': return 'Nhận tin';
-        case 'seen_broadcast': return 'Đã xem';
-        case 'reacted_broadcast': return 'Tương tác';
-        case 'user_submit_info': return 'Gửi Form';
-        case 'lead_score_reward': return 'Nhận điểm';
-        case 'lead_score_sync': return 'Đồng bộ điểm';
+        case 'follow': return 'Quan t�m OA';
+        case 'unfollow': return 'B? quan t�m';
+        case 'user_send_text': return 'KH g?i tin';
+        case 'sent_message': return 'Ph?n h?i';
+        case 'receive_broadcast': return 'Nh?n tin';
+        case 'seen_broadcast': return '�� xem';
+        case 'reacted_broadcast': return 'Tuong t�c';
+        case 'user_submit_info': return 'G?i Form';
+        case 'lead_score_reward': return 'Nh?n di?m';
+        case 'lead_score_sync': return '�?ng b? di?m';
         default: return type.toUpperCase();
     }
 };
@@ -581,11 +581,11 @@ const formatTimeAgoShort = (date: string) => {
     const then = new Date(date);
     const diff = now.getTime() - then.getTime();
 
-    if (diff < 60000) return 'vừa xong';
-    if (diff < 3600000) return `${Math.floor(diff / 60000)} phút trước`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)} giờ trước`;
+    if (diff < 60000) return 'v?a xong';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} ph�t tru?c`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} gi? tru?c`;
     const days = Math.floor(diff / 86400000);
-    if (days < 30) return `${days} ngày trước`;
+    if (days < 30) return `${days} ng�y tru?c`;
     return then.toLocaleDateString('vi-VN');
 };
 

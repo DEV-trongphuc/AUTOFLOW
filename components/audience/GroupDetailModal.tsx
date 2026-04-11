@@ -687,7 +687,7 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                                         <button
                                             onClick={handleAIAnalysis}
                                             disabled={isAnalyzing}
-                                            className={`flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:shadow-lg hover:shadow-amber-200 transition-all active:scale-95 disabled:opacity-70 ${isAnalyzing ? 'animate-pulse' : ''}`}
+                                            className={`flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:shadow-lg hover:shadow-amber-200 transition-all active:scale-95 disabled:opacity-70 ${isAnalyzing ? 'animate-pulse' : ''}`}
                                         >
                                             {isAnalyzing ? (
                                                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -749,7 +749,7 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                                     switch (status) {
                                         case 'all':
                                             colorClass = "text-amber-700";
-                                            dotColor = "bg-amber-500";
+                                            dotColor = "bg-amber-600";
                                             activeBorder = "border-amber-400";
                                             activeBg = "bg-amber-50";
                                             label = "Tất cả";
@@ -1118,7 +1118,7 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                     <div className="space-y-10">
                         {/* Summary Header */}
                         <div className="p-6 bg-slate-50 border border-slate-200 rounded-[24px] flex items-center gap-6 print:hidden">
-                            <div className="p-3.5 bg-white border border-slate-200 text-amber-500 rounded-2xl shadow-sm">
+                            <div className="p-3.5 bg-white border border-slate-200 text-amber-600 rounded-2xl shadow-sm">
                                 <Lightbulb className="w-6 h-6" />
                             </div>
                             <div>
@@ -1234,7 +1234,7 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                 <div className="min-h-[400px]">
                     {isPreviewLoading ? (
                         <div className="flex flex-col items-center justify-center py-20 gap-4">
-                            <Loader2 className="w-10 h-10 text-amber-500 animate-spin" />
+                            <Loader2 className="w-10 h-10 text-amber-600 animate-spin" />
                             <p className="text-sm text-slate-500 font-medium">Đang lọc danh sách thành viên...</p>
                         </div>
                     ) : (
@@ -1269,7 +1269,7 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                                                                 {m.zalo_user_id && <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm" title="Zalo" />}
                                                                 {m.meta_psid && <div className="w-2.5 h-2.5 rounded-full bg-violet-600 shadow-sm" title="Meta" />}
                                                                 <div className={`w-2.5 h-2.5 rounded-full shadow-sm ${m.status === 'active' ? 'bg-emerald-500' :
-                                                                    m.status === 'lead' ? 'bg-amber-500' :
+                                                                    m.status === 'lead' ? 'bg-amber-600' :
                                                                         m.status === 'customer' ? 'bg-pink-500' :
                                                                             'bg-slate-300'
                                                                     }`} title={m.status} />
@@ -1331,7 +1331,7 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                                         <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm"></span> Active
                                     </div>
                                     <div className="flex items-center gap-1.5">
-                                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm"></span> Lead
+                                        <span className="w-2.5 h-2.5 rounded-full bg-amber-600 shadow-sm"></span> Lead
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <span className="w-2.5 h-2.5 rounded-full bg-pink-500 shadow-sm"></span> Qualified
@@ -1374,7 +1374,7 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                             <button
                                 onClick={() => setSaveMode('new')}
                                 className={`flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all ${saveMode === 'new'
-                                    ? 'border-amber-500 bg-amber-50/50 shadow-sm'
+                                    ? 'border-amber-600 bg-amber-50/50 shadow-sm'
                                     : 'border-slate-100 bg-white hover:border-slate-200 shadow-sm hover:shadow-md'
                                     }`}
                             >
@@ -1386,7 +1386,7 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                             <button
                                 onClick={() => setSaveMode('existing')}
                                 className={`flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all ${saveMode === 'existing'
-                                    ? 'border-amber-500 bg-amber-50/50 shadow-sm'
+                                    ? 'border-amber-600 bg-amber-50/50 shadow-sm'
                                     : 'border-slate-100 bg-white hover:border-slate-200 shadow-sm hover:shadow-md'
                                     }`}
                             >

@@ -10,7 +10,8 @@ import {
     FileText, ChevronDown, X, ShieldCheck, Zap, Calendar, Facebook, MessageCircle, RotateCcw
 } from 'lucide-react';
 import Button from '../components/common/Button';
-import PageHeader from '../components/common/PageHeader';
+import PageHero from '../components/common/PageHero';
+
 import Tabs from '../components/common/Tabs';
 import Select from '../components/common/Select';
 import toast from 'react-hot-toast';
@@ -925,51 +926,42 @@ const Audience: React.FC = () => {
     return (
         <>
             <div className="animate-fade-in space-y-8 pb-20">
-                <PageHeader
-                    title="Đối tượng & Khách hàng"
-                    description="Quản lý vòng đời khách hàng từ lúc đăng ký đến lúc chuyển đổi."
-                    action={
-                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                            <Button
-                                variant="secondary"
-                                icon={(props) => <Lightbulb {...props} className={`${props.className} text-amber-500`} />}
-                                onClick={() => setIsTipsModalOpen(true)}
-                                className="w-full sm:w-auto h-11 lg:h-12 px-6"
-                            >
-                                Mẹo tăng trưởng
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => setIsIntegrationsModalOpen(true)}
-                                className="bg-blue-50/50 border-blue-100 text-blue-600 hover:bg-blue-100 hover:border-blue-200 shadow-sm transition-all font-bold ring-1 ring-blue-50/50 w-full sm:w-auto h-11 lg:h-12 px-6"
-                            >
-                                <div className="flex items-center gap-2 justify-center">
-                                    <RefreshCw className="w-4 h-4" />
-                                    <span>Auto Sync</span>
-                                </div>
-                            </Button>
-                            <Button
-                                icon={UserPlus}
-                                onClick={() => setImportModalOpen(true)}
-                                className="w-full sm:w-auto h-11 lg:h-12 px-6 shadow-lg shadow-indigo-200"
-                            >
-                                Import liên hệ
-                            </Button>
-                        </div>
-                    }
+                <PageHero 
+                    title={<>Audience <span className="text-orange-100/80">Nexus</span></>}
+                    subtitle="Quản lý vòng đời khách hàng từ lúc đăng ký đến lúc chuyển đổi đa kênh."
+                    showStatus={true}
+                    statusText="Database Online"
+                    actions={[
+                        { 
+                            label: 'Import liên hệ', 
+                            icon: UserPlus, 
+                            onClick: () => setImportModalOpen(true),
+                            primary: true 
+                        },
+                        { 
+                            label: 'Auto Sync', 
+                            icon: RefreshCw, 
+                            onClick: () => setIsIntegrationsModalOpen(true) 
+                        },
+                        { 
+                            label: 'Mẹo tăng trưởng', 
+                            icon: Lightbulb, 
+                            onClick: () => setIsTipsModalOpen(true) 
+                        }
+                    ]}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-white p-4 md:p-6 rounded-2xl md:rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group cursor-default">
                         <div>
-                            <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-amber-500 transition-colors">Tổng liên hệ</p>
+                            <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-amber-600 transition-colors">Tổng liên hệ</p>
                             {loading ? (
                                 <div style={{ width: 100, height: 32, borderRadius: 8, background: '#e2e8f0', position: 'relative', overflow: 'hidden' }}><div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)', animation: 'sk-shimmer 1.4s ease-in-out infinite', transform: 'translateX(-100%)' }} /></div>
                             ) : (
                                 <h3 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">{stats.total.toLocaleString()}</h3>
                             )}
                         </div>
-                        <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-amber-400 to-amber-600 text-white rounded-xl md:rounded-2xl shadow-lg shadow-amber-500/10 flex items-center justify-center transition-all group-hover:scale-110">
+                        <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-amber-400 to-amber-600 text-white rounded-xl md:rounded-2xl shadow-lg shadow-amber-600/10 flex items-center justify-center transition-all group-hover:scale-110">
                             <Users className="w-6 h-6 md:w-7 md:h-7" />
                         </div>
                     </div>

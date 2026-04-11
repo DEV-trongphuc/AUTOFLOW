@@ -41,7 +41,7 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
     if (type === 'text') { content = '<p style="margin: 0;">Nhập văn bản...</p>'; styleOverrides.textAlign = 'left'; }
     if (type === 'button') {
         content = 'Nút Bấm';
-        styleOverrides.contentBackgroundColor = '#f59e0b';
+        styleOverrides.contentBackgroundColor = '#d97706';
         styleOverrides.color = '#ffffff';
         styleOverrides.display = 'inline-block';
         styleOverrides.paddingTop = '12px';
@@ -59,7 +59,7 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
         content = 'Đây là nội dung trích dẫn nổi bật của bạn.';
         styleOverrides = createStyle({
             paddingTop: '20px', paddingRight: '20px', paddingBottom: '20px', paddingLeft: '20px', textAlign: 'left',
-            backgroundColor: '#f8fafc', borderLeftWidth: '4px', borderStyle: 'solid', borderColor: '#f59e0b', fontStyle: 'italic', color: '#334155',
+            backgroundColor: '#f8fafc', borderLeftWidth: '4px', borderStyle: 'solid', borderColor: '#d97706', fontStyle: 'italic', color: '#334155',
         });
     }
     if (type === 'timeline') {
@@ -68,7 +68,7 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
             { id: createUniqueId(), title: 'Sự kiện 2', date: '10:30', description: 'Mô tả bước tiếp theo' },
         ];
         styleOverrides.backgroundColor = 'transparent';
-        styleOverrides.timelineDotColor = '#f59e0b';
+        styleOverrides.timelineDotColor = '#d97706';
         styleOverrides.timelineLineColor = '#e2e8f0';
         styleOverrides.timelineLineStyle = 'solid';
         styleOverrides.textAlign = 'left';
@@ -103,7 +103,7 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
         styleOverrides.paddingTop = '10px';
         styleOverrides.paddingBottom = '10px';
         styleOverrides.borderRadius = '12px';
-        styleOverrides.playButtonColor = '#f59e0b';
+        styleOverrides.playButtonColor = '#d97706';
     }
     if (type === 'order_list') {
         styleOverrides.paddingTop = '20px';
@@ -137,7 +137,7 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
             { id: createUniqueId(), title: 'Tính năng 2', description: 'Mô tả ngắn gọn về tính năng hoặc lợi ích tuyệt vời của sản phẩm.' },
             { id: createUniqueId(), title: 'Tính năng 3', description: 'Mô tả ngắn gọn về tính năng hoặc lợi ích tuyệt vời của sản phẩm.' },
         ];
-        styleOverrides.checkIconColor = '#f59e0b';
+        styleOverrides.checkIconColor = '#d97706';
         styleOverrides.checkIconSize = '20';
         styleOverrides.showCheckListTitle = true;
         styleOverrides.textAlign = 'left';
@@ -197,107 +197,6 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
         styleOverrides.textAlign = 'center';
     }
 
-    // NEW: Job Card (Refined & Editable)
-    if (type === 'job_card') {
-        const createBadge = (text: string, bg: string, color: string) => ({
-            id: createUniqueId(), type: 'button' as const, content: `<div style="text-align: center;">${text}</div>`, url: '#',
-            style: createStyle({
-                backgroundColor: bg, color: color, fontSize: '11px', fontWeight: 'bold',
-                borderRadius: '99px', paddingLeft: '12px', paddingRight: '12px', paddingTop: '6px', paddingBottom: '6px',
-                width: 'auto', textAlign: 'center', display: 'inline-block'
-            })
-        });
-
-        // Nested Row for Footer (Badges + Button)
-        const footerRow = {
-            id: createUniqueId(), type: 'row' as const, content: '',
-            style: createStyle({ display: 'table', width: '100%', backgroundColor: 'transparent', noStack: true }),
-            children: [
-                // Col 1: Badges Area
-                {
-                    id: createUniqueId(), type: 'column' as const, content: '',
-                    style: createStyle({ width: '65%', verticalAlign: 'middle', textAlign: 'left' }),
-                    children: [{
-                        id: createUniqueId(), type: 'row' as const, content: '', // Inner row for badges
-                        style: createStyle({ display: 'table', width: 'auto', backgroundColor: 'transparent', noStack: true }),
-                        children: [
-                            {
-                                id: createUniqueId(), type: 'column' as const, content: '',
-                                style: createStyle({ width: 'auto', paddingRight: '8px' }),
-                                children: [createBadge('Thoả thuận', '#fef3c7', '#92400e')]
-                            },
-                            {
-                                id: createUniqueId(), type: 'column' as const, content: '',
-                                style: createStyle({ width: 'auto' }),
-                                children: [createBadge('Hồ Chí Minh', '#f1f5f9', '#475569')]
-                            }
-                        ]
-                    }]
-                },
-                // Col 2: Apply Button
-                {
-                    id: createUniqueId(), type: 'column' as const, content: '',
-                    style: createStyle({ width: '35%', verticalAlign: 'middle', textAlign: 'right' }),
-                    children: [{
-                        id: createUniqueId(), type: 'button' as const, content: 'Ứng tuyển', url: '#',
-                        style: createStyle({
-                            backgroundColor: '#f59e0b', color: '#ffffff', fontSize: '12px', fontWeight: 'bold',
-                            borderRadius: '99px', paddingLeft: '20px', paddingRight: '20px', paddingTop: '8px', paddingBottom: '8px',
-                            width: 'auto', textAlign: 'center', display: 'inline-block'
-                        })
-                    }]
-                }
-            ]
-        };
-
-        return {
-            id, type: 'section', content: '',
-            style: createStyle({ backgroundColor: 'transparent' }),
-            children: [{
-                id: createUniqueId(), type: 'row' as const, content: '',
-                style: createStyle({
-                    display: 'table', width: '100%', backgroundColor: '#ffffff',
-                    paddingTop: '20px', paddingRight: '20px', paddingBottom: '20px', paddingLeft: '20px',
-                    borderTopWidth: '1px', borderBottomWidth: '1px', borderLeftWidth: '1px', borderRightWidth: '1px',
-                    borderStyle: 'solid', borderColor: '#e2e8f0', borderRadius: '12px'
-                }),
-                children: [
-                    // Logo Column
-                    {
-                        id: createUniqueId(), type: 'column' as const, content: '',
-                        style: createStyle({ width: '60px', verticalAlign: 'top', paddingRight: '16px' }),
-                        children: [{
-                            id: createUniqueId(), type: 'image' as const,
-                            content: 'https://cdn-icons-png.flaticon.com/512/3003/3003984.png',
-                            style: createStyle({ width: '48px', height: '48px', borderRadius: '10px' }),
-                            altText: 'Company Logo'
-                        }]
-                    },
-                    // Content Column
-                    {
-                        id: createUniqueId(), type: 'column' as const, content: '',
-                        style: createStyle({ width: 'auto', verticalAlign: 'top' }),
-                        children: [
-                            // Title
-                            {
-                                id: createUniqueId(), type: 'text' as const,
-                                content: '<h3 style="margin: 0 0 4px 0; font-size: 15px; color: #0f172a; font-weight: 700; line-height: 1.4;">Senior Digital Marketer</h3>',
-                                style: createStyle()
-                            },
-                            // Company
-                            {
-                                id: createUniqueId(), type: 'text' as const,
-                                content: '<p style="margin: 0 0 12px 0; font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase;">MAJOR EDUCATION JSC</p>',
-                                style: createStyle()
-                            },
-                            // FOOTER (Badges + Button)
-                            footerRow
-                        ]
-                    }
-                ]
-            }]
-        };
-    }
 
     // NEW: Header Gradient (Google AI Style)
     if (type === 'header_gradient') {
@@ -343,7 +242,7 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
             id: createUniqueId(), type: 'column' as const, content: '',
             style: createStyle({ width: '48%', verticalAlign: 'top', backgroundColor: '#f8fafc', borderRadius: '16px', paddingBottom: '20px', paddingLeft: '0px', paddingRight: '0px' }),
             children: [
-                { id: createUniqueId(), type: 'image' as const, content: img, style: createStyle({ width: '100%', borderRadius: '16px 16px 0 0' }) },
+                { id: createUniqueId(), type: 'image' as const, content: img, style: createStyle({ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '16px 16px 0 0' }) },
                 { id: createUniqueId(), type: 'text' as const, content: `<h3 style="margin: 20px 20px 8px; padding: 0; font-size: 16px; font-weight: bold; color: #1e293b; text-align: center;">${title}</h3><p style="margin: 0; padding: 0 20px 20px; color: #64748b; font-size: 13px; line-height: 1.6; text-align: center;">Khám phá bộ sưu tập mới nhất với phong cách độc đáo của chúng tôi.</p>`, style: createStyle() },
                 { id: createUniqueId(), type: 'text' as const, content: '<p style="margin: 0; padding: 0 20px; text-align: center;"><a href="#" style="text-decoration: none; color: #2563eb; font-weight: 600; font-size: 13px;">Xem chi tiết →</a></p>', style: createStyle() }
             ]

@@ -69,7 +69,7 @@ const ZaloPolicyModal: React.FC<ZaloPolicyModalProps> = ({ isOpen, onClose }) =>
                 {/* Important Rules */}
                 <div className="bg-amber-50 rounded-2xl p-5 border border-amber-100 flex gap-4">
                     <div className="shrink-0 p-2 bg-white rounded-xl shadow-sm h-fit">
-                        <AlertOctagon className="w-5 h-5 text-amber-500" />
+                        <AlertOctagon className="w-5 h-5 text-amber-600" />
                     </div>
                     <div>
                         <h5 className="text-sm font-black text-amber-900 mb-1 tracking-tight">Cập nhật Quy định 2026</h5>

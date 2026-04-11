@@ -256,7 +256,7 @@ const RichText: React.FC<RichTextProps> = ({ html, onChange, placeholder, classN
                 />
             )}
             <style>{`
-                #${instanceId} a:not([style*="color"]) { color: ${bodyLinkColor}; text-decoration: underline; }
+                #${instanceId} a { color: ${bodyLinkColor} !important; text-decoration: underline !important; }
                 ${blockFontSize ? `#${instanceId} p, #${instanceId} div:not([class]) { font-size: ${typeof blockFontSize === 'number' ? blockFontSize + 'px' : blockFontSize}; }` : ''}
                 ${blockLineHeight ? `#${instanceId} p { line-height: ${blockLineHeight}; }` : ''}
             `}</style>

@@ -976,12 +976,23 @@ Lịch sử hoạt động:
         }
         setLoading(true);
         try {
-            const res = await api.post<any>('ai_training?action=update_settings', {
+            // Clean arrays before saving
+            const cleanedSettings = {
                 ...settings,
+                excluded_pages: (settings.excluded_pages || []).map(s => s.trim()).filter(Boolean),
+                excluded_paths: (settings.excluded_paths || []).map(s => s.trim()).filter(Boolean),
+                auto_open_excluded_pages: (settings.auto_open_excluded_pages || []).map(s => s.trim()).filter(Boolean),
+                auto_open_excluded_paths: (settings.auto_open_excluded_paths || []).map(s => s.trim()).filter(Boolean)
+            };
+
+            const res = await api.post<any>('ai_training?action=update_settings', {
+                ...cleanedSettings,
                 property_id: selectedProperty
             });
             if (res.success) {
                 toast.success('Đã cập nhật cấu hình AI');
+                // Refresh local settings after clean-up save to sync UI
+                setSettings({ ...settings, ...cleanedSettings });
             }
         } catch (e) {
             toast.error('Cập nhật thất bại');

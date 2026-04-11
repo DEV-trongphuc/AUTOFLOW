@@ -63,9 +63,19 @@ if ($method === 'GET' && !isset($_GET['type'])) {
 checkZaloAutomationSchema($pdo);
 
 if ($method === 'POST') {
+    // [EARLY ABORT / DDOS MITIGATION] Vòng 98: Reject requests > 1MB or malformed before touching DB
+    if (strlen($input) > 1048576) { 
+        http_response_code(413);
+        exit('Payload Too Large');
+    }
+    
     $data = json_decode($input, true);
+    if (!$data) {
+        http_response_code(400);
+        exit('Invalid JSON');
+    }
 
-    if ($data && (isset($data['event_name']) || isset($data['sender']['id']))) {
+    if (isset($data['event_name']) || isset($data['sender']['id'])) {
         // Advanced ID Resolution
         $zaloOaId = $data['oa_id'] ?? $data['recipient']['id'] ?? null;
         $timestamp = $data['timestamp'] ?? time();
@@ -296,18 +306,22 @@ if ($method === 'POST') {
                         if ($subId && strpos($event, 'oa_send_') === 0) {
                             $staffMsg = $data['message']['text'] ?? '[' . strtoupper(str_replace('oa_send_', '', $event)) . ']';
 
-                            // [KEY FIX] Only treat as human reply if sender has admin_id (real staff typing in Zalo console).
-                            // Bot/API-sent messages do NOT have admin_id in sender → must NOT pause AI.
+                            // [KEY FIX] Fix Zalo Human vs Bot parsing since Zalo API doesn't give admin_id reliably
                             $hasAdminId = !empty($data['sender']['admin_id']);
 
-                            // [NEW 10M] Check if this is an automated message echo to avoid pausing AI
-                            $isAutomated = !$hasAdminId || (strpos($staffMsg, '[Automation]') === 0);
-                            if (!$isAutomated) {
-                                // Match against our own local log (which always has the prefix)
-                                $stmtCheck = $pdo->prepare("SELECT id FROM zalo_user_messages WHERE zalo_user_id = ? AND direction = 'outbound' AND message_text = ? AND created_at > DATE_SUB(NOW(), INTERVAL 1 MINUTE) LIMIT 1");
-                                $stmtCheck->execute([$zaloUserId, "[Automation] " . $staffMsg]);
+                            // [FIX] Ensure we correctly detect human agents. Since Zalo sometimes omits admin_id for OA reps,
+                            // we must assume it's human UNLESS we explicitly sent it just now in our DB.
+                            $isAutomated = (strpos($staffMsg, '[Automation]') === 0);
+                            
+                            if (!$hasAdminId && !$isAutomated) {
+                                // It doesn't have an admin_id, BUT it could still be a human using Zalo OA Web.
+                                // Let's check if AutoFlow JUST sent this exact message.
+                                $stmtCheck = $pdo->prepare("SELECT id FROM zalo_user_messages WHERE zalo_user_id = ? AND direction = 'outbound' AND message_text IN (?, ?) AND created_at > DATE_SUB(NOW(), INTERVAL 3 MINUTE) LIMIT 1");
+                                $stmtCheck->execute([$zaloUserId, $staffMsg, "[Automation] " . $staffMsg]);
                                 if ($stmtCheck->fetch()) {
-                                    $isAutomated = true;
+                                    $isAutomated = true; // Yes, we generated this. Not a human takeover.
+                                } else {
+                                    $isAutomated = false; // We didn't send it. Must be a human rep on Zalo OA app!
                                 }
                             }
 
@@ -482,6 +496,22 @@ if ($method === 'POST') {
                                         $stmtFlowCheck->execute([$zaloUserId]);
                                         if ($stmtFlowCheck->fetch()) {
                                             $skipAI = true;
+                                        }
+                                    }
+
+                                    // 5. [ANTI-SPAM INFINITE LOOP] Vòng 96: Prevent User Bot vs AI Bot Loop
+                                    // If user sent >= 15 messages in the last 1 minute (Ping-pong loop), pause AI
+                                    if (!$skipAI) {
+                                        $stmtSpam = $pdo->prepare("
+                                            SELECT COUNT(*) FROM zalo_subscriber_activity 
+                                            WHERE subscriber_id = ? AND type = 'user_send_text' 
+                                            AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MINUTE)
+                                        ");
+                                        $stmtSpam->execute([$subId]);
+                                        if ((int)$stmtSpam->fetchColumn() >= 15) {
+                                            $skipAI = true;
+                                            $pdo->prepare("UPDATE zalo_subscribers SET ai_paused_until = DATE_ADD(NOW(), INTERVAL 30 MINUTE) WHERE id = ?")->execute([$subId]);
+                                            @file_put_contents(__DIR__ . '/zalo_debug.log', date('[Y-m-d H:i:s] ') . "ANTI-SPAM LOOP TRIPPED for $zaloUserId. Paused AI for 30 mins.\n", FILE_APPEND);
                                         }
                                     }
                                 } catch (Exception $e) {

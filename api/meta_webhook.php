@@ -58,6 +58,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $body = json_decode($input, true);
     writeLog($body); // Debug Log
 
+    // [FIX] Acknowledge Facebook IMMEDIATELY to prevent 20-second timeouts.
+    // If Gemini takes 35s to respond, Facebook will force-close the socket at 20s and kill PHP.
+    // This allows PHP to run in the background safely.
+    ignore_user_abort(true);
+    if (!ob_get_level()) ob_start();
+    http_response_code(200);
+    echo 'EVENT_RECEIVED';
+    header("Connection: close");
+    header("Content-Length: " . ob_get_length());
+    ob_end_flush();
+    @ob_flush();
+    flush();
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    }
+
     if ($body && isset($body['object']) && $body['object'] === 'page') {
 
         foreach ($body['entry'] as $entry) {
@@ -74,11 +90,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         }
-
-        http_response_code(200);
-        echo 'EVENT_RECEIVED';
     } else {
-        http_response_code(404);
+        // Not a page event, but we already responded 200 to keep Meta happy.
+        // We do nothing else.
     }
 }
 
@@ -163,9 +177,10 @@ function processMessagingEvent($pdo, $pageId, $event)
             } catch (Exception $e) {
             }
 
-            // Rule: Only skip pause if the app_id matches OUR bot's app_id.
-            // If app_id is NULL (mobile app) or DIFFERENT (Business Suite app_id: 263902037430900) -> It's a Human Rep.
-            $isOurBot = ($appId && $ourAppId && (string) $appId === (string) $ourAppId);
+            // [FIX] Rule: Skip pause if app_id matches our DB, OR if metadata matches our API signature.
+            // This prevents AI from pausing ITSELF if the app_id is missing or misconfigured in meta_app_configs.
+            $metaDataVal = $message['metadata'] ?? '';
+            $isOurBot = ($appId && $ourAppId && (string) $appId === (string) $ourAppId) || ($metaDataVal === 'autoflow_ai_bot');
 
             if (!$isOurBot && !empty($recipientId)) {
                 $pdo->prepare("UPDATE meta_subscribers SET ai_paused_until = DATE_ADD(NOW(), INTERVAL 30 MINUTE) WHERE page_id = ? AND psid = ?")
@@ -212,12 +227,16 @@ function processMessagingEvent($pdo, $pageId, $event)
             return;
         }
 
-        // Check Duplicate MID
+        // Check Duplicate MID with Idempotency Lock
         if ($mid) {
+            $lockName = "meta_msg_" . md5($mid);
+            $pdo->query("SELECT GET_LOCK('$lockName', 10)");
+            
             $stmt = $pdo->prepare("SELECT id FROM meta_message_logs WHERE mid = ?");
             $stmt->execute([$mid]);
             if ($stmt->fetch()) {
                 // Already processed
+                $pdo->query("SELECT RELEASE_LOCK('$lockName')");
                 return;
             }
         }
@@ -307,8 +326,14 @@ function processMessagingEvent($pdo, $pageId, $event)
             // Moved BEFORE mark_seen/typing_on to allow early exit if inactive/out-of-hours
             triggerAutomation($pdo, $pageId, $senderId, $text, $hasExtractedData);
 
+            if ($mid && isset($lockName)) {
+                $pdo->query("SELECT RELEASE_LOCK('$lockName')");
+            }
         } catch (Exception $e) {
             writeLog("DB Error in processMessagingEvent: " . $e->getMessage());
+            if (isset($mid) && isset($lockName)) {
+                $pdo->query("SELECT RELEASE_LOCK('$lockName')");
+            }
         }
     }
 
@@ -808,6 +833,16 @@ function processMetaAIMessage($pdo, $pageId, $senderId, $text, $chatbotId)
     curl_close($ch);
 
     writeLog("AI API Response (Code $httpCode, ${elapsed}s): " . substr($response, 0, 200) . ($curlError ? " Error: $curlError" : ""));
+
+    // [FIX] Race condition check: Verify if AI is paused AGAIN right before sending.
+    // A human agent might have replied while Gemini was generating this response.
+    $stmtCheckPause = $pdo->prepare("SELECT ai_paused_until FROM meta_subscribers WHERE page_id = ? AND psid = ?");
+    $stmtCheckPause->execute([$pageId, $senderId]);
+    $finalCheck = $stmtCheckPause->fetchColumn();
+    if ($finalCheck && strtotime($finalCheck) > time()) {
+        writeLog("AI Step 6.5: Aborting send! Human agent replied while generating. Paused until $finalCheck");
+        return;
+    }
 
     writeLog("AI Response time: {$elapsed}s");
 

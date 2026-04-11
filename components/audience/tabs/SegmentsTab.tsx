@@ -223,11 +223,11 @@ const SegmentsTab: React.FC<SegmentsTabProps> = ({ loading, segments, currentPag
                                         <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" />
                                     </div>
                                 </th>
-                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Tên phân khúc</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Điều kiện lọc</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Đồng bộ</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Kết quả</th>
-                                <th className="px-6 py-4 w-36 text-right pr-8">Thao tác</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">{"T\u00EAn ph\u00E2n kh\u00FAc"}</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{"\u0110i\u1EC1u ki\u1EC7n l\u1ECDc"}</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{"\u0110\u1ED3ng b\u1ED9"}</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{"K\u1EBFt qu\u1EA3"}</th>
+                                <th className="px-6 py-4 w-36 text-right pr-8">{"Thao t\u00E1c"}</th>
                             </tr>
                         )}
                     </thead>
@@ -248,7 +248,7 @@ const SegmentsTab: React.FC<SegmentsTabProps> = ({ loading, segments, currentPag
                             />
                         ))}
                         {!loading && segments.length === 0 && (
-                            <tr><td colSpan={6} className="py-12 text-center text-slate-400 text-sm">Không tìm thấy phân khúc nào.</td></tr>
+                            <tr><td colSpan={6} className="py-12 text-center text-slate-400 text-sm">{"Kh\u00F4ng t\u00ECm th\u1EA5y ph\u00E2n kh\u00FAc n\u00E0o."}</td></tr>
                         )}
                     </tbody>
                 </table>
@@ -269,3 +269,4 @@ const SegmentsTab: React.FC<SegmentsTabProps> = ({ loading, segments, currentPag
 };
 
 export default SegmentsTab;
+

@@ -1,10 +1,9 @@
 
 
-import React, { useState } from 'react';
-import { MoreHorizontal, Clock, MailOpen, MousePointer2, User, UserPlus, Calendar, Trash2, X, ChevronLeft, ChevronRight, Copy, Download, Mail, Check, Zap, BadgeCheck, Tag, List, MessageCircle } from 'lucide-react';
+import React from 'react';
+import { MoreHorizontal, Clock, MailOpen, MousePointer2, UserPlus, ChevronLeft, ChevronRight, Check, Zap, BadgeCheck, MessageCircle } from 'lucide-react';
 import Badge from '../../common/Badge';
 import { Subscriber } from '../../../types';
-import Button from '../../common/Button';
 import toast from 'react-hot-toast';
 import ItemsPerPageSelector from '../ItemsPerPageSelector';
 import BulkActionsToolbar from '../BulkActionsToolbar';
@@ -65,7 +64,7 @@ const ContactRow = React.memo<ContactRowProps>(({
                 <div className="flex items-center">
                     <div className="relative">
                         {sub.avatar ? (
-                            <img src={sub.avatar} alt="Avatar" className="h-9 w-9 rounded-xl object-cover mr-3 border border-slate-200 shadow-sm" />
+                            <img src={sub.avatar} alt={`${sub.firstName} ${sub.lastName}`} className="h-9 w-9 rounded-xl object-cover mr-3 border border-slate-200 shadow-sm" />
                         ) : (
                             <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-600 font-bold text-xs mr-3 border border-slate-200 group-hover:from-[#fff4e0] group-hover:to-[#ffe8cc] group-hover:text-[#ca7900] transition-all shadow-sm">
                                 {(sub.firstName || '?')[0]}{(sub.lastName || '')[0]}
@@ -80,13 +79,13 @@ const ContactRow = React.memo<ContactRowProps>(({
                     <div>
                         <div className="text-sm font-bold text-slate-800 group-hover:text-[#ca7900] transition-colors flex items-center gap-1">
                             {sub.firstName} {sub.lastName}
-                            {(Number(sub.verified) === 1) && <BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-50" title="Verified" />}
-                            {sub.status === "customer" && <BadgeCheck className="w-3.5 h-3.5 text-amber-500 fill-amber-50" title="Customer" />}
-                            {sub.meta_psid && <BadgeCheck className="w-3.5 h-3.5 text-blue-600 fill-blue-100" title="Facebook Messenger Verified" />}
-                            {((sub as any).chatCount > 0) && (
+                            {(Number(sub.verified) === 1) && <span title="Verified"><BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-50" /></span>}
+                            {sub.status === "customer" && <span title="Customer"><BadgeCheck className="w-3.5 h-3.5 text-amber-600 fill-amber-50" /></span>}
+                            {sub.meta_psid && <span title="Facebook Messenger Verified"><BadgeCheck className="w-3.5 h-3.5 text-blue-600 fill-blue-100" /></span>}
+                            {(sub.chatCount && sub.chatCount > 0) && (
                                 <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-[10px] font-bold shrink-0" title="Conversations">
                                     <MessageCircle className="w-3 h-3" />
-                                    {((sub as any).chatCount || 0).toLocaleString()}
+                                    {sub.chatCount.toLocaleString()}
                                 </div>
                             )}
                         </div>
@@ -116,7 +115,7 @@ const ContactRow = React.memo<ContactRowProps>(({
                     <Badge
                         variant={
                             sub.status === "active" ? "success" :
-                                (sub.status === "unsubscribed" || sub.status === "unsub" || sub.status === "bounced" || sub.status === "complained") ? "danger" :
+                                (sub.status === "unsubscribed" || sub.status === "bounced" || sub.status === "complained") ? "danger" :
                                     sub.status === "lead" ? "pink" :
                                         sub.status === "customer" ? "amber" : "neutral"
                         }
@@ -158,7 +157,7 @@ const ContactRow = React.memo<ContactRowProps>(({
                 </td>
             )}
             <td className="px-6 py-4 text-right pr-8">
-                <button className="text-slate-300 hover:text-[#ca7900] p-1.5 hover:bg-orange-50 rounded-lg transition-colors"><MoreHorizontal className="w-4 h-4" /></button>
+                <button type="button" className="text-slate-300 hover:text-[#ca7900] p-1.5 hover:bg-orange-50 rounded-lg transition-colors"><MoreHorizontal className="w-4 h-4" /></button>
             </td>
         </tr>
     );
@@ -199,13 +198,8 @@ const ContactsTab = React.memo<ContactsTabProps>(({
     const selectedOnPageCount = currentPageIds.filter(id => selectedIds.has(id)).length;
     const isAllPageSelected = currentPageIds.length > 0 && selectedOnPageCount === currentPageIds.length;
 
-    const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
-        if (type === 'success') toast.success(message);
-        else if (type === 'error') toast.error(message);
-        else toast(message);
-    };
 
-    const isValidDate = (d: Date) => d instanceof Date && !isNaN(d.getTime());
+    const isValidDate = (d: Date) => d instanceof Date && !Number.isNaN(d.getTime());
 
     // Stable rendering helpers
     const renderLastActive = React.useCallback((sub: Subscriber) => {
@@ -226,8 +220,8 @@ const ContactsTab = React.memo<ContactsTabProps>(({
             <div className="flex items-center gap-2 text-slate-400">
                 <Clock className="w-3.5 h-3.5" />
                 <div className="flex flex-col">
-                    <span className="text-[11px] font-medium">Chưa tương tác</span>
-                    <span className="text-[9px] opacity-70">gần đây</span>
+                    <span className="text-[11px] font-medium">{"Ch\u01B0a t\u01B0\u01A1ng t\u00E1c"}</span>
+                    <span className="text-[9px] opacity-70">{"g\u1EA7n \u0111\u00E2y"}</span>
                 </div>
             </div>
         );
@@ -236,19 +230,19 @@ const ContactsTab = React.memo<ContactsTabProps>(({
         if (latestActivity.type === 'click') return (
             <div className="flex items-center gap-2 text-emerald-600">
                 <MousePointer2 className="w-3.5 h-3.5" />
-                <div className="flex flex-col"><span className="text-[11px] font-bold">Vừa click link</span><span className="text-[9px] opacity-70">{timeAgo}</span></div>
+                <div className="flex flex-col"><span className="text-[11px] font-bold">{"V\u1EEBa click link"}</span><span className="text-[9px] opacity-70">{timeAgo}</span></div>
             </div>
         );
         if (latestActivity.type === 'open') return (
             <div className="flex items-center gap-2 text-blue-600">
                 <MailOpen className="w-3.5 h-3.5" />
-                <div className="flex flex-col"><span className="text-[11px] font-bold">Đã mở mail</span><span className="text-[9px] opacity-70">{timeAgo}</span></div>
+                <div className="flex flex-col"><span className="text-[11px] font-bold">{"\u0110\u00E3 m\u1EDF mail"}</span><span className="text-[9px] opacity-70">{timeAgo}</span></div>
             </div>
         );
         return (
             <div className="flex items-center gap-2 text-slate-600">
                 <UserPlus className="w-3.5 h-3.5" />
-                <div className="flex flex-col"><span className="text-[11px] font-medium">Tham gia</span><span className="text-[9px] opacity-70">{timeAgo}</span></div>
+                <div className="flex flex-col"><span className="text-[11px] font-medium">{"Tham gia"}</span><span className="text-[9px] opacity-70">{timeAgo}</span></div>
             </div>
         );
     }, [formatRelativeTime]);
@@ -293,15 +287,15 @@ const ContactsTab = React.memo<ContactsTabProps>(({
                                         <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" />
                                     </div>
                                 </th>
-                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tên</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{"T\u00EAn"}</th>
                                 {visibleColumns.includes('email') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</th>}
-                                {visibleColumns.includes('phone') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Số điện thoại</th>}
-                                {visibleColumns.includes('company') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Công ty</th>}
-                                {visibleColumns.includes('status') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Trạng thái</th>}
-                                {visibleColumns.includes('lastActivity') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Hoạt động gần nhất</th>}
-                                {visibleColumns.includes('leadScore') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Điểm Lead</th>}
+                                {visibleColumns.includes('phone') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{"S\u1ED1 \u0111i\u1EC7n tho\u1EA1i"}</th>}
+                                {visibleColumns.includes('company') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{"C\u00F4ng ty"}</th>}
+                                {visibleColumns.includes('status') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{"Tr\u1EA1ng th\u00E1i"}</th>}
+                                {visibleColumns.includes('lastActivity') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{"Ho\u1EA1t \u0111\u1ED9ng g\u1EA7n nh\u1EA5t"}</th>}
+                                {visibleColumns.includes('leadScore') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">{"\u0110i\u1EC3m Lead"}</th>}
                                 {visibleColumns.includes('tags') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tags</th>}
-                                {visibleColumns.includes('joinedAt') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ngày tham gia</th>}
+                                {visibleColumns.includes('joinedAt') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{"Ng\u00E0y tham gia"}</th>}
                                 <th className="px-6 py-4 text-right pr-8"></th>
                             </tr>
                         )}
@@ -311,9 +305,9 @@ const ContactsTab = React.memo<ContactsTabProps>(({
                             <tr className="bg-orange-50/50">
                                 <td colSpan={visibleColumns.length + 2} className="px-6 py-2.5 text-center">
                                     {isGlobalSelected ? (
-                                        <p className="text-xs font-medium text-slate-600">Đã chọn tất cả <span className="font-bold text-orange-600">{totalCount.toLocaleString()}</span> liên hệ. <button onClick={() => onToggleGlobalSelection(false)} className="ml-2 text-blue-600 font-bold hover:underline">Bỏ chọn</button></p>
+                                        <p className="text-xs font-medium text-slate-600">{"\u0110\u00E3 Ch\u1ECDn t\u1EA5t c\u1EA3"} <span className="font-bold text-orange-600">{totalCount.toLocaleString()}</span> {"li\u00EAn h\u1EC7."} <button type="button" onClick={() => onToggleGlobalSelection(false)} className="ml-2 text-blue-600 font-bold hover:underline">{"B\u1ECF ch\u1ECDn"}</button></p>
                                     ) : (
-                                        <p className="text-xs font-medium text-slate-600">Đã chọn {subscribers.length} liên hệ. <button onClick={() => onToggleGlobalSelection(true)} className="ml-1 text-orange-600 font-bold hover:underline italic underline-offset-2">Chọn tất cả {totalCount.toLocaleString()} liên hệ?</button></p>
+                                        <p className="text-xs font-medium text-slate-600">{"\u0110\u00E3 ch\u1ECDn"} {subscribers.length} {"li\u00EAn h\u1EC7."} <button type="button" onClick={() => onToggleGlobalSelection(true)} className="ml-1 text-orange-600 font-bold hover:underline italic underline-offset-2">{"Ch\u1ECDn t\u1EA5t c\u1EA3"} {totalCount.toLocaleString()} {"li\u00EAn h\u1EC7?"}</button></p>
                                     )}
                                 </td>
                             </tr>
@@ -335,7 +329,7 @@ const ContactsTab = React.memo<ContactsTabProps>(({
                             />
                         ))}
                         {!loading && subscribers.length === 0 && (
-                            <tr><td colSpan={visibleColumns.length + 2} className="py-12 text-center text-slate-400 text-sm">Không tìm thấy liên hệ nào.</td></tr>
+                            <tr><td colSpan={visibleColumns.length + 2} className="py-12 text-center text-slate-400 text-sm">{"Kh\u00F4ng t\u00ECm th\u1EA5y li\u00EAn h\u1EC7 n\u00E0o."}</td></tr>
                         )}
                     </tbody>
                 </table>
@@ -348,9 +342,9 @@ const ContactsTab = React.memo<ContactsTabProps>(({
                         onChange={onItemsPerPageChange}
                     />
                     <div className="flex gap-2">
-                        <button onClick={() => onPageChange(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"><ChevronLeft className="w-4 h-4" /></button>
+                        <button type="button" onClick={() => onPageChange(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"><ChevronLeft className="w-4 h-4" /></button>
                         <span className="px-4 py-2 bg-slate-50 rounded-lg text-xs font-bold text-slate-600 border border-slate-100">{currentPage.toLocaleString()} / {totalPages.toLocaleString()}</span>
-                        <button onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"><ChevronRight className="w-4 h-4" /></button>
+                        <button type="button" onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"><ChevronRight className="w-4 h-4" /></button>
                     </div>
                 </div>
             )}

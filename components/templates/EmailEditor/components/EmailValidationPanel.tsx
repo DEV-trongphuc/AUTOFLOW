@@ -138,14 +138,12 @@ const EmailValidationPanel: React.FC<EmailValidationPanelProps> = ({
                                         {/* Auto-fix ALL button for duplicate_link group */}
                                         {group.type === 'duplicate_link' && onAutoFixDuplicates && group.items.length > 0 && (
                                             <button
-                                                onClick={() => {
-                                                    // Fix all duplicate groups at once
+                                                    onClick={() => {
                                                     group.items.forEach(issue => {
                                                         if (issue.duplicateGroupIds && issue.currentUrl) {
                                                             onAutoFixDuplicates(issue.duplicateGroupIds, issue.currentUrl);
                                                         }
                                                     });
-                                                    setTimeout(onRerun, 150);
                                                 }}
                                                 className="flex items-center gap-1 px-2 py-1 rounded-lg bg-violet-500 hover:bg-violet-600 text-white text-[9px] font-bold transition-colors shadow-sm shrink-0"
                                                 title="Tự động gắn tracking cho tất cả link trùng"
@@ -177,7 +175,7 @@ const EmailValidationPanel: React.FC<EmailValidationPanelProps> = ({
                                                             <p className="text-[9px] text-violet-500 truncate mt-0.5 font-mono">{issue.currentUrl}</p>
                                                         )}
                                                     </div>
-                                                    <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-amber-500 transition-colors shrink-0" />
+                                                    <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-amber-600 transition-colors shrink-0" />
                                                 </button>
 
                                                 {/* Auto-fix button for individual duplicate group */}
@@ -185,7 +183,6 @@ const EmailValidationPanel: React.FC<EmailValidationPanelProps> = ({
                                                     <button
                                                         onClick={() => {
                                                             onAutoFixDuplicates(issue.duplicateGroupIds!, issue.currentUrl!);
-                                                            setTimeout(onRerun, 150);
                                                         }}
                                                         className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 border border-violet-200 text-violet-700 text-[10px] font-bold transition-colors"
                                                     >

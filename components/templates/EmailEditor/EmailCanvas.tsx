@@ -175,7 +175,7 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
 
         // Check if dragging a preset (which are usually sections)
         const draggingType = e.dataTransfer.getData('type');
-        const isPreset = ['job_card', 'double_card', 'review_card', 'download_badges', 'feature_card'].includes(draggingType);
+        const isPreset = ['double_card', 'review_card', 'download_badges', 'feature_card'].includes(draggingType);
 
         // Treat presets as SECTIONs for drop logic
         const effectiveDraggingType = isPreset ? 'section' : draggingType;
@@ -401,7 +401,7 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
                                         onDragOver={(e) => handleDragOver(e, 'root', 'section')} // Allow dropping layouts into empty canvas
                                         onDrop={(e) => handleDrop(e, 'root')}
                                     >
-                                        {dragOverId === 'root' && dropPosition && <div className="absolute inset-0 bg-amber-500/20 z-40 border-2 border-amber-500 border-dashed pointer-events-none"></div>}
+                                        {dragOverId === 'root' && dropPosition && <div className="absolute inset-0 bg-amber-600/20 z-40 border-2 border-amber-600 border-dashed pointer-events-none"></div>}
                                         <Layout className="w-16 h-16 mb-4 opacity-20" />
                                         <span className="font-black uppercase text-xs tracking-widest opacity-50">Kéo thả Section vào đây</span>
                                     </div>
@@ -463,7 +463,7 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
                                     <ChevronRight className="w-3 h-3 text-slate-600 mx-0.5" />
                                     <button
                                         onClick={(e) => { e.stopPropagation(); handleSelectBlock(b.id); }}
-                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all ${isLast ? 'bg-amber-500 text-white shadow-md' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all ${isLast ? 'bg-amber-600 text-white shadow-md' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}
                                     >
                                         <Icon className="w-3 h-3" />{b.type.replace('_', ' ')}
                                     </button>

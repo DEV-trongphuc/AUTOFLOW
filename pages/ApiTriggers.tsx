@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { FileInput, ShoppingCart, Zap, BookOpen, Database, CheckCircle2 } from 'lucide-react';
-import PageHeader from '../components/common/PageHeader';
+import PageHero from '../components/common/PageHero';
 import Tabs from '../components/common/Tabs';
 import FormsTab from '../components/triggers/FormsTab';
 import PurchasesTab from '../components/triggers/PurchasesTab';
@@ -29,14 +28,14 @@ const ApiTriggers: React.FC = () => {
 
     return (
         <div className="animate-fade-in space-y-8  mx-auto pb-40">
-            <PageHeader
-                 brandColor="#ffa900"title="API & Sự kiện"
-                description="Quản lý Biểu mẫu, Đơn hàng và Sự kiện."
-                action={
-                    <Button variant="secondary" icon={BookOpen} onClick={() => setShowDocs(true)} className="w-full lg:w-auto">
-                        Tài liệu Data
-                    </Button>
-                }
+            <PageHero
+                title={<>API & <span className="text-amber-100/80">Events</span></>}
+                subtitle="Quản lý Biểu mẫu, Đơn hàng và Sự kiện thông qua hệ thống API Webhook."
+                showStatus={true}
+                statusText="API Gateway Online"
+                actions={[
+                    { label: 'Tài liệu Data', icon: BookOpen, onClick: () => setShowDocs(true), primary: true }
+                ]}
             />
 
             <div className="bg-white rounded-3xl lg:rounded-[32px] border border-slate-200 shadow-sm p-4 lg:p-6 min-h-[600px]">

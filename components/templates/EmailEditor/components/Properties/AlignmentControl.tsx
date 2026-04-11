@@ -15,7 +15,7 @@ const AlignmentControl: React.FC<AlignmentControlProps> = ({ values, onChange })
                 <button
                     key={align}
                     onClick={() => onChange({ textAlign: align })}
-                    className={`flex-1 py-1.5 rounded-md flex items-center justify-center transition-all ${values.textAlign === align ? 'bg-white shadow text-amber-500' : 'text-slate-400 hover:text-slate-600'}`}
+                    className={`flex-1 py-1.5 rounded-md flex items-center justify-center transition-all ${values.textAlign === align ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}
                 >
                     {align === 'left' && <AlignLeft className="w-3.5 h-3.5" />}
                     {align === 'center' && <AlignCenter className="w-3.5 h-3.5" />}
@@ -29,7 +29,7 @@ const AlignmentControl: React.FC<AlignmentControlProps> = ({ values, onChange })
                 <button
                     key={align}
                     onClick={() => onChange({ verticalAlign: align })}
-                    className={`flex-1 py-1.5 rounded-md flex items-center justify-center transition-all ${values.verticalAlign === align ? 'bg-white shadow text-amber-500' : 'text-slate-400 hover:text-slate-600'}`}
+                    className={`flex-1 py-1.5 rounded-md flex items-center justify-center transition-all ${values.verticalAlign === align ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}
                 >
                     {align === 'top' && <AlignVerticalJustifyStart className="w-3.5 h-3.5" />}
                     {align === 'middle' && <AlignVerticalJustifyCenter className="w-3.5 h-3.5" />}

@@ -656,7 +656,7 @@ const Settings: React.FC = () => {
             {activeTab === 'ai' && (
                 <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="bg-white rounded-2xl lg:rounded-[32px] p-6 lg:p-10 border-2 border-amber-100 shadow-xl relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500 opacity-5 rounded-full blur-[80px] -mr-32 -mt-32"></div>
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-600 opacity-5 rounded-full blur-[80px] -mr-32 -mt-32"></div>
 
                         <div className="flex items-center gap-4 lg:gap-5 mb-8 lg:mb-10 relative z-10">
                             <div className="p-3 lg:p-4 bg-amber-50 rounded-2xl lg:rounded-3xl text-amber-600 shadow-sm ring-1 ring-amber-100">
@@ -672,7 +672,7 @@ const Settings: React.FC = () => {
                             <div className="p-6 bg-slate-50 rounded-[32px] border border-slate-100 space-y-6">
                                 <div className="flex items-center justify-between">
                                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div> Google Gemini AI
+                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-600"></div> Google Gemini AI
                                     </h4>
                                     <a
                                         href="https://aistudio.google.com/app/apikey"
@@ -692,10 +692,10 @@ const Settings: React.FC = () => {
                                         value={smtp.gemini_api_key}
                                         onChange={e => setSmtp({ ...smtp, gemini_api_key: e.target.value })}
                                         icon={KeyRound}
-                                        className="bg-white border-slate-200 focus:border-amber-500 h-14"
+                                        className="bg-white border-slate-200 focus:border-amber-600 h-14"
                                     />
                                     <div className="p-4 bg-white/50 rounded-2xl border border-slate-100 flex items-start gap-3">
-                                        <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                                        <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                                         <p className="text-[11px] text-slate-500 leading-relaxed">
                                             API Key này sẽ được sử dụng chung cho các tính năng như: **AI Chatbot**, **Phân tích phân khúc khách hàng**, **Tự động hóa hành trình** và các module AI chưa có cấu hình riêng.
                                         </p>
@@ -703,7 +703,7 @@ const Settings: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl lg:rounded-[32px] p-6 lg:p-8 text-white shadow-lg shadow-amber-200 relative overflow-hidden">
+                            <div className="bg-gradient-to-br from-amber-600 to-orange-600 rounded-2xl lg:rounded-[32px] p-6 lg:p-8 text-white shadow-lg shadow-amber-200 relative overflow-hidden">
                                 <Sparkles className="absolute -bottom-6 -right-6 w-24 lg:w-32 h-24 lg:h-32 opacity-20" />
                                 <h4 className="text-base lg:text-lg font-black mb-2 italic">Mô hình sử dụng</h4>
                                 <p className="text-amber-100 text-[11px] lg:text-sm font-medium leading-relaxed opacity-90">

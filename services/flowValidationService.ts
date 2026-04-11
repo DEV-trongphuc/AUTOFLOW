@@ -631,9 +631,9 @@ export const validateFlow = (flowToCheck: Flow, allFlows: Flow[] = [], isStrict:
       // Note: Tag might allow array only, but we check targetId usually
       // Let's relax for Tag if tags array exists
       if (trigger.config.type === 'tag' && (!trigger.config.tags || trigger.config.tags.length === 0) && !trigger.config.targetId) {
-        errors.push({ msg: `Chưa chọn thẻ (Tag) cho Trigger`, type: 'critical', stepId: trigger.id });
+        errors.push({ msg: `Chưa chọn thẻ (Tag) cho Trigger`, type: isStrict ? 'critical' : 'warning', stepId: trigger.id });
       } else if (trigger.config.type !== 'tag' && !trigger.config.targetId) {
-        errors.push({ msg: `Chưa chọn nguồn kích hoạt cho Trigger (${trigger.config.type})`, type: 'critical', stepId: trigger.id });
+        errors.push({ msg: `Chưa chọn nguồn kích hoạt cho Trigger (${trigger.config.type})`, type: isStrict ? 'critical' : 'warning', stepId: trigger.id });
       }
     }
     // ...

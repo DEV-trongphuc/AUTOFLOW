@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useMemo, useState } from 'react';
 import { Users, Zap, Eye, Clock, TrendingUp, BarChart2, Activity, Info, Table, BookOpen, UserPlus } from 'lucide-react';
 import Modal from '../../common/Modal';
@@ -163,7 +163,7 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                         </div>
 
                         {/* Total Sessions */}
-                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-[0_4px_15px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg hover:shadow-amber-500/10 transition-all duration-300 group flex items-center justify-between">
+                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-[0_4px_15px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg hover:shadow-amber-600/10 transition-all duration-300 group flex items-center justify-between">
                             <div className="flex flex-col h-full justify-between">
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-2">
@@ -177,7 +177,7 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                     </div>
                                 </div>
                             </div>
-                            <div className="w-9 h-9 rounded-lg bg-amber-500 border border-amber-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/20 transform group-hover:scale-105 transition-all duration-500">
+                            <div className="w-9 h-9 rounded-lg bg-amber-600 border border-amber-600 flex items-center justify-center text-white shadow-lg shadow-amber-600/20 transform group-hover:scale-105 transition-all duration-500">
                                 <Zap className="w-4 h-4" />
                             </div>
                         </div>
@@ -256,7 +256,7 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                 <div className="p-2 bg-rose-50 text-rose-600 rounded-xl">
                                     <Activity className="w-5 h-5" />
                                 </div>
-                                <span className="text-xl font-black text-slate-800 tracking-tight">Về Tỷ lệ thoát (Bounce Rate)</span>
+                                <span className="text-xl font-black text-slate-800 tracking-tight">V? T? l? tho�t (Bounce Rate)</span>
                             </div>
                         }
                         size="xl"
@@ -267,10 +267,10 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                     <div className="p-2 bg-rose-600 text-white rounded-xl">
                                         <BookOpen className="w-5 h-5" />
                                     </div>
-                                    Bounce Rate là gì?
+                                    Bounce Rate l� g�?
                                 </h4>
                                 <p className="text-sm text-slate-500 leading-relaxed font-medium">
-                                    Bounce rate hay Tỷ lệ thoát là phần trăm số lượt truy cập trang web chỉ xem duy nhất một trang và rời đi ngay lập tức mà không có thêm tương tác nào khác (như nhấn vào link hoặc xem trang thứ hai). Nó đo lường mức độ tương tác và tính hấp dẫn của trang đích.
+                                    Bounce rate hay T? l? tho�t l� ph?n tram s? lu?t truy c?p trang web ch? xem duy nh?t m?t trang v� r?i di ngay l?p t?c m� kh�ng c� th�m tuong t�c n�o kh�c (nhu nh?n v�o link ho?c xem trang th? hai). N� do lu?ng m?c d? tuong t�c v� t�nh h?p d?n c?a trang d�ch.
                                 </p>
                             </div>
 
@@ -280,13 +280,13 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                         <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
                                             <TrendingUp className="w-4 h-4" />
                                         </div>
-                                        Tỷ lệ bao nhiêu là tốt?
+                                        T? l? bao nhi�u l� t?t?
                                     </h5>
                                     <p className="text-xs text-slate-500 leading-relaxed font-medium mb-4">
-                                        Không có con số "chuẩn" cho mọi lĩnh vực. Tỷ lệ thoát phụ thuộc rất lớn vào loại trang web và mục đích của trang.
+                                        Kh�ng c� con s? "chu?n" cho m?i linh v?c. T? l? tho�t ph? thu?c r?t l?n v�o lo?i trang web v� m?c d�ch c?a trang.
                                     </p>
                                     <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl italic text-[11px] text-orange-800 font-bold">
-                                        "Ví dụ: Một trang blog trả lời đúng câu hỏi người dùng tìm kiếm có thể có tỷ lệ thoát 90%+ nhưng vẫn là trang chất lượng tốt."
+                                        "V� d?: M?t trang blog tr? l?i d�ng c�u h?i ngu?i d�ng t�m ki?m c� th? c� t? l? tho�t 90%+ nhung v?n l� trang ch?t lu?ng t?t."
                                     </div>
                                 </div>
 
@@ -295,14 +295,14 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                         <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
                                             <Table className="w-4 h-4" />
                                         </div>
-                                        Trung bình theo ngành
+                                        Trung b�nh theo ng�nh
                                     </h5>
                                     <div className="space-y-3">
                                         {[
-                                            { label: 'Bán lẻ / TMĐT', range: '20% - 40%', color: 'text-emerald-500' },
-                                            { label: 'Dịch vụ', range: '10% - 30%', color: 'text-emerald-500' },
-                                            { label: 'Tạo khách hàng tiềm năng', range: '30% - 50%', color: 'text-blue-500' },
-                                            { label: 'Nội dung (Content site)', range: '40% - 60%', color: 'text-amber-500' },
+                                            { label: 'B�n l? / TM�T', range: '20% - 40%', color: 'text-emerald-500' },
+                                            { label: 'D?ch v?', range: '10% - 30%', color: 'text-emerald-500' },
+                                            { label: 'T?o kh�ch h�ng ti?m nang', range: '30% - 50%', color: 'text-blue-500' },
+                                            { label: 'N?i dung (Content site)', range: '40% - 60%', color: 'text-amber-600' },
                                             { label: 'Blog / Landing Page', range: '70% - 90%', color: 'text-rose-500' }
                                         ].map((item, i) => (
                                             <div key={i} className="flex items-center justify-between text-[11px] font-bold py-2 border-b border-slate-50 last:border-0">
@@ -326,7 +326,7 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                     </div>
                                     Traffic Trend Analytics
                                 </h3>
-                                <p className="text-[10px] text-slate-500 mt-1.5 font-semibold ml-11">Thống kê lưu lượng truy cập theo thời gian</p>
+                                <p className="text-[10px] text-slate-500 mt-1.5 font-semibold ml-11">Th?ng k� luu lu?ng truy c?p theo th?i gian</p>
                             </div>
                         </div>
                         <div className="min-h-[350px] bg-white rounded-2xl p-4 border border-slate-100">
@@ -337,7 +337,7 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                     <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
                                         <BarChart2 className="w-8 h-8 opacity-20" />
                                     </div>
-                                    <p className="font-bold">Chưa có dữ liệu biểu đồ cho khoảng thời gian này</p>
+                                    <p className="font-bold">Chua c� d? li?u bi?u d? cho kho?ng th?i gian n�y</p>
                                 </div>
                             )}
                         </div>

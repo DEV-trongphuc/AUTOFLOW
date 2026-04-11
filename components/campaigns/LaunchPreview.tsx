@@ -703,7 +703,7 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                         <div className={`p-6 rounded-[32px] border-2 transition-all group ${activeFlow.status === 'active' ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
                             <div className="flex items-start justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${activeFlow.status === 'active' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'}`}>
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${activeFlow.status === 'active' ? 'bg-emerald-500 text-white' : 'bg-amber-600 text-white'}`}>
                                         <GitMerge className="w-6 h-6" />
                                     </div>
                                     <div>

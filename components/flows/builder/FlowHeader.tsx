@@ -26,6 +26,7 @@ interface FlowHeaderProps {
   isReportMode?: boolean;
   onSync?: () => void;
   isSyncing?: boolean;
+  onRename?: (name: string) => void;
 }
 
 const FlowHeader: React.FC<FlowHeaderProps> = ({
@@ -47,7 +48,8 @@ const FlowHeader: React.FC<FlowHeaderProps> = ({
   onToggleReportMode,
   isReportMode,
   onSync,
-  isSyncing
+  isSyncing,
+  onRename
 }) => {
   const isArchived = flow.status === 'archived';
 
@@ -61,7 +63,14 @@ const FlowHeader: React.FC<FlowHeaderProps> = ({
           </button>
           <div className="min-w-0 pr-2">
             <div className="flex items-center gap-2 lg:gap-3 overflow-hidden">
-              <h2 className="text-sm lg:text-base font-bold text-slate-800 leading-none tracking-tight truncate">{flow.name}</h2>
+              <input
+                className="text-sm lg:text-base font-bold text-slate-800 bg-transparent border-none outline-none focus:ring-2 focus:ring-[#ffa900]/20 rounded-lg px-2 -ml-2 w-full transition-all hover:bg-slate-50 focus:bg-white truncate"
+                value={flow.name}
+                onChange={(e) => onRename?.(e.target.value)}
+                placeholder="Tên kịch bản..."
+                title="Sửa tên kịch bản nhanh"
+                disabled={isViewMode}
+              />
               {isViewMode && <span className="px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded text-[8px] lg:text-[9px] font-bold uppercase tracking-widest border border-blue-100 flex-shrink-0">Preview</span>}
             </div>
             <div className="flex items-center gap-2 mt-1 lg:mt-1.5">

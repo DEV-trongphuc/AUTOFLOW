@@ -60,7 +60,7 @@ const FlowSidebar: React.FC<FlowSidebarProps> = ({
                                             </span>
                                         )}
                                     </div>
-                                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${err.type === 'critical' ? 'bg-rose-500' : 'bg-amber-500'}`}></div>
+                                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${err.type === 'critical' ? 'bg-rose-500' : 'bg-amber-600'}`}></div>
                                 </button>
                             ))}
                         </div>

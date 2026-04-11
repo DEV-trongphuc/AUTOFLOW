@@ -375,7 +375,7 @@ const MetaScenarioModal: React.FC<MetaScenarioModalProps> = ({ scenario, onClose
                                         label="Loại kích hoạt"
                                         value={formData.type}
                                         options={[
-                                            { value: 'welcome', label: <div className="flex items-center gap-2"><Star className="w-4 h-4 text-amber-500" /><span>Quan tâm</span></div> },
+                                            { value: 'welcome', label: <div className="flex items-center gap-2"><Star className="w-4 h-4 text-amber-600" /><span>Quan tâm</span></div> },
                                             { value: 'first_message', label: <div className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-rose-500" /><span>Bắt chuyện</span></div> },
                                             { value: 'keyword', label: <div className="flex items-center gap-2"><MessageCircle className="w-4 h-4 text-indigo-500" /><span>Từ khóa</span></div> },
                                             { value: 'ai_reply', label: <div className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-emerald-500" /><span>AI Trả lời</span></div> },

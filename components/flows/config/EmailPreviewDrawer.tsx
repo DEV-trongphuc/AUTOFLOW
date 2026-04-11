@@ -1,6 +1,6 @@
-
 import React from 'react';
-import { X, Smartphone, Monitor, SmartphoneNfc, Code, Check } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { X, Smartphone, Monitor, SmartphoneNfc, Code, Check, Edit3, Copy } from 'lucide-react';
 import { Template } from '../../../types';
 
 interface EmailPreviewDrawerProps {
@@ -8,12 +8,14 @@ interface EmailPreviewDrawerProps {
   htmlContent?: string;
   isOpen: boolean;
   onClose: () => void;
-  // Optional action button for "Templates" page usage
+  // Optional action buttons for "Templates" page usage
   onAction?: () => void;
   actionLabel?: string;
+  onEdit?: () => void;
+  onDuplicate?: () => void;
 }
 
-const EmailPreviewDrawer: React.FC<EmailPreviewDrawerProps> = ({ template, htmlContent, isOpen, onClose: _onClose, onAction, actionLabel }) => {
+const EmailPreviewDrawer: React.FC<EmailPreviewDrawerProps> = ({ template, htmlContent, isOpen, onClose: _onClose, onAction, actionLabel, onEdit, onDuplicate }) => {
   const [viewMode, setViewMode] = React.useState<'desktop' | 'mobile'>('desktop');
   const [isVisible, setIsVisible] = React.useState(false);
   const [animateIn, setAnimateIn] = React.useState(false);
@@ -44,8 +46,8 @@ const EmailPreviewDrawer: React.FC<EmailPreviewDrawerProps> = ({ template, htmlC
 
   const showMock = !contentToRender;
 
-  return (
-    <div className="fixed inset-0 z-[300] flex justify-end">
+  const drawerContent = (
+    <div className="fixed inset-0 z-[100000] flex justify-end">
       <div
         className={`absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`}
         onClick={onClose}
@@ -74,10 +76,30 @@ const EmailPreviewDrawer: React.FC<EmailPreviewDrawerProps> = ({ template, htmlC
               </button>
             </div>
 
-            {onAction && actionLabel && (
+            {onDuplicate && (
+              <button
+                onClick={onDuplicate}
+                className="p-2.5 bg-white border border-slate-200 hover:border-slate-300 text-slate-500 hover:text-slate-700 rounded-xl shadow-sm transition-all flex items-center justify-center"
+                title="Nhân bản"
+              >
+                <Copy className="w-5 h-5" />
+              </button>
+            )}
+
+            {onEdit && (
+              <button
+                onClick={onEdit}
+                className="p-2.5 bg-gradient-to-br from-amber-400 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl shadow-md transition-all flex items-center justify-center"
+                title="Chỉnh sửa"
+              >
+                <Edit3 className="w-5 h-5" />
+              </button>
+            )}
+
+            {onAction && actionLabel && !onEdit && !onDuplicate && (
               <button
                 onClick={onAction}
-                className="px-4 py-2 bg-gradient-to-br from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider shadow-md transition-all flex items-center gap-2"
+                className="px-4 py-2 bg-gradient-to-br from-amber-400 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider shadow-md transition-all flex items-center gap-2"
               >
                 <Check className="w-4 h-4" /> {actionLabel}
               </button>
@@ -123,6 +145,8 @@ const EmailPreviewDrawer: React.FC<EmailPreviewDrawerProps> = ({ template, htmlC
       </div>
     </div>
   );
+
+  return createPortal(drawerContent, document.body);
 };
 
 export default EmailPreviewDrawer;

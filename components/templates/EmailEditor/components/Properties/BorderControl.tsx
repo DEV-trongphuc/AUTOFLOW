@@ -18,8 +18,8 @@ const BorderStyleLine: React.FC<{ style: string; color?: string; selected?: bool
             <div className="flex items-center justify-center w-full h-full">
                 <div className="w-6 h-6 flex items-center justify-center">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <line x1="3" y1="3" x2="17" y2="17" stroke={selected ? '#f59e0b' : '#cbd5e1'} strokeWidth="1.5" strokeLinecap="round" />
-                        <line x1="17" y1="3" x2="3" y2="17" stroke={selected ? '#f59e0b' : '#cbd5e1'} strokeWidth="1.5" strokeLinecap="round" />
+                        <line x1="3" y1="3" x2="17" y2="17" stroke={selected ? '#d97706' : '#cbd5e1'} strokeWidth="1.5" strokeLinecap="round" />
+                        <line x1="17" y1="3" x2="3" y2="17" stroke={selected ? '#d97706' : '#cbd5e1'} strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
                 </div>
             </div>
@@ -28,7 +28,7 @@ const BorderStyleLine: React.FC<{ style: string; color?: string; selected?: bool
     return (
         <div className="flex items-center justify-center w-full h-full px-2">
             <div className="w-full" style={{
-                borderBottom: `2px ${style} ${selected ? '#f59e0b' : color}`,
+                borderBottom: `2px ${style} ${selected ? '#d97706' : color}`,
             }} />
         </div>
     );
@@ -86,7 +86,7 @@ const BorderStyleDropdown: React.FC<{
             {/* Trigger */}
             <button
                 onClick={() => setOpen(o => !o)}
-                className={`w-full flex items-center justify-between bg-white border rounded-xl px-3 py-2.5 transition-all shadow-sm hover:border-slate-300 outline-none ${open ? 'border-amber-400 ring-2 ring-amber-500/20' : 'border-slate-200'}`}
+                className={`w-full flex items-center justify-between bg-white border rounded-xl px-3 py-2.5 transition-all shadow-sm hover:border-slate-300 outline-none ${open ? 'border-amber-400 ring-2 ring-amber-600/20' : 'border-slate-200'}`}
             >
                 <div className="flex items-center flex-1 gap-2 min-w-0">
                     <div className="flex-1 flex items-center h-5">
@@ -111,11 +111,11 @@ const BorderStyleDropdown: React.FC<{
                             >
                                 {/* Line preview */}
                                 <div className="flex-1 flex items-center h-5">
-                                    {renderPreview(v, isSelected ? '#f59e0b' : '#94a3b8', 2)}
+                                    {renderPreview(v, isSelected ? '#d97706' : '#94a3b8', 2)}
                                 </div>
                                 {/* Checkmark if selected */}
                                 {isSelected && (
-                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-amber-500">
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-amber-600">
                                         <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
                                 )}
@@ -162,7 +162,7 @@ const BorderControl: React.FC<BorderControlProps> = ({ values, onChange, blocks,
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Đường viền</label>
                 <button
                     onClick={() => setIsLocked(!isLocked)}
-                    className={`p-1 rounded transition-all shadow-sm ${isLocked ? 'text-amber-500 bg-white border border-slate-100' : 'text-slate-400 bg-white border border-slate-100 hover:text-slate-600'}`}
+                    className={`p-1 rounded transition-all shadow-sm ${isLocked ? 'text-amber-600 bg-white border border-slate-100' : 'text-slate-400 bg-white border border-slate-100 hover:text-slate-600'}`}
                     title={isLocked ? 'Đang khóa 4 chiều' : 'Chỉnh riêng từng chiều'}
                 >
                     {isLocked ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
@@ -189,14 +189,14 @@ const BorderControl: React.FC<BorderControlProps> = ({ values, onChange, blocks,
                             type="range" min="0" max="20"
                             value={getNum(values.borderTopWidth)}
                             onChange={(e) => handleMainWidthChange(e.target.value)}
-                            className="flex-1 h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                            className="flex-1 h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-amber-600"
                         />
                         <div className="relative w-14 shrink-0">
                             <input
                                 type="number"
                                 value={getNum(values.borderTopWidth)}
                                 onChange={(e) => handleMainWidthChange(e.target.value)}
-                                className="w-full text-right text-[11px] font-black text-slate-700 bg-slate-50 border border-slate-200 rounded-lg py-1.5 pr-6 pl-1 outline-none focus:border-amber-500"
+                                className="w-full text-right text-[11px] font-black text-slate-700 bg-slate-50 border border-slate-200 rounded-lg py-1.5 pr-6 pl-1 outline-none focus:border-amber-600"
                             />
                             <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-400">px</span>
                         </div>
@@ -226,12 +226,12 @@ const BorderControl: React.FC<BorderControlProps> = ({ values, onChange, blocks,
                             <div key={k} className="relative flex flex-col gap-1">
                                 <span className="text-[8px] font-black text-slate-400 uppercase ml-1">{label}</span>
                                 <div className="relative group">
-                                    <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none group-focus-within:text-amber-500 transition-all scale-75">
+                                    <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none group-focus-within:text-amber-600 transition-all scale-75">
                                         <Icon className="w-4 h-4" />
                                     </div>
                                     <input
                                         type="number"
-                                        className="w-full pl-8 pr-6 py-2 text-right text-[11px] font-black rounded-xl border border-slate-200 outline-none focus:border-amber-500 transition-all bg-white text-slate-700 shadow-sm group-hover:border-slate-300"
+                                        className="w-full pl-8 pr-6 py-2 text-right text-[11px] font-black rounded-xl border border-slate-200 outline-none focus:border-amber-600 transition-all bg-white text-slate-700 shadow-sm group-hover:border-slate-300"
                                         value={getNum(values[k] as string)}
                                         onChange={(e) => handleSubChange(k, e.target.value)}
                                         placeholder="0"

@@ -22,6 +22,29 @@ interface NavItemConfig {
   prefetch?: () => Promise<any>; // [PERF] chunk prefetch on hover
 }
 
+const updateRecentModules = (href: string) => {
+  const pathMap: Record<string, string> = {
+    '/campaigns': 'campaigns',
+    '/flows': 'flows',
+    '/templates': 'templates',
+    '/ai-training': 'ai-training',
+    '/web-tracking': 'web-tracking',
+    '/audience': 'audience',
+    '/reports': 'reports',
+    '/settings': 'settings'
+  };
+
+  const id = pathMap[href];
+  if (!id) return;
+
+  try {
+    const stored = localStorage.getItem('recent_modules');
+    const recents: string[] = stored ? JSON.parse(stored) : [];
+    const updated = [id, ...recents.filter(x => x !== id)].slice(0, 4);
+    localStorage.setItem('recent_modules', JSON.stringify(updated));
+  } catch (e) {}
+};
+
 const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed: boolean }> = ({ item, onClose, isCollapsed }) => {
   const navigate = useNavigate();
   const [isPending, startTransition] = useTransition();
@@ -38,6 +61,7 @@ const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed:
     // [PERF] startTransition keeps the current page visible while the new
     // chunk loads in the background — eliminates the freeze/blank flash
     startTransition(() => {
+      updateRecentModules(item.href);
       navigate(item.href);
       onClose();
     });
@@ -79,7 +103,7 @@ const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed:
           )}
 
           {isActive && (
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-amber-500 rounded-r-full"></div>
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-amber-600 rounded-r-full"></div>
           )}
         </>
       )}
@@ -108,6 +132,7 @@ const SidebarSection: React.FC<{ title: string; children: React.ReactNode; isCol
 const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollapse }) => {
 
   const mainNav: NavItemConfig[] = [
+    { name: 'Trang chủ', href: '/', icon: LayoutDashboard, prefetch: () => import('../../pages/Dashboard') },
     { name: 'Chiến dịch', href: '/campaigns', icon: Send, prefetch: () => import('../../pages/Campaigns') },
     { name: 'Automation', href: '/flows', icon: GitMerge, prefetch: () => import('../../pages/Flows') },
     { name: 'Khách hàng', href: '/audience', icon: Users, prefetch: () => import('../../pages/Audience') },
@@ -130,6 +155,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
     { name: 'Báo cáo', href: '/reports', icon: BarChart3, prefetch: () => import('../../pages/Reports') },
   ];
 
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isAdmin = user.role === 'admin';
+
   return (
     <div className={`flex flex-col h-full bg-white border-r border-slate-100 shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'} group/sidebar`}>
 
@@ -137,23 +165,25 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
       <div className={`h-28 ${isCollapsed ? 'px-3' : 'px-6'} flex items-center justify-center shrink-0 relative`}>
         {isCollapsed ? (
           <div className="relative w-12 h-12 shrink-0 group cursor-pointer">
-            <div className="absolute inset-0 bg-amber-400 blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full"></div>
-            <div className="relative w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl shadow-xl shadow-amber-500/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ease-out border border-amber-400/20">
-              <Zap className="w-6 h-6 text-white fill-white/20" strokeWidth={3} />
-            </div>
+            <div className="absolute inset-0 bg-amber-400 blur-xl opacity-20 group-hover:opacity-50 transition-opacity duration-500 rounded-full animate-logo-pulse"></div>
+              <div className="relative w-full h-full flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ease-out overflow-hidden rounded-full border-2 border-white/80 shadow-lg shadow-amber-600/20">
+                <img src="/imgs/ICON.png" className="w-full h-full object-contain relative z-10" alt="Logo" />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-logo-shine pointer-events-none z-20"></div>
+              </div>
           </div>
         ) : (
           <div className="relative flex items-center gap-4 w-full group cursor-pointer">
             {/* Animated Logo Icon */}
             <div className="relative w-12 h-12 shrink-0">
-              <div className="absolute inset-0 bg-amber-400 blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full"></div>
-              <div className="relative w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl shadow-xl shadow-amber-500/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ease-out border border-amber-400/20">
-                <Zap className="w-6 h-6 text-white fill-white/20" strokeWidth={3} />
+              <div className="absolute inset-0 bg-amber-400 blur-xl opacity-20 group-hover:opacity-50 transition-opacity duration-500 rounded-full animate-logo-pulse"></div>
+              <div className="relative w-full h-full flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ease-out overflow-hidden rounded-full border-2 border-white/80 shadow-lg shadow-amber-600/20">
+                <img src="/imgs/ICON.png" className="w-full h-full object-contain relative z-10" alt="Logo" />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-logo-shine pointer-events-none z-20"></div>
               </div>
             </div>
 
             <div className="flex flex-col min-w-0">
-              <h1 className="text-2xl font-black text-slate-900 tracking-tighter leading-none group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-amber-500 group-hover:to-amber-700 transition-all duration-500">
+              <h1 className="text-2xl font-black text-slate-900 tracking-tighter leading-none group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-amber-600 group-hover:to-amber-700 transition-all duration-500">
                 AUTOFLOW
               </h1>
               <div className="flex items-center gap-2 mt-1.5 opacity-60 group-hover:opacity-100 transition-opacity duration-500">
@@ -196,29 +226,71 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
         <SidebarSection title="Reports" isCollapsed={isCollapsed}>
           {reportsNav.map((item) => <NavItem key={item.name} item={item} onClose={onClose} isCollapsed={isCollapsed} />)}
         </SidebarSection>
+        
+        {isAdmin && (
+          <SidebarSection title="Administration" isCollapsed={isCollapsed}>
+            <NavItem item={{ name: 'Quản lý User', href: '/admin/users', icon: Users }} onClose={onClose} isCollapsed={isCollapsed} />
+          </SidebarSection>
+        )}
       </nav>
 
-      {/* SIDEBAR FOOTER - SETTING */}
-      <div className={`${isCollapsed ? 'p-3' : 'p-6'} border-t border-slate-100 bg-white group/footer`}>
-        <NavLink
-          to="/settings"
-          onClick={onClose}
-          className={({ isActive }) => `
-            flex items-center ${isCollapsed ? 'justify-center px-3' : 'gap-3.5 px-5'} py-4 rounded-2xl transition-all duration-300
-            ${isActive
-              ? 'bg-gray-100 text-slate-700 shadow-sm'
-              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700 border border-transparent hover:border-slate-100'}`
-          }
-          title={isCollapsed ? 'Setting' : undefined}
-        >
-          <Settings className={`w-5 h-5 transition-transform duration-500 group-hover/footer:rotate-90`} />
+      {/* SIDEBAR FOOTER - PROFILE & SETTING */}
+      <div className={`${isCollapsed ? 'p-2' : 'p-4'} border-t border-slate-100 bg-white space-y-2`}>
+        {/* Profile & Logout Unified Container */}
+        <div className={`bg-amber-50/50 border border-amber-100/60 rounded-2xl flex items-center ${isCollapsed ? 'flex-col p-2' : 'p-1.5 gap-1'}`}>
+          <NavLink
+              to="/profile"
+              onClick={onClose}
+              className={({ isActive }) => `
+                flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 flex-1'} py-2 rounded-xl transition-all duration-300
+                ${isActive
+                  ? 'bg-white text-amber-900 shadow-sm border border-amber-200/50 scale-[1.02]'
+                  : 'text-amber-800/80 hover:bg-white/50 border border-transparent hover:border-amber-200/30'}`
+              }
+              title={isCollapsed ? 'Thông tin cá nhân' : undefined}
+            >
+              <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border-2 border-white bg-white shadow-sm">
+                  <img src={user.picture || "/imgs/ICON.png"} className="w-full h-full object-cover" alt="" />
+              </div>
+              {!isCollapsed && (
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[11px] font-black tracking-tight text-amber-900 truncate uppercase">{user.name}</span>
+                  <span className="text-[9px] font-bold text-amber-600/70 uppercase tracking-tighter">{user.role}</span>
+                </div>
+              )}
+          </NavLink>
+
           {!isCollapsed && (
-            <>
-              <span className="text-[14px] font-bold tracking-wide">Setting</span>
-              <ChevronRight className="w-4 h-4 ml-auto opacity-0 -translate-x-2 group-hover/footer:opacity-100 group-hover/footer:translate-x-0 transition-all" />
-            </>
+            <button
+                onClick={() => {
+                    localStorage.clear();
+                    window.location.reload();
+                }}
+                className="w-9 h-9 flex items-center justify-center text-amber-600/50 hover:text-rose-500 hover:bg-white rounded-xl transition-all border border-transparent hover:border-rose-100 hover:shadow-sm shrink-0"
+                title="Đăng xuất"
+            >
+                <LogOut className="w-4 h-4" />
+            </button>
           )}
-        </NavLink>
+        </div>
+
+        {/* Setting - Only Admin */}
+        {isAdmin && (
+            <NavLink
+            to="/settings"
+            onClick={onClose}
+            className={({ isActive }) => `
+                flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3.5'} py-2 rounded-xl transition-all duration-300
+                ${isActive
+                ? 'bg-amber-50/50 text-amber-900 shadow-sm border border-amber-100'
+                : 'text-slate-500 hover:bg-slate-50 border border-transparent hover:border-slate-100'}`
+            }
+            title={isCollapsed ? 'Cấu hình hệ thống' : undefined}
+            >
+            <Settings className={`w-4 h-4`} />
+            {!isCollapsed && <span className="text-[12px] font-bold tracking-wide">Cấu hình</span>}
+            </NavLink>
+        )}
       </div>
 
       {/* CSS for hiding scrollbar */}
@@ -229,6 +301,25 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
         .scrollbar-hide {
           -ms-overflow-style: none;
           scrollbar-width: none;
+        }
+
+        @keyframes shine-logo {
+          0% { transform: translateX(-150%) skewX(-30deg); }
+          20% { transform: translateX(150%) skewX(-30deg); }
+          100% { transform: translateX(150%) skewX(-30deg); }
+        }
+
+        @keyframes float-logo {
+          0%, 100% { transform: scale(1); opacity: 0.3; }
+          50% { transform: scale(1.2); opacity: 0.6; }
+        }
+
+        .animate-logo-shine {
+          animation: shine-logo 3.5s infinite ease-in-out;
+        }
+
+        .animate-logo-pulse {
+          animation: float-logo 4s infinite ease-in-out;
         }
       `}</style>
     </div>

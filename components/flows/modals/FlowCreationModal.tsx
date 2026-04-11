@@ -281,7 +281,7 @@ const FlowCreationModal: React.FC<FlowCreationModalProps> = ({
       case 'blue': return 'text-blue-500';
       case 'rose': return 'text-rose-500';
       case 'pink': return 'text-pink-500';
-      case 'amber': case 'orange': return 'text-amber-500';
+      case 'amber': case 'orange': return 'text-amber-600';
       case 'emerald': return 'text-emerald-500';
       default: return 'text-slate-500';
     }

@@ -5,7 +5,7 @@ export const DEFAULT_BODY_STYLE: EmailBodyStyle = {
     backgroundColor: '#F3F4F6',
     contentBackgroundColor: '#FFFFFF',
     contentWidth: '600px',
-    fontFamily: 'Arial, sans-serif',
+    fontFamily: "'Roboto', Arial, sans-serif",
     linkColor: '#2563eb'
 };
 
@@ -45,7 +45,7 @@ export const PREMIUM_COLORS = [
     '#ffffff', '#000000', '#f8fafc', '#f1f5f9', '#e2e8f0', '#cbd5e1', '#94a3b8', '#64748b', '#475569', '#334155', '#1e293b', '#0f172a',
     '#fef2f2', '#fee2e2', '#fecaca', '#fca5a5', '#ef4444', '#dc2626', '#b91c1c',
     '#fff7ed', '#ffedd5', '#fed7aa', '#fb923c', '#f97316', '#ea580c', '#c2410c',
-    '#fffbeb', '#fef3c7', '#fde68a', '#fbbf24', '#f59e0b', '#d97706', '#b45309',
+    '#fffbeb', '#fef3c7', '#fde68a', '#fbbf24', '#d97706', '#d97706', '#b45309',
     '#f0fdf4', '#dcfce7', '#bbf7d0', '#86efac', '#22c55e', '#16a34a', '#15803d',
     '#eff6ff', '#dbeafe', '#bfdbfe', '#93c5fd', '#3b82f6', '#2563eb', '#1d4ed8',
     '#faf5ff', '#f3e8ff', '#e9d5ff', '#d8b4fe', '#a855f7', '#9333ea', '#7e22ce'

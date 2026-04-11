@@ -7,11 +7,11 @@ ini_set('display_errors', 0);
 set_time_limit(600); // Allow up to 10 minutes for sending a batch
 ignore_user_abort(true); // Fix: Continue running even if client (curl) disconnects
 
-require_once 'db_connect.php';
-require_once 'Mailer.php'; // Mailer is required here for sending emails
-require_once 'segment_helper.php';
-require_once 'zalo_sender.php';
-require_once 'flow_helpers.php';
+require_once __DIR__ . '/db_connect.php';
+require_once __DIR__ . '/Mailer.php'; // Mailer is required here for sending emails
+require_once __DIR__ . '/segment_helper.php';
+require_once __DIR__ . '/zalo_sender.php';
+require_once __DIR__ . '/flow_helpers.php';
 
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");

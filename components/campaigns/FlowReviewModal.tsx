@@ -33,7 +33,7 @@ const FlowReviewModal: React.FC<FlowReviewModalProps> = ({
                         onClick={onConfirm}
                         icon={Play}
                         isLoading={isProcessing}
-                        className="shadow-lg shadow-amber-500/20 bg-amber-600 hover:bg-amber-700 text-white border-transparent transition-all duration-500"
+                        className="shadow-lg shadow-amber-600/20 bg-amber-600 hover:bg-amber-700 text-white border-transparent transition-all duration-500"
                     >
                         Xác nhận & Chạy ngay
                     </Button>

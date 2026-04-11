@@ -1,23 +1,12 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState } from 'react';
-import { List, Calendar, Upload, UserPlus, Edit3, Trash2, Check, X, ChevronLeft, ChevronRight, GitMerge, Eraser, Scissors } from 'lucide-react';
+import { 
+    Trash2, Edit3, Calendar, UserPlus, 
+    List, Check, X, Scissors, Eraser, 
+    ChevronLeft, ChevronRight, Upload, GitMerge
+} from 'lucide-react';
 import Card from '../../common/Card';
 import Skeleton from '../../common/Skeleton';
-
-interface ListsTabProps {
-    loading?: boolean;
-    lists: any[];
-    currentPage?: number;
-    totalPages?: number;
-    onPageChange?: (page: number) => void;
-    onView: (list: any) => void;
-    onEdit: (list: any) => void;
-    onDelete: (id: string) => void;
-    onBulkDelete?: (ids: string[]) => void;
-    onMerge?: (ids: string[]) => void;
-    onCleanup: (list: any) => void;
-    onSplit?: (list: any) => void;
-}
 
 interface ListRowProps {
     list: any;
@@ -30,19 +19,19 @@ interface ListRowProps {
     onSplit?: (list: any) => void;
 }
 
-const ListRow = React.memo<ListRowProps>(({ list, isSelected, onView, onToggleSelect, onEdit, onDelete, onCleanup, onSplit }) => {
+const ListRow = React.memo(({ list, isSelected, onView, onToggleSelect, onEdit, onDelete, onCleanup, onSplit }: ListRowProps) => {
     return (
-        <tr
-            className={`group hover:bg-slate-50/50 transition-all duration-300 cursor-pointer ${isSelected ? 'bg-orange-50/20' : ''}`}
+        <tr 
             onClick={() => onView(list)}
+            className={`group hover:bg-slate-50 transition-colors cursor-pointer ${isSelected ? 'bg-indigo-50/30' : ''}`}
         >
-            <td className="px-6 py-5 pl-8 text-center" onClick={(e) => { e.stopPropagation(); onToggleSelect(list.id); }}>
+            <td className="px-6 py-5 pl-8 text-center" onClick={(e) => e.stopPropagation()}>
                 <div className="relative flex items-center justify-center">
-                    <input
-                        type="checkbox"
+                    <input 
+                        type="checkbox" 
                         checked={isSelected}
-                        onChange={() => { }}
-                        className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-[#ffa900] checked:bg-[#ffa900] hover:border-[#ffa900]"
+                        onChange={() => onToggleSelect(list.id)}
+                        className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-indigo-600 checked:bg-indigo-600 hover:border-indigo-600" 
                     />
                     <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" />
                 </div>
@@ -97,30 +86,34 @@ const ListRow = React.memo<ListRowProps>(({ list, isSelected, onView, onToggleSe
             <td className="px-6 py-5 text-right pr-8">
                 <div className="flex items-center justify-end gap-1">
                     <button
+                        type="button"
                         onClick={(e) => { e.stopPropagation(); onSplit && onSplit(list); }}
                         className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all"
-                        title="Tách danh sách"
+                        title={'\u0054\u00E1\u0063\u0068\u0020\u0064\u0061\u006E\u0068\u0020\u0073\u00E1\u0063\u0068'}
                     >
                         <Scissors className="w-3.5 h-3.5" />
                     </button>
                     <button
+                        type="button"
                         onClick={(e) => { e.stopPropagation(); onEdit(list); }}
                         className="p-2 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all"
-                        title="Chỉnh sửa cấu hình"
+                        title={'\u0043\u0068\u1EC9\u006E\u0068\u0020\u0073\u1EED\u0061\u0020\u0063\u1EA5\u0075\u0020\u0068\u00EC\u006E\u0068'}
                     >
                         <Edit3 className="w-3.5 h-3.5" />
                     </button>
                     <button
+                        type="button"
                         onClick={(e) => { e.stopPropagation(); onCleanup(list); }}
-                        className="p-2 text-slate-300 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-all"
-                        title="Dọn dẹp danh sách"
+                        className="p-2 text-slate-300 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-all"
+                        title={'\u0044\u1ECD\u006E\u0020\u0064\u1EB9\u0070\u0020\u0064\u0061\u006E\u0068\u0020\u0073\u00E1\u0063\u0068'}
                     >
                         <Eraser className="w-3.5 h-3.5" />
                     </button>
                     <button
+                        type="button"
                         onClick={(e) => { e.stopPropagation(); onDelete(list.id); }}
                         className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all"
-                        title="Xóa danh sách"
+                        title={'\u0058\u00F3\u0061\u0020\u0064\u0061\u006E\u0068\u0020\u0073\u00E1\u0063\u0068'}
                     >
                         <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -152,6 +145,21 @@ const ListSkeleton = () => (
         </td>
     </tr>
 );
+
+interface ListsTabProps {
+    loading: boolean;
+    lists: any[];
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+    onView: (list: any) => void;
+    onEdit: (list: any) => void;
+    onDelete: (id: string) => void;
+    onBulkDelete?: (ids: string[]) => void;
+    onMerge?: (ids: string[]) => void;
+    onCleanup: (list: any) => void;
+    onSplit?: (list: any) => void;
+}
 
 const ListsTab: React.FC<ListsTabProps> = ({ loading, lists, currentPage = 1, totalPages = 1, onPageChange, onView, onEdit, onDelete, onBulkDelete, onMerge, onCleanup, onSplit }) => {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -205,35 +213,38 @@ const ListsTab: React.FC<ListsTabProps> = ({ loading, lists, currentPage = 1, to
                                 <th colSpan={6} className="px-4 py-3">
                                     <div className="flex items-center justify-between w-full">
                                         <div className="flex items-center gap-3">
-                                            <button onClick={toggleSelectAll} className="p-1 hover:bg-orange-100 rounded text-orange-600 transition-colors" title="Bỏ chọn tất cả">
+                                            <button type="button" onClick={toggleSelectAll} className="p-1 hover:bg-orange-100 rounded text-orange-600 transition-colors" title={'\u0042\u1ECF\u0020\u0063\u0068\u1ECD\u006E\u0020\u0074\u1EA5\u0074\u0020\u0063\u1EA3'}>
                                                 <div className="relative flex items-center justify-center">
                                                     <input type="checkbox" checked readOnly className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-orange-400 bg-orange-400" />
                                                     <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none" />
                                                 </div>
                                             </button>
-                                            <span className="text-xs font-bold text-slate-700">Đã chọn <span className="text-orange-600 font-black text-sm">{selectedIds.size.toLocaleString()}</span> danh sách</span>
+                                            <span className="text-xs font-bold text-slate-700">{'\u0110\u00E3\u0020\u0063\u0068\u1ECD\u006E'} <span className="text-orange-600 font-black text-sm">{selectedIds.size.toLocaleString()}</span> danh s{"\u00E1"}ch</span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             {selectedIds.size >= 2 && onMerge && (
                                                 <button
+                                                    type="button"
                                                     onClick={handleMerge}
                                                     className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-indigo-100 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 rounded-lg text-xs font-bold shadow-sm transition-all"
                                                 >
                                                     <GitMerge className="w-3.5 h-3.5" />
-                                                    <span>Gộp danh sách</span>
+                                                    <span>{'\u0047\u1ED9\u0070\u0020\u0064\u0061\u006E\u0068\u0020\u0073\u00E1\u0063\u0068'}</span>
                                                 </button>
                                             )}
                                             <button
+                                                type="button"
                                                 onClick={handleBulkDelete}
                                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-100 text-rose-600 hover:bg-rose-50 hover:border-rose-200 rounded-lg text-xs font-bold shadow-sm transition-all"
                                             >
                                                 <Trash2 className="w-3.5 h-3.5" />
-                                                <span>Xóa nhanh</span>
+                                                <span>{'\u0058\u00F3\u0061\u0020\u006E\u0068\u0061\u006E\u0068'}</span>
                                             </button>
                                             <button
+                                                type="button"
                                                 onClick={handleCancelSelection}
                                                 className="p-1.5 hover:bg-white rounded-lg text-slate-400 hover:text-slate-600"
-                                                title="Hủy chọn"
+                                                title={'\u0048\u1EE7\u0079\u0020\u0063\u0068\u1ECD\u006E'}
                                             >
                                                 <X className="w-4 h-4" />
                                             </button>
@@ -249,11 +260,11 @@ const ListsTab: React.FC<ListsTabProps> = ({ loading, lists, currentPage = 1, to
                                         <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" />
                                     </div>
                                 </th>
-                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Tên danh sách</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nguồn (Source)</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ngày tạo</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Số lượng</th>
-                                <th className="px-6 py-4 w-28 text-right pr-8">Thao tác</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">{'\u0054\u00EA\u006E\u0020\u0064\u0061\u006E\u0068\u0020\u0073\u00E1\u0063\u0068'}</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{'\u004E\u0067\u0075\u1ED3\u006E'} (Source)</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{'\u004E\u0067\u00E0\u0079\u0020\u0074\u1EA1\u006F'}</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{'\u0053\u1ED1\u0020\u006C\u01B0\u1EE3\u006E\u0067'}</th>
+                                <th className="px-6 py-4 w-28 text-right pr-8">{'\u0054\u0068\u0061\u006F\u0020\u0074\u00E1\u0063'}</th>
                             </tr>
                         )}
                     </thead>
@@ -274,7 +285,7 @@ const ListsTab: React.FC<ListsTabProps> = ({ loading, lists, currentPage = 1, to
                             />
                         ))}
                         {!loading && lists.length === 0 && (
-                            <tr><td colSpan={6} className="py-12 text-center text-slate-400 text-sm">Không tìm thấy danh sách nào.</td></tr>
+                            <tr><td colSpan={6} className="py-12 text-center text-slate-400 text-sm">{'\u004B\u0068\u00F4\u006E\u0067\u0020\u0074\u00EC\u006D\u0020\u0074\u0068\u1EA5\u0079\u0020\u0064\u0061\u006E\u0068\u0020\u0073\u00E1\u0063\u0068\u0020\u006E\u00E0\u006F\u002E'}</td></tr>
                         )}
                     </tbody>
                 </table>
@@ -284,9 +295,9 @@ const ListsTab: React.FC<ListsTabProps> = ({ loading, lists, currentPage = 1, to
                 <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
                     <p className="text-xs text-slate-500 font-medium">Trang <span className="font-bold text-slate-800">{currentPage.toLocaleString()}</span> / {totalPages.toLocaleString()}</p>
                     <div className="flex gap-2">
-                        <button onClick={() => onPageChange(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"><ChevronLeft className="w-4 h-4" /></button>
+                        <button type="button" onClick={() => onPageChange(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"><ChevronLeft className="w-4 h-4" /></button>
                         <span className="px-4 py-2 bg-slate-50 rounded-lg text-xs font-bold text-slate-600 border border-slate-100">{currentPage.toLocaleString()} / {totalPages.toLocaleString()}</span>
-                        <button onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"><ChevronRight className="w-4 h-4" /></button>
+                        <button type="button" onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"><ChevronRight className="w-4 h-4" /></button>
                     </div>
                 </div>
             )}

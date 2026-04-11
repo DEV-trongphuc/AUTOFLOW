@@ -11,12 +11,8 @@ export const useKeyboardShortcuts = (shortcuts: ShortcutMap, deps: any[] = []) =
         const handleKeyDown = (event: KeyboardEvent) => {
             // Don't trigger shortcuts if user is typing in an input/textarea
             const target = event.target as HTMLElement;
-            const isInput = target.tagName === 'INPUT' ||
-                target.tagName === 'TEXTAREA' ||
-                target.isContentEditable;
-
-            if (isInput && event.key !== 'Escape') return;
-
+            const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+            if (isInput && event.key !== 'Escape' && !event.ctrlKey && !event.metaKey) return;
             // Check for key combinations (case-insensitive for single keys)
             const key = event.key.toLowerCase();
             const ctrl = event.ctrlKey || event.metaKey;

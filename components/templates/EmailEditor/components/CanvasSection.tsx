@@ -118,7 +118,7 @@ const CanvasSection: React.FC<CanvasSectionProps> = (props) => {
                                     {(!section.children || section.children.length === 0) && (
                                         <tr>
                                             <td>
-                                                <div className="py-12 text-center text-slate-300 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 m-8 rounded-[32px] bg-slate-50/50 hover:bg-slate-50 hover:border-amber-500/30 transition-all group/empty">
+                                                <div className="py-12 text-center text-slate-300 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 m-8 rounded-[32px] bg-slate-50/50 hover:bg-slate-50 hover:border-amber-600/30 transition-all group/empty">
                                                     <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 group-hover/empty:scale-110 transition-transform">
                                                         <Layout className="w-8 h-8 text-slate-200" />
                                                     </div>

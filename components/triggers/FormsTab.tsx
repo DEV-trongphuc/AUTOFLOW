@@ -190,12 +190,12 @@ const FormsTab: React.FC = () => {
                         <p className="text-slate-400 mt-2 text-sm">Tạo form để bắt đầu thu thập khách hàng.</p>
                     </div>
                 ) : forms.map(form => (
-                    <div key={form.id} className="group bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-amber-500/10 hover:border-amber-200 transition-all flex flex-col justify-between gap-6 relative overflow-hidden">
+                    <div key={form.id} className="group bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-amber-600/10 hover:border-amber-200 transition-all flex flex-col justify-between gap-6 relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-8 opacity-[0.03] text-amber-600 group-hover:scale-125 transition-transform"><Globe className="w-32 h-32" /></div>
 
                         <div className="flex justify-between items-start relative z-10">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/30 group-hover:rotate-6 transition-transform">
+                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-amber-600/30 group-hover:rotate-6 transition-transform">
                                     <FileInput className="w-6 h-6" />
                                 </div>
                                 <div className="min-w-0">
@@ -269,7 +269,7 @@ const FormsTab: React.FC = () => {
                                 className="flex items-center gap-2 cursor-pointer select-none"
                             >
                                 <div className={`w-11 h-6 rounded-full p-0.5 transition-all duration-300 flex items-center ${
-                                    formData.notificationEnabled ? 'bg-amber-500 justify-end' : 'bg-slate-300 justify-start'
+                                    formData.notificationEnabled ? 'bg-amber-600 justify-end' : 'bg-slate-300 justify-start'
                                 }`}>
                                     <div className="w-4.5 h-4.5 w-5 h-5 bg-white rounded-full shadow-sm" />
                                 </div>
@@ -283,7 +283,7 @@ const FormsTab: React.FC = () => {
                             <div className="space-y-4 bg-amber-50/50 border border-amber-100 rounded-2xl p-4 animate-in slide-in-from-top-2 duration-300">
                                 <div>
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">
-                                        <BellRing className="w-3 h-3 inline mr-1 text-amber-500" />
+                                        <BellRing className="w-3 h-3 inline mr-1 text-amber-600" />
                                         Email nhận thông báo <span className="text-slate-400 font-normal lowercase normal-case tracking-normal">(To — nhiều email cách nhau bằng dấu phẩy)</span>
                                     </label>
                                     <textarea
@@ -414,7 +414,7 @@ const FormsTab: React.FC = () => {
                                         <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-4 border-t sm:border-t-0 border-slate-100 mt-1 sm:mt-0">
                                             {!field.isCustom && (
                                                 <div onClick={() => !isEmail && updateField(field.id, { required: !field.required })} className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg transition-all select-none ${isEmail ? 'opacity-50 pointer-events-none bg-slate-100' : 'hover:bg-slate-50'}`}>
-                                                    <div className={`w-9 h-5 rounded-full p-0.5 transition-all duration-300 flex items-center ${field.required ? 'bg-amber-500 justify-end' : 'bg-slate-300 justify-start'}`}><div className="w-4 h-4 bg-white rounded-full shadow-sm"></div></div>
+                                                    <div className={`w-9 h-5 rounded-full p-0.5 transition-all duration-300 flex items-center ${field.required ? 'bg-amber-600 justify-end' : 'bg-slate-300 justify-start'}`}><div className="w-4 h-4 bg-white rounded-full shadow-sm"></div></div>
                                                     <span className={`text-[9px] font-bold uppercase tracking-wider ${field.required ? 'text-amber-600' : 'text-slate-400'}`}>Bắt buộc</span>
                                                 </div>
                                             )}

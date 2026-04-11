@@ -337,6 +337,16 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg)
         return;
     }
 
+    // [FIX] Race condition check: Verify if AI is paused AGAIN right before sending.
+    // A human agent might have replied while Gemini was generating this response.
+    $stmtCheckPause = $pdo->prepare("SELECT ai_paused_until FROM zalo_subscribers WHERE zalo_user_id = ?");
+    $stmtCheckPause->execute([$zaloUserId]);
+    $pausedUntil = $stmtCheckPause->fetchColumn();
+    if ($pausedUntil && strtotime($pausedUntil) > time()) {
+        file_put_contents(__DIR__ . '/zalo_debug.log', date('[Y-m-d H:i:s] ') . "AI Aborted! Human agent replied during generation. Paused until $pausedUntil\n", FILE_APPEND);
+        return;
+    }
+
     // 2. Strip toàn bộ Markdown trước khi xử lý (bỏ *, **, #, v.v.)
     $aiText = formatZaloMessage($aiText);
 
@@ -631,6 +641,12 @@ function ensureZaloToken($pdo, $oaId)
 
                 $pdo->query("SELECT RELEASE_LOCK('$lockName')");
                 return $new_access_token;
+            } elseif (isset($result['error']) && $result['error'] != 0) {
+                // [Vòng 33 FIX] Suspend dead token to prevent API hammering
+                try {
+                    $pdo->prepare("UPDATE zalo_oa_configs SET status = 'error_refresh', updated_at = NOW() WHERE id = ?")->execute([$oa['id']]);
+                    error_log("Zalo OA Refresh Failed. Status set to error_refresh. OA: {$oa['id']}");
+                } catch (Exception $e) {}
             }
         }
     } catch (Exception $e) {

@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useMemo } from 'react';
 import { Globe, Save, Download, Trash2, FileSpreadsheet, FileText, FileCode, FileImage, FileVideo, FileAudio, File, Pin } from 'lucide-react';
 import { FileAttachment } from '../../types';
@@ -67,7 +67,7 @@ const WorkspaceDocItem = React.memo(({
         let label = 'Global';
 
         if (src === 'global_training') {
-            classes = 'bg-amber-500/80 text-white border-amber-300/30';
+            classes = 'bg-amber-600/80 text-white border-amber-300/30';
             label = 'Knowledge';
         } else if (src.includes('user') || src === 'file_upload') {
             classes = 'bg-blue-600/70 text-white border-blue-400/20';
@@ -114,7 +114,7 @@ const WorkspaceDocItem = React.memo(({
                             onSaveSnippet(doc);
                         }}
                         className={`p-2 rounded-xl border shadow-sm transition-all font-bold ${isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10' : 'bg-white border-slate-200 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50'}`}
-                        title="Lưu nhanh (Quick Save)"
+                        title="Luu nhanh (Quick Save)"
                     >
                         <Save className="w-3.5 h-3.5" />
                     </button>
@@ -125,7 +125,7 @@ const WorkspaceDocItem = React.memo(({
                             if (safeUrl) window.open(safeUrl, '_blank');
                         }}
                         className={`p-2 rounded-xl border shadow-sm transition-all font-bold ${isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10' : 'bg-white border-slate-200 text-slate-500 hover:text-blue-600 hover:bg-blue-50'}`}
-                        title="Tải xuống"
+                        title="T?i xu?ng"
                     >
                         <Download className="w-3.5 h-3.5" />
                     </button>
@@ -136,7 +136,7 @@ const WorkspaceDocItem = React.memo(({
                         onDelete(doc);
                     }}
                     className={`p-2 rounded-xl border shadow-sm transition-all font-bold ${isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10' : 'bg-white border-slate-200 text-slate-500 hover:text-rose-600 hover:bg-rose-50'}`}
-                    title="Xóa tệp"
+                    title="X�a t?p"
                 >
                     <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -149,7 +149,7 @@ const WorkspaceDocItem = React.memo(({
                         onToggleContext(doc);
                     }}
                     className={`absolute bottom-3 right-3 p-2 rounded-xl border shadow-sm transition-all font-bold z-10 ${isInContext ? 'bg-brand text-white border-brand shadow-brand' : (isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-brand' : 'bg-white border-slate-200 text-slate-400 hover:text-brand hover:border-brand/40')}`}
-                    title={isInContext ? "Gỡ khỏi Context" : "Ghim làm Context để hỏi AI"}
+                    title={isInContext ? "G? kh?i Context" : "Ghim l�m Context d? h?i AI"}
                 >
                     <Pin className={`w-3.5 h-3.5 ${isInContext ? 'fill-current' : ''}`} />
                 </button>
