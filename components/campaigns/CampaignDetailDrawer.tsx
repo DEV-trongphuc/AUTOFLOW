@@ -772,7 +772,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Đã gửi</p>
                                                     <p className="text-xl font-black text-slate-700">{(audienceStats.count_sent || 0).toLocaleString()}</p>
                                                 </div>
-                                                <div className="w-px h-10 bg-amber-100">-</div>
+                                                <div className="w-px h-10 bg-amber-100" />
                                                 <div className="text-center">
                                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Hiện tại</p>
                                                     <p className="text-xl font-black text-slate-700">{(audienceStats.total_current || 0).toLocaleString()}</p>
@@ -811,7 +811,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     {targetLists.length > 0 ? targetLists.map(list => (
                                         <div key={list.id} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center border border-indigo-100">-<List className="w-5 h-5" />-</div>
+                                                <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center border border-indigo-100"><List className="w-5 h-5" /></div>
                                                 <div>
                                                     <p className="text-sm font-bold text-slate-800">{list.name}</p>
                                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Static List</p>
@@ -835,7 +835,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     {targetSegments.length > 0 ? targetSegments.map(segment => (
                                         <div key={segment.id} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-orange-50 text-[#ca7900] flex items-center justify-center border border-orange-100">-<Layers className="w-5 h-5" />-</div>
+                                                <div className="w-10 h-10 bg-orange-50 text-[#ca7900] flex items-center justify-center border border-orange-100"><Layers className="w-5 h-5" /></div>
                                                 <div>
                                                     <p className="text-sm font-bold text-slate-800">{segment.name}</p>
                                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Dynamic Segment</p>
@@ -859,7 +859,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     {targetTags.length > 0 ? targetTags.map(tag => (
                                         <div key={tag.id} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center border border-emerald-100">-<Tag className="w-5 h-5" />-</div>
+                                                <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center border border-emerald-100"><Tag className="w-5 h-5" /></div>
                                                 <div>
                                                     <p className="text-sm font-bold text-slate-800">{tag.name}</p>
                                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Tag Group</p>
@@ -907,7 +907,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
                                             {loadingLogs ? (
-                                                <tr>-<td colSpan={4} className="py-20 text-center text-slate-400 text-xs font-medium italic">Đang tải dữ liệu...</td>-</tr>
+                                                <tr><td colSpan={4} className="py-20 text-center text-slate-400 text-xs font-medium italic">Đang tải dữ liệu...</td></tr>
                                             ) : activityLogs.length === 0 ? (
                                                 <tr>
                                                     <td colSpan={4} className="py-20 text-center">

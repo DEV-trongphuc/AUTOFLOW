@@ -657,7 +657,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                     });
                 }
             }
-        } catch (e) { toast.error('L?i khi c?p nh?t'); }
+        } catch (e) { toast.error('Lỗi khi cập nhật'); }
     };
 
     const [pendingDeleteSubId, setPendingDeleteSubId] = useState<string | null>(null);
@@ -1217,12 +1217,12 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                     listId: listId
                                 });
                                 if (res.success) {
-                                    toast.success('�� th�m v�o danh sách');
+                                    toast.success('Đã thêm vào danh sách');
                                     // Refresh subscriber data
                                     const fresh = await api.get(`subscribers/${subId}`);
                                     if (fresh.success) setCrmSubscriber(fresh.data);
                                 }
-                            } catch (e) { toast.error('L?i khi th�m v�o danh sách'); }
+                            } catch (e) { toast.error('Lỗi khi thêm vào danh sách'); }
                         }}
                         onRemoveFromList={async (subId, listId) => {
                             try {
@@ -1232,12 +1232,12 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                     listId: listId
                                 });
                                 if (res.success) {
-                                    toast.success('�� g? kh?i danh sách');
+                                    toast.success('Đã gỡ khỏi danh sách');
                                     // Refresh subscriber data
                                     const fresh = await api.get(`subscribers/${subId}`);
                                     if (fresh.success) setCrmSubscriber(fresh.data);
                                 }
-                            } catch (e) { toast.error('L?i khi g? kh?i danh sách'); }
+                            } catch (e) { toast.error('Lỗi khi gỡ khỏi danh sách'); }
                         }}
                     />
                 )
@@ -1299,15 +1299,15 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 transition-colors ${exportRange === 'custom' ? 'bg-slate-800 text-white shadow-lg shadow-slate-800/20' : 'bg-white text-slate-400 border border-slate-200'}`}>
                                     <Clock className="w-4 h-4" />
                                 </div>
-                                <div className="font-bold text-xs text-slate-800 uppercase tracking-tight">Kho?ng t�y chọn</div>
-                                <p className="text-[10px] text-slate-500 mt-1 font-medium">T? chọn ng�y b?t d?u & k?t th�c</p>
+                                <div className="font-bold text-xs text-slate-800 uppercase tracking-tight">Khoảng tùy chọn</div>
+                                <p className="text-[10px] text-slate-500 mt-1 font-medium">Tự chọn ngày bắt đầu & kết thúc</p>
                             </button>
                         </div>
 
                         {exportRange === 'custom' && (
                             <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 animate-in slide-in-from-top-2 duration-300">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ng�y b?t d?u</label>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ngày bắt đầu</label>
                                     <input
                                         type="date"
                                         value={customExportStart}
@@ -1316,7 +1316,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ng�y k?t th�c</label>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ngày kết thúc</label>
                                     <input
                                         type="date"
                                         value={customExportEnd}

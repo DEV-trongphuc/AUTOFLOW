@@ -13,7 +13,7 @@ const ExitConditions: React.FC<ExitConditionsProps> = ({ conditions, bounceBehav
   const options = [
     {
       id: 'unsubscribed',
-      label: 'Hủy đăng kýUnsubscribe)',
+      label: 'Hủy đăng ký',
       desc: 'Bắt buộc. Dừng gửi nếu Khách hàng chọn Hủy đăng ký',
       icon: UserMinus,
       color: 'text-slate-600 bg-slate-200',

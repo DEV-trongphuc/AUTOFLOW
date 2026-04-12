@@ -136,7 +136,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         }
     };
 
-    // CHUY?N �?I D? LI?U TH?C T? SANG FUNNEL (REAL-TIME LOGIC)
+    // CHUYỂN ĐỔI DỮ LIỆU THỰC TẾ SANG FUNNEL (REAL-TIME LOGIC)
     const funnelData = useMemo(() => {
         // 1. TOPOLOGICAL SORT: Get steps in execution order (Start -> End)
         const sortedSteps: any[] = [];
@@ -361,13 +361,13 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                 finalFunnel.push({
                     id: `end_${step.id}`,
                     type: 'completed',
-                    stepLabel: 'K?t th�c',
+                    stepLabel: 'Kết thúc',
                     stepNumberLabel: 'END',
-            label: "Hoàn thành Flow",
+                    label: "Hoàn thành Flow",
                     users: completedCount,
                     waiting: 0,
                     rate: 100,
-                    detailStat: `Ho�n t?t: ${completedCount}`,
+                    detailStat: `Hoàn tất: ${completedCount}`,
                     config: {},
                     style: { icon: CheckCircle2, gradient: 'from-emerald-500 to-teal-600', text: 'text-emerald-600', bg: 'bg-emerald-50', label: 'Completed' }
                 });
@@ -1419,7 +1419,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                     // Refresh the error list too
                     fetchStepErrors(errorModal.stepId, errorModal.stepLabel);
                 }}
-                onExport={() => showToast('�� xu?t danh sách l?i')}
+                onExport={() => showToast('Đã xuất danh sách lỗi')}
             />
 
             {/* Unsubscribe Modal */}
@@ -1429,7 +1429,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                 stepLabel={unsubscribeModal.stepLabel}
                 stepId={unsubscribeModal.stepId}
                 users={unsubscribeModal.users}
-                onExport={() => showToast('�� xuất danh sách Hủy đăng ký')}
+                onExport={() => showToast('Đã xuất danh sách Hủy đăng ký')}
             />
 
             {/* Confirmation Modal */}
@@ -1595,7 +1595,7 @@ const LogItem: React.FC<{
                         </span>
                         {log.details && (
                             <span className="text-[9px] text-slate-400 truncate opacity-0 group-hover:opacity-100 transition-opacity max-w-[120px]" title={log.details}>
-                                � {log.details.replace('Clicked link:', 'Click:')}
+                                {log.details.replace('Clicked link:', 'Click:')}
                             </span>
                         )}
                     </div>

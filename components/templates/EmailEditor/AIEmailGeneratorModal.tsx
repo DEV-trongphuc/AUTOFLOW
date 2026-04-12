@@ -186,7 +186,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                 setPreviewTab('new');
                 setStep('preview');
             } else {
-                setError(data.message || 'AI không thể tạo email. Tỉ lệ với prompt rõ hơn!');
+                setError(data.message || 'AI không thể tạo email. Thử lại với prompt rõ hơn!');
                 setStep('prompt');
             }
         } catch {
@@ -396,7 +396,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                             </label>
                                             <div style={{ display: 'flex', gap: '6px' }}>
                                                 {[
-                                                    { icon: <Upload style={{ width: 11, height: 11 }} />, label: 'Tỉ lệ', action: () => fileInputRef.current?.click(), amber: true },
+                                                    { icon: <Upload style={{ width: 11, height: 11 }} />, label: 'Tải lên', action: () => fileInputRef.current?.click(), amber: true },
                                                     { icon: <Library style={{ width: 11, height: 11 }} />, label: 'Thư viện', action: () => setShowLibrary(true), amber: false },
                                                     { icon: <Link2 style={{ width: 11, height: 11 }} />, label: 'URL', action: () => setShowUrlInput(!showUrlInput), amber: false },
                                                 ].map(b => (
@@ -604,11 +604,11 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                                 <span style={{ width: '18px', height: '18px', borderRadius: '5px', flexShrink: 0, background: 'linear-gradient(135deg, #d97706, #d97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 900, color: '#fff' }}>{i + 1}</span>
                                                 <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500, textTransform: 'capitalize', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.type}</span>
                                             </div>
-                                            <button 
+                                            <button
                                                 onClick={() => onSaveSection?.(b)}
-                                                style={{ 
-                                                    padding: '4px', border: 'none', background: 'transparent', cursor: 'pointer', color: '#cbd5e1', 
-                                                    transition: 'all 0.2s', display: 'flex', alignItems: 'center' 
+                                                style={{
+                                                    padding: '4px', border: 'none', background: 'transparent', cursor: 'pointer', color: '#cbd5e1',
+                                                    transition: 'all 0.2s', display: 'flex', alignItems: 'center'
                                                 }}
                                                 title="Lưu vào thư viện"
                                                 onMouseEnter={e => e.currentTarget.style.color = '#d97706'}
@@ -676,7 +676,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                     </button>
                                 </div>
 
-                                {/* Tỉ lệ banner */}
+                                {/* Tỷ lệ banner */}
                                 {previewTab === 'old' && (
                                     <div style={{ padding: '6px 16px', background: '#1e293b', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                                         <Eye style={{ width: 12, height: 12, color: '#94a3b8' }} />

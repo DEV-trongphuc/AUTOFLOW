@@ -668,7 +668,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                     setLastVisitorMsgAt(null);
                 }
             }
-            
+
             // Set loading false as soon as messages are ready
             setMsgLoading(false);
 
@@ -679,145 +679,145 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                     fetchWorkspaceFiles(convId);
                 }
 
-            // Also fetch journey based on source
-            if (selectedConv && selectedConv.visitor_id) {
-                let journeyData: any[] = [];
+                // Also fetch journey based on source
+                if (selectedConv && selectedConv.visitor_id) {
+                    let journeyData: any[] = [];
 
-                // Fetch journey based on source
-                if (selectedConv.source === 'meta') {
-                    // For Meta, fetch from meta_customers API
-                    const psid = selectedConv.visitor_id.replace('meta_', '');
-                    const metaRes = await api.get<any>(`meta_customers?route=user_details&id=${selectedConv.visitor_id}`);
-                    if (metaRes.success && metaRes.data?.journey) {
-                        journeyData = metaRes.data.journey.map((j: any) => ({
-                            type: j.event_type || 'other',
-                            title: j.event_name || 'Event',
-                            description: j.event_data ? JSON.stringify(j.event_data) : '',
-                            time: j.created_at,
-                            page_name: j.page_name
-                        }));
-                    }
-                } else if (selectedConv.source === 'zalo') {
-                    // For Zalo, could add similar logic if needed
-                    journeyData = [];
-                } else {
-                    // For Web, use existing web_tracking API
-                    const vid = selectedConv.visitor_id;
-                    const jRes = await api.get<any>(`web_tracking?action=visitor_journey&visitor_id=${vid}`);
-                    if (jRes.success) {
-                        journeyData = jRes.data || [];
-                    }
-                }
-
-                // Client-side: Detect Phone Numbers from Messages (for all sources)
-                const phoneRegex = /(0[3|5|7|8|9][0-9]{8})\b/g;
-                const detectedPhones = new Set();
-
-                // Scan messages from Visitor
-                (res.data || []).forEach((m: any) => {
-                    if (m.sender === 'visitor' && m.message) {
-                        // 1. Phone Detection
-                        const matches = m.message.match(phoneRegex);
-                        if (matches) {
-                            matches.forEach((phone: string) => {
-                                detectedPhones.add(phone);
-
-                                // Avoid duplicates in the same fetch if needed
-                                journeyData.push({
-                                    type: 'phone_detected',
-                                    title: 'phone_detected',
-                                    details: phone,
-                                    time: m.created_at,
-                                    page_title: 'Chat Conversation'
-                                });
-                            });
+                    // Fetch journey based on source
+                    if (selectedConv.source === 'meta') {
+                        // For Meta, fetch from meta_customers API
+                        const psid = selectedConv.visitor_id.replace('meta_', '');
+                        const metaRes = await api.get<any>(`meta_customers?route=user_details&id=${selectedConv.visitor_id}`);
+                        if (metaRes.success && metaRes.data?.journey) {
+                            journeyData = metaRes.data.journey.map((j: any) => ({
+                                type: j.event_type || 'other',
+                                title: j.event_name || 'Event',
+                                description: j.event_data ? JSON.stringify(j.event_data) : '',
+                                time: j.created_at,
+                                page_name: j.page_name
+                            }));
                         }
+                    } else if (selectedConv.source === 'zalo') {
+                        // For Zalo, could add similar logic if needed
+                        journeyData = [];
+                    } else {
+                        // For Web, use existing web_tracking API
+                        const vid = selectedConv.visitor_id;
+                        const jRes = await api.get<any>(`web_tracking?action=visitor_journey&visitor_id=${vid}`);
+                        if (jRes.success) {
+                            journeyData = jRes.data || [];
+                        }
+                    }
 
-                        // 2. Meta Lead Form Parsing
-                        if (m.message.includes('Full name:') || m.message.includes('Phone number:') || m.message.includes('Email:')) {
-                            const nameMatch = m.message.match(/Full name:\s*(.+)/i);
-                            const phoneMatch = m.message.match(/Phone number:\s*(.+)/i);
-                            const emailMatch = m.message.match(/Email:\s*(.+)/i);
+                    // Client-side: Detect Phone Numbers from Messages (for all sources)
+                    const phoneRegex = /(0[3|5|7|8|9][0-9]{8})\b/g;
+                    const detectedPhones = new Set();
 
-                            const leadInfo: any = {};
-                            if (nameMatch) leadInfo.first_name = nameMatch[1].trim();
-                            if (phoneMatch) leadInfo.phone = phoneMatch[1].trim();
-                            if (emailMatch) leadInfo.email = emailMatch[1].trim();
+                    // Scan messages from Visitor
+                    (res.data || []).forEach((m: any) => {
+                        if (m.sender === 'visitor' && m.message) {
+                            // 1. Phone Detection
+                            const matches = m.message.match(phoneRegex);
+                            if (matches) {
+                                matches.forEach((phone: string) => {
+                                    detectedPhones.add(phone);
 
-                            const lines = m.message.split('\n');
-                            const notes: string[] = [];
-                            lines.forEach((line: string) => {
-                                if (line.trim() && !line.match(/Full name:|Phone number:|Email:/i)) {
-                                    notes.push(line.trim());
-                                }
-                            });
-                            if (notes.length > 0) leadInfo.notes = notes.join('; ');
-
-                            if (Object.keys(leadInfo).length > 0) {
-                                const isGeneric = (conv: Conversation | null) => {
-                                    if (!conv) return false;
-                                    const name = conv.first_name || '';
-                                    return name.startsWith('v_') || name.startsWith('Visitor ') || !name;
-                                };
-
-                                if (leadInfo.first_name && isGeneric(selectedConv)) {
-                                    const newName = leadInfo.first_name;
-                                    setConversations(prev => prev.map(c => c.id === selectedConv.id ? { ...c, first_name: newName, email: leadInfo.email || c.email } : c));
-                                    setSelectedConv(prev => prev ? { ...prev, first_name: newName, email: leadInfo.email || prev.email } as Conversation : null);
-                                    if (source === 'meta') toast.success("Đã đồng bộ thông tin Lead từ Meta!", { icon: '⚡' });
-
-                                    api.post('ai_chatbot?action=update_visitor_info', {
-                                        conversation_id: selectedConv.id,
-                                        first_name: newName,
-                                        email: leadInfo.email,
-                                        phone: leadInfo.phone
+                                    // Avoid duplicates in the same fetch if needed
+                                    journeyData.push({
+                                        type: 'phone_detected',
+                                        title: 'phone_detected',
+                                        details: phone,
+                                        time: m.created_at,
+                                        page_title: 'Chat Conversation'
                                     });
+                                });
+                            }
+
+                            // 2. Meta Lead Form Parsing
+                            if (m.message.includes('Full name:') || m.message.includes('Phone number:') || m.message.includes('Email:')) {
+                                const nameMatch = m.message.match(/Full name:\s*(.+)/i);
+                                const phoneMatch = m.message.match(/Phone number:\s*(.+)/i);
+                                const emailMatch = m.message.match(/Email:\s*(.+)/i);
+
+                                const leadInfo: any = {};
+                                if (nameMatch) leadInfo.first_name = nameMatch[1].trim();
+                                if (phoneMatch) leadInfo.phone = phoneMatch[1].trim();
+                                if (emailMatch) leadInfo.email = emailMatch[1].trim();
+
+                                const lines = m.message.split('\n');
+                                const notes: string[] = [];
+                                lines.forEach((line: string) => {
+                                    if (line.trim() && !line.match(/Full name:|Phone number:|Email:/i)) {
+                                        notes.push(line.trim());
+                                    }
+                                });
+                                if (notes.length > 0) leadInfo.notes = notes.join('; ');
+
+                                if (Object.keys(leadInfo).length > 0) {
+                                    const isGeneric = (conv: Conversation | null) => {
+                                        if (!conv) return false;
+                                        const name = conv.first_name || '';
+                                        return name.startsWith('v_') || name.startsWith('Visitor ') || !name;
+                                    };
+
+                                    if (leadInfo.first_name && isGeneric(selectedConv)) {
+                                        const newName = leadInfo.first_name;
+                                        setConversations(prev => prev.map(c => c.id === selectedConv.id ? { ...c, first_name: newName, email: leadInfo.email || c.email } : c));
+                                        setSelectedConv(prev => prev ? { ...prev, first_name: newName, email: leadInfo.email || prev.email } as Conversation : null);
+                                        if (source === 'meta') toast.success("Đã đồng bộ thông tin Lead từ Meta!", { icon: '⚡' });
+
+                                        api.post('ai_chatbot?action=update_visitor_info', {
+                                            conversation_id: selectedConv.id,
+                                            first_name: newName,
+                                            email: leadInfo.email,
+                                            phone: leadInfo.phone
+                                        });
+                                    }
                                 }
                             }
                         }
+                    });
+
+                    // 3. Rename generic visitor if ONLY phone detected
+                    const isGeneric = (conv: Conversation | null) => {
+                        if (!conv) return false;
+                        const name = conv.first_name || '';
+                        return name.startsWith('v_') || name.startsWith('Visitor ') || !name;
+                    };
+
+                    if (detectedPhones.size > 0 && isGeneric(selectedConv)) {
+                        const lastPhone = Array.from(detectedPhones).pop() as string;
+                        if (!selectedConv.first_name) {
+                            const newName = lastPhone;
+                            setConversations(prev => prev.map(c => c.id === selectedConv.id ? { ...c, first_name: newName } : c));
+                            setSelectedConv(prev => prev ? { ...prev, first_name: newName } as Conversation : null);
+
+                            api.post('ai_chatbot?action=update_visitor_info', {
+                                conversation_id: selectedConv.id,
+                                first_name: newName,
+                                phone: lastPhone
+                            });
+                        }
                     }
-                });
 
-                // 3. Rename generic visitor if ONLY phone detected
-                const isGeneric = (conv: Conversation | null) => {
-                    if (!conv) return false;
-                    const name = conv.first_name || '';
-                    return name.startsWith('v_') || name.startsWith('Visitor ') || !name;
-                };
+                    journeyData.sort((a: any, b: any) => new Date(b.time).getTime() - new Date(a.time).getTime());
+                    if (journeyData.length > 20) journeyData = journeyData.slice(0, 20);
 
-                if (detectedPhones.size > 0 && isGeneric(selectedConv)) {
-                    const lastPhone = Array.from(detectedPhones).pop() as string;
-                    if (!selectedConv.first_name) {
-                        const newName = lastPhone;
-                        setConversations(prev => prev.map(c => c.id === selectedConv.id ? { ...c, first_name: newName } : c));
-                        setSelectedConv(prev => prev ? { ...prev, first_name: newName } as Conversation : null);
+                    if (selectedConv && (selectedConv.source === 'meta' || selectedConv.source === 'zalo')) {
+                        const pageName = selectedConv.source === 'zalo' ? (selectedConv.zalo_oa_name || 'Zalo OA') : (selectedConv.page_name || 'Facebook Page');
+                        const sourceLabel = selectedConv.source === 'zalo' ? 'Nhắn tin từ Zalo OA' : 'Nhắn tin từ Facebook Page';
 
-                        api.post('ai_chatbot?action=update_visitor_info', {
-                            conversation_id: selectedConv.id,
-                            first_name: newName,
-                            phone: lastPhone
+                        journeyData.unshift({
+                            type: 'page_source',
+                            title: sourceLabel,
+                            description: pageName,
+                            time: selectedConv.last_message_time || new Date().toISOString(),
+                            page_name: pageName,
+                            source: selectedConv.source
                         });
                     }
+                    setJourney(journeyData);
                 }
-
-                journeyData.sort((a: any, b: any) => new Date(b.time).getTime() - new Date(a.time).getTime());
-                if (journeyData.length > 20) journeyData = journeyData.slice(0, 20);
-
-                if (selectedConv && (selectedConv.source === 'meta' || selectedConv.source === 'zalo')) {
-                    const pageName = selectedConv.source === 'zalo' ? (selectedConv.zalo_oa_name || 'Zalo OA') : (selectedConv.page_name || 'Facebook Page');
-                    const sourceLabel = selectedConv.source === 'zalo' ? 'Nhắn tin từ Zalo OA' : 'Nhắn tin từ Facebook Page';
-
-                    journeyData.unshift({
-                        type: 'page_source',
-                        title: sourceLabel,
-                        description: pageName,
-                        time: selectedConv.last_message_time || new Date().toISOString(),
-                        page_name: pageName,
-                        source: selectedConv.source
-                    });
-                }
-                setJourney(journeyData);
-            }
             })();
         } catch (e) {
             console.error(e);
@@ -1376,7 +1376,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                     );
                 } else if (fileExtMatch) {
                     const ext = fileExtMatch[1].toLowerCase();
-                    const fileName = label || url.split('/').pop() || 'Tỉ lệ'
+                    const fileName = label || url.split('/').pop() || 'Tải lên'
 
                     parts.push(
                         <a key={match.index} href={url} target="_blank" rel="noopener noreferrer" className="block group mt-2 mb-2 no-underline">
@@ -2119,7 +2119,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                     </div>
                                     <div>
                                         <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight leading-none mb-1">Xem trước tài liệu</h4>
-                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{previewType === 'image' ? 'Hình ảnh' : 'Tỉ lệ'}</p>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{previewType === 'image' ? 'Hình ảnh' : 'Tải lên'}</p>
 
                                     </div>
                                 </div>
@@ -2953,7 +2953,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                 onClose={() => {
                     if (!publicMode) setShowAnalysisModal(false);
                 }}
-                title={<div className="flex items-center gap-2 text-slate-600"><Sparkles className="w-5 h-5 text-slate-400" /> <span>Tỉ lệ Phân tích hội thoại AI</span></div>}
+                title={<div className="flex items-center gap-2 text-slate-600"><Sparkles className="w-5 h-5 text-slate-400" /> <span>Phân tích hội thoại AI</span></div>}
                 size={analysisView === 'config' ? 'xl' : '4xl'}
                 hideCloseButton={publicMode}
                 footer={analysisView === 'report' ? (

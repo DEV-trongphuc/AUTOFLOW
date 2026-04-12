@@ -116,7 +116,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
             if (formRes.success) setForms(formRes.data);
             if (purchRes.success) setPurchases(purchRes.data);
             if (customRes.success) setCustomEvents(customRes.data);
-            
+
             // @ts-ignore
             if (customRes && arguments[0] /* Hack for promise array destructuring */) {
                 const arr = await Promise.all([api.get<VoucherCampaign[]>('voucher_campaigns')]);
@@ -292,7 +292,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                 </div>
             )}
 
-            {/* 1. TINH T?: EVENT SELECTOR (GRID 2 C?T) */}
+            {/* 1. TINH TÚY: EVENT SELECTOR (GRID 2 C?T) */}
             <div className="space-y-3.5">
                 <label className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.15em] px-1">Chọn sự kiện khởi đầu</label>
                 <div className="grid grid-cols-2 gap-2.5">
@@ -382,7 +382,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                     <ConfigItem
                                         key={item.id}
                                         label={item.name}
-                                        desc={`${item.count || 0} li�n h?`}
+                                        desc={`${item.count || 0} liên hệ`}
                                         icon={List}
                                         isSelected={config.targetId === item.id}
                                         onClick={() => handleTargetChange(item.id)}
@@ -396,7 +396,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                     <ConfigItem
                                         key={item.id}
                                         label={item.name}
-                                        desc={`${item.count || 0} li�n h? � ${item.source}`}
+                                        desc={`${item.count || 0} liên hệ - ${item.source}`}
                                         icon={item.source === 'MISA CRM' ? MisaIcon : GoogleSheetsIcon}
                                         isSelected={config.targetId === item.id}
                                         onClick={() => handleTargetChange(item.id)}
@@ -410,7 +410,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                     <ConfigItem
                                         key={item.id}
                                         label={item.name}
-                                        desc={`${item.count || 0} li�n h?`}
+                                        desc={`${item.count || 0} liên hệ`}
                                         icon={Layers}
                                         isSelected={config.targetId === item.id}
                                         onClick={() => handleTargetChange(item.id)}
@@ -425,7 +425,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                     <ConfigItem
                                         key={f.id}
                                         label={f.name}
-                                        desc={`${f.stats?.submissions || 0} lu?t dang k�`}
+                                        desc={`${f.stats?.submissions || 0} lượt đăng ký`}
                                         icon={FileInput}
                                         isSelected={config.targetId === f.id}
                                         onClick={() => handleTargetChange(f.id)}
@@ -462,7 +462,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                     />
                                 ))
                             }
-                            
+
                             {/* CASE: VOUCHER */}
                             {triggerType === 'voucher' && voucherCampaigns
                                 .filter(v => v.name.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -500,7 +500,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                     <ConfigItem
                                         key={t.id}
                                         label={t.name}
-                                        desc={`K�ch ho?t khi g?n nh�n n�y`}
+                                        desc={`Kích hoạt khi gắn nhãn này`}
                                         icon={Tag}
                                         isSelected={config.targetId === t.name}
                                         onClick={() => handleTargetChange(t.name)}
@@ -690,15 +690,15 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                             </div>
                                             <div className="p-3.5 bg-blue-50/50 rounded-xl flex items-start gap-2.5 border border-blue-100/50">
                                                 <Info className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" />
-                                                <p className="text-[10px] text-blue-700 font-medium leading-relaxed italic">V� d?: Thi?t l?p ng�y 14/02 d? b?t d?u chuong tr�nh Valentine cho to�n b? Khách hàng du?c chọn.</p>
+                                                <p className="text-[10px] text-blue-700 font-medium leading-relaxed italic">Ví dụ: Thiết lập ngày 14/02 để bắt đầu chương trình Valentine cho toàn bộ khách hàng được chọn.</p>
                                             </div>
                                         </div>
                                     )}
 
                                     {/* 6. THEO CUSTOM FIELD NG�Y */}
                                     <ConfigItem
-                                        label="Theo Custom Field Ng�y"
-                                        desc="Trước/sau ng�y luu trong tru?ng t�y chọnh"
+                                        label="Theo Custom Field Ngày"
+                                        desc="Trước/sau ngày lưu trong trường tùy chọn"
                                         icon={ArrowRight}
                                         isSelected={config.dateField === 'custom_field_date'}
                                         onClick={() => onChange(
@@ -713,7 +713,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                             <div className="space-y-2">
                                                 <div className="flex items-center gap-2">
                                                     <div className="p-1.5 bg-violet-50 rounded-lg text-violet-500"><Calendar className="w-3.5 h-3.5" /></div>
-                                                    <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">Tru?ng ng�y (Custom Field Key)</span>
+                                                    <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">Trường ngày (Custom Field Key)</span>
                                                 </div>
                                                 {customFieldDefs.length > 0 ? (
                                                     <select
@@ -722,7 +722,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                                         onChange={e => onChange({ ...config, customFieldKey: e.target.value }, getLabelForType('date', '', undefined, 'custom_field_date'))}
                                                         disabled={disabled}
                                                     >
-                                                        <option value="">-- Ch?n tru?ng ng�y --</option>
+                                                        <option value="">-- Chọn trường ngày --</option>
                                                         {customFieldDefs.map(f => (
                                                             <option key={f.key} value={f.key}>{f.label} ({f.key})</option>
                                                         ))}
@@ -730,49 +730,49 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                                 ) : (
                                                     <input
                                                         type="text"
-                                                        placeholder="Nh?p key, v� d?: ngay_dat_lich"
+                                                        placeholder="Nhập key, ví dụ: ngày_dat_lich"
                                                         className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:border-violet-400 focus:bg-white outline-none transition-all"
                                                         value={config.customFieldKey || ''}
                                                         onChange={e => onChange({ ...config, customFieldKey: e.target.value }, getLabelForType('date', '', undefined, 'custom_field_date'))}
                                                         disabled={disabled}
                                                     />
                                                 )}
-                                                <p className="text-[9px] text-slate-400">Key c?a custom field ch?a gi� tr? ng�y (YYYY-MM-DD ho?c DD/MM/YYYY)</p>
+                                                <p className="text-[9px] text-slate-400">Key của custom field chứa giá trị ngày (YYYY-MM-DD hoặc DD/MM/YYYY)</p>
                                             </div>
 
                                             {/* Offset Config */}
                                             <div className="space-y-2">
                                                 <div className="flex items-center gap-2">
                                                     <div className="p-1.5 bg-pink-50 rounded-lg text-pink-500"><Clock className="w-3.5 h-3.5" /></div>
-                                                    <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">Th?i di?m k�ch ho?t</span>
+                                                    <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">Thời điểm kích hoạt</span>
                                                 </div>
                                                 <div className="grid grid-cols-4 gap-2">
                                                     <Select
-                                                        label="Ki?u"
+                                                        label="Kiểu"
                                                         options={[
-                                                            { value: 'before', label: 'Trước X ng�y' },
-                                                            { value: 'on', label: '��ng ng�y' },
-                                                            { value: 'after', label: 'Sau X ng�y' },
+                                                            { value: 'before', label: 'Trước X ngày' },
+                                                            { value: 'on', label: 'Đúng ngày' },
+                                                            { value: 'after', label: 'Sau X ngày' },
                                                         ]}
                                                         value={config.offsetType || 'before'}
                                                         onChange={val => onChange({ ...config, offsetType: val }, getLabelForType('date', '', undefined, 'custom_field_date'))}
                                                     />
                                                     {config.offsetType !== 'on' && (
                                                         <Input
-                                                            label="S? ng�y (X)"
+                                                            label="Số ngày (X)"
                                                             type="number"
                                                             value={config.offsetValue ?? 1}
                                                             onChange={e => onChange({ ...config, offsetValue: parseInt(e.target.value) || 0 }, getLabelForType('date', '', undefined, 'custom_field_date'))}
                                                         />
                                                     )}
                                                     <Input
-                                                        label="Gi? (0-23)"
+                                                        label="Giờ (0-23)"
                                                         type="number"
                                                         value={config.triggerHour ?? 8}
                                                         onChange={e => onChange({ ...config, triggerHour: Math.min(23, Math.max(0, parseInt(e.target.value) || 0)) })}
                                                     />
                                                     <Input
-                                                        label="Ph�t (0-59)"
+                                                        label="Phút (0-59)"
                                                         type="number"
                                                         value={config.triggerMinute ?? 0}
                                                         onChange={e => onChange({ ...config, triggerMinute: Math.min(59, Math.max(0, parseInt(e.target.value) || 0)) })}
@@ -784,9 +784,9 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                                         const mm = String(config.triggerMinute ?? 0).padStart(2, '0');
                                                         const field = config.customFieldKey || 'field';
                                                         const x = config.offsetValue ?? 1;
-                                                        if (config.offsetType === 'before') return `K�ch ho?t ${x} ng�y TRU?C [${field}] l�c ${hh}:${mm}`;
-                                                        if (config.offsetType === 'after') return `K�ch ho?t ${x} ng�y SAU [${field}] l�c ${hh}:${mm}`;
-                                                        return `K�ch ho?t d�ng ng�y [${field}] l�c ${hh}:${mm}`;
+                                                        if (config.offsetType === 'before') return `Kích hoạt ${x} ngày TRƯỚC [${field}] lúc ${hh}:${mm}`;
+                                                        if (config.offsetType === 'after') return `Kích hoạt ${x} ngày SAU [${field}] lúc ${hh}:${mm}`;
+                                                        return `Kích hoạt đúng ngày [${field}] lúc ${hh}:${mm}`;
                                                     })()}
                                                 </p>
                                             </div>
@@ -795,17 +795,17 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                             <div className="space-y-2">
                                                 <div className="flex items-center gap-2">
                                                     <div className="p-1.5 bg-rose-50 rounded-lg text-rose-500"><Target className="w-3.5 h-3.5" /></div>
-                                                    <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">Danh sách theo d�i</span>
+                                                    <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">Danh sách theo dõi</span>
                                                 </div>
                                                 <div className="flex bg-slate-100 p-0.5 rounded-lg w-full">
-                                                    <button onClick={() => onChange({ ...config, targetLists: 'all', targetListIds: [] })} className={`flex-1 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all ${!config.targetLists || config.targetLists === 'all' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400'}`}>T?t c?</button>
-                                                    <button onClick={() => onChange({ ...config, targetLists: 'specific', targetListIds: [] })} className={`flex-1 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all ${config.targetLists === 'specific' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400'}`}>Danh sách c? th?</button>
+                                                    <button onClick={() => onChange({ ...config, targetLists: 'all', targetListIds: [] })} className={`flex-1 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all ${!config.targetLists || config.targetLists === 'all' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400'}`}>Tất cả</button>
+                                                    <button onClick={() => onChange({ ...config, targetLists: 'specific', targetListIds: [] })} className={`flex-1 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all ${config.targetLists === 'specific' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400'}`}>Danh sách cụ thể</button>
                                                 </div>
                                                 {config.targetLists === 'specific' && (
                                                     <div className="space-y-2">
                                                         <div className="relative">
                                                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-300" />
-                                                            <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="T�m danh sách..." className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold outline-none focus:border-slate-400 transition-all" />
+                                                            <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Tìm danh sách..." className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold outline-none focus:border-slate-400 transition-all" />
                                                         </div>
                                                         <div className="space-y-1 border border-slate-100 rounded-xl p-1 bg-slate-50/50 max-h-40 overflow-y-auto custom-scrollbar">
                                                             {lists.filter(l => isManualList(l) && l.name.toLowerCase().includes(searchTerm.toLowerCase())).map(item => {
@@ -823,7 +823,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                                                             <List className="w-3 h-3 text-blue-500 shrink-0" />
                                                                             <div>
                                                                                 <p className="text-xs font-semibold text-slate-700">{item.name}</p>
-                                                                                <p className="text-[9px] text-slate-400">{item.count || 0} li�n h?</p>
+                                                                                <p className="text-[9px] text-slate-400">{item.count || 0} liên hệ</p>
                                                                             </div>
                                                                         </div>
                                                                         <div className={`w-4 h-4 rounded border flex items-center justify-center ${isChecked ? 'bg-violet-500 border-violet-500 text-white' : 'border-slate-300 bg-white'}`}>
@@ -939,7 +939,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                                             <input
                                                                 value={searchTerm}
                                                                 onChange={e => setSearchTerm(e.target.value)}
-                                                                placeholder="Tìm kiếm danh sách..."
+                                                                placeholder="Tìm danh sách..."
                                                                 className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold outline-none focus:border-slate-400 transition-all"
                                                             />
                                                         </div>

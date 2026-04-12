@@ -221,7 +221,7 @@ const MetaScenarioModal: React.FC<MetaScenarioModalProps> = ({ scenario, onClose
                     attachment_id: metaRes.data.data.attachment_id,
                     image_url: imageUrl || prev.image_url
                 }));
-                toast.success('Tỉ lệ hoàn tất! Đã tự động cấu hình ID và URL.');
+                toast.success('Tải lên hoàn tất! Đã tự động cấu hình ID và URL.');
             } else {
                 // If meta fails but server succeeded, we still have the URL
                 if (imageUrl) {
@@ -378,7 +378,7 @@ const MetaScenarioModal: React.FC<MetaScenarioModalProps> = ({ scenario, onClose
                                             { value: 'welcome', label: <div className="flex items-center gap-2"><Star className="w-4 h-4 text-amber-600" /><span>Quan tâm</span></div> },
                                             { value: 'first_message', label: <div className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-rose-500" /><span>Bắt chuyện</span></div> },
                                             { value: 'keyword', label: <div className="flex items-center gap-2"><MessageCircle className="w-4 h-4 text-indigo-500" /><span>Từ khóa</span></div> },
-                                            { value: 'ai_reply', label: <div className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-emerald-500" /><span>AI Tỉ lệ'</span></div> },
+                                            { value: 'ai_reply', label: <div className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-emerald-500" /><span>AI chăm sóc</span></div> },
                                             { value: 'holiday', label: <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-rose-600" /><span>Ngày nghỉ</span></div> }
                                         ]}
                                         onChange={(val) => {

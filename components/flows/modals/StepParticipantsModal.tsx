@@ -621,7 +621,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                 <span>{activeTab === 'preview' ? 'Đóng Xem Mail' : 'XEM MAIL'}</span>
                             </button>
                         )}
-                        <button onClick={onRefresh} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="L�mĐã mới">
+                        <button onClick={onRefresh} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Đã làm mới">
                             <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                         </button>
                     </div>

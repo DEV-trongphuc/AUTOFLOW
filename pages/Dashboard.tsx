@@ -54,6 +54,15 @@ const ALL_MODULES: Module[] = [
         tags: ['AI', 'Smart']
     },
     {
+        id: 'ai-space',
+        title: 'AI Space',
+        sub: 'Không gian làm việc đa trí tuệ. Trình điều khiển tập trung giúp bạn tương tác, ra lệnh và quản lý hàng loạt AI Agents.',
+        icon: Sparkles,
+        color: 'from-fuchsia-500 to-purple-600',
+        path: '/ai-space',
+        tags: ['Agents', 'Workspace']
+    },
+    {
         id: 'vouchers',
         title: 'Voucher Hub',
         sub: 'Quản lý tập trung toàn bộ mã ưu đãi, quà tặng. Tự động sinh mã ngẫu nhiên và theo dõi lượt sử dụng thời gian thực.',
@@ -253,13 +262,14 @@ const Dashboard: React.FC = () => {
                                 <div className="mb-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <h3 className="text-lg font-black text-slate-800 tracking-tight">{module.title}</h3>
-                                        {['ai-training', 'zalo-oa', 'meta-api', 'vouchers', 'api-triggers'].includes(module.id) && (
+                                        {['ai-training', 'ai-space', 'zalo-oa', 'meta-api', 'vouchers', 'api-triggers'].includes(module.id) && (
                                             <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border ${module.id === 'ai-training' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                                module.id === 'ai-space' ? 'bg-fuchsia-50 text-fuchsia-600 border-fuchsia-100' :
                                                 module.id === 'vouchers' ? 'bg-amber-50 text-amber-600 border-amber-100' :
                                                     module.id === 'api-triggers' ? 'bg-orange-50 text-orange-600 border-orange-100' :
                                                         'bg-blue-50 text-blue-600 border-blue-100'
                                                 }`}>
-                                                {module.id === 'ai-training' ? 'A.I Core' : module.id === 'vouchers' ? 'New' : module.id === 'api-triggers' ? 'Dev' : 'Hot'}
+                                                {module.id === 'ai-training' ? 'A.I Core' : module.id === 'ai-space' ? 'A.I Hub' : module.id === 'vouchers' ? 'New' : module.id === 'api-triggers' ? 'Dev' : 'Hot'}
                                             </span>
                                         )}
                                     </div>

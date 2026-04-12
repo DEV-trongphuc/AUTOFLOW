@@ -132,7 +132,7 @@ const renderContent = (content: string, role: 'user' | 'assistant', onActionClic
                 );
             } else if (fileExtMatch) {
                 const ext = fileExtMatch[1].toLowerCase();
-                const fileName = label || url.split('/').pop() || 'Tỉ lệ'
+                const fileName = label || url.split('/').pop() || 'Tải lên'
 
 
                 parts.push(

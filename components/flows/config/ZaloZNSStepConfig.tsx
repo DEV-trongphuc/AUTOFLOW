@@ -120,7 +120,7 @@ const CustomSelect: React.FC<{
         >
             {options.length === 0 ? (
                 <div className="p-4 text-center text-xs text-slate-400 italic">
-                    Kh�ng c� d? li?u
+                    Không có dữ liệu
                 </div>
             ) : (
                 options.map((option) => (
@@ -359,7 +359,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                 });
 
                 // Check for phone and validate rows
-                const phoneIdx = headers.findIndex(h => h.includes('phone') || h.includes('sdt') || h.includes('s? dĐiện thoại'));
+                const phoneIdx = headers.findIndex(h => h.includes('phone') || h.includes('sdt') || h.includes('số điện thoại'));
                 let validCount = 0;
 
                 if (phoneIdx !== -1) {
@@ -426,33 +426,33 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
     // All available variables grouped by category
     const allVariableGroups = [
         {
-            label: 'Th�ng tin Contact',
+            label: 'Thông tin Contact',
             icon: 'user',
             vars: [
-                { key: '{{first_name}}', label: 'T�n', desc: 'First name of contact' },
-                { key: '{{last_name}}', label: 'H?', desc: 'Last name of contact' },
-                { key: '{{full_name}}', label: 'H? v� t�n', desc: 'Full name' },
+                { key: '{{first_name}}', label: 'Tên', desc: 'First name of contact' },
+                { key: '{{last_name}}', label: 'Họ', desc: 'Last name of contact' },
+                { key: '{{full_name}}', label: 'Họ và tên', desc: 'Full name' },
                 { key: '{{email}}', label: 'Email', desc: 'Email address' },
-                { key: '{{phone_number}}', label: 'S? dĐiện thoại', desc: 'Phone number' },
+                { key: '{{phone_number}}', label: 'Số điện thoại', desc: 'Phone number' },
                 { key: '{{company_name}}', label: 'Công ty', desc: 'Company name' },
-                { key: '{{job_title}}', label: 'Ch?c v?', desc: 'Job title' },
-                { key: '{{city}}', label: 'Th�nh ph?', desc: 'City' },
-                { key: '{{country}}', label: 'Qu?c gia', desc: 'Country' },
-                { key: '{{date_of_birth}}', label: 'Ng�y sinh', desc: 'Date of birth' },
-                { key: '{{gender}}', label: 'Gi?i t�nh', desc: 'Gender' },
-                { key: '{{joined_at}}', label: 'Ng�y tham gia', desc: 'Join date (dd/mm/yyyy)' },
+                { key: '{{job_title}}', label: 'Chức vụ', desc: 'Job title' },
+                { key: '{{city}}', label: 'Thành phố', desc: 'City' },
+                { key: '{{country}}', label: 'Quốc gia', desc: 'Country' },
+                { key: '{{date_of_birth}}', label: 'Ngày sinh', desc: 'Date of birth' },
+                { key: '{{gender}}', label: 'Giới tính', desc: 'Gender' },
+                { key: '{{joined_at}}', label: 'Ngày tham gia', desc: 'Join date (dd/mm/yyyy)' },
             ]
         },
         {
-            label: 'Ng�y & Thời gian',
+            label: 'Ngày & Thời gian',
             icon: 'calendar',
             vars: [
-                { key: '{{today}}', label: 'H�m nay', desc: 'Today\'s date (dd/mm/yyyy)' },
-                { key: '{{today_ymd}}', label: 'H�m nay (yyyy-mm-dd)', desc: 'Today yyyy-mm-dd format' },
-                { key: '{{today_dmy}}', label: 'H�m nay (dd-mm-yyyy)', desc: 'Today dd-mm-yyyy format' },
-                { key: '{{current_date}}', label: 'Ng�y hi?n t?i', desc: 'Current date dd/mm/yyyy' },
-                { key: '{{year}}', label: 'Nam hi?n t?i', desc: 'Current year' },
-                { key: '{{time}}', label: 'Gi? hi?n t?i', desc: 'Current time HH:mm' },
+                { key: '{{today}}', label: 'Hôm nay', desc: 'Today\'s date (dd/mm/yyyy)' },
+                { key: '{{today_ymd}}', label: 'Hôm nay (yyyy-mm-dd)', desc: 'Today yyyy-mm-dd format' },
+                { key: '{{today_dmy}}', label: 'Hôm nay (dd-mm-yyyy)', desc: 'Today dd-mm-yyyy format' },
+                { key: '{{current_date}}', label: 'Ngày hiện tại', desc: 'Current date dd/mm/yyyy' },
+                { key: '{{year}}', label: 'Năm hiện tại', desc: 'Current year' },
+                { key: '{{time}}', label: 'Giờ hiện tại', desc: 'Current time HH:mm' },
             ]
         },
         {
@@ -471,12 +471,12 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
     ];
 
     const personalizationTags = [
-        { label: 'T�n', value: 'first_name' },
-        { label: 'H?', value: 'last_name' },
+        { label: 'Tên', value: 'first_name' },
+        { label: 'Họ', value: 'last_name' },
         { label: 'Email', value: 'email' },
-        { label: 'S�T', value: 'phone_number' },
+        { label: 'SĐT', value: 'phone_number' },
         { label: 'Công ty', value: 'company_name' },
-        { label: 'H�m nay', value: 'today' },
+        { label: 'Hôm nay', value: 'today' },
         { label: 'ID', value: 'subscriber_id' },
     ];
 
@@ -541,8 +541,8 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
         return (
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center">
                 <AlertCircle className="w-12 h-12 text-amber-600 mx-auto mb-3" />
-                <p className="text-sm font-bold text-amber-800 mb-2">Chua c� Zalo OA</p>
-                <p className="text-xs text-amber-600">Vui lòng th�m Zalo Official Account trong Settings trước.</p>
+                <p className="text-sm font-bold text-amber-800 mb-2">Chưa có Zalo OA</p>
+                <p className="text-xs text-amber-600">Vui lòng thêm Zalo Official Account trong Settings trước.</p>
             </div>
         );
     }
@@ -556,7 +556,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
     const templateOptions: Option[] = templates.map(t => ({
         value: t.template_id,
         label: t.template_name,
-        subLabel: `ID: ${t.template_id} � Type: ${t.template_type}`
+        subLabel: `ID: ${t.template_id} • Type: ${t.template_type}`
     }));
 
     const selectedTemplate = templates.find(t => t.template_id === config.template_id);
@@ -586,14 +586,14 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                     <div className="flex-1 space-y-2">
                         <div className="flex items-center justify-between">
                             <h4 className={`text-[11px] font-black uppercase tracking-widest ${isTimeInsecure ? 'text-orange-900' : 'text-emerald-900'}`}>
-                                {isTimeInsecure ? 'Cònh b�o khung gi?đã gửi ZNS' : 'Khung gi? Flow d� an to�n'}
+                                {isTimeInsecure ? 'Cảnh báo khung giờ gửi ZNS' : 'Khung giờ Flow đã an toàn'}
                             </h4>
                             <Clock className={`w-4 h-4 ${isTimeInsecure ? 'text-orange-400' : 'text-emerald-400'}`} />
                         </div>
                         <p className={`text-[11px] font-bold leading-relaxed ${isTimeInsecure ? 'text-orange-800' : 'text-emerald-800'}`}>
                             {isTimeInsecure
-                                ? `Theo ch�nh s�ch Zalo, tin ZNS ch?đã gửi du?c t? 06:00 - 22:00. Flow hi?n t?i (${flow.config.startTime} - ${flow.config.endTime}) c� th? khi?n tin nh?n b? t?m gi? ho?c th?t b?i.`
-                                : 'C?u h�nh Thời gian c?a Flow n�y d� tu�n th? ch�nh s�ch c?a Zalo (06:00 - 22:00). Tin nh?n ZNS s? du?cđã gửi di ngay l?p t?c.'
+                                ? `Theo chính sách Zalo, tin ZNS chỉ gửi được từ 06:00 - 22:00. Flow hiện tại (${flow.config.startTime} - ${flow.config.endTime}) có thể khiến tin nhắn bị tạm giữ hoặc thất bại.`
+                                : 'Cấu hình Thời gian của Flow này đã tuân thủ chính sách của Zalo (06:00 - 22:00). Tin nhắn ZNS sẽ được gửi đi ngay lập tức.'
                             }
                         </p>
 
@@ -603,7 +603,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                 className="mt-2 flex items-center gap-2 px-3 py-1.5 bg-orange-600 text-white rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-orange-700 transition-all shadow-md shadow-orange-200 active:scale-95"
                             >
                                 <Zap className="w-3.5 h-3.5" />
-                                T? d?ng di?u chọnh Flow (06:00 - 22:00)
+                                Tự động điều chỉnh Flow (06:00 - 22:00)
                             </button>
                         )}
                     </div>
@@ -616,7 +616,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                     <div className="relative z-30">
                         <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-3">
                             <MessageSquare className="w-4 h-4 inline mr-2 text-blue-500" />
-                            G?i t? Zalo OA
+                            Gửi từ Zalo OA
                         </label>
                         <div className="flex gap-2">
                             <div className="flex-1">
@@ -625,7 +625,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                     options={oaOptions}
                                     onChange={handleOAChange}
                                     disabled={disabled}
-                                    placeholder="-- Ch?n Zalo OA --"
+                                    placeholder="-- Chọn Zalo OA --"
                                 />
                             </div>
                             <button
@@ -646,14 +646,14 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                         <div className="relative z-20">
                             <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-3">
                                 <FileText className="w-4 h-4 inline mr-2 text-indigo-500" />
-                                Ch?n M?u (Template)
+                                Chọn Mẫu (Template)
                             </label>
                             <CustomSelect
                                 value={config.template_id || ''}
                                 options={templateOptions}
                                 onChange={handleTemplateChange}
                                 disabled={disabled || templates.length === 0}
-                                placeholder={templates.length === 0 ? "Kh�ng c� template n�o" : "-- Ch?n Template --"}
+                                placeholder={templates.length === 0 ? "Không có template nào" : "-- Chọn Template --"}
                             />
 
                             {/* [NEW] UID Support Warning */}
@@ -662,12 +662,12 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                     <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                                     <div>
                                         <p className="text-[11px] font-black text-amber-800 uppercase tracking-wide mb-1">
-                                            Luu �: Template kh�ng h? tr? UID
+                                            Lưu ý: Template không hỗ trợ UID
                                         </p>
                                         <p className="text-[11px] text-amber-700 leading-relaxed font-medium">
-                                            M?u n�y s? <b>t? d?ng chuy?n sangđã gửi qua S? dĐiện thoại</b> n?u b?n nh?p UID.
+                                            Mẫu này sẽ <b>tự động chuyển sang gửi qua Số điện thoại</b> nếu bạn nhập UID.
                                             <br />
-                                            Chi ph� d? ki?n: <b className="text-amber-900">{selectedTemplate.template_data?.price || 'theo quy dảnh Zalo'} VND/tin</b>.
+                                            Chi phí dự kiến: <b className="text-amber-900">{selectedTemplate.template_data?.price || 'theo quy định Zalo'} VND/tin</b>.
                                         </p>
                                     </div>
                                 </div>
@@ -686,14 +686,14 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                     className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${config.input_mode !== 'csv' ? 'bg-white text-blue-600 shadow-md ring-1 ring-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
                                 >
                                     <HelpCircle className="w-3.5 h-3.5 inline mr-1.5" />
-                                    Cá nhân h�a
+                                    Cá nhân hóa
                                 </button>
                                 <button
                                     onClick={() => handleInputModeChange('csv')}
                                     className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${config.input_mode === 'csv' ? 'bg-white text-blue-600 shadow-md ring-1 ring-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
                                 >
                                     <FileSpreadsheet className="w-3.5 h-3.5 inline mr-1.5" />
-                                    G?i theo list CSV
+                                    Gửi theo list CSV
                                 </button>
                             </div>
 
@@ -704,7 +704,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                     className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 border border-emerald-100 transition-all active:scale-95"
                                 >
                                     <Download className="w-3.5 h-3.5" />
-                                    T?i fileĐã mởu .CSV
+                                    Tải file Mẫu .CSV
                                 </button>
                             )}
                         </div>
@@ -712,7 +712,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                         <div className="p-8 bg-white rounded-[32px] border-2 border-slate-100 shadow-xl shadow-slate-200/20">
                             <div className="flex items-center justify-between mb-8">
                                 <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                                    C?u h�nh Tham s? (Parameters)
+                                    Cấu hình Tham số (Parameters)
                                 </h4>
                                 {config.input_mode === 'manual' && (
                                     <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[9px] font-black uppercase tracking-widest">
@@ -738,10 +738,10 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                             </div>
                                             <div className="text-center px-6">
                                                 <p className="text-sm font-black text-slate-800 uppercase tracking-tight">
-                                                    {csvFile ? csvFile.name : 'Ch?n danh sách ngu?i nh?n (.CSV)'}
+                                                    {csvFile ? csvFile.name : 'Chọn danh sách người nhận (.CSV)'}
                                                 </p>
                                                 <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-widest leading-relaxed">
-                                                    {csvFile ? 'File d� s?n s�ng x? l�' : 'Ch? ch?p nh?n file dảnh d?ng CSV c� ch?a c?t S�T'}
+                                                    {csvFile ? 'File đã sẵn sàng xử lý' : 'Chỉ chấp nhận file định dạng CSV có chứa cột SĐT'}
                                                 </p>
                                             </div>
                                         </div>
@@ -752,17 +752,17 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                         <div className="space-y-6 animate-in slide-in-from-bottom-4">
                                             <div className="flex items-center gap-3 px-2">
                                                 <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50"></div>
-                                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">K?t qu? Mapping d? li?u:</p>
+                                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Kết quả Mapping dữ liệu:</p>
                                             </div>
                                             {csvStats && (
                                                 <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-4">
                                                     <div className="flex items-center justify-between">
                                                         <h5 className="text-[11px] font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
                                                             <FileText className="w-4 h-4 text-blue-500" />
-                                                            Báo cáo ki?m tra File
+                                                            Báo cáo kiểm tra File
                                                         </h5>
                                                         <span className="text-[10px] bg-slate-200 text-slate-600 font-bold px-2 py-1 rounded-lg">
-                                                            Total: {csvStats.totalRows} h�ng
+                                                            Total: {csvStats.totalRows} hàng
                                                         </span>
                                                     </div>
 
@@ -770,7 +770,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                                         {/* Valid Rows */}
                                                         <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-xl">
                                                             <div className="flex justify-between items-center mb-1">
-                                                                <span className="text-[10px] font-bold text-emerald-600 uppercase">H?p l? (S�T OK)</span>
+                                                                <span className="text-[10px] font-bold text-emerald-600 uppercase">Hợp lệ (SĐT OK)</span>
                                                                 <Check className="w-4 h-4 text-emerald-500" />
                                                             </div>
                                                             <p className="text-2xl font-black text-emerald-700">{csvStats.validRows}</p>
@@ -780,7 +780,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                                         <div className={`border p-3 rounded-xl ${csvStats.totalRows - csvStats.validRows > 0 ? 'bg-orange-50 border-orange-100' : 'bg-slate-50 border-slate-100'}`}>
                                                             <div className="flex justify-between items-center mb-1">
                                                                 <span className={`text-[10px] font-bold uppercase ${csvStats.totalRows - csvStats.validRows > 0 ? 'text-orange-600' : 'text-slate-400'}`}>
-                                                                    Lỗi (S�T sai/tr?ng)
+                                                                    Lỗi (SĐT sai/trống)
                                                                 </span>
                                                                 {csvStats.totalRows - csvStats.validRows > 0 ? (
                                                                     <AlertCircle className="w-4 h-4 text-orange-500" />
@@ -799,10 +799,10 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                                         <div className="flex items-start gap-3 p-3 bg-rose-50 border border-rose-100 rounded-xl">
                                                             <X className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
                                                             <div>
-                                                                <p className="text-[11px] font-black text-rose-700 uppercase mb-1">Thi?u c?t b?t bu?c</p>
+                                                                <p className="text-[11px] font-black text-rose-700 uppercase mb-1">Thiếu cột bắt buộc</p>
                                                                 <p className="text-[11px] text-rose-600 leading-relaxed">
-                                                                    File CSV thi?u c�c tham s? sau: <b>{csvStats.missingRequired.join(', ')}</b>.
-                                                                    Tin nh?n c� th? b? Zalo t? ch?i.
+                                                                    File CSV thiếu các tham số sau: <b>{csvStats.missingRequired.join(', ')}</b>.
+                                                                    Tin nhắn có thể bị Zalo từ chối.
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -813,12 +813,12 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                                         <div className="flex items-start gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl">
                                                             <HelpCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
                                                             <div>
-                                                                <p className="text-[11px] font-black text-blue-700 uppercase mb-1">X? l� h�ng l?i</p>
+                                                                <p className="text-[11px] font-black text-blue-700 uppercase mb-1">Xử lý hàng lỗi</p>
                                                                 <p className="text-[11px] text-blue-600 leading-relaxed">
-                                                                    C� <b>{csvStats.totalRows - csvStats.validRows}</b> h�ng ch?a S�T kh�ng h?p l?.
-                                                                    Hệ thống s? <span className="font-black px-1.5 py-0.5 bg-white rounded border border-blue-200">
-                                                                        {config.fallback_behavior === 'mark_failed' ? 'C?T FLOW & B�O L?I' : 'Bỏ qua & TI?P T?C'}
-                                                                    </span> d?i v?i c�c li�n h? n�y.
+                                                                    Có <b>{csvStats.totalRows - csvStats.validRows}</b> hàng chứa SĐT không hợp lệ.
+                                                                    Hệ thống sẽ <span className="font-black px-1.5 py-0.5 bg-white rounded border border-blue-200">
+                                                                        {config.fallback_behavior === 'mark_failed' ? 'CẮT FLOW & BÁO LỖI' : 'Bỏ qua & TIẾP TỤC'}
+                                                                    </span> đối với các liên hệ này.
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -829,6 +829,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                                 <div className="bg-rose-50 p-4 rounded-2xl border border-rose-100 flex items-center gap-3">
                                                     <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
                                                     <p className="text-[11px] text-rose-600 font-bold leading-relaxed">
+                                                        Vui lòng chọn cột chứa Số điện thoại để hệ thống có thể gửi tin nhắn.
                                                     </p>
                                                 </div>
                                             )}
@@ -854,7 +855,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                                             value={config.template_data?.[fieldName] || ''}
                                                             onChange={(e) => handleTemplateDataChange(fieldName, e.target.value)}
                                                             disabled={disabled}
-                                                            placeholder={`Nh?p n?i dung cho ${fieldName}...`}
+                                                            placeholder={`Nhập nội dung cho ${fieldName}...`}
                                                             className="w-full px-5 py-4 pr-12 bg-slate-50 border-2 border-transparent rounded-2xl text-sm font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all placeholder:font-medium"
                                                         />
                                                         {!disabled && (
@@ -865,7 +866,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                                                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
                                                                     : 'bg-white text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-slate-200'
                                                                     }`}
-                                                                title="Ch?n bi?n"
+                                                                title="Chọn biến"
                                                             >
                                                                 <Braces className="w-3.5 h-3.5" />
                                                             </button>
@@ -885,12 +886,12 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                                                 >
                                                                     {/* Header */}
                                                                     <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3">
-                                                                        <p className="text-[11px] font-black text-white uppercase tracking-widest mb-2">Ch?n bi?n cho: <span className="text-blue-200">{fieldName}</span></p>
+                                                                        <p className="text-[11px] font-black text-white uppercase tracking-widest mb-2">Chọn biến cho: <span className="text-blue-200">{fieldName}</span></p>
                                                                         <div className="relative">
                                                                             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-blue-300" />
                                                                             <input
                                                                                 type="text"
-                                                                                placeholder="T�m bi?n..."
+                                                                                placeholder="Tìm biến..."
                                                                                 value={varPickerSearch}
                                                                                 onChange={e => setVarPickerSearch(e.target.value)}
                                                                                 className="w-full pl-7 pr-3 py-1.5 bg-white/20 text-white placeholder-blue-300 text-xs rounded-lg outline-none focus:bg-white/30"
@@ -934,9 +935,9 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
 
                                                                     {/* Quick insert shortcuts */}
                                                                     <div className="px-3 py-2 bg-slate-50 border-t border-slate-100">
-                                                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nh?p nhanh</p>
+                                                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nhập nhanh</p>
                                                                         <div className="flex flex-wrap gap-1">
-                                                                            {[{ k: '{{today}}', l: 'H�m nay' }, { k: '{{first_name}}', l: 'T�n' }, { k: '{{subscriber_id}}', l: 'ID' }].map(q => (
+                                                                            {[{ k: '{{today}}', l: 'Hôm nay' }, { k: '{{first_name}}', l: 'Tên' }, { k: '{{subscriber_id}}', l: 'ID' }].map(q => (
                                                                                 <button
                                                                                     key={q.k}
                                                                                     type="button"
@@ -953,10 +954,10 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                                     </div>
                                                     <div className="flex justify-between items-center px-1">
                                                         <span className="text-[9px] font-medium text-slate-400 italic">
-                                                            {param.require ? '* B?t bu?c nh?p' : 'Kh�ng b?t bu?c'}
+                                                            {param.require ? '* Bắt buộc nhập' : 'Không bắt buộc'}
                                                         </span>
                                                         {param.maxLength && (
-                                                            <span className="text-[9px] font-black text-slate-300 uppercase">T?i da {param.maxLength} k� t?</span>
+                                                            <span className="text-[9px] font-black text-slate-300 uppercase">Tối đa {param.maxLength} kí tự</span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -966,7 +967,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                     {templateParams.length === 0 && (
                                         <div className="text-center py-10 opacity-30">
                                             <RefreshCw className="w-12 h-12 mx-auto mb-4" />
-                                            <p className="text-xs font-black uppercase tracking-widest">Kh�ng c� tham s?</p>
+                                            <p className="text-xs font-black uppercase tracking-widest">Không có tham số</p>
                                         </div>
                                     )}
                                 </div>
@@ -981,42 +982,42 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                         {/* Fallback Behavior */}
                         <div className="space-y-4">
                             <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1 px-1">
-                                H�nh d?ng n?u d? li?u l?i
+                                Hành động nếu dữ liệu lỗi
                             </label>
                             <div className="grid grid-cols-2 gap-4">
-                                <label className={`flex flex-col items-center gap-2 p-3 rounded-[24px] border-2 cursor-pointer transition-all hover:shadow-xl ${(config.fallback_behavior || 'skip') === 'skip' ? 'bg-blue-600 border-blue-600 text-white shadow-blue-200' : 'bg-white border-slate-100 text-slate-500 hover:border-blue-200'}`}>
-                                    <input
-                                        type="radio"
-                                        name="fallback"
-                                        value="skip"
-                                        checked={(config.fallback_behavior || 'skip') === 'skip'}
-                                        onChange={(e) => handleFallbackChange(e.target.value)}
-                                        disabled={disabled}
-                                        className="sr-only"
-                                    />
-                                    <HelpCircle className={`w-6 h-6 ${(config.fallback_behavior || 'skip') === 'skip' ? 'text-white' : 'text-slate-200'}`} />
+                                <button
+                                    type="button"
+                                    onClick={() => handleFallbackChange('skip')}
+                                    disabled={disabled}
+                                    className={`flex flex-col items-center gap-2 p-4 rounded-[24px] border-2 transition-all cursor-pointer ${
+                                        (config.fallback_behavior || 'skip') === 'skip'
+                                            ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200'
+                                            : 'bg-white border-slate-100 text-slate-500 hover:border-blue-200'
+                                    }`}
+                                >
+                                    <HelpCircle className={`w-6 h-6 ${(config.fallback_behavior || 'skip') === 'skip' ? 'text-blue-100' : 'text-slate-200'}`} />
                                     <div className="text-center">
                                         <p className="text-[10px] font-black uppercase tracking-tight">Bỏ qua</p>
-                                        <p className={`text-[8px] font-bold ${(config.fallback_behavior || 'skip') === 'skip' ? 'text-blue-200' : 'text-slate-400'}`}>TI?P T?C FLOW</p>
+                                        <p className={`text-[8px] font-bold ${(config.fallback_behavior || 'skip') === 'skip' ? 'text-blue-200' : 'text-slate-400'}`}>TIẾP TỤC FLOW</p>
                                     </div>
-                                </label>
+                                </button>
 
-                                <label className={`flex flex-col items-center gap-2 p-3 rounded-[24px] border-2 cursor-pointer transition-all hover:shadow-xl ${config.fallback_behavior === 'mark_failed' ? 'bg-rose-600 border-rose-600 text-white shadow-rose-200' : 'bg-white border-slate-100 text-slate-500 hover:border-rose-200'}`}>
-                                    <input
-                                        type="radio"
-                                        name="fallback"
-                                        value="mark_failed"
-                                        checked={config.fallback_behavior === 'mark_failed'}
-                                        onChange={(e) => handleFallbackChange(e.target.value)}
-                                        disabled={disabled}
-                                        className="sr-only"
-                                    />
-                                    <X className={`w-6 h-6 ${config.fallback_behavior === 'mark_failed' ? 'text-white' : 'text-slate-200'}`} />
+                                <button
+                                    type="button"
+                                    onClick={() => handleFallbackChange('mark_failed')}
+                                    disabled={disabled}
+                                    className={`flex flex-col items-center gap-2 p-4 rounded-[24px] border-2 transition-all cursor-pointer ${
+                                        config.fallback_behavior === 'mark_failed'
+                                            ? 'bg-rose-600 border-rose-600 text-white shadow-lg shadow-rose-200'
+                                            : 'bg-white border-slate-100 text-slate-500 hover:border-rose-200'
+                                    }`}
+                                >
+                                    <X className={`w-6 h-6 ${config.fallback_behavior === 'mark_failed' ? 'text-rose-100' : 'text-slate-200'}`} />
                                     <div className="text-center">
-                                        <p className="text-[10px] font-black uppercase tracking-tight">C?t flow</p>
-                                        <p className={`text-[8px] font-bold ${config.fallback_behavior === 'mark_failed' ? 'text-rose-200' : 'text-slate-400'}`}>��NH D?U L?I</p>
+                                        <p className="text-[10px] font-black uppercase tracking-tight">Cắt flow</p>
+                                        <p className={`text-[8px] font-bold ${config.fallback_behavior === 'mark_failed' ? 'text-rose-200' : 'text-slate-400'}`}>ĐÁNH DẤU LỖI</p>
                                     </div>
-                                </label>
+                                </button>
                             </div>
                         </div>
 
@@ -1026,15 +1027,15 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                 <HelpCircle className="w-6 h-6" />
                             </div>
                             <div className="space-y-2 flex-1 min-w-0">
-                                <p className="text-[11px] font-black text-slate-700 uppercase tracking-widest">M�ch nh? cho b?n</p>
+                                <p className="text-[11px] font-black text-slate-700 uppercase tracking-widest">Mách nhỏ cho bạn</p>
                                 <ul className="space-y-3 text-[11px] text-slate-500 font-bold leading-relaxed">
                                     <li className="flex items-start gap-2.5">
                                         <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0"></div>
-                                        <p className="flex-1">D�ng <b className="text-indigo-600">Cá nhân h�a</b> khi mu?nđã gửi t? d?ng theo s? ki?n c?a kh�ch.</p>
+                                        <p className="flex-1">Dùng <b className="text-indigo-600">Cá nhân hóa</b> khi muốn gửi tự động theo sự kiện của khách.</p>
                                     </li>
                                     <li className="flex items-start gap-2.5">
                                         <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0"></div>
-                                        <p className="flex-1">D�ng <b className="text-indigo-600">CSV</b> khi d� c� s?n danh sách S�T trong file Excel/CSV.</p>
+                                        <p className="flex-1">Dùng <b className="text-indigo-600">CSV</b> khi đã có sẵn danh sách SĐT trong file Excel/CSV.</p>
                                     </li>
                                 </ul>
                             </div>
@@ -1053,8 +1054,8 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                     <Eye className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h4 className="text-base font-black text-slate-800 tracking-tight">TR?C QUAN GIAO DI?N (PREVIEW)</h4>
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">X�c nh?n n?i dung s? hi?n th? tr�n dĐiện thoại</p>
+                                    <h4 className="text-base font-black text-slate-800 tracking-tight">TRỰC QUAN GIAO DIỆN (PREVIEW)</h4>
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">Xác nhận nội dung sẽ hiển thị trên điện thoại</p>
                                 </div>
                             </div>
                             {previewUrl && (
@@ -1072,7 +1073,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                             {loadingDetail ? (
                                 <div className="h-[600px] flex flex-col items-center justify-center text-slate-400 gap-4">
                                     <RefreshCw className="w-10 h-10 animate-spin text-blue-500" />
-                                    <p className="text-xs font-black uppercase tracking-[0.2em] animate-pulse">�ang n?p b? xem trước...</p>
+                                    <p className="text-xs font-black uppercase tracking-[0.2em] animate-pulse">Đang nạp bộ xem trước...</p>
                                 </div>
                             ) : previewUrl ? (
                                 <div className="w-full max-w-[400px] bg-slate-900 rounded-[60px] p-2.5 shadow-2xl relative z-10 scale-100 group-hover:scale-[1.02] transition-transform duration-500">
@@ -1086,7 +1087,7 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                         </div>
                                     </div>
 
-                                    <div className="bg-white rounded-[50px] overflow-hidden relative pt-12 pb-2 h-[720px]">
+                                    <div className="bg-white rounded-[50px] overflow-hidden relative pt-12 pb-2 h-[560px]">
                                         <iframe
                                             src={previewUrl}
                                             title="ZNS Preview"
@@ -1107,15 +1108,15 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                     <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-8 shadow-2xl border-4 border-slate-50">
                                         <AlertCircle className="w-10 h-10 text-amber-600" />
                                     </div>
-                                    <h5 className="text-lg font-black text-slate-800 tracking-tight mb-2">KH�NG T�M TH?Y PREVIEW</h5>
+                                    <h5 className="text-lg font-black text-slate-800 tracking-tight mb-2">KHÔNG TÌM THẤY PREVIEW</h5>
                                     <p className="text-sm font-bold text-slate-400 leading-relaxed mb-8 uppercase tracking-wide px-4">
-                                        Zalo chua cung c?p b?n xem trước cho Template n�y ho?c b? nh? d?m dang g?p l?i.
+                                        Zalo chưa cung cấp bản xem trước cho Template này hoặc bộ nhớ đệm đang gặp lỗi.
                                     </p>
                                     <button
                                         onClick={() => fetchTemplateDetail(selectedTemplate?.id || '')}
                                         className="px-10 py-3 bg-slate-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl active:scale-95"
                                     >
-                                        Th? t?i l?i ngay
+                                        Thử tải lại ngay
                                     </button>
                                 </div>
                             )}
