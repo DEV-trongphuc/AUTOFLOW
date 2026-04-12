@@ -173,15 +173,15 @@ const Vouchers: React.FC = () => {
                             <div key={campaign.id} className="group bg-white rounded-[24px] border border-slate-100 p-6 flex flex-col hover:shadow-xl hover:shadow-slate-200/40 transition-all duration-300 relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-rose-500/5 to-orange-500/5 rounded-bl-full -z-10 group-hover:scale-110 transition-transform"></div>
                                 <div className="flex justify-between items-center mb-4">
-                                    <div className="w-14 h-14 bg-white rounded-[18px] flex items-center justify-center shrink-0 relative overflow-hidden shadow-md shadow-slate-200/50 border border-slate-100">
+                                    <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shrink-0 relative overflow-hidden shadow-md shadow-orange-200/30 border-2 border-orange-500/20">
                                         {campaign.thumbnailUrl ? (
                                             <img 
                                                 src={campaign.thumbnailUrl} 
                                                 alt={campaign.name} 
-                                                className="w-full h-full object-cover rounded-[18px] transition-transform duration-500 group-hover:scale-110" 
+                                                className="w-full h-full object-cover rounded-full transition-transform duration-500 group-hover:scale-110" 
                                             />
                                         ) : (
-                                            <div className="w-full h-full bg-rose-50 flex items-center justify-center text-rose-600">
+                                            <div className="w-full h-full bg-orange-50 flex items-center justify-center text-orange-600">
                                                 <Gift className="w-6 h-6" />
                                             </div>
                                         )}
