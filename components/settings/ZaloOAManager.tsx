@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, RefreshCw, CheckCircle, XCircle, AlertTriangle, ExternalLink, HelpCircle, Loader2, Users, ShieldCheck, FileText } from 'lucide-react';
 import Button from '../common/Button';
@@ -104,7 +104,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                     `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
                 );
 
-                showToast('�ang m? c?a s? dang nh?p Zalo...', 'info');
+                showToast('Đang mở cửa sổ đăng nhập Zalo...', 'info');
             } else {
                 showToast(res.message || 'Lỗi khi tạo URL kết nối', 'error');
                 setIsConnecting(false);
@@ -141,7 +141,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
         try {
             const res = await api.post(`zalo_oa?route=refresh-token&id=${oaId}`, {});
             if (res.success) {
-                showToast('�� l�m mới token th�nh c�ng!', 'success');
+                showToast('Đã làm mới token thành công!', 'success');
                 fetchOAs();
             } else {
                 showToast(res.message || 'Lỗi khi refresh token', 'error');
@@ -178,7 +178,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                     }
                     return o;
                 }));
-                showToast('�� c?p nh?t H?n m?c v� Ch?t lu?ng', 'success');
+                showToast('Đã cập nhật Hạn mức và Chất lượng', 'success');
             }
         } catch (error) {
             console.error(error);
@@ -201,7 +201,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
         try {
             const res = await api.delete(`zalo_oa?id=${oaId}`);
             if (res.success) {
-                showToast('�� x�a OA th�nh c�ng', 'success');
+                showToast('Đã xóa OA thành công!', 'success');
                 fetchOAs();
             } else {
                 showToast(res.message || 'Lỗi khi xóa OA', 'error');
@@ -232,7 +232,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
             return (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-500/10 text-slate-500 rounded-xl text-[10px] font-black uppercase tracking-wider border border-slate-500/10">
                     <AlertTriangle className="w-3 h-3" />
-                    Chua authorize
+                    Chưa authorize
                 </div>
             );
         } else {
@@ -325,7 +325,7 @@ const ZaloOAManager: React.FC<ZaloOAManagerProps> = ({ onSelect }) => {
                             variant="secondary"
                             className="bg-slate-900 hover:bg-black !text-white rounded-2xl shadow-xl shadow-slate-900/10 px-10 py-4 transition-all hover:-translate-y-1 active:scale-95 border-0"
                         >
-                            Kết nối ngay 1 ch?m
+                            Kết nối ngay 1 chạm
                         </Button>
                     </div>
                 </div>

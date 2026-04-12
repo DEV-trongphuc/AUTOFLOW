@@ -674,7 +674,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                         <div className="p-5 bg-white border border-slate-200 rounded-[24px] space-y-4 animate-in slide-in-from-top-2 shadow-sm mb-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="p-2 bg-blue-50 rounded-lg text-blue-500"><Calendar className="w-4 h-4" /></div>
-                                                <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">Ch?n ng�y di?n ra s? ki?n</span>
+                                                <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">Chọn ngày diễn ra sự kiện</span>
                                             </div>
                                             <div className="flex gap-4 items-center">
                                                 <input

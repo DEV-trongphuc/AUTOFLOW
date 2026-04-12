@@ -1,7 +1,10 @@
-﻿import React, { useState, useEffect } from 'react';
-import { Users, Shield, ShieldAlert, Trash2, CheckCircle, XCircle, Search, Mail, Calendar, UserPlus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Users, Shield, ShieldAlert, Trash2, CheckCircle, XCircle, Search, Mail, Calendar, UserPlus, UserCheck, UserX, AlertTriangle, UserMinus } from 'lucide-react';
 import PageHero from '../components/common/PageHero';
 import toast from 'react-hot-toast';
+import Modal from '../components/common/Modal';
+import ConfirmModal from '../components/common/ConfirmModal';
+import Button from '../components/common/Button';
 
 interface ManagedUser {
     id: any;
@@ -16,6 +19,29 @@ interface ManagedUser {
 const AdminUsers: React.FC = () => {
     const [users, setUsers] = useState<ManagedUser[]>([]);
     const [search, setSearch] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: React.ReactNode;
+        variant: 'danger' | 'warning' | 'info' | 'success';
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        variant: 'warning',
+        onConfirm: () => { }
+    });
+
+    const [pendingModal, setPendingModal] = useState<{
+        isOpen: boolean;
+        user: ManagedUser | null;
+    }>({
+        isOpen: false,
+        user: null
+    });
 
     const fetchUsers = async () => {
         try {
@@ -33,22 +59,60 @@ const AdminUsers: React.FC = () => {
 
     const handleToggleRole = async (email: string, currentRole: string, id: any) => {
         if (email === 'dom.marketing.vn@gmail.com') return toast.error('Cannot change root admin role');
-        try {
-            const res = await fetch('/mail_api/admin_users.php?action=update_role', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, role: currentRole === 'admin' ? 'user' : 'admin' })
+
+        const executeToggle = async () => {
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            setIsLoading(true);
+            try {
+                const res = await fetch('/mail_api/admin_users.php?action=update_role', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, role: currentRole === 'admin' ? 'user' : 'admin' })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    toast.success('Đã cập nhật vai trò người dùng');
+                    fetchUsers();
+                } else toast.error(result.message);
+            } catch (e) {
+                toast.error('Lỗi kết nối');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (currentRole === 'user') {
+            setConfirmModal({
+                isOpen: true,
+                title: 'Nâng cấp quyền Admin?',
+                variant: 'warning',
+                message: (
+                    <div className="space-y-3">
+                        <p>Bạn có chắc chắn muốn nâng cấp người dùng <span className="font-bold text-slate-800">{email}</span> lên quyền <span className="text-amber-600 font-bold italic">ADMIN</span>?</p>
+                        <ul className="text-xs text-slate-500 space-y-1 list-disc pl-4 italic">
+                            <li>Admin có quyền quản lý kịch bản, chiến dịch.</li>
+                            <li>Admin có quyền xem và xuất báo cáo dữ liệu.</li>
+                            <li>Admin có thể quản lý danh sách người dùng.</li>
+                        </ul>
+                    </div>
+                ),
+                onConfirm: executeToggle
             });
-            const result = await res.json();
-            if (result.success) {
-                toast.success('Updated user role');
-                fetchUsers();
-            } else toast.error(result.message);
-        } catch (e) { toast.error('Lỗi kết nối'); }
+        } else {
+            setConfirmModal({
+                isOpen: true,
+                title: 'Hạ cấp người dùng?',
+                variant: 'danger',
+                message: `Bạn có chắc chắn muốn hạ cấp người dùng "${email}" xuống quyền USER thông thường?`,
+                onConfirm: executeToggle
+            });
+        }
     };
 
     const handleToggleStatus = async (email: string, currentStatus: string, id: any) => {
         if (email === 'dom.marketing.vn@gmail.com') return toast.error('Cannot disable root admin');
+        
+        setIsLoading(true);
         try {
             const res = await fetch('/mail_api/admin_users.php?action=update_status', {
                 method: 'POST',
@@ -57,23 +121,40 @@ const AdminUsers: React.FC = () => {
             });
             const result = await res.json();
             if (result.success) {
-                toast.success('Updated user status');
+                toast.success('Đã cập nhật trạng thái người dùng');
                 fetchUsers();
             } else toast.error(result.message);
         } catch (e) { toast.error('Lỗi kết nối'); }
+        finally { setIsLoading(false); }
+    };
+
+    const handleApproveUser = async (user: ManagedUser) => {
+        setPendingModal({ isOpen: false, user: null });
+        handleToggleStatus(user.email, 'pending', user.id);
     };
 
     const handleDelete = async (email: string, id: any) => {
         if (email === 'dom.marketing.vn@gmail.com') return toast.error('Cannot delete root admin');
-        if (!window.confirm('Xác nhận xóa người dùng này?')) return;
-        try {
-            const res = await fetch(`/mail_api/admin_users.php?action=delete&id=${id}`, { method: 'POST' });
-            const result = await res.json();
-            if (result.success) {
-                toast.success('Deleted user');
-                fetchUsers();
-            } else toast.error(result.message);
-        } catch (e) { toast.error('Lỗi kết nối'); }
+        
+        setConfirmModal({
+            isOpen: true,
+            title: 'Xóa người dùng?',
+            variant: 'danger',
+            message: `Bạn có chắc chắn muốn xóa người dùng "${email}"? Hành động này không thể hoàn tác.`,
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                setIsLoading(true);
+                try {
+                    const res = await fetch(`/mail_api/admin_users.php?action=delete&id=${id}`, { method: 'POST' });
+                    const result = await res.json();
+                    if (result.success) {
+                        toast.success('Đã xóa người dùng');
+                        fetchUsers();
+                    } else toast.error(result.message);
+                } catch (e) { toast.error('Lỗi kết nối'); }
+                finally { setIsLoading(false); }
+            }
+        });
     };
 
     const filteredUsers = users.filter(u => 
@@ -150,11 +231,17 @@ const AdminUsers: React.FC = () => {
                                     </td>
                                     <td className="px-8 py-5">
                                         <button 
-                                            onClick={() => handleToggleStatus(user.email, user.status, user.id)}
+                                            onClick={() => {
+                                                if (user.status === 'pending') {
+                                                    setPendingModal({ isOpen: true, user });
+                                                } else {
+                                                    handleToggleStatus(user.email, user.status, user.id);
+                                                }
+                                            }}
                                             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all ${
                                                 user.status === 'approved' 
                                                 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                                                : 'bg-rose-50 text-rose-600 border-rose-100'
+                                                : 'bg-rose-50 text-rose-600 border-rose-100 animate-pulse'
                                             }`}
                                         >
                                             {user.status === 'approved' ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
@@ -181,6 +268,83 @@ const AdminUsers: React.FC = () => {
                     </table>
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmModal.onConfirm}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                variant={confirmModal.variant}
+                isLoading={isLoading}
+            />
+
+            <Modal
+                isOpen={pendingModal.isOpen}
+                onClose={() => setPendingModal({ isOpen: false, user: null })}
+                title={
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
+                            <UserCheck className="w-5 h-5" />
+                        </div>
+                        <span className="text-xl font-black text-slate-800 tracking-tight">Phê duyệt người dùng</span>
+                    </div>
+                }
+                size="md"
+            >
+                {pendingModal.user && (
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-sm">
+                                <img src={pendingModal.user.picture || "/imgs/ICON.png"} className="w-full h-full object-cover" alt="" />
+                            </div>
+                            <div>
+                                <h4 className="text-lg font-black text-slate-900 leading-tight">{pendingModal.user.name}</h4>
+                                <p className="text-sm font-medium text-slate-500">{pendingModal.user.email}</p>
+                            </div>
+                        </div>
+
+                        <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl">
+                            <div className="flex items-start gap-3">
+                                <AlertTriangle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                                <p className="text-xs text-blue-800 font-medium leading-relaxed">Người dùng này đang chờ được phê duyệt để truy cập vào hệ thống. Bạn có thể chọn phê duyệt ngay hoặc từ chối để xóa người dùng này.</p>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-3 pt-2">
+                            <Button 
+                                fullWidth
+                                icon={UserCheck}
+                                onClick={() => handleApproveUser(pendingModal.user!)}
+                                isLoading={isLoading}
+                                className="!py-4 shadow-lg shadow-emerald-500/20 bg-emerald-500 hover:bg-emerald-600 text-white border-0"
+                            >
+                                Phê duyệt truy cập
+                            </Button>
+                            <div className="grid grid-cols-2 gap-3">
+                                <Button 
+                                    variant="danger"
+                                    icon={UserX}
+                                    onClick={() => {
+                                        setPendingModal({ isOpen: false, user: null });
+                                        handleDelete(pendingModal.user!.email, pendingModal.user!.id);
+                                    }}
+                                    className="!py-3"
+                                >
+                                    Từ chối & Xóa
+                                </Button>
+                                <Button 
+                                    variant="secondary"
+                                    onClick={() => setPendingModal({ isOpen: false, user: null })}
+                                    className="!py-3"
+                                >
+                                    Đóng
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 };

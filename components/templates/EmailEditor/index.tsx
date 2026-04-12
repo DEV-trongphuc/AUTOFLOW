@@ -284,6 +284,15 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
                 setSavedSections(JSON.parse(saved));
             } catch (e) { }
         }
+
+        // Prevent accidental tab close or reload while editing
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            e.preventDefault();
+            e.returnValue = ''; // Standard way to show browser's default warning dialog
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, []);
 
     // Auto-scan on mount to show badge immediately (silent, no panel)
@@ -293,11 +302,12 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // only on mount
 
+    // Optimize: Only compile HTML when switching to code mode to prevent heavy re-renders on every keystroke
     useEffect(() => {
-        if (editorMode === 'visual') {
+        if (editorMode === 'code') {
             setCustomHtml(compileHTML(blocks, bodyStyle, name));
         }
-    }, [editorMode, blocks, bodyStyle, name]);
+    }, [editorMode]); // Only depend on editorMode!
 
     const addToHistory = useCallback((newBlocks: EmailBlock[]) => {
         const newHistory = history.slice(0, historyIndex + 1);

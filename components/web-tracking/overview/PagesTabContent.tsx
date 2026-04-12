@@ -49,8 +49,8 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                                 <FileText className="w-4 h-4" />
                             </div>
                             <div>
-                                <h3 className="text-sm font-black text-slate-800 tracking-tight">Trang Ph? Bi?n</h3>
-                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Nội dung thu h�t ngu?i d�ng</p>
+                                <h3 className="text-sm font-black text-slate-800 tracking-tight">Trang Phổ Biến</h3>
+                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Nội dung thu hút người dùng</p>
                             </div>
                         </div>
 
@@ -58,7 +58,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                             <div className="relative flex-1">
                                 <input
                                     type="text"
-                                    placeholder="T�m ki?m trang..."
+                                    placeholder="Tìm kiếm trang..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all"
@@ -69,7 +69,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
 
                         <div className="hidden sm:flex items-center gap-6 text-[9px] font-semibold uppercase tracking-widest text-slate-400">
                             <div className="flex items-center gap-1.5 w-14 justify-end group cursor-pointer" onClick={() => setIsBounceInfoOpen(true)}>
-                                <span className="whitespace-nowrap group-hover:text-rose-500 transition-colors">Tỉ lệ tho�t</span>
+                                <span className="whitespace-nowrap group-hover:text-rose-500 transition-colors">Tỉ lệ thoát</span>
                                 <Info className="w-3 h-3 text-slate-300 group-hover:text-rose-500 transition-colors" />
                             </div>
                             <span className="w-14 text-right">Thời gian</span>
@@ -102,7 +102,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                                                 <div className="flex items-center gap-2.5">
                                                     <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-semibold uppercase tracking-widest shrink-0">
                                                         <MousePointer2 className="w-2.5 h-2.5 text-slate-300" />
-                                                        Cu?n {scrollPercent}%
+                                                        Cuộn {scrollPercent}%
                                                     </div>
                                                     <div className="flex-1 max-w-[200px] h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                                         <div
@@ -139,7 +139,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                             );
                         })}
                         {(!displayedPages || displayedPages.length === 0) && (
-                            <div className="py-20 text-center text-slate-400 text-sm italic font-medium bg-white rounded-2xl border border-slate-100">Kh�ng t�m th?y trang n�o</div>
+                            <div className="py-20 text-center text-slate-400 text-sm italic font-medium bg-white rounded-2xl border border-slate-100">Không tìm thấy trang nào</div>
                         )}
                     </div>
 
@@ -149,7 +149,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                             onClick={() => setShowAll(!showAll)}
                             className="w-full py-3 px-4 bg-white hover:bg-slate-50 border border-slate-200 hover:border-blue-300 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm font-semibold text-slate-600 hover:text-blue-600 group"
                         >
-                            <span>{showAll ? 'Thu g?n' : `Xem th�m ${filteredPages.length - 10} trang`}</span>
+                            <span>{showAll ? 'Thu gọn' : `Xem thêm ${filteredPages.length - 10} trang`}</span>
                             <ChevronDown className={`w-4 h-4 transition-transform ${showAll ? 'rotate-180' : ''}`} />
                         </button>
                     )}
@@ -162,8 +162,8 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                             <MousePointer2 className="w-4 h-4" />
                         </div>
                         <div>
-                            <h3 className="text-sm font-black text-slate-800 tracking-tight">Tuong T�c</h3>
-                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">H�nh vi ngu?i d�ng</p>
+                            <h3 className="text-sm font-black text-slate-800 tracking-tight">Tương Tác</h3>
+                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Hành vi người dùng</p>
                         </div>
                     </div>
 
@@ -182,7 +182,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <p className={`text-[11px] font-semibold truncate mb-0.5 ${isUnknown ? 'text-slate-300 italic' : 'text-slate-600 group-hover:text-slate-900'}`} title={event.target}>
-                                                {isUnknown ? 'Kh�ng r�' : event.target}
+                                                {isUnknown ? 'Không rõ' : event.target}
                                             </p>
                                             <div className="flex items-center gap-2">
                                                 <span className={`text-[8px] font-bold uppercase tracking-widest transition-colors ${event.type === 'click' ? 'text-blue-500 group-hover:text-blue-600' :
@@ -193,7 +193,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                                                 </span>
                                                 {event.url && (
                                                     <>
-                                                        <span className="text-slate-300">�</span>
+                                                        <span className="text-slate-300">·</span>
                                                         <span className="text-[8px] text-slate-400 truncate max-w-[150px]" title={event.url}>
                                                             {shortenUrl(event.url)}
                                                         </span>
@@ -214,7 +214,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                             );
                         })}
                         {(!stats?.topEvents || stats.topEvents.length === 0) && (
-                            <div className="py-20 text-center text-slate-400 text-sm italic font-medium bg-white rounded-xl border border-slate-100">Chua c� d? li?u</div>
+                            <div className="py-20 text-center text-slate-400 text-sm italic font-medium bg-white rounded-xl border border-slate-100">Chưa có dữ liệu</div>
                         )}
                     </div>
                 </div>
@@ -245,7 +245,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                         <div className="p-2 bg-rose-50 text-rose-600 rounded-xl">
                             <Activity className="w-5 h-5" />
                         </div>
-                        <span className="text-xl font-black text-slate-800 tracking-tight">V? Tỉ lệ tho�t (Bounce Rate)</span>
+                        <span className="text-xl font-black text-slate-800 tracking-tight">Về Tỉ lệ thoát (Bounce Rate)</span>
                     </div>
                 }
                 size="xl"
@@ -256,10 +256,10 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                             <div className="p-2 bg-rose-600 text-white rounded-xl">
                                 <BookOpen className="w-5 h-5" />
                             </div>
-                            Bounce Rate l� g�?
+                            Bounce Rate là gì?
                         </h4>
                         <p className="text-sm text-slate-500 leading-relaxed font-medium">
-                            Bounce rate hay Tỉ lệ tho�t l� ph?n tram s? lu?t truy c?p trang web ch? xem duy nh?t m?t trang v� r?i di ngay l?p t?c m� kh�ng c� th�m tuong t�c n�o kh�c (nhu nh?n v�o link ho?c xem trang th? hai). N� do lu?ng m?c d? tuong t�c v� t�nh h?p d?n c?a trang d�ch.
+                            Bounce rate hay Tỉ lệ thoát là phần trăm số lượt truy cập trang web chỉ xem duy nhất một trang và rời đi ngay lập tức mà không có thêm tương tác nào khác (như nhấn vào link hoặc xem trang thứ hai). Nó đo lường mức độ tương tác và tính hấp dẫn của trang đích.
                         </p>
                     </div>
 
@@ -269,13 +269,13 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                                 <div className="w-8 h-8 bg-teal-50 text-teal-600 rounded-lg flex items-center justify-center">
                                     <TrendingUp className="w-4 h-4" />
                                 </div>
-                                Tỉ lệ bao nhi�u l� t?t?
+                                Tỉ lệ bao nhiêu là tốt?
                             </h5>
                             <p className="text-xs text-slate-500 leading-relaxed font-medium mb-4">
-                                Kh�ng c� con s? "chu?n" cho mới linh v?c. Tỉ lệ tho�t ph? thu?c r?t l?n v�o lo?i trang web v� m?c d�ch c?a trang.
+                                Không có con số "chuẩn" cho mọi lĩnh vực. Tỉ lệ thoát phụ thuộc rất lớn vào loại trang web và mục đích của trang.
                             </p>
                             <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl italic text-[11px] text-orange-800 font-bold">
-                                "V� d?: M?t trang blog tr? l?i d�ng c�u h?i ngu?i d�ng t�m ki?m c� th? c� t? l? tho�t 90%+ nhung v?n l� trở lưu?ng t?t."
+                                "Ví dụ: Một trang blog trả lời đúng câu hỏi người dùng tìm kiếm có thể có tỉ lệ thoát 90%+ nhưng vẫn là trải nghiệm tốt."
                             </div>
                         </div>
 
@@ -284,13 +284,13 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                                 <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
                                     <Table className="w-4 h-4" />
                                 </div>
-                                Trung b�nh theo ng�nh
+                                Trung bình theo ngành
                             </h5>
                             <div className="space-y-3">
                                 {[
-                                    { label: 'B�n l? / TM�T', range: '20% - 40%', color: 'text-teal-500' },
-                                    { label: 'D?ch v?', range: '10% - 30%', color: 'text-teal-500' },
-                                    { label: 'T?o Khách hàng ti?m nang', range: '30% - 50%', color: 'text-blue-500' },
+                                    { label: 'Bán lẻ / TMĐT', range: '20% - 40%', color: 'text-teal-500' },
+                                    { label: 'Dịch vụ', range: '10% - 30%', color: 'text-teal-500' },
+                                    { label: 'Tạo Khách hàng tiềm năng', range: '30% - 50%', color: 'text-blue-500' },
                                     { label: 'Nội dung (Content site)', range: '40% - 60%', color: 'text-amber-600' },
                                     { label: 'Blog / Landing Page', range: '70% - 90%', color: 'text-rose-500' }
                                 ].map((item, i) => (
@@ -304,19 +304,19 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                     </div>
 
                     <div className="p-8 bg-slate-900 rounded-[32px] text-white">
-                        <h5 className="font-black text-sm mb-4 text-rose-400">C�ch gi?m t? l? tho�t:</h5>
+                        <h5 className="font-black text-sm mb-4 text-rose-400">Cách giảm tỉ lệ thoát:</h5>
                         <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[11px] font-bold text-slate-300">
                             <li className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10 italic">
-                                � C?i thi?n t?c d? t?i trang
+                                • Cải thiện tốc độ tải trang
                             </li>
                             <li className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10 italic">
-                                � T?i uu hi?n th? tr�n di d?ng
+                                • Tối ưu hiển thị trên di động
                             </li>
                             <li className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10 italic">
-                                � Nội dung d? d?c, chia nh? do?n
+                                • Nội dung dễ đọc, chia nhỏ đoạn
                             </li>
                             <li className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10 italic">
-                                � K�u gửi h�nh d?ng (CTA) r� r�ng
+                                • Kêu gọi hành động (CTA) rõ ràng
                             </li>
                         </ul>
                     </div>

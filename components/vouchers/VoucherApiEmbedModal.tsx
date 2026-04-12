@@ -64,9 +64,9 @@ const VoucherApiEmbedModal: React.FC<VoucherApiEmbedModalProps> = ({ isOpen, onC
                         <Mail className="w-4 h-4 text-emerald-600" /> 1. Mã nhúng Email (Shortcode)
                     </h4>
                     <p className="text-xs text-slate-600">Dán mã này vào bất cứ đâu trong Nội dung Email của AutoFlow, hoặc gán vào Nút Bấm. Nó sẽ tự động biến thành 1 mã Voucher thực tế khi gửi.</p>
-                    <div className="flex bg-slate-50 border border-slate-200 rounded-lg p-1 items-center">
-                        <code className="text-sm font-bold text-rose-600 px-3 flex-1">{shortcode}</code>
-                        <Button variant="ghost" size="sm" icon={Copy} onClick={() => copyToClipboard(shortcode)}>Copy</Button>
+                    <div className="flex bg-orange-50/50 border border-orange-200 rounded-lg p-1 items-center">
+                        <code className="text-sm font-bold text-orange-600 px-3 flex-1">{shortcode}</code>
+                        <Button variant="ghost" size="sm" icon={Copy} className="text-orange-600 hover:bg-orange-100" onClick={() => copyToClipboard(shortcode)}>Copy</Button>
                     </div>
                 </div>
 
@@ -76,9 +76,9 @@ const VoucherApiEmbedModal: React.FC<VoucherApiEmbedModalProps> = ({ isOpen, onC
                         <Terminal className="w-4 h-4 text-orange-600" /> 2. Gọi API Cấp Mã (Web / Minigame)
                     </h4>
                     <p className="text-xs text-slate-600">Gửi đường link này cho Đội Dev. Chỉ cần gọi GET/POST là hệ thống tự lấy SĐT/Email để Upsert khách hàng và nhả Mã về dạng JSON hoặc HTTP Redirect.</p>
-                    <div className="flex bg-slate-800 rounded-lg p-1 items-center">
-                        <code className="text-[11px] font-mono text-green-400 px-3 py-2 flex-1 break-all">{apiLink}</code>
-                        <Button variant="custom" className="text-white hover:bg-slate-700 mx-1 px-3 py-1.5 rounded-md" size="sm" icon={Copy} onClick={() => copyToClipboard(apiLink)}>Copy</Button>
+                    <div className="flex bg-slate-900 rounded-lg p-1 items-center shadow-inner">
+                        <code className="text-[11px] font-mono text-orange-400 px-3 py-2 flex-1 break-all">{apiLink}</code>
+                        <Button variant="custom" className="text-white hover:bg-slate-800 mx-1 px-3 py-1.5 rounded-md" size="sm" icon={Copy} onClick={() => copyToClipboard(apiLink)}>Copy</Button>
                     </div>
                 </div>
 
@@ -89,13 +89,13 @@ const VoucherApiEmbedModal: React.FC<VoucherApiEmbedModalProps> = ({ isOpen, onC
                     </h4>
                     <p className="text-xs text-slate-600">Dành cho người không biết Code. Chỉ cần dán nguyên khối HTML này vào Landing Page (Wordpress/LadiPage...), bạn lập tức có ngay 1 Form thu thập Email tặng mã Voucher.</p>
                     <div className="relative">
-                        <pre className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-[10px] font-mono text-slate-700 overflow-x-auto">
+                        <pre className="bg-slate-900 border border-slate-800 rounded-lg p-4 text-[10px] font-mono text-orange-400/90 overflow-x-auto shadow-xl">
                             {htmlEmbed}
                         </pre>
                         <Button 
-                            variant="outline" 
+                            variant="custom" 
                             size="sm" 
-                            className="absolute top-2 right-2 bg-white"
+                            className="absolute top-2 right-2 bg-slate-800 text-white hover:bg-slate-700 border border-slate-700"
                             icon={Copy} 
                             onClick={() => copyToClipboard(htmlEmbed)}
                         >

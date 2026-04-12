@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Layout from './components/Layout';
@@ -56,17 +57,29 @@ import PremiumLoader from './components/common/PremiumLoader';
 const PageLoader = () => <PremiumLoader title="AI-SPACE" subtitle="Đang tải ứng dụng..." />;
 
 // [PERF] Full-width amber progress bar for tab switches
-const TabLoader = () => (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 99999, height: '4px', background: '#fef3c7', overflow: 'hidden' }}>
-        <div style={{
-            position: 'absolute', top: 0, left: '-100%', bottom: 0, width: '100%',
-            background: '#d97706',
-            boxShadow: '0 0 15px 4px #fbbf24',
-            animation: 'tlbar 0.6s cubic-bezier(0.4,0,0.2,1) infinite',
-        }} />
-        <style>{`@keyframes tlbar { 0%{left:-100%} 100%{left:100%} }`}</style>
-    </div>
-);
+const TabLoader = () => {
+    // Portal to document.body so it is strictly fixed to window bounds 
+    // and ignores AnimatePresence transform/translate!
+    return mountComponent() ? createPortal(
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 99999, height: '4px', background: '#fef3c7', overflow: 'hidden' }}>
+            <div style={{
+                position: 'absolute', top: 0, left: '-100%', bottom: 0, width: '100%',
+                background: '#d97706',
+                boxShadow: '0 0 15px 4px #fbbf24',
+                animation: 'tlbar 0.6s cubic-bezier(0.4,0,0.2,1) infinite',
+            }} />
+            <style>{`@keyframes tlbar { 0%{left:-100%} 100%{left:100%} }`}</style>
+        </div>,
+        document.body
+    ) : null;
+};
+
+// Helper to only render portal on client
+function mountComponent() {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+    return mounted;
+}
 
 // [PERF] Per-route Suspense wrapper — only THIS route's chunk triggers TabLoader,
 // NOT the whole app. Combined with startTransition in Sidebar: old page visible
