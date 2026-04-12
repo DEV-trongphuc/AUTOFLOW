@@ -665,6 +665,50 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
 
                                         <VisualMeasure label="Cỡ Icon" value={getStyle('checkIconSize')} defaultValue={20} onChange={(v) => updateStyle({ checkIconSize: v })} max={60} unit="px" />
                                         
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <VisualMeasure 
+                                                label="Bo tròn" 
+                                                value={getStyle('checkIconRadius')} 
+                                                onChange={(v) => updateStyle({ checkIconRadius: v })} 
+                                                max={100} 
+                                                unit="px" 
+                                            />
+                                            <VisualMeasure 
+                                                label="Độ dày viền" 
+                                                value={getStyle('checkIconBorderWidth')} 
+                                                onChange={(v) => updateStyle({ checkIconBorderWidth: v })} 
+                                                max={10} 
+                                                unit="px" 
+                                            />
+                                         </div>
+
+                                         <div className="grid grid-cols-2 gap-3">
+                                            <ColorPicker 
+                                                solidOnly 
+                                                label="Màu nền" 
+                                                value={getStyle('checkIconBackgroundColor') || 'transparent'} 
+                                                onChange={(v) => updateStyle({ checkIconBackgroundColor: v })} 
+                                                blocks={blocks} 
+                                                bodyStyle={bodyStyle} 
+                                            />
+                                            <ColorPicker 
+                                                solidOnly 
+                                                label="Màu viền" 
+                                                value={getStyle('checkIconBorderColor') || '#e2e8f0'} 
+                                                onChange={(v) => updateStyle({ checkIconBorderColor: v })} 
+                                                blocks={blocks} 
+                                                bodyStyle={bodyStyle} 
+                                            />
+                                         </div>
+
+                                         <VisualMeasure 
+                                            label="Đệm Icon (Padding)" 
+                                            value={getStyle('checkIconPadding')} 
+                                            onChange={(v) => updateStyle({ checkIconPadding: v })} 
+                                            max={20} 
+                                            unit="px" 
+                                         />
+
                                         {/* Icon Vertical Alignment */}
                                         <div className="space-y-2">
                                             <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Căn chỉnh</label>

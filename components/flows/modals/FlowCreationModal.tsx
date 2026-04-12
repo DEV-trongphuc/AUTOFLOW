@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Sparkles, ArrowRight, Gift, Zap, Info, Cake, Tag, Users, RefreshCw, Send, PartyPopper, Ghost, Crown, UserPlus, Snowflake, Check, List, FileInput, Layers, ListPlus, ShoppingCart, Plug, FileSpreadsheet, BellRing, Calendar } from 'lucide-react';
+import { Sparkles, ArrowRight, Gift, Zap, Info, Cake, Tag, Users, RefreshCw, Send, PartyPopper, Ghost, Crown, UserPlus, Snowflake, Check, List, FileInput, Layers, ListPlus, ShoppingCart, Plug, FileSpreadsheet, BellRing, Calendar, MessageSquare, UserMinus } from 'lucide-react';
 import Modal from '../../common/Modal';
 import Button from '../../common/Button';
 import Input from '../../common/Input';
@@ -88,6 +88,18 @@ const FLOW_TEMPLATES = [
     ]
   },
   {
+    id: 'zalo_oa_welcome',
+    name: 'Quan tâm Zalo OA',
+    desc: 'Bắt đầu chăm sóc ngay khi khách hàng nhấn "Quan tâm" trang Zalo OA của bạn.',
+    icon: UserPlus,
+    theme: 'cyan',
+    gradient: 'from-blue-400 to-cyan-500',
+    steps: [
+      { id: 't1', type: 'trigger', label: 'Khi Quan tâm Zalo', iconName: 'zap', config: { type: 'zalo_follow' }, nextStepId: 'a1' },
+      { id: 'a1', type: 'zalo_zns', label: 'Tin nhắn Chào mừng Zalo', iconName: 'message-square', config: { subject: 'Chào mừng bạn đã quan tâm OA của chúng tôi! 💐' } }
+    ]
+  },
+  {
     id: 'campaign_tracking',
     name: 'Chăm sóc sau Chiến dịch',
     desc: 'Kích hoạt ngay khi một email trong chiến dịch chính vừa được gửi đi.',
@@ -98,6 +110,45 @@ const FLOW_TEMPLATES = [
       { id: 't1', type: 'trigger', label: 'Khi gửi Campaign', iconName: 'zap', config: { type: 'campaign', targetId: '' }, nextStepId: 'w1' },
       { id: 'w1', type: 'wait', label: 'Chờ 2 ngày', iconName: 'clock', config: { duration: 2, unit: 'days' }, nextStepId: 'a1' },
       { id: 'a1', type: 'action', label: 'Email Follow-up', iconName: 'mail', config: { subject: 'Bạn có nhận được ưu đãi hôm trước không? 😉' } }
+    ]
+  },
+  {
+    id: 'keyword_auto_reply',
+    name: 'Phản hồi Từ khóa (Chat)',
+    desc: 'Tự động gửi thông tin khi khách nhắn các từ khóa như "GIÁ", "TƯ VẤN" qua Meta/Zalo.',
+    icon: MessageSquare,
+    theme: 'blue',
+    gradient: 'from-blue-500 to-indigo-600',
+    steps: [
+      { id: 't1', type: 'trigger', label: 'Khi có từ khóa: GIÁ, TƯ VẤN', iconName: 'zap', config: { type: 'inbound_message', targetId: 'TƯ VẤN' }, nextStepId: 'a1' },
+      { id: 'a1', type: 'action', label: 'Gửi Báo giá / Tài liệu', iconName: 'mail', config: { subject: 'Tài liệu bạn yêu cầu đã sẵn sàng! 📄' } }
+    ]
+  },
+  {
+    id: 'upsell_after_purchase',
+    name: 'Gợi ý Bán chéo (Upsell)',
+    desc: 'Gửi mã giảm giá cho sản phẩm liên quan sau khi khách hoàn thành đơn hàng 3 ngày.',
+    icon: Gift,
+    theme: 'orange',
+    gradient: 'from-orange-400 to-amber-600',
+    steps: [
+      { id: 't1', type: 'trigger', label: 'Khi Mua hàng thành công', iconName: 'zap', config: { type: 'purchase', targetId: '' }, nextStepId: 'w1' },
+      { id: 'w1', type: 'wait', label: 'Chờ 3 ngày', iconName: 'clock', config: { duration: 3, unit: 'days' }, nextStepId: 'a1' },
+      { id: 'a1', type: 'action', label: 'Email Ưu đãi Bán thêm', iconName: 'mail', config: { subject: 'Dành riêng cho bạn: Ưu đãi 15% cho sản phẩm đi kèm! 🎁' } }
+    ]
+  },
+  {
+    id: 'abandoned_cart',
+    name: 'Nhắc nhở Giỏ hàng',
+    desc: 'Tự động gửi tin nhắn nhắc nhở khi khách đã thêm hàng vào giỏ nhưng chưa thanh toán.',
+    icon: ShoppingCart,
+    theme: 'rose',
+    gradient: 'from-rose-400 to-pink-600',
+    steps: [
+      { id: 't1', type: 'trigger', label: 'Khi thêm vào giỏ hàng', iconName: 'zap', config: { type: 'custom_event', targetId: 'add_to_cart' }, nextStepId: 'w1' },
+      { id: 'w1', type: 'wait', label: 'Chờ 2 giờ', iconName: 'clock', config: { duration: 2, unit: 'hours' }, nextStepId: 'c1' },
+      { id: 'c1', type: 'condition', label: 'Đã mua hàng chưa?', iconName: 'filter', config: { field: 'lastPurchase', operator: 'within_last', value: '2', unit: 'hours' }, yesStepId: '', noStepId: 'a1' },
+      { id: 'a1', type: 'action', label: 'Email Nhắc giỏ hàng', iconName: 'mail', config: { subject: 'Bạn để quên món đồ yêu thích trong giỏ hàng! 🛒' } }
     ]
   },
   {
@@ -133,6 +184,30 @@ const FLOW_TEMPLATES = [
     steps: [
       { id: 't1', type: 'trigger', label: 'Đúng ngày sinh nhật', iconName: 'zap', config: { type: 'date', dateField: 'dateOfBirth' }, nextStepId: 'a1' },
       { id: 'a1', type: 'action', label: 'Email Tặng Quà', iconName: 'mail', config: { subject: 'Chúc mừng sinh nhật! Nhận quà ngay 🎂' } }
+    ]
+  },
+  {
+    id: 'joined_anniversary',
+    name: 'Tri ân Ngày gia nhập',
+    desc: 'Tự động gửi thư tri ân khách hàng vào ngày kỷ niệm 1 năm, 2 năm gia nhập.',
+    icon: PartyPopper,
+    theme: 'violet',
+    gradient: 'from-violet-500 to-fuchsia-600',
+    steps: [
+      { id: 't1', type: 'trigger', label: 'Kỷ niệm ngày gia nhập', iconName: 'zap', config: { type: 'date', dateField: 'joinedAt' }, nextStepId: 'a1' },
+      { id: 'a1', type: 'action', label: 'Email Tri ân', iconName: 'mail', config: { subject: 'Cảm ơn bạn đã đồng hành cùng chúng tôi suốt 1 năm qua! ❤️' } }
+    ]
+  },
+  {
+    id: 'unsubscribe_cleanup',
+    name: 'Xử lý Hủy đăng ký',
+    desc: 'Tự động gắn nhãn "Unsubscribed" hoặc dọn dẹp CRM khi khách nhấn link hủy đăng ký.',
+    icon: UserMinus,
+    theme: 'red',
+    gradient: 'from-red-500 to-rose-700',
+    steps: [
+      { id: 't1', type: 'trigger', label: 'Khi Hủy đăng ký', iconName: 'zap', config: { type: 'unsubscribe' }, nextStepId: 'a1' },
+      { id: 'a1', type: 'update_tag', label: 'Gắn nhãn: STOP', iconName: 'tag', config: { action: 'add', tags: ['UNSUBSCRIBED', 'STOP_MARKETING'] } }
     ]
   },
   {
@@ -269,6 +344,7 @@ const FlowCreationModal: React.FC<FlowCreationModalProps> = ({
       case 'pink': return 'border-pink-400 ring-4 ring-pink-50 shadow-xl shadow-pink-100 bg-pink-50/30';
       case 'amber': case 'orange': return 'border-amber-400 ring-4 ring-amber-50 shadow-xl shadow-amber-100 bg-amber-50/30';
       case 'emerald': return 'border-emerald-400 ring-4 ring-emerald-50 shadow-xl shadow-emerald-100 bg-emerald-50/30';
+      case 'red': return 'border-rose-400 ring-4 ring-rose-50 shadow-xl shadow-rose-100 bg-rose-50/30';
       default: return 'border-slate-400 ring-4 ring-slate-100';
     }
   };
@@ -283,6 +359,7 @@ const FlowCreationModal: React.FC<FlowCreationModalProps> = ({
       case 'pink': return 'text-pink-500';
       case 'amber': case 'orange': return 'text-amber-600';
       case 'emerald': return 'text-emerald-500';
+      case 'red': return 'text-rose-500';
       default: return 'text-slate-500';
     }
   }

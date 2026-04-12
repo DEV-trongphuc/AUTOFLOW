@@ -446,12 +446,27 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                         ? s.checkCustomIconUrl
                         : getIconUrl(s.checkIcon || 'CheckCircle', checkIconColor);
 
+                // Style for the icon container
+                const iconRadius = sanitizeRadius(s.checkIconRadius || '0');
+                const iconBg = s.checkIconBackgroundColor || 'transparent';
+                const iconBorder = (parseInt(s.checkIconBorderWidth || '0') > 0) 
+                    ? `${s.checkIconBorderWidth} solid ${s.checkIconBorderColor || '#e2e8f0'}` 
+                    : 'none';
+                const iconPadding = s.checkIconPadding || '0';
+                const iconAlign = s.textAlign === 'center' ? 'center' : (s.textAlign === 'right' ? 'right' : 'left');
+
                 return `
                                     <tr>
                                         <td width="${checkIconSize + 10}" valign="${vAlignGlobal}" style="padding: ${vAlignGlobal === 'top' ? iconPaddingTop : '0'} 0 12px 0;">
-                                            <img src="${iconUrl}" width="${checkIconSize}" height="${checkIconSize}" style="display: block; width: ${checkIconSize}px; height: ${checkIconSize}px; object-fit: contain;" />
+                                            <table role="presentation" border="0" cellspacing="0" cellpadding="0" align="${iconAlign}" style="background-color: ${iconBg}; border-radius: ${iconRadius}; border: ${iconBorder}; border-collapse: separate;">
+                                                <tr>
+                                                    <td style="padding: ${iconPadding}; font-size: 0; line-height: 0;">
+                                                        <img src="${iconUrl}" width="${checkIconSize}" height="${checkIconSize}" style="display: block; width: ${checkIconSize}px; height: ${checkIconSize}px; object-fit: ${s.checkIconMode === 'image' ? 'cover' : 'contain'}; border: 0; border-radius: ${iconRadius};" />
+                                                    </td>
+                                                </tr>
+                                            </table>
                                         </td>
-                                        <td valign="top" style="padding: ${textPaddingTop} 0 12px 10px; font-family: ${fontFamily}; text-align: left;">
+                                        <td valign="${vAlignGlobal}" style="padding: ${textPaddingTop} 0 12px 10px; font-family: ${fontFamily}; text-align: left;">
                                             ${showItemTitle ? `<div style="font-size: ${itemSize}; font-weight: bold; color: ${itemColor}; margin-bottom: ${showItemDesc ? '2' : '0'}px;">${item.title}</div>` : ''}
                                             ${showItemDesc ? `<div style="font-size: ${descSize}; color: ${descColor}; line-height: 1.4;">${item.description}</div>` : ''}
                                         </td>

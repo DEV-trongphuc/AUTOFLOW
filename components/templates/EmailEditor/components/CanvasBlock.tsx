@@ -312,23 +312,42 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                                     const isSingleLine = !showItemTitle || !showItemDesc;
                                     const iconPaddingTop = isSingleLine ? '5px' : '6px';
                                     const textPaddingTop = isSingleLine ? '5px' : '2px';
-                                    const vAlign = cssAny.checkIconVerticalAlign || 'top';
+                                    const vAlign = cssAny.checkIconVerticalAlign || 'middle';
                                     const finalIconPaddingTop = vAlign === 'top' ? iconPaddingTop : '0px';
+                                    // Icon customizations
+                                    const iconRadius = sanitizeRadius(cssAny.checkIconRadius || '0');
+                                    const iconBg = cssAny.checkIconBackgroundColor || 'transparent';
+                                    const iconBorder = (parseInt(cssAny.checkIconBorderWidth || '0') > 0) 
+                                        ? `${parseInt(String(cssAny.checkIconBorderWidth || 0))}px solid ${cssAny.checkIconBorderColor || '#e2e8f0'}` 
+                                        : 'none';
+                                    const iconPadding = sanitizeRadius(cssAny.checkIconPadding || '0');
 
                                     return (
                                         <tr key={item.id || i}>
                                             <td width={checkSize + 10} valign={vAlign} style={{ padding: `${finalIconPaddingTop} 0 12px 0` }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: `${checkSize}px`, height: `${checkSize}px` }}>
+                                                <div style={{ 
+                                                    display: 'flex', 
+                                                    alignItems: 'center', 
+                                                    justifyContent: 'center', 
+                                                    width: `${checkSize}px`, 
+                                                    height: `${checkSize}px`,
+                                                    backgroundColor: iconBg,
+                                                    borderRadius: iconRadius,
+                                                    border: iconBorder,
+                                                    padding: iconPadding,
+                                                    boxSizing: 'content-box',
+                                                    overflow: 'hidden'
+                                                }}>
                                                     <img 
                                                         src={(cssAny.checkIndividualIcons && iconMode === 'image' && item.customIconUrl) ? item.customIconUrl : iconUrlCheck} 
                                                         width={checkSize} 
                                                         height={checkSize} 
-                                                        style={{ display: 'block', width: `${checkSize}px`, height: `${checkSize}px`, objectFit: 'contain' }} 
+                                                        style={{ display: 'block', width: `${checkSize}px`, height: `${checkSize}px`, objectFit: iconMode === 'image' ? 'cover' : 'contain' }} 
                                                         alt="check" 
                                                     />
                                                 </div>
                                             </td>
-                                            <td valign="top" style={{ padding: `${textPaddingTop} 0 12px 10px`, fontFamily: itemFontFamily, textAlign: 'left' }}>
+                                            <td valign={vAlign} style={{ padding: `${textPaddingTop} 0 12px 10px`, fontFamily: itemFontFamily, textAlign: 'left' }}>
                                                 {showItemTitle && <div style={{ fontSize: itemSize, fontWeight: 'bold', color: itemColor, marginBottom: showItemDesc ? '2px' : '0' }} dangerouslySetInnerHTML={{ __html: item.title }} />}
                                                 {showItemDesc && <div style={{ fontSize: descSize, color: descColor, lineHeight: '1.4' }} dangerouslySetInnerHTML={{ __html: item.description }} />}
                                             </td>

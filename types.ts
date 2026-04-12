@@ -138,6 +138,10 @@ export interface EmailBlockStyle {
   checkTitleColor?: string;
   checkItemColor?: string;
   checkIndividualIcons?: boolean;
+  checkIconRadius?: string;
+  checkIconBorderWidth?: string;
+  checkIconBorderColor?: string;
+  checkIconPadding?: string;
 
   // Table Specific
   tableRows?: number;            // number of data rows (excluding header)

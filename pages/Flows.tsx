@@ -1476,12 +1476,13 @@ const Flows: React.FC = () => {
                                 label: 'Tạo kịch bản', 
                                 icon: Plus, 
                                 onClick: () => setIsCreateModalOpen(true),
-                                primary: true 
+                                primary: false 
                             },
                             { 
                                 label: 'Mẹo Automation', 
                                 icon: Lightbulb, 
-                                onClick: () => setIsTipsModalOpen(true) 
+                                onClick: () => setIsTipsModalOpen(true),
+                                primary: true
                             }
                         ]}
                     />

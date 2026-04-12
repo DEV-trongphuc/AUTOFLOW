@@ -416,12 +416,13 @@ const Campaigns: React.FC = () => {
                         label: 'Chiến dịch mới', 
                         icon: Plus, 
                         onClick: () => { setSelectedDetailCampaign(null); setWizardInitialData(undefined); setIsWizardOpen(true); },
-                        primary: true 
+                        primary: false 
                     },
                     { 
                         label: 'Mẹo tăng trưởng', 
                         icon: Lightbulb, 
-                        onClick: () => setIsTipsModalOpen(true) 
+                        onClick: () => setIsTipsModalOpen(true),
+                        primary: true
                     }
                 ]}
             />
