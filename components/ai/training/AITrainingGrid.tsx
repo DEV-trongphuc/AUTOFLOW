@@ -475,7 +475,9 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
                                             }}
                                             className={`group p-6 rounded-[24px] border transition-all duration-500 cursor-pointer relative overflow-hidden ${isDarkTheme ? 'bg-slate-900 border-slate-800 hover:border-brand/20' : 'bg-white border-slate-100 shadow-sm hover:shadow-lg hover:border-brand/20'}`}
                                         >
-                                                                 <div 
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div 
                                                         className="w-12 h-12 rounded-[18px] flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-all duration-500 overflow-hidden" 
                                                         style={{ 
                                                             background: !hideWebsiteTab 
