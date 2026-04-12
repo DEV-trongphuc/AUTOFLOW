@@ -475,24 +475,22 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
                                             }}
                                             className={`group p-6 rounded-[24px] border transition-all duration-500 cursor-pointer relative overflow-hidden ${isDarkTheme ? 'bg-slate-900 border-slate-800 hover:border-brand/20' : 'bg-white border-slate-100 shadow-sm hover:shadow-lg hover:border-brand/20'}`}
                                         >
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-4">
-                                                    <div 
-                                                        className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-all duration-500" 
+                                                                 <div 
+                                                        className="w-12 h-12 rounded-[18px] flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-all duration-500 overflow-hidden" 
                                                         style={{ 
                                                             background: !hideWebsiteTab 
-                                                                ? 'linear-gradient(135deg, #ffa900, #ff8c00)' 
+                                                                ? 'linear-gradient(135deg, #f59e0b, #d97706)' 
                                                                 : `linear-gradient(135deg, ${c.brand_color || '#ffa900'}, ${c.brand_color ? c.brand_color + 'dd' : '#ffc107'})`, 
                                                             boxShadow: !hideWebsiteTab 
-                                                                ? '0 4px 12px -3px rgba(255, 169, 0, 0.4)' 
-                                                                : `0 4px 12px -3px ${c.brand_color ? c.brand_color + '44' : 'rgba(0,0,0,0.1)'}` 
+                                                                ? '0 8px 20px -6px rgba(245, 158, 11, 0.6)' 
+                                                                : `0 8px 20px -6px ${c.brand_color ? c.brand_color + '55' : 'rgba(0,0,0,0.1)'}` 
                                                         }}
                                                     >
                                                         <Building className="w-6 h-6" />
                                                     </div>
                                                     <div>
-                                                        <h4 className={`text-base font-bold leading-tight ${String(selectedCategoryId) === String(c.id) ? 'text-brand' : (isDarkTheme ? 'text-slate-200' : 'text-slate-800')}`}>{c.name}</h4>
-                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${String(selectedCategoryId) === String(c.id) ? (isDarkTheme ? 'bg-brand/20 text-brand' : 'bg-brand/10 text-brand') : (isDarkTheme ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-500')}`}>{(c.chatbot_count || 0).toLocaleString()} Chatbots</span>
+                                                        <h4 className={`text-base font-bold leading-tight ${(hideWebsiteTab && String(selectedCategoryId) === String(c.id)) ? 'text-brand' : (isDarkTheme ? 'text-slate-200' : 'text-slate-800')}`}>{c.name}</h4>
+                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${(hideWebsiteTab && String(selectedCategoryId) === String(c.id)) ? (isDarkTheme ? 'bg-brand/20 text-brand' : 'bg-brand/10 text-brand') : (isDarkTheme ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-500')}`}>{(c.chatbot_count || 0).toLocaleString()} Chatbots</span>
                                                     </div>
                                                 </div>
                                             </div>
