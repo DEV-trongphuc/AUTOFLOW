@@ -415,39 +415,53 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const showTitle = s.showCheckListTitle !== false;
             const title = b.checkListTitle || 'Checklist';
             const maxW = s.maxWidth ? `max-width: ${s.maxWidth}; margin: 0 auto;` : '';
-            // Fix Border Radius: Add radius to the container TD and overflow hidden
-            return wrapWithMargin(`\n                    <td style="${paddingCss} ${getBackgroundStyle(s)} border-radius: ${sanitizeRadius(s.borderRadius || '0')}; overflow: hidden;">\n                        <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="${maxW}">
-                        <tbody><tr><td>
-                        ${showTitle ? `<h3 style="margin: 0 0 15px; font-family: ${bodyStyle.fontFamily || "'Roboto', Arial, sans-serif"}; font-size: 18px; font-weight: bold; color: ${s.color || 'inherit'}; text-align: ${s.textAlign || 'left'};">${title}</h3>` : ''}
+            
+            const titleFont = s.checkTitleFont || fontFamily;
+            const titleSize = s.checkTitleSize ? (typeof s.checkTitleSize === 'string' ? s.checkTitleSize : s.checkTitleSize + 'px') : '18px';
+            const itemSize = s.checkItemSize ? (typeof s.checkItemSize === 'string' ? s.checkItemSize : s.checkItemSize + 'px') : '14px';
+            const descSize = s.checkItemSize ? `${Math.max(10, parseInt(String(s.checkItemSize)) - 1)}px` : '13px';
+            const titleColor = s.checkTitleColor || s.color || '#1e293b';
+            const itemColor = s.checkItemColor || s.color || '#334155';
+            const descColor = s.checkDescColor || '#64748b';
+            const vAlignGlobal = s.checkIconVerticalAlign || 'top';
+
+            return wrapWithMargin(`
+                    <td style="${paddingCss} ${getBackgroundStyle(s)} border-radius: ${sanitizeRadius(s.borderRadius || '0')}; overflow: hidden;">
+                        <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="${maxW}">
+                        <tbody><tr><td style="text-align: ${s.textAlign || 'left'};">
+                        ${showTitle ? `<h3 style="margin: 0 0 15px; font-family: ${titleFont}; font-size: ${titleSize}; font-weight: bold; color: ${titleColor}; text-align: ${s.textAlign || 'left'};">${title}</h3>` : ''}
                         <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%">
                             ${items.map(item => {
                 const showItemTitle = s.showItemTitle !== false;
                 const showItemDesc = s.showItemDescription !== false;
                 const isSingleLine = !showItemTitle || !showItemDesc;
-                const valign = 'top';
                 const iconPaddingTop = isSingleLine ? '5px' : '6px';
                 const textPaddingTop = isSingleLine ? '5px' : '2px';
 
                 // Support custom image OR library icon
-                const useCustomImage = s.checkIconMode === 'image' && s.checkCustomIconUrl;
-                const iconUrl = useCustomImage
-                    ? s.checkCustomIconUrl!
-                    : getIconUrl(s.checkIcon || 'CheckCircle', checkIconColor);
+                const showIndividual = s.checkIndividualIcons && s.checkIconMode === 'image';
+                const iconUrl = (showIndividual && item.customIconUrl)
+                    ? item.customIconUrl
+                    : (s.checkIconMode === 'image' && s.checkCustomIconUrl)
+                        ? s.checkCustomIconUrl
+                        : getIconUrl(s.checkIcon || 'CheckCircle', checkIconColor);
 
                 return `
                                     <tr>
-                                        <td width="${checkIconSize + 10}" valign="${valign}" style="padding: ${iconPaddingTop} 0 12px 0;">
+                                        <td width="${checkIconSize + 10}" valign="${vAlignGlobal}" style="padding: ${vAlignGlobal === 'top' ? iconPaddingTop : '0'} 0 12px 0;">
                                             <img src="${iconUrl}" width="${checkIconSize}" height="${checkIconSize}" style="display: block; width: ${checkIconSize}px; height: ${checkIconSize}px; object-fit: contain;" />
                                         </td>
-                                        <td valign="${valign}" style="padding: ${textPaddingTop} 0 12px 10px; font-family: ${bodyStyle.fontFamily || "'Roboto', Arial, sans-serif"}; text-align: ${s.textAlign || 'left'};">
-                                            ${showItemTitle ? `<div style="font-size: 14px; font-weight: bold; color: ${s.color || 'inherit'}; margin-bottom: ${showItemDesc ? '2' : '0'}px;">${item.title}</div>` : ''}
-                                            ${showItemDesc ? `<div style="font-size: 13px; color: #64748b; line-height: 1.4;">${item.description}</div>` : ''}
+                                        <td valign="top" style="padding: ${textPaddingTop} 0 12px 10px; font-family: ${fontFamily}; text-align: left;">
+                                            ${showItemTitle ? `<div style="font-size: ${itemSize}; font-weight: bold; color: ${itemColor}; margin-bottom: ${showItemDesc ? '2' : '0'}px;">${item.title}</div>` : ''}
+                                            ${showItemDesc ? `<div style="font-size: ${descSize}; color: ${descColor}; line-height: 1.4;">${item.description}</div>` : ''}
                                         </td>
                                     </tr>
                                 `;
             }).join('')}
                         </table>
-                        </td></tr></tbody></table>\n                    </td>\n                `);
+                        </td></tr></tbody></table>
+                    </td>
+                `);
         }
 
         if (b.type === 'table') {

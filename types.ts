@@ -131,6 +131,13 @@ export interface EmailBlockStyle {
   showItemTitle?: boolean;
   showItemDescription?: boolean;
   checkIconVerticalAlign?: 'top' | 'middle' | 'bottom';
+  checkTitleFont?: string;
+  checkTitleSize?: string;
+  checkItemSize?: string;
+  checkDescColor?: string;
+  checkTitleColor?: string;
+  checkItemColor?: string;
+  maxWidth?: string;
 
   // Table Specific
   tableRows?: number;            // number of data rows (excluding header)
