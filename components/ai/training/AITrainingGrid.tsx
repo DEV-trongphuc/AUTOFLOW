@@ -473,14 +473,21 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
                                                 setSelectedCategoryId(c.id);
                                                 setViewModeChat('chatbots');
                                             }}
-                                            className={`group p-6 rounded-[24px] border transition-all duration-500 cursor-pointer relative overflow-hidden ${String(selectedCategoryId) === String(c.id)
-                                                ? (isDarkTheme ? 'bg-emerald-500/10 border-emerald-500/50 shadow-md shadow-emerald-500/10' : 'bg-emerald-50/50 border-emerald-400 shadow-md shadow-emerald-500/5')
-                                                : (isDarkTheme ? 'bg-slate-900 border-slate-800 hover:border-brand/20' : 'bg-white border-slate-100 shadow-sm hover:shadow-lg hover:border-brand/20')
-                                                }`}
+                                            className={`group p-6 rounded-[24px] border transition-all duration-500 cursor-pointer relative overflow-hidden ${isDarkTheme ? 'bg-slate-900 border-slate-800 hover:border-brand/20' : 'bg-white border-slate-100 shadow-sm hover:shadow-lg hover:border-brand/20'}`}
                                         >
                                             <div className="flex items-center justify-between mb-4">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-all duration-500" style={{ background: `linear-gradient(135deg, ${c.brand_color || '#ffa900'}, ${c.brand_color ? c.brand_color + 'dd' : '#ffc107'})`, boxShadow: `0 4px 12px -3px ${c.brand_color ? c.brand_color + '44' : 'rgba(0,0,0,0.1)'}` }}>
+                                                    <div 
+                                                        className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-all duration-500" 
+                                                        style={{ 
+                                                            background: !hideWebsiteTab 
+                                                                ? 'linear-gradient(135deg, #ffa900, #ff8c00)' 
+                                                                : `linear-gradient(135deg, ${c.brand_color || '#ffa900'}, ${c.brand_color ? c.brand_color + 'dd' : '#ffc107'})`, 
+                                                            boxShadow: !hideWebsiteTab 
+                                                                ? '0 4px 12px -3px rgba(255, 169, 0, 0.4)' 
+                                                                : `0 4px 12px -3px ${c.brand_color ? c.brand_color + '44' : 'rgba(0,0,0,0.1)'}` 
+                                                        }}
+                                                    >
                                                         <Building className="w-6 h-6" />
                                                     </div>
                                                     <div>
@@ -488,11 +495,6 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
                                                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${String(selectedCategoryId) === String(c.id) ? (isDarkTheme ? 'bg-brand/20 text-brand' : 'bg-brand/10 text-brand') : (isDarkTheme ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-500')}`}>{(c.chatbot_count || 0).toLocaleString()} Chatbots</span>
                                                     </div>
                                                 </div>
-                                                {String(selectedCategoryId) === String(c.id) && (
-                                                    <div className="px-2 py-0.5 bg-brand text-white text-[8px] font-black uppercase rounded shadow-sm animate-pulse">
-                                                        Active
-                                                    </div>
-                                                )}
                                             </div>
                                             <p className={`text-xs font-medium leading-relaxed mb-6 line-clamp-2 ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
                                                 {c.description || 'Chưa có mô tả cho nhóm này.'}
