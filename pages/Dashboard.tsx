@@ -58,7 +58,7 @@ const ALL_MODULES: Module[] = [
         title: 'AI Space',
         sub: 'Training kiến thức AI và giao diện chuyên nghiệp riêng biệt dành cho đội nhóm & các phòng ban độc lập',
         icon: Sparkles,
-        color: 'from-[#881337] to-[#4c0519]',
+        color: 'from-[#e11d48] to-[#9f1239]',
         path: '/ai-space',
         tags: ['Agents', 'Workspace']
     },
