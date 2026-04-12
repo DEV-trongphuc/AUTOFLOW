@@ -44,7 +44,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
     const [logsPagination, setLogsPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
     const [previewType, setPreviewType] = useState<'main' | string>('main');
     const [previewContent, setPreviewContent] = useState({ html: '', subject: '', loading: false });
-    const [audienceStats, setAudienceStats] = useState<{ total_current: number, count_sent: number, gap: number, reminders: any[] } | null>(null);
+    const [audienceStats, setAudienceStats] = useState<{ total_current: number, count_sent: number, gap: number, count_unsubscribed?: number, reminders: any[] } | null>(null);
     const [refreshLoading, setRefreshLoading] = useState(false);
     const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
     const [showTestModal, setShowTestModal] = useState(false);
@@ -83,7 +83,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
         if (localCampaign?.id && isVisible && activeTab === 'activity') {
             fetchLogs(logsPagination.page);
         }
-        }, [localCampaign?.id, isVisible, activeTab]);
+    }, [localCampaign?.id, isVisible, activeTab, logsPagination.page]);
 
     // Polling logic for "sending" status progress + stats update
     useEffect(() => {
@@ -184,7 +184,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
 
     if (!localCampaign) return null;
 
-    const stats = localCampaign.stats || { sent: 0, opened: 0, clicked: 0, bounced: 0, spam: 0, unsubscribed: 0 };
+    const stats = localCampaign.stats || { sent: 0, opened: 0, clicked: 0, bounced: 0, spam: 0, unsubscribed: 0, failed: 0 };
 
     // Real Calculations
     const isSent = localCampaign.status === CampaignStatus.SENT;
@@ -211,7 +211,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
 
     const healthData = [
         { name: isZns ? 'Đã nhận' : 'Hộp thư chính', value: retainedCount, fill: '#10b981' },
-        { name: isZns ? 'Lỗi gửi' : 'Tỉ lệ (Bounce)', value: stats.bounced, fill: '#f43f5e' },
+        { name: isZns ? 'Lỗi gửi' : 'Tỷ lệ (Bounce)', value: stats.bounced, fill: '#f43f5e' },
         ...(isZns ? [] : [{ name: 'Hủy đăng ký (Unsub)', value: stats.unsubscribed, fill: '#d97706' }])
     ].filter(d => d.value > 0);
 
@@ -257,7 +257,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                             <Badge variant={
                                 localCampaign.status === 'sent' ? 'success' :
                                     localCampaign.status === 'sending' ? 'info' :
-                                        localCampaign.status === 'scheduled' ? 'warning' : 'secondary'
+                                        localCampaign.status === 'scheduled' ? 'warning' : 'neutral'
                             } className="px-2 py-0.5 md:px-3 md:py-1 text-[9px] md:text-xs">
                                 {localCampaign.status === 'sending' && <RefreshCw className="w-2.5 h-2.5 animate-spin" />}
                                 {localCampaign.status.toUpperCase()}
@@ -781,8 +781,8 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                 <div className="text-center">
                                                     <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Chênh lệch</p>
                                                     <p className="text-xl font-black text-amber-600">+{(audienceStats.gap || 0).toLocaleString()}</p>
-                                                    {localCampaign.count_unsubscribed > 0 && (
-                                                        <p className="text-[10px] font-bold text-rose-500 mt-1">(-{localCampaign.count_unsubscribed} hủy đăng ký)</p>
+                                                    {audienceStats.count_unsubscribed !== undefined && audienceStats.count_unsubscribed > 0 && (
+                                                        <p className="text-[10px] font-bold text-rose-500 mt-1">(-{audienceStats.count_unsubscribed} hủy đăng ký)</p>
                                                     )}
                                                 </div>
                                             </div>
@@ -889,7 +889,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                 <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                     <Activity className="w-4 h-4" /> Nhật ký tương tác
                                 </h4>
-                                <button onClick={fetchLogs} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors">
+                                <button onClick={() => fetchLogs()} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors">
                                     <RefreshCw className={`w-4 h-4 ${loadingLogs ? 'animate-spin' : ''}`} />
                                 </button>
                             </div>

@@ -146,494 +146,496 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
                 .from-brand { --tw-gradient-from: var(--brand-primary) !important; --tw-gradient-to: var(--brand-primary-dark) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
                 .shadow-brand { box-shadow: 0 4px 12px -2px var(--brand-shadow) !important; }
             `}} />
-            <PageHero 
-                title={<>AI <span className="text-orange-100/80">Training Center</span></>}
-                subtitle="Nạp kiến thức và huấn luyện bộ não AI cho từng website hoặc các kênh chatbot tập trung của bạn."
-                showStatus={true}
-                statusText="Neural Engine Ready"
-                actions={[
-                    { 
-                        label: 'Mẹo Training', 
-                        icon: Sparkles, 
-                        onClick: () => setIsOptimizationModalOpen(true),
-                        primary: true 
-                    },
-                    { 
-                        label: 'Hướng dẫn AI', 
-                        icon: BookOpen, 
-                        onClick: () => setIsTipsModalOpen(true) 
-                    }
-                ]}
-            />
+            <div className="space-y-8">
+                <PageHero 
+                    title={<>AI <span className="text-orange-100/80">Training Center</span></>}
+                    subtitle="Nạp kiến thức và huấn luyện bộ não AI cho từng website hoặc các kênh chatbot tập trung của bạn."
+                    showStatus={true}
+                    statusText="Neural Engine Ready"
+                    actions={[
+                        { 
+                            label: 'Mẹo Training', 
+                            icon: Sparkles, 
+                            onClick: () => setIsOptimizationModalOpen(true),
+                            primary: true 
+                        },
+                        { 
+                            label: 'Hướng dẫn AI', 
+                            icon: BookOpen, 
+                            onClick: () => setIsTipsModalOpen(true) 
+                        }
+                    ]}
+                />
 
-            <div className={`w-full rounded-[24px] md:rounded-[32px] border shadow-sm p-4 md:p-8 min-h-[600px] animate-in fade-in slide-in-from-bottom-5 duration-1000 delay-200 transition-colors ${isDarkTheme ? 'bg-[rgba(13,17,23,0.6)] backdrop-blur-md border-slate-800' : 'bg-white border-slate-200'}`}>
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6 mb-6 lg:mb-10">
-                    <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 flex-1">
-                        {!hideWebsiteTab && (
-                            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0">
-                                <Tabs
-                                    activeId={mainTab}
-                                    onChange={(id) => {
-                                        setMainTab(id as any);
-                                        if (id === 'chat') {
-                                            setViewModeChat('categories');
-                                            setSelectedCategoryId(null);
-                                        }
-                                    }}
-                                    variant="pill"
-                                    className="flex-nowrap"
-                                    items={[
-                                        { id: 'website', label: 'AI Chatbot', icon: Globe },
-                                        { id: 'chat', label: 'AI Group Training', icon: Bot },
-                                    ]}
-                                    isDarkTheme={isDarkTheme}
-                                />
-                            </div>
-                        )}
-
-                        {viewModeChat === 'chatbots' && (
-                            <div className="flex items-center gap-2 anim-scale-in">
-                                <Tabs
-                                    activeId={activeSubTab}
-                                    onChange={(id) => handleSetSubTab(id as any)}
-                                    variant="pill"
-                                    items={[
-                                        // "AI Agents" tab only shown in AI Space (hideWebsiteTab=true)
-                                        // In Autoflow the chatbot list is already the default view — no need to repeat it
-                                        ...(!hideWebsiteTab ? [] : [{ id: 'chatbots', label: 'AI Agents', icon: Bot }]),
-                                        { id: 'users', label: 'Quản trị User', icon: Users },
-                                        { id: 'feedback', label: 'Feedback', icon: MessageSquare },
-                                    ]}
-                                    isDarkTheme={isDarkTheme}
-                                />
-                            </div>
-                        )}
-
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3 shrink-0">
-                        <div className="relative group/tips shrink-0">
-                            <button
-                                className={`w-full lg:w-auto h-10 md:h-11 px-4 lg:px-6 border rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${isDarkTheme ? 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800 shadow-inner shadow-slate-950/30' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 shadow-sm'}`}
-                            >
-                                <BookOpen className="w-4 h-4" style={{ color: activeBrandColor }} />
-                                <span className="hidden sm:inline">Mẹo & Hướng dẫn</span>
-                                <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover/tips:rotate-180 transition-transform duration-300" />
-                            </button>
-
-                            <div className={`absolute right-0 top-full mt-2 w-64 rounded-2xl shadow-xl border p-2 space-y-1 invisible opacity-0 group-hover/tips:visible group-hover/tips:opacity-100 transition-all duration-300 transform origin-top-right z-50 ${isDarkTheme ? 'bg-slate-900 border-slate-800 shadow-2xl shadow-slate-950' : 'bg-white border-slate-100'}`}>
-                                <button
-                                    onClick={() => setIsOptimizationModalOpen(true)}
-                                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left group ${isDarkTheme ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
-                                >
-                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-all" style={{ backgroundColor: `${activeBrandColor}15`, color: activeBrandColor, borderColor: `${activeBrandColor}30` }}>
-                                        <Sparkles className="w-4 h-4" />
-                                    </div>
-                                    <div>
-                                        <div className={`text-[11px] font-bold ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>Tối ưu Training</div>
-                                        <div className="text-[9px] text-slate-400 font-medium">Cách soạn dữ liệu chuẩn</div>
-                                    </div>
-                                </button>
-
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        props.setIsEmbeddingModalOpen(true);
-                                        toast.success('Đang mở Cơ chế AI & Score...');
-                                    }}
-                                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left group ${isDarkTheme ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
-                                >
-                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-all" style={{ backgroundColor: `${activeBrandColor}15`, color: activeBrandColor, borderColor: `${activeBrandColor}30` }}>
-                                        <Bot className="w-4 h-4" />
-                                    </div>
-                                    <div>
-                                        <div className={`text-[11px] font-bold ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>Cơ chế AI & Score</div>
-                                        <div className="text-[9px] text-slate-400 font-medium">Hiểu về Embedding</div>
-                                    </div>
-                                </button>
-
-                                <button
-                                    onClick={() => setIsTipsModalOpen(true)}
-                                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left group ${isDarkTheme ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
-                                >
-                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-all" style={{ backgroundColor: `${activeBrandColor}15`, color: activeBrandColor, borderColor: `${activeBrandColor}30` }}>
-                                        <Zap className="w-4 h-4" />
-                                    </div>
-                                    <div>
-                                        <div className={`text-[11px] font-bold ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>Smart Link (Nâng cao)</div>
-                                        <div className="text-[9px] text-slate-400 font-medium">Tự tạo nút & ảnh</div>
-                                    </div>
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Admin Logs Button - Only in AI Space */}
-                        {props.setActiveTab && hideWebsiteTab && (
-                            <button
-                                onClick={() => props.setActiveTab && props.setActiveTab('logs')}
-                                className="h-10 md:h-11 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-lg shadow-brand/20 hover:shadow-brand/40 hover:-translate-y-0.5 active:translate-y-0 text-white bg-gradient-to-r from-brand to-brand-dark"
-                            >
-                                <Activity size={16} className="text-white animate-pulse" />
-                                Logs & Stats
-                            </button>
-                        )}
-                    </div>
-                </div>
-
-                {mainTab === 'website' ? (
-                    <div className="space-y-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className={`text-base md:text-lg font-bold ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`}>Danh sách Website</h3>
-                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                Tổng cộng: {filteredProperties.length.toLocaleString()}
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {loading ? (
-                                [1, 2, 3].map(i => <div key={i} className={`h-48 rounded-[32px] animate-pulse ${isDarkTheme ? 'bg-slate-800' : 'bg-slate-50'}`} />)
-                            ) : filteredProperties.map(p => (
-                                <div key={p.id} className={`group p-6 rounded-[32px] border transition-all flex flex-col justify-between gap-6 relative overflow-hidden ${isDarkTheme ? 'bg-slate-900 border-slate-800 hover:border-brand/30 shadow-inner shadow-slate-950/20' : 'bg-white border-slate-100 shadow-sm hover:shadow-xl hover:border-brand/30'}`}>
-                                    <div className={`absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform ${p.ai_enabled ? 'text-brand' : (isDarkTheme ? 'text-slate-400' : 'text-slate-500')
-                                        }`}><img src="/imgs/ICON.png" className="w-32 h-32 object-contain grayscale brightness-0" alt="" /></div>
-
-                                    <div className="flex justify-between items-start relative z-10">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 shrink-0 transition-transform duration-500 group-hover:scale-110">
-                                                <img src="/imgs/ICON.png" className="w-full h-full object-contain" alt="" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <h4 className={`text-base font-bold leading-tight truncate pr-2 ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`} title={p.name}>{p.name}</h4>
-                                                <p className="text-[10px] text-slate-400 font-mono mt-1 pr-2 truncate">{p.domain}</p>
-                                            </div>
-                                        </div>
-                                        <div className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight ${p.ai_enabled ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : (isDarkTheme ? 'bg-slate-800 text-slate-500 border border-slate-700' : 'bg-slate-50 text-slate-400 border border-slate-100')}`}>
-                                            {p.ai_enabled ? 'Active' : 'OFF'}
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4 relative z-10">
-                                        <div className={`flex items-center justify-between p-3 rounded-2xl border transition-colors ${isDarkTheme ? 'bg-slate-800/50 border-slate-700 group-hover:bg-brand/10 group-hover:border-brand/20' : 'bg-slate-50 border-slate-100 group-hover:bg-brand/5 group-hover:border-brand/10'}`}>
-                                            <div className="flex flex-col">
-                                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Tỉ lệ</span>
-
-                                                <span className={`text-sm font-black ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>{(p.stats?.docs_count || 0).toLocaleString()} <span className="text-[10px] font-medium text-slate-500">docs</span></span>
-                                            </div>
-                                            <div className={`h-8 w-px ${isDarkTheme ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
-                                            <div className="flex flex-col items-end">
-                                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Cuộc trò chuyện</span>
-                                                <span className={`text-sm font-black ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>{(p.stats?.queries_count || 0).toLocaleString()} <span className="text-[10px] font-medium text-slate-500">convos</span></span>
-                                            </div>
-                                        </div>
-
-                                        <button
-                                            onClick={() => {
-                                                setSelectedProperty(p.id);
-                                                setViewMode('doc');
-                                            }}
-                                            className={`w-full h-11 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all duration-500 flex items-center justify-center gap-2 group/btn ${isDarkTheme ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
-                                        >
-                                            <Bot className={`w-4 h-4 group-hover/btn:rotate-12 transition-transform duration-500 ${isDarkTheme ? 'text-slate-500' : 'text-slate-400'}`} />
-                                            QUẢN LÝ
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                ) : (
-                    <div className="space-y-6">
-                        <div className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 lg:p-6 rounded-[24px] border mb-6 gap-6 ${isDarkTheme ? 'bg-slate-800/30 border-slate-800' : 'bg-slate-50/50 border-slate-100'}`}>
-                            <div className="flex items-center gap-3">
-                                {viewModeChat === 'chatbots' && (
-                                    <button
-                                        onClick={() => {
-                                            if (activeSubTab !== 'chatbots') {
-                                                handleSetSubTab('chatbots');
-                                            } else if (singleGroupMode && onClose) {
-                                                onClose();
-                                            } else {
+                <div className={`w-full rounded-[24px] md:rounded-[32px] border shadow-sm p-4 md:p-8 min-h-[600px] animate-in fade-in slide-in-from-bottom-5 duration-1000 delay-200 transition-colors ${isDarkTheme ? 'bg-[rgba(13,17,23,0.6)] backdrop-blur-md border-slate-800' : 'bg-white border-slate-200'}`}>
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6 mb-6 lg:mb-10">
+                        <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 flex-1">
+                            {!hideWebsiteTab && (
+                                <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0 w-fit">
+                                    <Tabs
+                                        activeId={mainTab}
+                                        onChange={(id) => {
+                                            setMainTab(id as any);
+                                            if (id === 'chat') {
                                                 setViewModeChat('categories');
                                                 setSelectedCategoryId(null);
                                             }
                                         }}
-                                        className={`p-2.5 rounded-xl transition-colors mr-1 shadow-sm border ${isDarkTheme ? 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700' : 'bg-white text-slate-900 border-slate-100 hover:bg-slate-100'}`}
+                                        variant="pill"
+                                        className="flex-nowrap"
+                                        items={[
+                                            { id: 'website', label: 'AI Chatbot', icon: Globe },
+                                            { id: 'chat', label: 'AI Group Training', icon: Bot },
+                                        ]}
+                                        isDarkTheme={isDarkTheme}
+                                    />
+                                </div>
+                            )}
+
+                            {viewModeChat === 'chatbots' && (
+                                <div className="flex items-center gap-2 anim-scale-in">
+                                    <Tabs
+                                        activeId={activeSubTab}
+                                        onChange={(id) => handleSetSubTab(id as any)}
+                                        variant="pill"
+                                        items={[
+                                            // "AI Agents" tab only shown in AI Space (hideWebsiteTab=true)
+                                            // In Autoflow the chatbot list is already the default view — no need to repeat it
+                                            ...(!hideWebsiteTab ? [] : [{ id: 'chatbots', label: 'AI Agents', icon: Bot }]),
+                                            { id: 'users', label: 'Quản trị User', icon: Users },
+                                            { id: 'feedback', label: 'Feedback', icon: MessageSquare },
+                                        ]}
+                                        isDarkTheme={isDarkTheme}
+                                    />
+                                </div>
+                            )}
+
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3 shrink-0">
+                            <div className="relative group/tips shrink-0">
+                                <button
+                                    className={`w-full lg:w-auto h-10 md:h-11 px-4 lg:px-6 border rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${isDarkTheme ? 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800 shadow-inner shadow-slate-950/30' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 shadow-sm'}`}
+                                >
+                                    <BookOpen className="w-4 h-4" style={{ color: activeBrandColor }} />
+                                    <span className="hidden sm:inline">Mẹo & Hướng dẫn</span>
+                                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover/tips:rotate-180 transition-transform duration-300" />
+                                </button>
+
+                                <div className={`absolute right-0 top-full mt-2 w-64 rounded-2xl shadow-xl border p-2 space-y-1 invisible opacity-0 group-hover/tips:visible group-hover/tips:opacity-100 transition-all duration-300 transform origin-top-right z-50 ${isDarkTheme ? 'bg-slate-900 border-slate-800 shadow-2xl shadow-slate-950' : 'bg-white border-slate-100'}`}>
+                                    <button
+                                        onClick={() => setIsOptimizationModalOpen(true)}
+                                        className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left group ${isDarkTheme ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
                                     >
-                                        <ArrowLeft className="w-5 h-5" />
-                                    </button>
-                                )}
-                                <div>
-                                    <div className="flex items-center gap-3 mb-1">
-                                        <h3 className={`text-base lg:text-lg font-bold ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`}>
-                                            {viewModeChat === 'categories' ? 'Danh sách Nhóm' : `Quản lý: ${categories.find(c => String(c.id) === String(selectedCategoryId))?.name || 'Nhóm'}`}
-                                        </h3>
-                                        <div className={`hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border ${isDarkTheme ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-white text-slate-400 border-slate-100'}`}>
-                                            {viewModeChat === 'categories'
-                                                ? `Tổng cộng: ${categories.length.toLocaleString()}`
-                                                : activeSubTab === 'chatbots'
-                                                    ? `Chatbots: ${filteredChatbots.length.toLocaleString()}`
-                                                    : (activeSubTab || 'chatbots').toUpperCase()}
+                                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-all" style={{ backgroundColor: `${activeBrandColor}15`, color: activeBrandColor, borderColor: `${activeBrandColor}30` }}>
+                                            <Sparkles className="w-4 h-4" />
                                         </div>
-                                    </div>
-                                    <p className={`text-[10px] lg:text-xs font-medium tracking-tight ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
-                                        {viewModeChat === 'categories'
-                                            ? 'Quản lý các nhóm AI của bạn.'
-                                            : (activeSubTab === 'chatbots' ? 'Danh sách các chatbot AI thuộc nhóm này.' : activeSubTab === 'users' ? 'Quản lý toàn bộ thành viên trong tổ chức này.' : `Quản lý ${activeSubTab === 'logs' ? 'nhật ký' : 'cài đặt'} của nhóm.`)}
-                                    </p>
+                                        <div>
+                                            <div className={`text-[11px] font-bold ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>Tối ưu Training</div>
+                                            <div className="text-[9px] text-slate-400 font-medium">Cách soạn dữ liệu chuẩn</div>
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            props.setIsEmbeddingModalOpen(true);
+                                            toast.success('Đang mở Cơ chế AI & Score...');
+                                        }}
+                                        className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left group ${isDarkTheme ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
+                                    >
+                                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-all" style={{ backgroundColor: `${activeBrandColor}15`, color: activeBrandColor, borderColor: `${activeBrandColor}30` }}>
+                                            <Bot className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <div className={`text-[11px] font-bold ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>Cơ chế AI & Score</div>
+                                            <div className="text-[9px] text-slate-400 font-medium">Hiểu về Embedding</div>
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        onClick={() => setIsTipsModalOpen(true)}
+                                        className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left group ${isDarkTheme ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
+                                    >
+                                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-all" style={{ backgroundColor: `${activeBrandColor}15`, color: activeBrandColor, borderColor: `${activeBrandColor}30` }}>
+                                            <Zap className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <div className={`text-[11px] font-bold ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>Smart Link (Nâng cao)</div>
+                                            <div className="text-[9px] text-slate-400 font-medium">Tự tạo nút & ảnh</div>
+                                        </div>
+                                    </button>
                                 </div>
                             </div>
 
-
-
-                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 ml-auto">
-                                {viewModeChat === 'categories' && !singleGroupMode ? (
-                                    <button
-                                        onClick={() => setIsCreateCategoryModalOpen(true)}
-                                        className={`h-10 px-5 rounded-xl text-[10px] lg:text-xs font-bold transition-all flex items-center gap-2 shadow-sm w-full sm:w-auto justify-center border ${isDarkTheme ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700 hover:border-slate-600' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300'}`}
-                                    >
-                                        <FolderPlus className="w-4 h-4 text-slate-400" />
-                                        Tạo Group
-                                    </button>
-                                ) : (
-                                    <div className="flex items-center gap-2 lg:gap-3">
-                                        {/* Simplified Actions per USER request */}
-                                        <button
-                                            onClick={() => {
-                                                const cat = activeCategory
-                                                    || selectedCategoryProp
-                                                    || { id: selectedCategoryId || '', name: '', description: '', slug: '' };
-                                                handleEditCategory(cat);
-                                            }}
-                                            className={`h-10 px-4 rounded-xl text-[10px] lg:text-xs font-bold transition-all flex items-center justify-center gap-2 border shadow-sm ${isDarkTheme ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
-                                        >
-                                            <Settings className="w-4 h-4 text-slate-400" />
-                                            <span>Quản trị Group</span>
-                                        </button>
-
-                                        {/* View AI Space button */}
-                                        {selectedCategoryId && (
-                                            <a
-                                                href={`/#/ai-space/${selectedCategoryId}`}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className={`h-10 px-4 rounded-xl text-[10px] lg:text-xs font-bold transition-all flex items-center justify-center gap-2 border shadow-sm ${isDarkTheme ? 'bg-indigo-600/20 text-indigo-300 border-indigo-500/30 hover:bg-indigo-600/30 hover:border-indigo-400/50' : 'bg-indigo-50 text-indigo-600 border-indigo-100 hover:bg-indigo-100 hover:border-indigo-200'}`}
-                                                title={`Mở AI Space: ${categories.find(c => String(c.id) === String(selectedCategoryId))?.name || ''}`}
-                                            >
-                                                <ExternalLink className="w-3.5 h-3.5" />
-                                                <span>Xem AI Space</span>
-                                            </a>
-                                        )}
-
-                                        {/* Primary Tabs Action */}
-                                        {activeSubTab === 'chatbots' && (
-                                            <button
-                                                onClick={() => setIsCreateBotModalOpen(true)}
-                                                className={`h-10 px-5 rounded-xl text-[10px] lg:text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm border ${isDarkTheme ? 'bg-brand text-white border-brand/20 hover:bg-brand-dark' : 'bg-brand text-white border-brand/10 hover:shadow-lg'}`}
-                                            >
-                                                <Plus className="w-4 h-4" />
-                                                Tạo AI Agent
-                                            </button>
-                                        )}
-
-                                        {activeSubTab === 'users' && (
-                                            <button
-                                                onClick={() => {
-                                                    // Trigger Add User modal in OrgUserManager
-                                                    const btn = document.getElementById('org-user-add-btn');
-                                                    if (btn) btn.click();
-                                                }}
-                                                className={`h-10 px-5 rounded-xl text-[10px] lg:text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm border ${isDarkTheme ? 'bg-brand text-white border-brand/20 hover:bg-brand-dark' : 'bg-brand text-white border-brand/10 hover:shadow-lg'}`}
-                                            >
-                                                <Plus className="w-4 h-4" />
-                                                Thêm User Tổ chức
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
+                            {/* Admin Logs Button - Only in AI Space */}
+                            {props.setActiveTab && hideWebsiteTab && (
+                                <button
+                                    onClick={() => props.setActiveTab && props.setActiveTab('logs')}
+                                    className="h-10 md:h-11 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-lg shadow-brand/20 hover:shadow-brand/40 hover:-translate-y-0.5 active:translate-y-0 text-white bg-gradient-to-r from-brand to-brand-dark"
+                                >
+                                    <Activity size={16} className="text-white animate-pulse" />
+                                    Logs & Stats
+                                </button>
+                            )}
                         </div>
+                    </div>
 
-                        {viewModeChat === 'categories' ? (
+                    {mainTab === 'website' ? (
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className={`text-base md:text-lg font-bold ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`}>Danh sách Website</h3>
+                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                    Tổng cộng: {filteredProperties.length.toLocaleString()}
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {loading ? (
-                                    [1, 2, 3].map(i => <div key={i} className={`h-32 rounded-[24px] animate-pulse ${isDarkTheme ? 'bg-slate-800' : 'bg-slate-50'}`} />)
-                                ) : categories.length === 0 ? (
-                                    <div className={`col-span-full py-20 text-center border-2 border-dashed rounded-[32px] ${isDarkTheme ? 'border-slate-800 bg-slate-900/30' : 'border-slate-200 bg-slate-50/50'}`}>
-                                        <Building className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                                        <h3 className={`font-bold text-lg ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>Chưa có nhóm nào</h3>
-                                        <p className="text-slate-500 mt-2 text-sm">Vui lòng tạo nhóm để quản lý các chatbot.</p>
-                                    </div>
-                                ) : categories.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || (c.description && c.description.toLowerCase().includes(searchTerm.toLowerCase()))).map(c => (
-                                    <div
-                                        key={c.id}
-                                        onClick={() => {
-                                            setSelectedCategoryId(c.id);
-                                            setViewModeChat('chatbots');
-                                        }}
-                                        className={`group p-6 rounded-[24px] border transition-all duration-500 cursor-pointer relative overflow-hidden ${String(selectedCategoryId) === String(c.id)
-                                            ? (isDarkTheme ? 'bg-emerald-500/10 border-emerald-500/50 shadow-md shadow-emerald-500/10' : 'bg-emerald-50/50 border-emerald-400 shadow-md shadow-emerald-500/5')
-                                            : (isDarkTheme ? 'bg-slate-900 border-slate-800 hover:border-brand/20' : 'bg-white border-slate-100 shadow-sm hover:shadow-lg hover:border-brand/20')
-                                            }`}
-                                    >
-                                        <div className="flex items-center justify-between mb-4">
+                                    [1, 2, 3].map(i => <div key={i} className={`h-48 rounded-[32px] animate-pulse ${isDarkTheme ? 'bg-slate-800' : 'bg-slate-50'}`} />)
+                                ) : filteredProperties.map(p => (
+                                    <div key={p.id} className={`group p-6 rounded-[32px] border transition-all flex flex-col justify-between gap-6 relative overflow-hidden ${isDarkTheme ? 'bg-slate-900 border-slate-800 hover:border-brand/30 shadow-inner shadow-slate-950/20' : 'bg-white border-slate-100 shadow-sm hover:shadow-xl hover:border-brand/30'}`}>
+                                        <div className={`absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform ${p.ai_enabled ? 'text-brand' : (isDarkTheme ? 'text-slate-400' : 'text-slate-500')
+                                            }`}><img src="/imgs/ICON.png" className="w-32 h-32 object-contain grayscale brightness-0" alt="" /></div>
+
+                                        <div className="flex justify-between items-start relative z-10">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-all duration-500" style={{ background: `linear-gradient(135deg, ${c.brand_color || '#ffa900'}, ${c.brand_color ? c.brand_color + 'dd' : '#ffc107'})`, boxShadow: `0 4px 12px -3px ${c.brand_color ? c.brand_color + '44' : 'rgba(0,0,0,0.1)'}` }}>
-                                                    <Building className="w-6 h-6" />
+                                                <div className="w-12 h-12 shrink-0 transition-transform duration-500 group-hover:scale-110">
+                                                    <img src="/imgs/ICON.png" className="w-full h-full object-contain" alt="" />
                                                 </div>
-                                                <div>
-                                                    <h4 className={`text-base font-bold leading-tight ${String(selectedCategoryId) === String(c.id) ? 'text-brand' : (isDarkTheme ? 'text-slate-200' : 'text-slate-800')}`}>{c.name}</h4>
-                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${String(selectedCategoryId) === String(c.id) ? (isDarkTheme ? 'bg-brand/20 text-brand' : 'bg-brand/10 text-brand') : (isDarkTheme ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-500')}`}>{(c.chatbot_count || 0).toLocaleString()} Chatbots</span>
+                                                <div className="min-w-0">
+                                                    <h4 className={`text-base font-bold leading-tight truncate pr-2 ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`} title={p.name}>{p.name}</h4>
+                                                    <p className="text-[10px] text-slate-400 font-mono mt-1 pr-2 truncate">{p.domain}</p>
                                                 </div>
                                             </div>
-                                            {String(selectedCategoryId) === String(c.id) && (
-                                                <div className="px-2 py-0.5 bg-brand text-white text-[8px] font-black uppercase rounded shadow-sm animate-pulse">
-                                                    Active
-                                                </div>
-                                            )}
+                                            <div className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight ${p.ai_enabled ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : (isDarkTheme ? 'bg-slate-800 text-slate-500 border border-slate-700' : 'bg-slate-50 text-slate-400 border border-slate-100')}`}>
+                                                {p.ai_enabled ? 'Active' : 'OFF'}
+                                            </div>
                                         </div>
-                                        <p className={`text-xs font-medium leading-relaxed mb-6 line-clamp-2 ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
-                                            {c.description || 'Chưa có mô tả cho nhóm này.'}
-                                        </p>
 
-                                        <div className="flex gap-2">
+                                        <div className="space-y-4 relative z-10">
+                                            <div className={`flex items-center justify-between p-3 rounded-2xl border transition-colors ${isDarkTheme ? 'bg-slate-800/50 border-slate-700 group-hover:bg-brand/10 group-hover:border-brand/20' : 'bg-slate-50 border-slate-100 group-hover:bg-brand/5 group-hover:border-brand/10'}`}>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Tỷ lệ</span>
+
+                                                    <span className={`text-sm font-black ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>{(p.stats?.docs_count || 0).toLocaleString()} <span className="text-[10px] font-medium text-slate-500">docs</span></span>
+                                                </div>
+                                                <div className={`h-8 w-px ${isDarkTheme ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
+                                                <div className="flex flex-col items-end">
+                                                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Cuộc trò chuyện</span>
+                                                    <span className={`text-sm font-black ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>{(p.stats?.queries_count || 0).toLocaleString()} <span className="text-[10px] font-medium text-slate-500">convos</span></span>
+                                                </div>
+                                            </div>
+
                                             <button
-                                                className={`flex-1 border text-[10px] font-bold uppercase tracking-widest py-3 rounded-xl transition-all flex items-center justify-center gap-2 ${isDarkTheme ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
+                                                onClick={() => {
+                                                    setSelectedProperty(p.id);
+                                                    setViewMode('doc');
+                                                }}
+                                                className={`w-full h-11 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all duration-500 flex items-center justify-center gap-2 group/btn ${isDarkTheme ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
                                             >
-                                                <Shield className={`w-4 h-4 ${isDarkTheme ? 'text-slate-500' : 'text-slate-400'}`} /> XEM CHI TIẾT
+                                                <Bot className={`w-4 h-4 group-hover/btn:rotate-12 transition-transform duration-500 ${isDarkTheme ? 'text-slate-500' : 'text-slate-400'}`} />
+                                                QUẢN LÝ
                                             </button>
                                         </div>
-
-                                        {/* Quick Actions Overlay for Admin */}
-                                        {(orgUser?.role === 'admin' || orgUser?.role === 'assistant') && (
-                                            <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleEditCategory(c); }}
-                                                    className={`p-2 rounded-full transition-colors ${isDarkTheme ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
-                                                    title="Chỉnh sửa nhóm"
-                                                >
-                                                    <Edit2 className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleDeleteCategory(c.id, c.name, e); }}
-                                                    className={`p-2 rounded-full transition-colors ${isDarkTheme ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
-                                                    title="Xóa nhóm"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                                <ChevronRight className="w-5 h-5 text-brand" />
-                                            </div>
-                                        )}
                                     </div>
                                 ))}
                             </div>
-                        ) : (
-                            <div className="space-y-6">
-                                {activeSubTab === 'chatbots' ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {filteredChatbots.length === 0 ? (
-                                            <div className={`col-span-full py-20 text-center border-2 border-dashed rounded-[32px] ${isDarkTheme ? 'border-slate-800 bg-slate-900/30' : 'border-slate-200 bg-slate-50/50'}`}>
-                                                <Bot className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                                                <h3 className={`font-bold text-lg ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>Chưa có AI Chatbot nào</h3>
-                                                <p className="text-slate-500 mt-2 text-sm">Nhấn "Tạo AI Agent" để bắt đầu.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-6">
+                            <div className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 lg:p-6 rounded-[24px] border mb-6 gap-6 ${isDarkTheme ? 'bg-slate-800/30 border-slate-800' : 'bg-slate-50/50 border-slate-100'}`}>
+                                <div className="flex items-center gap-3">
+                                    {viewModeChat === 'chatbots' && (
+                                        <button
+                                            onClick={() => {
+                                                if (activeSubTab !== 'chatbots') {
+                                                    handleSetSubTab('chatbots');
+                                                } else if (singleGroupMode && onClose) {
+                                                    onClose();
+                                                } else {
+                                                    setViewModeChat('categories');
+                                                    setSelectedCategoryId(null);
+                                                }
+                                            }}
+                                            className={`p-2.5 rounded-xl transition-colors mr-1 shadow-sm border ${isDarkTheme ? 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700' : 'bg-white text-slate-900 border-slate-100 hover:bg-slate-100'}`}
+                                        >
+                                            <ArrowLeft className="w-5 h-5" />
+                                        </button>
+                                    )}
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-1">
+                                            <h3 className={`text-base lg:text-lg font-bold ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`}>
+                                                {viewModeChat === 'categories' ? 'Danh sách Nhóm' : `Quản lý: ${categories.find(c => String(c.id) === String(selectedCategoryId))?.name || 'Nhóm'}`}
+                                            </h3>
+                                            <div className={`hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border ${isDarkTheme ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-white text-slate-400 border-slate-100'}`}>
+                                                {viewModeChat === 'categories'
+                                                    ? `Tổng cộng: ${categories.length.toLocaleString()}`
+                                                    : activeSubTab === 'chatbots'
+                                                        ? `Chatbots: ${filteredChatbots.length.toLocaleString()}`
+                                                        : (activeSubTab || 'chatbots').toUpperCase()}
                                             </div>
-                                        ) : filteredChatbots.map(c => (
-                                            <div key={c.id} className={`group p-6 rounded-[32px] border transition-all flex flex-col justify-between gap-6 relative overflow-hidden ${isDarkTheme ? 'bg-slate-900 border-slate-800 hover:border-emerald-500/30 shadow-inner shadow-slate-950/20' : 'bg-white border-slate-100 shadow-sm hover:shadow-lg hover:border-emerald-200/50'}`}>
-                                                <div className="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+                                        </div>
+                                        <p className={`text-[10px] lg:text-xs font-medium tracking-tight ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
+                                            {viewModeChat === 'categories'
+                                                ? 'Quản lý các nhóm AI của bạn.'
+                                                : (activeSubTab === 'chatbots' ? 'Danh sách các chatbot AI thuộc nhóm này.' : activeSubTab === 'users' ? 'Quản lý toàn bộ thành viên trong tổ chức này.' : `Quản lý ${activeSubTab === 'logs' ? 'nhật ký' : 'cài đặt'} của nhóm.`)}
+                                        </p>
+                                    </div>
+                                </div>
+
+
+
+                                <div className="flex flex-wrap items-center gap-2 sm:gap-3 ml-auto">
+                                    {viewModeChat === 'categories' && !singleGroupMode ? (
+                                        <button
+                                            onClick={() => setIsCreateCategoryModalOpen(true)}
+                                            className={`h-10 px-5 rounded-xl text-[10px] lg:text-xs font-bold transition-all flex items-center gap-2 shadow-sm w-full sm:w-auto justify-center border ${isDarkTheme ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700 hover:border-slate-600' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300'}`}
+                                        >
+                                            <FolderPlus className="w-4 h-4 text-slate-400" />
+                                            Tạo Group
+                                        </button>
+                                    ) : (
+                                        <div className="flex items-center gap-2 lg:gap-3">
+                                            {/* Simplified Actions per USER request */}
+                                            <button
+                                                onClick={() => {
+                                                    const cat = activeCategory
+                                                        || selectedCategoryProp
+                                                        || { id: selectedCategoryId || '', name: '', description: '', slug: '' };
+                                                    handleEditCategory(cat);
+                                                }}
+                                                className={`h-10 px-4 rounded-xl text-[10px] lg:text-xs font-bold transition-all flex items-center justify-center gap-2 border shadow-sm ${isDarkTheme ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+                                            >
+                                                <Settings className="w-4 h-4 text-slate-400" />
+                                                <span>Quản trị Group</span>
+                                            </button>
+
+                                            {/* View AI Space button */}
+                                            {selectedCategoryId && (
+                                                <a
+                                                    href={`/#/ai-space/${selectedCategoryId}`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className={`h-10 px-4 rounded-xl text-[10px] lg:text-xs font-bold transition-all flex items-center justify-center gap-2 border shadow-sm ${isDarkTheme ? 'bg-indigo-600/20 text-indigo-300 border-indigo-500/30 hover:bg-indigo-600/30 hover:border-indigo-400/50' : 'bg-indigo-50 text-indigo-600 border-indigo-100 hover:bg-indigo-100 hover:border-indigo-200'}`}
+                                                    title={`Mở AI Space: ${categories.find(c => String(c.id) === String(selectedCategoryId))?.name || ''}`}
+                                                >
+                                                    <ExternalLink className="w-3.5 h-3.5" />
+                                                    <span>Xem AI Space</span>
+                                                </a>
+                                            )}
+
+                                            {/* Primary Tabs Action */}
+                                            {activeSubTab === 'chatbots' && (
+                                                <button
+                                                    onClick={() => setIsCreateBotModalOpen(true)}
+                                                    className={`h-10 px-5 rounded-xl text-[10px] lg:text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm border ${isDarkTheme ? 'bg-brand text-white border-brand/20 hover:bg-brand-dark' : 'bg-brand text-white border-brand/10 hover:shadow-lg'}`}
+                                                >
+                                                    <Plus className="w-4 h-4" />
+                                                    Tạo AI Agent
+                                                </button>
+                                            )}
+
+                                            {activeSubTab === 'users' && (
+                                                <button
+                                                    onClick={() => {
+                                                        // Trigger Add User modal in OrgUserManager
+                                                        const btn = document.getElementById('org-user-add-btn');
+                                                        if (btn) btn.click();
+                                                    }}
+                                                    className={`h-10 px-5 rounded-xl text-[10px] lg:text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm border ${isDarkTheme ? 'bg-brand text-white border-brand/20 hover:bg-brand-dark' : 'bg-brand text-white border-brand/10 hover:shadow-lg'}`}
+                                                >
+                                                    <Plus className="w-4 h-4" />
+                                                    Thêm User Tổ chức
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {viewModeChat === 'categories' ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {loading ? (
+                                        [1, 2, 3].map(i => <div key={i} className={`h-32 rounded-[24px] animate-pulse ${isDarkTheme ? 'bg-slate-800' : 'bg-slate-50'}`} />)
+                                    ) : categories.length === 0 ? (
+                                        <div className={`col-span-full py-20 text-center border-2 border-dashed rounded-[32px] ${isDarkTheme ? 'border-slate-800 bg-slate-900/30' : 'border-slate-200 bg-slate-50/50'}`}>
+                                            <Building className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                                            <h3 className={`font-bold text-lg ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>Chưa có nhóm nào</h3>
+                                            <p className="text-slate-500 mt-2 text-sm">Vui lòng tạo nhóm để quản lý các chatbot.</p>
+                                        </div>
+                                    ) : categories.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || (c.description && c.description.toLowerCase().includes(searchTerm.toLowerCase()))).map(c => (
+                                        <div
+                                            key={c.id}
+                                            onClick={() => {
+                                                setSelectedCategoryId(c.id);
+                                                setViewModeChat('chatbots');
+                                            }}
+                                            className={`group p-6 rounded-[24px] border transition-all duration-500 cursor-pointer relative overflow-hidden ${String(selectedCategoryId) === String(c.id)
+                                                ? (isDarkTheme ? 'bg-emerald-500/10 border-emerald-500/50 shadow-md shadow-emerald-500/10' : 'bg-emerald-50/50 border-emerald-400 shadow-md shadow-emerald-500/5')
+                                                : (isDarkTheme ? 'bg-slate-900 border-slate-800 hover:border-brand/20' : 'bg-white border-slate-100 shadow-sm hover:shadow-lg hover:border-brand/20')
+                                                }`}
+                                        >
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-all duration-500" style={{ background: `linear-gradient(135deg, ${c.brand_color || '#ffa900'}, ${c.brand_color ? c.brand_color + 'dd' : '#ffc107'})`, boxShadow: `0 4px 12px -3px ${c.brand_color ? c.brand_color + '44' : 'rgba(0,0,0,0.1)'}` }}>
+                                                        <Building className="w-6 h-6" />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className={`text-base font-bold leading-tight ${String(selectedCategoryId) === String(c.id) ? 'text-brand' : (isDarkTheme ? 'text-slate-200' : 'text-slate-800')}`}>{c.name}</h4>
+                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${String(selectedCategoryId) === String(c.id) ? (isDarkTheme ? 'bg-brand/20 text-brand' : 'bg-brand/10 text-brand') : (isDarkTheme ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-500')}`}>{(c.chatbot_count || 0).toLocaleString()} Chatbots</span>
+                                                    </div>
+                                                </div>
+                                                {String(selectedCategoryId) === String(c.id) && (
+                                                    <div className="px-2 py-0.5 bg-brand text-white text-[8px] font-black uppercase rounded shadow-sm animate-pulse">
+                                                        Active
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <p className={`text-xs font-medium leading-relaxed mb-6 line-clamp-2 ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
+                                                {c.description || 'Chưa có mô tả cho nhóm này.'}
+                                            </p>
+
+                                            <div className="flex gap-2">
+                                                <button
+                                                    className={`flex-1 border text-[10px] font-bold uppercase tracking-widest py-3 rounded-xl transition-all flex items-center justify-center gap-2 ${isDarkTheme ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
+                                                >
+                                                    <Shield className={`w-4 h-4 ${isDarkTheme ? 'text-slate-500' : 'text-slate-400'}`} /> XEM CHI TIẾT
+                                                </button>
+                                            </div>
+
+                                            {/* Quick Actions Overlay for Admin */}
+                                            {(orgUser?.role === 'admin' || orgUser?.role === 'assistant') && (
+                                                <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button
-                                                        onClick={(e) => { e.stopPropagation(); handleEditBot(c); }}
-                                                        className={`p-2 rounded-full shadow-sm border transition-all ${isDarkTheme ? 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100 hover:text-slate-600'}`}
-                                                        title="Chỉnh sửa Chatbot"
+                                                        onClick={(e) => { e.stopPropagation(); handleEditCategory(c); }}
+                                                        className={`p-2 rounded-full transition-colors ${isDarkTheme ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+                                                        title="Chỉnh sửa nhóm"
                                                     >
                                                         <Edit2 className="w-4 h-4" />
                                                     </button>
-                                                    <button onClick={() => handleDeleteChatbot(c.id, c.name)} className={`p-2 rounded-full shadow-sm border transition-all ${isDarkTheme ? 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100 hover:text-slate-600'}`} title="Xóa Chatbot">
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleDeleteCategory(c.id, c.name, e); }}
+                                                        className={`p-2 rounded-full transition-colors ${isDarkTheme ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+                                                        title="Xóa nhóm"
+                                                    >
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
+                                                    <ChevronRight className="w-5 h-5 text-brand" />
                                                 </div>
-                                                <div className={`absolute top-0 right-0 p-8 opacity-[0.03] transition-transform group-hover:scale-125 ${isDarkTheme ? 'text-brand' : 'text-emerald-600'}`}><img src="/imgs/ICON.png" className="w-32 h-32 object-contain grayscale brightness-0" alt="" /></div>
-
-                                                <div className="flex justify-between items-start relative z-10">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="relative w-12 h-12 shrink-0 transition-transform duration-500 group-hover:scale-110">
-                                                            <img src="/imgs/ICON.png" className="w-full h-full object-contain" alt="" />
-                                                            {activePropertyId === c.id && (
-                                                                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-[3px] border-white rounded-full shadow-md z-30 flex items-center justify-center">
-                                                                    <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <div className="min-w-0">
-                                                            <h4 className={`text-base font-bold leading-tight truncate pr-2 ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`} title={c.name}>{c.name}</h4>
-                                                            <p className={`text-[10px] mt-1 pr-2 truncate ${isDarkTheme ? 'text-slate-500' : 'text-slate-400'}`}>{c.description || 'Chưa có mô tả'}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight ${activePropertyId === c.id || c.ai_enabled ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : (isDarkTheme ? 'bg-slate-800 text-slate-500 border border-slate-700' : 'bg-slate-50 text-slate-400 border border-slate-100')}`}>
-                                                        {activePropertyId === c.id ? 'Active' : c.ai_enabled ? 'Active' : 'Off'}
-                                                    </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    {activeSubTab === 'chatbots' ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {filteredChatbots.length === 0 ? (
+                                                <div className={`col-span-full py-20 text-center border-2 border-dashed rounded-[32px] ${isDarkTheme ? 'border-slate-800 bg-slate-900/30' : 'border-slate-200 bg-slate-50/50'}`}>
+                                                    <Bot className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                                                    <h3 className={`font-bold text-lg ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>Chưa có AI Chatbot nào</h3>
+                                                    <p className="text-slate-500 mt-2 text-sm">Nhấn "Tạo AI Agent" để bắt đầu.</p>
                                                 </div>
-
-                                                <div className="space-y-4 relative z-10">
-                                                    <div style={{ backgroundColor: isDarkTheme ? '#1E293B' : 'var(--brand-surface)', borderColor: isDarkTheme ? '#334155' : 'var(--brand-border)' }} className="flex items-center justify-between p-3 rounded-2xl border transition-colors">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Tỉ lệ</span>
-
-                                                            <span className={`text-sm font-black ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>{(c.stats?.docs_count || 0).toLocaleString()} <span className="text-[10px] font-medium text-slate-500">docs</span></span>
-                                                        </div>
-                                                        <div className={`h-8 w-px ${isDarkTheme ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
-                                                        <div className="flex flex-col items-end">
-                                                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Cuộc trò chuyện</span>
-                                                            <span className={`text-sm font-black ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>{(c.stats?.queries_count || 0).toLocaleString()} <span className="text-[10px] font-medium text-slate-500">convos</span></span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex gap-2">
+                                            ) : filteredChatbots.map(c => (
+                                                <div key={c.id} className={`group p-6 rounded-[32px] border transition-all flex flex-col justify-between gap-6 relative overflow-hidden ${isDarkTheme ? 'bg-slate-900 border-slate-800 hover:border-emerald-500/30 shadow-inner shadow-slate-950/20' : 'bg-white border-slate-100 shadow-sm hover:shadow-lg hover:border-emerald-200/50'}`}>
+                                                    <div className="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
                                                         <button
-                                                            onClick={() => { setSelectedProperty(c.id); setViewMode('doc'); }}
-                                                            className={`flex-1 border text-[10px] font-bold uppercase tracking-widest py-3 rounded-xl transition-all flex items-center justify-center gap-2 ${isDarkTheme ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
+                                                            onClick={(e) => { e.stopPropagation(); handleEditBot(c); }}
+                                                            className={`p-2 rounded-full shadow-sm border transition-all ${isDarkTheme ? 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100 hover:text-slate-600'}`}
+                                                            title="Chỉnh sửa Chatbot"
                                                         >
-                                                            <Bot className={`w-4 h-4 ${isDarkTheme ? 'text-slate-500' : 'text-slate-400'}`} /> TRAINING AI
+                                                            <Edit2 className="w-4 h-4" />
+                                                        </button>
+                                                        <button onClick={() => handleDeleteChatbot(c.id, c.name)} className={`p-2 rounded-full shadow-sm border transition-all ${isDarkTheme ? 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100 hover:text-slate-600'}`} title="Xóa Chatbot">
+                                                            <Trash2 className="w-4 h-4" />
                                                         </button>
                                                     </div>
+                                                    <div className={`absolute top-0 right-0 p-8 opacity-[0.03] transition-transform group-hover:scale-125 ${isDarkTheme ? 'text-brand' : 'text-emerald-600'}`}><img src="/imgs/ICON.png" className="w-32 h-32 object-contain grayscale brightness-0" alt="" /></div>
+
+                                                    <div className="flex justify-between items-start relative z-10">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="relative w-12 h-12 shrink-0 transition-transform duration-500 group-hover:scale-110">
+                                                                <img src="/imgs/ICON.png" className="w-full h-full object-contain" alt="" />
+                                                                {activePropertyId === c.id && (
+                                                                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-[3px] border-white rounded-full shadow-md z-30 flex items-center justify-center">
+                                                                        <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <h4 className={`text-base font-bold leading-tight truncate pr-2 ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`} title={c.name}>{c.name}</h4>
+                                                                <p className={`text-[10px] mt-1 pr-2 truncate ${isDarkTheme ? 'text-slate-500' : 'text-slate-400'}`}>{c.description || 'Chưa có mô tả'}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight ${activePropertyId === c.id || c.ai_enabled ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : (isDarkTheme ? 'bg-slate-800 text-slate-500 border border-slate-700' : 'bg-slate-50 text-slate-400 border border-slate-100')}`}>
+                                                            {activePropertyId === c.id ? 'Active' : c.ai_enabled ? 'Active' : 'Off'}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-4 relative z-10">
+                                                        <div style={{ backgroundColor: isDarkTheme ? '#1E293B' : 'var(--brand-surface)', borderColor: isDarkTheme ? '#334155' : 'var(--brand-border)' }} className="flex items-center justify-between p-3 rounded-2xl border transition-colors">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Tỷ lệ</span>
+
+                                                                <span className={`text-sm font-black ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>{(c.stats?.docs_count || 0).toLocaleString()} <span className="text-[10px] font-medium text-slate-500">docs</span></span>
+                                                            </div>
+                                                            <div className={`h-8 w-px ${isDarkTheme ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
+                                                            <div className="flex flex-col items-end">
+                                                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Cuộc trò chuyện</span>
+                                                                <span className={`text-sm font-black ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>{(c.stats?.queries_count || 0).toLocaleString()} <span className="text-[10px] font-medium text-slate-500">convos</span></span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => { setSelectedProperty(c.id); setViewMode('doc'); }}
+                                                                className={`flex-1 border text-[10px] font-bold uppercase tracking-widest py-3 rounded-xl transition-all flex items-center justify-center gap-2 ${isDarkTheme ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
+                                                            >
+                                                                <Bot className={`w-4 h-4 ${isDarkTheme ? 'text-slate-500' : 'text-slate-400'}`} /> TRAINING AI
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : activeSubTab === 'users' ? (
-                                    <div className={`p-4 rounded-[24px] border ${isDarkTheme ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-100'}`}>
-                                        <OrgUserManager
-                                            isDarkTheme={isDarkTheme}
-                                            hideHeader={true}
-                                            categoryId={selectedCategoryId}
-                                        />
-                                    </div>
-                                ) : activeSubTab === 'logs' ? (
-                                    <div className={`p-4 rounded-[24px] border ${isDarkTheme ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-100'}`}>
-                                        <AdminLogsTab categoryId={selectedCategoryId} />
-                                    </div>
-                                ) : activeSubTab === 'feedback' ? (
-                                    <div className={`p-4 rounded-[24px] border ${isDarkTheme ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-100'}`}>
-                                        <FeedbackAdminPanel />
-                                    </div>
-                                ) : (
-                                    <div className={`p-12 text-center border-2 border-dashed rounded-[32px] ${isDarkTheme ? 'border-slate-800 bg-slate-900/30' : 'bg-slate-200 bg-slate-50/50'}`}>
-                                        <Shield className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                                        <h3 className={`font-bold text-lg ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>Cài đặt Nhóm</h3>
-                                        <p className="text-slate-500 mt-2 mb-6 text-sm">Quản lý thông tin cơ bản và cấu hình của nhóm AI này.</p>
-                                        <button
-                                            onClick={() => {
-                                                const cat = categories.find(c => String(c.id) === String(selectedCategoryId));
-                                                if (cat) handleEditCategory(cat);
-                                            }}
-                                            className="px-6 py-3 bg-brand text-white rounded-xl font-bold uppercase tracking-widest text-[10px] hover:shadow-lg transition-all"
-                                        >
-                                            Mở Cấu hình Nhóm
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
+                                            ))}
+                                        </div>
+                                    ) : activeSubTab === 'users' ? (
+                                        <div className={`p-4 rounded-[24px] border ${isDarkTheme ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-100'}`}>
+                                            <OrgUserManager
+                                                isDarkTheme={isDarkTheme}
+                                                hideHeader={true}
+                                                categoryId={selectedCategoryId}
+                                            />
+                                        </div>
+                                    ) : activeSubTab === 'logs' ? (
+                                        <div className={`p-4 rounded-[24px] border ${isDarkTheme ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-100'}`}>
+                                            <AdminLogsTab categoryId={selectedCategoryId} />
+                                        </div>
+                                    ) : activeSubTab === 'feedback' ? (
+                                        <div className={`p-4 rounded-[24px] border ${isDarkTheme ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-100'}`}>
+                                            <FeedbackAdminPanel />
+                                        </div>
+                                    ) : (
+                                        <div className={`p-12 text-center border-2 border-dashed rounded-[32px] ${isDarkTheme ? 'border-slate-800 bg-slate-900/30' : 'bg-slate-200 bg-slate-50/50'}`}>
+                                            <Shield className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                                            <h3 className={`font-bold text-lg ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>Cài đặt Nhóm</h3>
+                                            <p className="text-slate-500 mt-2 mb-6 text-sm">Quản lý thông tin cơ bản và cấu hình của nhóm AI này.</p>
+                                            <button
+                                                onClick={() => {
+                                                    const cat = categories.find(c => String(c.id) === String(selectedCategoryId));
+                                                    if (cat) handleEditCategory(cat);
+                                                }}
+                                                className="px-6 py-3 bg-brand text-white rounded-xl font-bold uppercase tracking-widest text-[10px] hover:shadow-lg transition-all"
+                                            >
+                                                Mở Cấu hình Nhóm
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

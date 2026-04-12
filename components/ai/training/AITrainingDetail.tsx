@@ -605,7 +605,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                 </div>
                                 <div>
                                     <h3 className={`text-base lg:text-lg font-bold ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`}>Kho kiến thức AI</h3>
-                                    <p className="text-[9px] lg:text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">Sắp xếp thư tự ưu tiên kéo thả Folder</p>
+                                    <p className="text-[9px] lg:text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">Sắp xếp thứ tự ưu tiên kéo thả Folder</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 lg:pb-0 shrink-0">

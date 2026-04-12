@@ -256,7 +256,7 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                 <div className="p-2 bg-rose-50 text-rose-600 rounded-xl">
                                     <Activity className="w-5 h-5" />
                                 </div>
-                                <span className="text-xl font-black text-slate-800 tracking-tight">V? Tỉ lệ tho�t (Bounce Rate)</span>
+                                <span className="text-xl font-black text-slate-800 tracking-tight">Về Tỉ lệ thoát (Bounce Rate)</span>
                             </div>
                         }
                         size="xl"
@@ -267,10 +267,10 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                     <div className="p-2 bg-rose-600 text-white rounded-xl">
                                         <BookOpen className="w-5 h-5" />
                                     </div>
-                                    Bounce Rate l� g�?
+                                    Bounce Rate là gì?
                                 </h4>
                                 <p className="text-sm text-slate-500 leading-relaxed font-medium">
-                                    Bounce rate hay Tỉ lệ tho�t l� ph?n tram s? lu?t truy c?p trang web ch? xem duy nh?t m?t trang v� r?i di ngay l?p t?c m� kh�ng c� th�m tuong t�c n�o kh�c (nhu nh?n v�o link ho?c xem trang th? hai). N� do lu?ng m?c d? tuong t�c v� t�nh h?p d?n c?a trang d�ch.
+                                    Bounce rate hay Tỉ lệ thoát là phần trăm số lượt truy cập trang web chỉ xem duy nhất một trang và rời đi ngay lập tức mà không có thêm tương tác nào khác (như nhấn vào link hoặc xem trang thứ hai). Nó đo lường mức độ tương tác và tính hấp dẫn của trang đích.
                                 </p>
                             </div>
 
@@ -280,13 +280,13 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                         <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
                                             <TrendingUp className="w-4 h-4" />
                                         </div>
-                                        Tỉ lệ bao nhi�u l� t?t?
+                                        Tỉ lệ bao nhiêu là tốt?
                                     </h5>
                                     <p className="text-xs text-slate-500 leading-relaxed font-medium mb-4">
-                                        Kh�ng c� con s? "chu?n" cho mới linh v?c. Tỉ lệ tho�t ph? thu?c r?t l?n v�o lo?i trang web v� m?c d�ch c?a trang.
+                                        Không có con số "chuẩn" cho mỗi lĩnh vực. Tỉ lệ thoát phụ thuộc rất lớn vào loại trang web và mục đích của trang.
                                     </p>
                                     <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl italic text-[11px] text-orange-800 font-bold">
-                                        "V� d?: M?t trang blog tr? l?i d�ng c�u h?i ngu?i d�ng t�m ki?m c� th? c� t? l? tho�t 90%+ nhung v?n l� trở lưu?ng t?t."
+                                        "Ví dụ: Một trang blog trả lời đúng câu hỏi người dùng tìm kiếm có thể có tỷ lệ thoát 90%+ nhưng vẫn là chất lượng tốt."
                                     </div>
                                 </div>
 
@@ -295,13 +295,13 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                         <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
                                             <Table className="w-4 h-4" />
                                         </div>
-                                        Trung b�nh theo ng�nh
+                                        Trung bình theo ngành
                                     </h5>
                                     <div className="space-y-3">
                                         {[
-                                            { label: 'B�n l? / TM�T', range: '20% - 40%', color: 'text-emerald-500' },
-                                            { label: 'D?ch v?', range: '10% - 30%', color: 'text-emerald-500' },
-                                            { label: 'T?o Khách hàng ti?m nang', range: '30% - 50%', color: 'text-blue-500' },
+                                            { label: 'Bán lẻ / TMĐT', range: '20% - 40%', color: 'text-emerald-500' },
+                                            { label: 'Dịch vụ', range: '10% - 30%', color: 'text-emerald-500' },
+                                            { label: 'Tạo Khách hàng tiềm năng', range: '30% - 50%', color: 'text-blue-500' },
                                             { label: 'Nội dung (Content site)', range: '40% - 60%', color: 'text-amber-600' },
                                             { label: 'Blog / Landing Page', range: '70% - 90%', color: 'text-rose-500' }
                                         ].map((item, i) => (
@@ -326,7 +326,7 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                     </div>
                                     Traffic Trend Analytics
                                 </h3>
-                                <p className="text-[10px] text-slate-500 mt-1.5 font-semibold ml-11">Th?ng k� luu lu?ng truy c?p theo Thời gian</p>
+                                <p className="text-[10px] text-slate-500 mt-1.5 font-semibold ml-11">Thống kê lưu lượng truy cập theo Thời gian</p>
                             </div>
                         </div>
                         <div className="min-h-[350px] bg-white rounded-2xl p-4 border border-slate-100">
@@ -337,7 +337,7 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                     <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
                                         <BarChart2 className="w-8 h-8 opacity-20" />
                                     </div>
-                                    <p className="font-bold">Chua c� d? li?u bi?u d? cho kho?ng Thời gian n�y</p>
+                                    <p className="font-bold">Chưa có dữ liệu biểu đồ cho khoảng Thời gian này</p>
                                 </div>
                             )}
                         </div>

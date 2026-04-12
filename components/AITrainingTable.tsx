@@ -131,7 +131,7 @@ const MemberRow = React.memo(({ member, isLast, isSelected, onToggleSelect, hand
             <div className={`hidden lg:block text-right font-mono text-[11px] ${isDarkTheme ? 'text-slate-500' : 'text-slate-400'}`}>
                 {formatSize(member.content_size || 0)}
             </div>
-            <div className="hidden lg:flex justify-start pl-4">
+            <div className="hidden lg:flex justify-center">
                 {member.status === 'pending' ? (
                     <div className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></div>
@@ -317,7 +317,7 @@ const TrainingRow = React.memo(({ row, index, isExpanded, isSelected, dragOverIn
                     </div>
                 </div>
                 <div className={`hidden lg:block text-right font-mono text-[12px] font-medium ${isDarkTheme ? 'text-slate-500' : 'text-slate-500'}`}>{formatSize(row.totalSize || row.content_size)}</div>
-                <div className="hidden lg:flex justify-start pl-4">
+                <div className="hidden lg:flex justify-center">
                     {row.source_type !== 'folder' && (
                         row.status === 'pending' ? (
                             <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></div><span className="text-[12px] font-medium text-amber-600">Waiting</span></div>
@@ -470,7 +470,7 @@ const AITrainingTable: React.FC<AITrainingTableProps> = ({
                 <div className="text-center">#</div>
                 <div className="pl-0 lg:pl-2">Tên dữ liệu</div>
                 <div className="hidden lg:block text-right">Kích cỡ</div>
-                <div className="hidden lg:block text-left pl-4">Trạng thái</div>
+                <div className="hidden lg:block text-center">Trạng thái</div>
                 <div className="hidden lg:block text-center">Cập nhật</div>
                 <div className="hidden lg:block text-center">Active</div>
                 {showGlobal && <div className="hidden lg:block text-center">Global</div>}

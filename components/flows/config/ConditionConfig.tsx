@@ -29,9 +29,9 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
         : (config.linkTarget ? [config.linkTarget] : []);
 
     const unitOptions = [
-        { value: 'hours', label: 'Gi?' },
-        { value: 'days', label: 'Ng�y' },
-        { value: 'weeks', label: 'Tu?n' },
+        { value: 'hours', label: 'Giờ' },
+        { value: 'days', label: 'Ngày' },
+        { value: 'weeks', label: 'Tuần' },
     ];
 
     useEffect(() => {
@@ -191,11 +191,11 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
 
     const getActionDescription = () => {
         switch (config.conditionType) {
-            case 'opened': return 'm? mail';
+            case 'opened': return 'mở mail';
             case 'clicked': return 'click link';
-            case 'delivered': return 'nh?n du?c mail/tin';
+            case 'delivered': return 'nhận được mail/tin';
             case 'unsubscribed': return 'Hủy đăng ký';
-            default: return 'tuong t�c';
+            default: return 'tương tác';
         }
     };
 
@@ -204,15 +204,15 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
             {!parentEmailStep ? (
                 <div className="p-8 bg-rose-50 border-2 border-dashed border-rose-200 rounded-[32px] text-center space-y-4">
                     <Unlink className="w-8 h-8 mx-auto text-rose-500" />
-                    <p className="text-sm font-black text-rose-700 uppercase">Thi?u ngu?n Email/ZNS</p>
-                    <p className="text-xs text-rose-500">Vui lòng n?i bu?c n�y SAUĐã mởt bu?c "G?i Email" ho?c "Zalo ZNS".</p>
+                    <p className="text-sm font-black text-rose-700 uppercase">Thiếu nguồn Email/ZNS</p>
+                    <p className="text-xs text-rose-500">Vui lòng nối bước này SAU một bước "Gửi Email" hoặc "Zalo ZNS".</p>
                 </div>
             ) : (
                 <>
                     <div className="flex items-center justify-between mb-2 px-1">
                         <div className="flex items-center gap-2">
                             <GitMerge className="w-4 h-4 text-indigo-500" />
-                            <span className="text-[10px] font-black uppercase text-indigo-500 tracking-widest">Ngu?n theo d�i:</span>
+                            <span className="text-[10px] font-black uppercase text-indigo-500 tracking-widest">Nguồn theo dõi:</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg font-bold text-[10px] border border-indigo-100 shadow-sm">
                             <Link className="w-3 h-3" />
@@ -221,21 +221,21 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
                     </div>
 
                     <Radio
-                        label="H�nh d?ng ki?m tra:"
+                        label="Hành động kiểm tra:"
                         options={parentEmailStep?.type === 'zalo_zns' ? [
-                            { id: 'zns_delivered', label: '�� nh?n (G?i th�nh c�ng)', icon: CheckSquare, desc: 'Tin nh?n d�đã gửi th�nh c�ng' },
-                            { id: 'zns_clicked', label: 'Kh�ch Click Link', icon: MousePointer2, desc: 'Theo d�i chuy?n d?i link ZNS' },
-                            { id: 'zns_replied', label: 'Kh�ch Phản hồi', icon: MessageSquare, desc: 'Kh�ch chat l?i v?i OA' },
-                            { id: 'zns_failed', label: 'G?i th?t b?i', icon: AlertTriangle, desc: 'Gửi lại (H?t quota, sai s?...)' },
+                            { id: 'zns_delivered', label: 'Đã nhận (Gửi thành công)', icon: CheckSquare, desc: 'Tin nhắn đã gửi thành công' },
+                            { id: 'zns_clicked', label: 'Khách Click Link', icon: MousePointer2, desc: 'Theo dõi chuyển đổi link ZNS' },
+                            { id: 'zns_replied', label: 'Khách Phản hồi', icon: MessageSquare, desc: 'Khách chat lại với OA' },
+                            { id: 'zns_failed', label: 'Gửi thất bại', icon: AlertTriangle, desc: 'Gửi lại (Hết quota, sai số...)' },
                         ] : [
-                            { id: 'delivered', label: '�� nh?n (Delivered)', icon: MailCheck, desc: 'Nữu KH�NG -> Chuy?n nh�nh ELSE' },
-                            { id: 'opened', label: 'Kh�chĐã mở Email', icon: MailOpen, desc: 'Theo d�i t? l? d?c' },
-                            { id: 'clicked', label: 'Kh�ch Click Link', icon: MousePointer2, desc: 'Theo d�i chuy?n d?i' },
+                            { id: 'delivered', label: 'Đã nhận (Delivered)', icon: MailCheck, desc: 'Nếu KHÔNG -> Chuyển nhánh ELSE' },
+                            { id: 'opened', label: 'Khách Đã mở Email', icon: MailOpen, desc: 'Theo dõi tỷ lệ đọc' },
+                            { id: 'clicked', label: 'Khách Click Link', icon: MousePointer2, desc: 'Theo dõi chuyển đổi' },
                             ...((parentEmailStep?.type === 'trigger' && parentEmailStep?.config?.type === 'campaign') ? [
-                                { id: 'received_reminder', label: '�� nh?n Reminder', icon: Bell, desc: '�� nh?n Email Nh?c nh?' },
-                                { id: 'opened_reminder', label: 'Đã mở Reminder', icon: MailOpen, desc: 'Đã mở Email Nh?c nh?' }
+                                { id: 'received_reminder', label: 'Đã nhận Reminder', icon: Bell, desc: 'Đã nhận Email Nhắc nhở' },
+                                { id: 'opened_reminder', label: 'Đã mở Reminder', icon: MailOpen, desc: 'Đã mở Email Nhắc nhở' }
                             ] : []),
-                            { id: 'unsubscribed', label: 'Hủy đăng ký', icon: UserMinus, desc: 'Ph�n lo?i kh�ch r?i di' },
+                            { id: 'unsubscribed', label: 'Hủy đăng ký', icon: UserMinus, desc: 'Phân loại khách rời đi' },
                         ]}
                         value={config.conditionType || (parentEmailStep?.type === 'zalo_zns' ? 'zns_delivered' : 'opened')}
                         onChange={handleTypeChange}
@@ -245,24 +245,24 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
                     {/* Reminder ID Input */}
                     {['received_reminder', 'opened_reminder'].includes(config.conditionType) && (
                         <div className="p-5 bg-amber-50 border border-amber-200 rounded-[28px] space-y-2 mt-4">
-                            <label className="text-[10px] font-black uppercase text-amber-700 tracking-widest">ID Chi?n d?ch Reminder</label>
+                            <label className="text-[10px] font-black uppercase text-amber-700 tracking-widest">ID Chiến dịch Reminder</label>
                             <Input
-                                placeholder="Nh?p ID Reminder (VD: 1, 2...)"
+                                placeholder="Nhập ID Reminder (VD: 1, 2...)"
                                 value={config.reminderId || ''}
                                 onChange={(e) => onChange({ ...config, reminderId: e.target.value })}
                                 disabled={disabled}
                             />
-                            <p className="text-[10px] text-amber-600 italic">ID n�y n?m trong c�i d?t Reminder c?a Chi?n d?ch.</p>
+                            <p className="text-[10px] text-amber-600 italic">ID này nằm trong cài đặt Reminder của Chiến dịch.</p>
                         </div>
                     )}
 
                     <div className="p-5 bg-slate-50 border border-slate-200 rounded-[28px] space-y-4">
                         <div className="flex items-center gap-2 mb-2">
                             <Clock className="w-4 h-4 text-slate-500" />
-                            <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Th?i h?n ki?m tra (Timeout)</span>
+                            <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Thời hạn kiểm tra (Timeout)</span>
                         </div>
                         <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-                            Nữu sau Thời gian n�y kh�ch v?n chua {getActionDescription()}, h? th?ng s? dua kh�ch v�o nh�nh "ELSE".
+                            Nếu sau Thời gian này khách vẫn chưa {getActionDescription()}, hệ thống sẽ đưa khách vào nhánh "ELSE".
                         </p>
                         <div className="grid grid-cols-2 gap-3">
                             <Input
@@ -284,7 +284,7 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
                     {(config.conditionType === 'clicked' || config.conditionType === 'zns_clicked') && (
                         <div className="space-y-4 pt-4 animate-in fade-in slide-in-from-top-4 duration-500" ref={linkContainerRef}>
                             <div className="flex items-center justify-between px-1">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ch?n Link c?n theo d�i (OR Logic)</p>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chọn Link cần theo dõi (OR Logic)</p>
                                 {scanning && <RefreshCw className="w-3 h-3 animate-spin text-slate-400" />}
                             </div>
 
@@ -298,8 +298,8 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
                                     {/* Option for ANY Link using a Toggle Switch */}
                                     <div className={`p-4 rounded-2xl border-2 transition-all flex items-center justify-between ${selectedLinks.length === 0 ? 'border-indigo-500 bg-indigo-50/50 shadow-sm ring-4 ring-indigo-500/5' : 'border-slate-100 bg-slate-50/30'}`}>
                                         <div className="flex-1">
-                                            <p className="text-xs font-black text-slate-800">Theo d�i B?T K? Link n�o (Any)</p>
-                                            <p className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">H?p l? n?u kh�ch click v�o b?t c? link n�o c� trong n?i dung.</p>
+                                            <p className="text-xs font-black text-slate-800">Theo dõi BẤT KỲ Link nào (Any)</p>
+                                            <p className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">Hợp lệ nếu khách click vào bất cứ link nào có trong nội dung.</p>
                                         </div>
                                         <button
                                             onClick={() => {
@@ -325,7 +325,7 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
                                     {!disabled && selectedLinks.length === availableLinks.length && (
                                         <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 animate-in fade-in zoom-in duration-300">
                                             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                                            <p className="text-[10px] text-amber-700 font-bold leading-relaxed lowercase first-letter:uppercase">�ang ? ch? d? "B?t k? Link n�o". B? chọnĐã mởt link b?t k? n?u b?n ch? mu?n theo d�i danh sách c? th?.</p>
+                                            <p className="text-[10px] text-amber-700 font-bold leading-relaxed lowercase first-letter:uppercase">Đang ở chế độ "Bất kỳ Link nào". Bạn nên chọn một link bất kỳ nếu bạn chỉ muốn theo dõi danh sách cụ thể.</p>
                                         </div>
                                     )}
 
@@ -359,12 +359,12 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
                                 parentEmailStep.type === 'zalo_zns' ? (
                                     <div className="p-4 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-2xl text-xs font-bold flex items-center gap-2">
                                         <CheckSquare className="w-4 h-4" />
-                                        M?c dảnh theo d�i B?T K? LINK n�o trong tin ZNS (Do kh�ng th? qu�t trước n?i dung ZNS).
+                                        Mặc định theo dõi BẤT KỲ LINK nào trong tin ZNS (Do không thể quét trước nội dung ZNS).
                                     </div>
                                 ) : (
                                     <div className="p-4 bg-amber-50 text-amber-700 border border-amber-200 rounded-2xl text-xs font-bold flex items-center gap-2">
                                         <AlertTriangle className="w-4 h-4" />
-                                        Kh�ng t�m th?y Link n�o trong n?i dung trước d�.
+                                        Không tìm thấy Link nào trong nội dung trước đó.
                                     </div>
                                 )
                             )}

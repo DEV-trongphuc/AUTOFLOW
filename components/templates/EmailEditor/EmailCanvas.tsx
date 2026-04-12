@@ -420,22 +420,26 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
                                     >
                                         {dragOverId === 'root' && dropPosition && <div className="absolute inset-0 bg-amber-600/10 z-40 border-2 border-amber-600 border-dashed pointer-events-none rounded-xl"></div>}
                                         
-                                        <div className="relative mb-6">
-                                            <div className="absolute -inset-4 bg-amber-50 rounded-full animate-pulse"></div>
-                                            <div className="relative bg-white p-6 rounded-3xl shadow-xl shadow-amber-600/5 border border-amber-100">
-                                                <Layout className="w-12 h-12 text-amber-600" />
-                                            </div>
-                                            <div className="absolute -bottom-2 -right-2 bg-amber-600 text-white p-1.5 rounded-xl shadow-lg">
-                                                <Plus className="w-4 h-4 text-white" />
+                                        <div className="relative mb-8">
+                                            <div className="absolute -inset-10 bg-amber-50 rounded-full animate-pulse opacity-60"></div>
+                                            <div className="absolute -inset-6 bg-amber-100/50 rounded-full animate-pulse delay-75"></div>
+                                            <div className="relative bg-white p-8 rounded-[32px] shadow-2xl shadow-amber-600/10 border border-amber-100 flex items-center justify-center transform hover:scale-105 transition-transform duration-500">
+                                                <Layout className="w-16 h-16 text-amber-600" />
+                                                <div className="absolute -bottom-2 -right-2 bg-amber-600 text-white p-2.5 rounded-2xl shadow-xl ring-4 ring-white">
+                                                    <Plus className="w-5 h-5 font-black" />
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <h3 className="text-xl font-bold text-slate-800 mb-2">Bắt đầu thiết kế Email</h3>
-                                        <p className="text-sm text-slate-500 max-w-[280px] mb-8 font-medium">Kéo các khối nội dung từ thanh công cụ bên trái và thả vào đây.</p>
+                                        <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Thiết kế Email của bạn</h3>
+                                        <p className="text-sm text-slate-500 max-w-[320px] mb-10 font-medium leading-relaxed">
+                                            Bắt đầu bằng cách kéo các thành phần nội dung từ <span className="text-amber-600 font-bold underline decoration-dotted underline-offset-4">thanh công cụ bên trái</span> và thả vào vùng trung tâm này.
+                                        </p>
                                         
-                                        <div className="flex items-center gap-3 py-3 px-6 bg-slate-50 rounded-2xl border border-slate-200/50 animate-bounce">
-                                            <ArrowLeft className="w-4 h-4 text-amber-600" />
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Chọn khối từ bên trái</span>
+                                        <div className="group relative flex items-center gap-4 py-4 px-8 bg-white rounded-2xl border-2 border-dashed border-amber-200 shadow-sm transition-all hover:border-amber-400 hover:shadow-md cursor-default overflow-hidden">
+                                            <div className="absolute inset-0 bg-amber-50/30 -translate-x-full group-hover:translate-x-0 transition-transform duration-500"></div>
+                                            <ArrowLeft className="w-5 h-5 text-amber-600 relative z-10 animate-pulse" />
+                                            <span className="text-[11px] font-black uppercase tracking-widest text-amber-700 relative z-10">Kéo Item sang bên phải →</span>
                                         </div>
                                     </div>
                                 ) : (

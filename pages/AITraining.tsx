@@ -1668,7 +1668,7 @@ Lịch sử hoạt động:
 
     const addQuickAction = React.useCallback(() => {
         if (!newQuickAction.trim()) return;
-        if (settings.quick_actions.length >= 4) return toast.error('T?i da 4 câu h?i nhanh');
+        if (settings.quick_actions.length >= 4) return toast.error('Tối đa 4 câu hỏi nhanh');
         setSettings({
             ...settings,
             quick_actions: [...settings.quick_actions, newQuickAction.trim()]
@@ -1703,7 +1703,7 @@ Lịch sử hoạt động:
     ), [chatbots, searchTerm]);
 
     return (
-        <div className="pt-4 space-y-12 animate-in fade-in duration-500 pb-20 mx-auto">
+        <div className="animate-fade-in space-y-8 pb-20">
             {viewMode === 'grid' ? (
                 <AITrainingGrid
                     mainTab={mainTab}
@@ -1973,10 +1973,12 @@ Lịch sử hoạt động:
                             </button>
                         </div>
                         <div className="flex-1 overflow-hidden p-6 bg-slate-50">
-                            <OrgUserManager
-                                isDarkTheme={false}
-                                categoryId={selectedCategoryId || undefined}
-                            />
+                            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0 max-w-fit">
+                                <OrgUserManager
+                                    isDarkTheme={false}
+                                    categoryId={selectedCategoryId || undefined}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

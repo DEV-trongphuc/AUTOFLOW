@@ -66,16 +66,16 @@ const FastRepliesSettings: React.FC<FastRepliesSettingsProps> = ({ settings, set
                     </div>
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                            Nội dung ph?n h?i
+                            Nội dung phản hồi
                         </label>
                         <div className="flex gap-2">
                             <input
                                 className={`flex-1 h-11 px-4 border rounded-xl text-xs font-medium outline-none transition-all ${isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-200 placeholder:text-slate-600 focus:border-brand shadow-none' : 'bg-white border-slate-200 text-slate-700 placeholder:text-slate-300 focus:border-amber-600 focus:ring-4 focus:ring-amber-600/5'}`}
-                                placeholder="Ch�o b?n! M�nh c� th?..."
+                                placeholder="Chào bạn! Mình có thể..."
                                 value={newFastReply.reply}
                                 onChange={e => setNewFastReply({ ...newFastReply, reply: e.target.value })}
                             />
-                            <Button className="h-11 px-6 bg-gradient-to-r from-amber-600 to-amber-600 border-none text-white font-bold shadow-lg shadow-amber-600/20 hover:shadow-amber-600/40 transition-all" icon={Plus} onClick={addFastReply}>Th�m</Button>
+                            <Button className="h-11 px-6 bg-gradient-to-r from-amber-600 to-amber-600 border-none text-white font-bold shadow-lg shadow-amber-600/20 hover:shadow-amber-600/40 transition-all" icon={Plus} onClick={addFastReply}>Thêm</Button>
                         </div>
                     </div>
                 </div>
@@ -84,7 +84,7 @@ const FastRepliesSettings: React.FC<FastRepliesSettingsProps> = ({ settings, set
                 <div className={`flex items-start gap-2 px-3 py-2 rounded-lg border ${isDarkTheme ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
                     <div className="w-1 h-1 bg-slate-400 rounded-full mt-1.5 shrink-0" />
                     <p className={`text-[10px] leading-relaxed ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
-                        M?o: S? d?ng bi?n <span className={`font-mono font-bold px-1 rounded border ${isDarkTheme ? 'text-slate-200 bg-slate-800 border-slate-700' : 'text-slate-700 bg-white border-slate-200'}`}>{`{botName}`}</span> v� <span className={`font-mono font-bold px-1 rounded border ${isDarkTheme ? 'text-slate-200 bg-slate-800 border-slate-700' : 'text-slate-700 bg-white border-slate-200'}`}>{`{companyName}`}</span> d? h? th?ng t? d?ng di?n t�n Bot v� Còng ty c?a b?n v�o c�u tr? l?i.
+                        Mẹo: Sử dụng biến <span className={`font-mono font-bold px-1 rounded border ${isDarkTheme ? 'text-slate-200 bg-slate-800 border-slate-700' : 'text-slate-700 bg-white border-slate-200'}`}>{`{botName}`}</span> và <span className={`font-mono font-bold px-1 rounded border ${isDarkTheme ? 'text-slate-200 bg-slate-800 border-slate-700' : 'text-slate-700 bg-white border-slate-200'}`}>{`{companyName}`}</span> để hệ thống tự động điền tên Bot và Công ty của bạn vào câu trả lời.
                     </p>
                 </div>
             </div>
@@ -97,14 +97,14 @@ const FastRepliesSettings: React.FC<FastRepliesSettingsProps> = ({ settings, set
                             <div className="space-y-4 p-4">
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                                        T? kh�a (Keywords)
+                                        Từ khóa (Keywords)
                                     </label>
                                     <input
                                         type="text"
                                         className={`w-full border rounded-xl px-4 py-3 text-xs font-bold outline-none transition-all shadow-sm ${isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-200 focus:border-brand shadow-none' : 'bg-white border-slate-200 text-slate-700 focus:border-amber-600 focus:ring-4 focus:ring-amber-600/5'}`}
                                         value={fr.pattern}
                                         onChange={e => updateFastReply(idx, 'pattern', e.target.value)}
-                                        placeholder="ch�o, hi, hello..."
+                                        placeholder="chào, hi, hello..."
                                     />
                                     <div className="flex flex-wrap gap-1.5 mt-2 ml-1">
                                         {fr.pattern.split(',').map((kw: string, i: number) => kw.trim() ? (
@@ -117,20 +117,20 @@ const FastRepliesSettings: React.FC<FastRepliesSettingsProps> = ({ settings, set
 
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                                        Nội dung ph?n h?i
+                                        Nội dung phản hồi
                                     </label>
                                     <textarea
                                         className={`w-full border rounded-xl px-4 py-3 text-xs font-medium leading-relaxed outline-none transition-all shadow-sm min-h-[80px] resize-none ${isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-200 placeholder:text-slate-600 focus:border-brand shadow-none' : 'bg-white border-slate-200 text-slate-700 placeholder:text-slate-300 focus:border-amber-600 focus:ring-4 focus:ring-amber-600/5'}`}
                                         value={fr.reply}
                                         onChange={e => updateFastReply(idx, 'reply', e.target.value)}
-                                        placeholder="Nh?p n?i dung..."
+                                        placeholder="Nhập nội dung..."
                                     />
                                 </div>
 
                                 {/* Helper Note in Editing Mode */}
                                 <div className="ml-1">
                                     <p className="text-[10px] text-slate-400">
-                                        M?o: D�ng <span className="font-mono text-slate-600 font-bold">{`{botName}`}</span>, <span className="font-mono text-slate-600 font-bold">{`{companyName}`}</span> d? t? d?ng di?n.
+                                        Mẹo: Dùng <span className="font-mono text-slate-600 font-bold">{`{botName}`}</span>, <span className="font-mono text-slate-600 font-bold">{`{companyName}`}</span> để tự động điền.
                                     </p>
                                 </div>
 
@@ -193,7 +193,7 @@ const FastRepliesSettings: React.FC<FastRepliesSettingsProps> = ({ settings, set
                         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 border shadow-sm ${isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-600' : 'bg-white border-slate-50 text-slate-200'}`}>
                             <Zap className="w-6 h-6" />
                         </div>
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Chua c� ph?n h?i nhanh</h4>
+                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Chưa có phản hồi nhanh</h4>
                     </div>
                 )}
             </div>

@@ -246,7 +246,7 @@ const Campaigns: React.FC = () => {
     }, [campaigns]);
 
     const handleSaveDraft = React.useCallback(async (data: Partial<Campaign>) => {
-        const payload = { ...data, status: CampaignStatus.DRAFT, stats: data.id ? undefined : { sent: 0, opened: 0, clicked: 0, bounced: 0, spam: 0 } };
+        const payload = { ...data, status: CampaignStatus.DRAFT, stats: data.id ? undefined : { sent: 0, opened: 0, clicked: 0, bounced: 0, spam: 0, unsubscribed: 0, failed: 0 } };
         try {
             let res;
             if (data.id) res = await api.put<Campaign>(`campaigns/${data.id}`, payload);
@@ -450,7 +450,7 @@ const Campaigns: React.FC = () => {
 
                     <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group">
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-emerald-500 transition-colors">Tỉ lệ mở trung bình</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-emerald-500 transition-colors">Tỷ lệ mở trung bình</p>
                             <h3 className="text-2xl font-black text-slate-800 tracking-tight">{stats.openRate}%</h3>
                         </div>
                         <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-2xl shadow-lg shadow-emerald-500/10 flex items-center justify-center transition-all group-hover:scale-110">

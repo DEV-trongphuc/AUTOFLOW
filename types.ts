@@ -282,6 +282,7 @@ export interface Campaign {
     bounced: number;
     spam: number;
     unsubscribed: number;
+    failed: number;
   };
   contentBody?: string;
   templateId?: string;

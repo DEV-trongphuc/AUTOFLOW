@@ -138,15 +138,43 @@ const FormEditorModal: React.FC<FormEditorModalProps> = ({
                             onChange={e => setFormData({ ...formData, name: e.target.value })}
                             autoFocus
                         />
-                        <Select
-                            label="Danh sách lưu trữ đích"
-                            options={lists.map(l => ({ value: l.id, label: l.name }))}
-                            value={formData.targetListId || ''}
-                            onChange={v => setFormData({ ...formData, targetListId: v })}
-                            placeholder="Chọn danh sách đích..."
-                            icon={Database}
-                            variant="outline"
-                        />
+                                <div className="flex-1">
+                                    <Select
+                                        label="Danh sách lưu trữ đích"
+                                        options={[
+                                            ...lists.map(l => ({ value: l.id, label: l.name })),
+                                            { value: 'CREATE_NEW_LIST', label: '+ Tạo danh sách mới...' }
+                                        ]}
+                                        value={formData.targetListId || ''}
+                                        onChange={v => {
+                                            if (v === 'CREATE_NEW_LIST') {
+                                                const newName = prompt('Nhập tên danh sách mới:');
+                                                if (newName) {
+                                                    toast.promise(
+                                                        api.post('lists', { name: newName, status: 1 }),
+                                                        {
+                                                            loading: 'Đang tạo danh sách...',
+                                                            success: (res: any) => {
+                                                                if (res.success) {
+                                                                    setFormData(prev => ({ ...prev, targetListId: res.data.id }));
+                                                                    onSuccess(); 
+                                                                    return 'Đã tạo danh sách mới!';
+                                                                }
+                                                                throw new Error(res.message);
+                                                            },
+                                                            error: (err) => `Lỗi: ${err.message}`
+                                                        }
+                                                    );
+                                                }
+                                            } else {
+                                                setFormData({ ...formData, targetListId: v });
+                                            }
+                                        }}
+                                        placeholder="Chọn danh sách đích..."
+                                        icon={Database}
+                                        variant="outline"
+                                    />
+                                </div>
                     </div>
 
                     {/* SECTION 1.5: Email Notification */}
