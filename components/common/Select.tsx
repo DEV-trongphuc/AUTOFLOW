@@ -94,9 +94,9 @@ const Select: React.FC<SelectProps> = ({
           ${disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}
         `}
       >
-        <div className="flex items-center gap-2.5 overflow-hidden z-10 w-full">
+        <div className="flex items-center gap-2.5 overflow-hidden z-10 w-full h-full">
           {Icon && (
-            <div className={`transition-colors duration-300 shrink-0 ${variant === 'premium' ? 'text-amber-400' : (isOpen ? 'text-amber-600' : 'text-slate-400')}`}>
+            <div className={`flex items-center justify-center transition-colors duration-300 shrink-0 ${variant === 'premium' ? 'text-amber-400' : (isOpen ? 'text-amber-600' : 'text-slate-400')}`}>
               <Icon className={size === 'xs' ? "w-3.5 h-3.5" : "w-4 h-4"} />
             </div>
           )}

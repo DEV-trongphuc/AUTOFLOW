@@ -312,11 +312,20 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                                     const isSingleLine = !showItemTitle || !showItemDesc;
                                     const iconPaddingTop = isSingleLine ? '5px' : '6px';
                                     const textPaddingTop = isSingleLine ? '5px' : '2px';
+                                    const vAlign = cssAny.checkIconVerticalAlign || 'top';
+                                    const finalIconPaddingTop = vAlign === 'top' ? iconPaddingTop : '0px';
+
                                     return (
                                         <tr key={item.id || i}>
-                                            <td width={checkSize + 10} valign="top" style={{ padding: `${iconPaddingTop} 0 12px 0` }}>
+                                            <td width={checkSize + 10} valign={vAlign} style={{ padding: `${finalIconPaddingTop} 0 12px 0` }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: `${checkSize}px`, height: `${checkSize}px` }}>
-                                                    <img src={iconUrlCheck} width={checkSize} height={checkSize} style={{ display: 'block', width: `${checkSize}px`, height: `${checkSize}px`, objectFit: 'contain' }} alt="check" />
+                                                    <img 
+                                                        src={(cssAny.checkIndividualIcons && iconMode === 'image' && item.customIconUrl) ? item.customIconUrl : iconUrlCheck} 
+                                                        width={checkSize} 
+                                                        height={checkSize} 
+                                                        style={{ display: 'block', width: `${checkSize}px`, height: `${checkSize}px`, objectFit: 'contain' }} 
+                                                        alt="check" 
+                                                    />
                                                 </div>
                                             </td>
                                             <td valign="top" style={{ padding: `${textPaddingTop} 0 12px 10px`, fontFamily: itemFontFamily, textAlign: 'left' }}>

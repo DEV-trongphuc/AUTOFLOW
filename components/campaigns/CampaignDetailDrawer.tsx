@@ -368,7 +368,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                             <div className="flex gap-4">
                                                 <span className="text-slate-500 uppercase tracking-wider">Đã gửi: <span className="text-blue-600 font-black">{(localCampaign.stats?.sent || 0).toLocaleString()}</span>-</span>
                                                 {(localCampaign.stats?.failed || 0) > 0 && (
-                                                    <span className="text-rose-500 uppercase tracking-wider">Th?t b?i: <span className="font-black">{(localCampaign.stats?.failed || 0).toLocaleString()}</span>-</span>
+                                                    <span className="text-rose-500 uppercase tracking-wider">Thất bại: <span className="font-black">{(localCampaign.stats?.failed || 0).toLocaleString()}</span>-</span>
                                                 )}
                                             </div>
                                             <div className="flex items-center gap-3">

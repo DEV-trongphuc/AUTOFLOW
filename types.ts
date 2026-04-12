@@ -130,6 +130,7 @@ export interface EmailBlockStyle {
   showCheckListTitle?: boolean;
   showItemTitle?: boolean;
   showItemDescription?: boolean;
+  checkIconVerticalAlign?: 'top' | 'middle' | 'bottom';
 
   // Table Specific
   tableRows?: number;            // number of data rows (excluding header)
@@ -155,6 +156,7 @@ export interface EmailBlockStyle {
   tableLastColTextColor?: string;
 
   noStack?: boolean;
+  checkIndividualIcons?: boolean;
 }
 
 export interface SocialLink {
@@ -175,6 +177,7 @@ export interface ListItem {
   description: string;
   date?: string;
   icon?: string;
+  customIconUrl?: string;
 }
 
 export interface TableCell {

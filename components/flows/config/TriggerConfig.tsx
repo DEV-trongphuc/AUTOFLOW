@@ -134,10 +134,10 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
         { id: 'purchase', label: 'Khách hàng Mua', icon: ShoppingCart, color: 'pink', desc: 'S? ki?n API' },
         { id: 'inbound_message', label: 'Tin nh?n d?n', icon: MessageSquare, color: 'blue', desc: 'Meta / Zalo OA / Keyword' },
         { id: 'zalo_follow', label: 'Quan t�m Zalo', icon: UserPlus, color: 'cyan', desc: 'Khi kh�ch nh?n Follow' },
-        { id: 'custom_event', label: 'Custom Event', icon: Zap, color: 'violet', desc: 'S? ki?n t�y ch?nh' },
+        { id: 'custom_event', label: 'Custom Event', icon: Zap, color: 'violet', desc: 'S? ki?n t�y chọnh' },
         { id: 'tag', label: '�u?c g?n nh�n', icon: Tag, color: 'emerald', desc: 'Ph�n lo?i th? c�ng' },
         { id: 'date', label: 'Ng�y / S? ki?n', icon: Calendar, color: 'blue', desc: 'Sinh nh?t, Ng? d�ng' },
-        { id: 'campaign', label: 'Sau Chi?n d?ch', icon: Send, color: 'indigo', desc: 'Tuong t�c Email' },
+        { id: 'campaign', label: 'Sau Chi?n d?ch', icon: Send, color: 'indigo', desc: 'Tương tác Email' },
         { id: 'unsubscribe', label: 'Hủy đăng ký', icon: UserMinus, color: 'red', desc: 'Khi kh�ch nh?n Unsub' },
     ];
 
@@ -162,7 +162,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                 return purch ? `Mua h�ng: ${purch.name}` : 'Khi kh�ch Mua h�ng';
             case 'custom_event':
                 const ce = customEvents.find(c => c.id === targetId);
-                return ce ? `S? ki?n: ${ce.name}` : 'Khi c� s? ki?n t�y ch?nh';
+                return ce ? `S? ki?n: ${ce.name}` : 'Khi c� s? ki?n t�y chọnh';
             case 'inbound_message':
                 return targetId ? `Tin nhắn: "${targetId}"` : 'Khi kh�chđã gửi tin nh?n';
             case 'zalo_follow':
@@ -173,7 +173,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                 return targetId ? `�u?c g?n Tag: ${targetId}` : 'Khi du?c g?n nh�n';
             case 'campaign':
                 const camp = campaigns.find(c => c.id === targetId);
-                return camp ? `Sau Campaign: ${camp.name}` : 'Tuong t�c chi?n d?ch';
+                return camp ? `Sau Campaign: ${camp.name}` : 'Tương tác chi?n d?ch';
             case 'date':
                 if (dateField === 'dateOfBirth' || dateField === 'anniversaryDate' || dateField === 'joinedAt') {
                     const isBirth = dateField === 'dateOfBirth';
@@ -182,7 +182,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                     const offsetType = config.offsetType || 'on';
                     const offsetVal = config.offsetValue || 0;
                     if (offsetType === 'on') return `M?ng ${isBirth ? 'Sinh nh?t' : (isJoined ? 'Ng�y gia nh?p' : 'K? ni?m')}`;
-                    return `${offsetVal} ng�y ${offsetType === 'before' ? 'tru?c' : 'sau'} ${attr}`;
+                    return `${offsetVal} ng�y ${offsetType === 'before' ? 'trước' : 'sau'} ${attr}`;
                 }
                 if (dateField === 'specificDate') return `V�o ng�y ${config.specificDate || '...'}`;
                 if (dateField === 'lastActivity') return 'Khách hàng ng? d�ng';
@@ -191,7 +191,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                     const offsetType = config.offsetType || 'on';
                     const offsetVal = config.offsetValue || 0;
                     if (offsetType === 'on') return `Trigger ng�y: ${fieldKey}`;
-                    return `${offsetVal} ng�y ${offsetType === 'before' ? 'tru?c' : 'sau'} [${fieldKey}]`;
+                    return `${offsetVal} ng�y ${offsetType === 'before' ? 'trước' : 'sau'} [${fieldKey}]`;
                 }
                 return 'S? ki?n theo ng�y';
             default: return 'B?t d?u Flow';
@@ -485,7 +485,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                     <div className="p-5 bg-white border border-slate-200 rounded-[24px] space-y-4 shadow-sm">
                                         <div className="flex items-center gap-3">
                                             <div className="p-2 bg-blue-50 rounded-lg text-blue-500"><MessageSquare className="w-4 h-4" /></div>
-                                            <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">T? kh�a k�ch ho?t (T�y ch?n)</span>
+                                            <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">T? kh�a k�ch ho?t (T�y chọn)</span>
                                         </div>
                                         <div className="space-y-2">
                                             <input
@@ -573,7 +573,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                             </div>
                                             <div className="p-3.5 bg-blue-50/50 rounded-xl flex items-start gap-2.5 border border-blue-100/50">
                                                 <Info className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" />
-                                                <p className="text-[10px] text-blue-700 font-medium leading-relaxed italic">Hệ thống s? qu�t d?nh k? nh?ng Khách hàng kh�ng M? ho?c Click link trong {config.inactiveAmount || 30} ng�y d? dua v�o lu?ng.</p>
+                                                <p className="text-[10px] text-blue-700 font-medium leading-relaxed italic">Hệ thống s? qu�t dảnh k? nh?ng Khách hàng kh�ng M? ho?c Click link trong {config.inactiveAmount || 30} ng�y d? dua v�o lu?ng.</p>
                                             </div>
                                         </div>
                                     )}
@@ -581,7 +581,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                     {/* 2. SINH NH?T */}
                                     <ConfigItem
                                         label="Ch�cĐã mởng Sinh nh?t"
-                                        desc="Ch?y v�o ng�y sinh ho?c tru?c/sau"
+                                        desc="Ch?y v�o ng�y sinh ho?c trước/sau"
                                         icon={Cake}
                                         isSelected={config.dateField === 'dateOfBirth'}
                                         onClick={() => {
@@ -617,7 +617,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                     {/* 5. NG�Y C? TH? */}
                                     <ConfigItem
                                         label="Ng�y c? th? (L?, S? ki?n)"
-                                        desc="Ch?y v�oĐã mởt ng�y c? d?nh duy nh?t"
+                                        desc="Ch?y v�oĐã mởt ng�y c? dảnh duy nh?t"
                                         icon={Clock}
                                         isSelected={config.dateField === 'specificDate'}
                                         onClick={() => {
@@ -646,7 +646,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                             </div>
                                             <div className="p-3.5 bg-blue-50/50 rounded-xl flex items-start gap-2.5 border border-blue-100/50">
                                                 <Info className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" />
-                                                <p className="text-[10px] text-blue-700 font-medium leading-relaxed italic">V� d?: Thi?t l?p ng�y 14/02 d? b?t d?u chuong tr�nh Valentine cho to�n b? Khách hàng du?c ch?n.</p>
+                                                <p className="text-[10px] text-blue-700 font-medium leading-relaxed italic">V� d?: Thi?t l?p ng�y 14/02 d? b?t d?u chuong tr�nh Valentine cho to�n b? Khách hàng du?c chọn.</p>
                                             </div>
                                         </div>
                                     )}
@@ -654,7 +654,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                     {/* 6. THEO CUSTOM FIELD NG�Y */}
                                     <ConfigItem
                                         label="Theo Custom Field Ng�y"
-                                        desc="Trước/sau ng�y luu trong tru?ng t�y ch?nh"
+                                        desc="Trước/sau ng�y luu trong tru?ng t�y chọnh"
                                         icon={ArrowRight}
                                         isSelected={config.dateField === 'custom_field_date'}
                                         onClick={() => onChange(
@@ -866,7 +866,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                                         <div className="p-3 bg-amber-50 rounded-xl flex items-start gap-2.5 border border-amber-200/50">
                                                             <Info className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
                                                             <p className="text-[10px] text-amber-700 font-bold leading-relaxed">
-                                                                Ch? k�ch ho?t theo ng�y d?i v?i nh?ng ngu?i c� trong danh sách du?c ch?n du?i d�y.
+                                                                Ch? k�ch ho?t theo ng�y d?i v?i nh?ng ngu?i c� trong danh sách du?c chọn du?i d�y.
                                                                 <span className="block font-medium text-slate-500 mt-0.5 mt-0.5 italic">Nữu h? kh�ng thu?c danh sách n�y, flow s? kh�ng t? d?ng b?t d?u.</span>
                                                             </p>
                                                         </div>

@@ -497,7 +497,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                 reason: blockReason
             });
             if (res.success) {
-                toast.success('�� ch?n IP th�nh c�ng');
+                toast.success('�� chọn IP th�nh c�ng');
                 setShowBlockIPModal(false);
                 setBlockReason('');
                 // Update local state to reflect the block immediately
@@ -506,7 +506,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                     setSelectedConv({ ...selectedConv, is_blocked: 1 });
                 }
             } else {
-                toast.error(res.message || 'L?i khi ch?n IP');
+                toast.error(res.message || 'L?i khi chọn IP');
             }
         } catch (e) { toast.error('L?i h? th?ng'); }
         finally { setIsBlocking(false); }
@@ -939,7 +939,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                                     setShowBlockIPModal(true);
                                                 }}
                                                 className={`p-2.5 rounded-xl transition-all border ${selectedConv.is_blocked ? 'bg-rose-600 text-white border-rose-600 shadow-md cursor-default' : 'text-rose-400 hover:text-rose-600 hover:bg-rose-50 border-transparent hover:border-rose-100'}`}
-                                                title={selectedConv.is_blocked ? "IP �� b? ch?n" : "Ch?n IP n�y"}
+                                                title={selectedConv.is_blocked ? "IP �� b? chọn" : "Ch?n IP n�y"}
                                             >
                                                 <ShieldAlert className="w-5 h-5" />
                                             </button>
@@ -1149,22 +1149,22 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                 isOpen={showBlockIPModal}
                 onClose={() => setShowBlockIPModal(false)}
                 onConfirm={handleBlockIP}
-                title="X�c nh?n ch?n IP"
+                title="X�c nh?n chọn IP"
                 isLoading={isBlocking}
                 variant="danger"
-                confirmLabel="X�c nh?n ch?n"
+                confirmLabel="X�c nh?n chọn"
                 message={
                     <div className="space-y-4">
                         <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100">
                             <p className="text-sm font-medium text-rose-800 leading-relaxed">
-                                B?n dang th?c hi?n ch?n d?a ch? IP <span className="font-black underline">{ipToBlock?.ip}</span> c?a <span className="font-black">{ipToBlock?.visitorName}</span>.
+                                B?n dang th?c hi?n chọn d?a ch? IP <span className="font-black underline">{ipToBlock?.ip}</span> c?a <span className="font-black">{ipToBlock?.visitorName}</span>.
                             </p>
                             <p className="text-[10px] text-rose-600 mt-2 font-bold uppercase tracking-tight">
                                 Luu �: M?i luu lu?ng t? IP n�y s? b? t? ch?i (tr? Googlebot).
                             </p>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">L� do ch?n (kh�ng b?t bu?c)</label>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">L� do chọn (kh�ng b?t bu?c)</label>
                             <textarea
                                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm focus:outline-none focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 transition-all min-h-[100px] resize-none"
                                 placeholder="V� d?: Spam click, Attack detection..."
@@ -1299,8 +1299,8 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 transition-colors ${exportRange === 'custom' ? 'bg-slate-800 text-white shadow-lg shadow-slate-800/20' : 'bg-white text-slate-400 border border-slate-200'}`}>
                                     <Clock className="w-4 h-4" />
                                 </div>
-                                <div className="font-bold text-xs text-slate-800 uppercase tracking-tight">Kho?ng t�y ch?n</div>
-                                <p className="text-[10px] text-slate-500 mt-1 font-medium">T? ch?n ng�y b?t d?u & k?t th�c</p>
+                                <div className="font-bold text-xs text-slate-800 uppercase tracking-tight">Kho?ng t�y chọn</div>
+                                <p className="text-[10px] text-slate-500 mt-1 font-medium">T? chọn ng�y b?t d?u & k?t th�c</p>
                             </button>
                         </div>
 

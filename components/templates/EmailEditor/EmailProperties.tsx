@@ -311,10 +311,18 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                             <div className="space-y-4">
                                 <VisualMeasure label="Chiều rộng cột" value={getStyle('width')} onChange={(v) => updateStyle({ width: v })} max={600} canAuto />
                                 <div className="space-y-2">
-                                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Còn dọc</label>
+                                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Căn chỉnh</label>
                                     <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
-                                        {[{ v: 'top', label: 'Trên' }, { v: 'middle', label: 'Giữa' }, { v: 'bottom', label: 'Dưới' }].map(opt => (
-                                            <button key={opt.v} onClick={() => updateStyle({ verticalAlign: opt.v as any })} className={`flex-1 py-1.5 text-[9px] font-bold uppercase rounded-lg transition-all ${(getStyle('verticalAlign') || 'top') === opt.v ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}>{opt.label}</button>
+                                        {['top', 'middle', 'bottom'].map(v => (
+                                            <button 
+                                                key={v} 
+                                                onClick={() => updateStyle({ verticalAlign: v as any })} 
+                                                className={`flex-1 py-1.5 rounded-lg flex items-center justify-center transition-all ${(getStyle('verticalAlign') || 'top') === v ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                            >
+                                                {v === 'top' && <LucideIcons.AlignVerticalJustifyStart className="w-3.5 h-3.5" />}
+                                                {v === 'middle' && <LucideIcons.AlignVerticalJustifyCenter className="w-3.5 h-3.5" />}
+                                                {v === 'bottom' && <LucideIcons.AlignVerticalJustifyEnd className="w-3.5 h-3.5" />}
+                                            </button>
                                         ))}
                                     </div>
                                 </div>
@@ -591,7 +599,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                                     onClick={() => updateStyle({ checkIconMode: mode } as any)}
                                                     className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all ${(getStyle('checkIconMode') || 'icon') === mode ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}
                                                 >
-                                                    {mode === 'icon' ? '🎨 Icon thư viện' : '🖼️ Ảnh tùy chỉnh'}
+                                                    {mode === 'icon' ? 'Icon thư viện' : 'Ảnh tùy chỉnh'}
                                                 </button>
                                             ))}
                                         </div>
@@ -639,7 +647,42 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                             />
                                         )}
 
+                                        {(getStyle('checkIconMode') || 'icon') === 'image' && (
+                                            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                                <div className="flex items-center gap-2">
+                                                    <LucideIcons.Layers className="w-4 h-4 text-emerald-600" />
+                                                    <div>
+                                                        <p className="text-[10px] font-bold text-slate-700 uppercase tracking-widest leading-none">Ảnh riêng từng mục</p>
+                                                        <p className="text-[8px] text-slate-400 mt-0.5">Mỗi hàng dùng một ảnh khác nhau</p>
+                                                    </div>
+                                                </div>
+                                                <label className="relative inline-flex items-center cursor-pointer">
+                                                    <input type="checkbox" className="sr-only peer" checked={!!getStyle('checkIndividualIcons' as any)} onChange={(e) => updateStyle({ checkIndividualIcons: e.target.checked } as any)} />
+                                                    <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:bg-emerald-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+                                                </label>
+                                            </div>
+                                        )}
+
                                         <VisualMeasure label="Cỡ Icon" value={getStyle('checkIconSize')} defaultValue={20} onChange={(v) => updateStyle({ checkIconSize: v })} max={60} unit="px" />
+                                        
+                                        {/* Icon Vertical Alignment */}
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Căn chỉnh</label>
+                                            <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
+                                                {['top', 'middle', 'bottom'].map(v => (
+                                                    <button 
+                                                        key={v} 
+                                                        onClick={() => updateStyle({ checkIconVerticalAlign: v as any })} 
+                                                        className={`flex-1 py-1.5 rounded-lg flex items-center justify-center transition-all ${(getStyle('checkIconVerticalAlign') || 'top') === v ? 'bg-white shadow-sm text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                                    >
+                                                        {v === 'top' && <LucideIcons.AlignVerticalJustifyStart className="w-3.5 h-3.5" />}
+                                                        {v === 'middle' && <LucideIcons.AlignVerticalJustifyCenter className="w-3.5 h-3.5" />}
+                                                        {v === 'bottom' && <LucideIcons.AlignVerticalJustifyEnd className="w-3.5 h-3.5" />}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
                                         <VisualMeasure label="Max Width (checklist)" value={getStyle('maxWidth')} defaultValue={600} onChange={(v) => updateStyle({ maxWidth: v })} max={700} unit="px" />
                                     </div>
                                 </Accordion>
@@ -650,8 +693,23 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                             <button onClick={() => removeTimelineItem(i)} className="absolute top-3 right-3 text-slate-300 hover:text-rose-500 z-10"><LucideIcons.X className="w-4 h-4" /></button>
                                             {getStyle('showItemTitle') !== false && (
                                                 <div className="space-y-1">
-                                                    <label className="text-[8px] font-bold text-slate-400 uppercase px-1">Tiêu đề</label>
+                                                    <div className="flex justify-between items-center px-1">
+                                                        <label className="text-[8px] font-bold text-slate-400 uppercase">Tiêu đề</label>
+                                                        {getStyle('checkIndividualIcons' as any) === true && (getStyle('checkIconMode') || 'icon') === 'image' && (
+                                                            <span className="text-[8px] font-bold text-amber-600 uppercase flex items-center gap-1"><LucideIcons.Image className="w-2.5 h-2.5" /> Iconic</span>
+                                                        )}
+                                                    </div>
                                                     <RichText value={item.title} onChange={(v) => handleTimelineItemChange(i, 'title', v)} minHeight="40px" bodyLinkColor={bodyStyle.linkColor} customMergeTags={customMergeTags} usedColors={usedColors} />
+                                                </div>
+                                            )}
+                                            {getStyle('checkIndividualIcons' as any) === true && (getStyle('checkIconMode') || 'icon') === 'image' && (
+                                                <div className="px-1 py-1">
+                                                    <ImageUploader
+                                                        compact
+                                                        label="Icon riêng cho mục này"
+                                                        value={item.customIconUrl || ''}
+                                                        onChange={(url: string) => handleTimelineItemChange(i, 'customIconUrl' as any, url)}
+                                                    />
                                                 </div>
                                             )}
                                             {getStyle('showItemDescription') !== false && (

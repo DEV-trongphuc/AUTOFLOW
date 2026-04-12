@@ -107,7 +107,7 @@ const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSele
                 >
                     {hasChildren ? (
                         <div onClick={(e) => toggleCollapse(e, block.id)} className="p-0.5 hover:bg-black/5 rounded transition-colors cursor-pointer">
-                            <IconMap.ChevronDown as LucideIcon className={`w-3 h-3 transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
+                            <IconMap.ChevronDown className={`w-3 h-3 transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
                         </div>
                     ) : <div className="w-4" />}
                     <Icon className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-amber-600' : 'text-slate-400 group-hover/item:text-slate-600'}`} />
@@ -141,14 +141,14 @@ const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSele
                 </div>
                 {activeTab === 'blocks' && (
                     <div className="relative group">
-                        <IconMap.Search as LucideIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-amber-600 transition-colors" />
+                        <IconMap.Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-amber-600 transition-colors" />
                         <input
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             placeholder="Tìm kiếm block..."
                             className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-8 py-2 text-xs font-bold outline-none focus:border-amber-600 focus:ring-4 focus:ring-amber-600/10 transition-all placeholder:text-slate-300"
                         />
-                        {searchTerm && <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-300 hover:text-slate-500"><IconMap.X as LucideIcon className="w-3 h-3" /></button>}
+                        {searchTerm && <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-300 hover:text-slate-500"><IconMap.X className="w-3 h-3" /></button>}
                     </div>
                 )}
             </div>
@@ -175,7 +175,7 @@ const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSele
                             })}
                             {filteredTools.filter(t => ['layout', 'content', 'basic'].includes(t.cat)).length === 0 && (
                                 <div className="text-center py-10 opacity-40">
-                                    <IconMap.Search as LucideIcon className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                                    <IconMap.Search className="w-8 h-8 mx-auto mb-2 text-slate-300" />
                                     <p className="text-xs font-bold text-slate-400">Không tìm thấy</p>
                                 </div>
                             )}
@@ -190,7 +190,7 @@ const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSele
                             savedSections.map(item => <ToolboxSavedItem key={item.id} item={item} onDragStart={onDragStart} onDelete={onDeleteSavedSection} />)
                         ) : (
                             <div className="text-center py-10 opacity-40">
-                                <IconMap.Bookmark as LucideIcon className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                                <IconMap.Bookmark className="w-8 h-8 mx-auto mb-2 text-slate-300" />
                                 <p className="text-[10px] font-bold uppercase text-slate-400">Chưa có mẫu nào</p>
                                 <p className="text-[9px] text-slate-300 mt-1">Lưu Section trong trình soạn thảo để tái sử dụng.</p>
                             </div>
@@ -216,7 +216,7 @@ const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSele
 
             <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
                 <p className="text-[9px] text-slate-400 font-medium flex items-center justify-center gap-1.5">
-                    <IconMap.Settings as LucideIcon className="w-3 h-3" /> Kéo thả để thêm Block
+                    <IconMap.Settings className="w-3 h-3" /> Kéo thả để thêm Block
                 </p>
             </div>
         </div>

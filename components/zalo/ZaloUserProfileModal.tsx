@@ -219,26 +219,26 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                 <ProfileTab
                                     active={activeTab === 'personal'}
                                     onClick={() => setActiveTab('personal')}
-                                    label="Cònh�n"
+                                    label="Cá nhân"
                                     icon={User}
                                 />
                                 <ProfileTab
                                     active={activeTab === 'interaction'}
                                     onClick={() => setActiveTab('interaction')}
-                                    label="Tuong t�c"
+                                    label="Tương tác"
                                     icon={Activity}
                                     count={user.messages?.length || 0}
                                 />
                                 <ProfileTab
                                     active={activeTab === 'journey'}
                                     onClick={() => setActiveTab('journey')}
-                                    label="H�nh tr�nh"
+                                    label="Hành trình"
                                     icon={History}
                                 />
                                 <ProfileTab
                                     active={activeTab === 'notes'}
                                     onClick={() => setActiveTab('notes')}
-                                    label="Ghi ch�"
+                                    label="Ghi chú"
                                     icon={FileText}
                                     count={formData.notes ? 1 : 0}
                                 />
@@ -254,7 +254,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                         {/* Identity Section */}
                                         <section className="space-y-4">
                                             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
-                                                <div className="w-4 h-px bg-slate-200"></div> Th�ng tin d?nh danh
+                                                <div className="w-4 h-px bg-slate-200"></div> Th�ng tin dảnh danh
                                             </h4>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 bg-white p-6 rounded-[28px] border border-slate-100 shadow-sm">
                                                 <div className="col-span-1 md:col-span-2">
@@ -336,7 +336,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                         )) : (
                                             <div className="py-20 text-center bg-slate-50/50 rounded-[28px] border border-dashed border-slate-200">
                                                 <Activity className="w-10 h-10 text-slate-200 mx-auto mb-3" />
-                                                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Kh�ng c� tuong t�c n�o</p>
+                                                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Không có tương tác nào</p>
                                             </div>
                                         )}
                                     </div>
@@ -435,7 +435,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                             )) : (
                                                 <div className="py-20 text-center bg-slate-50/50 rounded-[28px] border border-dashed border-slate-200 mr-12 -ml-12 pl-12">
                                                     <History className="w-10 h-10 text-slate-200 mx-auto mb-3" />
-                                                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">H�nh tr�nh dang tr?ng</p>
+                                                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Hành trình dang tr?ng</p>
                                                 </div>
                                             )}
                                     </div>
@@ -465,7 +465,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                         })()}
 
                                         <div className="relative pt-4">
-                                            <div className="absolute top-0 left-4 px-2 bg-white text-[9px] font-black text-slate-400 uppercase tracking-widest z-10">Ghi ch� c� nh�n</div>
+                                            <div className="absolute top-0 left-4 px-2 bg-white text-[9px] font-black text-slate-400 uppercase tracking-widest z-10">Ghi chú c� nh�n</div>
                                             <textarea
                                                 value={formData.notes}
                                                 onChange={e => setFormData({ ...formData, notes: e.target.value })}
@@ -485,7 +485,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                         </div>
                                         <div className="flex items-center gap-2 px-2 text-slate-400">
                                             <Info className="w-3 h-3" />
-                                            <p className="text-[10px] font-bold">Th�ng tin n�y du?c b?o m?t v� ch? b?n mới th?y.</p>
+                                            <p className="text-[10px] font-bold">Th�ng tin n�y được bảo mật v� ch? b?n mới th?y.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -568,7 +568,7 @@ const getEventLabel = (type: string) => {
         case 'sent_message': return 'Phản hồi';
         case 'receive_broadcast': return 'Nhận tin';
         case 'seen_broadcast': return '�� xem';
-        case 'reacted_broadcast': return 'Tuong t�c';
+        case 'reacted_broadcast': return 'Tương tác';
         case 'user_submit_info': return 'Gửi Form';
         case 'lead_score_reward': return 'Nhận điểm';
         case 'lead_score_sync': return '�Đồng bộ điểm';
@@ -582,10 +582,10 @@ const formatTimeAgoShort = (date: string) => {
     const diff = now.getTime() - then.getTime();
 
     if (diff < 60000) return 'vừa xong';
-    if (diff < 3600000) return `${Math.floor(diff / 60000)} ph�t tru?c`;
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} ph�t trước`;
     if (diff < 86400000) return `${Math.floor(diff / 3600000)} giờ trước`;
     const days = Math.floor(diff / 86400000);
-    if (days < 30) return `${days} ng�y tru?c`;
+    if (days < 30) return `${days} ng�y trước`;
     return then.toLocaleDateString('vi-VN');
 };
 

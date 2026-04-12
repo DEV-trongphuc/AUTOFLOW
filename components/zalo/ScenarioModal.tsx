@@ -207,10 +207,10 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        if (!formData.oa_config_id) return toast.error('Vui l�ng ch?n Zalo OA tru?c khi upload ?nh');
+        if (!formData.oa_config_id) return toast.error('Vui lòng chọn Zalo OA trước khi upload ảnh');
 
         setUploading(true);
-        const uploadToast = toast.loading('�ang t?i ?nh l�n...');
+        const uploadToast = toast.loading('Đang tải ảnh lên...');
 
         try {
             const formDataUpload = new FormData();
@@ -226,7 +226,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                     image_url: res.data.data.image_url,
                     attachment_id: res.data.data.attachment_id
                 }));
-                toast.success('Upload th�nh c�ng', { id: uploadToast });
+                toast.success('Upload thành công', { id: uploadToast });
             } else {
                 toast.error(res.data.message || 'Upload th?t b?i', { id: uploadToast });
             }
@@ -276,13 +276,13 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.oa_config_id) return toast.error('Vui l�ng ch?n OA');
-        if (!formData.title) return toast.error('Vui l�ng nh?p t�n k?ch b?n');
-        if (formData.type !== 'ai_reply' && !formData.content) return toast.error('Vui l�ng nh?p n?i dung tin nh?n');
-        if (formData.type === 'ai_reply' && !formData.ai_chatbot_id) return toast.error('Vui l�ng ch?n AI Chatbot');
+        if (!formData.oa_config_id) return toast.error('Vui lòng chọn OA');
+        if (!formData.title) return toast.error('Vui lòng nh?p t�n k?ch b?n');
+        if (formData.type !== 'ai_reply' && !formData.content) return toast.error('Vui lòng nh?p n?i dung tin nh?n');
+        if (formData.type === 'ai_reply' && !formData.ai_chatbot_id) return toast.error('Vui lòng chọn AI Chatbot');
 
         if (formData.type === 'keyword') {
-            if (!formData.trigger_text) return toast.error('Vui l�ng nh?p t? kh�a k�ch ho?t');
+            if (!formData.trigger_text) return toast.error('Vui lòng nh?p t? kh�a k�ch ho?t');
             const error = validateKeyword(formData.trigger_text);
             if (error) return toast.error(error);
         }
@@ -451,7 +451,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                                 <li>Hệ thống s? d?a tr�n <b>Ki?n th?c d� Train</b> c?a AI d? t? d?ng tr? l?i Khách hàng.</li>
                                                 <li>T? d?ng nh?n di?n Website Link th�nh <b>N�t b?m</b>.</li>
                                                 <li>T? d?ng nh?n di?n Phone Number th�nh <b>N�t gửi</b>.</li>
-                                                <li>T? d?ng gửi <b>?nh</b> n?u trong c�u tr? l?i c� ch?a link ?nh h?p l?.</li>
+                                                <li>T? d?ng gửi <b>ảnh</b> n?u trong c�u tr? l?i c� ch?a link ảnh h?p l?.</li>
                                             </ul>
                                         </div>
                                     </div>
@@ -483,7 +483,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                     />
                                     <div className="bg-white/50 p-4 rounded-2xl border border-indigo-100 space-y-2">
                                         <div className="flex items-center gap-2 text-[10px] font-bold text-indigo-400 uppercase tracking-tight">
-                                            <AlertCircle className="w-3.5 h-3.5" /> Quy d?nh t? kh�a:
+                                            <AlertCircle className="w-3.5 h-3.5" /> Quy dảnh t? kh�a:
                                         </div>
                                         <ul className="text-[10px] text-slate-500 font-medium space-y-1 ml-5 list-disc leading-relaxed">
                                             <li>T? kh�a ph?i c� �t nh?t <b>2 t? tr? l�n</b> (VD: "xin ch�o" thay v� "hi").</li>
@@ -512,7 +512,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                                 <button
                                                     onClick={() => setFormData({ ...formData, schedule_type: 'custom' })}
                                                     className={`px-4 py-1.5 rounded-lg text-[10px] font-black transition-all ${formData.schedule_type === 'custom' ? 'bg-white text-emerald-600 shadow-sm border border-slate-100' : 'text-slate-400'}`}
-                                                >T�y ch?nh</button>
+                                                >T�y chọnh</button>
                                             </div>
                                         )}
                                     </div>
@@ -731,9 +731,9 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
 
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">H�nh ?nh d�nh k�m</label>
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">H�nh ảnh d�nh k�m</label>
                                                 {formData.image_url && (
-                                                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, image_url: '', attachment_id: '', message_type: 'text' }))} className="text-[10px] text-rose-500 hover:underline font-bold">X�a ?nh</button>
+                                                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, image_url: '', attachment_id: '', message_type: 'text' }))} className="text-[10px] text-rose-500 hover:underline font-bold">X�a ảnh</button>
                                                 )}
                                             </div>
 
@@ -754,7 +754,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                                             {uploading ? <div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /> : <UploadCloud className="w-6 h-6" />}
                                                         </div>
                                                         <div className="text-center">
-                                                            <p className="text-xs font-bold text-slate-600">Click d? t?i ?nh l�n</p>
+                                                            <p className="text-xs font-bold text-slate-600">Click d? t?i ảnh l�n</p>
                                                             <p className="text-[10px] text-slate-400 mt-1">JPEG, PNG, JPG (Max 5MB)</p>
                                                         </div>
                                                     </div>
@@ -840,7 +840,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                                         {btn.show_response_config && (
                                                             <div className="animate-in slide-in-from-top-2 space-y-2 pt-2">
                                                                 <p className="text-[10px] text-slate-500 italic">
-                                                                    Tin nh?n ph?n h?i nhanh khi kh�ch b?m nh?n "<strong>{btn.payload || '...'}</strong>". Nữu mu?n th�m n�t b?m v� h�nh ?nh xin h�y t?o th�m k?ch b?n mới.
+                                                                    Tin nh?n ph?n h?i nhanh khi kh�ch b?m nh?n "<strong>{btn.payload || '...'}</strong>". Nữu mu?n th�m n�t b?m v� h�nh ảnh xin h�y t?o th�m k?ch b?n mới.
                                                                 </p>
                                                                 <textarea
                                                                     placeholder="Nh?p c�u tr? l?i..."
@@ -893,7 +893,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                                     <img src={formData.image_url} alt="Preview" className="w-full h-auto" />
                                                 )}
                                                 <div className="p-3 space-y-2">
-                                                    <p className="text-[11px] text-slate-700 whitespace-pre-wrap leading-relaxed">{formData.content || 'Nh?p n?i dung d? xem tru?c...'}</p>
+                                                    <p className="text-[11px] text-slate-700 whitespace-pre-wrap leading-relaxed">{formData.content || 'Nh?p n?i dung d? xem trước...'}</p>
                                                 </div>
                                                 {formData.buttons.length > 0 && (
                                                     <div className="border-t border-slate-50">

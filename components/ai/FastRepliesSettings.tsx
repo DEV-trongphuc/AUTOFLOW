@@ -45,7 +45,7 @@ const FastRepliesSettings: React.FC<FastRepliesSettingsProps> = ({ settings, set
         <div className={`pt-6 border-t border-dashed space-y-5 ${isDarkTheme ? 'border-slate-800' : 'border-slate-200'}`}>
             <div className="flex items-center gap-2 ml-1">
                 <label className={`text-[10px] font-black uppercase tracking-widest ${isDarkTheme ? 'text-slate-500' : 'text-slate-400'}`}>
-                    Ph?i h?p ph?n h?i nhanh - Ti?t ki?m TOKEN AI v� tr�nh truy xu?t Knowledge kh�ng c?n thi?t.
+                    Phối hợp phản hồi nhanh - Tiết kiệm TOKEN AI và tránh truy xuất Knowledge không cần thiết.
                 </label>
                 <Zap className="w-3.5 h-3.5 text-amber-600" />
             </div>
@@ -55,11 +55,11 @@ const FastRepliesSettings: React.FC<FastRepliesSettingsProps> = ({ settings, set
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                            T? kh�a (C�ch nhau b?ng d?u ph?y)
+                            Từ khóa (Cách nhau bằng dấu phẩy)
                         </label>
                         <input
                             className={`w-full h-11 px-4 border rounded-xl text-xs font-medium outline-none transition-all ${isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-200 placeholder:text-slate-600 focus:border-brand shadow-none' : 'bg-white border-slate-200 text-slate-700 placeholder:text-slate-300 focus:border-amber-600 focus:ring-4 focus:ring-amber-600/5'}`}
-                            placeholder="VD: ch�o, hi, hello"
+                            placeholder="VD: chào, hi, hello"
                             value={newFastReply.pattern}
                             onChange={e => setNewFastReply({ ...newFastReply, pattern: e.target.value })}
                         />
@@ -139,7 +139,7 @@ const FastRepliesSettings: React.FC<FastRepliesSettingsProps> = ({ settings, set
                                         onClick={() => setEditingIdx(null)}
                                         className={`px-6 py-2 text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all shadow-lg ${isDarkTheme ? 'bg-brand hover:bg-brand-dark text-white' : 'bg-slate-900 hover:bg-black text-white'}`}
                                     >
-                                        Ho�n t?t
+                                        Hoàn tất
                                     </button>
                                 </div>
                             </div>

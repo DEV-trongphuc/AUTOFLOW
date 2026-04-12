@@ -205,7 +205,7 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
                 <div className="p-8 bg-rose-50 border-2 border-dashed border-rose-200 rounded-[32px] text-center space-y-4">
                     <Unlink className="w-8 h-8 mx-auto text-rose-500" />
                     <p className="text-sm font-black text-rose-700 uppercase">Thi?u ngu?n Email/ZNS</p>
-                    <p className="text-xs text-rose-500">Vui l�ng n?i bu?c n�y SAUĐã mởt bu?c "G?i Email" ho?c "Zalo ZNS".</p>
+                    <p className="text-xs text-rose-500">Vui lòng n?i bu?c n�y SAUĐã mởt bu?c "G?i Email" ho?c "Zalo ZNS".</p>
                 </div>
             ) : (
                 <>
@@ -325,7 +325,7 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
                                     {!disabled && selectedLinks.length === availableLinks.length && (
                                         <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 animate-in fade-in zoom-in duration-300">
                                             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                                            <p className="text-[10px] text-amber-700 font-bold leading-relaxed lowercase first-letter:uppercase">�ang ? ch? d? "B?t k? Link n�o". B? ch?nĐã mởt link b?t k? n?u b?n ch? mu?n theo d�i danh sách c? th?.</p>
+                                            <p className="text-[10px] text-amber-700 font-bold leading-relaxed lowercase first-letter:uppercase">�ang ? ch? d? "B?t k? Link n�o". B? chọnĐã mởt link b?t k? n?u b?n ch? mu?n theo d�i danh sách c? th?.</p>
                                         </div>
                                     )}
 
@@ -359,12 +359,12 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
                                 parentEmailStep.type === 'zalo_zns' ? (
                                     <div className="p-4 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-2xl text-xs font-bold flex items-center gap-2">
                                         <CheckSquare className="w-4 h-4" />
-                                        M?c d?nh theo d�i B?T K? LINK n�o trong tin ZNS (Do kh�ng th? qu�t tru?c n?i dung ZNS).
+                                        M?c dảnh theo d�i B?T K? LINK n�o trong tin ZNS (Do kh�ng th? qu�t trước n?i dung ZNS).
                                     </div>
                                 ) : (
                                     <div className="p-4 bg-amber-50 text-amber-700 border border-amber-200 rounded-2xl text-xs font-bold flex items-center gap-2">
                                         <AlertTriangle className="w-4 h-4" />
-                                        Kh�ng t�m th?y Link n�o trong n?i dung tru?c d�.
+                                        Kh�ng t�m th?y Link n�o trong n?i dung trước d�.
                                     </div>
                                 )
                             )}

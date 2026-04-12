@@ -905,7 +905,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                     <tr className="bg-orange-50/50">
                                         <td colSpan={['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive', 'zns_skipped'].includes(activeTab) ? 5 : 4} className="px-6 py-2.5 text-center">
                                             {isGlobalSelected ? (
-                                                <p className="text-xs font-medium text-slate-600">đã chọn tất cả <span className="font-bold text-orange-600">{pagination.total.toLocaleString()}</span> Khách hàng. <button onClick={() => setIsGlobalSelected(false)} className="ml-2 text-blue-600 font-bold hover:underline">B? ch?n</button></p>
+                                                <p className="text-xs font-medium text-slate-600">đã chọn tất cả <span className="font-bold text-orange-600">{pagination.total.toLocaleString()}</span> Khách hàng. <button onClick={() => setIsGlobalSelected(false)} className="ml-2 text-blue-600 font-bold hover:underline">B? chọn</button></p>
                                             ) : (
                                                 <p className="text-xs font-medium text-slate-600">Đã chọn {participants.length} Khách hàng. <button onClick={() => setIsGlobalSelected(true)} className="ml-1 text-orange-600 font-bold hover:underline italic underline-offset-2">Ch?n t?t c? {pagination.total.toLocaleString()} Khách hàng?</button></p>
                                             )}

@@ -1,6 +1,6 @@
 // components/templates/EmailEditor/EmailCanvas.tsx
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Layout, Plus, ChevronRight, Home, Square, GripHorizontal, Box, Type } from 'lucide-react';
+import { Layout, Plus, ChevronRight, Home, Square, GripHorizontal, Box, Type, MousePointer2, ArrowLeft } from 'lucide-react';
 import { EmailBlock, EmailBlockType, EmailBodyStyle } from '../../../types';
 import { createBlock, wrapElement, insertDeep, findBlock, isDescendant, deleteBlockDeep, moveBlockOrder, swapColumnsInRow, duplicateBlockDeep } from './utils/blockUtils';
 import CanvasSection from './components/CanvasSection';
@@ -285,8 +285,10 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
      * - Nếu kéo <= 10%: tương tự chiều ngược lại
      */
     const handleResizeColumns = useCallback((rowId: string, colIndex: number, newLeftPct: number) => {
-        // Snap to nearest 5%
-        const snap = Math.round(newLeftPct / 5) * 5;
+        // Snap to nearest 1/12th (Bootstrap grid)
+        const snapUnit = 100 / 12;
+        const gridSpan = Math.round(newLeftPct / snapUnit);
+        const snap = gridSpan * snapUnit;
 
         const updateDeep = (list: EmailBlock[]): EmailBlock[] => {
             return list.map(b => {
@@ -306,8 +308,8 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
                     if (cols[colIndex] && cols[colIndex + 1]) {
                         const pairTotal = parseFloat(cols[colIndex].style.width || '50') + parseFloat(cols[colIndex + 1].style.width || '50');
 
-                        // 🔀 Merge: kéo quá 90% → xóa column bên phải (colIndex+1)
-                        if (snap >= 90) {
+                        // 🔀 Merge: kéo quá 11/12 (chỉ còn 1 ô) → xóa column bên phải (colIndex+1)
+                        if (gridSpan >= 11) {
                             const survivingCol = { ...cols[colIndex], style: { ...cols[colIndex].style, width: `${pairTotal}%` } };
                             const newCols = cols.filter((_, i) => i !== colIndex + 1);
                             newCols[colIndex] = survivingCol;
@@ -316,8 +318,8 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
                             return { ...b, children: newCols };
                         }
 
-                        // 🔀 Merge: kéo quá 10% bên trái → xóa column bên trái (colIndex)
-                        if (snap <= 10) {
+                        // 🔀 Merge: kéo quá 1/12 bên trái (chỉ còn 1 ô) → xóa column bên trái (colIndex)
+                        if (gridSpan <= 1) {
                             const survivingCol = { ...cols[colIndex + 1], style: { ...cols[colIndex + 1].style, width: `${pairTotal}%` } };
                             const newCols = cols.filter((_, i) => i !== colIndex);
                             // colIndex+1 is now at colIndex after filter
@@ -350,7 +352,9 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
      * newLeftPct = width của column MỚI bên trái.
      */
     const handleLeftResizeColumns = useCallback((rowId: string, newLeftPct: number) => {
-        const snap = Math.round(newLeftPct / 5) * 5;
+        const snapUnit = 100 / 12;
+        const gridSpan = Math.round(newLeftPct / snapUnit);
+        const snap = gridSpan * snapUnit;
 
         const updateDeep = (list: EmailBlock[]): EmailBlock[] => {
             return list.map(b => {
@@ -379,7 +383,20 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
 
     return (
         <EditorContextProvider value={{ usedColors, onUpdateBlock: handleUpdateBlock }}>
-            <div ref={canvasContainerRef} className="flex-1 h-full overflow-y-auto custom-scrollbar relative flex flex-col bg-slate-200" onClick={() => handleSelectBlock(null)} onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleDrop(e, 'root')}>
+            <div 
+                ref={canvasContainerRef} 
+                className="flex-1 h-full overflow-y-auto custom-scrollbar relative flex flex-col" 
+                style={{ 
+                    backgroundColor: bodyStyle.backgroundColor || '#f1f5f9',
+                    backgroundImage: bodyStyle.backgroundImage || 'none',
+                    backgroundSize: bodyStyle.backgroundSize || 'cover',
+                    backgroundPosition: bodyStyle.backgroundPosition || 'center',
+                    backgroundRepeat: bodyStyle.backgroundRepeat || 'no-repeat'
+                }} 
+                onClick={() => handleSelectBlock(null)} 
+                onDragOver={(e) => e.preventDefault()} 
+                onDrop={(e) => handleDrop(e, 'root')}
+            >
                 <div className={`transition-all duration-500 ease-out mx-auto flex flex-col ${isMobile ? 'py-10 h-full' : 'p-8'} ${!isMobile ? 'w-full' : ''}`}>
                     <div
                         className={`transition-all duration-300 flex flex-col overflow-hidden relative mx-auto ${isMobile ? 'w-[375px] h-[720px] rounded-[40px] border-[12px] border-slate-800 shadow-2xl' : 'min-h-[500px] border border-slate-100 rounded-2xl'}`}
@@ -392,18 +409,34 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
                     >
                         {isMobile && <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-xl z-50 pointer-events-none"></div>}
 
-                        {/* Mobile: scrollable inner content; Desktop: no extra wrapper needed */}
-                        <div className={isMobile ? 'flex-1 overflow-y-auto overflow-x-hidden pt-6' : 'relative'}>
-                            <div className="relative pt-0 pb-0">
+                        {/* Mobile: scrollable inner content; Desktop: scrollable flex block */}
+                        <div className={isMobile ? 'flex-1 overflow-y-auto overflow-x-hidden pt-6' : 'relative flex-1 flex flex-col overflow-y-auto custom-scrollbar'}>
+                            <div className="relative flex-1 flex flex-col min-h-full">
                                 {blocks.length === 0 ? (
                                     <div
-                                        className="h-full flex flex-col items-center justify-center text-slate-300"
-                                        onDragOver={(e) => handleDragOver(e, 'root', 'section')} // Allow dropping layouts into empty canvas
+                                        className="flex-1 flex flex-col items-center justify-center text-slate-400 p-12 text-center"
+                                        onDragOver={(e) => handleDragOver(e, 'root', 'section')}
                                         onDrop={(e) => handleDrop(e, 'root')}
                                     >
-                                        {dragOverId === 'root' && dropPosition && <div className="absolute inset-0 bg-amber-600/20 z-40 border-2 border-amber-600 border-dashed pointer-events-none"></div>}
-                                        <Layout className="w-16 h-16 mb-4 opacity-20" />
-                                        <span className="font-black uppercase text-xs tracking-widest opacity-50">Kéo thả Section vào đây</span>
+                                        {dragOverId === 'root' && dropPosition && <div className="absolute inset-0 bg-amber-600/10 z-40 border-2 border-amber-600 border-dashed pointer-events-none rounded-xl"></div>}
+                                        
+                                        <div className="relative mb-6">
+                                            <div className="absolute -inset-4 bg-amber-50 rounded-full animate-pulse"></div>
+                                            <div className="relative bg-white p-6 rounded-3xl shadow-xl shadow-amber-600/5 border border-amber-100">
+                                                <Layout className="w-12 h-12 text-amber-600" />
+                                            </div>
+                                            <div className="absolute -bottom-2 -right-2 bg-amber-600 text-white p-1.5 rounded-xl shadow-lg">
+                                                <Plus className="w-4 h-4 text-white" />
+                                            </div>
+                                        </div>
+
+                                        <h3 className="text-xl font-bold text-slate-800 mb-2">Bắt đầu thiết kế Email</h3>
+                                        <p className="text-sm text-slate-500 max-w-[280px] mb-8 font-medium">Kéo các khối nội dung từ thanh công cụ bên trái và thả vào đây.</p>
+                                        
+                                        <div className="flex items-center gap-3 py-3 px-6 bg-slate-50 rounded-2xl border border-slate-200/50 animate-bounce">
+                                            <ArrowLeft className="w-4 h-4 text-amber-600" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Chọn khối từ bên trái</span>
+                                        </div>
                                     </div>
                                 ) : (
                                     <table width="100%" border={0} cellPadding={0} cellSpacing={0} role="presentation" style={{ backgroundColor: 'transparent', fontFamily: bodyStyle.fontFamily }}>

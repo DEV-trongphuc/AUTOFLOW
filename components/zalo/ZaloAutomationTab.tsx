@@ -80,16 +80,16 @@ const ZaloAutomationTab: React.FC = () => {
     const handleDelete = async (id: string) => {
         setConfirmModal({
             isOpen: true,
-            title: 'X�a k?ch b?n?',
-            message: 'B?n c� ch?c ch?n mu?n x�a k?ch b?n n�y? H�nh d?ng n�y kh�ng th? ho�n t�c.',
+            title: 'Xóa kịch bản?',
+            message: 'B?n c� ch?c chọn mu?n x�a k?ch b?n n�y? H�nh d?ng n�y kh�ng th? ho�n t�c.',
             onConfirm: async () => {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 try {
                     await axios.delete(`https://automation.ideas.edu.vn/mail_api/zalo_automation.php?route=delete&id=${id}`);
-                    toast.success('�� x�a k?ch b?n');
+                    toast.success('Đã xóa kịch bản');
                     fetchScenarios();
                 } catch (error) {
-                    toast.error('Lỗi khi x�a');
+                    toast.error('Lỗi khi xóa');
                 }
             }
         });
@@ -102,7 +102,7 @@ const ZaloAutomationTab: React.FC = () => {
                 ...scenario,
                 status: newStatus
             });
-            toast.success(`�� ${newStatus === 'active' ? 'k�ch ho?t' : 't?m d?ng'}`);
+            toast.success(`�� ${newStatus === 'active' ? 'k�ch ho?t' : 'tạm dừng'}`);
             fetchScenarios();
         } catch (error) {
             toast.error('Lỗi khi c?p nh?t Trạng thái');
@@ -188,7 +188,7 @@ const ZaloAutomationTab: React.FC = () => {
                         className="h-11 px-6 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg shadow-orange-500/30 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shrink-0 w-full md:w-auto disabled:opacity-50 disabled:shadow-none hover:-translate-y-0.5"
                     >
                         <Plus className="w-4 h-4" />
-                        T?O K?CH B?N M?I
+                        TẠO KỊCH BẢN MỚI
                     </button>
                 </div>
             </div>
@@ -233,7 +233,7 @@ const ZaloAutomationTab: React.FC = () => {
                                     <button
                                         onClick={() => setViewingStatsScenario(scenario)}
                                         className="p-2.5 bg-blue-50 text-blue-500 hover:bg-blue-100 rounded-xl transition-all"
-                                        title="Báo cáo hi?u qu?"
+                                        title="Báo cáo hiệu quả"
                                     >
                                         <BarChart className="w-4 h-4" />
                                     </button>
@@ -267,7 +267,7 @@ const ZaloAutomationTab: React.FC = () => {
                                     </span>
                                     {scenario.status === 'inactive' && (
                                         <span className="text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest bg-slate-100 text-slate-500 border border-slate-200">
-                                            T?m d?ng
+                                            Tạm dừng
                                         </span>
                                     )}
                                 </div>

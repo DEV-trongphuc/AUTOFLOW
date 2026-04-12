@@ -9,7 +9,7 @@ interface AlignmentControlProps {
 
 const AlignmentControl: React.FC<AlignmentControlProps> = ({ values, onChange }) => (
     <div className="space-y-2">
-        <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Còn chỉnh</label>
+        <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Căn chỉnh</label>
         <div className="flex bg-slate-100 p-1 rounded-lg">
             {['left', 'center', 'right', 'justify'].map((align) => (
                 <button

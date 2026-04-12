@@ -59,53 +59,64 @@ const EmailTopBar: React.FC<EmailTopBarProps> = ({
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div className="flex flex-col">
-          <div className="flex items-center gap-2 h-8">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="h-8 text-base font-bold text-slate-800 outline-none bg-transparent hover:bg-slate-50 focus:bg-slate-100 px-2 rounded transition-all border border-transparent hover:border-slate-200 focus:border-amber-600 truncate max-w-[150px] sm:max-w-xs flex items-center"
-            />
-            <div className="w-48">
-              <Select
-                options={[
-                  { value: '', label: 'Chưa phân loại' },
-                  ...groups.map(g => ({ value: g.id, label: g.name }))
-                ]}
-                value={groupId}
-                onChange={setGroupId}
-                variant="filled"
-                size="xs"
-                searchable
-                icon={FolderOpen}
-                placeholder="Chọn nhóm..."
-              />
-            </div>
-          </div>
-          <p className="text-[10px] text-slate-400 font-black px-2 uppercase tracking-wider">{editorMode === 'code' ? 'HTML Editor' : 'Drag & Drop Builder'}</p>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="h-9 text-base font-bold text-slate-800 outline-none bg-transparent hover:bg-slate-50 focus:bg-slate-100 px-2 rounded transition-all border border-transparent hover:border-slate-200 focus:border-amber-600 truncate max-w-[150px] sm:max-w-xs flex items-center"
+          />
+          <p className="text-[10px] text-slate-400 font-black px-2 uppercase tracking-wider leading-none mt-0.5">
+            {editorMode === 'code' ? 'HTML Editor' : 'Drag & Drop Builder'}
+          </p>
+        </div>
+
+        <div className="h-8 w-px bg-slate-200/60 mx-1 hidden sm:block" />
+
+        <div className="w-56 flex items-center">
+          <Select
+            options={[
+              { value: '', label: 'Chưa phân loại' },
+              ...groups.map(g => ({ value: g.id, label: g.name }))
+            ]}
+            value={groupId}
+            onChange={setGroupId}
+            variant="filled"
+            size="sm"
+            searchable
+            icon={FolderOpen}
+            placeholder="Chọn nhóm..."
+          />
         </div>
       </div>
 
       <div className="flex items-center gap-6">
         {editorMode === 'visual' && (
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl shadow-inner">
-            <button onClick={onUndo} disabled={!canUndo} className="p-2 rounded-lg hover:bg-white text-slate-500 hover:text-slate-800 hover:shadow-sm disabled:opacity-30 disabled:hover:bg-transparent transition-all" title="Undo (Ctrl+Z)"><Undo2 className="w-4 h-4" /></button>
-            <div className="w-px h-4 bg-slate-300"></div>
-            <button onClick={onRedo} disabled={!canRedo} className="p-2 rounded-lg hover:bg-white text-slate-500 hover:text-slate-800 hover:shadow-sm disabled:opacity-30 disabled:hover:bg-transparent transition-all" title="Redo (Ctrl+Y)"><Redo2 className="w-4 h-4" /></button>
+          <div className="flex items-center bg-slate-50 p-1 rounded-2xl border border-slate-200/50 shadow-inner">
+            <button onClick={onUndo} disabled={!canUndo} className="p-2 rounded-xl hover:bg-white text-slate-500 hover:text-amber-600 hover:shadow-sm disabled:opacity-30 disabled:hover:bg-transparent transition-all flex items-center justify-center" title="Undo (Ctrl+Z)"><Undo2 className="w-4 h-4" /></button>
+            <div className="w-px h-4 bg-slate-200 mx-0.5"></div>
+            <button onClick={onRedo} disabled={!canRedo} className="p-2 rounded-xl hover:bg-white text-slate-500 hover:text-amber-600 hover:shadow-sm disabled:opacity-30 disabled:hover:bg-transparent transition-all flex items-center justify-center" title="Redo (Ctrl+Y)"><Redo2 className="w-4 h-4" /></button>
           </div>
         )}
 
-        <div className="hidden md:flex bg-slate-100 p-1 rounded-xl border border-slate-200">
-          <button onClick={() => setEditorMode('visual')} className={`px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${editorMode === 'visual' ? 'bg-white shadow text-amber-600' : 'text-slate-500 hover:text-slate-700'}`}>
-            <Layout className="w-3.5 h-3.5" /> Visual
+        <div className="hidden md:flex bg-slate-50 p-1 rounded-2xl border border-slate-200/50 overflow-hidden shadow-inner">
+          <button 
+            onClick={() => setEditorMode('visual')} 
+            className={`px-4 h-8 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${editorMode === 'visual' ? 'bg-white shadow-md text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}
+          >
+            <Layout className="w-3.5 h-3.5" />
+            <span className="leading-none">Visual</span>
           </button>
-          <button onClick={() => setEditorMode('code')} className={`px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${editorMode === 'code' ? 'bg-white shadow text-amber-600' : 'text-slate-500 hover:text-slate-700'}`}>
-            <Code className="w-3.5 h-3.5" /> Code
+          <button 
+            onClick={() => setEditorMode('code')} 
+            className={`px-4 h-8 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${editorMode === 'code' ? 'bg-white shadow-md text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}
+          >
+            <Code className="w-3.5 h-3.5" />
+            <span className="leading-none">Code</span>
           </button>
         </div>
 
-        <div className="hidden md:flex bg-slate-100 p-1 rounded-lg border border-slate-200">
-          <button onClick={() => setViewMode('desktop')} className={`p-2 rounded-md transition-all ${viewMode === 'desktop' ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`} title="Desktop View"><Monitor className="w-4 h-4" /></button>
-          <button onClick={() => setViewMode('mobile')} className={`p-2 rounded-md transition-all ${viewMode === 'mobile' ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`} title="Mobile View"><Smartphone className="w-4 h-4" /></button>
+        <div className="hidden md:flex bg-slate-50 p-1 rounded-xl border border-slate-200/50 shadow-inner">
+          <button onClick={() => setViewMode('desktop')} className={`p-2 rounded-lg transition-all flex items-center justify-center ${viewMode === 'desktop' ? 'bg-white shadow-sm text-amber-600' : 'text-slate-400 hover:text-slate-600'}`} title="Desktop View"><Monitor className="w-4 h-4" /></button>
+          <button onClick={() => setViewMode('mobile')} className={`p-2 rounded-lg transition-all flex items-center justify-center ${viewMode === 'mobile' ? 'bg-white shadow-sm text-amber-600' : 'text-slate-400 hover:text-slate-600'}`} title="Mobile View"><Smartphone className="w-4 h-4" /></button>
         </div>
       </div>
 
@@ -138,7 +149,7 @@ const EmailTopBar: React.FC<EmailTopBarProps> = ({
         )}
 
         <div className="relative">
-          <Button variant="secondary" onClick={() => setShowTestInput(!showTestInput)} icon={Send} className="hidden sm:flex h-10 px-4 text-xs font-medium text-slate-600">Test Send</Button>
+          <Button variant="secondary" onClick={() => setShowTestInput(!showTestInput)} icon={Send} className="hidden sm:flex h-10 px-4 text-xs font-bold text-slate-600">Test</Button>
           {showTestInput && (
             <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 p-3 z-50 flex flex-col gap-2 animate-in fade-in zoom-in-95 duration-200">
               <p className="text-xs font-semibold text-slate-700">Gửi email test</p>
@@ -166,8 +177,15 @@ const EmailTopBar: React.FC<EmailTopBarProps> = ({
           {showTestInput && <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setShowTestInput(false)} />}
         </div>
 
-        <Button variant="secondary" onClick={onPreview} icon={Eye} className="hidden sm:flex h-10 px-4 text-xs">Xem trước</Button>
-        <Button icon={isSaving ? Loader2 : Save} onClick={handleSave} isLoading={isSaving} className="bg-gradient-to-r from-amber-400 to-amber-600 text-white border-transparent hover:from-amber-600 hover:to-amber-600 shadow-lg shadow-amber-600/20 h-10 px-6 text-xs transition-all duration-300">Lưu mẫu</Button>
+        <Button 
+          variant="secondary" 
+          onClick={onPreview} 
+          className="hidden sm:flex h-10 w-10 !p-0 md:!p-0 items-center justify-center rounded-xl bg-white border-slate-200 shadow-sm hover:shadow-md transition-all" 
+          title="Xem trước"
+        >
+          <Eye className="w-5 h-5 text-amber-600" strokeWidth={2.2} />
+        </Button>
+        <Button icon={isSaving ? Loader2 : Save} onClick={handleSave} isLoading={isSaving} className="bg-gradient-to-r from-amber-400 to-amber-600 text-white border-transparent hover:from-amber-600 hover:to-amber-600 shadow-lg shadow-amber-600/20 h-10 px-6 text-xs font-bold transition-all duration-300">Lưu mẫu</Button>
       </div>
     </div>
   );
