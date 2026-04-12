@@ -96,6 +96,7 @@ export interface AISettings {
     cat_bot_avatar?: string;
     has_api_key?: boolean;
     has_cat_api_key?: boolean;
+    notification_enabled?: number;
 }
 
 

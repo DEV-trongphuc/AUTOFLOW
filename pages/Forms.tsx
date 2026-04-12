@@ -25,7 +25,7 @@ const DB_FIELDS = [
     { value: 'lastName', label: 'Họ Khách hàng', type: 'text', required: false, icon: Type },
     { value: 'phoneNumber', label: 'Số điện thoại', type: 'tel', required: false, icon: Phone },
     { value: 'jobTitle', label: 'Chức danh', type: 'text', required: false, icon: Briefcase },
-    { value: 'companyName', label: 'Còng ty', type: 'text', required: false, icon: Building },
+    { value: 'companyName', label: 'Công ty', type: 'text', required: false, icon: Building },
     { value: 'country', label: 'Quốc gia', type: 'text', required: false, icon: Globe },
     { value: 'city', label: 'Thành phố', type: 'text', required: false, icon: MapPin },
     { value: 'dateOfBirth', label: 'Ngày sinh', type: 'date', required: false, icon: Calendar },
@@ -344,14 +344,12 @@ const Forms: React.FC = () => {
                                 onClick={() => setFormData({ ...formData, notificationEnabled: !formData.notificationEnabled })}
                                 className="flex items-center gap-2 cursor-pointer select-none"
                             >
-                                <div className={`w-11 h-6 rounded-full p-0.5 transition-all duration-300 flex items-center ${
-                                    formData.notificationEnabled ? 'bg-amber-600 justify-end' : 'bg-slate-300 justify-start'
-                                }`}>
+                                <div className={`w-11 h-6 rounded-full p-0.5 transition-all duration-300 flex items-center ${formData.notificationEnabled ? 'bg-amber-600 justify-end' : 'bg-slate-300 justify-start'
+                                    }`}>
                                     <div className="w-4.5 h-4.5 w-5 h-5 bg-white rounded-full shadow-sm" />
                                 </div>
-                                <span className={`text-[10px] font-bold uppercase tracking-wider ${
-                                    formData.notificationEnabled ? 'text-amber-600' : 'text-slate-400'
-                                }`}>{formData.notificationEnabled ? 'Bật' : 'Tắt'}</span>
+                                <span className={`text-[10px] font-bold uppercase tracking-wider ${formData.notificationEnabled ? 'text-amber-600' : 'text-slate-400'
+                                    }`}>{formData.notificationEnabled ? 'Bật' : 'Tắt'}</span>
                             </div>
                         </div>
 

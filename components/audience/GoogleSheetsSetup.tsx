@@ -23,7 +23,7 @@ const SYSTEM_FIELDS = [
     { key: 'phoneNumber', label: 'Số điện thoại', required: false },
     { key: 'source', label: 'Nguồn (Source)', required: false },
     { key: 'jobTitle', label: 'Chức danh', required: false },
-    { key: 'companyName', label: 'Còng ty', required: false },
+    { key: 'companyName', label: 'Công ty', required: false },
     { key: 'info.salesperson', label: 'Sale phụ trách', required: false },
     { key: 'info.address', label: 'Địa chỉ', required: false },
     { key: 'info.website', label: 'Website', required: false },

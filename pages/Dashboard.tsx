@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Star, Sparkles, LayoutDashboard, Activity, Mail, Zap, FileText, Bot, Globe, Users, BarChart3, Settings, Clock, ArrowRight, MessageSquare, Facebook, Share2, Ticket
+    Star, Sparkles, LayoutDashboard, Activity, Mail, Zap, FileText, Bot, Globe, Users, BarChart3, Settings, Clock, ArrowRight, MessageSquare, Facebook, Share2, Ticket, Webhook, Code2
 } from 'lucide-react';
 import PageHero from '../components/common/PageHero';
 
@@ -105,6 +105,15 @@ const ALL_MODULES: Module[] = [
         path: '/reports'
     },
     {
+        id: 'api-triggers',
+        title: 'API Triggers',
+        sub: 'Thiết lập Webhook và API kết nối 2 chiều. Kích hoạt Automation trực tiếp từ các hệ thống ngoại vi.',
+        icon: Code2,
+        color: 'from-indigo-500 to-violet-600',
+        path: '/api-triggers',
+        tags: ['Dev', 'API']
+    },
+    {
         id: 'settings',
         title: 'Cấu hình',
         sub: 'Quản lý tài khoản, phân quyền thành viên và thiết lập các kết nối API ngoại vi cho hệ thống.',
@@ -112,6 +121,7 @@ const ALL_MODULES: Module[] = [
         color: 'from-slate-400 to-slate-600',
         path: '/settings'
     },
+
 ];
 
 
@@ -243,12 +253,13 @@ const Dashboard: React.FC = () => {
                                 <div className="mb-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <h3 className="text-lg font-black text-slate-800 tracking-tight">{module.title}</h3>
-                                        {['ai-training', 'zalo-oa', 'meta-api', 'vouchers'].includes(module.id) && (
-                                            <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border ${module.id === 'ai-training' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
+                                        {['ai-training', 'zalo-oa', 'meta-api', 'vouchers', 'api-triggers'].includes(module.id) && (
+                                            <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border ${module.id === 'ai-training' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
                                                 module.id === 'vouchers' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                                'bg-blue-50 text-blue-600 border-blue-100'
+                                                    module.id === 'api-triggers' ? 'bg-orange-50 text-orange-600 border-orange-100' :
+                                                        'bg-blue-50 text-blue-600 border-blue-100'
                                                 }`}>
-                                                {module.id === 'ai-training' ? 'A.I Core' : module.id === 'vouchers' ? 'New' : 'Hot'}
+                                                {module.id === 'ai-training' ? 'A.I Core' : module.id === 'vouchers' ? 'New' : module.id === 'api-triggers' ? 'Dev' : 'Hot'}
                                             </span>
                                         )}
                                     </div>

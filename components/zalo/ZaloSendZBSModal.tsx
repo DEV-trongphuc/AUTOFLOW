@@ -47,7 +47,7 @@ const MERGE_TAGS = [
     { label: 'Tên (First Name)', value: '{{first_name}}' },
     { label: 'Họ (Last Name)', value: '{{last_name}}' },
     { label: 'Email', value: '{{email}}' },
-    { label: 'Còng ty', value: '{{company}}' },
+    { label: 'Công ty', value: '{{company}}' },
     { label: 'Chức danh', value: '{{job_title}}' },
     { label: 'Số điện thoại', value: '{{phone}}' },
 ];

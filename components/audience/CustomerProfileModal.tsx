@@ -755,11 +755,11 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                 {/* Nhóm 2: Còng việc */}
                                 <section className="space-y-4">
                                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
-                                        <div className="w-4 h-px bg-slate-200"></div> Còng việc & Còng ty
+                                        <div className="w-4 h-px bg-slate-200"></div> Còng việc & Công ty
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 bg-white p-4 md:p-6 rounded-2xl md:rounded-[28px] border border-slate-100 shadow-sm">
                                         <Input label="Chức danh" value={formData.jobTitle} onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })} disabled={!isEditing} icon={Briefcase} />
-                                        <Input label="Tên Còng ty" value={formData.companyName} onChange={(e) => setFormData({ ...formData, companyName: e.target.value })} disabled={!isEditing} icon={Building} />
+                                        <Input label="Tên Công ty" value={formData.companyName} onChange={(e) => setFormData({ ...formData, companyName: e.target.value })} disabled={!isEditing} icon={Building} />
                                     </div>
                                 </section>
 

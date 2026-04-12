@@ -91,7 +91,7 @@ const Templates: React.FC = () => {
     const [filterGroupId, setFilterGroupId] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const PAGE_SIZE = 15;
+    const PAGE_SIZE = 12;
 
     // Confirm Delete
     const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean, ids: string[], type: 'template' | 'group' }>({ isOpen: false, ids: [], type: 'template' });
@@ -491,19 +491,6 @@ const Templates: React.FC = () => {
                                 <CardGridSkeleton cols={4} rows={2} height={160} />
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-8">
-                                    {filterGroupId === 'all' && currentPage === 1 && (
-                                        <button
-                                            onClick={() => { setEditingTemplate(undefined); setIsEditorOpen(true); }}
-                                            className="border-2 border-dashed border-slate-200 rounded-[32px] h-[380px] flex flex-col items-center justify-center text-slate-400 hover:text-amber-600 hover:border-amber-600 hover:bg-amber-50/50 transition-all group bg-white hover:shadow-2xl hover:shadow-amber-600/5"
-                                        >
-                                            <div className="p-6 bg-slate-50 rounded-full mb-6 shadow-sm group-hover:scale-110 transition-transform group-hover:shadow-lg group-hover:bg-white border border-slate-100">
-                                                <Plus className="w-7 h-7 text-amber-600" />
-                                            </div>
-                                            <span className="font-bold text-lg text-[#333333] tracking-tight">Tạo thiết kế mới</span>
-                                            <span className="text-[10px] mt-2 opacity-50 font-bold uppercase tracking-[0.2em]">Bắt đầu tạo mẫu của bạn</span>
-                                        </button>
-                                    )}
-
                                     {paginatedTemplates.map((template) => (
                                         <div key={template.id} className={`bg-white rounded-[24px] shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] border-2 overflow-hidden group hover:shadow-[0_20px_40px_-12px_rgba(245,158,11,0.15)] hover:-translate-y-1.5 transition-all duration-500 flex flex-col h-[380px] relative ${selectedIds.includes(template.id) ? 'border-amber-600 shadow-xl ring-4 ring-amber-600/10' : 'border-white hover:border-amber-200'}`}>
 

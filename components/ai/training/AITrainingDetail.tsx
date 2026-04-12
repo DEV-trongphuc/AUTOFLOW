@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { AISettings } from '../../../pages/AITraining';
 import { toast } from 'react-hot-toast';
-import { Save, Bot, Sparkles, Database, FolderPlus, BrainCircuit, FlaskConical, Search, AlertTriangle, HelpCircle, RefreshCw, X, Copy, Move, Trash2, Check, BookOpen, Mail, Palette, Building, Image as ImageIcon, Users, FileInput, ShieldCheck, Zap, Settings, ChevronDown, BarChart2, ArrowLeft, Pencil, Activity, ListCheck, Globe, Edit2, Eye, FileText, Layers, Clock, FileUp } from 'lucide-react';
+import { Save, Bot, Sparkles, Database, FolderPlus, BrainCircuit, FlaskConical, Search, AlertTriangle, HelpCircle, RefreshCw, X, Copy, Move, Trash2, Check, BookOpen, Mail, Palette, Building, Image as ImageIcon, Users, FileInput, ShieldCheck, Zap, Settings, ChevronDown, BarChart2, ArrowLeft, Pencil, Activity, ListCheck, Globe, Edit2, Eye, FileText, Layers, Clock, FileUp, BellRing, Edit3 } from 'lucide-react';
 import Button from '../../common/Button';
 import Input from '../../common/Input';
 import AITrainingTable from '../../AITrainingTable';
@@ -1181,52 +1181,69 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                         </div>
 
                                         {/* Notification Settings */}
-                                        <div className={`p-6 rounded-[24px] border border-dashed space-y-5 transition-all duration-300 ${isDarkTheme ? 'bg-slate-800/40 border-emerald-500/20 shadow-none' : 'bg-emerald-50/50 border-emerald-200 shadow-sm'}`}>
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDarkTheme ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'}`}>
-                                                    <Mail className="w-4 h-4" />
+                                        <div className={`space-y-4 px-6 py-6 rounded-[32px] relative overflow-hidden transition-all duration-500 ${settings.notification_enabled ? 'ring-1 shadow-sm' : ''} ${isDarkTheme ? 'bg-slate-800/40 border-slate-700' : 'bg-amber-50/20 border border-amber-100'} ${settings.notification_enabled && !isDarkTheme ? 'ring-amber-200' : ''}`}>
+                                            <div className="flex justify-between items-start relative z-10">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm transition-all duration-500 ${settings.notification_enabled ? 'bg-gradient-to-br from-[#ffa900] to-amber-600 text-white shadow-amber-200' : (isDarkTheme ? 'bg-slate-800 text-amber-500 border border-slate-700' : 'bg-amber-50 text-[#ffa900]')}`}>
+                                                        <BellRing className="w-6 h-6" />
+                                                    </div>
+                                                    <div>
+                                                        <h5 className={`text-base font-black tracking-tight ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`}>Email thông báo khi có thông tin khách</h5>
+                                                        <p className="text-[10px] text-slate-500 font-medium">Thiết lập nơi nhận Khách hàng để đội Telesale CSKH khai thác.</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <h4 className={`text-sm font-bold ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`}>Email thông báo khi có thông tin khách</h4>
-                                                    <p className="text-[10px] text-slate-500">Thiết lập nơi nhận Khách hàng để đội Telesale CSKH khai thác.</p>
+                                                <div
+                                                    onClick={() => setSettings({ ...settings, notification_enabled: settings.notification_enabled ? 0 : 1 })}
+                                                    className={`flex items-center gap-3 cursor-pointer select-none p-1.5 px-3 rounded-xl border shadow-sm hover:shadow-md transition-all active:scale-95 ${isDarkTheme ? 'bg-slate-800 border-slate-700 hover:border-slate-600' : 'bg-white border-slate-100 hover:border-amber-200'}`}
+                                                >
+                                                    <div className={`w-9 h-5 rounded-full p-0.5 transition-all duration-300 flex items-center ${settings.notification_enabled ? 'bg-[#ffa900] justify-end' : 'bg-slate-200 justify-start'}`}>
+                                                        <div className="w-4 h-4 bg-white rounded-full shadow-sm" />
+                                                    </div>
+                                                    <span className={`text-[9px] font-black uppercase tracking-widest ${settings.notification_enabled ? 'text-[#ffa900]' : 'text-slate-400'}`}>{settings.notification_enabled ? 'Đang bật' : 'Đang tắt'}</span>
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-4">
-                                                <div className="space-y-1.5">
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tiêu đề (Subject) gửi thông báo</label>
-                                                    <input
-                                                        type="text"
+                                            {settings.notification_enabled ? (
+                                                <div className={`space-y-6 mt-6 pt-6 border-t relative z-10 animate-in fade-in slide-in-from-top-4 duration-500 ${isDarkTheme ? 'border-slate-700/50' : 'border-amber-100/50'}`}>
+                                                    <Input
+                                                        label="Tiêu đề (Subject) gửi thông báo"
+                                                        icon={Edit3}
+                                                        placeholder="VD: [AutoCapture] Có Khách hàng mới từ Hội thoại AI..."
                                                         value={settings.notification_subject || ''}
                                                         onChange={(e: any) => setSettings({ ...settings, notification_subject: e.target.value })}
-                                                        placeholder="VD: [AutoCapture] Có Khách hàng mới từ Hội thoại AI..."
-                                                        className={`w-full h-11 px-4 border rounded-xl text-xs font-medium outline-none transition-all ${isDarkTheme ? 'bg-slate-900 border-slate-700 text-slate-200 focus:border-emerald-500' : 'bg-white border-slate-200 text-slate-700 focus:border-emerald-500'}`}
+                                                        className={isDarkTheme ? 'bg-slate-900/80' : 'bg-white/80'}
                                                     />
-                                                </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div className="space-y-1.5">
-                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email nhận thông báo (Chính)</label>
-                                                        <textarea
+                                                    
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                                        <Input
+                                                            label="Email nhận thông báo (Chính)"
+                                                            icon={Mail}
+                                                            multiline
+                                                            rows={2}
+                                                            placeholder={`support@domain.com\nsale@domain.com`}
                                                             value={settings.notification_emails || ''}
                                                             onChange={(e: any) => setSettings({ ...settings, notification_emails: e.target.value })}
-                                                            placeholder={`support@domain.com\nsale@domain.com`}
-                                                            className={`w-full p-4 border rounded-xl text-xs font-mono outline-none transition-all resize-none h-[80px] ${isDarkTheme ? 'bg-slate-900 border-slate-700 text-slate-200 focus:border-emerald-500' : 'bg-white border-slate-200 text-slate-700 focus:border-emerald-500'}`}
+                                                            className={isDarkTheme ? 'bg-slate-900/80' : 'bg-white/80'}
                                                         />
-                                                    </div>
-                                                    <div className="space-y-1.5">
-                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email CC (Nhận bản sao)</label>
-                                                        <textarea
+                                                        <Input
+                                                            label="Email CC (Nhận bản sao)"
+                                                            icon={Users}
+                                                            multiline
+                                                            rows={2}
+                                                            placeholder={`manager@domain.com`}
                                                             value={settings.notification_cc_emails || ''}
                                                             onChange={(e: any) => setSettings({ ...settings, notification_cc_emails: e.target.value })}
-                                                            placeholder={`manager@domain.com`}
-                                                            className={`w-full p-4 border rounded-xl text-xs font-mono outline-none transition-all resize-none h-[80px] ${isDarkTheme ? 'bg-slate-900 border-slate-700 text-slate-200 focus:border-emerald-500' : 'bg-white border-slate-200 text-slate-700 focus:border-emerald-500'}`}
+                                                            className={isDarkTheme ? 'bg-slate-900/80' : 'bg-white/80'}
                                                         />
                                                     </div>
+                                                    
+                                                    <div className={`p-4 shadow-[inset_0_1px_4px_rgba(0,0,0,0.02)] rounded-2xl border ${isDarkTheme ? 'bg-slate-900/40 border-slate-700/50' : 'bg-white/40 border-amber-100/50'}`}>
+                                                        <p className="text-[10px] text-slate-500 leading-relaxed font-medium">
+                                                            * Nhập nhiều email bằng cách nhấn <kbd className={`px-1 inline-block pb-0.5 rounded font-bold border ${isDarkTheme ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-700 border-slate-200'}`}>Enter</kbd> để xuống dòng. Phân cách bằng dấu phẩy sẽ được tự động hỗ trợ.
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <p className="text-[9px] text-slate-500 px-1 italic">
-                                                    * Nhập nhiều email bằng cách nhấn Enter để xuống dòng. Phân cách bằng dấu phẩy sẽ tự động hỗ trợ.
-                                                </p>
-                                            </div>
+                                            ) : null}
                                         </div>
 
                                         {/* Interface & Visibility Settings */}

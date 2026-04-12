@@ -34,7 +34,7 @@ const ApiTriggers: React.FC = () => {
                 showStatus={true}
                 statusText="API Gateway Online"
                 actions={[
-                    { label: 'Tỉ lệ Data', icon: BookOpen, onClick: () => setShowDocs(true), primary: true }
+                    { label: 'Tài liệu Data', icon: BookOpen, onClick: () => setShowDocs(true), primary: true }
                 ]}
             />
 

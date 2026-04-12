@@ -184,7 +184,7 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
                 variant="underline"
                 items={[
                     { id: 'list', label: 'Danh sách Visitor', icon: List },
-        { id: "loyalty", label: "Báo cáo Trung thành", icon: BarChart3 },
+                    { id: "loyalty", label: "Báo cáo Trung thành", icon: BarChart3 },
                     { id: 'blocked', label: 'IP Đã Chặn', icon: ShieldAlert },
                 ]}
             />
@@ -304,7 +304,7 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
                         <button
                             onClick={() => fetchVisitors()}
                             className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all group"
-                            title="Tỉ lệ danh sách"
+                            title="Tải lại danh sách"
                         >
                             <RefreshCw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" />
                         </button>

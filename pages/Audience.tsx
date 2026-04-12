@@ -47,7 +47,7 @@ const ITEMS_PER_PAGE = 20;
 const COLUMN_DEFINITIONS = [
     { id: 'name', label: 'Tên', required: true },
     { id: 'phone', label: 'Số điện thoại', required: false },
-    { id: 'company', label: 'Còng ty', required: false },
+    { id: 'company', label: 'Công ty', required: false },
     { id: 'status', label: 'Trạng thái', required: false },
     { id: 'lastActivity', label: 'Hoạt động gần nhất', required: false },
     { id: 'leadScore', label: 'Điểm Lead', required: false },
@@ -232,16 +232,12 @@ const Audience: React.FC = () => {
 
 
     useEffect(() => {
-        let didCancel = false;
         const guardedFetch = async () => {
-            if (initialLoadDone.current) return; // Already loaded (StrictMode remount guard)
+            if (initialLoadDone.current) return; // Already loaded
             initialLoadDone.current = true;
             await fetchInitialData();
-            // If StrictMode unmounted us mid-flight, mark as not done so next real mount retries
-            if (didCancel) initialLoadDone.current = false;
         };
         guardedFetch();
-        return () => { didCancel = true; };
     }, []);
 
     const location = useLocation();
@@ -254,9 +250,13 @@ const Audience: React.FC = () => {
                 if (res.success) {
                     setSelectedSubscriber(res.data);
                     // Clear state to avoid reopening on refresh
-                    navigate(location.pathname, { replace: true, state: {} });
+                    navigate(location.pathname, { replace: true, state: { ...state, openSubscriberId: undefined } });
                 }
             });
+        }
+        if (state?.openListId) {
+            setViewingGroup({ id: state.openListId, name: state.openListName || 'Danh sách', type: 'list', count: state.openListCount || 0 });
+            navigate(location.pathname, { replace: true, state: { ...state, openListId: undefined, openListName: undefined, openListCount: undefined } });
         }
     }, [location.state]);
 
@@ -396,9 +396,9 @@ const Audience: React.FC = () => {
 
             const total = (totalSubRes.success && totalSubRes.data.pagination) ? totalSubRes.data.pagination.total : 0;
             const apiStats = totalSubRes.data?.globalStats || { customer: 0, unsubscribed: 0, lead: 0 };
-            
-            setStats(prev => ({ 
-                ...prev, 
+
+            setStats(prev => ({
+                ...prev,
                 total,
                 customer: apiStats.customer,
                 unsubscribed: apiStats.unsubscribed,
@@ -963,27 +963,27 @@ const Audience: React.FC = () => {
     return (
         <>
             <div className="animate-fade-in space-y-8 pb-20">
-                <PageHero 
+                <PageHero
                     title={<>Audience <span className="text-orange-100/80">Nexus</span></>}
                     subtitle="Quản lý vòng đời Khách hàng từ lúc đăng ký đến lúc chuyển đổi đa kênh."
                     showStatus={true}
                     statusText="Database Online"
                     actions={[
-                        { 
-                            label: 'Import liên hệ', 
-                            icon: UserPlus, 
+                        {
+                            label: 'Import liên hệ',
+                            icon: UserPlus,
                             onClick: () => setImportModalOpen(true),
-                            primary: true 
+                            primary: true
                         },
-                        { 
-                            label: 'Auto Sync', 
-                            icon: RefreshCw, 
-                            onClick: () => setIsIntegrationsModalOpen(true) 
+                        {
+                            label: 'Auto Sync',
+                            icon: RefreshCw,
+                            onClick: () => setIsIntegrationsModalOpen(true)
                         },
-                        { 
-                            label: 'Mẹo tăng trưởng', 
-                            icon: Lightbulb, 
-                            onClick: () => setIsTipsModalOpen(true) 
+                        {
+                            label: 'Mẹo tăng trưởng',
+                            icon: Lightbulb,
+                            onClick: () => setIsTipsModalOpen(true)
                         }
                     ]}
                 />

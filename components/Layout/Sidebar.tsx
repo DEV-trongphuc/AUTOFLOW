@@ -42,7 +42,7 @@ const updateRecentModules = (href: string) => {
   try {
     const stored = localStorage.getItem('recent_modules');
     let recents: any[] = stored ? JSON.parse(stored) : [];
-    
+
     // Migrate old format (string[]) to new object format
     if (recents.length > 0 && typeof recents[0] === 'string') {
       recents = recents.map(r => ({ id: r, t: 0 }));
@@ -64,7 +64,7 @@ const updateRecentModules = (href: string) => {
     // Add new history entry, limit to 10
     const updated = [{ id, t: now }, ...recents.filter(x => x.id !== id)].slice(0, 10);
     localStorage.setItem('recent_modules', JSON.stringify(updated));
-  } catch (e) {}
+  } catch (e) { }
 };
 
 const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed: boolean }> = ({ item, onClose, isCollapsed }) => {
@@ -79,7 +79,7 @@ const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed:
     // [PERF] Triggers data prefetching 
     if (item.prefetchApis && item.prefetchApis.length > 0) {
       item.prefetchApis.forEach(endpoint => {
-        api.get(endpoint).catch(() => {});
+        api.get(endpoint).catch(() => { });
       });
     }
   };
@@ -170,7 +170,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
     { name: 'Automation', href: '/flows', icon: GitMerge, prefetch: () => import('../../pages/Flows'), prefetchApis: ['flows'] },
     { name: 'Khách hàng', href: '/audience', icon: Users, prefetch: () => import('../../pages/Audience'), prefetchApis: ['segments', 'lists', 'tags', 'integrations'] },
     { name: 'Quản lý Nhãn', href: '/tags', icon: Tag, prefetch: () => import('../../pages/Tags'), prefetchApis: ['tags'] },
-    { name: 'Kho Voucher', href: '/vouchers', icon: Gift, prefetch: () => import('../../pages/Vouchers') },
+    { name: 'Kho Voucher', href: '/vouchers', icon: Gift, badge: 'Dev', prefetch: () => import('../../pages/Vouchers') },
     { name: 'Mẫu Email', href: '/templates', icon: FileEdit, prefetch: () => import('../../pages/Templates') },
   ];
 
@@ -200,10 +200,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
         {isCollapsed ? (
           <div className="relative w-12 h-12 shrink-0 group cursor-pointer">
             <div className="absolute inset-0 bg-amber-400 blur-xl opacity-20 group-hover:opacity-50 transition-opacity duration-500 rounded-full animate-logo-pulse"></div>
-              <div className="relative w-full h-full flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ease-out overflow-hidden rounded-full border-2 border-white/80 shadow-lg shadow-amber-600/20">
-                <img src="/imgs/ICON.png" className="w-full h-full object-contain relative z-10" alt="Logo" />
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-logo-shine pointer-events-none z-20"></div>
-              </div>
+            <div className="relative w-full h-full flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ease-out overflow-hidden rounded-full border-2 border-white/80 shadow-lg shadow-amber-600/20">
+              <img src="/imgs/ICON.png" className="w-full h-full object-contain relative z-10" alt="Logo" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-logo-shine pointer-events-none z-20"></div>
+            </div>
           </div>
         ) : (
           <div className="relative flex items-center gap-4 w-full group cursor-pointer">
@@ -260,7 +260,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
         <SidebarSection title="Reports" isCollapsed={isCollapsed}>
           {reportsNav.map((item) => <NavItem key={item.name} item={item} onClose={onClose} isCollapsed={isCollapsed} />)}
         </SidebarSection>
-        
+
         {isAdmin && (
           <SidebarSection title="Administration" isCollapsed={isCollapsed}>
             <NavItem item={{ name: 'Quản lý User', href: '/admin/users', icon: Users }} onClose={onClose} isCollapsed={isCollapsed} />
@@ -273,49 +273,49 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
         {/* Profile & Logout Unified Container */}
         <div className={`bg-white/40 border border-white/60 rounded-2xl flex items-center backdrop-blur-md shadow-[0_2px_8px_rgba(0,0,0,0.02)] ${isCollapsed ? 'flex-col p-2 gap-2' : 'p-1.5 gap-1'}`}>
           <NavLink
-              to="/profile"
-              onClick={onClose}
-              className={({ isActive }) => `
+            to="/profile"
+            onClick={onClose}
+            className={({ isActive }) => `
                 flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 flex-1'} py-2 rounded-xl transition-all duration-300
                 ${isActive
-                  ? 'bg-white/80 text-amber-900 shadow-sm border border-white scale-[1.02]'
-                  : 'text-slate-600 hover:bg-white/60 border border-transparent hover:border-white'}`
-              }
-              title={isCollapsed ? 'Thông tin cá nhân' : undefined}
-            >
-              <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border-2 border-white bg-white shadow-sm">
-                  <img src={user.picture || "/imgs/ICON.png"} className="w-full h-full object-cover" alt="" />
+                ? 'bg-white/80 text-amber-900 shadow-sm border border-white scale-[1.02]'
+                : 'text-slate-600 hover:bg-white/60 border border-transparent hover:border-white'}`
+            }
+            title={isCollapsed ? 'Thông tin cá nhân' : undefined}
+          >
+            <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border-2 border-white bg-white shadow-sm">
+              <img src={user.picture || "/imgs/ICON.png"} className="w-full h-full object-cover" alt="" />
+            </div>
+            {!isCollapsed && (
+              <div className="flex flex-col min-w-0">
+                <span className="text-[11px] font-black tracking-tight text-amber-900 truncate uppercase">{user.name}</span>
+                <span className="text-[9px] font-bold text-amber-600/70 uppercase tracking-tighter">{user.role}</span>
               </div>
-              {!isCollapsed && (
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[11px] font-black tracking-tight text-amber-900 truncate uppercase">{user.name}</span>
-                  <span className="text-[9px] font-bold text-amber-600/70 uppercase tracking-tighter">{user.role}</span>
-                </div>
-              )}
+            )}
           </NavLink>
 
           {!isCollapsed ? (
             <button
-                onClick={() => {
-                    localStorage.clear();
-                    window.location.reload();
-                }}
-                className="w-9 h-9 flex items-center justify-center text-amber-600/50 hover:text-rose-500 hover:bg-white rounded-xl transition-all border border-transparent hover:border-rose-100 hover:shadow-sm shrink-0"
-                title="Đăng xuất"
+              onClick={() => {
+                localStorage.clear();
+                window.location.reload();
+              }}
+              className="w-9 h-9 flex items-center justify-center text-amber-600/50 hover:text-rose-500 hover:bg-white rounded-xl transition-all border border-transparent hover:border-rose-100 hover:shadow-sm shrink-0"
+              title="Đăng xuất"
             >
-                <LogOut className="w-4 h-4" />
+              <LogOut className="w-4 h-4" />
             </button>
           ) : (
             <button
-                  onClick={() => {
-                      localStorage.clear();
-                      window.location.reload();
-                  }}
-                  className="flex w-full items-center justify-center p-2 rounded-xl transition-all text-rose-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200"
-                  title="Đăng xuất"
-              >
-                  <LogOut className="w-4 h-4" />
-              </button>
+              onClick={() => {
+                localStorage.clear();
+                window.location.reload();
+              }}
+              className="flex w-full items-center justify-center p-2 rounded-xl transition-all text-rose-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200"
+              title="Đăng xuất"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           )}
         </div>
       </div>

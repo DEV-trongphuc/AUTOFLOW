@@ -31,7 +31,7 @@ const FIELDS = [
     { value: 'first_name', label: 'Tên (First Name)', icon: User, type: FIELD_TYPES.STRING },
     { value: 'last_name', label: 'Họ (Last Name)', icon: User, type: FIELD_TYPES.STRING },
     { value: 'tags', label: 'Thẻ (Tags)', icon: Layers, type: FIELD_TYPES.ARRAY },
-    { value: 'company_name', label: 'Còng ty', icon: Monitor, type: FIELD_TYPES.STRING },
+    { value: 'company_name', label: 'Công ty', icon: Monitor, type: FIELD_TYPES.STRING },
     { value: 'job_title', label: 'Chức danh', icon: User, type: FIELD_TYPES.STRING },
     { value: 'source', label: 'Nguồn gốc (Source)', icon: Globe, type: FIELD_TYPES.STRING },
     { value: 'salesperson', label: 'Nhân viên phụ trách', icon: User, type: FIELD_TYPES.STRING },

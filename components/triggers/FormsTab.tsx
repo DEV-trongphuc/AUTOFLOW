@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Code2, Plus, Globe, Edit3, Trash2,
     Type, Mail, Phone, Calendar, Briefcase, Building, MapPin, Sparkles, FileInput,
-    List, Braces, ChevronDown, CheckCircle2, Database, Wand2, Tag, Bell, BellRing
+    List, Braces, ChevronDown, CheckCircle2, Database, Wand2, Tag, Bell, BellRing, Users, Link
 } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
 import { FormDefinition, FormField } from '../../types';
@@ -28,6 +29,7 @@ const DB_FIELDS = [
 ];
 
 const FormsTab: React.FC = () => {
+    const navigate = useNavigate();
     const [forms, setForms] = useState<FormDefinition[]>([]);
     const [lists, setLists] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -200,10 +202,20 @@ const FormsTab: React.FC = () => {
                                 </div>
                                 <div className="min-w-0">
                                     <h4 className="text-base font-bold text-slate-800 leading-tight truncate pr-2" title={form.name}>{form.name}</h4>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <span className="px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-[10px] font-bold text-slate-500 flex items-center gap-1 truncate max-w-[120px]">
-                                            <List className="w-3 h-3" /> {lists.find(l => l.id === form.targetListId)?.name || 'Unknown List'}
-                                        </span>
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <div 
+                                            onClick={() => {
+                                                const listName = lists.find(l => l.id === form.targetListId)?.name || 'Danh sách';
+                                                navigate('/audience', { state: { openListId: form.targetListId, openListName: listName } });
+                                            }}
+                                            className="px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-[10px] font-bold text-amber-700 w-max max-w-full flex items-center gap-1.5 cursor-pointer hover:bg-amber-100 hover:border-amber-300 hover:shadow-sm transition-all"
+                                            title="Bấm để xem danh sách Audience"
+                                        >
+                                            <Link className="w-3 h-3 shrink-0" />
+                                            <span className="truncate flex-1">
+                                            {lists.find(l => l.id === form.targetListId)?.name || 'Unknown List'}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -255,7 +267,7 @@ const FormsTab: React.FC = () => {
                         <div className="space-y-1">
                             <div className="flex justify-between items-center mb-1">
                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Danh sách lưu trữ đích</label>
-                                <button 
+                                <button
                                     onClick={async () => {
                                         const listName = prompt('Nhập tên danh sách mới:');
                                         if (listName) {
@@ -282,71 +294,65 @@ const FormsTab: React.FC = () => {
                     </div>
 
                     {/* SECTION 1.5: Email Notification */}
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-100">
-                            <div>
-                                <h5 className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                                    <Bell className="w-4 h-4 text-[#ffa900]" /> Thông báo Email
-                                </h5>
-                                <p className="text-[10px] text-slate-400 font-medium mt-1">Gửi email thông Báo cáo tư vấn viên khi có lead mới.</p>
+                    <div className={`space-y-4 bg-amber-50/20 border border-amber-100 px-6 py-6 rounded-[32px] relative overflow-hidden transition-all duration-500 ${formData.notificationEnabled ? 'ring-1 ring-amber-200' : ''}`}>
+                        <div className="flex justify-between items-start relative z-10">
+                            <div className="flex items-center gap-4">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm transition-all duration-500 ${formData.notificationEnabled ? 'bg-gradient-to-br from-[#ffa900] to-amber-600 text-white shadow-amber-200' : 'bg-amber-50 text-[#ffa900]'}`}>
+                                    <BellRing className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h5 className="text-base font-black text-slate-800 tracking-tight">Email thông báo khi có thông tin khách</h5>
+                                    <p className="text-[10px] text-slate-500 font-medium">Thiết lập nơi nhận Khách hàng để đội Telesale CSKH khai thác.</p>
+                                </div>
                             </div>
                             <div
                                 onClick={() => setFormData({ ...formData, notificationEnabled: !formData.notificationEnabled })}
-                                className="flex items-center gap-2 cursor-pointer select-none"
+                                className="flex items-center gap-3 cursor-pointer select-none bg-white p-1.5 px-3 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:border-amber-200 transition-all active:scale-95"
                             >
-                                <div className={`w-11 h-6 rounded-full p-0.5 transition-all duration-300 flex items-center ${
-                                    formData.notificationEnabled ? 'bg-amber-600 justify-end' : 'bg-slate-300 justify-start'
-                                }`}>
-                                    <div className="w-4.5 h-4.5 w-5 h-5 bg-white rounded-full shadow-sm" />
+                                <div className={`w-9 h-5 rounded-full p-0.5 transition-all duration-300 flex items-center ${formData.notificationEnabled ? 'bg-[#ffa900] justify-end' : 'bg-slate-200 justify-start'}`}>
+                                    <div className="w-4 h-4 bg-white rounded-full shadow-sm" />
                                 </div>
-                                <span className={`text-[10px] font-bold uppercase tracking-wider ${
-                                    formData.notificationEnabled ? 'text-amber-600' : 'text-slate-400'
-                                }`}>{formData.notificationEnabled ? 'Bật' : 'Tắt'}</span>
+                                <span className={`text-[9px] font-black uppercase tracking-widest ${formData.notificationEnabled ? 'text-[#ffa900]' : 'text-slate-400'}`}>{formData.notificationEnabled ? 'Đang bật' : 'Đang tắt'}</span>
                             </div>
                         </div>
 
                         {formData.notificationEnabled && (
-                            <div className="space-y-4 bg-amber-50/50 border border-amber-100 rounded-2xl p-4 animate-in slide-in-from-top-2 duration-300">
-                                <div>
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">
-                                        <BellRing className="w-3 h-3 inline mr-1 text-amber-600" />
-                                        Email nhận thông báo <span className="text-slate-400 font-normal lowercase normal-case tracking-normal">(To — nhiều email cách nhau bằng dấu phẩy)</span>
-                                    </label>
-                                    <textarea
+                            <div className="space-y-6 mt-6 pt-6 border-t border-amber-100/50 relative z-10 animate-in fade-in slide-in-from-top-4 duration-500">
+                                <Input
+                                    label="Tiêu đề (Subject) gửi thông báo"
+                                    icon={Edit3}
+                                    placeholder={`VD: [${formData.name || 'Form'}] Lead mới cần xử lý`}
+                                    value={formData.notificationSubject || ''}
+                                    onChange={e => setFormData({ ...formData, notificationSubject: e.target.value })}
+                                    className="bg-white/80"
+                                />
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <Input
+                                        label="Email nhận thông báo (Chính)"
+                                        icon={Mail}
+                                        multiline
                                         rows={2}
-                                        placeholder="vd: tuvan1@cty.com, manager@cty.com"
+                                        placeholder="tuvan1@cty.com, manager@cty.com"
                                         value={formData.notificationEmails || ''}
                                         onChange={e => setFormData({ ...formData, notificationEmails: e.target.value })}
-                                        className="w-full px-4 py-3 bg-white border-2 border-amber-200 focus:border-amber-400 rounded-xl text-sm text-slate-700 outline-none resize-none transition-all focus:ring-4 focus:ring-amber-400/10 placeholder:text-slate-300"
+                                        className="bg-white/80"
                                     />
-                                </div>
-                                <div>
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">
-                                        <Mail className="w-3 h-3 inline mr-1 text-slate-400" />
-                                        CC Email <span className="text-slate-400 font-normal lowercase normal-case tracking-normal">(tùy chọn — nhiều email cách nhau bằng dấu phẩy)</span>
-                                    </label>
-                                    <textarea
+                                    <Input
+                                        label="Email CC (Nhận bản sao)"
+                                        icon={Users}
+                                        multiline
                                         rows={2}
-                                        placeholder="vd: giamdoc@cty.com, ketoan@cty.com"
+                                        placeholder="giamdoc@cty.com"
                                         value={formData.notificationCcEmails || ''}
                                         onChange={e => setFormData({ ...formData, notificationCcEmails: e.target.value })}
-                                        className="w-full px-4 py-3 bg-white border-2 border-slate-200 focus:border-amber-400 rounded-xl text-sm text-slate-700 outline-none resize-none transition-all focus:ring-4 focus:ring-amber-400/10 placeholder:text-slate-300"
+                                        className="bg-white/80"
                                     />
                                 </div>
-                                <div>
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">Tiêu đề email (tùy chọn)</label>
-                                    <input
-                                        type="text"
-                                        placeholder={`VD: [${formData.name || 'Form'}] Lead mới cần xử lý`}
-                                        value={formData.notificationSubject || ''}
-                                        onChange={e => setFormData({ ...formData, notificationSubject: e.target.value })}
-                                        className="w-full h-10 px-4 bg-white border-2 border-amber-200 focus:border-amber-400 rounded-xl text-sm text-slate-700 outline-none transition-all focus:ring-4 focus:ring-amber-400/10 placeholder:text-slate-300"
-                                    />
-                                </div>
-                                <div className="flex items-start gap-2 p-3 bg-white rounded-xl border border-amber-100">
-                                    <span className="text-base mt-0.5">📧</span>
-                                    <p className="text-[11px] text-slate-500 leading-relaxed">
-                                        Email sẽ chứa toàn bộ trường dữ liệu mà Khách hàng gửi — bao gồm cả custom fields như <code className="bg-amber-100 px-1 rounded text-amber-700 text-[10px]">hoc_van</code>, <code className="bg-amber-100 px-1 rounded text-amber-700 text-[10px]">chuong_trinh</code>, v.v.
+
+                                <div className="p-4 bg-white/40 shadow-[inset_0_1px_4px_rgba(0,0,0,0.02)] rounded-2xl border border-amber-100/50">
+                                    <p className="text-[10px] text-slate-500 leading-relaxed font-medium">
+                                        * Nhập nhiều email bằng cách nhấn <kbd className="bg-slate-100 px-1 inline-block pb-0.5 rounded text-slate-700 font-bold border border-slate-200">Enter</kbd> để xuống dòng. Phân cách bằng dấu phẩy sẽ được tự động hỗ trợ.
                                     </p>
                                 </div>
                             </div>

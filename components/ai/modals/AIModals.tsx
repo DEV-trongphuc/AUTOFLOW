@@ -1420,7 +1420,7 @@ const AIModals: React.FC<AIModalsProps> = (props) => {
                                 </p>
                                 <div className="flex gap-4 text-[9px] font-bold text-slate-400 uppercase tracking-wider">
                                     <span className="flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-slate-300" /> VD: "Hp" → "Học phí"</span>
-                                    <span className="flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-slate-300" /> VD: "Cty" → "Còng ty"</span>
+                                    <span className="flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-slate-300" /> VD: "Cty" → "Công ty"</span>
                                 </div>
                             </div>
                         </div>
