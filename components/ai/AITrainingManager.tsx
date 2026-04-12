@@ -1586,6 +1586,7 @@ const AITrainingManager: React.FC<AITrainingManagerProps> = ({ onClose, category
                             handleFileUpload={handleFileUpload}
                             uploadLimit={uploadLimit}
                             fetchDocs={fetchDocs}
+                            categoryId={selectedCategoryId || categoryId || undefined}
                             onBack={() => {
                                 setSelectedProperty('');
                                 setViewMode('grid');

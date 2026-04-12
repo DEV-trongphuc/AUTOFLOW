@@ -148,10 +148,12 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
             `}} />
             <div className="space-y-8">
                 <PageHero 
-                    title={<>AI <span className="text-orange-100/80">Training Center</span></>}
+                    title={<>AI <span className={hideWebsiteTab ? "text-white/70" : "text-orange-100/80"}>Training Center</span></>}
                     subtitle="Nạp kiến thức và huấn luyện bộ não AI cho từng website hoặc các kênh chatbot tập trung của bạn."
                     showStatus={true}
                     statusText="Neural Engine Ready"
+                    customGradient={hideWebsiteTab ? "from-brand to-brand-dark" : undefined}
+                    shadowColor={hideWebsiteTab ? "shadow-brand/30" : undefined}
                     actions={[
                         { 
                             label: 'Mẹo Training', 
@@ -556,7 +558,17 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
                                                     <div className="flex justify-between items-start relative z-10">
                                                         <div className="flex items-center gap-4">
                                                             <div className="relative w-12 h-12 shrink-0 transition-transform duration-500 group-hover:scale-110">
-                                                                <img src="/imgs/ICON.png" className="w-full h-full object-contain" alt="" />
+                                                                {c.settings?.bot_avatar || c.bot_avatar ? (
+                                                                    <img 
+                                                                        src={c.settings?.bot_avatar || c.bot_avatar} 
+                                                                        className={`w-full h-full object-cover rounded-2xl ${hideWebsiteTab ? 'grayscale group-hover:grayscale-0 transition-all duration-500' : ''}`} 
+                                                                        alt="" 
+                                                                    />
+                                                                ) : (
+                                                                    <div className={`w-full h-full rounded-2xl flex items-center justify-center text-white ${hideWebsiteTab ? 'bg-slate-400 grayscale' : 'bg-gradient-to-br from-brand to-brand-dark'}`}>
+                                                                        <Bot className="w-6 h-6" />
+                                                                    </div>
+                                                                )}
                                                                 {activePropertyId === c.id && (
                                                                     <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-[3px] border-white rounded-full shadow-md z-30 flex items-center justify-center">
                                                                         <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>

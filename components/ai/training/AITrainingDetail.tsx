@@ -76,6 +76,7 @@ interface AITrainingDetailProps {
     uploadLimit?: string;
     fetchDocs?: () => void;
     orgUser?: any;
+    categoryId?: string;
 }
 
 
@@ -93,7 +94,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
         totalSelectableCount, onToggleSelect, onToggleSelectAll, setSettings,
         showAdvanced, setShowAdvanced, handleSaveSettings,
         newQuickAction, setNewQuickAction, addQuickAction, removeQuickAction,
-        mainTab, isDarkTheme, uploadLimit
+        mainTab, isDarkTheme, uploadLimit, categoryId
     } = props;
 
 
@@ -447,10 +448,18 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                 <ArrowLeft className="w-5 h-5" />
                             </button>
                         )}
-                        <div className={`w-12 h-12 rounded-[1.25rem] bg-gradient-to-br flex items-center justify-center text-white shadow-md transition-all duration-500 ${settings.is_enabled
+                        <div className={`w-12 h-12 rounded-[1.25rem] bg-gradient-to-br flex items-center justify-center text-white shadow-md transition-all duration-500 overflow-hidden ${settings.is_enabled
                             ? 'from-brand shadow-brand/20'
                             : (isDarkTheme ? 'from-slate-700 to-slate-800 shadow-slate-900 border border-slate-700' : 'from-slate-400 to-slate-500 shadow-slate-200')}`}>
-                            <Bot className="w-6 h-6" />
+                            {settings.bot_avatar ? (
+                                <img 
+                                    src={settings.bot_avatar} 
+                                    className={`w-full h-full object-cover ${categoryId ? 'grayscale hover:grayscale-0 transition-all duration-300' : ''}`} 
+                                    alt="" 
+                                />
+                            ) : (
+                                <Bot className="w-6 h-6" />
+                            )}
                         </div>
                         <h1 className={`text-3xl font-black tracking-tight ${isDarkTheme ? 'text-white' : 'text-slate-800'}`}>
                             {currentProperty?.name || 'Cấu hình AI'}

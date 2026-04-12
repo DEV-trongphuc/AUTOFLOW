@@ -6,12 +6,14 @@ const ChatbotCard = React.memo(({
     bot,
     onClick,
     onStartChat,
-    isDarkTheme
+    isDarkTheme,
+    categoryId
 }: {
     bot: any,
     onClick: (e: React.MouseEvent) => void,
     onStartChat: (e: React.MouseEvent, bot: any) => void,
-    isDarkTheme?: boolean
+    isDarkTheme?: boolean,
+    categoryId?: string
 }) => {
     const isActive = Number(bot.is_active) === 1 || bot.ai_enabled || bot.is_enabled;
 
@@ -28,7 +30,10 @@ const ChatbotCard = React.memo(({
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand to-brand-primary-dark flex items-center justify-center text-white shadow-brand group-hover:rotate-6 transition-transform shrink-0">
                         {bot.settings?.bot_avatar ? (
-                            <img src={bot.settings.bot_avatar} className="w-full h-full object-cover rounded-2xl" />
+                            <img 
+                                src={bot.settings.bot_avatar} 
+                                className={`w-full h-full object-cover rounded-2xl ${categoryId ? 'grayscale group-hover:grayscale-0 transition-all duration-500' : ''}`} 
+                            />
                         ) : (
                             <Bot className="w-6 h-6" />
                         )}
@@ -170,6 +175,7 @@ const HomeView = React.memo(({
                             <ChatbotCard
                                 key={bot.id}
                                 bot={bot}
+                                categoryId={categoryId}
                                 onClick={(e) => {
                                     const botSessions = sessions[bot.id] || [];
                                     if (botSessions.length > 0) {
