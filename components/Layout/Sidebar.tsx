@@ -1,11 +1,10 @@
-
-import React, { useTransition } from 'react';
+import React, { useTransition, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Send, Users, FileEdit, BarChart3,
   Settings, Mail, GitMerge, Tag, Webhook,
   ExternalLink, Zap, ChevronRight, LogOut, Globe,
-  LayoutDashboard, Key, Bot, PanelLeftClose, PanelLeft, Facebook
+  LayoutDashboard, Key, Bot, PanelLeftClose, PanelLeft, Facebook, Gift
 } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
 
@@ -32,6 +31,7 @@ const updateRecentModules = (href: string) => {
     '/ai-training': 'ai-training',
     '/web-tracking': 'web-tracking',
     '/audience': 'audience',
+    '/vouchers': 'vouchers',
     '/reports': 'reports',
     '/settings': 'settings'
   };
@@ -41,8 +41,28 @@ const updateRecentModules = (href: string) => {
 
   try {
     const stored = localStorage.getItem('recent_modules');
-    const recents: string[] = stored ? JSON.parse(stored) : [];
-    const updated = [id, ...recents.filter(x => x !== id)].slice(0, 4);
+    let recents: any[] = stored ? JSON.parse(stored) : [];
+    
+    // Migrate old format (string[]) to new object format
+    if (recents.length > 0 && typeof recents[0] === 'string') {
+      recents = recents.map(r => ({ id: r, t: 0 }));
+    }
+
+    const now = Date.now();
+    const ONE_HOUR = 3600000;
+
+    if (recents.length > 0) {
+      const last = recents[0];
+      // If the same module is visited within 1 hour, just update the timestamp
+      if (last.id === id && (now - last.t) < ONE_HOUR) {
+        last.t = now;
+        localStorage.setItem('recent_modules', JSON.stringify(recents));
+        return;
+      }
+    }
+
+    // Add new history entry, limit to 10
+    const updated = [{ id, t: now }, ...recents.filter(x => x.id !== id)].slice(0, 10);
     localStorage.setItem('recent_modules', JSON.stringify(updated));
   } catch (e) {}
 };
@@ -138,6 +158,11 @@ const SidebarSection: React.FC<{ title: string; children: React.ReactNode; isCol
 );
 
 const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollapse }) => {
+  const location = useLocation();
+
+  useEffect(() => {
+    updateRecentModules(location.pathname);
+  }, [location.pathname]);
 
   const mainNav: NavItemConfig[] = [
     { name: 'Trang chủ', href: '/', icon: LayoutDashboard, prefetch: () => import('../../pages/Dashboard') },
@@ -145,6 +170,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
     { name: 'Automation', href: '/flows', icon: GitMerge, prefetch: () => import('../../pages/Flows'), prefetchApis: ['flows'] },
     { name: 'Khách hàng', href: '/audience', icon: Users, prefetch: () => import('../../pages/Audience'), prefetchApis: ['segments', 'lists', 'tags', 'integrations'] },
     { name: 'Quản lý Nhãn', href: '/tags', icon: Tag, prefetch: () => import('../../pages/Tags'), prefetchApis: ['tags'] },
+    { name: 'Kho Voucher', href: '/vouchers', icon: Gift, prefetch: () => import('../../pages/Vouchers') },
     { name: 'Mẫu Email', href: '/templates', icon: FileEdit, prefetch: () => import('../../pages/Templates') },
   ];
 
@@ -245,7 +271,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
       {/* SIDEBAR FOOTER - PROFILE & SETTING */}
       <div className={`${isCollapsed ? 'p-2' : 'p-4'} border-t border-white/50 bg-transparent space-y-2`}>
         {/* Profile & Logout Unified Container */}
-        <div className={`bg-white/40 border border-white/60 rounded-2xl flex items-center backdrop-blur-md shadow-[0_2px_8px_rgba(0,0,0,0.02)] ${isCollapsed ? 'flex-col p-2' : 'p-1.5 gap-1'}`}>
+        <div className={`bg-white/40 border border-white/60 rounded-2xl flex items-center backdrop-blur-md shadow-[0_2px_8px_rgba(0,0,0,0.02)] ${isCollapsed ? 'flex-col p-2 gap-2' : 'p-1.5 gap-1'}`}>
           <NavLink
               to="/profile"
               onClick={onClose}
@@ -268,7 +294,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
               )}
           </NavLink>
 
-          {!isCollapsed && (
+          {!isCollapsed ? (
             <button
                 onClick={() => {
                     localStorage.clear();
@@ -279,26 +305,19 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
             >
                 <LogOut className="w-4 h-4" />
             </button>
+          ) : (
+            <button
+                  onClick={() => {
+                      localStorage.clear();
+                      window.location.reload();
+                  }}
+                  className="flex w-full items-center justify-center p-2 rounded-xl transition-all text-rose-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200"
+                  title="Đăng xuất"
+              >
+                  <LogOut className="w-4 h-4" />
+              </button>
           )}
         </div>
-
-        {/* Setting - Only Admin */}
-        {isAdmin && (
-            <NavLink
-            to="/settings"
-            onClick={onClose}
-            className={({ isActive }) => `
-                flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3.5'} py-2 rounded-xl transition-all duration-300
-                ${isActive
-                ? 'bg-amber-50/50 text-amber-900 shadow-sm border border-amber-100'
-                : 'text-slate-500 hover:bg-slate-50 border border-transparent hover:border-slate-100'}`
-            }
-            title={isCollapsed ? 'Cấu hình hệ thống' : undefined}
-            >
-            <Settings className={`w-4 h-4`} />
-            {!isCollapsed && <span className="text-[12px] font-bold tracking-wide">Cấu hình</span>}
-            </NavLink>
-        )}
       </div>
 
       {/* CSS for hiding scrollbar */}

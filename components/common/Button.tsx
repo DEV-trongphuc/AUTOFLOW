@@ -3,7 +3,7 @@ import React from 'react';
 import { Loader2 } from 'lucide-react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'custom';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   isDarkTheme?: boolean;
@@ -41,6 +41,7 @@ const Button: React.FC<ButtonProps> = ({
     danger: isDarkTheme
       ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30 hover:border-rose-500/50'
       : 'bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-100 hover:border-rose-200',
+    custom: '', // Allows full override via className
   };
 
   const sizes = {

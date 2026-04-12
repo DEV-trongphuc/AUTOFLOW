@@ -559,6 +559,81 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                         <!--[if mso]></td></tr></table><![endif]-->\n                    </td>\n                `).trim();
         }
 
+        if (b.type === 'voucher') {
+            const vStyle = s.voucherStyle || 'ticket';
+            const vBorderColor = s.voucherBorderColor || '#d97706';
+            const vBorderStyle = s.voucherBorderStyle || 'dashed';
+            const vBg = s.voucherBg || '#fffbe1';
+            const vTextColor = s.voucherTextColor || '#b45309';
+            const btnBg = s.voucherButtonBg || '#d97706';
+            const btnText = s.voucherButtonTextColor || '#ffffff';
+            const linkId = b.voucherCampaignId;
+            const codePlaceholder = linkId ? `[VOUCHER_${linkId}]` : 'XXXX-XXXX';
+            
+            let previewImgUrl = '';
+            if (linkId) {
+                try {
+                    const stored = JSON.parse(localStorage.getItem('mailflow_voucher_campaigns') || '[]');
+                    const camp = stored.find((c: any) => c.id === linkId);
+                    if (camp && camp.rewards && camp.rewards.length > 0) {
+                        previewImgUrl = camp.rewards[0].imageUrl || '';
+                    }
+                } catch (e) {}
+            }
+
+            // We must render standard table-based layouts for email clients
+            const innerHtml = `
+                <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="background-color: ${vBg}; border: 2px ${vBorderStyle} ${vBorderColor}; border-radius: ${sanitizeRadius(s.borderRadius || '12px')};">
+                    <tr>
+                        <td align="center" style="padding: 24px; text-align: center; font-family: ${fontFamily};">
+                            <!-- Icon / Img -->
+                            ${previewImgUrl 
+                                ? `<img src="${previewImgUrl}" style="display: block; margin: 0 auto 16px auto; max-height: 120px; max-width: 100%; border-radius: 8px;" alt="Reward" />` 
+                                : `<img src="${getIconUrl('Gift', vBorderColor)}" width="32" height="32" style="display: block; margin: 0 auto 16px auto;" alt="Gift" />`
+                            }
+                            
+                            <!-- Title -->
+                            <h3 style="margin: 0 0 8px 0; font-size: ${s.fontSize || '24px'}; font-weight: 900; color: ${vTextColor}; text-transform: uppercase;">
+                                VOUCHER ƯU ĐÃI
+                            </h3>
+                            
+                            <p style="margin: 0 0 20px 0; font-size: 14px; color: ${vTextColor}; opacity: 0.8;">
+                                Sử dụng mã dưới đây khi thanh toán
+                            </p>
+                            
+                            <!-- Code Box -->
+                            <table role="presentation" border="0" cellspacing="0" cellpadding="0" align="center" style="margin-bottom: 20px;">
+                                <tr>
+                                    <td style="border: 2px solid ${vBorderColor}; background-color: #ffffff; border-radius: 8px; padding: 10px 24px;">
+                                        <span style="font-family: monospace; font-size: 20px; font-weight: bold; color: ${vBorderColor}; letter-spacing: 2px;">
+                                            ${codePlaceholder}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Save Button -->
+                            <table role="presentation" border="0" cellspacing="0" cellpadding="0" align="center">
+                                <tr>
+                                    <td align="center" style="border-radius: 8px;" bgcolor="${btnBg}">
+                                        <a href="#" target="_blank" style="font-size: 14px; font-weight: bold; font-family: ${fontFamily}; color: ${btnText}; text-decoration: none; border-radius: 8px; padding: 12px 32px; border: 1px solid ${btnBg}; display: inline-block; text-transform: uppercase;">
+                                            LƯU MÃ NGAY
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            `;
+
+            return wrapWithMargin(`
+                <td align="center" style="${paddingCss} ${getBackgroundStyle(s)}">
+                    ${innerHtml}
+                </td>
+            `);
+        }
+
         if (b.type === 'review') {
             const starsHtml = Array(b.rating || 5).fill(0).map(() => `<div style="display: inline-block; margin: 0 2px;"><img src="${getIconUrl('Star', '#fbbf24')}" width="20" height="20" style="display: block; width: 20px; height: 20px;" /></div>`).join('');
             return wrapWithMargin(`\n                    <td align="center">\n                        <table border="0" cellpadding="0" cellspacing="0" width="${s.width || '100%'}" style="display: inline-table; max-width: 100%; border-radius: ${sanitizeRadius(s.borderRadius || '8px')}; overflow: hidden; border-collapse: separate;">

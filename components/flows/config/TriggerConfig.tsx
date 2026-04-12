@@ -5,10 +5,10 @@ import {
     CheckCircle2, Send, Cake, Lock,
     List, Snowflake, History, Layers, Search, MessageSquare,
     Info, Filter, ArrowRight, MousePointer2, Check, ShoppingCart, Zap,
-    UserPlus, UserMinus, AlertCircle
+    UserPlus, UserMinus, AlertCircle, Ticket, PartyPopper
 } from 'lucide-react';
 import { api } from '../../../services/storageAdapter';
-import { Campaign, Flow, Segment, FormDefinition, PurchaseEvent, CustomEvent } from '../../../types';
+import { Campaign, Flow, Segment, FormDefinition, PurchaseEvent, CustomEvent, VoucherCampaign } from '../../../types';
 import IntegrationGuideModal from '../modals/IntegrationGuideModal';
 import { isManualList, isSyncList } from '../../../utils/listHelpers';
 import Input from '../../common/Input';
@@ -44,7 +44,7 @@ const MisaIcon = ({ className }: { className?: string }) => (
 );
 
 const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disabled, locked }) => {
-    const [triggerType, setTriggerType] = useState<'segment' | 'tag' | 'form' | 'date' | 'campaign' | 'purchase' | 'custom_event' | 'inbound_message' | 'zalo_follow' | 'unsubscribe'>(config.type || 'segment');
+    const [triggerType, setTriggerType] = useState<'segment' | 'tag' | 'form' | 'date' | 'campaign' | 'purchase' | 'custom_event' | 'voucher' | 'voucher_redeem' | 'inbound_message' | 'zalo_follow' | 'unsubscribe'>(config.type || 'segment');
     const [targetSubtype, setTargetSubtype] = useState<'list' | 'segment' | 'sync'>(config.targetSubtype || 'list');
     const [lists, setLists] = useState<any[]>([]);
     const [segments, setSegments] = useState<Segment[]>([]);
@@ -53,6 +53,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [purchases, setPurchases] = useState<PurchaseEvent[]>([]);
     const [customEvents, setCustomEvents] = useState<CustomEvent[]>([]);
+    const [voucherCampaigns, setVoucherCampaigns] = useState<VoucherCampaign[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [showGuide, setShowGuide] = useState(false);
@@ -105,7 +106,8 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                 api.get<any[]>('tags'),
                 api.get<FormDefinition[]>('forms'),
                 api.get<PurchaseEvent[]>('purchase_events'),
-                api.get<CustomEvent[]>('custom_events')
+                api.get<CustomEvent[]>('custom_events'),
+                api.get<VoucherCampaign[]>('voucher_campaigns')
             ]);
             if (listRes.success) setLists(listRes.data);
             if (segRes.success) setSegments(segRes.data);
@@ -114,8 +116,12 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
             if (formRes.success) setForms(formRes.data);
             if (purchRes.success) setPurchases(purchRes.data);
             if (customRes.success) setCustomEvents(customRes.data);
-
-            // Load custom field definitions for date trigger
+            
+            // @ts-ignore
+            if (customRes && arguments[0] /* Hack for promise array destructuring */) {
+                const arr = await Promise.all([api.get<VoucherCampaign[]>('voucher_campaigns')]);
+                if (arr[0].success) setVoucherCampaigns(arr[0].data);
+            }
             try {
                 const cfRes = await api.get<any>('subscribers?route=field_definitions');
                 if (cfRes.success && cfRes.data) {
@@ -135,6 +141,8 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
         { id: 'inbound_message', label: 'Tin nhắn đến', icon: MessageSquare, color: 'blue', desc: 'Meta / Zalo OA / Keyword' },
         { id: 'zalo_follow', label: 'Quan tâm Zalo', icon: UserPlus, color: 'cyan', desc: 'Khi khách nhấn Follow' },
         { id: 'custom_event', label: 'Custom Event', icon: Zap, color: 'violet', desc: 'Sự kiện tùy chọn' },
+        { id: 'voucher', label: 'Nhận Voucher', icon: Ticket, color: 'amber', desc: 'Mã giảm giá/Khuyến mãi' },
+        { id: 'voucher_redeem', label: 'Sử dụng Voucher', icon: PartyPopper, color: 'emerald', desc: 'Khi khách gạch mã' },
         { id: 'tag', label: 'Được gắn nhãn', icon: Tag, color: 'emerald', desc: 'Phân loại thủ công' },
         { id: 'date', label: 'Ngày / Sự kiện', icon: Calendar, color: 'blue', desc: 'Sinh nhật, Ngủ đông' },
         { id: 'campaign', label: 'Sau Chiến dịch', icon: Send, color: 'indigo', desc: 'Tương tác Email' },
@@ -163,6 +171,12 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
             case 'custom_event':
                 const ce = customEvents.find(c => c.id === targetId);
                 return ce ? `Sự kiện: ${ce.name}` : 'Khi có sự kiện tùy chọn';
+            case 'voucher':
+                const vc = voucherCampaigns.find(v => v.id === targetId);
+                return vc ? `Khi nhận Voucher: ${vc.name}` : 'Khi nhận Voucher';
+            case 'voucher_redeem':
+                const vr = voucherCampaigns.find(v => v.id === targetId);
+                return vr ? `Khi dùng Voucher: ${vr.name}` : 'Khi sử dụng mã Voucher';
             case 'inbound_message':
                 return targetId ? `Tin nhắn: "${targetId}"` : 'Khi khách đã gửi tin nhắn';
             case 'zalo_follow':
@@ -445,6 +459,36 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                         icon={Zap}
                                         isSelected={config.targetId === c.id}
                                         onClick={() => handleTargetChange(c.id)}
+                                    />
+                                ))
+                            }
+                            
+                            {/* CASE: VOUCHER */}
+                            {triggerType === 'voucher' && voucherCampaigns
+                                .filter(v => v.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                                .map(v => (
+                                    <ConfigItem
+                                        key={v.id}
+                                        label={v.name}
+                                        desc={`Còn lại: ${v.codeType === 'static' ? 'Không giới hạn' : (v.rewards?.[0]?.quantity || 0) + ' mã'}`}
+                                        icon={Ticket}
+                                        isSelected={config.targetId === v.id}
+                                        onClick={() => handleTargetChange(v.id)}
+                                    />
+                                ))
+                            }
+
+                            {/* CASE: VOUCHER REDEEM */}
+                            {triggerType === 'voucher_redeem' && voucherCampaigns
+                                .filter(v => v.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                                .map(v => (
+                                    <ConfigItem
+                                        key={v.id}
+                                        label={v.name}
+                                        desc={`Chạy khi Khách dùng mã / được Store Gạch mã`}
+                                        icon={PartyPopper}
+                                        isSelected={config.targetId === v.id}
+                                        onClick={() => handleTargetChange(v.id)}
                                     />
                                 ))
                             }

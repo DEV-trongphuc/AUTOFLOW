@@ -306,7 +306,7 @@ const Tags: React.FC = () => {
     );
 
     return (
-        <div className="animate-fade-in space-y-8 pb-40 px-4 lg:px-8">
+        <div className="animate-fade-in space-y-8 pb-40">
             <PageHero 
                 title={<>Tag <span className="text-orange-100/80">Classifier</span></>}
                 subtitle="Phân loại Khách hàng tự động để cá nhân hóa chiến dịch và luồng Automation."

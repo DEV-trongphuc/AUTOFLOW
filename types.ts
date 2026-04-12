@@ -166,6 +166,15 @@ export interface EmailBlockStyle {
   tableLastColBg?: string;       // special background for last column
   tableLastColTextColor?: string;
 
+  // Voucher Specific
+  voucherStyle?: 'ticket' | 'modern' | 'minimal';
+  voucherBorderColor?: string;
+  voucherBorderStyle?: 'dashed' | 'dotted' | 'solid';
+  voucherBg?: string;
+  voucherTextColor?: string;
+  voucherButtonBg?: string;
+  voucherButtonTextColor?: string;
+
   noStack?: boolean;
 }
 
@@ -198,7 +207,61 @@ export interface TableCell {
   color?: string;   // cell-level text color override
 }
 
-export type EmailBlockType = 'section' | 'row' | 'column' | 'text' | 'image' | 'button' | 'spacer' | 'divider' | 'social' | 'video' | 'html' | 'list' | 'header' | 'countdown' | 'quote' | 'timeline' | 'review' | 'order_list' | 'check_list' | 'table';
+export type VoucherDiscountType = 'percentage' | 'fixed_amount' | 'physical_gift' | 'free_shipping';
+export type VoucherCodeType = 'static' | 'dynamic';
+
+export interface VoucherRewardItem {
+    id: string; // unique string like reward_xyz
+    discountType: VoucherDiscountType;
+    discountValue?: number;
+    giftTitle?: string;
+    imageUrl?: string;
+    quantity?: number; // max amount of this reward to generate. undefined/null means unlimited.
+}
+
+export interface VoucherCampaign {
+    id: string;
+    name: string;
+    description: string;
+    thumbnailUrl?: string;
+    
+    rewards: VoucherRewardItem[];
+    
+    codeType: VoucherCodeType;
+    staticCode?: string;
+    prefixList?: string;
+    
+    startDate: string;
+    endDate?: string;
+    
+    usageLimitPerUser?: number;
+    totalUsageLimit?: number;
+    expirationDays?: number;
+    
+    status: 'draft' | 'active' | 'expired' | 'depleted';
+    createdAt: string;
+    
+    stats: {
+        totalGenerated: number;
+        totalDistributed: number;
+        totalRedeemed: number;
+    };
+}
+
+export interface VoucherCode {
+    id: string;
+    campaignId: string;
+    rewardItemId?: string; // Optional for backward compatibility but required for multi-reward
+    code: string;
+    distributedToSubscriberId?: string;
+    distributedAt?: string;
+    redeemedAt?: string;
+    expirationDays?: number;
+    expiresAt?: string;
+    status: 'available' | 'distributed' | 'redeemed';
+}
+
+export type EmailBlockType = 'section' | 'row' | 'column' | 'text' | 'image' | 'button' | 'spacer' | 'divider' | 'social' | 'video' | 'html' | 'list' | 'header' | 'countdown' | 'quote' | 'timeline' | 'review' | 'order_list' | 'check_list' | 'table' | 'voucher';
 
 export interface EmailBlock {
   id: string;
@@ -214,6 +277,8 @@ export interface EmailBlock {
   style: EmailBlockStyle;
   children?: EmailBlock[];
   checkListTitle?: string;
+  voucherCampaignId?: string; // Linked Voucher Campaign
+
 }
 
 export interface EmailBodyStyle {

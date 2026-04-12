@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import * as LucideIcons from 'lucide-react'; // Import all Lucide icons
 import { type LucideIcon } from 'lucide-react'; // Import specific type
-import { EmailBlock, EmailBodyStyle, EmailBlockStyle, ListItem } from '../../../types';
+import { EmailBlock, EmailBodyStyle, EmailBlockStyle, ListItem, VoucherCampaign } from '../../../types';
 import RichText from '../../common/RichText/RichText'; // UPDATED IMPORT
 
 import Input from '../../common/Input';
@@ -59,6 +59,14 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
 }) => {
     const [activeTab, setActiveTab] = useState<'content' | 'style'>('style');
     const [editSocialId, setEditSocialId] = useState<string | null>(null);
+    const [voucherCampaigns, setVoucherCampaigns] = useState<VoucherCampaign[]>([]);
+
+    useEffect(() => {
+        try {
+            const stored = JSON.parse(localStorage.getItem('mailflow_voucher_campaigns') || '[]');
+            setVoucherCampaigns(stored);
+        } catch (e) {}
+    }, []);
 
     // Scan tất cả màu đang dùng trong email để hiển thị trong tooltip màu chữ
     const usedColors = useMemo(() => {
@@ -766,6 +774,59 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                     ))}
                                     <button onClick={addTimelineItem} className="w-full py-4 border-2 border-dashed border-slate-200 rounded-3xl text-xs font-bold text-slate-400 hover:text-amber-600 hover:border-amber-600 hover:bg-amber-50 transition-all"><LucideIcons.Plus className="w-4 h-4 inline mr-2" /> Thêm mục mới</button>
                                 </div>
+                            </div>
+                        )}
+                        {selectedBlock.type === 'voucher' && (
+                            <div className="space-y-4">
+                                <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <LucideIcons.Gift className="w-5 h-5 text-amber-600" />
+                                        <span className="text-[10px] font-bold text-slate-700 uppercase tracking-widest">Cấu hình Voucher</span>
+                                    </div>
+                                    <CustomSelect
+                                        label="Chọn chiến dịch Voucher"
+                                        value={selectedBlock.voucherCampaignId || ''}
+                                        onChange={(v) => onUpdateBlock(selectedBlock.id, { voucherCampaignId: v })}
+                                        options={[
+                                            { value: '', label: '-- Chưa chọn --' },
+                                            ...voucherCampaigns.filter(c => c.status !== 'expired').map(c => ({
+                                                value: c.id,
+                                                label: c.name
+                                            }))
+                                        ]}
+                                    />
+                                    
+                                    <CustomSelect
+                                        label="Kiểu hiển thị"
+                                        value={getStyle('voucherStyle') || 'ticket'}
+                                        onChange={(v) => updateStyle({ voucherStyle: v as any })}
+                                        options={[
+                                            { value: 'ticket', label: 'Vé cắt góc (Ticket)' },
+                                            { value: 'box', label: 'Hộp chữ nhật (Box)' }
+                                        ]}
+                                    />
+                                </div>
+                                <Accordion title="Màu sắc ưu đãi" icon={LucideIcons.Palette} defaultOpen>
+                                    <div className="space-y-4">
+                                        <ColorPicker label="Màu viền ranh (Border)" value={getStyle('voucherBorderColor') || '#d97706'} onChange={(v, t) => handleColorUpdate(v, t, 'voucherBorderColor' as any)} blocks={blocks} bodyStyle={bodyStyle} />
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Kiểu viền</label>
+                                            <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
+                                                {['dashed', 'dotted', 'solid'].map(v => (
+                                                    <button key={v} onClick={() => updateStyle({ voucherBorderStyle: v as any })} className={`flex-1 py-1.5 rounded-lg flex items-center justify-center text-[10px] uppercase font-bold transition-all ${(getStyle('voucherBorderStyle') || 'dashed') === v ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}>{v}</button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <ColorPicker label="Màu nền" solidOnly value={getStyle('voucherBg') || '#fffbe1'} onChange={(v) => updateStyle({ voucherBg: v } as any)} blocks={blocks} bodyStyle={bodyStyle} />
+                                            <ColorPicker label="Màu chữ" solidOnly value={getStyle('voucherTextColor') || '#b45309'} onChange={(v) => updateStyle({ voucherTextColor: v } as any)} blocks={blocks} bodyStyle={bodyStyle} />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100">
+                                            <ColorPicker label="Nút - Màu nền" solidOnly value={getStyle('voucherButtonBg') || '#d97706'} onChange={(v) => updateStyle({ voucherButtonBg: v } as any)} blocks={blocks} bodyStyle={bodyStyle} />
+                                            <ColorPicker label="Nút - Màu chữ" solidOnly value={getStyle('voucherButtonTextColor') || '#ffffff'} onChange={(v) => updateStyle({ voucherButtonTextColor: v } as any)} blocks={blocks} bodyStyle={bodyStyle} />
+                                        </div>
+                                    </div>
+                                </Accordion>
                             </div>
                         )}
                         {/* TABLE block properties */}

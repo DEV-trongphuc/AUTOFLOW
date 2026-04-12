@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Sparkles, ArrowRight, Gift, Zap, Info, Cake, Tag, Users, RefreshCw, Send, PartyPopper, Ghost, Crown, UserPlus, Snowflake, Check, List, FileInput, Layers, ListPlus, ShoppingCart, Plug, FileSpreadsheet, BellRing, Calendar, MessageSquare, UserMinus } from 'lucide-react';
+import { Sparkles, ArrowRight, Gift, Zap, Info, Cake, Tag, Users, RefreshCw, Send, PartyPopper, Ghost, Crown, UserPlus, Snowflake, Check, List, FileInput, Layers, ListPlus, ShoppingCart, Plug, FileSpreadsheet, BellRing, Calendar, MessageSquare, UserMinus, Ticket } from 'lucide-react';
 import Modal from '../../common/Modal';
 import Button from '../../common/Button';
 import Input from '../../common/Input';
@@ -254,6 +254,35 @@ const FLOW_TEMPLATES = [
         iconName: 'mail',
         config: { subject: '⏰ Nhắc nhở: Lịch hẹn của bạn là ngày mai!' }
       }
+    ]
+  },
+  {
+    id: 'voucher_claim',
+    name: 'Chăm sóc lấy Voucher',
+    desc: 'Tự động gửi email đính kèm mã khi khách hàng xí Voucher, hoặc upsell sau vài ngày.',
+    icon: Ticket,
+    theme: 'amber',
+    gradient: 'from-amber-400 to-orange-500',
+    steps: [
+      { id: 't1', type: 'trigger', label: 'Khi nhận Voucher', iconName: 'zap', config: { type: 'voucher', targetId: '' }, nextStepId: 'a1' },
+      { id: 'a1', type: 'action', label: 'Email tặng mã', iconName: 'mail', config: { subject: 'Mã giảm giá của bạn đây! 🎟️' }, nextStepId: 'w1' },
+      { id: 'w1', type: 'wait', label: 'Chờ hêt hạn', iconName: 'clock', config: { duration: 3, unit: 'days' }, nextStepId: 'c1' },
+      { id: 'c1', type: 'condition', label: 'Đã mua chưa?', iconName: 'filter', config: { field: 'lastPurchase', operator: 'within_last', value: '3', unit: 'days' }, yesStepId: '', noStepId: 'a2' },
+      { id: 'a2', type: 'action', label: 'Email Nhắc nhở', iconName: 'mail', config: { subject: 'Mã sắp hết hạn, dùng ngay kẻo lỡ! ⏰' } }
+    ]
+  },
+  {
+    id: 'voucher_redeem_thanks',
+    name: 'Cảm ơn & Tặng quà sau Mua',
+    desc: 'Bắt sự kiện khách hàng Gạch mã Voucher tại Cửa hàng. Tự động gửi thư Cảm ơn và mã giảm giá cho Lần Kế tiếp.',
+    icon: PartyPopper,
+    theme: 'emerald',
+    gradient: 'from-emerald-400 to-green-500',
+    steps: [
+      { id: 't1', type: 'trigger', label: 'Khi khách Dùng mã', iconName: 'zap', config: { type: 'voucher_redeem', targetId: '' }, nextStepId: 'a1' },
+      { id: 'a1', type: 'action', label: 'Zalo ZNS Cảm ơn', iconName: 'message-square', config: { templateId: 'thanks_zns' }, nextStepId: 'w1' },
+      { id: 'w1', type: 'wait', label: 'Chờ 2 ngày', iconName: 'clock', config: { duration: 2, unit: 'days' }, nextStepId: 'a2' },
+      { id: 'a2', type: 'action', label: 'Gửi Email Mời Đánh giá', iconName: 'mail', config: { subject: 'Bạn đánh giá trải nghiệm mua sắm hôm trước thế nào? ⭐' } }
     ]
   }
 ];

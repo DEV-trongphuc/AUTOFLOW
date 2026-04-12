@@ -181,9 +181,9 @@ const FlowHeader: React.FC<FlowHeaderProps> = ({
           )}
 
           {isArchived ? (
-            <Button size="sm" icon={RefreshCw} onClick={onRestore} variant="primary">Khôi phục</Button>
+            <Button icon={RefreshCw} onClick={onRestore} variant="primary" className="h-9 lg:h-10 rounded-full px-4 lg:px-6 text-[9px] lg:text-[10px] uppercase font-black tracking-widest">Khôi phục</Button>
           ) : (
-            <Button size="sm" icon={Save} onClick={onSave} disabled={isViewMode} className="bg-[#ffa900] px-3 lg:px-6 hover:bg-[#e69800] text-white shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 border-none">Lưu</Button>
+            <Button icon={Save} onClick={onSave} disabled={isViewMode} className="h-9 lg:h-10 rounded-full px-4 lg:px-6 text-[9px] lg:text-[10px] uppercase font-black tracking-widest bg-[#ffa900] hover:bg-[#e69800] text-white shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 border-none">Lưu</Button>
           )}
         </div>
       </div >

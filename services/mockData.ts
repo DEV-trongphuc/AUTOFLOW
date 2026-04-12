@@ -68,11 +68,47 @@ export const seedData = () => {
       { id: '2', name: 'Danh sách đen', description: 'Những người đã hủy đăng ký', count: 0, criteria: inactiveCriteria },
     ];
 
+    const voucherCampaigns = [
+      {
+        id: 'camp_1',
+        name: 'Giảm 20% sinh nhật',
+        description: 'Mã giảm giá 20% tự sinh cho từng khách hàng.',
+        discountType: 'percentage',
+        discountValue: 20,
+        codeType: 'dynamic',
+        status: 'active',
+        startDate: '2023-01-01T00:00:00Z',
+        stats: { totalGenerated: 100, totalDistributed: 45, totalRedeemed: 10 }
+      },
+      {
+        id: 'camp_2',
+        name: 'Tặng Áo thun giới hạn',
+        description: 'Voucher đổi áo thun trực tiếp tại cửa hàng',
+        discountType: 'physical_gift',
+        discountValue: 'Áo phông mùa hè',
+        codeType: 'dynamic',
+        status: 'draft',
+        stats: { totalGenerated: 50, totalDistributed: 0, totalRedeemed: 0 }
+      },
+      {
+        id: 'camp_3',
+        name: 'Sale 50K - Chung',
+        description: 'Mã chung sale ngày đôi',
+        discountType: 'fixed_amount',
+        discountValue: 50000,
+        codeType: 'static',
+        staticCode: 'SALE50K',
+        status: 'active',
+        stats: { totalGenerated: 1, totalDistributed: 1000, totalRedeemed: 350 }
+      }
+    ];
+
     localStorage.setItem('mailflow_campaigns', JSON.stringify(campaigns));
     localStorage.setItem('mailflow_subscribers', JSON.stringify(subscribers));
     localStorage.setItem('mailflow_segments', JSON.stringify(segments));
     localStorage.setItem('mailflow_lists', JSON.stringify(lists));
     localStorage.setItem('mailflow_templates', JSON.stringify([]));
+    localStorage.setItem('mailflow_voucher_campaigns', JSON.stringify(voucherCampaigns));
     localStorage.setItem('mailflow_initialized', 'true');
   }
 };

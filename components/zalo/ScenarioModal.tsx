@@ -631,24 +631,29 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                                                 </label>
                                                 {/* Hide per-day toggle when full schedule */}
                                                 {formData.schedule_type !== 'full' && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const newVal = !isPerDay;
-                                                            setIsPerDay(newVal);
-                                                            if (newVal && Object.keys(perDaySchedule).length === 0) {
-                                                                // Initialize from current daily
-                                                                const initial: any = {};
-                                                                formData.active_days.split(',').forEach(d => {
-                                                                    if (d) initial[d] = { start: formData.start_time, end: formData.end_time };
-                                                                });
-                                                                setPerDaySchedule(initial);
-                                                            }
-                                                        }}
-                                                        className={`text-[10px] font-bold px-3 py-1 rounded-full border transition-all ${isPerDay ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-white border-slate-200 text-slate-400'}`}
-                                                    >
-                                                        {isPerDay ? 'Giờ riêng từng ngày: BẬT' : 'Giờ riêng từng ngày: TẮT'}
-                                                    </button>
+                                                    <div className="flex items-center gap-2.5">
+                                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{isPerDay ? 'Giờ riêng: BẬT' : 'Giờ riêng: TẮT'}</span>
+                                                        <button
+                                                            type="button"
+                                                            role="switch"
+                                                            aria-checked={isPerDay}
+                                                            onClick={() => {
+                                                                const newVal = !isPerDay;
+                                                                setIsPerDay(newVal);
+                                                                if (newVal && Object.keys(perDaySchedule).length === 0) {
+                                                                    // Initialize from current daily
+                                                                    const initial: any = {};
+                                                                    formData.active_days.split(',').forEach(d => {
+                                                                        if (d) initial[d] = { start: formData.start_time, end: formData.end_time };
+                                                                    });
+                                                                    setPerDaySchedule(initial);
+                                                                }
+                                                            }}
+                                                            className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:ring-offset-1 ${isPerDay ? 'bg-indigo-500' : 'bg-slate-300'}`}
+                                                        >
+                                                            <span aria-hidden="true" className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isPerDay ? 'translate-x-4' : 'translate-x-0'}`} />
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </div>
 

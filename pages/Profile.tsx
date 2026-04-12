@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Shield, ShieldCheck, History, Edit3, Save, LogOut, Clock, Globe } from 'lucide-react';
+import { User, Mail, Shield, ShieldCheck, History, Edit3, Save, LogOut, Clock, Globe, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import PageHero from '../components/common/PageHero';
 import toast from 'react-hot-toast';
 import { api } from '../services/storageAdapter';
@@ -10,6 +11,8 @@ const Profile: React.FC = () => {
     const [name, setName] = useState(user.name);
     const [loginHistory, setLoginHistory] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const navigate = useNavigate();
+    const isAdmin = user && user.role === 'admin';
 
     useEffect(() => {
         fetchProfile();
@@ -74,6 +77,7 @@ const Profile: React.FC = () => {
                 title={<>My <span className="text-amber-100/80">Account</span></>}
                 subtitle="Quản lý thông tin cá nhân, bảo mật và theo dõi lịch sử truy cập hệ thống."
                 actions={[
+                    ...(isAdmin ? [{ label: 'Cấu hình Admin', icon: Settings, onClick: () => navigate('/settings'), primary: true }] : []),
                     { label: 'Thoát hệ thống', icon: LogOut, onClick: handleLogout }
                 ]}
             />

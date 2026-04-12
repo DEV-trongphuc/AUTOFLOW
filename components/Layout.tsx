@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Layout/Sidebar';
 import Header from './Layout/Header';
 import CommandPalette from './Layout/CommandPalette';
@@ -11,6 +13,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     // [UI] Persistence — retrieve from localStorage to avoid "collapsing back" on every page change
@@ -62,10 +65,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 lg:p-10 scroll-smooth relative">
           {/* Golden glow decor — top-right corner accent */}
           <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[400px] z-0" style={{ background: 'radial-gradient(ellipse at 100% 0%, rgba(251,191,36,0.13) 0%, transparent 65%)' }} />
-          {/* [PERF] Reduced from 700ms slide-in to 200ms fade-in — faster tab switching */}
-          <div className="max-w-[1400px] mx-auto animate-in fade-in duration-150">
-            {children}
-          </div>
+          {/* Slide-Up with slower overshoot spring (bouncing back) */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ y: 30 }}
+              animate={{ y: 0 }}
+              exit={{ opacity: 0, transition: { duration: 0 } }}
+              transition={{ type: "spring", bounce: 0.45, duration: 0.85 }}
+              className="max-w-[1400px] mx-auto origin-top"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </div>

@@ -1,7 +1,8 @@
-﻿import * as React from 'react';
-import { useEffect, useState } from 'react';
+import * as React from 'react';
+import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ModalProps {
   isOpen: boolean;
@@ -30,30 +31,18 @@ const Modal: React.FC<ModalProps> = ({
   hideCloseButton = false,
   isDarkTheme = false
 }) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [animateIn, setAnimateIn] = useState(false);
-
   useEffect(() => {
     if (isOpen) {
-      setIsVisible(true);
       document.body.style.overflow = 'hidden';
-
-      const timer = setTimeout(() => {
-        setAnimateIn(true);
-      }, 10);
-
-      return () => clearTimeout(timer);
     } else {
-      setAnimateIn(false);
-      const timer = setTimeout(() => {
-        setIsVisible(false);
-        document.body.style.overflow = 'unset';
-      }, 400);
-      return () => clearTimeout(timer);
+      document.body.style.overflow = 'unset';
     }
+    return () => { document.body.style.overflow = 'unset'; };
   }, [isOpen]);
 
-  if (!isVisible) return null;
+  // Handle case where some root usages might wrap <Modal> conditionally
+  // Wait, if it's conditional, Modal unmounts immediately anyway, AnimatePresence inside won't help limit exit animations, but enter animations will work.
+  // Best practice is `<Modal isOpen={state} />`
 
   const sizeClasses = {
     sm: 'max-w-md rounded-[32px] max-h-[90vh]',
@@ -67,29 +56,32 @@ const Modal: React.FC<ModalProps> = ({
   };
 
   return createPortal(
-    <div className={`fixed inset-0 z-[100000] flex items-center justify-center overflow-hidden ${size === 'full' ? 'w-full h-full' : 'p-4 sm:p-6'}`}>
-      {/* Backdrop */}
-      <div
-        className={`
-            absolute inset-0 bg-slate-900/60 transition-all duration-500 ease-in-out
-            ${animateIn ? 'opacity-100 backdrop-blur-md' : 'opacity-0 backdrop-blur-0'}
-        `}
-        onClick={onClose}
-      />
+    <AnimatePresence>
+      {isOpen && (
+        <div className={`fixed inset-0 z-[100000] flex items-center justify-center overflow-hidden ${size === 'full' ? 'w-full h-full' : 'p-4 sm:p-6'}`}>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            onClick={onClose}
+          />
 
-      {/* Modal Content */}
-      <div
-        style={{
-          transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-          perspective: '1000px'
-        }}
-        className={`
-        relative shadow-2xl w-full flex flex-col overflow-hidden
-        transform transition-all duration-500 border shadow-[0_32px_120px_-10px_rgba(0,0,0,0.3)]
-        ${sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md}
-        ${animateIn ? 'scale-100 opacity-100 translate-y-0 rotate-0' : 'scale-[0.98] opacity-0 translate-y-8 rotate-x-4'}
-        ${isDarkTheme ? 'bg-[#161B24] border-slate-800' : 'bg-white border-white/20'}
-      `}>
+          {/* Modal Content */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 350, mass: 0.8 }}
+            className={`
+            relative shadow-2xl w-full flex flex-col overflow-hidden
+            border shadow-[0_32px_120px_-10px_rgba(0,0,0,0.3)]
+            ${sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md}
+            ${isDarkTheme ? 'bg-[#161B24] border-slate-800' : 'bg-white border-white/20'}
+          `}
+          >
         {isLoading && (
           <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-50 flex items-center justify-center">
             <div className="flex flex-col items-center gap-2">
@@ -126,8 +118,10 @@ const Modal: React.FC<ModalProps> = ({
             {footer}
           </div>
         )}
-      </div>
-    </div>,
+      </motion.div>
+    </div>
+    )}
+  </AnimatePresence>,
     document.body
   );
 };

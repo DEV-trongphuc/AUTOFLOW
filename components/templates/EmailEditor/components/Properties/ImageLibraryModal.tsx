@@ -1,6 +1,6 @@
 
 // components/templates/EmailEditor/components/Properties/ImageLibraryModal.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Modal from '../../../../common/Modal';
 import Button from '../../../../common/Button';
 import { Image as ImageIcon, Upload, Search, Trash2, CheckCircle2, X } from 'lucide-react';
@@ -19,6 +19,74 @@ interface ImageFile {
     size: number;
     date: number;
 }
+
+const formatSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+const ImageCard = React.memo(({ 
+    img, 
+    isSelected, 
+    isDeleteMode, 
+    onToggleSelect, 
+    onSelect,
+    onClose
+}: { 
+    img: ImageFile, 
+    isSelected: boolean, 
+    isDeleteMode: boolean, 
+    onToggleSelect: (url: string) => void, 
+    onSelect?: (url: string) => void,
+    onClose?: () => void
+}) => {
+    return (
+        <div
+            className={`group relative aspect-square bg-white rounded-2xl overflow-hidden border-2 transition-all duration-300 shadow-sm hover:shadow-xl cursor-pointer
+                ${isSelected ? 'border-amber-600 ring-4 ring-amber-600/10' : 'border-slate-100 hover:border-amber-200'}
+            `}
+            onClick={() => {
+                if (isDeleteMode) {
+                    onToggleSelect(img.url);
+                } else if (onSelect) {
+                    onSelect(img.url);
+                    if (onClose) onClose();
+                }
+            }}
+        >
+            <img
+                src={img.url}
+                alt={img.name}
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+            />
+            
+            {/* Selection Overlay */}
+            <div className={`absolute inset-0 bg-slate-900/60 transition-all duration-300 flex flex-col items-center justify-center p-3 text-center
+                ${isDeleteMode || isSelected ? 'opacity-100' : 'opacity-0'}
+            `}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 mb-2 shadow-lg
+                    ${isSelected ? 'bg-amber-600 text-white scale-110' : 'bg-white/20 text-white border border-white/40'}
+                `}>
+                    <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <p className="text-[10px] font-black text-white truncate w-full px-2 drop-shadow-md">{img.name}</p>
+                <p className="text-[8px] font-bold text-white/60 uppercase tracking-tighter mt-1">{formatSize(img.size)}</p>
+            </div>
+
+            {/* Hover info badge */}
+            {!isDeleteMode && !isSelected && (
+                <div className="absolute inset-x-0 bottom-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-t from-slate-900/80 to-transparent">
+                    <p className="text-[8px] font-black text-white uppercase truncate">{img.name}</p>
+                </div>
+            )}
+        </div>
+    );
+});
 
 const ImageLibraryModal: React.FC<ImageLibraryModalProps> = ({ isOpen, onClose, onSelect }) => {
     const [images, setImages] = useState<ImageFile[]>([]);
@@ -112,23 +180,15 @@ const ImageLibraryModal: React.FC<ImageLibraryModalProps> = ({ isOpen, onClose, 
         }
     };
 
-    const toggleSelect = (url: string) => {
+    const toggleSelect = useCallback((url: string) => {
         setSelectedUrls(prev => 
             prev.includes(url) ? prev.filter(u => u !== url) : [...prev, url]
         );
-    };
+    }, []);
 
     const filteredImages = images.filter(img =>
         img.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
-
-    const formatSize = (bytes: number) => {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    };
 
     return (
         <Modal
@@ -220,51 +280,17 @@ const ImageLibraryModal: React.FC<ImageLibraryModalProps> = ({ isOpen, onClose, 
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                        {filteredImages.map((img) => {
-                            const isSelected = selectedUrls.includes(img.url);
-                            return (
-                                <div
-                                    key={img.url}
-                                    className={`group relative aspect-square bg-white rounded-2xl overflow-hidden border-2 transition-all duration-300 shadow-sm hover:shadow-xl cursor-pointer
-                                        ${isSelected ? 'border-amber-600 ring-4 ring-amber-600/10' : 'border-slate-100 hover:border-amber-200'}
-                                    `}
-                                    onClick={() => {
-                                        if (isDeleteMode) {
-                                            toggleSelect(img.url);
-                                        } else if (onSelect) {
-                                            onSelect(img.url);
-                                            onClose();
-                                        }
-                                    }}
-                                >
-                                    <img
-                                        src={img.url}
-                                        alt={img.name}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                    />
-                                    
-                                    {/* Selection Overlay */}
-                                    <div className={`absolute inset-0 bg-slate-900/60 transition-all duration-300 flex flex-col items-center justify-center p-3 text-center
-                                        ${isDeleteMode || isSelected ? 'opacity-100' : 'opacity-0'}
-                                    `}>
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 mb-2 shadow-lg
-                                            ${isSelected ? 'bg-amber-600 text-white scale-110' : 'bg-white/20 text-white border border-white/40'}
-                                        `}>
-                                            <CheckCircle2 className="w-6 h-6" />
-                                        </div>
-                                        <p className="text-[10px] font-black text-white truncate w-full px-2 drop-shadow-md">{img.name}</p>
-                                        <p className="text-[8px] font-bold text-white/60 uppercase tracking-tighter mt-1">{formatSize(img.size)}</p>
-                                    </div>
-
-                                    {/* Hover info badge */}
-                                    {!isDeleteMode && !isSelected && (
-                                        <div className="absolute inset-x-0 bottom-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-t from-slate-900/80 to-transparent">
-                                            <p className="text-[8px] font-black text-white uppercase truncate">{img.name}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
+                        {filteredImages.map((img) => (
+                            <ImageCard
+                                key={img.url}
+                                img={img}
+                                isSelected={selectedUrls.includes(img.url)}
+                                isDeleteMode={isDeleteMode}
+                                onToggleSelect={toggleSelect}
+                                onSelect={onSelect}
+                                onClose={onClose}
+                            />
+                        ))}
                     </div>
                 )}
             </div>

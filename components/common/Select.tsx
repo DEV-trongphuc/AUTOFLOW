@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { ChevronDown, Check, Search, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Option {
   value: string;
@@ -109,68 +110,75 @@ const Select: React.FC<SelectProps> = ({
         <ChevronDown className={`shrink-0 w-3.5 h-3.5 ml-2 transition-transform duration-500 z-10 ${isOpen ? 'rotate-180 text-amber-600' : 'text-slate-400'}`} />
       </div>
 
-      {isOpen && !disabled && (
-        <div className={`
-            absolute z-[500] min-w-[240px] w-full border rounded-[22px] shadow-[0_20px_50px_rgba(0,0,0,0.2)] p-2 animate-in fade-in zoom-in-95 duration-300
-            ${direction === 'top' ? 'bottom-full mb-3 origin-bottom' : 'top-full mt-3 right-0 origin-top'}
-            ${variant === 'premium'
-            ? 'bg-slate-900 border-white/10 shadow-black/50'
-            : 'bg-white border-slate-100'}
-        `}>
-          {searchable && (
-            <div className="relative mb-2 group/search">
-              <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${variant === 'premium' ? 'text-white/20' : 'text-slate-400'}`} />
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder={searchPlaceholder}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className={`w-full py-2.5 pl-10 pr-4 text-xs font-bold outline-none rounded-xl transition-all ${variant === 'premium'
-                    ? 'bg-white/5 text-white placeholder:text-white/30 focus:bg-white/10'
-                    : 'bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-amber-600/10'
-                  }`}
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors ${variant === 'premium' ? 'hover:bg-white/10 text-white/40' : 'hover:bg-slate-100 text-slate-400'}`}
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              )}
-            </div>
-          )}
-
-          <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-1">
-            {filteredOptions.map((opt) => {
-              const isActive = opt.value === value;
-              return (
-                <div
-                  key={opt.value}
-                  onClick={() => { onChange(opt.value); setIsOpen(false); setSearchTerm(''); }}
-                  className={`
-                    px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer group/opt select-none
-                    ${isActive
-                      ? (variant === 'premium' ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-600')
-                      : (variant === 'premium' ? 'text-white/60 hover:bg-white/5 hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900')}
-                  `}
-                >
-                  <span className="truncate">{opt.label}</span>
-                  {isActive && <Check className={`w-3.5 h-3.5 ${variant === 'premium' ? 'text-white' : 'text-amber-600'}`} />}
-                </div>
-              );
-            })}
-            {filteredOptions.length === 0 && (
-              <div className="text-center py-6 px-4">
-                <p className={`text-xs font-medium ${variant === 'premium' ? 'text-white/40' : 'text-slate-400'}`}>
-                  Không tìm thấy kết quả cho "{searchTerm}"
-                </p>
+      <AnimatePresence>
+        {isOpen && !disabled && (
+          <motion.div 
+            initial={{ opacity: 0, y: direction === 'top' ? 10 : -10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: direction === 'top' ? 5 : -5, scale: 0.98, transition: { duration: 0.1 } }}
+            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+            className={`
+              absolute z-[500] min-w-[240px] w-full border rounded-[22px] shadow-[0_20px_50px_rgba(0,0,0,0.2)] p-2
+              ${direction === 'top' ? 'bottom-full mb-3 origin-bottom' : 'top-full mt-3 right-0 origin-top'}
+              ${variant === 'premium'
+              ? 'bg-slate-900 border-white/10 shadow-black/50'
+              : 'bg-white border-slate-100'}
+          `}>
+            {searchable && (
+              <div className="relative mb-2 group/search">
+                <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${variant === 'premium' ? 'text-white/20' : 'text-slate-400'}`} />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder={searchPlaceholder}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className={`w-full py-2.5 pl-10 pr-4 text-xs font-bold outline-none rounded-xl transition-all ${variant === 'premium'
+                      ? 'bg-white/5 text-white placeholder:text-white/30 focus:bg-white/10'
+                      : 'bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-amber-600/10'
+                    }`}
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors ${variant === 'premium' ? 'hover:bg-white/10 text-white/40' : 'hover:bg-slate-100 text-slate-400'}`}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
               </div>
             )}
-          </div>
-        </div>
-      )}
+
+            <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-1">
+              {filteredOptions.map((opt) => {
+                const isActive = opt.value === value;
+                return (
+                  <div
+                    key={opt.value}
+                    onClick={() => { onChange(opt.value); setIsOpen(false); setSearchTerm(''); }}
+                    className={`
+                      px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer group/opt select-none
+                      ${isActive
+                        ? (variant === 'premium' ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-600')
+                        : (variant === 'premium' ? 'text-white/60 hover:bg-white/5 hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900')}
+                    `}
+                  >
+                    <span className="truncate">{opt.label}</span>
+                    {isActive && <Check className={`w-3.5 h-3.5 ${variant === 'premium' ? 'text-white' : 'text-amber-600'}`} />}
+                  </div>
+                );
+              })}
+              {filteredOptions.length === 0 && (
+                <div className="text-center py-6 px-4">
+                  <p className={`text-xs font-medium ${variant === 'premium' ? 'text-white/40' : 'text-slate-400'}`}>
+                    Không tìm thấy kết quả cho "{searchTerm}"
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

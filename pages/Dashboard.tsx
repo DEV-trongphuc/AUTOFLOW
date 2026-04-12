@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Star, Sparkles, LayoutDashboard, Activity, Mail, Zap, FileText, Bot, Globe, Users, BarChart3, Settings, Clock, ArrowRight, MessageSquare, Facebook, Share2
+    Star, Sparkles, LayoutDashboard, Activity, Mail, Zap, FileText, Bot, Globe, Users, BarChart3, Settings, Clock, ArrowRight, MessageSquare, Facebook, Share2, Ticket
 } from 'lucide-react';
 import PageHero from '../components/common/PageHero';
 
@@ -52,6 +52,15 @@ const ALL_MODULES: Module[] = [
         color: 'from-rose-500 to-red-600',
         path: '/ai-training',
         tags: ['AI', 'Smart']
+    },
+    {
+        id: 'vouchers',
+        title: 'Voucher Hub',
+        sub: 'Quản lý tập trung toàn bộ mã ưu đãi, quà tặng. Tự động sinh mã ngẫu nhiên và theo dõi lượt sử dụng thời gian thực.',
+        icon: Ticket,
+        color: 'from-[#F59E0B] to-[#D97706]',
+        path: '/vouchers',
+        tags: ['Promo', 'Loyalty']
     },
     {
         id: 'zalo-oa',
@@ -114,7 +123,14 @@ const Dashboard: React.FC = () => {
     useEffect(() => {
         const storedRecents = localStorage.getItem('recent_modules');
         if (storedRecents) {
-            setRecentIds(JSON.parse(storedRecents));
+            const parsed = JSON.parse(storedRecents);
+            if (parsed && parsed.length > 0) {
+                if (typeof parsed[0] === 'string') {
+                    setRecentIds(parsed.slice(0, 4));
+                } else {
+                    setRecentIds(parsed.map((item: any) => item.id).slice(0, 4));
+                }
+            }
         }
 
         const user = localStorage.getItem('user');
@@ -129,7 +145,6 @@ const Dashboard: React.FC = () => {
     const handleModuleClick = (module: Module) => {
         const newRecents = [module.id, ...recentIds.filter(id => id !== module.id)].slice(0, 4);
         setRecentIds(newRecents);
-        localStorage.setItem('recent_modules', JSON.stringify(newRecents));
 
         // Auto scroll to top before/during navigation
         window.scrollTo({ top: 0, behavior: 'auto' });
@@ -228,10 +243,12 @@ const Dashboard: React.FC = () => {
                                 <div className="mb-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <h3 className="text-lg font-black text-slate-800 tracking-tight">{module.title}</h3>
-                                        {['ai-training', 'zalo-oa', 'meta-api'].includes(module.id) && (
-                                            <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border ${module.id === 'ai-training' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-blue-600 border-blue-100'
+                                        {['ai-training', 'zalo-oa', 'meta-api', 'vouchers'].includes(module.id) && (
+                                            <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border ${module.id === 'ai-training' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
+                                                module.id === 'vouchers' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                'bg-blue-50 text-blue-600 border-blue-100'
                                                 }`}>
-                                                {module.id === 'ai-training' ? 'A.I Core' : 'Hot'}
+                                                {module.id === 'ai-training' ? 'A.I Core' : module.id === 'vouchers' ? 'New' : 'Hot'}
                                             </span>
                                         )}
                                     </div>

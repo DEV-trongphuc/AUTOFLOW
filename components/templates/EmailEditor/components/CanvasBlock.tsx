@@ -564,6 +564,115 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                     </div>
                 );
 
+            case 'voucher': {
+                const voucherStyle = cssAny.voucherStyle || 'ticket';
+                const vBorderColor = cssAny.voucherBorderColor || '#d97706';
+                const vBorderStyle = cssAny.voucherBorderStyle || 'dashed';
+                const vBg = cssAny.voucherBg || '#fffbe1';
+                const vTextColor = cssAny.voucherTextColor || '#b45309';
+                const btnBg = cssAny.voucherButtonBg || '#d97706';
+                const btnText = cssAny.voucherButtonTextColor || '#ffffff';
+                const linkId = block.voucherCampaignId;
+                
+                let previewImgUrl = '';
+                if (linkId) {
+                    try {
+                        const stored = JSON.parse(localStorage.getItem('mailflow_voucher_campaigns') || '[]');
+                        const camp = stored.find((c: any) => c.id === linkId);
+                        if (camp && camp.rewards && camp.rewards.length > 0) {
+                            previewImgUrl = camp.rewards[0].imageUrl || '';
+                        }
+                    } catch (e) {}
+                }
+                
+                return (
+                    <div style={{
+                        padding: `${css.paddingTop ?? '20px'} ${css.paddingRight ?? '20px'} ${css.paddingBottom ?? '20px'} ${css.paddingLeft ?? '20px'}`,
+                        backgroundColor: css.backgroundColor ?? 'transparent',
+                        borderRadius: sanitizeRadius(css.borderRadius ?? '16px')
+                    }}>
+                        <div style={{
+                            border: `2px ${vBorderStyle} ${vBorderColor}`,
+                            backgroundColor: vBg,
+                            borderRadius: sanitizeRadius(css.borderRadius ?? '12px'),
+                            padding: '24px',
+                            textAlign: 'center',
+                            position: 'relative',
+                            overflow: 'hidden'
+                        }}>
+                            {/* Cutout effects for ticket style */}
+                            {voucherStyle === 'ticket' && (
+                                <>
+                                    <div style={{ position: 'absolute', top: '50%', left: '-12px', width: '24px', height: '24px', backgroundColor: css.backgroundColor ?? '#ffffff', borderRadius: '50%', transform: 'translateY(-50%)', borderRight: `2px ${vBorderStyle} ${vBorderColor}` }}></div>
+                                    <div style={{ position: 'absolute', top: '50%', right: '-12px', width: '24px', height: '24px', backgroundColor: css.backgroundColor ?? '#ffffff', borderRadius: '50%', transform: 'translateY(-50%)', borderLeft: `2px ${vBorderStyle} ${vBorderColor}` }}></div>
+                                </>
+                            )}
+                            
+                            <div style={{ marginBottom: '16px' }}>
+                                {previewImgUrl ? (
+                                    <img src={previewImgUrl} alt="Reward" style={{ maxHeight: '100px', objectFit: 'contain', margin: '0 auto', display: 'block', borderRadius: '8px' }} />
+                                ) : (
+                                    <LucideIcons.Gift size={32} color={vBorderColor} style={{ margin: '0 auto' }} />
+                                )}
+                            </div>
+                            
+                            <h3 style={{ 
+                                fontFamily: bodyStyle.fontFamily, 
+                                fontSize: css.fontSize ?? '24px', 
+                                fontWeight: '900', 
+                                color: vTextColor,
+                                margin: '0 0 8px 0',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em'
+                            }}>
+                                {linkId ? 'VOUCHER ƯU ĐÃI' : 'VOUCHER ƯU ĐÃI'}
+                            </h3>
+                            
+                            <p style={{
+                                fontFamily: bodyStyle.fontFamily,
+                                color: vTextColor,
+                                opacity: 0.8,
+                                fontSize: '14px',
+                                margin: '0 0 20px 0'
+                            }}>
+                                {linkId ? 'Áp dụng trước khi ưu đãi kết thúc' : 'Chưa chọn chiến dịch! Vui lòng chọn ở panel bên phải.'}
+                            </p>
+                            
+                            <div style={{
+                                display: 'inline-block',
+                                border: `2px solid ${vBorderColor}`,
+                                backgroundColor: 'rgba(255,255,255,0.5)',
+                                padding: '10px 24px',
+                                borderRadius: '8px',
+                                fontSize: '20px',
+                                fontWeight: 'bold',
+                                color: vBorderColor,
+                                letterSpacing: '3px',
+                                marginBottom: '20px'
+                            }}>
+                                {linkId ? 'SUMMER26' : 'XXXX-XXXX'}
+                            </div>
+                            <br/>
+                            
+                            <a href="#" style={{
+                                display: 'inline-block',
+                                backgroundColor: btnBg,
+                                color: btnText,
+                                padding: '12px 24px',
+                                borderRadius: sanitizeRadius(css.borderRadius ?? '8px'),
+                                textDecoration: 'none',
+                                fontWeight: 'bold',
+                                fontFamily: bodyStyle.fontFamily,
+                                textTransform: 'uppercase',
+                                fontSize: '14px'
+                            }}>
+                                LƯU MÃ NGAY
+                            </a>
+                        </div>
+                    </div>
+                );
+            }
+
             case 'review':
                 return (
                     <table border={0} cellPadding={0} cellSpacing={0} width={block.style.width || '100%'} style={{ display: 'inline-table', maxWidth: '100%' }}>

@@ -397,7 +397,7 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
                 onDragOver={(e) => e.preventDefault()} 
                 onDrop={(e) => handleDrop(e, 'root')}
             >
-                <div className={`transition-all duration-500 ease-out mx-auto flex flex-col ${isMobile ? 'py-10 h-full' : 'p-8'} ${!isMobile ? 'w-full' : ''}`}>
+                <div className={`transition-all duration-500 ease-out mx-auto flex flex-col ${isMobile ? 'py-10 h-full' : 'p-8 pb-24'} ${!isMobile ? 'w-full' : ''}`}>
                     <div
                         className={`transition-all duration-300 flex flex-col overflow-hidden relative mx-auto ${isMobile ? 'w-[375px] h-[720px] rounded-[40px] border-[12px] border-slate-800 shadow-2xl' : 'min-h-[500px] border border-slate-100 rounded-2xl'}`}
                         style={{
@@ -486,7 +486,7 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
                 </div>
 
                 {selectedBlockId && (
-                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex items-center bg-slate-900/90 backdrop-blur-md rounded-full px-2 py-1.5 shadow-2xl border border-white/10 animate-in slide-in-from-bottom-6 fade-in duration-300">
+                    <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[100] flex items-center bg-slate-900/90 backdrop-blur-md rounded-full px-2 py-1.5 shadow-2xl border border-white/10 animate-in slide-in-from-bottom-10 fade-in duration-300">
                         <button onClick={(e) => { e.stopPropagation(); handleSelectBlock(null); }} className="p-1.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors"><Home className="w-3.5 h-3.5" /></button>
                         {breadcrumbs?.map((b, idx, arr) => {
                             const Icon = b.type === 'section' ? Square : (b.type === 'row' ? GripHorizontal : (b.type === 'column' ? Box : Type));

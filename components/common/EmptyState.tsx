@@ -10,6 +10,7 @@ interface EmptyStateProps {
     onCtaClick?: () => void;
     className?: string;
     iconColor?: string;
+    ctaClassName?: string;
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({
@@ -19,7 +20,8 @@ const EmptyState: React.FC<EmptyStateProps> = ({
     ctaLabel,
     onCtaClick,
     className = '',
-    iconColor = 'text-slate-300'
+    iconColor = 'text-slate-300',
+    ctaClassName = ''
 }) => {
     return (
         <div className={`py-20 px-6 text-center animate-in fade-in zoom-in-95 duration-700 ${className}`}>
@@ -40,8 +42,8 @@ const EmptyState: React.FC<EmptyStateProps> = ({
                 {ctaLabel && onCtaClick && (
                     <Button
                         onClick={onCtaClick}
-                        variant="primary"
-                        className="shadow-xl shadow-blue-500/20 px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest"
+                        variant={ctaClassName ? 'custom' : 'primary'}
+                        className={ctaClassName || "shadow-xl shadow-blue-500/20 px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest"}
                     >
                         {ctaLabel}
                     </Button>

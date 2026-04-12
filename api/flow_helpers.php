@@ -523,6 +523,72 @@ function replaceMergeTags($html, $subscriber, $context = [])
         $map['unsubscribeLink'] = $map['unsubscribe_url'];
     }
 
+    // [VOUCHER CLAIMING LOGIC] (End-to-End Dynamic Code Assignment)
+    if (strpos($html, '[VOUCHER_') !== false) {
+        $html = preg_replace_callback('/\[VOUCHER_([a-zA-Z0-9_\-]+)\]/i', function ($m) use ($subscriber, $context) {
+            global $pdo;
+            if (!$pdo) return $m[0]; // safety
+
+            $campaignId = trim($m[1]);
+            $subscriberId = $subscriber['id'] ?? ($subscriber['subscriber_id'] ?? null);
+
+            // 1. Check if this subscriber ALREADY has a code from this campaign
+            if ($subscriberId) {
+                $stmtCheck = $pdo->prepare("SELECT id, code FROM voucher_codes WHERE campaign_id = ? AND subscriber_id = ? LIMIT 1");
+                $stmtCheck->execute([$campaignId, $subscriberId]);
+                $existing = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+                
+                if ($existing) {
+                    $pdo->prepare("UPDATE voucher_codes SET sent_at = NOW() WHERE id = ? AND sent_at IS NULL")->execute([$existing['id']]);
+                    return $existing['code'];
+                }
+            }
+
+            // 2. Fetch Campaign Info
+            $stmtCamp = $pdo->prepare("SELECT code_type, static_code, expiration_days FROM voucher_campaigns WHERE id = ? AND status = 'active'");
+            $stmtCamp->execute([$campaignId]);
+            $camp = $stmtCamp->fetch(PDO::FETCH_ASSOC);
+
+            if (!$camp) return 'INVALID-VOUCHER';
+
+            if ($camp['code_type'] === 'static') {
+                return $camp['static_code'] ?: 'NO-CODE';
+            }
+
+            if (!$subscriberId) return 'NO-CODE';
+
+            // 3. ATOMIC CLAIM FOR DYNAMIC CODE (Concurrency Safe)
+            try {
+                // Must ensure no recursive transaction errors if already in transaction
+                $alreadyInTransaction = $pdo->inTransaction();
+                if (!$alreadyInTransaction) $pdo->beginTransaction();
+
+                $stmtClaim = $pdo->prepare("SELECT id, code FROM voucher_codes WHERE campaign_id = ? AND status = 'unused' AND subscriber_id IS NULL LIMIT 1 FOR UPDATE SKIP LOCKED");
+                $stmtClaim->execute([$campaignId]);
+                $row = $stmtClaim->fetch(PDO::FETCH_ASSOC);
+
+                if ($row) {
+                    $expiresAt = null;
+                    if (!empty($camp['expiration_days'])) {
+                        $expiresAt = date('Y-m-d H:i:s', strtotime("+{$camp['expiration_days']} days"));
+                    }
+                    
+                    $pdo->prepare("UPDATE voucher_codes SET status = 'available', subscriber_id = ?, sent_at = NOW(), expires_at = ? WHERE id = ?")
+                        ->execute([$subscriberId, $expiresAt, $row['id']]);
+                        
+                    if (!$alreadyInTransaction) $pdo->commit();
+                    return $row['code'];
+                } else {
+                    if (!$alreadyInTransaction) $pdo->rollBack();
+                    return 'HẾT-MÃ';
+                }
+            } catch (Exception $e) {
+                // Return generic error gracefully so flow does not crash
+                return 'HẾT-MÃ';
+            }
+        }, $html);
+    }
+
     // [ROBUST FIX] Use Regex to handle {{ var }}, {{var}}, {{ VAR }} etc
     $html = preg_replace_callback('/{{\s*(.*?)\s*}}/i', function ($m) use ($map) {
         $tag = trim($m[1]);

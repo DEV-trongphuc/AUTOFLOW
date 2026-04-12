@@ -11,6 +11,7 @@ export const TOOLBOX_ITEMS = [
     { id: 'timeline', label: 'Timeline', icon: 'List', cat: 'content' },
     { id: 'review', label: 'Đánh giá', icon: 'Star', cat: 'content' },
     { id: 'countdown', label: 'Đếm ngược', icon: 'Clock', cat: 'template_tab' },
+    { id: 'voucher', label: 'Mã Giảm Giá', icon: 'Ticket', cat: 'template_tab' },
     { id: 'divider', label: 'Kẻ ngang', icon: 'Minus', cat: 'basic' },
     { id: 'table', label: 'Bảng', icon: 'Table2', cat: 'basic' },
     { id: 'footer', label: 'Footer', icon: 'PanelBottom', cat: 'basic' },

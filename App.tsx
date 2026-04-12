@@ -37,6 +37,7 @@ const Settings = lazy(() => import('./pages/Settings'));
 const Reports = lazy(() => import('./pages/Reports'));
 const Tags = lazy(() => import('./pages/Tags'));
 const ApiTriggers = lazy(() => import('./pages/ApiTriggers'));
+const Vouchers = lazy(() => import('./pages/Vouchers'));
 const ZaloSettings = lazy(() => import('./pages/SocialSettings'));
 const WebTracking = lazy(() => import('./pages/WebTracking'));
 const AITraining = lazy(() => import('./pages/AITraining'));
@@ -144,6 +145,7 @@ const App: React.FC = () => {
                 () => import('./pages/Templates'),
                 () => import('./pages/Reports'),
                 () => import('./pages/Settings'),
+                () => import('./pages/Vouchers'),
                 () => import('./pages/AITraining'),
                 () => import('./pages/WebTracking'),
                 () => import('./pages/Tags'),
@@ -226,6 +228,9 @@ const App: React.FC = () => {
                                 } />
                                 <Route path="/tags" element={
                                     <ProtectedRoute><Layout><P c={Tags} /></Layout></ProtectedRoute>
+                                } />
+                                <Route path="/vouchers" element={
+                                    <ProtectedRoute><Layout><P c={Vouchers} /></Layout></ProtectedRoute>
                                 } />
                                 <Route path="/api-triggers" element={
                                     <ProtectedRoute><Layout><P c={ApiTriggers} /></Layout></ProtectedRoute>
