@@ -73,18 +73,23 @@ const RichText: React.FC<RichTextProps> = ({ html, onChange, placeholder, classN
         }
     }, []);
 
-    const handleFocus = () => {
+    const handleContextMenu = (e: React.MouseEvent) => {
         if (disabled || isModalOpen) return;
-        const el = elementRef.current;
-        if (!el) return;
-        const rect = el.getBoundingClientRect();
+        e.preventDefault();
+        saveRange();
         setToolbar({
             isVisible: true,
+            // Đặt popup ngay tại vị trí click chuột (dùng tọa độ viewport vì tooltip là vị trí fixed)
             position: {
-                top: rect.top + window.scrollY,
-                left: rect.left + rect.width / 2 + window.scrollX
+                top: e.clientY,
+                left: e.clientX
             }
         });
+    };
+
+    const handleFocus = () => {
+        if (disabled || isModalOpen) return;
+        handleSelection();
     };
 
     const handleSelection = () => {
@@ -94,16 +99,34 @@ const RichText: React.FC<RichTextProps> = ({ html, onChange, placeholder, classN
             return;
         }
         saveRange();
-        // Update toolbar position when selection changes — keep it pinned to editor top
+        
+        let targetTop = 0;
+        let targetLeft = 0;
         const el = elementRef.current;
         if (!el) return;
-        const rect = el.getBoundingClientRect();
+
+        if (selection.rangeCount > 0 && !selection.isCollapsed) {
+            const range = selection.getRangeAt(0);
+            const rects = range.getClientRects();
+            if (rects.length > 0) {
+                const firstRect = rects[0];
+                targetTop = firstRect.top;
+                targetLeft = firstRect.left + (firstRect.width / 2);
+            } else {
+                const rect = el.getBoundingClientRect();
+                targetTop = rect.top;
+                targetLeft = rect.left + rect.width / 2;
+            }
+        } else {
+            const rect = el.getBoundingClientRect();
+            // Nếu không bôi đen chữ thì cho popup nổi cách 40px lên trên block để khỏi che chữ
+            targetTop = rect.top - 40;
+            targetLeft = rect.left + rect.width / 2;
+        }
+
         setToolbar({
             isVisible: true,
-            position: {
-                top: rect.top + window.scrollY,
-                left: rect.left + rect.width / 2 + window.scrollX
-            }
+            position: { top: targetTop, left: targetLeft }
         });
     };
 
@@ -219,6 +242,7 @@ const RichText: React.FC<RichTextProps> = ({ html, onChange, placeholder, classN
                 onInput={handleInput}
                 onKeyDown={handleKeyDown}
                 onMouseUp={handleSelection}
+                onContextMenu={handleContextMenu}
                 onKeyUp={handleSelection}
                 onFocus={handleFocus}
                 className={`rich-text-editor ${className || ''}`}

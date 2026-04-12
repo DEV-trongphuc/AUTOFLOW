@@ -357,7 +357,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                         options={BODY_FONT_OPTIONS}
                                     />
                                     <div className="mt-2">
-                                        <ColorPicker label="Màu chữ" value={getStyle('color')} onChange={(v, t) => handleColorUpdate(v, t, 'color')} blocks={blocks} bodyStyle={bodyStyle} />
+                                        <ColorPicker label="Màu chữ" value={getStyle('color') || '#1e293b'} onChange={(v, t) => handleColorUpdate(v, t, 'color')} blocks={blocks} bodyStyle={bodyStyle} />
                                     </div>
                                 </Accordion>
                             </div>
@@ -378,7 +378,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                         <VisualMeasure label="Cỡ" value={getStyle('fontSize')} defaultValue={14} onChange={(v) => updateStyle({ fontSize: v })} max={100} unit="px" />
                                         <VisualMeasure label="Dòng" value={getStyle('lineHeight')} defaultValue={1.5} onChange={(v) => updateStyle({ lineHeight: v })} max={3} unit="" hideSlider />
                                     </div>
-                                    <ColorPicker label="Màu chữ" value={getStyle('color')} onChange={(v, t) => handleColorUpdate(v, t, 'color')} blocks={blocks} bodyStyle={bodyStyle} />
+                                    <ColorPicker label="Màu chữ" value={getStyle('color') || '#1e293b'} onChange={(v, t) => handleColorUpdate(v, t, 'color')} blocks={blocks} bodyStyle={bodyStyle} />
                                 </Accordion>
                             </div>
                         )}
@@ -425,7 +425,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                         <VisualMeasure label="Cỡ" value={getStyle('fontSize')} defaultValue={14} onChange={(v) => updateStyle({ fontSize: v })} max={100} unit="px" />
                                         <VisualMeasure label="Dòng" value={getStyle('lineHeight')} defaultValue={1.5} onChange={(v) => updateStyle({ lineHeight: v })} max={3} unit="" hideSlider />
                                     </div>
-                                    <ColorPicker label="Màu chữ" value={getStyle('color')} onChange={(v, t) => handleColorUpdate(v, t, 'color')} blocks={blocks} bodyStyle={bodyStyle} />
+                                    <ColorPicker label="Màu chữ" value={getStyle('color') || '#1e293b'} onChange={(v, t) => handleColorUpdate(v, t, 'color')} blocks={blocks} bodyStyle={bodyStyle} />
                                 </Accordion>
                             </div>
                         )}

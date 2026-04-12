@@ -1,6 +1,7 @@
 
 // components/templates/EmailEditor/components/RichTextToolbar.tsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Bold, Italic, Underline, Strikethrough, Link, Palette, Eraser, AlignLeft, AlignCenter, AlignRight, AlignJustify, Heading1, Heading2, Heading3, Braces, Type, Tag } from 'lucide-react';
 import InputModal from '../../../common/InputModal';
 
@@ -169,13 +170,17 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
         setShowMergeTags(false);
     };
 
-    if (!isVisible && !showLinkModal) return null;
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => { setMounted(true); }, []);
 
-    return (
+    if (!isVisible && !showLinkModal) return null;
+    if (!mounted) return null;
+
+    return createPortal(
         <>
             <div
                 className={`fixed z-[9999] flex flex-col bg-slate-900 text-white rounded-2xl shadow-2xl px-1 py-1 gap-0.5 border border-slate-700/50 ${!isVisible ? 'invisible pointer-events-none' : 'animate-in fade-in zoom-in-95 duration-150'}`}
-                style={{ top: position.top - 105, left: position.left, transform: 'translateX(-50%)', width: 'max-content' }}
+                style={{ top: position.top, left: position.left, transform: 'translate(-50%, -100%)', width: 'max-content', marginTop: '-12px' }}
                 onMouseDown={(e) => e.preventDefault()}
                 onMouseEnter={onToolbarMouseEnter}
                 onMouseLeave={onToolbarMouseLeave}
@@ -399,7 +404,8 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
                 placeholder="https://example.com"
                 confirmLabel="Chèn"
             />
-        </>
+        </>,
+        document.body
     );
 };
 

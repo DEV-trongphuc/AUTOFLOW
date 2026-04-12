@@ -1,5 +1,6 @@
 // components/common/RichText/PopoverColorPicker.tsx
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Ban } from 'lucide-react';
 import { PREMIUM_COLORS } from '../../templates/EmailEditor/constants/editorConstants';
 
@@ -23,30 +24,49 @@ const PopoverColorPicker: React.FC<PopoverColorPickerProps> = ({ onSelect, onClo
         .filter(c => c && c !== 'transparent' && c !== 'none' && !c.includes('gradient'))
         .slice(0, 12);
 
-    // Calculate smart position
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => { setMounted(true); }, []);
+
     const [style, setStyle] = useState<React.CSSProperties>({
         position: 'fixed',
-        top: position.top + 38,
-        left: position.left - 10,
+        visibility: 'hidden', // Hide initially to wait for math
         zIndex: 99999,
     });
+    const [arrowLeft, setArrowLeft] = useState<number | string>('1.25rem'); // 20px (left-5)
 
     useEffect(() => {
         if (!containerRef.current) return;
-        const w = 228; // approx width
-        const h = 380; // approx height
+        const w = 240; 
+        const h = 380; 
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
 
         let left = position.left - 10;
         let top = position.top + 38;
+        let arrowPos: number | string = '1.25rem';
 
-        if (left + w > viewportWidth - 8) left = viewportWidth - w - 8;
-        if (left < 8) left = 8;
-        if (top + h > viewportHeight - 8) top = position.top - h - 8;
+        // Nếu cái nút bấm nằm ở mảng bên phải của màn hình (vùng properties)
+        // Ta sẽ tự động khóa lề phải của popover lại, để popup nở vểnh sang bên trái thay vì rớt mép phải.
+        if (position.left > viewportWidth - 300) {
+            // Popup được neo về bên phải, canh đuôi theo cái nút
+            left = position.left - w + 30; // 30 là trừ hao khoảng cách tính từ viền phải vào nút
+            // Lật mũi tên sang mép phải
+            arrowPos = `calc(100% - 30px)`;
+        } else {
+            // Nếu không thì cứ tràn mép phải
+            if (left + w > viewportWidth - 10) {
+                const diff = (left + w) - (viewportWidth - 10);
+                left -= diff;
+                arrowPos = `calc(1.25rem + ${diff}px)`; 
+            }
+        }
 
-        setStyle({ position: 'fixed', top, left, zIndex: 99999 });
-    }, [position]);
+        if (left < 10) left = 10;
+        if (top + h > viewportHeight - 10) top = position.top - h - 8;
+
+        setStyle({ position: 'fixed', top, left, visibility: 'visible', zIndex: 99999 });
+        setArrowLeft(arrowPos);
+    }, [position, mounted]); // trigger after mounted is true
 
     const isValidHex = (val: string) => /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(val);
 
@@ -76,7 +96,9 @@ const PopoverColorPicker: React.FC<PopoverColorPickerProps> = ({ onSelect, onClo
         onSelect(color);
     };
 
-    return (
+    if (!mounted) return null;
+
+    return createPortal(
         <>
             {/* Backdrop */}
             <div className="fixed inset-0 z-[99998]" onClick={onClose} />
@@ -87,7 +109,10 @@ const PopoverColorPicker: React.FC<PopoverColorPickerProps> = ({ onSelect, onClo
                 className="bg-white border border-slate-200 rounded-2xl shadow-2xl p-3 w-56 animate-in fade-in zoom-in-95"
             >
                 {/* Arrow */}
-                <div className="absolute -top-1.5 left-5 w-3 h-3 bg-white border-t border-l border-slate-200 rotate-45" />
+                <div 
+                    className="absolute -top-1.5 w-3 h-3 bg-white border-t border-l border-slate-200 rotate-45 transform"
+                    style={{ left: arrowLeft }}
+                />
 
                 {/* Hex input + preview */}
                 <div className="mb-3">
@@ -178,7 +203,8 @@ const PopoverColorPicker: React.FC<PopoverColorPickerProps> = ({ onSelect, onClo
                     </button>
                 </div>
             </div>
-        </>
+        </>,
+        document.body
     );
 };
 
