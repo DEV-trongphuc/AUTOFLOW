@@ -314,8 +314,13 @@ const AITraining: React.FC = () => {
 
                 const pId = params.get('propertyId');
                 const tab = params.get('tab');
+                const mainTabParam = params.get('mainTab');
                 const convId = params.get('conversationId');
                 const visId = params.get('visitorId');
+
+                if (mainTabParam === 'chat' || mainTabParam === 'website') {
+                    setMainTab(mainTabParam as any);
+                }
 
                 if (pId) {
                     setSelectedProperty(pId);

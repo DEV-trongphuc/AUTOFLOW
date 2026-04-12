@@ -59,7 +59,7 @@ const ALL_MODULES: Module[] = [
         sub: 'Training kiến thức AI và giao diện chuyên nghiệp riêng biệt dành cho đội nhóm & các phòng ban độc lập',
         icon: Sparkles,
         color: 'from-[#e11d48] to-[#9f1239]',
-        path: '/ai-space',
+        path: '/ai-training?mainTab=chat',
         tags: ['Agents', 'Workspace']
     },
     {
