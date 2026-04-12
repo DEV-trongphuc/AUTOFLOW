@@ -58,7 +58,7 @@ const ALL_MODULES: Module[] = [
         title: 'AI Space',
         sub: 'Training kiến thức AI và giao diện chuyên nghiệp riêng biệt dành cho đội nhóm & các phòng ban độc lập',
         icon: Sparkles,
-        color: 'from-sky-500 to-indigo-700',
+        color: 'from-[#881337] to-[#4c0519]',
         path: '/ai-space',
         tags: ['Agents', 'Workspace']
     },
@@ -264,7 +264,7 @@ const Dashboard: React.FC = () => {
                                         <h3 className="text-lg font-black text-slate-800 tracking-tight">{module.title}</h3>
                                         {['ai-training', 'ai-space', 'zalo-oa', 'meta-api', 'vouchers', 'api-triggers'].includes(module.id) && (
                                             <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border ${module.id === 'ai-training' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                                module.id === 'ai-space' ? 'bg-sky-50 text-sky-600 border-sky-100' :
+                                                module.id === 'ai-space' ? 'bg-rose-50 text-rose-700 border-rose-100' :
                                                     module.id === 'vouchers' ? 'bg-amber-50 text-amber-600 border-amber-100' :
                                                         module.id === 'api-triggers' ? 'bg-orange-50 text-orange-600 border-orange-100' :
                                                             'bg-blue-50 text-blue-600 border-blue-100'
