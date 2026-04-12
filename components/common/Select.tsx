@@ -4,7 +4,8 @@ import { ChevronDown, Check, Search, X } from 'lucide-react';
 
 interface Option {
   value: string;
-  label: string;
+  label: React.ReactNode;
+  searchLabel?: string;
 }
 
 interface SelectProps {
@@ -37,9 +38,10 @@ const Select: React.FC<SelectProps> = ({
 
   const filteredOptions = useMemo(() => {
     if (!searchable || !searchTerm) return options;
-    return options.filter(opt =>
-      opt.label.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return options.filter(opt => {
+      const searchStr = opt.searchLabel || (typeof opt.label === 'string' ? opt.label : '');
+      return searchStr.toLowerCase().includes(searchTerm.toLowerCase());
+    });
   }, [options, searchTerm, searchable]);
 
   useEffect(() => {

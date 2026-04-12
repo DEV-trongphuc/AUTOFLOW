@@ -3,6 +3,7 @@ import React from 'react';
 import { Check } from 'lucide-react';
 
 interface CheckboxProps {
+    id?: string;
     checked: boolean;
     onChange: (checked: boolean) => void;
     label?: React.ReactNode;

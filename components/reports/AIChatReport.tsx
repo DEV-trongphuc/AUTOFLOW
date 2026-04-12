@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Bot, MessageSquare, User, Zap } from 'lucide-react';
@@ -85,7 +85,7 @@ const AIChatReport: React.FC<AIReportProps> = ({ dateRange }) => {
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                             <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} dy={10} tickFormatter={(val) => val.split('-').slice(1).reverse().join('/')} />
                             <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
-                            <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', shadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} />
+                            <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} />
                             <Area type="monotone" dataKey="ai_count" name="AI Tỉ lệ" stroke="#10b981" strokeWidth={3} fill="url(#colorAi)" />
                             <Area type="monotone" dataKey="visitor_count" name="Khách nhắn" stroke="#6366f1" strokeWidth={3} fill="url(#colorUser)" />
                         </AreaChart>

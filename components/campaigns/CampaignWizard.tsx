@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
@@ -1343,7 +1343,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                         >
                             Lưu nháp
                         </Button>
-                        {step < 5 ? <Button onClick={handleNext} className="px-10 h-11 rounded-xl shadow-lg transition-all bg-slate-900 text-white hover:bg-black uppercase text-[11px] tracking-widest font-bold flex items-center gap-2">Tiếp tục <ChevronRight className="w-4 h-4" /></Button> : <Button isLoading={isSubmitting} disabled={isSubmitting || errors.schedule} onClick={handlePublishClick} icon={connectFlow ? GitMerge : (formData.scheduledAt ? Calendar : Send)} size="lg" className="px-12 h-12 rounded-2xl shadow-xl shadow-orange-500/30 text-xs font-bold uppercase tracking-wider">{connectFlow ? 'Save & Build Flow' : (formData.scheduledAt ? 'Lên lịch gửi' : 'Gửi ngay')}</Button>}
+                        {step < 5 ? <Button onClick={handleNext} className="px-10 h-11 rounded-xl shadow-lg transition-all bg-slate-900 text-white hover:bg-black uppercase text-[11px] tracking-widest font-bold flex items-center gap-2">Tiếp tục <ChevronRight className="w-4 h-4" /></Button> : <Button isLoading={isSubmitting} disabled={isSubmitting || !!errors.schedule} onClick={handlePublishClick} icon={connectFlow ? GitMerge : (formData.scheduledAt ? Calendar : Send)} size="lg" className="px-12 h-12 rounded-2xl shadow-xl shadow-orange-500/30 text-xs font-bold uppercase tracking-wider">{connectFlow ? 'Save & Build Flow' : (formData.scheduledAt ? 'Lên lịch gửi' : 'Gửi ngay')}</Button>}
                     </div>
                 </div>
                 <TestEmailModal

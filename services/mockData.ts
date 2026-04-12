@@ -21,7 +21,7 @@ export const seedData = () => {
         reminders: [],
         senderEmail: 'marketing@company.com',
         trackingEnabled: true,
-        stats: { sent: 1250, opened: 850, clicked: 320, bounced: 12, spam: 3 },
+        stats: { sent: 1250, opened: 850, clicked: 320, bounced: 12, spam: 3, unsubscribed: 0, failed: 0 },
       },
     ];
 

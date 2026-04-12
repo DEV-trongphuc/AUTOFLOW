@@ -9,15 +9,10 @@ import Checkbox from '../common/Checkbox';
 import Select from '../common/Select';
 import Input from '../common/Input';
 import toast from 'react-hot-toast';
-import { CampaignStatus } from '../../types'; // Assuming types exist
+import { CampaignStatus, Flow } from '../../types'; // Assuming types exist
 import { api } from '../../services/storageAdapter';
 
-interface Flow {
-    id: string;
-    name: string;
-    status: 'active' | 'inactive' | 'archived';
-    steps: any[];
-}
+
 
 interface Attachment {
     id: string;

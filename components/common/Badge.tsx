@@ -3,7 +3,7 @@ import React from 'react';
 
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'brand' | 'pink' | 'amber';
+  variant?: 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'brand' | 'pink' | 'amber' | 'secondary';
   className?: string;
   icon?: React.ElementType;
 }
@@ -18,6 +18,7 @@ const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', className 
     brand: 'bg-[#fff9f0] text-[#ca7900] border-orange-200 shadow-sm',
     pink: 'bg-pink-50 text-pink-700 border-pink-200 shadow-sm',
     amber: 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm',
+    secondary: 'bg-slate-100 text-slate-600 border-slate-200'
   };
 
   return (

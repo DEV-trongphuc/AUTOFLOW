@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { TrendingUp, MessageSquare, Zap, Calendar, RefreshCw, ChevronDown, Users, Heart, MessageSquareDashed } from 'lucide-react';
@@ -159,7 +159,7 @@ const MetaGrowthReport: React.FC = () => {
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                 <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} dy={10} />
                                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
-                                <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', shadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} />
+                                <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} />
                                 <Area type="monotone" dataKey="new_followers" name="Mới" stroke="#3b82f6" strokeWidth={4} fill="url(#colorNew)" />
                             </AreaChart>
                         </ResponsiveContainer>
@@ -180,7 +180,7 @@ const MetaGrowthReport: React.FC = () => {
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                 <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} dy={10} />
                                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
-                                <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', shadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} cursor={{ fill: '#f8fafc' }} />
+                                <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} cursor={{ fill: '#f8fafc' }} />
                                 <Bar dataKey="non_follower_interactions" name="Tương tác" fill="#10b981" radius={[8, 8, 0, 0]} barSize={20} />
                             </BarChart>
                         </ResponsiveContainer>
@@ -200,7 +200,7 @@ const MetaGrowthReport: React.FC = () => {
                             <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                 <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} dy={10} />
                                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
-                                <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', shadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} />
+                                <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} />
                                 <Area type="monotone" dataKey="automation" name="Kích hoạt" stroke="#f97316" strokeWidth={4} fill="none" />
                             </AreaChart>
                         </ResponsiveContainer>

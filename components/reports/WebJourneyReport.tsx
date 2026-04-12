@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { MousePointerClick, Users, Clock, ArrowUpRight } from 'lucide-react';
@@ -92,7 +92,7 @@ const WebJourneyReport: React.FC<WebReportProps> = ({ dateRange }) => {
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} dy={10} tickFormatter={(val) => val.split('-').slice(1).reverse().join('/')} />
                                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
-                                <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', shadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} />
+                                <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} />
                                 <Area type="monotone" dataKey="sessions" name="Phiên" stroke="#3b82f6" strokeWidth={3} fill="url(#colorSessions)" />
                                 <Area type="monotone" dataKey="pageViews" name="Xem trang" stroke="#f97316" strokeWidth={3} fill="none" />
                             </AreaChart>

@@ -137,7 +137,7 @@ export interface EmailBlockStyle {
   checkDescColor?: string;
   checkTitleColor?: string;
   checkItemColor?: string;
-  maxWidth?: string;
+  checkIndividualIcons?: boolean;
 
   // Table Specific
   tableRows?: number;            // number of data rows (excluding header)
@@ -163,7 +163,6 @@ export interface EmailBlockStyle {
   tableLastColTextColor?: string;
 
   noStack?: boolean;
-  checkIndividualIcons?: boolean;
 }
 
 export interface SocialLink {

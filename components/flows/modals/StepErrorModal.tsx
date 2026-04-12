@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { AlertOctagon, Download, RefreshCcw, X, Mail, Clock, Trash2, ArrowRight, AlertTriangle, ShieldAlert, ChevronRight } from 'lucide-react';
 import Modal from '../../common/Modal';
@@ -145,7 +145,7 @@ const StepErrorModal: React.FC<StepErrorModalProps> = ({
     const isNextStepEmail = targetStep?.type === 'action' || targetStep?.type === 'email';
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={`Lỗi gửi mail tại: ${stepLabel}`} size="large">
+        <Modal isOpen={isOpen} onClose={onClose} title={`Lỗi gửi mail tại: ${stepLabel}`} size="lg">
             <div className="space-y-4">
                 {/* Summary & Warnings */}
                 <div className="space-y-2">
@@ -370,7 +370,7 @@ const StepErrorModal: React.FC<StepErrorModalProps> = ({
                             <Button
                                 onClick={() => handleResolveAction('move', targetStep?.id)}
                                 disabled={!targetStep || isLoading}
-                                loading={isLoading}
+                                isLoading={isLoading}
                             >
                                 Xác nhận chuyển
                             </Button>

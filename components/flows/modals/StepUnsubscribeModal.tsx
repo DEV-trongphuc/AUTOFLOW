@@ -59,7 +59,7 @@ const StepUnsubscribeModal: React.FC<StepUnsubscribeModalProps> = ({
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={`Hủy đăng kýtại: ${stepLabel}`} size="large">
+        <Modal isOpen={isOpen} onClose={onClose} title={`Hủy đăng kýtại: ${stepLabel}`} size="lg">
             <div className="space-y-4">
                 {/* Summary */}
                 <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-3">

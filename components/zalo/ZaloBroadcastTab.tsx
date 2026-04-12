@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useEffect, useState, useMemo } from 'react';
 import { api } from '../../services/storageAdapter';
 import {
@@ -232,7 +232,7 @@ const ZaloBroadcastTab: React.FC<ZaloBroadcastTabProps> = ({ initialSelectedIds,
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             icon={Search}
-                            size="sm"
+                            customSize="sm"
                         />
                     </div>
                     <Button
@@ -603,7 +603,7 @@ const ZaloBroadcastTab: React.FC<ZaloBroadcastTabProps> = ({ initialSelectedIds,
                                             value={trackSearch}
                                             onChange={e => setTrackSearch(e.target.value)}
                                             icon={Search}
-                                            size="sm"
+                                            customSize="sm"
                                         />
                                         <Select
                                             value={trackFilter}

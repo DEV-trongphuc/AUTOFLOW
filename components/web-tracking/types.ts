@@ -18,8 +18,8 @@ export interface WebStats {
         growth?: number;
     };
     chart: { date: string; sessions: number; pageViews: number }[];
-    topPages: { url: string; urlHash?: string; title: string; count: number; avgTime: number; avgScroll: number; bounceRate: number }[];
-    topEvents: { type: string; target: string; count: number }[];
+    topPages: { url: string; urlHash?: string; title: string; count: number; avgTime: number; avgScroll: number; bounceRate: number; avgLoadTime?: number }[];
+    topEvents: { type: string; target: string; count: number; url?: string }[];
     trafficSources: { source: string; medium: string; campaign: string | null; sessions: number; visitors: number }[];
     userAcquisition?: { source: string; medium: string; newUsers: number }[];
     deviceStats: { name: string; value: number }[];

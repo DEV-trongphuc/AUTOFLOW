@@ -56,7 +56,7 @@ const ChatbotCard = React.memo(({
                 </div>
 
                 <button
-                    onClick={onStartChat}
+                    onClick={(e) => onStartChat(e, bot)}
                     className="w-full h-11 rounded-xl bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100 transition-all duration-500 flex items-center justify-center gap-2 group/btn"
                 >
                     <MessageSquare className="w-4 h-4 text-slate-400 group-hover/btn:scale-110 transition-transform" />
