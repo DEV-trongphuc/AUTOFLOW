@@ -565,8 +565,8 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
                                                                         alt="" 
                                                                     />
                                                                 ) : (
-                                                                    <div className={`w-full h-full rounded-2xl flex items-center justify-center text-white ${hideWebsiteTab ? 'bg-slate-400 grayscale' : 'bg-gradient-to-br from-brand to-brand-dark'}`}>
-                                                                        <Bot className="w-6 h-6" />
+                                                                    <div className={`w-full h-full rounded-[18px] flex items-center justify-center text-white shadow-lg overflow-hidden transition-all duration-500 ${hideWebsiteTab ? 'bg-slate-400 grayscale' : 'bg-gradient-to-br from-brand to-brand-dark shadow-brand/30 group-hover:shadow-brand/50'}`}>
+                                                                        <img src="/imgs/ICON.png" className="w-7 h-7 object-contain brightness-0 invert" alt="" />
                                                                     </div>
                                                                 )}
                                                                 {activePropertyId === c.id && (

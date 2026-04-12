@@ -32,10 +32,12 @@ const ChatbotCard = React.memo(({
                         {bot.settings?.bot_avatar ? (
                             <img 
                                 src={bot.settings.bot_avatar} 
-                                className={`w-full h-full object-cover rounded-2xl ${categoryId ? 'grayscale group-hover:grayscale-0 transition-all duration-500' : ''}`} 
+                                className={`w-full h-full object-cover rounded-[18px] ${categoryId ? 'grayscale group-hover:grayscale-0 transition-all duration-500' : ''}`} 
                             />
                         ) : (
-                            <Bot className="w-6 h-6" />
+                            <div className={`w-full h-full rounded-[18px] flex items-center justify-center text-white shadow-lg overflow-hidden transition-all duration-500 ${categoryId ? 'bg-slate-400 grayscale group-hover:grayscale-0' : 'bg-gradient-to-br from-brand to-brand-dark shadow-brand/30'}`}>
+                                <img src="/imgs/ICON.png" className="w-7 h-7 object-contain brightness-0 invert" alt="" />
+                            </div>
                         )}
                     </div>
                     <div className="min-w-0">

@@ -458,7 +458,9 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                     alt="" 
                                 />
                             ) : (
-                                <Bot className="w-6 h-6" />
+                                <div className={`w-full h-full flex items-center justify-center transition-all duration-500 ${categoryId ? 'bg-slate-500 grayscale' : 'bg-gradient-to-br from-brand to-brand-dark'}`}>
+                                    <img src="/imgs/ICON.png" className="w-6 h-6 object-contain brightness-0 invert" alt="" />
+                                </div>
                             )}
                         </div>
                         <h1 className={`text-3xl font-black tracking-tight ${isDarkTheme ? 'text-white' : 'text-slate-800'}`}>

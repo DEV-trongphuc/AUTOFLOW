@@ -56,7 +56,7 @@ const ALL_MODULES: Module[] = [
     {
         id: 'ai-space',
         title: 'AI Space',
-        sub: 'Training kiến thức AI và giao diện chuyên nghiệp riêng biệt dành cho đội nhóm & các phòng ban độc lập',
+        sub: 'Training kiến thức AI và giao diện chuyên nghiệp riêng biệt dành cho đội nhóm & các phòng ban độc lập.',
         icon: Sparkles,
         color: 'from-[#e11d48] to-[#9f1239]',
         path: '/ai-training?mainTab=chat',
