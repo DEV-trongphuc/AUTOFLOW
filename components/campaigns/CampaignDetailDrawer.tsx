@@ -177,7 +177,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
             }
         } catch (err) {
             console.error(err);
-            toast.error("Đã xảy ra lỗi khiĐã gửi yêu cầu.");
+            toast.error("Đã xảy ra lỗi khi gửi yêu cầu.");
         }
         setRefreshLoading(false);
     };
@@ -203,9 +203,9 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
     const retainedRate = (sentCount > 0 && isFinite(retainedCount / sentCount)) ? ((retainedCount / sentCount) * 100).toFixed(1) : "0.0";
 
     const funnelData = [
-        { name: isZns ? 'Tin nhắn đãĐã gửi' : 'Đã gửi (Sent)', value: sentCount, fill: '#94a3b8', icon: Send },
+        { name: isZns ? 'Tin nhắn đã gửi' : 'Đã gửi (Sent)', value: sentCount, fill: '#94a3b8', icon: Send },
         { name: isZns ? 'Đã nhận (Delivered)' : 'Đã nhận (Delivered)', value: deliveredCount, fill: '#3b82f6', icon: CheckCircle2 },
-        { name: isZns ? 'LượtĐã xem (Seen)' : 'Đã mở (Opened)', value: stats.opened, fill: '#ffa900', icon: isZns ? BadgeCheck : MailOpen },
+        { name: isZns ? 'Lượt xem (Seen)' : 'Đã mở (Opened)', value: stats.opened, fill: '#ffa900', icon: isZns ? BadgeCheck : MailOpen },
         ...(isZns ? [] : [{ name: 'Đã click (Unique Click)', value: stats.clicked, fill: '#10b981', icon: MousePointer2, subValue: (stats as any).total_clicked ? `Total: ${(stats as any).total_clicked}` : null }]),
     ];
 
@@ -246,7 +246,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
 
     return ReactDOM.createPortal(
         <div className={`fixed inset-0 z-[9999] flex justify-end ${isVisible ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-            <div className={`absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`} onClick={onClose}>-</div>
+            <div className={`absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`} onClick={onClose} />
             <div
                 className={`relative w-full lg:max-w-6xl bg-[#f8fafc] shadow-2xl h-full lg:h-screen flex flex-col transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${animateIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}
             >
@@ -267,11 +267,10 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     <span className="text-blue-600">{(localCampaign.stats?.sent || 0).toLocaleString()}</span>/{(localCampaign.totalTargetAudience || 0).toLocaleString()}
                                 </span>
                             )}
-                            <span className="text-slate-300 hidden md:inline">-</span>
                             <span className="text-[9px] md:text-[11px] font-bold text-slate-400 flex items-center gap-1">
                                 <Calendar className="w-3 h-3 md:w-3.5 md:h-3.5" />
                                 {localCampaign.sentAt
-                                    ? `Gợi ý${!isNaN(new Date(localCampaign.sentAt).getTime()) ? new Date(localCampaign.sentAt).toLocaleString('vi-VN') : '...'}`
+                                    ? `Gửi lúc: ${!isNaN(new Date(localCampaign.sentAt).getTime()) ? new Date(localCampaign.sentAt).toLocaleString('vi-VN') : '...'}`
                                     : `Bản nháp`}
                             </span>
                         </div>
@@ -303,7 +302,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                             icon={Send}
                             className="!rounded-xl border-slate-200"
                         >
-                            <span className="hidden md:inline">{isZns ? 'Gợi ýTest ZNS' : 'Gợi ýTest Email'}</span>
+                            <span className="hidden md:inline">{isZns ? 'Gửi Test ZNS' : 'Gửi Test Email'}</span>
                             <span className="md:hidden">Test</span>
                         </Button>
                         <button
@@ -366,9 +365,9 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                         </div>
                                         <div className="flex justify-between text-[11px] font-bold">
                                             <div className="flex gap-4">
-                                                <span className="text-slate-500 uppercase tracking-wider">Đã gửi: <span className="text-blue-600 font-black">{(localCampaign.stats?.sent || 0).toLocaleString()}</span>-</span>
+                                                <span className="text-slate-500 uppercase tracking-wider">Đã gửi: <span className="text-blue-600 font-black">{(localCampaign.stats?.sent || 0).toLocaleString()}</span></span>
                                                 {(localCampaign.stats?.failed || 0) > 0 && (
-                                                    <span className="text-rose-500 uppercase tracking-wider">Thất bại: <span className="font-black">{(localCampaign.stats?.failed || 0).toLocaleString()}</span>-</span>
+                                                    <span className="text-rose-500 uppercase tracking-wider">Thất bại: <span className="font-black">{(localCampaign.stats?.failed || 0).toLocaleString()}</span></span>
                                                 )}
                                             </div>
                                             <div className="flex items-center gap-3">
@@ -377,7 +376,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                     onClick={handleTriggerRefresh}
                                                     disabled={refreshLoading}
                                                     className="ml-2 px-3 py-1 bg-slate-900 text-white text-[10px] font-black uppercase rounded-lg hover:bg-black transition-all flex items-center gap-1.5 shadow-sm"
-                                                    title="Nếu tiến độ bị kẹt, nhấn để kích hoạt lại tiến trìnhĐã gửi"
+                                                    title="Nếu tiến độ bị kẹt, nhấn để kích hoạt lại tiến trình gửi"
                                                 >
                                                     {refreshLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3 text-orange-400" />}
                                                     Kích hoạt lại
@@ -403,7 +402,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                     </div>
                                                     <div>
                                                         <h4 className="text-sm font-black uppercase tracking-wider">Kịch bản chăm sóc liên quan</h4>
-                                                        <p className="text-xs text-indigo-100 font-medium mt-0.5">Chiến dịch này đang kích hoạt Flow: <span className="font-bold underline">{associatedFlow.name}</span>-</p>
+                                                        <p className="text-xs text-indigo-100 font-medium mt-0.5">Chiến dịch này đang kích hoạt Flow: <span className="font-bold underline">{associatedFlow.name}</span></p>
                                                     </div>
                                                 </div>
                                                 <Button
@@ -427,8 +426,8 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                         <AlertOctagon className="w-6 h-6" />
                                                     </div>
                                                     <div>
-                                                        <h4 className="text-sm font-black text-rose-900 uppercase tracking-tight">Phát hiện lỗi khiĐã gửi ({(localCampaign.stats?.failed || 0).toLocaleString()} {isZns ? 'tin nhắn' : 'email'})</h4>
-                                                        <p className="text-xs text-rose-700 font-medium mt-0.5">Một số {isZns ? 'tin nhắn' : 'email'} đã không thểĐã gửi đi do lỗi hệ thống hoặc địa chỉ không tồn tại.</p>
+                                                        <h4 className="text-sm font-black text-rose-900 uppercase tracking-tight">Phát hiện lỗi khi gửi ({(localCampaign.stats?.failed || 0).toLocaleString()} {isZns ? 'tin nhắn' : 'email'})</h4>
+                                                        <p className="text-xs text-rose-700 font-medium mt-0.5">Một số {isZns ? 'tin nhắn' : 'email'} đã không thể gửi đi do lỗi hệ thống hoặc địa chỉ không tồn tại.</p>
                                                     </div>
                                                 </div>
                                                 <Button
@@ -437,7 +436,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                     className="bg-white text-rose-600 border-rose-200 hover:bg-rose-50 shadow-sm !rounded-xl px-6"
                                                     icon={BarChart2}
                                                 >
-                                                    Xem chi ti?t l?i
+                                                    Xem chi tiết lỗi
                                                 </Button>
                                             </div>
                                         )}
@@ -448,7 +447,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                             {/* 1. KEY METRICS ROW */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                                 <StatBox
-                                    label={isZns ? "Tỉ lệ Xem (Seen Rate)" : "Tỉ lệ M? (Open Rate)"}
+                                    label={isZns ? "Tỉ lệ Xem (Seen Rate)" : "Tỉ lệ Mở (Open Rate)"}
                                     value={`${openRate}%`}
                                     subValue={`${(stats.opened || 0).toLocaleString()} người${(stats as any).total_opened && !isZns ? ` - ${(stats as any).total_opened.toLocaleString()} lượt` : ''}`}
                                     icon={isZns ? BadgeCheck : MailOpen}
@@ -466,7 +465,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     <StatBox
                                         label="Tỉ lệ Click (CTR)"
                                         value={`${clickRate}%`}
-                                        subValue={`${(stats.clicked || 0).toLocaleString()} lượt nh?n`}
+                                        subValue={`${(stats.clicked || 0).toLocaleString()} lượt nhấn`}
                                         icon={MousePointerClick}
                                         colorClass="text-emerald-500"
                                     />
@@ -481,7 +480,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     />
                                 )}
                                 <StatBox
-                                    label={isZns ? "Chi phí tạm tính" : "Tỉ lệ Gợi ýthành công"}
+                                    label={isZns ? "Chi phí tạm tính" : "Tỉ lệ gửi thành công"}
                                     value={isZns ? (() => {
                                         const configData = typeof localCampaign.config === 'string' ? JSON.parse(localCampaign.config) : localCampaign.config;
                                         const price = configData?.price || 300;
@@ -505,9 +504,9 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                             </div>
                                             <div className="flex gap-2">
                                                 {/* Legend */}
-                                                <div className="flex items-center gap-1.5">-<div className="w-2 h-2 rounded-full bg-slate-400">-</div>-<span className="text-[10px] font-bold text-slate-500">{isZns ? 'Đã gửi' : 'Sent'}</span>-</div>
-                                                <div className="flex items-center gap-1.5">-<div className={`w-2 h-2 rounded-full bg-[#ffa900]`}>-</div>-<span className="text-[10px] font-bold text-slate-500">{isZns ? 'Đã xem' : 'Open'}</span>-</div>
-                                                {!isZns && <div className="flex items-center gap-1.5">-<div className="w-2 h-2 rounded-full bg-emerald-500">-</div>-<span className="text-[10px] font-bold text-slate-500">Click</span>-</div>}
+                                                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-slate-400" /><span className="text-[10px] font-bold text-slate-500">{isZns ? 'Đã gửi' : 'Sent'}</span></div>
+                                                <div className="flex items-center gap-1.5"><div className={`w-2 h-2 rounded-full bg-[#ffa900]`} /><span className="text-[10px] font-bold text-slate-500">{isZns ? 'Đã xem' : 'Open'}</span></div>
+                                                {!isZns && <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500" /><span className="text-[10px] font-bold text-slate-500">Click</span></div>}
                                             </div>
                                         </div>
                                         <div className="p-6 h-[320px]">
@@ -541,7 +540,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                         {funnelData.map((item, idx) => (
                                             <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
-                                                <div className="p-2 rounded-xl bg-slate-50 text-slate-500">-<item.icon className="w-4 h-4" />-</div>
+                                                <div className="p-2 rounded-xl bg-slate-50 text-slate-500"><item.icon className="w-4 h-4" /></div>
                                                 <div>
                                                     <p className="text-[10px] text-slate-400 font-bold uppercase">{item.name.split(' (')[0]}</p>
                                                     <p className="text-sm font-black text-slate-800">{(item.value || 0).toLocaleString()}</p>
@@ -578,7 +577,6 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                                 ))}
                                                             </Pie>
                                                             <Tooltip
-                                                                cursor={{ fill: '#f8fafc' }}
                                                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}
                                                             />
                                                         </RePieChart>
@@ -596,7 +594,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                             <div className="space-y-4 mt-2">
                                                 <div className="flex justify-between items-center text-xs">
                                                     <div className="flex items-center gap-2">
-                                                        <div className={`w-2 h-2 rounded-full ${isZns ? 'bg-rose-500' : 'bg-rose-500'}`}>-</div>
+                                                        <div className={`w-2 h-2 rounded-full ${isZns ? 'bg-rose-500' : 'bg-rose-500'}`} />
                                                         <span className="text-slate-600 font-bold">{isZns ? 'Lỗi gửi (Failed)' : 'Email hỏng (Bounce)'}</span>
                                                     </div>
                                                     <span className="font-mono font-bold text-rose-500">{isZns ? `${(sentCount > 0 ? ((localCampaign.stats?.failed || 0) / sentCount * 100).toFixed(2) : '0.00')}% (${localCampaign.stats?.failed || 0})` : `${bounceRate}% (${stats.bounced})`}</span>
@@ -604,7 +602,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                 {!isZns && (
                                                     <div className="flex justify-between items-center text-xs">
                                                         <div className="flex items-center gap-2">
-                                                            <div className="w-2 h-2 rounded-full bg-amber-600">-</div>
+                                                        <div className="w-2 h-2 rounded-full bg-amber-600" />
                                                             <span className="text-slate-600 font-bold">Hủy đăng ký (Unsub)</span>
                                                         </div>
                                                         <span className="font-mono font-bold text-amber-600">{unsubRate}% ({stats.unsubscribed})</span>
@@ -615,7 +613,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     </Card>
 
                                     <div className="p-5 bg-blue-50 border border-blue-100 rounded-[24px] relative overflow-hidden">
-                                        <div className="absolute -right-4 -top-4 w-20 h-20 bg-blue-200 rounded-full opacity-20 blur-xl">-</div>
+                                        <div className="absolute -right-4 -top-4 w-20 h-20 bg-blue-200 rounded-full opacity-20 blur-xl" />
                                         <h4 className="text-xs font-black text-blue-800 uppercase tracking-widest mb-3">Thông tin gửi</h4>
                                         <div className="space-y-2 text-[11px]">
                                             <div className="flex justify-between">
@@ -734,7 +732,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
 
                                     {previewType !== 'main' && (
                                         <div className="bg-emerald-50 p-6 rounded-[24px] border border-emerald-100">
-                                            <p className="text-[10px] font-bold text-emerald-600 uppercase mb-2 flex items-center gap-1.5">-<Zap className="w-3.5 h-3.5" /> Gợi ý</p>
+                                            <p className="text-[10px] font-bold text-emerald-600 uppercase mb-2 flex items-center gap-1.5"><Zap className="w-3.5 h-3.5" /> Gợi ý</p>
                                             <p className="text-xs text-emerald-800 leading-relaxed font-medium">Nhắc nhở này giúp tăng thêm **15-20%** tỷ lệ chuyển đổi cho những người bỏ lỡ email đầu tiên.</p>
                                         </div>
                                     )}
@@ -779,7 +777,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Hiện tại</p>
                                                     <p className="text-xl font-black text-slate-700">{(audienceStats.total_current || 0).toLocaleString()}</p>
                                                 </div>
-                                                <div className="w-px h-10 bg-amber-100">-</div>
+                                                <div className="w-px h-10 bg-amber-100" />
                                                 <div className="text-center">
                                                     <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Chênh lệch</p>
                                                     <p className="text-xl font-black text-amber-600">+{(audienceStats.gap || 0).toLocaleString()}</p>
@@ -796,7 +794,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                 className="!rounded-2xl shadow-xl shadow-amber-600/20"
                                                 icon={Send}
                                             >
-                                                Gợi ýcho {audienceStats.gap} người mới
+                                                Gửi cho {audienceStats.gap} người mới
                                             </Button>
                                         )}
                                     </div>

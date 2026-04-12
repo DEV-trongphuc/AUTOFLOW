@@ -1703,7 +1703,7 @@ Lịch sử hoạt động:
     ), [chatbots, searchTerm]);
 
     return (
-        <div className="pt-8 space-y-12 animate-in fade-in duration-500 pb-20 mx-auto">
+        <div className="pt-4 space-y-12 animate-in fade-in duration-500 pb-20 mx-auto">
             {viewMode === 'grid' ? (
                 <AITrainingGrid
                     mainTab={mainTab}

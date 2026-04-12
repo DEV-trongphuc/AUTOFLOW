@@ -21,7 +21,7 @@ const DB_FIELDS = [
     { value: 'lastName', label: 'Họ Khách hàng', type: 'text', required: false, icon: Type },
     { value: 'phoneNumber', label: 'Số điện thoại', type: 'tel', required: false, icon: Phone },
     { value: 'jobTitle', label: 'Chức danh', type: 'text', required: false, icon: Briefcase },
-    { value: 'companyName', label: 'Còng ty', type: 'text', required: false, icon: Building },
+    { value: 'companyName', label: 'Công ty', type: 'text', required: false, icon: Building },
     { value: 'country', label: 'Quốc gia', type: 'text', required: false, icon: Globe },
     { value: 'city', label: 'Thành phố', type: 'text', required: false, icon: MapPin },
     { value: 'dateOfBirth', label: 'Ngày sinh', type: 'date', required: false, icon: Calendar },
@@ -252,7 +252,33 @@ const FormsTab: React.FC = () => {
                 <div className="space-y-8 py-2">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <Input label="Tên định danh Form" placeholder="VD: Form Landing Page..." value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} autoFocus />
-                        <Select label="Danh sách lưu trữ đích" options={lists.map(l => ({ value: l.id, label: l.name }))} value={formData.targetListId || ''} onChange={v => setFormData({ ...formData, targetListId: v })} placeholder="Chọn danh sách đích..." icon={Database} variant="outline" />
+                        <div className="space-y-1">
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Danh sách lưu trữ đích</label>
+                                <button 
+                                    onClick={async () => {
+                                        const listName = prompt('Nhập tên danh sách mới:');
+                                        if (listName) {
+                                            try {
+                                                const res = await api.post<any>('lists', { name: listName, description: 'Created from Form Builder' });
+                                                if (res.success) {
+                                                    toast.success('Đã tạo danh sách mới');
+                                                    const listsRes = await api.get<any[]>('lists');
+                                                    if (listsRes.success) {
+                                                        setLists(listsRes.data);
+                                                        setFormData(prev => ({ ...prev, targetListId: res.data.id }));
+                                                    }
+                                                }
+                                            } catch (e) { toast.error('Lỗi khi tạo danh sách'); }
+                                        }
+                                    }}
+                                    className="text-[9px] font-black text-amber-600 hover:text-amber-700 uppercase tracking-tight flex items-center gap-1"
+                                >
+                                    <Plus className="w-3 h-3" /> Tạo danh sách nhanh
+                                </button>
+                            </div>
+                            <Select options={lists.map(l => ({ value: l.id, label: l.name }))} value={formData.targetListId || ''} onChange={v => setFormData({ ...formData, targetListId: v })} placeholder="Chọn danh sách đích..." icon={Database} variant="outline" />
+                        </div>
                     </div>
 
                     {/* SECTION 1.5: Email Notification */}

@@ -110,7 +110,7 @@ const renderContent = (content: string, role: string, onActionClick?: (action: s
             } else if (fileExtMatch) {
                 // RENDER AS FILE CARD
                 const ext = fileExtMatch[1].toLowerCase();
-                const fileName = label || url.split('/').pop() || 'Tỉ lệ'
+                const fileName = label || url.split('/').pop() || 'Tài liệu'
 
 
                 parts.push(
@@ -131,7 +131,7 @@ const renderContent = (content: string, role: string, onActionClick?: (action: s
                             </div>
                             <div className="flex-1 min-w-0">
                                 <h5 className="text-[13px] font-bold text-slate-700 truncate group-hover:text-amber-600 transition-colors">{fileName}</h5>
-                                <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{ext.toUpperCase()} FILE � B?m d? t?i</p>
+                                <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{ext.toUpperCase()} FILE • Bấm để tải</p>
                             </div>
                             <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-all">
                                 <Maximize2 className="w-4 h-4 rotate-45" />
@@ -359,7 +359,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
     }, [initialConversationId]);
 
     // [FIX] Split into 2 effects:
-    // Effect 1: When SOURCE tab changes � always reset to page 1 and clear selected conv
+    // Effect 1: When SOURCE tab changes – always reset to page 1 and clear selected conv
     useEffect(() => {
         if (propertyId) {
             setPage(1);
@@ -368,7 +368,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
         }
     }, [source]);
 
-    // Effect 2: When propertyId or filters change � also reset to page 1
+    // Effect 2: When propertyId or filters change – also reset to page 1
     useEffect(() => {
         if (propertyId) {
             setPage(1);
@@ -429,7 +429,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                 // Auto Select First only if init and search cleared
                 if (p === 1 && !appliedFilters.search && !appliedFilters.ip && !appliedFilters.start && !appliedFilters.end && res.data.length > 0 && !selectedConv) setSelectedConv(res.data[0]);
             }
-        } catch (e) { toast.error('L?i t?i danh sách h?i tho?i'); }
+        } catch (e) { toast.error('Lỗi tải danh sách hội thoại'); }
         finally { setLoading(false); }
     };
 
@@ -481,11 +481,11 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                 status: status
             });
             if (res.success) {
-                toast.success('�� c?p nh?t Trạng thái');
+                toast.success('Đã cập nhật trạng thái');
                 setSelectedConv({ ...selectedConv, status });
                 setConversations(prev => prev.map(c => c.id === selectedConv.id ? { ...c, status } : c));
             }
-        } catch (e) { toast.error('L?i c?p nh?t'); }
+        } catch (e) { toast.error('Lỗi cập nhật'); }
     };
 
     const handleBlockIP = async () => {
@@ -497,7 +497,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                 reason: blockReason
             });
             if (res.success) {
-                toast.success('�� chọn IP th�nh c�ng');
+                toast.success('Đã chặn IP thành công');
                 setShowBlockIPModal(false);
                 setBlockReason('');
                 // Update local state to reflect the block immediately
@@ -506,9 +506,9 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                     setSelectedConv({ ...selectedConv, is_blocked: 1 });
                 }
             } else {
-                toast.error(res.message || 'L?i khi chọn IP');
+                toast.error(res.message || 'Lỗi khi chặn IP');
             }
-        } catch (e) { toast.error('L?i h? th?ng'); }
+        } catch (e) { toast.error('Lỗi hệ thống'); }
         finally { setIsBlocking(false); }
     };
 
@@ -572,7 +572,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
             const guestSub: any = {
                 id: selectedConv.visitor_id,
                 email: selectedConv.email || '',
-                firstName: selectedConv.first_name || 'Kh�ch v�ng lai',
+                firstName: selectedConv.first_name || 'Khách vãng lai',
                 lastName: selectedConv.last_name || '',
                 status: selectedConv.status || 'lead',
                 tags: [],
@@ -637,7 +637,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
         try {
             const res = await api.put(`subscribers/${updated.id}`, updated);
             if (res.success) {
-                toast.success('�� c?p nh?t li�n h?');
+                toast.success('Đã cập nhật liên hệ');
                 setCrmSubscriber(res.data);
                 // Also update local conversations if firstName or email changed
                 setConversations(prev => prev.map(c => (c.subscriber_id === updated.id || c.visitor_id === updated.visitor_id) ? {
@@ -671,14 +671,14 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
         try {
             const res = await api.delete(`subscribers/${pendingDeleteSubId}`);
             if (res.success) {
-                toast.success('�� x�a li�n h?');
+                toast.success('Đã xóa liên hệ');
                 setShowCrmModal(false);
                 setCrmSubscriber(null);
                 // Update local list
                 setConversations(prev => prev.map(c => c.subscriber_id === pendingDeleteSubId ? { ...c, subscriber_id: undefined } : c));
                 if (selectedConv?.subscriber_id === pendingDeleteSubId) setSelectedConv({ ...selectedConv, subscriber_id: undefined });
             }
-        } catch (e) { toast.error('L?i khi x�a'); }
+        } catch (e) { toast.error('Lỗi khi xóa'); }
         finally { setPendingDeleteSubId(null); }
     };
 
@@ -703,7 +703,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
     };
 
     return (
-        <div className="flex flex-col lg:flex-row gap-6 h-[800px] bg-slate-50/30 p-4 rounded-[32px] border border-slate-100 shadow-inner overflow-hidden">
+        <div className="flex flex-col lg:flex-row gap-6 h-[800px] max-w-[1400px] mx-auto bg-slate-50/30 p-4 rounded-[32px] border border-slate-100 shadow-inner overflow-hidden">
             {/* Left: Conversations List */}
             <div className="w-full lg:w-80 flex flex-col gap-4 bg-white rounded-[28px] border border-slate-100 shadow-sm overflow-hidden flex-shrink-0">
                 <div className="p-5 border-b border-slate-50">
@@ -713,7 +713,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                             <button
                                 onClick={handleExport}
                                 className="p-2 bg-slate-50 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
-                                title="Xu?t CSV"
+                                title="Xuất CSV"
                             >
                                 <Download className="w-4 h-4" />
                             </button>
@@ -766,7 +766,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
                                     <input
                                         type="text"
-                                        placeholder="T�m t�n, email, n?i dung..."
+                                        placeholder="Tìm tên, email, nội dung..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleApplyFilters()}
@@ -777,7 +777,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                     <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
                                     <input
                                         type="text"
-                                        placeholder="L?c theo IP address..."
+                                        placeholder="Lọc theo IP address..."
                                         value={ipSearch}
                                         onChange={(e) => setIpSearch(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleApplyFilters()}
@@ -786,7 +786,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <div className="flex-1 space-y-1">
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter pl-1">T? ng�y</p>
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter pl-1">Từ ngày</p>
                                         <input
                                             type="date"
                                             value={startDate}
@@ -795,7 +795,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                         />
                                     </div>
                                     <div className="flex-1 space-y-1">
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter pl-1">�?n ng�y</p>
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter pl-1">Đến ngày</p>
                                         <input
                                             type="date"
                                             value={endDate}
@@ -811,7 +811,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                 className="w-full bg-slate-800 text-white py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
                             >
                                 {loading ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
-                                �p d?ng b? l?c
+                                Áp dụng bộ lọc
                             </button>
                         </div>
                     )}
@@ -830,7 +830,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                             ))}
                         </div>
                     ) : conversations.length === 0 ? (
-                        <div className="p-10 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kh�ng t�m th?y h?i tho?i</div>
+                        <div className="p-10 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">Không tìm thấy hội thoại</div>
                     ) : (
                         conversations.map((c) => (
                             <div
@@ -841,7 +841,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                 <div className="flex justify-between items-start mb-1">
                                     <div className="flex items-center gap-2 min-w-0">
                                         <span className="text-[11px] font-black text-slate-700 truncate max-w-[110px]">
-                                            {c.first_name || (c.zalo_name && c.zalo_name !== 'Zalo User' ? c.zalo_name : null) || c.email || (c.visitor_id.startsWith('zalo_') ? `Zalo: ${c.visitor_id.substring(5, 13)}...` : 'Kh�ch #' + (c.visitor_id ? c.visitor_id.substring(0, 6) : '???'))}
+                                            {c.first_name || (c.zalo_name && c.zalo_name !== 'Zalo User' ? c.zalo_name : null) || c.email || (c.visitor_id.startsWith('zalo_') ? `Zalo: ${c.visitor_id.substring(5, 13)}...` : 'Khách #' + (c.visitor_id ? c.visitor_id.substring(0, 6) : '???'))}
                                         </span>
                                         {c.visitor_id.startsWith('zalo_') ? (
                                             <div className="bg-slate-100 text-slate-500 p-0.5 rounded shadow-sm scale-90">
@@ -858,7 +858,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                         {c.last_message_at ? formatDate(c.last_message_at, 'time') : ''}
                                     </span>
                                 </div>
-                                <p className="text-[10px] text-slate-500 truncate mb-1.5">{c.last_message || 'Chua c� tin nh?n'}</p>
+                                <p className="text-[10px] text-slate-500 truncate mb-1.5">{c.last_message || 'Chưa có tin nhắn'}</p>
                                 <div className="flex items-center gap-2">
 
                                     {c.visitor_id.startsWith('zalo_') && (
@@ -912,7 +912,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                         </div>
                                         <div className="flex items-center gap-2 mt-0.5">
                                             <div className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></div>
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest opacity-60">�ang truy c?p � {selectedConv.visit_count || 1} l?n xem</span>
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest opacity-60">Đang truy cập • {selectedConv.visit_count || 1} lần xem</span>
                                         </div>
                                     </div>
                                 </div>
@@ -923,13 +923,13 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                                 onClick={() => toggleStatus(selectedConv.status === 'ai' ? 'human' : 'ai')}
                                                 className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${selectedConv.status === 'ai' ? 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-slate-800 hover:border-slate-300' : 'bg-slate-800 text-white shadow-slate-900/20'
                                                     }`}>
-                                                {selectedConv.status === 'ai' ? 'Ti?p qu?n' : 'B?t l?i AI'}
+                                                {selectedConv.status === 'ai' ? 'Tiếp quản' : 'Bật lại AI'}
                                             </button>
                                             <button
                                                 onClick={() => {
                                                     if (selectedConv.is_blocked) return;
                                                     if (!(selectedConv as any).ip_address) {
-                                                        toast.error('Kh�ng t�m th?y IP');
+                                                        toast.error('Không tìm thấy IP');
                                                         return;
                                                     }
                                                     setIpToBlock({
@@ -939,7 +939,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                                     setShowBlockIPModal(true);
                                                 }}
                                                 className={`p-2.5 rounded-xl transition-all border ${selectedConv.is_blocked ? 'bg-rose-600 text-white border-rose-600 shadow-md cursor-default' : 'text-rose-400 hover:text-rose-600 hover:bg-rose-50 border-transparent hover:border-rose-100'}`}
-                                                title={selectedConv.is_blocked ? "IP �� b? chọn" : "Ch?n IP n�y"}
+                                                title={selectedConv.is_blocked ? "IP đã bị chặn" : "Chặn IP này"}
                                             >
                                                 <ShieldAlert className="w-5 h-5" />
                                             </button>
@@ -957,7 +957,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                                 'bg-slate-100 text-slate-700 rounded-tr-none'
                                                 }`}>
                                                 {m.sender === 'ai' && <div className="flex items-center gap-1.5 mb-1.5 opacity-80"><Bot className="w-3.5 h-3.5" /><span className="text-[9px] font-black uppercase tracking-widest">AI Agent</span></div>}
-                                                {m.sender === 'human' && <div className="flex items-center gap-1.5 mb-1.5 opacity-80"><User className="w-3.5 h-3.5" /><span className="text-[9px] font-black uppercase tracking-widest">Tu v?n vi�n</span></div>}
+                                                {m.sender === 'human' && <div className="flex items-center gap-1.5 mb-1.5 opacity-80"><User className="w-3.5 h-3.5" /><span className="text-[9px] font-black uppercase tracking-widest">Tư vấn viên</span></div>}
                                                 {renderContent(m.message, m.sender === 'visitor' ? 'user' : 'assistant', (action) => setReply(action))}
                                             </div>
                                             <div className={`text-[9px] text-slate-400 font-bold px-2 ${m.sender === 'visitor' ? 'text-left' : 'text-right'}`}>
@@ -990,7 +990,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                     <textarea
                                         value={reply}
                                         onChange={e => setReply(e.target.value)}
-                                        placeholder={selectedConv.status === 'ai' ? "AI dang tr? l?i kh�ch..." : "Nh?p n?i dung tr? l?i kh�ch..."}
+                                        placeholder={selectedConv.status === 'ai' ? "AI đang trả lời khách..." : "Nhập nội dung trả lời khách..."}
                                         disabled={selectedConv.status === 'ai'}
                                         className="w-full pl-4 pr-14 py-3 bg-slate-50 border border-slate-100 rounded-[20px] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-slate-800/10 focus:bg-white focus:border-slate-800 transition-all resize-none min-h-[52px]"
                                         onKeyDown={(e) => {
@@ -1010,14 +1010,14 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                 </div>
                                 <div className="mt-2 flex items-center justify-between px-1">
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5 grayscale opacity-70">
-                                        Shift +Enter d? xu?ng d�ng
+                                        Shift + Enter để xuống dòng
                                     </span>
                                     {selectedConv.status === 'ai' && (
                                         <button
                                             onClick={() => toggleStatus('human')}
                                             className="text-[10px] font-black text-slate-800 uppercase tracking-widest hover:underline"
                                         >
-                                            D?ng AI
+                                            Dừng AI
                                         </button>
                                     )}
                                 </div>
@@ -1028,7 +1028,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                             <div className="w-16 h-16 rounded-3xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
                                 <MessageSquare className="w-8 h-8" />
                             </div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Ch?n m?t h?i tho?i d? b?t d?u</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Chọn một hội thoại để bắt đầu</p>
                         </div>
                     )
                 }
@@ -1047,7 +1047,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                     : 'text-slate-400 hover:text-slate-600'
                                     }`}
                             >
-                                {tab === 'all' ? 'T?t c?' : tab === 'view' ? 'Views' : tab === 'click' ? 'Clicks' : 'Kh�c'}
+                                {tab === 'all' ? 'Tất cả' : tab === 'view' ? 'Views' : tab === 'click' ? 'Clicks' : 'Khác'}
                             </button>
                         ))}
                     </div>
@@ -1055,7 +1055,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
 
                 <div className="flex-1 overflow-y-auto p-6 pt-2 space-y-6 custom-scrollbar">
                     {journey.length === 0 ? (
-                        <div className="p-10 text-center text-[10px] font-black text-slate-300 uppercase italic">Chua c� th�ng tin tracking</div>
+                        <div className="p-10 text-center text-[10px] font-black text-slate-300 uppercase italic">Chưa có thông tin tracking</div>
                     ) : (
                         <div className="space-y-6 relative ml-2">
                             <div className="absolute left-[-1.5px] top-2 bottom-2 w-[3px] bg-slate-200/50 rounded-full"></div>
@@ -1100,7 +1100,7 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                                     <div className="flex items-center gap-1 opacity-60">
                                                         <Layout className="w-2 h-2 text-slate-400" />
                                                         <span className="text-[8px] font-bold text-slate-500 italic truncate max-w-[200px]" title={item.page_url}>
-                                                            T?i: {item.page_title}
+                                                            Tại: {item.page_title}
                                                         </span>
                                                     </div>
                                                 )}
@@ -1149,25 +1149,25 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                 isOpen={showBlockIPModal}
                 onClose={() => setShowBlockIPModal(false)}
                 onConfirm={handleBlockIP}
-                title="X�c nh?n chọn IP"
+                title="Xác nhận chặn IP"
                 isLoading={isBlocking}
                 variant="danger"
-                confirmLabel="X�c nh?n chọn"
+                confirmLabel="Xác nhận chặn"
                 message={
                     <div className="space-y-4">
                         <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100">
                             <p className="text-sm font-medium text-rose-800 leading-relaxed">
-                                B?n dang th?c hi?n chọn d?a ch? IP <span className="font-black underline">{ipToBlock?.ip}</span> c?a <span className="font-black">{ipToBlock?.visitorName}</span>.
+                                Bạn đang thực hiện chặn địa chỉ IP <span className="font-black underline">{ipToBlock?.ip}</span> của <span className="font-black">{ipToBlock?.visitorName}</span>.
                             </p>
                             <p className="text-[10px] text-rose-600 mt-2 font-bold uppercase tracking-tight">
-                                Luu �: M?i luu lu?ng t? IP n�y s? b? t? ch?i (tr? Googlebot).
+                                Lưu ý: Mọi lưu lượng từ IP này sẽ bị từ chối (trừ Googlebot).
                             </p>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">L� do chọn (kh�ng b?t bu?c)</label>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Lý do chặn (không bắt buộc)</label>
                             <textarea
                                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm focus:outline-none focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 transition-all min-h-[100px] resize-none"
-                                placeholder="V� d?: Spam click, Attack detection..."
+                                placeholder="Ví dụ: Spam click, Attack detection..."
                                 value={blockReason}
                                 onChange={(e) => setBlockReason(e.target.value)}
                             />
@@ -1181,17 +1181,17 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                 isOpen={!!pendingDeleteSubId}
                 onClose={() => setPendingDeleteSubId(null)}
                 onConfirm={executeDeleteSubscriber}
-                title="X�a li�n h? vinh vi?n?"
+                title="Xóa liên hệ vĩnh viễn?"
                 variant="danger"
                 requireConfirmText="DELETE"
-                confirmLabel="X�a vinh vi?n"
+                confirmLabel="Xóa vĩnh viễn"
                 message={
                     <div className="space-y-3">
                         <p className="text-sm text-slate-600">
-                            B?n s?p x�a li�n h? n�y kh?i h? th?ng ho�n to�n.
+                            Bạn sắp xóa liên hệ này khỏi hệ thống hoàn toàn.
                         </p>
                         <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 text-xs text-rose-700 font-medium">
-                            ?? To�n b? l?ch s?, tag v� d? li?u c?a li�n h? n�y s? b? x�a vinh vi?n, kh�ng th? kh�i ph?c.
+                            🔞 Toàn bộ lịch sử, tag và dữ liệu của liên hệ này sẽ bị xóa vĩnh viễn, không thể khôi phục.
                         </div>
                     </div>
                 }
@@ -1248,8 +1248,8 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                 onClose={() => setShowExportModal(false)}
                 onConfirm={confirmExport}
                 variant="success"
-                title="Xu?t d? li?u h?i tho?i"
-                confirmLabel="X�c nh?n xu?t CSV"
+                title="Xuất dữ liệu hội thoại"
+                confirmLabel="Xác nhận xuất CSV"
                 message={
                     <div className="space-y-6">
                         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-start gap-4 text-left">
@@ -1257,12 +1257,12 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                 <FileText className="w-5 h-5" />
                             </div>
                             <div className="flex-1">
-                                <h4 className="text-sm font-bold text-slate-800">C?u h�nh xu?t CSV</h4>
-                                <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">Ch?n ph?m vi Thời gian b?n mu?n tr�ch xu?t d? li?u cu?c tr� chuy?n.</p>
+                                <h4 className="text-sm font-bold text-slate-800">Cấu hình xuất CSV</h4>
+                                <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">Chọn phạm vi Thời gian bạn muốn trích xuất dữ liệu cuộc trò chuyện.</p>
 
                                 <div className="mt-4 flex bg-slate-100 p-1 rounded-xl border border-slate-200/50">
                                     {[
-                                        { id: 'all', label: 'T?t c?', icon: Sparkles },
+                                        { id: 'all', label: 'Tất cả', icon: Sparkles },
                                         { id: 'web', label: 'Web', icon: Globe },
                                         { id: 'zalo', label: 'Zalo', icon: MessageSquare },
                                         { id: 'meta', label: 'Meta', icon: Layout }
@@ -1288,8 +1288,8 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 transition-colors ${exportRange === 'current' ? 'bg-slate-800 text-white shadow-lg shadow-slate-800/20' : 'bg-white text-slate-400 border border-slate-200'}`}>
                                     <Zap className="w-4 h-4" />
                                 </div>
-                                <div className="font-bold text-xs text-slate-800 uppercase tracking-tight">B? l?c hi?n t?i</div>
-                                <p className="text-[10px] text-slate-500 mt-1 font-medium">{startDate && endDate ? `${startDate} d?n ${endDate}` : 'T?t c? Thời gian'}</p>
+                                <div className="font-bold text-xs text-slate-800 uppercase tracking-tight">Bộ lọc hiện tại</div>
+                                <p className="text-[10px] text-slate-500 mt-1 font-medium">{startDate && endDate ? `${startDate} đến ${endDate}` : 'Tất cả thời gian'}</p>
                             </button>
 
                             <button

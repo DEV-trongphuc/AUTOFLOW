@@ -192,7 +192,7 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
                     <div className="space-y-3">
                         <p>Bạn đang yêu cầu <b>XÓA VĨNH VIỄN</b> {selectedIds.length} người đăng ký khỏi hệ thống.</p>
                         <div className="p-3 bg-rose-50 text-rose-700 text-xs rounded border border-rose-100">
-                            ⚠ Hành động này không thể hoàn tác. Tất cả dữ liệu lịch sử hoạTổng sốbị mất.
+                            ⚠ Hành động này không thể hoàn tác. Tất cả dữ liệu lịch sử hoạt động sẽ bị mất.
                         </div>
                     </div>
                 ),
@@ -416,7 +416,8 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
                                                             onClick={() => executeBulkAction('unsubscribe')}
                                                             className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-orange-100 text-orange-600 hover:bg-orange-50 hover:border-orange-200 rounded-lg text-xs font-bold shadow-sm transition-all"
                                                         >
-                                                            <AlertTriangle className="w-3.5 h-3.5" /> Hủy đăng ký                                                       </button>
+                                                            <AlertTriangle className="w-3.5 h-3.5" /> Hủy đăng ký
+                                                        </button>
                                                         <div className="h-4 w-px bg-orange-200 mx-1"></div>
                                                         <button
                                                             onClick={() => executeBulkAction('delete')}

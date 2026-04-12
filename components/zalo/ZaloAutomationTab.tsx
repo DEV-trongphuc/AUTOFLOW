@@ -81,7 +81,7 @@ const ZaloAutomationTab: React.FC = () => {
         setConfirmModal({
             isOpen: true,
             title: 'Xóa kịch bản?',
-            message: 'B?n c� ch?c chọn mu?n x�a k?ch b?n n�y? H�nh d?ng n�y kh�ng th? ho�n t�c.',
+            message: 'Bạn có chắc chắn muốn xóa kịch bản này? Hành động này không thể hoàn tác.',
             onConfirm: async () => {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 try {
@@ -102,10 +102,10 @@ const ZaloAutomationTab: React.FC = () => {
                 ...scenario,
                 status: newStatus
             });
-            toast.success(`�� ${newStatus === 'active' ? 'k�ch ho?t' : 'tạm dừng'}`);
+            toast.success(`Đã ${newStatus === 'active' ? 'kích hoạt' : 'tạm dừng'}`);
             fetchScenarios();
         } catch (error) {
-            toast.error('Lỗi khi c?p nh?t Trạng thái');
+            toast.error('Lỗi khi cập nhật Trạng thái');
         }
     };
 
@@ -134,7 +134,7 @@ const ZaloAutomationTab: React.FC = () => {
                                     {selectedOA?.name?.charAt(0) || 'O'}
                                 </div>
                             )}
-                            <span className="truncate max-w-[160px]">{selectedOA?.name || 'Ch?n OA'}</span>
+                            <span className="truncate max-w-[160px]">{selectedOA?.name || 'Chọn OA'}</span>
                         </div>
                         <Search className={`w-4 h-4 text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
@@ -173,7 +173,7 @@ const ZaloAutomationTab: React.FC = () => {
 
                 <div className="flex items-center gap-4 flex-1 w-full max-w-md">
                     <Input
-                        placeholder="T�m ki?m k?ch b?n..."
+                        placeholder="Tìm kiếm kịch bản..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         icon={Search}
@@ -202,12 +202,12 @@ const ZaloAutomationTab: React.FC = () => {
                     <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4 text-slate-300">
                         <Zap className="w-8 h-8" />
                     </div>
-                    <p className="text-slate-500 font-medium">Chua c� k?ch b?n n�o du?c t?o</p>
+                    <p className="text-slate-500 font-medium">Chưa có kịch bản nào được tạo</p>
                     <button
                         onClick={() => setIsModalOpen(true)}
                         className="mt-4 text-emerald-500 font-bold hover:underline"
                     >
-                        B?t d?u t?o k?ch b?n d?u ti�n
+                        Bắt đầu tạo kịch bản đầu tiên
                     </button>
                 </div>
             ) : (
@@ -240,7 +240,7 @@ const ZaloAutomationTab: React.FC = () => {
                                     <button
                                         onClick={() => toggleStatus(scenario)}
                                         className={`p-2.5 rounded-xl transition-all ${scenario.status === 'active' ? 'bg-emerald-50 text-emerald-500 hover:bg-emerald-100' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
-                                        title={scenario.status === 'active' ? 'D?ng' : 'K�ch ho?t'}
+                                        title={scenario.status === 'active' ? 'Dừng' : 'Kích hoạt'}
                                     >
                                         <Play className={`w-4 h-4 ${scenario.status === 'active' ? 'hidden' : ''}`} />
                                         <Pause className={`w-4 h-4 ${scenario.status === 'active' ? '' : 'hidden'}`} />
@@ -260,10 +260,10 @@ const ZaloAutomationTab: React.FC = () => {
                                         scenario.type === 'ai_reply' ? 'bg-purple-50 text-purple-600 border-purple-100' :
                                             scenario.type === 'holiday' ? 'bg-rose-50 text-rose-600 border-rose-100' :
                                                 'bg-blue-50 text-blue-600 border-blue-100'}`}>
-                                        {scenario.type === 'welcome' ? 'Ch�o m?ng' :
+                                        {scenario.type === 'welcome' ? 'Chào mừng' :
                                             scenario.type === 'ai_reply' ? 'AI Phản hồi' :
                                                 scenario.type === 'holiday' ? 'Ngày nghỉ' :
-                                                    'T? kh�a'}
+                                                    'Từ khóa'}
                                     </span>
                                     {scenario.status === 'inactive' && (
                                         <span className="text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest bg-slate-100 text-slate-500 border border-slate-200">
@@ -289,7 +289,7 @@ const ZaloAutomationTab: React.FC = () => {
                                         </div>
                                     )}
                                     <p className="text-sm text-slate-400 line-clamp-2 leading-relaxed h-10 font-medium">
-                                        {scenario.type === 'ai_reply' ? 'T? d?ng ph?n h?i d?a tr�n ki?n th?c du?c d�o t?o c?a AI Chatbot.' : scenario.content}
+                                        {scenario.type === 'ai_reply' ? 'Tự động phản hồi dựa trên kiến thức được đào tạo của AI Chatbot.' : scenario.content}
                                     </p>
                                 </div>
                             </div>

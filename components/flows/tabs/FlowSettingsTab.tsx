@@ -355,7 +355,7 @@ const FlowSettingsTab: React.FC<FlowSettingsTabProps> = ({ flow, onUpdate }) => 
                                         />
                                         <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">Lần</span>
                                     </div>
-                                    <p className="text-[9px] text-slate-400 font-medium max-w-[140px] leading-tight text-right">Tổng sốlần tối đa. Để <b>0</b> nếu muốn không giới hạn.</p>
+                                    <p className="text-[9px] text-slate-400 font-medium max-w-[140px] leading-tight text-right">Tổng số lần tối đa. Để <b>0</b> nếu muốn không giới hạn.</p>
                                 </div>
                             </div>
                         </div>
