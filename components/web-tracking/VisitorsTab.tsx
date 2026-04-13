@@ -683,7 +683,7 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
                                     <button
                                         onClick={() => selectedVisitor && fetchVisitorJourney(selectedVisitor)}
                                         className="pb-3 text-slate-400 hover:text-blue-600 transition-colors flex items-center gap-1.5 text-xs font-bold group"
-                                        title="Tỉ lệ hành trình"
+                                        title="Tải lại hành trình"
                                     >
                                         <RefreshCw className="w-3.5 h-3.5 group-hover:rotate-180 transition-transform duration-500" />
                                         <span>Reload</span>

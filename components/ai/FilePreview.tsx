@@ -290,7 +290,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
                         const pageText = textContent.items.map((item: any) => item.str).join(' ');
                         fullText += `[Page ${i}]\n${pageText}\n\n`;
                     }
-                    setDocContent(fullText || '[Tỉ lệ PDF rỗng]');
+                    setDocContent(fullText || '[Tài liệu PDF rỗng]');
                     // Update main workspace state with extracted text for AI context
                     onUpdateDoc({ ...file, content: fullText });
                 } else if (isDoc) {
@@ -1186,7 +1186,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
                                 <p className="text-sm text-slate-500">
                                     {isDoc
                                         ? 'Định dạng tệp này cần được đồng bộ với máy chủ để xem trước. Vui lòng tải lên lại hoặc chuyển sang định dạng .docx'
-                                        : 'Tỉ lệ này không hỗ trợ xem trực tiếp. Vui lòng tải xuống để xem nội dung đầy đủ.'}
+                                        : 'Tài liệu này không hỗ trợ xem trực tiếp. Vui lòng tải xuống để xem nội dung đầy đủ.'}
                                 </p>
                                 <a
                                     href={activeDoc.previewUrl || activeDoc.base64}

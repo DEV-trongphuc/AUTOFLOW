@@ -77,6 +77,7 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
                                             <div className="flex items-center gap-2 mb-1">
                                                 {c.type === 'zalo_zns' && <span className="px-1.5 py-0.5 rounded bg-[#0068ff] text-white text-[9px] font-black uppercase tracking-wider shadow-sm shadow-[#0068ff]/20">ZNS</span>}
                                                 <p className="font-bold text-slate-800 text-sm leading-tight group-hover:text-[#ca7900] transition-colors truncate">{c.name}</p>
+                                                <span className="px-2.5 py-0.5 bg-slate-50 text-slate-500 border border-slate-200 rounded-full text-[10px] font-black font-mono">ID: {c.id}</span>
                                             </div>
                                             <p className="text-[11px] text-slate-500 font-medium truncate max-w-xs">{c.subject || (c.type === 'zalo_zns' ? `Template: ${c.templateId}` : '')}</p>
                                         </div>

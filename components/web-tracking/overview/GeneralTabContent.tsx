@@ -256,7 +256,7 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                 <div className="p-2 bg-rose-50 text-rose-600 rounded-xl">
                                     <Activity className="w-5 h-5" />
                                 </div>
-                                <span className="text-xl font-black text-slate-800 tracking-tight">Về Tỉ lệ thoát (Bounce Rate)</span>
+                                <span className="text-xl font-black text-slate-800 tracking-tight">Về Tỷ lệ thoát (Bounce Rate)</span>
                             </div>
                         }
                         size="xl"
@@ -270,7 +270,7 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                     Bounce Rate là gì?
                                 </h4>
                                 <p className="text-sm text-slate-500 leading-relaxed font-medium">
-                                    Bounce rate hay Tỉ lệ thoát là phần trăm số lượt truy cập trang web chỉ xem duy nhất một trang và rời đi ngay lập tức mà không có thêm tương tác nào khác (như nhấn vào link hoặc xem trang thứ hai). Nó đo lường mức độ tương tác và tính hấp dẫn của trang đích.
+                                    Bounce rate hay Tỷ lệ thoát là phần trăm số lượt truy cập trang web chỉ xem duy nhất một trang và rời đi ngay lập tức mà không có thêm tương tác nào khác (như nhấn vào link hoặc xem trang thứ hai). Nó đo lường mức độ tương tác và tính hấp dẫn của trang đích.
                                 </p>
                             </div>
 
@@ -280,10 +280,10 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                                         <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
                                             <TrendingUp className="w-4 h-4" />
                                         </div>
-                                        Tỉ lệ bao nhiêu là tốt?
+                                        Tỷ lệ bao nhiêu là tốt?
                                     </h5>
                                     <p className="text-xs text-slate-500 leading-relaxed font-medium mb-4">
-                                        Không có con số "chuẩn" cho mỗi lĩnh vực. Tỉ lệ thoát phụ thuộc rất lớn vào loại trang web và mục đích của trang.
+                                        Không có con số "chuẩn" cho mỗi lĩnh vực. Tỷ lệ thoát phụ thuộc rất lớn vào loại trang web và mục đích của trang.
                                     </p>
                                     <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl italic text-[11px] text-orange-800 font-bold">
                                         "Ví dụ: Một trang blog trả lời đúng câu hỏi người dùng tìm kiếm có thể có tỷ lệ thoát 90%+ nhưng vẫn là chất lượng tốt."

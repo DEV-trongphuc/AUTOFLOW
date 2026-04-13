@@ -194,7 +194,7 @@ const StepErrorModal: React.FC<StepErrorModalProps> = ({
                                     className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 transition-colors disabled:opacity-50"
                                 >
                                     <RefreshCcw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-                                    Tỉ lệ
+                                    Thử lại
 
                                 </button>
                                 <button

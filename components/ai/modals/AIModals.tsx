@@ -391,7 +391,7 @@ const AIModals: React.FC<AIModalsProps> = (props) => {
                             <ArrowRight className="w-4 h-4 -rotate-45" />
                         </div>
                         <div>
-                            <h4 className={`text-[11px] font-bold transition-colors ${isDarkTheme ? 'text-slate-200 group-hover:text-blue-400' : 'text-slate-700 group-hover:text-blue-600'}`}>Tỉ lệ Prompting Strategies (Google)</h4>
+                            <h4 className={`text-[11px] font-bold transition-colors ${isDarkTheme ? 'text-slate-200 group-hover:text-blue-400' : 'text-slate-700 group-hover:text-blue-600'}`}>Tài liệu Prompting Strategies (Google)</h4>
                             <p className={`text-[10px] mt-0.5 ${isDarkTheme ? 'text-slate-500' : 'text-slate-500'}`}>Xem hướng dẫn chính thức để tối ưu hóa câu lệnh cho AI.</p>
                         </div>
                     </a>

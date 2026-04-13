@@ -61,6 +61,13 @@ const Campaigns: React.FC = () => {
         requireConfirmText?: string;
     }>({ isOpen: false, title: '', message: '', variant: 'warning', onConfirm: () => { } });
 
+    const [advancedDeleteModal, setAdvancedDeleteModal] = useState<{
+        isOpen: boolean;
+        campaignId: string | null;
+        flows: Flow[];
+        deleteFlowMode: number;
+    }>({ isOpen: false, campaignId: null, flows: [], deleteFlowMode: 0 });
+
     const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
 
     // Data
@@ -342,35 +349,52 @@ const Campaigns: React.FC = () => {
         return null;
     }, [allFlows, navigate]);
 
+    const executeDelete = async (id: string, deleteFlowMode: number) => {
+        setLoading(true);
+        try {
+            const res = await api.delete(`campaigns/${id}?delete_flow=${deleteFlowMode}`);
+            if (res.success) {
+                showToast('Đã xóa chiến dịch thành công!');
+                fetchInitialData();
+            } else {
+                showToast(res.message || 'Lỗi khi xóa chiến dịch', 'error');
+            }
+        } catch (error) {
+            showToast('Đã xảy ra lỗi hệ thống khi xóa chiến dịch', 'error');
+        } finally {
+            setLoading(false);
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            setAdvancedDeleteModal(prev => ({ ...prev, isOpen: false }));
+        }
+    };
+
     const handleDeleteCampaign = React.useCallback((id: string) => {
         // [FIX] Nếu đang xem campaign này thì đóng drawer lại
         setSelectedDetailCampaign(prev => prev?.id === id ? null : prev);
 
-        setConfirmModal({
-            isOpen: true,
-            title: 'Xác nhận xóa chiến dịch',
-            message: 'Bạn có chắc chắn muốn xóa chiến dịch này không? Toàn bộ dữ liệu kết quả và thống kê sẽ bị xóa vĩnh viễn.',
-            variant: 'danger',
-            requireConfirmText: 'DELETE',
-            onConfirm: async () => {
-                setLoading(true);
-                try {
-                    const res = await api.delete(`campaigns/${id}`);
-                    if (res.success) {
-                        showToast('Đã xóa chiến dịch thành công!');
-                        fetchInitialData();
-                    } else {
-                        showToast(res.message || 'Lỗi khi xóa chiến dịch', 'error');
-                    }
-                } catch (error) {
-                    showToast('Đã xảy ra lỗi hệ thống khi xóa chiến dịch', 'error');
-                } finally {
-                    setLoading(false);
-                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
-                }
-            }
+        const connectedFlows = allFlows.filter(f => {
+            const trigger = f.steps.find(s => s.type === 'trigger');
+            return trigger?.config.type === 'campaign' && trigger.config.targetId === id;
         });
-    }, []);
+
+        if (connectedFlows.length > 0) {
+            setAdvancedDeleteModal({
+                isOpen: true,
+                campaignId: id,
+                flows: connectedFlows,
+                deleteFlowMode: 0
+            });
+        } else {
+            setConfirmModal({
+                isOpen: true,
+                title: 'Xác nhận xóa chiến dịch',
+                message: 'Bạn có chắc chắn muốn xóa chiến dịch này không? Toàn bộ dữ liệu kết quả và thống kê sẽ bị xóa vĩnh viễn.',
+                variant: 'danger',
+                requireConfirmText: 'DELETE',
+                onConfirm: () => executeDelete(id, 1)
+            });
+        }
+    }, [allFlows]);
 
 
     const handlePlayClick = React.useCallback((campaign: Campaign) => {
@@ -605,6 +629,57 @@ const Campaigns: React.FC = () => {
                 message={confirmModal.message}
                 variant={confirmModal.variant}
                 requireConfirmText={confirmModal.requireConfirmText}
+            />
+
+            <ConfirmModal
+                isOpen={advancedDeleteModal.isOpen}
+                onClose={() => setAdvancedDeleteModal(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={() => {
+                    if (advancedDeleteModal.campaignId) {
+                        executeDelete(advancedDeleteModal.campaignId, advancedDeleteModal.deleteFlowMode);
+                    }
+                }}
+                title="Xác nhận xóa chiến dịch"
+                message={
+                    <div className="space-y-4">
+                        <p className="text-slate-600">Bạn sắp xóa một chiến dịch đang được kết nối với <b>{advancedDeleteModal.flows.length} kịch bản (Flow)</b> chăm sóc.</p>
+                        <div className="space-y-2 mt-4">
+                            <label className={`block border p-4 rounded-xl cursor-pointer transition-all ${advancedDeleteModal.deleteFlowMode === 0 ? 'bg-amber-50 border-amber-300 ring-1 ring-amber-300' : 'bg-white border-slate-200'}`}>
+                                <div className="flex items-start gap-3">
+                                    <input 
+                                        type="radio" 
+                                        name="delete_flow" 
+                                        checked={advancedDeleteModal.deleteFlowMode === 0}
+                                        onChange={() => setAdvancedDeleteModal(prev => ({ ...prev, deleteFlowMode: 0 }))}
+                                        className="mt-1"
+                                    />
+                                    <div>
+                                        <b className="text-slate-800 block">Giữ lại Flow (Chỉ gỡ kết nối)</b>
+                                        <p className="text-xs text-slate-500 mt-1">Chiến dịch sẽ bị xóa, nhưng Kịch bản chăm sóc sẽ được giữ lại. Nút Trigger sẽ trở về trạng thái trống (Disconnected).</p>
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <label className={`block border p-4 rounded-xl cursor-pointer transition-all ${advancedDeleteModal.deleteFlowMode === 1 ? 'bg-rose-50 border-rose-300 ring-1 ring-rose-300' : 'bg-white border-slate-200'}`}>
+                                <div className="flex items-start gap-3">
+                                    <input 
+                                        type="radio" 
+                                        name="delete_flow" 
+                                        checked={advancedDeleteModal.deleteFlowMode === 1}
+                                        onChange={() => setAdvancedDeleteModal(prev => ({ ...prev, deleteFlowMode: 1 }))}
+                                        className="mt-1 accent-rose-600"
+                                    />
+                                    <div>
+                                        <b className="text-rose-800 block">Xóa TOÀN BỘ (Cả Campaign & Flow)</b>
+                                        <p className="text-xs text-rose-600/80 mt-1">Hành động này sẽ xóa vĩnh viễn chiến dịch và tất cả {advancedDeleteModal.flows.length} flow đang theo dõi chiến dịch này.</p>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                }
+                variant={advancedDeleteModal.deleteFlowMode === 1 ? 'danger' : 'warning'}
+                requireConfirmText="DELETE"
             />
 
             <TipsModal

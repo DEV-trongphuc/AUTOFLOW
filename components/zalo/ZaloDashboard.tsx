@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { MessageSquare, RefreshCw, Settings, ShieldCheck, Zap } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
@@ -38,7 +38,8 @@ const ZaloDashboard: React.FC = () => {
         try {
             const res = await api.get<ZaloTemplate[]>(`zalo_templates?oa_id=${oaId}`);
             if (res.success) {
-                setTemplates(res.data);
+                const validTemplates = (res.data || []).filter((t: ZaloTemplate) => t.status?.toUpperCase() !== 'REJECT' && t.status?.toUpperCase() !== 'REJECTED');
+                setTemplates(validTemplates);
             } else {
                 showToast('Không thể tải templates', 'error');
             }

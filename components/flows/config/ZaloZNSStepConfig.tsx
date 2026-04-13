@@ -310,12 +310,38 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
         });
     };
 
+    const KNOWN_ZNS_LIMITS: Record<string, number> = {
+        customer_name: 30,
+        phone_number: 15,
+        address: 80,
+        product_code: 30,
+        custom_field: 30,
+        transaction_status: 30,
+        contact: 50,
+        personal_title: 5,
+        product_name: 100,
+        amount_vn_standard: 20,
+        time: 20,
+        bank_transfer_note: 90
+    };
+
     const handleTemplateDataChange = (field: string, value: string) => {
+        let safeValue = value;
+        const limit = KNOWN_ZNS_LIMITS[field];
+        
+        if (limit && safeValue.length > limit) {
+            safeValue = safeValue.substring(0, limit);
+        }
+        
+        if (field === 'bank_transfer_note') {
+            safeValue = safeValue.replace(/[@\[\]\^_!"•#\$%¥&'\(\)\*\+,€\-\.\/:;{\\|<}=~>\?]/g, '');
+        }
+
         onChange({
             ...config,
             template_data: {
                 ...config.template_data,
-                [field]: value
+                [field]: safeValue
             }
         });
     };

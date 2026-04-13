@@ -234,7 +234,7 @@ const ZaloSetupGuide: React.FC<ZaloSetupGuideProps> = ({ isOpen, onClose }) => {
 
                 {/* Additional Resources */}
                 <div className="border-t border-slate-200 pt-6">
-                    <h4 className="text-sm font-black text-slate-700 mb-3 uppercase tracking-wider">Tỉ lệ tham khảo</h4>
+                    <h4 className="text-sm font-black text-slate-700 mb-3 uppercase tracking-wider">Tài liệu tham khảo</h4>
                     <div className="space-y-2">
                         <a
                             href="https://developers.zalo.me/docs/official-account/bat-dau/tao-ung-dung-post-2626"
@@ -252,7 +252,7 @@ const ZaloSetupGuide: React.FC<ZaloSetupGuideProps> = ({ isOpen, onClose }) => {
                             className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 hover:underline"
                         >
                             <ExternalLink className="w-4 h-4" />
-                            Tỉ lệ Zalo Notification Service (ZNS)
+                            Tài liệu Zalo Notification Service (ZNS)
                         </a>
                         <a
                             href="https://developers.zalo.me/docs/api/official-account-api/phu-luc/ma-loi-post-4307"

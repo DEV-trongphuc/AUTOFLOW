@@ -725,8 +725,12 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                             />
                         </div>
                     ) : (
-                        <table className="w-full text-left">
-                            <thead className="bg-slate-50/80 border-b border-slate-200 text-left sticky top-0 z-20 backdrop-blur-sm">
+                        <div className="relative">
+                            {loading && participants.length > 0 && (
+                                <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-30" />
+                            )}
+                            <table className="w-full text-left">
+                                <thead className="bg-slate-50/80 border-b border-slate-200 text-left sticky top-0 z-20 backdrop-blur-sm">
                                 {selectedIds.size > 0 && ['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive'].includes(activeTab) ? (
                                     <tr className="bg-[#fffbf0] border-b border-orange-200 shadow-sm animate-in fade-in duration-200">
                                         <th colSpan={['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive'].includes(activeTab) ? 5 : 4} className="px-6 py-3">
@@ -912,9 +916,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                         </td>
                                     </tr>
                                 )}
-                                {loading && participants.length > 0 && (
-                                    <div className="absolute inset-0 bg-white/10 backdrop-blur-[1px] z-20" />
-                                )}
+
                                 {loading && participants.length === 0 ? (
                                     [...Array(6)].map((_, i) => (
                                         <tr key={i}>
@@ -1238,6 +1240,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                 })}
                             </tbody>
                         </table>
+                        </div>
                     )}
                 </div>
 

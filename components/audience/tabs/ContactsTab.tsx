@@ -44,6 +44,14 @@ interface ContactRowProps {
 const ContactRow = React.memo<ContactRowProps>(({
     sub, isSelected, onToggle, onSelect, renderLastActive, renderJoinedDate, visibleColumns
 }) => {
+    const getCleanName = (name: any) => {
+        if (!name || name === 0 || name === '0') return '';
+        return String(name).trim();
+    };
+    const cleanFirstName = getCleanName(sub.firstName);
+    const cleanLastName = getCleanName(sub.lastName);
+    const fullName = `${cleanFirstName} ${cleanLastName}`.trim() || 'Unknown';
+
     return (
         <tr
             className={`hover:bg-slate-50 transition-colors group cursor-pointer ${isSelected ? 'bg-orange-50/20' : ''}`}
@@ -64,10 +72,10 @@ const ContactRow = React.memo<ContactRowProps>(({
                 <div className="flex items-center">
                     <div className="relative">
                         {sub.avatar ? (
-                            <img src={sub.avatar} alt={`${sub.firstName} ${sub.lastName}`} className="h-9 w-9 rounded-xl object-cover mr-3 border border-slate-200 shadow-sm" />
+                            <img src={sub.avatar} alt={fullName} className="h-9 w-9 rounded-xl object-cover mr-3 border border-slate-200 shadow-sm" />
                         ) : (
                             <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-600 font-bold text-xs mr-3 border border-slate-200 group-hover:from-[#fff4e0] group-hover:to-[#ffe8cc] group-hover:text-[#ca7900] transition-all shadow-sm">
-                                {(sub.firstName || '?')[0]}{(sub.lastName || '')[0]}
+                                {(cleanFirstName || '?')[0]}{(cleanLastName || '')[0]}
                             </div>
                         )}
                         {(Number(sub.verified) === 1) && (
@@ -78,16 +86,16 @@ const ContactRow = React.memo<ContactRowProps>(({
                     </div>
                     <div>
                         <div className="text-sm font-bold text-slate-800 group-hover:text-[#ca7900] transition-colors flex items-center gap-1">
-                            {sub.firstName} {sub.lastName}
+                            {fullName}
                             {(Number(sub.verified) === 1) && <span title="Verified"><BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-50" /></span>}
-                            {sub.status === "customer" && <span title="Customer"><BadgeCheck className="w-3.5 h-3.5 text-amber-600 fill-amber-50" /></span>}
-                            {sub.meta_psid && <span title="Facebook Messenger Verified"><BadgeCheck className="w-3.5 h-3.5 text-blue-600 fill-blue-100" /></span>}
-                            {(sub.chatCount && sub.chatCount > 0) && (
+                            {sub.status === "customer" ? <span title="Customer"><BadgeCheck className="w-3.5 h-3.5 text-amber-600 fill-amber-50" /></span> : null}
+                            {sub.meta_psid && sub.meta_psid !== '0' ? <span title="Facebook Messenger Verified"><BadgeCheck className="w-3.5 h-3.5 text-blue-600 fill-blue-100" /></span> : null}
+                            {sub.chatCount && sub.chatCount > 0 ? (
                                 <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-[10px] font-bold shrink-0" title="Conversations">
                                     <MessageCircle className="w-3 h-3" />
                                     {sub.chatCount.toLocaleString()}
                                 </div>
-                            )}
+                            ) : null}
                         </div>
                         {!visibleColumns.includes('email') && (
                             <div className="text-[11px] font-medium text-slate-400">{sub.email}</div>

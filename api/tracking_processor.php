@@ -25,6 +25,20 @@ function processTrackingEvent($pdo, $type, $payload)
             return false;
         }
 
+        // [DEBOUNCE] Prevent duplicate logging and stats bloat if email pixel/click fires multiple times rapidly (AMPP proxy clones)
+        if (in_array($subType, ['open_email', 'click_link', 'zalo_clicked'])) {
+            try {
+                $stmtSpam = $pdo->prepare("SELECT 1 FROM subscriber_activity WHERE subscriber_id = ? AND type = ? AND (reference_id = ? OR (reference_id IS NULL AND ? IS NULL)) AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MINUTE) LIMIT 1");
+                $stmtSpam->execute([$sid, $subType, $rid, $rid]);
+                if ($stmtSpam->fetchColumn()) {
+                    // Exact same event within the last 60 seconds. Skip processing.
+                    return true;
+                }
+            } catch (Exception $e) {
+                // Ignore DB check error
+            }
+        }
+
         // 1. Log essential activity (PULL FROM CONFIG)
         // [CONFLICT-3 FIX] Use __DIR__ to anchor path — relative 'scoring_config.php' fails
         // when this file is included by a CLI worker (cron/worker) running from a different CWD.
@@ -326,14 +340,21 @@ function processTrackingEvent($pdo, $type, $payload)
             return false;
         }
 
+        $stmtStatus = $pdo->prepare("SELECT status FROM subscribers WHERE id = ?");
+        $stmtStatus->execute([$sid]);
+        $currentStatus = $stmtStatus->fetchColumn();
+
         $pdo->prepare("UPDATE subscribers SET status = 'unsubscribed', updated_at = NOW() WHERE id = ?")->execute([$sid]);
         $pdo->prepare("UPDATE subscriber_flow_states SET status = 'cancelled', updated_at = NOW() WHERE subscriber_id = ? AND status IN ('waiting', 'processing')")->execute([$sid]);
 
-        if ($fid) {
-            $pdo->prepare("INSERT INTO stats_update_buffer (target_table, target_id, column_name, increment) VALUES ('flows', ?, 'stat_total_unsubscribed', 1)")->execute([$fid]);
-        }
-        if ($cid) {
-            $pdo->prepare("INSERT INTO stats_update_buffer (target_table, target_id, column_name, increment) VALUES ('campaigns', ?, 'count_unsubscribed', 1)")->execute([$cid]);
+        // Only increment counters if they weren't already unsubscribed previously or from another click
+        if ($currentStatus !== 'unsubscribed') {
+            if ($fid) {
+                $pdo->prepare("INSERT INTO stats_update_buffer (target_table, target_id, column_name, increment) VALUES ('flows', ?, 'stat_total_unsubscribed', 1)")->execute([$fid]);
+            }
+            if ($cid) {
+                $pdo->prepare("INSERT INTO stats_update_buffer (target_table, target_id, column_name, increment) VALUES ('campaigns', ?, 'count_unsubscribed', 1)")->execute([$cid]);
+            }
         }
 
         logActivity($pdo, $sid, 'unsubscribe', $rid, 'Unsubscribe', "Unsubscribed via Link", $fid, $cid);

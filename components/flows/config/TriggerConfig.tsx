@@ -117,8 +117,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
             if (purchRes.success) setPurchases(purchRes.data);
             if (customRes.success) setCustomEvents(customRes.data);
 
-            // @ts-ignore
-            if (customRes && arguments[0] /* Hack for promise array destructuring */) {
+            if (customRes) {
                 const arr = await Promise.all([api.get<VoucherCampaign[]>('voucher_campaigns')]);
                 if (arr[0].success) setVoucherCampaigns(arr[0].data);
             }
@@ -257,23 +256,23 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
         <button
             onClick={onClick}
             disabled={disabled}
-            className={`w-full flex items-center justify-between p-3 rounded-2xl border-2 transition-all duration-300 group
+            className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all duration-300 group relative overflow-hidden
         ${isSelected
-                    ? 'border-emerald-500 bg-emerald-50 shadow-sm ring-2 ring-emerald-500/10'
-                    : 'border-transparent bg-slate-50 hover:bg-slate-100 hover:border-slate-200'}
+                    ? 'border-emerald-500 bg-emerald-50 shadow-md ring-4 ring-emerald-500/5'
+                    : 'border-transparent bg-slate-50 hover:bg-white hover:border-slate-200 hover:shadow-sm'}
         ${disabled ? 'opacity-50 cursor-not-allowed grayscale' : 'cursor-pointer'}`}
         >
-            <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 shrink-0 flex items-center justify-center rounded-xl transition-all duration-300 ${isSelected ? 'bg-emerald-500 text-white shadow-md' : 'bg-white text-slate-400 group-hover:text-slate-600'}`}>
-                    <Icon className="w-4 h-4" />
+            <div className="flex items-center gap-4">
+                <div className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl transition-all duration-500 ${isSelected ? 'bg-emerald-500 text-white shadow-lg' : 'bg-white text-slate-400 group-hover:text-slate-600 shadow-sm'}`}>
+                    <Icon className="w-5 h-5" />
                 </div>
                 <div className="text-left overflow-hidden">
-                    <p className={`text-[13px] font-semibold transition-colors ${isSelected ? 'text-slate-900' : 'text-slate-600'}`}>{label}</p>
-                    {desc && <p className={`text-[9px] font-medium uppercase tracking-tight mt-0.5 transition-colors ${isSelected ? 'text-emerald-600/80' : 'text-slate-400'}`}>{desc}</p>}
+                    <p className={`text-[13px] font-black tracking-tight transition-colors ${isSelected ? 'text-slate-900' : 'text-slate-700'}`}>{label}</p>
+                    {desc && <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 transition-colors ${isSelected ? 'text-emerald-600/70' : 'text-slate-400'}`}>{desc}</p>}
                 </div>
             </div>
-            <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${isSelected ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 bg-white'}`}>
-                {isSelected && <CheckCircle2 className="w-3 h-3" />}
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'border-emerald-500 bg-emerald-500 text-white scale-110 shadow-sm' : 'border-slate-200 bg-white group-hover:border-slate-400'}`}>
+                {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
             </div>
         </button>
     );
@@ -293,9 +292,9 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
             )}
 
             {/* 1. TINH TÚY: EVENT SELECTOR (GRID 2 C?T) */}
-            <div className="space-y-3.5">
-                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.15em] px-1">Chọn sự kiện khởi đầu</label>
-                <div className="grid grid-cols-2 gap-2.5">
+            <div className="space-y-4">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Chọn sự kiện khởi đầu</label>
+                <div className="grid grid-cols-2 gap-3">
                     {triggerOptions.map((opt) => {
                         const isSelected = triggerType === opt.id;
                         return (
@@ -303,18 +302,23 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                 key={opt.id}
                                 disabled={disabled || locked}
                                 onClick={() => handleTypeChange(opt.id)}
-                                className={`flex items-center gap-3 p-3 rounded-[20px] border-2 transition-all duration-300 relative group overflow-hidden
+                                className={`flex items-center gap-4 p-4 rounded-[24px] border-2 transition-all duration-500 relative group overflow-hidden
                         ${getOptionClasses(opt.color, isSelected)} 
-                        ${isSelected ? 'shadow-sm ring-2' : 'bg-white border-slate-100'}
+                        ${isSelected ? 'shadow-md ring-4 ring-offset-0 ring-opacity-10' : 'bg-white border-slate-100 hover:border-slate-300 hover:shadow-sm'}
                         ${disabled || locked ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
                             >
-                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-500 ${getIconClasses(opt.color, isSelected)} ${isSelected ? 'shadow-md' : 'group-hover:scale-105'}`}>
-                                    <opt.icon className="w-4 h-4" />
+                                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-500 ${getIconClasses(opt.color, isSelected)} ${isSelected ? 'shadow-lg scale-110' : 'group-hover:bg-white group-hover:shadow-sm'}`}>
+                                    <opt.icon className={`transition-transform duration-500 ${isSelected ? 'w-5 h-5' : 'w-5 h-5 group-hover:scale-110'}`} />
                                 </div>
-                                <div className="text-left overflow-hidden">
-                                    <p className={`text-xs font-bold leading-none mb-1 tracking-tight ${isSelected ? 'text-slate-900' : 'text-slate-700'}`}>{opt.label}</p>
-                                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-tight truncate">{opt.desc}</p>
+                                <div className="text-left overflow-hidden relative z-10">
+                                    <p className={`text-xs font-black leading-tight mb-1 tracking-tight ${isSelected ? 'text-slate-950' : 'text-slate-700'}`}>{opt.label}</p>
+                                    <p className={`text-[10px] font-bold uppercase tracking-widest truncate ${isSelected ? 'opacity-80' : 'text-slate-400'}`}>{opt.desc}</p>
                                 </div>
+                                {isSelected && (
+                                    <div className="absolute top-2 right-2">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                    </div>
+                                )}
                             </button>
                         );
                     })}

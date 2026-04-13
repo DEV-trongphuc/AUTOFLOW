@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { X, Send, Search, Layout, AlertTriangle, CheckCircle, RefreshCw, FileText, Download, Upload, Info, Phone, User as UserIcon, Settings2, Eye, ReceiptText, BadgeCheck, Globe, Sparkles, Smartphone, Monitor, FileSpreadsheet, Zap, ChevronDown, Check, Braces, Clock, ShieldAlert, UserPlus, Heart, ExternalLink, Star, Facebook, MessageCircle, List, Plus, Trash2, ArrowRight, MoreHorizontal, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
@@ -486,7 +486,7 @@ const ZaloSendZBSModal: React.FC<ZaloSendZBSModalProps> = ({ isOpen, onClose: _o
                                             <Download className="w-3.5 h-3.5" /> Mẫu CSV
                                         </button>
                                         <button onClick={() => fileInputRef.current?.click()} className="flex items-center justify-center gap-2 py-2.5 px-3 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-xl text-[10px] font-bold transition-all border border-amber-100 uppercase tracking-widest">
-                                            <Upload className="w-3.5 h-3.5" /> Tỉ lệ CSV
+                                            <Upload className="w-3.5 h-3.5" /> Tải lên CSV
                                         </button>
                                         <input type="file" ref={fileInputRef} onChange={handleUploadCsv} className="hidden" accept=".csv" />
                                     </div>
@@ -583,7 +583,7 @@ const ZaloSendZBSModal: React.FC<ZaloSendZBSModalProps> = ({ isOpen, onClose: _o
                                                     <button
                                                         onClick={() => fetchTemplateDetail(selectedTemplate.id)}
                                                         className="absolute bottom-4 right-4 p-2 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-full text-slate-400 hover:text-amber-600 hover:border-amber-200 transition-all shadow-sm z-50 pointer-events-auto"
-                                                        title="Tỉ lệ preview"
+                                                        title="Tải lại preview"
                                                     >
                                                         <RefreshCw className="w-3.5 h-3.5" />
                                                     </button>

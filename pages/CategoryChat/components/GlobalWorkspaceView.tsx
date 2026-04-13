@@ -321,7 +321,7 @@ const GlobalWorkspaceView = React.memo(({
                                     <Database className="w-10 h-10 text-slate-200" />
                                 </div>
                                 <h4 className="text-lg font-bold text-slate-900 mb-2">Chưa có tệp tin nào</h4>
-                                <p className="text-slate-400 text-sm max-w-xs">Tỉ lệ các tài liệu hoặc hình ảnh quan trọng để sử dụng chung cho nhiều Bot khác nhau.</p>
+                                <p className="text-slate-400 text-sm max-w-xs">Tải lên các tài liệu hoặc hình ảnh quan trọng để sử dụng chung cho nhiều Bot khác nhau.</p>
                             </div>
                         );
 

@@ -3,9 +3,9 @@ import { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import {
     Plus, TrendingUp, MousePointerClick,
-    CheckCircle2, GitMerge, RefreshCw, FileText, CalendarClock, PieChart, Send, MailOpen,
+    CheckCircle2, GitMerge, GitBranch, RefreshCw, FileText, CalendarClock, PieChart, Send, MailOpen,
     Search, ChevronLeft, ChevronRight, X, BarChart2, Calendar, Users, MailCheck, Activity, Zap, ExternalLink, Mail, Bell, Clock, Activity as ActivityIcon, MousePointer2, BadgeCheck, FileBarChart, MousePointerClick as ClickIcon,
-    Layers, List, AlertOctagon, UserMinus, History, Tag, Loader2, ShieldCheck, Smartphone, Globe, Laptop
+    Layers, List, AlertOctagon, UserMinus, History, Tag, Loader2, ShieldCheck, Smartphone, Globe, Laptop, Trash2
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart as RePieChart, Pie, AreaChart, Area, FunnelChart, Funnel, LabelList
@@ -39,6 +39,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
 }) => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('overview');
+    const [initialAudienceFilter, setInitialAudienceFilter] = useState('all');
     const [activityLogs, setActivityLogs] = useState<any[]>([]);
     const [loadingLogs, setLoadingLogs] = useState(false);
     const [logsPagination, setLogsPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
@@ -52,6 +53,16 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
     const [statsLoading, setStatsLoading] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
     const [animateIn, setAnimateIn] = useState(false);
+
+    const [deleteModal, setDeleteModal] = useState<{
+        isOpen: boolean;
+        loading: boolean;
+        list: any[];
+        page: number;
+        totalPages: number;
+        total: number;
+        fetchingList: boolean;
+    }>({ isOpen: false, loading: false, list: [], page: 1, totalPages: 1, total: 0, fetchingList: false });
 
     useEffect(() => {
         if (campaign && isOpen) {
@@ -77,6 +88,11 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
             return () => clearTimeout(timer);
         }
     }, [campaign, isOpen]);
+
+    const handleNavigateToAudienceFilter = (filter: string) => {
+        setInitialAudienceFilter(filter);
+        setActiveTab('delivery');
+    };
 
     // Poll for activity logs and campaign stats when drawer is open and relevant tabs are active
     useEffect(() => {
@@ -182,6 +198,56 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
         setRefreshLoading(false);
     };
 
+    const fetchUnsubscribedList = async (page: number = 1) => {
+        if (!campaign) return;
+        setDeleteModal(prev => ({ ...prev, fetchingList: true, page }));
+        try {
+            const res = await api.get<any>(`campaigns?route=unsubscribed_list&id=${campaign.id}&page=${page}&limit=10`);
+            if (res && res.success && res.data) {
+                setDeleteModal(prev => ({
+                    ...prev,
+                    fetchingList: false,
+                    list: res.data.data || [],
+                    totalPages: res.data.pagination?.totalPages || 1,
+                    total: res.data.pagination?.total || 0
+                }));
+            } else {
+                setDeleteModal(prev => ({ ...prev, fetchingList: false }));
+                toast.error("Không thể lấy danh sách, server phản hồi lỗi hoặc chưa nạp API mới!");
+            }
+        } catch (err) {
+            console.error("fetchUnsubscribedList Error:", err);
+            toast.error("Lỗi kết nối API lấy danh sách Unsub. Hãy chắc chắn bạn đã upload file api/campaigns.php!");
+            setDeleteModal(prev => ({ ...prev, fetchingList: false }));
+        }
+    };
+
+    useEffect(() => {
+        if (deleteModal.isOpen && campaign) {
+            fetchUnsubscribedList(deleteModal.page);
+        }
+    }, [deleteModal.isOpen, deleteModal.page, campaign]);
+
+    const handleDeleteUnsubscribed = async () => {
+        if (!campaign) return;
+        setDeleteModal(prev => ({ ...prev, loading: true }));
+        try {
+            const res = await api.post<any>('campaigns?route=delete_unsubscribed', { id: campaign.id });
+            if (res.success) {
+                toast.success(`Đã xóa vĩnh viễn ${res.data?.deleted || 0} liên hệ Hủy đăng ký khỏi hệ thống.`);
+                setDeleteModal(prev => ({ ...prev, isOpen: false, loading: false }));
+                fetchAudienceStats();
+            } else {
+                toast.error(res.message || "Lỗi khi xóa liên hệ.");
+                setDeleteModal(prev => ({ ...prev, loading: false }));
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error("Lỗi khi gọi API xóa.");
+            setDeleteModal(prev => ({ ...prev, loading: false }));
+        }
+    };
+
     if (!localCampaign) return null;
 
     const stats = localCampaign.stats || { sent: 0, opened: 0, clicked: 0, bounced: 0, spam: 0, unsubscribed: 0, failed: 0 };
@@ -272,6 +338,9 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                 {localCampaign.sentAt
                                     ? `Gửi lúc: ${!isNaN(new Date(localCampaign.sentAt).getTime()) ? new Date(localCampaign.sentAt).toLocaleString('vi-VN') : '...'}`
                                     : `Bản nháp`}
+                            </span>
+                            <span className="px-3 py-1 bg-slate-50 border border-slate-200 text-slate-600 rounded-full text-[10px] md:text-xs font-black font-mono tracking-widest ml-2 shadow-sm">
+                                ID: {localCampaign.id}
                             </span>
                         </div>
                         <h2 className="text-lg md:text-xl font-black text-slate-800 tracking-tight leading-tight truncate pr-4">{localCampaign.name}</h2>
@@ -398,10 +467,10 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                             <div className="bg-gradient-to-r from-violet-900 via-indigo-950 to-slate-950 p-6 rounded-[24px] shadow-lg shadow-indigo-900/20 text-white flex flex-col md:flex-row items-center justify-between gap-6 animate-in fade-in zoom-in duration-500 border border-white/5">
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center">
-                                                        <Zap className="w-6 h-6 text-orange-300" />
+                                                        <GitBranch className="w-6 h-6 text-orange-300" />
                                                     </div>
                                                     <div>
-                                                        <h4 className="text-sm font-black uppercase tracking-wider">Kịch bản chăm sóc liên quan</h4>
+                                                        <h4 className="text-sm font-black uppercase tracking-wider">Kịch bản chăm sóc sau chiến dịch</h4>
                                                         <p className="text-xs text-indigo-100 font-medium mt-0.5">Chiến dịch này đang kích hoạt Flow: <span className="font-bold underline">{associatedFlow.name}</span></p>
                                                     </div>
                                                 </div>
@@ -447,7 +516,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                             {/* 1. KEY METRICS ROW */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                                 <StatBox
-                                    label={isZns ? "Tỉ lệ Xem (Seen Rate)" : "Tỉ lệ Mở (Open Rate)"}
+                                    label={isZns ? "Tỷ lệ Xem (Seen Rate)" : "Tỷ lệ Mở (Open Rate)"}
                                     value={`${openRate}%`}
                                     subValue={`${(stats.opened || 0).toLocaleString()} người${(stats as any).total_opened && !isZns ? ` - ${(stats as any).total_opened.toLocaleString()} lượt` : ''}`}
                                     icon={isZns ? BadgeCheck : MailOpen}
@@ -463,9 +532,9 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     />
                                 ) : (
                                     <StatBox
-                                        label="Tỉ lệ Click (CTR)"
+                                        label="Tỷ lệ Click (CTR)"
                                         value={`${clickRate}%`}
-                                        subValue={`${(stats.clicked || 0).toLocaleString()} lượt nhấn`}
+                                        subValue={`${(stats.clicked || 0).toLocaleString()} lượt CLICKS`}
                                         icon={MousePointerClick}
                                         colorClass="text-emerald-500"
                                     />
@@ -480,7 +549,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     />
                                 )}
                                 <StatBox
-                                    label={isZns ? "Chi phí tạm tính" : "Tỉ lệ gửi thành công"}
+                                    label={isZns ? "Chi phí tạm tính" : "Tỷ lệ gửi thành công"}
                                     value={isZns ? (() => {
                                         const configData = typeof localCampaign.config === 'string' ? JSON.parse(localCampaign.config) : localCampaign.config;
                                         const price = configData?.price || 300;
@@ -592,22 +661,20 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                             )}
 
                                             <div className="space-y-4 mt-2">
-                                                <div className="flex justify-between items-center text-xs">
+                                                <div className="flex justify-between items-center text-xs group cursor-pointer" onClick={() => handleNavigateToAudienceFilter('failed')}>
                                                     <div className="flex items-center gap-2">
                                                         <div className={`w-2 h-2 rounded-full ${isZns ? 'bg-rose-500' : 'bg-rose-500'}`} />
-                                                        <span className="text-slate-600 font-bold">{isZns ? 'Lỗi gửi (Failed)' : 'Email hỏng (Bounce)'}</span>
+                                                        <span className="text-slate-600 font-bold group-hover:text-blue-600 transition-colors">{isZns ? 'Lỗi gửi (Failed)' : 'Email hỏng (Bounce)'}</span>
                                                     </div>
                                                     <span className="font-mono font-bold text-rose-500">{isZns ? `${(sentCount > 0 ? ((localCampaign.stats?.failed || 0) / sentCount * 100).toFixed(2) : '0.00')}% (${localCampaign.stats?.failed || 0})` : `${bounceRate}% (${stats.bounced})`}</span>
                                                 </div>
-                                                {!isZns && (
-                                                    <div className="flex justify-between items-center text-xs">
-                                                        <div className="flex items-center gap-2">
-                                                        <div className="w-2 h-2 rounded-full bg-amber-600" />
-                                                            <span className="text-slate-600 font-bold">Hủy đăng ký (Unsub)</span>
-                                                        </div>
-                                                        <span className="font-mono font-bold text-amber-600">{unsubRate}% ({stats.unsubscribed})</span>
+                                                <div className="flex justify-between items-center text-xs group cursor-pointer" onClick={() => handleNavigateToAudienceFilter('unsubscribed')}>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={`w-2 h-2 rounded-full ${isZns ? 'bg-[#ca7900]' : 'bg-[#ca7900]'}`} />
+                                                        <span className="text-slate-600 font-bold group-hover:text-blue-600 transition-colors">{isZns ? 'Hủy đăng ký (Unsub)' : 'Hủy đăng ký (Unsub)'}</span>
                                                     </div>
-                                                )}
+                                                    <span className="font-mono font-bold text-[#ca7900]">{isZns ? '0.00% (0)' : `${unsubRate}% (${stats.unsubscribed})`}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </Card>
@@ -778,11 +845,19 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                     <p className="text-xl font-black text-slate-700">{(audienceStats.total_current || 0).toLocaleString()}</p>
                                                 </div>
                                                 <div className="w-px h-10 bg-amber-100" />
-                                                <div className="text-center">
+                                                <div className="text-center relative group">
                                                     <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Chênh lệch</p>
                                                     <p className="text-xl font-black text-amber-600">+{(audienceStats.gap || 0).toLocaleString()}</p>
                                                     {audienceStats.count_unsubscribed !== undefined && audienceStats.count_unsubscribed > 0 && (
-                                                        <p className="text-[10px] font-bold text-rose-500 mt-1">(-{audienceStats.count_unsubscribed} hủy đăng ký)</p>
+                                                        <div className="mt-2 text-center">
+                                                            <p className="text-[10px] font-bold text-rose-500 whitespace-nowrap">Do {audienceStats.count_unsubscribed} người Unsub</p>
+                                                            <button
+                                                                onClick={() => setDeleteModal(prev => ({ ...prev, isOpen: true, loading: false, page: 1 }))}
+                                                                className="mt-1 px-3 py-1 bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white border border-rose-200 rounded-lg text-[9px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-1 mx-auto shadow-sm relative z-20"
+                                                            >
+                                                                <Trash2 className="w-3 h-3" /> Dọn dẹp
+                                                            </button>
+                                                        </div>
                                                     )}
                                                 </div>
                                             </div>
@@ -876,11 +951,14 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                     )}
 
                     {activeTab === 'delivery' && localCampaign && (
-                        <CampaignDeliveryDetailsTab
-                            campaign={localCampaign}
-                            allLists={allLists}
-                            allTags={allTags}
-                        />
+                        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                            <CampaignDeliveryDetailsTab
+                                campaign={localCampaign}
+                                allLists={allLists}
+                                allTags={allTags}
+                                initialFilter={initialAudienceFilter}
+                            />
+                        </div>
                     )}
 
                     {activeTab === 'activity' && (
@@ -1028,6 +1106,74 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                     onClose={() => setShowTestModal(false)}
                     campaignId={localCampaign.id}
                     campaignName={localCampaign.name}
+                />
+
+                <ConfirmModal
+                    isOpen={deleteModal.isOpen}
+                    onClose={() => !deleteModal.loading && setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+                    onConfirm={handleDeleteUnsubscribed}
+                    title="Dọn dẹp người Unsubscribe"
+                    message={
+                        <div className="space-y-4">
+                            <p className="text-slate-600">Bạn sắp xóa <span className="font-bold text-rose-600">{deleteModal.total || audienceStats?.count_unsubscribed || 0} người liên hệ</span> đã Hủy đăng ký từ chiến dịch này.</p>
+
+                            {deleteModal.fetchingList ? (
+                                <div className="flex justify-center p-4">
+                                    <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                                </div>
+                            ) : deleteModal.list.length > 0 ? (
+                                <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
+                                    <table className="w-full text-left text-[11px]">
+                                        <thead className="bg-slate-50 border-b border-slate-100 uppercase text-slate-500 font-bold tracking-wider">
+                                            <tr>
+                                                <th className="px-3 py-2">Email</th>
+                                                <th className="px-3 py-2">Tên</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {deleteModal.list.map(sub => (
+                                                <tr key={sub.id}>
+                                                    <td className="px-3 py-2 font-medium text-slate-700 truncate max-w-[150px]">{sub.email}</td>
+                                                    <td className="px-3 py-2 text-slate-500">{sub.first_name} {sub.last_name}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                    {deleteModal.totalPages > 1 && (
+                                        <div className="px-3 py-2 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[10px]">
+                                            <span className="text-slate-500">Trang {deleteModal.page} / {deleteModal.totalPages}</span>
+                                            <div className="flex gap-1">
+                                                <button
+                                                    onClick={() => setDeleteModal(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
+                                                    disabled={deleteModal.page === 1}
+                                                    className="p-1 rounded bg-white border border-slate-200 disabled:opacity-50"
+                                                >
+                                                    <ChevronLeft className="w-3 h-3" />
+                                                </button>
+                                                <button
+                                                    onClick={() => setDeleteModal(prev => ({ ...prev, page: Math.min(prev.totalPages, prev.page + 1) }))}
+                                                    disabled={deleteModal.page === deleteModal.totalPages}
+                                                    className="p-1 rounded bg-white border border-slate-200 disabled:opacity-50"
+                                                >
+                                                    <ChevronRight className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : null}
+
+                            <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-3">
+                                <AlertOctagon className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                                <div>
+                                    <h5 className="text-sm font-bold text-rose-800">Cảnh báo: Hành động Vĩnh viễn</h5>
+                                    <p className="text-xs text-rose-700/80 mt-1">Các liên hệ này sẽ bị xóa hoàn toàn khỏi cơ sở dữ liệu và không thể khôi phục. Mọi lịch sử tương tác cũng bị mất.</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    variant="danger"
+                    confirmLabel={deleteModal.loading ? "ĐANG XÓA..." : "XÓA VĨNH VIỄN"}
                 />
             </div>
         </div>,

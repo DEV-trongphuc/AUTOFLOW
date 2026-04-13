@@ -25,13 +25,19 @@ $currentUserId = $currentOrgUser['id'];
 $currentUserRole = $currentOrgUser['role'];
 
 // Determine the org scope: use admin_id from the current user record to scope all queries.
-// This ensures org isolation — users of org A cannot see users of org B.
-// If the current user is a top-level admin (admin_id = null), use their OWN id as the scope anchor
-// so all users they create will share the same admin_id = currentUserId.
-$orgScopeAdminId = $currentOrgUser['admin_id'] ?? $GLOBALS['current_admin_id'] ?? null;
+// If the current user is a top-level admin (admin_id is null or 'admin-001'), 
+// they are the anchor for their own organization.
+$orgScopeAdminId = $currentOrgUser['admin_id'] ?? null;
+
+// Virtual 'admin-001' should not be used for database WHERE clauses if we have a real ID
+if ($orgScopeAdminId === 'admin-001') $orgScopeAdminId = null;
+
 if (!$orgScopeAdminId && $currentUserRole === 'admin') {
     $orgScopeAdminId = $currentUserId; // Top-level admin: use own ID as org scope
 }
+
+// Final fallback: if currentUserId is virtual, don't use it for scoping unless we specifically want global access
+if ($orgScopeAdminId === 'admin-001') $orgScopeAdminId = null;
 
 // Only Admin and Assistant can access the users management API
 if (!in_array($currentUserRole, ['admin', 'assistant'])) {

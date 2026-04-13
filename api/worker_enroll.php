@@ -167,8 +167,32 @@ foreach ($activeFlows as $flow) {
                AND ($segSql)
                $existsCheckSql";
 
-    $pastTime = date('Y-m-d H:i:s', strtotime('-1 second'));
-    $params = array_merge([$flow['id'], $trigger['nextStepId'], $pastTime], $segParams, $checkParams);
+    $initialSchedule = date('Y-m-d H:i:s', time() - 1); // Default backward 1 sec for instant trigger if not wait
+
+    // [SMART SCHEDULE] Check if first step is WAIT
+    foreach ($steps as $fs) {
+        if ($fs['id'] === $trigger['nextStepId'] && $fs['type'] === 'wait') {
+            $fsWaitConfig = $fs['config'] ?? [];
+            $fsWaitMode = $fsWaitConfig['mode'] ?? 'duration';
+            if ($fsWaitMode === 'duration') {
+                $dur = (int) ($fsWaitConfig['duration'] ?? 0);
+                $unit = $fsWaitConfig['unit'] ?? 'minutes';
+                $unitSeconds = match ($unit) {
+                    'weeks' => 604800,
+                    'days' => 86400,
+                    'hours' => 3600,
+                    default => 60,
+                };
+                $delay = $unitSeconds * $dur;
+                if ($delay > 0) {
+                    $initialSchedule = date('Y-m-d H:i:s', time() + $delay);
+                }
+            }
+            break;
+        }
+    }
+
+    $params = array_merge([$flow['id'], $trigger['nextStepId'], $initialSchedule], $segParams, $checkParams);
 
     try {
         $stmtIns = $pdo->prepare($sqlIns);

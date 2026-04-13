@@ -167,7 +167,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
             sortedSteps.push(...currentFlow.steps);
         }
 
-        // Filter for Action Steps from the SORTỉ lệ - ADD zalo_zns
+        // Filter for Action Steps from the SORTED steps - ADD zalo_zns
         const actionSteps = sortedSteps.filter(s => ['action', 'zalo_zns', 'update_tag', 'condition', 'wait', 'list_action', 'remove_action'].includes(s.type));
 
         // 2. T?o Map index d? bi?t th? t? bu?c
@@ -900,9 +900,9 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                 <div>
                                     <h3 className="text-lg md:text-2xl font-bold tracking-tight">Hiệu suất vận hành</h3>
                                     <div className="flex items-center gap-2 mt-0.5 md:mt-1">
-                                        <span className={`w-1.5 h-1.5 rounded-full ${currentFlow.status === 'active' ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`}></span>
-                                        <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                            Automation {currentFlow.status === 'active' ? 'Đang chờ' : 'Đã dừng'}
+                                        <span className={`w-1.5 h-1.5 rounded-full ${currentFlow.status === 'active' ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} title={currentFlow.status === 'active' ? 'Active' : 'Paused'}></span>
+                                        <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">
+                                            ID: {currentFlow.id}
                                         </span>
                                     </div>
                                 </div>
@@ -920,14 +920,14 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                         <div className="space-y-4 md:space-y-6">
                             <div className="flex justify-between items-end">
                                 <div>
-                                    <p className="text-[9px] md:text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1">Tỉ lệ hoàn tất</p>
+                                    <p className="text-[9px] md:text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1">Tỷ lệ hoàn tất</p>
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-2xl md:text-4xl font-black text-white tracking-tighter">{completionRate}%</span>
                                         <span className="text-[10px] md:text-xs text-slate-400 font-medium">({stats.completed}/{stats.enrolled})</span>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[9px] md:text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1">Tỉ lệ mở TB</p>
+                                    <p className="text-[9px] md:text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1">Tỷ lệ mở TB</p>
                                     <span className="text-xl md:text-2xl font-black text-emerald-400 tracking-tighter">{realOpenRate}%</span>
                                 </div>
                             </div>
@@ -1035,7 +1035,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                     }}
                 />
                 <StatItem
-                    label="Tỉ lệ lỗi"
+                    label="Tỷ lệ lỗi"
                     value={errorRate + '%'}
                     icon={AlertOctagon}
                     color="bg-rose-500"
@@ -1119,7 +1119,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                             <BottleneckBadge
                                                                 type="drop"
                                                                 value={`Drop-off ${Math.round(item.dropOffRate * 100)}%`}
-                                                                tooltip="Cảnh báo: Tỉ lệ thoát/dừng tại bước này cao (>70%). Bạn nên tối ưu nội dung hoặc điều kiện lọc."
+                                                                tooltip="Cảnh báo: Tỷ lệ thoát/dừng tại bước này cao (>70%). Bạn nên tối ưu nội dung hoặc điều kiện lọc."
                                                             />
                                                         )}
 

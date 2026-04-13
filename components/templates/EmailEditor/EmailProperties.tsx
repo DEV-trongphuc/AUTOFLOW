@@ -467,7 +467,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                             />
                                             <div className="flex items-start gap-2 p-2 bg-blue-50 border border-blue-100 rounded-xl">
                                                 <LucideIcons.Info className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" />
-                                                <p className="text-[10px] text-blue-700 font-medium">Ảnh sử dụng <strong>object-fit: cover</strong> — tự crop và căn giữa, giữ tỉ lệ ảnh.</p>
+                                                <p className="text-[10px] text-blue-700 font-medium">Ảnh sử dụng <strong>object-fit: cover</strong> — tự crop và căn giữa, giữ tỷ lệ ảnh.</p>
                                             </div>
                                         </>
                                     )}

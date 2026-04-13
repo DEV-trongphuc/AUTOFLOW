@@ -836,7 +836,7 @@ const ZaloTemplateCreateModal: React.FC<ZaloTemplateCreateModalProps> = ({ isOpe
                                             </p>
                                             <ul className="ml-3.5 mt-1 grid grid-cols-2 gap-2">
                                                 <li className="flex items-center gap-1.5">• Định dạng: <b className="text-amber-900">JPG, PNG</b></li>
-                                                <li className="flex items-center gap-1.5">• Tỉ lệ <b className="text-amber-900">16:9</b></li>
+                                                <li className="flex items-center gap-1.5">• Tỷ lệ <b className="text-amber-900">16:9</b></li>
                                             </ul>
                                         </div>
                                     </div>

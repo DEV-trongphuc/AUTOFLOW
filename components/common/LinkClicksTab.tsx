@@ -187,7 +187,7 @@ const LinkClicksTab: React.FC<LinkClicksTabProps> = ({ type, id, stepId, initial
                             <MousePointerClick className="w-6 h-6" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Tỉ lệ Click</p>
+                            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Tỷ lệ Click</p>
                             <h4 className="text-2xl font-black text-slate-800 tracking-tight">{totalAllClicks.toLocaleString()}</h4>
                         </div>
                     </div>

@@ -164,7 +164,8 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
                         { 
                             label: 'Hướng dẫn AI', 
                             icon: BookOpen, 
-                            onClick: () => setIsTipsModalOpen(true) 
+                            onClick: () => setIsTipsModalOpen(true),
+                            primary: true
                         }
                     ]}
                 />
@@ -567,8 +568,8 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
                                                                         alt="" 
                                                                     />
                                                                 ) : (
-                                                                    <div className={`w-full h-full rounded-[18px] flex items-center justify-center text-white shadow-lg overflow-hidden transition-all duration-500 ${hideWebsiteTab ? 'bg-slate-400 grayscale' : 'bg-gradient-to-br from-brand to-brand-dark shadow-brand/30 group-hover:shadow-brand/50'}`}>
-                                                                        <img src="/imgs/ICON.png" className="w-7 h-7 object-contain brightness-0 invert" alt="" />
+                                                                    <div className={`w-full h-full rounded-[18px] flex items-center justify-center text-white shadow-lg overflow-hidden transition-all duration-500 ${hideWebsiteTab ? 'bg-brand shadow-brand/20' : 'bg-gradient-to-br from-[#c2410c] to-[#9a3412] shadow-orange-950/20 group-hover:shadow-orange-900/40'}`}>
+                                                                        <Bot className="w-6 h-6" />
                                                                     </div>
                                                                 )}
                                                                 {activePropertyId === c.id && (

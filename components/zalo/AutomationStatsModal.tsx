@@ -113,7 +113,7 @@ const AutomationStatsModal: React.FC<AutomationStatsModalProps> = ({ scenario, o
                                 <span className="text-lg font-black">%</span>
                             </div>
                             <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tỉ lệ click (CTR)</p>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tỷ lệ click (CTR)</p>
                                 <p className="text-2xl font-black text-slate-800">{summary.ctr}</p>
                             </div>
                         </div>

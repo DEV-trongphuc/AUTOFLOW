@@ -68,7 +68,7 @@ ${jsFields}
 };`;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Tỉ lệ tích hợp API" size="lg">
+        <Modal isOpen={isOpen} onClose={onClose} title="Tài liệu tích hợp API" size="lg">
             <div className="space-y-6 pb-10">
                 <div className="p-6 bg-orange-50 border-2 border-orange-100 rounded-[32px] flex gap-5">
                     <div className="p-3 bg-white rounded-2xl text-[#ca7900] shadow-sm shrink-0 h-fit"><BookOpen className="w-6 h-6" /></div>

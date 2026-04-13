@@ -61,7 +61,7 @@ const RetentionTabContent: React.FC<RetentionTabContentProps> = ({ property, dev
                     <div>
                         <h3 className="text-2xl font-black text-slate-800 tracking-tight">Phân tích Trung thành</h3>
                         <p className="text-slate-500 text-sm mt-1 font-medium max-w-md leading-relaxed">
-                            Theo dõi tỉ lệ Khách hàng trung thành quay lại website theo từng {cycle === 'day' ? 'ngày' : cycle === 'month' ? 'tháng' : 'tuần'}. Đây là chỉ số quan trọng để đánh giá chất lượng nội dung.
+                            Theo dõi tỷ lệ Khách hàng trung thành quay lại website theo từng {cycle === 'day' ? 'ngày' : cycle === 'month' ? 'tháng' : 'tuần'}. Đây là chỉ số quan trọng để đánh giá chất lượng nội dung.
                         </p>
                     </div>
                 </div>
@@ -205,7 +205,7 @@ const RetentionTabContent: React.FC<RetentionTabContentProps> = ({ property, dev
                             </li>
                             <li className="flex gap-4">
                                 <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-black text-slate-400 border border-slate-100">3</div>
-                                <span><b>{cycle === 'day' ? 'Ngày' : cycle === 'month' ? 'Tháng' : 'Tuần'} 1-7:</b> Tỉ lệ % số người dùng của chính nhóm đó quay lại ở các {cycle === 'day' ? 'ngày' : cycle === 'month' ? 'tháng' : 'tuần'} kế tiếp.</span>
+                                <span><b>{cycle === 'day' ? 'Ngày' : cycle === 'month' ? 'Tháng' : 'Tuần'} 1-7:</b> Tỷ lệ % số người dùng của chính nhóm đó quay lại ở các {cycle === 'day' ? 'ngày' : cycle === 'month' ? 'tháng' : 'tuần'} kế tiếp.</span>
                             </li>
                         </ul>
                     </div>
@@ -220,7 +220,7 @@ const RetentionTabContent: React.FC<RetentionTabContentProps> = ({ property, dev
                         </h4>
                         <div className="space-y-4 relative">
                             <p className="text-sm text-slate-500 leading-relaxed font-medium">
-                                Chỉ số Retention cao chứng tỏ website của bạn đủ sức hấp dẫn. Nếu tỉ lệ giảm quá nhanh ở các tuần đầu/ngày đầu, bạn cần xem xét lại chiến lược giữ chân Khách hàng (Email Marketing, Zalo ZNS...).
+                                Chỉ số Retention cao chứng tỏ website của bạn đủ sức hấp dẫn. Nếu tỷ lệ giảm quá nhanh ở các tuần đầu/ngày đầu, bạn cần xem xét lại chiến lược giữ chân Khách hàng (Email Marketing, Zalo ZNS...).
                             </p>
                             <div className="p-5 bg-white border border-slate-100 rounded-[24px] flex items-start gap-4 mt-6">
                                 <blockquote className="text-xs text-orange-800 font-bold italic leading-relaxed">
@@ -233,7 +233,7 @@ const RetentionTabContent: React.FC<RetentionTabContentProps> = ({ property, dev
                 <div className="mt-8 p-6 bg-slate-900 rounded-[24px] text-white">
                     <h5 className="font-bold text-sm mb-2 text-blue-400">Mẹo nhỏ:</h5>
                     <p className="text-xs text-slate-300 leading-relaxed">
-                        Hãy theo dõi các tuần có tỉ lệ retention cao đột biến để tìm ra nguyên nhân (ví dụ: một chiến dịch email thành công, hoặc một bài viết blog chất lượng) và nhân bản nó.
+                        Hãy theo dõi các tuần có tỷ lệ retention cao đột biến để tìm ra nguyên nhân (ví dụ: một chiến dịch email thành công, hoặc một bài viết blog chất lượng) và nhân bản nó.
                     </p>
                 </div>
             </Modal>

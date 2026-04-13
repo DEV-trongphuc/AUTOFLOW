@@ -123,7 +123,7 @@ const ChatSummaryPanel: React.FC<ChatSummaryPanelProps> = ({
                         <button
                             onClick={onRegenerate}
                             className={`p-2.5 rounded-xl transition-all ${isDarkTheme ? 'bg-slate-800 hover:bg-slate-700 text-slate-400' : 'bg-white border border-slate-200 hover:bg-slate-50 text-slate-500 shadow-sm'}`}
-                            title="Tỉ lệ tóm tắt"
+                            title="Tóm tắt"
                         >
                             <RefreshCw className="w-4 h-4" />
                         </button>

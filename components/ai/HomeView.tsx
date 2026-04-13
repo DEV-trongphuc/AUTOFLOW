@@ -28,15 +28,15 @@ const ChatbotCard = React.memo(({
 
             <div className="flex justify-between items-start relative z-10">
                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand to-brand-primary-dark flex items-center justify-center text-white shadow-brand group-hover:rotate-6 transition-transform shrink-0">
+                    <div className="w-14 h-14 rounded-[22px] bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center text-white shadow-xl shadow-brand/20 group-hover:rotate-3 transition-transform shrink-0 overflow-hidden border border-slate-100/10">
                         {bot.settings?.bot_avatar ? (
-                            <img 
-                                src={bot.settings.bot_avatar} 
-                                className={`w-full h-full object-cover rounded-[18px] ${categoryId ? 'grayscale group-hover:grayscale-0 transition-all duration-500' : ''}`} 
+                            <img
+                                src={bot.settings.bot_avatar}
+                                className={`w-full h-full object-cover ${categoryId ? 'grayscale group-hover:grayscale-0 transition-all duration-500' : ''}`}
                             />
                         ) : (
-                            <div className={`w-full h-full rounded-[18px] flex items-center justify-center text-white shadow-lg overflow-hidden transition-all duration-500 ${categoryId ? 'bg-slate-400 grayscale group-hover:grayscale-0' : 'bg-gradient-to-br from-brand to-brand-dark shadow-brand/30'}`}>
-                                <img src="/imgs/ICON.png" className="w-7 h-7 object-contain brightness-0 invert" alt="" />
+                            <div className={`w-full h-full flex items-center justify-center transition-all duration-500 ${categoryId ? 'bg-brand' : 'bg-gradient-to-br from-[#c2410c] to-[#9a3412]'}`}>
+                                <Bot className="w-7 h-7" />
                             </div>
                         )}
                     </div>
@@ -56,7 +56,7 @@ const ChatbotCard = React.memo(({
             <div className="space-y-4 relative z-10">
                 <div className={`flex items-center justify-between p-3 rounded-2xl border transition-colors ${isDarkTheme ? 'bg-[#0B0F17] border-slate-800 group-hover:bg-[#161B24]' : 'bg-slate-50 border-slate-100 group-hover:bg-slate-100 group-hover:border-slate-200'}`}>
                     <div className="flex flex-col">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tỉ lệ</span>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tài liệu</span>
 
                         <span className={`text-sm font-black ${isDarkTheme ? 'text-slate-300' : 'text-slate-700'}`}>{(bot.stats?.docs_count || 0).toLocaleString()} <span className="text-[10px] font-medium text-slate-500">docs</span></span>
                     </div>

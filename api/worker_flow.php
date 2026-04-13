@@ -293,11 +293,22 @@ if (!function_exists('runWorkerFlow')) {
                 }
 
                 // [SCHEDULING CHECK] activeDays / startTime / endTime from flow config
-                // Only applies to message-sending steps — we check early to avoid wasting cycles.
+                // Only applies to message-sending steps (emails, zalo, sms, meta).
+                
+                // [FIX] First, identify the step type to ensure we don't accidentally pause logical/wait steps
+                $currentStepId = $item['step_id'];
+                $chkStepType = 'unknown';
+                $flowSteps = json_decode($item['flow_steps'], true) ?? [];
+                foreach ($flowSteps as $s) {
+                    if (trim((string) ($s['id'] ?? '')) === trim((string) $currentStepId)) {
+                        $chkStepType = $s['type'] ?? 'unknown';
+                        break;
+                    }
+                }
+                
+                $isCommunicationStep = in_array(strtolower($chkStepType), ['action', 'zalo_zns', 'zalo_cs', 'meta_message', 'sms']);
+
                 $activeDays = $fConfig['activeDays'] ?? [0, 1, 2, 3, 4, 5, 6];
-                // [FIX] Guard against empty activeDays (e.g. UI bug / user didn't select any day)
-                // An empty array would cause the "find next day" loop to exhaust without assignment,
-                // leaving $nextSendAt = NOW() and creating an infinite reschedule loop.
                 if (empty($activeDays)) {
                     $activeDays = [0, 1, 2, 3, 4, 5, 6]; // Fallback: allow all days
                 }
@@ -309,14 +320,11 @@ if (!function_exists('runWorkerFlow')) {
                 $isDayAllowed = in_array($currentDayOfWeek, array_map('intval', $activeDays));
                 $isTimeAllowed = ($currentTime >= $startTime && $currentTime <= $endTime);
 
-                // [FIX] If today is allowed but we're already past endTime,
-                // treat the day as "not allowed" so the loop below finds the NEXT valid day
-                // instead of naively adding +1 day (which might land on an invalid day).
                 if ($isDayAllowed && $currentTime > $endTime) {
                     $isDayAllowed = false;
                 }
 
-                if (!$isDayAllowed || !$isTimeAllowed) {
+                if ($isCommunicationStep && (!$isDayAllowed || !$isTimeAllowed)) {
                     if ($isDayAllowed && !$isTimeAllowed) {
                         // Ngày hợp lệ nhưng chưa đến giờ startTime — chờ đến startTime hôm nay
                         $nextSendAt = date('Y-m-d') . ' ' . $startTime . ':00';
@@ -342,7 +350,6 @@ if (!function_exists('runWorkerFlow')) {
                     continue;
                 }
 
-                $currentStepId = $item['step_id'];
                 $stepsProcessedInRun = 0;
                 $MAX_STEPS = 50; // [FIX] Tăng từ 20→50 để nhất quán với worker_priority.php
                 // Flow phức tạp >20 bước condition/split sẽ bị dừng sớm nếu giữ 20

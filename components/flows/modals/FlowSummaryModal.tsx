@@ -69,7 +69,7 @@ const FlowSummaryModal: React.FC<FlowSummaryModalProps> = ({ isOpen, onClose, fl
                                         <Activity className="w-6 h-6" />
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tỉ lệ hoàn tất</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tỷ lệ hoàn tất</p>
                                         <h3 className="text-3xl font-black tracking-tight">{completionRate}%</h3>
                                     </div>
                                 </div>

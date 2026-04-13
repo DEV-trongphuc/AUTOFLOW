@@ -30,7 +30,7 @@ const ALL_MODULES: Module[] = [
     {
         id: 'flows',
         title: 'Automation',
-        sub: 'Tỉ lệ kịch bản dựa trên hành vi và sự kiện thực tế. Tự động hóa 100% quy trình CSKH đa kênh.',
+        sub: 'Thiết lập kịch bản dựa trên hành vi và sự kiện thực tế. Tự động hóa 100% quy trình CSKH đa kênh.',
         icon: Zap,
         color: 'from-blue-500 to-indigo-600',
         path: '/flows',
@@ -178,7 +178,7 @@ const Dashboard: React.FC = () => {
         <div className="animate-fade-in min-h-screen pb-20">
             <PageHero
                 title={<>Ready to Scale, {userName}! 🚀</>}
-                subtitle={<>Hệ thống Automation đa thông điệp đã sẵn sàng. Tối ưu hóa trải nghiệm Khách hàng với sức mạnh từ <span className="underline decoration-white/40 underline-offset-4 font-black">Email, Zalo, Meta & AI.</span></>}
+                subtitle={<>Hệ thống Automation đa thông điệp đã sẵn sàng. Tối ưu hóa trải nghiệm Khách hàng với sức mạnh từ <span className="underline decoration-white/40 underline-offset-4 font-black">Email, Zalo, Meta & AI Automation.</span></>}
                 showStatus={true}
                 statusText="Multi-Channel Active"
                 actions={[

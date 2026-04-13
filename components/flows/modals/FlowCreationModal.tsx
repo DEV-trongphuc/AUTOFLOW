@@ -84,7 +84,7 @@ const FLOW_TEMPLATES = [
     gradient: 'from-amber-400 to-orange-500',
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi khách gửi Form', iconName: 'zap', config: { type: 'form', targetId: '' }, nextStepId: 'a1' },
-      { id: 'a1', type: 'action', label: 'Email Phản hồi Form', iconName: 'mail', config: { subject: 'Cảm ơn bạn đã quan tâm! Tỉ lệ của bạn đây' } }
+      { id: 'a1', type: 'action', label: 'Email Phản hồi Form', iconName: 'mail', config: { subject: 'Cảm ơn bạn đã quan tâm! Tài liệu của bạn đây' } }
     ]
   },
   {

@@ -118,8 +118,8 @@ const WorkspacePanel: React.FC<WorkspacePanelProps> = ({
                     <button
                         onClick={() => setActiveTab('all')}
                         className={`pb-3 text-sm font-bold transition-colors relative ${activeTab === 'all'
-                                ? 'text-brand'
-                                : 'text-slate-400 hover:text-slate-600'
+                            ? 'text-brand'
+                            : 'text-slate-400 hover:text-slate-600'
                             }`}
                     >
                         Tất cả tệp
@@ -130,8 +130,8 @@ const WorkspacePanel: React.FC<WorkspacePanelProps> = ({
                     <button
                         onClick={() => setActiveTab('drafts')}
                         className={`pb-3 text-sm font-bold transition-colors relative ${activeTab === 'drafts'
-                                ? 'text-brand'
-                                : 'text-slate-400 hover:text-slate-600'
+                            ? 'text-brand'
+                            : 'text-slate-400 hover:text-slate-600'
                             }`}
                     >
                         Bản nhập
@@ -159,7 +159,7 @@ const WorkspacePanel: React.FC<WorkspacePanelProps> = ({
                                 onClick={onUploadFile}
                                 className="mt-2 px-4 py-2 bg-brand text-white rounded-xl text-sm font-bold hover:bg-brand/90 transition-colors"
                             >
-                                Tỉ lệ tệp đầu tiên
+                                Tải tệp đầu tiên
                             </button>
                         </div>
                     ) : (

@@ -156,11 +156,29 @@ if ($method === 'POST' && $route === 'bulk_update_subscribers') {
                 $successCount++;
             } elseif ($action === 'add_list' || $action === 'remove_list') {
                 if ($action === 'add_list') {
-                    $pdo->prepare("INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id) VALUES (?, ?)")->execute([$subId, $value]);
-                    // [PERF] Removed per-row count update
+                    // Quick check if $value is an existing list ID
+                    $stmtL = $pdo->prepare("SELECT id FROM lists WHERE id = ?");
+                    $stmtL->execute([$value]);
+                    $listId = $stmtL->fetchColumn();
+
+                    if (!$listId) {
+                        // Might be a new list name, check by name
+                        $stmtLN = $pdo->prepare("SELECT id FROM lists WHERE name = ?");
+                        $stmtLN->execute([$value]);
+                        $listId = $stmtLN->fetchColumn();
+                        
+                        // If not found, create new list
+                        if (!$listId) {
+                            $listId = bin2hex(random_bytes(8));
+                            $pdo->prepare("INSERT INTO lists (id, name, type, subscriber_count) VALUES (?, ?, 'standard', 0)")->execute([$listId, $value]);
+                        }
+                    }
+
+                    $pdo->prepare("INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id) VALUES (?, ?)")->execute([$subId, $listId]);
+                    // Override $value to listId so that the final UPDATE lists works
+                    $value = $listId;
                 } else {
                     $pdo->prepare("DELETE FROM subscriber_lists WHERE subscriber_id = ? AND list_id = ?")->execute([$subId, $value]);
-                    // [PERF] Removed per-row count update
                 }
                 logActivity($pdo, $subId, 'list_action', $value, 'Bulk Action', "{$action} List ID '{$value}'", null, null);
                 $successCount++;
@@ -284,16 +302,95 @@ AND NOT EXISTS (
             $gap = (int) $stmtGap->fetchColumn();
         }
 
+        $stmtUnsub = $pdo->prepare("SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_activity WHERE campaign_id = ? AND type = 'unsubscribe'");
+        $stmtUnsub->execute([$campaignId]);
+        $unsubs = (int) $stmtUnsub->fetchColumn();
+
         jsonResponse(true, [
             'count_sent' => $sentTotal,
             'total_current' => $currentTotal,
             'gap' => $gap,
+            'count_unsubscribed' => $unsubs,
             'reminders' => $reminders,
             'now' => date('Y-m-d H:i:s')
         ]);
     } catch (Exception $e) {
         jsonResponse(false, null, $e->getMessage());
     }
+}
+
+// --- NEW ROUTE: Delete Unsubscribed Audience ---
+if ($method === 'POST' && $route === 'delete_unsubscribed') {
+    try {
+        $data = json_decode(file_get_contents("php://input"), true);
+        $cid = $data['id'] ?? null;
+        if (!$cid) jsonResponse(false, null, 'Campaign ID is required.');
+        
+        $stmt = $pdo->prepare("SELECT subscriber_id FROM subscriber_activity WHERE campaign_id = ? AND type = 'unsubscribe'");
+        $stmt->execute([$cid]);
+        $subIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        if (empty($subIds)) {
+            jsonResponse(true, ['deleted' => 0], 'Không tìm thấy liên hệ nào đã click Hủy đăng ký từ chiến dịch này.');
+            exit;
+        }
+        
+        $placeholders = implode(',', array_fill(0, count($subIds), '?'));
+        $pdo->prepare("DELETE FROM subscribers WHERE id IN ($placeholders)")->execute($subIds);
+        
+        // Cập nhật lại số liệu thống kê để cho thấy đã được dọn
+        $pdo->prepare("UPDATE campaigns SET count_unsubscribed = 0 WHERE id = ?")->execute([$cid]);
+        
+        jsonResponse(true, ['deleted' => count($subIds)]);
+    } catch (Exception $e) {
+        jsonResponse(false, null, $e->getMessage());
+    }
+    exit;
+}
+
+// --- NEW ROUTE: Unsubscribed List ---
+if ($method === 'GET' && $route === 'unsubscribed_list') {
+    try {
+        $cid = $_GET['id'] ?? null;
+        if (!$cid) jsonResponse(false, null, 'Campaign ID is required.');
+        
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
+        $offset = ($page - 1) * $limit;
+
+        $stmtSubIds = $pdo->prepare("SELECT DISTINCT subscriber_id FROM subscriber_activity WHERE campaign_id = ? AND type = 'unsubscribe'");
+        $stmtSubIds->execute([$cid]);
+        $subIds = $stmtSubIds->fetchAll(PDO::FETCH_COLUMN);
+
+        if (empty($subIds)) {
+            jsonResponse(true, ['data' => [], 'pagination' => ['total' => 0, 'page' => $page, 'limit' => $limit, 'totalPages' => 0]]);
+            exit;
+        }
+        
+        $placeholders = implode(',', array_fill(0, count($subIds), '?'));
+        
+        $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM subscribers WHERE id IN ($placeholders)");
+        $stmtCount->execute($subIds);
+        $total = (int) $stmtCount->fetchColumn();
+        
+        $sql = "SELECT id, email, first_name, last_name, status, joined_at FROM subscribers WHERE id IN ($placeholders) ORDER BY joined_at DESC LIMIT $limit OFFSET $offset";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($subIds);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        jsonResponse(true, [
+            'data' => $data,
+            'pagination' => [
+                'total' => $total,
+                'page' => $page,
+                'limit' => $limit,
+                'totalPages' => ceil($total / $limit)
+            ]
+        ]);
+    } catch (Exception $e) {
+        jsonResponse(false, null, $e->getMessage());
+    }
+    exit;
 }
 
 // --- NEW ROUTE: Trigger Audience Refresh ---
@@ -784,6 +881,14 @@ switch ($method) {
                         $total = (int) $stmtCount->fetchColumn();
                         $totalPages = ceil($total / $limit);
 
+                        if (isset($_GET['return_ids_only']) && $_GET['return_ids_only'] == 1) {
+                            $sql = "SELECT s.id as subscriber_id FROM zalo_delivery_logs l LEFT JOIN subscribers s ON l.subscriber_id = s.id WHERE $whereSql AND s.id IS NOT NULL";
+                            $stmt = $pdo->prepare($sql);
+                            $stmt->execute($params);
+                            $ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                            jsonResponse(true, ['ids' => $ids]);
+                        }
+
                         $sql = "SELECT l.phone_number as email, s.id as subscriber_id, l.status as delivery_status, l.sent_at,
     l.error_message, NULL as reminder_id, s.first_name, s.last_name, s.status as subscriber_status
     FROM zalo_delivery_logs l LEFT JOIN subscribers s ON l.subscriber_id = s.id WHERE $whereSql ORDER BY l.sent_at DESC
@@ -826,6 +931,8 @@ switch ($method) {
                                 $whereClauses[] = "l.status = 'success'";
                             } elseif ($filterStatus === 'failed') {
                                 $whereClauses[] = "l.status = 'failed'";
+                            } elseif ($filterStatus === 'unsubscribed') {
+                                $whereClauses[] = "EXISTS (SELECT 1 FROM subscriber_activity a WHERE a.campaign_id = l.campaign_id AND a.subscriber_id = s.id AND a.type = 'unsubscribe')";
                             }
                         }
 
@@ -853,6 +960,14 @@ switch ($method) {
                         $stmtCount->execute($params);
                         $total = (int) $stmtCount->fetchColumn();
                         $totalPages = ceil($total / $limit);
+
+                        if (isset($_GET['return_ids_only']) && $_GET['return_ids_only'] == 1) {
+                            $sql = "SELECT s.id as subscriber_id FROM mail_delivery_logs l LEFT JOIN subscribers s ON l.recipient = s.email WHERE $whereSql AND s.id IS NOT NULL";
+                            $stmt = $pdo->prepare($sql);
+                            $stmt->execute($params);
+                            $ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                            jsonResponse(true, ['ids' => $ids]);
+                        }
 
                         $sql = "SELECT l.recipient as email, s.id as subscriber_id, l.status as delivery_status, l.sent_at, l.error_message,
     l.reminder_id, s.first_name, s.last_name, s.status as subscriber_status
@@ -1289,7 +1404,9 @@ switch ($method) {
             // were left as orphaned records, polluting the subscriber history.
             $pdo->beginTransaction();
 
-            // 1. Cleanup Linked Flows (Cascade)
+            // 1. Cleanup Linked Flows (Cascade or Disconnect)
+            $deleteFlows = isset($_GET['delete_flow']) ? (int)$_GET['delete_flow'] : 1;
+            
             $likePattern = '%"targetId":"' . $path . '"%';
             $stmtFlow = $pdo->prepare("SELECT id FROM flows WHERE steps LIKE ?");
             $stmtFlow->execute([$likePattern]);
@@ -1297,17 +1414,36 @@ switch ($method) {
 
             if (!empty($flowsToDelete)) {
                 foreach ($flowsToDelete as $flowId) {
-                    $pdo->prepare("DELETE FROM subscriber_flow_states WHERE flow_id = ?")->execute([$flowId]);
-                    $pdo->prepare("DELETE FROM flow_enrollments WHERE flow_id = ?")->execute([$flowId]);
-                    $pdo->prepare("DELETE FROM flows WHERE id = ?")->execute([$flowId]);
-                    $pdo->prepare("DELETE FROM mail_delivery_logs WHERE flow_id = ?")->execute([$flowId]);
-                    try {
-                        $pdo->prepare("DELETE FROM zalo_delivery_logs WHERE flow_id = ?")->execute([$flowId]);
-                    } catch (Exception $ignored) {
+                    if ($deleteFlows === 1) {
+                        // Xóa hoàn toàn Flow theo yêu cầu
+                        $pdo->prepare("DELETE FROM subscriber_flow_states WHERE flow_id = ?")->execute([$flowId]);
+                        $pdo->prepare("DELETE FROM flow_enrollments WHERE flow_id = ?")->execute([$flowId]);
+                        $pdo->prepare("DELETE FROM flows WHERE id = ?")->execute([$flowId]);
+                        $pdo->prepare("DELETE FROM mail_delivery_logs WHERE flow_id = ?")->execute([$flowId]);
+                        try {
+                            $pdo->prepare("DELETE FROM zalo_delivery_logs WHERE flow_id = ?")->execute([$flowId]);
+                        } catch (Exception $ignored) {
+                        }
+                        // Cleanup Flow Queue Jobs
+                        $pdo->prepare("DELETE FROM queue_jobs WHERE (payload LIKE ? OR payload LIKE ?) AND status IN ('pending', 'processing')")
+                            ->execute(['%"flow_id":"' . $flowId . '"%', '%"priority_flow_id":"' . $flowId . '"%']);
+                    } else {
+                        // Chỉ ngắt kết nối (Disconnect): Tháo targetId ra khỏi Trigger
+                        $stmtFlowRead = $pdo->prepare("SELECT steps FROM flows WHERE id = ?");
+                        $stmtFlowRead->execute([$flowId]);
+                        $flowJson = $stmtFlowRead->fetchColumn();
+                        if ($flowJson) {
+                            $steps = json_decode($flowJson, true);
+                            if (is_array($steps)) {
+                                foreach ($steps as &$s) {
+                                    if ($s['type'] === 'trigger' && isset($s['config']['targetId']) && $s['config']['targetId'] == $path) {
+                                        $s['config']['targetId'] = '';
+                                    }
+                                }
+                                $pdo->prepare("UPDATE flows SET steps = ? WHERE id = ?")->execute([json_encode($steps), $flowId]);
+                            }
+                        }
                     }
-                    // Cleanup Flow Queue Jobs
-                    $pdo->prepare("DELETE FROM queue_jobs WHERE (payload LIKE ? OR payload LIKE ?) AND status IN ('pending', 'processing')")
-                        ->execute(['%"flow_id":"' . $flowId . '"%', '%"priority_flow_id":"' . $flowId . '"%']);
                 }
             }
 

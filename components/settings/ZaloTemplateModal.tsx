@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { X, Search, FileText, CheckCircle, AlertTriangle, XCircle, Code, RefreshCw, Plus, Layout, Smartphone, Edit, Download } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
@@ -52,7 +52,7 @@ const ZaloTemplateModal: React.FC<ZaloTemplateModalProps> = ({ isOpen, onClose, 
                     template_type: t.template_type || '',
                     template_data: typeof t.template_data === 'string' ? JSON.parse(t.template_data) : t.template_data,
                     preview_data: typeof t.preview_data === 'string' ? JSON.parse(t.preview_data) : t.preview_data
-                }));
+                })).filter((t: any) => t.status?.toUpperCase() !== 'REJECT' && t.status?.toUpperCase() !== 'REJECTED');
 
                 setTemplates(list);
             }
@@ -450,7 +450,7 @@ const ZaloTemplateModal: React.FC<ZaloTemplateModalProps> = ({ isOpen, onClose, 
                                                 <p className="text-xs text-slate-400 mt-2 leading-relaxed">Template này chưa được Zalo tạo bản preview. Vui lòng kiểm tra lại Trạng thái duyệt.</p>
                                             </div>
                                             <Button size="sm" variant="secondary" onClick={() => handleSelectTemplate(selectedTemplate)}>
-                                                Tỉ lệ
+                                                Tỷ lệ
 
                                             </Button>
                                         </div>

@@ -924,7 +924,7 @@ Lịch sử hoạt động:
 ### RULES 
 0. **NGÔN NGỮ (QUAN TRỌNG NHẤT):**
    - **PHẢI** trả lời bằng ngôn ngữ mà Khách hàng đang sử dụng.
-   - Nếu khách hỏi Tiếng Anh -> Tỉ lệ hoàn toàn bằng Tiếng Anh (Dịch thông tin từ Knowledge Base sang Tiếng Anh).
+    - Nếu khách hỏi Tiếng Anh -> Trả lời hoàn toàn bằng Tiếng Anh (Dịch thông tin từ Knowledge Base sang Tiếng Anh).
    - Nếu khách hỏi Tiếng Việt hoặc mơ hồ thì ưu tiên trả lời Tiếng Việt.
 
 1. **ANTI-HALLUCINATION (KHÔNG ĐƯỢC BỊA ĐẶT):**
@@ -945,7 +945,7 @@ Lịch sử hoạt động:
 
 ### RESPONSE FORMAT
 - Trên 3 ý (liệt kê) thì cho gạch đầu dòng (cái gì là liệt kê thì liệt kê cho đầy đủ, cảm thấy ko đủ thì gợi mở cho câu sau)
-- Tỉ lệ đi thẳng vào vấn đề.`,
+- Trả lời đi thẳng vào vấn đề.`,
                     fast_replies: [
                         { pattern: 'chào, hi, hello, xin chào, hé lô, chào bạn, hello ad, hi ad', reply: 'Chào bạn! Mình là trợ lý của {companyName}. Mình có thể giúp gì cho bạn hôm nay ạ?' },
                         { pattern: 'tạm biệt, bye, cám ơn, cảm ơn, thanks, kêu, iu, yêu', reply: 'Dạ, cảm ơn bạn đã quan tâm! Chúc bạn một ngày tốt lành ạ.' },
@@ -1140,7 +1140,7 @@ Lịch sử hoạt động:
                 toast.error(res.message);
             }
         } catch (e) {
-            toast.error('Lỗi k?t n?i AI');
+            toast.error('Lỗi kết nối AI');
         } finally {
             setLoading(false);
         }
@@ -1281,7 +1281,7 @@ Lịch sử hoạt động:
                 name: folderName
             });
             if (res.success) {
-                toast.success('Đã đổđổi tên thư mục');
+                toast.success('Đã đổi tên thư mục');
                 setIsEditFolderModalOpen(false);
                 setEditingFolder(null);
                 setFolderName('');
@@ -1297,7 +1297,7 @@ Lịch sử hoạt động:
         try {
             const res = await api.post<any>('ai_training?action=create_cache', { property_id: selectedProperty });
             if (res.success) {
-                toast.success('Đã t?o b? nh? d?m thành công (1 gi?)');
+                toast.success('Đã tạo bộ nhớ đệm thành công (1 giờ)');
                 fetchSettings();
             } else {
                 toast.error('Lỗi: ' + res.message);

@@ -456,7 +456,7 @@ export const SectionAudience = () => (
 /* ─── SECTION 7: TAGS ───────────────────────────────── */
 export const SectionTags = () => (
     <div className="space-y-16 animate-in fade-in duration-700">
-        <SectionHeader label="Tags & Segmentation" title={<>Hệ thống <span className="text-amber-600">Phân loại</span></>} desc="Tỉ lệ hoạt + Auto-tagging rules để phân loại Khách hàng điền vào đúng flow." />
+        <SectionHeader label="Tags & Segmentation" title={<>Hệ thống <span className="text-amber-600">Phân loại</span></>} desc="Tài liệu + Auto-tagging rules để phân loại Khách hàng điền vào đúng flow." />
         <div className="grid lg:grid-cols-2 gap-10">
             <div className="space-y-6">
                 <div className="p-8 bg-white border border-slate-100 rounded-3xl">

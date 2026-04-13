@@ -86,7 +86,7 @@ const AIChatReport: React.FC<AIReportProps> = ({ dateRange }) => {
                             <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} dy={10} tickFormatter={(val) => val.split('-').slice(1).reverse().join('/')} />
                             <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
                             <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} />
-                            <Area type="monotone" dataKey="ai_count" name="AI Tỉ lệ" stroke="#10b981" strokeWidth={3} fill="url(#colorAi)" />
+                            <Area type="monotone" dataKey="ai_count" name="AI Trả lời" stroke="#10b981" strokeWidth={3} fill="url(#colorAi)" />
                             <Area type="monotone" dataKey="visitor_count" name="Khách nhắn" stroke="#6366f1" strokeWidth={3} fill="url(#colorUser)" />
                         </AreaChart>
                     </ResponsiveContainer>

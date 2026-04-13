@@ -113,6 +113,18 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
         @media screen and (max-width: 600px) {
             .full-width { width: 100% !important; }
             
+            /* Section & Layout Resets */
+            .section-wrapper { 
+                padding-left: 0 !important; 
+                padding-right: 0 !important; 
+                padding-top: 15px !important; /* Reduced from 20px */
+                padding-bottom: 15px !important; /* Reduced from 20px */
+            }
+            .section-content {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            
             /* Stacking Columns */
             .row-resp { 
                 display: block !important; 
@@ -123,9 +135,9 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                 width: 100% !important; 
                 min-width: 100% !important;
                 max-width: 100% !important;
-                padding-left: 15px !important;
-                padding-right: 15px !important;
-                margin-bottom: 20px !important;
+                padding-left: 8px !important; /* Further reduced from 10px */
+                padding-right: 8px !important; /* Further reduced from 10px */
+                margin-bottom: 12px !important; /* Reduced from 15px */
                 box-sizing: border-box !important;
                 clear: both !important;
             }
@@ -157,6 +169,25 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                 width: 100% !important;
                 height: auto !important;
                 max-width: 100% !important;
+            }
+            
+            /* Text & Content Block Mobile Adjustments */
+            .text-block, .quote-block {
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+            }
+
+            .image-block {
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+                padding-top: 10px !important;
+                padding-bottom: 10px !important;
+            }
+            
+            /* Reduce vertical padding for internal blocks if excessive */
+            .mobile-padding-y {
+                padding-top: 10px !important;
+                padding-bottom: 10px !important;
             }
             .mobile-hide { display: none !important; }
         }
@@ -255,7 +286,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             // We use separate spacer rows before/after the section content for cross-client margin support
             const topSpacer = sectionMarginTop !== '0px' && sectionMarginTop !== '0' ? `<tr><td height="${parseInt(sectionMarginTop)||0}" style="font-size: ${parseInt(sectionMarginTop)||0}px; line-height: ${parseInt(sectionMarginTop)||0}px; mso-line-height-rule: exactly;">&nbsp;</td></tr>` : '';
             const bottomSpacer = sectionMarginBottom !== '0px' && sectionMarginBottom !== '0' ? `<tr><td height="${parseInt(sectionMarginBottom)||0}" style="font-size: ${parseInt(sectionMarginBottom)||0}px; line-height: ${parseInt(sectionMarginBottom)||0}px; mso-line-height-rule: exactly;">&nbsp;</td></tr>` : '';
-            return `${topSpacer}<tr><td align="center" valign="top" ${getBgColorHtmlAttr(s)} style="${getBackgroundStyle(s)} ${paddingCss} ${radiusStyle}"><table class="full-width" role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" align="center" style="max-width: ${bodyStyle.contentWidth}; ${innerBgCss}; margin: 0 auto;"><tbody>${childrenHtml}</tbody></table></td></tr>${bottomSpacer}`;
+            return `${topSpacer}<tr><td align="center" valign="top" class="section-wrapper" ${getBgColorHtmlAttr(s)} style="${getBackgroundStyle(s)} ${paddingCss} ${radiusStyle}"><table class="full-width section-content" role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" align="center" style="max-width: ${bodyStyle.contentWidth}; ${innerBgCss}; margin: 0 auto;"><tbody>${childrenHtml}</tbody></table></td></tr>${bottomSpacer}`;
         }
 
         if (b.type === 'row') {
@@ -405,7 +436,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const quoteBorderColor = s.borderColor || '#ffa900';
             const quoteBorderWidth = s.borderLeftWidth || '4px';
             // [FIX] Gmail-safe: use table instead of div for quote block
-            return wrapWithMargin(`<td style="${paddingCss}"><table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="border-left: ${quoteBorderWidth} solid ${quoteBorderColor}; border-radius: ${sanitizeRadius(s.borderRadius || '0')}; background-color: ${s.backgroundColor || 'transparent'};"><tr><td style="padding: ${paddingVertical} ${s.paddingRight || '25px'} ${s.paddingBottom || '15px'} ${paddingHorizontal}; font-family: ${bodyStyle.fontFamily || "'Roboto', Arial, sans-serif"}; font-size: ${s.fontSize || '15px'}; font-style: ${s.fontStyle || 'italic'}; line-height: 1.6; color: ${s.color || 'inherit'}; text-align: ${s.textAlign || 'left'}; font-weight: ${s.fontWeight || 'normal'};">${b.content}</td></tr></table></td>`);
+            return wrapWithMargin(`<td class="quote-block" style="${paddingCss}"><table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="border-left: ${quoteBorderWidth} solid ${quoteBorderColor}; border-radius: ${sanitizeRadius(s.borderRadius || '0')}; background-color: ${s.backgroundColor || 'transparent'};"><tr><td style="padding: ${paddingVertical} ${s.paddingRight || '25px'} ${s.paddingBottom || '15px'} ${paddingHorizontal}; font-family: ${bodyStyle.fontFamily || "'Roboto', Arial, sans-serif"}; font-size: ${s.fontSize || '15px'}; font-style: ${s.fontStyle || 'italic'}; line-height: 1.6; color: ${s.color || 'inherit'}; text-align: ${s.textAlign || 'left'}; font-weight: ${s.fontWeight || 'normal'};">${b.content}</td></tr></table></td>`);
         }
 
         if (b.type === 'check_list') {
@@ -426,7 +457,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const vAlignGlobal = s.checkIconVerticalAlign || 'top';
 
             return wrapWithMargin(`
-                    <td style="${paddingCss} ${getBackgroundStyle(s)} border-radius: ${sanitizeRadius(s.borderRadius || '0')}; overflow: hidden;">
+                    <td class="mobile-padding-y" style="${paddingCss} ${getBackgroundStyle(s)} border-radius: ${sanitizeRadius(s.borderRadius || '0')}; overflow: hidden;">
                         <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="${maxW}">
                         <tbody><tr><td style="text-align: ${s.textAlign || 'left'};">
                         ${showTitle ? `<h3 style="margin: 0 0 15px; font-family: ${titleFont}; font-size: ${titleSize}; font-weight: bold; color: ${titleColor}; text-align: ${s.textAlign || 'left'};">${title}</h3>` : ''}
@@ -685,7 +716,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const overflowCss = s.borderRadius ? 'overflow: hidden;' : '';
             // [FIX] Margin on <td> is ignored by Outlook/Gmail.
             // When margin is set, wrap in an outer table with margin for cross-client support.
-            return wrapWithMargin(`<td align="${align}" style="${paddingCss} ${commonStyle} font-size: ${s.fontSize || '14px'}; line-height: ${s.lineHeight || '1.5'}; ${getBackgroundStyle(s)} ${radiusStyle} ${borderCss} ${overflowCss} text-align: ${align};">${b.content}</td>`);
+            return wrapWithMargin(`<td align="${align}" class="text-block" style="${paddingCss} ${commonStyle} font-size: ${s.fontSize || '14px'}; line-height: ${s.lineHeight || '1.5'}; ${getBackgroundStyle(s)} ${radiusStyle} ${borderCss} ${overflowCss} text-align: ${align};">${b.content}</td>`);
         }
         if (b.type === 'image') {
             const imgWidth = s.width || '100%';
@@ -715,9 +746,9 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             }
 
             if (b.url) {
-                return wrapWithMargin(`<td align="${align}" width="100%" style="width: 100%; ${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${borderCss} text-align: ${align};"><a href="${b.url}" target="_blank" style="display: block; text-decoration: none; width: 100%;">${imgHtml}</a></td>`);
+                return wrapWithMargin(`<td align="${align}" class="image-block" width="100%" style="width: 100%; ${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${borderCss} text-align: ${align};"><a href="${b.url}" target="_blank" style="display: block; text-decoration: none; width: 100%;">${imgHtml}</a></td>`);
             }
-            return wrapWithMargin(`<td align="${align}" width="100%" style="width: 100%; ${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${borderCss} text-align: ${align};">${imgHtml}</td>`);
+            return wrapWithMargin(`<td align="${align}" class="image-block" width="100%" style="width: 100%; ${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${borderCss} text-align: ${align};">${imgHtml}</td>`);
         }
 
 

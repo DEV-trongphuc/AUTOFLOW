@@ -44,7 +44,7 @@ const ChatbotCard = React.memo(({
             <div className="space-y-4 relative z-10">
                 <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100 group-hover:bg-brand group-hover:bg-opacity-5 group-hover:border-brand-accent transition-colors">
                     <div className="flex flex-col">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tỉ lệ</span>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tài liệu</span>
 
                         <span className="text-sm font-black text-slate-700">{(bot.stats?.docs_count || 0).toLocaleString()} <span className="text-[10px] font-medium text-slate-400">docs</span></span>
                     </div>

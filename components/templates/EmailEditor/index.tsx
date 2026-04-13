@@ -168,7 +168,7 @@ const scanBlocks = (blocks: EmailBlock[]): ValidationIssue[] => {
     // Emit one issue per duplicate group (keyed by the first blockId in the group)
     byUrl.forEach((group, normalizedUrl) => {
         if (group.length < 2) return;
-        
+
         // Count occurrences of each FULL URL string within this group.
         // If all members of the group have unique full URL strings (because they have different tracking params),
         // then we don't consider them "identical" duplicates anymore.
@@ -250,7 +250,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
     const runValidation = useCallback(() => {
         const issues = scanBlocks(blocks);
         setValidationIssues(issues);
-        
+
         if (issues.length === 0) {
             setShowValidation(false);
             toast.success('Email đã sẵn sàng! Không có vấn đề nào.', { icon: '✅', id: 'validation-toast' });
@@ -258,7 +258,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
             setShowValidation(true);
             toast(`Tìm thấy ${issues.length} vấn đề cần xem lại`, { icon: '⚠️', id: 'validation-toast' });
         }
-        
+
         setSelectedBlockId(null);
     }, [blocks]);
 
@@ -338,7 +338,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
         const idxMap = new Map(groupIds.map((id, i) => [id, i]));
         const newBlocks = applyDeep(blocks, idxMap);
         addToHistory(newBlocks);
-        
+
         // Auto re-scan issues with the new blocks
         const newIssues = scanBlocks(newBlocks);
         setValidationIssues(newIssues);
@@ -463,7 +463,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
             const result = await response.json();
 
             if (result.success) {
-                toast.success(`đã gửi email test đến ${email}`);
+                toast.success(`Đã gửi email test đến ${email}`);
             } else {
                 toast.error(result.error || 'Gửi thất bại');
             }

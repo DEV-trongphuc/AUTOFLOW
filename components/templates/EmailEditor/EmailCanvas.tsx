@@ -383,18 +383,18 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
 
     return (
         <EditorContextProvider value={{ usedColors, onUpdateBlock: handleUpdateBlock }}>
-            <div 
-                ref={canvasContainerRef} 
-                className="flex-1 h-full overflow-y-auto custom-scrollbar relative flex flex-col" 
-                style={{ 
+            <div
+                ref={canvasContainerRef}
+                className="flex-1 h-full overflow-y-auto custom-scrollbar relative flex flex-col"
+                style={{
                     backgroundColor: bodyStyle.backgroundColor || '#f1f5f9',
                     backgroundImage: bodyStyle.backgroundImage || 'none',
                     backgroundSize: bodyStyle.backgroundSize || 'cover',
                     backgroundPosition: bodyStyle.backgroundPosition || 'center',
                     backgroundRepeat: bodyStyle.backgroundRepeat || 'no-repeat'
-                }} 
-                onClick={() => handleSelectBlock(null)} 
-                onDragOver={(e) => e.preventDefault()} 
+                }}
+                onClick={() => handleSelectBlock(null)}
+                onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => handleDrop(e, 'root')}
             >
                 <div className={`transition-all duration-500 ease-out mx-auto flex flex-col ${isMobile ? 'py-10 h-full' : 'p-8 pb-24'} ${!isMobile ? 'w-full' : ''}`}>
@@ -419,7 +419,7 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
                                         onDrop={(e) => handleDrop(e, 'root')}
                                     >
                                         {dragOverId === 'root' && dropPosition && <div className="absolute inset-0 bg-amber-600/10 z-40 border-2 border-amber-600 border-dashed pointer-events-none rounded-xl"></div>}
-                                        
+
                                         <div className="relative mb-8">
                                             <div className="absolute -inset-10 bg-amber-50 rounded-full animate-pulse opacity-60"></div>
                                             <div className="absolute -inset-6 bg-amber-100/50 rounded-full animate-pulse delay-75"></div>
@@ -435,11 +435,11 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
                                         <p className="text-sm text-slate-500 max-w-[320px] mb-10 font-medium leading-relaxed">
                                             Bắt đầu bằng cách kéo các thành phần nội dung từ <span className="text-amber-600 font-bold underline decoration-dotted underline-offset-4">thanh công cụ bên trái</span> và thả vào vùng trung tâm này.
                                         </p>
-                                        
+
                                         <div className="group relative flex items-center gap-4 py-4 px-8 bg-white rounded-2xl border-2 border-dashed border-amber-200 shadow-sm transition-all hover:border-amber-400 hover:shadow-md cursor-default overflow-hidden">
                                             <div className="absolute inset-0 bg-amber-50/30 -translate-x-full group-hover:translate-x-0 transition-transform duration-500"></div>
                                             <ArrowLeft className="w-5 h-5 text-amber-600 relative z-10 animate-pulse" />
-                                            <span className="text-[11px] font-black uppercase tracking-widest text-amber-700 relative z-10">Kéo Item sang bên phải →</span>
+                                            <span className="text-[11px] font-black uppercase tracking-widest text-amber-700 relative z-10">Kéo Item thả vào đây →</span>
                                         </div>
                                     </div>
                                 ) : (

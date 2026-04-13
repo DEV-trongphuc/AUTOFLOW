@@ -41,10 +41,11 @@ const ClickHeatmap: React.FC<ClickHeatmapProps> = ({ html, clickData, deviceFilt
             clean = clean.replace(/^https?:\/\//, '');
             // Remove www.
             clean = clean.replace(/^www\./, '');
-            // Remove query params and fragments
-            clean = clean.split('?')[0].split('#')[0];
-            // Remove trailing slashes
-            clean = clean.replace(/\/+$/, '');
+            // Remove fragments
+            clean = clean.split('#')[0];
+            
+            // Clean up trailing slashes before query params if they exist, or at the end
+            clean = clean.replace(/\/\?/, '?').replace(/\/+$/, '');
 
             return clean;
         } catch (e) {

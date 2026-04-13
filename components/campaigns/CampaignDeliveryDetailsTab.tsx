@@ -18,13 +18,14 @@ interface Props {
     campaign: Campaign;
     allLists: any[];
     allTags: any[];
+    initialFilter?: string;
 }
 
-const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTags }) => {
+const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTags, initialFilter = 'all' }) => {
     const isZns = campaign.type === 'zalo_zns';
     const [recipients, setRecipients] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState('all');
+    const [filter, setFilter] = useState(initialFilter);
     const [typeFilter, setTypeFilter] = useState('all');
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -109,6 +110,8 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
     const [bulkActionOpen, setBulkActionOpen] = useState(false);
     const [bulkTagValue, setBulkTagValue] = useState('');
     const [showBulkTagInput, setShowBulkTagInput] = useState(false);
+    const [showBulkListInput, setShowBulkListInput] = useState(false);
+    const [bulkListValue, setBulkListValue] = useState('');
 
     const handleActionClick = (id: string) => {
         setOpenActionId(openActionId === id ? null : id);
@@ -117,14 +120,38 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
 
     // ...
 
-    const handleSelectAll = () => {
-        // Select all ON CURRENT PAGE
-        const validRecipients = recipients.filter(r => r.subscriber_id);
-        if (selectedIds.length === validRecipients.length && validRecipients.length > 0) {
+    const handleSelectAll = async () => {
+        if (selectedIds.length > 0) {
             setSelectedIds([]);
-        } else {
-            setSelectedIds(validRecipients.map(r => r.subscriber_id));
+            return;
         }
+
+        setLoading(true);
+        try {
+            const query = new URLSearchParams({
+                route: 'recipients',
+                id: campaign.id,
+                status: filter,
+                type: typeFilter,
+                search: debouncedSearch,
+                min_opens: minOpens,
+                min_clicks: minClicks,
+                return_ids_only: '1'
+            });
+            const endpoint = `campaigns?${query.toString()}`;
+            const res = await api.get<any>(endpoint);
+            if (res.success && res.data?.ids) {
+                const fetchedIds = res.data.ids.filter((id: string | null) => id != null);
+                setSelectedIds(fetchedIds);
+                if (fetchedIds.length > 0) {
+                    toast.success(`Đã chọn toàn bộ ${fetchedIds.length.toLocaleString()} liên hệ theo bộ lọc hiện tại!`);
+                }
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error("Không thể chọn tất cả liên hệ.");
+        }
+        setLoading(false);
     };
 
     const handleSelectRow = (id: string, e?: React.MouseEvent) => {
@@ -148,8 +175,11 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
             fetchRecipients(pagination.page);
             setShowBulkTagInput(false);
             setBulkTagValue('');
+            setShowBulkListInput(false);
+            setBulkListValue('');
             setBulkActionOpen(false);
             setTagInputId(null);
+            toast.success('Hành động xử lý thành công!');
         } else {
             toast.error('Có lỗi xảy ra: ' + ((res as any).message || 'Unknown error'));
         }
@@ -157,7 +187,7 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
     };
 
-    const executeBulkAction = (action: 'add_tag' | 'unsubscribe' | 'delete', value: string = '') => {
+    const executeBulkAction = (action: 'add_tag' | 'add_list' | 'unsubscribe' | 'delete', value: string = '') => {
         if (selectedIds.length === 0) return;
 
         if (action === 'delete') {
@@ -179,6 +209,10 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
 
         if (action === 'add_tag') {
             performBulkApi('add_tag', value);
+        }
+
+        if (action === 'add_list') {
+            performBulkApi('add_list', value);
         }
     };
 
@@ -359,7 +393,8 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
                                 { value: 'success', label: 'Thành công (Sent)' },
                                 { value: 'opened', label: 'Đã mở (Opened)' },
                                 { value: 'clicked', label: 'Đã click (Clicked)' },
-                                { value: 'failed', label: 'Thất bại (Failed)' }
+                                { value: 'failed', label: 'Thất bại (Failed)' },
+                                { value: 'unsubscribed', label: 'Hủy đăng ký (Unsubscribed)' }
                             ]}
                         />
                     </div>
@@ -404,19 +439,39 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
                                                         <button onClick={() => executeBulkAction('add_tag', bulkTagValue)} className="p-1.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 shadow-sm transition-all"><Plus className="w-3.5 h-3.5" /></button>
                                                         <button onClick={() => setShowBulkTagInput(false)} className="p-1.5 bg-white border border-slate-200 text-slate-400 rounded-lg hover:bg-slate-50 transition-all"><XCircle className="w-3.5 h-3.5" /></button>
                                                     </div>
+                                                ) : showBulkListInput ? (
+                                                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2">
+                                                        <div className="w-48 relative">
+                                                            <Input
+                                                                value={bulkListValue}
+                                                                onChange={(e) => setBulkListValue(e.target.value)}
+                                                                list="listDropdownMenu"
+                                                                placeholder="Chọn/Nhập tên Danh sách"
+                                                                customSize="sm"
+                                                                className="!text-xs"
+                                                            />
+                                                            <datalist id="listDropdownMenu">
+                                                                {allLists.map(l => (
+                                                                    <option key={l.id} value={l.name || l.id} />
+                                                                ))}
+                                                            </datalist>
+                                                        </div>
+                                                        <button onClick={() => executeBulkAction('add_list', bulkListValue)} className="p-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 shadow-sm transition-all"><Plus className="w-3.5 h-3.5" /></button>
+                                                        <button onClick={() => setShowBulkListInput(false)} className="p-1.5 bg-white border border-slate-200 text-slate-400 rounded-lg hover:bg-slate-50 transition-all"><XCircle className="w-3.5 h-3.5" /></button>
+                                                    </div>
                                                 ) : (
                                                     <>
                                                         <button
-                                                            onClick={() => setShowBulkTagInput(true)}
+                                                            onClick={() => { setShowBulkTagInput(false); setShowBulkListInput(true); }}
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-100 text-blue-600 hover:bg-blue-50 hover:border-blue-200 rounded-lg text-xs font-bold shadow-sm transition-all"
+                                                        >
+                                                            <Save className="w-3.5 h-3.5" /> Thêm vào List
+                                                        </button>
+                                                        <button
+                                                            onClick={() => { setShowBulkListInput(false); setShowBulkTagInput(true); }}
                                                             className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-orange-100 text-orange-600 hover:bg-orange-50 hover:border-orange-200 rounded-lg text-xs font-bold shadow-sm transition-all"
                                                         >
                                                             <Tag className="w-3.5 h-3.5" /> Gắn Tag
-                                                        </button>
-                                                        <button
-                                                            onClick={() => executeBulkAction('unsubscribe')}
-                                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-orange-100 text-orange-600 hover:bg-orange-50 hover:border-orange-200 rounded-lg text-xs font-bold shadow-sm transition-all"
-                                                        >
-                                                            <AlertTriangle className="w-3.5 h-3.5" /> Hủy đăng ký
                                                         </button>
                                                         <div className="h-4 w-px bg-orange-200 mx-1"></div>
                                                         <button
@@ -435,7 +490,7 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
                                 <tr>
                                     <th className="px-6 py-4 w-10">
                                         <Checkbox
-                                            checked={recipients.filter(r => r.subscriber_id).length > 0 && selectedIds.length === recipients.filter(r => r.subscriber_id).length}
+                                            checked={selectedIds.length > 0}
                                             onChange={handleSelectAll}
                                             size="sm"
                                         />

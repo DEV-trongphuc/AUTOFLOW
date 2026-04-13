@@ -96,6 +96,9 @@ if (!function_exists('runWorkerCampaign')) {
             $cid = $campaign['id'];
             $cName = $campaign['name'];
 
+            // [OPTIMIZATION] Clean up stale temporary locks to auto-recover if worker crashed on previous runs
+            $pdo->prepare("DELETE FROM subscriber_activity WHERE campaign_id = ? AND type = 'processing_campaign' AND created_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE)")->execute([$cid]);
+
             // Start a transaction for the campaign processing
             $pdo->beginTransaction();
             try {
@@ -245,8 +248,8 @@ if (!function_exists('runWorkerCampaign')) {
                 }
 
                 // 2. Micro-Batch Processing Loop
-                $BATCH_SIZE = 50;
-                $MAX_BATCHES = 40; // Safety: Cap at 2000 emails per worker run (40 batches x 50) to prevent FPM exhaustion
+                $BATCH_SIZE = 20;
+                $MAX_BATCHES = 30; // Safety: Cap at 600 emails per worker run to prevent FPM exhaustion
                 $batchCount = 0;
                 $hasMore = true;
                 $totalProcessed = 0;
@@ -281,7 +284,7 @@ if (!function_exists('runWorkerCampaign')) {
                         $sql .= " AND NOT EXISTS (
                     SELECT 1 FROM subscriber_activity sa 
                     WHERE sa.subscriber_id = s.id 
-                    AND (sa.type IN ('receive_email', 'failed_email', 'zalo_sent', 'meta_sent', 'zns_sent', 'zns_failed', 'enter_flow')) 
+                    AND (sa.type IN ('receive_email', 'failed_email', 'zalo_sent', 'meta_sent', 'zns_sent', 'zns_failed', 'enter_flow', 'processing_campaign')) 
                     AND sa.campaign_id = ?
                 )";
                         $execParams[] = $cid;
@@ -297,6 +300,20 @@ if (!function_exists('runWorkerCampaign')) {
                             $pdo->commit();
                             break;
                         }
+
+                        // [OPTIMIZATION] 0.1s Unlock Technique: Insert placeholder lock and commit IMMEDIATELY
+                        $lockVals = [];
+                        $lockBinds = [];
+                        foreach ($recipients as $sub) {
+                            $lockBinds[] = "(?, 'processing_campaign', ?, ?, 'Processing...', ?, NOW())";
+                            $lockVals = array_merge($lockVals, [$sub['id'], $cid, $cName, $cid]);
+                        }
+                        if (!empty($lockBinds)) {
+                            $sqlLockIns = "INSERT INTO subscriber_activity (subscriber_id, type, reference_id, reference_name, details, campaign_id, created_at) VALUES " . implode(',', $lockBinds);
+                            $pdo->prepare($sqlLockIns)->execute($lockVals);
+                        }
+                        
+                        $pdo->commit(); // === UNLOCK DB IMMEDIATELY! LET WEBSITE BREATHE ===
 
                         // Prepare Batch Data
                         $successIds = [];
@@ -509,6 +526,15 @@ if (!function_exists('runWorkerCampaign')) {
                         }
 
                         // Batch Operations
+                        $pdo->beginTransaction(); // Re-open transaction to save results safely
+
+                        // Cleanup temporary 'processing_campaign' locks for this specific batch
+                        if (!empty($recipients)) {
+                            $subIdListForClean = array_column($recipients, 'id');
+                            $idPlaceholdersClean = implode(',', array_fill(0, count($subIdListForClean), '?'));
+                            $pdo->prepare("DELETE FROM subscriber_activity WHERE campaign_id = ? AND type = 'processing_campaign' AND subscriber_id IN ($idPlaceholdersClean)")->execute(array_merge([$cid], $subIdListForClean));
+                        }
+
                         // 1. Log Activities
                         $allActivities = array_merge($successActivities, $failActivities);
                         if (!empty($allActivities)) {
@@ -597,7 +623,9 @@ if (!function_exists('runWorkerCampaign')) {
                             flush();
                         }
                     } catch (Exception $e) {
-                        $pdo->rollBack();
+                        if ($pdo->inTransaction()) {
+                            $pdo->rollBack();
+                        }
                         $logs[] = "[ERROR] Batch failed: " . $e->getMessage();
                         writeWorkerLog("[ERROR] Campaign $cid Batch failed: " . $e->getMessage());
                         break;
@@ -632,20 +660,25 @@ if (!function_exists('runWorkerCampaign')) {
                     $logs[] = "[Campaign {$cid}] Finished. Status set to 'sent'.";
                     writeWorkerLog("Campaign $cid: Finished. Status set to 'sent'.");
                 } else {
-                    // [INFINITE LOOP GUARD] Prevent recursive self-spawn from running forever.
-                    // If a SQL bug or persistent lock causes $remaining to never reach 0,
-                    // the worker would spawn itself indefinitely and crash the server.
-                    // Solution: pass retry_count in each re-trigger. Auto-pause after MAX_RETRIES.
-                    if ($retryCount >= $MAX_RETRIES) {
-                        $pdo->prepare("UPDATE campaigns SET status = 'paused' WHERE id = ?")->execute([$cid]);
-                        $errMsg = "[CIRCUIT BREAKER] Campaign $cid auto-paused after $MAX_RETRIES consecutive retries with $remaining unsent recipients. Manual review required.";
-                        $logs[] = $errMsg;
-                        writeWorkerLog($errMsg);
+                    // [CONCURRENCY GUARD] If remaining > 0 but we processed 0 rows, 
+                    // it means other workers are currently holding the locks, or they are crashed locks.
+                    // Instead of rapid-fire retrying (which causes infinite loops and circuit breaker tripping),
+                    // we gracefully exit and let the minute Cron Job handle the leftovers.
+                    if ($totalProcessed > 0) {
+                        if ($retryCount >= $MAX_RETRIES) {
+                            $pdo->prepare("UPDATE campaigns SET status = 'paused' WHERE id = ?")->execute([$cid]);
+                            $errMsg = "[CIRCUIT BREAKER] Campaign $cid auto-paused after $MAX_RETRIES consecutive retries with $remaining unsent recipients. Manual review required.";
+                            $logs[] = $errMsg;
+                            writeWorkerLog($errMsg);
+                        } else {
+                            $nextRetry = $retryCount + 1;
+                            triggerAsyncWorker('/worker_campaign.php?campaign_id=' . $cid . '&retry_count=' . $nextRetry);
+                            $logs[] = "[Campaign {$cid}] Continuous mode: $remaining remaining. Follow-up triggered (retry #$nextRetry).";
+                            writeWorkerLog("Campaign $cid: Continuous mode: $remaining remaining. Follow-up triggered (retry #$nextRetry/$MAX_RETRIES).");
+                        }
                     } else {
-                        $nextRetry = $retryCount + 1;
-                        triggerAsyncWorker('/worker_campaign.php?campaign_id=' . $cid . '&retry_count=' . $nextRetry);
-                        $logs[] = "[Campaign {$cid}] Continuous mode: $remaining remaining. Follow-up triggered (retry #$nextRetry).";
-                        writeWorkerLog("Campaign $cid: Continuous mode: $remaining remaining. Follow-up triggered (retry #$nextRetry/$MAX_RETRIES).");
+                        $logs[] = "[Campaign {$cid}] Remaining $remaining are currently locked by other workers or pending recovery. Safely yielding to Cron.";
+                        writeWorkerLog("Campaign $cid: Remaining $remaining are locked. Yielding to Cron Job.");
                     }
                 }
                 $pdo->commit();

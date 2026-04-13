@@ -26,7 +26,7 @@ const COMMON_LABELS: Record<string, string> = {
     'email_address': 'Địa chỉ Email',
     'first_name': 'Tên',
     'last_name': 'Họ',
-    'contact_name': 'Tỉ lệ hệ',
+    'contact_name': 'Tên liên hệ',
     'account_name': 'Tên Khách hàng',
     'mobile': 'Số di động',
     'office_tel': 'ĐT văn phòng',

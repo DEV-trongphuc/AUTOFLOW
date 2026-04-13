@@ -442,7 +442,11 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                         api.get<any>('zalo_templates'),
                         api.get<any>('zalo_oa') // Assuming this endpoint exists based on context
                     ]);
-                    if (resTpl.success) setZnsTemplates(Array.isArray(resTpl.data) ? resTpl.data : resTpl.data?.data || []);
+                    if (resTpl.success) {
+                        const rawTemplates = Array.isArray(resTpl.data) ? resTpl.data : resTpl.data?.data || [];
+                        const validTemplates = rawTemplates.filter((t: any) => t.status?.toUpperCase() !== 'REJECT' && t.status?.toUpperCase() !== 'REJECTED');
+                        setZnsTemplates(validTemplates);
+                    }
                     if (resOA.success) {
                         const oas = Array.isArray(resOA.data) ? resOA.data : [];
                         setZnsOAs(oas);
@@ -825,7 +829,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
             <div className={`relative w-full lg:max-w-6xl bg-[#fdfdfd] shadow-2xl h-full flex flex-col border-l border-slate-100 transform transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${animateWizardIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}>
                 <div className="px-4 lg:px-8 py-4 lg:py-5 bg-white flex justify-between items-center shrink-0 border-b border-slate-100">
                     <div className="flex items-center gap-3 lg:gap-4">
-                        <div className="w-9 h-9 lg:w-10 lg:h-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-md text-white"><Wand2 className="w-5 h-5" /></div>
+                        <div className="w-9 h-9 lg:w-10 lg:h-10 bg-[#ffa900] rounded-xl flex items-center justify-center shadow-md text-white"><Wand2 className="w-5 h-5" /></div>
                         <div><h3 className="text-sm lg:text-lg font-bold text-slate-800 line-clamp-1">{formData.name || 'Chiến dịch mới'}</h3><p className="text-[9px] lg:text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Bước {step} / 5</p></div>
                     </div>
                     <div className="hidden sm:flex items-center gap-2">
@@ -865,7 +869,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                     </div>
                                     <h5 className={`text-xl font-black mb-2 transition-colors ${(!formData.type || formData.type === 'email') ? 'text-blue-900' : 'text-slate-800'}`}>Campaign Marketing</h5>
                                     <p className={`text-sm font-medium leading-relaxed ${(!formData.type || formData.type === 'email') ? 'text-blue-700/80' : 'text-slate-500'}`}>
-                                        Gửi email hàng loạt với giao diện kéo thả trực quan, tỉ lệ vào inbox cao và Báo cáo chi tiết.
+                                        Gửi email hàng loạt với giao diện kéo thả trực quan, tỷ lệ vào inbox cao và Báo cáo chi tiết.
                                     </p>
                                     <div className={`mt-6 flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${(!formData.type || formData.type === 'email') ? 'text-blue-600' : 'text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity'}`}>
                                         <span>Chọn phương thức này</span>
@@ -883,7 +887,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                     </div>
                                     <h5 className={`text-xl font-black mb-2 transition-colors ${formData.type === 'zalo_zns' ? 'text-[#0068ff]' : 'text-slate-800'}`}>Zalo ZNS</h5>
                                     <p className={`text-sm font-medium leading-relaxed ${formData.type === 'zalo_zns' ? 'text-blue-700/80' : 'text-slate-500'}`}>
-                                        Gửi thông báo tin nhắn OA trực tiếp đến số điện thoại. Tăng tỉ lệ đọc tin và tương tác lập tức.
+                                        Gửi thông báo tin nhắn OA trực tiếp đến số điện thoại. Tăng tỷ lệ đọc tin và tương tác lập tức.
                                     </p>
                                     <div className={`mt-6 flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${formData.type === 'zalo_zns' ? 'text-[#0068ff]' : 'text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity'}`}>
                                         <span>Chọn phương thức này</span>
@@ -1018,7 +1022,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                             onClick={() => setStep(3)}
                                                             className="flex items-center justify-center gap-2 py-2 px-3 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl text-[10px] font-bold transition-all border border-blue-100"
                                                         >
-                                                            <Upload className="w-3.5 h-3.5" /> Tỉ lệ CSV
+                                                            <Upload className="w-3.5 h-3.5" /> Tải lên CSV
                                                         </button>
                                                     </div>
                                                     <p className="text-[9px] text-slate-400 italic text-center leading-tight">Bạn có thể tải lên CSV ở Bước 3 (Đối tượng) để tự động khớp các tham số trên.</p>
@@ -1232,6 +1236,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                 <TemplateSelector
                                                     templates={allTemplates}
                                                     selectedId={formData.templateId}
+                                                    gridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-6 p-1 pb-8"
                                                     onSelect={t => {
                                                         setFormData({ ...formData, templateId: t.id });
                                                         fetchTemplatePreview(t.id);

@@ -452,14 +452,14 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                             ? 'from-brand shadow-brand/20'
                             : (isDarkTheme ? 'from-slate-700 to-slate-800 shadow-slate-900 border border-slate-700' : 'from-slate-400 to-slate-500 shadow-slate-200')}`}>
                             {settings.bot_avatar ? (
-                                <img 
-                                    src={settings.bot_avatar} 
-                                    className={`w-full h-full object-cover ${categoryId ? 'grayscale hover:grayscale-0 transition-all duration-300' : ''}`} 
-                                    alt="" 
+                                <img
+                                    src={settings.bot_avatar}
+                                    className={`w-full h-full object-cover ${categoryId ? 'grayscale hover:grayscale-0 transition-all duration-300' : ''}`}
+                                    alt=""
                                 />
                             ) : (
-                                <div className={`w-full h-full flex items-center justify-center transition-all duration-500 ${categoryId ? 'bg-slate-500 grayscale' : 'bg-gradient-to-br from-brand to-brand-dark'}`}>
-                                    <img src="/imgs/ICON.png" className="w-6 h-6 object-contain brightness-0 invert" alt="" />
+                                <div className={`w-full h-full flex items-center justify-center transition-all duration-500 ${categoryId ? 'bg-brand' : 'bg-gradient-to-br from-[#c2410c] to-[#9a3412]'}`}>
+                                    <Bot className="w-6 h-6" />
                                 </div>
                             )}
                         </div>
@@ -873,7 +873,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2 flex-wrap">
                                                         <span style={{ color: isDarkTheme ? '#e2e8f0' : '#1e293b', fontSize: 12, fontWeight: 900 }} className="truncate max-w-[220px]">
-                                                            {doc.name || doc.title || 'Tỉ lệ PDF'}
+                                                            {doc.name || doc.title || 'Tài liệu PDF'}
                                                         </span>
                                                         <span className={isCooldown ? '' : 'animate-pulse'} style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', padding: '2px 8px', borderRadius: 999, color: colors.text, background: colors.labelBg, textTransform: 'uppercase', flexShrink: 0 }}>
                                                             {isEmbedding ? '🧠 Tạo Embedding' : isCooldown ? '⏳ Chờ rate limit' : processing > 0 ? '⚡ Đang trích xuất' : '📄 Trích xuất'}
@@ -962,7 +962,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                 <div className="px-8 pt-8 pb-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${isDarkTheme ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
-                                            Tỉ lệ sẵn sàng
+                                            Tài liệu sẵn sàng
                                         </span>
                                     </div>
                                     <h3 className={`text-2xl font-black ${isDarkTheme ? 'text-white' : 'text-slate-900'}`}>
@@ -1224,7 +1224,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                         onChange={(e: any) => setSettings({ ...settings, notification_subject: e.target.value })}
                                                         className={isDarkTheme ? 'bg-slate-900/80' : 'bg-white/80'}
                                                     />
-                                                    
+
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                                         <Input
                                                             label="Email nhận thông báo (Chính)"
@@ -1247,7 +1247,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                             className={isDarkTheme ? 'bg-slate-900/80' : 'bg-white/80'}
                                                         />
                                                     </div>
-                                                    
+
                                                     <div className={`p-4 shadow-[inset_0_1px_4px_rgba(0,0,0,0.02)] rounded-2xl border ${isDarkTheme ? 'bg-slate-900/40 border-slate-700/50' : 'bg-white/40 border-amber-100/50'}`}>
                                                         <p className="text-[10px] text-slate-500 leading-relaxed font-medium">
                                                             * Nhập nhiều email bằng cách nhấn <kbd className={`px-1 inline-block pb-0.5 rounded font-bold border ${isDarkTheme ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-700 border-slate-200'}`}>Enter</kbd> để xuống dòng. Phân cách bằng dấu phẩy sẽ được tự động hỗ trợ.
@@ -1611,7 +1611,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                         <strong className="text-slate-300">Giải thích:</strong> Kiểm soát tính ngẫu nhiên và sáng tạo của AI.
                                                         <br />• <span className="text-amber-600 font-bold">Chính xác (0.1 - 0.5):</span> AI bám sát 100% dữ liệu, trả lời nhất quán và nghiêm túc. Phù hợp cho hỗ trợ kỹ thuật, y tế hoặc tra cứu thông tin chính xác.
                                                         <br />• <span className="text-blue-400 font-bold">Còn bằng (0.6 - 1.2):</span> AI trả lời tự nhiên, linh hoạt trong cách dùng từ như người thật. Mức **khuyên dùng** cho tư vấn bán hàng và CSKH.
-                                                        <br />• <span className="text-orange-400 font-bold">Sáng tạo (1.3 - 2.0):</span> Tỉ lệ rất "bay bổng" và đa dạng. **Lưu ý:** Dễ bị hiện tượng "ảo giác" (nói những thông tin không có trong Knowledge Base).
+                                                        <br />• <span className="text-orange-400 font-bold">Sáng tạo (1.3 - 2.0):</span> Câu trả lời rất "bay bổng" và đa dạng. **Lưu ý:** Dễ bị hiện tượng "ảo giác" (nói những thông tin không có trong Knowledge Base).
                                                     </p>
                                                 </div>
 
@@ -1661,7 +1661,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                         { var: '{$today}', desc: 'Ngày hiện tại (Định dạng: dd/mm/yyyy).' },
                                         { var: '{$currentPage}', desc: 'URL trang web khách đang xem.' },
                                         { var: '{$activityContext}', desc: 'Lịch sử hành vi/click của khách.' },
-            { var: "{$isIdentified}", desc: "Trạng thái ĐÃ ĐọNH DANH hoặc CHƯA ĐọNH DANH." },
+                                        { var: "{$isIdentified}", desc: "Trạng thái ĐÃ ĐọNH DANH hoặc CHƯA ĐọNH DANH." },
                                     ].map((item, idx) => (
                                         <div key={idx} className={`p-3 rounded-xl border group/var hover:border-amber-200 transition-all relative ${isDarkTheme ? 'bg-slate-800/40 border-slate-700 shadow-inner' : 'bg-slate-50 border-slate-100'}`}>
                                             <div className="flex justify-between items-start mb-1">

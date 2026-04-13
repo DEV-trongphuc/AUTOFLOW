@@ -991,7 +991,7 @@ const Audience: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-white p-4 md:p-6 rounded-2xl md:rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group cursor-default">
                         <div>
-                            <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-amber-600 transition-colors">Tỉ lệ hệ</p>
+                            <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-amber-600 transition-colors">Liên hệ</p>
                             {loading ? (
                                 <div style={{ width: 100, height: 32, borderRadius: 8, background: '#e2e8f0', position: 'relative', overflow: 'hidden' }}><div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)', animation: 'sk-shimmer 1.4s ease-in-out infinite', transform: 'translateX(-100%)' }} /></div>
                             ) : (
@@ -1315,7 +1315,7 @@ const Audience: React.FC = () => {
                                                                     const forceRes = await api.delete(`lists/${id}?force=1`);
                                                                     if (forceRes.success) {
                                                                         fetchLists(listsPagination.page);
-                                                                        showToast('Đã xóa danh sách thành công (Còng chế)', 'success');
+                                                                        showToast('Đã xóa danh sách thành công (Cưỡng chế)', 'success');
                                                                     } else {
                                                                         showToast(forceRes.message || 'Lỗi khi xóa cưỡng chế', 'error');
                                                                     }

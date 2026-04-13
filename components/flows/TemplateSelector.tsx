@@ -46,31 +46,43 @@ interface TemplateSelectorProps {
   templates: Template[];
   selectedId?: string;
   onSelect: (template: Template) => void;
+  gridClassName?: string;
 }
 
-const TemplateSelector: React.FC<TemplateSelectorProps> = ({ templates, selectedId, onSelect }) => {
+const TemplateSelector: React.FC<TemplateSelectorProps> = ({ templates, selectedId, onSelect, gridClassName }) => {
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filtered = templates.filter(t =>
     t.name.toLowerCase().includes(search.toLowerCase()) ||
     t.category.toLowerCase().includes(search.toLowerCase())
   );
 
+  const ITEMS_PER_PAGE = 12;
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  const defaultGridClass = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-4 gap-6 p-1 pb-8";
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 flex flex-col h-full">
       <div className="relative">
         <Input
           placeholder="Tìm mẫu email theo tên hoặc loại..."
           icon={Search}
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setCurrentPage(1);
+          }}
           className="shadow-none border-slate-200"
         />
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar p-1">
-        {filtered.length > 0 ? (
-          filtered.map((template) => {
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className={gridClassName || defaultGridClass}>
+          {paginated.length > 0 ? (
+            paginated.map((template) => {
             const isSelected = template.id === selectedId;
             return (
               <div
@@ -94,8 +106,8 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ templates, selected
                       </div>
                     </div>
                   )}
-                  <div className="absolute top-2 right-2 bg-white/90 backdrop-blur px-2 py-0.5 rounded-lg text-[8px] font-black uppercase text-slate-500 border border-slate-100">
-                    {template.category}
+                  <div className="absolute top-2 right-2 bg-white/95 backdrop-blur px-2.5 py-1 rounded-lg text-[8px] font-black uppercase text-slate-500 border border-slate-100 shadow-sm flex items-center gap-1">
+                    <span className="text-orange-500">Update:</span> {template.lastModified ? new Date(template.lastModified).toLocaleDateString('vi-VN') : 'Unknown'}
                   </div>
                 </div>
                 <div className="p-3 bg-white border-t border-slate-50">
@@ -108,9 +120,35 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ templates, selected
           <div className="col-span-full py-20 text-center">
             <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4"><Layout className="w-8 h-8 text-slate-200" /></div>
             <p className="text-slate-400 font-bold text-sm">Không tìm thấy mẫu phù hợp</p>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-auto">
+          <p className="text-xs font-bold text-slate-400">
+            Trang <span className="text-slate-700">{currentPage}</span> / {totalPages}
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 disabled:opacity-50 hover:bg-slate-50 transition-colors"
+            >
+              Trước
+            </button>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 disabled:opacity-50 hover:bg-slate-50 transition-colors"
+            >
+              Sau
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

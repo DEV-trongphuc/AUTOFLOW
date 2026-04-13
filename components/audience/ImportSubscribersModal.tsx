@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { Upload, FileText, CheckCircle2, AlertTriangle, ArrowRight, List, Plus, X, Database, FileSpreadsheet, DownloadCloud, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -145,11 +145,15 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
 
         let dupCount = 0;
         const validRows: any[] = [];
+        const seenEmailsInCsv = new Set<string>();
 
         dataRows.forEach((row: any) => {
-            if (existingEmails.has(row.email)) {
+            const email = row.email?.toLowerCase()?.trim() || '';
+            
+            if (existingEmails.has(row.email) || existingEmails.has(email) || seenEmailsInCsv.has(email)) {
                 dupCount++;
             } else {
+                seenEmailsInCsv.add(email);
                 validRows.push(row);
             }
         });

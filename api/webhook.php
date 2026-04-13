@@ -1036,37 +1036,47 @@ if ($method === 'POST') {
             // Without this filter: 1 real click = 2 recorded clicks (bot + human). N users = 2N clicks.
             $isBotClick = false;
             if ($type === 'click') {
-                $botUaPatterns = [
-                    'GoogleImageProxy',  // Gmail image proxy (open tracking)
-                    'YahooMailProxy',
-                    'Googlebot',
-                    'bingbot',
-                    'BingPreview',
-                    'Twitterbot',
-                    'facebookexternalhit',
-                    'LinkedInBot',
-                    'Slackbot',
-                    'AhrefsBot',
-                    'SemrushBot',
-                    'DotBot',
-                    'python-requests',
-                    'python-urllib',
-                    'curl/',
-                    'wget/',
-                    'HeadlessChrome',
-                    'PhantomJS',
-                    'SafeBrowsing',       // Google Safe Browsing pre-checker
-                    'GSecurityScanner',   // Google Workspace security scanner
-                    'Barracuda',          // Barracuda email security
-                    'Proofpoint',         // Proofpoint email scanner
-                    'Mimecast',           // Mimecast email scanner
-                    'MSIE 7.0',           // IE7 is bot-like in many scanners
-                    'MS Web Services Client Protocol', // Microsoft security scanner
-                ];
-                foreach ($botUaPatterns as $pattern) {
-                    if (stripos($ua, $pattern) !== false) {
-                        $isBotClick = true;
-                        break;
+                // [PREFETCH DETECTION] Safar/Email Clients often pre-download links!
+                $xPurpose = $_SERVER['HTTP_X_PURPOSE'] ?? '';
+                $purpose = $_SERVER['HTTP_PURPOSE'] ?? '';
+                $secFetchMode = $_SERVER['HTTP_SEC_FETCH_MODE'] ?? '';
+                if (strtolower($xPurpose) === 'preview' || strtolower($purpose) === 'prefetch' || strtolower($secFetchMode) === 'prefetch') {
+                    $isBotClick = true;
+                }
+
+                if (!$isBotClick) {
+                    $botUaPatterns = [
+                        'GoogleImageProxy',  // Gmail image proxy (open tracking)
+                        'YahooMailProxy',
+                        'Googlebot',
+                        'bingbot',
+                        'BingPreview',
+                        'Twitterbot',
+                        'facebookexternalhit',
+                        'LinkedInBot',
+                        'Slackbot',
+                        'AhrefsBot',
+                        'SemrushBot',
+                        'DotBot',
+                        'python-requests',
+                        'python-urllib',
+                        'curl/',
+                        'wget/',
+                        'HeadlessChrome',
+                        'PhantomJS',
+                        'SafeBrowsing',       // Google Safe Browsing pre-checker
+                        'GSecurityScanner',   // Google Workspace security scanner
+                        'Barracuda',          // Barracuda email security
+                        'Proofpoint',         // Proofpoint email scanner
+                        'Mimecast',           // Mimecast email scanner
+                        'MSIE 7.0',           // IE7 is bot-like in many scanners
+                        'MS Web Services Client Protocol', // Microsoft security scanner
+                    ];
+                    foreach ($botUaPatterns as $pattern) {
+                        if (stripos($ua, $pattern) !== false) {
+                            $isBotClick = true;
+                            break;
+                        }
                     }
                 }
 

@@ -2349,7 +2349,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                 <button onClick={() => setMobileView('chat')} className="lg:hidden p-1 text-slate-400 hover:text-slate-600">
                                     <ChevronLeft className="w-4 h-4" />
                                 </button>
-                                <h4 className={`text-[10px] font-black uppercase tracking-widest ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>Tỉ lệ hội thoại</h4>
+                                <h4 className={`text-[10px] font-black uppercase tracking-widest ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>Hội thoại</h4>
                             </div>
 
                             {/* Tabs */}
@@ -3123,7 +3123,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                                                 { id: 'zalo', label: 'Zalo OA Message' },
                                                                 { id: 'meta', label: 'Messenger/Instagram' }
                                                             ] : []),
-                                                            { id: 'org', label: 'Tỉ lệ hội thoại' }
+                                                            { id: 'org', label: 'Hội thoại' }
                                                         ].map(opt => (
                                                             <div
                                                                 key={opt.id}
@@ -3269,7 +3269,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                                             </span>
                                                             <div className="flex items-center gap-1.5">
                                                                 <span className="text-[10px] text-slate-400 font-medium">
-                                                                    Tỉ lệ {item.generated_at ? new Date(item.generated_at).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : `Bản ghi #${idx + 1}`}
+                                                                    Tài liệu {item.generated_at ? new Date(item.generated_at).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : `Bản ghi #${idx + 1}`}
                                                                 </span>
                                                                 <span className="text-[9px] text-amber-600 font-bold opacity-0 group-hover/item:opacity-100 transition-opacity ml-1">Click để xem lại</span>
                                                             </div>
@@ -3463,7 +3463,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                                     <tr className="bg-slate-50 border-b border-slate-100">
                                                         <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-1/2">Chủ đề / Keyword</th>
                                                         <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider w-32">Số lượng</th>
-                                                        <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Tỉ lệ quan tâm</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Mức độ quan tâm</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-100">
@@ -3642,7 +3642,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                                                         <div className="flex flex-col items-start gap-1.5 max-w-[95%]">
                                                                             <div className="flex items-center gap-2 ml-1">
                                                                                 <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                                                                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Tỉ lệ AI</span>
+                                                                                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Tài liệu AI</span>
                                                                             </div>
                                                                             <div className="bg-gradient-to-br from-emerald-50/60 to-teal-50/40 backdrop-blur-sm border border-emerald-100/80 p-5 rounded-[24px] rounded-tl-none text-[11px] text-slate-800 leading-relaxed w-full shadow-md relative group/msg-ai">
                                                                                 <div className="max-h-[350px] overflow-y-auto custom-scrollbar pr-2">

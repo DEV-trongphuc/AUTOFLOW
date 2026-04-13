@@ -113,7 +113,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
                 {/* Content */}
                 <div className="px-6 py-5">
-                    <p className={`text-sm leading-relaxed font-medium ${isDarkTheme ? 'text-slate-400' : 'text-slate-600'}`}>{message}</p>
+                    <div className={`text-sm leading-relaxed font-medium ${isDarkTheme ? 'text-slate-400' : 'text-slate-600'}`}>{message}</div>
 
                     {requireConfirmText && (
                         <div className="mt-6 space-y-2">

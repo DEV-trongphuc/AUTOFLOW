@@ -220,9 +220,13 @@ if (session_status() === PHP_SESSION_NONE) {
     // CRITICAL: Set session cookie params BEFORE session_start()
     // This ensures the session cookie is compatible with both the
     // main Autoflow app and the AI Space API.
+    
+    // [FIX] Increase session garbage collection to 30 days to prevent "mất auth sau vài tiếng"
+    ini_set('session.gc_maxlifetime', 2592000);
+    
     $isSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
     session_set_cookie_params([
-        'lifetime' => 0,           // Session cookie (expires when browser closes)
+        'lifetime' => 2592000,     // Session cookie 30 days instead of 0
         'path' => '/',         // Share across the entire domain
         'domain' => '',          // Current domain only
         'secure' => $isSecure,   // Only send over HTTPS in production

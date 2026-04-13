@@ -163,15 +163,20 @@ const FlowSettingsTab: React.FC<FlowSettingsTabProps> = ({ flow, onUpdate }) => 
     return (
         <div className="p-5 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300 pb-20">
 
-            {/* WARNING FOR PRIORITY TRIGGER */}
+            {/* PREEMIUM ALERT FOR PRIORITY TRIGGER */}
             {isPriorityTrigger && (
-                <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-2xl flex items-start gap-3 shadow-sm">
-                    <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5" />
-                    <div>
-                        <p className="text-xs font-black text-orange-900 uppercase tracking-tight">Chế độ ưu tiên (Real-time Transaction)</p>
-                        <p className="text-[11px] font-medium text-orange-800 leading-relaxed mt-1">
-                            Kịch bản này được kích hoạt bởi <b>{getPriorityLabel()}</b>.
-                            Hệ thống sẽ <b>Bỏ qua</b> các giới hạn về khung giờ, ngày nghỉ và tần suất gửi để đảm bảo phản hồi ngay lập tức cho Khách hàng.
+                <div className="mb-8 p-5 bg-gradient-to-br from-amber-50 to-orange-50/50 border border-amber-200 rounded-[28px] flex items-start gap-4 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.03] -mr-8 -mt-8 group-hover:scale-110 transition-transform duration-700">
+                        <Zap className="w-32 h-32 text-orange-600" />
+                    </div>
+                    <div className="p-3 bg-white rounded-2xl text-orange-600 shadow-sm border border-amber-100/50">
+                        <Zap className="w-5 h-5 animate-pulse" />
+                    </div>
+                    <div className="relative z-10">
+                        <p className="text-[10px] font-black text-orange-900 uppercase tracking-[0.1em]">Chế độ ưu tiên (Real-time Transaction)</p>
+                        <p className="text-[11px] font-medium text-orange-800/90 leading-relaxed mt-1.5">
+                            Kịch bản này được khởi động bởi <span className="bg-orange-100/50 px-1.5 py-0.5 rounded-md font-bold text-orange-900">{getPriorityLabel()}</span>.
+                            Hệ thống sẽ <span className="underline decoration-orange-300 decoration-2 underline-offset-2">bỏ qua</span> các giới hạn về khung giờ và tần suất để đảm bảo phản hồi tức thì cho khách hàng.
                         </p>
                     </div>
                 </div>
@@ -215,39 +220,39 @@ const FlowSettingsTab: React.FC<FlowSettingsTabProps> = ({ flow, onUpdate }) => 
                         </div>
                         <div className="space-y-4">
                             <div>
-                                <h4 className="text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest ml-1">Loại quy trình</h4>
-                                <div className="grid grid-cols-2 gap-3">
+                                <h4 className="text-[9px] font-black text-slate-400 mb-3 uppercase tracking-widest ml-1">Loại quy trình</h4>
+                                <div className="grid grid-cols-2 gap-4">
                                     <button
                                         onClick={() => updateConfig('type', 'realtime')}
-                                        className={`p-3 rounded-xl text-left transition-all border-2 flex items-center gap-3 ${localConfig.type !== 'batch' ? 'bg-blue-50 border-blue-500 shadow-sm' : 'bg-white border-slate-100 hover:border-slate-200'}`}
-                                        disabled={isFlowArchived} // Disable if archived
+                                        className={`p-4 rounded-2xl text-left transition-all border-2 flex items-center gap-4 ${localConfig.type !== 'batch' ? 'bg-blue-50/50 border-blue-500 shadow-sm ring-4 ring-blue-500/5' : 'bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50'}`}
+                                        disabled={isFlowArchived}
                                     >
-                                        <div className={`p-1.5 rounded-lg ${localConfig.type !== 'batch' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                                            <Zap className="w-4 h-4" />
+                                        <div className={`p-2.5 rounded-xl shadow-sm transition-all ${localConfig.type !== 'batch' ? 'bg-blue-500 text-white scale-110' : 'bg-slate-100 text-slate-400'}`}>
+                                            <Zap className="w-5 h-5" />
                                         </div>
                                         <div>
-                                            <p className={`text-[10px] font-black uppercase ${localConfig.type !== 'batch' ? 'text-blue-700' : 'text-slate-600'}`}>Real-time</p>
-                                            <p className="text-[9px] text-slate-400 font-medium">Xử lý ngay</p>
+                                            <p className={`text-[11px] font-black uppercase tracking-tight ${localConfig.type !== 'batch' ? 'text-blue-900' : 'text-slate-600'}`}>Real-time</p>
+                                            <p className="text-[10px] text-slate-400 font-medium">Xử lý ngay</p>
                                         </div>
                                     </button>
                                     <button
                                         onClick={() => updateConfig('type', 'batch')}
-                                        className={`p-3 rounded-xl text-left transition-all border-2 flex items-center gap-3 ${localConfig.type === 'batch' ? 'bg-indigo-50 border-indigo-500 shadow-sm' : 'bg-white border-slate-100 hover:border-slate-200'}`}
-                                        disabled={isFlowArchived} // Disable if archived
+                                        className={`p-4 rounded-2xl text-left transition-all border-2 flex items-center gap-4 ${localConfig.type === 'batch' ? 'bg-indigo-50/50 border-indigo-500 shadow-sm ring-4 ring-indigo-500/5' : 'bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50'}`}
+                                        disabled={isFlowArchived}
                                     >
-                                        <div className={`p-1.5 rounded-lg ${localConfig.type === 'batch' ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                                            <Clock className="w-4 h-4" />
+                                        <div className={`p-2.5 rounded-xl shadow-sm transition-all ${localConfig.type === 'batch' ? 'bg-indigo-500 text-white scale-110' : 'bg-slate-100 text-slate-400'}`}>
+                                            <Clock className="w-5 h-5" />
                                         </div>
                                         <div>
-                                            <p className={`text-[10px] font-black uppercase ${localConfig.type === 'batch' ? 'text-indigo-700' : 'text-slate-600'}`}>Batch</p>
-                                            <p className="text-[9px] text-slate-400 font-medium">Tỉ lệ</p>
+                                            <p className={`text-[11px] font-black uppercase tracking-tight ${localConfig.type === 'batch' ? 'text-indigo-900' : 'text-slate-600'}`}>Batch</p>
+                                            <p className="text-[10px] text-slate-400 font-medium">Theo tỷ lệ</p>
                                         </div>
                                     </button>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                <Globe className="w-4 h-4 text-slate-400" />
-                                <p className="text-[10px] text-slate-500 font-medium">Tự động gắn UTM tag: <span className="font-bold text-slate-700">{localName}</span></p>
+                            <div className="flex items-center gap-3 bg-slate-50/80 p-4 rounded-2xl border border-slate-100/50">
+                                <Globe className="w-4.5 h-4.5 text-slate-400" />
+                                <p className="text-[11px] text-slate-500 font-medium leading-none">Tự động gắn UTM tag: <span className="font-black text-slate-800 tracking-tight">{localName}</span></p>
                             </div>
                         </div>
                     </div>
@@ -264,98 +269,113 @@ const FlowSettingsTab: React.FC<FlowSettingsTabProps> = ({ flow, onUpdate }) => 
                     <div className="p-6 space-y-8">
                         {/* Frequency Toggle - Row of 3 spread out */}
                         <div>
-                            <h4 className="text-[10px] font-black text-slate-400 mb-3 uppercase tracking-widest ml-1">Tần suất tham gia</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <h4 className="text-[9px] font-black text-slate-400 mb-4 uppercase tracking-widest ml-1">Tần suất tham gia</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                                 <button
                                     onClick={() => {
                                         updateConfigs({ frequency: 'one-time', allowMultiple: false });
                                     }}
-                                    className={`p-4 rounded-2xl text-left transition-all border-2 flex items-center gap-4 ${(localConfig.frequency || 'one-time') === 'one-time' ? 'bg-purple-50 border-purple-500 shadow-sm' : 'bg-white border-slate-100 hover:border-slate-200'}`}
+                                    className={`p-5 rounded-3xl text-left transition-all border-2 flex flex-col gap-4 relative overflow-hidden group ${(localConfig.frequency || 'one-time') === 'one-time' ? 'bg-purple-50/50 border-purple-500 shadow-md ring-4 ring-purple-500/5' : 'bg-white border-slate-100 hover:border-slate-300 hover:bg-slate-50/30'}`}
                                     disabled={isFlowArchived}
                                 >
-                                    <div className={`p-2 rounded-xl ${(localConfig.frequency || 'one-time') === 'one-time' ? 'bg-purple-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                                        <Target className="w-5 h-5" />
+                                    <div className={`p-3 rounded-2xl w-fit transition-transform duration-500 group-hover:scale-110 shadow-sm ${(localConfig.frequency || 'one-time') === 'one-time' ? 'bg-purple-600 text-white ring-8 ring-purple-100' : 'bg-slate-100 text-slate-400'}`}>
+                                        <Target className="w-6 h-6" />
                                     </div>
                                     <div>
-                                        <p className={`text-xs font-black uppercase ${(localConfig.frequency || 'one-time') === 'one-time' ? 'text-purple-700' : 'text-slate-600'}`}>Một lần</p>
-                                        <p className="text-[10px] text-slate-400 font-medium whitespace-nowrap">Chỉ tham gia 1 lần duy nhất</p>
+                                        <p className={`text-[13px] font-black uppercase tracking-tight ${(localConfig.frequency || 'one-time') === 'one-time' ? 'text-purple-900' : 'text-slate-700'}`}>Một lần</p>
+                                        <p className="text-[11px] text-slate-400 font-medium leading-tight">Chỉ tham gia 1 lần duy nhất trên toàn hệ thống.</p>
                                     </div>
+                                    {(localConfig.frequency || 'one-time') === 'one-time' && <div className="absolute top-3 right-3"><CheckCircle2 className="w-5 h-5 text-purple-600" /></div>}
                                 </button>
-
+                                
                                 <button
                                     onClick={() => {
                                         updateConfigs({ frequency: 'recurring', allowMultiple: false });
                                     }}
-                                    className={`p-4 rounded-2xl text-left transition-all border-2 flex items-center gap-4 ${localConfig.frequency === 'recurring' && !localConfig.allowMultiple ? 'bg-pink-50 border-pink-500 shadow-sm' : 'bg-white border-slate-100 hover:border-slate-200'}`}
+                                    className={`p-5 rounded-3xl text-left transition-all border-2 flex flex-col gap-4 relative overflow-hidden group ${localConfig.frequency === 'recurring' && !localConfig.allowMultiple ? 'bg-pink-50/50 border-pink-500 shadow-md ring-4 ring-pink-500/5' : 'bg-white border-slate-100 hover:border-slate-300 hover:bg-slate-50/30'}`}
                                     disabled={isFlowArchived}
                                 >
-                                    <div className={`p-2 rounded-xl ${localConfig.frequency === 'recurring' && !localConfig.allowMultiple ? 'bg-pink-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                                        <RefreshCw className="w-5 h-5" />
+                                    <div className={`p-3 rounded-2xl w-fit transition-transform duration-500 group-hover:scale-110 shadow-sm ${localConfig.frequency === 'recurring' && !localConfig.allowMultiple ? 'bg-pink-600 text-white ring-8 ring-pink-100' : 'bg-slate-100 text-slate-400'}`}>
+                                        <RefreshCw className="w-6 h-6 border-2 border-transparent" />
                                     </div>
                                     <div>
-                                        <p className={`text-xs font-black uppercase ${localConfig.frequency === 'recurring' && !localConfig.allowMultiple ? 'text-pink-700' : 'text-slate-600'}`}>Lặp lại</p>
-                                        <p className="text-[10px] text-slate-400 font-medium whitespace-nowrap">Xong lượt này mới vào lại</p>
+                                        <p className={`text-[13px] font-black uppercase tracking-tight ${localConfig.frequency === 'recurring' && !localConfig.allowMultiple ? 'text-pink-900' : 'text-slate-700'}`}>Lặp lại</p>
+                                        <p className="text-[11px] text-slate-400 font-medium leading-tight">Tự động vào lại sau khi kết thúc và qua thời gian chờ.</p>
                                     </div>
+                                    {localConfig.frequency === 'recurring' && !localConfig.allowMultiple && <div className="absolute top-3 right-3"><CheckCircle2 className="w-5 h-5 text-pink-600" /></div>}
                                 </button>
-
+                                
                                 <button
                                     onClick={() => {
                                         updateConfigs({ frequency: 'recurring', allowMultiple: true });
                                     }}
-                                    className={`p-4 rounded-2xl text-left transition-all border-2 flex items-center gap-4 ${localConfig.allowMultiple ? 'bg-emerald-50 border-emerald-500 shadow-sm' : 'bg-white border-slate-100 hover:border-slate-200'}`}
+                                    className={`p-5 rounded-3xl text-left transition-all border-2 flex flex-col gap-4 relative overflow-hidden group ${localConfig.allowMultiple ? 'bg-emerald-50/50 border-emerald-500 shadow-md ring-4 ring-emerald-500/5' : 'bg-white border-slate-100 hover:border-slate-300 hover:bg-slate-50/30'}`}
                                     disabled={isFlowArchived}
                                 >
-                                    <div className={`p-2 rounded-xl ${localConfig.allowMultiple ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                                        <Zap className="w-5 h-5" />
+                                    <div className={`p-3 rounded-2xl w-fit transition-transform duration-500 group-hover:scale-110 shadow-sm ${localConfig.allowMultiple ? 'bg-emerald-600 text-white ring-8 ring-emerald-100' : 'bg-slate-100 text-slate-400'}`}>
+                                        <Zap className="w-6 h-6" />
                                     </div>
                                     <div>
-                                        <p className={`text-xs font-black uppercase ${localConfig.allowMultiple ? 'text-emerald-700' : 'text-slate-600'}`}>Liên tục</p>
-                                        <p className="text-[10px] text-slate-400 font-medium whitespace-nowrap">Luôn vào luồng khi có sự kiện</p>
+                                        <p className={`text-[13px] font-black uppercase tracking-tight ${localConfig.allowMultiple ? 'text-emerald-900' : 'text-slate-700'}`}>Liên tục</p>
+                                        <p className="text-[11px] text-slate-400 font-medium leading-tight">Luôn mở luồng mới khi phát hiện sự kiện trùng khớp.</p>
                                     </div>
+                                    {localConfig.allowMultiple && <div className="absolute top-3 right-3"><CheckCircle2 className="w-5 h-5 text-emerald-600" /></div>}
                                 </button>
                             </div>
                         </div>
 
                         {/* Secondary Settings (Cooldown for Recurring, Max for Continuous) */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-slate-50">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-slate-100">
                             {/* Cooldown Settings - Only for "Lặp lại" (recurring without allowMultiple) */}
                             <div className={`${localConfig.frequency !== 'recurring' || localConfig.allowMultiple ? 'opacity-30 grayscale pointer-events-none' : ''}`}>
-                                <h4 className="text-[10px] font-black text-slate-400 mb-3 uppercase tracking-widest ml-1">Thời gian chờ (Cool-down)</h4>
-                                <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 group">
-                                    <div className="p-2 bg-white rounded-xl shadow-sm"><Clock className="w-4 h-4 text-slate-400 group-hover:text-pink-500 transition-colors" /></div>
-                                    <div className="flex-1 flex items-center gap-3">
+                                <h4 className="text-[9px] font-black text-slate-400 mb-4 uppercase tracking-widest ml-1">Thời gian chờ (Cool-down)</h4>
+                                <div className="flex items-center gap-5 bg-slate-50/50 p-5 rounded-3xl border border-slate-200 group relative">
+                                    <div className="absolute -top-3 left-6 px-3 bg-white border border-slate-100 rounded-full shadow-sm">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Khoảng cách an toàn</span>
+                                    </div>
+                                    <div className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100 group-hover:scale-105 transition-transform duration-300">
+                                        <Clock className="w-5 h-5 text-slate-400 group-hover:text-pink-500 transition-colors" />
+                                    </div>
+                                    <div className="flex-1 flex items-baseline gap-2">
                                         <input
                                             type="number"
                                             min="0"
                                             max="720"
                                             value={localConfig.enrollmentCooldownHours ?? 12}
                                             onChange={(e) => updateConfig('enrollmentCooldownHours', parseInt(e.target.value) || 0)}
-                                            className="w-14 bg-white border border-slate-200 rounded-xl px-2 py-2 text-xs font-black text-slate-700 outline-none focus:border-pink-500 text-center shadow-inner"
+                                            className="w-20 bg-white border-2 border-slate-200 rounded-2xl px-2 py-3 text-xl font-black text-slate-800 outline-none focus:border-pink-500 text-center shadow-lg shadow-slate-200/50 transition-all"
                                             disabled={isFlowArchived || localConfig.frequency !== 'recurring' || localConfig.allowMultiple}
                                         />
-                                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">Giờ</span>
+                                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Tiếng</span>
                                     </div>
-                                    <p className="text-[9px] text-slate-400 font-medium max-w-[140px] leading-tight text-right">Khoảng cách tối thiểu giữa 2 lần tham gia.</p>
+                                    <p className="text-[10px] text-slate-400 font-bold max-w-[120px] leading-tight text-right">Tối thiểu giữa 2 lần tham gia.</p>
                                 </div>
                             </div>
-
+                            
                             {/* Max Enrollments - Only for "Liên tục" (allowMultiple = true) */}
                             <div className={`${!localConfig.allowMultiple ? 'opacity-30 grayscale pointer-events-none' : ''}`}>
-                                <h4 className="text-[10px] font-black text-slate-400 mb-3 uppercase tracking-widest ml-1">Giới hạn số lần (Max)</h4>
-                                <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 group">
-                                    <div className="p-2 bg-white rounded-xl shadow-sm"><Target className="w-4 h-4 text-slate-400 group-hover:text-emerald-500 transition-colors" /></div>
-                                    <div className="flex-1 flex items-center gap-3">
+                                <h4 className="text-[9px] font-black text-slate-400 mb-4 uppercase tracking-widest ml-1">Giới hạn số lần (Max)</h4>
+                                <div className="flex items-center gap-5 bg-slate-50/50 p-5 rounded-3xl border border-slate-200 group relative">
+                                    <div className="absolute -top-3 left-6 px-3 bg-white border border-slate-100 rounded-full shadow-sm">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Hạn mức quy trình</span>
+                                    </div>
+                                    <div className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100 group-hover:scale-105 transition-transform duration-300">
+                                        <Target className="w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition-colors" />
+                                    </div>
+                                    <div className="flex-1 flex items-baseline gap-2">
                                         <input
                                             type="number"
                                             min="0"
                                             value={localConfig.maxEnrollments ?? 0}
                                             onChange={(e) => updateConfig('maxEnrollments', parseInt(e.target.value) || 0)}
-                                            className="w-14 bg-white border border-slate-200 rounded-xl px-2 py-2 text-xs font-black text-slate-700 outline-none focus:border-emerald-500 text-center shadow-inner"
+                                            className="w-20 bg-white border-2 border-slate-200 rounded-2xl px-2 py-3 text-xl font-black text-slate-800 outline-none focus:border-emerald-500 text-center shadow-lg shadow-slate-200/50 transition-all"
                                             disabled={isFlowArchived || !localConfig.allowMultiple}
                                         />
-                                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">Lần</span>
+                                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Lần</span>
                                     </div>
-                                    <p className="text-[9px] text-slate-400 font-medium max-w-[140px] leading-tight text-right">Tổng số lần tối đa. Để <b>0</b> nếu muốn không giới hạn.</p>
+                                    <p className="text-[10px] text-slate-400 font-bold max-w-[120px] leading-tight text-right text-balance">
+                                        {localConfig.maxEnrollments > 0 ? `Đã giới hạn ${localConfig.maxEnrollments} lần.` : 'Không giới hạn tham gia.'}
+                                    </p>
                                 </div>
                             </div>
                         </div>

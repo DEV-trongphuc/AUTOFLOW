@@ -40,7 +40,7 @@ const SplitTestConfig = ({ config, onChange, disabled }: any) => {
       </div>
       <div className="grid grid-cols-2 gap-8">
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase text-slate-400">Tỉ lệ nhánh A (%)</label>
+          <label className="text-[10px] font-black uppercase text-slate-400">Tỷ lệ nhánh A (%)</label>
           <input
             type="number"
             value={config.ratioA || 50}
@@ -50,7 +50,7 @@ const SplitTestConfig = ({ config, onChange, disabled }: any) => {
           />
         </div>
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase text-slate-400">Tỉ lệ nhánh B (%)</label>
+          <label className="text-[10px] font-black uppercase text-slate-400">Tỷ lệ nhánh B (%)</label>
           <input
             type="number"
             value={config.ratioB || 50}

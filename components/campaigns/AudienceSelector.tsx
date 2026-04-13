@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useMemo, useEffect } from 'react';
 import { api } from '../../services/storageAdapter';
 import { Search, Users, Layers, List, Plus, CheckCircle2, Upload, FileText, X, ArrowRight, Sparkles, Tag, RefreshCw, Zap, ChevronDown, Check } from 'lucide-react';
@@ -501,7 +501,7 @@ const AudienceSelector: React.FC<AudienceSelectorProps> = ({
                         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                             <div>
                                 <h4 className="text-sm font-bold text-slate-800">Import Nhanh</h4>
-                                <p className="text-[10px] text-slate-500 font-medium">Tỉ lệ hệ vào chiến dịch qua CSV hoặc dán trực tiếp.</p>
+                                <p className="text-[10px] text-slate-500 font-medium">Thêm liên hệ vào chiến dịch qua CSV hoặc dán trực tiếp.</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <button

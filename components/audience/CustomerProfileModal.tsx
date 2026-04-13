@@ -1639,7 +1639,7 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
 
             // Temporary: Use a known Property ID or fetch it via `formData`.
             // Let's check `formData` dump. `view_file` showed `subscribers` table has `property_id`.
-            // But `activeTỉ lệ has access to `formData`.
+            // But `activeTab` has access to `formData`.
             // Let's use `(subscriber as any).property_id`.
 
             // Re-read API: It takes `property_id` as GET param.

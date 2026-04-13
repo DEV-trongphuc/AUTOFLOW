@@ -377,7 +377,7 @@ const MessageList = React.memo(({
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDarkTheme ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-500/10 text-blue-600'}`}>
                             <FileText className="w-4 h-4" />
                         </div>
-                        <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkTheme ? 'text-slate-400' : 'text-slate-600'}`}>Phân tích Tỉ lệ</span>
+                        <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkTheme ? 'text-slate-400' : 'text-slate-600'}`}>Phân tích Tài liệu</span>
 
                     </div>
                     <div className={`flex items-center gap-2 grayscale hover:grayscale-0 transition-all opacity-40 hover:opacity-100 cursor-default`}>

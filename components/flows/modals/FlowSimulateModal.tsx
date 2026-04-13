@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState } from 'react';
 import {
     Play, X, User, Tag, Mail, MousePointerClick, Activity,
@@ -164,7 +164,7 @@ const FlowSimulateModal: React.FC<FlowSimulateModalProps> = ({ isOpen, onClose, 
 
                         let condMatch = false;
                         if (Array.isArray(actualVal)) {
-                            // Tỉ lệ</span>
+                            // Process Array values
 
                             const arr = actualVal.map(v => String(v).toLowerCase());
                             if (op === 'contains') condMatch = arr.includes(val);

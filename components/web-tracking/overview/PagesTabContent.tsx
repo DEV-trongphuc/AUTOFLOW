@@ -69,7 +69,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
 
                         <div className="hidden sm:flex items-center gap-6 text-[9px] font-semibold uppercase tracking-widest text-slate-400">
                             <div className="flex items-center gap-1.5 w-14 justify-end group cursor-pointer" onClick={() => setIsBounceInfoOpen(true)}>
-                                <span className="whitespace-nowrap group-hover:text-rose-500 transition-colors">Tỉ lệ thoát</span>
+                                <span className="whitespace-nowrap group-hover:text-rose-500 transition-colors">Tỷ lệ thoát</span>
                                 <Info className="w-3 h-3 text-slate-300 group-hover:text-rose-500 transition-colors" />
                             </div>
                             <span className="w-14 text-right">Thời gian</span>
@@ -245,7 +245,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                         <div className="p-2 bg-rose-50 text-rose-600 rounded-xl">
                             <Activity className="w-5 h-5" />
                         </div>
-                        <span className="text-xl font-black text-slate-800 tracking-tight">Về Tỉ lệ thoát (Bounce Rate)</span>
+                        <span className="text-xl font-black text-slate-800 tracking-tight">Về Tỷ lệ thoát (Bounce Rate)</span>
                     </div>
                 }
                 size="xl"
@@ -259,7 +259,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                             Bounce Rate là gì?
                         </h4>
                         <p className="text-sm text-slate-500 leading-relaxed font-medium">
-                            Bounce rate hay Tỉ lệ thoát là phần trăm số lượt truy cập trang web chỉ xem duy nhất một trang và rời đi ngay lập tức mà không có thêm tương tác nào khác (như nhấn vào link hoặc xem trang thứ hai). Nó đo lường mức độ tương tác và tính hấp dẫn của trang đích.
+                            Bounce rate hay Tỷ lệ thoát là phần trăm số lượt truy cập trang web chỉ xem duy nhất một trang và rời đi ngay lập tức mà không có thêm tương tác nào khác (như nhấn vào link hoặc xem trang thứ hai). Nó đo lường mức độ tương tác và tính hấp dẫn của trang đích.
                         </p>
                     </div>
 
@@ -269,13 +269,13 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                                 <div className="w-8 h-8 bg-teal-50 text-teal-600 rounded-lg flex items-center justify-center">
                                     <TrendingUp className="w-4 h-4" />
                                 </div>
-                                Tỉ lệ bao nhiêu là tốt?
+                                Tỷ lệ bao nhiêu là tốt?
                             </h5>
                             <p className="text-xs text-slate-500 leading-relaxed font-medium mb-4">
-                                Không có con số "chuẩn" cho mọi lĩnh vực. Tỉ lệ thoát phụ thuộc rất lớn vào loại trang web và mục đích của trang.
+                                Không có con số "chuẩn" cho mọi lĩnh vực. Tỷ lệ thoát phụ thuộc rất lớn vào loại trang web và mục đích của trang.
                             </p>
                             <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl italic text-[11px] text-orange-800 font-bold">
-                                "Ví dụ: Một trang blog trả lời đúng câu hỏi người dùng tìm kiếm có thể có tỉ lệ thoát 90%+ nhưng vẫn là trải nghiệm tốt."
+                                "Ví dụ: Một trang blog trả lời đúng câu hỏi người dùng tìm kiếm có thể có tỷ lệ thoát 90%+ nhưng vẫn là trải nghiệm tốt."
                             </div>
                         </div>
 
@@ -304,7 +304,7 @@ const PagesTabContent: React.FC<PagesTabContentProps> = ({
                     </div>
 
                     <div className="p-8 bg-slate-900 rounded-[32px] text-white">
-                        <h5 className="font-black text-sm mb-4 text-rose-400">Cách giảm tỉ lệ thoát:</h5>
+                        <h5 className="font-black text-sm mb-4 text-rose-400">Cách giảm tỷ lệ thoát:</h5>
                         <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[11px] font-bold text-slate-300">
                             <li className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10 italic">
                                 • Cải thiện tốc độ tải trang

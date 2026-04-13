@@ -76,6 +76,10 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'worker_tracking_aggregator.php') 
     $startTime = microtime(true);
     $timeLimit = 260; // Break at 260s — leaves 40s for Phase C/C2 cleanup + sync buffers
 
+    // [ANTI-SPAM IN-MEMORY DEBOUNCE]
+    // Drops multiple identical click events hitting the same batch (e.g. from rapid-fire email scanners).
+    $seenRapidEvents = [];
+
     foreach ($events as $event) {
         // [TIMEOUT GUARD] Check elapsed time before starting each potentially slow event
         if ((microtime(true) - $startTime) > $timeLimit) {
@@ -94,6 +98,18 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'worker_tracking_aggregator.php') 
         $variation = $payload['var'] ?? null;
         if ($variation) {
             $extra['variation'] = $variation;
+        }
+
+        // [ANTI-SPAM CACHE CHECK]
+        if ($type === 'click') {
+            $hashUrl = $extra['url'] ?? '';
+            $hash = md5("{$type}|{$sid}|{$cid}|{$fid}|{$rid}|{$hashUrl}");
+            if (isset($seenRapidEvents[$hash])) {
+                // Duplicate in the same worker batch. Mark processed and skip DB hit!
+                $processedIds[] = $event['id'];
+                continue;
+            }
+            $seenRapidEvents[$hash] = true;
         }
 
         if ($type === 'open' || $type === 'click') {

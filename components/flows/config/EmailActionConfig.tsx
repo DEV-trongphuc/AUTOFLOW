@@ -534,7 +534,7 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
             </div>
 
             {showPicker && (
-                <div className="p-1 bg-white rounded-[32px] border-2 border-[#ffa900]/10 shadow-2xl animate-in zoom-in-95 duration-200 fixed inset-x-4 top-20 bottom-20 z-[100] overflow-hidden flex flex-col">
+                <div className="p-1 bg-white rounded-b-[32px] border-b-2 border-x-2 border-[#ffa900]/10 shadow-2xl animate-in slide-in-from-top-10 duration-200 fixed inset-x-4 md:inset-x-12 lg:inset-x-32 top-0 max-h-[80vh] z-[100] overflow-hidden flex flex-col">
                     <div className="p-4 border-b border-slate-100 flex justify-between items-center">
                         <h3 className="font-bold text-slate-800">Chọn mẫu Email</h3>
                         <button onClick={() => setShowPicker(false)} className="p-2 hover:bg-slate-100 rounded-full"><FileText className="w-4 h-4" /></button>

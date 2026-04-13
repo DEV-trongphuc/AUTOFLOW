@@ -334,21 +334,39 @@ try {
             $vals = [];
             $batchPlaceholders = [];
             $nowStr = date('Y-m-d H:i:s');
+            $initialSchedule = $nowStr;
+            
+            // [SMART SCHEDULE] Check if first step is WAIT
+            if ($steps) {
+                foreach ($steps as $fs) {
+                    if ($fs['id'] === $startStepId && $fs['type'] === 'wait') {
+                        $fsWaitConfig = $fs['config'] ?? [];
+                        $fsWaitMode = $fsWaitConfig['mode'] ?? 'duration';
+                        if ($fsWaitMode === 'duration') {
+                            $dur = (int) ($fsWaitConfig['duration'] ?? 0);
+                            $unit = $fsWaitConfig['unit'] ?? 'minutes';
+                            $unitSeconds = match ($unit) {
+                                'weeks' => 604800,
+                                'days' => 86400,
+                                'hours' => 3600,
+                                default => 60,
+                            };
+                            $delay = $unitSeconds * $dur;
+                            if ($delay > 0) {
+                                $initialSchedule = date('Y-m-d H:i:s', time() + $delay);
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
 
             foreach ($subscriberIds as $sid) {
                 $batchPlaceholders[] = "(?, ?, ?, ?, 'waiting', ?, ?)";
                 $vals[] = $flowId;
                 $vals[] = $sid;
                 $vals[] = $startStepId;
-                $vals[] = $flowId; // For NOT IN check, but here we do pure insert. For IGNORE logic, we need unique key on (flow_id, subscriber_id)?
-                // Actually, duplicate enrollments might be allowed depending on logic.
-                // Assuming we want to avoid double enrollment unless re-entry.
-                // Logic: Check existing? Too slow.
-                // Let's use INSERT SELECT with WHERE NOT EXISTS for better perf if pure SQL, but here we have ID list.
-                // Optimally: Just insert. If unique index (flow_id, subscriber_id) exists, IGNORE works.
-                // v11_optimization adds idx_flow_enrollment_lookup but it's not UNIQUE.
-                // Let's rely on app logic: check if 'processing' or 'waiting' exists?
-                // For bulk manual enroll, usually we force enroll.
+                $vals[] = $flowId;
 
                 $vals[] = $nowStr;
                 $vals[] = $nowStr;
@@ -361,7 +379,7 @@ try {
             // Actually, placeholders are safer.
 
             $sql = "INSERT INTO subscriber_flow_states (flow_id, subscriber_id, step_id, status, created_at, updated_at, scheduled_at, last_step_at)
-                    SELECT ?, s.id, ?, 'waiting', NOW(), NOW(), NOW(), NOW()
+                    SELECT ?, s.id, ?, 'waiting', NOW(), NOW(), ?, NOW()
                     FROM subscribers s
                     WHERE s.id IN ($placeholders)
                     AND s.status IN ('active', 'lead', 'customer')
@@ -370,8 +388,8 @@ try {
                         WHERE sfs.flow_id = ? AND sfs.subscriber_id = s.id AND sfs.status IN ('waiting', 'processing')
                     )";
 
-            // Params: FlowID, StartStepID, Subscribers..., FlowID
-            $finalParams = array_merge([$flowId, $startStepId], $subscriberIds, [$flowId]);
+            // Params: FlowID, StartStepID, InitialSchedule, Subscribers..., FlowID
+            $finalParams = array_merge([$flowId, $startStepId, $initialSchedule], $subscriberIds, [$flowId]);
             $stmt = $pdo->prepare($sql);
             $stmt->execute($finalParams);
             $affectedCount = $stmt->rowCount();

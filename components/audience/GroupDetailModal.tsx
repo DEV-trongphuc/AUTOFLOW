@@ -1381,7 +1381,7 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                                 <div className={`p-2 rounded-xl ${saveMode === 'new' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-500'}`}>
                                     <FolderPlus className="w-5 h-5" />
                                 </div>
-                                <span className={`text-xs font-bold ${saveMode === 'new' ? 'text-amber-900' : 'text-slate-600'}`}>Tỉ lệ mới</span>
+                                <span className={`text-xs font-bold ${saveMode === 'new' ? 'text-amber-900' : 'text-slate-600'}`}>Danh sách mới</span>
                             </button>
                             <button
                                 onClick={() => setSaveMode('existing')}

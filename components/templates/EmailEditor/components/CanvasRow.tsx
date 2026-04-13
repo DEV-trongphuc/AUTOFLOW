@@ -324,7 +324,7 @@ const CanvasRow: React.FC<CanvasRowProps> = (props) => {
                                                                 marginLeft: totalCols === 1 ? undefined : '-4px',
                                                                 marginRight: totalCols === 1 ? undefined : '-4px',
                                                             }}
-                                                            title="Kéo để thay đổi tỉ lệ cột"
+                                                            title="Kéo để thay đổi tỷ lệ cột"
                                                         >
                                                             <div style={{
                                                                 width: '3px',

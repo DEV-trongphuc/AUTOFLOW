@@ -18,7 +18,7 @@ while ($row = $stmt->fetch()) {
     $uniqueClickCount = $pdo->query("SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_activity WHERE campaign_id = '$cid' AND type = 'click_link'")->fetchColumn();
 
     // Unsubscribes
-    $unsubCount = $pdo->query("SELECT COUNT(*) FROM subscriber_activity WHERE campaign_id = '$cid' AND type = 'unsubscribe'")->fetchColumn();
+    $unsubCount = $pdo->query("SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_activity WHERE campaign_id = '$cid' AND type = 'unsubscribe'")->fetchColumn();
 
     // Sent
     $sentCount = $pdo->query("SELECT COUNT(*) FROM subscriber_activity WHERE campaign_id = '$cid' AND type = 'receive_email'")->fetchColumn();
@@ -50,7 +50,7 @@ while ($row = $stmtF->fetch()) {
     $sentCount = $pdo->query("SELECT COUNT(*) FROM subscriber_activity WHERE flow_id = '$fid' AND type = 'receive_email'")->fetchColumn();
 
     // Unsubscribes
-    $unsubCount = $pdo->query("SELECT COUNT(*) FROM subscriber_activity WHERE flow_id = '$fid' AND type = 'unsubscribe'")->fetchColumn();
+    $unsubCount = $pdo->query("SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_activity WHERE flow_id = '$fid' AND type = 'unsubscribe'")->fetchColumn();
 
     // Failed
     $failCount = $pdo->query("SELECT COUNT(*) FROM mail_delivery_logs WHERE flow_id = '$fid' AND status = 'failed'")->fetchColumn();
