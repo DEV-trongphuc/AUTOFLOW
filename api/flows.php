@@ -1112,22 +1112,34 @@ if (isset($_GET['route']) && $_GET['route'] === 'migrate-users') {
             while (isset($stepMap[$currentId]) && ($stepMap[$currentId]['type'] ?? '') === 'wait' && !isset($visited[$currentId])) {
                 $visited[$currentId] = true;
                 $s = $stepMap[$currentId];
-                $dur = (int) ($s['config']['duration'] ?? 1);
-                $unit = $s['config']['unit'] ?? 'hours';
+                $mode = $s['config']['mode'] ?? 'duration';
 
-                // Convert to seconds for accumulation
-                // [BUG-E1 FIX] Added 'weeks' unit (same fix as Bug C2 in worker_campaign.php)
-                $seconds = $dur;
-                if ($unit === 'minutes' || $unit === 'mins')
-                    $seconds *= 60;
-                elseif ($unit === 'hours')
-                    $seconds *= 3600;
-                elseif ($unit === 'days')
-                    $seconds *= 86400;
-                elseif ($unit === 'weeks')
-                    $seconds *= 604800;
-
-                $totalDurationSeconds += $seconds;
+                if ($mode === 'duration') {
+                    $dur = (int) ($s['config']['duration'] ?? 1);
+                    $unit = $s['config']['unit'] ?? 'hours';
+                    $seconds = $dur;
+                    if ($unit === 'minutes' || $unit === 'mins') $seconds *= 60;
+                    elseif ($unit === 'hours') $seconds *= 3600;
+                    elseif ($unit === 'days') $seconds *= 86400;
+                    elseif ($unit === 'weeks') $seconds *= 604800;
+                    $totalDurationSeconds += $seconds;
+                } elseif ($mode === 'until_date') {
+                    $specDate = $s['config']['specificDate'] ?? '';
+                    $targetTime = $s['config']['untilTime'] ?? '09:00';
+                    if ($specDate) {
+                        $targetTs = strtotime("$specDate $targetTime:00");
+                        if ($targetTs > time()) {
+                            $totalDurationSeconds += ($targetTs - time());
+                        }
+                    }
+                } elseif ($mode === 'until') {
+                    $targetTime = $s['config']['untilTime'] ?? '09:00';
+                    $dt = new DateTime();
+                    $parts2 = explode(':', $targetTime);
+                    $dt->setTime((int)$parts2[0], (int)($parts2[1] ?? 0), 0);
+                    if ($dt->getTimestamp() <= time()) $dt->modify('+1 day');
+                    $totalDurationSeconds += ($dt->getTimestamp() - time());
+                }
 
                 // Jump to next
                 $nextId = trim($s['nextStepId'] ?? '');
@@ -1393,16 +1405,17 @@ if (isset($_GET['route']) && $_GET['route'] === 'step-unsubscribes') {
             $params[] = "%$search%";
         }
 
-        $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM subscriber_activity sa JOIN subscribers s ON sa.subscriber_id = s.id WHERE $where");
+        $stmtCount = $pdo->prepare("SELECT COUNT(DISTINCT s.id) FROM subscriber_activity sa JOIN subscribers s ON sa.subscriber_id = s.id WHERE $where");
         $stmtCount->execute($params);
         $total = (int) $stmtCount->fetchColumn();
 
-        $sql = "SELECT s.email, CONCAT(s.first_name, ' ', s.last_name) as name, 
-                       sa.created_at as timestamp
+        $sql = "SELECT s.id as subscriber_id, s.email, CONCAT(s.first_name, ' ', s.last_name) as name, 
+                       MAX(sa.created_at) as timestamp
                 FROM subscriber_activity sa
                 JOIN subscribers s ON sa.subscriber_id = s.id
                 WHERE $where
-                ORDER BY sa.created_at DESC
+                GROUP BY s.id, s.email, name
+                ORDER BY timestamp DESC
                 LIMIT $limit OFFSET $offset";
 
         $stmt = $pdo->prepare($sql);
@@ -1618,8 +1631,13 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-next-step') {
         }
 
         // [OPTIMIZATION] Expand Step IDs to include wait steps pointing to the current action/template
+        // [BUG-FIX] Only expand during executeAction mode (sending emails from waiting waiters).
+        // In SKIP mode, expanding upstream wait steps would move subscribers who haven't finished
+        // their wait yet (e.g. people still at step#0 "Chờ 1 Ngày" get dragged to step#2 when
+        // admin clicks "Next Step" on step#1 "Email Follow-up"). NEVER expand in skip mode.
         $expandedStepIds = [$currentStepId];
-        if ($currentStepData) {
+        if ($currentStepData && $executeAction) {
+            // Only expand for execute-action mode: find wait steps that feed into this action
             foreach ($steps as $s) {
                 if (strtolower($s['type'] ?? '') === 'wait' && trim($s['nextStepId'] ?? '') === trim($currentStepId)) {
                     $expandedStepIds[] = trim($s['id']);
@@ -2188,8 +2206,9 @@ switch ($method) {
 
             $steps = json_encode($data['steps'] ?? []);
             $config = json_encode($data['config'] ?? (object) []);
-            $sql = "INSERT INTO flows (id, name, description, status, steps, config, trigger_type, created_at, stat_enrolled, stat_completed, stat_total_sent, stat_total_opened, stat_unique_opened, stat_total_clicked, stat_unique_clicked, stat_total_failed, stat_total_unsubscribed) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), 0, 0, 0, 0, 0, 0, 0, 0, 0)";
+            $sql = "INSERT INTO flows (id, name, description, status, steps, config, trigger_type) VALUES (?, ?, ?, ?, ?, ?, ?)";
             $pdo->prepare($sql)->execute([$id, $data['name'] ?? 'Flow mới', $data['description'] ?? '', $data['status'] ?? 'draft', $steps, $config, $triggerType]);
+            logSystemActivity($pdo, 'flows', 'create', $id, $data['name'] ?? 'Flow mới', ['status' => $data['status'] ?? 'draft']);
             jsonResponse(true, ['id' => $id]);
         } catch (Throwable $e) {
             jsonResponse(false, null, 'Lỗi khi tạo automation: ' . $e->getMessage());
@@ -2258,12 +2277,16 @@ switch ($method) {
                         elseif ($unit === 'weeks')
                             $seconds *= 604800;
 
-                        // [FIX] Removed duplicate DATE_ADD SQL UPDATE that was here.
-                        // That SQL ran first and if updated_at has ON UPDATE CURRENT_TIMESTAMP,
-                        // it would reset updated_at to NOW(). Then the PHP loop below would
-                        // base its calculation on NOW() instead of the original wait-entry time,
-                        // causing subscribers to restart their wait from scratch.
-                        // The PHP loop below handles rescheduling correctly using last_step_at.
+                        // [FIX] We must update scheduled_at relative to last_step_at to ensure 
+                        // subscribers don't restart their wait from NOW(). last_step_at accurately 
+                        // reflects when they entered the wait step.
+                        $stmtUpdateWait = $pdo->prepare("
+                            UPDATE subscriber_flow_states 
+                            SET scheduled_at = DATE_ADD(IFNULL(last_step_at, created_at), INTERVAL ? SECOND) 
+                            WHERE flow_id = ? AND step_id = ? AND status IN ('waiting', 'processing')
+                        ");
+                        $stmtUpdateWait->execute([$seconds, $path, $nsId]);
+                        $rescheduledCount += $stmtUpdateWait->rowCount();
                     }
                 }
             }
@@ -2273,6 +2296,7 @@ switch ($method) {
 
             $sql = "UPDATE flows SET name=?, description=?, status=?, steps=?, config=?, trigger_type=?, stat_enrolled=?, stat_completed=?, stat_total_sent=?, stat_total_opened=?, stat_unique_opened=?, stat_total_clicked=?, stat_unique_clicked=?, stat_total_failed=?, stat_total_unsubscribed=?, stat_zalo_sent=?, archived_at=? WHERE id=?";
             $pdo->prepare($sql)->execute([$data['name'], $data['description'], $data['status'], $steps, $config, $triggerType, (int) ($stats['enrolled'] ?? 0), (int) ($stats['completed'] ?? 0), (int) ($stats['totalSent'] ?? 0), (int) ($stats['totalOpened'] ?? 0), (int) ($stats['uniqueOpened'] ?? 0), (int) ($stats['totalClicked'] ?? 0), (int) ($stats['uniqueClicked'] ?? 0), (int) ($stats['totalFailed'] ?? 0), (int) ($stats['totalUnsubscribed'] ?? 0), (int) ($stats['zaloSent'] ?? 0), $data['archivedAt'] ?? null, $path]);
+            logSystemActivity($pdo, 'flows', 'update', $path, $data['name'], ['status' => $data['status']]);
 
             if ($data['status'] === 'active') {
                 $stepsArr = json_decode($steps, true);
@@ -2315,6 +2339,45 @@ switch ($method) {
                                     $totalAdded = 0;
                                     $pastTime = date('Y-m-d H:i:s', strtotime('-1 second'));
 
+                                    // [SMART SCHEDULE FIX] Predict wait-time for step 1
+                                    $initialSchedule = $pastTime;
+                                    foreach ($stepsArr as $fs) {
+                                        if (($fs['id'] ?? '') === $trigger['nextStepId'] && strtolower($fs['type'] ?? '') === 'wait') {
+                                            $fsWaitConfig = $fs['config'] ?? [];
+                                            $fsWaitMode = $fsWaitConfig['mode'] ?? 'duration';
+                                            if ($fsWaitMode === 'duration') {
+                                                $dur = (int) ($fsWaitConfig['duration'] ?? 0);
+                                                $unit = $fsWaitConfig['unit'] ?? 'minutes';
+                                                $unitSeconds = match ($unit) {
+                                                    'weeks' => 604800,
+                                                    'days' => 86400,
+                                                    'hours' => 3600,
+                                                    default => 60,
+                                                };
+                                                if (($unitSeconds * $dur) > 0) {
+                                                    $initialSchedule = date('Y-m-d H:i:s', time() + ($unitSeconds * $dur));
+                                                }
+                                            } elseif ($fsWaitMode === 'until_date') {
+                                                $specDate = $fsWaitConfig['specificDate'] ?? '';
+                                                $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
+                                                if ($specDate) {
+                                                    $targetTs = strtotime("$specDate $targetTime:00");
+                                                    if ($targetTs > time()) {
+                                                        $initialSchedule = date('Y-m-d H:i:s', $targetTs);
+                                                    }
+                                                }
+                                            } elseif ($fsWaitMode === 'until') {
+                                                $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
+                                                $dt = new DateTime();
+                                                $parts2 = explode(':', $targetTime);
+                                                $dt->setTime((int)$parts2[0], (int)($parts2[1] ?? 0), 0);
+                                                if ($dt->getTimestamp() <= time()) $dt->modify('+1 day');
+                                                $initialSchedule = $dt->format('Y-m-d H:i:s');
+                                            }
+                                            break;
+                                        }
+                                    }
+
                                     foreach ($chunks as $chunk) {
                                         $placeholders = implode(',', array_fill(0, count($chunk), '?'));
 
@@ -2350,7 +2413,7 @@ switch ($method) {
                                         }
 
                                         // Params: [flowId, stepId, time] + [sub IDs] + [checkParams]
-                                        $params = array_merge([$path, $trigger['nextStepId'], $pastTime], $chunk, $checkParams);
+                                        $params = array_merge([$path, $trigger['nextStepId'], $initialSchedule], $chunk, $checkParams);
 
                                         $stmtIns = $pdo->prepare($sqlIns);
                                         $stmtIns->execute($params);
@@ -2571,6 +2634,7 @@ switch ($method) {
             }
 
             // 5. Delete Flow + its snapshots
+            logSystemActivity($pdo, 'flows', 'delete', $path, "Flow $path");
             $pdo->prepare("DELETE FROM flows WHERE id = ?")->execute([$path]);
             try {
                 $pdo->prepare("DELETE FROM flow_snapshots WHERE flow_id = ?")->execute([$path]);

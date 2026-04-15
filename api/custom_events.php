@@ -15,8 +15,8 @@ try {
     if ($method === 'POST' && $route === 'track') {
         try {
             $data = json_decode(file_get_contents("php://input"), true);
-            $scoring = require 'scoring_config.php';
-            $pCustom = $scoring['custom_event'] ?? 5;
+            $LSC = function_exists('getGlobalLeadScoreConfig') ? getGlobalLeadScoreConfig($pdo) : [];
+            $pCustom = $LSC['leadscore_custom_event'] ?? $data['lead_score'] ?? 5;
             $now = date('Y-m-d H:i:s');
 
             $email = trim($data['email'] ?? '');

@@ -213,6 +213,47 @@ try {
                         // that happen on the same date. Using direct INSERT ensures only
                         // THIS flow (already correctly filtered above) receives enrollments.
                         $pastTime = date('Y-m-d H:i:s', strtotime('-1 second'));
+                        $initialSchedule = $pastTime;
+
+                        // [SMART SCHEDULE FIX] Calculate future wait date if first step is wait
+                        foreach ($steps as $fs) {
+                            if ($fs['id'] === $trigger['nextStepId'] && strtolower($fs['type'] ?? '') === 'wait') {
+                                $fsWaitConfig = $fs['config'] ?? [];
+                                $fsWaitMode = $fsWaitConfig['mode'] ?? 'duration';
+                                if ($fsWaitMode === 'duration') {
+                                    $dur = (int) ($fsWaitConfig['duration'] ?? 0);
+                                    $unit = $fsWaitConfig['unit'] ?? 'minutes';
+                                    $unitSeconds = match ($unit) {
+                                        'weeks' => 604800,
+                                        'days' => 86400,
+                                        'hours' => 3600,
+                                        default => 60,
+                                    };
+                                    $delay = $unitSeconds * $dur;
+                                    if ($delay > 0) {
+                                        $initialSchedule = date('Y-m-d H:i:s', time() + $delay);
+                                    }
+                                } elseif ($fsWaitMode === 'until_date') {
+                                    $specDate   = $fsWaitConfig['specificDate'] ?? '';
+                                    $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
+                                    if ($specDate) {
+                                        $targetTs = strtotime("$specDate $targetTime:00");
+                                        if ($targetTs > time()) {
+                                            $initialSchedule = date('Y-m-d H:i:s', $targetTs);
+                                        }
+                                    }
+                                } elseif ($fsWaitMode === 'until') {
+                                    $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
+                                    $dt = new DateTime();
+                                    $parts2 = explode(':', $targetTime);
+                                    $dt->setTime((int)$parts2[0], (int)($parts2[1] ?? 0), 0);
+                                    if ($dt->getTimestamp() <= time()) $dt->modify('+1 day');
+                                    $initialSchedule = $dt->format('Y-m-d H:i:s');
+                                }
+                                break;
+                            }
+                        }
+
                         $subPlaceholders = implode(',', array_fill(0, count($subs), '?'));
                         $sqlDirect = "INSERT INTO subscriber_flow_states
                             (subscriber_id, flow_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at)
@@ -225,7 +266,7 @@ try {
                                 AND sfs.created_at > DATE_SUB(NOW(), INTERVAL $cooldownHours HOUR)
                             )";
                         $directParams = array_merge(
-                            [$flow['id'], $trigger['nextStepId'], $pastTime],
+                            [$flow['id'], $trigger['nextStepId'], $initialSchedule],
                             $subs,
                             [$flow['id']]
                         );

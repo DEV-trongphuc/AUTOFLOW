@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { X, Search, RefreshCcw, Check, MailOpen, Clock, Download, MousePointer2, MessageSquare, AlertOctagon, Reply, MousePointerClick, Monitor, Smartphone, Tablet, Globe, FastForward, Trash2, Play, SkipForward, UserPlus, Send, Loader2, ChevronDown, Tag, List } from 'lucide-react';
+import { X, Search, RefreshCcw, Check, MailOpen, Clock, Download, MousePointer2, MessageSquare, AlertOctagon, Reply, MousePointerClick, Monitor, Smartphone, Tablet, Globe, FastForward, Trash2, Play, SkipForward, UserPlus, UserMinus, Send, Loader2, ChevronDown, Tag, List } from 'lucide-react';
 import { api } from '../../../services/storageAdapter';
 import Skeleton from '../../common/Skeleton';
 import LinkClicksTab from '../../common/LinkClicksTab';
@@ -731,515 +731,538 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                             )}
                             <table className="w-full text-left">
                                 <thead className="bg-slate-50/80 border-b border-slate-200 text-left sticky top-0 z-20 backdrop-blur-sm">
-                                {selectedIds.size > 0 && ['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive'].includes(activeTab) ? (
-                                    <tr className="bg-[#fffbf0] border-b border-orange-200 shadow-sm animate-in fade-in duration-200">
-                                        <th colSpan={['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive'].includes(activeTab) ? 5 : 4} className="px-6 py-3">
-                                            <div className="flex items-center justify-between w-full">
-                                                <div className="flex items-center gap-3">
-                                                    <button onClick={handleSelectAll} className="p-1 hover:bg-orange-100 rounded text-orange-600 transition-colors" title="Bỏ chọn tất cả">
-                                                        <div className="relative flex items-center justify-center">
-                                                            <input type="checkbox" checked readOnly className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-orange-400 bg-orange-400" />
-                                                            <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none" />
-                                                        </div>
-                                                    </button>
-                                                    <span className="text-xs font-bold text-slate-700">Đã chọn <span className="text-orange-600 font-black text-sm">{selectedIds.size}</span> Khách hàng</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    {stepType !== 'inactive' && (
-                                                        <>
-                                                            <button
-                                                                onClick={handleBulkExecute}
-                                                                disabled={bulkActionLoading}
-                                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-emerald-100 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 rounded-lg text-xs font-bold shadow-sm transition-all disabled:opacity-50"
-                                                            >
-                                                                <Play className="w-3.5 h-3.5" />
-                                                                <span>{bulkActionLoading ? 'Đang gửi...' : 'Complete & Next'}</span>
-                                                            </button>
-                                                            <button
-                                                                onClick={handleBulkSkip}
-                                                                disabled={bulkActionLoading}
-                                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-100 text-blue-600 hover:bg-blue-50 hover:border-blue-200 rounded-lg text-xs font-bold shadow-sm transition-all disabled:opacity-50"
-                                                            >
-                                                                <SkipForward className="w-3.5 h-3.5" />
-                                                                <span>{bulkActionLoading ? 'Đang gửi...' : 'Bỏ qua & Next'}</span>
-                                                            </button>
-                                                            <div className="h-4 w-px bg-orange-200 mx-1"></div>
-                                                        </>
-                                                    )}
+                                    {selectedIds.size > 0 && ['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive'].includes(activeTab) ? (
+                                        <tr className="bg-[#fffbf0] border-b border-orange-200 shadow-sm animate-in fade-in duration-200">
+                                            <th colSpan={['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive'].includes(activeTab) ? 5 : 4} className="px-6 py-3">
+                                                <div className="flex items-center justify-between w-full">
+                                                    <div className="flex items-center gap-3">
+                                                        <button onClick={handleSelectAll} className="p-1 hover:bg-orange-100 rounded text-orange-600 transition-colors" title="Bỏ chọn tất cả">
+                                                            <div className="relative flex items-center justify-center">
+                                                                <input type="checkbox" checked readOnly className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-orange-400 bg-orange-400" />
+                                                                <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none" />
+                                                            </div>
+                                                        </button>
+                                                        <span className="text-xs font-bold text-slate-700">Đã chọn <span className="text-orange-600 font-black text-sm">{selectedIds.size}</span> Khách hàng</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        {stepType !== 'inactive' && (
+                                                            <>
+                                                                <button
+                                                                    onClick={handleBulkExecute}
+                                                                    disabled={bulkActionLoading}
+                                                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-emerald-100 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 rounded-lg text-xs font-bold shadow-sm transition-all disabled:opacity-50"
+                                                                >
+                                                                    <Play className="w-3.5 h-3.5" />
+                                                                    <span>{bulkActionLoading ? 'Đang gửi...' : 'Complete & Next'}</span>
+                                                                </button>
+                                                                <button
+                                                                    onClick={handleBulkSkip}
+                                                                    disabled={bulkActionLoading}
+                                                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-100 text-blue-600 hover:bg-blue-50 hover:border-blue-200 rounded-lg text-xs font-bold shadow-sm transition-all disabled:opacity-50"
+                                                                >
+                                                                    <SkipForward className="w-3.5 h-3.5" />
+                                                                    <span>{bulkActionLoading ? 'Đang gửi...' : 'Bỏ qua & Next'}</span>
+                                                                </button>
+                                                                <div className="h-4 w-px bg-orange-200 mx-1"></div>
+                                                            </>
+                                                        )}
 
-                                                    {/* Quick Actions Dropdown for Inactive Tab */}
-                                                    {stepType === 'inactive' && (
-                                                        <div className="relative">
-                                                            <button
-                                                                onClick={() => setQuickActionsOpen(!quickActionsOpen)}
-                                                                disabled={bulkActionLoading}
-                                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700 rounded-lg text-xs font-bold shadow-sm transition-all disabled:opacity-50"
-                                                            >
-                                                                <Tag className="w-3.5 h-3.5" />
-                                                                <span>Hành động nhanh</span>
-                                                                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${quickActionsOpen ? 'rotate-180' : ''}`} />
-                                                            </button>
+                                                        {/* Quick Actions Dropdown for Inactive Tab */}
+                                                        {stepType === 'inactive' && (
+                                                            <div className="relative">
+                                                                <button
+                                                                    onClick={() => setQuickActionsOpen(!quickActionsOpen)}
+                                                                    disabled={bulkActionLoading}
+                                                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700 rounded-lg text-xs font-bold shadow-sm transition-all disabled:opacity-50"
+                                                                >
+                                                                    <Tag className="w-3.5 h-3.5" />
+                                                                    <span>Hành động nhanh</span>
+                                                                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${quickActionsOpen ? 'rotate-180' : ''}`} />
+                                                                </button>
 
-                                                            {quickActionsOpen && (
-                                                                <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            setQuickActionsOpen(false);
-                                                                            setTagModalOpen(true);
-                                                                        }}
-                                                                        className="w-full px-4 py-2.5 text-left hover:bg-violet-50 transition-colors flex items-center gap-3 group"
-                                                                    >
-                                                                        <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center group-hover:bg-violet-200 transition-colors">
-                                                                            <Tag className="w-4 h-4 text-violet-600" />
-                                                                        </div>
-                                                                        <div>
-                                                                            <p className="text-xs font-bold text-slate-700">Gắn Tag</p>
-                                                                            <p className="text-[10px] text-slate-400">Thêm nhãn cho Khách hàng</p>
-                                                                        </div>
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            setQuickActionsOpen(false);
-                                                                            setListModalOpen(true);
-                                                                        }}
-                                                                        className="w-full px-4 py-2.5 text-left hover:bg-blue-50 transition-colors flex items-center gap-3 group"
-                                                                    >
-                                                                        <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                                                                            <List className="w-4 h-4 text-blue-600" />
-                                                                        </div>
-                                                                        <div>
-                                                                            <p className="text-xs font-bold text-slate-700">Thêm vào List</p>
-                                                                            <p className="text-[10px] text-slate-400">Thêm vào danh sách</p>
-                                                                        </div>
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            setQuickActionsOpen(false);
-                                                                            setStatusModalOpen(true);
-                                                                        }}
-                                                                        className="w-full px-4 py-2.5 text-left hover:bg-emerald-50 transition-colors flex items-center gap-3 group"
-                                                                    >
-                                                                        <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
-                                                                            <Check className="w-4 h-4 text-emerald-600" />
-                                                                        </div>
-                                                                        <div>
-                                                                            <p className="text-xs font-bold text-slate-700">Đổi Trạng thái</p>
-                                                                            <p className="text-[10px] text-slate-400">Cập nhật Trạng thái</p>
-                                                                        </div>
-                                                                    </button>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
+                                                                {quickActionsOpen && (
+                                                                    <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                setQuickActionsOpen(false);
+                                                                                setTagModalOpen(true);
+                                                                            }}
+                                                                            className="w-full px-4 py-2.5 text-left hover:bg-violet-50 transition-colors flex items-center gap-3 group"
+                                                                        >
+                                                                            <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center group-hover:bg-violet-200 transition-colors">
+                                                                                <Tag className="w-4 h-4 text-violet-600" />
+                                                                            </div>
+                                                                            <div>
+                                                                                <p className="text-xs font-bold text-slate-700">Gắn Tag</p>
+                                                                                <p className="text-[10px] text-slate-400">Thêm nhãn cho Khách hàng</p>
+                                                                            </div>
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                setQuickActionsOpen(false);
+                                                                                setListModalOpen(true);
+                                                                            }}
+                                                                            className="w-full px-4 py-2.5 text-left hover:bg-blue-50 transition-colors flex items-center gap-3 group"
+                                                                        >
+                                                                            <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                                                                                <List className="w-4 h-4 text-blue-600" />
+                                                                            </div>
+                                                                            <div>
+                                                                                <p className="text-xs font-bold text-slate-700">Thêm vào List</p>
+                                                                                <p className="text-[10px] text-slate-400">Thêm vào danh sách</p>
+                                                                            </div>
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                setQuickActionsOpen(false);
+                                                                                setStatusModalOpen(true);
+                                                                            }}
+                                                                            className="w-full px-4 py-2.5 text-left hover:bg-emerald-50 transition-colors flex items-center gap-3 group"
+                                                                        >
+                                                                            <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
+                                                                                <Check className="w-4 h-4 text-emerald-600" />
+                                                                            </div>
+                                                                            <div>
+                                                                                <p className="text-xs font-bold text-slate-700">Đổi Trạng thái</p>
+                                                                                <p className="text-[10px] text-slate-400">Cập nhật Trạng thái</p>
+                                                                            </div>
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
 
-                                                    <button
-                                                        onClick={handleBulkRemove}
-                                                        disabled={bulkActionLoading}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-100 text-rose-600 hover:bg-rose-50 hover:border-rose-200 rounded-lg text-xs font-bold shadow-sm transition-all disabled:opacity-50"
-                                                    >
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                        <span>{isGlobalSelected ? 'Loại bỏ TẤT CẢ' : 'Loại bỏ'}</span>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </th>
-                                    </tr>
-                                ) : (
-                                    <tr>
-                                        {/* Checkbox Column - Show for actionable tabs */}
-                                        {['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive'].includes(activeTab) && (
-                                            <th className="px-4 py-3 w-12">
-                                                <div className="relative flex items-center justify-center">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedIds.size === participants.length && participants.length > 0}
-                                                        onChange={handleSelectAll}
-                                                        className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-[#ffa900] checked:bg-[#ffa900] hover:border-[#ffa900]"
-                                                    />
-                                                    <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" />
-                                                </div>
-                                            </th>
-                                        )}
-                                        <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-[320px]">
-                                            Khách hàng
-                                        </th>
-                                        {(stepType === 'action' || stepType === 'zalo_zns') && activeTab !== 'waiting' && (
-                                            <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider w-[120px]">
-                                                Gửi lại
-                                            </th>
-                                        )}
-                                        {stepType === 'completed' ? (
-                                            <>
-                                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Bước cuối cùng</th>
-                                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Trạng thái</th>
-                                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Số lần</th>
-                                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Thời gian</th>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-[200px]">Trạng thái</th>
-                                                {activeTab === 'opened' && (
-                                                    <>
-                                                        <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">S? L?N</th>
-                                                        <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Thời gian</th>
-                                                    </>
-                                                )}
-                                                {activeTab === 'waiting' ? (
-                                                    <>
-                                                        <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Thời gian VÀO</th>
-                                                        <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Thời gian CH?</th>
-                                                    </>
-                                                ) : activeTab !== 'opened' ? (
-                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-left">Thời gian</th>
-                                                ) : null}
-
-                                                {activeTab !== 'opened' && activeTab !== 'all_touched' && activeTab !== 'waiting' && activeTab !== 'failed' && stepType !== 'zalo_zns' && (
-                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
-                                                        ĐỊA CHỈ IP
-                                                    </th>
-                                                )}
-                                            </>
-                                        )}
-                                    </tr>
-                                )}
-                            </thead>
-                            <tbody className="divide-y divide-slate-50 relative">
-                                {/* "Select All" row - Show when all on page are selected and there are more */}
-                                {selectedIds.size === participants.length && participants.length > 0 && pagination.total > participants.length && ['waiting', 'failed', 'unsubscribed', 'zns_failed', 'zns_skipped'].includes(activeTab) && (
-                                    <tr className="bg-orange-50/50">
-                                        <td colSpan={['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive', 'zns_skipped'].includes(activeTab) ? 5 : 4} className="px-6 py-2.5 text-center">
-                                            {isGlobalSelected ? (
-                                                <p className="text-xs font-medium text-slate-600">đã chọn tất cả <span className="font-bold text-orange-600">{pagination.total.toLocaleString()}</span> Khách hàng. <button onClick={() => setIsGlobalSelected(false)} className="ml-2 text-blue-600 font-bold hover:underline">B? chọn</button></p>
-                                            ) : (
-                                                <p className="text-xs font-medium text-slate-600">Đã chọn {participants.length} Khách hàng. <button onClick={() => setIsGlobalSelected(true)} className="ml-1 text-orange-600 font-bold hover:underline italic underline-offset-2">Ch?n t?t c? {pagination.total.toLocaleString()} Khách hàng?</button></p>
-                                            )}
-                                        </td>
-                                    </tr>
-                                )}
-
-                                {loading && participants.length === 0 ? (
-                                    [...Array(6)].map((_, i) => (
-                                        <tr key={i}>
-                                            {['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive', 'zns_skipped'].includes(activeTab) && <td className="px-4 py-4"><Skeleton variant="rectangular" width={16} height={16} /></td>}
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <Skeleton variant="circular" width={32} height={32} />
-                                                    <div className="space-y-2">
-                                                        <Skeleton variant="text" width={100} height={12} />
-                                                        <Skeleton variant="text" width={150} height={10} />
+                                                        <button
+                                                            onClick={handleBulkRemove}
+                                                            disabled={bulkActionLoading}
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-100 text-rose-600 hover:bg-rose-50 hover:border-rose-200 rounded-lg text-xs font-bold shadow-sm transition-all disabled:opacity-50"
+                                                        >
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                            <span>{isGlobalSelected ? 'Loại bỏ TẤT CẢ' : 'Loại bỏ'}</span>
+                                                        </button>
                                                     </div>
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-4"><Skeleton variant="text" width={80} height={12} /></td>
-                                            <td className="px-6 py-4"><Skeleton variant="text" width={60} height={12} /></td>
-                                            <td className="px-6 py-4 text-right"><Skeleton variant="text" width={100} height={12} /></td>
+                                            </th>
                                         </tr>
-                                    ))
-                                ) : participants.length === 0 ? (
-                                    <tr><td colSpan={['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive', 'zns_skipped'].includes(activeTab) ? 6 : 5} className="py-20 text-center">
-                                        <p className="text-xs font-bold text-slate-400">Không tìm thấy dữ liệu nào.</p>
-                                    </td></tr>
-                                ) : participants.map((p, i) => {
-                                    const participantId = p.subscriber_id || p.id;
-                                    return (
-                                        <tr key={i} className="hover:bg-slate-50/80 transition-colors group">
-                                            {/* Checkbox - Show for actionable tabs */}
-                                            {['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive', 'zns_skipped'].includes(activeTab) && (
-                                                <td className="px-4 py-3">
+                                    ) : (
+                                        <tr>
+                                            {/* Checkbox Column - Show for actionable tabs */}
+                                            {['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive'].includes(activeTab) && (
+                                                <th className="px-4 py-3 w-12">
                                                     <div className="relative flex items-center justify-center">
                                                         <input
                                                             type="checkbox"
-                                                            checked={selectedIds.has(participantId)}
-                                                            onChange={() => handleSelectOne(participantId)}
+                                                            checked={selectedIds.size === participants.length && participants.length > 0}
+                                                            onChange={handleSelectAll}
                                                             className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-[#ffa900] checked:bg-[#ffa900] hover:border-[#ffa900]"
                                                         />
                                                         <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" />
                                                     </div>
-                                                </td>
+                                                </th>
                                             )}
-                                            <td className="px-6 py-3">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-xs uppercase">
-                                                        {p.email.substring(0, 2)}
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors">{p.name || 'Unknown'}</p>
-                                                        <p className="text-[10px] text-slate-400">
-                                                            {stepType === 'zalo_zns' ? (p.phone || p.phone_number || p.phoneNumber || p.email) : p.email}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </td>
-
-                                            {/* Dedicated Action Column */}
-                                            {(stepType === 'action' || stepType === 'zalo_zns') && activeTab !== 'waiting' && (
-                                                <td className="px-6 py-3 text-center">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleResendInit(p);
-                                                        }}
-                                                        disabled={bulkActionLoading && (resendingParticipant?.id === participantId || resendingParticipant?.subscriber_id === participantId)}
-                                                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all inline-flex items-center justify-center border border-slate-100 shadow-sm bg-white disabled:opacity-50"
-                                                        title="Gửi lại cho người này"
-                                                    >
-                                                        {bulkActionLoading && (resendingParticipant?.id === participantId || resendingParticipant?.subscriber_id === participantId) ? (
-                                                            <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
-                                                        ) : (
-                                                            <Send className="w-3.5 h-3.5" />
-                                                        )}
-                                                    </button>
-                                                </td>
+                                            <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-[320px]">
+                                                Khách hàng
+                                            </th>
+                                            {(stepType === 'action' || stepType === 'zalo_zns') && activeTab !== 'waiting' && activeTab !== 'unsubscribed' && (
+                                                <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider w-[120px]">
+                                                    Gửi lại
+                                                </th>
                                             )}
-
                                             {stepType === 'completed' ? (
                                                 <>
-                                                    <td className="px-6 py-3 text-xs text-slate-600 font-medium">
-                                                        {p.stepId ? getStepName(p.stepId) : '--'}
-                                                    </td>
-                                                    <td className="px-6 py-3 text-center">
-                                                        <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md text-[10px] font-bold border border-emerald-100 inline-flex items-center gap-1">
-                                                            <Check className="w-3 h-3" /> Hoàn thành
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-3 text-center">
-                                                        <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-bold">
-                                                            {p.completion_count || 1}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-3 text-xs font-medium text-slate-500 text-right">
-                                                        <span className="inline-flex items-center gap-1">
-                                                            <Clock className="w-3 h-3" />
-                                                            {formatTime(p.completedAt || p.updatedAt || p.enteredAt)}
-                                                        </span>
-                                                    </td>
+                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Bước cuối cùng</th>
+                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Trạng thái</th>
+                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Số lần</th>
+                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Thời gian</th>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <td className="px-6 py-3">
-                                                        {p.status === 'completed' ? (
-                                                            <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md text-[10px] font-bold border border-emerald-100 inline-flex items-center gap-1">
-                                                                <Check className="w-3 h-3" /> Hoàn thành
-                                                            </span>
-                                                        ) : p.status === 'opened' ? (
-                                                            <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-md text-[10px] font-bold border border-blue-100 inline-flex items-center gap-1">
-                                                                <MailOpen className="w-3 h-3" /> Mở email
-                                                            </span>
-                                                        ) : (activeTab === 'failed' || p.status?.toLowerCase().includes('failed') || p.status?.toLowerCase().includes('error') || p.status?.toLowerCase() === 'fail') ? (
-                                                            <span className="bg-rose-50 text-rose-600 px-2 py-1 rounded-md text-[10px] font-bold border border-rose-100 inline-flex items-center gap-1">
-                                                                <AlertOctagon className="w-3 h-3" /> Lỗi
-                                                            </span>
-                                                        ) : p.status === 'zns_sent' ? (
-                                                            <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-md text-[10px] font-bold border border-blue-100 inline-flex items-center gap-1">
-                                                                <MessageSquare className="w-3 h-3" /> ZNS đã gửi
-                                                            </span>
-                                                        ) : p.status === 'zns_clicked' ? (
-                                                            <span className="bg-cyan-50 text-cyan-600 px-2 py-1 rounded-md text-[10px] font-bold border border-cyan-200 inline-flex items-center gap-1">
-                                                                <MousePointerClick className="w-3 h-3" /> ZNS Clicked
-                                                            </span>
-                                                        ) : p.status === 'zns_replied' ? (
-                                                            <span className="bg-violet-50 text-violet-600 px-2 py-1 rounded-md text-[10px] font-bold border border-violet-200 inline-flex items-center gap-1">
-                                                                <Reply className="w-3 h-3" /> ZNS Replied
-                                                            </span>
-                                                        ) : p.status === 'zns_failed' ? (
-                                                            <span className="bg-rose-50 text-rose-600 px-2 py-1 rounded-md text-[10px] font-bold border border-rose-100 inline-flex items-center gap-1">
-                                                                <AlertOctagon className="w-3 h-3" /> ZNS Lỗi
-                                                            </span>
-                                                        ) : p.status === 'zns_skipped' ? (
-                                                            <span className="bg-slate-50 text-slate-600 px-2 py-1 rounded-md text-[10px] font-bold border border-slate-200 inline-flex items-center gap-1">
-                                                                <SkipForward className="w-3 h-3" /> Bỏ qua
-                                                            </span>
-                                                        ) : p.status === 'unsubscribed' ? (
-                                                            <span className="bg-orange-50 text-orange-600 px-2 py-1 rounded-md text-[10px] font-bold border border-orange-100 inline-flex items-center gap-1">
-                                                                Hủy đăng ký
-                                                            </span>
-                                                        ) : p.status === 'condition_true' ? (
-                                                            <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md text-[10px] font-bold border border-emerald-100 inline-flex items-center gap-1">
-                                                                <Check className="w-3 h-3" /> Đã khớp
-                                                            </span>
-                                                        ) : p.status === 'condition_false' ? (
-                                                            <span className="bg-rose-50 text-rose-600 px-2 py-1 rounded-md text-[10px] font-bold border border-rose-100 inline-flex items-center gap-1">
-                                                                <X className="w-3 h-3" /> Không khớp
-                                                            </span>
-                                                        ) : (p.status === 'processed' || p.status === 'success') ? (
-                                                            <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md text-[10px] font-bold border border-emerald-100 inline-flex items-center gap-1">
-                                                                <Check className="w-3 h-3" /> Hoàn thành
-                                                            </span>
-                                                        ) : p.status === 'processing' ? (
-                                                            <span className="bg-violet-50 text-violet-600 px-2 py-1 rounded-md text-[10px] font-bold border border-violet-100 inline-flex items-center gap-1">
-                                                                <RefreshCcw className="w-3 h-3 animate-spin" /> Đang xử lý
-                                                            </span>
-                                                        ) : (p.lastError || p.last_error) && p.status === 'waiting' ? (
-                                                            <span className="bg-orange-50 text-orange-600 px-2 py-1 rounded-md text-[10px] font-bold border border-orange-200 inline-flex items-center gap-1" title={p.lastError || p.last_error}>
-                                                                <AlertOctagon className="w-3 h-3" /> {p.lastError || p.last_error}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="bg-amber-50 text-amber-600 px-2 py-1 rounded-md text-[10px] font-bold border border-amber-100 inline-flex items-center gap-1">
-                                                                <Clock className="w-3 h-3" /> Đang đợi
-                                                            </span>
-                                                        )}
-                                                    </td>
-
+                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-[200px]">Trạng thái</th>
                                                     {activeTab === 'opened' && (
                                                         <>
-                                                            <td className="px-6 py-3 text-center">
-                                                                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-bold">
-                                                                    {p.open_count || 1}
-                                                                </span>
-                                                            </td>
-                                                            <td className="px-6 py-3">
-                                                                {(() => {
-                                                                    const lastOpen = p.updatedAt || p.updated_at || p.lastOpenAt || p.completedAt;
-                                                                    const firstOpen = p.firstOpenAt || p.first_open_at;
-                                                                    return (
-                                                                        <div className="flex flex-col">
-                                                                            <span className="text-[11px] font-medium text-slate-700 flex items-center gap-1">
-                                                                                <Clock className="w-3 h-3" />
-                                                                                {lastOpen ? formatTime(lastOpen) : (firstOpen ? formatTime(firstOpen) : '--:--')}
-                                                                            </span>
-                                                                            {firstOpen && lastOpen && firstOpen !== lastOpen && (
-                                                                                <span className="text-[9px] text-slate-400 mt-0.5">
-                                                                                    Lần đầu: {formatTime(firstOpen)}
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                    );
-                                                                })()}
-                                                            </td>
+                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Số lần</th>
+                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Thời gian</th>
                                                         </>
                                                     )}
-
                                                     {activeTab === 'waiting' ? (
                                                         <>
-                                                            <td className="px-6 py-3 text-[11px] font-medium text-slate-500">
-                                                                <span className="inline-flex items-center gap-1">
-                                                                    <Clock className="w-3 h-3" />
-                                                                    {p.enteredAt ? formatTime(p.enteredAt) : '--'}
-                                                                </span>
-                                                            </td>
-                                                            <td className="px-6 py-3">
-                                                                {(() => {
-                                                                    // For Condition steps: Calculate deadline from enteredAt + waitDuration
-                                                                    if (stepType === 'condition' && stepConfig?.waitDuration) {
-                                                                        const enteredMs = new Date(p.enteredAt || p.createdAt || new Date()).getTime();
-                                                                        const duration = parseInt(stepConfig.waitDuration);
-                                                                        const unit = stepConfig.waitUnit || 'hours';
-
-                                                                        let durationMs = 0;
-                                                                        if (unit === 'minutes') durationMs = duration * 60 * 1000;
-                                                                        else if (unit === 'hours') durationMs = duration * 60 * 60 * 1000;
-                                                                        else if (unit === 'days') durationMs = duration * 24 * 60 * 60 * 1000;
-
-                                                                        const deadline = enteredMs + durationMs;
-                                                                        const diff = deadline - new Date().getTime();
-
-                                                                        if (diff > 0) {
-                                                                            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-                                                                            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                                                                            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                                                                            return (
-                                                                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600">
-                                                                                    <Clock className="w-3.5 h-3.5" />
-                                                                                    Còn {d > 0 ? `${d}d ` : ''}{h > 0 ? `${h}h ` : ''}{m}m
-                                                                                </span>
-                                                                            );
-                                                                        } else {
-                                                                            return (
-                                                                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-violet-600">
-                                                                                    <Clock className="w-3.5 h-3.5" />
-                                                                                    Sắp chạy ngay
-                                                                                </span>
-                                                                            );
-                                                                        }
-                                                                    }
-
-                                                                    // For ALL other steps (Email, Action, etc.): Show scheduledAt
-                                                                    const timeInfo = calculateTimeRemaining(p.scheduledAt);
-                                                                    return (
-                                                                        <div className="flex flex-col">
-                                                                            <span className={`inline-flex items-center gap-1 text-[11px] font-bold ${timeInfo.isUrgent
-                                                                                ? 'text-violet-600'
-                                                                                : (new Date(p.scheduledAt) > new Date() ? 'text-blue-600' : 'text-amber-600')
-                                                                                }`}>
-                                                                                <Clock className="w-3.5 h-3.5" />
-                                                                                {timeInfo.text || '--'}
-                                                                            </span>
-                                                                            <span className="text-[9px] text-slate-400">
-                                                                                {new Date(p.scheduledAt).toLocaleString('vi-VN')}
-                                                                            </span>
-                                                                        </div>
-                                                                    );
-                                                                })()}
-                                                            </td>
+                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Thời gian vào</th>
+                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Thời gian chờ</th>
                                                         </>
                                                     ) : activeTab !== 'opened' ? (
-                                                        <td className="px-6 py-3 text-[11px] font-medium text-slate-500">
-                                                            {(activeTab === 'failed' || activeTab === 'all_touched' || activeTab === 'inactive' || p.status === 'completed' || p.status === 'processed' || p.status === 'success' || p.status === 'condition_true' || p.status === 'condition_false' || p.status === 'unsubscribed' || p.status === 'zns_sent' || p.status === 'zns_skipped') ? (
-                                                                <span className="inline-flex items-center gap-1">
-                                                                    <Clock className="w-3 h-3" />
-                                                                    {activeTab === 'failed' && p.updated_at ? formatTime(p.updated_at) : (p.completedAt ? formatTime(p.completedAt) : (p.updated_at ? formatTime(p.updated_at) : (p.enteredAt ? formatTime(p.enteredAt) : '--:--')))}
-                                                                </span>
-                                                            ) : p.status === 'opened' ? (
-                                                                <span className="inline-flex items-center gap-1">
-                                                                    <Clock className="w-3 h-3" />
-                                                                    Lần đầu: {p.firstOpenAt ? formatTime(p.firstOpenAt) : '--:--'}
-                                                                </span>
-                                                            ) : (
-                                                                (() => {
-                                                                    // Special handling for Condition steps: Show Deadline instead of Polling Time
-                                                                    if (stepType === 'condition' && (activeTab as string) === 'waiting' && stepConfig?.waitDuration) {
-                                                                        const enteredMs = new Date(p.enteredAt || p.createdAt || new Date()).getTime();
-                                                                        const duration = parseInt(stepConfig.waitDuration);
-                                                                        const unit = stepConfig.waitUnit || 'hours';
-
-                                                                        let durationMs = 0;
-                                                                        if (unit === 'minutes') durationMs = duration * 60 * 1000;
-                                                                        else if (unit === 'hours') durationMs = duration * 60 * 60 * 1000;
-                                                                        else if (unit === 'days') durationMs = duration * 24 * 60 * 60 * 1000;
-
-                                                                        const deadline = enteredMs + durationMs;
-                                                                        const diff = deadline - new Date().getTime();
-
-                                                                        if (diff > 0) {
-                                                                            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-                                                                            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                                                                            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                                                                            return (
-                                                                                <span className="inline-flex items-center gap-1 font-bold text-blue-600" title={`Kiểm tra - Làm mới mỗi 1 phút. Hết hạn lúc: ${new Date(Date.now() + 30000).toLocaleTimeString()}`}>
-                                                                                    <Clock className="w-3.5 h-3.5" />
-                                                                                    Ch? {d > 0 ? `${d}d ` : ''}{h > 0 ? `${h}h ` : ''}{m}m (Deadline)
-                                                                                </span>
-                                                                            );
-                                                                        }
-                                                                    }
-
-                                                                    const timeInfo = calculateTimeRemaining(p.scheduledAt);
-                                                                    return (
-                                                                        <span className={`inline-flex items-center gap-1 font-bold ${timeInfo.isUrgent
-                                                                            ? 'text-violet-600'
-                                                                            : 'text-amber-600'
-                                                                            }`}>
-                                                                            <Clock className="w-3.5 h-3.5" />
-                                                                            {timeInfo.text || '--'}
-                                                                        </span>
-                                                                    );
-                                                                })()
-                                                            )}
-                                                        </td>
+                                                        <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-left">Thời gian</th>
                                                     ) : null}
 
-                                                    {activeTab !== 'opened' && activeTab !== 'all_touched' && activeTab !== 'waiting' && activeTab !== 'failed' && stepType !== 'zalo_zns' && (
-                                                        <td className="px-6 py-3 text-[11px] text-slate-500 font-mono text-right">
-                                                            {p.ip || '--'}
-                                                        </td>
+                                                    {activeTab !== 'unsubscribed' && activeTab !== 'opened' && activeTab !== 'all_touched' && activeTab !== 'waiting' && activeTab !== 'failed' && stepType !== 'zalo_zns' && (
+                                                        <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
+                                                            ĐỊA CHỈ IP
+                                                        </th>
                                                     )}
                                                 </>
                                             )}
                                         </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                                    )}
+                                </thead>
+                                <tbody className="divide-y divide-slate-50 relative">
+                                    {/* "Select All" row - Show when all on page are selected and there are more */}
+                                    {selectedIds.size === participants.length && participants.length > 0 && pagination.total > participants.length && ['waiting', 'failed', 'unsubscribed', 'zns_failed', 'zns_skipped'].includes(activeTab) && (
+                                        <tr className="bg-orange-50/50">
+                                            <td colSpan={['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive', 'zns_skipped'].includes(activeTab) ? 5 : 4} className="px-6 py-2.5 text-center">
+                                                {isGlobalSelected ? (
+                                                    <p className="text-xs font-medium text-slate-600">đã chọn tất cả <span className="font-bold text-orange-600">{pagination.total.toLocaleString()}</span> Khách hàng. <button onClick={() => setIsGlobalSelected(false)} className="ml-2 text-blue-600 font-bold hover:underline">B? chọn</button></p>
+                                                ) : (
+                                                    <p className="text-xs font-medium text-slate-600">Đã chọn {participants.length} Khách hàng. <button onClick={() => setIsGlobalSelected(true)} className="ml-1 text-orange-600 font-bold hover:underline italic underline-offset-2">Chọn tất cả {pagination.total.toLocaleString()} Khách hàng?</button></p>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    )}
+
+                                    {loading && participants.length === 0 ? (
+                                        [...Array(6)].map((_, i) => (
+                                            <tr key={i}>
+                                                {['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive', 'zns_skipped'].includes(activeTab) && <td className="px-4 py-4"><Skeleton variant="rectangular" width={16} height={16} /></td>}
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <Skeleton variant="circular" width={32} height={32} />
+                                                        <div className="space-y-2">
+                                                            <Skeleton variant="text" width={100} height={12} />
+                                                            <Skeleton variant="text" width={150} height={10} />
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4"><Skeleton variant="text" width={80} height={12} /></td>
+                                                <td className="px-6 py-4"><Skeleton variant="text" width={60} height={12} /></td>
+                                                <td className="px-6 py-4 text-right"><Skeleton variant="text" width={100} height={12} /></td>
+                                            </tr>
+                                        ))
+                                    ) : participants.length === 0 ? (
+                                        <tr><td colSpan={['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive', 'zns_skipped'].includes(activeTab) ? 6 : 5} className="py-20 text-center">
+                                            <p className="text-xs font-bold text-slate-400">Không tìm thấy dữ liệu nào.</p>
+                                        </td></tr>
+                                    ) : participants.map((p, i) => {
+                                        const participantId = p.subscriber_id || p.id;
+                                        return (
+                                            <tr key={i} className="hover:bg-slate-50/80 transition-colors group">
+                                                {/* Checkbox - Show for actionable tabs */}
+                                                {['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive', 'zns_skipped'].includes(activeTab) && (
+                                                    <td className="px-4 py-3">
+                                                        <div className="relative flex items-center justify-center">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedIds.has(participantId)}
+                                                                onChange={() => handleSelectOne(participantId)}
+                                                                className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-[#ffa900] checked:bg-[#ffa900] hover:border-[#ffa900]"
+                                                            />
+                                                            <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                                        </div>
+                                                    </td>
+                                                )}
+                                                <td className="px-6 py-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-xs uppercase">
+                                                            {p.email.substring(0, 2)}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors">{p.name || 'Unknown'}</p>
+                                                            <p className="text-[10px] text-slate-400">
+                                                                {stepType === 'zalo_zns' ? (p.phone || p.phone_number || p.phoneNumber || p.email) : p.email}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                {/* Dedicated Action Column */}
+                                                {(stepType === 'action' || stepType === 'zalo_zns') && activeTab !== 'waiting' && activeTab !== 'unsubscribed' && (
+                                                    <td className="px-6 py-3 text-center">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleResendInit(p);
+                                                            }}
+                                                            disabled={bulkActionLoading && (resendingParticipant?.id === participantId || resendingParticipant?.subscriber_id === participantId)}
+                                                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all inline-flex items-center justify-center border border-slate-100 shadow-sm bg-white disabled:opacity-50"
+                                                            title="Gửi lại cho người này"
+                                                        >
+                                                            {bulkActionLoading && (resendingParticipant?.id === participantId || resendingParticipant?.subscriber_id === participantId) ? (
+                                                                <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+                                                            ) : (
+                                                                <Send className="w-3.5 h-3.5" />
+                                                            )}
+                                                        </button>
+                                                    </td>
+                                                )}
+
+                                                {stepType === 'completed' ? (
+                                                    <>
+                                                        <td className="px-6 py-3 text-xs text-slate-600 font-medium">
+                                                            {p.stepId ? getStepName(p.stepId) : '--'}
+                                                        </td>
+                                                        <td className="px-6 py-3 text-center">
+                                                            <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md text-[10px] font-bold border border-emerald-100 inline-flex items-center gap-1">
+                                                                <Check className="w-3 h-3" /> Hoàn thành
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-3 text-center">
+                                                            <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                                                                {p.completion_count || 1}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-3 text-xs font-medium text-slate-500 text-right">
+                                                            <span className="inline-flex items-center gap-1">
+                                                                <Clock className="w-3 h-3" />
+                                                                {formatTime(p.completedAt || p.updatedAt || p.enteredAt)}
+                                                            </span>
+                                                        </td>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <td className="px-6 py-3">
+                                                            {p.status === 'completed' ? (
+                                                                <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md text-[10px] font-bold border border-emerald-100 inline-flex items-center gap-1">
+                                                                    <Check className="w-3 h-3" /> Hoàn thành
+                                                                </span>
+                                                            ) : p.status === 'opened' ? (
+                                                                <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-md text-[10px] font-bold border border-blue-100 inline-flex items-center gap-1">
+                                                                    <MailOpen className="w-3 h-3" /> Mở email
+                                                                </span>
+                                                            ) : (activeTab === 'failed' || p.status?.toLowerCase().includes('failed') || p.status?.toLowerCase().includes('error') || p.status?.toLowerCase() === 'fail') ? (
+                                                                <span className="bg-rose-50 text-rose-600 px-2 py-1 rounded-md text-[10px] font-bold border border-rose-100 inline-flex items-center gap-1">
+                                                                    <AlertOctagon className="w-3 h-3" /> Lỗi
+                                                                </span>
+                                                            ) : p.status === 'zns_sent' ? (
+                                                                <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-md text-[10px] font-bold border border-blue-100 inline-flex items-center gap-1">
+                                                                    <MessageSquare className="w-3 h-3" /> ZNS đã gửi
+                                                                </span>
+                                                            ) : p.status === 'zns_clicked' ? (
+                                                                <span className="bg-cyan-50 text-cyan-600 px-2 py-1 rounded-md text-[10px] font-bold border border-cyan-200 inline-flex items-center gap-1">
+                                                                    <MousePointerClick className="w-3 h-3" /> ZNS Clicked
+                                                                </span>
+                                                            ) : p.status === 'zns_replied' ? (
+                                                                <span className="bg-violet-50 text-violet-600 px-2 py-1 rounded-md text-[10px] font-bold border border-violet-200 inline-flex items-center gap-1">
+                                                                    <Reply className="w-3 h-3" /> ZNS Replied
+                                                                </span>
+                                                            ) : p.status === 'zns_failed' ? (
+                                                                <span className="bg-rose-50 text-rose-600 px-2 py-1 rounded-md text-[10px] font-bold border border-rose-100 inline-flex items-center gap-1">
+                                                                    <AlertOctagon className="w-3 h-3" /> ZNS Lỗi
+                                                                </span>
+                                                            ) : p.status === 'zns_skipped' ? (
+                                                                <span className="bg-slate-50 text-slate-600 px-2 py-1 rounded-md text-[10px] font-bold border border-slate-200 inline-flex items-center gap-1">
+                                                                    <SkipForward className="w-3 h-3" /> Bỏ qua
+                                                                </span>
+                                                            ) : (activeTab === 'unsubscribed' || p.status === 'unsubscribed') ? (
+                                                                <span className="bg-orange-50 text-orange-600 px-2 py-1 rounded-md text-[10px] font-bold border border-orange-100 inline-flex items-center gap-1">
+                                                                    <UserMinus className="w-3 h-3" /> Hủy đăng ký
+                                                                </span>
+                                                            ) : p.status === 'condition_true' ? (
+                                                                <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md text-[10px] font-bold border border-emerald-100 inline-flex items-center gap-1">
+                                                                    <Check className="w-3 h-3" /> Đã khớp
+                                                                </span>
+                                                            ) : p.status === 'condition_false' ? (
+                                                                <span className="bg-rose-50 text-rose-600 px-2 py-1 rounded-md text-[10px] font-bold border border-rose-100 inline-flex items-center gap-1">
+                                                                    <X className="w-3 h-3" /> Không khớp
+                                                                </span>
+                                                            ) : (p.status === 'processed' || p.status === 'success') ? (
+                                                                <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md text-[10px] font-bold border border-emerald-100 inline-flex items-center gap-1">
+                                                                    <Check className="w-3 h-3" /> Hoàn thành
+                                                                </span>
+                                                            ) : p.status === 'processing' ? (
+                                                                <span className="bg-violet-50 text-violet-600 px-2 py-1 rounded-md text-[10px] font-bold border border-violet-100 inline-flex items-center gap-1">
+                                                                    <RefreshCcw className="w-3 h-3 animate-spin" /> Đang xử lý
+                                                                </span>
+                                                            ) : (p.lastError || p.last_error) && p.status === 'waiting' ? (
+                                                                <span className="bg-orange-50 text-orange-600 px-2 py-1 rounded-md text-[10px] font-bold border border-orange-200 inline-flex items-center gap-1" title={p.lastError || p.last_error}>
+                                                                    <AlertOctagon className="w-3 h-3" /> {p.lastError || p.last_error}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="bg-amber-50 text-amber-600 px-2 py-1 rounded-md text-[10px] font-bold border border-amber-100 inline-flex items-center gap-1">
+                                                                    <Clock className="w-3 h-3" /> Đang đợi
+                                                                </span>
+                                                            )}
+                                                        </td>
+
+                                                        {activeTab === 'opened' && (
+                                                            <>
+                                                                <td className="px-6 py-3 text-center">
+                                                                    <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                                                                        {p.open_count || 1}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-6 py-3">
+                                                                    {(() => {
+                                                                        const lastOpen = p.updatedAt || p.updated_at || p.lastOpenAt || p.completedAt;
+                                                                        const firstOpen = p.firstOpenAt || p.first_open_at;
+
+                                                                        return (
+                                                                            <div className="flex flex-col">
+                                                                                <span className="text-[11px] font-medium text-slate-700 flex items-center gap-1">
+                                                                                    <Clock className="w-3 h-3" />
+                                                                                    {lastOpen ? formatTime(lastOpen) : (firstOpen ? formatTime(firstOpen) : '--:--')}
+                                                                                </span>
+                                                                                {firstOpen && lastOpen && firstOpen !== lastOpen && (
+                                                                                    <span className="text-[9px] text-slate-400 mt-0.5">
+                                                                                        Lần đầu: {formatTime(firstOpen)}
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                        );
+                                                                    })()}
+                                                                </td>
+                                                            </>
+                                                        )}
+
+                                                        {activeTab === 'failed' && (
+                                                            <>
+                                                                <td className="px-6 py-3">
+                                                                    <div className="flex flex-col gap-1.5">
+                                                                        {(() => {
+                                                                            const error = p.lastError || p.last_error || p.error_message || 'Lỗi không xác định';
+                                                                            return (
+                                                                                <div className="p-2 bg-rose-50 border border-rose-100 rounded-xl text-[10px] text-rose-600 font-bold flex items-start gap-2 shadow-sm animate-in fade-in slide-in-from-left-2 duration-300">
+                                                                                    <AlertOctagon className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                                                                                    <span className="leading-relaxed">{error}</span>
+                                                                                </div>
+                                                                            );
+                                                                        })()}
+                                                                        <span className="text-[9px] text-slate-400 flex items-center gap-1 ml-1">
+                                                                            <Clock className="w-2.5 h-2.5" />
+                                                                            Xảy ra lúc: {formatTime(p.updated_at || p.updatedAt)}
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                            </>
+                                                        )}
+
+                                                        {activeTab === 'waiting' ? (
+                                                            <>
+                                                                <td className="px-6 py-3 text-[11px] font-medium text-slate-500">
+                                                                    <span className="inline-flex items-center gap-1">
+                                                                        <Clock className="w-3 h-3" />
+                                                                        {p.enteredAt ? formatTime(p.enteredAt) : '--'}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-6 py-3">
+                                                                    {(() => {
+                                                                        // For Condition steps: Calculate deadline from enteredAt + waitDuration
+                                                                        if (stepType === 'condition' && stepConfig?.waitDuration) {
+                                                                            const enteredMs = new Date(p.enteredAt || p.createdAt || new Date()).getTime();
+                                                                            const duration = parseInt(stepConfig.waitDuration);
+                                                                            const unit = stepConfig.waitUnit || 'hours';
+
+                                                                            let durationMs = 0;
+                                                                            if (unit === 'minutes') durationMs = duration * 60 * 1000;
+                                                                            else if (unit === 'hours') durationMs = duration * 60 * 60 * 1000;
+                                                                            else if (unit === 'days') durationMs = duration * 24 * 60 * 60 * 1000;
+
+                                                                            const deadline = enteredMs + durationMs;
+                                                                            const diff = deadline - new Date().getTime();
+
+                                                                            if (diff > 0) {
+                                                                                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                                                                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                                                                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                                                                return (
+                                                                                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600">
+                                                                                        <Clock className="w-3.5 h-3.5" />
+                                                                                        Còn {d > 0 ? `${d}d ` : ''}{h > 0 ? `${h}h ` : ''}{m}m
+                                                                                    </span>
+                                                                                );
+                                                                            } else {
+                                                                                return (
+                                                                                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-violet-600">
+                                                                                        <Clock className="w-3.5 h-3.5" />
+                                                                                        Sắp chạy ngay
+                                                                                    </span>
+                                                                                );
+                                                                            }
+                                                                        }
+
+                                                                        // For ALL other steps (Email, Action, etc.): Show scheduledAt
+                                                                        const timeInfo = calculateTimeRemaining(p.scheduledAt);
+                                                                        return (
+                                                                            <div className="flex flex-col">
+                                                                                <span className={`inline-flex items-center gap-1 text-[11px] font-bold ${timeInfo.isUrgent
+                                                                                    ? 'text-violet-600'
+                                                                                    : (new Date(p.scheduledAt) > new Date() ? 'text-blue-600' : 'text-amber-600')
+                                                                                    }`}>
+                                                                                    <Clock className="w-3.5 h-3.5" />
+                                                                                    {timeInfo.text || '--'}
+                                                                                </span>
+                                                                                <span className="text-[9px] text-slate-400">
+                                                                                    {new Date(p.scheduledAt).toLocaleString('vi-VN')}
+                                                                                </span>
+                                                                            </div>
+                                                                        );
+                                                                    })()}
+                                                                </td>
+                                                            </>
+                                                        ) : activeTab !== 'opened' ? (
+                                                            <td className="px-6 py-3 text-[11px] font-medium text-slate-500">
+                                                                {(activeTab === 'failed' || activeTab === 'unsubscribed' || activeTab === 'all_touched' || activeTab === 'inactive' || p.status === 'completed' || p.status === 'processed' || p.status === 'success' || p.status === 'condition_true' || p.status === 'condition_false' || p.status === 'unsubscribed' || p.status === 'zns_sent' || p.status === 'zns_skipped') ? (
+                                                                    <span className="inline-flex items-center gap-1">
+                                                                        <Clock className="w-3 h-3" />
+                                                                        {activeTab === 'failed' && p.updated_at ? formatTime(p.updated_at) : (p.completedAt ? formatTime(p.completedAt) : (p.updated_at ? formatTime(p.updated_at) : (p.enteredAt ? formatTime(p.enteredAt) : (p.timestamp ? formatTime(p.timestamp) : '--:--'))))}
+                                                                    </span>
+                                                                ) : p.status === 'opened' ? (
+                                                                    <span className="inline-flex items-center gap-1">
+                                                                        <Clock className="w-3 h-3" />
+                                                                        Lần đầu: {p.firstOpenAt ? formatTime(p.firstOpenAt) : '--:--'}
+                                                                    </span>
+                                                                ) : (
+                                                                    (() => {
+                                                                        // Special handling for Condition steps: Show Deadline instead of Polling Time
+                                                                        if (stepType === 'condition' && (activeTab as string) === 'waiting' && stepConfig?.waitDuration) {
+                                                                            const enteredMs = new Date(p.enteredAt || p.createdAt || new Date()).getTime();
+                                                                            const duration = parseInt(stepConfig.waitDuration);
+                                                                            const unit = stepConfig.waitUnit || 'hours';
+
+                                                                            let durationMs = 0;
+                                                                            if (unit === 'minutes') durationMs = duration * 60 * 1000;
+                                                                            else if (unit === 'hours') durationMs = duration * 60 * 60 * 1000;
+                                                                            else if (unit === 'days') durationMs = duration * 24 * 60 * 60 * 1000;
+
+                                                                            const deadline = enteredMs + durationMs;
+                                                                            const diff = deadline - new Date().getTime();
+
+                                                                            if (diff > 0) {
+                                                                                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                                                                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                                                                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                                                                return (
+                                                                                    <span className="inline-flex items-center gap-1 font-bold text-blue-600" title={`Kiểm tra - Làm mới mỗi 1 phút. Hết hạn lúc: ${new Date(Date.now() + 30000).toLocaleTimeString()}`}>
+                                                                                        <Clock className="w-3.5 h-3.5" />
+                                                                                        Ch? {d > 0 ? `${d}d ` : ''}{h > 0 ? `${h}h ` : ''}{m}m (Deadline)
+                                                                                    </span>
+                                                                                );
+                                                                            }
+                                                                        }
+
+                                                                        const timeInfo = calculateTimeRemaining(p.scheduledAt);
+                                                                        return (
+                                                                            <span className={`inline-flex items-center gap-1 font-bold ${timeInfo.isUrgent
+                                                                                ? 'text-violet-600'
+                                                                                : 'text-amber-600'
+                                                                                }`}>
+                                                                                <Clock className="w-3.5 h-3.5" />
+                                                                                {timeInfo.text || '--'}
+                                                                            </span>
+                                                                        );
+                                                                    })()
+                                                                )}
+                                                            </td>
+                                                        ) : null}
+
+                                                        {activeTab !== 'unsubscribed' && activeTab !== 'opened' && activeTab !== 'all_touched' && activeTab !== 'waiting' && activeTab !== 'failed' && stepType !== 'zalo_zns' && (
+                                                            <td className="px-6 py-3 text-[11px] text-slate-500 font-mono text-right">
+                                                                {p.ip || '--'}
+                                                            </td>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
                         </div>
                     )}
                 </div>

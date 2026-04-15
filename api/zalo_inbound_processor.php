@@ -261,7 +261,10 @@ function processZaloTrackingEvent($pdo, $event, $payload, $subId, $zaloUserId)
                 $mainId = $stmtMain->fetchColumn();
 
                 if ($mainId) {
-                    $points = ($event === 'user_received_message') ? 1 : 3;
+                    require_once __DIR__ . '/db_connect.php';
+                    $LSC = function_exists('getGlobalLeadScoreConfig') ? getGlobalLeadScoreConfig($pdo) : [];
+                    $basePoints = $LSC['leadscore_zalo_interact'] ?? 3;
+                    $points = ($event === 'user_received_message') ? max(1, floor($basePoints / 2)) : $basePoints;
                     $label = ($event === 'user_received_message') ? 'ZNS Delivered' : 'ZNS Seen';
 
                     logActivity($pdo, $mainId, "zns_" . $newStatus, $logEntry['step_id'], 'ZNS Automation', "$label (+$points điểm)", $logEntry['flow_id'], $logEntry['flow_id']);
@@ -332,8 +335,12 @@ function checkZnsReplyContext($pdo, $mainId, $zaloUserId, $msgText)
     $lastZns = $stmtZns->fetch();
 
     if ($lastZns) {
-        logActivity($pdo, $mainId, 'reply_zns', $lastZns['flow_id'], 'Zalo Reply', "Replied to ZNS (+5 điểm): $msgText", $lastZns['flow_id'], null);
-        $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + 5 WHERE id = ?")->execute([$mainId]);
+        require_once __DIR__ . '/db_connect.php';
+        $LSC = function_exists('getGlobalLeadScoreConfig') ? getGlobalLeadScoreConfig($pdo) : [];
+        $znsRepScore = ($LSC['leadscore_zalo_interact'] ?? 3) + 2; 
+
+        logActivity($pdo, $mainId, 'reply_zns', $lastZns['flow_id'], 'Zalo Reply', "Replied to ZNS (+$znsRepScore điểm): $msgText", $lastZns['flow_id'], null);
+        $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + ? WHERE id = ?")->execute([$znsRepScore, $mainId]);
     }
 }
 

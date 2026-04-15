@@ -17,17 +17,19 @@ require_once 'flow_helpers.php'; // For logActivity
 function updateZaloLeadScore($pdo, $zaloUserId, $type, $refId = null, $mainSubId = null)
 {
     // Load centralized points config
-    $config = require 'scoring_config.php';
+    require_once __DIR__ . '/db_connect.php';
+    $config = function_exists('getGlobalLeadScoreConfig') ? getGlobalLeadScoreConfig($pdo) : [];
+    $baseZalo = (int)($config['leadscore_zalo_interact'] ?? 3);
 
-    // Map internal types to config keys
+    // Map internal types to config keys 
     $pointsMap = [
-        'follow' => $config['zalo_follow'] ?? 10,
-        'message' => $config['zalo_message'] ?? 5,
-        'click' => $config['zalo_click'] ?? 2,
-        'zns_interaction' => $config['zalo_zns_interact'] ?? 3,
-        'click_zns' => $config['zalo_zns_click'] ?? 5,
-        'reaction' => $config['zalo_reaction'] ?? 3,
-        'feedback' => $config['zalo_feedback'] ?? 5
+        'follow' => $baseZalo + 5,
+        'message' => $baseZalo,
+        'click' => max(1, $baseZalo - 1),
+        'zns_interaction' => $baseZalo,
+        'click_zns' => $baseZalo + 2,
+        'reaction' => max(1, floor($baseZalo / 2)),
+        'feedback' => $baseZalo + 2
     ];
 
     $points = $pointsMap[$type] ?? 0;

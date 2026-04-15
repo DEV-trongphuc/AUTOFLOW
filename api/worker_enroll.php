@@ -187,6 +187,22 @@ foreach ($activeFlows as $flow) {
                 if ($delay > 0) {
                     $initialSchedule = date('Y-m-d H:i:s', time() + $delay);
                 }
+            } elseif ($fsWaitMode === 'until_date') {
+                $specDate   = $fsWaitConfig['specificDate'] ?? '';
+                $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
+                if ($specDate) {
+                    $targetTs = strtotime("$specDate $targetTime:00");
+                    if ($targetTs > time()) {
+                        $initialSchedule = date('Y-m-d H:i:s', $targetTs);
+                    }
+                }
+            } elseif ($fsWaitMode === 'until') {
+                $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
+                $dt = new DateTime();
+                $parts2 = explode(':', $targetTime);
+                $dt->setTime((int)$parts2[0], (int)($parts2[1] ?? 0), 0);
+                if ($dt->getTimestamp() <= time()) $dt->modify('+1 day');
+                $initialSchedule = $dt->format('Y-m-d H:i:s');
             }
             break;
         }

@@ -5,7 +5,7 @@ import {
     CheckCircle2, Send, Cake, Lock,
     List, Snowflake, History, Layers, Search, MessageSquare,
     Info, Filter, ArrowRight, MousePointer2, Check, ShoppingCart, Zap,
-    UserPlus, UserMinus, AlertCircle, Ticket, PartyPopper
+    UserPlus, UserMinus, AlertCircle, Ticket, PartyPopper, Bot
 } from 'lucide-react';
 import { api } from '../../../services/storageAdapter';
 import { Campaign, Flow, Segment, FormDefinition, PurchaseEvent, CustomEvent, VoucherCampaign } from '../../../types';
@@ -44,7 +44,7 @@ const MisaIcon = ({ className }: { className?: string }) => (
 );
 
 const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disabled, locked }) => {
-    const [triggerType, setTriggerType] = useState<'segment' | 'tag' | 'form' | 'date' | 'campaign' | 'purchase' | 'custom_event' | 'voucher' | 'voucher_redeem' | 'inbound_message' | 'zalo_follow' | 'unsubscribe'>(config.type || 'segment');
+    const [triggerType, setTriggerType] = useState<'segment' | 'tag' | 'form' | 'date' | 'campaign' | 'purchase' | 'custom_event' | 'voucher' | 'voucher_redeem' | 'inbound_message' | 'zalo_follow' | 'unsubscribe' | 'ai_capture'>(config.type || 'segment');
     const [targetSubtype, setTargetSubtype] = useState<'list' | 'segment' | 'sync'>(config.targetSubtype || 'list');
     const [lists, setLists] = useState<any[]>([]);
     const [segments, setSegments] = useState<Segment[]>([]);
@@ -145,6 +145,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
         { id: 'tag', label: 'Được gắn nhãn', icon: Tag, color: 'emerald', desc: 'Phân loại thủ công' },
         { id: 'date', label: 'Ngày / Sự kiện', icon: Calendar, color: 'blue', desc: 'Sinh nhật, Ngủ đông' },
         { id: 'campaign', label: 'Sau Chiến dịch', icon: Send, color: 'indigo', desc: 'Tương tác Email' },
+        { id: 'ai_capture', label: 'Lead từ AI Chatbot', icon: Bot, color: 'rose', desc: 'AI lấy Email/SDT' },
         { id: 'unsubscribe', label: 'Hủy đăng ký', icon: UserMinus, color: 'red', desc: 'Khi khách nhấn Unsub' },
     ];
 
@@ -180,6 +181,8 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                 return targetId ? `Tin nhắn: "${targetId}"` : 'Khi khách đã gửi tin nhắn';
             case 'zalo_follow':
                 return 'Khi khách Quan tâm Zalo OA';
+            case 'ai_capture':
+                return 'Khi AI Chatbot Capture Lead';
             case 'unsubscribe':
                 return 'Khi khách Hủy đăng ký';
             case 'tag':
@@ -248,6 +251,8 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
             blue: isSelected ? 'bg-blue-500 text-white' : 'bg-blue-50 text-blue-500',
             violet: isSelected ? 'bg-violet-500 text-white' : 'bg-violet-50 text-violet-500',
             indigo: isSelected ? 'bg-indigo-500 text-white' : 'bg-indigo-50 text-indigo-500',
+            rose: isSelected ? 'bg-rose-500 text-white' : 'bg-rose-50 text-rose-500',
+            red: isSelected ? 'bg-red-500 text-white' : 'bg-red-50 text-red-500',
         };
         return colors[color] || '';
     };
@@ -572,7 +577,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                 </div>
                             )}
 
-                            {/* CASE: UNSUBSCRIBE */}
+                            {/* CASE: BUNSUBSCRIBE */}
                             {triggerType === 'unsubscribe' && (
                                 <div className="p-8 text-center space-y-4 animate-in zoom-in-95 duration-300">
                                     <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-red-100/50">
@@ -584,6 +589,23 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                     </p>
                                     <div className="p-3 bg-red-50/50 rounded-xl inline-block border border-red-100">
                                         <span className="text-[10px] font-bold text-red-400 uppercase tracking-widest">Trigger Dọn dẹp & CRM</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* CASE: AI CAPTURE */}
+                            {triggerType === 'ai_capture' && (
+                                <div className="p-8 text-center space-y-4 animate-in zoom-in-95 duration-300">
+                                    <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-rose-100/50">
+                                        <Bot className="w-10 h-10 text-rose-500" />
+                                    </div>
+                                    <h3 className="text-sm font-bold text-slate-800">Kích hoạt khi AI lấy được Lead</h3>
+                                    <p className="text-[11px] text-slate-500 max-w-[280px] mx-auto leading-relaxed">
+                                        Luồng này sẽ được kích hoạt ngay lập tức khi Chatbot AI (trên Website/Fanpage) hoặc tính năng Auto-fill của Form nhận diện thành công Email/SĐT của khách hàng.
+                                        Ưu tiên xử lý ngang bằng hệ thống Landing Page thông thường.
+                                    </p>
+                                    <div className="p-3 bg-rose-50/50 rounded-xl inline-block border border-rose-100">
+                                        <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Hoạt động cho mọi AI Bot hiện có</span>
                                     </div>
                                 </div>
                             )}

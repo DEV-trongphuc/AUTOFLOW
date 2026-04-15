@@ -98,6 +98,7 @@ $botPatterns = [
     'facebookexternalhit' => 'Facebook Bot',
     'twitterbot' => 'Twitter Bot',
     'linkedinbot' => 'LinkedIn Bot',
+    'slackbot' => 'Slackbot',
     'chrome-lighthouse' => 'Lighthouse',
     'zalobot' => 'ZaloBot',
     'headlesschrome' => 'Headless Chrome',
@@ -105,24 +106,40 @@ $botPatterns = [
     'wget' => 'Wget',
     'curl' => 'Curl',
     'http-client' => 'HTTP Client',
-    'mailflowai' => 'MailFlow Pro Crawler'
+    'mailflowai' => 'MailFlow Pro Crawler',
+    'microsoft office' => 'Microsoft Office',
+    'outlook-express' => 'Outlook',
+    'safelinks' => 'Microsoft Safelinks',
+    'g-security-scanner' => 'Google Security',
+    'barracuda' => 'Barracuda',
+    'proofpoint' => 'Proofpoint',
+    'mimecast' => 'Mimecast',
+    'trend micro' => 'Trend Micro',
+    'fireeye' => 'FireEye',
+    'sophos' => 'Sophos',
+    'fortinet' => 'Fortinet',
+    'palo alto' => 'Palo Alto',
+    'zscaler' => 'Zscaler',
+    'cloudflare-healthcheck' => 'Cloudflare Health'
 ];
 
 $isBot = false;
 $detectedBotName = null;
 
 // A. Check by IP Range (Highest Priority for known Good Bots)
-if (strpos($ip, '66.249.') === 0) {
+if (strpos($ip, '66.249.') === 0 || strpos($ip, '64.233.') === 0 || strpos($ip, '72.14.') === 0 || strpos($ip, '209.85.') === 0) {
     $isBot = true;
     $detectedBotName = 'Googlebot';
 } elseif (
     strpos($ip, '40.77.') === 0 || strpos($ip, '40.78.') === 0 ||
     strpos($ip, '40.80.') === 0 || strpos($ip, '40.90.') === 0 ||
     strpos($ip, '157.55.') === 0 || strpos($ip, '157.56.') === 0 ||
-    strpos($ip, '207.46.') === 0
+    strpos($ip, '207.46.') === 0 || strpos($ip, '104.47.') === 0 ||
+    strpos($ip, '52.148.') === 0 || strpos($ip, '13.107.') === 0 ||
+    strpos($ip, '13.106.') === 0 || strpos($ip, '40.') === 0
 ) {
     $isBot = true;
-    $detectedBotName = 'Bingbot';
+    $detectedBotName = 'Bing/Microsoft Bot';
 }
 
 // B. Check by User Agent Pattern (if not already identified by IP)
@@ -522,10 +539,22 @@ try {
 
                     $updateParams = [$os, $browser, $deviceType, $city, $country, $ip, $city, $country, $data['address'] ?? null, $zaloSubscriberId];
 
-                    if ($payloadFirstName) {
-                        // Merge: if both firstName AND lastName came from tracking,
-                        // store only full name in first_name to avoid display duplication
-                        $mergedName = trim($payloadFirstName . ($payloadLastName ? ' ' . $payloadLastName : ''));
+                    if ($payloadFirstName || $payloadLastName) {
+                        $fn = trim($payloadFirstName ?? '');
+                        $ln = trim($payloadLastName ?? '');
+                        $mergedName = $fn;
+                        if ($ln !== '') {
+                            if ($fn === '') {
+                                $mergedName = $ln;
+                            } else {
+                                $fnLower = strtolower($fn);
+                                $lnLower = strtolower($ln);
+                                if ($fnLower !== $lnLower && !str_ends_with($fnLower, ' ' . $lnLower)) {
+                                    $mergedName = $fn . ' ' . $ln;
+                                }
+                            }
+                        }
+                        
                         $updateSql .= ", first_name = ?";
                         $updateParams[] = $mergedName;
                         $subscriberFirstName = $mergedName;
@@ -551,10 +580,27 @@ try {
                     if (($priority >= 1 && $email) || ($email && !$isSystemEmail)) {
                         $newSid = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x', mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0x0fff) | 0x4000, mt_rand(0, 0x3fff) | 0x8000, mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff));
 
-                        // Merge firstName + lastName into first_name only to avoid display duplication
-                        $finalFirstName = $payloadFirstName
-                            ? trim($payloadFirstName . ($payloadLastName ? ' ' . $payloadLastName : ''))
-                            : ($email ? explode('@', $email)[0] : 'Visitor');
+                        // Merge firstName + lastName intelligently to avoid duplication
+                        $fn = trim($payloadFirstName ?? '');
+                        $ln = trim($payloadLastName ?? '');
+                        $finalFirstName = $fn;
+                        if ($ln !== '') {
+                            if ($fn === '') {
+                                $finalFirstName = $ln;
+                            } else {
+                                $fnLower = strtolower($fn);
+                                $lnLower = strtolower($ln);
+                                if ($fnLower !== $lnLower && !str_ends_with($fnLower, ' ' . $lnLower)) {
+                                    $finalFirstName = $fn . ' ' . $ln;
+                                }
+                            }
+                        }
+                        if (!$finalFirstName && $email) {
+                            $finalFirstName = explode('@', $email)[0];
+                        } else if (!$finalFirstName) {
+                            $finalFirstName = 'Visitor';
+                        }
+                        
                         $finalLastName = ''; // Always empty on auto-create from tracking
 
                         $pdo->prepare("INSERT INTO subscribers (id, property_id, email, phone_number, first_name, last_name, status, source, last_os, last_browser, last_device, last_city, last_country, city, country, address, last_ip, zalo_user_id) VALUES (?, ?, ?, ?, ?, ?, 'active', 'website_tracking', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
@@ -602,6 +648,16 @@ try {
 
                 if ($email) {
                     dispatchQueueJob($pdo, 'high', ['action' => 'identify_visitor', 'visitor_id' => $visitorUuid, 'email' => $email, 'phone_number' => $phone]);
+                }
+                
+                // [NEW] Trigger flow for AI Lead Capture / Autofill (Web Tracking)
+                if (($email || $phone) && !empty($emailSubscriberId)) {
+                    try {
+                        require_once __DIR__ . '/trigger_helper.php';
+                        triggerFlows($pdo, $emailSubscriberId, 'ai_capture', $propertyId);
+                    } catch (Exception $e) {
+                        error_log("Failed to trigger flow for Web Autofill Capture: " . $e->getMessage());
+                    }
                 }
                 
                 if (isset($lockName) && $lockName) {

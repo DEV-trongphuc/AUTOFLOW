@@ -118,10 +118,13 @@ function handleFirstChatPoints($pdo, $visitorUuid, $propertyId, $tableName = 'ai
         $stmtTotal = $pdo->prepare("SELECT COUNT(*) FROM $tableName WHERE visitor_id = ?");
         $stmtTotal->execute([$visitorUuid]);
         if ($stmtTotal->fetchColumn() == 1) {
-            $pdo->prepare("INSERT INTO web_events (visitor_id, property_id, event_type, target_text) VALUES (?, ?, 'form', 'Bắt đầu chat với AI (+5 points)')")
+            require_once __DIR__ . '/db_connect.php';
+            $LSC = function_exists('getGlobalLeadScoreConfig') ? getGlobalLeadScoreConfig($pdo) : [];
+            $botSc = $LSC['leadscore_ai_chat'] ?? 5;
+            $pdo->prepare("INSERT INTO web_events (visitor_id, property_id, event_type, target_text) VALUES (?, ?, 'form', 'Bắt đầu chat với AI (+$botSc points)')")
                 ->execute([$visitorUuid, $propertyId]);
-            $pdo->prepare("UPDATE subscribers s JOIN web_visitors v ON s.id = v.subscriber_id SET s.lead_score = s.lead_score + 5 WHERE v.id = ?")
-                ->execute([$visitorUuid]);
+            $pdo->prepare("UPDATE subscribers s JOIN web_visitors v ON s.id = v.subscriber_id SET s.lead_score = s.lead_score + ? WHERE v.id = ?")
+                ->execute([$botSc, $visitorUuid]);
         }
     } catch (Exception $e) {
     }

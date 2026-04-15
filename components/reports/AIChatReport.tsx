@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Bot, MessageSquare, User, Zap } from 'lucide-react';
 import axios from 'axios';
+import Select from '../common/Select';
 
 const API_BASE = 'https://automation.ideas.edu.vn/mail_api';
 
@@ -14,17 +15,35 @@ const AIChatReport: React.FC<AIReportProps> = ({ dateRange }) => {
     const [summary, setSummary] = useState<any>(null);
     const [chartData, setChartData] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [properties, setProperties] = useState<any[]>([]);
+    const [propertyId, setPropertyId] = useState<string>('');
+
+    useEffect(() => {
+        const fetchProperties = async () => {
+            try {
+                // Fetch domains/properties from web_tracking (since AI widget uses property_id)
+                const res = await axios.get(`${API_BASE}/web_tracking.php?action=list`);
+                if (res.data.success) {
+                    setProperties(res.data.data);
+                    if (res.data.data.length > 0) {
+                        setPropertyId(res.data.data[0].id);
+                    }
+                }
+            } catch (e) { console.error(e); }
+        };
+        fetchProperties();
+    }, []);
 
     useEffect(() => {
         fetchData();
-    }, [dateRange]);
+    }, [propertyId, dateRange]);
 
     const fetchData = async () => {
         setLoading(true);
         try {
             const [summaryRes, chartRes] = await Promise.all([
-                axios.get(`${API_BASE}/ai_report.php?action=summary&start_date=${dateRange.start}&end_date=${dateRange.end}`),
-                axios.get(`${API_BASE}/ai_report.php?action=chart&period=day&start_date=${dateRange.start}&end_date=${dateRange.end}`)
+                axios.get(`${API_BASE}/ai_report.php?action=summary&start_date=${dateRange.start}&end_date=${dateRange.end}&property_id=${propertyId}`),
+                axios.get(`${API_BASE}/ai_report.php?action=chart&period=day&start_date=${dateRange.start}&end_date=${dateRange.end}&property_id=${propertyId}`)
             ]);
 
             if (summaryRes.data.success) setSummary(summaryRes.data.data);
@@ -45,6 +64,29 @@ const AIChatReport: React.FC<AIReportProps> = ({ dateRange }) => {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
+            {/* Filters Row */}
+            <div className="bg-slate-50/50 p-6 rounded-[32px] border border-slate-100 flex flex-wrap items-center gap-6">
+                <div className="shrink-0 min-w-[250px]">
+                    <Select
+                        value={propertyId}
+                        onChange={(val) => setPropertyId(val)}
+                        options={[
+                            { value: '', label: 'Tất cả Chatbot / Kênh AI' },
+                            ...properties.map(p => ({
+                                value: p.id,
+                                label: (
+                                    <div className="flex items-center gap-2">
+                                        <Bot className="w-4 h-4 text-slate-400" />
+                                        <span>{p.domain || p.name || 'Chatbot ' + p.id}</span>
+                                    </div>
+                                ),
+                                searchLabel: p.domain || p.name || `Chatbot ${p.id}`
+                            }))
+                        ]}
+                    />
+                </div>
+            </div>
+
             {/* Stats Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                 {stats.map((stat, idx) => (

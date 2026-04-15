@@ -1075,49 +1075,11 @@ switch ($method) {
                     jsonResponse(false, null, 'Not found');
                 }
             } else {
-                $linkedFlows = [];
-                try {
-                    $stmtFlows = $pdo->query("SELECT id, name, status, steps FROM flows WHERE status != 'archived' AND steps LIKE
-    '%\"type\":\"campaign\"%'");
-                    while ($f = $stmtFlows->fetch(PDO::FETCH_ASSOC)) {
-                        $steps = json_decode($f['steps'] ?? '[]', true);
-                        if (is_array($steps)) {
-                            foreach ($steps as $s) {
-                                if (($s['type'] ?? '') === 'trigger' && ($s['config']['type'] ?? '') === 'campaign') {
-                                    $cId = $s['config']['targetId'] ?? null;
-                                    if ($cId)
-                                        $linkedFlows[$cId] = ['id' => $f['id'], 'name' => $f['name'], 'status' => $f['status']];
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                } catch (Exception $e) {
-                }
-
-
-
-                if (!isset($_GET['page']) && !isset($_GET['limit']) && !isset($_GET['search'])) {
-                    // [BUG-FIX #11] Added is_deleted=0 filter — without it, soft-deleted campaigns
-                    // were returned to the frontend list, causing phantom entries in the UI.
-                    $stmt = $pdo->query("SELECT id, name, subject, status, sent_at, scheduled_at, sender_email, template_id, target_config,
-                        count_sent, count_opened, count_unique_opened, count_clicked, count_unique_clicked, count_bounced, count_spam,
-                        count_unsubscribed, tracking_enabled, created_at, updated_at, type, config, total_target_audience
-                        FROM campaigns WHERE is_deleted = 0 ORDER BY created_at DESC");
-                    $cms = $stmt->fetchAll();
-                    $data = array_map(function ($c) use ($linkedFlows) {
-                        $fmt = formatCampaign($c);
-                        $fmt['linkedFlow'] = $linkedFlows[$fmt['id']] ?? null;
-                        return $fmt;
-                    }, $cms);
-                    jsonResponse(true, $data);
-                    return;
-                }
-
                 $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
                 $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 50;
                 $offset = ($page - 1) * $limit;
                 $search = $_GET['search'] ?? '';
+                $fetchAll = (!isset($_GET['page']) && !isset($_GET['limit']) && !isset($_GET['search']));
 
                 $params = [];
                 $whereClauses = ['is_deleted = 0']; // [BUG-FIX #11] Always exclude soft-deleted
@@ -1127,7 +1089,6 @@ switch ($method) {
                     $params[] = "%$search%";
                 }
 
-                // [BUG-FIX #12] Removed duplicate $whereSql assignment (was computed twice — wasteful)
                 $whereSql = " WHERE " . implode(" AND ", $whereClauses);
 
                 $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM campaigns" . $whereSql);
@@ -1137,27 +1098,71 @@ switch ($method) {
                 $sql = "SELECT id, name, subject, status, sent_at, scheduled_at, sender_email, template_id, target_config,
     count_sent, count_opened, count_unique_opened, count_clicked, count_unique_clicked, count_bounced, count_spam,
     count_unsubscribed, tracking_enabled, created_at, updated_at, type, config, total_target_audience FROM campaigns" .
-                    $whereSql . " ORDER BY created_at DESC LIMIT $limit OFFSET $offset";
+                    $whereSql . " ORDER BY created_at DESC";
+                
+                if (!$fetchAll) {
+                    $sql .= " LIMIT $limit OFFSET $offset";
+                }
+
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($params);
                 $camps = $stmt->fetchAll();
 
+                // [PERF OPTIMIZATION] Avoid loading and json_decoding ALL flows in the system.
+                // We ONLY query for flows linked to the specific campaigns we just fetched.
+                // We use a highly efficient single LIKE or trigger_type filter instead of N LIKE clauses.
+                $linkedFlows = [];
+                if (!empty($camps)) {
+                    $campIds = array_column($camps, 'id');
+                    
+                    // Fetch only flows that are triggered by a campaign.
+                    // Checking `trigger_type = 'campaign'` uses an index if available. 
+                    // `steps LIKE` is a fallback for legacy flows without `trigger_type` correctly set yet.
+                    $flowSql = "SELECT id, name, status, steps FROM flows WHERE status != 'archived' AND (trigger_type = 'campaign' OR (trigger_type IS NULL AND steps LIKE '%\"type\":\"campaign\"%'))";
+                    
+                    try {
+                        $stmtFlows = $pdo->prepare($flowSql);
+                        $stmtFlows->execute();
+                        while ($f = $stmtFlows->fetch(PDO::FETCH_ASSOC)) {
+                            $steps = json_decode($f['steps'] ?? '[]', true);
+                            if (is_array($steps)) {
+                                foreach ($steps as $s) {
+                                    if (($s['type'] ?? '') === 'trigger' && ($s['config']['type'] ?? '') === 'campaign') {
+                                        $cId = $s['config']['targetId'] ?? null;
+                                        if ($cId && in_array($cId, $campIds)) {
+                                            $linkedFlows[$cId] = ['id' => $f['id'], 'name' => $f['name'], 'status' => $f['status']];
+                                        }
+                                        break; // Found the trigger, break step loop
+                                    }
+                                }
+                            }
+                        }
+                    } catch (Exception $e) {
+                        error_log("Failed to load linked flows for campaigns API: " . $e->getMessage());
+                    }
+                }
+
                 $data = array_map(function ($c) use ($linkedFlows) {
                     $fmt = formatCampaign($c);
-                    if (isset($linkedFlows[$fmt['id']]))
+                    if (isset($linkedFlows[$fmt['id']])) {
                         $fmt['linkedFlow'] = $linkedFlows[$fmt['id']];
+                    }
                     return $fmt;
                 }, $camps);
 
-                jsonResponse(true, [
-                    'data' => $data,
-                    'pagination' => [
-                        'total' => $total,
-                        'page' => $page,
-                        'limit' => $limit,
-                        'totalPages' => ceil($total / $limit)
-                    ]
-                ]);
+                if ($fetchAll) {
+                    jsonResponse(true, $data);
+                } else {
+                    jsonResponse(true, [
+                        'data' => $data,
+                        'pagination' => [
+                            'total' => $total,
+                            'page' => $page,
+                            'limit' => $limit,
+                            'totalPages' => ceil($total / $limit)
+                        ]
+                    ]);
+                }
             }
         } catch (Throwable $e) {
             jsonResponse(false, null, $e->getMessage());
@@ -1251,6 +1256,7 @@ switch ($method) {
                 'email',
                 $configJson
             ]);
+            logSystemActivity($pdo, 'campaigns', 'create', $id, $data['name'], ['type' => $data['type'] ?? 'email', 'status' => $data['status']]);
 
             if (!empty($data['reminders'])) {
                 $stmtRem = $pdo->prepare("INSERT INTO campaign_reminders (id, campaign_id, type, trigger_mode, delay_days,
@@ -1354,6 +1360,7 @@ switch ($method) {
                 $configJson,
                 $path
             ]);
+            logSystemActivity($pdo, 'campaigns', 'update', $path, $data['name'], ['status' => $newStatus]);
 
             $pdo->prepare("DELETE FROM campaign_reminders WHERE campaign_id = ?")->execute([$path]);
             if (!empty($data['reminders'])) {
@@ -1448,6 +1455,7 @@ switch ($method) {
             }
 
             // 2. Delete Main Campaign Records
+            logSystemActivity($pdo, 'campaigns', 'delete', $path, "Campaign $path");
             $pdo->prepare("DELETE FROM campaigns WHERE id = ?")->execute([$path]);
             $pdo->prepare("DELETE FROM campaign_reminders WHERE campaign_id = ?")->execute([$path]);
             $pdo->prepare("DELETE FROM mail_delivery_logs WHERE campaign_id = ?")->execute([$path]);

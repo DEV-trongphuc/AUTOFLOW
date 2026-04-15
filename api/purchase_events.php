@@ -15,8 +15,8 @@ try {
     if ($method === 'POST' && $route === 'track') {
         try {
             $data = json_decode(file_get_contents("php://input"), true);
-            $scoring = require 'scoring_config.php';
-            $pPurch = $scoring['purchase'] ?? 10;
+            $LSC = function_exists('getGlobalLeadScoreConfig') ? getGlobalLeadScoreConfig($pdo) : [];
+            $pPurch = $LSC['leadscore_purchase'] ?? 10;
             $now = date('Y-m-d H:i:s');
 
             $email = trim($data['email'] ?? '');
@@ -68,8 +68,8 @@ try {
                 } else if (!in_array($sub['status'] ?? '', ['active', 'lead', 'customer'])) {
                     $updateSqlParts[] = "status = 'active'";
                 }
-                $scoring = require 'scoring_config.php';
-                $pPurch = $scoring['purchase'] ?? 10;
+                $LSC = function_exists('getGlobalLeadScoreConfig') ? getGlobalLeadScoreConfig($pdo) : [];
+                $pPurch = $LSC['leadscore_purchase'] ?? 10;
                 $updateSqlParts[] = "lead_score = lead_score + $pPurch";
                 $updateValues = [];
 

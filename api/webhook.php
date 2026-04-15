@@ -24,6 +24,7 @@ mb_internal_encoding("UTF-8");
 // --- ADVANCED TRACKING HELPERS ---
 require_once 'tracking_helper.php';
 require_once 'tracking_processor.php'; // [FIX] Required for synchronous processing
+$LSC = getGlobalLeadScoreConfig($pdo);
 
 // ---------------------------------
 
@@ -260,8 +261,9 @@ if ($method === 'POST') {
                                     if ($enrollment) {
                                         // Log activity for main subscriber
                                         require_once 'flow_helpers.php';
-                                        logActivity($pdo, $linkedSubId, 'zns_delivered', $enrollment['step_id'], $enrollment['flow_name'], 'ZNS Delivered (+1 điểm)', $enrollment['flow_id'], $enrollment['flow_id']);
-                                        $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + 1 WHERE id = ?")->execute([$linkedSubId]);
+                                        $znsDelScore = max(1, floor($LSC['leadscore_zalo_interact'] / 2));
+                                        logActivity($pdo, $linkedSubId, 'zns_delivered', $enrollment['step_id'], $enrollment['flow_name'], "ZNS Delivered (+$znsDelScore điểm)", $enrollment['flow_id'], $enrollment['flow_id']);
+                                        $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + ? WHERE id = ?")->execute([$znsDelScore, $linkedSubId]);
                                     }
                                 }
                             }
@@ -293,8 +295,9 @@ if ($method === 'POST') {
 
                                                 // Log activity
                                                 require_once 'flow_helpers.php';
-                                                logActivity($pdo, $linkedSubId, 'zns_seen', $logEntry['step_id'], 'ZNS', 'ZNS Seen (+3 điểm)', $logEntry['flow_id'], $logEntry['flow_id']);
-                                                $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + 3 WHERE id = ?")->execute([$linkedSubId]);
+                                                $znsSeenScore = $LSC['leadscore_zalo_interact'];
+                                                logActivity($pdo, $linkedSubId, 'zns_seen', $logEntry['step_id'], 'ZNS', "ZNS Seen (+$znsSeenScore điểm)", $logEntry['flow_id'], $logEntry['flow_id']);
+                                                $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + ? WHERE id = ?")->execute([$znsSeenScore, $linkedSubId]);
                                             }
                                         }
                                     }
@@ -691,9 +694,10 @@ if ($method === 'POST') {
 
                                             // Log Profile Sync
                                             logActivity($pdo, $mainId, 'profile_sync', null, 'Sync Profile', "Linked Zalo ID: $zaloUserId", null, null);
-                                            logActivity($pdo, $mainId, 'reply_zns', $lastZns['flow_id'] ?? null, 'Zalo Reply', "Replied to ZNS (+5 điểm): $msgText", $lastZns['flow_id'] ?? null, null);
+                                            $znsRepScore = $LSC['leadscore_zalo_interact'] + 2; // Extra points for text reply
+                                            logActivity($pdo, $mainId, 'reply_zns', $lastZns['flow_id'] ?? null, 'Zalo Reply', "Replied to ZNS (+$znsRepScore điểm): $msgText", $lastZns['flow_id'] ?? null, null);
                                             // Award points for ZNS reply
-                                            $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + 5 WHERE id = ?")->execute([$mainId]);
+                                            $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + ? WHERE id = ?")->execute([$znsRepScore, $mainId]);
                                         }
                                     }
                                 }
@@ -1046,31 +1050,18 @@ if ($method === 'POST') {
 
                 if (!$isBotClick) {
                     $botUaPatterns = [
-                        'GoogleImageProxy',  // Gmail image proxy (open tracking)
-                        'YahooMailProxy',
-                        'Googlebot',
-                        'bingbot',
-                        'BingPreview',
-                        'Twitterbot',
-                        'facebookexternalhit',
-                        'LinkedInBot',
-                        'Slackbot',
-                        'AhrefsBot',
-                        'SemrushBot',
-                        'DotBot',
-                        'python-requests',
-                        'python-urllib',
-                        'curl/',
-                        'wget/',
-                        'HeadlessChrome',
-                        'PhantomJS',
-                        'SafeBrowsing',       // Google Safe Browsing pre-checker
-                        'GSecurityScanner',   // Google Workspace security scanner
-                        'Barracuda',          // Barracuda email security
-                        'Proofpoint',         // Proofpoint email scanner
-                        'Mimecast',           // Mimecast email scanner
-                        'MSIE 7.0',           // IE7 is bot-like in many scanners
-                        'MS Web Services Client Protocol', // Microsoft security scanner
+                        'GoogleImageProxy', 'YahooMailProxy', 'Googlebot', 'bingbot', 'BingPreview',
+                        'Twitterbot', 'facebookexternalhit', 'LinkedInBot', 'Slackbot', 
+                        'AhrefsBot', 'SemrushBot', 'DotBot', 'python-requests', 'python-urllib', 
+                        'curl/', 'wget/', 'HeadlessChrome', 'PhantomJS', 'SafeBrowsing',
+                        'GSecurityScanner', 'Barracuda', 'Proofpoint', 'Mimecast', 
+                        'MSIE 7.0', 'MS Web Services Client Protocol',
+                        // ADDITIONAL: Secure Web Gateways & Scanners
+                        'Microsoft Office', 'Outlook-Express', 'Outlook-iOS', 'Outlook-Android',
+                        'Office 365', 'Exchange Online', 'Safelinks', 'G-Security-Scanner',
+                        'CiscoUmbrella', 'Trend Micro', 'FireEye', 'Sophos', 'Fortinet',
+                        'Palo Alto Networks', 'Zscaler', 'Symantec', 'McAfee', 'Bitdefender',
+                        'Cloudflare-HealthCheck', 'Viber', 'WhatsApp', 'TelegramBot', 'Cyber-Security'
                     ];
                     foreach ($botUaPatterns as $pattern) {
                         if (stripos($ua, $pattern) !== false) {
@@ -1083,13 +1074,14 @@ if ($method === 'POST') {
                 // Also filter by known scanner IP ranges
                 if (!$isBotClick) {
                     $botIpPrefixes = [
-                        '66.249.',   // Google
-                        '64.233.',   // Google
-                        '72.14.',    // Google
-                        '209.85.',   // Google
-                        '40.77.',    // Bing/Microsoft
-                        '157.55.',   // Bing/Microsoft
-                        '207.46.',   // Bing/Microsoft
+                        '66.249.', '64.233.', '72.14.', '209.85.', // Google
+                        '40.77.', '157.55.', '207.46.', '20.42.', '20.191.', // Bing/Microsoft
+                        '104.47.', '52.148.', '13.107.', '13.106.', // Microsoft EOP / Azure
+                        '104.143.', '104.146.', '104.147.', // Outlook
+                        '108.177.', '74.125.', // Google DCs
+                        '192.174.', '199.10.', // Proofpoint
+                        '204.14.', '208.75.',  // Mimecast
+                        '40.' // Broad MS range
                     ];
                     foreach ($botIpPrefixes as $prefix) {
                         if (strpos($ip, $prefix) === 0) {
@@ -1101,6 +1093,27 @@ if ($method === 'POST') {
             }
 
             if ($type === 'open' || ($type === 'click' && !$isBotClick)) {
+
+                // [DEBOUNCE FIX] Pre-buffer deduplication
+                // Checks raw_event_buffer for identical recent events to prevent redundant logs
+                // from multi-threaded scanners or rapid user clicks.
+                try {
+                    $stmtCheck = $pdo->prepare("
+                        SELECT 1 FROM raw_event_buffer 
+                        WHERE type = ? 
+                        AND created_at >= DATE_SUB(NOW(), INTERVAL 30 SECOND)
+                        AND payload LIKE ? 
+                        LIMIT 1
+                    ");
+                    $stmtCheck->execute([$type, '%"sid":"' . $sid . '"%' . ($rid ? '%"rid":"' . $rid . '"%' : '')]);
+                    if ($stmtCheck->fetchColumn()) {
+                        if ($type === 'click') {
+                            header("Location: $url");
+                            exit;
+                        }
+                        if ($type === 'open') exit;
+                    }
+                } catch (Exception $e) {}
 
                 try {
                     $rawPayload = json_encode([

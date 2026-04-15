@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { ExternalLink, Search, MousePointer2, RefreshCw, Filter, User, Calendar, MousePointerClick, ChevronRight, BarChart3, Smartphone, Monitor, Globe, MapPin, ChevronDown, Check, LayoutGrid, Flame } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
@@ -26,7 +26,7 @@ const LinkClicksTab: React.FC<LinkClicksTabProps> = ({ type, id, stepId, initial
     const [uniqueUserClicks, setUniqueUserClicks] = useState(0);
 
     // Heatmap State
-    const [viewMode, setViewMode] = useState<'list' | 'heatmap'>(initialViewMode || 'list');
+    const [viewMode, setViewMode] = useState<'list' | 'heatmap'>(initialViewMode || 'heatmap');
     const [html, setHtml] = useState(initialHtml || '');
     const [loadingHtml, setLoadingHtml] = useState(false);
     const [deviceFilter, setDeviceFilter] = useState<'all' | 'desktop' | 'mobile'>('all');

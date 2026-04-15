@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost:3306
--- Thời gian đã tạo: Th4 12, 2026 lúc 01:54 AM
+-- Thời gian đã tạo: Th4 15, 2026 lúc 06:11 PM
 -- Phiên bản máy phục vụ: 10.6.18-MariaDB-cll-lve-log
 -- Phiên bản PHP: 8.4.19
 
@@ -998,7 +998,8 @@ CREATE TABLE `meta_message_logs` (
   `status` enum('sent','delivered','read','failed') DEFAULT 'sent',
   `error_message` text DEFAULT NULL,
   `timestamp` bigint(20) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp()
+  `created_at` datetime DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1246,6 +1247,7 @@ CREATE TABLE `subscriber_flow_states` (
   `subscriber_id` char(36) NOT NULL,
   `flow_id` char(36) NOT NULL,
   `step_id` char(36) NOT NULL,
+  `step_type` varchar(50) DEFAULT NULL,
   `status` enum('waiting','processing','completed','failed','unsubscribed') DEFAULT 'waiting',
   `scheduled_at` datetime NOT NULL,
   `last_error` text DEFAULT NULL,
@@ -1304,6 +1306,25 @@ CREATE TABLE `subscriber_notes` (
 CREATE TABLE `subscriber_tags` (
   `subscriber_id` char(36) NOT NULL,
   `tag_id` char(36) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `system_audit_logs`
+--
+
+CREATE TABLE `system_audit_logs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` varchar(100) NOT NULL,
+  `user_name` varchar(255) DEFAULT NULL,
+  `module` varchar(50) NOT NULL COMMENT 'e.g. campaigns, flows, audience',
+  `action` varchar(50) NOT NULL COMMENT 'e.g. create, update, delete, play, pause',
+  `target_id` varchar(100) DEFAULT NULL,
+  `target_name` varchar(255) DEFAULT NULL,
+  `details` text DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1431,6 +1452,47 @@ CREATE TABLE `users` (
   `picture` text DEFAULT NULL,
   `status` enum('pending','approved') DEFAULT 'pending',
   `google_id` varchar(100) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `voucher_campaigns`
+--
+
+CREATE TABLE `voucher_campaigns` (
+  `id` varchar(36) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `thumbnail_url` varchar(500) DEFAULT NULL,
+  `rewards` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`rewards`)),
+  `code_type` enum('dynamic','static') DEFAULT 'dynamic',
+  `static_code` varchar(100) DEFAULT NULL,
+  `start_date` datetime DEFAULT NULL,
+  `end_date` datetime DEFAULT NULL,
+  `status` enum('draft','active','expired') DEFAULT 'draft',
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  `expiration_days` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `voucher_codes`
+--
+
+CREATE TABLE `voucher_codes` (
+  `id` varchar(36) NOT NULL,
+  `campaign_id` varchar(36) NOT NULL,
+  `code` varchar(100) NOT NULL,
+  `reward_item_id` varchar(100) DEFAULT NULL,
+  `subscriber_id` varchar(36) DEFAULT NULL,
+  `status` enum('unused','used') DEFAULT 'unused',
+  `sent_at` datetime DEFAULT NULL,
+  `used_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL,
+  `expires_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1847,7 +1909,9 @@ CREATE TABLE `zalo_user_messages` (
 ALTER TABLE `activity_buffer`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_processed` (`processed`),
-  ADD KEY `idx_created_at` (`created_at`);
+  ADD KEY `idx_created_at` (`created_at`),
+  ADD KEY `idx_subscriber_id` (`subscriber_id`),
+  ADD KEY `idx_flow_id` (`flow_id`);
 
 --
 -- Chỉ mục cho bảng `admin_logs`
@@ -2148,7 +2212,10 @@ ALTER TABLE `campaigns`
   ADD KEY `idx_campaigns_stats` (`status`,`count_unique_opened`),
   ADD KEY `idx_status` (`status`),
   ADD KEY `idx_sent_at` (`sent_at`),
-  ADD KEY `idx_scheduled_at` (`scheduled_at`);
+  ADD KEY `idx_scheduled_at` (`scheduled_at`),
+  ADD KEY `idx_camp_type` (`type`),
+  ADD KEY `idx_camp_created` (`created_at`),
+  ADD KEY `idx_camp_template` (`template_id`);
 
 --
 -- Chỉ mục cho bảng `campaign_reminders`
@@ -2182,7 +2249,8 @@ ALTER TABLE `flow_enrollments`
   ADD KEY `subscriber_id` (`subscriber_id`),
   ADD KEY `idx_flow_enrollment_lookup` (`flow_id`,`subscriber_id`),
   ADD KEY `idx_sub_flow` (`subscriber_id`,`flow_id`),
-  ADD KEY `idx_sub_flow_status` (`subscriber_id`,`flow_id`,`status`);
+  ADD KEY `idx_sub_flow_status` (`subscriber_id`,`flow_id`,`status`),
+  ADD KEY `idx_current_step` (`current_step_id`);
 
 --
 -- Chỉ mục cho bảng `flow_event_queue`
@@ -2191,7 +2259,8 @@ ALTER TABLE `flow_event_queue`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_status` (`status`),
   ADD KEY `idx_created` (`created_at`),
-  ADD KEY `fk_feq_subscriber` (`subscriber_id`);
+  ADD KEY `fk_feq_subscriber` (`subscriber_id`),
+  ADD KEY `idx_target_id_type` (`target_id`,`type`);
 
 --
 -- Chỉ mục cho bảng `flow_snapshots`
@@ -2445,7 +2514,8 @@ ALTER TABLE `subscriber_activity`
   ADD KEY `idx_subact_type_ref` (`type`,`reference_id`),
   ADD KEY `idx_subact_feed` (`subscriber_id`,`created_at`),
   ADD KEY `idx_subact_flow_type` (`flow_id`,`type`),
-  ADD KEY `idx_subact_ref_type` (`reference_id`,`type`);
+  ADD KEY `idx_subact_ref_type` (`reference_id`,`type`),
+  ADD KEY `idx_sub_type_date` (`subscriber_id`,`type`,`created_at`);
 
 --
 -- Chỉ mục cho bảng `subscriber_flow_states`
@@ -2475,7 +2545,8 @@ ALTER TABLE `subscriber_flow_states`
   ADD KEY `idx_status_created` (`status`,`created_at`),
   ADD KEY `idx_sub_flow_step` (`subscriber_id`,`flow_id`,`step_id`),
   ADD KEY `idx_flow_sub_status` (`flow_id`,`subscriber_id`,`status`),
-  ADD KEY `idx_flow_states_step` (`flow_id`,`step_id`,`status`);
+  ADD KEY `idx_flow_states_step` (`flow_id`,`step_id`,`status`),
+  ADD KEY `idx_status_step_type` (`status`,`step_type`);
 
 --
 -- Chỉ mục cho bảng `subscriber_lists`
@@ -2500,6 +2571,15 @@ ALTER TABLE `subscriber_tags`
   ADD PRIMARY KEY (`subscriber_id`,`tag_id`),
   ADD KEY `idx_tag_lookup` (`tag_id`,`subscriber_id`),
   ADD KEY `idx_subtags_tag` (`tag_id`);
+
+--
+-- Chỉ mục cho bảng `system_audit_logs`
+--
+ALTER TABLE `system_audit_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_user_id` (`user_id`),
+  ADD KEY `idx_created_at` (`created_at`),
+  ADD KEY `idx_user_created` (`user_id`,`created_at`);
 
 --
 -- Chỉ mục cho bảng `system_logs`
@@ -2561,6 +2641,19 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `google_id` (`google_id`),
   ADD UNIQUE KEY `email` (`email`),
   ADD KEY `idx_username` (`username`);
+
+--
+-- Chỉ mục cho bảng `voucher_campaigns`
+--
+ALTER TABLE `voucher_campaigns`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Chỉ mục cho bảng `voucher_codes`
+--
+ALTER TABLE `voucher_codes`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `idx_campaign_code` (`campaign_id`,`code`);
 
 --
 -- Chỉ mục cho bảng `web_blacklist`
@@ -2957,6 +3050,12 @@ ALTER TABLE `subscriber_flow_states`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT cho bảng `system_audit_logs`
+--
+ALTER TABLE `system_audit_logs`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT cho bảng `timestamp_buffer`
 --
 ALTER TABLE `timestamp_buffer`
@@ -3086,6 +3185,12 @@ ALTER TABLE `subscriber_tags`
   ADD CONSTRAINT `fk_st_tag` FOREIGN KEY (`tag_id`) REFERENCES `tags` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_sub_tags_subscriber` FOREIGN KEY (`subscriber_id`) REFERENCES `subscribers` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_sub_tags_tag` FOREIGN KEY (`tag_id`) REFERENCES `tags` (`id`) ON DELETE CASCADE;
+
+--
+-- Ràng buộc cho bảng `voucher_codes`
+--
+ALTER TABLE `voucher_codes`
+  ADD CONSTRAINT `voucher_codes_ibfk_1` FOREIGN KEY (`campaign_id`) REFERENCES `voucher_campaigns` (`id`) ON DELETE CASCADE;
 
 --
 -- Ràng buộc cho bảng `zalo_automation_scenarios`

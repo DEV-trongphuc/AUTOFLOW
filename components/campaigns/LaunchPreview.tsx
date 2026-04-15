@@ -104,6 +104,13 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
         if (onConnectFlow) onConnectFlow(connectFlow);
     }, [connectFlow, onConnectFlow]);
 
+    // Sync internal state if parent forcibly updates it (e.g. from Nurture Modal)
+    useEffect(() => {
+        if (initialConnectFlow || activateFlowId) {
+            setConnectFlow(true);
+        }
+    }, [initialConnectFlow, activateFlowId]);
+
     useEffect(() => {
         if (onActivateFlow && linkedFlow && linkedFlow.status !== 'active') {
             onActivateFlow(linkedFlow.id, activateLinkedFlow);
@@ -465,7 +472,7 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                                     return (
                                         <div className="flex items-center gap-4 bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 rounded-2xl shadow-xl shadow-blue-200 text-white min-w-[200px] justify-between transition-all hover:scale-[1.02]">
                                             <span className="text-[10px] font-bold text-blue-200 uppercase tracking-widest">Chi phí ước tính</span>
-                                            <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
                                                 <Sparkles className="w-4 h-4 text-[#ffa900] animate-pulse" />
                                                 <span className="text-xl font-black leading-none">{(estimatedReach * znsPrice).toLocaleString()}<span className="text-[10px] ml-1 font-bold">đ</span></span>
                                             </div>
@@ -480,8 +487,104 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                 {/* COLUMN 2: ATTACHMENTS, TIMING & FLOW */}
                 <div className="space-y-6">
 
+                    {/* Automation Connection Logic */}
+                    {linkedFlow ? (
+                        <div className={`p-6 rounded-[32px] border-2 transition-all group ${activeFlow.status === 'active' ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
+                            <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${activeFlow.status === 'active' ? 'bg-emerald-500 text-white' : 'bg-amber-600 text-white'}`}>
+                                        <GitMerge className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="text-sm font-bold text-slate-800">Đã kết nối Flow: {activeFlow.name}</h4>
+                                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md ${activeFlow.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{activeFlow.status}</span>
+                                        </div>
+                                        <div className="mt-1 flex items-center gap-2 text-[11px] font-medium opacity-80">
+                                            {activeFlow.status === 'active' ? <span className="text-emerald-700 flex items-center gap-1"><Play className="w-3 h-3" /> Automation sẽ chạy ngay khi Campaign gửi.</span> : <span className="text-amber-700 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Automation đang tắt. Còn kích hoạt để chạy.</span>}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {activeFlow.status !== 'active' && !isAlreadySent && (
+                                <div className="mt-4 pt-4 border-t border-amber-200/50 flex items-center gap-3">
+                                    <Checkbox
+                                        id="activate-flow"
+                                        checked={activateLinkedFlow}
+                                        onChange={(checked) => setActivateLinkedFlow(checked)}
+                                        label="Kích hoạt Flow này & Xuất bản cùng lúc?"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <Card className={`p-6 border-2 transition-all rounded-[32px] ${connectFlow ? 'bg-violet-50/50 border-violet-200' : 'bg-white border-slate-100'}`}>
+                            <div
+                                className={`flex items-center justify-between group ${isAlreadySent ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                                onClick={() => !isAlreadySent && setConnectFlow(!connectFlow)}
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${connectFlow ? 'bg-violet-500 text-white' : 'bg-slate-100 text-slate-400'}`}><GitMerge className="w-6 h-6" /></div>
+                                    <div>
+                                        <h4 className={`text-sm font-bold transition-colors ${connectFlow ? 'text-violet-900' : 'text-slate-700'}`}>Kích hoạt chăm sóc sau chiến dịch?</h4>
+                                        <p className="text-[11px] text-slate-500 mt-0.5 font-medium max-w-sm">
+                                            {isAlreadySent ? "Không thể bật automation vì chiến dịch này đã bắt đầu chạy." : "Tự động gửi email chăm sóc khi Khách hàng nhận được chiến dịch này."}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className={`w-12 h-6 rounded-full p-1 border-opacity-30 transition-all duration-300 flex items-center shrink-0 ${connectFlow ? 'bg-violet-600 justify-end' : 'bg-slate-200 justify-start'}`}>
+                                    <div className="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300"></div>
+                                </div>
+                            </div>
+
+                            {connectFlow && !isAlreadySent && (
+                                <div className="mt-6 pt-6 border-t border-violet-100 animate-in slide-in-from-top-2">
+                                    <label className="text-[10px] font-bold uppercase text-slate-400 mb-3 block">Chọn kịch bản muốn kết nối:</label>
+                                    <div className="space-y-2">
+                                        <button
+                                            onClick={() => onActivateFlow && onActivateFlow('', true)}
+                                            className={`w-full p-4 rounded-2xl border-2 text-left flex items-center justify-between transition-all ${!activateFlowId ? 'border-violet-500 bg-white ring-2 ring-violet-50 shadow-sm' : 'border-slate-100 bg-white hover:border-slate-200'}`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${!activateFlowId ? 'bg-violet-100 text-violet-600' : 'bg-slate-50 text-slate-400'}`}>
+                                                    <Plus className="w-4 h-4" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-slate-800">Tạo Flow mới</p>
+                                                    <p className="text-[9px] text-slate-500 font-medium">Chọn mẫu Chăm sóc sau chiến dịch</p>
+                                                </div>
+                                            </div>
+                                            {!activateFlowId && <CheckCircle2 className="w-4 h-4 text-violet-500" />}
+                                        </button>
+
+                                        {allFlows.filter(f => {
+                                            const trigger = f.steps?.find(s => s.type === 'trigger');
+                                            return trigger?.config?.type === 'campaign' && !trigger.config.targetId;
+                                        }).map((flow) => (
+                                            <button
+                                                key={flow.id}
+                                                onClick={() => onActivateFlow && onActivateFlow(flow.id, true)}
+                                                className={`w-full p-4 rounded-2xl border-2 text-left flex items-center justify-between transition-all ${activateFlowId === flow.id ? 'border-violet-500 bg-white ring-2 ring-violet-50 shadow-sm' : 'border-slate-100 bg-white hover:border-slate-200'}`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${activateFlowId === flow.id ? 'bg-violet-100 text-violet-600' : 'bg-slate-50 text-slate-400'}`}>
+                                                        <GitMerge className="w-4 h-4" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-bold text-slate-800 truncate max-w-[200px]">{flow.name}</p>
+                                                        <p className="text-[9px] text-slate-500 font-medium">Kịch bản chăm sóc sẵn có</p>
+                                                    </div>
+                                                </div>
+                                                {activateFlowId === flow.id && <CheckCircle2 className="w-4 h-4 text-violet-500" />}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </Card>
+                    )}
+
                     {/* ATTACHMENTS SECTION - UPDATED */}
-                    {/* Only show attachments for Email, unless ZNS supports it (usually no, except specific templates) */}
                     {!isZns && (
                         <Card className="p-6 border-slate-100 bg-white rounded-[32px]">
                             <div className="flex items-center justify-between mb-6">
@@ -494,30 +597,28 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                                 </div>
                             </div>
 
-                            {/* ... Attachment UI can remain similar, just checking type above ... */}
-                            {/* --- TOGGLE ROW (New Layout) --- */}
                             <div className={`mb-6 p-4 rounded-2xl border-2 transition-all flex items-center justify-between cursor-pointer ${isPersonalizedMode ? 'bg-blue-50/50 border-blue-200' : 'bg-slate-50 border-slate-100'}`} onClick={() => !isAlreadySent && setIsPersonalizedMode(!isPersonalizedMode)}>
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-6 rounded-full p-1 transition-colors duration-300 flex items-center ${isPersonalizedMode ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'}`}>
-                                        <div className="w-4 h-4 bg-white rounded-full shadow-md"></div>
+                                    <div className={`p-2 rounded-lg ${isPersonalizedMode ? 'bg-blue-100 text-blue-600' : 'bg-slate-200 text-slate-500'}`}>
+                                        {isPersonalizedMode ? <Filter className="w-4 h-4" /> : <Layers className="w-4 h-4" />}
                                     </div>
                                     <div>
                                         <p className={`text-xs font-bold ${isPersonalizedMode ? 'text-blue-700' : 'text-slate-600'}`}>Bật đã gửi file khớp cá nhân</p>
                                         {isPersonalizedMode && <p className="text-[9px] text-blue-500 font-medium mt-0.5">Tự động tìm file chứa Email Khách hàng</p>}
                                     </div>
                                 </div>
-                                {isPersonalizedMode ? <Filter className="w-5 h-5 text-blue-500" /> : <Layers className="w-5 h-5 text-slate-400" />}
+                                <div className={`w-10 h-6 rounded-full p-1 transition-colors duration-300 flex items-center ${isPersonalizedMode ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'}`}>
+                                    <div className="w-4 h-4 bg-white rounded-full shadow-md"></div>
+                                </div>
                             </div>
 
                             <div className="space-y-4">
-                                {/* UPLOAD BUTTON */}
                                 <div onClick={() => !isAlreadySent && fileInputRef.current?.click()} className={`cursor-pointer w-full py-4 border-2 border-dashed rounded-2xl flex items-center justify-center gap-2 text-slate-400 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50/30 transition-all ${isAlreadySent ? 'opacity-50 pointer-events-none' : ''}`}>
                                     {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
                                     <span className="text-xs font-bold uppercase">{isPersonalizedMode ? 'Upload Nhiều File (Có kèm Email)' : 'Upload File Gửi Chung (Multi)'}</span>
                                     <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileUpload} disabled={isUploading || isAlreadySent} />
                                 </div>
 
-                                {/* ATTACHMENT LIST */}
                                 {attachments.length > 0 ? attachments.map((att) => (
                                     <div key={att.id} className={`border rounded-2xl p-3 animate-in fade-in slide-in-from-bottom-2 transition-colors ${att.logic !== 'all' ? 'bg-blue-50/30 border-blue-100' : 'bg-white border-slate-100'}`}>
                                         <div className="flex items-start justify-between gap-3">
@@ -556,7 +657,6 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                             <h4 className="font-bold text-slate-800">Thời điểm gửi</h4>
                         </div>
 
-                        {/* [P0] ZNS TIME WINDOW ALERT */}
                         {isZns && (() => {
                             const checkDate = scheduleMode === 'later' ? (() => {
                                 let d = new Date(selectedDate);
@@ -609,7 +709,6 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
 
                         {scheduleMode === 'later' && !isAlreadySent && (
                             <div className="animate-in slide-in-from-top-2 space-y-5">
-                                {/* ... Date Picker Logic ... */}
                                 <div>
                                     <label className="text-[10px] font-bold uppercase text-slate-400 mb-2 block ml-1">Chọn ngày</label>
                                     <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
@@ -692,105 +791,6 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                             </div>
                         )}
                     </Card>
-
-                    {/* Automation Connection Logic (Refined) */}
-                    {linkedFlow ? (
-                        <div className={`p-6 rounded-[32px] border-2 transition-all group ${activeFlow.status === 'active' ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
-                            <div className="flex items-start justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${activeFlow.status === 'active' ? 'bg-emerald-500 text-white' : 'bg-amber-600 text-white'}`}>
-                                        <GitMerge className="w-6 h-6" />
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <h4 className="text-sm font-bold text-slate-800">Đã kết nối Flow: {activeFlow.name}</h4>
-                                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md ${activeFlow.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{activeFlow.status}</span>
-                                        </div>
-                                        <div className="mt-1 flex items-center gap-2 text-[11px] font-medium opacity-80">
-                                            {activeFlow.status === 'active' ? <span className="text-emerald-700 flex items-center gap-1"><Play className="w-3 h-3" /> Automation sẽ chạy ngay khi Campaign gửi.</span> : <span className="text-amber-700 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Automation đang tắt. Còn kích hoạt để chạy.</span>}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {activeFlow.status !== 'active' && !isAlreadySent && (
-                                <div className="mt-4 pt-4 border-t border-amber-200/50 flex items-center gap-3">
-                                    <Checkbox
-                                        id="activate-flow"
-                                        checked={activateLinkedFlow}
-                                        onChange={(checked) => setActivateLinkedFlow(checked)}
-                                        label="Kích hoạt Flow này & Xuất bản cùng lúc?"
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <Card className={`p-6 border-2 transition-all rounded-[32px] ${connectFlow ? 'bg-violet-50/50 border-violet-200' : 'bg-white border-slate-100'}`}>
-                            <div
-                                className={`flex items-center justify-between group ${isAlreadySent ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
-                                onClick={() => !isAlreadySent && setConnectFlow(!connectFlow)}
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${connectFlow ? 'bg-violet-500 text-white' : 'bg-slate-100 text-slate-400'}`}><GitMerge className="w-6 h-6" /></div>
-                                    <div>
-                                        <h4 className={`text-sm font-bold transition-colors ${connectFlow ? 'text-violet-900' : 'text-slate-700'}`}>Kích hoạt chăm sóc sau chiến dịch?</h4>
-                                        <p className="text-[11px] text-slate-500 mt-0.5 font-medium max-w-sm">
-                                            {isAlreadySent ? "Không thể bật automation vì chiến dịch này đã bắt đầu chạy." : "Tự động gửi email chăm sóc khi Khách hàng nhận được chiến dịch này."}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${connectFlow ? 'bg-violet-500 border-violet-500' : 'border-slate-300'}`}>
-                                    {connectFlow && <CheckCircle2 className="w-4 h-4 text-white" />}
-                                </div>
-                            </div>
-
-                            {connectFlow && !isAlreadySent && (
-                                <div className="mt-6 pt-6 border-t border-violet-100 animate-in slide-in-from-top-2">
-                                    <label className="text-[10px] font-bold uppercase text-slate-400 mb-3 block">Chọn kịch bản muốn kết nối:</label>
-                                    <div className="space-y-2">
-                                        {/* Option: Create New */}
-                                        <button
-                                            onClick={() => onActivateFlow && onActivateFlow('', true)} // Empty ID means create new, but keep connection ON
-                                            className={`w-full p-4 rounded-2xl border-2 text-left flex items-center justify-between transition-all ${!activateFlowId ? 'border-violet-500 bg-white ring-2 ring-violet-50 shadow-sm' : 'border-slate-100 bg-white hover:border-slate-200'}`}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${!activateFlowId ? 'bg-violet-100 text-violet-600' : 'bg-slate-50 text-slate-400'}`}>
-                                                    <Plus className="w-4 h-4" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-slate-800">Tạo Flow mới</p>
-                                                    <p className="text-[9px] text-slate-500 font-medium">Chọn mẫu Chăm sóc sau chiến dịch</p>
-                                                </div>
-                                            </div>
-                                            {!activateFlowId && <CheckCircle2 className="w-4 h-4 text-violet-500" />}
-                                        </button>
-
-                                        {/* Existing Unlinked Flows: Only Campaign-triggered, Not Linked */}
-                                        {allFlows.filter(f => {
-                                            const trigger = f.steps?.find(s => s.type === 'trigger');
-                                            return trigger?.config?.type === 'campaign' && !trigger.config.targetId;
-                                        }).map((flow) => (
-                                            <button
-                                                key={flow.id}
-                                                onClick={() => onActivateFlow && onActivateFlow(flow.id, true)}
-                                                className={`w-full p-4 rounded-2xl border-2 text-left flex items-center justify-between transition-all ${activateFlowId === flow.id ? 'border-violet-500 bg-white ring-2 ring-violet-50 shadow-sm' : 'border-slate-100 bg-white hover:border-slate-200'}`}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${activateFlowId === flow.id ? 'bg-violet-100 text-violet-600' : 'bg-slate-50 text-slate-400'}`}>
-                                                        <GitMerge className="w-4 h-4" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs font-bold text-slate-800 truncate max-w-[200px]">{flow.name}</p>
-                                                        <p className="text-[9px] text-slate-500 font-medium">Kịch bản chăm sóc sẵn có</p>
-                                                    </div>
-                                                </div>
-                                                {activateFlowId === flow.id && <CheckCircle2 className="w-4 h-4 text-violet-500" />}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </Card>
-                    )}
                 </div>
             </div>
 
@@ -811,8 +811,8 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
 
                 {/* Iframe Container */}
                 <div className="w-full flex justify-center bg-slate-200/50 rounded-[24px] overflow-hidden border border-slate-200 min-h-[600px] relative">
-                    <div className={`transition-all duration-500 ease-in-out bg-white shadow-2xl overflow-hidden my-8 ${previewDevice === 'mobile' || isZns ? 'w-[375px] h-[667px] rounded-[32px] border-8 border-slate-800' : 'w-full h-[700px] rounded-none border-none'}`}>
-                        {(previewDevice === 'mobile' || isZns) && <div className="absolute top-8 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-xl z-20"></div>}
+                    <div className={`transition-all duration-500 ease-in-out bg-white shadow-2xl overflow-hidden my-8 relative ${previewDevice === 'mobile' || isZns ? 'w-[375px] h-[667px] rounded-[32px] border-8 border-slate-800' : 'w-full max-w-3xl h-[700px] rounded-2xl border border-slate-200/60'}`}>
+                        {(previewDevice === 'mobile' || isZns) && <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-xl z-20"></div>}
                         {isZns ? (
                             <iframe
                                 src={selectedTemplate?.template_data?.detail?.previewUrl || selectedTemplate?.template_data?.raw?.previewUrl}

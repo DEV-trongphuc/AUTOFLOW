@@ -164,13 +164,16 @@ if ($method === 'POST' && ($route === 'bulk-add-tag' || $route === 'bulk-add-to-
         if (!$tagId)
             jsonResponse(false, null, 'Tag ID required');
 
-        $placeholders = implode(',', array_fill(0, count($subscriberIds), '(?, ?)'));
-        $sql = "INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES $placeholders";
-        $params = [];
-        foreach ($subscriberIds as $sid) {
-            array_push($params, $sid, $tagId);
+        $CHUNK = 500;
+        foreach (array_chunk($subscriberIds, $CHUNK) as $chunk) {
+            $placeholders = implode(',', array_fill(0, count($chunk), '(?, ?)'));
+            $sql = "INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES $placeholders";
+            $params = [];
+            foreach ($chunk as $sid) {
+                array_push($params, $sid, $tagId);
+            }
+            $pdo->prepare($sql)->execute($params);
         }
-        $pdo->prepare($sql)->execute($params);
 
         jsonResponse(true, ['count' => count($subscriberIds)], 'Đã gắn tag thành công');
     }
@@ -215,9 +218,12 @@ if ($method === 'POST' && ($route === 'bulk-add-tag' || $route === 'bulk-add-to-
         if (!$status)
             jsonResponse(false, null, 'Status required');
 
-        $placeholders = implode(',', array_fill(0, count($subscriberIds), '?'));
-        $sql = "UPDATE subscribers SET status = ? WHERE id IN ($placeholders)";
-        $pdo->prepare($sql)->execute(array_merge([$status], $subscriberIds));
+        $CHUNK = 500;
+        foreach (array_chunk($subscriberIds, $CHUNK) as $chunk) {
+            $placeholders = implode(',', array_fill(0, count($chunk), '?'));
+            $sql = "UPDATE subscribers SET status = ? WHERE id IN ($placeholders)";
+            $pdo->prepare($sql)->execute(array_merge([$status], $chunk));
+        }
 
         jsonResponse(true, ['count' => count($subscriberIds)], 'Đã cập nhật trạng thái thành công');
     }

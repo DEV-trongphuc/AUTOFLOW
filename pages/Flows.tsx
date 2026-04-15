@@ -46,6 +46,7 @@ import EmptyState from '../components/common/EmptyState';
 import Tabs from '../components/common/Tabs';
 import TabTransition from '../components/common/TabTransition';
 import TipsModal from '../components/common/TipsModal';
+import { useIsAdmin } from '../hooks/useAuthUser';
 
 type FlowFilter = 'all' | 'active' | 'draft' | 'paused' | 'archived';
 type TriggerTypeFilter = 'all' | 'segment' | 'date' | 'campaign' | 'form' | 'tag';
@@ -172,6 +173,7 @@ interface FlowSnapshot {
 const Flows: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const isAdmin = useIsAdmin();
     const [flows, setFlows] = useState<Flow[]>([]);
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [forms, setForms] = useState<FormDefinition[]>([]);
@@ -1446,6 +1448,8 @@ const Flows: React.FC = () => {
         };
     }, [selectedFlow?.steps]);
 
+
+
     // Filtered logs for the selected flow - Move to top level to avoid Hook violation
     const currentFlowLogs = useMemo(() => {
         if (!selectedFlow) return [];
@@ -1471,13 +1475,13 @@ const Flows: React.FC = () => {
                         subtitle="Quản lý vòng đời Khách hàng tự động — nuôi dưỡng & chuyển đổi thông minh đa kênh."
                         showStatus={true}
                         statusText="Orchestrator Online"
-                        actions={[
-                            { 
-                                label: 'Tạo kịch bản', 
-                                icon: Plus, 
-                                onClick: () => setIsCreateModalOpen(true),
-                                primary: false 
-                            },
+            actions={[
+                ...(isAdmin ? [{ 
+                    label: 'Tạo kịch bản', 
+                    icon: Plus, 
+                    onClick: () => setIsCreateModalOpen(true),
+                    primary: false 
+                }] : []),
                             { 
                                 label: 'Mẹo Automation', 
                                 icon: Lightbulb, 

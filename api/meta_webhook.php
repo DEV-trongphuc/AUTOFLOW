@@ -407,7 +407,11 @@ function upsertSubscriber($pdo, $pageId, $psid, $messageText = null)
 
     // 4. Update Database
     $params = [];
-    $sqlPart = "last_active_at = NOW(), lead_score = lead_score + 1";
+    require_once __DIR__ . '/db_connect.php';
+    $LSC = function_exists('getGlobalLeadScoreConfig') ? getGlobalLeadScoreConfig($pdo) : [];
+    $basePoints = (int)($LSC['leadscore_zalo_interact'] ?? 3);
+    $points = max(1, floor($basePoints / 3)); // Synchronous basic interaction
+    $sqlPart = "last_active_at = NOW(), lead_score = lead_score + $points";
 
     if ($messageText) {
         $lines = explode("\n", $messageText);

@@ -153,8 +153,48 @@ try {
 
                     if ($subDetails) {
                         $pastTime = date('Y-m-d H:i:s', strtotime('-1 second'));
+                        $initialSchedule = $pastTime;
+
+                        // [SMART SCHEDULE FIX] Calculate future wait date if first step is wait
+                        foreach ($steps as $fs) {
+                            if (($fs['id'] ?? '') === $trigger['nextStepId'] && strtolower($fs['type'] ?? '') === 'wait') {
+                                $fsWaitConfig = $fs['config'] ?? [];
+                                $fsWaitMode = $fsWaitConfig['mode'] ?? 'duration';
+                                if ($fsWaitMode === 'duration') {
+                                    $dur = (int) ($fsWaitConfig['duration'] ?? 0);
+                                    $unit = $fsWaitConfig['unit'] ?? 'minutes';
+                                    $unitSeconds = match ($unit) {
+                                        'weeks' => 604800,
+                                        'days' => 86400,
+                                        'hours' => 3600,
+                                        default => 60,
+                                    };
+                                    if (($unitSeconds * $dur) > 0) {
+                                        $initialSchedule = date('Y-m-d H:i:s', time() + ($unitSeconds * $dur));
+                                    }
+                                } elseif ($fsWaitMode === 'until_date') {
+                                    $specDate = $fsWaitConfig['specificDate'] ?? '';
+                                    $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
+                                    if ($specDate) {
+                                        $targetTs = strtotime("$specDate $targetTime:00");
+                                        if ($targetTs > time()) {
+                                            $initialSchedule = date('Y-m-d H:i:s', $targetTs);
+                                        }
+                                    }
+                                } elseif ($fsWaitMode === 'until') {
+                                    $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
+                                    $dt = new DateTime();
+                                    $parts2 = explode(':', $targetTime);
+                                    $dt->setTime((int)$parts2[0], (int)($parts2[1] ?? 0), 0);
+                                    if ($dt->getTimestamp() <= time()) $dt->modify('+1 day');
+                                    $initialSchedule = $dt->format('Y-m-d H:i:s');
+                                }
+                                break;
+                            }
+                        }
+
                         $stmtE = $pdo->prepare("INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at) VALUES (?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW())");
-                        $stmtE->execute([$prioritySid, $manualFlow['id'], $trigger['nextStepId'], $pastTime]);
+                        $stmtE->execute([$prioritySid, $manualFlow['id'], $trigger['nextStepId'], $initialSchedule]);
                         $newQueueId = $pdo->lastInsertId();
 
                         logActivity($pdo, $prioritySid, 'enter_flow', $manualFlow['id'], $manualFlow['name'], "Manual Trigger by Admin", $manualFlow['id']);
@@ -165,7 +205,7 @@ try {
                             'subscriber_id' => $prioritySid,
                             'flow_id' => $manualFlow['id'],
                             'step_id' => $trigger['nextStepId'],
-                            'scheduled_at' => $pastTime,
+                            'scheduled_at' => $initialSchedule,
                             'queue_created_at' => $now,
                             'flow_steps' => $manualFlow['steps'],
                             'flow_config' => $manualFlow['config'],
@@ -298,7 +338,45 @@ try {
                         continue;
 
                     $pastTime = date('Y-m-d H:i:s', strtotime('-1 second'));
+                    $initialSchedule = $pastTime;
 
+                    // [SMART SCHEDULE FIX] Calculate future wait date if first step is wait
+                    foreach ($steps as $fs) {
+                        if (($fs['id'] ?? '') === $trigger['nextStepId'] && strtolower($fs['type'] ?? '') === 'wait') {
+                            $fsWaitConfig = $fs['config'] ?? [];
+                            $fsWaitMode = $fsWaitConfig['mode'] ?? 'duration';
+                            if ($fsWaitMode === 'duration') {
+                                $dur = (int) ($fsWaitConfig['duration'] ?? 0);
+                                $unit = $fsWaitConfig['unit'] ?? 'minutes';
+                                $unitSeconds = match ($unit) {
+                                    'weeks' => 604800,
+                                    'days' => 86400,
+                                    'hours' => 3600,
+                                    default => 60,
+                                };
+                                if (($unitSeconds * $dur) > 0) {
+                                    $initialSchedule = date('Y-m-d H:i:s', time() + ($unitSeconds * $dur));
+                                }
+                            } elseif ($fsWaitMode === 'until_date') {
+                                $specDate = $fsWaitConfig['specificDate'] ?? '';
+                                $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
+                                if ($specDate) {
+                                    $targetTs = strtotime("$specDate $targetTime:00");
+                                    if ($targetTs > time()) {
+                                        $initialSchedule = date('Y-m-d H:i:s', $targetTs);
+                                    }
+                                }
+                            } elseif ($fsWaitMode === 'until') {
+                                $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
+                                $dt = new DateTime();
+                                $parts2 = explode(':', $targetTime);
+                                $dt->setTime((int)$parts2[0], (int)($parts2[1] ?? 0), 0);
+                                if ($dt->getTimestamp() <= time()) $dt->modify('+1 day');
+                                $initialSchedule = $dt->format('Y-m-d H:i:s');
+                            }
+                            break;
+                        }
+                    }
                     // [DEBUG] Log enrollment attempt details
                     $debugInfo = [
                         'subscriber_id' => $prioritySid,
@@ -332,7 +410,7 @@ try {
                                        AND created_at >= DATE_SUB(NOW(), INTERVAL 3 SECOND)
                                    )";
                         $stmtE = $pdo->prepare($sqlIns);
-                        $stmtE->execute([$prioritySid, $flow['id'], $trigger['nextStepId'], $pastTime, $prioritySid, $flow['id']]);
+                        $stmtE->execute([$prioritySid, $flow['id'], $trigger['nextStepId'], $initialSchedule, $prioritySid, $flow['id']]);
                     } else {
                         // allowMultiple = false: Apply frequency and cooldown rules
                         if ($frequency === 'one-time') {
@@ -351,7 +429,7 @@ try {
                                        AND ($blockCondition)
                                    )";
                         $stmtE = $pdo->prepare($sqlIns);
-                        $stmtE->execute([$prioritySid, $flow['id'], $trigger['nextStepId'], $pastTime, $prioritySid, $flow['id']]);
+                        $stmtE->execute([$prioritySid, $flow['id'], $trigger['nextStepId'], $initialSchedule, $prioritySid, $flow['id']]);
                     }
 
                     if ($stmtE->rowCount() === 0) {
@@ -371,7 +449,7 @@ try {
                             'subscriber_id' => $prioritySid,
                             'flow_id' => $flow['id'],
                             'step_id' => $trigger['nextStepId'],
-                            'scheduled_at' => $pastTime,
+                            'scheduled_at' => $initialSchedule,
                             'queue_created_at' => $now,
                             'flow_steps' => $flow['steps'],
                             'flow_config' => $flow['config'],
@@ -720,6 +798,54 @@ try {
             break;
         }
 
+        // [PER-STEP SCHEDULING CHECK] Mirror của worker_flow.php isCommunicationStep check
+        // Ngăn Priority chain gửi message ngoài giờ/ngày cho phép kể cả khi
+        // initial scheduling check ở đầu chain đã pass (chain chạy qua midnight...).
+        $chkStepType = strtolower($currentStep['type'] ?? 'unknown');
+        $isCommunicationStep = in_array($chkStepType, ['action', 'zalo_zns', 'zalo_cs', 'meta_message', 'sms']);
+        if ($isCommunicationStep) {
+            $chkActiveDays = $fConfig['activeDays'] ?? [0, 1, 2, 3, 4, 5, 6];
+            if (empty($chkActiveDays)) $chkActiveDays = [0, 1, 2, 3, 4, 5, 6];
+            $chkStart = $fConfig['startTime'] ?? '00:00';
+            $chkEnd   = $fConfig['endTime']   ?? '23:59';
+
+            // Zalo ZNS/CS phải trong 06:00–22:00 theo quy định Zalo
+            $isZaloStep = in_array($chkStepType, ['zalo_zns', 'zalo_cs']);
+            if ($isZaloStep) {
+                if ($chkStart < '06:00') $chkStart = '06:00';
+                if ($chkEnd > '21:59' || $chkEnd < '06:00') $chkEnd = '21:59';
+            }
+
+            $chkDayNow  = (int) date('w');
+            $chkTimeNow = date('H:i');
+            $chkDayOk   = in_array($chkDayNow, array_map('intval', $chkActiveDays));
+            $chkTimeOk  = ($chkTimeNow >= $chkStart && $chkTimeNow <= $chkEnd);
+            // Nếu hết giờ trong ngày cho phép → treat như sai ngày để skip sang ngày tiếp
+            if ($chkDayOk && $chkTimeNow > $chkEnd) $chkDayOk = false;
+
+            if (!$chkDayOk || !$chkTimeOk) {
+                if ($chkDayOk && !$chkTimeOk) {
+                    // Ngày đúng, chưa tới giờ → đợi đến startTime hôm nay
+                    $chkNextSend = date('Y-m-d') . ' ' . $chkStart . ':00';
+                } else {
+                    // Tìm ngày tiếp theo hợp lệ
+                    $chkNextSend = date('Y-m-d') . ' ' . $chkStart . ':00';
+                    for ($i = 1; $i <= 7; $i++) {
+                        $chkDay = (int) date('w', strtotime("+$i days"));
+                        if (in_array($chkDay, array_map('intval', $chkActiveDays))) {
+                            $chkNextSend = date('Y-m-d', strtotime("+$i days")) . ' ' . $chkStart . ':00';
+                            break;
+                        }
+                    }
+                }
+                $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = ?, step_id = ?, updated_at = NOW() WHERE id = ?")
+                    ->execute([$chkNextSend, $currentStepId, $queueId]);
+                $logs[] = "  -> [Priority-TimeGuard] Step '{$currentStep['label']}' paused mid-chain (Time/Day restriction). Re-scheduled: $chkNextSend";
+                $shouldContinueChain = false;
+                break;
+            }
+        }
+
         // [SCHEDULE PROTECT]
         if ($isPriorityChain && !($_GET['force_skip'] ?? 0)) {
             $scheduledTime = strtotime($item['scheduled_at'] ?? $now);
@@ -741,13 +867,21 @@ try {
             'queue_created_at' => $item['queue_created_at'],
             'last_step_at' => $item['last_step_at'] ?? $item['updated_at'],
             'updated_at' => $item['updated_at'],
+            'scheduled_at' => $item['scheduled_at'],  // [BUG-FIX] Pass scheduled_at to FlowExecutor wait-case
             'has_email_error' => $item['has_email_error'] ?? false,
             'flow_steps' => $flowSteps,
             'flow_name' => $flowName,
             'is_priority_chain' => $isPriorityChain,
             'total_sent_today' => $totalSentToday,
             'activity_cache' => $activityCache,
-            'is_resumed_wait' => ($stepsProcessedInRun === 1 && trim((string) ($item['step_id'] ?? '')) === trim((string) $currentStepId) && $item['scheduled_at'] <= $now),
+            // [CRITICAL FIX] Must also check $item['status'] === 'waiting' (original status before UPDATE to 'processing').
+            // If item was picked up as stale 'processing' (crash recovery), its step_id may already point to
+            // a fresh/unscheduled wait step. Treating it as is_resumed_wait=TRUE would skip that wait entirely.
+            // Only genuine 'waiting' → time-expired → picked-up items can be considered resumed.
+            'is_resumed_wait' => ($stepsProcessedInRun === 1
+                && ($item['status'] ?? '') === 'waiting'  // GUARD: only original 'waiting' items, not crash recovery
+                && trim((string) ($item['step_id'] ?? '')) === trim((string) $currentStepId)
+                && $item['scheduled_at'] <= $now),
             'now' => $now
         ];
 
@@ -762,21 +896,45 @@ try {
                 if (!empty($execResult['message_sent'])) {
                     $totalSentToday++;
                 }
-
+                // [PERF] Persist step_type alongside step_id so tracking_processor can use
+                // the indexed column instead of json_decode on every open/click event.
+                $_nextStepType = null;
+                foreach ($flowSteps as $_pns) {
+                    if (trim((string)($_pns['id'] ?? '')) === trim((string)$currentStepId)) {
+                        $_nextStepType = $_pns['type'] ?? null;
+                        break;
+                    }
+                }
+                $pdo->prepare("UPDATE subscriber_flow_states SET step_id = ?, step_type = ?, last_step_at = NOW(), updated_at = NOW() WHERE id = ?")
+                    ->execute([$currentStepId, $_nextStepType, $queueId]);
                 $pdo->commit();
                 $pdo->beginTransaction();
                 $isPriorityChain = false; // After first action, constraints apply
                 continue;
             } else {
-                $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = ?, step_id = ?, updated_at = NOW(), last_step_at = NOW() WHERE id = ?")->execute([$execResult['scheduled_at'], $currentStepId, $queueId]);
+                $_waitStepType = null;
+                foreach ($flowSteps as $_pws) {
+                    if (trim((string)($_pws['id'] ?? '')) === trim((string)$currentStepId)) {
+                        $_waitStepType = $_pws['type'] ?? null;
+                        break;
+                    }
+                }
+                $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = ?, step_id = ?, step_type = ?, updated_at = NOW(), last_step_at = NOW() WHERE id = ?")->execute([$execResult['scheduled_at'], $currentStepId, $_waitStepType, $queueId]);
                 $shouldContinueChain = false;
             }
         } else {
             if ($execResult['status'] === 'completed') {
-                $pdo->prepare("UPDATE subscriber_flow_states SET status = 'completed', updated_at = NOW() WHERE id = ?")->execute([$queueId]);
+                $pdo->prepare("UPDATE subscriber_flow_states SET status = 'completed', step_type = NULL, updated_at = NOW() WHERE id = ?")->execute([$queueId]);
                 $pdo->prepare("UPDATE flows SET stat_completed = stat_completed + 1 WHERE id = ?")->execute([$flowId]);
             } else {
-                $pdo->prepare("UPDATE subscriber_flow_states SET status = ?, scheduled_at = ?, updated_at = NOW(), step_id = ? WHERE id = ?")->execute([$execResult['status'], $execResult['scheduled_at'] ?? $now, $currentStepId, $queueId]);
+                $_genStepType = null;
+                foreach ($flowSteps as $_gs) {
+                    if (trim((string)($_gs['id'] ?? '')) === trim((string)$currentStepId)) {
+                        $_genStepType = $_gs['type'] ?? null;
+                        break;
+                    }
+                }
+                $pdo->prepare("UPDATE subscriber_flow_states SET status = ?, scheduled_at = ?, step_type = ?, updated_at = NOW(), step_id = ? WHERE id = ?")->execute([$execResult['status'], $execResult['scheduled_at'] ?? $now, $_genStepType, $currentStepId, $queueId]);
             }
             $shouldContinueChain = false;
         }

@@ -32,8 +32,8 @@ const updateRecentModules = (href: string) => {
     '/web-tracking': 'web-tracking',
     '/audience': 'audience',
     '/vouchers': 'vouchers',
-    '/reports': 'reports',
-    '/settings': 'settings'
+    '/tags': 'tags',
+    '/meta-messenger': 'meta-messenger'
   };
 
   const id = pathMap[href];
@@ -167,10 +167,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
   const mainNav: NavItemConfig[] = [
     { name: 'Trang chủ', href: '/', icon: LayoutDashboard, prefetch: () => import('../../pages/Dashboard') },
     { name: 'Chiến dịch', href: '/campaigns', icon: Send, prefetch: () => import('../../pages/Campaigns') },
-    { name: 'Automation', href: '/flows', icon: GitMerge, prefetch: () => import('../../pages/Flows'), prefetchApis: ['flows'] },
-    { name: 'Khách hàng', href: '/audience', icon: Users, prefetch: () => import('../../pages/Audience'), prefetchApis: ['segments', 'lists', 'tags', 'integrations'] },
+    { name: 'Automation', href: '/flows', icon: GitMerge, badge: 'Hot', prefetch: () => import('../../pages/Flows'), prefetchApis: ['flows'] },
+    { name: 'Khách hàng', href: '/audience', icon: Users, prefetch: () => import('../../pages/Audience') },
     { name: 'Quản lý Nhãn', href: '/tags', icon: Tag, prefetch: () => import('../../pages/Tags'), prefetchApis: ['tags'] },
-    { name: 'Kho Voucher', href: '/vouchers', icon: Gift, badge: 'Dev', prefetch: () => import('../../pages/Vouchers') },
+    { name: 'Kho Voucher', href: '/vouchers', icon: Gift, badge: 'Promo', prefetch: () => import('../../pages/Vouchers') },
     { name: 'Mẫu Email', href: '/templates', icon: FileEdit, prefetch: () => import('../../pages/Templates') },
   ];
 
@@ -183,10 +183,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
   const analyticsNav: NavItemConfig[] = [
     { name: 'Website Tracking', href: '/web-tracking', icon: Globe, prefetch: () => import('../../pages/WebTracking') },
     { name: 'API Triggers', href: '/api-triggers', icon: Webhook, badge: 'Dev', prefetch: () => import('../../pages/ApiTriggers') },
-  ];
-
-  const reportsNav: NavItemConfig[] = [
-    { name: 'Báo cáo', href: '/reports', icon: BarChart3, prefetch: () => import('../../pages/Reports') },
   ];
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -256,9 +252,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
 
         <SidebarSection title="Tracking" isCollapsed={isCollapsed}>
           {analyticsNav.map((item) => <NavItem key={item.name} item={item} onClose={onClose} isCollapsed={isCollapsed} />)}
-        </SidebarSection>
-        <SidebarSection title="Reports" isCollapsed={isCollapsed}>
-          {reportsNav.map((item) => <NavItem key={item.name} item={item} onClose={onClose} isCollapsed={isCollapsed} />)}
         </SidebarSection>
 
         {isAdmin && (

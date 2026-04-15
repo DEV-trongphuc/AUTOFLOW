@@ -23,22 +23,19 @@ interface ZaloOA {
     avatar?: string;
 }
 
-const ZaloReportTab: React.FC = () => {
+interface ZaloReportProps {
+    dateRange?: { start: string; end: string };
+}
+
+const ZaloReportTab: React.FC<ZaloReportProps> = ({ dateRange }) => {
     const [period, setPeriod] = useState<'month' | 'day'>('month');
     const [selectedOA, setSelectedOA] = useState<string>('');
     const [oas, setOas] = useState<ZaloOA[]>([]);
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<ReportData[]>([]);
 
-    const [startDate, setStartDate] = useState(
-        new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0]
-    );
-    const [endDate, setEndDate] = useState(
-        new Date().toISOString().split('T')[0]
-    );
-
     useEffect(() => { fetchOAs(); }, []);
-    useEffect(() => { fetchReport(); }, [period, selectedOA, startDate, endDate]);
+    useEffect(() => { fetchReport(); }, [selectedOA, dateRange]);
 
     const fetchOAs = async () => {
         try {
@@ -49,8 +46,13 @@ const ZaloReportTab: React.FC = () => {
 
     const fetchReport = async () => {
         setLoading(true);
+        // Fallback to month if dateRange is missing (e.g. standalone mode without UI)
+        const activeStart = dateRange?.start || new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
+        const activeEnd = dateRange?.end || new Date().toISOString().split('T')[0];
+        const activePeriod = dateRange ? 'day' : period;
+
         try {
-            const res = await api.get<ReportData[]>(`zalo_report?period=${period}&oa_id=${selectedOA}&start_date=${startDate}&end_date=${endDate}`);
+            const res = await api.get<ReportData[]>(`zalo_report?period=${activePeriod}&oa_id=${selectedOA}&start_date=${activeStart}&end_date=${activeEnd}`);
             if (res.success) setData(res.data);
         } catch (error) { console.error("Failed to fetch Zalo report", error); }
         finally { setLoading(false); }
@@ -76,17 +78,12 @@ const ZaloReportTab: React.FC = () => {
         <TabTransition className="space-y-8">
             {/* Filters Row */}
             <div className="bg-slate-50/50 p-6 rounded-[32px] border border-slate-100 flex flex-wrap items-center gap-6">
-                <div className="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-sm shrink-0">
-                    <button onClick={() => setPeriod('month')} className={`px-6 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${period === 'month' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'text-slate-400 hover:text-slate-600'}`}>Tháng</button>
-                    <button onClick={() => setPeriod('day')} className={`px-6 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${period === 'day' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'text-slate-400 hover:text-slate-600'}`}>Ngày</button>
-                </div>
-
-                <div className="shrink-0 min-w-[200px]">
+                <div className="shrink-0 min-w-[250px]">
                     <Select
                         value={selectedOA}
                         onChange={(val) => setSelectedOA(val)}
                         options={[
-                            { value: '', label: 'Tất cả OA' },
+                            { value: '', label: 'Tất cả Zalo OA' },
                             ...oas.map(oa => ({
                                 value: oa.id,
                                 label: (
@@ -98,26 +95,6 @@ const ZaloReportTab: React.FC = () => {
                                 searchLabel: oa.name
                             }))
                         ]}
-                    />
-                </div>
-
-                <div className="flex items-center gap-4 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-sm">
-                    <Input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        customSize="sm"
-                        className="!w-[140px] !py-1 !px-2"
-                        label="Từ"
-                    />
-                    <div className="w-px h-6 bg-slate-100 mt-4"></div>
-                    <Input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        customSize="sm"
-                        className="!w-[140px] !py-1 !px-2"
-                        label="Đến"
                     />
                 </div>
 

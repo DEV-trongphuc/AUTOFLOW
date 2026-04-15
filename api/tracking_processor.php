@@ -28,10 +28,20 @@ function processTrackingEvent($pdo, $type, $payload)
         // [DEBOUNCE] Prevent duplicate logging and stats bloat if email pixel/click fires multiple times rapidly (AMPP proxy clones)
         if (in_array($subType, ['open_email', 'click_link', 'zalo_clicked'])) {
             try {
-                $stmtSpam = $pdo->prepare("SELECT 1 FROM subscriber_activity WHERE subscriber_id = ? AND type = ? AND (reference_id = ? OR (reference_id IS NULL AND ? IS NULL)) AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MINUTE) LIMIT 1");
-                $stmtSpam->execute([$sid, $subType, $rid, $rid]);
+                // [FIX] Buffer Gap: Check both main activity table AND the pending activity buffer.
+                // Without checking the buffer, multiple events in the same queue batch will all pass
+                // the check because the first one's activity record hasn't been flushed yet.
+                $stmtSpam = $pdo->prepare("
+                    SELECT 1 FROM subscriber_activity 
+                    WHERE subscriber_id = ? AND type = ? AND (reference_id = ? OR (reference_id IS NULL AND ? IS NULL)) AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MINUTE)
+                    UNION ALL
+                    SELECT 1 FROM activity_buffer
+                    WHERE subscriber_id = ? AND type = ? AND (reference_id = ? OR (reference_id IS NULL AND ? IS NULL))
+                    LIMIT 1
+                ");
+                $stmtSpam->execute([$sid, $subType, $rid, $rid, $sid, $subType, $rid, $rid]);
                 if ($stmtSpam->fetchColumn()) {
-                    // Exact same event within the last 60 seconds. Skip processing.
+                    // Exact same event within the last 60 seconds (or pending in buffer). Skip processing.
                     return true;
                 }
             } catch (Exception $e) {
@@ -40,14 +50,11 @@ function processTrackingEvent($pdo, $type, $payload)
         }
 
         // 1. Log essential activity (PULL FROM CONFIG)
-        // [CONFLICT-3 FIX] Use __DIR__ to anchor path — relative 'scoring_config.php' fails
-        // when this file is included by a CLI worker (cron/worker) running from a different CWD.
-        $scoring = file_exists(__DIR__ . '/scoring_config.php')
-            ? (require __DIR__ . '/scoring_config.php')
-            : [];
-        $pOpen = $scoring['email_open'] ?? 1;
-        $pClick = $scoring['email_click'] ?? 5;
-        $pZaloClick = $scoring['zalo_click'] ?? 5;
+        require_once __DIR__ . '/db_connect.php'; // Ensure db_connect is loaded for getGlobalLeadScoreConfig
+        $scoring = function_exists('getGlobalLeadScoreConfig') ? getGlobalLeadScoreConfig($pdo) : [];
+        $pOpen = $scoring['leadscore_email_open'] ?? 2;
+        $pClick = $scoring['leadscore_email_click'] ?? 5;
+        $pZaloClick = $scoring['leadscore_zalo_interact'] ?? 3;
 
         $pointValue = $pClick;
         $activityLabel = 'Email Click';
@@ -97,26 +104,18 @@ function processTrackingEvent($pdo, $type, $payload)
             // The nested catch below acts as a last-resort safety net.
             if (strpos($e->getMessage(), "doesn't exist") !== false) {
                 try {
-                    $pdo->exec("CREATE TABLE IF NOT EXISTS timestamp_buffer (
-                        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                        subscriber_id char(36) NOT NULL,
-                        column_name VARCHAR(50) NOT NULL,
-                        timestamp_value DATETIME NOT NULL,
-                        processed TINYINT(1) DEFAULT 0,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        INDEX idx_processed (processed),
-                        INDEX idx_sub_col (subscriber_id, column_name)
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+                    // [HOTFIX RUNTIME_DDL] Removed CREATE TABLE IF NOT EXISTS here.
+                    // This caused severe Metadata Locks freezing entire workers.
+                    // Please run migrate_optimizations.php to provision the timestamp_buffer.
 
-                    $pdo->prepare("INSERT INTO timestamp_buffer (subscriber_id, column_name, timestamp_value) VALUES (?, ?, ?), (?, 'last_activity_at', ?)")
-                        ->execute([$sid, $col, $ts, $sid, $ts]);
-                } catch (Exception $ex) {
-                    // Last resort: Update directly
+                    // If migration hasn't run, fallback to explicit UPDATE immediately (less ideal for concurrency, but won't crash DB core)
                     $pdo->prepare("UPDATE subscribers SET " . ($subType === 'open_email' ? 'last_open_at = NOW()' : 'last_click_at = NOW()') . ", last_activity_at = NOW() WHERE id = ?")
                         ->execute([$sid]);
+                } catch (Exception $ex) {
+                    // Ignore gracefully
                 }
             } else {
-                // Ignore
+                // Ignore other issues.
             }
         }
 
@@ -142,16 +141,13 @@ function processTrackingEvent($pdo, $type, $payload)
                     strpos($eUniq->getMessage(), 'reference_key') !== false
                     || strpos($eUniq->getMessage(), "Unknown column") !== false
                 ) {
-                    // Auto-add missing column
+                    // [HOTFIX RUNTIME_DDL] Removed ALTER TABLE tracking_unique_cache inline logic.
+                    // Causes Metadata Locks. Fallback safely until migrate_optimizations.php is executed.
                     try {
-                        $pdo->exec("ALTER TABLE tracking_unique_cache ADD COLUMN IF NOT EXISTS reference_key VARCHAR(255) DEFAULT NULL");
-                        $stmtUnique = $pdo->prepare("INSERT IGNORE INTO tracking_unique_cache (subscriber_id, target_type, target_id, event_type, reference_key) VALUES (?, 'flow', ?, ?, ?)");
-                        $stmtUnique->execute([$sid, $fid, $evt, $refKey]);
-                    } catch (Exception $eAlt) {
-                        // Fallback: Insert without reference_key
                         $pdo->prepare("INSERT IGNORE INTO tracking_unique_cache (subscriber_id, target_type, target_id, event_type) VALUES (?, 'flow', ?, ?)")
                             ->execute([$sid, $fid, $evt]);
-                    }
+                    } catch (Exception $eAlt) {}
+                    
                     $stmtUnique = null; // prevent rowCount() error below
                 }
             }
@@ -193,14 +189,13 @@ function processTrackingEvent($pdo, $type, $payload)
                     strpos($eUniq->getMessage(), 'reference_key') !== false
                     || strpos($eUniq->getMessage(), "Unknown column") !== false
                 ) {
+                    // [HOTFIX RUNTIME_DDL] Removed ALTER TABLE tracking_unique_cache inline logic.
+                    // Fallback to legacy insert structure to prevent locking DB.
                     try {
-                        $pdo->exec("ALTER TABLE tracking_unique_cache ADD COLUMN IF NOT EXISTS reference_key VARCHAR(255) DEFAULT NULL");
-                        $stmtUnique = $pdo->prepare("INSERT IGNORE INTO tracking_unique_cache (subscriber_id, target_type, target_id, event_type, reference_key) VALUES (?, 'campaign', ?, ?, ?)");
-                        $stmtUnique->execute([$sid, $cid, $evt, $refKey]);
-                    } catch (Exception $eAlt) {
                         $pdo->prepare("INSERT IGNORE INTO tracking_unique_cache (subscriber_id, target_type, target_id, event_type) VALUES (?, 'campaign', ?, ?)")
                             ->execute([$sid, $cid, $evt]);
-                    }
+                    } catch (Exception $eAlt) {}
+                    
                     $stmtUnique = null;
                 }
             }
@@ -211,61 +206,57 @@ function processTrackingEvent($pdo, $type, $payload)
             }
         }
 
-        // 5. [POKE FLOW WORKER] - Trigger Immediate Flow Evaluation
-        // If a subscriber interacts, we should immediately re-check their flow conditions (e.g. Wait until Click)
-        // Instead of verifying specific Waiting states, we dispatch a priority job for this subscriber if they are in a flow (fid is present).
+        // [POKE FLOW WORKER] - Trigger Immediate Flow Evaluation on subscriber interaction.
+        // Only poke 'condition' steps — wait steps are time-gated and must not be woken early.
+        // [PERF] Use indexed step_type column instead of JOIN+json_decode on every event.
+        //        Falls back to json_decode path if step_type column doesn't exist yet (self-healing).
         if ($sid) {
-            // [REMOVED] checkDynamicTriggers($pdo, $sid) was called here on every open/click event.
-            // That function queries ALL active flows to check segment/date triggers — O(flows × subscribers).
-            // Dynamic triggers only apply when subscriber PROFILE changes (tags, fields, list membership),
-            // not when they simply open/click an email. Moved to subscriber update paths only.
-
-            // 2. [POKE FLOWS VIA CAMPAIGN or FID]
-            // Case A: Direct Flow Interaction (we know the fid)
+            // Case A: Direct Flow Interaction (fid known)
             if ($fid) {
-                // [FIX] Only poke waiting states that are at a 'condition' step.
-                // 'wait' (duration/until) steps are time-based — waking them early
-                // causes executeStep() to re-calculate duration and RESET the timer.
-                // We must NOT wake a 'wait' step just because an email was opened.
-                //
-                // To distinguish: load the flow's steps JSON and check the step_id's type.
-                // Only dispatch for states where step type = 'condition'.
-                $checkWait = $pdo->prepare("
-                    SELECT sfs.id, sfs.step_id, f.steps
-                    FROM subscriber_flow_states sfs
-                    JOIN flows f ON sfs.flow_id = f.id
-                    WHERE sfs.subscriber_id = ? AND sfs.flow_id = ? AND sfs.status = 'waiting'
-                ");
-                $checkWait->execute([$sid, $fid]);
-                $waitingStates = $checkWait->fetchAll(PDO::FETCH_ASSOC);
+                try {
+                    // Fast path: use step_type column (indexed, no json_decode)
+                    $checkWait = $pdo->prepare("
+                        SELECT sfs.id, sfs.step_id, sfs.step_type, f.steps
+                        FROM subscriber_flow_states sfs
+                        JOIN flows f ON sfs.flow_id = f.id
+                        WHERE sfs.subscriber_id = ? AND sfs.flow_id = ? AND sfs.status = 'waiting'
+                    ");
+                    $checkWait->execute([$sid, $fid]);
+                    $waitingStates = $checkWait->fetchAll(PDO::FETCH_ASSOC);
 
-                foreach ($waitingStates as $state) {
-                    // Decode flow steps and check if current step is a 'condition'
-                    $flowSteps = json_decode($state['steps'] ?? '[]', true) ?: [];
-                    $currentStepType = null;
-                    foreach ($flowSteps as $s) {
-                        if (trim($s['id']) === trim($state['step_id'])) {
-                            $currentStepType = $s['type'] ?? null;
-                            break;
+                    foreach ($waitingStates as $state) {
+                        // Fast path: step_type already stored — no json_decode needed
+                        if ($state['step_type'] !== null) {
+                            $currentStepType = $state['step_type'];
+                        } else {
+                            // Slow path fallback: decode flow steps (step_type column may not exist yet)
+                            $flowSteps = json_decode($state['steps'] ?? '[]', true) ?: [];
+                            $currentStepType = null;
+                            foreach ($flowSteps as $s) {
+                                if (trim($s['id']) === trim($state['step_id'])) {
+                                    $currentStepType = $s['type'] ?? null;
+                                    break;
+                                }
+                            }
                         }
+                        // Only wake condition steps — NOT wait/action/zalo_zns etc.
+                        if ($currentStepType !== 'condition') {
+                            continue;
+                        }
+                        dispatchQueueJob($pdo, 'flows', [
+                            'priority_queue_id' => $state['id'],
+                            'subscriber_id' => $sid,
+                            'priority_flow_id' => $fid
+                        ]);
                     }
-                    // Only wake condition steps — NOT wait/action/zalo_zns etc.
-                    // 'wait' steps are time-gated and must not be reset by tracking events.
-                    if ($currentStepType !== 'condition') {
-                        continue;
-                    }
-                    dispatchQueueJob($pdo, 'flows', [
-                        'priority_queue_id' => $state['id'],
-                        'subscriber_id' => $sid,
-                        'priority_flow_id' => $fid
-                    ]);
+                } catch (Exception $e) {
+                    // Ignore poke errors (e.g., step_type column not yet in schema)
                 }
             }
 
             // Case B: Campaign Interaction (Poke all flows triggered by this campaign)
             if ($cid) {
                 try {
-                    // [OPTIMIZATION] Cache campaign-to-flow mapping
                     static $campaignFlowCache = [];
 
                     if (!isset($campaignFlowCache[$cid])) {
@@ -288,9 +279,8 @@ function processTrackingEvent($pdo, $type, $payload)
 
                     foreach ($campaignFlowCache[$cid] as $fId) {
                         if ($fId !== $fid) { // Skip if already poked by Case A above
-                            // [FIX] Same fix as Case A: only wake 'condition' steps, not 'wait' steps.
                             $checkWait = $pdo->prepare("
-                                SELECT sfs.id, sfs.step_id, f.steps
+                                SELECT sfs.id, sfs.step_id, sfs.step_type, f.steps
                                 FROM subscriber_flow_states sfs
                                 JOIN flows f ON sfs.flow_id = f.id
                                 WHERE sfs.subscriber_id = ? AND sfs.flow_id = ? AND sfs.status = 'waiting'
@@ -299,12 +289,18 @@ function processTrackingEvent($pdo, $type, $payload)
                             $waitingStates = $checkWait->fetchAll(PDO::FETCH_ASSOC);
 
                             foreach ($waitingStates as $state) {
-                                $fStepsForCheck = json_decode($state['steps'] ?? '[]', true) ?: [];
-                                $stepTypeForCheck = null;
-                                foreach ($fStepsForCheck as $s) {
-                                    if (trim($s['id']) === trim($state['step_id'])) {
-                                        $stepTypeForCheck = $s['type'] ?? null;
-                                        break;
+                                // Fast path: use stored step_type
+                                if ($state['step_type'] !== null) {
+                                    $stepTypeForCheck = $state['step_type'];
+                                } else {
+                                    // Slow fallback
+                                    $fStepsForCheck = json_decode($state['steps'] ?? '[]', true) ?: [];
+                                    $stepTypeForCheck = null;
+                                    foreach ($fStepsForCheck as $s) {
+                                        if (trim($s['id']) === trim($state['step_id'])) {
+                                            $stepTypeForCheck = $s['type'] ?? null;
+                                            break;
+                                        }
                                     }
                                 }
                                 if ($stepTypeForCheck !== 'condition') {

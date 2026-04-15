@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Sparkles, ArrowRight, Gift, Zap, Info, Cake, Tag, Users, RefreshCw, Send, PartyPopper, Ghost, Crown, UserPlus, Snowflake, Check, List, FileInput, Layers, ListPlus, ShoppingCart, Plug, FileSpreadsheet, BellRing, Calendar, MessageSquare, UserMinus, Ticket } from 'lucide-react';
+import { Sparkles, ArrowRight, Gift, Zap, Info, Cake, Tag, Users, RefreshCw, Send, PartyPopper, Ghost, Crown, UserPlus, Snowflake, Check, List, FileInput, Layers, ListPlus, ShoppingCart, Plug, FileSpreadsheet, BellRing, Calendar, MessageSquare, UserMinus, Ticket, Bot } from 'lucide-react';
 import Modal from '../../common/Modal';
 import Button from '../../common/Button';
 import Input from '../../common/Input';
@@ -15,6 +15,18 @@ interface FlowCreationModalProps {
 }
 
 const FLOW_TEMPLATES = [
+  {
+    id: 'ai_chatbot_lead',
+    name: 'Lead từ AI Chatbot',
+    desc: 'Kích hoạt ngay khi Bot AI Chatbot hoặc Auto-fill Website capture thông tin Lead (Email/SDT).',
+    icon: Bot,
+    theme: 'rose', // Đỏ đô sáng
+    gradient: 'from-rose-500 to-rose-700',
+    steps: [
+      { id: 't1', type: 'trigger', label: 'Khi có Lead từ AI', iconName: 'zap', config: { type: 'ai_capture', targetId: '' }, nextStepId: 'a1' },
+      { id: 'a1', type: 'action', label: 'Email Chào Mừng', iconName: 'mail', config: { subject: 'Tài liệu bạn yêu cầu từ AI của chúng tôi! 🚀' } }
+    ]
+  },
   {
     id: 'welcome_segment',
     name: 'Phân khúc động (Smart)',

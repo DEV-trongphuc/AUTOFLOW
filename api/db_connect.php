@@ -316,6 +316,20 @@ if (empty($current_admin_id)) {
 
 $GLOBALS['current_admin_id'] = $current_admin_id;
 
+// ── UPDATE LAST_LOGIN FOOTPRINT (TRACK ACTIVITY) ─────────────────────────
+if (session_status() === PHP_SESSION_ACTIVE) {
+    $sessionUserId = $_SESSION['user_id'] ?? null;
+    if ($sessionUserId && is_numeric($sessionUserId)) {
+        $lastUpdate = $_SESSION['last_login_update_time'] ?? 0;
+        if (time() - $lastUpdate > 300) { // 5 minutes throttle
+            try {
+                $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?")->execute([$sessionUserId]);
+                $_SESSION['last_login_update_time'] = time();
+            } catch (Exception $e) { /* ignore */ }
+        }
+    }
+}
+
 // ── SESSION LOCK RELEASE ──────────────────────────────────────────────────────
 // PHP file-based sessions use EXCLUSIVE FILE LOCKS.
 // Problem: While one request holds the session open (e.g., campaign send = minutes),
@@ -331,4 +345,85 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 // DEBUG: Log session state for troubleshooting (remove in production)
 if (defined('AI_SPACE_DEBUG') && AI_SPACE_DEBUG) {
     error_log("[SESSION] ID=" . session_id() . " org_user_id=" . ($_SESSION['org_user_id'] ?? 'null') . " user_id=" . ($_SESSION['user_id'] ?? 'null') . " resolved=" . ($current_admin_id ?? 'null'));
+}
+
+/**
+ * Log System Activity (Audit Log)
+ * Xử lý ghi nhận thao tác của User/Admin vào bảng system_audit_logs
+ * 
+ * @param PDO $pdo
+ * @param string $module Tên module (campaigns, flows, etc)
+ * @param string $action Hành động (create, update, delete, play, pause)
+ * @param string|null $target_id ID đối tượng bị tác động
+ * @param string|null $target_name Tên đối tượng bị tác động (giúp dễ đọc log)
+ * @param array|null $details Các thông tin bổ sung (sẽ được parse ra JSON)
+ */
+function logSystemActivity($pdo, $module, $action, $target_id = null, $target_name = null, $details = null) {
+    if (!$pdo) return;
+    
+    // Fallback thông tin User
+    $userId = $_SESSION['user_id'] ?? $GLOBALS['current_admin_id'] ?? 'unknown';
+    $userName = $_SESSION['full_name'] ?? $_SESSION['username'] ?? 'System';
+    if ($userId === 'admin-001') $userName = 'Admin Master';
+
+    $ip = $_SERVER['REMOTE_ADDR'] ?? null;
+    $detailsJson = null;
+    if ($details) {
+        $encoded = json_encode($details, JSON_UNESCAPED_UNICODE);
+        $detailsJson = $encoded !== false ? $encoded : json_encode(['error' => 'Malformed UTF-8 in details']);
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            INSERT INTO system_audit_logs 
+            (user_id, user_name, module, action, target_id, target_name, details, ip_address) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([
+            $userId, 
+            $userName, 
+            $module, 
+            $action, 
+            $target_id, 
+            $target_name, 
+            $detailsJson, 
+            $ip
+        ]);
+    } catch (Exception $e) {
+        error_log("[AuditLogError] " . $e->getMessage());
+    }
+}
+
+/**
+ * Lấy cấu hình Leadscore Global từ Database
+ * Có cơ chế caching trong memory (biến tĩnh) để tái sử dụng trong cùng 1 request
+ */
+function getGlobalLeadScoreConfig($pdo) {
+    static $config = null;
+    if ($config !== null) return $config;
+
+    // Default configuration (fallback)
+    $config = [
+        'leadscore_email_open' => 2,
+        'leadscore_email_click' => 5,
+        'leadscore_form_submit' => 10,
+        'leadscore_web_visit' => 1,
+        'leadscore_zalo_interact' => 3,
+        'leadscore_ai_chat' => 5,
+        'leadscore_purchase' => 10,
+        'leadscore_custom_event' => 5
+    ];
+
+    try {
+        $stmt = $pdo->query("SELECT `key`, `value` FROM system_settings WHERE `key` LIKE 'leadscore_%'");
+        while ($row = $stmt->fetch()) {
+            if (is_numeric($row['value'])) {
+                $config[$row['key']] = (int) $row['value'];
+            }
+        }
+    } catch (Exception $e) {
+        // Fallback to default safely if table error
+    }
+
+    return $config;
 }

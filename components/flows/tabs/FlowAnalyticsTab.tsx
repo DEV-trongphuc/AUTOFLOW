@@ -35,7 +35,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
     // Inactive Users State
     const [isInactiveModalOpen, setIsInactiveModalOpen] = useState(false);
     const [inactiveUsers, setInactiveUsers] = useState<any[]>([]);
-    const [inactivePagination, setInactivePagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
+    const [inactivePagination, setInactivePagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
     const [loadingInactive, setLoadingInactive] = useState(false);
     // NEW: Track completed user stats by branch (leaf node id -> count)
     const [completedBranchStats, setCompletedBranchStats] = useState<Record<string, number>>({});
@@ -49,7 +49,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
     // NEW: Execution Log State
     const [logPage, setLogPage] = useState(1);
-    const [logPagination, setLogPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
+    const [logPagination, setLogPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
     const [logSearchTerm, setLogSearchTerm] = useState('');
     const [debouncedLogSearch, setDebouncedLogSearch] = useState('');
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
@@ -188,24 +188,25 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         });
 
         // 3.5 [SHIFTING LOGIC] Move 'Waiting' counts from Wait/Delay steps to their target steps
-        // This aligns with user expectation: "How many are waiting FOR this email"
         const shiftedWaiting = new Map<string, number>();
-        // Populate initial counts
         currentFlow.steps.forEach(s => {
             shiftedWaiting.set(s.id, realtimeDistribution[s.id]?.count || 0);
         });
 
         // Loop through steps in order and push 'wait' counts forward
-        sortedSteps.forEach(s => {
-            if (s.type === 'wait') {
-                const count = shiftedWaiting.get(s.id) || 0;
-                if (count > 0 && s.nextStepId) {
-                    const currentTargetCount = shiftedWaiting.get(s.nextStepId) || 0;
-                    shiftedWaiting.set(s.nextStepId, currentTargetCount + count);
-                    shiftedWaiting.set(s.id, 0); // Clear from wait step
+        // Repeat up to 3 times to handle chained wait nodes (Wait -> Wait -> Action)
+        for (let i = 0; i < 3; i++) {
+            sortedSteps.forEach(s => {
+                if (s.type === 'wait') {
+                    const count = shiftedWaiting.get(s.id) || 0;
+                    if (count > 0 && s.nextStepId) {
+                        const currentTargetCount = shiftedWaiting.get(s.nextStepId) || 0;
+                        shiftedWaiting.set(s.nextStepId, currentTargetCount + count);
+                        shiftedWaiting.set(s.id, 0); // Clear from wait step
+                    }
                 }
-            }
-        });
+            });
+        }
 
 
         // 4. Build Funnel Data (Recursive Traversal)
@@ -357,7 +358,20 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                 traverse(nextStepId);
             } else {
                 // BRANCH TERMINATION -> Add "Completed" node for this branch
-                const completedCount = completedBranchStats[step.id] || 0;
+                // [FIX] Use min(total_completed, last_step_processed) for most accurate display.
+                // Reasoning:
+                //   - stats.completed = 444 (authoritative, but can exceed step.stats due to buffer lag)
+                //   - byBranch[step.id] = 439 (undercounts due to step_id mismatch on exit paths)
+                //   - step.stats.processed = 440 (definitive: exactly how many passed through last step)
+                // → min(444, 440) = 440: matches Qua count, never shows more completed than passed through.
+                const lastStepStats = (step as any).stats || {};
+                const lastStepProcessed = lastStepStats.processed || lastStepStats.sent || 0;
+                const totalCompleted = stats.completed || 0;
+                const byBranchCount = completedBranchStats[step.id] || 0;
+                // Priority: min(total, last_step_processed) when we have real data; fallback to byBranch
+                const completedCount = lastStepProcessed > 0
+                    ? Math.min(totalCompleted, lastStepProcessed)
+                    : (byBranchCount > 0 ? byBranchCount : totalCompleted);
                 finalFunnel.push({
                     id: `end_${step.id}`,
                     type: 'completed',
@@ -372,6 +386,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                     style: { icon: CheckCircle2, gradient: 'from-emerald-500 to-teal-600', text: 'text-emerald-600', bg: 'bg-emerald-50', label: 'Completed' }
                 });
             }
+
         };
 
         const triggerStart = currentFlow.steps.find(s => s.type === 'trigger');
@@ -454,7 +469,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         return finalFunnel;
     }, [currentFlow.steps, stats, activeBranches, flowLabels, completedBranchStats, realtimeDistribution]);
 
-    const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
+    const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
 
     const selectedStepType = useMemo(() => {
         if (!selectedStepId) return null;
@@ -530,13 +545,23 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
     }, [flow]);
 
     const refreshFlow = async () => {
-        const res = await api.get<Flow>(`flows/${flow.id}`);
-        if (res.success) {
-            // Update everything including steps which contains individual stats
-            setCurrentFlow(res.data);
-        }
-        // Also refresh logs
-        fetchLogs(1, true, debouncedLogSearch);
+        // [FIX] Fetch flow data + completed stats + distribution ALL in parallel.
+        // Previously: flow data was set first, then fetchLogs fetched stats separately.
+        // This caused a window where step.stats.processed (from flow) was newer than
+        // completedBranchStats (from fetchLogs), showing e.g. "440 Qua / 439 Hoàn thành".
+        // Fix: single Promise.all ensures all state updates use data from the same moment.
+        const [flowRes, statsRes, distRes] = await Promise.all([
+            api.get<Flow>(`flows/${flow.id}`),
+            api.get<any>(`flows?id=${flow.id}&route=completed-users`),
+            api.get<any>(`flows?id=${flow.id}&route=distribution`)
+        ]);
+
+        if (flowRes.success) setCurrentFlow(flowRes.data);
+        if (statsRes.success && statsRes.data) setCompletedBranchStats(statsRes.data.byBranch || {});
+        if (distRes.success && distRes.data) setRealtimeDistribution(distRes.data);
+
+        // Fetch logs only (skip stats re-fetch since we just set them above)
+        fetchLogs(1, false, debouncedLogSearch);
     };
 
     const fetchParticipants = async (page = 1, stepId?: string | null, status?: string | null, search?: string, type?: string | null) => {
@@ -561,15 +586,15 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         }
 
         if (status === 'failed') {
-            url = `flows?id=${flow.id}&route=step-errors&page=${page}&limit=20`;
+            url = `flows?id=${flow.id}&route=step-errors&page=${page}&limit=10`;
             if (effectiveStepId) url += `&step_id=${effectiveStepId}`;
             if (search) url += `&search=${encodeURIComponent(search)}`;
         } else if (status === 'unsubscribed') {
-            url = `flows?id=${flow.id}&route=step-unsubscribes&page=${page}&limit=20`;
+            url = `flows?id=${flow.id}&route=step-unsubscribes&page=${page}&limit=10`;
             if (effectiveStepId) url += `&step_id=${effectiveStepId}`;
             if (search) url += `&search=${encodeURIComponent(search)}`;
         } else {
-            url = `flows?id=${flow.id}&route=participants&page=${page}&limit=20`;
+            url = `flows?id=${flow.id}&route=participants&page=${page}&limit=10`;
             if (effectiveStepId) url += `&step_id=${effectiveStepId}`;
             if (status) url += `&status=${status}`;
             if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -591,14 +616,14 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
             } else if (Array.isArray(res.data)) {
                 // If endpoint returns direct array (like likely step-errors does based on old code)
                 setModalParticipants(res.data);
-                setPagination({ page: 1, limit: 50, total: res.data.length, totalPages: 1 });
+                setPagination({ page: 1, limit: 10, total: res.data.length, totalPages: 1 });
             } else {
                 setModalParticipants([]);
-                setPagination({ page: 1, limit: 50, total: 0, totalPages: 1 });
+                setPagination({ page: 1, limit: 10, total: 0, totalPages: 1 });
             }
         } else {
             setModalParticipants([]);
-            setPagination({ page: 1, limit: 50, total: 0, totalPages: 1 });
+            setPagination({ page: 1, limit: 10, total: 0, totalPages: 1 });
         }
         setLoadingList(false);
     };
@@ -613,7 +638,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         setShowOpens(false);
     };
 
-    const handleStepClick = (stepId: string, type: string) => {
+    const handleStepClick = (stepId: string, type: string, initialTab?: string) => {
         setSelectedStepId(stepId);
         setSelectedStatus(null);
         setSearchTerm(''); // Clear search on step change
@@ -621,7 +646,9 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         setIsParticipantsModalOpen(true); // Open Modal
 
         // Smart Default Tab
-        if (type === 'zalo_zns') {
+        if (initialTab) {
+            setModalTab(initialTab as any);
+        } else if (type === 'zalo_zns') {
             setModalTab('zns_sent');
         } else {
             setModalTab('all_touched');
@@ -648,7 +675,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
             setIsLoadingMoreLogs(true);
         }
 
-        const limit = 20;
+        const limit = 10;
         let url = `flows?id=${flow.id}&route=history&page=${page}&limit=${limit}`;
         if (search) url += `&search=${encodeURIComponent(search)}`;
 
@@ -688,7 +715,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                 setLogPage(page);
             } else if (reset) {
                 setLogs([]);
-                setLogPagination({ page: 1, limit: 50, total: 0, totalPages: 1 });
+                setLogPagination({ page: 1, limit: 10, total: 0, totalPages: 1 });
             }
         } catch (error) {
             console.error('Failed to fetch logs:', error);
@@ -812,7 +839,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         setLoadingInactive(true);
         setIsInactiveModalOpen(true);
         try {
-            const res = await api.get(`flows?id=${flow.id}&route=inactive-users&page=${page}&limit=20`);
+            const res = await api.get(`flows?id=${flow.id}&route=inactive-users&page=${page}&limit=10`);
             if (res.success) {
                 setInactiveUsers((res.data as any).users || []);
                 if ((res.data as any).pagination) {
@@ -1078,8 +1105,8 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                 {/* Step Card */}
                                                 <div
                                                     onClick={() => item.type !== 'wait' && handleStepClick(item.id, item.type)}
-                                                    className={`flex flex-col bg-white border rounded-xl md:rounded-[20px] transition-all duration-300 group 
-                                                        ${item.type === 'wait' ? 'p-2 md:p-3 border-dashed bg-slate-50/50' : 'p-3 md:p-4 cursor-pointer'} 
+                                                    className={`flex flex-col border rounded-xl md:rounded-[20px] transition-all duration-300 group 
+                                                        ${item.type === 'wait' ? 'p-2 md:p-3 border-dashed bg-slate-100/50 opacity-90' : 'bg-white p-3 md:p-4 cursor-pointer'} 
                                                         ${(selectedStepId === item.id || (selectedStatus === 'completed' && item.type === 'completed'))
                                                             ? 'border-[#ffa900] shadow-lg ring-1 ring-[#ffa900]/20'
                                                             : (item.type === 'wait' ? 'border-slate-200' : 'border-slate-100 hover:shadow-lg hover:border-slate-200')
@@ -1125,24 +1152,38 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
 
                                                         {/* Right: Stats */}
                                                         <div className="flex items-center justify-between sm:justify-end gap-4 md:gap-8 text-right">
-                                                            <div className="flex gap-4 md:gap-6">
+                                                            <div className="flex flex-col sm:flex-row gap-2 md:gap-3 items-end sm:items-center">
                                                                 {item.type === 'completed' ? (
-                                                                    <div>
-                                                                        <p className="text-[8px] md:text-[9px] text-emerald-500 font-bold uppercase tracking-wide whitespace-nowrap">Hoàn thành</p>
-                                                                        <p className="text-base md:text-lg font-black text-emerald-600">{(item as any).users?.toLocaleString() || 0}</p>
+                                                                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100 shadow-sm">
+                                                                        <CheckCircle2 size={13} className="text-emerald-500" />
+                                                                        <span className="text-[11px] md:text-xs font-bold text-emerald-600">{(item as any).users?.toLocaleString() || 0} Hoàn thành</span>
                                                                     </div>
-                                                                ) : (
+                                                                ) : item.type !== 'wait' ? (
                                                                     <>
-                                                                        <div>
-                                                                            <p className="text-[8px] md:text-[9px] text-slate-400 font-bold uppercase tracking-wide whitespace-nowrap">Đang ở đây</p>
-                                                                            <p className="text-base md:text-lg font-black text-slate-800">{(item as any).waiting?.toLocaleString() || 0}</p>
+                                                                        <div className="flex items-center gap-1.5" title="Đang ở đây (Waiting)">
+                                                                            <div 
+                                                                                onClick={(e) => { e.stopPropagation(); handleStepClick(item.id, item.type, 'waiting'); }}
+                                                                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-amber-50/70 border border-amber-200/40 shadow-sm transition-colors hover:bg-amber-500 hover:border-amber-500 group/pill cursor-pointer"
+                                                                            >
+                                                                                <Clock size={12} className="text-amber-500 group-hover/pill:text-white" />
+                                                                                <span className="text-[11px] md:text-xs font-semibold text-amber-600 group-hover/pill:text-white transition-colors">
+                                                                                    {(item as any).waiting?.toLocaleString() || 0} <span className="font-medium text-amber-500 group-hover/pill:text-white hidden xl:inline transition-colors">Chờ</span>
+                                                                                </span>
+                                                                            </div>
                                                                         </div>
-                                                                        <div>
-                                                                            <p className="text-[8px] md:text-[9px] text-slate-400 font-bold uppercase tracking-wide whitespace-nowrap">Đã đi qua</p>
-                                                                            <p className="text-base md:text-lg font-black text-slate-800">{(item as any).processedHere?.toLocaleString() || 0}</p>
+                                                                        <div className="flex items-center gap-1.5" title="Đã đi qua (Processed)">
+                                                                            <div 
+                                                                                onClick={(e) => { e.stopPropagation(); handleStepClick(item.id, item.type, 'all_touched'); }}
+                                                                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-emerald-50/70 border border-emerald-200/40 shadow-sm transition-colors hover:bg-emerald-500 hover:border-emerald-500 group/pill2 cursor-pointer"
+                                                                            >
+                                                                                <FastForward size={12} className="text-emerald-500 group-hover/pill2:text-white transition-colors" />
+                                                                                <span className="text-[11px] md:text-xs font-semibold text-emerald-600 group-hover/pill2:text-white transition-colors">
+                                                                                    {(item as any).processedHere?.toLocaleString() || 0} <span className="font-medium text-emerald-500 group-hover/pill2:text-white hidden xl:inline transition-colors">Qua</span>
+                                                                                </span>
+                                                                            </div>
                                                                         </div>
                                                                     </>
-                                                                )}
+                                                                ) : null}
                                                             </div>
 
                                                             {/* Contextual Metric based on Type */}

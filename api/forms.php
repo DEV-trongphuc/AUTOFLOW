@@ -17,8 +17,9 @@ try {
     if ($method === 'POST' && $route === 'submit') {
         try {
             $data = json_decode(file_get_contents("php://input"), true);
-            $scoring = require 'scoring_config.php';
-            $pForm = $scoring['form_submit'] ?? 5;
+            require_once __DIR__ . '/db_connect.php';
+            $scoring = function_exists('getGlobalLeadScoreConfig') ? getGlobalLeadScoreConfig($pdo) : [];
+            $pForm = $scoring['leadscore_form_submit'] ?? 10;
             if (!$data)
                 $data = $_POST;
 

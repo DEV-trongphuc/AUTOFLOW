@@ -232,8 +232,8 @@ function handleFormSubmit($pdo, $visitorId, $sessionId, $pageUrl, $data, $timest
             $subscriberId = $subscriber['id'];
 
             // Award points for form submission
-            $scoring = require 'scoring_config.php';
-            $points = $scoring['form_submit'] ?? 10;
+            $scoring = getGlobalLeadScoreConfig($pdo);
+            $points = $scoring['leadscore_form_submit'] ?? 10;
             $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + ? WHERE id = ?")
                 ->execute([$points, $subscriberId]);
         } else {
@@ -246,8 +246,8 @@ function handleFormSubmit($pdo, $visitorId, $sessionId, $pageUrl, $data, $timest
                 INSERT INTO subscribers (id, email, first_name, last_name, phone_number, source, lead_score)
                 VALUES (?, ?, ?, ?, ?, 'Web Form', ?)
             ");
-            $scoring = require 'scoring_config.php';
-            $points = $scoring['form_submit'] ?? 10;
+            $scoring = getGlobalLeadScoreConfig($pdo);
+            $points = $scoring['leadscore_form_submit'] ?? 10;
             $stmt->execute([$subscriberId, $email, $firstName, $lastName, $phone, $points]);
         }
     }

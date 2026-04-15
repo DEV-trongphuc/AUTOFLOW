@@ -101,16 +101,17 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'worker_tracking_aggregator.php') 
         }
 
         // [ANTI-SPAM CACHE CHECK]
-        if ($type === 'click') {
-            $hashUrl = $extra['url'] ?? '';
-            $hash = md5("{$type}|{$sid}|{$cid}|{$fid}|{$rid}|{$hashUrl}");
-            if (isset($seenRapidEvents[$hash])) {
-                // Duplicate in the same worker batch. Mark processed and skip DB hit!
-                $processedIds[] = $event['id'];
-                continue;
-            }
-            $seenRapidEvents[$hash] = true;
+        // Drops multiple identical events hitting the same batch (e.g. from rapid-fire email scanners).
+        // Applied to all types (open, click, unsubscribe) to prevent intra-batch race conditions
+        // since `processTrackingEvent` checks the main DB but writes are buffered.
+        $hashUrl = $extra['url'] ?? '';
+        $hash = md5("{$type}|{$sid}|{$cid}|{$fid}|{$rid}|{$hashUrl}");
+        if (isset($seenRapidEvents[$hash])) {
+            // Duplicate in the same worker batch. Mark processed and skip DB hit!
+            $processedIds[] = $event['id'];
+            continue;
         }
+        $seenRapidEvents[$hash] = true;
 
         if ($type === 'open' || $type === 'click') {
             // Enrich with device/geo (offloaded from webhook to avoid blocking PHP-FPM under load)

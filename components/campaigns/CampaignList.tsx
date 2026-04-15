@@ -13,7 +13,11 @@ interface CampaignListProps {
     onPlayFlow: (campaign: Campaign) => void;
 }
 
+import { useIsAdmin } from '../../hooks/useAuthUser';
+
 const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelect, onEdit, onDelete, onPlayFlow }) => {
+    const isAdmin = useIsAdmin();
+
     if (loading) return (
         <div className="p-32 text-center animate-pulse">
             <Loader2 className="w-10 h-10 animate-spin text-[#ffa900] mx-auto mb-4" />
@@ -186,11 +190,21 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
                                 <td className="px-8 py-5 text-right" onClick={(e) => e.stopPropagation()}>
                                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0 duration-300">
                                         {isWaiting && (
-                                            <button onClick={() => onPlayFlow(c)} className="p-2 text-emerald-600 hover:text-white bg-emerald-50 hover:bg-emerald-500 rounded-xl transition-all shadow-sm hover:shadow-md border border-emerald-100" title="Khởi chạy ngay">
+                                            <button 
+                                                onClick={() => isAdmin && onPlayFlow(c)} 
+                                                disabled={!isAdmin}
+                                                className={`p-2 rounded-xl transition-all shadow-sm border ${isAdmin ? 'text-emerald-600 hover:text-white bg-emerald-50 hover:bg-emerald-500 hover:shadow-md border-emerald-100' : 'text-slate-300 bg-slate-50 border-slate-100 cursor-not-allowed'}`} 
+                                                title={isAdmin ? "Khởi chạy ngay" : "Chỉ Admin mới có quyền thực hiện thao tác này"}
+                                            >
                                                 <Play className="w-4 h-4 fill-current" />
                                             </button>
                                         )}
-                                        <button onClick={() => onDelete(c.id)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all" title="Xóa">
+                                        <button 
+                                            onClick={() => isAdmin && onDelete(c.id)} 
+                                            disabled={!isAdmin}
+                                            className={`p-2 rounded-xl transition-all ${isAdmin ? 'text-slate-400 hover:text-rose-600 hover:bg-rose-50' : 'text-slate-200 cursor-not-allowed hidden'}`} 
+                                            title={isAdmin ? "Xóa" : "Chỉ Admin mới có quyền thực hiện thao tác này"}
+                                        >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                         {!isWaiting && (

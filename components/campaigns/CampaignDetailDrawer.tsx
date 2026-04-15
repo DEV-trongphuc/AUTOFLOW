@@ -5,7 +5,7 @@ import {
     Plus, TrendingUp, MousePointerClick,
     CheckCircle2, GitMerge, GitBranch, RefreshCw, FileText, CalendarClock, PieChart, Send, MailOpen,
     Search, ChevronLeft, ChevronRight, X, BarChart2, Calendar, Users, MailCheck, Activity, Zap, ExternalLink, Mail, Bell, Clock, Activity as ActivityIcon, MousePointer2, BadgeCheck, FileBarChart, MousePointerClick as ClickIcon,
-    Layers, List, AlertOctagon, UserMinus, History, Tag, Loader2, ShieldCheck, Smartphone, Globe, Laptop, Trash2
+    Layers, List, AlertOctagon, UserMinus, History, Tag, Loader2, ShieldCheck, Smartphone, Globe, Laptop, Trash2, Monitor, Flame, Link as LinkIcon
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart as RePieChart, Pie, AreaChart, Area, FunnelChart, Funnel, LabelList
@@ -45,11 +45,48 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
     const [logsPagination, setLogsPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
     const [previewType, setPreviewType] = useState<'main' | string>('main');
     const [previewContent, setPreviewContent] = useState({ html: '', subject: '', loading: false });
+    const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
     const [audienceStats, setAudienceStats] = useState<{ total_current: number, count_sent: number, gap: number, count_unsubscribed?: number, reminders: any[] } | null>(null);
     const [refreshLoading, setRefreshLoading] = useState(false);
     const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
+
+
     const [showTestModal, setShowTestModal] = useState(false);
     const [localCampaign, setLocalCampaign] = useState<Campaign | null>(campaign);
+
+    // Extract unique links from email HTML
+    const uniqueLinks = React.useMemo(() => {
+        // Safe check for localCampaign
+        if (!previewContent.html || !localCampaign || localCampaign.type === 'zalo_zns') return [];
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(previewContent.html, 'text/html');
+        const anchors = doc.querySelectorAll('a[href]');
+        const linksSet = new Set<string>();
+        
+        anchors.forEach(a => {
+            let url = a.getAttribute('href');
+            if (url && (url.startsWith('http') || url.startsWith('https'))) {
+                try {
+                    const urlObj = new URL(url);
+                    // Remove tracking/cta params to deduplicate
+                    urlObj.searchParams.delete('mc_cta');
+                    urlObj.searchParams.delete('mc_cid');
+                    urlObj.searchParams.delete('mc_eid');
+                    
+                    // Clean trailing slash if path is empty
+                    let cleanUrl = urlObj.toString();
+                    if (cleanUrl.endsWith('/') && urlObj.pathname === '/') {
+                        cleanUrl = cleanUrl.slice(0, -1);
+                    }
+                    linksSet.add(cleanUrl);
+                } catch (e) {
+                    linksSet.add(url.split('?mc_cta')[0]);
+                }
+            }
+        });
+        return Array.from(linksSet);
+    }, [previewContent.html, localCampaign?.type]);
+    
     const [statsLoading, setStatsLoading] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
     const [animateIn, setAnimateIn] = useState(false);
@@ -394,7 +431,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                             { id: 'audience', label: 'Đối tượng', icon: Users, count: totalAudience },
                             { id: 'delivery', label: 'Lịch sử', icon: MailCheck },
                             ...(localCampaign.type !== 'zalo_zns' ? [
-                                { id: 'links', label: 'Links', icon: ClickIcon },
+                                { id: 'links', label: 'Click Heatmap', icon: ClickIcon },
                                 { id: 'tech', label: 'Thiết bị', icon: Smartphone },
                             ] : []),
                             { id: 'activity', label: 'Nhật ký Live', icon: Activity },
@@ -735,22 +772,54 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                 <div className="lg:col-span-2 space-y-4">
                                     <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm min-h-[950px] flex flex-col">
-                                        <div className="mb-4 pb-4 border-b border-slate-50">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tiêu đề bản tin</p>
-                                            <h4 className="text-sm font-bold text-slate-700">{previewContent.loading ? '...' : previewContent.subject}</h4>
+                                        <div className="mb-4 pb-4 border-b border-slate-50 flex justify-between items-center">
+                                            <div>
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tiêu đề bản tin</p>
+                                                <h4 className="text-sm font-bold text-slate-700">{previewContent.loading ? '...' : previewContent.subject}</h4>
+                                            </div>
+                                            <div className="flex bg-slate-100 p-1 rounded-xl">
+                                                <button
+                                                    onClick={() => setPreviewMode('desktop')}
+                                                    className={`p-2 rounded-lg transition-all ${previewMode === 'desktop' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                                    title="Xem trên máy tính"
+                                                >
+                                                    <Monitor className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => setPreviewMode('mobile')}
+                                                    className={`p-2 rounded-lg transition-all ${previewMode === 'mobile' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                                    title="Xem trên điện thoại"
+                                                >
+                                                    <Smartphone className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div className="h-[900px] bg-[#fcfcfc] rounded-2xl border border-slate-50 shadow-inner overflow-hidden relative">
+                                        <div className="h-[900px] bg-[#fcfcfc] rounded-2xl border border-slate-50 shadow-inner overflow-hidden relative flex justify-center items-start">
                                             {previewContent.loading ? (
                                                 <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-3">
                                                     <RefreshCw className="w-8 h-8 animate-spin" />
                                                     <p className="text-[10px] font-bold uppercase tracking-widest">Đang tải preview...</p>
                                                 </div>
                                             ) : (
-                                                <iframe
-                                                    srcDoc={previewContent.html}
-                                                    className="w-full h-full border-none"
-                                                    title="Email Content Preview"
-                                                />
+                                                <div className={`h-full transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${previewMode === 'mobile' ? 'w-[400px] py-8' : 'w-full py-0'}`}>
+                                                    <div className={`w-full h-full overflow-hidden transition-all duration-500 ${previewMode === 'mobile' ? 'rounded-[40px] shadow-[0_0_0_12px_#1e293b,0_20px_40px_rgba(0,0,0,0.2)] bg-white relative' : ''}`}>
+                                                        {previewMode === 'mobile' && (
+                                                            <>
+                                                                <div className="absolute top-0 inset-x-0 h-6 bg-white z-10 flex justify-center">
+                                                                    <div className="w-32 h-6 bg-[#1e293b] rounded-b-[16px]"></div>
+                                                                </div>
+                                                                <div className="absolute bottom-1.5 inset-x-0 flex justify-center z-10">
+                                                                    <div className="w-32 h-1.5 bg-slate-200/50 rounded-full"></div>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                        <iframe
+                                                            srcDoc={previewContent.html}
+                                                            className={`w-full border-none bg-white ${previewMode === 'mobile' ? 'h-[calc(100%-20px)] mt-5' : 'h-full'}`}
+                                                            title="Email Content Preview"
+                                                        />
+                                                    </div>
+                                                </div>
                                             )}
                                         </div>
                                     </div>
@@ -801,6 +870,32 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                         <div className="bg-emerald-50 p-6 rounded-[24px] border border-emerald-100">
                                             <p className="text-[10px] font-bold text-emerald-600 uppercase mb-2 flex items-center gap-1.5"><Zap className="w-3.5 h-3.5" /> Gợi ý</p>
                                             <p className="text-xs text-emerald-800 leading-relaxed font-medium">Nhắc nhở này giúp tăng thêm **15-20%** tỷ lệ chuyển đổi cho những người bỏ lỡ email đầu tiên.</p>
+                                        </div>
+                                    )}
+
+                                    {/* Link Summary Card */}
+                                    {previewType === 'main' && uniqueLinks.length > 0 && (
+                                        <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                                                    <LinkIcon className="w-4 h-4 text-orange-500" />
+                                                    Đính kèm ({uniqueLinks.length} Links)
+                                                </h4>
+                                            </div>
+                                            <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-2 mb-5">
+                                                {uniqueLinks.map((url, i) => (
+                                                    <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-300 transition-colors text-[11px] font-medium text-slate-600 truncate" title={url}>
+                                                        {url}
+                                                    </a>
+                                                ))}
+                                            </div>
+                                            <button
+                                                onClick={() => setActiveTab('links')}
+                                                className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
+                                            >
+                                                <Flame className="w-4 h-4" />
+                                                Xem Click Heatmap
+                                            </button>
                                         </div>
                                     )}
                                 </div>

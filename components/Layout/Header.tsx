@@ -3,6 +3,8 @@ import React from 'react';
 import { Menu, Search, ChevronRight, ShieldAlert, MessageCircle, ExternalLink, Command } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useNavigation } from '../../contexts/NavigationContext';
+import { useIsAdmin } from '../../hooks/useAuthUser';
+import AuditLogModal from '../settings/AuditLogModal';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -12,6 +14,8 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const location = useLocation();
   const path = location.pathname;
   const { handleBack } = useNavigation();
+  const isAdmin = useIsAdmin();
+  const [isAuditModalOpen, setIsAuditModalOpen] = React.useState(false);
 
   const getBreadcrumb = () => {
     if (path.startsWith('/campaigns')) return 'Chiến dịch';
@@ -116,10 +120,22 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 </div>
                 <span>Liên hệ IT</span>
               </a>
+              {isAdmin && (
+                <button
+                  onClick={() => setIsAuditModalOpen(true)}
+                  className="flex items-center gap-3 w-full p-3 rounded-2xl text-xs font-bold text-slate-600 hover:text-amber-600 hover:bg-amber-50 transition-all group/item"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center group-hover/item:bg-amber-100 transition-colors shadow-sm">
+                    <ShieldAlert className="w-4 h-4" />
+                  </div>
+                  <span>Audit Logs</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
       </div>
+      <AuditLogModal isOpen={isAuditModalOpen} onClose={() => setIsAuditModalOpen(false)} />
     </header>
   );
 };

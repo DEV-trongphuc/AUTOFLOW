@@ -82,6 +82,49 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
 
         if ($isMatch && $targetMatched) {
             $pastTime = date('Y-m-d H:i:s', strtotime('-1 second'));
+            $initialSchedule = $pastTime;
+
+            // [SMART SCHEDULE FIX] 
+            // If the first step is a wait, we MUST pre-calculate the future wait time.
+            // If we don't, it gets inserted as "pastTime", the worker picks it up immediately,
+            // thinks the wait has already passed (is_resumed_wait=TRUE), and SKIPS the wait step!
+            foreach ($steps as $fs) {
+                if ($fs['id'] === $trigger['nextStepId'] && strtolower($fs['type'] ?? '') === 'wait') {
+                    $fsWaitConfig = $fs['config'] ?? [];
+                    $fsWaitMode = $fsWaitConfig['mode'] ?? 'duration';
+                    if ($fsWaitMode === 'duration') {
+                        $dur = (int) ($fsWaitConfig['duration'] ?? 0);
+                        $unit = $fsWaitConfig['unit'] ?? 'minutes';
+                        $unitSeconds = match ($unit) {
+                            'weeks' => 604800,
+                            'days' => 86400,
+                            'hours' => 3600,
+                            default => 60,
+                        };
+                        $delay = $unitSeconds * $dur;
+                        if ($delay > 0) {
+                            $initialSchedule = date('Y-m-d H:i:s', time() + $delay);
+                        }
+                    } elseif ($fsWaitMode === 'until_date') {
+                        $specDate   = $fsWaitConfig['specificDate'] ?? '';
+                        $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
+                        if ($specDate) {
+                            $targetTs = strtotime("$specDate $targetTime:00");
+                            if ($targetTs > time()) {
+                                $initialSchedule = date('Y-m-d H:i:s', $targetTs);
+                            }
+                        }
+                    } elseif ($fsWaitMode === 'until') {
+                        $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
+                        $dt = new DateTime();
+                        $parts2 = explode(':', $targetTime);
+                        $dt->setTime((int)$parts2[0], (int)($parts2[1] ?? 0), 0);
+                        if ($dt->getTimestamp() <= time()) $dt->modify('+1 day');
+                        $initialSchedule = $dt->format('Y-m-d H:i:s');
+                    }
+                    break;
+                }
+            }
 
             // ATOMIC INSERT SELECT: Prevents duplicates based on frequency and status
             $existsCheckSql = "";
@@ -135,7 +178,7 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
                            AND s.status IN ('active', 'lead', 'customer')
                            $existsCheckSql";
 
-                $params = array_merge([$flow['id'], $trigger['nextStepId'], $pastTime], $chunk, $checkParams);
+                $params = array_merge([$flow['id'], $trigger['nextStepId'], $initialSchedule], $chunk, $checkParams);
                 $stmt = $pdo->prepare($sqlIns);
                 $stmt->execute($params);
                 $enrolledTotal += $stmt->rowCount();

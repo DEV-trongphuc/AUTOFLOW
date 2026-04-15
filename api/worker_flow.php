@@ -102,7 +102,7 @@ if (!function_exists('runWorkerFlow')) {
                         JOIN flows f ON q.flow_id = f.id 
                         JOIN subscribers s ON q.subscriber_id = s.id 
                         WHERE ((q.status = 'waiting' AND q.scheduled_at <= ?) OR 
-                              (q.status = 'processing' AND q.updated_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE)))
+                              (q.status = 'processing' AND q.updated_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE) AND q.scheduled_at <= NOW()))
                         AND f.status = 'active'
                         ORDER BY q.scheduled_at ASC, q.updated_at ASC LIMIT {$BATCH_SIZE}";
 
@@ -173,6 +173,34 @@ if (!function_exists('runWorkerFlow')) {
                 $flowId = $item['flow_id'];
                 $flowName = $item['flow_name'];
                 $queueId = $item['queue_id'];
+
+                // [BUG-FIX] DOUBLE-CHECK LOCK for MySQL 5.7 (no SKIP LOCKED):
+                // On MySQL 5.7, FOR UPDATE blocks Worker B waiting for Worker A to commit.
+                // After Worker A commits, Worker B wakes up and re-reads the SAME row —
+                // now with status='waiting' or 'completed' (already advanced by A).
+                // Without this check, Worker B would re-process the same item → duplicate email in 1-2s.
+                // Fix: re-read status from DB inside the new transaction. If no longer 'processing',
+                // someone else already handled this item — skip it.
+                $checkStmt = $pdo->prepare("SELECT status, updated_at FROM subscriber_flow_states WHERE id = ? FOR UPDATE");
+                $checkStmt->execute([$queueId]);
+                $freshState = $checkStmt->fetch(PDO::FETCH_ASSOC);
+                if (!$freshState || $freshState['status'] !== 'processing') {
+                    $pdo->rollBack();
+                    $logs[] = "  -> [DOUBLE-LOCK] Sub {$subscriberId} already processed by another worker (status: " . ($freshState['status'] ?? 'not found') . "). Skipping.";
+                    continue;
+                }
+
+                // [BUG-FIX] Guard: Stale 'processing' items picked up via OR clause may have
+                // scheduled_at far in the future (e.g. wait 1-day). Processing them now would
+                // cause wait step to recalculate from scratch, resetting the timer.
+                // If scheduled_at is still in the future, restore to 'waiting' and skip.
+                if (!empty($item['scheduled_at']) && strtotime($item['scheduled_at']) > time()) {
+                    $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', updated_at = NOW() WHERE id = ?")->execute([$queueId]);
+                    $logs[] = "  -> [STALE-GUARD] Sub {$subscriberId} restored to waiting (scheduled: {$item['scheduled_at']})";
+                    $pdo->commit();
+                    continue;
+                }
+
 
                 // [EXIT CHECK] Check if subscriber is still eligible (not unsubscribed globally)
                 if (trim($item['sub_status']) === 'unsubscribed') {
@@ -262,7 +290,9 @@ if (!function_exists('runWorkerFlow')) {
                         }
                     }
                     if ($shouldExit) {
-                        $pdo->prepare("UPDATE subscriber_flow_states SET status = 'completed', updated_at = NOW() WHERE id = ?")->execute([$queueId]);
+                        // [FIX] Include step_id so byBranch query in completed-users API counts correctly
+                        $currentStepIdExit = $item['step_id'] ?? null;
+                        $pdo->prepare("UPDATE subscriber_flow_states SET status = 'completed', step_id = COALESCE(?, step_id), updated_at = NOW() WHERE id = ?")->execute([$currentStepIdExit, $queueId]);
                         logActivity($pdo, $subscriberId, 'exit_flow', $flowId, $flowName, "Exited: Condition met", $flowId);
                         // Buffer Completion Stat
                         try {
@@ -279,7 +309,9 @@ if (!function_exists('runWorkerFlow')) {
                 // [EXIT CHECK] Advanced Exit: form_submit / purchase / custom_event
                 $advancedExit = $fConfig['advancedExit'] ?? [];
                 if (!empty($advancedExit) && checkAdvancedExit($pdo, $subscriberId, $item['queue_created_at'], $advancedExit, $activityCache)) {
-                    $pdo->prepare("UPDATE subscriber_flow_states SET status = 'completed', updated_at = NOW() WHERE id = ?")->execute([$queueId]);
+                    // [FIX] Include step_id so byBranch query in completed-users API counts correctly
+                    $currentStepIdExit = $item['step_id'] ?? null;
+                    $pdo->prepare("UPDATE subscriber_flow_states SET status = 'completed', step_id = COALESCE(?, step_id), updated_at = NOW() WHERE id = ?")->execute([$currentStepIdExit, $queueId]);
                     logActivity($pdo, $subscriberId, 'exit_flow', $flowId, $flowName, "Exited: Advanced condition met", $flowId);
                     // Buffer Completion Stat
                     try {
@@ -292,64 +324,8 @@ if (!function_exists('runWorkerFlow')) {
                     continue;
                 }
 
-                // [SCHEDULING CHECK] activeDays / startTime / endTime from flow config
-                // Only applies to message-sending steps (emails, zalo, sms, meta).
-                
-                // [FIX] First, identify the step type to ensure we don't accidentally pause logical/wait steps
+
                 $currentStepId = $item['step_id'];
-                $chkStepType = 'unknown';
-                $flowSteps = json_decode($item['flow_steps'], true) ?? [];
-                foreach ($flowSteps as $s) {
-                    if (trim((string) ($s['id'] ?? '')) === trim((string) $currentStepId)) {
-                        $chkStepType = $s['type'] ?? 'unknown';
-                        break;
-                    }
-                }
-                
-                $isCommunicationStep = in_array(strtolower($chkStepType), ['action', 'zalo_zns', 'zalo_cs', 'meta_message', 'sms']);
-
-                $activeDays = $fConfig['activeDays'] ?? [0, 1, 2, 3, 4, 5, 6];
-                if (empty($activeDays)) {
-                    $activeDays = [0, 1, 2, 3, 4, 5, 6]; // Fallback: allow all days
-                }
-                $startTime = $fConfig['startTime'] ?? '00:00';
-                $endTime = $fConfig['endTime'] ?? '23:59';
-                $currentDayOfWeek = (int) date('w'); // 0=Sunday, 6=Saturday
-                $currentTime = date('H:i');
-
-                $isDayAllowed = in_array($currentDayOfWeek, array_map('intval', $activeDays));
-                $isTimeAllowed = ($currentTime >= $startTime && $currentTime <= $endTime);
-
-                if ($isDayAllowed && $currentTime > $endTime) {
-                    $isDayAllowed = false;
-                }
-
-                if ($isCommunicationStep && (!$isDayAllowed || !$isTimeAllowed)) {
-                    if ($isDayAllowed && !$isTimeAllowed) {
-                        // Ngày hợp lệ nhưng chưa đến giờ startTime — chờ đến startTime hôm nay
-                        $nextSendAt = date('Y-m-d') . ' ' . $startTime . ':00';
-                    } else {
-                        // Ngày không hợp lệ (hoặc đã qua endTime) — tìm ngày hợp lệ tiếp theo
-                        // [FIX #4] Dùng DateTime object thay vì strtotime('+N days') để tránh lệch ngày
-                        // khi worker chạy gần 00:00 hoặc trong môi trường DST timezone
-                        $dtBase = new DateTime('now', new DateTimeZone('Asia/Ho_Chi_Minh'));
-                        $nextSendAt = $dtBase->format('Y-m-d') . ' ' . $startTime . ':00'; // fallback
-                        for ($i = 1; $i <= 7; $i++) {
-                            $dtCheck = clone $dtBase;
-                            $dtCheck->modify("+$i days");
-                            $checkDay = (int) $dtCheck->format('w');
-                            if (in_array($checkDay, array_map('intval', $activeDays))) {
-                                $nextSendAt = $dtCheck->format('Y-m-d') . ' ' . $startTime . ':00';
-                                break;
-                            }
-                        }
-                    }
-                    $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = ?, updated_at = NOW() WHERE id = ?")->execute([$nextSendAt, $queueId]);
-                    $logs[] = "  -> Scheduling paused for Sub {$subscriberId} (Day/Time restriction). Next send: $nextSendAt";
-                    $pdo->commit();
-                    continue;
-                }
-
                 $stepsProcessedInRun = 0;
                 $MAX_STEPS = 50; // [FIX] Tăng từ 20→50 để nhất quán với worker_priority.php
                 // Flow phức tạp >20 bước condition/split sẽ bị dừng sớm nếu giữ 20
@@ -371,6 +347,67 @@ if (!function_exists('runWorkerFlow')) {
                         break;
                     }
 
+                    // [SCHEDULING CHECK MOVED INSIDE CHAIN LOOP]
+                    // This prevents the "Night-Time Wait Node Exploit" where a wait node finishing at midnight
+                    // would immediately process the next target node without checking the Time Restriction again.
+                    $chkStepType = strtolower($currentStep['type'] ?? 'unknown');
+                    $isCommunicationStep = in_array($chkStepType, ['action', 'zalo_zns', 'zalo_cs', 'meta_message', 'sms']);
+
+                    if ($isCommunicationStep) {
+                        $activeDays = $fConfig['activeDays'] ?? [0, 1, 2, 3, 4, 5, 6];
+                        if (empty($activeDays)) {
+                            $activeDays = [0, 1, 2, 3, 4, 5, 6];
+                        }
+                        $startTime = $fConfig['startTime'] ?? '00:00';
+                        $endTime = $fConfig['endTime'] ?? '23:59';
+
+                        if (isset($fConfig['type']) && $fConfig['type'] === 'realtime') {
+                            $activeDays = [0, 1, 2, 3, 4, 5, 6];
+                            $startTime = '00:00';
+                            $endTime = '23:59';
+                        }
+                        
+                        $isZaloStep = in_array($chkStepType, ['zalo_zns', 'zalo_cs']);
+                        if ($isZaloStep) {
+                            if ($startTime < '06:00') $startTime = '06:00';
+                            if ($endTime > '21:59' || $endTime < '06:00') $endTime = '21:59';
+                        }
+
+                        $currentDayOfWeek = (int) date('w');
+                        $currentTime = date('H:i');
+
+                        $isDayAllowed = in_array($currentDayOfWeek, array_map('intval', $activeDays));
+                        $isTimeAllowed = ($currentTime >= $startTime && $currentTime <= $endTime);
+
+                        if ($isDayAllowed && $currentTime > $endTime) {
+                            $isDayAllowed = false;
+                        }
+
+                        if (!$isDayAllowed || !$isTimeAllowed) {
+                            if ($isDayAllowed && !$isTimeAllowed) {
+                                $nextSendAt = date('Y-m-d') . ' ' . $startTime . ':00';
+                            } else {
+                                $dtBase = new DateTime('now', new DateTimeZone('Asia/Ho_Chi_Minh'));
+                                $dtBase->setTime((int)substr($startTime, 0, 2), (int)substr($startTime, 3, 2), 0);
+                                $nextSendAt = $dtBase->format('Y-m-d H:i:s');
+                                for ($i = 1; $i <= 7; $i++) {
+                                    $dtCheck = clone $dtBase;
+                                    $dtCheck->modify("+$i days");
+                                    $checkDay = (int) $dtCheck->format('w');
+                                    if (in_array($checkDay, array_map('intval', $activeDays))) {
+                                        $nextSendAt = $dtCheck->format('Y-m-d H:i:s');
+                                        break;
+                                    }
+                                }
+                            }
+                            // Save step_id so it wakes up at this exact step, not the previous one
+                            $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = ?, step_id = ?, updated_at = NOW() WHERE id = ?")->execute([$nextSendAt, $currentStepId, $queueId]);
+                            $logs[] = "  -> Step '{$currentStep['label']}' paused (Time Restriction). Re-scheduled to: $nextSendAt";
+                            $shouldContinueChain = false;
+                            break; // Ngắt khỏi dòng while ngay lập tức, đợi lần chạy sau
+                        }
+                    }
+
                     // [OPTIMIZATION] Frequency Cap check - Uses batch-fetched data
                     $cacheKey = (int) $subscriberId;
                     // [FIX] PHP 8: initialize key before ++ to prevent Undefined array key Warning
@@ -383,13 +420,26 @@ if (!function_exists('runWorkerFlow')) {
                         'queue_created_at' => $item['queue_created_at'],
                         'last_step_at' => $item['last_step_at'] ?? $item['updated_at'],
                         'updated_at' => $item['updated_at'],
+                        'scheduled_at' => $item['scheduled_at'],  // [BUG-FIX] Pass scheduled_at so FlowExecutor wait-case doesn't recalculate from scratch
                         'flow_steps' => $flowSteps,
                         'flow_name' => $flowName,
                         'total_sent_today' => $subscriberFreqCache[$cacheKey],
                         'activity_cache' => $activityCache,
                         'now' => $now,
                         // [FIX #2] Cast (string) trước trim() — tránh PHP 8.1 Deprecated khi step_id là null
-                        'is_resumed_wait' => ($stepsProcessedInRun === 1 && trim((string) ($item['step_id'] ?? '')) === trim((string) $currentStepId) && $item['scheduled_at'] <= $now)
+                        // [CRITICAL FIX] is_resumed_wait guards against the wait being re-calculated
+                        // from scratch, but it MUST only be TRUE when:
+                        // 1. This is the first step of this worker run (stepsProcessedInRun===1)
+                        // 2. The ORIGINAL DB status was 'waiting' — NOT crash recovery ('processing').
+                        //    If we were 'processing' when picked up (5-min stale fallback), it means
+                        //    the worker previously committed step_id but crashed before scheduling the
+                        //    wait. Treating it as a resumed wait would SKIP the wait entirely.
+                        // 3. step_id in DB matches current step (same step the item was fetched with)
+                        // 4. scheduled_at has passed (the wait time has actually expired)
+                        'is_resumed_wait' => ($stepsProcessedInRun === 1
+                            && ($item['status'] ?? '') === 'waiting'  // GUARD: only genuine wait-resume, not crash recovery
+                            && trim((string) ($item['step_id'] ?? '')) === trim((string) $currentStepId)
+                            && $item['scheduled_at'] <= $now)
                     ];
 
                     $execResult = $executor->executeStep($currentStep, $item, $flowId, $currentStepId, null, $fConfig, $contextData);
@@ -403,16 +453,38 @@ if (!function_exists('runWorkerFlow')) {
                             if (!empty($execResult['message_sent'])) {
                                 $subscriberFreqCache[$cacheKey]++;
                             }
+                            // [BUG-FIX] CRASH RECOVERY: Persist step_id progress to DB BEFORE commit.
+                            // Previously: commit() without updating step_id → DB still shows the old wait step.
+                            // If worker crashes after this commit, cron picks up item 5min later,
+                            // sees step_id=wait_step, treats as fresh entry, recalculates wait → RESET.
+                            // Fix: always write step_id + updated_at so crash recovery resumes correctly.
+                            // [PERF] Also persist step_type — used by tracking_processor to avoid
+                            // json_decode on every open/click event (eliminates full flow.steps scan).
+                            $nextStepType = null;
+                            foreach ($flowSteps as $_ns) {
+                                if (trim((string)($_ns['id'] ?? '')) === trim((string)$currentStepId)) {
+                                    $nextStepType = $_ns['type'] ?? null;
+                                    break;
+                                }
+                            }
+                            $pdo->prepare("UPDATE subscriber_flow_states SET step_id = ?, step_type = ?, last_step_at = NOW(), updated_at = NOW() WHERE id = ?")->execute([$currentStepId, $nextStepType, $queueId]);
                             $pdo->commit();
                             $pdo->beginTransaction();
                             continue;
                         } else {
-                            $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = ?, step_id = ?, updated_at = NOW(), last_step_at = NOW() WHERE id = ?")->execute([$execResult['scheduled_at'], $currentStepId, $queueId]);
+                            $waitStepType = null;
+                            foreach ($flowSteps as $_ws) {
+                                if (trim((string)($_ws['id'] ?? '')) === trim((string)$currentStepId)) {
+                                    $waitStepType = $_ws['type'] ?? null;
+                                    break;
+                                }
+                            }
+                            $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = ?, step_id = ?, step_type = ?, updated_at = NOW(), last_step_at = NOW() WHERE id = ?")->execute([$execResult['scheduled_at'], $currentStepId, $waitStepType, $queueId]);
                             $shouldContinueChain = false;
                         }
                     } else {
                         if ($execResult['status'] === 'completed') {
-                            $pdo->prepare("UPDATE subscriber_flow_states SET status = 'completed', step_id = ?, updated_at = NOW() WHERE id = ?")->execute([$currentStepId, $queueId]);
+                            $pdo->prepare("UPDATE subscriber_flow_states SET status = 'completed', step_id = ?, step_type = NULL, updated_at = NOW() WHERE id = ?")->execute([$currentStepId, $queueId]);
 
                             // NEW: Log completion activity for Dashboard accuracy
                             logActivity($pdo, $subscriberId, 'complete_flow', $currentStepId, $flowName, "Flow finished automatically", $flowId);

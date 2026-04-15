@@ -139,14 +139,13 @@ const FlowSettingsTab: React.FC<FlowSettingsTabProps> = ({ flow, onUpdate }) => 
     };
 
     const scheduleBarStyles = useMemo(() => {
-        // Schedule bar should always reflect actual config, regardless of priority bypass
-        const start = timeToPercent(localConfig.startTime);
-        const end = timeToPercent(localConfig.endTime);
+        const start = timeToPercent(isPriorityTrigger ? '00:00' : localConfig.startTime);
+        const end = timeToPercent(isPriorityTrigger ? '23:59' : localConfig.endTime);
         return {
             left: `${start}%`,
             width: `${Math.max(2, end - start)}%`
         };
-    }, [localConfig.startTime, localConfig.endTime]);
+    }, [localConfig.startTime, localConfig.endTime, isPriorityTrigger]);
 
     const days = [
         { label: 'T2', id: 0 }, { label: 'T3', id: 1 }, { label: 'T4', id: 2 },
@@ -383,61 +382,60 @@ const FlowSettingsTab: React.FC<FlowSettingsTabProps> = ({ flow, onUpdate }) => 
                 </Card>
             </section>
 
-            {/* SCHEDULING - HIDDEN FOR PRIORITY TRIGGERS, DISABLED IF ARCHIVED */}
-            {!isPriorityTrigger && (
-                <section className={`mb-6 space-y-3 transition-opacity ${isFlowArchived ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
-                    <div className="flex items-center gap-2 px-1">
-                        <div className="p-1.5 bg-amber-50 text-amber-600 rounded-lg border border-amber-100 shadow-sm"><Calendar className="w-3.5 h-3.5" /></div>
-                        <h3 className="text-sm font-black text-slate-700 uppercase tracking-widest">Lịch trình gửi</h3>
-                    </div>
+            {/* SCHEDULING - ALWAYS VISIBLE BUT DISABLED FOR PRIORITY TRIGGERS */}
+            <section className={`mb-6 space-y-3 transition-opacity ${(isFlowArchived) ? 'opacity-50 pointer-events-none grayscale' : ''} ${isPriorityTrigger ? 'opacity-70' : ''}`}>
+                <div className="flex items-center gap-2 px-1">
+                    <div className="p-1.5 bg-amber-50 text-amber-600 rounded-lg border border-amber-100 shadow-sm"><Calendar className="w-3.5 h-3.5" /></div>
+                    <h3 className="text-sm font-black text-slate-700 uppercase tracking-widest">Lịch trình gửi</h3>
+                </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <Card className="rounded-[20px] border border-slate-200 shadow-sm p-5 bg-white md:col-span-1" noPadding>
-                            <div className="p-5 flex flex-col h-full justify-between">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Shield className="w-4 h-4 text-slate-400" />
-                                        <h4 className="text-xs font-bold text-slate-700 uppercase">Tần suất (Cap)</h4>
-                                    </div>
-                                    <p className="text-[10px] text-slate-400 font-medium leading-tight">Giới hạn số email tối đa gửi cho 1 người / 24h.</p>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <Card className="rounded-[20px] border border-slate-200 shadow-sm p-5 bg-white md:col-span-1" noPadding>
+                        <div className="p-5 flex flex-col h-full justify-between">
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Shield className="w-4 h-4 text-slate-400" />
+                                    <h4 className="text-xs font-bold text-slate-700 uppercase">Tần suất (Cap)</h4>
                                 </div>
-                                <div className="flex items-center gap-2 mt-4 bg-slate-50 p-2 rounded-xl border border-slate-100">
-                                    <button onClick={() => handleCapping(-1)} className="w-8 h-8 flex items-center justify-center bg-white rounded-lg border border-slate-200 text-slate-500 hover:border-slate-400 hover:text-slate-600 shadow-sm active:scale-90 transition-all font-bold text-lg" disabled={isFlowArchived}>-</button>
-                                    <div className="flex-1 text-center">
-                                        <span className="text-xl font-black text-slate-800">{localConfig.frequencyCap}</span>
-                                    </div>
-                                    <button onClick={() => handleCapping(1)} className="w-8 h-8 flex items-center justify-center bg-white rounded-lg border border-slate-200 text-slate-500 hover:border-slate-400 hover:text-slate-600 shadow-sm active:scale-90 transition-all font-bold text-lg" disabled={isFlowArchived}>+</button>
-                                </div>
+                                <p className="text-[10px] text-slate-400 font-medium leading-tight">Giới hạn số email tối đa gửi cho 1 người / 24h.</p>
                             </div>
-                        </Card>
+                            <div className="flex items-center gap-2 mt-4 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                                <button onClick={() => handleCapping(-1)} className="w-8 h-8 flex items-center justify-center bg-white rounded-lg border border-slate-200 text-slate-500 hover:border-slate-400 hover:text-slate-600 shadow-sm active:scale-90 transition-all font-bold text-lg disabled:opacity-50" disabled={isFlowArchived || isPriorityTrigger}>-</button>
+                                <div className="flex-1 text-center">
+                                    <span className="text-xl font-black text-slate-800">{isPriorityTrigger ? '∞' : localConfig.frequencyCap}</span>
+                                </div>
+                                <button onClick={() => handleCapping(1)} className="w-8 h-8 flex items-center justify-center bg-white rounded-lg border border-slate-200 text-slate-500 hover:border-slate-400 hover:text-slate-600 shadow-sm active:scale-90 transition-all font-bold text-lg disabled:opacity-50" disabled={isFlowArchived || isPriorityTrigger}>+</button>
+                            </div>
+                        </div>
+                    </Card>
 
-                        {/* Max Messages Per Day */}
-                        <Card className="rounded-[20px] border border-slate-200 shadow-sm p-5 bg-white md:col-span-1" noPadding>
-                            <div className="p-5 flex flex-col h-full justify-between">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Zap className="w-4 h-4 text-slate-400" />
-                                        <h4 className="text-xs font-bold text-slate-700 uppercase">Max Tin / Ngày</h4>
-                                    </div>
-                                    <p className="text-[10px] text-slate-400 font-medium leading-tight">Giới hạn tổng tin nhắn (email + Zalo + Meta) / ngày. Để <b>0</b> là không giới hạn.</p>
+                    {/* Max Messages Per Day */}
+                    <Card className="rounded-[20px] border border-slate-200 shadow-sm p-5 bg-white md:col-span-1" noPadding>
+                        <div className="p-5 flex flex-col h-full justify-between">
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Zap className="w-4 h-4 text-slate-400" />
+                                    <h4 className="text-xs font-bold text-slate-700 uppercase">Max Tin / Ngày</h4>
                                 </div>
-                                <div className="flex items-center gap-2 mt-4 bg-slate-50 p-2 rounded-xl border border-slate-100">
-                                    <button
-                                        onClick={() => updateConfig('maxMessagesPerDay', Math.max(0, (localConfig.maxMessagesPerDay ?? 0) - 1))}
-                                        className="w-8 h-8 flex items-center justify-center bg-white rounded-lg border border-slate-200 text-slate-500 hover:border-slate-400 hover:text-slate-600 shadow-sm active:scale-90 transition-all font-bold text-lg"
-                                        disabled={isFlowArchived}
-                                    >-</button>
-                                    <div className="flex-1 text-center">
-                                        <span className="text-xl font-black text-slate-800">{localConfig.maxMessagesPerDay ?? 0}</span>
-                                    </div>
-                                    <button
-                                        onClick={() => updateConfig('maxMessagesPerDay', (localConfig.maxMessagesPerDay ?? 0) + 1)}
-                                        className="w-8 h-8 flex items-center justify-center bg-white rounded-lg border border-slate-200 text-slate-500 hover:border-slate-400 hover:text-slate-600 shadow-sm active:scale-90 transition-all font-bold text-lg"
-                                        disabled={isFlowArchived}
-                                    >+</button>
-                                </div>
+                                <p className="text-[10px] text-slate-400 font-medium leading-tight">Giới hạn tổng tin nhắn (email + Zalo + Meta) / ngày. Để <b>0</b> là không giới hạn.</p>
                             </div>
-                        </Card>
+                            <div className="flex items-center gap-2 mt-4 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                                <button
+                                    onClick={() => updateConfig('maxMessagesPerDay', Math.max(0, (localConfig.maxMessagesPerDay ?? 0) - 1))}
+                                    className="w-8 h-8 flex items-center justify-center bg-white rounded-lg border border-slate-200 text-slate-500 hover:border-slate-400 hover:text-slate-600 shadow-sm active:scale-90 transition-all font-bold text-lg disabled:opacity-50"
+                                    disabled={isFlowArchived || isPriorityTrigger}
+                                >-</button>
+                                <div className="flex-1 text-center">
+                                    <span className="text-xl font-black text-slate-800">{isPriorityTrigger ? '∞' : (localConfig.maxMessagesPerDay ?? 0) || '∞'}</span>
+                                </div>
+                                <button
+                                    onClick={() => updateConfig('maxMessagesPerDay', (localConfig.maxMessagesPerDay ?? 0) + 1)}
+                                    className="w-8 h-8 flex items-center justify-center bg-white rounded-lg border border-slate-200 text-slate-500 hover:border-slate-400 hover:text-slate-600 shadow-sm active:scale-90 transition-all font-bold text-lg disabled:opacity-50"
+                                    disabled={isFlowArchived || isPriorityTrigger}
+                                >+</button>
+                            </div>
+                        </div>
+                    </Card>
 
                         <Card className="rounded-[20px] border border-slate-200 shadow-sm md:col-span-2 bg-white" noPadding>
                             <div className="p-5 space-y-5">
@@ -457,20 +455,20 @@ const FlowSettingsTab: React.FC<FlowSettingsTabProps> = ({ flow, onUpdate }) => 
                                         <div className="flex-1">
                                             <input
                                                 type="time"
-                                                value={localConfig.startTime}
+                                                value={isPriorityTrigger ? '00:00' : localConfig.startTime}
                                                 onChange={(e) => updateConfig('startTime', e.target.value)}
-                                                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:border-slate-400 outline-none text-center"
-                                                disabled={isFlowArchived}
+                                                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:border-slate-400 outline-none text-center disabled:opacity-60 disabled:bg-slate-50"
+                                                disabled={isFlowArchived || isPriorityTrigger}
                                             />
                                         </div>
                                         <span className="text-slate-300 font-black">-</span>
                                         <div className="flex-1">
                                             <input
                                                 type="time"
-                                                value={localConfig.endTime}
+                                                value={isPriorityTrigger ? '23:59' : localConfig.endTime}
                                                 onChange={(e) => updateConfig('endTime', e.target.value)}
-                                                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:border-slate-400 outline-none text-center"
-                                                disabled={isFlowArchived}
+                                                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:border-slate-400 outline-none text-center disabled:opacity-60 disabled:bg-slate-50"
+                                                disabled={isFlowArchived || isPriorityTrigger}
                                             />
                                         </div>
                                     </div>
@@ -481,18 +479,19 @@ const FlowSettingsTab: React.FC<FlowSettingsTabProps> = ({ flow, onUpdate }) => 
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Ngày hoạt động</label>
                                     <div className="flex gap-1.5">
                                         {days.map((day) => {
-                                            const isActive = (localConfig.activeDays || []).includes(day.id);
+                                            const isActive = isPriorityTrigger ? true : (localConfig.activeDays || []).includes(day.id);
                                             return (
                                                 <button
                                                     key={day.id}
-                                                    onClick={() => toggleDay(day.id)}
+                                                    onClick={() => !isPriorityTrigger && toggleDay(day.id)}
                                                     className={`
                                             flex-1 py-2.5 rounded-lg text-[10px] font-bold border transition-all shadow-sm
                                             ${isActive
                                                             ? 'bg-emerald-500 border-emerald-600 text-white shadow-emerald-200'
                                                             : 'bg-white border-slate-100 text-slate-400 hover:border-slate-300'}
+                                            ${isPriorityTrigger ? 'opacity-70 pointer-events-none' : ''}
                                         `}
-                                                    disabled={isFlowArchived}
+                                                    disabled={isFlowArchived || isPriorityTrigger}
                                                 >
                                                     {day.label}
                                                 </button>
@@ -504,7 +503,6 @@ const FlowSettingsTab: React.FC<FlowSettingsTabProps> = ({ flow, onUpdate }) => 
                         </Card>
                     </div>
                 </section>
-            )}
 
             {/* SMART INTERRUPTS */}
             <section className={`mb-8 space-y-3 ${isFlowArchived ? 'opacity-50 pointer-events-none grayscale' : ''}`}>

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Star, Sparkles, LayoutDashboard, Activity, Mail, Zap, FileText, Bot, Globe, Users, BarChart3, Settings, Clock, ArrowRight, MessageSquare, Facebook, Share2, Ticket, Webhook, Code2
+    Star, Sparkles, LayoutDashboard, Activity, Mail, Zap, FileText, Bot, Globe, Users, BarChart3, Settings, Clock, ArrowRight, MessageSquare, Facebook, Share2, Ticket, Webhook, Code2, Link, Play, Target
 } from 'lucide-react';
 import PageHero from '../components/common/PageHero';
-
-
+import { SystemOverviewModal } from '../components/common/SystemOverviewModal';
+import { SystemConnectionsModal } from '../components/common/SystemConnectionsModal';
+import { LeadscoreSetupModal } from '../components/settings/LeadscoreSetupModal';
 
 interface Module {
     id: string;
@@ -138,6 +139,9 @@ const Dashboard: React.FC = () => {
     const navigate = useNavigate();
     const [recentIds, setRecentIds] = useState<string[]>([]);
     const [userName, setUserName] = useState('Bạn');
+    const [isOverviewOpen, setIsOverviewOpen] = useState(false);
+    const [isConnectionsOpen, setIsConnectionsOpen] = useState(false);
+    const [isLeadscoreOpen, setIsLeadscoreOpen] = useState(false);
 
     useEffect(() => {
         const storedRecents = localStorage.getItem('recent_modules');
@@ -162,6 +166,11 @@ const Dashboard: React.FC = () => {
     }, []);
 
     const handleModuleClick = (module: Module) => {
+        if (module.id === 'reports') {
+            setIsOverviewOpen(true);
+            return;
+        }
+
         const newRecents = [module.id, ...recentIds.filter(id => id !== module.id)].slice(0, 4);
         setRecentIds(newRecents);
 
@@ -182,10 +191,15 @@ const Dashboard: React.FC = () => {
                 showStatus={true}
                 statusText="Multi-Channel Active"
                 actions={[
-                    { label: 'Kịch bản Automation', icon: Zap, onClick: () => navigate('/flows'), primary: true },
-                    { label: 'AI TRAINING', icon: Bot, onClick: () => navigate('/ai-training') }
+                    { label: 'KẾT NỐI CẤU HÌNH', icon: Play, onClick: () => setIsConnectionsOpen(true), primary: true },
+                    { label: 'CẤU HÌNH LEADSCORE', icon: Target, onClick: () => setIsLeadscoreOpen(true), primary: false },
+                    { label: 'TỔNG QUAN HỆ THỐNG', icon: BarChart3, onClick: () => setIsOverviewOpen(true) }
                 ]}
             />
+
+            <SystemOverviewModal isOpen={isOverviewOpen} onClose={() => setIsOverviewOpen(false)} />
+            <SystemConnectionsModal isOpen={isConnectionsOpen} onClose={() => setIsConnectionsOpen(false)} />
+            <LeadscoreSetupModal isOpen={isLeadscoreOpen} onClose={() => setIsLeadscoreOpen(false)} />
 
             {/* Middle Section: Recent Access */}
             {recentModules.length > 0 && (
@@ -236,7 +250,7 @@ const Dashboard: React.FC = () => {
                             className="group relative h-full bg-white rounded-[20px] p-5 border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all cursor-pointer overflow-hidden flex flex-col"
                         >
                             {/* Decorative background logo */}
-                            <div className="absolute top-0 right-0 p-4 opacity-[0.08] group-hover:opacity-[0.12] transition-opacity">
+                            <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
                                 {module.id === 'zalo-oa' ? (
                                     <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Zalo-Arc.png" className="w-24 h-24 grayscale group-hover:grayscale-0 transition-all duration-700 object-contain" alt="Zalo" />
                                 ) : module.id === 'meta-api' ? (
@@ -312,6 +326,8 @@ const Dashboard: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            <SystemOverviewModal isOpen={isOverviewOpen} onClose={() => setIsOverviewOpen(false)} />
         </div>
     );
 };

@@ -328,13 +328,15 @@ function upsertSubscriberAsync($pdo, $pageId, $psid, $messageText = null, $event
 {
     $id = md5($pageId . '_' . $psid);
     $dataCaptured = false;
-
-    // Harmonized Scoring: Message = +5, Follow/Postback = +2, Activity = +1
-    $points = 1;
+    require_once __DIR__ . '/db_connect.php';
+    $LSC = function_exists('getGlobalLeadScoreConfig') ? getGlobalLeadScoreConfig($pdo) : [];
+    $basePoints = (int)($LSC['leadscore_zalo_interact'] ?? 3); // Map Meta to Zalo interactions
+    
+    $points = max(1, floor($basePoints / 3)); // Activity
     if ($eventType === 'message')
-        $points = 5;
+        $points = $basePoints + 2;
     if ($eventType === 'postback' || $eventType === 'optin')
-        $points = 2;
+        $points = max(1, $basePoints - 1);
 
     $stmt = $pdo->prepare("SELECT name, email, phone, lead_score, notes FROM meta_subscribers WHERE id = ?");
     $stmt->execute([$id]);

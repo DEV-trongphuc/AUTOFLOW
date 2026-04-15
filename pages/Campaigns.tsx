@@ -24,10 +24,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { SYSTEM_TEMPLATES } from '../services/systemTemplates';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import TipsModal from '../components/common/TipsModal';
+import { useIsAdmin } from '../hooks/useAuthUser';
 
 const Campaigns: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const isAdmin = useIsAdmin();
 
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
@@ -436,12 +438,12 @@ const Campaigns: React.FC = () => {
                 showStatus={true}
                 statusText="AI Engine Active"
                 actions={[
-                    { 
+                    ...(isAdmin ? [{ 
                         label: 'Chiến dịch mới', 
                         icon: Plus, 
                         onClick: () => { setSelectedDetailCampaign(null); setWizardInitialData(undefined); setIsWizardOpen(true); },
                         primary: false 
-                    },
+                    }] : []),
                     { 
                         label: 'Mẹo tăng trưởng', 
                         icon: Lightbulb, 

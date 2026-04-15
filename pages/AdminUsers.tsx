@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import Modal from '../components/common/Modal';
 import ConfirmModal from '../components/common/ConfirmModal';
 import Button from '../components/common/Button';
+import AuditLogModal from '../components/settings/AuditLogModal';
 
 interface ManagedUser {
     id: any;
@@ -20,6 +21,7 @@ const AdminUsers: React.FC = () => {
     const [users, setUsers] = useState<ManagedUser[]>([]);
     const [search, setSearch] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
 
     const [confirmModal, setConfirmModal] = useState<{
         isOpen: boolean;
@@ -111,7 +113,7 @@ const AdminUsers: React.FC = () => {
 
     const handleToggleStatus = async (email: string, currentStatus: string, id: any) => {
         if (email === 'dom.marketing.vn@gmail.com') return toast.error('Cannot disable root admin');
-        
+
         setIsLoading(true);
         try {
             const res = await fetch('/mail_api/admin_users.php?action=update_status', {
@@ -135,7 +137,7 @@ const AdminUsers: React.FC = () => {
 
     const handleDelete = async (email: string, id: any) => {
         if (email === 'dom.marketing.vn@gmail.com') return toast.error('Cannot delete root admin');
-        
+
         setConfirmModal({
             isOpen: true,
             title: 'Xóa người dùng?',
@@ -157,19 +159,20 @@ const AdminUsers: React.FC = () => {
         });
     };
 
-    const filteredUsers = users.filter(u => 
-        u.name.toLowerCase().includes(search.toLowerCase()) || 
+    const filteredUsers = users.filter(u =>
+        u.name.toLowerCase().includes(search.toLowerCase()) ||
         u.email.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-20">
-            <PageHero 
+            <PageHero
                 title={<>User <span className="text-amber-100/80">Management</span></>}
                 subtitle="Quản lý quyền truy cập, nâng cấp/hạ cấp và phê duyệt người dùng mới."
                 showStatus={true}
                 statusText="System Security Active"
                 actions={[
+                    { label: 'Check logs', icon: ShieldAlert, onClick: () => setIsAuditModalOpen(true), primary: false },
                     { label: 'Mời thành viên', icon: UserPlus, onClick: () => toast('Tính năng mời qua email đang phát triển'), primary: true }
                 ]}
             />
@@ -178,9 +181,9 @@ const AdminUsers: React.FC = () => {
                 <div className="p-6 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="relative flex-1 max-w-md">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input 
-                            type="text" 
-                            placeholder="Tìm kiếm theo tên hoặc email..." 
+                        <input
+                            type="text"
+                            placeholder="Tìm kiếm theo tên hoặc email..."
                             className="w-full pl-11 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-medium focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
@@ -195,7 +198,7 @@ const AdminUsers: React.FC = () => {
                                 <th className="px-8 py-4">User</th>
                                 <th className="px-8 py-4">Role</th>
                                 <th className="px-8 py-4">Status</th>
-                                <th className="px-8 py-4">Last Login</th>
+                                <th className="px-8 py-4">Last Activity </th>
                                 <th className="px-8 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -217,20 +220,19 @@ const AdminUsers: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="px-8 py-5">
-                                        <button 
+                                        <button
                                             onClick={() => handleToggleRole(user.email, user.role, user.id)}
-                                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all ${
-                                                user.role === 'admin' 
-                                                ? 'bg-amber-50 text-amber-600 border-amber-100' 
+                                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all ${user.role === 'admin'
+                                                ? 'bg-amber-50 text-amber-600 border-amber-100'
                                                 : 'bg-slate-50 text-slate-500 border-slate-100'
-                                            }`}
+                                                }`}
                                         >
                                             {user.role === 'admin' ? <Shield className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
                                             {user.role}
                                         </button>
                                     </td>
                                     <td className="px-8 py-5">
-                                        <button 
+                                        <button
                                             onClick={() => {
                                                 if (user.status === 'pending') {
                                                     setPendingModal({ isOpen: true, user });
@@ -238,11 +240,10 @@ const AdminUsers: React.FC = () => {
                                                     handleToggleStatus(user.email, user.status, user.id);
                                                 }
                                             }}
-                                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all ${
-                                                user.status === 'approved' 
-                                                ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all ${user.status === 'approved'
+                                                ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                                                 : 'bg-rose-50 text-rose-600 border-rose-100 animate-pulse'
-                                            }`}
+                                                }`}
                                         >
                                             {user.status === 'approved' ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
                                             {user.status}
@@ -255,7 +256,7 @@ const AdminUsers: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="px-8 py-5 text-right">
-                                        <button 
+                                        <button
                                             onClick={() => handleDelete(user.email, user.id)}
                                             className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
                                         >
@@ -312,7 +313,7 @@ const AdminUsers: React.FC = () => {
                         </div>
 
                         <div className="flex flex-col gap-3 pt-2">
-                            <Button 
+                            <Button
                                 fullWidth
                                 icon={UserCheck}
                                 onClick={() => handleApproveUser(pendingModal.user!)}
@@ -322,7 +323,7 @@ const AdminUsers: React.FC = () => {
                                 Phê duyệt truy cập
                             </Button>
                             <div className="grid grid-cols-2 gap-3">
-                                <Button 
+                                <Button
                                     variant="danger"
                                     icon={UserX}
                                     onClick={() => {
@@ -333,7 +334,7 @@ const AdminUsers: React.FC = () => {
                                 >
                                     Từ chối & Xóa
                                 </Button>
-                                <Button 
+                                <Button
                                     variant="secondary"
                                     onClick={() => setPendingModal({ isOpen: false, user: null })}
                                     className="!py-3"
@@ -345,6 +346,11 @@ const AdminUsers: React.FC = () => {
                     </div>
                 )}
             </Modal>
+
+            <AuditLogModal
+                isOpen={isAuditModalOpen}
+                onClose={() => setIsAuditModalOpen(false)}
+            />
         </div>
     );
 };

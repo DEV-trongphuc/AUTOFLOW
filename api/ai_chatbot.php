@@ -2178,6 +2178,17 @@ CHÚ Ý:
                 }
 
                 // 3. Force cache invalidation if needed (not implemented yet but good to note)
+                
+                // [NEW] Trigger flow for AI Lead Capture
+                if (!empty($email) || !empty($phone)) {
+                    try {
+                        require_once __DIR__ . '/trigger_helper.php';
+                        $targetSubId = $subId ?: $newSubId;
+                        triggerFlows($pdo, $targetSubId, 'ai_capture', $propertyId);
+                    } catch (Exception $e) {
+                        error_log("Failed to trigger flow for AI Capture: " . $e->getMessage());
+                    }
+                }
 
                 echo json_encode(['success' => true, 'message' => 'Info updated']);
                 exit;

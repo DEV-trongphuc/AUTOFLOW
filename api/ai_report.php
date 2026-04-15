@@ -19,34 +19,42 @@ function getRange($period)
 }
 
 list($start, $end) = getRange($period);
+$property_id = $_GET['property_id'] ?? '';
+
+$propFilterConvs = "";
+$propFilterMsgs = "";
+if (!empty($property_id)) {
+    $propFilterConvs = " AND property_id = ?";
+    $propFilterMsgs = " AND conversation_id IN (SELECT id FROM ai_conversations WHERE property_id = ?)";
+}
 
 if ($method === 'GET' && $action === 'summary') {
     try {
         // 1. Total Conversations
-        $param = [$start, $end . ' 23:59:59'];
+        $paramConvs = [$start, $end . ' 23:59:59'];
+        if (!empty($property_id)) $paramConvs[] = $property_id;
 
-        $sqlTotal = "SELECT COUNT(*) FROM ai_conversations WHERE created_at BETWEEN ? AND ?";
+        $sqlTotal = "SELECT COUNT(*) FROM ai_conversations WHERE created_at BETWEEN ? AND ?" . $propFilterConvs;
         $stmt = $pdo->prepare($sqlTotal);
-        $stmt->execute($param);
+        $stmt->execute($paramConvs);
         $totalConvs = $stmt->fetchColumn();
 
         // 2. AI Replies
-        $sqlAI = "SELECT COUNT(*) FROM ai_messages WHERE sender='ai' AND created_at BETWEEN ? AND ?";
+        $paramMsgs = [$start, $end . ' 23:59:59'];
+        if (!empty($property_id)) $paramMsgs[] = $property_id;
+
+        $sqlAI = "SELECT COUNT(*) FROM ai_messages WHERE sender='ai' AND created_at BETWEEN ? AND ?" . $propFilterMsgs;
         $stmt = $pdo->prepare($sqlAI);
-        $stmt->execute($param);
+        $stmt->execute($paramMsgs);
         $aiReplies = $stmt->fetchColumn();
 
         // 3. Human Handovers (Conversations that have at least one human reply)
-        $sqlHandover = "SELECT COUNT(DISTINCT conversation_id) FROM ai_messages WHERE sender='human' AND created_at BETWEEN ? AND ?";
+        $sqlHandover = "SELECT COUNT(DISTINCT conversation_id) FROM ai_messages WHERE sender='human' AND created_at BETWEEN ? AND ?" . $propFilterMsgs;
         $stmt = $pdo->prepare($sqlHandover);
-        $stmt->execute($param);
+        $stmt->execute($paramMsgs);
         $handovers = $stmt->fetchColumn();
 
         // 4. Unanswered (Visitor sent last message > 2 hours ago)
-        // This is a snapshot, not range bound, but useful context
-        $sqlUnanswered = "SELECT COUNT(*) FROM ai_conversations WHERE status != 'closed' AND last_message_at < DATE_SUB(NOW(), INTERVAL 2 HOUR) AND id IN (SELECT conversation_id FROM ai_messages WHERE sender='visitor' ORDER BY created_at DESC LIMIT 1)";
-        // Simplified heuristic: Just check if last message in table is visitor? complex in SQL.
-        // Let's us basic status check if exists
         $unanswered = 0; // Placeholder for optimization
 
         echo json_encode([
@@ -74,12 +82,14 @@ if ($method === 'GET' && $action === 'chart') {
                 SUM(CASE WHEN sender = 'visitor' THEN 1 ELSE 0 END) as visitor_count,
                 SUM(CASE WHEN sender = 'human' THEN 1 ELSE 0 END) as human_count
                 FROM ai_messages 
-                WHERE created_at BETWEEN ? AND ? 
+                WHERE created_at BETWEEN ? AND ?" . $propFilterMsgs . " 
                 GROUP BY date 
                 ORDER BY date ASC";
 
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$start, $end . ' 23:59:59']);
+        $paramChart = [$start, $end . ' 23:59:59'];
+        if (!empty($property_id)) $paramChart[] = $property_id;
+        $stmt->execute($paramChart);
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         echo json_encode(['success' => true, 'data' => $data]);

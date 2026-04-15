@@ -32,7 +32,7 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
     // Pagination State
-    const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
+    const [pagination, setPagination] = useState({ page: 1, limit: 50, total: 0, totalPages: 1 });
 
     // Stats State (fetched from API)
     const [stats, setStats] = useState({ total: 0, sent: 0, failed: 0, opened: 0 });
@@ -84,7 +84,7 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
             route: 'recipients',
             id: campaign.id,
             page: page.toString(),
-            limit: '20',
+            limit: '50',
             status: filter,
             type: typeFilter,
             search: debouncedSearch,
@@ -95,7 +95,7 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
         const res = await api.get<any>(`campaigns?${query.toString()}`);
         if (res.success) {
             setRecipients(res.data.data || []);
-            setPagination(res.data.pagination || { page: 1, limit: 20, total: 0, totalPages: 1 });
+            setPagination(res.data.pagination || { page: 1, limit: 50, total: 0, totalPages: 1 });
             if (res.data.stats) {
                 setStats(res.data.stats);
             }

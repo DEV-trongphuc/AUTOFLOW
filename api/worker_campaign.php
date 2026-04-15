@@ -97,7 +97,7 @@ if (!function_exists('runWorkerCampaign')) {
             $cName = $campaign['name'];
 
             // [OPTIMIZATION] Clean up stale temporary locks to auto-recover if worker crashed on previous runs
-            $pdo->prepare("DELETE FROM subscriber_activity WHERE campaign_id = ? AND type = 'processing_campaign' AND created_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE)")->execute([$cid]);
+            $pdo->prepare("DELETE FROM subscriber_activity WHERE campaign_id = ? AND type = 'processing_campaign' AND created_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE)")->execute([$cid]);
 
             // Start a transaction for the campaign processing
             $pdo->beginTransaction();
@@ -248,8 +248,9 @@ if (!function_exists('runWorkerCampaign')) {
                 }
 
                 // 2. Micro-Batch Processing Loop
-                $BATCH_SIZE = 20;
-                $MAX_BATCHES = 30; // Safety: Cap at 600 emails per worker run to prevent FPM exhaustion
+                $BATCH_SIZE = 50;   // [PERF] Increased from 20 → 50 (2.5x throughput per batch)
+                $MAX_BATCHES = 60;  // [PERF] Increased from 30 → 60 — max 3,000 emails per worker run
+                                    // 450s time guard still protects against FPM exhaustion
                 $batchCount = 0;
                 $hasMore = true;
                 $totalProcessed = 0;
@@ -410,10 +411,27 @@ if (!function_exists('runWorkerCampaign')) {
 
                                 $templateData = [];
                                 $missingParams = [];
+                                // [FIX] Per-field length limits — same as FlowExecutor zalo_zns
+                                // Zalo ZNS short fields (id, ma_giao_dich...) max 20 chars; others max 100
+                                $znsShortFieldMap = [
+                                    'id'           => 20,
+                                    'ma_giao_dich' => 20,
+                                    'ma_don_hang'  => 20,
+                                    'tracking_id'  => 20,
+                                    'order_id'     => 20,
+                                    'invoice_id'   => 20,
+                                ];
                                 foreach ($mappedParams as $tKey => $subField) {
                                     $val = replaceMergeTags($subField, $sub, []);
                                     if ($val === '') {
                                         $missingParams[] = $tKey;
+                                    }
+                                    // Truncate per field limit to prevent Zalo API -1121
+                                    if (is_string($val)) {
+                                        $maxLen = $znsShortFieldMap[$tKey] ?? 100;
+                                        if (mb_strlen($val, 'UTF-8') > $maxLen) {
+                                            $val = mb_substr($val, 0, $maxLen, 'UTF-8');
+                                        }
                                     }
                                     $templateData[$tKey] = $val;
                                 }
@@ -491,8 +509,28 @@ if (!function_exists('runWorkerCampaign')) {
                                                     $delay = $unitSeconds * $dur;
                                                     if ($delay > 0)
                                                         $initialSchedule = date('Y-m-d H:i:s', time() + $delay);
+                                                // else: dura=0 → keep $initialSchedule = $now → immediate
+                                                } elseif ($fsWaitMode === 'until_date') {
+                                                    // [BUG-2 FIX] SMART SCHEDULE for until_date:
+                                                    // Without this: scheduled_at=NOW → priority worker sees NOW<=NOW → is_resumed_wait=TRUE → wait SKIPPED!
+                                                    $specDate   = $fsWaitConfig['specificDate'] ?? '';
+                                                    $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
+                                                    if ($specDate) {
+                                                        $targetTs = strtotime("$specDate $targetTime:00");
+                                                        if ($targetTs > time()) {
+                                                            $initialSchedule = date('Y-m-d H:i:s', $targetTs);
+                                                        }
+                                                        // If date already past: keep $initialSchedule=$now → FlowExecutor isWaitOver=TRUE → skip correctly
+                                                    }
+                                                } elseif ($fsWaitMode === 'until') {
+                                                    // [BUG-2 FIX] SMART SCHEDULE for until (time-of-day):
+                                                    $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
+                                                    $dt = new DateTime();
+                                                    $parts2 = explode(':', $targetTime);
+                                                    $dt->setTime((int)$parts2[0], (int)($parts2[1] ?? 0), 0);
+                                                    if ($dt->getTimestamp() <= time()) $dt->modify('+1 day');
+                                                    $initialSchedule = $dt->format('Y-m-d H:i:s');
                                                 }
-                                                // For until/until_date/until_attribute modes, FlowExecutor handles scheduling on first execution
                                                 break;
                                             }
                                         }
@@ -572,8 +610,19 @@ if (!function_exists('runWorkerCampaign')) {
                                     'priority_flow_id' => $en['fid']
                                 ];
                             }
-                            // [BUG-C1 FIX] Use INSERT IGNORE to prevent duplicate enrollment crashes
-                            $sqlFlow = "INSERT IGNORE INTO subscriber_flow_states (subscriber_id, flow_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at) VALUES " . implode(',', $binds);
+                            // [BUG-1 FIX] Replace INSERT IGNORE with ON DUPLICATE KEY UPDATE.
+                            // INSERT IGNORE silently drops re-enrollment for subscribers who completed the flow.
+                            // ON DUPLICATE KEY UPDATE re-enrolls only if status is NOT active (waiting/processing).
+                            // This allows recurring campaigns to correctly re-enroll completed subscribers.
+                            $sqlFlow = "INSERT INTO subscriber_flow_states 
+                                (subscriber_id, flow_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at) 
+                                VALUES " . implode(',', $binds) . "
+                                ON DUPLICATE KEY UPDATE
+                                    step_id      = IF(status NOT IN ('waiting','processing'), VALUES(step_id), step_id),
+                                    scheduled_at = IF(status NOT IN ('waiting','processing'), VALUES(scheduled_at), scheduled_at),
+                                    status       = IF(status NOT IN ('waiting','processing'), 'waiting', status),
+                                    last_step_at = IF(status NOT IN ('waiting','processing'), NOW(), last_step_at),
+                                    updated_at   = IF(status NOT IN ('waiting','processing'), NOW(), updated_at)";
                             $pdo->prepare($sqlFlow)->execute($vals);
 
                             foreach ($fidStats as $fid => $count) {

@@ -223,8 +223,17 @@ class FlowExecutor
                                 $logs[] = "  -> Attempting Fallback ZNS.";
                                 $templateData = [];
                                 $rawTemplateData = $config['fallback_zns_data'] ?? [];
+                                $fbShortFieldMap = ['id' => 20, 'ma_giao_dich' => 20, 'ma_don_hang' => 20, 'tracking_id' => 20, 'order_id' => 20, 'invoice_id' => 20];
                                 foreach ($rawTemplateData as $key => $value) {
-                                    $templateData[$key] = is_string($value) ? replaceMergeTags($value, $subscriber, []) : $value;
+                                    $fbVal = is_string($value) ? replaceMergeTags($value, $subscriber, []) : $value;
+                                    // [FIX] Apply same per-field ZNS length limits as primary zalo_zns step
+                                    if (is_string($fbVal)) {
+                                        $fbMax = $fbShortFieldMap[$key] ?? 100;
+                                        if (mb_strlen($fbVal, 'UTF-8') > $fbMax) {
+                                            $fbVal = mb_substr($fbVal, 0, $fbMax, 'UTF-8');
+                                        }
+                                    }
+                                    $templateData[$key] = $fbVal;
                                 }
                                 $znsRes = sendZNSMessage($this->pdo, $oaConfigId, $fallbackTemplateId, $subscriber['phone_number'], $templateData, $flowId, $currentStepId, $subscriberId);
                                 if ($znsRes['success']) {
@@ -315,10 +324,27 @@ class FlowExecutor
                             $val = (strlen($trackingUrl) <= 200) ? $trackingUrl : $val;
                         }
 
-                        // [FIX] Truncate to 100 chars — prevents "id data breaks max length" on short ZNS fields
-                        // Use mb_strlen/mb_substr to avoid cutting mid-byte on Vietnamese UTF-8 chars
-                        if (is_string($val) && mb_strlen($val) > 100) {
-                            $val = mb_substr($val, 0, 100);
+                        // [FIX v2] Per-field length limits for Zalo ZNS known short fields.
+                        // Zalo enforces different max lengths per template param type:
+                        //   - 'id', 'ma_giao_dich', 'ma_don_hang', 'tracking_id' → max 20 chars
+                        //   - All others → max 100 chars (safe default)
+                        // Previously all fields were truncated at 100 chars, but UUID (36 chars)
+                        // still exceeded the 20-char limit for 'id' → Zalo API error -1121.
+                        $znsShortFieldMap = [
+                            'id'            => 20,
+                            'ma_giao_dich'  => 20,
+                            'ma_don_hang'   => 20,
+                            'tracking_id'   => 20,
+                            'order_id'      => 20,
+                            'invoice_id'    => 20,
+                        ];
+                        if (is_string($val)) {
+                            $maxLen = $znsShortFieldMap[$key] ?? 100;
+                            if (mb_strlen($val, 'UTF-8') > $maxLen) {
+                                $truncated = mb_substr($val, 0, $maxLen, 'UTF-8');
+                                error_log("[ZNS-WARN] Field '$key' truncated from " . mb_strlen($val) . " to $maxLen chars for Sub:{$subscriberId}");
+                                $val = $truncated;
+                            }
                         }
 
                         $templateData[$key] = $val;
@@ -459,20 +485,16 @@ class FlowExecutor
                     }
 
                     // Check Resume (If scheduled time passed)
-                    // Note: Caller must provide 'scheduled_at' from DB for this to work
-                    $dbScheduledAt = $contextData['scheduled_at'] ?? $scheduleNow; // default to now if not set
-                    $isResuming = ($dbScheduledAt <= $scheduleNow);
+                    // $contextData['scheduled_at'] is the DB value for the CURRENT wake-up step only.
+                    // It must NOT be used for chain steps (fresh waits should always calculate, not resume).
+                    // Only is_resumed_wait — set by the worker based on original DB scheduled_at —
+                    // correctly distinguishes "woken up from wait" vs "fresh wait in chain".
+                    $dbScheduledAt = $contextData['scheduled_at'] ?? $scheduleNow; // used for debug log only
+                    $isResuming = ($dbScheduledAt <= $scheduleNow); // diagnostic only — NOT used in logic
 
-                    // HOWEVER: executeStep is called when we HIT the wait step.
-                    // If we just hit it, we calculate delay.
-                    // If we are 'processing' it (i.e. we were waiting, and now worker picked it up), then wait is over.
-                    // The Worker distinguishes "New Entry" vs "Wake Up".
-                    // But here we are just executing logic.
-                    // Assumption: If status is 'waiting' and we are here, it means we woke up.
-                    // If status is 'processing' (standard loop), we calculate wait.
-
-                    // Actually, simpler:
-                    // If $isResuming is TRUE relative to the context provided by worker:
+                    // CORRECT LOGIC: only is_resumed_wait controls wait resumption.
+                    // Worker sets this TRUE only for step 1 in the run AND step_id matches AND scheduled_at passed.
+                    // Chain steps (stepsProcessedInRun > 1) always get is_resumed_wait=FALSE → always calculate.
                     if (!empty($contextData['is_resumed_wait'])) {
                         $isWaitOver = true;
                         $logDetail = "Wait Finished (Resumed)";
@@ -646,7 +668,7 @@ class FlowExecutor
 
                     if (empty($types)) {
                         $activities = [];
-                    } elseif (isset($contextData['activity_cache'])) {
+                    } elseif (isset($contextData['activity_cache']) && count($contextData['activity_cache']) < 500) {
                         $cachedActivities = $contextData['activity_cache'];
                         $activities = [];
                         foreach ($cachedActivities as $act) {
@@ -986,10 +1008,49 @@ class FlowExecutor
                                 }
 
                                 if ($canEnroll) {
+                                    $linkedInitialSchedule = date('Y-m-d H:i:s');
+                                    // [SMART SCHEDULE FIX] Calculate future wait date if first step of linked flow is wait
+                                    foreach ($lSteps as $fs) {
+                                        if (($fs['id'] ?? '') === $lStart && strtolower($fs['type'] ?? '') === 'wait') {
+                                            $fsWaitConfig = $fs['config'] ?? [];
+                                            $fsWaitMode = $fsWaitConfig['mode'] ?? 'duration';
+                                            if ($fsWaitMode === 'duration') {
+                                                $dur = (int) ($fsWaitConfig['duration'] ?? 0);
+                                                $unit = $fsWaitConfig['unit'] ?? 'minutes';
+                                                $unitSeconds = match ($unit) {
+                                                    'weeks' => 604800,
+                                                    'days' => 86400,
+                                                    'hours' => 3600,
+                                                    default => 60,
+                                                };
+                                                if (($unitSeconds * $dur) > 0) {
+                                                    $linkedInitialSchedule = date('Y-m-d H:i:s', time() + ($unitSeconds * $dur));
+                                                }
+                                            } elseif ($fsWaitMode === 'until_date') {
+                                                $specDate = $fsWaitConfig['specificDate'] ?? '';
+                                                $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
+                                                if ($specDate) {
+                                                    $targetTs = strtotime("$specDate $targetTime:00");
+                                                    if ($targetTs > time()) {
+                                                        $linkedInitialSchedule = date('Y-m-d H:i:s', $targetTs);
+                                                    }
+                                                }
+                                            } elseif ($fsWaitMode === 'until') {
+                                                $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
+                                                $dt = new DateTime();
+                                                $parts2 = explode(':', $targetTime);
+                                                $dt->setTime((int)$parts2[0], (int)($parts2[1] ?? 0), 0);
+                                                if ($dt->getTimestamp() <= time()) $dt->modify('+1 day');
+                                                $linkedInitialSchedule = $dt->format('Y-m-d H:i:s');
+                                            }
+                                            break;
+                                        }
+                                    }
+
                                     $this->pdo->prepare(
                                         "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at)
-                                         VALUES (?, ?, ?, NOW(), 'processing', NOW(), NOW(), NOW())"
-                                    )->execute([$subscriberId, $linkedId, $lStart]);
+                                         VALUES (?, ?, ?, ?, 'processing', NOW(), NOW(), NOW())"
+                                    )->execute([$subscriberId, $linkedId, $lStart, $linkedInitialSchedule]);
                                     $newQ = $this->pdo->lastInsertId();
                                     if ($newQ) {
                                         dispatchFlowWorker($this->pdo, 'flows', ['priority_queue_id' => $newQ, 'subscriber_id' => $subscriberId, 'priority_flow_id' => $linkedId]);

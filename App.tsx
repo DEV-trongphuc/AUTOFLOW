@@ -35,7 +35,6 @@ const Templates = lazy(() => import('./pages/Templates'));
 const Audience = lazy(() => import('./pages/Audience'));
 const Flows = lazy(() => import('./pages/Flows'));
 const Settings = lazy(() => import('./pages/Settings'));
-const Reports = lazy(() => import('./pages/Reports'));
 const Tags = lazy(() => import('./pages/Tags'));
 const ApiTriggers = lazy(() => import('./pages/ApiTriggers'));
 const Vouchers = lazy(() => import('./pages/Vouchers'));
@@ -156,7 +155,6 @@ const App: React.FC = () => {
                 () => import('./pages/Flows'),
                 () => import('./pages/Audience'),
                 () => import('./pages/Templates'),
-                () => import('./pages/Reports'),
                 () => import('./pages/Settings'),
                 () => import('./pages/Vouchers'),
                 () => import('./pages/AITraining'),
@@ -264,9 +262,6 @@ const App: React.FC = () => {
                                     <ProtectedRoute>
                                         <ChatPageProvider><Layout><P c={AITraining} /></Layout></ChatPageProvider>
                                     </ProtectedRoute>
-                                } />
-                                <Route path="/reports" element={
-                                    <ProtectedRoute><Layout><P c={Reports} /></Layout></ProtectedRoute>
                                 } />
                                 <Route path="/admin/users" element={
                                     <ProtectedRoute><Layout><P c={AdminUsers} /></Layout></ProtectedRoute>

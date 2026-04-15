@@ -76,9 +76,26 @@ function enrichSubscriberProfile($pdo, $payload)
         return false;
 
     // 1. UPDATE BASIC INFO
+    $fnRaw = $data['firstName'] ?? $data['first_name'] ?? $data['name'] ?? null;
+    $lnRaw = $data['lastName'] ?? $data['last_name'] ?? null;
+    
+    $fn = trim($fnRaw ?? '');
+    $ln = trim($lnRaw ?? '');
+    if ($fn && $ln) {
+        $fnLower = strtolower($fn);
+        $lnLower = strtolower($ln);
+        if ($fnLower !== $lnLower && !str_ends_with($fnLower, ' ' . $lnLower)) {
+            $fn = $fn . ' ' . $ln;
+        }
+        $ln = null; // Intentionally nullify last_name from tracking to prevent display duplication
+    } else if (!$fn && $ln) {
+        $fn = $ln;
+        $ln = null;
+    }
+
     $updatableFields = [
-        'first_name' => $data['firstName'] ?? $data['first_name'] ?? $data['name'] ?? null,
-        'last_name' => $data['lastName'] ?? $data['last_name'] ?? null,
+        'first_name' => $fn ?: null,
+        'last_name' => $ln ?: null,
         'phone_number' => $data['phoneNumber'] ?? $data['phone_number'] ?? $data['phone'] ?? null,
         'gender' => $data['gender'] ?? null,
         'date_of_birth' => $data['dateOfBirth'] ?? $data['date_of_birth'] ?? null,
@@ -193,9 +210,10 @@ address, job_title, company_name FROM subscribers WHERE id = ?");
     $mergedAttrs = array_merge($existingAttrs, $customData);
 
     // [FIX] Use Centralized Scoring Config
-    $scoring = require 'scoring_config.php';
+    require_once __DIR__ . '/db_connect.php';
+    $scoring = function_exists('getGlobalLeadScoreConfig') ? getGlobalLeadScoreConfig($pdo) : [];
     $priority = (int) ($data['priority'] ?? 0);
-    $scoreAdd = ($priority >= 1) ? ($scoring['form_submit'] ?? 5) : 1;
+    $scoreAdd = ($priority >= 1) ? ($scoring['leadscore_form_submit'] ?? 5) : ($scoring['leadscore_web_visit'] ?? 1);
 
     $pdo->prepare("UPDATE subscribers SET custom_attributes = ?, lead_score = lead_score + ? WHERE id = ?")
         ->execute([json_encode($mergedAttrs), $scoreAdd, $subscriberId]);
