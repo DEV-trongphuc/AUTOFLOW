@@ -61,7 +61,8 @@ function runSystemMigration($pdo, $targetVersion)
         $indices = [
             'subscriber_activity' => [
                 'idx_activity_flow_ref_type' => 'flow_id, reference_id, type',
-                'idx_activity_flow_time' => 'flow_id, created_at'
+                'idx_activity_flow_time' => 'flow_id, created_at',
+                'idx_activity_sub_camp_type' => 'subscriber_id, campaign_id, type'
             ],
             'subscriber_flow_states' => [
                 'idx_flow_status_step' => 'flow_id, status, step_id'

@@ -37,7 +37,7 @@ const VisualTemplate: React.FC<{ template: Template, html: string }> = ({ templa
     }, []);
 
     return (
-        <div ref={containerRef} className="w-full h-full bg-white relative overflow-hidden flex items-start justify-center">
+        <div ref={containerRef} className="w-full h-full bg-white dark:bg-slate-900 relative overflow-hidden flex items-start justify-center">
             <div className="absolute top-0 left-0 origin-top-left" style={{
                 width: '600px',
                 height: '1000px',
@@ -408,7 +408,7 @@ const Templates: React.FC = () => {
                                 value={searchTerm}
                                 onChange={(e) => handleSearchChange(e.target.value)}
                                 placeholder="Tìm kiếm mẫu..."
-                                className="w-full bg-white border border-slate-200 rounded-2xl pl-11 pr-4 py-2.5 text-sm font-bold outline-none focus:border-amber-600 focus:ring-4 focus:ring-amber-600/10 transition-all shadow-sm"
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-2xl pl-11 pr-4 py-2.5 text-sm font-bold outline-none focus:border-amber-600 focus:ring-4 focus:ring-amber-600/10 transition-all shadow-sm"
                             />
                         </div>
                         <p className="text-xs text-slate-400 font-medium shrink-0">{filteredTemplates.length} mẫu</p>
@@ -419,33 +419,33 @@ const Templates: React.FC = () => {
                         <div className="flex items-center gap-4 relative group/categories">
                             <button 
                                 onClick={() => scrollCategories('left')}
-                                className="hidden group-hover/categories:flex absolute -left-4 z-10 w-10 h-10 bg-white shadow-xl border border-slate-100 rounded-full items-center justify-center text-slate-400 hover:text-amber-600 hover:scale-110 transition-all active:scale-95"
+                                className="hidden group-hover/categories:flex absolute -left-4 z-10 w-10 h-10 bg-white dark:bg-slate-900 shadow-xl border border-slate-100 dark:border-slate-800/60 rounded-full items-center justify-center text-slate-400 hover:text-amber-600 hover:scale-110 transition-all active:scale-95"
                             >
                                 <ChevronLeft className="w-5 h-5" />
                             </button>
 
                             <div 
                                 ref={categoryScrollRef}
-                                className="flex-1 bg-white rounded-2xl lg:rounded-full p-1.5 lg:p-2 shadow-sm border border-slate-200 flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth"
+                                className="flex-1 bg-white dark:bg-slate-900 rounded-2xl lg:rounded-full p-1.5 lg:p-2 shadow-sm border border-slate-200 dark:border-slate-700/60 flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth"
                             >
                                 <button
                                     onClick={() => handleFilterGroupChange('all')}
-                                    className={`whitespace-nowrap flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 rounded-xl lg:rounded-full text-xs lg:text-sm font-bold transition-all duration-300 ${filterGroupId === 'all' ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                                    className={`whitespace-nowrap flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 rounded-xl lg:rounded-full text-xs lg:text-sm font-bold transition-all duration-300 ${filterGroupId === 'all' ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:bg-slate-950 hover:text-slate-700 dark:text-slate-200'}`}
                                 >
                                     <Globe className={`w-3.5 h-3.5 lg:w-4 h-4 transition-transform duration-500 ${filterGroupId === 'all' ? 'rotate-12 scale-110' : ''}`} />
                                     Tất cả mẫu
-                                    <span className={`text-[9px] lg:text-[10px] px-1.5 lg:px-2 py-0.5 rounded-full ${filterGroupId === 'all' ? 'bg-white/20' : 'bg-slate-100'}`}>{allMergedTemplates.length}</span>
+                                    <span className={`text-[9px] lg:text-[10px] px-1.5 lg:px-2 py-0.5 rounded-full ${filterGroupId === 'all' ? 'bg-white dark:bg-slate-900/20' : 'bg-slate-100'}`}>{allMergedTemplates.length}</span>
                                 </button>
 
                                 {groups.map(group => (
                                     <div key={group.id} className="group/item relative flex items-center shrink-0">
                                         <button
                                             onClick={() => handleFilterGroupChange(group.id)}
-                                            className={`flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 rounded-xl lg:rounded-full text-xs lg:text-sm font-bold transition-all duration-300 ${filterGroupId === group.id ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                                            className={`flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 rounded-xl lg:rounded-full text-xs lg:text-sm font-bold transition-all duration-300 ${filterGroupId === group.id ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:bg-slate-950 hover:text-slate-700 dark:text-slate-200'}`}
                                         >
                                             <FolderOpen className={`w-3.5 h-3.5 lg:w-4 h-4 transition-transform duration-500 ${filterGroupId === group.id ? 'rotate-12 scale-110' : 'opacity-50'}`} />
                                             <span className="truncate max-w-[120px] lg:max-w-[150px]">{group.name}</span>
-                                            <span className={`text-[9px] lg:text-[10px] px-1.5 lg:px-2 py-0.5 rounded-full ${filterGroupId === group.id ? 'bg-white/20' : 'bg-slate-100'}`}>
+                                            <span className={`text-[9px] lg:text-[10px] px-1.5 lg:px-2 py-0.5 rounded-full ${filterGroupId === group.id ? 'bg-white dark:bg-slate-900/20' : 'bg-slate-100'}`}>
                                                 {allMergedTemplates.filter(t => t.groupId === group.id).length}
                                             </span>
                                         </button>
@@ -454,13 +454,13 @@ const Templates: React.FC = () => {
                                         <div className="absolute -top-1 -right-1 flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity translate-y-2 group-hover/item:translate-y-0 duration-300">
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); setEditingGroup(group); setNewGroupName(group.name); setIsGroupModalOpen(true); }}
-                                                className="p-1.5 bg-white shadow-md border border-slate-100 text-amber-600 rounded-full hover:bg-amber-50"
+                                                className="p-1.5 bg-white dark:bg-slate-900 shadow-md border border-slate-100 dark:border-slate-800/60 text-amber-600 rounded-full hover:bg-amber-50"
                                             >
                                                 <Edit3 className="w-3 h-3" />
                                             </button>
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ isOpen: true, ids: [group.id], type: 'group' }); }}
-                                                className="p-1.5 bg-white shadow-md border border-slate-100 text-rose-600 rounded-full hover:bg-rose-50"
+                                                className="p-1.5 bg-white dark:bg-slate-900 shadow-md border border-slate-100 dark:border-slate-800/60 text-rose-600 rounded-full hover:bg-rose-50"
                                             >
                                                 <Trash2 className="w-3 h-3" />
                                             </button>
@@ -470,7 +470,7 @@ const Templates: React.FC = () => {
 
                                 <button
                                     onClick={() => { setEditingGroup(null); setNewGroupName(''); setIsGroupModalOpen(true); }}
-                                    className="p-3 bg-slate-50 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-all group shrink-0"
+                                    className="p-3 bg-slate-50 dark:bg-slate-950 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-all group shrink-0"
                                     title="Tạo nhóm mới"
                                 >
                                     <FolderPlus className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -479,7 +479,7 @@ const Templates: React.FC = () => {
 
                             <button 
                                 onClick={() => scrollCategories('right')}
-                                className="hidden group-hover/categories:flex absolute -right-4 z-10 w-10 h-10 bg-white shadow-xl border border-slate-100 rounded-full items-center justify-center text-slate-400 hover:text-amber-600 hover:scale-110 transition-all active:scale-95"
+                                className="hidden group-hover/categories:flex absolute -right-4 z-10 w-10 h-10 bg-white dark:bg-slate-900 shadow-xl border border-slate-100 dark:border-slate-800/60 rounded-full items-center justify-center text-slate-400 hover:text-amber-600 hover:scale-110 transition-all active:scale-95"
                             >
                                 <ChevronRight className="w-5 h-5" />
                             </button>
@@ -492,21 +492,21 @@ const Templates: React.FC = () => {
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-8">
                                     {paginatedTemplates.map((template) => (
-                                        <div key={template.id} className={`bg-white rounded-[24px] shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] border-2 overflow-hidden group hover:shadow-[0_20px_40px_-12px_rgba(245,158,11,0.15)] hover:-translate-y-1.5 transition-all duration-500 flex flex-col h-[380px] relative ${selectedIds.includes(template.id) ? 'border-amber-600 shadow-xl ring-4 ring-amber-600/10' : 'border-white hover:border-amber-200'}`}>
+                                        <div key={template.id} className={`bg-white dark:bg-slate-900 rounded-[24px] shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] border-2 overflow-hidden group hover:shadow-[0_20px_40px_-12px_rgba(245,158,11,0.15)] hover:-translate-y-1.5 transition-all duration-500 flex flex-col h-[380px] relative ${selectedIds.includes(template.id) ? 'border-amber-600 shadow-xl ring-4 ring-amber-600/10' : 'border-white hover:border-amber-200'}`}>
 
                                             {/* Selection Checkbox */}
                                             {!template.id.startsWith('sys_') && (
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); toggleSelect(template.id); }}
-                                                    className={`absolute top-5 left-5 z-20 w-10 h-10 rounded-2xl border-2 flex items-center justify-center transition-all duration-300 ${selectedIds.includes(template.id) ? 'bg-amber-600 border-amber-600 text-white scale-110 shadow-lg' : 'bg-white/90 backdrop-blur border-slate-100 text-slate-400 opacity-0 group-hover:opacity-100 hover:border-amber-400 hover:scale-105'}`}
+                                                    className={`absolute top-5 left-5 z-20 w-10 h-10 rounded-2xl border-2 flex items-center justify-center transition-all duration-300 ${selectedIds.includes(template.id) ? 'bg-amber-600 border-amber-600 text-white scale-110 shadow-lg' : 'bg-white dark:bg-slate-900/90 backdrop-blur border-slate-100 dark:border-slate-800/60 text-slate-400 opacity-0 group-hover:opacity-100 hover:border-amber-400 hover:scale-105'}`}
                                                 >
                                                     <Check className={`w-5 h-5 transition-transform duration-500 ${selectedIds.includes(template.id) ? 'scale-100 rotate-0' : 'scale-0 rotate-12'}`} />
                                                 </button>
                                             )}
 
                                             {/* Thumbnail Area */}
-                                            <div className="relative h-52 bg-slate-50 overflow-hidden cursor-pointer" onClick={() => setPreviewTemplate(template)}>
-                                                <div className="w-full h-full bg-white flex items-center justify-center group-hover:scale-110 transition-transform duration-[1.5s] ease-out overflow-hidden relative">
+                                            <div className="relative h-52 bg-slate-50 dark:bg-slate-950 overflow-hidden cursor-pointer" onClick={() => setPreviewTemplate(template)}>
+                                                <div className="w-full h-full bg-white dark:bg-slate-900 flex items-center justify-center group-hover:scale-110 transition-transform duration-[1.5s] ease-out overflow-hidden relative">
                                                     {template.thumbnail && !template.thumbnail.includes('placehold.co') ? (
                                                         <img src={template.thumbnail} alt={template.name} className="w-full h-full object-cover object-top" loading="lazy" />
                                                     ) : (
@@ -516,7 +516,7 @@ const Templates: React.FC = () => {
 
                                                 {/* Overlay Actions */}
                                                 <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[4px] opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center gap-4">
-                                                    <button onClick={(e) => { e.stopPropagation(); setPreviewTemplate(template); }} className="px-5 py-2.5 bg-white text-slate-900 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-amber-600 hover:text-white transition-all shadow-2xl flex items-center gap-2 transform translate-y-8 group-hover:translate-y-0 duration-500 ease-out">
+                                                    <button onClick={(e) => { e.stopPropagation(); setPreviewTemplate(template); }} className="px-5 py-2.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-amber-600 hover:text-white transition-all shadow-2xl flex items-center gap-2 transform translate-y-8 group-hover:translate-y-0 duration-500 ease-out">
                                                         <Eye className="w-3.5 h-3.5" /> Xem chi tiết
                                                     </button>
 
@@ -526,13 +526,13 @@ const Templates: React.FC = () => {
                                                         </button>
                                                     ) : (
                                                         <div className="flex gap-2 transform translate-y-8 group-hover:translate-y-0 duration-500 delay-100 ease-out">
-                                                            <button onClick={(e) => { e.stopPropagation(); setEditingTemplate(template); setIsEditorOpen(true); }} className="p-2.5 bg-white text-amber-600 rounded-xl hover:bg-amber-600 hover:text-white shadow-xl transition-all" title="Chỉnh sửa">
+                                                            <button onClick={(e) => { e.stopPropagation(); setEditingTemplate(template); setIsEditorOpen(true); }} className="p-2.5 bg-white dark:bg-slate-900 text-amber-600 rounded-xl hover:bg-amber-600 hover:text-white shadow-xl transition-all" title="Chỉnh sửa">
                                                                 <Edit3 className="w-4 h-4" />
                                                             </button>
-                                                            <button onClick={(e) => { e.stopPropagation(); handleDuplicate(template); }} className="p-2.5 bg-white text-blue-600 rounded-xl hover:bg-blue-500 hover:text-white shadow-xl transition-all" title="Nhân bản">
+                                                            <button onClick={(e) => { e.stopPropagation(); handleDuplicate(template); }} className="p-2.5 bg-white dark:bg-slate-900 text-blue-600 rounded-xl hover:bg-blue-500 hover:text-white shadow-xl transition-all" title="Nhân bản">
                                                                 <Copy className="w-4 h-4" />
                                                             </button>
-                                                            <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ isOpen: true, ids: [template.id], type: 'template' }); }} className="p-2.5 bg-white text-rose-600 rounded-xl hover:bg-rose-500 hover:text-white shadow-xl transition-all" title="Xóa">
+                                                            <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ isOpen: true, ids: [template.id], type: 'template' }); }} className="p-2.5 bg-white dark:bg-slate-900 text-rose-600 rounded-xl hover:bg-rose-500 hover:text-white shadow-xl transition-all" title="Xóa">
                                                                 <Trash2 className="w-4 h-4" />
                                                             </button>
                                                         </div>
@@ -546,7 +546,7 @@ const Templates: React.FC = () => {
                                                             Premium
                                                         </span>
                                                     )}
-                                                    <span className="bg-white/95 backdrop-blur px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-widest text-slate-700 shadow-md flex items-center gap-1.5 border border-slate-100">
+                                                    <span className="bg-white dark:bg-slate-900/95 backdrop-blur px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-widest text-slate-700 dark:text-slate-200 shadow-md flex items-center gap-1.5 border border-slate-100 dark:border-slate-800/60">
                                                         {template.blocks && template.blocks.length > 0 ? (
                                                             <><Sparkles className="w-3.5 h-3.5 text-amber-600" /> Editor</>
                                                         ) : (
@@ -558,10 +558,10 @@ const Templates: React.FC = () => {
                                             </div>
 
                                             {/* Info Area */}
-                                            <div className="p-5 flex-1 flex flex-col justify-between bg-white group-hover:bg-slate-50/50 transition-colors duration-500">
+                                            <div className="p-5 flex-1 flex flex-col justify-between bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:bg-slate-950/50 transition-colors duration-500">
                                                 <div className="space-y-3">
                                                     <div className="flex justify-between items-center">
-                                                        <span className="text-[10px] uppercase tracking-[0.15em] font-bold px-3 py-1 rounded-xl bg-slate-50 text-slate-500 border border-slate-100 flex items-center gap-1.5 shadow-sm">
+                                                        <span className="text-[10px] uppercase tracking-[0.15em] font-bold px-3 py-1 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-800/60 flex items-center gap-1.5 shadow-sm">
                                                             <FolderOpen className="w-3 h-3 text-slate-400" /> {getGroupName(template.groupId)}
                                                         </span>
                                                     </div>
@@ -570,14 +570,14 @@ const Templates: React.FC = () => {
                                                     </h3>
                                                 </div>
 
-                                                <div className="pt-4 border-t border-slate-100 flex justify-between items-center mt-auto">
+                                                <div className="pt-4 border-t border-slate-100 dark:border-slate-800/60 flex justify-between items-center mt-auto">
                                                     <div className="flex flex-col">
                                                         <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-1 opacity-60">Lần cuối cập nhật</span>
-                                                        <span className="text-[11px] text-slate-600 font-bold">
+                                                        <span className="text-[11px] text-slate-600 dark:text-slate-300 font-bold">
                                                             {template.id.startsWith('sys_') ? 'System Template' : new Date(template.lastModified).toLocaleDateString('vi-VN')}
                                                         </span>
                                                     </div>
-                                                    <div className="w-8 h-8 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-amber-100 group-hover:text-amber-600 transition-all">
+                                                    <div className="w-8 h-8 bg-slate-50 dark:bg-slate-950 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-amber-100 group-hover:text-amber-600 transition-all">
                                                         <ChevronRight className="w-4 h-4" />
                                                     </div>
                                                 </div>
@@ -588,11 +588,11 @@ const Templates: React.FC = () => {
                             )}
 
                             {filteredTemplates.length === 0 && !loading && (
-                                <div className="text-center py-32 bg-slate-50/50 rounded-[48px] border-2 border-dashed border-slate-200 animate-in fade-in duration-700">
-                                    <div className="w-32 h-32 bg-white rounded-[40px] shadow-xl flex items-center justify-center mx-auto mb-8 border border-slate-100 transform -rotate-6">
+                                <div className="text-center py-32 bg-slate-50 dark:bg-slate-950/50 rounded-[48px] border-2 border-dashed border-slate-200 dark:border-slate-700/60 animate-in fade-in duration-700">
+                                    <div className="w-32 h-32 bg-white dark:bg-slate-900 rounded-[40px] shadow-xl flex items-center justify-center mx-auto mb-8 border border-slate-100 dark:border-slate-800/60 transform -rotate-6">
                                         <Search className="w-16 h-16 text-slate-200" />
                                     </div>
-                                    <h4 className="text-2xl font-black text-slate-800 tracking-tight">Không tìm thấy mẫu phù hợp</h4>
+                                    <h4 className="text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight">Không tìm thấy mẫu phù hợp</h4>
                                     <button onClick={() => { setSearchTerm(''); handleFilterGroupChange('all'); }} className="mt-8 px-8 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-amber-600 transition-all active:scale-95 shadow-xl">Xóa bộ lọc</button>
                                 </div>
                             )}
@@ -603,7 +603,7 @@ const Templates: React.FC = () => {
                                     <button
                                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                         disabled={currentPage === 1}
-                                        className="px-5 py-2.5 rounded-2xl border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:border-amber-400 hover:text-amber-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
+                                        className="px-5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 text-xs font-bold hover:border-amber-400 hover:text-amber-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
                                     >
                                         ← Trước
                                     </button>
@@ -614,7 +614,7 @@ const Templates: React.FC = () => {
                                                 onClick={() => setCurrentPage(page)}
                                                 className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${page === currentPage
                                                     ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20 scale-110'
-                                                    : 'bg-white border border-slate-200 text-slate-500 hover:border-amber-300 hover:text-amber-600'
+                                                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 text-slate-500 dark:text-slate-400 hover:border-amber-300 hover:text-amber-600'
                                                     }`}
                                             >
                                                 {page}
@@ -624,7 +624,7 @@ const Templates: React.FC = () => {
                                     <button
                                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                         disabled={currentPage === totalPages}
-                                        className="px-5 py-2.5 rounded-2xl border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:border-amber-400 hover:text-amber-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
+                                        className="px-5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 text-xs font-bold hover:border-amber-400 hover:text-amber-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
                                     >
                                         Tiếp →
                                     </button>
@@ -693,7 +693,7 @@ const Templates: React.FC = () => {
                     {filteredTemplates.length === 0 && !loading && (
                         <div className="text-center py-20 opacity-50">
                             <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4"><Search className="w-10 h-10 text-slate-300" /></div>
-                            <p className="text-sm font-bold text-slate-500">Không tìm thấy mẫu nào phù hợp</p>
+                            <p className="text-sm font-bold text-slate-500 dark:text-slate-400">Không tìm thấy mẫu nào phù hợp</p>
                         </div>
                     )}
                 </>
@@ -760,7 +760,7 @@ const Templates: React.FC = () => {
                         </p>
                     </div>
                     <div className="space-y-2">
-                        <p className="text-xs font-black text-slate-500 uppercase tracking-widest">Đang được dùng tại:</p>
+                        <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Đang được dùng tại:</p>
                         {usageBlockModal.errors.map((err, i) => (
                             <div key={i} className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-100 rounded-xl">
                                 <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />

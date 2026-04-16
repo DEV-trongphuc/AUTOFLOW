@@ -16,7 +16,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 
 if ($method === 'GET' && $action === 'list') {
-    $stmt = $pdo->query("SELECT id, email, name, role, status, last_login, picture FROM users ORDER BY created_at DESC");
+    $stmt = $pdo->query("SELECT id, email, name, role, status, last_login, picture FROM users ORDER BY last_login DESC, created_at DESC");
     jsonResponse(true, $stmt->fetchAll());
 }
 

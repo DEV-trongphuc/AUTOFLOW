@@ -49,7 +49,7 @@ const FlowCard = React.memo<FlowCardProps>(({
         if (isArchived) return {
             icon: GitMerge,
             accent: 'slate' as const,
-            gradientMain: 'from-slate-100 to-slate-200 text-slate-500',
+            gradientMain: 'from-slate-100 to-slate-200 text-slate-500 dark:text-slate-400',
             label: 'Đã xóa'
         };
 
@@ -211,17 +211,17 @@ const FlowCard = React.memo<FlowCardProps>(({
     const Icon = theme.icon;
 
     const StatusPill = () => {
-        if (isArchived) return <span className="px-2.5 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-bold uppercase tracking-wide border border-slate-200">Archived</span>;
+        if (isArchived) return <span className="px-2.5 py-1 bg-slate-100 text-slate-500 dark:text-slate-400 rounded-full text-[10px] font-bold uppercase tracking-wide border border-slate-200 dark:border-slate-700/60">Archived</span>;
         if (isActive) return <span className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold uppercase tracking-wide border border-emerald-100"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-subtle" /> Active</span>;
         if (flow.status === 'draft') return <span className="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-bold uppercase tracking-wide border border-blue-100">Draft</span>;
-        return <span className="px-2.5 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-bold uppercase tracking-wide border border-slate-200">Paused</span>;
+        return <span className="px-2.5 py-1 bg-slate-100 text-slate-500 dark:text-slate-400 rounded-full text-[10px] font-bold uppercase tracking-wide border border-slate-200 dark:border-slate-700/60">Paused</span>;
     };
 
     return (
         <div
             onClick={onClick}
             className={`
-        group relative bg-white rounded-[20px] border border-slate-200 transition-all duration-500 h-full flex flex-col cursor-pointer overflow-hidden hover-lift
+        group relative bg-white dark:bg-slate-900 rounded-[20px] border border-slate-200 dark:border-slate-700/60 transition-all duration-500 h-full flex flex-col cursor-pointer overflow-hidden hover-lift
         ${isArchived ? 'opacity-60 grayscale' : 'hover:border-transparent hover:shadow-xl'}
       `}
         >
@@ -236,10 +236,10 @@ const FlowCard = React.memo<FlowCardProps>(({
                 </div>
 
                 <div>
-                    <h3 className="text-base font-bold text-slate-800 leading-tight mb-1 line-clamp-2 group-hover:text-emerald-600 transition-colors">
+                    <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 leading-tight mb-1 line-clamp-2 group-hover:text-emerald-600 transition-colors">
                         {flow.name}
                     </h3>
-                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
                         {!(theme as any).isLink && <span className={`w-1.5 h-1.5 rounded-full bg-${theme.accent}-500`}></span>}
                         {(theme as any).isLink ? (
                             <div onClick={(e) => { e.stopPropagation(); (theme as any).onLinkClick?.(); }} className={`flex items-center gap-1.5 text-${theme.accent}-700 bg-${theme.accent}-50 hover:bg-${theme.accent}-100 px-2.5 py-1 -ml-1 rounded-lg transition-all cursor-pointer group/link z-20 relative font-bold`}>
@@ -254,22 +254,22 @@ const FlowCard = React.memo<FlowCardProps>(({
             </div>
 
             <div className="px-4 pb-4 pt-1 relative z-10">
-                <div className="grid grid-cols-3 gap-1 p-0.5 bg-slate-50/80 rounded-xl border border-slate-100/50">
+                <div className="grid grid-cols-3 gap-1 p-0.5 bg-slate-50 dark:bg-slate-950/80 rounded-xl border border-slate-100 dark:border-slate-800/50">
                     <div className="flex flex-col items-center justify-center py-1.5 px-1 group/stat">
                         <div className="flex items-center gap-1.5 mb-0.5">
-                            <Layers className="w-3 h-3 text-slate-400 group-hover/stat:text-slate-600 transition-colors" />
+                            <Layers className="w-3 h-3 text-slate-400 group-hover/stat:text-slate-600 dark:text-slate-300 transition-colors" />
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Steps</span>
                         </div>
-                        <span className="text-xs font-black text-slate-700">{stepCount}</span>
+                        <span className="text-xs font-black text-slate-700 dark:text-slate-200">{stepCount}</span>
                     </div>
-                    <div className="flex flex-col items-center justify-center py-1.5 px-1 border-l border-slate-200/50 group/stat">
+                    <div className="flex flex-col items-center justify-center py-1.5 px-1 border-l border-slate-200 dark:border-slate-700/60/50 group/stat">
                         <div className="flex items-center gap-1.5 mb-0.5">
                             <Users className="w-3 h-3 text-blue-400 group-hover/stat:text-blue-600 transition-colors" />
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Users</span>
                         </div>
-                        <span className="text-xs font-black text-slate-700">{enrolled.toLocaleString()}</span>
+                        <span className="text-xs font-black text-slate-700 dark:text-slate-200">{enrolled.toLocaleString()}</span>
                     </div>
-                    <div className="flex flex-col items-center justify-center py-1.5 px-1 border-l border-slate-200/50 group/stat">
+                    <div className="flex flex-col items-center justify-center py-1.5 px-1 border-l border-slate-200 dark:border-slate-700/60/50 group/stat">
                         <div className="flex items-center gap-1.5 mb-0.5">
                             <CheckCircle className="w-3 h-3 text-emerald-400 group-hover/stat:text-emerald-600 transition-colors" />
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Complete</span>
@@ -282,19 +282,19 @@ const FlowCard = React.memo<FlowCardProps>(({
             <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0 z-20">
                 {isArchived ? (
                     <>
-                        <button onClick={(e) => { e.stopPropagation(); onRestore?.(); }} className="w-8 h-8 flex items-center justify-center bg-white text-emerald-600 rounded-xl shadow-lg border border-slate-100 hover:bg-emerald-50 transition-colors" title="Khôi phục">
+                        <button onClick={(e) => { e.stopPropagation(); onRestore?.(); }} className="w-8 h-8 flex items-center justify-center bg-white dark:bg-slate-900 text-emerald-600 rounded-xl shadow-lg border border-slate-100 dark:border-slate-800 hover:bg-emerald-50 transition-colors" title="Khôi phục">
                             <RotateCcw className="w-4 h-4" />
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); onDelete(true); }} className="w-8 h-8 flex items-center justify-center bg-white text-rose-600 rounded-xl shadow-lg border border-slate-100 hover:bg-rose-50 transition-colors" title="Xóa vĩnh viễn">
+                        <button onClick={(e) => { e.stopPropagation(); onDelete(true); }} className="w-8 h-8 flex items-center justify-center bg-white dark:bg-slate-900 text-rose-600 rounded-xl shadow-lg border border-slate-100 dark:border-slate-800 hover:bg-rose-50 transition-colors" title="Xóa vĩnh viễn">
                             <Trash2 className="w-4 h-4" />
                         </button>
                     </>
                 ) : (
                     <>
-                        <button onClick={(e) => { e.stopPropagation(); onDuplicate?.(flow); }} className="w-8 h-8 flex items-center justify-center bg-white text-blue-600 rounded-xl shadow-lg border border-slate-100 hover:bg-blue-50 transition-colors" title="Nhân bản">
+                        <button onClick={(e) => { e.stopPropagation(); onDuplicate?.(flow); }} className="w-8 h-8 flex items-center justify-center bg-white dark:bg-slate-900 text-blue-600 rounded-xl shadow-lg border border-slate-100 dark:border-slate-800 hover:bg-blue-50 transition-colors" title="Nhân bản">
                             <Copy className="w-4 h-4" />
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); onDelete(false); }} className="w-8 h-8 flex items-center justify-center bg-white text-rose-600 rounded-xl shadow-lg border border-slate-100 hover:bg-rose-50 rounded-xl transition-all" title="Thùng rác">
+                        <button onClick={(e) => { e.stopPropagation(); onDelete(false); }} className="w-8 h-8 flex items-center justify-center bg-white dark:bg-slate-900 text-rose-600 rounded-xl shadow-lg border border-slate-100 dark:border-slate-800 hover:bg-rose-50 rounded-xl transition-all" title="Thùng rác">
                             <Trash2 className="w-4 h-4" />
                         </button>
                     </>

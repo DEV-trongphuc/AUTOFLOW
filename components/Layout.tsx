@@ -53,7 +53,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       `}>
         <Sidebar
           onClose={() => setSidebarOpen(false)}
-          isCollapsed={sidebarCollapsed}
+          isCollapsed={sidebarOpen ? false : sidebarCollapsed}
           onToggleCollapse={toggleSidebar}
         />
       </aside>

@@ -50,7 +50,7 @@ const PageHero: React.FC<PageHeroProps> = ({
                 </p>
 
                 {actions && actions.length > 0 && (
-                    <div className="flex items-center gap-4 w-full">
+                    <div className="flex flex-wrap items-center gap-3 w-full">
                         {actions.map((action, idx) => {
                             const isFirstIconOnly = !action.label && (idx === 0 || !!actions[idx - 1].label);
                             

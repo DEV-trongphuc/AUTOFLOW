@@ -449,40 +449,40 @@ const Campaigns: React.FC = () => {
 
             <div className="space-y-8">
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group">
+                    <div className="bg-white dark:bg-slate-900 p-5 rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-sm flex items-center justify-between group">
                         <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-amber-600 transition-colors">Tổng chiến dịch</p>
-                            <h3 className="text-2xl font-black text-slate-800 tracking-tight">{campaigns.length}</h3>
+                            <h3 className="text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight">{campaigns.length}</h3>
                         </div>
                         <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 text-white rounded-2xl shadow-lg shadow-amber-600/10 flex items-center justify-center transition-all group-hover:scale-110">
                             <PieChart className="w-6 h-6" />
                         </div>
                     </div>
 
-                    <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group">
+                    <div className="bg-white dark:bg-slate-900 p-5 rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-sm flex items-center justify-between group">
                         <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-indigo-500 transition-colors">Tổng gửi (Email/ZNS)</p>
-                            <h3 className="text-2xl font-black text-slate-800 tracking-tight">{stats.totalSent.toLocaleString()}</h3>
+                            <h3 className="text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight">{stats.totalSent.toLocaleString()}</h3>
                         </div>
                         <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded-2xl shadow-lg shadow-indigo-500/10 flex items-center justify-center transition-all group-hover:scale-110">
                             <Send className="w-6 h-6" />
                         </div>
                     </div>
 
-                    <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group">
+                    <div className="bg-white dark:bg-slate-900 p-5 rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-sm flex items-center justify-between group">
                         <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-emerald-500 transition-colors">Tỷ lệ mở trung bình</p>
-                            <h3 className="text-2xl font-black text-slate-800 tracking-tight">{stats.openRate}%</h3>
+                            <h3 className="text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight">{stats.openRate}%</h3>
                         </div>
                         <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-2xl shadow-lg shadow-emerald-500/10 flex items-center justify-center transition-all group-hover:scale-110">
                             <MailOpen className="w-6 h-6" />
                         </div>
                     </div>
 
-                    <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group">
+                    <div className="bg-white dark:bg-slate-900 p-5 rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-sm flex items-center justify-between group">
                         <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-rose-500 transition-colors">Lượt Click</p>
-                            <h3 className="text-2xl font-black text-slate-800 tracking-tight">{stats.totalClicked.toLocaleString()}</h3>
+                            <h3 className="text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight">{stats.totalClicked.toLocaleString()}</h3>
                         </div>
                         <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-rose-700 text-white rounded-2xl shadow-lg shadow-rose-500/10 flex items-center justify-center transition-all group-hover:scale-110">
                             <MousePointerClick className="w-6 h-6" />
@@ -491,39 +491,41 @@ const Campaigns: React.FC = () => {
                 </div>
 
                 {/* Table section */}
-                <div className="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-700/60 shadow-sm overflow-hidden">
                 {/* Tabs + Search + Filter — single clean row */}
-                <div className="px-4 lg:px-6 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                <div className="px-4 lg:px-6 py-3 border-b border-slate-100 dark:border-slate-800/60 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                     {/* Left: Status tabs */}
-                    <Tabs
-                        variant="pill"
-                        activeId={activeTab}
-                        onChange={setActiveTab as any}
-                        items={[
-                            { id: 'all', label: 'Tất cả', icon: PieChart },
-                            { id: 'sent', label: 'đã gửi', icon: CheckCircle2 },
-                            { id: 'waiting', label: 'Chờ Flow', icon: GitMerge },
-                            { id: 'scheduled', label: 'Đang xử lý', icon: CalendarClock },
-                            { id: 'draft', label: 'Bản nháp', icon: FileText }
-                        ]}
-                    />
+                    <div className="overflow-x-auto pb-1 -mx-4 px-4 lg:mx-0 lg:px-0 lg:pb-0 scrollbar-hide">
+                        <Tabs
+                            variant="pill"
+                            activeId={activeTab}
+                            onChange={setActiveTab as any}
+                            items={[
+                                { id: 'all', label: 'Tất cả', icon: PieChart },
+                                { id: 'sent', label: 'đã gửi', icon: CheckCircle2 },
+                                { id: 'waiting', label: 'Chờ Flow', icon: GitMerge },
+                                { id: 'scheduled', label: 'Đang xử lý', icon: CalendarClock },
+                                { id: 'draft', label: 'Bản nháp', icon: FileText }
+                            ]}
+                        />
+                    </div>
 
                     {/* Right: Search + Type filter */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0 w-full lg:w-auto">
                         {/* Search */}
-                        <div className="relative">
+                        <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                             <input
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 placeholder="Tìm chiến dịch..."
-                                className="w-44 pl-8 pr-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs focus:bg-white focus:ring-2 focus:ring-amber-600/20 focus:border-amber-400/50 transition-all outline-none"
+                                className="w-full lg:w-44 pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-lg text-xs focus:bg-white dark:bg-slate-900 focus:ring-2 focus:ring-amber-600/20 focus:border-amber-400/50 transition-all outline-none"
                             />
                         </div>
 
                         {/* Type segmented control */}
-                        <div className="flex bg-slate-100 p-0.5 rounded-lg">
+                        <div className="flex bg-slate-100 p-0.5 rounded-lg overflow-x-auto scrollbar-hide shrink-0">
                             {[
                                 { value: 'all', label: 'Tất cả' },
                                 { value: 'email', label: 'Email' },
@@ -532,9 +534,9 @@ const Campaigns: React.FC = () => {
                                 <button
                                     key={value}
                                     onClick={() => setActiveType(value as any)}
-                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all whitespace-nowrap ${
+                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all whitespace-nowrap flex-1 text-center ${
                                         activeType === value
-                                            ? 'bg-white text-slate-800 shadow-sm'
+                                            ? 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-sm'
                                             : 'text-slate-400 hover:text-slate-600'
                                     }`}
                                 >
@@ -563,7 +565,7 @@ const Campaigns: React.FC = () => {
 
                 {/* Pagination */}
                 {pagination.totalPages > 1 && (
-                    <div className="px-6 py-4 border-t border-slate-50 bg-slate-50/30 flex items-center justify-between">
+                    <div className="px-6 py-4 border-t border-slate-50 bg-slate-50 dark:bg-slate-950/30 flex items-center justify-between">
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                             Trang {pagination.page.toLocaleString()} / {pagination.totalPages.toLocaleString()}
                         </p>
@@ -640,7 +642,7 @@ const Campaigns: React.FC = () => {
                     <div className="space-y-4">
                         <p className="text-slate-600">Bạn sắp xóa một chiến dịch đang được kết nối với <b>{advancedDeleteModal.flows.length} kịch bản (Flow)</b> chăm sóc.</p>
                         <div className="space-y-2 mt-4">
-                            <label className={`block border p-4 rounded-xl cursor-pointer transition-all ${advancedDeleteModal.deleteFlowMode === 0 ? 'bg-amber-50 border-amber-300 ring-1 ring-amber-300' : 'bg-white border-slate-200'}`}>
+                            <label className={`block border p-4 rounded-xl cursor-pointer transition-all ${advancedDeleteModal.deleteFlowMode === 0 ? 'bg-amber-50 border-amber-300 ring-1 ring-amber-300' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700/60'}`}>
                                 <div className="flex items-start gap-3">
                                     <input 
                                         type="radio" 
@@ -650,13 +652,13 @@ const Campaigns: React.FC = () => {
                                         className="mt-1"
                                     />
                                     <div>
-                                        <b className="text-slate-800 block">Giữ lại Flow (Chỉ gỡ kết nối)</b>
-                                        <p className="text-xs text-slate-500 mt-1">Chiến dịch sẽ bị xóa, nhưng Kịch bản chăm sóc sẽ được giữ lại. Nút Trigger sẽ trở về trạng thái trống (Disconnected).</p>
+                                        <b className="text-slate-800 dark:text-slate-200 block">Giữ lại Flow (Chỉ gỡ kết nối)</b>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Chiến dịch sẽ bị xóa, nhưng Kịch bản chăm sóc sẽ được giữ lại. Nút Trigger sẽ trở về trạng thái trống (Disconnected).</p>
                                     </div>
                                 </div>
                             </label>
                             
-                            <label className={`block border p-4 rounded-xl cursor-pointer transition-all ${advancedDeleteModal.deleteFlowMode === 1 ? 'bg-rose-50 border-rose-300 ring-1 ring-rose-300' : 'bg-white border-slate-200'}`}>
+                            <label className={`block border p-4 rounded-xl cursor-pointer transition-all ${advancedDeleteModal.deleteFlowMode === 1 ? 'bg-rose-50 border-rose-300 ring-1 ring-rose-300' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700/60'}`}>
                                 <div className="flex items-start gap-3">
                                     <input 
                                         type="radio" 

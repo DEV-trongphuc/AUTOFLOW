@@ -340,6 +340,7 @@ foreach ($jobs as $jobItem) {
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                         INDEX idx_doc_id (doc_id),
+                        INDEX idx_status_updated (status, updated_at),
                         UNIQUE KEY uq_doc_chunk (doc_id, chunk_index)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
                 } catch (Exception $e) { /* table may already exist */

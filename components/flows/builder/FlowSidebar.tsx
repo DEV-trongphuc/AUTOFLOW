@@ -22,7 +22,7 @@ const FlowSidebar: React.FC<FlowSidebarProps> = ({
     onOpenHistory
 }) => {
     return (
-        <div className="w-full lg:w-80 h-full border-l border-slate-200 bg-white overflow-hidden flex flex-col shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.02)]">
+        <div className="w-full lg:w-80 h-full border-l border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-900 overflow-hidden flex flex-col shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.02)]">
             <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
                 <div className="space-y-4">
                     <div className="flex items-center justify-between px-1">
@@ -66,7 +66,7 @@ const FlowSidebar: React.FC<FlowSidebarProps> = ({
                         </div>
                     ) : (
                         <div className="bg-emerald-50/50 p-4 lg:p-6 rounded-[32px] border border-emerald-100/50 flex flex-col items-center text-center group transition-all">
-                            <div className="w-8 h-8 lg:w-10 lg:h-10 bg-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/10 mb-2 lg:mb-3 group-hover:scale-110 transition-transform">
+                            <div className="w-8 h-8 lg:w-10 lg:h-10 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/10 mb-2 lg:mb-3 group-hover:scale-110 transition-transform">
                                 <CheckCircle2 className="w-4 h-4 lg:w-5 lg:h-5 text-emerald-500" />
                             </div>
                             <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Luồng an toàn</p>
@@ -77,23 +77,23 @@ const FlowSidebar: React.FC<FlowSidebarProps> = ({
 
                 {/* DURATION PREDICTION BLOCK */}
                 {durationInfo && (
-                    <div className="px-1 space-y-3 pt-6 border-t border-slate-100/80">
+                    <div className="px-1 space-y-3 pt-6 border-t border-slate-100 dark:border-slate-800/80">
                         <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
                             <Clock className="w-3.5 h-3.5 text-indigo-500" /> Thời gian hoàn hành
                         </h4>
-                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                        <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl p-3">
                             <div className="flex items-baseline justify-between mb-2">
-                                <span className="text-[10px] font-bold text-slate-500">Tổng quan:</span>
-                                <span className="text-[11px] font-black text-slate-700">
+                                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Tổng quan:</span>
+                                <span className="text-[11px] font-black text-slate-700 dark:text-slate-200">
                                     {durationInfo.min === durationInfo.max ? durationInfo.max : `${durationInfo.min} - ${durationInfo.max}`}
                                 </span>
                             </div>
                             {durationInfo.breakdown && durationInfo.breakdown.length > 0 && (
-                                <div className="space-y-1.5 pt-2 border-t border-slate-200/50 mt-2">
+                                <div className="space-y-1.5 pt-2 border-t border-slate-200 dark:border-slate-700/60/50 mt-2">
                                     {durationInfo.breakdown.map((b, idx) => (
                                         <div key={idx} className="flex justify-between items-start text-[9px]">
-                                            <span className="text-slate-500 font-bold max-w-[60%]">{b.label}</span>
-                                            <span className="text-slate-700 font-bold">
+                                            <span className="text-slate-500 dark:text-slate-400 font-bold max-w-[60%]">{b.label}</span>
+                                            <span className="text-slate-700 dark:text-slate-200 font-bold">
                                                 {Math.round(b.min / 60 * 10) / 10}h - {Math.round(b.max / 60 * 10) / 10}h
                                             </span>
                                         </div>
@@ -104,28 +104,28 @@ const FlowSidebar: React.FC<FlowSidebarProps> = ({
                     </div>
                 )}
 
-                <div className="pt-8 border-t border-slate-100 space-y-6">
+                <div className="pt-8 border-t border-slate-100 dark:border-slate-800 space-y-6">
                     <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 px-1">
-                        <History className="w-4 h-4 text-slate-500" /> Lịch sử chỉnh sửa
+                        <History className="w-4 h-4 text-slate-500 dark:text-slate-400" /> Lịch sử chỉnh sửa
                     </h4>
 
-                    <div className="relative pl-4 space-y-6 before:absolute before:left-[1.5px] before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-50">
+                    <div className="relative pl-4 space-y-6 before:absolute before:left-[1.5px] before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-50 dark:bg-slate-950">
                         {logs.length === 0 ? (
                             <div className="text-center py-10 opacity-30">
                                 <p className="text-[10px] font-bold uppercase tracking-widest">Chưa có nhật ký</p>
                             </div>
                         ) : logs.map((log) => (
                             <div key={log.id} className="relative group">
-                                <div className="absolute -left-[18.5px] top-1.5 w-2 h-2 rounded-full bg-white border-2 border-slate-200 group-hover:border-slate-400 z-10" />
-                                <div className="bg-slate-50/50 rounded-2xl p-3 border border-transparent hover:border-slate-200 hover:bg-white transition-all">
+                                <div className="absolute -left-[18.5px] top-1.5 w-2 h-2 rounded-full bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700/60 group-hover:border-slate-400 z-10" />
+                                <div className="bg-slate-50 dark:bg-slate-950/50 rounded-2xl p-3 border border-transparent hover:border-slate-200 dark:border-slate-700/60 hover:bg-white dark:bg-slate-900 transition-all">
                                     <div className="flex justify-between items-start mb-1 gap-2">
-                                        <p className="text-[11px] font-black text-slate-700 leading-tight flex-1 whitespace-normal break-words">{log.action}</p>
+                                        <p className="text-[11px] font-black text-slate-700 dark:text-slate-200 leading-tight flex-1 whitespace-normal break-words">{log.action}</p>
                                         <span className="text-[9px] font-black text-slate-300 uppercase shrink-0 flex items-center gap-1">
                                             <Clock className="w-2.5 h-2.5" />
                                             {new Date(log.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                     </div>
-                                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed whitespace-normal break-words">{log.details}</p>
+                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed whitespace-normal break-words">{log.details}</p>
                                 </div>
                             </div>
                         ))}
@@ -135,17 +135,17 @@ const FlowSidebar: React.FC<FlowSidebarProps> = ({
 
             {/* Version History Button */}
             {onOpenHistory && (
-                <div className="p-4 border-t border-slate-100 shrink-0">
+                <div className="p-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
                     <button
                         onClick={onOpenHistory}
-                        className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-amber-50 border border-slate-100 hover:border-amber-200 rounded-2xl transition-all group"
+                        className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-950 hover:bg-amber-50 border border-slate-100 dark:border-slate-800 hover:border-amber-200 rounded-2xl transition-all group"
                     >
                         <div className="flex items-center gap-2.5">
                             <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center text-[#ca7900] group-hover:bg-[#ffa900] group-hover:text-white transition-all">
                                 <RotateCcw className="w-3.5 h-3.5" />
                             </div>
                             <div className="text-left">
-                                <p className="text-[11px] font-black text-slate-700 group-hover:text-[#ca7900] leading-none">Lịch sử phiên bản</p>
+                                <p className="text-[11px] font-black text-slate-700 dark:text-slate-200 group-hover:text-[#ca7900] leading-none">Lịch sử phiên bản</p>
                                 <p className="text-[9px] text-slate-400 font-medium mt-0.5">Khôi phục bản chỉnh sửa trước</p>
                             </div>
                         </div>

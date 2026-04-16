@@ -694,50 +694,8 @@ try {
     $item['has_email_error'] = false;
 
 
-    // [SCHEDULING CHECK] activeDays / startTime / endTime from flow config
-    $activeDays = $fConfig['activeDays'] ?? [0, 1, 2, 3, 4, 5, 6];
-    // [FIX] Guard against empty array from bad UI config — prevents infinite loop
-    // where the for($i=1..7) loop never finds a valid day and $nextSendAt is never set.
-    if (empty($activeDays)) {
-        $activeDays = [0, 1, 2, 3, 4, 5, 6];
-    }
-    $startTimeSched = $fConfig['startTime'] ?? '00:00';
-    $endTimeSched = $fConfig['endTime'] ?? '23:59';
-    $currentDayOfWeek = (int) date('w'); // 0=Sunday, 6=Saturday
-    $currentTimeSched = date('H:i');
-
-    $isDayAllowed = in_array($currentDayOfWeek, array_map('intval', $activeDays));
-    $isTimeAllowed = ($currentTimeSched >= $startTimeSched && $currentTimeSched <= $endTimeSched);
-
-    // [FIX] If today is an allowed day but current time is PAST the endTime window,
-    // treat the day as NOT allowed so we skip to the NEXT valid day.
-    // Without this guard: the else-branch below sets $nextSendAt = today + startTimeSched
-    // which is ALREADY in the past → worker wakes up immediately → infinite reschedule loop.
-    if ($isDayAllowed && $currentTimeSched > $endTimeSched) {
-        $isDayAllowed = false;
-    }
-
-    if (!$isDayAllowed || !$isTimeAllowed) {
-        // Reschedule to next valid window
-        if ($isDayAllowed && !$isTimeAllowed) {
-            // Day is valid and time hasn't arrived yet — wait until startTime today
-            $nextSendAt = date('Y-m-d') . ' ' . $startTimeSched . ':00';
-        } else {
-            // Day not allowed (or past endTime on otherwise valid day) — find next allowed day
-            $nextSendAt = date('Y-m-d') . ' ' . $startTimeSched . ':00';
-            for ($i = 1; $i <= 7; $i++) {
-                $checkDay = (int) date('w', strtotime("+$i days"));
-                if (in_array($checkDay, array_map('intval', $activeDays))) {
-                    $nextSendAt = date('Y-m-d', strtotime("+$i days")) . ' ' . $startTimeSched . ':00';
-                    break;
-                }
-            }
-        }
-        $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = ?, updated_at = NOW() WHERE id = ?")->execute([$nextSendAt, $queueId]);
-        $logs[] = "[Priority-Schedule] Paused for Sub {$subscriberId} (Day/Time restriction). Next send: $nextSendAt";
-        $pdo->commit();
-        exit;
-    }
+    // [OMNI-FIX REMOVED] Priority Flows now bypass global flow frequency limits (activeDays, startTime, endTime).
+    // They will execute instantly. (Zalo API physical limits are still enforced by FlowExecutor).
 
     while ($shouldContinueChain && $stepsProcessedInRun < $MAX_STEPS) {
         $stepsProcessedInRun++;
@@ -798,53 +756,8 @@ try {
             break;
         }
 
-        // [PER-STEP SCHEDULING CHECK] Mirror của worker_flow.php isCommunicationStep check
-        // Ngăn Priority chain gửi message ngoài giờ/ngày cho phép kể cả khi
-        // initial scheduling check ở đầu chain đã pass (chain chạy qua midnight...).
-        $chkStepType = strtolower($currentStep['type'] ?? 'unknown');
-        $isCommunicationStep = in_array($chkStepType, ['action', 'zalo_zns', 'zalo_cs', 'meta_message', 'sms']);
-        if ($isCommunicationStep) {
-            $chkActiveDays = $fConfig['activeDays'] ?? [0, 1, 2, 3, 4, 5, 6];
-            if (empty($chkActiveDays)) $chkActiveDays = [0, 1, 2, 3, 4, 5, 6];
-            $chkStart = $fConfig['startTime'] ?? '00:00';
-            $chkEnd   = $fConfig['endTime']   ?? '23:59';
-
-            // Zalo ZNS/CS phải trong 06:00–22:00 theo quy định Zalo
-            $isZaloStep = in_array($chkStepType, ['zalo_zns', 'zalo_cs']);
-            if ($isZaloStep) {
-                if ($chkStart < '06:00') $chkStart = '06:00';
-                if ($chkEnd > '21:59' || $chkEnd < '06:00') $chkEnd = '21:59';
-            }
-
-            $chkDayNow  = (int) date('w');
-            $chkTimeNow = date('H:i');
-            $chkDayOk   = in_array($chkDayNow, array_map('intval', $chkActiveDays));
-            $chkTimeOk  = ($chkTimeNow >= $chkStart && $chkTimeNow <= $chkEnd);
-            // Nếu hết giờ trong ngày cho phép → treat như sai ngày để skip sang ngày tiếp
-            if ($chkDayOk && $chkTimeNow > $chkEnd) $chkDayOk = false;
-
-            if (!$chkDayOk || !$chkTimeOk) {
-                if ($chkDayOk && !$chkTimeOk) {
-                    // Ngày đúng, chưa tới giờ → đợi đến startTime hôm nay
-                    $chkNextSend = date('Y-m-d') . ' ' . $chkStart . ':00';
-                } else {
-                    // Tìm ngày tiếp theo hợp lệ
-                    $chkNextSend = date('Y-m-d') . ' ' . $chkStart . ':00';
-                    for ($i = 1; $i <= 7; $i++) {
-                        $chkDay = (int) date('w', strtotime("+$i days"));
-                        if (in_array($chkDay, array_map('intval', $chkActiveDays))) {
-                            $chkNextSend = date('Y-m-d', strtotime("+$i days")) . ' ' . $chkStart . ':00';
-                            break;
-                        }
-                    }
-                }
-                $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = ?, step_id = ?, updated_at = NOW() WHERE id = ?")
-                    ->execute([$chkNextSend, $currentStepId, $queueId]);
-                $logs[] = "  -> [Priority-TimeGuard] Step '{$currentStep['label']}' paused mid-chain (Time/Day restriction). Re-scheduled: $chkNextSend";
-                $shouldContinueChain = false;
-                break;
-            }
-        }
+        // [OMNI-FIX REMOVED] Mid-chain Priority flow execution now ignores activeDays / startTime limits.
+        // Zalo rules (06h - 22h) are still inherently protected inside FlowExecutor loop directly.
 
         // [SCHEDULE PROTECT]
         if ($isPriorityChain && !($_GET['force_skip'] ?? 0)) {
@@ -953,6 +866,9 @@ try {
     // [FIX] Force-flush any buffered Mailer delivery logs into DB before script exits.
     // Mailer.php batches logs in memory (writes every 10 emails). If the priority chain
     // processed < 10 email steps, those logs would be silently lost without this call.
+    if (function_exists('flushActivityLogBuffer')) {
+        flushActivityLogBuffer($pdo);
+    }
     $mailer->closeConnection();
 
 } catch (Throwable $e) {

@@ -517,6 +517,9 @@ if (!function_exists('runWorkerFlow')) {
             }
         }
 
+        if (function_exists('flushActivityLogBuffer')) {
+            flushActivityLogBuffer($pdo);
+        }
         $mailer->closeConnection();
         // [FIX] LOCK_EX prevents log corruption when multiple worker processes write concurrently
         file_put_contents(__DIR__ . '/worker_flow.log', implode("\n", $logs) . "\n", FILE_APPEND | LOCK_EX);

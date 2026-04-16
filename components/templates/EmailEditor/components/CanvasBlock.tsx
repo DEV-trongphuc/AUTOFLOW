@@ -157,7 +157,7 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                                         padding: 0,
                                         whiteSpace: 'nowrap'  // ✅ giữ button không bị wrap
                                     }}>
-                                        <div style={{ background: btnBg, borderRadius: btnRadius, overflow: 'hidden', display: 'block', boxSizing: 'border-box' }}>
+                                        <div style={{ background: btnBg, borderRadius: btnRadius, overflow: 'hidden', display: 'block', boxSizing: 'border-box', height: css.height }}>
                                             <div style={{
                                                 paddingTop: paddingTop ?? '12px', paddingBottom: paddingBottom ?? '12px',
                                                 paddingLeft: paddingLeft ?? '24px', paddingRight: paddingRight ?? '24px',
@@ -172,7 +172,8 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                                                 letterSpacing: css.letterSpacing,
                                                 textTransform: css.textTransform as any,
                                                 fontStyle: css.fontStyle as any,
-                                                whiteSpace: 'nowrap'
+                                                whiteSpace: 'nowrap',
+                                                lineHeight: css.lineHeight ?? 'normal'
                                             }} dangerouslySetInnerHTML={{ __html: block.content || 'BUTTON' }} />
                                         </div>
                                     </td>

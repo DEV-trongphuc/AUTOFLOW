@@ -214,11 +214,20 @@ const ContactsTab = React.memo<ContactsTabProps>(({
         const lastClickDate = sub.stats?.lastClickAt ? new Date(sub.stats.lastClickAt) : null;
         const lastOpenDate = sub.stats?.lastOpenAt ? new Date(sub.stats.lastOpenAt) : null;
         const joinedDate = sub.joinedAt ? new Date(sub.joinedAt) : null;
+        const genericActivityDate = sub.lastActivityAt ? new Date(sub.lastActivityAt) : null;
 
-        let latestActivity: { type: 'click' | 'open' | 'joined', date: Date } | null = null;
+        let latestActivity: { type: 'click' | 'open' | 'joined' | 'generic', date: Date } | null = null;
         if (lastClickDate && isValidDate(lastClickDate)) latestActivity = { type: 'click', date: lastClickDate };
         if (lastOpenDate && isValidDate(lastOpenDate)) {
             if (!latestActivity || lastOpenDate.getTime() > latestActivity.date.getTime()) latestActivity = { type: 'open', date: lastOpenDate };
+        }
+        if (genericActivityDate && isValidDate(genericActivityDate)) {
+            // Only consider it generic activity if it's strictly > joinedDate by at least a fraction of difference 
+            // Actually, we can just check if it's the most recent date compared to others
+            const joinMs = (joinedDate && isValidDate(joinedDate)) ? joinedDate.getTime() : 0;
+            if (genericActivityDate.getTime() > joinMs + 2000) { // 2s buffer for creation time drift
+                if (!latestActivity || genericActivityDate.getTime() > latestActivity.date.getTime()) latestActivity = { type: 'generic', date: genericActivityDate };
+            }
         }
         if (joinedDate && isValidDate(joinedDate)) {
             if (!latestActivity || joinedDate.getTime() > latestActivity.date.getTime()) latestActivity = { type: 'joined', date: joinedDate };
@@ -245,6 +254,12 @@ const ContactsTab = React.memo<ContactsTabProps>(({
             <div className="flex items-center gap-2 text-blue-600">
                 <MailOpen className="w-3.5 h-3.5" />
                 <div className="flex flex-col"><span className="text-[11px] font-bold">{"\u0110\u00E3 m\u1EDF mail"}</span><span className="text-[9px] opacity-70">{timeAgo}</span></div>
+            </div>
+        );
+        if (latestActivity.type === 'generic') return (
+            <div className="flex items-center gap-2 text-indigo-600">
+                <Zap className="w-3.5 h-3.5" />
+                <div className="flex flex-col"><span className="text-[11px] font-bold">{"T\u01B0\u01A1ng t\u00E1c h\u1EC7 th\u1ED1ng"}</span><span className="text-[9px] opacity-70">{timeAgo}</span></div>
             </div>
         );
         return (

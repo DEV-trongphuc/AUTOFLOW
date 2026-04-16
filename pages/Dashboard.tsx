@@ -214,13 +214,13 @@ const Dashboard: React.FC = () => {
                             <button
                                 key={module.id}
                                 onClick={() => handleModuleClick(module)}
-                                className="group relative flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-amber-200 transition-all text-left"
+                                className="group relative flex items-center gap-4 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800/60 shadow-sm hover:shadow-md hover:border-amber-200 transition-all text-left"
                             >
                                 <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${module.color} flex items-center justify-center text-white shrink-0 shadow-lg group-hover:scale-110 transition-transform`}>
                                     <module.icon className="w-6 h-6" />
                                 </div>
                                 <div className="min-w-0">
-                                    <h3 className="text-sm font-bold text-slate-800 truncate">{module.title}</h3>
+                                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{module.title}</h3>
                                     <p className="text-[10px] text-slate-400 font-medium truncate">{module.sub}</p>
                                 </div>
                                 <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
@@ -247,7 +247,7 @@ const Dashboard: React.FC = () => {
                         <div
                             key={module.id}
                             onClick={() => handleModuleClick(module)}
-                            className="group relative h-full bg-white rounded-[20px] p-5 border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all cursor-pointer overflow-hidden flex flex-col"
+                            className="group relative h-full bg-white dark:bg-slate-900 rounded-[20px] p-5 border border-slate-100 dark:border-slate-800/60 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all cursor-pointer overflow-hidden flex flex-col"
                         >
                             {/* Decorative background logo */}
                             <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
@@ -275,7 +275,7 @@ const Dashboard: React.FC = () => {
 
                                 <div className="mb-4">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <h3 className="text-lg font-black text-slate-800 tracking-tight">{module.title}</h3>
+                                        <h3 className="text-lg font-black text-slate-800 dark:text-slate-200 tracking-tight">{module.title}</h3>
                                         {['ai-training', 'ai-space', 'zalo-oa', 'meta-api', 'vouchers', 'api-triggers'].includes(module.id) && (
                                             <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border ${module.id === 'ai-training' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
                                                 module.id === 'ai-space' ? 'bg-rose-50 text-rose-700 border-rose-100' :
@@ -295,12 +295,12 @@ const Dashboard: React.FC = () => {
                                 <div className="mt-auto flex items-center justify-between pt-4">
                                     <div className="flex flex-wrap gap-1.5">
                                         {module.tags?.map(tag => (
-                                            <span key={tag} className="text-[8px] font-black uppercase tracking-wider text-slate-400 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
+                                            <span key={tag} className="text-[8px] font-black uppercase tracking-wider text-slate-400 bg-slate-50 dark:bg-slate-950 px-2 py-1 rounded-md border border-slate-100 dark:border-slate-800/60">
                                                 {tag}
                                             </span>
                                         ))}
                                     </div>
-                                    <div className="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-blue-50 group-hover:text-blue-600 transition-all shadow-sm">
+                                    <div className="w-9 h-9 rounded-full bg-slate-50 dark:bg-slate-950 flex items-center justify-center group-hover:bg-blue-50 group-hover:text-blue-600 transition-all shadow-sm">
                                         <ArrowRight className="w-4 h-4" />
                                     </div>
                                 </div>
@@ -320,7 +320,7 @@ const Dashboard: React.FC = () => {
                     </div>
                     <button
                         onClick={() => navigate('/docs')}
-                        className="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black text-sm hover:bg-amber-400 transition-all hover:scale-105 shadow-xl"
+                        className="px-8 py-4 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-2xl font-black text-sm hover:bg-amber-400 transition-all hover:scale-105 shadow-xl"
                     >
                         Khám phá hướng dẫn
                     </button>

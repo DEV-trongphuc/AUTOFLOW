@@ -203,35 +203,171 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
         return {
             id, type: 'section', content: '',
             style: createStyle({
-                backgroundImage: 'linear-gradient(180deg, #fdfbf7 0%, #fae8ff 25%, #ffe4e6 50%, #ccfbf1 100%)', // Approximate gradient
-                backgroundColor: '#ffffff', // Fallback
-                paddingTop: '40px', paddingBottom: '40px'
+                backgroundColor: 'transparent',
+                paddingTop: '0px', paddingBottom: '24px'
             }),
             children: [{
                 id: createUniqueId(), type: 'row' as const, content: '',
-                style: createStyle({ display: 'table', width: '100%', textAlign: 'center' }),
+                style: createStyle({ 
+                    display: 'table', width: '100%', textAlign: 'center', 
+                    backgroundImage: 'linear-gradient(135deg, #1e1b4b 0%, #4c1d95 100%)', // Gradient requested
+                    backgroundColor: '#1e1b4b', // Fallback color
+                    paddingTop: '48px', paddingBottom: '48px', borderRadius: '16px' 
+                }),
                 children: [{
                     id: createUniqueId(), type: 'column' as const, content: '',
                     style: createStyle({ width: '100%', textAlign: 'center' }),
                     children: [
                         {
                             id: createUniqueId(), type: 'image' as const,
-                            content: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Google_Gemini_logo.svg/2560px-Google_Gemini_logo.svg.png',
-                            style: createStyle({ width: '60px', height: 'auto', display: 'block' }),
+                            content: 'https://cdn-icons-png.flaticon.com/512/6124/6124998.png',
+                            style: createStyle({ width: '60px', height: 'auto', display: 'block', marginLeft: 'auto', marginRight: 'auto' }),
                             altText: 'Logo'
                         },
                         {
                             id: createUniqueId(), type: 'text' as const,
-                            content: '<h1 style="margin: 0 0 16px; font-size: 32px; font-weight: 400; color: #1e1e1e; font-family: Google Sans, Roboto, sans-serif;">Welcome to Google AI Pro</h1>',
-                            style: createStyle()
+                            content: '<div style="font-size: 32px; font-weight: 400; color: #ffffff; font-family: Google Sans, Roboto, sans-serif;">Welcome to Our Service</div>',
+                            style: createStyle({ textAlign: 'center', marginBottom: '16px' })
                         },
                         {
                             id: createUniqueId(), type: 'text' as const,
-                            content: '<p style="margin: 0 auto; max-width: 600px; font-size: 16px; color: #444746; line-height: 1.5;">Nice to see you again. You’ve unlocked higher access to Google AI. With your Google AI Pro plan, you can now generate even more cinematic videos.</p>',
-                            style: createStyle()
+                            content: '<div style="max-width: 600px; font-size: 16px; color: #cbd5e1; line-height: 1.5; margin: 0 auto;">Thank you for joining us. You now have full access to our ecosystem. Enjoy your stay and explore infinite possibilities.</div>',
+                            style: createStyle({ textAlign: 'center' })
                         }
                     ]
                 }]
+            }]
+        };
+    }
+
+    // NEW: Article List
+    if (type === 'article_list') {
+        const createRow = (img: string, title: string, desc: string, isReverse?: boolean) => {
+            const imgCol = {
+                id: createUniqueId(), type: 'column' as const, content: '',
+                style: createStyle({ width: '30%', verticalAlign: 'middle', paddingRight: isReverse ? '0' : '20px', paddingLeft: isReverse ? '20px' : '0' }),
+                children: [{ id: createUniqueId(), type: 'image' as const, content: img, style: createStyle({ width: '100%', height: 'auto', borderRadius: '12px' }) }]
+            };
+            const textCol = {
+                id: createUniqueId(), type: 'column' as const, content: '',
+                style: createStyle({ width: '70%', verticalAlign: 'middle' }),
+                children: [
+                    { id: createUniqueId(), type: 'text' as const, content: `<h3 style="margin: 0 0 8px; font-size: 16px; font-weight: bold; color: #1e293b;">${title}</h3><p style="margin: 0 0 12px; font-size: 13px; color: #64748b; line-height: 1.5;">${desc}</p><a href="#" style="font-size: 13px; font-weight: 600; color: #2563eb; text-decoration: none;">Đọc thêm →</a>`, style: createStyle({ textAlign: 'left' }) }
+                ]
+            };
+            return {
+                id: createUniqueId(), type: 'row' as const, content: '',
+                style: createStyle({ display: 'table', width: '100%', paddingBottom: '24px', noStack: true }),
+                children: isReverse ? [textCol, imgCol] : [imgCol, textCol]
+            };
+        };
+
+        return {
+            id, type: 'section', content: '',
+            style: createStyle({ backgroundColor: 'transparent', paddingBottom: '24px' }),
+            children: [{
+                id: createUniqueId(), type: 'row' as const, content: '',
+                style: createStyle({ display: 'table', width: '100%', backgroundColor: '#ffffff', paddingTop: '24px', paddingLeft: '24px', paddingRight: '24px', paddingBottom: '0px', borderRadius: '16px', borderTopWidth: '1px', borderBottomWidth: '1px', borderLeftWidth: '1px', borderRightWidth: '1px', borderStyle: 'solid', borderColor: '#e2e8f0' }),
+                children: [{
+                    id: createUniqueId(), type: 'column' as const, content: '',
+                    style: createStyle({ width: '100%' }),
+                    children: [
+                        { id: createUniqueId(), type: 'text' as const, content: '<h2 style="margin: 0 0 24px; font-size: 20px; font-weight: bold; color: #0f172a; text-align: left; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px;">Tin tức mới nhất</h2>', style: createStyle({ textAlign: 'left' }) },
+                        createRow('https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=300&h=200&fit=crop', 'Cập nhật tính năng mới', 'Trải nghiệm sức mạnh của hệ thống giúp tăng tốc quy trình làm việc của bạn mỗi ngày.'),
+                        createRow('https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=300&h=200&fit=crop', 'Báo cáo xu hướng 2024', 'Khám phá những chiến lược dữ liệu thông minh sẽ định hình thị trường trong năm nay.')
+                    ]
+                }]
+            }]
+        };
+    }
+
+    // NEW: E-Commerce Product
+    if (type === 'ecommerce_product') {
+        const createProduct = (img: string, title: string, oldPrice: string, newPrice: string) => ({
+            id: createUniqueId(), type: 'column' as const, content: '',
+            style: createStyle({ width: '33.33%', verticalAlign: 'top', paddingLeft: '10px', paddingRight: '10px', paddingBottom: '20px' }),
+            children: [
+                { id: createUniqueId(), type: 'image' as const, content: img, style: createStyle({ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '12px' }) },
+                { id: createUniqueId(), type: 'text' as const, content: `<h4 style="margin: 12px 0 4px; font-size: 14px; font-weight: 600; color: #1e293b; text-align: center;">${title}</h4><div style="text-align: center;"><span style="color: #94a3b8; text-decoration: line-through; font-size: 12px; margin-right: 8px;">${oldPrice}</span><span style="color: #e11d48; font-weight: bold; font-size: 14px;">${newPrice}</span></div>`, style: createStyle({ textAlign: 'center'}) },
+                { id: createUniqueId(), type: 'button' as const, content: 'MUA NGAY', style: createStyle({ width: '100%', display: 'block', paddingLeft: '0', paddingRight: '0', paddingTop: '8px', paddingBottom: '8px', fontSize: '12px', contentBackgroundColor: '#0f172a', borderRadius: '8px', marginTop: '12px', color: '#ffffff' }) }
+            ]
+        });
+
+        return {
+            id, type: 'section', content: '',
+            style: createStyle({ backgroundColor: 'transparent', paddingBottom: '24px' }),
+            children: [{
+                id: createUniqueId(), type: 'row' as const, content: '',
+                style: createStyle({ display: 'table', width: '100%', backgroundColor: '#ffffff', paddingTop: '32px', paddingBottom: '16px', paddingLeft: '14px', paddingRight: '14px', borderRadius: '16px' }),
+                children: [
+                    createProduct('https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop', 'Tai nghe ANC Pro', '2.500.000đ', '1.890.000đ'),
+                    createProduct('https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=300&fit=crop', 'Smartwatch Series X', '4.200.000đ', '3.450.000đ'),
+                    createProduct('https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=300&h=300&fit=crop', 'Máy ảnh Retro XL', '12.000.000đ', '9.900.000đ')
+                ]
+            }]
+        };
+    }
+
+    // NEW: Steps Flow (Hình Ảnh / Icon)
+    if (type === 'steps_flow') {
+        const createStep = (img: string, title: string, desc: string, isLast: boolean) => ({
+            id: createUniqueId(), type: 'column' as const, content: '',
+            style: createStyle({ width: '33.33%', verticalAlign: 'top', paddingLeft: '12px', paddingRight: '12px', textAlign: 'center' }),
+            children: [
+                { id: createUniqueId(), type: 'image' as const, content: img, style: createStyle({ width: '48px', height: '48px', display: 'block', marginLeft: 'auto', marginRight: 'auto', marginBottom: '16px', borderRadius: '100px' }) },
+                { id: createUniqueId(), type: 'text' as const, content: `<div style="font-size: 15px; font-weight: bold; color: #1e293b;">${title}</div>`, style: createStyle({ textAlign: 'center', marginBottom: '8px' }) },
+                { id: createUniqueId(), type: 'text' as const, content: `<div style="font-size: 13px; color: #64748b; line-height: 1.5;">${desc}</div>`, style: createStyle({ textAlign: 'center' }) }
+            ]
+        });
+
+        return {
+            id, type: 'section', content: '',
+            style: createStyle({ backgroundColor: 'transparent', paddingBottom: '24px' }),
+            children: [{
+                id: createUniqueId(), type: 'row' as const, content: '',
+                style: createStyle({ display: 'table', width: '100%', backgroundColor: '#ffffff', paddingTop: '32px', paddingBottom: '32px', paddingLeft: '12px', paddingRight: '12px', borderRadius: '16px' }),
+                children: [
+                    createStep('https://img.icons8.com/ios-filled/50/4f46e5/user.png', 'Đăng ký', 'Tạo tài khoản miễn phí chỉ trong 2 phút với email của bạn.', false),
+                    createStep('https://img.icons8.com/ios-filled/50/4f46e5/settings.png', 'Cài đặt', 'Tuỳ chỉnh giao diện và cấu hình hệ thống theo ý muốn.', false),
+                    createStep('https://img.icons8.com/ios-filled/50/4f46e5/rocket.png', 'Bắt đầu', 'Kích hoạt chiến dịch và theo dõi kết quả tự động ngay.', true)
+                ]
+            }]
+        };
+    }
+
+    // NEW: Steps Flow (Dạng Số)
+    if (type === 'steps_flow_number') {
+        const createStep = (num: string, title: string, desc: string, isLast: boolean) => ({
+            id: createUniqueId(), type: 'column' as const, content: '',
+            style: createStyle({ width: '33.33%', verticalAlign: 'top', paddingLeft: '12px', paddingRight: '12px', textAlign: 'center' }),
+            children: [
+                { 
+                    id: createUniqueId(), type: 'button' as const, content: num,
+                    style: createStyle({ 
+                        display: 'inline-block',
+                        width: '44px', height: '44px', lineHeight: '44px', 
+                        borderRadius: '100px', contentBackgroundColor: '#eff6ff', color: '#2563eb', 
+                        fontWeight: 'bold', fontSize: '18px', textAlign: 'center', 
+                        marginBottom: '16px', borderStyle: 'none', borderTopWidth: '0px', borderBottomWidth: '0px', borderLeftWidth: '0px', borderRightWidth: '0px', borderColor: 'transparent',
+                        paddingTop: '0px', paddingBottom: '0px', paddingLeft: '0px', paddingRight: '0px'
+                    })
+                },
+                { id: createUniqueId(), type: 'text' as const, content: `<div style="font-size: 15px; font-weight: bold; color: #1e293b;">${title}</div>`, style: createStyle({ textAlign: 'center', marginBottom: '8px' }) },
+                { id: createUniqueId(), type: 'text' as const, content: `<div style="font-size: 13px; color: #64748b; line-height: 1.5;">${desc}</div>`, style: createStyle({ textAlign: 'center' }) }
+            ]
+        });
+
+        return {
+            id, type: 'section', content: '',
+            style: createStyle({ backgroundColor: 'transparent', paddingBottom: '24px' }),
+            children: [{
+                id: createUniqueId(), type: 'row' as const, content: '',
+                style: createStyle({ display: 'table', width: '100%', backgroundColor: '#ffffff', paddingTop: '32px', paddingBottom: '32px', paddingLeft: '12px', paddingRight: '12px', borderRadius: '16px' }),
+                children: [
+                    createStep('1', 'Đăng ký', 'Tạo tài khoản miễn phí chỉ trong 2 phút với email của bạn.', false),
+                    createStep('2', 'Cài đặt', 'Tuỳ chỉnh giao diện và cấu hình hệ thống theo ý muốn.', false),
+                    createStep('3', 'Bắt đầu', 'Kích hoạt chiến dịch và theo dõi kết quả tự động ngay.', true)
+                ]
             }]
         };
     }
@@ -243,8 +379,8 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
             style: createStyle({ width: '48%', verticalAlign: 'top', backgroundColor: '#f8fafc', borderRadius: '16px', paddingBottom: '20px', paddingLeft: '0px', paddingRight: '0px' }),
             children: [
                 { id: createUniqueId(), type: 'image' as const, content: img, style: createStyle({ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '16px 16px 0 0' }) },
-                { id: createUniqueId(), type: 'text' as const, content: `<h3 style="margin: 20px 20px 8px; padding: 0; font-size: 16px; font-weight: bold; color: #1e293b; text-align: center;">${title}</h3><p style="margin: 0; padding: 0 20px 20px; color: #64748b; font-size: 13px; line-height: 1.6; text-align: center;">Khám phá bộ sưu tập mới nhất với phong cách độc đáo của chúng tôi.</p>`, style: createStyle() },
-                { id: createUniqueId(), type: 'text' as const, content: '<p style="margin: 0; padding: 0 20px; text-align: center;"><a href="#" style="text-decoration: none; color: #2563eb; font-weight: 600; font-size: 13px;">Xem chi tiết →</a></p>', style: createStyle() }
+                { id: createUniqueId(), type: 'text' as const, content: `<h3 style="margin: 20px 20px 8px; padding: 0; font-size: 16px; font-weight: bold; color: #1e293b; text-align: left;">${title}</h3><p style="margin: 0; padding: 0 20px 20px; color: #64748b; font-size: 13px; line-height: 1.6; text-align: left;">Khám phá bộ sưu tập mới nhất với phong cách độc đáo của chúng tôi.</p>`, style: createStyle({ textAlign: 'left' }) },
+                { id: createUniqueId(), type: 'text' as const, content: '<p style="margin: 0; padding: 0 20px; text-align: left;"><a href="#" style="text-decoration: none; color: #2563eb; font-weight: 600; font-size: 13px;">Xem chi tiết →</a></p>', style: createStyle({ textAlign: 'left' }) }
             ]
         });
 
@@ -257,10 +393,10 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
 
         return {
             id, type: 'section', content: '',
-            style: createStyle({ backgroundColor: 'transparent' }),
+            style: createStyle({ backgroundColor: 'transparent', paddingBottom: '24px' }),
             children: [{
                 id: createUniqueId(), type: 'row' as const, content: '',
-                style: createStyle({ display: 'table', width: '100%', backgroundColor: '#ffffff', paddingTop: '20px', paddingBottom: '20px', paddingLeft: '20px', paddingRight: '20px' }), // Added white bg and padding
+                style: createStyle({ display: 'table', width: '100%', backgroundColor: '#ffffff', paddingTop: '20px', paddingBottom: '20px', paddingLeft: '20px', paddingRight: '20px', borderRadius: '16px' }), // Added white bg and padding
                 children: [
                     createCardCol('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=350&fit=crop&auto=format', 'Architecture & Design'),
                     gapCol,
@@ -274,22 +410,23 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
     if (type === 'review_card') {
         return {
             id, type: 'section', content: '',
-            style: createStyle({ backgroundColor: 'transparent' }),
+            style: createStyle({ backgroundColor: 'transparent', paddingBottom: '24px' }),
             children: [{
                 id: createUniqueId(), type: 'row' as const, content: '',
                 style: createStyle({ display: 'table', width: '100%', backgroundColor: '#ffffff', paddingTop: '24px', paddingRight: '24px', paddingBottom: '24px', paddingLeft: '24px', borderTopWidth: '1px', borderBottomWidth: '1px', borderLeftWidth: '1px', borderRightWidth: '1px', borderStyle: 'solid', borderColor: '#f1f5f9', borderRadius: '16px' }), // Removed boxShadow
                 children: [
                     {
                         id: createUniqueId(), type: 'column' as const, content: '',
-                        style: createStyle({ width: '60px', verticalAlign: 'top', paddingRight: '16px' }),
-                        children: [{ id: createUniqueId(), type: 'image' as const, content: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&auto=format', style: createStyle({ width: '48px', height: '48px', borderRadius: '50%' }) }]
+                        style: createStyle({ width: '15%', verticalAlign: 'top', paddingRight: '15px' }),
+                        children: [{ id: createUniqueId(), type: 'image' as const, content: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&auto=format', style: createStyle({ width: '100%', height: 'auto', objectFit: 'cover', borderRadius: '100px' }) }]
                     },
                     {
                         id: createUniqueId(), type: 'column' as const, content: '',
-                        style: createStyle({ width: 'auto', verticalAlign: 'top' }),
+                        style: createStyle({ width: '85%', verticalAlign: 'top' }),
                         children: [
-                            { id: createUniqueId(), type: 'text' as const, content: '<h4 style="margin: 0 0 4px 0; font-size: 14px; font-weight: bold; color: #0f172a;">Sarah Johnston</h4><div style="color: #fbbf24; font-size: 12px; margin-bottom: 8px;">★★★★★</div>', style: createStyle() },
-                            { id: createUniqueId(), type: 'text' as const, content: '<p style="margin: 0; font-size: 14px; color: #475569; line-height: 1.5; font-style: italic;">"MailFlow đã giúp đội nhóm của tôi tiết kiệm 50% thời gian xử lý email mỗi ngày. Một công cụ tuyệt vời!"</p>', style: createStyle() }
+                            { id: createUniqueId(), type: 'text' as const, content: '<div style="font-size: 14px; font-weight: bold; color: #0f172a;">Sarah Johnston</div>', style: createStyle({ textAlign: 'left', marginBottom: '4px' }) },
+                            { id: createUniqueId(), type: 'text' as const, content: '<div style="color: #fbbf24; font-size: 12px;">★★★★★</div>', style: createStyle({ textAlign: 'left', marginBottom: '8px' }) },
+                            { id: createUniqueId(), type: 'text' as const, content: '<div style="font-size: 14px; color: #475569; line-height: 1.5; font-style: italic;">"MailFlow đã giúp đội nhóm của tôi tiết kiệm 50% thời gian xử lý email mỗi ngày. Một công cụ tuyệt vời!"</div>', style: createStyle({ textAlign: 'left' }) }
                         ]
                     }
                 ]
@@ -329,7 +466,7 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
 
         return {
             id, type: 'section', content: '',
-            style: createStyle({ backgroundColor: 'transparent' }),
+            style: createStyle({ backgroundColor: 'transparent', paddingBottom: '24px' }),
             children: [{
                 id: createUniqueId(), type: 'row' as const, content: '',
                 style: createStyle({
@@ -342,8 +479,8 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
                     style: createStyle({ width: '100%', textAlign: 'center' }), // Ensure column is full width
                     children: [
                         { id: createUniqueId(), type: 'image' as const, content: 'https://cdn-icons-png.flaticon.com/512/6124/6124998.png', style: createStyle({ width: '48px', height: 'auto', marginBottom: '16px' }), altText: 'Gemini Logo' }, // Restored stable logo
-                        { id: createUniqueId(), type: 'text' as const, content: '<h2 style="font-size: 24px; font-weight: 700; color: #1e293b; margin: 0 0 12px; font-family: sans-serif; text-align: center; width: 100%;">Get the Gemini app</h2>', style: createStyle({ textAlign: 'center', width: '100%' }) },
-                        { id: createUniqueId(), type: 'text' as const, content: '<p style="font-size: 15px; color: #64748b; margin: 0 auto 32px; max-width: 480px; line-height: 1.6; text-align: center; width: 100%;">Try features like Gemini Live and get access to Google AI wherever you go.</p>', style: createStyle({ textAlign: 'center', width: '100%' }) },
+                        { id: createUniqueId(), type: 'text' as const, content: '<h2 style="font-size: 24px; font-weight: 700; color: #1e293b; margin: 0 0 12px; font-family: sans-serif; text-align: center; width: 100%;">Get the app</h2>', style: createStyle({ textAlign: 'center', width: '100%' }) },
+                        { id: createUniqueId(), type: 'text' as const, content: '<p style="font-size: 15px; color: #64748b; margin: 0 auto 32px; max-width: 480px; line-height: 1.6; text-align: center; width: 100%;">Try new features and get access to our service wherever you go.</p>', style: createStyle({ textAlign: 'center', width: '100%' }) },
                         badgesRow
                     ]
                 }]
@@ -355,7 +492,7 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
     if (type === 'feature_card') {
         return {
             id, type: 'section', content: '',
-            style: createStyle({ backgroundColor: 'transparent' }),
+            style: createStyle({ backgroundColor: 'transparent', paddingBottom: '24px' }),
             children: [{
                 id: createUniqueId(), type: 'row' as const, content: '',
                 style: createStyle({
@@ -376,7 +513,7 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
                         children: [
                             { id: createUniqueId(), type: 'text' as const, content: '<h3 style="font-size: 20px; font-weight: bold; margin: 0 0 8px; color: #1e1b4b; text-align: left;">Hệ sinh thái học tập</h3>', style: createStyle({ textAlign: 'left' }) },
                             { id: createUniqueId(), type: 'text' as const, content: '<p style="font-size: 14px; color: #475569; margin: 0 0 16px; line-height: 1.6; text-align: left;">Mô tả ngắn gọn về tính năng hoặc dịch vụ của bạn tại đây để thu hút người dùng.</p>', style: createStyle({ textAlign: 'left' }) },
-                            { id: createUniqueId(), type: 'text' as const, content: '<a href="#" style="font-size: 14px; font-weight: 600; color: #2563eb; text-decoration: none; text-align: left;">Xem chi tiết ></a>', style: createStyle({ textAlign: 'left' }) }
+                            { id: createUniqueId(), type: 'text' as const, content: '<p style="margin: 0; text-align: left;"><a href="#" style="font-size: 14px; font-weight: 600; color: #2563eb; text-decoration: none; text-align: left;">Xem chi tiết ></a></p>', style: createStyle({ textAlign: 'left' }) }
                         ]
                     }
                 ]

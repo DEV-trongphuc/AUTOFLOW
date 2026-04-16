@@ -550,6 +550,16 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
                 $recentDays = isset($_GET['recent_days']) ? (int) $_GET['recent_days'] : 7;
                 $whereClauses[] = "s.last_activity_at >= DATE_SUB(NOW(), INTERVAL ? DAY)";
                 $params[] = $recentDays;
+                
+                // USER REQUEST: exclude "Join system" and "Participation" (enter_list, enter_segment, enter_flow)
+                // Enforce that they have a GENUINE interaction in the activity log.
+                $whereClauses[] = "EXISTS (
+                    SELECT 1 FROM subscriber_activity sa 
+                    WHERE sa.subscriber_id = s.id 
+                    AND sa.type NOT IN ('join', 'enter_list', 'enter_segment', 'enter_flow')
+                    AND sa.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+                )";
+                $params[] = $recentDays;
             }
 
             // Custom Attribute Filter

@@ -621,7 +621,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                             </div>
                             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 lg:pb-0 shrink-0">
                                 <button onClick={() => setIsFolderModalOpen(true)} className={`h-9 lg:h-11 px-3 lg:px-5 rounded-lg lg:rounded-xl text-[10px] lg:text-[11px] font-bold border transition-all flex items-center gap-2 shadow-sm whitespace-nowrap ${isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'}`}>
-                                    <FolderPlus className="w-3.5 h-3.5 lg:w-4 h-4 text-slate-400" /> Tạo Thư Mục
+                                    <FolderPlus className={`w-3.5 h-3.5 lg:w-4 h-4 ${isDarkTheme ? 'fill-[#ffc800] text-[#ffc800]' : 'fill-[#fbbf24] text-[#fbbf24]'}`} /> Tạo Thư Mục
                                 </button>
                                 <button
                                     onClick={() => props.fileInputRef?.current?.click()}

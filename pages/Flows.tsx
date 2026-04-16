@@ -1493,51 +1493,51 @@ const Flows: React.FC = () => {
 
                     <div className="space-y-8">
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group">
+                            <div className="bg-white dark:bg-slate-900 dark:bg-slate-900 p-5 rounded-[24px] border border-slate-100 dark:border-slate-800 dark:border-slate-800/60 shadow-sm flex items-center justify-between group">
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-amber-600 transition-colors">Tổng kịch bản</p>
-                                    <h3 className="text-2xl font-black text-slate-800 tracking-tight">{flowStats.total}</h3>
+                                    <h3 className="text-2xl font-black text-slate-800 dark:text-slate-200 dark:text-slate-200 tracking-tight">{flowStats.total}</h3>
                                 </div>
                                 <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 text-white rounded-2xl shadow-lg shadow-amber-600/10 flex items-center justify-center transition-all group-hover:scale-110">
                                     <LayoutGrid className="w-6 h-6" />
                                 </div>
                             </div>
 
-                            <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group">
+                            <div className="bg-white dark:bg-slate-900 dark:bg-slate-900 p-5 rounded-[24px] border border-slate-100 dark:border-slate-800 dark:border-slate-800/60 shadow-sm flex items-center justify-between group">
                                 <div>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-emerald-500 transition-colors">Đang hoạt động</p>
-                                    <h3 className="text-2xl font-black text-slate-800 tracking-tight">{flowStats.active}</h3>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-blue-500 transition-colors">Đang hoạt động</p>
+                                    <h3 className="text-2xl font-black text-slate-800 dark:text-slate-200 dark:text-slate-200 tracking-tight">{flowStats.active}</h3>
                                 </div>
-                                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-2xl shadow-lg shadow-emerald-500/10 flex items-center justify-center transition-all group-hover:scale-110">
+                                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl shadow-lg shadow-blue-500/10 flex items-center justify-center transition-all group-hover:scale-110">
                                     <Zap className="w-6 h-6" />
                                 </div>
                             </div>
 
-                            <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group">
+                            <div className="bg-white dark:bg-slate-900 dark:bg-slate-900 p-5 rounded-[24px] border border-slate-100 dark:border-slate-800 dark:border-slate-800/60 shadow-sm flex items-center justify-between group">
                                 <div>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-indigo-500 transition-colors">Đang tham gia</p>
-                                    <h3 className="text-2xl font-black text-slate-800 tracking-tight">{flowStats.totalUsers.toLocaleString()}</h3>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-rose-500 transition-colors">Đang tham gia</p>
+                                    <h3 className="text-2xl font-black text-slate-800 dark:text-slate-200 dark:text-slate-200 tracking-tight">{flowStats.totalUsers.toLocaleString()}</h3>
                                 </div>
-                                <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-2xl shadow-lg shadow-indigo-500/10 flex items-center justify-center transition-all group-hover:scale-110">
+                                <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-rose-600 text-white rounded-2xl shadow-lg shadow-rose-500/10 flex items-center justify-center transition-all group-hover:scale-110">
                                     <Users className="w-6 h-6" />
                                 </div>
                             </div>
 
-                            <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group">
+                            <div className="bg-white dark:bg-slate-900 dark:bg-slate-900 p-5 rounded-[24px] border border-slate-100 dark:border-slate-800 dark:border-slate-800/60 shadow-sm flex items-center justify-between group">
                                 <div>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-rose-500 transition-colors">Hoàn thành</p>
-                                    <h3 className="text-2xl font-black text-slate-800 tracking-tight">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-emerald-500 transition-colors">Hoàn thành</p>
+                                    <h3 className="text-2xl font-black text-slate-800 dark:text-slate-200 dark:text-slate-200 tracking-tight">
                                         {flows.reduce((sum, f) => sum + (f.stats?.completed || 0), 0).toLocaleString()}
                                     </h3>
                                 </div>
-                                <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-rose-700 text-white rounded-2xl shadow-lg shadow-rose-500/10 flex items-center justify-center transition-all group-hover:scale-110">
+                                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-2xl shadow-lg shadow-emerald-500/10 flex items-center justify-center transition-all group-hover:scale-110">
                                     <CheckCircle2 className="w-6 h-6" />
                                 </div>
                             </div>
                         </div>
 
                         {/* WHITE CONTENT AREA */}
-                        <div className="bg-white rounded-[32px] border border-slate-200 shadow-sm p-4 lg:p-6 min-h-[400px] overflow-hidden">
+                        <div className="bg-white dark:bg-slate-900 dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-700/60 dark:border-slate-700/60 shadow-sm p-4 lg:p-6 min-h-[400px] overflow-hidden">
                         {/* Toolbar */}
                         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                             <Tabs
@@ -1557,7 +1557,7 @@ const Flows: React.FC = () => {
                             <div className="relative shrink-0">
                                 <button
                                     onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-100 hover:border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-all"
+                                    className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-950 dark:bg-slate-950 hover:bg-slate-100 border border-slate-100 dark:border-slate-800 dark:border-slate-800/60 hover:border-slate-200 dark:border-slate-700/60 dark:border-slate-700/60 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 dark:text-slate-200 transition-all"
                                 >
                                     <Filter className="w-3.5 h-3.5 text-slate-400" />
                                     <span>{triggerTypes.find(t => t.id === filterType)?.label}</span>
@@ -1566,11 +1566,11 @@ const Flows: React.FC = () => {
                                 {isTypeDropdownOpen && (
                                     <>
                                         <div className="fixed inset-0 z-10" onClick={() => setIsTypeDropdownOpen(false)} />
-                                        <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-100 rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in-95">
+                                        <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-900 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 dark:border-slate-800/60 rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in-95">
                                             {triggerTypes.map(type => (
                                                 <button key={type.id}
                                                     onClick={() => { setFilterType(type.id as TriggerTypeFilter); setIsTypeDropdownOpen(false); }}
-                                                    className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-bold text-left hover:bg-slate-50 transition-colors ${filterType === type.id ? 'text-amber-600 bg-orange-50' : 'text-slate-600'}`}
+                                                    className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-bold text-left hover:bg-slate-50 dark:bg-slate-950 dark:bg-slate-950 transition-colors ${filterType === type.id ? 'text-amber-600 bg-orange-50' : 'text-slate-600 dark:text-slate-300 dark:text-slate-300'}`}
                                                 >
                                                     {type.label}
                                                     {filterType === type.id && <Check className="w-3.5 h-3.5" />}
@@ -1585,10 +1585,10 @@ const Flows: React.FC = () => {
                         <div className="animate-in fade-in duration-300">
                         <div className="flex items-center justify-between mb-5">
                             <div>
-                                <h3 className="text-sm font-bold text-slate-700">Danh sách kịch bản</h3>
+                                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 dark:text-slate-200">Danh sách kịch bản</h3>
                                 <p className="text-[11px] text-slate-400">Các luồng tự động trên hệ thống</p>
                             </div>
-                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-950 dark:bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-800 dark:border-slate-800/60">
                                 Tổng: {filteredFlows.length}
                             </div>
                         </div>
@@ -1596,7 +1596,7 @@ const Flows: React.FC = () => {
                         {loading ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                                 {[...Array(6)].map((_, i) => (
-                                    <div key={i} className="bg-white rounded-[24px] border border-slate-100 p-6 space-y-4 shadow-sm">
+                                    <div key={i} className="bg-white dark:bg-slate-900 dark:bg-slate-900 rounded-[24px] border border-slate-100 dark:border-slate-800 dark:border-slate-800/60 p-6 space-y-4 shadow-sm">
                                         <div className="flex justify-between items-start">
                                             <Skeleton variant="rounded" width={44} height={44} className="rounded-xl" />
                                             <Skeleton variant="rounded" width={80} height={24} className="rounded-lg" />
@@ -1663,7 +1663,7 @@ const Flows: React.FC = () => {
 
             {
                 selectedFlow && (
-                    <div className="fixed inset-0 z-[100] flex flex-col bg-white animate-in fade-in duration-300 overflow-hidden">
+                    <div className="fixed inset-0 z-[100] flex flex-col bg-white dark:bg-slate-900 dark:bg-slate-900 animate-in fade-in duration-300 overflow-hidden">
                         <FlowHeader
                             flow={selectedFlow}
                             isSaving={isSaving}
@@ -1782,7 +1782,7 @@ const Flows: React.FC = () => {
                         <div className="flex-1 flex overflow-hidden relative">
                             {/* MAIN CONTENT AREA */}
                             <TabTransition key={flowViewTab} className={`flex-1 overflow-hidden relative flex flex-col transition-all duration-300 ${isSidebarOpen && selectedFlow && flowViewTab === 'builder' ? 'ml-0' : ''}`}>
-                                <div className="flex-1 overflow-hidden relative bg-slate-50/50">
+                                <div className="flex-1 overflow-hidden relative bg-slate-50 dark:bg-slate-950 dark:bg-slate-950/50">
                                     {flowViewTab === 'builder' && (
                                         <FlowBuilderTab
                                             flow={selectedFlow}
@@ -1814,7 +1814,7 @@ const Flows: React.FC = () => {
                             </TabTransition>
 
                             {isSidebarOpen && (
-                                <aside className="fixed lg:relative inset-0 top-0 lg:top-auto z-[120] lg:z-[110] lg:w-80 flex-shrink-0 h-full bg-white border-l border-slate-200 shadow-[-4px_0_20px_rgba(0,0,0,0.02)] animate-in slide-in-from-right duration-300">
+                                <aside className="fixed lg:relative inset-0 top-0 lg:top-auto z-[120] lg:z-[110] lg:w-80 flex-shrink-0 h-full bg-white dark:bg-slate-900 dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700/60 dark:border-slate-700/60 shadow-[-4px_0_20px_rgba(0,0,0,0.02)] animate-in slide-in-from-right duration-300">
                                     <div className="lg:hidden absolute top-4 right-4 z-[130]">
                                         <Button variant="ghost" size="sm" onClick={() => setIsSidebarOpen(false)} icon={Plus} className="rotate-45" />
                                     </div>
@@ -2278,21 +2278,21 @@ const Flows: React.FC = () => {
             {/* Restore Confirm Dialog */}
             {restoreConfirmSnapshot && (
                 <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl w-[480px] max-w-[95vw] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        <div className="p-5 border-b border-slate-100 flex items-center gap-3">
+                    <div className="bg-white dark:bg-slate-900 dark:bg-slate-900 rounded-2xl shadow-2xl w-[480px] max-w-[95vw] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="p-5 border-b border-slate-100 dark:border-slate-800 dark:border-slate-800/60 flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-[#ffa900] shrink-0">
                                 <RotateCcw className="w-5 h-5" />
                             </div>
                             <div>
-                                <h3 className="text-sm font-black text-slate-800">Xác nhận khôi phục phiên bản</h3>
+                                <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 dark:text-slate-200">Xác nhận khôi phục phiên bản</h3>
                                 <p className="text-[11px] text-slate-400 font-medium mt-0.5">Hành động này sẽ thay thế flow hiện tại</p>
                             </div>
                         </div>
                         <div className="p-5 space-y-3">
                             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-2">
                                 <p className="text-xs font-black text-amber-800">📋 Phiên bản được chọn:</p>
-                                <p className="text-sm font-bold text-slate-700">{restoreConfirmSnapshot.label}</p>
-                                <div className="flex gap-4 text-[10px] text-slate-500 font-medium">
+                                <p className="text-sm font-bold text-slate-700 dark:text-slate-200 dark:text-slate-200">{restoreConfirmSnapshot.label}</p>
+                                <div className="flex gap-4 text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-400 font-medium">
                                     <span>🕐 {new Date(restoreConfirmSnapshot.created_at).toLocaleString('vi-VN')}</span>
                                     {restoreConfirmSnapshot.created_by && <span>👤 {restoreConfirmSnapshot.created_by}</span>}
                                 </div>
@@ -2301,11 +2301,11 @@ const Flows: React.FC = () => {
                                 <p className="text-[11px] font-bold text-rose-700">⚠️ Cònh báo: Mọi thay đổi chưa lưu hiện tại sẽ bị mất. Sau khi khôi phục, bạn cần bấm <strong>Lưu</strong> để áp dụng lên server.</p>
                             </div>
                         </div>
-                        <div className="p-4 border-t border-slate-100 flex gap-3 justify-end">
+                        <div className="p-4 border-t border-slate-100 dark:border-slate-800 dark:border-slate-800/60 flex gap-3 justify-end">
                             <button
                                 onClick={() => setRestoreConfirmSnapshot(null)}
                                 disabled={isRestoringSnapshot}
-                                className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+                                className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
                             >
                                 Hủy bỏ
                             </button>

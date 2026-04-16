@@ -184,72 +184,52 @@ if (!function_exists('logActivity')) {
             'browser' => $browser,
             'location' => $location
         ]);
+        // [PERFORMANCE] LOG BUFFERING (RAM LEVEL)
+        // Convert sequential single writes (which choke MySQL connection pooling) into Mass DB Queries.
+        // We accumulate both the `INSERT INTO activity_buffer` and the `UPDATE subscribers` here.
+        global $GLOBAL_ACTIVITY_BUFFER;
+        global $GLOBAL_SUBSCRIBER_ACTIVE_IDS;
+        global $GLOBAL_ACTIVITY_REGISTERED;
 
+        if (!is_array($GLOBAL_ACTIVITY_BUFFER)) $GLOBAL_ACTIVITY_BUFFER = [];
+        if (!is_array($GLOBAL_SUBSCRIBER_ACTIVE_IDS)) $GLOBAL_SUBSCRIBER_ACTIVE_IDS = [];
 
-        try {
-            $jsonData = json_encode($bufferExtra);
-            $stmtBuf = $pdo->prepare("INSERT INTO activity_buffer (subscriber_id, type, details, reference_id, flow_id, campaign_id, extra_data) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmtBuf->execute([$subscriberId, $type, $details, $referenceId, $flowId, $campaignId, $jsonData]);
-        } catch (Exception $e) {
-            // Fallback: Create table if missing
-            if (strpos($e->getMessage(), "doesn't exist") !== false) {
-                try {
-                    $pdo->exec("CREATE TABLE IF NOT EXISTS activity_buffer (
-                        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                        subscriber_id char(36) NOT NULL,
-                        type VARCHAR(50) NOT NULL,
-                        details TEXT,
-                        reference_id VARCHAR(100),
-                        flow_id VARCHAR(50),
-                        campaign_id VARCHAR(50),
-                        extra_data JSON,
-                        processed TINYINT(1) DEFAULT 0,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        INDEX idx_processed (processed)
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
-
-                    $stmtBuf = $pdo->prepare("INSERT INTO activity_buffer (subscriber_id, type, details, reference_id, flow_id, campaign_id, extra_data) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                    $stmtBuf->execute([$subscriberId, $type, $details, $referenceId, $flowId, $campaignId, $jsonData]);
-                } catch (Exception $ex) {
-                    // Last resort: Fallback to direct synchronous insert (Old behavior)
-                    try {
-                        $stmtIns = $pdo->prepare("INSERT INTO subscriber_activity (subscriber_id, type, reference_id, flow_id, campaign_id, reference_name, details, ip_address, user_agent, device_type, os, browser, location, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-                        $stmtIns->execute([$subscriberId, $type, $referenceId, $flowId, $campaignId, $referenceName, $details, $ip, $ua, $device, $os, $browser, $location]);
-                    } catch (Exception $finalEx) {
-                        // ignore log failure
-                    }
+        if (empty($GLOBAL_ACTIVITY_REGISTERED)) {
+            $GLOBAL_ACTIVITY_REGISTERED = true;
+            register_shutdown_function(function () use ($pdo) {
+                if (function_exists('flushActivityLogBuffer')) {
+                    flushActivityLogBuffer($pdo);
                 }
-            } else {
-                // Log error
-            }
+            });
         }
 
-        $updateFields = ["last_activity_at = NOW()"];
-        $updateParams = [];
+        $jsonData = json_encode($bufferExtra) ?: '{}';
+        $GLOBAL_ACTIVITY_BUFFER[] = [$subscriberId, $type, $details, $referenceId, $flowId, $campaignId, $jsonData];
 
-        if (!empty($os)) {
-            $updateFields[] = "last_os = ?";
-            $updateParams[] = $os;
-        }
-        if (!empty($device)) {
-            $updateFields[] = "last_device = ?";
-            $updateParams[] = $device;
-        }
-        if (!empty($browser)) {
-            $updateFields[] = "last_browser = ?";
-            $updateParams[] = $browser;
-        }
-        if (!empty($location)) {
-            $updateFields[] = "last_city = ?"; // Assuming location format is "City, Country"
-            $updateParams[] = $location;
-        }
+        // For rich Tracking Data (OS, Browser) triggered by individual Tracker Webhooks, update immediately.
+        // For Flow/Campaign Backend Workers (which spam 1000s of events like 'receive_email'), queue them for Bulk Update.
+        if (!empty($os) || !empty($device) || !empty($browser) || !empty($location)) {
+            $updateFields = ["last_activity_at = NOW()"];
+            $updateParams = [];
 
-        $updateParams[] = $subscriberId;
+            if (!empty($os)) { $updateFields[] = "last_os = ?"; $updateParams[] = $os; }
+            if (!empty($device)) { $updateFields[] = "last_device = ?"; $updateParams[] = $device; }
+            if (!empty($browser)) { $updateFields[] = "last_browser = ?"; $updateParams[] = $browser; }
+            if (!empty($location)) { $updateFields[] = "last_city = ?"; $updateParams[] = $location; }
 
-        if (!empty($updateFields)) {
+            $updateParams[] = $subscriberId;
             $sql = "UPDATE subscribers SET " . implode(', ', $updateFields) . " WHERE id = ?";
-            $pdo->prepare($sql)->execute($updateParams);
+            try { $pdo->prepare($sql)->execute($updateParams); } catch (Exception $e) {}
+        } else {
+            $GLOBAL_SUBSCRIBER_ACTIVE_IDS[$subscriberId] = true;
         }
+
+        // Auto-flush every 150 items to prevent MySQL max_allowed_packet overload
+        if (count($GLOBAL_ACTIVITY_BUFFER) >= 150) {
+            flushActivityLogBuffer($pdo);
+        }
+
+
 
         // NO CLEANUP for essential types. We want lifetime history for stats.
 
@@ -306,6 +286,74 @@ if (!function_exists('logActivity')) {
                 // checking flow states shouldn't break the main request
             }
         }
+    }
+}
+
+if (!function_exists('flushActivityLogBuffer')) {
+    /**
+     * Dumps the accumulated Static RAM Buffer into MySQL in ONE bulk query.
+     * MUST be called at the very end of ANY worker script (`worker_flow`, `worker_priority`, `worker_campaign`)
+     */
+    function flushActivityLogBuffer($pdo)
+    {
+        global $GLOBAL_ACTIVITY_BUFFER;
+        global $GLOBAL_SUBSCRIBER_ACTIVE_IDS;
+
+        if (empty($GLOBAL_ACTIVITY_BUFFER) || !is_array($GLOBAL_ACTIVITY_BUFFER)) return;
+
+        // 1. Bulk Insert into `activity_buffer`
+        $vals = [];
+        $binds = [];
+        foreach ($GLOBAL_ACTIVITY_BUFFER as $act) {
+            $binds[] = "(?, ?, ?, ?, ?, ?, ?)";
+            $vals = array_merge($vals, $act);
+        }
+
+        try {
+            $sql = "INSERT INTO activity_buffer (subscriber_id, type, details, reference_id, flow_id, campaign_id, extra_data) VALUES " . implode(',', $binds);
+            $pdo->prepare($sql)->execute($vals);
+        } catch (Exception $e) {
+            // Fallback: Create table if missing
+            if (strpos($e->getMessage(), "doesn't exist") !== false) {
+                try {
+                    $pdo->exec("CREATE TABLE IF NOT EXISTS activity_buffer (
+                        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                        subscriber_id char(36) NOT NULL,
+                        type VARCHAR(50) NOT NULL,
+                        details TEXT,
+                        reference_id VARCHAR(100),
+                        flow_id VARCHAR(50),
+                        campaign_id VARCHAR(50),
+                        extra_data JSON,
+                        processed TINYINT(1) DEFAULT 0,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        INDEX idx_processed (processed)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
+                    $sql = "INSERT INTO activity_buffer (subscriber_id, type, details, reference_id, flow_id, campaign_id, extra_data) VALUES " . implode(',', $binds);
+                    $pdo->prepare($sql)->execute($vals);
+                } catch (Exception $ex) {
+                    // ignore
+                }
+            }
+        }
+
+        // 2. Bulk Update Last Activity
+        if (!empty($GLOBAL_SUBSCRIBER_ACTIVE_IDS)) {
+            $ids = array_keys($GLOBAL_SUBSCRIBER_ACTIVE_IDS);
+            // Chunking to prevent placeholder exhaustion just in case
+            $chunks = array_chunk($ids, 500);
+            foreach ($chunks as $chunk) {
+                $placeholders = implode(',', array_fill(0, count($chunk), '?'));
+                try {
+                    $pdo->prepare("UPDATE subscribers SET last_activity_at = NOW() WHERE id IN ($placeholders)")->execute($chunk);
+                } catch (Exception $e) {}
+            }
+        }
+
+        // Reset buffers
+        $GLOBAL_ACTIVITY_BUFFER = [];
+        $GLOBAL_SUBSCRIBER_ACTIVE_IDS = [];
     }
 }
 
@@ -406,23 +454,37 @@ function parseLoopingContent($html, $context)
  */
 function resolveEmailContent($pdo, $templateId, $customHtml, $fallbackBody = '', $context = [])
 {
-    $htmlContent = '';
-    if ($templateId && $templateId !== 'custom-html') {
-        $stmt = $pdo->prepare("SELECT html_content FROM templates WHERE id = ?");
-        $stmt->execute([$templateId]);
-        $htmlContent = $stmt->fetchColumn();
-        if ($htmlContent && $fallbackBody && strpos($htmlContent, '{{body}}') !== false) {
-            $htmlContent = str_replace('{{body}}', $fallbackBody, $htmlContent);
-        }
-    } elseif ($templateId === 'custom-html' || !empty($customHtml)) {
-        $htmlContent = !empty($customHtml) ? $customHtml : $fallbackBody;
-    } else {
-        // Fallback to contentBody if no customHtml and no valid templateId
-        $htmlContent = $fallbackBody;
-    }
+    // [PERF] In-memory static cache to prevent hitting MySQL for thousands of identical flow loops
+    static $templateCache = [];
+    $cacheKey = md5((string)$templateId . (string)$customHtml . (string)$fallbackBody);
 
-    if (!$htmlContent) {
-        $htmlContent = "<html><body><p>(No Content)</p></body></html>";
+    if (isset($templateCache[$cacheKey])) {
+        $htmlContent = $templateCache[$cacheKey];
+    } else {
+        $htmlContent = '';
+        if ($templateId && $templateId !== 'custom-html') {
+            $stmt = $pdo->prepare("SELECT html_content FROM templates WHERE id = ?");
+            $stmt->execute([$templateId]);
+            $htmlContent = $stmt->fetchColumn();
+            if ($htmlContent && $fallbackBody && strpos($htmlContent, '{{body}}') !== false) {
+                $htmlContent = str_replace('{{body}}', $fallbackBody, $htmlContent);
+            }
+        } elseif ($templateId === 'custom-html' || !empty($customHtml)) {
+            $htmlContent = !empty($customHtml) ? $customHtml : $fallbackBody;
+        } else {
+            // Fallback to contentBody if no customHtml and no valid templateId
+            $htmlContent = $fallbackBody;
+        }
+
+        if (!$htmlContent) {
+            $htmlContent = "<html><body><p>(No Content)</p></body></html>";
+        }
+
+        // Limit the static cache to 50 active items to prevent worker memory leaks over long processes
+        if (count($templateCache) >= 50) {
+            array_shift($templateCache);
+        }
+        $templateCache[$cacheKey] = $htmlContent;
     }
 
     return parseLoopingContent($htmlContent, $context);

@@ -2850,7 +2850,7 @@ CHÚ Ý:
         
         // --- MẠNG XÃ HỘI (META/ZALO) BẮT BUỘC TRẢ LỜI DỰA THEO KNOWLEDGE BASE ---
         if (strpos($visitorUuid, 'meta_') === 0 || strpos($visitorUuid, 'zalo_') === 0) {
-            $systemInst .= "\n\n[STRICT KB MODE - SOCIAL MEDIA]: LƯU Ý TỐI QUAN TRỌNG: KHÁCH HÀNG NÀY ĐẾN TỪ MẠNG XÃ HỘI. BẠN BẮT BUỘC PHẢI SỬ DỤNG VÀ CHỈ ĐƯỢC PHÉP TRẢ LỜI DỰA TRÊN KNOWLEDGE BASE (Organization Knowledge). Tuyệt đối KHÔNG sử dụng kiến thức bên ngoài, KHÔNG tự bịa thông tin. Nếu khách hỏi kiến thức ngoài lề hoặc thông tin KHÔNG có trong tài liệu, hãy đáp khéo léo (VD: 'Dạ thông tin này em chưa được cập nhật...') và từ chối trả lời.";
+            $systemInst .= "\n\n[STRICT KB MODE - SOCIAL MEDIA]: LƯU Ý TỐI QUAN TRỌNG: KHÁCH HÀNG NÀY ĐẾN TỪ MẠNG XÃ HỘI. BẠN BẮT BUỘC PHẢI SỬ DỤNG VÀ CHỈ ĐƯỢC PHÉP TRẢ LỜI DỰA TRÊN KNOWLEDGE BASE (Organization Knowledge). Tuyệt đối KHÔNG sử dụng định dạng bảng (Markdown Table) trong câu trả lời vì trên nền tảng nhắn tin Zalo/Meta sẽ bị lỗi hiển thị. Nếu thông tin là dạng danh sách, hãy liệt kê từng dòng có gạch đầu dòng ngắn gọn. Tuyệt đối KHÔNG sử dụng kiến thức bên ngoài, KHÔNG tự bịa thông tin. Nếu khách hỏi kiến thức ngoài lề hoặc thông tin KHÔNG có trong tài liệu, hãy đáp khéo léo (VD: 'Dạ thông tin này em chưa được cập nhật...') và từ chối trả lời.";
         }
 
         // We modify buildSystemPrompt's strictness directly (see changed function below)

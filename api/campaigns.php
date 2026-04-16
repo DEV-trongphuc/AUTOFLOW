@@ -79,6 +79,7 @@ if ($method === 'POST' && $route === 'resend_failed_emails') {
         $stmtDeleteLogs->execute(array_merge($logIds, [$campaignId]));
         $pdo->prepare("UPDATE campaigns SET status = 'sending' WHERE id = ? AND status = 'sent'")->execute([$campaignId]);
         $pdo->commit();
+        logSystemActivity($pdo, 'campaigns', 'resend_failed', $campaignId, "Campaign $campaignId", ['log_ids' => $logIds]);
         jsonResponse(true, ['count' => count($logIds)], 'Emails re-queued successfully.');
     } catch (Exception $e) {
         if ($pdo->inTransaction())
@@ -118,6 +119,7 @@ if ($method === 'POST' && $route === 'bulk_update_subscribers') {
             }
             $successCount = count($deleteIds);
             $pdo->commit();
+            logSystemActivity($pdo, 'audience', "bulk_delete", null, "Bulk delete", ['subscriber_count' => $successCount]);
             jsonResponse(true, ['count' => $successCount], 'Bulk delete successful.');
         }
 
@@ -197,6 +199,7 @@ if ($method === 'POST' && $route === 'bulk_update_subscribers') {
                 ->execute([$value, $value]);
         }
         $pdo->commit();
+        logSystemActivity($pdo, 'audience', "bulk_{$action}", null, "Bulk {$action}", ['subscriber_count' => $successCount, 'value' => $value]);
         jsonResponse(true, ['count' => $successCount], 'Bulk update successful.');
     } catch (Exception $e) {
         if ($pdo->inTransaction())
@@ -341,6 +344,7 @@ if ($method === 'POST' && $route === 'delete_unsubscribed') {
         // Cập nhật lại số liệu thống kê để cho thấy đã được dọn
         $pdo->prepare("UPDATE campaigns SET count_unsubscribed = 0 WHERE id = ?")->execute([$cid]);
         
+        logSystemActivity($pdo, 'campaigns', 'delete_unsubscribed', $cid, "Campaign $cid", ['deleted_count' => count($subIds)]);
         jsonResponse(true, ['deleted' => count($subIds)]);
     } catch (Exception $e) {
         jsonResponse(false, null, $e->getMessage());
@@ -498,6 +502,8 @@ for campaign $campaignId. URL: $workerUrl\n", FILE_APPEND);
                 file_put_contents(__DIR__ . '/worker_campaign.log', "[" . date('Y-m-d H:i:s') . "] CURL ERROR triggering worker:
 $curlError\n", FILE_APPEND);
             }
+
+            logSystemActivity($pdo, 'campaigns', 'refresh_audience', $campaignId, "Campaign $campaignId", ['audience' => $totalAudience]);
 
             jsonResponse(true, [
                 'total_target_audience' => $totalAudience,
@@ -742,6 +748,7 @@ if ($method === 'POST' && $route === 'send_test') {
             $res = sendZNSMessage($pdo, $oaId, $templateId, $targetPhone, $finalTemplateData, null, null, 'test_user', 'test');
 
             if ($res['success']) {
+                logSystemActivity($pdo, 'campaigns', 'send_test', $campaignId, "Campaign $campaignId", ['target' => $targetPhone]);
                 jsonResponse(true, null, 'ZNS test sent successfully.');
             } else {
                 jsonResponse(false, null, 'ZNS Test Failed: ' . ($res['message'] ?? 'Unknown error'));
@@ -817,9 +824,10 @@ if ($method === 'POST' && $route === 'send_test') {
                 $testLabel
             );
 
-            if ($res === true)
+            if ($res === true) {
+                logSystemActivity($pdo, 'campaigns', 'send_test', $campaignId, "Campaign $campaignId", ['target' => $targetEmail]);
                 jsonResponse(true, null, 'Test email sent successfully.');
-            else
+            } else
                 jsonResponse(false, null, 'Failed to send test email: ' . (is_string($res) ? $res : 'Unknown error'));
         }
     } catch (Exception $e) {
@@ -1303,6 +1311,12 @@ switch ($method) {
     tracking_enabled, scheduled_at, attachments, type, config, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
     ?, NOW())";
             $stmt = $pdo->prepare($sql);
+            
+            $isAdmin = ($GLOBALS['current_admin_id'] === 'admin-001');
+            if (!$isAdmin && in_array(strtolower($data['status'] ?? ''), ['sending', 'scheduled', 'sent'])) {
+                $data['status'] = 'draft';
+            }
+            
             $targetJson = json_encode($data['target']);
             $attachmentsJson = json_encode($data['attachments'] ?? []);
             $configJson = json_encode($data['config'] ?? []);
@@ -1360,11 +1374,23 @@ switch ($method) {
                 jsonResponse(false, null, 'ID required');
             $data = json_decode(file_get_contents("php://input"), true);
 
-            // CRITICAL: Fetch current status BEFORE any updates
             $stmtCurrent = $pdo->prepare("SELECT status FROM campaigns WHERE id = ?");
             $stmtCurrent->execute([$path]);
             $currentCampaign = $stmtCurrent->fetch();
             $currentStatus = strtolower($currentCampaign['status'] ?? 'draft');
+
+            $isAdmin = ($GLOBALS['current_admin_id'] === 'admin-001');
+            if (!$isAdmin) {
+                if (in_array($currentStatus, ['sending', 'scheduled', 'sent'])) {
+                    if (strtolower($data['status'] ?? '') !== 'paused') {
+                        jsonResponse(false, null, 'User chỉ có quyền Tạm dừng (Pause) campaign hiện tại, không được sửa nội dung.');
+                    }
+                } else {
+                    if (in_array(strtolower($data['status'] ?? ''), ['sending', 'scheduled', 'sent', 'active'])) {
+                        jsonResponse(false, null, 'User không có quyền chạy hoặc active campaign.');
+                    }
+                }
+            }
 
             // [FIX] PHP 8: Added null-coalescing guards to prevent Undefined array key warnings
             // on partial PUT payloads (e.g. UI saves only a subset of campaign fields).
@@ -1472,6 +1498,11 @@ switch ($method) {
         try {
             if (!$path)
                 jsonResponse(false, null, 'ID required');
+                
+            $isAdmin = ($GLOBALS['current_admin_id'] === 'admin-001');
+            if (!$isAdmin) {
+                jsonResponse(false, null, 'User không có quyền xóa campaign.');
+            }
 
             // [BUG-FIX #16] Wrapped all operations in transaction to prevent partial delete.
             // Also added subscriber_activity cleanup — previously activity logs for deleted campaigns

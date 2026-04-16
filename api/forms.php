@@ -530,12 +530,14 @@ try {
                     // This hits the index (type, reference_id) directly per row,
                     // avoiding the overhead of a large GROUP BY materialization.
                     $stmt = $pdo->query(
-                        "SELECT f.*,
-                                (SELECT COUNT(*) 
-                                 FROM subscriber_activity sa 
-                                 WHERE sa.type = 'form_submit' 
-                                 AND sa.reference_id = f.id) as submission_count
+                        "SELECT f.*, COALESCE(sa_count.cnt, 0) as submission_count
                          FROM forms f
+                         LEFT JOIN (
+                             SELECT reference_id, COUNT(*) as cnt
+                             FROM subscriber_activity
+                             WHERE type = 'form_submit'
+                             GROUP BY reference_id
+                         ) sa_count ON sa_count.reference_id = f.id
                          ORDER BY f.created_at DESC"
                     );
                     $data = array_map(function ($f) {

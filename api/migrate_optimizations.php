@@ -62,6 +62,42 @@ try {
     }
 
     echo "=================================================\n";
+    // 4. Bổ sung Index tối ưu NOT EXISTS cho (subscriber_id, campaign_id, type)
+    echo "4. Kiểm tra Index 'idx_activity_sub_camp_type' (Dành cho Zalo Campaign và Inactive logic)...\n";
+    try {
+        $stmt = $pdo->query("SHOW INDEX FROM subscriber_activity WHERE Key_name = 'idx_activity_sub_camp_type'");
+        if ($stmt->rowCount() > 0) {
+            echo "   [OK] Index 'idx_activity_sub_camp_type' đã tồn tại. Bỏ qua altering.\n\n";
+        } else {
+            echo "   Đang bổ sung Index tối ưu ZNS/Anti-join...\n";
+            $pdo->exec("ALTER TABLE subscriber_activity ADD INDEX idx_activity_sub_camp_type (subscriber_id, campaign_id, type)");
+            echo "   [OK] Đã đánh Index thành công.\n\n";
+        }
+    } catch (PDOException $e) {
+        echo "   [CẢNH BÁO] Không thể tạo Index: " . $e->getMessage() . "\n\n";
+    }
+
+    // 5. Bổ sung Index tối ưu Queue Scanner (Quét Job Lỗi)
+    echo "5. Kiểm tra Index 'idx_status_updated' (Dành cho tiến trình Quét Lỗi ngầm)...\n";
+    try {
+        $stmt = $pdo->query("SHOW INDEX FROM ai_pdf_chunk_results WHERE Key_name = 'idx_status_updated'");
+        if ($stmt->rowCount() > 0) {
+            echo "   [OK] Index 'idx_status_updated' đã tồn tại. Bỏ qua altering.\n\n";
+        } else {
+            echo "   Đang bổ sung Index chống sập DB cho hệ thống Worker Queue...\n";
+            $pdo->exec("ALTER TABLE ai_pdf_chunk_results ADD INDEX idx_status_updated (status, updated_at)");
+            echo "   [OK] Đã đánh Index thành công.\n\n";
+        }
+    } catch (PDOException $e) {
+        // Table hasn't been created yet perhaps
+        if (strpos($e->getMessage(), "Table") !== false && strpos($e->getMessage(), "doesn't exist") !== false) {
+             echo "   [BỎ QUA] Bảng ai_pdf_chunk_results chưa tồn tại (chưa từng training PDF).\n\n";
+        } else {
+             echo "   [CẢNH BÁO] Không thể tạo Index: " . $e->getMessage() . "\n\n";
+        }
+    }
+
+    echo "=================================================\n";
     echo "HOÀN TẤT! HỆ THỐNG ĐÃ ĐƯỢC FIX LỖI DEADLOCK VÀ INDEX.\n";
     echo "BẠN CÓ THỂ ĐÓNG TAB TRÌNH DUYỆT NÀY VÀ YÊN TÂM CHẠY CHIẾN DỊCH.\n";
 

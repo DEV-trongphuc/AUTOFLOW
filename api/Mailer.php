@@ -487,6 +487,14 @@ class Mailer
             $this->closeConnection();
         }
 
+        if ($result) {
+            $this->sentInSession++;
+            if ($this->sentInSession >= 200) {
+                $this->closeConnection();
+                $this->sentInSession = 0;
+            }
+        }
+
         return $result;
     }
 

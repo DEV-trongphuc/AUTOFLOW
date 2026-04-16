@@ -969,6 +969,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
 
 
         if ($addedCount > 0) {
+            logSystemActivity($pdo, 'flows', 'manual_add_participant', $flowId, "Flow $flowId", ['added' => $addedCount]);
             jsonResponse(true, ['added' => $addedCount, 'errors' => $errors], "Đã thêm thành công $addedCount khách hàng.");
         } else {
             jsonResponse(false, ['errors' => $errors], "Không thêm được khách hàng nào. " . implode(', ', array_slice($errors, 0, 3)));
@@ -1821,6 +1822,8 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-next-step') {
                 WHERE id = ?");
             $stmtUpdateStats->execute([$flowId, $flowId, $flowId]);
 
+            logSystemActivity($pdo, 'flows', 'bulk_next_step', $flowId, "Flow $flowId", ['count' => $count, 'to_step' => $finalNextStepId]);
+
             $msg = $isLastStep ? "Đã hoàn thành luồng cho $count khách hàng" : "Đã bỏ qua sang bước tiếp theo cho $count khách hàng";
             jsonResponse(true, ['message' => $msg, 'count' => $count]);
         }
@@ -1915,6 +1918,8 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-remove') {
             WHERE id = ?");
         $stmtUpdateStats->execute([$flowId, $flowId, $flowId]);
 
+        logSystemActivity($pdo, 'flows', 'bulk_remove', $flowId, "Flow $flowId", ['count' => $count]);
+
         jsonResponse(true, ['message' => "Removed $count subscribers from flow", 'count' => $count]);
     } catch (Exception $e) {
         error_log("Bulk remove error: " . $e->getMessage());
@@ -1952,12 +1957,14 @@ if (isset($_GET['route']) && $_GET['route'] === 'inactive-users') {
         // Count total for pagination
         $countSql = "SELECT COUNT(DISTINCT sfs.subscriber_id)
                     FROM subscriber_flow_states sfs
-                    LEFT JOIN subscriber_activity sa ON sa.subscriber_id = sfs.subscriber_id 
+                    WHERE sfs.flow_id = ?
+                    AND sfs.status IN ('waiting', 'processing', 'completed', 'failed')
+                    AND NOT EXISTS (
+                        SELECT 1 FROM subscriber_activity sa 
+                        WHERE sa.subscriber_id = sfs.subscriber_id 
                         AND sa.flow_id = sfs.flow_id 
                         AND sa.type IN ('open_email', 'click_link', 'click_zns', 'zns_clicked', 'zns_replied', 'reply_email', 'form_submit', 'purchase')
-                    WHERE sfs.flow_id = ?
-                    AND sa.id IS NULL
-                    AND sfs.status IN ('waiting', 'processing', 'completed', 'failed')";
+                    )";
         $countStmt = $pdo->prepare($countSql);
         $countStmt->execute([$flowId]);
         $total = $countStmt->fetchColumn();
@@ -1969,12 +1976,14 @@ if (isset($_GET['route']) && $_GET['route'] === 'inactive-users') {
                 sfs.step_id as current_step_id
                 FROM subscriber_flow_states sfs
                 JOIN subscribers s ON s.id = sfs.subscriber_id
-                LEFT JOIN subscriber_activity sa ON sa.subscriber_id = sfs.subscriber_id 
+                WHERE sfs.flow_id = ?
+                AND sfs.status IN ('waiting', 'processing', 'completed', 'failed')
+                AND NOT EXISTS (
+                    SELECT 1 FROM subscriber_activity sa 
+                    WHERE sa.subscriber_id = sfs.subscriber_id 
                     AND sa.flow_id = sfs.flow_id 
                     AND sa.type IN ('open_email', 'click_link', 'click_zns', 'zns_clicked', 'zns_replied', 'reply_email', 'form_submit', 'purchase')
-                WHERE sfs.flow_id = ?
-                AND sa.id IS NULL
-                AND sfs.status IN ('waiting', 'processing', 'completed', 'failed')
+                )
                 GROUP BY s.id
                 ORDER BY sfs.created_at DESC
                 LIMIT ? OFFSET ?";
@@ -2204,6 +2213,11 @@ switch ($method) {
                     }
                 }
             }
+            
+            $isAdmin = ($GLOBALS['current_admin_id'] === 'admin-001');
+            if (!$isAdmin && in_array(strtolower($data['status'] ?? ''), ['active', 'sending', 'scheduled'])) {
+                $data['status'] = 'draft';
+            }
 
             $steps = json_encode($data['steps'] ?? []);
             $config = json_encode($data['config'] ?? (object) []);
@@ -2221,6 +2235,23 @@ switch ($method) {
             if (!$path)
                 jsonResponse(false, null, 'ID required');
             $data = json_decode(file_get_contents("php://input"), true);
+
+            $stmtCurrent = $pdo->prepare("SELECT status FROM flows WHERE id = ?");
+            $stmtCurrent->execute([$path]);
+            $currentFlowStatus = strtolower($stmtCurrent->fetchColumn() ?: 'draft');
+
+            $isAdmin = ($GLOBALS['current_admin_id'] === 'admin-001');
+            if (!$isAdmin) {
+                if (in_array($currentFlowStatus, ['active', 'sending', 'scheduled', 'processing'])) {
+                    if (strtolower($data['status'] ?? '') !== 'paused') {
+                        jsonResponse(false, null, 'User chỉ được phép Tạm dừng (Pause) flow đang chạy, không được sửa nội dung.');
+                    }
+                } else {
+                    if (in_array(strtolower($data['status'] ?? ''), ['active', 'sending', 'scheduled'])) {
+                        jsonResponse(false, null, 'User không có quyền chạy hoặc active flow.');
+                    }
+                }
+            }
 
             // [FIX] Bổ sung trigger_type nếu null (frontend đã clean orphaned steps)
             $triggerType = $data['trigger_type'] ?? null;
@@ -2601,6 +2632,11 @@ switch ($method) {
         try {
             if (!$path)
                 jsonResponse(false, null, 'ID required');
+                
+            $isAdmin = ($GLOBALS['current_admin_id'] === 'admin-001');
+            if (!$isAdmin) {
+                jsonResponse(false, null, 'User không có quyền xóa flow.');
+            }
 
             // [BUG-FIX #15] Wrap all delete operations in transaction for atomicity.
             // Previously mail_delivery_logs and zalo_delivery_logs were NOT cleaned up on flow delete,

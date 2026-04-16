@@ -163,7 +163,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
         if (fullActivity && fullActivity.length > 0) {
             list = fullActivity.map((act, i) => {
                 let icon = Activity;
-                let color = 'text-slate-500 bg-slate-50';
+                let color = 'text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950';
                 let label = 'Hoạt động';
 
                 switch (act.type) {
@@ -189,7 +189,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                         icon = Zap; color = 'text-yellow-500 bg-yellow-50'; label = 'Vào Automation';
                         break;
                     case 'note_added':
-                        icon = FileText; color = 'text-slate-500 bg-slate-50'; label = 'Ghi chú';
+                        icon = FileText; color = 'text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950'; label = 'Ghi chú';
                         break;
                     case 'form_submit': // Added for Form Submissions
                         icon = FileText; color = 'text-amber-600 bg-amber-50'; label = 'Gửi Form';
@@ -210,7 +210,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                         break;
                     case 'staff_reply':
                         icon = MessageSquare;
-                        color = 'text-slate-500 bg-slate-50';
+                        color = 'text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950';
                         label = 'Staff Reply';
                         // Use Facebook icon if explicitly mentioned in label or type
                         if (act.label && act.label.toLowerCase().includes('facebook')) {
@@ -356,9 +356,6 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
 
         // Add "Join System" event if not duplicated
         if (subscriber && !list.some(a => a.type === 'join')) {
-            const joinScore = subscriber.leadScore || 0;
-            const scoreLabel = joinScore > 0 ? ` (+${joinScore} điểm)` : '';
-
             const siteDomain = subscriber.customAttributes?.site_domain || subscriber.customAttributes?.domain || subscriber.customAttributes?.site_name;
             const sourceDisplay = subscriber.source === 'website_tracking' && siteDomain ? siteDomain : (subscriber.source || 'Manual');
 
@@ -366,7 +363,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                 id: 'join-system',
                 type: 'join',
                 date: subscriber.joinedAt,
-                label: `Gia nhập hệ thống${scoreLabel}`,
+                label: `Gia nhập hệ thống`,
                 detail: `Nguồn: ${sourceDisplay}`,
                 icon: UserPlus,
                 color: 'text-blue-500 bg-blue-50'
@@ -392,9 +389,12 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
             const websiteTypes = ['web_pageview', 'web_click', 'web_canvas_click', 'web_scroll', 'web_identify', 'web_form', 'web_lead_capture'];
             // Everything else is system (including join, tags, flows, Zalo, and specifically web_track leads)
             list = list.filter(act => !mailTypes.includes(act.type) && !websiteTypes.includes(act.type));
-        } else {
-            // 'all' tab - no filtering needed
+        // 'all' tab - no filtering needed
         }
+
+        // USER REQUEST: Exclude 'join' (gia nhập hệ thống) and 'enter' (tham gia) from recent interaction filter view
+        const excludeTypes = ['join', 'enter_list', 'enter_segment', 'enter_flow'];
+        list = list.filter(act => !excludeTypes.includes(act.type));
 
         if (!activityFilter) return list;
         const query = activityFilter.toLowerCase();
@@ -589,14 +589,14 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                     <div className="flex items-center gap-5 mb-8 px-1 shrink-0">
                         <div className="relative">
                             {formData.avatar ? (
-                                <img src={formData.avatar} alt="Avatar" className="w-14 h-14 md:w-16 md:h-16 rounded-[22px] md:rounded-[24px] object-cover border-2 border-slate-100 shadow-xl shadow-orange-500/10 shrink-0" />
+                                <img src={formData.avatar} alt="Avatar" className="w-14 h-14 md:w-16 md:h-16 rounded-[22px] md:rounded-[24px] object-cover border-2 border-slate-100 dark:border-slate-800/60 shadow-xl shadow-orange-500/10 shrink-0" />
                             ) : (
                                 <div className="w-14 h-14 md:w-16 md:h-16 rounded-[22px] md:rounded-[24px] bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-lg md:text-xl font-bold text-white shadow-xl shadow-amber-600/20 shrink-0">
                                     {(formData.firstName || '?')[0]}{(formData.lastName || '')[0]}
                                 </div>
                             )}
                             {(Number(formData.verified) === 1) && (
-                                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 border border-slate-50">
+                                <div className="absolute -bottom-1 -right-1 bg-white dark:bg-slate-900 rounded-full p-0.5 border border-slate-50">
                                     <BadgeCheck className="w-4 h-4 md:w-5 md:h-5 text-blue-500 fill-white" />
                                 </div>
                             )}
@@ -604,7 +604,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-1.5 min-w-0">
-                                    <h2 className="text-xl md:text-2xl font-black text-slate-800 truncate tracking-tight">{(formData.firstName || formData.lastName) ? `${formData.firstName || ''} ${formData.lastName || ''}`.trim() : 'Chưa đặt tên'}</h2>
+                                    <h2 className="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-200 truncate tracking-tight">{(formData.firstName || formData.lastName) ? `${formData.firstName || ''} ${formData.lastName || ''}`.trim() : 'Chưa đặt tên'}</h2>
                                     {(Number(formData.verified) === 1) && <BadgeCheck className="w-5 h-5 md:w-6 md:h-6 text-blue-500 fill-blue-50 flex-shrink-0" />}
                                     {formData.status === 'customer' && <BadgeCheck className="w-5 h-5 md:w-6 md:h-6 text-amber-600 fill-amber-50 flex-shrink-0" />}
                                 </div>
@@ -620,7 +620,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                     {formData.status}
                                 </Badge>
                             </div>
-                            <div className="flex items-center gap-3 mt-1.5 text-slate-500 font-bold text-xs tracking-tight">
+                            <div className="flex items-center gap-3 mt-1.5 text-slate-500 dark:text-slate-400 font-bold text-xs tracking-tight">
                                 <span className="flex items-center gap-1.5 text-blue-600 lowercase"><Mail className="w-3.5 h-3.5" />{formData.email}</span>
                                 <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                                 <span className="text-slate-400">Tham gia: {formatRelativeTime(formData.joinedAt)}</span>
@@ -642,7 +642,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                 ))}
                             </div>
                         </div>
-                        {!isEditing && <button onClick={() => setIsEditing(true)} className="px-3 py-1.5 md:px-4 md:py-2 bg-white hover:bg-slate-50 text-slate-600 rounded-xl text-[10px] md:text-xs font-black border border-slate-200 transition-all duration-500 flex items-center gap-2 hover:shadow-sm w-fit self-start shrink-0"><Edit3 className="w-3 md:w-3.5 h-3 md:h-3.5" /> Sửa hồ sơ</button>}
+                        {!isEditing && <button onClick={() => setIsEditing(true)} className="px-3 py-1.5 md:px-4 md:py-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] md:text-xs font-black border border-slate-200 dark:border-slate-700/60 transition-all duration-500 flex items-center gap-2 hover:shadow-sm w-fit self-start shrink-0"><Edit3 className="w-3 md:w-3.5 h-3 md:h-3.5" /> Sửa hồ sơ</button>}
                     </div>
                 </div>
 
@@ -668,7 +668,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
                                         <div className="w-4 h-px bg-slate-200"></div> Thông tin định danh
                                     </h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 bg-white p-4 md:p-6 rounded-2xl md:rounded-[28px] border border-slate-100 shadow-sm">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 bg-white dark:bg-slate-900 p-4 md:p-6 rounded-2xl md:rounded-[28px] border border-slate-100 dark:border-slate-800/60 shadow-sm">
                                         <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-5">
                                             {(isEditing || formData.lastName) && (
                                                 <div className="md:col-span-1">
@@ -708,14 +708,14 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                         <div className="space-y-1.5">
                                             <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 ml-1 text-slate-400">Ngày sinh</label>
                                             <div className="relative">
-                                                <input type="date" value={formData.dateOfBirth || ''} onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })} disabled={!isEditing} className={`w-full h-[42px] bg-white border border-slate-200 rounded-xl px-4 text-sm font-bold focus:border-[#ffa900] outline-none disabled:bg-slate-50 transition-all pl-10 ${!formData.dateOfBirth ? 'text-slate-300' : 'text-slate-700'}`} />
+                                                <input type="date" value={formData.dateOfBirth || ''} onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })} disabled={!isEditing} className={`w-full h-[42px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-xl px-4 text-sm font-bold focus:border-[#ffa900] outline-none disabled:bg-slate-50 dark:bg-slate-950 transition-all pl-10 ${!formData.dateOfBirth ? 'text-slate-300' : 'text-slate-700 dark:text-slate-200'}`} />
                                                 <Cake className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
                                             </div>
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 ml-1 text-slate-400">Ngày đặc biệt</label>
                                             <div className="relative">
-                                                <input type="date" value={formData.anniversaryDate || ''} onChange={(e) => setFormData({ ...formData, anniversaryDate: e.target.value })} disabled={!isEditing} className={`w-full h-[42px] bg-white border border-slate-200 rounded-xl px-4 text-sm font-bold focus:border-[#ffa900] outline-none disabled:bg-slate-50 transition-all pl-10 ${!formData.anniversaryDate ? 'text-slate-300' : 'text-slate-700'}`} />
+                                                <input type="date" value={formData.anniversaryDate || ''} onChange={(e) => setFormData({ ...formData, anniversaryDate: e.target.value })} disabled={!isEditing} className={`w-full h-[42px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-xl px-4 text-sm font-bold focus:border-[#ffa900] outline-none disabled:bg-slate-50 dark:bg-slate-950 transition-all pl-10 ${!formData.anniversaryDate ? 'text-slate-300' : 'text-slate-700 dark:text-slate-200'}`} />
                                                 <Activity className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
                                             </div>
                                         </div>
@@ -757,7 +757,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
                                         <div className="w-4 h-px bg-slate-200"></div> Còng việc & Công ty
                                     </h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 bg-white p-4 md:p-6 rounded-2xl md:rounded-[28px] border border-slate-100 shadow-sm">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 bg-white dark:bg-slate-900 p-4 md:p-6 rounded-2xl md:rounded-[28px] border border-slate-100 dark:border-slate-800/60 shadow-sm">
                                         <Input label="Chức danh" value={formData.jobTitle} onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })} disabled={!isEditing} icon={Briefcase} />
                                         <Input label="Tên Công ty" value={formData.companyName} onChange={(e) => setFormData({ ...formData, companyName: e.target.value })} disabled={!isEditing} icon={Building} />
                                     </div>
@@ -768,7 +768,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
                                         <div className="w-4 h-px bg-slate-200"></div> Thông tin Địa lý
                                     </h4>
-                                    <div className="bg-white p-4 md:p-6 rounded-2xl md:rounded-[28px] border border-slate-100 shadow-sm">
+                                    <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-2xl md:rounded-[28px] border border-slate-100 dark:border-slate-800/60 shadow-sm">
                                         <Input label="Địa chỉ" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} disabled={!isEditing} icon={MapPin} />
                                     </div>
                                 </section>
@@ -782,7 +782,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                         {isEditing && (
                                             <button
                                                 onClick={() => setAttrForm({ isOpen: true, key: '', value: '' })}
-                                                className="flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-black uppercase text-slate-600 transition-all hover:shadow-sm"
+                                                className="flex items-center gap-1.5 px-3 py-1 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700/60 rounded-xl text-[10px] font-black uppercase text-slate-600 dark:text-slate-300 transition-all hover:shadow-sm"
                                             >
                                                 <Plus className="w-3.5 h-3.5 text-orange-500" /> Thêm trường
                                             </button>
@@ -799,7 +799,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                             placeholder="VD: Website, Facebook..."
                                                             value={attrForm.key}
                                                             onChange={e => setAttrForm({ ...attrForm, key: e.target.value })}
-                                                            className="w-full bg-white border border-orange-100 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-orange-300"
+                                                            className="w-full bg-white dark:bg-slate-900 border border-orange-100 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-orange-300"
                                                         />
                                                     </div>
                                                     <div className="space-y-1">
@@ -808,12 +808,12 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                             placeholder="Nhập giá trị..."
                                                             value={attrForm.value}
                                                             onChange={e => setAttrForm({ ...attrForm, value: e.target.value })}
-                                                            className="w-full bg-white border border-orange-100 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-orange-300"
+                                                            className="w-full bg-white dark:bg-slate-900 border border-orange-100 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-orange-300"
                                                         />
                                                     </div>
                                                 </div>
                                                 <div className="flex justify-end gap-2">
-                                                    <button onClick={() => setAttrForm({ isOpen: false, key: '', value: '' })} className="px-3 py-1.5 text-[10px] font-black text-slate-400 uppercase hover:text-slate-600">Hủy</button>
+                                                    <button onClick={() => setAttrForm({ isOpen: false, key: '', value: '' })} className="px-3 py-1.5 text-[10px] font-black text-slate-400 uppercase hover:text-slate-600 dark:text-slate-300">Hủy</button>
                                                     <button
                                                         onClick={() => {
                                                             if (!attrForm.key) return;
@@ -832,9 +832,9 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                             </div>
                                         )}
 
-                                        <div className={`bg-white p-6 rounded-[28px] border border-slate-100 shadow-sm grid grid-cols-1 sm:grid-cols-2 gap-4 ${!formData.customAttributes || Object.keys(formData.customAttributes).length === 0 ? 'hidden' : ''}`}>
+                                        <div className={`bg-white dark:bg-slate-900 p-6 rounded-[28px] border border-slate-100 dark:border-slate-800/60 shadow-sm grid grid-cols-1 sm:grid-cols-2 gap-4 ${!formData.customAttributes || Object.keys(formData.customAttributes).length === 0 ? 'hidden' : ''}`}>
                                             {Object.entries(formData.customAttributes || {}).map(([key, value]) => (
-                                                <div key={key} className="flex flex-col bg-slate-50/50 p-3 px-4 rounded-xl border border-transparent hover:border-slate-200 hover:bg-white group/attr relative transition-all">
+                                                <div key={key} className="flex flex-col bg-slate-50 dark:bg-slate-950/50 p-3 px-4 rounded-xl border border-transparent hover:border-slate-200 dark:border-slate-700/60 hover:bg-white dark:bg-slate-900 group/attr relative transition-all">
                                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter mb-0.5">{key}</span>
                                                     {isEditing ? (
                                                         <input
@@ -846,10 +846,10 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                                     customAttributes: { ...formData.customAttributes, [key]: e.target.value }
                                                                 });
                                                             }}
-                                                            className="text-xs font-bold text-slate-800 bg-transparent border-none outline-none rounded p-0 w-full focus:text-blue-600"
+                                                            className="text-xs font-bold text-slate-800 dark:text-slate-200 bg-transparent border-none outline-none rounded p-0 w-full focus:text-blue-600"
                                                         />
                                                     ) : (
-                                                        <span className="text-xs font-bold text-slate-800 break-all">{String(value)}</span>
+                                                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 break-all">{String(value)}</span>
                                                     )}
 
                                                     {isEditing && (
@@ -878,8 +878,8 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                         </div>
 
                                         {(!formData.customAttributes || Object.keys(formData.customAttributes).length === 0) && !isEditing && (
-                                            <div className="text-center py-10 bg-slate-50/50 rounded-[28px] border border-slate-100 border-dashed">
-                                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
+                                            <div className="text-center py-10 bg-slate-50 dark:bg-slate-950/50 rounded-[28px] border border-slate-100 dark:border-slate-800/60 border-dashed">
+                                                <div className="w-12 h-12 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
                                                     <Globe className="w-6 h-6 text-slate-200" />
                                                 </div>
                                                 <p className="text-xs text-slate-400 font-bold italic tracking-tight">Chưa có thông tin mở rộng.</p>
@@ -893,10 +893,10 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
                                         <div className="w-4 h-px bg-slate-200"></div> Nhãn phân loại (Tags)
                                     </h4>
-                                    <div className="p-6 bg-slate-50/50 rounded-[28px] border border-slate-200 border-dashed">
+                                    <div className="p-6 bg-slate-50 dark:bg-slate-950/50 rounded-[28px] border border-slate-200 dark:border-slate-700/60 border-dashed">
                                         <div className="flex flex-wrap gap-2 mb-5">
                                             {(Array.isArray(formData.tags) ? formData.tags : []).map((tag: string) => (
-                                                <span key={tag} className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-[10px] font-black text-slate-700 shadow-sm uppercase tracking-tight group/tag transition-all hover:border-orange-200 hover:bg-orange-50/30">
+                                                <span key={tag} className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-xl text-[10px] font-black text-slate-700 dark:text-slate-200 shadow-sm uppercase tracking-tight group/tag transition-all hover:border-orange-200 hover:bg-orange-50/30">
                                                     <Tag className="w-3 h-3 text-[#ca7900]" /> {tag}
                                                     {isEditing && <button onClick={() => setFormData({ ...formData, tags: (Array.isArray(formData.tags) ? formData.tags : []).filter((t: string) => t !== tag) })} className="text-slate-300 hover:text-rose-500 transition-colors ml-1"><X className="w-3 h-3" /></button>}
                                                 </span>
@@ -912,14 +912,14 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                 </section>
 
                                 {/* Nhóm: Metadata Hệ thống */}
-                                <div className="pt-6 border-t border-slate-100 flex flex-wrap gap-x-6 gap-y-2">
+                                <div className="pt-6 border-t border-slate-100 dark:border-slate-800/60 flex flex-wrap gap-x-6 gap-y-2">
                                     <div className="flex items-center gap-2">
                                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">ID:</span>
-                                        <span className="text-[9px] font-mono text-slate-500">{formData.id}</span>
+                                        <span className="text-[9px] font-mono text-slate-500 dark:text-slate-400">{formData.id}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Cập nhật lúc:</span>
-                                        <span className="text-[9px] font-black text-slate-500 tracking-tight">{formData.updatedAt ? new Date(formData.updatedAt).toLocaleString('vi-VN') : 'Unknown'}</span>
+                                        <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 tracking-tight">{formData.updatedAt ? new Date(formData.updatedAt).toLocaleString('vi-VN') : 'Unknown'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -944,7 +944,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                         </div>
                                     </div>
 
-                                    <div className="bg-white p-6 pt-12 rounded-[28px] border border-slate-100 shadow-sm overflow-visible">
+                                    <div className="bg-white dark:bg-slate-900 p-6 pt-12 rounded-[28px] border border-slate-100 dark:border-slate-800/60 shadow-sm overflow-visible">
                                         <div className="grid grid-rows-4 grid-flow-col gap-1.5">
                                             {heatmapData.map((day, idx) => (
                                                 <div
@@ -977,11 +977,11 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                             { label: 'Đã mở', value: formData.stats?.emailsOpened || 0, color: 'orange', icon: MailOpen, rate: formData.stats?.emailsSent > 0 ? Math.round((formData.stats.emailsOpened / formData.stats.emailsSent) * 100) : 0 },
                                             { label: 'Đã bấm', value: formData.stats?.linksClicked || 0, color: 'emerald', icon: MousePointer2, rate: formData.stats?.emailsOpened > 0 ? Math.round((formData.stats.linksClicked / formData.stats.emailsOpened) * 100) : 0 },
                                         ].map((stat, idx) => (
-                                            <div key={idx} className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
+                                            <div key={idx} className="bg-white dark:bg-slate-900 p-5 rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
                                                 <div className={`absolute top-0 right-0 w-16 h-16 -mr-4 -mt-4 rounded-full opacity-5 bg-${stat.color}-500 transform scale-150`}></div>
                                                 <stat.icon className={`w-5 h-5 text-${stat.color}-500 mb-2.5 opacity-40`} />
                                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 z-10">{stat.label}</p>
-                                                <p className="text-2xl font-black text-slate-800 tracking-tighter z-10">{stat.value}</p>
+                                                <p className="text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tighter z-10">{stat.value}</p>
                                                 {stat.rate !== undefined && (
                                                     <div className={`mt-1.5 px-2 py-0.5 rounded-full bg-${stat.color}-50 text-${stat.color}-600 text-[9px] font-black z-10`}>
                                                         {stat.rate}%
@@ -991,7 +991,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                         ))}
                                     </div>
 
-                                    <div className="bg-slate-50/80 p-5 rounded-[24px] border border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                                    <div className="bg-slate-50 dark:bg-slate-950/80 p-5 rounded-[24px] border border-slate-100 dark:border-slate-800/60 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
                                         {[
                                             { label: 'Hoạt động cuối', value: formData.lastActivityAt, color: 'blue', icon: Activity },
                                             { label: 'Mở thư cuối', value: formData.stats?.lastOpenAt, color: 'orange', icon: Eye },
@@ -999,12 +999,12 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                         ].map((item, idx) => (
                                             <div key={idx} className="flex items-center justify-between group">
                                                 <div className="flex items-center gap-2.5">
-                                                    <div className={`w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-${item.color}-500 shadow-sm`}>
+                                                    <div className={`w-8 h-8 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/60 flex items-center justify-center text-${item.color}-500 shadow-sm`}>
                                                         <item.icon className="w-4 h-4" />
                                                     </div>
-                                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">{item.label}:</span>
+                                                    <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-tighter">{item.label}:</span>
                                                 </div>
-                                                <span className={`text-[10px] font-black tracking-tight ${item.value ? 'text-slate-800' : 'text-slate-400 italic'}`}>
+                                                <span className={`text-[10px] font-black tracking-tight ${item.value ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 italic'}`}>
                                                     {item.value ? formatRelativeTime(item.value) : 'Chưa ghi nhận'}
                                                 </span>
                                             </div>
@@ -1019,7 +1019,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
                                         <div className="w-4 h-px bg-slate-200"></div> Hệ điều hành & Vị trí (Auto)
                                     </h4>
-                                    <div className="bg-white p-6 rounded-[28px] border border-slate-100 shadow-sm">
+                                    <div className="bg-white dark:bg-slate-900 p-6 rounded-[28px] border border-slate-100 dark:border-slate-800/60 shadow-sm">
                                         <div className="grid grid-cols-2 md:grid-cols-3 gap-y-8 gap-x-4">
                                             {[
                                                 { label: 'Thiết bị', value: formData.last_device, icon: Smartphone, color: 'indigo' },
@@ -1043,7 +1043,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                         <item.icon className="w-3 h-3" />
                                                         <p className="text-[9px] font-black uppercase tracking-widest">{item.label}</p>
                                                     </div>
-                                                    <p className={`text-xs font-black truncate px-1 ${item.value ? 'text-slate-800' : 'text-slate-400 italic font-bold'}`}>
+                                                    <p className={`text-xs font-black truncate px-1 ${item.value ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 italic font-bold'}`}>
                                                         {item.value || 'N/A'}
                                                     </p>
                                                 </div>
@@ -1065,7 +1065,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                         {(Array.isArray(formData.listIds) ? formData.listIds : []).map((lId: string) => {
                                             const list = allLists.find(x => x.id === lId);
                                             return list && (
-                                                <div key={lId} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl shadow-sm group">
+                                                <div key={lId} className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-sm group">
                                                     <div className="flex items-center gap-4">
                                                         <div className={`w-10 h-10 ${list.source === 'Google Sheets' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-blue-600 border-blue-100'} rounded-xl flex items-center justify-center border`}>
                                                             {list.source === 'Google Sheets' ? (
@@ -1075,7 +1075,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                             )}
                                                         </div>
                                                         <div>
-                                                            <p className="text-sm font-bold text-slate-700">{list.name}</p>
+                                                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{list.name}</p>
                                                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
                                                                 {list.source === 'Google Sheets' ? 'Google Sheets Sync' : 'Static List'}
                                                             </p>
@@ -1094,7 +1094,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                             );
                                         })}
                                         {(!Array.isArray(formData.listIds) || formData.listIds.length === 0) && (
-                                            <div className="text-center py-6 border-2 border-dashed border-slate-100 rounded-2xl text-slate-300 text-xs font-bold uppercase tracking-widest">Trống</div>
+                                            <div className="text-center py-6 border-2 border-dashed border-slate-100 dark:border-slate-800/60 rounded-2xl text-slate-300 text-xs font-bold uppercase tracking-widest">Trống</div>
                                         )}
 
                                         {/* Chỉ hiện nút Ghi danh khi đang Edit */}
@@ -1106,7 +1106,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                         className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-2 border-dashed border-blue-200 hover:border-blue-400 rounded-2xl transition-all group"
                                                     >
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                                            <div className="w-10 h-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
                                                                 <UserPlus className="w-5 h-5 text-blue-600" />
                                                             </div>
                                                             <div className="text-left">
@@ -1118,7 +1118,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                     </button>
 
                                                     {showListPicker && (
-                                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-slate-200 shadow-xl z-50 max-h-80 overflow-y-auto">
+                                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-xl z-50 max-h-80 overflow-y-auto">
                                                             <div className="p-2 space-y-1">
                                                                 {allLists
                                                                     .filter(l => {
@@ -1133,14 +1133,14 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                                                 handleLocalAddList(l.id);
                                                                                 setShowListPicker(false);
                                                                             }}
-                                                                            className="w-full flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl transition-all group/item"
+                                                                            className="w-full flex items-center justify-between p-3 hover:bg-slate-50 dark:bg-slate-950 rounded-xl transition-all group/item"
                                                                         >
                                                                             <div className="flex items-center gap-3">
                                                                                 <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center group-hover/item:scale-110 transition-transform">
                                                                                     <List className="w-4 h-4" />
                                                                                 </div>
                                                                                 <div className="text-left">
-                                                                                    <p className="text-sm font-bold text-slate-700 group-hover/item:text-blue-600">{l.name}</p>
+                                                                                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover/item:text-blue-600">{l.name}</p>
                                                                                     <p className="text-[10px] text-slate-400 font-medium">{l.count || 0} thành viên</p>
                                                                                 </div>
                                                                             </div>
@@ -1175,11 +1175,11 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                             <div key={seg.id} className="flex items-center justify-between p-4 bg-orange-50 border border-orange-100 rounded-2xl">
                                                 <div className="flex items-center gap-3">
                                                     <Layers className="w-5 h-5 text-[#ca7900]" />
-                                                    <span className="text-sm font-bold text-slate-800">{seg.name}</span>
+                                                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{seg.name}</span>
                                                 </div>
                                                 <Badge variant="brand" className="text-[8px] uppercase tracking-tighter">Auto-Matched</Badge>
                                             </div>
-                                        )) : <p className="text-xs text-slate-400 italic text-center py-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100 font-bold uppercase tracking-widest">Không khớp phân khúc nào</p>}
+                                        )) : <p className="text-xs text-slate-400 italic text-center py-6 bg-slate-50 dark:bg-slate-950 rounded-2xl border-2 border-dashed border-slate-100 dark:border-slate-800/60 font-bold uppercase tracking-widest">Không khớp phân khúc nào</p>}
                                     </div>
                                 </section>
 
@@ -1201,18 +1201,18 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                             return (
                                                 <div
                                                     key={flow.id}
-                                                    className={`p-5 rounded-3xl flex items-center justify-between shadow-xl cursor-pointer transition-all group/flow ${isActive ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:border-slate-300'}`}
+                                                    className={`p-5 rounded-3xl flex items-center justify-between shadow-xl cursor-pointer transition-all group/flow ${isActive ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700/60 text-slate-500 dark:text-slate-400 hover:border-slate-300'}`}
                                                     onClick={() => {
                                                         navigate('/flows', { state: { openFlowId: flow.id, tab: 'analytics' } });
                                                         onClose();
                                                     }}
                                                 >
                                                     <div className="flex items-center gap-4">
-                                                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-colors ${isActive ? 'bg-white/10 group-hover/flow:bg-[#ffa900]/20' : 'bg-slate-200'}`}>
+                                                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-colors ${isActive ? 'bg-white dark:bg-slate-900/10 group-hover/flow:bg-[#ffa900]/20' : 'bg-slate-200'}`}>
                                                             <Zap className={`w-5 h-5 ${isActive ? 'text-[#ffa900] fill-[#ffa900]' : 'text-slate-400'}`} />
                                                         </div>
                                                         <div>
-                                                            <span className={`text-sm font-bold transition-colors ${isActive ? 'group-hover/flow:text-[#ffa900]' : 'text-slate-700'}`}>{flow.name}</span>
+                                                            <span className={`text-sm font-bold transition-colors ${isActive ? 'group-hover/flow:text-[#ffa900]' : 'text-slate-700 dark:text-slate-200'}`}>{flow.name}</span>
                                                             <p className="text-[10px] opacity-60 font-bold uppercase tracking-widest mt-0.5">
                                                                 {isActive ? 'Active Journey' : 'Automation Paused'}
                                                             </p>
@@ -1227,7 +1227,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                 </div>
                                             );
                                         })}
-                                        {memberInsights.flows.length === 0 && <p className="text-xs text-slate-400 italic text-center py-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100 font-bold uppercase tracking-widest">Chưa tham gia quy trình nào</p>}
+                                        {memberInsights.flows.length === 0 && <p className="text-xs text-slate-400 italic text-center py-6 bg-slate-50 dark:bg-slate-950 rounded-2xl border-2 border-dashed border-slate-100 dark:border-slate-800/60 font-bold uppercase tracking-widest">Chưa tham gia quy trình nào</p>}
                                     </div>
                                 </section>
                             </div>
@@ -1248,7 +1248,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                             <button
                                                 key={tab.id}
                                                 onClick={() => setActivitySubTab(tab.id as any)}
-                                                className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${activitySubTab === tab.id ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                                className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${activitySubTab === tab.id ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200'}`}
                                             >
                                                 {tab.label}
                                             </button>
@@ -1264,12 +1264,12 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                             placeholder="Tìm kiếm hành trình..."
                                             value={activityFilter}
                                             onChange={(e) => setActivityFilter(e.target.value)}
-                                            className="w-full bg-white border border-slate-200 rounded-2xl py-2.5 pl-10 pr-4 text-xs font-bold outline-none focus:ring-4 focus:ring-blue-50/50 focus:border-blue-400 transition-all shadow-sm"
+                                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-2xl py-2.5 pl-10 pr-4 text-xs font-bold outline-none focus:ring-4 focus:ring-blue-50/50 focus:border-blue-400 transition-all shadow-sm"
                                         />
                                         {activityFilter && (
                                             <button
                                                 onClick={() => setActivityFilter('')}
-                                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:text-slate-300"
                                             >
                                                 <X className="h-4 w-4" />
                                             </button>
@@ -1283,7 +1283,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                             <div className={`absolute -left-12 w-10 h-10 rounded-full border-4 border-white shadow-md flex items-center justify-center z-10 ${act.color}`}>
                                                 <act.icon className="w-4 h-4" />
                                             </div>
-                                            <div className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm group hover:border-blue-200 transition-all">
+                                            <div className="bg-white dark:bg-slate-900 p-5 rounded-[28px] border border-slate-100 dark:border-slate-800/60 shadow-sm group hover:border-blue-200 transition-all">
                                                 <div className="flex items-center justify-between gap-4 mb-2">
                                                     <div className="flex-1 min-w-0">
                                                         {act.type.includes('click') ? (
@@ -1291,14 +1291,14 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                                 href={act.url || '#'}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
-                                                                className="text-sm font-black truncate block hover:underline text-slate-800"
+                                                                className="text-sm font-black truncate block hover:underline text-slate-800 dark:text-slate-200"
                                                                 title={act.label}
                                                             >
                                                                 {act.label}
                                                             </a>
                                                         ) : (
                                                             <h5
-                                                                className={`text-sm font-black truncate block ${act.type.includes('scroll') ? 'text-blue-600' : 'text-slate-800'}`}
+                                                                className={`text-sm font-black truncate block ${act.type.includes('scroll') ? 'text-blue-600' : 'text-slate-800 dark:text-slate-200'}`}
                                                                 title={act.label}
                                                             >
                                                                 {act.label}
@@ -1313,7 +1313,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                     </div>
                                                     <span className="text-[10px] font-bold text-slate-400 uppercase shrink-0">{formatRelativeTime(act.date)}</span>
                                                 </div>
-                                                <div className="text-xs text-slate-500 font-medium leading-relaxed">
+                                                <div className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
                                                     {(() => {
                                                         const text = act.detail || '';
 
@@ -1363,20 +1363,20 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                                 if (Array.isArray(parsed)) {
                                                                     return (
                                                                         <div className="space-y-2 mt-1">
-                                                                            {prefix && <div className="text-sm text-slate-800 whitespace-pre-wrap mb-2">{prefix}</div>}
+                                                                            {prefix && <div className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap mb-2">{prefix}</div>}
                                                                             {parsed.map((item: any, idx: number) => {
                                                                                 if (item.type === 'template' || item.title) {
                                                                                     return (
-                                                                                        <div key={idx} className="bg-slate-50 p-2 rounded-xl border border-slate-100 flex gap-3">
-                                                                                            {item.image_url && <img src={item.image_url} className="w-10 h-10 rounded-lg object-cover bg-white" />}
-                                                                                            <div className="text-slate-600">
+                                                                                        <div key={idx} className="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl border border-slate-100 dark:border-slate-800/60 flex gap-3">
+                                                                                            {item.image_url && <img src={item.image_url} className="w-10 h-10 rounded-lg object-cover bg-white dark:bg-slate-900" />}
+                                                                                            <div className="text-slate-600 dark:text-slate-300">
                                                                                                 <div className="font-bold text-xs">{item.title}</div>
                                                                                                 {item.subtitle && <div className="text-[10px] text-slate-400">{item.subtitle}</div>}
                                                                                             </div>
                                                                                         </div>
                                                                                     );
                                                                                 }
-                                                                                if (item.text) return <div key={idx} className="text-slate-600 whitespace-pre-wrap">{item.text}</div>;
+                                                                                if (item.text) return <div key={idx} className="text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{item.text}</div>;
                                                                                 return <div key={idx} className="text-xs text-slate-400 font-mono break-all">{JSON.stringify(item)}</div>;
                                                                             })}
                                                                         </div>
@@ -1388,13 +1388,13 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                                     if (payload.template_type === 'generic' && Array.isArray(payload.elements)) {
                                                                         return (
                                                                             <div className="space-y-2 mt-2">
-                                                                                {prefix && <div className="text-sm text-slate-800 whitespace-pre-wrap mb-2">{prefix}</div>}
+                                                                                {prefix && <div className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap mb-2">{prefix}</div>}
                                                                                 {payload.elements.map((el: any, idx: number) => (
-                                                                                    <div key={idx} className="flex gap-3 p-3 bg-slate-50/50 rounded-xl border border-slate-100 items-center">
+                                                                                    <div key={idx} className="flex gap-3 p-3 bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-100 dark:border-slate-800/60 items-center">
                                                                                         {el.image_url && <img src={el.image_url} alt="" className="w-12 h-12 rounded-lg object-cover bg-slate-200" />}
                                                                                         <div className="flex-1 min-w-0">
-                                                                                            <div className="text-sm font-bold text-slate-700">{el.title}</div>
-                                                                                            {el.subtitle && <div className="text-xs text-slate-500">{el.subtitle}</div>}
+                                                                                            <div className="text-sm font-bold text-slate-700 dark:text-slate-200">{el.title}</div>
+                                                                                            {el.subtitle && <div className="text-xs text-slate-500 dark:text-slate-400">{el.subtitle}</div>}
                                                                                         </div>
                                                                                     </div>
                                                                                 ))}
@@ -1403,13 +1403,13 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                                     }
                                                                     if (payload.template_type === 'button') {
                                                                         return (
-                                                                            <div className="mt-1 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                                                                                {prefix && <div className="text-sm text-slate-800 whitespace-pre-wrap mb-2">{prefix}</div>}
-                                                                                <div className="text-slate-700 font-medium text-sm mb-2">{payload.text}</div>
+                                                                            <div className="mt-1 p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800/60">
+                                                                                {prefix && <div className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap mb-2">{prefix}</div>}
+                                                                                <div className="text-slate-700 dark:text-slate-200 font-medium text-sm mb-2">{payload.text}</div>
                                                                                 {Array.isArray(payload.buttons) && (
                                                                                     <div className="flex flex-wrap gap-2">
                                                                                         {payload.buttons.map((btn: any, bIdx: number) => (
-                                                                                            <span key={bIdx} className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-blue-600 uppercase tracking-wide shadow-sm">
+                                                                                            <span key={bIdx} className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-lg text-[10px] font-bold text-blue-600 uppercase tracking-wide shadow-sm">
                                                                                                 {btn.title}
                                                                                             </span>
                                                                                         ))}
@@ -1423,8 +1423,8 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                                 // 3. Simple Button Template (Old format or custom)
                                                                 if (parsed.type === 'template' && parsed.title) {
                                                                     return (
-                                                                        <div className="mt-1 text-slate-600 whitespace-pre-wrap">
-                                                                            {prefix && <div className="text-sm text-slate-800 whitespace-pre-wrap mb-2">{prefix}</div>}
+                                                                        <div className="mt-1 text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
+                                                                            {prefix && <div className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap mb-2">{prefix}</div>}
                                                                             <span className="font-bold">{parsed.title}</span>
                                                                             {parsed.subtitle && <div className="text-[11px] text-slate-400">{parsed.subtitle}</div>}
                                                                         </div>
@@ -1440,11 +1440,11 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                                     if (isSimple && keys.length > 0) {
                                                                         return (
                                                                             <div className="mt-1 space-y-1">
-                                                                                {prefix && <div className="text-sm text-slate-800 whitespace-pre-wrap mb-2">{prefix}</div>}
+                                                                                {prefix && <div className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap mb-2">{prefix}</div>}
                                                                                 {keys.map(k => (
                                                                                     <div key={k} className="flex gap-2 text-xs">
                                                                                         <span className="font-bold text-slate-400 capitalize">{k.replace(/_/g, ' ')}:</span>
-                                                                                        <span className="text-slate-700 break-all">{String(parsed[k])}</span>
+                                                                                        <span className="text-slate-700 dark:text-slate-200 break-all">{String(parsed[k])}</span>
                                                                                     </div>
                                                                                 ))}
                                                                             </div>
@@ -1453,10 +1453,10 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                                 }
 
                                                                 // Raw fallback for complex objects
-                                                                // return <pre className="text-[10px] bg-slate-50 p-3 rounded-xl mt-2 overflow-auto font-mono text-slate-500 border border-slate-100 whitespace-pre-wrap">{JSON.stringify(parsed, null, 2)}</pre>;
+                                                                // return <pre className="text-[10px] bg-slate-50 dark:bg-slate-950 p-3 rounded-xl mt-2 overflow-auto font-mono text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-800/60 whitespace-pre-wrap">{JSON.stringify(parsed, null, 2)}</pre>;
                                                                 return (
-                                                                    <div className="mt-2 text-[10px] bg-slate-50 p-3 rounded-xl overflow-auto border border-slate-100 font-mono text-slate-500">
-                                                                        {prefix && <div className="text-sm text-slate-800 whitespace-pre-wrap mb-2 font-sans">{prefix}</div>}
+                                                                    <div className="mt-2 text-[10px] bg-slate-50 dark:bg-slate-950 p-3 rounded-xl overflow-auto border border-slate-100 dark:border-slate-800/60 font-mono text-slate-500 dark:text-slate-400">
+                                                                        {prefix && <div className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap mb-2 font-sans">{prefix}</div>}
                                                                         <div className="font-bold text-slate-400 mb-1 uppercase tracking-widest text-[9px]">Raw Data</div>
                                                                         <pre className="whitespace-pre-wrap break-all">{JSON.stringify(parsed, null, 2)}</pre>
                                                                     </div>
@@ -1514,7 +1514,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                     {!isEditing && <span className="text-[10px] text-slate-300 italic">Bấm "Sửa hồ sơ" để chỉnh sửa</span>}
                                 </div>
                                 <textarea
-                                    className="flex-1 w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 text-sm font-medium text-slate-700 outline-none focus:ring-4 focus:ring-orange-50/5 focus:border-[#ffa900] focus:bg-white transition-all shadow-inner leading-relaxed resize-none"
+                                    className="flex-1 w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-2xl p-5 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-4 focus:ring-orange-50/5 focus:border-[#ffa900] focus:bg-white dark:bg-slate-900 transition-all shadow-inner leading-relaxed resize-none"
                                     placeholder="Nhập ghi chú chi tiết cho Khách hàng này..."
                                     value={(() => {
                                         // Handle different note formats
@@ -1572,7 +1572,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                 </ul>
                             </div>
                         </div>
-                        <p className="text-xs text-slate-600 font-medium">Bạn có chắc chắn muốn thực hiện hành động này và để các quy trình trên chạy cho Khách hàng này không?</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">Bạn có chắc chắn muốn thực hiện hành động này và để các quy trình trên chạy cho Khách hàng này không?</p>
                     </div>
                 }
                 confirmLabel="Xác nhận & Kích hoạt"
@@ -1796,7 +1796,7 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
                 if (isMarkdownImage || imgExtMatch) {
                     parts.push(
                         <div key={match.index} className="mt-2 mb-2">
-                            <a href={url} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-2xl border border-slate-100 shadow-sm transition-all hover:scale-[1.02]">
+                            <a href={url} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800/60 shadow-sm transition-all hover:scale-[1.02]">
                                 <img src={url} alt={label || "Image"} className="w-full max-h-[200px] object-cover" />
                             </a>
                         </div>
@@ -1808,7 +1808,7 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 mt-1 bg-slate-100/50 border border-slate-200 rounded-lg text-blue-600 font-bold hover:bg-white hover:shadow-sm transition-all no-underline"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 mt-1 bg-slate-100/50 border border-slate-200 dark:border-slate-700/60 rounded-lg text-blue-600 font-bold hover:bg-white dark:bg-slate-900 hover:shadow-sm transition-all no-underline"
                         >
                             <ExternalLink className="w-3 h-3 text-slate-400" />
                             <span className="truncate max-w-[200px]">{label || url}</span>
@@ -1856,7 +1856,7 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
                 }
                 if (trimmed) {
                     if (trimmed.startsWith('### ')) {
-                        blocks.push(<h3 key={`h-${idx}`} className={`font-bold text-sm mb-2 mt-3 text-slate-800`}>{parseInline(trimmed.substring(4))}</h3>);
+                        blocks.push(<h3 key={`h-${idx}`} className={`font-bold text-sm mb-2 mt-3 text-slate-800 dark:text-slate-200`}>{parseInline(trimmed.substring(4))}</h3>);
                     } else {
                         blocks.push(<p key={`p-${idx}`} className="mb-2 last:mb-0 leading-relaxed min-h-[1.2em]">{parseInline(trimmed)}</p>);
                     }
@@ -1871,11 +1871,11 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
         // Append Actions if any
         if (role === 'ai' && extractedActions.length > 0) {
             blocks.push(
-                <div key="actions" className="flex flex-wrap gap-1 mt-3 pt-3 border-t border-slate-100">
+                <div key="actions" className="flex flex-wrap gap-1 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/60">
                     {extractedActions.map((action, i) => (
                         <div
                             key={`action-${i}`}
-                            className="px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[9px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"
+                            className="px-2 py-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700/60 rounded text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1"
                         >
                             <Sparkles className="w-3 h-3 text-orange-400" />
                             {action}
@@ -1909,7 +1909,7 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
                                 </div>
                                 <div className="relative z-10 flex items-center justify-between gap-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30">
+                                        <div className="w-12 h-12 bg-white dark:bg-slate-900/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30">
                                             <Facebook className="w-6 h-6 text-white" />
                                         </div>
                                         <div>
@@ -1923,7 +1923,7 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
                                     </div>
                                     <button
                                         onClick={() => setIsMetaModalOpen(true)}
-                                        className="px-4 py-2 bg-white text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:translate-y-[-2px] active:translate-y-0 transition-all flex items-center gap-1.5"
+                                        className="px-4 py-2 bg-white dark:bg-slate-900 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:translate-y-[-2px] active:translate-y-0 transition-all flex items-center gap-1.5"
                                     >
                                         <MessageSquare className="w-3.5 h-3.5" />
                                         Chat
@@ -1940,7 +1940,7 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
                                 </div>
                                 <div className="relative z-10 flex items-center justify-between gap-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30">
+                                        <div className="w-12 h-12 bg-white dark:bg-slate-900/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30">
                                             <span className="font-black text-xs">ZALO</span>
                                         </div>
                                         <div>
@@ -1952,7 +1952,7 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
                                             <p className="text-[9px] text-blue-100/70 font-bold font-mono mt-0.5 opacity-80">UID: {subscriber.zalo_user_id}</p>
                                         </div>
                                     </div>
-                                    <button className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-default">
+                                    <button className="px-4 py-2 bg-white dark:bg-slate-900/10 hover:bg-white dark:bg-slate-900/20 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-default">
                                         Đã đồng bộ
                                     </button>
                                 </div>
@@ -1967,7 +1967,7 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
                                 </div>
                                 <div className="relative z-10 flex items-center justify-between gap-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30">
+                                        <div className="w-12 h-12 bg-white dark:bg-slate-900/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30">
                                             <Globe className="w-6 h-6 text-white" />
                                         </div>
                                         <div>
@@ -2002,9 +2002,9 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
                 ) : (
                     <div className="flex flex-col gap-4">
                         {conversations.map((conv, idx) => (
-                            <div key={conv.id} className="border border-slate-100 rounded-2xl overflow-hidden">
+                            <div key={conv.id} className="border border-slate-100 dark:border-slate-800/60 rounded-2xl overflow-hidden">
                                 <div
-                                    className="bg-slate-50 p-4 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors"
+                                    className="bg-slate-50 dark:bg-slate-950 p-4 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors"
                                     onClick={() => {
                                         if (openIndex === idx) setOpenIndex(null);
                                         else {
@@ -2018,7 +2018,7 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
                                             <MessageSquare className="w-4 h-4" />
                                         </div>
                                         <div>
-                                            <div className="text-xs font-bold text-slate-700">Hội thoại #{conv.id}</div>
+                                            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">Hội thoại #{conv.id}</div>
                                             <div className="text-[10px] text-slate-400">{formatRelativeTime(conv.last_message_at)}</div>
                                         </div>
                                     </div>
@@ -2029,7 +2029,7 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
 
                                 {openIndex === idx && (
                                     <div
-                                        className="border-t border-slate-100 bg-white p-4 max-h-[400px] overflow-y-auto space-y-4"
+                                        className="border-t border-slate-100 dark:border-slate-800/60 bg-white dark:bg-slate-900 p-4 max-h-[400px] overflow-y-auto space-y-4"
                                         ref={chatContainerRef}
                                         onScroll={handleScroll}
                                     >
@@ -2039,7 +2039,7 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
                                                 <div key={msg.id} className={`flex ${msg.sender === 'visitor' ? 'justify-end' : 'justify-start'}`}>
                                                     <div className={`max-w-[80%] rounded-2xl p-3 text-sm ${msg.sender === 'visitor'
                                                         ? 'bg-blue-600 text-white rounded-tr-sm'
-                                                        : 'bg-slate-100 text-slate-700 rounded-tl-sm'
+                                                        : 'bg-slate-100 text-slate-700 dark:text-slate-200 rounded-tl-sm'
                                                         }`}>
                                                         {renderContent(msg.message, msg.sender)}
                                                         <div className={`text-[9px] mt-1 ${msg.sender === 'visitor' ? 'text-blue-200' : 'text-slate-400'}`}>

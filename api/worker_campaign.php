@@ -366,7 +366,22 @@ if (!function_exists('runWorkerCampaign')) {
                         // [REAL-TIME PROGRESS] Time-based tracking (every 3 seconds)
                         $lastProgressUpdate = microtime(true);
 
+                        // [OPTIMIZATION] Pre-fetch ZNS Token for entire batch
+                        $preloadedZnsToken = null;
+                        if (($campaign['type'] ?? 'email') === 'zalo_zns') {
+                            $znsConfig = $campaign['config'] ? json_decode($campaign['config'], true) : [];
+                            $oaConfigId = $znsConfig['oa_config_id'] ?? '';
+                            if ($oaConfigId) {
+                                // 1 DB call for token instead of N calls inside loop
+                                $tokenResult = getAccessToken($pdo, $oaConfigId);
+                                if ($tokenResult['success']) {
+                                    $preloadedZnsToken = $tokenResult['access_token'];
+                                }
+                            }
+                        }
+
                         $recipientIndexInBatch = 0;
+                        $bouncedIds = [];
                         foreach ($recipients as $sub) {
                             $subId = $sub['id'];
                             $attachments = Mailer::filterAttachments($campaignAttachments, $sub['email']);
@@ -440,8 +455,8 @@ if (!function_exists('runWorkerCampaign')) {
                                     $res = "ZNS Failed: Missing data for parameters (" . implode(', ', $missingParams) . ")";
                                     writeWorkerLog("Campaign $cid: [ZNS] Subscriber {$sub['id']} missing data for " . implode(', ', $missingParams));
                                 } else {
-                                    // Send ZNS
-                                    $znsRes = sendZNSMessage($pdo, $oaConfigId, $campaign['template_id'], $sub['phone_number'], $templateData, null, null, $sub['id']);
+                                    // Send ZNS using preloaded token to save DB queries
+                                    $znsRes = sendZNSMessage($pdo, $oaConfigId, $campaign['template_id'], $sub['phone_number'], $templateData, null, null, $sub['id'], null, $preloadedZnsToken);
 
                                     // ZNS result standardization
                                     if ($znsRes['success']) {
@@ -550,17 +565,28 @@ if (!function_exists('runWorkerCampaign')) {
                                 } else {
                                     $jobDispatches[] = ['trigger_type' => 'campaign', 'target_id' => $cid, 'subscriber_id' => $subId];
                                 }
-
                             } else {
                                 $errMsg = is_string($res) ? $res : 'Unknown Error';
-                                // [DEADLOCK NOTE] checkAndHandleHardBounce() UPDATEs subscribers.
-                                // Safe here because: FOR UPDATE SKIP LOCKED already locked $sub['id']
-                                // specifically for this worker. The function's UPDATE targets the same
-                                // row we own — no cross-lock conflict with other workers.
-                                $extra = checkAndHandleHardBounce($pdo, $sub['id'], $errMsg);
+                                
+                                // Local string check to avoid sequential DB Updates
+                                $isHardBounce = false;
+                                $errMsgLower = strtolower($errMsg);
+                                $hkb = ['hard bounce', 'invalid recipient', 'unreachable', 'address rejected', 'does not exist', '550 5.1.1', '550 5.2.1', 'user unknown', 'recipient unknown', 'mailbox not found', 'account disabled', '5.1.1', 'permanent failure'];
+                                foreach ($hkb as $kb) {
+                                    if (strpos($errMsgLower, $kb) !== false) {
+                                        $isHardBounce = true;
+                                        break;
+                                    }
+                                }
+
+                                if ($isHardBounce) {
+                                    $bouncedIds[] = $sub['id'];
+                                }
+
                                 $failType = ($campaign['type'] ?? 'email') === 'zalo_zns' ? 'zns_failed' : 'failed_email';
-                                if ($extra)
+                                if ($isHardBounce) {
                                     $failType = 'failed_email'; // hardbounce implies email
+                                }
                                 $failActivities[] = [$subId, $failType, $cid, $cName, "Email failed: " . $errMsg, $cid, null, $isABTest ? $variationLabel : null];
                             }
 
@@ -570,6 +596,12 @@ if (!function_exists('runWorkerCampaign')) {
 
                         // Batch Operations
                         $pdo->beginTransaction(); // Re-open transaction to save results safely
+
+                        // Bulk Update Hard Bounces
+                        if (!empty($bouncedIds)) {
+                            $idPlaceholdersBounce = implode(',', array_fill(0, count($bouncedIds), '?'));
+                            $pdo->prepare("UPDATE subscribers SET status = 'bounced' WHERE id IN ($idPlaceholdersBounce)")->execute($bouncedIds);
+                        }
 
                         // Cleanup temporary 'processing_campaign' locks for this specific batch
                         if (!empty($recipients)) {
@@ -751,6 +783,9 @@ if (!function_exists('runWorkerCampaign')) {
 
         file_put_contents(__DIR__ . '/worker_campaign.log', implode("\n", $logs) . "\n", FILE_APPEND);
 
+        if (function_exists('flushActivityLogBuffer')) {
+            flushActivityLogBuffer($pdo);
+        }
         if (isset($mailer))
             $mailer->closeConnection();
 

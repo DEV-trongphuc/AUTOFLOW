@@ -175,7 +175,8 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
 
         // Check if dragging a preset (which are usually sections)
         const draggingType = e.dataTransfer.getData('type');
-        const isPreset = ['double_card', 'review_card', 'download_badges', 'feature_card'].includes(draggingType);
+        const smartPresetsConfig = ['double_card', 'review_card', 'download_badges', 'feature_card', 'header_gradient', 'article_list', 'ecommerce_product', 'steps_flow', 'steps_flow_number'];
+        const isPreset = smartPresetsConfig.includes(draggingType);
 
         // Treat presets as SECTIONs for drop logic
         const effectiveDraggingType = isPreset ? 'section' : draggingType;

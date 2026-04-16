@@ -348,8 +348,8 @@ function processTrainingBuffer($pdo, $propertyId, $apiKey, $batch, &$processedDo
         return 0;
     }
 
-    // ★ Throttle: 6s sleep → max 10 embedding calls/minute, tránh 429
-    sleep(6);
+    // ★ Micro-Throttle: Tốc độ xử lý thả ga nhờ vào Auto-Retry Catch. Chỉ tạm nghỉ 0.5s để giữ an toàn HTTP connection.
+    usleep(500000);
 
     $pdo->prepare("UPDATE ai_training_docs SET error_message = 'Đã nhận vector, đang lưu " . count($batch) . " đoạn vào DB...' WHERE id IN ($ePlaceholders)")
         ->execute(array_values($batchDocIds));

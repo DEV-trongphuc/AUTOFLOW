@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost:3306
--- Thời gian đã tạo: Th4 15, 2026 lúc 06:11 PM
+-- Thời gian đã tạo: Th4 16, 2026 lúc 08:48 PM
 -- Phiên bản máy phục vụ: 10.6.18-MariaDB-cll-lve-log
 -- Phiên bản PHP: 8.4.19
 
@@ -1100,7 +1100,11 @@ CREATE TABLE `segments` (
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `ai_analysis` longtext DEFAULT NULL,
   `ai_analysis_at` timestamp NULL DEFAULT NULL,
-  `synced_at` timestamp NULL DEFAULT NULL
+  `synced_at` timestamp NULL DEFAULT NULL,
+  `notify_on_join` tinyint(1) DEFAULT 0,
+  `notify_subject` varchar(255) DEFAULT NULL,
+  `notify_email` varchar(255) DEFAULT NULL,
+  `notify_cc` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -2105,7 +2109,8 @@ ALTER TABLE `ai_org_user_categories`
 ALTER TABLE `ai_pdf_chunk_results`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uq_doc_chunk` (`doc_id`,`chunk_index`),
-  ADD KEY `idx_doc_id` (`doc_id`);
+  ADD KEY `idx_doc_id` (`doc_id`),
+  ADD KEY `idx_status_updated` (`status`,`updated_at`);
 
 --
 -- Chỉ mục cho bảng `ai_rag_search_cache`
@@ -2515,7 +2520,15 @@ ALTER TABLE `subscriber_activity`
   ADD KEY `idx_subact_feed` (`subscriber_id`,`created_at`),
   ADD KEY `idx_subact_flow_type` (`flow_id`,`type`),
   ADD KEY `idx_subact_ref_type` (`reference_id`,`type`),
-  ADD KEY `idx_sub_type_date` (`subscriber_id`,`type`,`created_at`);
+  ADD KEY `idx_sub_type_date` (`subscriber_id`,`type`,`created_at`),
+  ADD KEY `idx_spam_debounce` (`subscriber_id`,`type`,`created_at`),
+  ADD KEY `idx_subid_type_ref` (`subscriber_id`,`type`,`reference_id`),
+  ADD KEY `idx_sub` (`subscriber_id`),
+  ADD KEY `idx_flow` (`flow_id`),
+  ADD KEY `idx_camp` (`campaign_id`),
+  ADD KEY `idx_type` (`type`),
+  ADD KEY `idx_worker_check` (`subscriber_id`,`type`,`flow_id`,`created_at`),
+  ADD KEY `idx_activity_sub_camp_type` (`subscriber_id`,`campaign_id`,`type`);
 
 --
 -- Chỉ mục cho bảng `subscriber_flow_states`
@@ -2667,7 +2680,8 @@ ALTER TABLE `web_blacklist`
 -- Chỉ mục cho bảng `web_daily_stats`
 --
 ALTER TABLE `web_daily_stats`
-  ADD PRIMARY KEY (`date`,`property_id`,`url_hash`,`device_type`);
+  ADD PRIMARY KEY (`date`,`property_id`,`url_hash`,`device_type`),
+  ADD UNIQUE KEY `idx_prop_date` (`property_id`,`date`);
 
 --
 -- Chỉ mục cho bảng `web_events`
