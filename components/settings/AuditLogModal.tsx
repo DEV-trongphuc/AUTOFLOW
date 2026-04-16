@@ -98,6 +98,21 @@ const AuditLogModal: React.FC<AuditLogModalProps> = ({ isOpen, onClose }) => {
                                     log.action === 'update' ? 'text-blue-600 bg-blue-50 border-blue-100' :
                                     'text-amber-600 bg-amber-50 border-amber-100';
 
+                                let actionVerb = 'đã thao tác thay đổi';
+                                if (log.action === 'create') actionVerb = 'đã tạo mới bản ghi';
+                                else if (log.action === 'delete') actionVerb = 'đã xóa vĩnh viễn';
+                                else if (log.action === 'update') {
+                                    actionVerb = 'đã cập nhật cấu hình';
+                                    if (log.details?.status) {
+                                        const st = String(log.details.status).toLowerCase();
+                                        if (st === 'paused' || st === 'pause') actionVerb = 'đã tạm dừng (pause) hoạt động của';
+                                        else if (st === 'active') actionVerb = 'đã kích hoạt chạy lại (active)';
+                                        else if (st === 'draft') actionVerb = 'đã chuyển về bản nháp (draft)';
+                                        else actionVerb = `đã đổi trạng thái thành "${log.details.status}" đối với`;
+                                    }
+                                } else if (log.action === 'export') actionVerb = 'đã trích xuất dữ liệu từ';
+                                else if (log.action === 'login') actionVerb = 'đã đăng nhập vào hệ thống';
+
                                 return (
                                     <div key={log.id} className="relative pl-14 transition-all">
                                         {/* Dot */}
@@ -109,14 +124,19 @@ const AuditLogModal: React.FC<AuditLogModalProps> = ({ isOpen, onClose }) => {
                                                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border ${actionColor}`}>{log.action}</span>
                                                     <span className="text-xs font-bold text-slate-700 capitalize">{log.module}</span>
                                                 </div>
-                                                <p className="text-sm font-medium text-slate-600 mb-2">
-                                                    <span className="font-bold text-slate-800">{log.user_name}</span> đã tác động tới <span className="font-bold text-slate-800 truncate block sm:inline max-w-xs">{log.target_name}</span>
+                                                <p className="text-sm text-slate-600 mb-2">
+                                                    <span className="font-bold text-slate-800">{log.user_name}</span> {actionVerb} <span className="font-bold text-slate-800 truncate block sm:inline max-w-xs">{log.target_name || log.module}</span>
                                                 </p>
                                                 {log.details && Object.keys(log.details).length > 0 && (
-                                                    <div className="mt-2 bg-slate-50 p-2 rounded-xl border border-slate-100 overflow-x-auto">
-                                                        <pre className="text-[10px] font-mono text-slate-500 m-0">
-                                                            {JSON.stringify(log.details, null, 2)}
-                                                        </pre>
+                                                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+                                                        {Object.entries(log.details).map(([k, v]) => (
+                                                            <div key={k} className="flex items-center justify-between bg-slate-50 hover:bg-amber-50/30 border border-slate-100 hover:border-amber-100/50 rounded-lg py-2 px-3 transition-colors group/prop">
+                                                                <span className="text-[10px] font-black tracking-wider uppercase text-slate-400 group-hover/prop:text-amber-600/70">{k}</span>
+                                                                <span className="text-xs font-bold text-slate-700 font-mono truncate max-w-[65%]" title={typeof v === 'object' ? JSON.stringify(v) : String(v)}>
+                                                                    {typeof v === 'object' ? JSON.stringify(v) : String(v)}
+                                                                </span>
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                 )}
                                             </div>

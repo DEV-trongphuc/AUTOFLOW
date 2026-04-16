@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 interface StepErrorUser {
     subscriber_id: string;
     email: string;
+    phone?: string;
     name: string;
     errorType: string;
     errorMessage: string;
@@ -111,9 +112,10 @@ const StepErrorModal: React.FC<StepErrorModalProps> = ({
     };
 
     const handleExportCSV = () => {
-        const headers = ['Email', 'Tên', 'Loại lỗi', 'Thông báo lỗi', 'Thời gian', 'Số lần thử'];
+        const headers = ['Email', 'SĐT', 'Tên', 'Loại lỗi', 'Thông báo lỗi', 'Thời gian', 'Số lần thử'];
         const rows = users.map(u => [
             u.email,
+            u.phone || '',
             u.name || 'N/A',
             u.errorType,
             u.errorMessage,
@@ -121,8 +123,8 @@ const StepErrorModal: React.FC<StepErrorModalProps> = ({
             u.attemptCount?.toString() || '1'
         ]);
 
-        const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(',')).join('\n');
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.download = `step-errors-${stepLabel}-${new Date().toISOString().split('T')[0]}.csv`;

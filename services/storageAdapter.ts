@@ -137,10 +137,11 @@ async function request<T>(
 ): Promise<ApiResponse<T>> {
   if (method === 'GET') {
     const cached = apiCache[endpoint];
-    const isStaticEndpoint = typeof endpoint === 'string' && (endpoint.startsWith('tags') || endpoint.startsWith('segments') || endpoint.startsWith('flows') || endpoint.startsWith('integrations') || endpoint.startsWith('lists'));
+    const isStaticEndpoint = typeof endpoint === 'string' && (endpoint.startsWith('tags') || endpoint.startsWith('segments') || endpoint.startsWith('flows') || endpoint.startsWith('integrations') || endpoint.startsWith('lists') || endpoint.startsWith('templates') || endpoint.startsWith('settings'));
     
-    // [PERF] Tăng TTL cho dữ liệu tĩnh lên 30s, các dữ liệu khác 5s
-    const ttl = isStaticEndpoint ? 30000 : 5000;
+    // [PERF] Tăng TTL cho báo cáo/danh sách lên 15s. Dữ liệu hạ tầng tĩnh là 60s
+    // Cache cực kỳ an toàn vì hàm này tự động flush TOÀN BỘ cache khi có bất kỳ POST/PUT/DELETE
+    const ttl = isStaticEndpoint ? 60000 : 15000;
     
     // Bỏ qua Bộ nhớ đệm nếu Endpoint chứa các tham số Bộ Lọc CÓ GIÁ TRỊ (search, sort khác newest, v.v)
     const hasActiveFilters = 

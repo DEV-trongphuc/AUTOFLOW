@@ -58,6 +58,9 @@ if ($method === 'GET' && $action === 'check') {
             $user = $stmt->fetch();
 
             if ($user) {
+                // Update last activity when session check happens
+                $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?")->execute([$_SESSION['user_id']]);
+                
                 jsonResponse(true, $user);
             } else {
                 session_destroy();

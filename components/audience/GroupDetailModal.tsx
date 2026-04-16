@@ -220,11 +220,23 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
 
     const handleExportCSV = () => {
         const selectedMembers = members.filter(m => selectedIds.has(m.id));
-        const header = ['ID', 'Email', 'First Name', 'Last Name', 'Status', 'Joined At'];
-        const rows = selectedMembers.map(m => [m.id, m.email, m.firstName, m.lastName, m.status, m.joinedAt]);
+        const header = ['ID', 'Email', 'SĐT', 'First Name', 'Last Name', 'Giới tính', 'Địa chỉ', 'Công ty', 'Nguồn', 'Status', 'Joined At'];
+        const rows = selectedMembers.map(s => [
+            s.id,
+            s.email,
+            s.phoneNumber || '',
+            s.firstName || '',
+            s.lastName || '',
+            s.gender || '',
+            s.address || '',
+            s.companyName || '',
+            s.source || '',
+            s.status,
+            s.joinedAt
+        ]);
 
-        const csvContent = "data:text/csv;charset=utf-8,"
-            + [header, ...rows].map(e => e.join(",")).join("\n");
+        const csvContent = "data:text/csv;charset=utf-8,\uFEFF"
+            + [header, ...rows].map(row => row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(",")).join("\n");
 
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");

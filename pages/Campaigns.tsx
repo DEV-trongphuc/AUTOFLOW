@@ -189,16 +189,11 @@ const Campaigns: React.FC = () => {
             await loadCampaigns(1, debouncedSearch);
 
             // Logic to sync verified emails from Settings (Source of Truth)
-            let currentSaved: string[] = JSON.parse(localStorage.getItem('mailflow_verified_emails') || '[]');
+            let currentSaved: string[] = [];
 
             if (settingRes.success && settingRes.data) {
-                const configEmail = settingRes.data.smtp_from_email || settingRes.data.smtp_user;
-                if (configEmail && configEmail.includes('@')) {
-                    // Check if configEmail is already in the list, if not add it to TOP
-                    if (!currentSaved.includes(configEmail)) {
-                        currentSaved = [configEmail, ...currentSaved];
-                    }
-                }
+                const configEmailRaw = settingRes.data.smtp_from_email || settingRes.data.smtp_user || '';
+                currentSaved = configEmailRaw.split(',').map((e: string) => e.trim()).filter(Boolean);
             }
 
             // Fallback default
@@ -206,7 +201,6 @@ const Campaigns: React.FC = () => {
                 currentSaved = ['marketing@ka-en.com.vn'];
             }
 
-            localStorage.setItem('mailflow_verified_emails', JSON.stringify(currentSaved));
             setVerifiedEmails(currentSaved);
         } catch (error) {
             showToast('Không thể tải dữ liệu chiến dịch', 'error');

@@ -44,6 +44,13 @@ $optimizations = [
         'queries' => [
             "ALTER TABLE `flow_enrollments` ADD INDEX `idx_current_step` (`current_step_id`)"
         ]
+    ],
+    // 5. subscriber_activity (Crucial for Segment Worker & Tracking Worker speed)
+    [
+        'table' => 'subscriber_activity',
+        'queries' => [
+            "ALTER TABLE `subscriber_activity` ADD INDEX `idx_subid_type_ref` (`subscriber_id`, `type`, `reference_id`)"
+        ]
     ]
 ];
 

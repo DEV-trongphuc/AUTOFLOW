@@ -148,7 +148,7 @@ const VoucherCodeManager: React.FC<VoucherCodeManagerProps> = ({ isOpen, onClose
                 code.distributedAt ? new Date(code.distributedAt).toLocaleString('vi-VN') : '-',
                 code.redeemedAt ? new Date(code.redeemedAt).toLocaleString('vi-VN') : '-',
                 code.expiresAt ? new Date(code.expiresAt).toLocaleString('vi-VN') : '-'
-            ].join(',');
+            ].map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(',');
         });
 
         const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(','), ...rows].join('\n');

@@ -1114,11 +1114,11 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                 >
                                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-4">
 
-                                                        <div className="flex items-center gap-3 md:gap-4">
+                                                        <div className="flex items-center flex-1 min-w-0 gap-3 md:gap-4">
                                                             <div className={`${item.type === 'wait' ? 'w-8 h-8 md:w-10 md:h-10' : 'w-10 h-10 md:w-12 md:h-12'} rounded-lg md:rounded-xl flex items-center justify-center shadow-md bg-gradient-to-br ${item.style.gradient} text-white shrink-0`}>
                                                                 <Icon className={`${item.type === 'wait' ? 'w-4 h-4 md:w-5 md:h-5' : 'w-5 h-5 md:w-6 md:h-6'}`} />
                                                             </div>
-                                                            <div className="min-w-0">
+                                                            <div className="min-w-0 flex-1">
                                                                 <div className="flex flex-wrap items-center gap-1.5 md:gap-2 mb-1">
                                                                     <span className={`text-[8px] md:text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md ${item.style.bg} ${item.style.text}`}>
                                                                         {item.stepNumberLabel}: {item.style.label}
@@ -1130,7 +1130,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                                         </span>
                                                                     )}
                                                                 </div>
-                                                                <h4 className={`${item.type === 'wait' ? 'text-[10px] md:text-xs' : 'text-xs md:text-sm'} font-bold text-slate-800 truncate max-w-[150px] md:max-w-[300px] lg:max-w-[400px]`}>{item.label}</h4>
+                                                                <h4 className={`${item.type === 'wait' ? 'text-[10px] md:text-xs' : 'text-xs md:text-sm'} font-bold text-slate-800 truncate`} title={item.label}>{item.label}</h4>
                                                             </div>
                                                         </div>
 
@@ -1151,7 +1151,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                         )}
 
                                                         {/* Right: Stats */}
-                                                        <div className="flex items-center justify-between sm:justify-end gap-4 md:gap-8 text-right">
+                                                        <div className="flex items-center shrink-0 justify-between sm:justify-end gap-4 md:gap-8 text-right">
                                                             <div className="flex flex-col sm:flex-row gap-2 md:gap-3 items-end sm:items-center">
                                                                 {item.type === 'completed' ? (
                                                                     <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100 shadow-sm">

@@ -407,6 +407,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                 setFormData(prev => ({
                     ...prev,
                     ...initialData,
+                    senderEmail: (initialData.senderEmail && senderEmails.includes(initialData.senderEmail)) ? initialData.senderEmail : (senderEmails[0] || ''),
                     target: {
                         listIds: initialData.target?.listIds || [],
                         segmentIds: initialData.target?.segmentIds || [],
@@ -427,14 +428,20 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                 if (step === 1 && !formData.id) {
                     const now = new Date();
                     const dateStr = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
-                    setFormData({
-                        name: `[${dateStr}] - Chiến dịch mới`, subject: '', senderEmail: senderEmails[0] || '', templateId: '',
-                        target: { listIds: [], segmentIds: [], tagIds: [], individualIds: [] },
-                        reminders: [], trackingEnabled: true, status: CampaignStatus.DRAFT,
-                        contentBody: '',
-                        attachments: [],
-                        type: 'email'
-                    });
+                    setFormData(prev => ({
+                        ...prev,
+                        name: prev.name && prev.name !== `[${dateStr}] - Chiến dịch mới` ? prev.name : `[${dateStr}] - Chiến dịch mới`, 
+                        subject: prev.subject || '', 
+                        senderEmail: (prev.senderEmail && senderEmails.includes(prev.senderEmail)) ? prev.senderEmail : (senderEmails[0] || ''), 
+                        templateId: prev.templateId || '',
+                        target: prev.target?.listIds ? prev.target : { listIds: [], segmentIds: [], tagIds: [], individualIds: [] },
+                        reminders: prev.reminders || [], 
+                        trackingEnabled: prev.trackingEnabled ?? true, 
+                        status: prev.status || CampaignStatus.DRAFT,
+                        contentBody: prev.contentBody || '',
+                        attachments: prev.attachments || [],
+                        type: prev.type || 'email'
+                    }));
                 }
             }
         }
@@ -967,11 +974,14 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                         <div className="space-y-4 animate-in fade-in duration-500">
                                             <label className="text-[11px] font-bold uppercase text-slate-500 ml-1 tracking-widest">Người gửi (Sender) <span className="text-rose-500">*</span></label>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                {senderEmails.map(email => (
+                                                {senderEmails.map((email, index) => (
                                                     <button key={email} onClick={() => setFormData({ ...formData, senderEmail: email })} className={`p-4 rounded-xl border transition-all flex items-center justify-between group ${formData.senderEmail === email ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-200' : 'border-slate-100 bg-white hover:border-slate-200'}`}>
                                                         <div className="flex items-center gap-3 overflow-hidden">
                                                             <ShieldCheck className={`w-4 h-4 ${formData.senderEmail === email ? 'text-indigo-600' : 'text-slate-400'}`} />
-                                                            <span className={`text-xs font-bold truncate ${formData.senderEmail === email ? 'text-indigo-900' : 'text-slate-600'}`}>{email}</span>
+                                                            <span className={`text-xs font-bold truncate flex items-center ${formData.senderEmail === email ? 'text-indigo-900' : 'text-slate-600'}`}>
+                                                                {email}
+                                                                {index === 0 && <span className="ml-2 text-[9px] text-blue-600 font-bold uppercase tracking-widest bg-blue-100/80 border border-blue-200/50 px-2 py-0.5 rounded-full shrink-0 mt-0.5">Mặc định</span>}
+                                                            </span>
                                                         </div>
                                                         {formData.senderEmail === email && <div className="w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center text-white"><Check className="w-3 h-3" /></div>}
                                                     </button>

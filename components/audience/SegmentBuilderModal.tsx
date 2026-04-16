@@ -1,6 +1,6 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
-import { Save, Plus, Trash2, Users, Crown, Zap, ShieldCheck, ChevronDown, Check, X, Filter, Sparkles, Copy, MonitorPlay, Search, Loader2, MessageCircle } from 'lucide-react';
+import { Save, Plus, Trash2, Users, Crown, Zap, ShieldCheck, ChevronDown, Check, X, Filter, Sparkles, Copy, MonitorPlay, Search, Loader2, MessageCircle, Bell } from 'lucide-react';
 import { Segment, Subscriber } from '../../types';
 import { api } from '../../services/storageAdapter';
 import toast from 'react-hot-toast';
@@ -232,6 +232,10 @@ const SegmentBuilderModal: React.FC<SegmentBuilderModalProps> = ({ isOpen, onClo
     const [groups, setGroups] = useState<SegmentGroup[]>([]);
     const [estimatedCount, setEstimatedCount] = useState(0);
     const [autoCleanupDays, setAutoCleanupDays] = useState('0');
+    const [notifyOnJoin, setNotifyOnJoin] = useState(false);
+    const [notifySubject, setNotifySubject] = useState('');
+    const [notifyEmail, setNotifyEmail] = useState('');
+    const [notifyCc, setNotifyCc] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
     // Initial Load
@@ -240,6 +244,12 @@ const SegmentBuilderModal: React.FC<SegmentBuilderModalProps> = ({ isOpen, onClo
             if (initialSegment) {
                 setName(initialSegment.name);
                 setAutoCleanupDays(initialSegment.autoCleanupDays?.toString() || '0');
+                // Cast to boolean explicitly since API might return 0, 1, "0" or "1" depending on MySQL driver
+                const nj = initialSegment.notifyOnJoin as any;
+                setNotifyOnJoin(nj === true || nj === 1 || nj === '1');
+                setNotifySubject(initialSegment.notifySubject || '');
+                setNotifyEmail(initialSegment.notifyEmail || '');
+                setNotifyCc(initialSegment.notifyCc || '');
                 try {
                     const parsedCriteria = JSON.parse(initialSegment.criteria);
                     setGroups(Array.isArray(parsedCriteria) ? parsedCriteria : []);
@@ -249,6 +259,10 @@ const SegmentBuilderModal: React.FC<SegmentBuilderModalProps> = ({ isOpen, onClo
             } else {
                 setName('');
                 setAutoCleanupDays('0');
+                setNotifyOnJoin(false);
+                setNotifySubject('');
+                setNotifyEmail('');
+                setNotifyCc('');
                 resetGroups();
             }
         }
@@ -338,7 +352,7 @@ const SegmentBuilderModal: React.FC<SegmentBuilderModalProps> = ({ isOpen, onClo
         if (!name.trim()) return toast.error('Vui lòng nhập tên phân khúc');
         setIsLoading(true);
         try {
-            await Promise.resolve(onSave({ ...initialSegment, name, criteria: JSON.stringify(groups), count: estimatedCount, autoCleanupDays: parseInt(autoCleanupDays) }));
+            await Promise.resolve(onSave({ ...initialSegment, name, criteria: JSON.stringify(groups), count: estimatedCount, autoCleanupDays: parseInt(autoCleanupDays), notifyOnJoin, notifySubject, notifyEmail, notifyCc }));
             onClose(); // Close modal after successful save
         } catch (error) {
             toast.error('Có lỗi xảy ra');
@@ -481,6 +495,62 @@ const SegmentBuilderModal: React.FC<SegmentBuilderModalProps> = ({ isOpen, onClo
                                 className="h-[40px]"
                             />
                         </div>
+                    </div>
+
+                    {/* Features Toggle */}
+                    <div className="flex flex-col p-3.5 rounded-[16px] border border-slate-200 bg-white shadow-sm mt-4 transition-all">
+                        <div className="flex items-center justify-between group">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center transition-colors group-hover:bg-orange-100 border border-orange-100 shadow-sm">
+                                    <Bell className={`w-5 h-5 ${notifyOnJoin ? 'text-orange-500 animate-pulse' : 'text-[#ffa900]'}`} />
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-bold text-slate-800 tracking-tight mb-0.5">Thời gian thực: Báo Cáo Lead Mới</h4>
+                                    <p className="text-[11px] font-medium text-slate-500">Tự động push thông báo trực tiếp cho bạn khi có user thỏa mãn điều kiện gia nhập (Join) vào nhánh phân khúc này.</p>
+                                </div>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer mr-1">
+                                <input 
+                                    type="checkbox" 
+                                    className="sr-only peer" 
+                                    checked={notifyOnJoin}
+                                    onChange={(e) => setNotifyOnJoin(e.target.checked)}
+                                />
+                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#ffa900]"></div>
+                            </label>
+                        </div>
+                        
+                        {notifyOnJoin && (
+                            <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-300">
+                                <div className="space-y-1.5 md:col-span-2">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Tiêu đề (Subject) <span className="text-orange-500">*</span></label>
+                                    <input
+                                        value={notifySubject}
+                                        onChange={(e) => setNotifySubject(e.target.value)}
+                                        placeholder="VD: [Cảnh báo Khách Nóng] Lead mới lọt lưới..."
+                                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-[#ffa900] focus:ring-4 focus:ring-orange-100 outline-none text-xs font-medium text-slate-700 bg-white"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Email nhận <span className="text-orange-500">*</span></label>
+                                    <input
+                                        value={notifyEmail}
+                                        onChange={(e) => setNotifyEmail(e.target.value)}
+                                        placeholder="admin@example.com"
+                                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-[#ffa900] focus:ring-4 focus:ring-orange-100 outline-none text-xs font-medium text-slate-700 bg-white"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Email CC thêm (Tùy chọn)</label>
+                                    <input
+                                        value={notifyCc}
+                                        onChange={(e) => setNotifyCc(e.target.value)}
+                                        placeholder="sale1@example.com, mgr@example.com"
+                                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-[#ffa900] focus:ring-4 focus:ring-orange-100 outline-none text-xs font-medium text-slate-700 bg-white"
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Conditions */}

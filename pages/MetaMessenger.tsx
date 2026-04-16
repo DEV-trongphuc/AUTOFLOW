@@ -21,8 +21,9 @@ const MetaMessenger: React.FC = () => {
                 statusText="Meta Cloud API Active"
                 showStatus={true}
                 actions={[
-                    { label: 'Quy tắc 24h', icon: HelpCircle, onClick: () => setShowPolicyModal(true), primary: true },
-                    { label: 'Meta Platform', icon: Zap, onClick: () => window.open('https://developers.facebook.com/docs/messenger-platform', '_blank') }
+                    { label: 'CẤU HÌNH META', icon: Settings, onClick: () => setActiveTab('config'), primary: false },
+                    { label: '', title: 'Quy tắc 24h', icon: HelpCircle, onClick: () => setShowPolicyModal(true), primary: true },
+                    { label: '', title: 'Meta Platform', icon: Zap, onClick: () => window.open('https://developers.facebook.com/docs/messenger-platform', '_blank'), primary: true }
                 ]}
             />
 
@@ -40,8 +41,7 @@ const MetaMessenger: React.FC = () => {
                         items={[
                             { id: 'customers', label: 'Khách hàng', icon: Users },
                             { id: 'automation', label: 'Kịch bản', icon: Zap },
-                            { id: 'report', label: 'Báo cáo', icon: BarChart3 },
-                            { id: 'config', label: 'Cấu hình', icon: Settings }
+                            { id: 'report', label: 'Báo cáo', icon: BarChart3 }
                         ]}
                     />
                 </div>

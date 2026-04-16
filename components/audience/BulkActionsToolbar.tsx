@@ -40,17 +40,23 @@ const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
 
     const handleExportCSV = () => {
         const selectedMembers = subscribers.filter(s => selectedIds.has(s.id));
-        const header = ['ID', 'Email', 'First Name', 'Last Name', 'Status', 'Joined At', 'Tags'];
+        const header = ['ID', 'Email', 'SĐT', 'First Name', 'Last Name', 'Giới tính', 'Địa chỉ', 'Công ty', 'Nguồn', 'Status', 'Joined At', 'Tags'];
         const rows = selectedMembers.map(s => [
             s.id,
             s.email,
-            s.firstName,
-            s.lastName,
+            s.phoneNumber || '',
+            s.firstName || '',
+            s.lastName || '',
+            s.gender || '',
+            s.address || '',
+            s.companyName || '',
+            s.source || '',
             s.status,
             s.joinedAt,
             (Array.isArray(s.tags) ? s.tags : []).join(';')
         ]);
-        const csvContent = "data:text/csv;charset=utf-8," + [header, ...rows].map(e => e.join(",")).join("\n");
+        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + 
+            [header, ...rows].map(row => row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(",")).join("\n");
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);

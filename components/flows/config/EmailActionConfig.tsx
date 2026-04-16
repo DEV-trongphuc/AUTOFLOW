@@ -61,25 +61,21 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
             }
 
             // Sync verified emails
-            let currentSaved: string[] = JSON.parse(localStorage.getItem('mailflow_verified_emails') || '[]');
-            
-            // Xóa triệt để email mẫu nằm vùng nếu có tồn tại từ các phiên trước
-            currentSaved = currentSaved.filter(e => e !== 'marketing@ka-en.com.vn');
+            let currentSaved: string[] = [];
 
             if (settingRes.success && settingRes.data) {
-                const configEmail = settingRes.data.smtp_from_email || settingRes.data.smtp_user;
-                if (configEmail && configEmail.includes('@')) {
-                    if (!currentSaved.includes(configEmail)) {
-                        currentSaved = [configEmail, ...currentSaved];
-                    }
-                }
+                const configEmailRaw = settingRes.data.smtp_from_email || settingRes.data.smtp_user || '';
+                currentSaved = configEmailRaw.split(',').map((e: string) => e.trim()).filter(Boolean);
             }
 
-            localStorage.setItem('mailflow_verified_emails', JSON.stringify(currentSaved));
+            if (currentSaved.length === 0) {
+                currentSaved = ['marketing@email']; // Fallback
+            }
+
             setVerifiedEmails(currentSaved.map((e: string) => ({ value: e, label: e })));
 
-            // [AUTO-SELECT] Nếu bước chưa có email người gửi → tự chọn
-            if (!config.senderEmail && currentSaved.length > 0) {
+            // [AUTO-SELECT] Nếu bước chưa có email người gửi HOẶC email đã lưu không còn tồn tại trong hệ thống → tự chọn lại
+            if ((!config.senderEmail || !currentSaved.includes(config.senderEmail)) && currentSaved.length > 0) {
                 // Ưu tiên email đã chọn gần nhất (nhớ qua localStorage)
                 const lastUsed = localStorage.getItem('mailflow_last_sender_email');
                 const defaultEmail = (lastUsed && currentSaved.includes(lastUsed))
@@ -270,7 +266,7 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
                         </div>
                     </div>
                     <div className="grid grid-cols-1 gap-2">
-                        {verifiedEmails.length > 0 ? verifiedEmails.map((email) => (
+                        {verifiedEmails.length > 0 ? verifiedEmails.map((email, index) => (
                             <button
                                 key={email.value}
                                 onClick={() => {
@@ -289,7 +285,10 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
                                     </div>
                                     <div>
                                         <p className="text-xs font-black text-slate-800">{email.label}</p>
-                                        <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-widest">Đã xác minh</p>
+                                        <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-widest flex items-center">
+                                            Đã xác minh 
+                                            {index === 0 && <span className="ml-2 text-[9px] text-blue-600 font-bold uppercase tracking-widest bg-blue-100/80 border border-blue-200/50 px-2 py-0.5 rounded-full shrink-0">Mặc định</span>}
+                                        </p>
                                     </div>
                                 </div>
                                 {config.senderEmail === email.value && <Zap className="w-4 h-4 text-[#ffa900] fill-[#ffa900]" />}

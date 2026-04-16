@@ -48,9 +48,10 @@ const ZaloSettings: React.FC = () => {
                 statusText="Zalo API Connected"
                 showStatus={true}
                 actions={[
-                    { label: 'QUẢN LÝ TEMPLATE', icon: FileText, onClick: handleOpenTemplates },
-                    { label: 'Official OA', icon: Zap, onClick: () => window.open('https://developers.zalo.me/docs/official-account/bat-dau/kham-pha', '_blank'), primary: true },
-                    { label: '', icon: Info, onClick: () => setIsPolicyModalOpen(true), primary: true },
+                    { label: 'QUẢN LÝ TEMPLATE', icon: FileText, onClick: handleOpenTemplates, primary: false },
+                    { label: 'CẤU HÌNH ZALO', icon: Settings, onClick: () => setActiveTab('dashboard'), primary: true },
+                    { label: '', title: 'Official OA', icon: Zap, onClick: () => window.open('https://developers.zalo.me/docs/official-account/bat-dau/kham-pha', '_blank'), primary: true },
+                    { label: '', title: 'Quy tắc', icon: Info, onClick: () => setIsPolicyModalOpen(true), primary: true },
                 ]}
             />
 
@@ -63,8 +64,7 @@ const ZaloSettings: React.FC = () => {
                         items={[
                             { id: 'audience', label: 'Khách hàng', icon: Users },
                             { id: 'automation', label: 'Kịch bản', icon: Zap },
-                            { id: 'report', label: 'Báo cáo', icon: BarChart3 },
-                            { id: 'dashboard', label: 'Cấu hình', icon: Settings }
+                            { id: 'report', label: 'Báo cáo', icon: BarChart3 }
                         ]}
                     />
                 </div>

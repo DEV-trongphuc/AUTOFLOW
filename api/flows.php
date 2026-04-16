@@ -285,7 +285,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
             $totalPages = ceil($total / $limit);
 
             $sql = "SELECT s.id, s.email, s.phone_number, s.first_name, s.last_name, sa.reference_id as step_id, 
-                           sa.type as status, sa.created_at as entered_at, MAX(sa.created_at) as updated_at
+                           sa.type as status, sa.created_at as entered_at, MAX(sa.created_at) as updated_at, MAX(sa.details) as details
                     FROM subscriber_activity sa
                     JOIN subscribers s ON sa.subscriber_id = s.id
                     WHERE $whereSql
@@ -303,7 +303,8 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                     'status' => $p['status'],
                     'completedAt' => $p['updated_at'],
                     'enteredAt' => $p['entered_at'],
-                    'phone' => $p['phone_number']
+                    'phone' => $p['phone_number'],
+                    'lastError' => $p['details'] ?? null
                 ];
             }, $stmt->fetchAll());
         } elseif ($status === 'all_touched') {
@@ -1351,7 +1352,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'step-errors') {
         $stmtCount->execute($params);
         $total = (int) $stmtCount->fetchColumn();
 
-        $sql = "SELECT s.id as subscriber_id, s.email, CONCAT(s.first_name, ' ', s.last_name) as name, 
+        $sql = "SELECT s.id as subscriber_id, s.email, s.phone_number as phone, CONCAT(s.first_name, ' ', s.last_name) as name, 
                        sa.type as errorType, sa.details as errorMessage, sa.created_at as timestamp
                 FROM subscriber_activity sa
                 JOIN subscribers s ON sa.subscriber_id = s.id
@@ -1409,12 +1410,12 @@ if (isset($_GET['route']) && $_GET['route'] === 'step-unsubscribes') {
         $stmtCount->execute($params);
         $total = (int) $stmtCount->fetchColumn();
 
-        $sql = "SELECT s.id as subscriber_id, s.email, CONCAT(s.first_name, ' ', s.last_name) as name, 
+        $sql = "SELECT s.id as subscriber_id, s.email, s.phone_number as phone, CONCAT(s.first_name, ' ', s.last_name) as name, 
                        MAX(sa.created_at) as timestamp
                 FROM subscriber_activity sa
                 JOIN subscribers s ON sa.subscriber_id = s.id
                 WHERE $where
-                GROUP BY s.id, s.email, name
+                GROUP BY s.id, s.email, s.phone_number, name
                 ORDER BY timestamp DESC
                 LIMIT $limit OFFSET $offset";
 

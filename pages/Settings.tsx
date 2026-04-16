@@ -551,15 +551,16 @@ const Settings: React.FC = () => {
                                             icon={Users}
                                         />
                                         <Input
-                                            label="Email gửi đi (From Email)"
-                                            placeholder="marketing@yourdomain.com"
+                                            label="Email gửi đi (Có thể nhập nhiều, cách nhau dấu phẩy)"
+                                            placeholder="marketing@domain.com, sales@domain.com"
                                             value={(smtp as any).smtp_from_email || ''}
                                             onChange={e => setSmtp({ ...smtp, smtp_from_email: e.target.value } as any)}
                                             icon={Mail}
                                         />
                                     </div>
                                     <p className="text-[10px] text-slate-400 mt-2 italic px-2">
-                                        *Lưu ý: "Email gửi đi" phải là email đã được xác thực (Verified Identity) trên Amazon SES.
+                                        *Lưu ý: Các "Email gửi đi" phải là email đã được xác thực (Verified) trên Amazon SES, cách nhau bằng dấu phẩy (,).<br/>
+                                        <strong className="text-orange-500 font-bold">Email đầu tiên trong danh sách</strong> sẽ tự động trở thành <b>Email Mặc định (Default Fallback)</b> cho các kịch bản không chọn email.
                                     </p>
                                 </div>
                             </div>

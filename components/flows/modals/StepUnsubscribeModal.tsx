@@ -5,6 +5,7 @@ import Button from '../../common/Button';
 
 interface StepUnsubscribeUser {
     email: string;
+    phone?: string;
     name: string;
     unsubscribeDate: string;
     source: string;
@@ -28,17 +29,18 @@ const StepUnsubscribeModal: React.FC<StepUnsubscribeModalProps> = ({
     onExport
 }) => {
     const handleExportCSV = () => {
-        const headers = ['Email', 'Tên', 'Ngày hủy', 'Nguồn', 'Lý do'];
+        const headers = ['Email', 'SĐT', 'Tên', 'Ngày hủy', 'Nguồn', 'Lý do'];
         const rows = users.map(u => [
             u.email,
+            u.phone || '',
             u.name || 'N/A',
             new Date(u.unsubscribeDate).toLocaleString('vi-VN'),
             u.source,
             u.reason || 'N/A'
         ]);
 
-        const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(',')).join('\n');
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.download = `step-unsubscribes-${stepLabel}-${new Date().toISOString().split('T')[0]}.csv`;

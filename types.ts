@@ -371,7 +371,7 @@ export interface Campaign {
   };
 }
 export interface Subscriber { id: string; email: string; firstName: string; lastName: string; status: 'active' | 'unsubscribed' | 'lead' | 'customer' | 'bounced' | 'complained'; tags: string[]; joinedAt: string; dateOfBirth?: string | null; anniversaryDate?: string | null; lastActivityAt?: string | null; leadScore?: number; chatCount?: number; listIds: string[]; notes: SubscriberNote[]; stats: { emailsSent: number; emailsOpened: number; linksClicked: number; lastOpenAt?: string; lastClickAt?: string; }; customAttributes: Record<string, any>; gender?: string; phoneNumber?: string; jobTitle?: string; companyName?: string; address?: string; source?: string; activity?: any[]; verified?: boolean | number; avatar?: string; meta_psid?: string; meta_page_id?: string; }
-export interface Segment { id: string; name: string; description: string; count: number; criteria: string; autoCleanupDays?: number; }
+export interface Segment { id: string; name: string; description: string; count: number; criteria: string; autoCleanupDays?: number; notifyOnJoin?: boolean; notifySubject?: string; notifyEmail?: string; notifyCc?: string; }
 export interface FlowStep { id: string; type: 'trigger' | 'action' | 'wait' | 'condition' | 'advanced_condition' | 'split_test' | 'link_flow' | 'remove_action' | 'update_tag' | 'list_action' | 'zalo_zns' | 'zalo_cs'; label: string; iconName: string; config: Record<string, any>; nextStepId?: string; yesStepId?: string; noStepId?: string; pathAStepId?: string; pathBStepId?: string; stats?: any; }
 
 // Updated FlowStats to reflect total counts from DB

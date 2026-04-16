@@ -6,6 +6,17 @@ $method = $_SERVER['REQUEST_METHOD'];
 $path = isset($_GET['id']) ? $_GET['id'] : null;
 $route = $_GET['route'] ?? null;
 
+// Bootstrap missing DB columns if any (quietly catch duplicate column errors)
+$cols = [
+    "ALTER TABLE segments ADD COLUMN notify_on_join BOOLEAN DEFAULT FALSE",
+    "ALTER TABLE segments ADD COLUMN notify_subject VARCHAR(255) NULL",
+    "ALTER TABLE segments ADD COLUMN notify_email VARCHAR(255) NULL",
+    "ALTER TABLE segments ADD COLUMN notify_cc VARCHAR(255) NULL"
+];
+foreach ($cols as $sql) {
+    try { $pdo->exec($sql); } catch (Exception $e) {}
+}
+
 if ($method === 'POST' && $route === 'estimate') {
     $data = json_decode(file_get_contents("php://input"), true);
     // Criteria can be passed as 'criteria' key. Array or string.
@@ -355,7 +366,7 @@ switch ($method) {
             }
 
             if (!isset($_GET['page']) && !isset($_GET['limit']) && !isset($_GET['search'])) {
-                $stmt = $pdo->query("SELECT id, name, description, criteria, subscriber_count as count, auto_cleanup_days as autoCleanupDays FROM segments ORDER BY name ASC");
+                $stmt = $pdo->query("SELECT id, name, description, criteria, subscriber_count as count, auto_cleanup_days as autoCleanupDays, notify_on_join as notifyOnJoin, notify_subject as notifySubject, notify_email as notifyEmail, notify_cc as notifyCc FROM segments ORDER BY name ASC");
                 jsonResponse(true, $stmt->fetchAll());
                 return;
             }
@@ -378,7 +389,7 @@ switch ($method) {
             $stmtCount->execute($params);
             $total = (int) $stmtCount->fetchColumn();
 
-            $sql = "SELECT id, name, description, criteria, subscriber_count as count, phone_count, auto_cleanup_days as autoCleanupDays FROM segments" . $whereSql . " ORDER BY name ASC LIMIT $limit OFFSET $offset";
+            $sql = "SELECT id, name, description, criteria, subscriber_count as count, phone_count, auto_cleanup_days as autoCleanupDays, notify_on_join as notifyOnJoin, notify_subject as notifySubject, notify_email as notifyEmail, notify_cc as notifyCc FROM segments" . $whereSql . " ORDER BY name ASC LIMIT $limit OFFSET $offset";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
             $segments = $stmt->fetchAll();
@@ -408,8 +419,13 @@ switch ($method) {
             $data = json_decode(file_get_contents("php://input"), true);
             $id = $data['id'] ?? uniqid();
             $criteria = is_string($data['criteria']) ? $data['criteria'] : json_encode($data['criteria']);
-            $stmt = $pdo->prepare("INSERT INTO segments (id, name, description, criteria, subscriber_count, auto_cleanup_days) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$id, $data['name'], $data['description'], $criteria, $data['count'], $data['autoCleanupDays']]);
+            $notifyOnJoin = isset($data['notifyOnJoin']) && $data['notifyOnJoin'] ? 1 : 0;
+            $notifySubject = $data['notifySubject'] ?? null;
+            $notifyEmail = $data['notifyEmail'] ?? null;
+            $notifyCc = $data['notifyCc'] ?? null;
+            
+            $stmt = $pdo->prepare("INSERT INTO segments (id, name, description, criteria, subscriber_count, auto_cleanup_days, notify_on_join, notify_subject, notify_email, notify_cc) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$id, $data['name'], $data['description'], $criteria, $data['count'], $data['autoCleanupDays'], $notifyOnJoin, $notifySubject, $notifyEmail, $notifyCc]);
             $data['id'] = $id;
             jsonResponse(true, $data);
         } catch (Exception $e) {
@@ -423,8 +439,13 @@ switch ($method) {
                 jsonResponse(false, null, 'ID required');
             $data = json_decode(file_get_contents("php://input"), true);
             $criteria = is_string($data['criteria']) ? $data['criteria'] : json_encode($data['criteria']);
-            $stmt = $pdo->prepare("UPDATE segments SET name=?, description=?, criteria=?, subscriber_count=?, auto_cleanup_days=? WHERE id=?");
-            $stmt->execute([$data['name'], $data['description'], $criteria, $data['count'], $data['autoCleanupDays'], $path]);
+            $notifyOnJoin = isset($data['notifyOnJoin']) && $data['notifyOnJoin'] ? 1 : 0;
+            $notifySubject = $data['notifySubject'] ?? null;
+            $notifyEmail = $data['notifyEmail'] ?? null;
+            $notifyCc = $data['notifyCc'] ?? null;
+            
+            $stmt = $pdo->prepare("UPDATE segments SET name=?, description=?, criteria=?, subscriber_count=?, auto_cleanup_days=?, notify_on_join=?, notify_subject=?, notify_email=?, notify_cc=? WHERE id=?");
+            $stmt->execute([$data['name'], $data['description'], $criteria, $data['count'], $data['autoCleanupDays'], $notifyOnJoin, $notifySubject, $notifyEmail, $notifyCc, $path]);
             jsonResponse(true, $data);
         } catch (Exception $e) {
             jsonResponse(false, null, $e->getMessage());

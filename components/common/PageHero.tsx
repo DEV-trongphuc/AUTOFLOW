@@ -3,6 +3,7 @@ import { Star } from 'lucide-react';
 
 interface Action {
     label: string;
+    title?: string;
     icon: any;
     onClick: () => void;
     primary?: boolean;
@@ -49,21 +50,30 @@ const PageHero: React.FC<PageHeroProps> = ({
                 </p>
 
                 {actions && actions.length > 0 && (
-                    <div className="flex items-center gap-4">
-                        {actions.map((action, idx) => (
-                            <button 
-                                key={idx}
-                                onClick={action.onClick}
-                                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-xl ${
-                                    action.primary 
-                                    ? 'bg-white text-[#451a03] hover:bg-amber-50 shadow-amber-950/20' 
-                                    : 'bg-[#fbbf24] text-[#451a03] border border-[#d97706] hover:bg-[#fcd34d] hover:scale-105 shadow-lg transition-all font-black'
-                                }`}
-                            >
-                                {action.icon && <action.icon className="w-4 h-4" />}
-                                {action.label}
-                            </button>
-                        ))}
+                    <div className="flex items-center gap-4 w-full">
+                        {actions.map((action, idx) => {
+                            const isFirstIconOnly = !action.label && (idx === 0 || !!actions[idx - 1].label);
+                            
+                            return (
+                                <button 
+                                    key={idx}
+                                    onClick={action.onClick}
+                                    title={action.title || action.label}
+                                    className={`flex items-center justify-center transition-all shadow-xl ${
+                                        action.label 
+                                            ? 'gap-2 px-6 h-[40px] rounded-xl font-black text-xs uppercase tracking-wider' 
+                                            : `h-[40px] w-[40px] rounded-xl ${isFirstIconOnly ? 'ml-auto' : ''}`
+                                    } ${
+                                        action.primary 
+                                        ? 'bg-white text-[#333] hover:bg-slate-50 shadow-amber-950/20' 
+                                        : 'bg-[#fbbf24] text-[#451a03] border border-[#d97706] hover:bg-[#fcd34d] hover:scale-105 shadow-lg transition-all font-black'
+                                    }`}
+                                >
+                                    {action.icon && <action.icon className={action.label ? "w-4 h-4" : "w-5 h-5"} />}
+                                    {action.label}
+                                </button>
+                            );
+                        })}
                     </div>
                 )}
             </div>

@@ -10,6 +10,7 @@ import { api } from '../../services/storageAdapter';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
 import Select from '../common/Select';
+import ZbsGuidelinesModal from './ZbsGuidelinesModal';
 
 interface ZaloTemplate {
     id: string;
@@ -90,6 +91,7 @@ const BUTTON_TYPES = [
 
 const ZaloTemplateCreateModal: React.FC<ZaloTemplateCreateModalProps> = ({ isOpen, onClose, oaId, onSuccess, editData }) => {
     // Basic Info
+    const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
     const [name, setName] = useState('');
     const [type, setType] = useState('1');
     const [tag, setTag] = useState('1');
@@ -644,6 +646,8 @@ const ZaloTemplateCreateModal: React.FC<ZaloTemplateCreateModalProps> = ({ isOpe
     };
 
     return (
+        <>
+            <ZbsGuidelinesModal isOpen={isGuidelinesOpen} onClose={() => setIsGuidelinesOpen(false)} />
         <Modal
             isOpen={isOpen}
             onClose={onClose}
@@ -692,16 +696,21 @@ const ZaloTemplateCreateModal: React.FC<ZaloTemplateCreateModalProps> = ({ isOpe
                         )}
 
                         {/* ZBS Guidelines Link */}
-                        <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-700 text-sm flex items-start gap-4 mb-6 shadow-sm">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0">
-                                <FileCheck className="w-6 h-6" />
+                        <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-700 text-sm flex items-start justify-between gap-4 mb-6 shadow-sm">
+                            <div className="flex gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                                    <FileCheck className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <p className="font-black text-emerald-800 tracking-tight">Quy chuẩn thiết kế Zalo ZBS</p>
+                                    <p className="text-xs mt-1 text-emerald-600/90 leading-relaxed max-w-sm">
+                                        Nắm vững TẤT CẢ yêu cầu để template được <b className="text-emerald-800">duyệt ngay trong 15 phút</b>.
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="font-black text-emerald-800 tracking-tight">Quy chuẩn thiết kế Zalo ZBS</p>
-                                <p className="text-xs mt-1 text-emerald-600/90 leading-relaxed">
-                                    Vui lòng tuân thủ <a href="https://zalo.solutions/business-message/guidelines/quy-dinh-chung-khi-kiem-duyet-mau-zbs-template-message" target="_blank" rel="noopener noreferrer" className="underline font-black hover:text-emerald-900 transition-colors">Quy định kiểm duyệt của Zalo</a> để đảm bảo template được phê duyệt nhanh nhất.
-                                </p>
-                            </div>
+                            <Button size="sm" variant="primary" className="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white border-none shadow-md shadow-emerald-600/20" onClick={() => setIsGuidelinesOpen(true)}>
+                                Đọc Đầy Đủ
+                            </Button>
                         </div>
 
                         {/* SECTION 1: GLOBAL SETTINGS */}
@@ -1124,113 +1133,87 @@ const ZaloTemplateCreateModal: React.FC<ZaloTemplateCreateModalProps> = ({ isOpe
                         LIVE PREVIEW
                     </div>
 
-                    {/* PHONE SIMULATOR */}
-                    <div className="w-[340px] h-[660px] bg-white rounded-[44px] border-[10px] border-slate-800 shadow-2xl overflow-hidden flex flex-col relative transform scale-[0.95] translate-y-4">
+                    {/* PHONE SIMULATOR - ZNS PREVIEW */}
+                    <div className="w-[340px] h-[660px] bg-slate-50 rounded-[44px] border-[12px] border-slate-800 shadow-2xl overflow-hidden flex flex-col relative transform scale-[0.95] translate-y-4">
                         {/* Notch */}
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-xl z-20"></div>
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-2xl z-20"></div>
 
                         {/* Status Bar */}
-                        <div className="h-11 bg-white border-b border-slate-50 flex items-end justify-between px-6 pb-2 select-none">
-                            <span className="text-[10px] font-bold">9:41</span>
-                            <div className="flex gap-1">
-                                <div className="w-3.5 h-3.5 bg-slate-800 rounded-full opacity-20" />
-                                <div className="w-3.5 h-3.5 bg-slate-800 rounded-full opacity-20" />
+                        <div className="h-12 flex items-end justify-between px-6 pb-2 select-none z-10 shrink-0">
+                            <span className="text-[11px] font-bold text-slate-800">9:41</span>
+                            <div className="flex gap-1.5 items-center pb-0.5">
+                                <div className="w-4 h-3 bg-slate-800 rounded-[2px] opacity-80" />
+                                <div className="w-3.5 h-3.5 bg-slate-800 rounded-full opacity-80" />
                             </div>
                         </div>
 
-                        {/* Zalo Header */}
-                        <div className="bg-[#0068ff] h-12 flex items-center px-4 text-white gap-3 shadow-md z-10 shrink-0">
-                            <div className="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center text-[10px] font-bold border border-blue-300 shadow-inner">OA</div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-xs font-bold leading-none truncate">Doanh Nghiệp</p>
-                                <p className="text-[9px] opacity-80 font-medium">Đã quan tâm</p>
-                            </div>
-                        </div>
-
-                        {/* Chat Content */}
-                        <div className="flex-1 bg-[#d6e3f2] p-3 overflow-y-auto">
-                            <div className="flex gap-2 mb-4">
-                                <div className="w-8 h-8 bg-white rounded-full place-self-end shrink-0 shadow-sm overflow-hidden border border-white">
-                                    <div className="w-full h-full bg-[#0068ff] flex items-center justify-center text-white text-[9px] font-bold">OA</div>
-                                </div>
-
-                                {/* ZNS BUBBLE */}
-                                <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.05)] max-w-[88%] overflow-hidden text-sm ring-1 ring-slate-100">
-                                    {/* 1. Header Img */}
-                                    {builder.header.type === 'LOGO' ? (
-                                        <div className="h-16 border-b border-slate-50 flex items-center px-4 gap-3 bg-slate-50/50">
-                                            {previewUrls.logo ? (
-                                                <img src={previewUrls.logo} className="w-10 h-10 rounded-full object-contain bg-white shadow-sm ring-1 ring-slate-100" />
-                                            ) : (
-                                                <div className="w-10 h-10 bg-slate-200 rounded-full shrink-0 flex items-center justify-center">
-                                                    <BrainCircuit className="w-5 h-5 text-slate-400 opacity-50" />
-                                                </div>
-                                            )}
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-xs text-slate-800 leading-none">Tên Doanh Nghiệp</span>
-                                                <span className="text-[10px] text-slate-400 mt-1">Official Account</span>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="aspect-video bg-slate-100 w-full flex flex-col items-center justify-center overflow-hidden border-b border-slate-50 relative group">
-                                            {previewUrls.banner ? (
-                                                <img src={previewUrls.banner} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <>
-                                                    <ImageIcon className="w-6 h-6 text-slate-400 opacity-50" />
-                                                    <span className="text-[10px] font-medium text-slate-400">
-                                                        {builder.header.light_image ? 'Đã có Banner' : 'Chưa có Banner'}
-                                                    </span>
-                                                </>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* 2. Body */}
-                                    <div className="p-4 space-y-3">
-                                        <h3 className="font-bold text-[15px] text-slate-800 leading-tight">
-                                            {builder.body.title || 'Tiêu đề tin nhắn'}
-                                        </h3>
-
-                                        <div className="text-slate-600 text-[13px] leading-relaxed whitespace-pre-wrap">
-                                            {builder.body.content.split(/(<[^>]+>)/g).map((part, i) =>
-                                                part.match(/^<[^>]+>$/) ?
-                                                    <span key={i} className="text-blue-600 bg-blue-50 px-1 rounded font-mono font-medium text-[11px] align-middle" title="Biến động">{part}</span> :
-                                                    part
-                                            )}
-                                            {!builder.body.content && <span className="text-slate-300 italic">Nhập nội dung tin nhắn...</span>}
-                                        </div>
-
-                                        {/* Table */}
-                                        {builder.body.hasTable && (
-                                            <div className="bg-slate-50/60 rounded-lg p-3 space-y-2 border border-slate-100">
-                                                {builder.body.tableRows.map((r, i) => (
-                                                    <div key={i} className="flex justify-between text-[11px] border-b border-dashed border-slate-200 last:border-0 pb-1.5 last:pb-0">
-                                                        <span className="text-slate-500 font-medium">{r.title}</span>
-                                                        <span className="font-bold text-slate-800 font-mono">{r.value}</span>
-                                                    </div>
-                                                ))}
-                                                {builder.body.tableRows.length === 0 && <span className="text-[10px] text-slate-400 italic text-center block">Chưa có dòng nào</span>}
+                        {/* Scrollable Content */}
+                        <div className="flex-1 overflow-y-auto custom-scrollbar px-4 pb-8 pt-4">
+                            {/* ZNS WHITE CARD */}
+                            <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden relative">
+                                
+                                {/* 1. Header Img */}
+                                {builder.header.type === 'LOGO' ? (
+                                    <div className="pt-5 px-5 pb-2">
+                                        {previewUrls.logo ? (
+                                            <img src={previewUrls.logo} className="h-10 max-w-[200px] object-contain object-left" alt="ZNS Logo" />
+                                        ) : (
+                                            <div className="w-32 h-8 bg-slate-100 rounded flex items-center justify-center border border-dashed border-slate-300">
+                                                <span className="text-[10px] text-slate-400 font-medium">Logo (400x96)</span>
                                             </div>
                                         )}
                                     </div>
+                                ) : (
+                                    <div className="aspect-video bg-slate-100 w-full flex flex-col items-center justify-center overflow-hidden relative">
+                                        {previewUrls.banner ? (
+                                            <img src={previewUrls.banner} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="flex flex-col items-center gap-1 opacity-50">
+                                                <ImageIcon className="w-8 h-8 text-slate-400" />
+                                                <span className="text-[10px] font-medium text-slate-400">Banner Ảnh Bìa (16:9)</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* 2. Body Content */}
+                                <div className="p-5 space-y-4">
+                                    <h3 className="font-bold text-[17px] text-slate-900 leading-tight">
+                                        {builder.body.title || 'Tiêu đề tin nhắn ZNS'}
+                                    </h3>
+
+                                    <div className="text-slate-700 text-[14px] leading-relaxed whitespace-pre-wrap">
+                                        {builder.body.content.split(/(<[^>]+>)/g).map((part, i) =>
+                                            part.match(/^<[^>]+>$/) ?
+                                                <span key={i} className="font-bold text-slate-900">{part}</span> :
+                                                part
+                                        )}
+                                        {!builder.body.content && <span className="text-slate-300 italic">Nhập nội dung mẫu...</span>}
+                                    </div>
+
+                                    {/* Table (Borderless grid layout like user image) */}
+                                    {builder.body.hasTable && builder.body.tableRows.length > 0 && (
+                                        <div className="pt-2 flex flex-col gap-3">
+                                            {builder.body.tableRows.map((r, i) => (
+                                                <div key={i} className="flex text-[13px]">
+                                                    <span className="text-slate-500 w-[110px] shrink-0 leading-tight">{r.title}</span>
+                                                    <span className="font-bold text-slate-900 flex-1 leading-tight">{r.value}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
 
                                     {/* 3. Footer / Buttons */}
                                     {builder.footer.buttons.length > 0 && (
-                                        <div className="border-t border-slate-100 divide-y divide-slate-100 bg-slate-50/30">
+                                        <div className="pt-4 space-y-2">
                                             {builder.footer.buttons.map((btn, i) => (
-                                                <div key={i} className="py-3.5 text-center text-[#0068ff] font-bold text-[13px] hover:bg-slate-50 cursor-pointer transition-colors flex items-center justify-center gap-2">
-                                                    {btn.type === '2' && <Smartphone className="w-3.5 h-3.5" />}
-                                                    {btn.type === '1' && <LinkIcon className="w-3.5 h-3.5" />}
-                                                    {btn.title || 'Nút bấm'}
+                                                <div key={i} className="w-full py-3 bg-[#4c6ef5] text-white rounded-xl text-center font-bold text-[14px] shadow-sm">
+                                                    {btn.title || 'Nút hành động'}
                                                 </div>
                                             ))}
                                         </div>
                                     )}
                                 </div>
-                            </div>
-                            <div className="mt-4 text-[10px] text-slate-400 text-center pb-4 opacity-70">
-                                <p>Tin nhắn Zalo Notification Service (ZNS)</p>
                             </div>
                         </div>
                     </div>
@@ -1244,6 +1227,7 @@ const ZaloTemplateCreateModal: React.FC<ZaloTemplateCreateModalProps> = ({ isOpe
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
             `}</style>
         </Modal>
+        </>
     );
 };
 

@@ -452,6 +452,11 @@ if (!function_exists('runWorkerCampaign')) {
                                 }
                             } else {
                                 // EMAIL SENDING LOGIC
+                                // [MULTI-EMAIL] Dynamically override the sender for this campaign specifically
+                                if (!empty($campaign['sender_email'])) {
+                                    $mailer->setDynamicSender($campaign['sender_email']);
+                                }
+
                                 $res = $mailer->send($sub['email'], $personalSubject, $personalHtml, $sub['id'], $cid, null, null, $attachments, null, null, $cName, false, $skipQA, $variationLabel);
                             }
 

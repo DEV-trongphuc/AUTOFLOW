@@ -110,6 +110,11 @@ class FlowExecutor
                     $emailAttachments = is_array($attRaw) ? $attRaw : (json_decode($attRaw, true) ?: []);
                     $attachments = Mailer::filterAttachments($emailAttachments, $subscriber['email']);
 
+                    // [MULTI-EMAIL] Inject sender_email if specified in Flow Step
+                    if (!empty($config['senderEmail'])) {
+                        $this->mailer->setDynamicSender($config['senderEmail']);
+                    }
+
                     // Send
                     $res = $this->mailer->send($subscriber['email'], $finalSubject, $finalHtml, $subscriberId, $campaignId, $flowId, $flowName, $attachments, null, $currentStepId, $step['label']);
 

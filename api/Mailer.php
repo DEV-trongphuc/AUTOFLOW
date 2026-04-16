@@ -8,6 +8,7 @@ class Mailer
     private $smtpSettings = null;
     private $phpMailerInstance = null; // Cache PHPMailer instance
     private $sentInSession = 0; // Counter for SMTP session pooling
+    private $dynamicSender = null; // Dynamic sender for specific campaigns/flows
     private static $pathCache = []; // Optimization: Disk I/O cache for attachments
     private static $htmlTemplateCache = []; // Optimization: Regex-injected HTML cache
     private $logBuffer = []; // Optimization: Batch logging
@@ -37,14 +38,30 @@ class Mailer
         }
     }
 
+    public function setDynamicSender($email)
+    {
+        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->dynamicSender = $email;
+        } else {
+            $this->dynamicSender = null;
+        }
+    }
+
     /**
      * Dispatch an email without any tracking/footer overhead.
      * Used for QA copies and avoid recursion overhead.
      */
     public function dispatchRaw($toEmail, $subject, $htmlContent, $attachments = [], &$error = "", $ccEmails = [])
     {
-        $fromEmail = $this->smtpSettings['smtp_from_email'] ?? null;
-        if (!$fromEmail || !filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
+        $fromEmail = $this->dynamicSender;
+
+        if (!$fromEmail) {
+            $fromEmailRaw = $this->smtpSettings['smtp_from_email'] ?? '';
+            $fromEmailArray = array_map('trim', explode(',', $fromEmailRaw));
+            $fromEmail = filter_var($fromEmailArray[0] ?? '', FILTER_VALIDATE_EMAIL) ? $fromEmailArray[0] : null;
+        }
+
+        if (!$fromEmail) {
             $fromEmail = (isset($this->smtpSettings['smtp_user']) && filter_var($this->smtpSettings['smtp_user'], FILTER_VALIDATE_EMAIL))
                 ? $this->smtpSettings['smtp_user'] : $this->defaultSender;
         }

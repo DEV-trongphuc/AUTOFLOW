@@ -480,6 +480,53 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
         }
     };
 
+    const handleExportCSV = () => {
+        let headers = ['Email', 'Tên', 'SĐT', 'Trạng thái', 'Thời gian vào', 'Thời gian hoàn thành', 'Lỗi (nếu có)'];
+        if (activeTab === 'clicks' || activeTab === 'zns_clicked') {
+            headers = ['Email', 'Tên', 'SĐT', 'URL Click', 'Thiết bị', 'Hệ điều hành', 'Trình duyệt', 'Vị trí', 'Thời gian'];
+        } else if (activeTab === 'opened') {
+            headers = ['Email', 'Tên', 'SĐT', 'Số lần mở', 'Thiết bị', 'Hệ điều hành', 'Trình duyệt', 'Vị trí', 'Thời gian mở đầu'];
+        }
+        
+        const rows = participants.map(p => {
+            if (activeTab === 'clicks' || activeTab === 'zns_clicked') {
+                return [
+                    p.email || '', p.name || '', p.phone || '', p.url || '', p.device || '', p.os || '', p.browser || '', p.location || '',
+                    p.enteredAt ? new Date(p.enteredAt).toLocaleString('vi-VN') : ''
+                ];
+            } else if (activeTab === 'opened') {
+                return [
+                     p.email || '', p.name || '', p.phone || '', p.open_count || '', p.device || '', p.os || '', p.browser || '', p.location || '',
+                     p.firstOpenAt ? new Date(p.firstOpenAt).toLocaleString('vi-VN') : ''
+                ];
+            }
+            
+            const error = p.lastError || p.last_error || p.error_message || '';
+            const errorStr = typeof error === 'object' ? JSON.stringify(error) : error;
+
+            return [
+                p.email || '',
+                p.name || '',
+                p.phone || '',
+                p.status || '',
+                p.enteredAt ? new Date(p.enteredAt).toLocaleString('vi-VN') : '',
+                p.completedAt || p.updated_at || p.updatedAt ? new Date(p.completedAt || p.updated_at || p.updatedAt).toLocaleString('vi-VN') : '',
+                errorStr
+            ];
+        });
+
+        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + 
+            [headers.join(','), ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))].join("\n");
+            
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `step_${stepId}_export_${new Date().getTime()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success(`Đã xuất ${participants.length} dữ liệu`);
+    };
     const fetchTagsAndLists = async () => {
         try {
             const [tagsRes, listsRes] = await Promise.all([
@@ -590,6 +637,13 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                 <span>Thêm User</span>
                             </button>
                         )}
+                        <button
+                            onClick={handleExportCSV}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg text-xs font-bold transition-all"
+                        >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Xuất CSV</span>
+                        </button>
                         <button onClick={onClose} className="p-2 hover:bg-white hover:shadow-md rounded-full text-slate-400 transition-all">
                             <X className="w-5 h-5" />
                         </button>
@@ -890,10 +944,12 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                             <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Thời gian chờ</th>
                                                         </>
                                                     ) : activeTab !== 'opened' ? (
-                                                        <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-left">Thời gian</th>
+                                                        <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-left">
+                                                            {['failed', 'zns_failed'].includes(activeTab as string) ? 'Chi tiết lỗi' : 'Thời gian'}
+                                                        </th>
                                                     ) : null}
 
-                                                    {activeTab !== 'unsubscribed' && activeTab !== 'opened' && activeTab !== 'all_touched' && activeTab !== 'waiting' && activeTab !== 'failed' && stepType !== 'zalo_zns' && (
+                                                    {activeTab !== 'inactive' && activeTab !== 'unsubscribed' && activeTab !== 'opened' && activeTab !== 'all_touched' && activeTab !== 'waiting' && activeTab !== 'failed' && stepType !== 'zalo_zns' && (
                                                         <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
                                                             ĐỊA CHỈ IP
                                                         </th>
@@ -1110,7 +1166,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                             </>
                                                         )}
 
-                                                        {activeTab === 'failed' && (
+                                                        {['failed', 'zns_failed'].includes(activeTab as string) && (
                                                             <>
                                                                 <td className="px-6 py-3">
                                                                     <div className="flex flex-col gap-1.5">
@@ -1125,7 +1181,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                                         })()}
                                                                         <span className="text-[9px] text-slate-400 flex items-center gap-1 ml-1">
                                                                             <Clock className="w-2.5 h-2.5" />
-                                                                            Xảy ra lúc: {formatTime(p.updated_at || p.updatedAt)}
+                                                                            Xảy ra lúc: {formatTime(p.updated_at || p.updatedAt || p.completedAt)}
                                                                         </span>
                                                                     </div>
                                                                 </td>
@@ -1195,7 +1251,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                                     })()}
                                                                 </td>
                                                             </>
-                                                        ) : activeTab !== 'opened' ? (
+                                                        ) : (activeTab !== 'opened' && !['failed', 'zns_failed'].includes(activeTab as string)) ? (
                                                             <td className="px-6 py-3 text-[11px] font-medium text-slate-500">
                                                                 {(activeTab === 'failed' || activeTab === 'unsubscribed' || activeTab === 'all_touched' || activeTab === 'inactive' || p.status === 'completed' || p.status === 'processed' || p.status === 'success' || p.status === 'condition_true' || p.status === 'condition_false' || p.status === 'unsubscribed' || p.status === 'zns_sent' || p.status === 'zns_skipped') ? (
                                                                     <span className="inline-flex items-center gap-1">
@@ -1251,7 +1307,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                             </td>
                                                         ) : null}
 
-                                                        {activeTab !== 'unsubscribed' && activeTab !== 'opened' && activeTab !== 'all_touched' && activeTab !== 'waiting' && activeTab !== 'failed' && stepType !== 'zalo_zns' && (
+                                                        {activeTab !== 'inactive' && activeTab !== 'unsubscribed' && activeTab !== 'opened' && activeTab !== 'all_touched' && activeTab !== 'waiting' && activeTab !== 'failed' && stepType !== 'zalo_zns' && (
                                                             <td className="px-6 py-3 text-[11px] text-slate-500 font-mono text-right">
                                                                 {p.ip || '--'}
                                                             </td>

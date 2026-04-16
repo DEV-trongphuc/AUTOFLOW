@@ -31,7 +31,7 @@ export const LeadscoreSetupModal: React.FC<Props> = ({ isOpen, onClose }) => {
     const fetchSettings = async () => {
         setLoading(true);
         try {
-            const res = await api.get('settings');
+            const res = await api.get<any>('settings');
             if (res.success && res.data) {
                 const settings = res.data;
                 setScores({
