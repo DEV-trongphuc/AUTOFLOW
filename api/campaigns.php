@@ -1077,6 +1077,48 @@ switch ($method) {
                         }
                     }
 
+                    // [SELF-HEALING] Cross-check Clicks against subscriber_activity to prevent Dashboard/Heatmap mismatch
+                    // Specifically fixes issue where older tracking missed count_unique_clicked.
+                    if (in_array(strtolower($camp['status'] ?? ''), ['sent', 'sending'])) {
+                        $stmtClickSync = $pdo->prepare("
+                            SELECT 
+                                COUNT(*) as total_clicks, 
+                                COUNT(DISTINCT subscriber_id) as uniq_clicks 
+                            FROM subscriber_activity 
+                            WHERE campaign_id = ? AND type = 'click_link'
+                        ");
+                        $stmtClickSync->execute([$path]);
+                        $clickStats = $stmtClickSync->fetch();
+                        
+                        if ($clickStats && ((int)$clickStats['uniq_clicks'] > 0)) {
+                            // If DB counts are behind the real activity logs, sync them immediately
+                            if ((int)$camp['count_unique_clicked'] !== (int)$clickStats['uniq_clicks'] || (int)$camp['count_clicked'] !== (int)$clickStats['total_clicks']) {
+                                $camp['count_clicked'] = (int)$clickStats['total_clicks'];
+                                $camp['count_unique_clicked'] = (int)$clickStats['uniq_clicks'];
+                                $pdo->prepare("UPDATE campaigns SET count_clicked = ?, count_unique_clicked = ? WHERE id = ?")->execute([$camp['count_clicked'], $camp['count_unique_clicked'], $path]);
+                            }
+                        }
+
+                        // Also self-heal Opens (Dashboard vs Raw Logs)
+                        $stmtOpenSync = $pdo->prepare("
+                            SELECT 
+                                COUNT(*) as total_opens, 
+                                COUNT(DISTINCT subscriber_id) as uniq_opens 
+                            FROM subscriber_activity 
+                            WHERE campaign_id = ? AND type = 'open_email'
+                        ");
+                        $stmtOpenSync->execute([$path]);
+                        $openStats = $stmtOpenSync->fetch();
+                        
+                        if ($openStats && ((int)$openStats['uniq_opens'] > 0)) {
+                            if ((int)$camp['count_unique_opened'] !== (int)$openStats['uniq_opens'] || (int)$camp['count_opened'] !== (int)$openStats['total_opens']) {
+                                $camp['count_opened'] = (int)$openStats['total_opens'];
+                                $camp['count_unique_opened'] = (int)$openStats['uniq_opens'];
+                                $pdo->prepare("UPDATE campaigns SET count_opened = ?, count_unique_opened = ? WHERE id = ?")->execute([$camp['count_opened'], $camp['count_unique_opened'], $path]);
+                            }
+                        }
+                    }
+
                     $data = formatCampaign($camp);
                     $stmtRem = $pdo->prepare("SELECT * FROM campaign_reminders WHERE campaign_id = ?");
                     $stmtRem->execute([$path]);

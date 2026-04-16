@@ -571,7 +571,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     <StatBox
                                         label="Tỷ lệ Click (CTR)"
                                         value={`${clickRate}%`}
-                                        subValue={`${(stats.clicked || 0).toLocaleString()} lượt CLICKS`}
+                                        subValue={`${(stats as any).total_clicked?.toLocaleString() || stats.clicked?.toLocaleString() || 0} lượt - ${stats.clicked?.toLocaleString() || 0} người`}
                                         icon={MousePointerClick}
                                         colorClass="text-emerald-500"
                                     />
