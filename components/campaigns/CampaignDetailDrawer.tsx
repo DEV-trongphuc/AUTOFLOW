@@ -138,19 +138,31 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
         }
     }, [localCampaign?.id, isVisible, activeTab, logsPagination.page]);
 
-    // Polling logic for "sending" status progress + stats update
+    // Fetch fresh stats at least once when opened to trigger backend self-healing
+    // Polling logic continues only for "sending" status progress + stats update
     useEffect(() => {
         let pollTimer: any;
-        if (isVisible && localCampaign?.id && localCampaign.status === 'sending') {
-            pollTimer = setInterval(async () => {
+        if (isVisible && localCampaign?.id) {
+            // Unconditional initial fetch to grab latest healed DB state
+            const fetchCampaign = async () => {
                 const res = await api.get<any>(`campaigns?id=${localCampaign.id}`);
                 if (res.success) {
                     setLocalCampaign(res.data);
-                    if (res.data.status !== 'sending') {
-                        clearInterval(pollTimer);
-                    }
                 }
-            }, 5000);
+            };
+            fetchCampaign();
+
+            if (['sending', 'scheduled'].includes(localCampaign.status?.toLowerCase() || '')) {
+                pollTimer = setInterval(async () => {
+                    const res = await api.get<any>(`campaigns?id=${localCampaign.id}`);
+                    if (res.success) {
+                        setLocalCampaign(res.data);
+                        if (!['sending', 'scheduled'].includes(res.data.status?.toLowerCase() || '')) {
+                            clearInterval(pollTimer);
+                        }
+                    }
+                }, 5000);
+            }
         }
         return () => {
             if (pollTimer) clearInterval(pollTimer);
