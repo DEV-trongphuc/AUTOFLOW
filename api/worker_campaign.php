@@ -248,8 +248,8 @@ if (!function_exists('runWorkerCampaign')) {
                 }
 
                 // 2. Micro-Batch Processing Loop
-                $BATCH_SIZE = 50;   // [PERF] Increased from 20 → 50 (2.5x throughput per batch)
-                $MAX_BATCHES = 60;  // [PERF] Increased from 30 → 60 — max 3,000 emails per worker run
+                $BATCH_SIZE = 200;   // [PERF] Increased from 50 → 200 to boost throughput per batch
+                $MAX_BATCHES = 60;  // [PERF] Increased from 30 → 60 — max 12,000 emails per worker run
                                     // 450s time guard still protects against FPM exhaustion
                 $batchCount = 0;
                 $hasMore = true;
