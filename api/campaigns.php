@@ -460,6 +460,13 @@ WHERE t_sub.name = ?)";
             $totalAudience = (int) $stmtCount->fetchColumn();
         }
 
+        // [SELF-HEALING] Synchronize actual sent stats from delivery logs before refreshing
+        if ($campaignType === 'zalo_zns') {
+            $pdo->prepare("UPDATE campaigns SET count_sent = (SELECT COUNT(*) FROM zalo_delivery_logs WHERE flow_id = ? AND status IN ('sent', 'seen', 'delivered')) WHERE id = ?")->execute([$campaignId, $campaignId]);
+        } else {
+            $pdo->prepare("UPDATE campaigns SET count_sent = (SELECT COUNT(*) FROM mail_delivery_logs WHERE campaign_id = ? AND status = 'success') WHERE id = ?")->execute([$campaignId, $campaignId]);
+        }
+
         $stmt = $pdo->prepare("UPDATE campaigns SET status = 'sending', total_target_audience = ? WHERE id = ? AND
 (LOWER(status) IN ('sent', 'sending', 'scheduled', 'draft', 'paused'))");
         $stmt->execute([$totalAudience, $campaignId]);
@@ -1049,6 +1056,24 @@ switch ($method) {
                             $camp['count_unsubscribed'] = $realUnsub;
                             // Update DB asynchronously-ish (fast query)
                             $pdo->prepare("UPDATE campaigns SET count_unsubscribed = ? WHERE id = ?")->execute([$realUnsub, $path]);
+                        }
+                    }
+
+                    // [SELF-HEALING] Real-time sync for count_sent to ensure UI progress bar is always perfectly accurate 
+                    // compared to the raw mail_delivery_logs tables (solves batching lag discrepancy).
+                    if (strtolower($camp['status'] ?? '') === 'sending') {
+                        $isZns = ($camp['type'] ?? '') === 'zalo_zns';
+                        $statsSql = $isZns 
+                            ? "SELECT COUNT(*) FROM zalo_delivery_logs WHERE flow_id = ? AND status IN ('sent', 'seen', 'delivered')"
+                            : "SELECT COUNT(*) FROM mail_delivery_logs WHERE campaign_id = ? AND status = 'success'";
+                        
+                        $stmtSync = $pdo->prepare($statsSql);
+                        $stmtSync->execute([$path]);
+                        $realSent = (int)$stmtSync->fetchColumn();
+                        
+                        if ($realSent > (int)$camp['count_sent']) {
+                            $camp['count_sent'] = $realSent;
+                            $pdo->prepare("UPDATE campaigns SET count_sent = ? WHERE id = ?")->execute([$realSent, $path]);
                         }
                     }
 
