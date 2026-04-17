@@ -776,6 +776,61 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                 </div>
                             </div>
                         )}
+                        {selectedBlock.type === 'header' && (
+                            <div className="space-y-6">
+                                <Accordion title="Logo" icon={LucideIcons.Image} defaultOpen>
+                                    <div className="space-y-4">
+                                        <ImageUploader label="Logo Image" value={selectedBlock.content} onChange={(url: string) => onUpdateBlock(selectedBlock.id, { content: url })} />
+                                        <Input label="Alt Text" value={selectedBlock.altText || ''} onChange={(e) => onUpdateBlock(selectedBlock.id, { altText: e.target.value })} />
+                                        <div className="pt-2">
+                                            <VisualMeasure label="Logo Width" value={getStyle('logoWidth')} defaultValue={120} onChange={(v) => updateStyle({ logoWidth: v })} max={300} unit="px" />
+                                        </div>
+                                    </div>
+                                </Accordion>
+
+                                <Accordion title="Menu Links" icon={LucideIcons.Link} defaultOpen>
+                                    <div className="space-y-4">
+                                        <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
+                                            {(['link', 'button'] as const).map(v => (
+                                                <button key={v} onClick={() => updateStyle({ headerMenuType: v })} className={`flex-1 py-1.5 rounded-lg flex items-center justify-center text-[10px] uppercase font-bold transition-all ${(getStyle('headerMenuType') || 'link') === v ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}>{v === 'link' ? 'Simple Link' : 'CTA Button'}</button>
+                                            ))}
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            {selectedBlock.items?.map((item, i) => (
+                                                <div key={item.id} className="bg-slate-50 p-3 rounded-2xl border border-slate-100 relative group space-y-2">
+                                                    <button onClick={() => removeTimelineItem(i)} className="absolute top-2 right-2 text-slate-300 hover:text-rose-500"><LucideIcons.X className="w-3.5 h-3.5" /></button>
+                                                    <Input label="Label" value={item.title} onChange={(e) => handleTimelineItemChange(i, 'title', e.target.value)} />
+                                                    <div className="flex items-center justify-between gap-4">
+                                                        <div className="flex-1">
+                                                            <Input label="URL" value={item.description} onChange={(e) => handleTimelineItemChange(i, 'description', e.target.value)} icon={LucideIcons.Link} />
+                                                        </div>
+                                                        <div className="flex flex-col gap-1.5 pt-4">
+                                                            <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                                                                {(['link', 'button'] as const).map(type => (
+                                                                    <button 
+                                                                        key={type} 
+                                                                        onClick={() => handleTimelineItemChange(i, 'menuType' as any, type)}
+                                                                        className={`p-1.5 rounded-md transition-all ${ (item.menuType || (getStyle('headerMenuType') || 'link')) === type ? 'bg-white shadow-sm text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                                                        title={type === 'link' ? 'Simple Link' : 'CTA Button'}
+                                                                    >
+                                                                        {type === 'link' ? <LucideIcons.Link className="w-3 h-3" /> : <LucideIcons.Square className="w-3 h-3" />}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            <button onClick={() => {
+                                                const newItem: ListItem = { id: crypto.randomUUID(), title: 'New Link', description: 'https://' };
+                                                onUpdateBlock(selectedBlock.id, { items: [...(selectedBlock.items || []), newItem] });
+                                            }} className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-[10px] font-bold text-slate-400 hover:text-amber-600 hover:border-amber-600 transition-all uppercase tracking-widest leading-none"><LucideIcons.Plus className="w-3.5 h-3.5 inline mr-1" /> Thêm menu item</button>
+                                        </div>
+                                    </div>
+                                </Accordion>
+                            </div>
+                        )}
                         {selectedBlock.type === 'voucher' && (
                             <div className="space-y-4">
                                 <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-4">
@@ -1201,6 +1256,33 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                     <ColorPicker label="Màu nhãn (Ngày, Giờ...)" value={getStyle('labelColor') || '#004a7c'} onChange={(v, t) => handleColorUpdate(v, t, 'labelColor' as any)} blocks={blocks} bodyStyle={bodyStyle} />
                                 </div>
                             </Accordion>
+                        )}
+
+                        {selectedBlock.type === 'header' && (
+                            <div className="space-y-4">
+                                <Accordion title="Header Styles" icon={LucideIcons.Layout} defaultOpen>
+                                    <div className="space-y-4">
+                                        <VisualMeasure label="Menu Gap" value={getStyle('menuGap')} defaultValue={20} onChange={(v) => updateStyle({ menuGap: v })} max={50} unit="px" />
+                                        
+                                        <div className="pt-3 border-t border-slate-100 space-y-4">
+                                            {(getStyle('headerMenuType') || 'link') === 'button' ? (
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <ColorPicker label="Button Bg" solidOnly value={getStyle('buttonBg') || '#d97706'} onChange={(v) => updateStyle({ buttonBg: v })} blocks={blocks} bodyStyle={bodyStyle} />
+                                                    <ColorPicker label="Button Text" solidOnly value={getStyle('buttonColor') || '#ffffff'} onChange={(v) => updateStyle({ buttonColor: v })} blocks={blocks} bodyStyle={bodyStyle} />
+                                                </div>
+                                            ) : (
+                                                <ColorPicker label="Link Color" solidOnly value={getStyle('color') || '#475569'} onChange={(v, t) => handleColorUpdate(v, t, 'color')} blocks={blocks} bodyStyle={bodyStyle} />
+                                            )}
+                                        </div>
+                                    </div>
+                                </Accordion>
+
+                                <Accordion title="Kích thước & Khoảng cách" icon={LucideIcons.Maximize} defaultOpen>
+                                    <ColorPicker label="Background Color" value={getStyle('backgroundColor')} onChange={(v, t) => handleColorUpdate(v, t, 'backgroundColor')} blocks={blocks} bodyStyle={bodyStyle} />
+                                    <SpacingControl label="Padding" values={{ top: getStyle('paddingTop'), right: getStyle('paddingRight'), bottom: getStyle('paddingBottom'), left: getStyle('paddingLeft') }} onChange={(v: any) => updateStyle({ paddingTop: v.top, paddingRight: v.right, paddingBottom: v.bottom, paddingLeft: v.left })} />
+                                    <RadiusControl label="Border Radius" values={{ borderRadius: getStyle('borderRadius') }} onChange={(v: any) => updateStyle({ borderRadius: v.borderRadius })} />
+                                </Accordion>
+                            </div>
                         )}
 
                         {selectedBlock.type === 'divider' && (

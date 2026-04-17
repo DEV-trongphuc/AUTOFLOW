@@ -189,6 +189,12 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                 padding-top: 10px !important;
                 padding-bottom: 10px !important;
             }
+            .center-on-narrow {
+                text-align: center !important;
+                display: block !important;
+                margin: 0 auto !important;
+                float: none !important;
+            }
             .mobile-hide { display: none !important; }
         }
     </style>
@@ -326,6 +332,55 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const tableMarginCss = `margin-top: ${btnMarginTop}; margin-bottom: ${btnMarginBottom}; margin-left: ${btnMarginLeft}; margin-right: ${btnMarginRight};`;
 
             return `<tr><td align="${btnAlign}" style="width: 100%; text-align: ${btnAlign} !important;"><!--[if mso]><table role="presentation" border="0" cellspacing="0" cellpadding="0" align="${btnAlign}" width="${tableWidth}" style="${tableMarginCss} width: ${btnWidth};"><tr><td align="center" style="background: ${btnBg}; border-radius: ${btnRadius};"><![endif]--><!--[if !mso]><!--><table border="0" cellspacing="0" cellpadding="0" align="${btnAlign}" width="${tableWidth}" style="${tableMarginCss} display: inline-table; border-collapse: separate; width: ${btnWidth};"><!--<![endif]--><tr><td align="center" class="${parentNoStack ? 'btn-nostack' : ''}" style="${getBorderStyle(s)} border-radius: ${btnRadius};"><a class="btn-link ${parentNoStack ? 'btn-nostack' : ''}" href="${b.url || '#'}" target="_blank" style="font-family: ${bodyStyle.fontFamily || "'Roboto', Arial, sans-serif"}; font-size: ${s.fontSize || '16px'}; font-weight: ${s.fontWeight || 'bold'}; font-style: ${s.fontStyle || 'normal'}; text-decoration: ${s.textDecoration || 'none'}; text-transform: ${s.textTransform || 'none'}; color: ${btnColor} !important; border-radius: ${btnRadius}; -webkit-border-radius: ${btnRadius}; -moz-border-radius: ${btnRadius}; ${btnPadding} ${btnHeight}${btnLineHeight}display: block; background: ${btnBg}; width: ${btnWidth}; box-sizing: border-box; text-align: center; overflow: hidden;">${b.content || 'BUTTON'}</a></td></tr></table><!--[if mso]></td></tr></table><![endif]--></td></tr>`;
+        }
+
+        if (b.type === 'header') {
+            const menuType = (s as any).headerMenuType || 'link';
+            const menuGap = parseInt((s as any).menuGap || '20px');
+            const logoWidth = (s as any).logoWidth || '120px';
+            const btnBg = (s as any).buttonBg || '#d97706';
+            const btnColor = (s as any).buttonColor || '#ffffff';
+            const menuItems = b.items || [];
+            
+            const menuHtml = menuItems.map((item, i) => {
+                const paddingLeft = i === 0 ? 0 : menuGap;
+                const itemLink = item.description || '#';
+                const itemType = item.menuType || menuType;
+                
+                if (itemType === 'button') {
+                    return `<td style="padding-left: ${paddingLeft}px; padding-top: 5px; padding-bottom: 5px;"><table role="presentation" border="0" cellspacing="0" cellpadding="0" align="center"><tr><td align="center" bgcolor="${btnBg}" style="border-radius: 6px; padding: 8px 16px;"><a href="${itemLink}" target="_blank" style="font-family: ${fontFamily}; font-size: 13px; font-weight: bold; color: ${btnColor} !important; text-decoration: none; display: block;">${item.title}</a></td></tr></table></td>`;
+                } else {
+                    return `<td style="padding-left: ${paddingLeft}px; padding-top: 5px; padding-bottom: 5px;"><a href="${itemLink}" target="_blank" style="font-family: ${fontFamily}; font-size: 14px; font-weight: 600; color: ${s.color || '#475569'} !important; text-decoration: none;">${item.title}</a></td>`;
+                }
+            }).join('');
+
+            return wrapWithMargin(`
+                <td align="center" style="${paddingCss} ${getBackgroundStyle(s)}">
+                    <!--[if mso]><table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"><tr><td width="30%" align="left" valign="middle"><![endif]-->
+                    <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%">
+                        <tr>
+                            <!-- Logo Column -->
+                            <td class="col-resp" align="left" valign="middle" style="padding: 0; text-align: left;">
+                                <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%">
+                                    <tr>
+                                        <td align="left" class="center-on-narrow">
+                                            <img src="${b.content || 'https://via.placeholder.com/120x40?text=Logo'}" width="${logoWidth.replace('px', '')}" style="display: block; width: ${logoWidth}; max-width: 100%; height: auto; border: 0;" alt="${b.altText || 'Logo'}" />
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <!--[if mso]></td><td width="70%" align="right" valign="middle"><![endif]-->
+                            <!-- Menu Column -->
+                            <td class="col-resp" align="right" valign="middle" style="padding: 0; text-align: right;">
+                                <table role="presentation" border="0" cellspacing="0" cellpadding="0" align="right" class="center-on-narrow" style="display: inline-table;">
+                                    <tr>${menuHtml}</tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                    <!--[if mso]></td></tr></table><![endif]-->
+                </td>
+            `);
         }
 
         if (b.type === 'timeline') {

@@ -179,6 +179,29 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
         };
     }
 
+
+    // NEW: Header Block (Logo Left, Menu Right)
+    if (type === 'header') {
+        content = 'https://cdn-icons-png.flaticon.com/512/6124/6124998.png'; // Default Logo
+        items = [
+            { id: createUniqueId(), title: 'Home', description: 'https://example.com' },
+            { id: createUniqueId(), title: 'Features', description: 'https://example.com' },
+            { id: createUniqueId(), title: 'Contact', description: 'https://example.com' },
+        ];
+        styleOverrides.backgroundColor = '#ffffff';
+        styleOverrides.paddingTop = '15px';
+        styleOverrides.paddingBottom = '15px';
+        styleOverrides.paddingLeft = '30px';
+        styleOverrides.paddingRight = '30px';
+        styleOverrides.textAlign = 'right'; // For menu items
+        // Custom properties for header
+        (styleOverrides as any).logoWidth = '120px';
+        (styleOverrides as any).headerMenuType = 'link'; // 'link' or 'button'
+        (styleOverrides as any).menuGap = '20px';
+        (styleOverrides as any).buttonBg = '#d97706';
+        (styleOverrides as any).buttonColor = '#ffffff';
+    }
+
     // NEW: Footer Block
     if (type === 'footer') {
         content = '<p style="margin: 0; font-size: 12px; color: #64748b; text-align: center;">' +

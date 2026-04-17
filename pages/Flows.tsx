@@ -46,7 +46,7 @@ import EmptyState from '../components/common/EmptyState';
 import Tabs from '../components/common/Tabs';
 import TabTransition from '../components/common/TabTransition';
 import TipsModal from '../components/common/TipsModal';
-import { useIsAdmin } from '../hooks/useAuthUser';
+import { useIsAdmin, useAuthUser } from '../hooks/useAuthUser';
 
 type FlowFilter = 'all' | 'active' | 'draft' | 'paused' | 'archived';
 type TriggerTypeFilter = 'all' | 'segment' | 'date' | 'campaign' | 'form' | 'tag';
@@ -174,6 +174,7 @@ const Flows: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const isAdmin = useIsAdmin();
+    const currentUser = useAuthUser();
     const [flows, setFlows] = useState<Flow[]>([]);
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [forms, setForms] = useState<FormDefinition[]>([]);
@@ -481,7 +482,7 @@ const Flows: React.FC = () => {
                     id: snapshotId,
                     label: logMsg,
                     flow_data: updated,
-                    created_by: (window as any).__currentUser?.name || (window as any).__currentUser?.email || 'Admin'
+                    created_by: currentUser?.name || currentUser?.email || 'Admin'
                 }).then(() => {
                     // Refresh snapshot list in background
                     api.get<FlowSnapshot[]>(`flows?id=${updated.id}&route=flow-snapshots`).then(res => {

@@ -48,9 +48,7 @@ export const SystemConnectionsModal: React.FC<Props> = ({ isOpen, onClose }) => 
             name: 'Máy chủ Gửi Email',
             desc: 'Cấu hình SMTP (Amazon SES, SendGrid...) để gửi chiến dịch tự động.',
             icon: Mail,
-            color: 'text-amber-500',
-            bg: 'bg-amber-50',
-            border: 'border-amber-200',
+            color: 'from-amber-400 to-orange-500',
             status: fetchedStatus ? fetchedStatus.smtp : false,
             path: '/settings'
         },
@@ -60,32 +58,26 @@ export const SystemConnectionsModal: React.FC<Props> = ({ isOpen, onClose }) => 
             desc: 'Kết nối Official Account gửi tin nhắn Zalo chăm sóc khách hàng.',
             icon: MessageSquare,
             imageUrl: 'https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Zalo-Arc.png',
-            color: 'text-blue-500',
-            bg: 'bg-blue-50',
-            border: 'border-blue-200',
+            color: 'from-[#0068FF] to-[#00c6ff]',
             status: fetchedStatus ? fetchedStatus.zalo : false,
-            path: '/settings'
+            path: '/zalo-settings'
         },
         {
             id: 'mess',
             name: 'Messenger',
             desc: 'Gửi tin nhắn chăm sóc tự động và thu thập Khách hàng từ Fanpage.',
             icon: Smartphone,
-            imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQwESTE4gC5EjHVEh0GMHxFEkbc9xadlRePkA&s',
-            color: 'text-indigo-500',
-            bg: 'bg-indigo-50',
-            border: 'border-indigo-200',
+            imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg',
+            color: 'from-[#0668E1] to-[#00f2fe]',
             status: fetchedStatus ? fetchedStatus.meta : false,
-            path: '/settings'
+            path: '/meta-messenger'
         },
         {
             id: 'api',
             name: 'Forms & API Webhooks',
             desc: 'Thu thập Khách hàng trực tiếp từ Form hoặc qua ứng dụng thứ ba (CRM, POS...).',
             icon: Code,
-            color: 'text-violet-500',
-            bg: 'bg-violet-50',
-            border: 'border-violet-200',
+            color: 'from-violet-500 to-purple-600',
             status: fetchedStatus ? fetchedStatus.api : false,
             path: '/api-triggers'
         },
@@ -94,20 +86,16 @@ export const SystemConnectionsModal: React.FC<Props> = ({ isOpen, onClose }) => 
             name: 'Website Tracking Pixel',
             desc: 'Gắn mã theo dõi hành vi Khách truy cập web, giỏ hàng, mua hàng.',
             icon: Globe,
-            color: 'text-emerald-500',
-            bg: 'bg-emerald-50',
-            border: 'border-emerald-200',
+            color: 'from-cyan-500 to-blue-600',
             status: fetchedStatus ? fetchedStatus.tracking : false,
-            path: '/forms' // Assuming tracking instructions might be near forms or landing pages
+            path: '/web-tracking'
         },
         {
             id: 'ai',
             name: 'AI Chatbot Assistant',
             desc: 'Triển khai tư vấn viên tự động sử dụng trí tuệ nhân tạo riêng biệt.',
             icon: Bot,
-            color: 'text-rose-500',
-            bg: 'bg-rose-50',
-            border: 'border-rose-200',
+            color: 'from-rose-500 to-red-600',
             status: fetchedStatus ? fetchedStatus.ai : false,
             path: '/ai-training'
         }
@@ -129,7 +117,7 @@ export const SystemConnectionsModal: React.FC<Props> = ({ isOpen, onClose }) => 
                     <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600" />
                     
                     <div className="flex items-center gap-4 relative z-10">
-                        <div className="w-12 h-12 rounded-[14px] bg-white shadow-sm border border-slate-200 flex items-center justify-center text-emerald-600">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
                             <Link className="w-6 h-6" />
                         </div>
                         <div>
@@ -151,11 +139,11 @@ export const SystemConnectionsModal: React.FC<Props> = ({ isOpen, onClose }) => 
                         {connections.map((item, idx) => (
                                 <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all flex flex-col group">
                                     <div className="flex items-start gap-4 mb-4">
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center border shrink-0 ${item.bg} ${item.color} ${item.border}`}>
+                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-lg transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 overflow-hidden ${item.imageUrl ? 'bg-white border border-slate-100' : `bg-gradient-to-br ${item.color} text-white`}`}>
                                             {item.imageUrl ? (
-                                                <img src={item.imageUrl} alt={item.name} className="w-7 h-7 object-contain mix-blend-multiply rounded" />
+                                                <img src={item.imageUrl} alt={item.name} className="w-full h-full object-contain p-1.5" />
                                             ) : (
-                                                <item.icon className="w-6 h-6" />
+                                                <item.icon className="w-7 h-7" />
                                             )}
                                         </div>
                                         <div className="flex-1 min-w-0">

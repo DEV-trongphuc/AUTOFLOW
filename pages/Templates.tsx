@@ -434,7 +434,7 @@ const Templates: React.FC = () => {
                                 >
                                     <Globe className={`w-3.5 h-3.5 lg:w-4 h-4 transition-transform duration-500 ${filterGroupId === 'all' ? 'rotate-12 scale-110' : ''}`} />
                                     Tất cả mẫu
-                                    <span className={`text-[9px] lg:text-[10px] px-1.5 lg:px-2 py-0.5 rounded-full ${filterGroupId === 'all' ? 'bg-white dark:bg-slate-900/20' : 'bg-slate-100'}`}>{allMergedTemplates.length}</span>
+                                    <span className={`text-[9px] lg:text-[10px] px-1.5 lg:px-2 py-0.5 rounded-full ${filterGroupId === 'all' ? 'bg-white text-amber-600 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>{allMergedTemplates.length}</span>
                                 </button>
 
                                 {groups.map(group => (
@@ -445,7 +445,7 @@ const Templates: React.FC = () => {
                                         >
                                             <FolderOpen className={`w-3.5 h-3.5 lg:w-4 h-4 transition-transform duration-500 ${filterGroupId === group.id ? 'rotate-12 scale-110' : 'opacity-50'}`} />
                                             <span className="truncate max-w-[120px] lg:max-w-[150px]">{group.name}</span>
-                                            <span className={`text-[9px] lg:text-[10px] px-1.5 lg:px-2 py-0.5 rounded-full ${filterGroupId === group.id ? 'bg-white dark:bg-slate-900/20' : 'bg-slate-100'}`}>
+                                            <span className={`text-[9px] lg:text-[10px] px-1.5 lg:px-2 py-0.5 rounded-full ${filterGroupId === group.id ? 'bg-white text-amber-600 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
                                                 {allMergedTemplates.filter(t => t.groupId === group.id).length}
                                             </span>
                                         </button>

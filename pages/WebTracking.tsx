@@ -387,7 +387,7 @@ const WebTracking: React.FC = () => {
                         showStatus={true}
                         statusText="Realtime Engine Active"
                         actions={[
-                            { label: 'Thêm Website', icon: Plus, onClick: () => setIsAddOpen(true), primary: true }
+                            { label: 'Thêm Website', icon: Plus, onClick: () => setIsAddOpen(true) }
                         ]}
                     />
 
@@ -554,7 +554,7 @@ const WebTracking: React.FC = () => {
             {view === 'report' && selectedWebsite && (
                 <div className="animate-fade-in space-y-8">
                     <div className="flex items-center gap-3">
-                        
+
                         <div className="flex-1 w-full">
                             <PageHero
                                 title={<>Website: <span className="text-amber-100/80">{selectedWebsite.name}</span></>}

@@ -724,6 +724,142 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                     </table>
                 );
 
+            case 'header': {
+                const globalMenuType = (block.style as any).headerMenuType || 'link';
+                const menuGap = (block.style as any).menuGap || '20px';
+                const logoWidth = (block.style as any).logoWidth || '120px';
+                const btnBg = (block.style as any).buttonBg || '#d97706';
+                const btnColor = (block.style as any).buttonColor || '#ffffff';
+                const menuItems = block.items || [];
+
+                const onLogoResizeMouseDown = (e: React.MouseEvent) => {
+                    if (!isSelected) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const startX = e.clientX;
+                    const startWidth = parseInt(logoWidth);
+
+                    const onMouseMove = (moveEvent: MouseEvent) => {
+                        const delta = moveEvent.clientX - startX;
+                        const newWidth = Math.max(30, Math.min(500, startWidth + delta));
+                        onUpdateBlock?.(block.id, { style: { ...block.style, logoWidth: `${newWidth}px` } as any });
+                    };
+
+                    const onMouseUp = () => {
+                        window.removeEventListener('mousemove', onMouseMove);
+                        window.removeEventListener('mouseup', onMouseUp);
+                        document.body.style.cursor = 'default';
+                    };
+
+                    window.addEventListener('mousemove', onMouseMove);
+                    window.addEventListener('mouseup', onMouseUp);
+                    document.body.style.cursor = 'col-resize';
+                };
+
+                return (
+                    <div style={{
+                        width: '100%',
+                        padding: `${css.paddingTop ?? '15px'} ${css.paddingRight ?? '30px'} ${css.paddingBottom ?? '15px'} ${css.paddingLeft ?? '30px'}`,
+                        backgroundColor: css.backgroundColor ?? '#ffffff',
+                        borderRadius: sanitizeRadius(css.borderRadius),
+                        overflow: 'visible' // Changed to visible for resize handle
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexDirection: viewMode === 'mobile' ? 'column' : 'row'
+                        }}>
+                             {/* Logo Section */}
+                            <div style={{ 
+                                flexShrink: 0, 
+                                width: viewMode === 'mobile' ? '100%' : 'auto', 
+                                textAlign: viewMode === 'mobile' ? 'center' : 'left',
+                                marginBottom: viewMode === 'mobile' ? '15px' : '0px',
+                                position: 'relative',
+                                display: 'inline-block'
+                            }}>
+                                <div style={{ position: 'relative', display: 'inline-block' }}>
+                                    <img 
+                                        src={block.content || 'https://via.placeholder.com/120x40?text=Logo'} 
+                                        style={{ width: logoWidth, height: 'auto', display: 'inline-block' }} 
+                                        alt={block.altText || 'Logo'} 
+                                    />
+                                    {isSelected && viewMode !== 'mobile' && (
+                                        <div 
+                                            onMouseDown={onLogoResizeMouseDown}
+                                            style={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                bottom: 0,
+                                                right: -8,
+                                                width: 16,
+                                                cursor: 'col-resize',
+                                                zIndex: 30,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                            className="group/resizer"
+                                        >
+                                            {/* Visual Handle */}
+                                            <div className="w-1.5 h-full flex flex-col items-center justify-center gap-1 group-hover/resizer:bg-amber-100/20 rounded-full transition-all">
+                                                <div className="w-1 h-12 bg-amber-500 rounded-full shadow-sm" />
+                                                <div className="absolute -right-1.5 bg-amber-600 text-white p-1 rounded-full shadow-lg opacity-0 group-hover/resizer:opacity-100 transition-opacity">
+                                                    <LucideIcons.ChevronsLeftRight className="w-2.5 h-2.5" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Menu Section */}
+                            <div style={{ 
+                                display: 'flex', 
+                                flexWrap: 'wrap',
+                                justifyContent: viewMode === 'mobile' ? 'center' : 'flex-end',
+                                width: viewMode === 'mobile' ? '100%' : 'auto',
+                                gap: menuGap,
+                                alignItems: 'center'
+                            }}>
+                                {menuItems.map((item) => {
+                                    const itemType = item.menuType || globalMenuType;
+                                    return (
+                                        <div key={item.id}>
+                                            {itemType === 'button' ? (
+                                                <div style={{
+                                                    padding: '8px 16px',
+                                                    backgroundColor: btnBg,
+                                                    color: btnColor,
+                                                    borderRadius: '6px',
+                                                    fontSize: '13px',
+                                                    fontWeight: 'bold',
+                                                    cursor: 'pointer'
+                                                }}>
+                                                    {item.title}
+                                                </div>
+                                            ) : (
+                                                <div style={{
+                                                    fontSize: '14px',
+                                                    fontWeight: '600',
+                                                    color: css.color || '#475569',
+                                                    cursor: 'pointer',
+                                                    fontFamily: css.fontFamily
+                                                }}>
+                                                    {item.title}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
             case 'table':
                 return (
                     <TableBlockCanvas

@@ -15,6 +15,7 @@ export const TOOLBOX_ITEMS = [
     { id: 'divider', label: 'Divider', icon: 'Minus', cat: 'basic' },
     { id: 'table', label: 'Bảng', icon: 'Table2', cat: 'basic' },
     { id: 'footer', label: 'Footer', icon: 'PanelBottom', cat: 'basic' },
+    { id: 'header', label: 'Header', icon: 'Layout', cat: 'basic' },
     { id: 'spacer', label: 'Spacer', icon: 'Layers', cat: 'basic' },
     { id: '1', type: 'layout', layout: '1', label: '1 Cột', cat: 'layout' },
     { id: '2', type: 'layout', layout: '2', label: '2 Cột', cat: 'layout' },

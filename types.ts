@@ -174,6 +174,13 @@ export interface EmailBlockStyle {
   voucherTextColor?: string;
   voucherButtonBg?: string;
   voucherButtonTextColor?: string;
+  
+  // Header Specific
+  headerMenuType?: 'link' | 'button';
+  logoWidth?: string;
+  menuGap?: string;
+  buttonBg?: string;
+  buttonColor?: string;
 
   noStack?: boolean;
 }
@@ -197,6 +204,7 @@ export interface ListItem {
   date?: string;
   icon?: string;
   customIconUrl?: string;
+  menuType?: 'link' | 'button';
 }
 
 export interface TableCell {
