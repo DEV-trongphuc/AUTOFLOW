@@ -27,6 +27,7 @@ import { NavigationProvider } from './contexts/NavigationContext';
 import { ChatPageProvider } from './contexts/ChatPageContext';
 import { KeyboardShortcutsProvider } from './components/common/KeyboardShortcutsProvider';
 import { AuthProvider } from './components/contexts/AuthContext';
+import { SettingsProvider } from './components/contexts/SettingsContext';
 import { apiEvents } from './services/storageAdapter';
 
 // Lazy load heavy pages for code splitting
@@ -118,10 +119,12 @@ const App: React.FC = () => {
         if (!localStorage.getItem('user')) seedData();
     }, []);
 
-    // ── Worker Heartbeat ──────────────────────────────────────────────────────
+    // ── Worker Heartbeat + Activity Tracker ──────────────────────────────────
     // Ping worker_queue.php every 60s so scheduled flow steps (e.g. after a
     // Delay step) are processed promptly instead of waiting for a random API hit.
+    // Also pings auth.php every 5 min to keep last_login fresh while user is active.
     const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const activityRef = useRef<ReturnType<typeof setInterval> | null>(null);
     useEffect(() => {
         const isLocal =
             window.location.hostname === 'localhost' ||
@@ -137,12 +140,22 @@ const App: React.FC = () => {
             fetch(`${apiBase}/worker_flow.php`, { method: 'GET', credentials: 'include' }).catch(() => { });
         };
 
+        // [NEW] Ping auth.php to refresh last_login every 5 minutes
+        // db_connect.php already throttles the UPDATE to max once per 5 min via session
+        const pingActivity = () => {
+            if (document.visibilityState !== 'visible') return;
+            fetch(`${apiBase}/auth.php?action=ping`, { method: 'GET', credentials: 'include' }).catch(() => { });
+        };
+
         // Immediate first ping, then every 60 seconds
         pingWorker();
+        pingActivity(); // Update last_login on app load
         heartbeatRef.current = setInterval(pingWorker, 60_000);
+        activityRef.current = setInterval(pingActivity, 5 * 60_000); // every 5 min
 
         return () => {
             if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+            if (activityRef.current) clearInterval(activityRef.current);
         };
     }, []);
     // ─────────────────────────────────────────────────────────────────────────
@@ -199,6 +212,7 @@ const App: React.FC = () => {
             />
             <GlobalDeleteOverlay />
             <AuthProvider>
+                <SettingsProvider>
                 <HashRouter>
                     <KeyboardShortcutsProvider>
                         <NavigationProvider>
@@ -287,6 +301,7 @@ const App: React.FC = () => {
                         </NavigationProvider>
                     </KeyboardShortcutsProvider>
                 </HashRouter>
+                </SettingsProvider>
             </AuthProvider>
         </QueryClientProvider>
     );

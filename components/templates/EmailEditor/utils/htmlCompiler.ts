@@ -3,9 +3,9 @@ import { SHARED_EMAIL_CSS } from '../constants/editorStyles';
 
 // Utility: Sanitize border-radius to prevent double 'px' suffix
 const sanitizeRadius = (val: string | undefined): string => {
-    if (!val) return '0px';
-    // Remove any existing 'px' and add it back once
+    if (!val) return ''; // [FIX] return '' instead of '0px' so caller can omit border-radius entirely
     const cleaned = val.replace(/px/g, '').trim();
+    if (!cleaned) return '';
     // Handle multi-value radius (e.g., "10 20 30 40" or "10px 20px 30px 40px")
     const values = cleaned.split(/\s+/).filter(v => v);
     return values.map(v => `${v}px`).join(' ');
@@ -96,7 +96,8 @@ export const getIconUrl = (iconName: string, color: string) => {
     return `https://img.icons8.com/ios-filled/${(tag === 'twitter' || tag === 'star') ? '50' : '100'}/${cleanColor}/${tag}.png`;
 };
 
-export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, title: string) => {
+export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, title: string, options: { isPreview?: boolean } = {}) => {
+    const { isPreview = false } = options;
 
     const HEAD_CSS = `
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -855,6 +856,19 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
     </script>
     `;
 
+    // ── [NEW] Auto-inject unsubscribe safety net ─────────────────────────────
+    // If no block in the layout contains {{unsubscribe_url}}, append a
+    // minimal legal-compliance footer row to prevent accidental spam flagging.
+    const allBlocksHtml = blocks.map(b => renderBlock(b).trim()).join('');
+    const hasUnsubTag = /\{\{\s*unsubscribe_url\s*\}\}/i.test(
+        blocks.map(b => JSON.stringify(b)).join('')
+    );
+    const unsubFallbackRow = !hasUnsubTag
+        ? `<tr><td align="center" style="padding: 24px 20px 16px; font-family: ${bodyStyle.fontFamily || "'Roboto', Arial, sans-serif"}; font-size: 12px; color: #94a3b8; text-align: center;">` +
+          `<a href="{{unsubscribe_url}}" style="color: #94a3b8; text-decoration: underline;">Hủy đăng ký nhận email này</a>` +
+          `</td></tr>`
+        : '';
+
     return `<!DOCTYPE html>
 <html lang="vi" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
@@ -872,12 +886,13 @@ ${HEAD_CSS}
 <center>
 <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 0 auto;">
 <tbody>
-${blocks.map(b => renderBlock(b).trim()).join('')}
+${allBlocksHtml}
+${unsubFallbackRow}
 </tbody>
 </table>
 </center>
 </div>
-${PREVIEW_SCRIPT}
+${isPreview ? PREVIEW_SCRIPT : '<!-- email client: no scripts -->'}
 </body>
 </html>`.trim();
 };

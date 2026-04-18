@@ -799,13 +799,18 @@ const Flows: React.FC = () => {
             const targetFlow = flows.find(f => f.id === navState.openFlowId);
             if (targetFlow) {
                 setSelectedFlow(JSON.parse(JSON.stringify(targetFlow)));
-                // FIX: Support opening to a specific tab (e.g. analytics)
                 const initialTab = navState.tab || 'builder';
                 setFlowViewTab(initialTab as FlowViewTab);
                 window.history.replaceState({}, document.title);
+
+                // [FIX] Lazy-load full steps (list has only trigger step due to PERF-F3)
+                api.get<Flow>(`flows?id=${targetFlow.id}`).then(res => {
+                    if (res.success && res.data) setSelectedFlow(res.data);
+                }).catch(() => {});
             }
         }
     }, [flows, location.state]);
+
 
     // NEW: Handle Redirects for Creation
     const [prefillCampaignId, setPrefillCampaignId] = useState<string | undefined>();
@@ -892,12 +897,25 @@ const Flows: React.FC = () => {
     const segmentsMap = useMemo(() => new Map((Array.isArray(allSegments) ? allSegments : []).map(s => [s.id, s])), [allSegments]);
     const listsMap = useMemo(() => new Map((Array.isArray(allLists) ? allLists : []).map(l => [l.id, l])), [allLists]);
 
-    const handleFlowClick = React.useCallback((flow: Flow) => {
+    const handleFlowClick = React.useCallback(async (flow: Flow) => {
         if (flow.status !== 'archived') {
+            // Set immediately so UI opens fast (may only have trigger step from list view PERF-F3)
             setSelectedFlow(JSON.parse(JSON.stringify(flow)));
             setFlowViewTab('builder');
+
+            // [FIX] Lazy-load full flow steps — the list response (PERF-F3) strips all non-trigger steps
+            // for bandwidth. We must re-fetch the single flow to get the complete step chain.
+            try {
+                const res = await api.get<Flow>(`flows?id=${flow.id}`);
+                if (res.success && res.data) {
+                    setSelectedFlow(res.data);
+                }
+            } catch (e) {
+                console.warn('[FlowClick] Failed to lazy-load full flow steps:', e);
+            }
         }
     }, []);
+
 
     const handleOpenCampaign = React.useCallback((c: Campaign) => {
         // [FIX] Navigate to Campaigns page and open report there for better context

@@ -66,14 +66,16 @@ const ListFormModal: React.FC<ListFormModalProps> = ({ isOpen, onClose, onSave, 
                             <Button
                                 variant="danger"
                                 icon={Trash2}
+                                size="md"
                                 className="bg-red-50 text-red-600 hover:bg-red-100 border-none shadow-none px-3"
                                 onClick={() => setIsConfirmOpen(true)}
                             >
                                 Xóa
                             </Button>
                         )}
-                        <Button variant="ghost" onClick={onClose} disabled={isLoading}>Hủy</Button>
+                        <Button variant="ghost" size="md" onClick={onClose} disabled={isLoading}>Hủy</Button>
                         <Button
+                            size="lg"
                             icon={isLoading ? Loader2 : (isNew ? Plus : Save)}
                             onClick={handleSubmit}
                             disabled={!name.trim() || isLoading}
@@ -82,6 +84,7 @@ const ListFormModal: React.FC<ListFormModalProps> = ({ isOpen, onClose, onSave, 
                         </Button>
                     </div>
                 }
+
             >
                 <div className="space-y-6">
                     <div className="flex items-center gap-4 bg-indigo-50 p-4 rounded-2xl border border-indigo-100">

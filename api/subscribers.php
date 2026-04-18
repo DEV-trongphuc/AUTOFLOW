@@ -249,7 +249,11 @@ if ($method === 'POST' && $route === 'subscribers_bulk') {
         $allAffectedListSubscribers = [];
 
         // Cache tags for speed
-        $stmtT = $pdo->query("SELECT id, name FROM tags");
+        // [FIX P43-E1] Scoped to workspace_id — old code fetched ALL workspace tags.
+        // If two workspaces had a tag named "VIP", the first one's tag ID would be used
+        // for the second workspace's subscribers → cross-workspace tag contamination.
+        $stmtT = $pdo->prepare("SELECT id, name FROM tags WHERE workspace_id = ?");
+        $stmtT->execute([$workspace_id]);
         $tagMap = [];
         while ($t = $stmtT->fetch())
             $tagMap[strtolower($t['name'])] = $t['id'];

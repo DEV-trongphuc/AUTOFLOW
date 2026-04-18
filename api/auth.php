@@ -146,8 +146,28 @@ if ($method === 'GET' && $action === 'check') {
     }
 }
 
+// [NEW] Lightweight activity ping — only updates last_login, no profile fetch
+// Called by App.tsx heartbeat every 5 min to keep last_activity fresh while user is active
+if ($method === 'GET' && $action === 'ping') {
+    if (!isset($_SESSION['user_id'])) {
+        jsonResponse(false, null, 'Not authenticated'); // Silently ignored by frontend
+    }
+    try {
+        // Throttle server-side: only update if last_login > 5 minutes ago
+        $pdo->prepare("
+            UPDATE users SET last_login = NOW()
+            WHERE id = ?
+            AND (last_login IS NULL OR last_login < DATE_SUB(NOW(), INTERVAL 5 MINUTE))
+        ")->execute([$_SESSION['user_id']]);
+        jsonResponse(true, null, 'ok');
+    } catch (Exception $e) {
+        jsonResponse(true, null, 'ok'); // Don't expose errors for ping
+    }
+}
+
 // Get access logs for current user (Sync real history)
 if ($method === 'GET' && $action === 'logs') {
+
     if (!isset($_SESSION['user_id'])) {
         jsonResponse(false, null, 'Unauthorized');
     }

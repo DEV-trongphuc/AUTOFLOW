@@ -5,14 +5,17 @@
  */
 
 require_once 'db_connect.php';
+require_once 'auth_middleware.php'; // [FIX] Templates require authentication
 
 apiHeaders();
+$workspace_id = get_current_workspace_id(); // For context-aware queries
 $method = $_SERVER['REQUEST_METHOD'];
 
 $route = $_GET['route'] ?? '';
 $id = $_GET['id'] ?? '';              // Internal UUID
 $template_id = $_GET['template_id'] ?? ''; // Zalo's numeric template_id
 $oa_id = $_GET['oa_id'] ?? '';
+
 
 try {
     switch ($method) {

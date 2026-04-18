@@ -27,6 +27,8 @@ import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import TipsModal from '../components/common/TipsModal';
 import { useIsAdmin } from '../hooks/useAuthUser';
 import { usePermissionGuard } from '../components/common/PermissionGuard';
+import { useSettings } from '../components/contexts/SettingsContext';
+
 
 import SesQuotaWidget from '../components/common/SesQuotaWidget';
 
@@ -102,7 +104,8 @@ const Campaigns: React.FC = () => {
     const [allTemplates, setAllTemplates] = useState<Template[]>([]);
     const [allFlows, setAllFlows] = useState<Flow[]>([]);
     const [allTags, setAllTags] = useState<{ id: string, name: string, count: number }[]>([]);
-    const [verifiedEmails, setVerifiedEmails] = useState<string[]>([]);
+    // [FIX] Dùng global SettingsContext — đã load sẵn khi app khởi động
+    const { senderEmails: verifiedEmails } = useSettings();
 
     const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
         if (type === 'success') toast.success(message);
@@ -245,13 +248,12 @@ const Campaigns: React.FC = () => {
     const fetchInitialData = async () => {
         setLoading(true);
         try {
-            const [lRes, sRes, tRes, fRes, tagRes, settingRes] = await Promise.all([
+            const [lRes, sRes, tRes, fRes, tagRes] = await Promise.all([
                 api.get<any[]>('lists'),
                 api.get<Segment[]>('segments'),
                 api.get<Template[]>('templates'),
                 api.get<Flow[]>('flows'),
                 api.get<{ id: string, name: string, subscriber_count: number }[]>('tags'),
-                api.get<any>('settings')
             ]);
             if (lRes.success) setAllLists(lRes.data);
             if (sRes.success) setAllSegments(sRes.data);
@@ -268,23 +270,9 @@ const Campaigns: React.FC = () => {
                 })));
             }
 
-            // Initial Campaigns Fetch (parallellized by the backend thanks to session unlock, but handled after the UI gets settings to avoid huge bundle stalls in JS thread)
+            // Initial Campaigns Fetch
             await loadCampaigns(1, debouncedSearch);
-
-            // Logic to sync verified emails from Settings (Source of Truth)
-            let currentSaved: string[] = [];
-
-            if (settingRes.success && settingRes.data) {
-                const configEmailRaw = settingRes.data.smtp_from_email || settingRes.data.smtp_user || '';
-                currentSaved = configEmailRaw.split(',').map((e: string) => e.trim()).filter(Boolean);
-            }
-
-            // Fallback default
-            if (currentSaved.length === 0) {
-                currentSaved = ['marketing@ka-en.com.vn'];
-            }
-
-            setVerifiedEmails(currentSaved);
+            // [FIX] senderEmails đã được load toàn cục bởi SettingsContext — không cần fetch ở đây
         } catch (error) {
             showToast('Không thể tải dữ liệu chiến dịch', 'error');
         } finally {

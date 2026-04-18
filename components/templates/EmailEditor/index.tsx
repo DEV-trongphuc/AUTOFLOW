@@ -195,6 +195,67 @@ const scanBlocks = (blocks: EmailBlock[]): ValidationIssue[] => {
         }
     });
 
+    // ── [NEW] Unsubscribe link checks ─────────────────────────────────────────
+    // Build a flat HTML string of all text/quote/footer blocks for scanning
+    const collectAllHtml = (list: EmailBlock[]): string => {
+        let html = '';
+        for (const block of list) {
+            if (block.type === 'text' || block.type === 'quote') {
+                html += block.content || '';
+            }
+            // Also scan button URLs and image URLs for the merge tag
+            if ((block.type === 'button' || block.type === 'image') && block.url) {
+                html += block.url;
+            }
+            if (block.children?.length) html += collectAllHtml(block.children);
+        }
+        return html;
+    };
+
+    const allHtml = collectAllHtml(blocks);
+    const hasUnsubscribeTag = /\{\{\s*unsubscribe_url\s*\}\}/i.test(allHtml);
+
+    if (!hasUnsubscribeTag) {
+        // No {{unsubscribe_url}} found anywhere in the email
+        issues.unshift({
+            blockId: '__email_root__',
+            type: 'missing_unsubscribe',
+            label: 'Email chưa có link hủy đăng ký {{unsubscribe_url}} — có thể bị đánh dấu spam',
+            preview: 'Thêm Footer block hoặc thêm thủ công vào text block',
+        });
+    }
+
+    // Scan for anchors whose visible text contains "unsubscribe" but href is NOT {{unsubscribe_url}}
+    const wrongUnsubScan = (list: EmailBlock[]) => {
+        for (const block of list) {
+            if (block.type === 'text' || block.type === 'quote') {
+                const html = block.content || '';
+                // Match: <a href="...">...unsubscribe...</a> (case-insensitive on visible text)
+                const aTagRegex = /<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]*)<\/a>/gi;
+                let m: RegExpExecArray | null;
+                while ((m = aTagRegex.exec(html)) !== null) {
+                    const href = m[1];
+                    const visibleText = m[2];
+                    if (/unsubscrib/i.test(visibleText)) {
+                        // This anchor claims to be an unsubscribe link
+                        const isCorrect = /^\{\{\s*unsubscribe_url\s*\}\}$/i.test(href.trim());
+                        if (!isCorrect) {
+                            issues.push({
+                                blockId: block.id,
+                                type: 'wrong_unsubscribe_url',
+                                label: `Link “${visibleText.trim().slice(0, 30)}” gắn URL sai: “${href.slice(0, 50)}”`,
+                                preview: 'Cần đổi thành {{unsubscribe_url}}',
+                                badHref: href,
+                            });
+                        }
+                    }
+                }
+            }
+            if (block.children?.length) wrongUnsubScan(block.children);
+        }
+    };
+    wrongUnsubScan(blocks);
+
     return issues;
 };
 
@@ -483,7 +544,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
                 editorMode={editorMode} setEditorMode={setEditorMode}
                 viewMode={viewMode} setViewMode={setViewMode} canUndo={historyIndex > 0} canRedo={historyIndex < history.length - 1}
                 onUndo={handleUndo} onRedo={handleRedo} onSave={handleSaveData} onCancel={onCancel}
-                onPreview={() => { const win = window.open(); win?.document.write(editorMode === 'code' ? customHtml : compileHTML(blocks, bodyStyle, name)); }}
+                onPreview={() => { const win = window.open(); win?.document.write(editorMode === 'code' ? customHtml : compileHTML(blocks, bodyStyle, name, { isPreview: true })); }}
                 onSendTest={handleSendTest}
                 onValidate={runValidation}
                 validationIssueCount={validationIssues?.length}

@@ -2,6 +2,10 @@
 require_once 'bootstrap.php';
 initializeSystem($pdo);
 
+// [FIX P43-J] Add auth + workspace isolation
+require_once 'auth_middleware.php';
+$workspace_id = get_current_workspace_id();
+
 $method = $_SERVER['REQUEST_METHOD'];
 $route = $_GET['route'] ?? '';
 
@@ -11,6 +15,12 @@ if ($method === 'GET') {
         if (!$campaignId) {
             jsonResponse(false, null, 'Campaign ID required');
         }
+
+        // [FIX P43-J1] Verify campaign belongs to workspace before returning codes
+        $stmtOwn = $pdo->prepare("SELECT id FROM voucher_campaigns WHERE id = ? AND workspace_id = ?");
+        $stmtOwn->execute([$campaignId, $workspace_id]);
+        if (!$stmtOwn->fetchColumn())
+            jsonResponse(false, null, 'Campaign không tồn tại hoặc không có quyền truy cập');
 
         // Just fetch latest 500 for UI to avoid crashing on huge campaigns
         $stmt = $pdo->prepare("SELECT * FROM voucher_codes WHERE campaign_id = ? ORDER BY created_at DESC LIMIT 500");
@@ -48,9 +58,15 @@ if ($method === 'GET') {
             jsonResponse(false, null, 'Invalid parameters');
         }
 
+        // [FIX P43-J2] Verify campaign belongs to workspace
+        $stmtOwn = $pdo->prepare("SELECT id FROM voucher_campaigns WHERE id = ? AND workspace_id = ?");
+        $stmtOwn->execute([$campaignId, $workspace_id]);
+        if (!$stmtOwn->fetchColumn())
+            jsonResponse(false, null, 'Campaign không tồn tại hoặc không có quyền thêm mã');
+
         // 1. Get Campaign and Rewards
-        $stmtC = $pdo->prepare("SELECT rewards FROM voucher_campaigns WHERE id = ?");
-        $stmtC->execute([$campaignId]);
+        $stmtC = $pdo->prepare("SELECT rewards FROM voucher_campaigns WHERE id = ? AND workspace_id = ?");
+        $stmtC->execute([$campaignId, $workspace_id]);
         $campJson = $stmtC->fetchColumn();
         if (!$campJson) {
             jsonResponse(false, null, 'Campaign not found');
@@ -159,12 +175,22 @@ if ($method === 'GET') {
         
         if ($data && !empty($data['ids']) && is_array($data['ids'])) {
             $ids = $data['ids'];
+            // [FIX P43-J3] Only delete codes belonging to campaigns in this workspace
             $placeholders = implode(',', array_fill(0, count($ids), '?'));
-            $pdo->prepare("DELETE FROM voucher_codes WHERE id IN ($placeholders)")->execute($ids);
+            $pdo->prepare("
+                DELETE vc FROM voucher_codes vc
+                JOIN voucher_campaigns vcamp ON vc.campaign_id = vcamp.id
+                WHERE vc.id IN ($placeholders) AND vcamp.workspace_id = ?
+            ")->execute(array_merge($ids, [$workspace_id]));
             jsonResponse(true, null, 'Đã xóa các mã được chọn.');
         } else {
             $campaignId = $_GET['campaign_id'] ?? null;
             if ($campaignId) {
+                // Verify ownership
+                $stmtOwn = $pdo->prepare("SELECT id FROM voucher_campaigns WHERE id = ? AND workspace_id = ?");
+                $stmtOwn->execute([$campaignId, $workspace_id]);
+                if (!$stmtOwn->fetchColumn())
+                    jsonResponse(false, null, 'Campaign không tồn tại hoặc không có quyền xóa');
                 $pdo->prepare("DELETE FROM voucher_codes WHERE campaign_id = ?")->execute([$campaignId]);
                 jsonResponse(true, null, 'Deleted all codes for this campaign');
             } else {

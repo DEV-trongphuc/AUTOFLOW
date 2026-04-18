@@ -1,15 +1,17 @@
 // components/templates/EmailEditor/components/EmailValidationPanel.tsx
 import React from 'react';
-import { ShieldCheck, AlertTriangle, Image, MousePointer2, CheckCircle2, X, ChevronRight, Wand2, Link2 } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, Image, MousePointer2, CheckCircle2, X, ChevronRight, Wand2, Link2, MailX } from 'lucide-react';
 
 export interface ValidationIssue {
     blockId: string;
-    type: 'button_no_link' | 'image_no_link' | 'image_no_alt' | 'duplicate_link';
+    type: 'button_no_link' | 'image_no_link' | 'image_no_alt' | 'duplicate_link' | 'missing_unsubscribe' | 'wrong_unsubscribe_url';
     label: string;
     preview?: string;
     // For duplicate_link: the group of blockIds sharing the same URL
     duplicateGroupIds?: string[];
     currentUrl?: string;
+    // For wrong_unsubscribe_url: the href that was detected
+    badHref?: string;
 }
 
 interface EmailValidationPanelProps {
@@ -21,6 +23,22 @@ interface EmailValidationPanelProps {
 }
 
 const ISSUE_META: Record<ValidationIssue['type'], { icon: React.ElementType; color: string; bg: string; border: string; title: string }> = {
+    // [NEW] Critical: email has no unsubscribe link at all
+    missing_unsubscribe: {
+        icon: MailX,
+        color: 'text-red-700',
+        bg: 'bg-red-50',
+        border: 'border-red-200',
+        title: 'Thiếu link hủy đăng ký',
+    },
+    // [NEW] Warning: text says "Unsubscribe" but href is wrong
+    wrong_unsubscribe_url: {
+        icon: AlertTriangle,
+        color: 'text-orange-700',
+        bg: 'bg-orange-50',
+        border: 'border-orange-200',
+        title: 'Link Unsubscribe gắn sai URL',
+    },
     button_no_link: {
         icon: MousePointer2,
         color: 'text-rose-600',
@@ -106,11 +124,22 @@ const EmailValidationPanel: React.FC<EmailValidationPanelProps> = ({
                         </div>
                         <p className="text-sm font-bold text-slate-700 mb-1">Email đã sẵn sàng! 🎉</p>
                         <p className="text-xs text-slate-400 leading-relaxed">
-                            Tất cả nút bấm và hình ảnh đã được gắn link và mô tả đầy đủ.
+                            Tất cả nút bấm, hình ảnh đã có link/mô tả đầy đủ và link hủy đăng ký hợp lệ.
                         </p>
                     </div>
                 ) : (
                     <div className="p-4 space-y-4">
+                        {/* [NEW] Critical: missing unsubscribe — shown prominently at top */}
+                        {issues.some(i => i.type === 'missing_unsubscribe') && (
+                            <div className="p-3 bg-red-100 border-2 border-red-300 rounded-xl flex items-start gap-3">
+                                <MailX className="w-5 h-5 text-red-700 mt-0.5 shrink-0" />
+                                <p className="text-xs text-red-800 font-bold leading-snug">
+                                    Email chưa có link hủy đăng ký (Unsubscribe)! Bắt buộc phải có để tránh bị đánh dấu Spam.
+                                    <br /><span className="font-normal opacity-80">Thêm Footer block hoặc dùng merge tag <code className="bg-red-200 px-1 rounded">{'{{unsubscribe_url}}'}</code> trong bất kỳ text block nào.</span>
+                                </p>
+                            </div>
+                        )}
+
                         {/* Summary banner */}
                         <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-3">
                             <AlertTriangle className="w-4 h-4 text-rose-500 mt-0.5 shrink-0" />
@@ -138,7 +167,7 @@ const EmailValidationPanel: React.FC<EmailValidationPanelProps> = ({
                                         {/* Auto-fix ALL button for duplicate_link group */}
                                         {group.type === 'duplicate_link' && onAutoFixDuplicates && group.items.length > 0 && (
                                             <button
-                                                    onClick={() => {
+                                                onClick={() => {
                                                     group.items.forEach(issue => {
                                                         if (issue.duplicateGroupIds && issue.currentUrl) {
                                                             onAutoFixDuplicates(issue.duplicateGroupIds, issue.currentUrl);

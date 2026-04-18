@@ -6,22 +6,31 @@
 
 require_once 'db_connect.php';
 require_once 'zalo_helpers.php';
+require_once 'auth_middleware.php'; // [FIX] Broadcasts must be workspace-scoped
 
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS, DELETE");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS')
     exit(0);
 
+$workspace_id = get_current_workspace_id();
 $method = $_SERVER['REQUEST_METHOD'];
 $route = $_GET['route'] ?? '';
 
 try {
     if ($method === 'GET') {
         if ($route === 'list') {
-            $stmt = $pdo->query("SELECT * FROM zalo_broadcasts ORDER BY created_at DESC");
+            // [FIX] Only broadcasts created by OA configs in the current workspace
+            $stmt = $pdo->prepare("
+                SELECT b.* FROM zalo_broadcasts b 
+                JOIN zalo_oa_configs oa ON b.oa_config_id = oa.id 
+                WHERE oa.workspace_id = ? 
+                ORDER BY b.created_at DESC
+            ");
+            $stmt->execute([$workspace_id]);
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Parse JSON fields
@@ -41,8 +50,13 @@ try {
             if (!$id)
                 throw new Exception("ID required");
 
-            $stmt = $pdo->prepare("SELECT * FROM zalo_broadcasts WHERE id = ?");
-            $stmt->execute([$id]);
+            // [FIX] Verify the broadcast belongs to this workspace before fetching
+            $stmt = $pdo->prepare("
+                SELECT b.* FROM zalo_broadcasts b 
+                JOIN zalo_oa_configs oa ON b.oa_config_id = oa.id 
+                WHERE b.id = ? AND oa.workspace_id = ?
+            ");
+            $stmt->execute([$id, $workspace_id]);
             $campaign = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$campaign)
@@ -242,14 +256,25 @@ try {
             if (!$id)
                 throw new Exception("ID required");
 
+            // [FIX] Only delete broadcasts from this workspace
+            $stmtCheck = $pdo->prepare("
+                SELECT b.id FROM zalo_broadcasts b 
+                JOIN zalo_oa_configs oa ON b.oa_config_id = oa.id 
+                WHERE b.id = ? AND oa.workspace_id = ?
+            ");
+            $stmtCheck->execute([$id, $workspace_id]);
+            if (!$stmtCheck->fetch()) {
+                throw new Exception("Broadcast not found or access denied");
+            }
+
             $pdo->beginTransaction();
             try {
-                // Delete tracking first due to potential (though not explicitly defined) relations or just for cleanliness
                 $stmtTrack = $pdo->prepare("DELETE FROM zalo_broadcast_tracking WHERE broadcast_id = ?");
                 $stmtTrack->execute([$id]);
 
                 $stmtCamp = $pdo->prepare("DELETE FROM zalo_broadcasts WHERE id = ?");
                 $stmtCamp->execute([$id]);
+
 
                 $pdo->commit();
                 echo json_encode(['success' => true, 'message' => 'Deleted successfully']);

@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import ConfirmModal from '../../common/ConfirmModal';
 import { MultiFileUploadModal } from '../../campaigns/MultiFileUploadModal';
 import FileLibraryModal from '../../common/FileLibraryModal';
+import { useSettings } from '../../contexts/SettingsContext';
 
 interface EmailActionConfigProps {
     config: Record<string, any>;
@@ -32,7 +33,9 @@ const MERGE_TAGS = [
 
 const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange, disabled }) => {
     const [templates, setTemplates] = useState<Template[]>([]);
-    const [verifiedEmails, setVerifiedEmails] = useState<any[]>([]);
+    // [FIX] Dùng global SettingsContext thay vì fetch settings riêng mỗi lần mở node
+    const { senderEmails } = useSettings();
+    const verifiedEmails = senderEmails.map(e => ({ value: e, label: e }));
     const [showPicker, setShowPicker] = useState(false);
     const [previewData, setPreviewData] = useState<{ template: Template | null, html?: string } | null>(null);
     const [showPersonalization, setShowPersonalization] = useState<{ target: 'subject' | 'body' | null }>({ target: null });
@@ -55,40 +58,23 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
     const sourceMode = config.sourceMode || (config.templateId ? 'template' : (config.customHtml ? 'html' : 'template'));
 
     useEffect(() => {
-        Promise.all([
-            api.get<Template[]>('templates'),
-            api.get<any>('settings')
-        ]).then(([res, settingRes]) => {
+        api.get<Template[]>('templates').then(res => {
             if (res.success) {
                 const personalTemplates = res.data.filter(t => !t.id.startsWith('sys_'));
                 setTemplates(personalTemplates);
             }
-
-            // Sync verified emails
-            let currentSaved: string[] = [];
-
-            if (settingRes.success && settingRes.data) {
-                const configEmailRaw = settingRes.data.smtp_from_email || settingRes.data.smtp_user || '';
-                currentSaved = configEmailRaw.split(',').map((e: string) => e.trim()).filter(Boolean);
-            }
-
-            if (currentSaved.length === 0) {
-                currentSaved = ['marketing@email']; // Fallback
-            }
-
-            setVerifiedEmails(currentSaved.map((e: string) => ({ value: e, label: e })));
-
-            // [AUTO-SELECT] Nếu bước chưa có email người gửi HOẶC email đã lưu không còn tồn tại trong hệ thống → tự chọn lại
-            if ((!config.senderEmail || !currentSaved.includes(config.senderEmail)) && currentSaved.length > 0) {
-                // Ưu tiên email đã chọn gần nhất (nhớ qua localStorage)
-                const lastUsed = localStorage.getItem('mailflow_last_sender_email');
-                const defaultEmail = (lastUsed && currentSaved.includes(lastUsed))
-                    ? lastUsed
-                    : currentSaved[0];
-                onChange({ ...config, senderEmail: defaultEmail });
-            }
         });
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // [AUTO-SELECT] Nếu bước chưa có email người gửi HOᡀC email đã lưu không còn tồn tại → tự chọn lại
+    useEffect(() => {
+        if (senderEmails.length === 0) return;
+        if (!config.senderEmail || !senderEmails.includes(config.senderEmail)) {
+            const lastUsed = localStorage.getItem('mailflow_last_sender_email');
+            const defaultEmail = (lastUsed && senderEmails.includes(lastUsed)) ? lastUsed : senderEmails[0];
+            onChange({ ...config, senderEmail: defaultEmail });
+        }
+    }, [senderEmails]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Sync attachments with parent config
     useEffect(() => {

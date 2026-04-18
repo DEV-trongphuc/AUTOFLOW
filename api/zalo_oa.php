@@ -7,8 +7,10 @@
 require_once 'db_connect.php';
 require_once 'zalo_helpers.php';
 require_once 'zalo_config.php';
+require_once 'auth_middleware.php'; // [FIX P43-L] Add auth
 
 apiHeaders();
+$workspace_id = get_current_workspace_id();
 $method = $_SERVER['REQUEST_METHOD'];
 
 // Parse query parameters
@@ -78,8 +80,10 @@ try {
 function getAllOAs($pdo)
 {
     ensureZaloConfigSchema($pdo);
+    // [FIX P43-L1] workspace_id passed as global — OA configs scoped per workspace
+    global $workspace_id;
     try {
-        $stmt = $pdo->query("
+        $stmt = $pdo->prepare("
             SELECT 
                 id, name, avatar, oa_id, app_id, 
                 daily_quota, remaining_quota, 
@@ -88,9 +92,10 @@ function getAllOAs($pdo)
                 quota_used_today, quota_reset_date,
                 status, token_expires_at, created_at, updated_at
             FROM zalo_oa_configs
-            WHERE status != 'verifying'
+            WHERE workspace_id = ? AND status != 'verifying'
             ORDER BY created_at DESC
         ");
+        $stmt->execute([$workspace_id]);
         $oas = $stmt->fetchAll(PDO::FETCH_ASSOC);
         jsonResponse(true, $oas);
     } catch (Exception $e) {
@@ -374,9 +379,11 @@ function testConnection($pdo, $id)
  */
 function generateAuthUrl($pdo, $id = null)
 {
+    global $workspace_id; // [FIX] $workspace_id is defined at top-level scope
     $verifier = generateCodeVerifier();
     $challenge = generateCodeChallenge($verifier);
     $session_id = bin2hex(random_bytes(16));
+
 
     // ── Cleanup stale "verifying" rows before inserting a new one ─────────────
     // These are rows where OAuth was started but never completed (oa_id is NULL/empty).
@@ -389,18 +396,17 @@ function generateAuthUrl($pdo, $id = null)
         error_log('[Zalo OA] Could not clean stale verifying rows: ' . $e->getMessage());
     }
 
-    // Insert with quota = 0 (Default to 0 until real fetch)
-    // This solves user request: "Don't show default quota" (Show 0 instead)
+    // [FIX P43-L2] Include workspace_id in INSERT for new OA
     $stmt = $pdo->prepare("
         INSERT INTO zalo_oa_configs 
-        (id, name, app_id, app_secret, daily_quota, quota_used_today, quota_reset_date, status, pkce_verifier, created_at)
-        VALUES (?, 'Zalo Connecting...', ?, ?, 0, 0, CURDATE(), 'verifying', ?, NOW())
+        (id, workspace_id, name, app_id, app_secret, daily_quota, quota_used_today, quota_reset_date, status, pkce_verifier, created_at)
+        VALUES (?, ?, 'Zalo Connecting...', ?, ?, 0, 0, CURDATE(), 'verifying', ?, NOW())
     ");
 
     $app_id = defined('ZALO_APP_ID') ? ZALO_APP_ID : '';
     $app_secret = defined('ZALO_APP_SECRET') ? ZALO_APP_SECRET : '';
 
-    $stmt->execute([$session_id, $app_id, $app_secret, $verifier]);
+    $stmt->execute([$session_id, $workspace_id, $app_id, $app_secret, $verifier]);
 
     $callback_url = defined('ZALO_CALLBACK_URL') ? ZALO_CALLBACK_URL : API_BASE_URL . '/zalo_oauth_callback.php';
     $state = $session_id;

@@ -179,24 +179,28 @@ if ($method === 'POST' && $route === 'bulk_update_subscribers') {
         $tagId = null;
         $listId = null;
         if ($action === 'add_tag' || $action === 'remove_tag') {
-            $stmtT = $pdo->prepare("SELECT id FROM tags WHERE name = ?");
-            $stmtT->execute([$value]);
+            $stmtT = $pdo->prepare("SELECT id FROM tags WHERE name = ? AND workspace_id = ?");
+            $stmtT->execute([$value, $workspace_id]);
             $tagId = $stmtT->fetchColumn();
             if (!$tagId && $action === 'add_tag') {
                 $tagId = bin2hex(random_bytes(8));
-                $pdo->prepare("INSERT INTO tags (id, name) VALUES (?, ?)")->execute([$tagId, $value]);
+                // [FIX P43-G1] workspace_id added — auto-created tags previously had NULL
+                // workspace_id and appeared in all workspaces' tag pickers.
+                $pdo->prepare("INSERT INTO tags (id, workspace_id, name) VALUES (?, ?, ?)")->execute([$tagId, $workspace_id, $value]);
             }
         } elseif ($action === 'add_list') {
-            $stmtL = $pdo->prepare("SELECT id FROM lists WHERE id = ?");
-            $stmtL->execute([$value]);
+            $stmtL = $pdo->prepare("SELECT id FROM lists WHERE id = ? AND workspace_id = ?");
+            $stmtL->execute([$value, $workspace_id]);
             $listId = $stmtL->fetchColumn();
             if (!$listId) {
-                $stmtLN = $pdo->prepare("SELECT id FROM lists WHERE name = ?");
-                $stmtLN->execute([$value]);
+                $stmtLN = $pdo->prepare("SELECT id FROM lists WHERE name = ? AND workspace_id = ?");
+                $stmtLN->execute([$value, $workspace_id]);
                 $listId = $stmtLN->fetchColumn();
                 if (!$listId) {
                     $listId = bin2hex(random_bytes(8));
-                    $pdo->prepare("INSERT INTO lists (id, name, type, subscriber_count) VALUES (?, ?, 'standard', 0)")->execute([$listId, $value]);
+                    // [FIX P43-G2] workspace_id added — auto-created lists previously had NULL
+                    // workspace_id and were invisible / shared across all workspaces.
+                    $pdo->prepare("INSERT INTO lists (id, workspace_id, name, type, subscriber_count) VALUES (?, ?, ?, 'standard', 0)")->execute([$listId, $workspace_id, $value]);
                 }
             }
             $value = $listId; // normalize for list count update below

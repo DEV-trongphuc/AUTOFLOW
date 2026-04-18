@@ -110,10 +110,12 @@ if ($method === 'POST') {
                 return;
             }
             // Filter by selected IDs
+            // [FIX P43-F1] Added workspace_id guard — without this a client could supply
+            // subscriber IDs from any workspace and have them moved to a destination list.
             $placeholders = implode(',', array_fill(0, count($inputData), '?'));
-            $sql = "SELECT id FROM subscribers WHERE id IN ($placeholders) AND id IN ($sql)"; // Intersect selection with source valid set
-            // Move inputData to front of params
-            $params = array_merge($inputData, $params);
+            $sql = "SELECT id FROM subscribers WHERE id IN ($placeholders) AND workspace_id = ? AND id IN ($sql)";
+            // Params: inputData IDs, then workspace_id, then source params
+            $params = array_merge($inputData, [$workspace_id], $params);
 
             // Execute directly here as it's a specific set check
             $stmt = $pdo->prepare($sql);

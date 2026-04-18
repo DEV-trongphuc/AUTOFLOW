@@ -1,8 +1,10 @@
 <?php
 // api/integrations.php - Integrations Management
 require_once 'db_connect.php';
+require_once 'auth_middleware.php'; // [FIX P43-D] Add workspace isolation
 apiHeaders();
 
+$workspace_id = get_current_workspace_id(); // [FIX P43-D]
 $method = $_SERVER['REQUEST_METHOD'];
 $path = isset($_GET['id']) ? $_GET['id'] : null;
 
@@ -16,6 +18,12 @@ try {
         if (!$id)
             jsonResponse(false, null, 'Thiếu ID kết nối');
 
+        // [FIX P43-D1] Validate sync_now ownership — ensure integration belongs to this workspace
+        $stmtOwn = $pdo->prepare("SELECT id FROM integrations WHERE id = ? AND workspace_id = ?");
+        $stmtOwn->execute([$id, $workspace_id]);
+        if (!$stmtOwn->fetchColumn())
+            jsonResponse(false, null, 'Kết nối không tồn tại hoặc không thuộc workspace của bạn');
+
         // SYNCHRONOUS SYNC - Run directly for reliability
         try {
             // Check if column exists
@@ -28,8 +36,8 @@ try {
         }
 
         // Set status to syncing
-        $stmt = $pdo->prepare("UPDATE integrations SET sync_status = 'syncing' WHERE id = ?");
-        $stmt->execute([$id]);
+        $stmt = $pdo->prepare("UPDATE integrations SET sync_status = 'syncing' WHERE id = ? AND workspace_id = ?");
+        $stmt->execute([$id, $workspace_id]);
 
         // Track timing
         $startTime = microtime(true);
@@ -181,15 +189,17 @@ try {
     switch ($method) {
         case 'GET':
             if (isset($_GET['route']) && $_GET['route'] === 'cleanup') {
-                // CLEANUP: Remove duplicate empty lists named "Tổng Data"
-                $pdo->exec("DELETE FROM lists WHERE name = 'Tổng Data' AND subscriber_count = 0");
-                $deleted = $stmt ? $stmt->rowCount() : 0;
-                jsonResponse(true, ['deleted' => $deleted], "Đã xóa các danh sách rác.");
+                // [FIX P43-D3] Cleanup scoped to workspace — old code deleted across all workspaces
+                $pdo->prepare("DELETE FROM lists WHERE name = 'Tổng Data' AND subscriber_count = 0 AND workspace_id = ?")->execute([$workspace_id]);
+                jsonResponse(true, ['deleted' => 'done'], "Đã xóa các danh sách rác.");
                 break;
             }
 
             try {
-                $stmt = $pdo->query("SELECT * FROM integrations ORDER BY created_at DESC");
+                // [FIX P43-D2] Scoped to workspace_id — old code returned ALL integrations across
+                // all workspaces, leaking MISA API keys, Google Sheets IDs, webhook secrets.
+                $stmt = $pdo->prepare("SELECT * FROM integrations WHERE workspace_id = ? ORDER BY created_at DESC");
+                $stmt->execute([$workspace_id]);
                 $integrations = $stmt->fetchAll();
 
                 // Hydrate real counts
@@ -223,8 +233,10 @@ try {
                 $config = $data['config'] ?? '{}';
                 $status = $data['status'] ?? 'active';
 
-                $stmt = $pdo->prepare("INSERT INTO integrations (id, type, name, config, status, created_at) VALUES (?, ?, ?, ?, ?, NOW())");
-                $stmt->execute([$id, $data['type'], $name, $config, $status]);
+                // [FIX P43-D4] Include workspace_id in INSERT — previously missing,
+                // making all integrations visible to all workspaces.
+                $stmt = $pdo->prepare("INSERT INTO integrations (id, workspace_id, type, name, config, status, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+                $stmt->execute([$id, $workspace_id, $data['type'], $name, $config, $status]);
 
                 // Don't sync on create - let user manually sync to avoid long waits
                 // Just ensure sync_status column exists
@@ -269,8 +281,9 @@ try {
                 if (empty($updates))
                     jsonResponse(false, null, 'Không có dữ liệu cập nhật');
 
-                $sql .= implode(', ', $updates) . " WHERE id = ?";
+                $sql .= implode(', ', $updates) . " WHERE id = ? AND workspace_id = ?";
                 $params[] = $path;
+                $params[] = $workspace_id;
 
                 $pdo->prepare($sql)->execute($params);
                 jsonResponse(true, $data, 'Đã cập nhật kết nối');
@@ -283,7 +296,11 @@ try {
             try {
                 if (!$path)
                     jsonResponse(false, null, 'Thiếu ID kết nối');
-                $pdo->prepare("DELETE FROM integrations WHERE id = ?")->execute([$path]);
+                // [FIX P43-D5] Scope DELETE to workspace to prevent deleting another tenant's integration
+                $stmt = $pdo->prepare("DELETE FROM integrations WHERE id = ? AND workspace_id = ?");
+                $stmt->execute([$path, $workspace_id]);
+                if ($stmt->rowCount() === 0)
+                    throw new Exception('Không tìm thấy kết nối hoặc không có quyền xóa');
                 jsonResponse(true, ['id' => $path], 'Đã xóa kết nối');
             } catch (Exception $e) {
                 jsonResponse(false, null, 'Lỗi khi xóa kết nối: ' . $e->getMessage());

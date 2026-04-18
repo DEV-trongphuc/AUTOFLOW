@@ -9,6 +9,15 @@ $route = $_GET['route'] ?? '';
 
 require_once 'flow_helpers.php';
 
+// [FIX P43-H] CRUD routes require auth + workspace isolation.
+// Public /track route is exempt (external webhooks from third-party apps).
+$isCrudRoute = !($method === 'POST' && $route === 'track');
+if ($isCrudRoute) {
+    require_once 'auth_middleware.php';
+    $workspace_id = get_current_workspace_id();
+} else {
+    $workspace_id = null;
+}
 
 try {
     // --- TRACKING PURCHASE (PUBLIC API) ---
@@ -83,12 +92,13 @@ try {
                                 if (empty($tagName))
                                     continue;
 
-                                $stmtTag = $pdo->prepare("SELECT id FROM tags WHERE name = ?");
-                                $stmtTag->execute([$tagName]);
+                                $stmtTag = $pdo->prepare("SELECT id FROM tags WHERE name = ? AND workspace_id = ?");
+                                $stmtTag->execute([$tagName, $workspace_id ?? '']);
                                 $tagId = $stmtTag->fetchColumn();
                                 if (!$tagId) {
                                     $tagId = bin2hex(random_bytes(8));
-                                    $pdo->prepare("INSERT INTO tags (id, name) VALUES (?, ?)")->execute([$tagId, $tagName]);
+                                    // [FIX P43-H1] workspace_id in auto-create tag
+                                    $pdo->prepare("INSERT INTO tags (id, workspace_id, name) VALUES (?, ?, ?)")->execute([$tagId, $workspace_id ?? '', $tagName]);
                                 }
                                 $stmtInsTag = $pdo->prepare("INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES (?, ?)");
                                 $stmtInsTag->execute([$sid, $tagId]);
@@ -133,12 +143,12 @@ try {
                         if (empty($tagName))
                             continue;
 
-                        $stmtTag = $pdo->prepare("SELECT id FROM tags WHERE name = ?");
-                        $stmtTag->execute([$tagName]);
+                        $stmtTag = $pdo->prepare("SELECT id FROM tags WHERE name = ? AND workspace_id = ?");
+                        $stmtTag->execute([$tagName, $workspace_id ?? '']);
                         $tagId = $stmtTag->fetchColumn();
                         if (!$tagId) {
                             $tagId = bin2hex(random_bytes(8));
-                            $pdo->prepare("INSERT INTO tags (id, name) VALUES (?, ?)")->execute([$tagId, $tagName]);
+                            $pdo->prepare("INSERT INTO tags (id, workspace_id, name) VALUES (?, ?, ?)")->execute([$tagId, $workspace_id ?? '', $tagName]);
                         }
                         $stmtInsTag = $pdo->prepare("INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES (?, ?)");
                         $stmtInsTag->execute([$sid, $tagId]);
@@ -374,10 +384,11 @@ try {
         case 'GET':
             if (session_id()) session_write_close();
             try {
-                $stmt = $pdo->query("SELECT p.*, 
+                $stmt = $pdo->prepare("SELECT p.*,
                                     (SELECT COUNT(*) FROM subscriber_activity sa WHERE sa.type = 'purchase' AND sa.reference_id = p.id) as count,
                                     (SELECT SUM(CAST(REGEXP_REPLACE(SUBSTRING_INDEX(details, 'Order value: ', -1), '[^0-9]', '') AS UNSIGNED)) FROM subscriber_activity sa WHERE sa.type = 'purchase' AND sa.reference_id = p.id) as revenue
-                                    FROM purchase_events p ORDER BY p.created_at DESC");
+                                    FROM purchase_events p WHERE p.workspace_id = ? ORDER BY p.created_at DESC");
+                $stmt->execute([$workspace_id]);
                 $data = array_map(function ($row) {
                     return [
                         'id' => $row['id'],
@@ -409,7 +420,8 @@ try {
                 $notifEmails = $data['notificationEmails'] ?? null;
                 $notifSubject = $data['notificationSubject'] ?? null;
 
-                $pdo->prepare("INSERT INTO purchase_events (id, name, notification_enabled, notification_emails, notification_subject, created_at) VALUES (?, ?, ?, ?, ?, NOW())")->execute([$id, $data['name'], $notifEnabled, $notifEmails, $notifSubject]);
+                // [FIX P43-H2] Include workspace_id in INSERT
+                $pdo->prepare("INSERT INTO purchase_events (id, workspace_id, name, notification_enabled, notification_emails, notification_subject, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())")->execute([$id, $workspace_id, $data['name'], $notifEnabled, $notifEmails, $notifSubject]);
                 jsonResponse(true, ['id' => $id], 'Đã tạo sự kiện mua hàng mới');
             } catch (Exception $e) {
                 jsonResponse(false, null, 'Lỗi khi tạo sự kiện mua hàng: ' . $e->getMessage());
@@ -428,7 +440,7 @@ try {
                 $notifEmails = $data['notificationEmails'] ?? null;
                 $notifSubject = $data['notificationSubject'] ?? null;
 
-                $pdo->prepare("UPDATE purchase_events SET name = ?, notification_enabled = ?, notification_emails = ?, notification_subject = ? WHERE id = ?")->execute([$data['name'], $notifEnabled, $notifEmails, $notifSubject, $path]);
+                $pdo->prepare("UPDATE purchase_events SET name = ?, notification_enabled = ?, notification_emails = ?, notification_subject = ? WHERE id = ? AND workspace_id = ?")->execute([$data['name'], $notifEnabled, $notifEmails, $notifSubject, $path, $workspace_id]);
                 jsonResponse(true, $data, 'Đã cập nhật sự kiện mua hàng');
             } catch (Exception $e) {
                 jsonResponse(false, null, 'Lỗi khi cập nhật sự kiện mua hàng: ' . $e->getMessage());
@@ -439,7 +451,7 @@ try {
             try {
                 if (!$path)
                     jsonResponse(false, null, 'Thiếu ID sự kiện');
-                $pdo->prepare("DELETE FROM purchase_events WHERE id = ?")->execute([$path]);
+                $pdo->prepare("DELETE FROM purchase_events WHERE id = ? AND workspace_id = ?")->execute([$path, $workspace_id]);
                 $pdo->prepare("DELETE FROM subscriber_activity WHERE type = 'purchase' AND reference_id = ?")->execute([$path]);
                 jsonResponse(true, ['id' => $path], 'Đã xóa sự kiện mua hàng');
             } catch (Exception $e) {

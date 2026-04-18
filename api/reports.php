@@ -1,17 +1,15 @@
 <?php
 require_once 'db_connect.php';
+require_once 'auth_middleware.php'; // [FIX P43-K] Add auth + workspace isolation
 apiHeaders();
 
+$workspace_id = get_current_workspace_id();
 $method = $_SERVER['REQUEST_METHOD'];
-$startDate = $_GET['startDate'] ?? date('Y-m-01'); // Mặc định đầu tháng
-$endDate = $_GET['endDate'] ?? date('Y-m-d');     // Mặc định hôm nay
+$startDate = $_GET['startDate'] ?? date('Y-m-01');
+$endDate = $_GET['endDate'] ?? date('Y-m-d');
 
 if ($method !== 'GET') {
     jsonResponse(false, null, 'Method not allowed');
-}
-
-if (empty($current_admin_id)) {
-    jsonResponse(false, null, 'Unauthorized');
 }
 
 try {
@@ -20,6 +18,12 @@ try {
     $campaignId = $_GET['campaignId'] ?? null;
 
     if ($campaignId) {
+        // [FIX P43-K1] Verify campaign belongs to workspace before returning A/B breakdown
+        $stmtOwn = $pdo->prepare("SELECT id FROM campaigns WHERE id = ? AND workspace_id = ?");
+        $stmtOwn->execute([$campaignId, $workspace_id]);
+        if (!$stmtOwn->fetchColumn())
+            jsonResponse(false, null, 'Campaign không tồn tại hoặc không có quyền truy cập');
+
         $sqlAB = "SELECT 
             variation,
             SUM(CASE WHEN type IN ('sent_email', 'receive_email', 'sent_zns', 'zns_sent', 'zalo_sent') THEN 1 ELSE 0 END) as sent,
@@ -68,20 +72,21 @@ try {
     // ... Original Data Fetching ...
 
     // 1. Tổng hợp số liệu Metrics (Optimized with index-friendly ranges)
+    // [FIX P43-K2] Scope metrics to workspace via subscriber activity JOIN
     $sqlMetrics = "SELECT 
-        SUM(CASE WHEN type IN ('sent_email', 'receive_email') THEN 1 ELSE 0 END) as sent,
-        COUNT(DISTINCT CASE WHEN type = 'open_email' THEN subscriber_id END) as opened,
-        COUNT(DISTINCT CASE WHEN type = 'click_link' THEN subscriber_id END) as clicked,
-        COUNT(DISTINCT CASE WHEN type = 'unsubscribe' THEN subscriber_id END) as unsubscribed,
-        -- Zalo Metrics (Standardized)
-        SUM(CASE WHEN type IN ('sent_zns', 'zns_sent', 'zalo_sent') THEN 1 ELSE 0 END) as zalo_sent,
-        SUM(CASE WHEN type = 'zns_delivered' THEN 1 ELSE 0 END) as zalo_delivered,
-        COUNT(DISTINCT CASE WHEN type IN ('zalo_clicked', 'zns_clicked', 'click_zns') THEN subscriber_id END) as zalo_clicked
-    FROM subscriber_activity 
-    WHERE created_at >= ? AND created_at <= ?";
+        SUM(CASE WHEN sa.type IN ('sent_email', 'receive_email') THEN 1 ELSE 0 END) as sent,
+        COUNT(DISTINCT CASE WHEN sa.type = 'open_email' THEN sa.subscriber_id END) as opened,
+        COUNT(DISTINCT CASE WHEN sa.type = 'click_link' THEN sa.subscriber_id END) as clicked,
+        COUNT(DISTINCT CASE WHEN sa.type = 'unsubscribe' THEN sa.subscriber_id END) as unsubscribed,
+        SUM(CASE WHEN sa.type IN ('sent_zns', 'zns_sent', 'zalo_sent') THEN 1 ELSE 0 END) as zalo_sent,
+        SUM(CASE WHEN sa.type = 'zns_delivered' THEN 1 ELSE 0 END) as zalo_delivered,
+        COUNT(DISTINCT CASE WHEN sa.type IN ('zalo_clicked', 'zns_clicked', 'click_zns') THEN sa.subscriber_id END) as zalo_clicked
+    FROM subscriber_activity sa
+    JOIN subscribers s ON sa.subscriber_id = s.id
+    WHERE s.workspace_id = ? AND sa.created_at >= ? AND sa.created_at <= ?";
 
     $stmtMetrics = $pdo->prepare($sqlMetrics);
-    $stmtMetrics->execute([$startDateFull, $endDateFull]);
+    $stmtMetrics->execute([$workspace_id, $startDateFull, $endDateFull]);
     $metrics = $stmtMetrics->fetch(PDO::FETCH_ASSOC);
 
     foreach ($metrics as $key => $val) {
@@ -90,38 +95,41 @@ try {
 
     // 2. Xu hướng hàng ngày (Daily Trend) - Optimized: Avoid DATE(created_at) in WHERE if possible
     // (Still need DATE() in SELECT for grouping, but created_at range in WHERE ensures index usage)
+    // [FIX P43-K3] Scope trend to workspace
     $sqlTrend = "SELECT 
-        DATE(created_at) as date,
-        SUM(CASE WHEN type IN ('sent_email', 'receive_email') THEN 1 ELSE 0 END) as sent,
-        COUNT(DISTINCT CASE WHEN type = 'open_email' THEN subscriber_id END) as opened,
-        COUNT(DISTINCT CASE WHEN type = 'click_link' THEN subscriber_id END) as clicked,
-        SUM(CASE WHEN type IN ('sent_zns', 'zns_sent', 'zalo_sent') THEN 1 ELSE 0 END) as zalo_sent,
-        SUM(CASE WHEN type = 'zns_delivered' THEN 1 ELSE 0 END) as zalo_delivered,
-        COUNT(DISTINCT CASE WHEN type IN ('zalo_clicked', 'zns_clicked', 'click_zns') THEN subscriber_id END) as zalo_clicked
-    FROM subscriber_activity 
-    WHERE created_at >= ? AND created_at <= ?
-    GROUP BY DATE(created_at)
+        DATE(sa.created_at) as date,
+        SUM(CASE WHEN sa.type IN ('sent_email', 'receive_email') THEN 1 ELSE 0 END) as sent,
+        COUNT(DISTINCT CASE WHEN sa.type = 'open_email' THEN sa.subscriber_id END) as opened,
+        COUNT(DISTINCT CASE WHEN sa.type = 'click_link' THEN sa.subscriber_id END) as clicked,
+        SUM(CASE WHEN sa.type IN ('sent_zns', 'zns_sent', 'zalo_sent') THEN 1 ELSE 0 END) as zalo_sent,
+        SUM(CASE WHEN sa.type = 'zns_delivered' THEN 1 ELSE 0 END) as zalo_delivered,
+        COUNT(DISTINCT CASE WHEN sa.type IN ('zalo_clicked', 'zns_clicked', 'click_zns') THEN sa.subscriber_id END) as zalo_clicked
+    FROM subscriber_activity sa
+    JOIN subscribers s ON sa.subscriber_id = s.id
+    WHERE s.workspace_id = ? AND sa.created_at >= ? AND sa.created_at <= ?
+    GROUP BY DATE(sa.created_at)
     ORDER BY date ASC";
 
     $stmtTrend = $pdo->prepare($sqlTrend);
-    $stmtTrend->execute([$startDateFull, $endDateFull]);
+    $stmtTrend->execute([$workspace_id, $startDateFull, $endDateFull]);
     $trend = $stmtTrend->fetchAll(PDO::FETCH_ASSOC);
 
-    // 3. Detailed Campaigns (Removed LIMIT 5 for full table/CSV)
+    // [FIX P43-K4] Scope campaigns list to workspace
     $sqlTopCampaigns = "SELECT id, name, count_sent as sent, count_unique_opened as opened, count_unique_clicked as clicked, count_bounced as bounced, count_spam as spam, created_at, status
                         FROM campaigns 
-                        WHERE status != 'draft' AND ((sent_at >= ? AND sent_at <= ?) OR (created_at >= ? AND created_at <= ?))
+                        WHERE workspace_id = ? AND status != 'draft' AND ((sent_at >= ? AND sent_at <= ?) OR (created_at >= ? AND created_at <= ?))
                         ORDER BY count_unique_opened DESC";
     $stmtTopCampaigns = $pdo->prepare($sqlTopCampaigns);
-    $stmtTopCampaigns->execute([$startDateFull, $endDateFull, $startDateFull, $endDateFull]);
+    $stmtTopCampaigns->execute([$workspace_id, $startDateFull, $endDateFull, $startDateFull, $endDateFull]);
     $topCampaigns = $stmtTopCampaigns->fetchAll(PDO::FETCH_ASSOC);
 
-    // 4. Detailed Flows
+    // [FIX P43-K5] Scope flows list to workspace
     $sqlTopFlows = "SELECT id, name, stat_total_sent as sent, stat_unique_opened as opened, stat_unique_clicked as clicked, stat_total_failed as failed, created_at, status
                     FROM flows 
+                    WHERE workspace_id = ?
                     ORDER BY stat_unique_opened DESC";
     $stmtTopFlows = $pdo->prepare($sqlTopFlows);
-    $stmtTopFlows->execute([]);
+    $stmtTopFlows->execute([$workspace_id]);
     $topFlows = $stmtTopFlows->fetchAll(PDO::FETCH_ASSOC);
 
     $responsePayload = [

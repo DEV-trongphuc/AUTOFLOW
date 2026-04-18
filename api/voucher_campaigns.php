@@ -2,14 +2,19 @@
 require_once 'bootstrap.php';
 initializeSystem($pdo);
 
+// [FIX P43-I] Add auth + workspace isolation
+require_once 'auth_middleware.php';
+$workspace_id = get_current_workspace_id();
+
 $method = $_SERVER['REQUEST_METHOD'];
 $id = $_GET['id'] ?? null;
 
 if ($method === 'GET') {
     try {
         if ($id) {
-            $stmt = $pdo->prepare("SELECT * FROM voucher_campaigns WHERE id = ?");
-            $stmt->execute([$id]);
+            // [FIX P43-I1] Scope single fetch to workspace
+            $stmt = $pdo->prepare("SELECT * FROM voucher_campaigns WHERE id = ? AND workspace_id = ?");
+            $stmt->execute([$id, $workspace_id]);
             $camp = $stmt->fetch();
             if ($camp) {
                 // Decode JSON back to array
@@ -25,16 +30,19 @@ if ($method === 'GET') {
                 jsonResponse(false, null, 'Campaign not found');
             }
         } else {
-            // Better to count properly based on actual usage
-            $statsStmt = $pdo->query("
+            // [FIX P43-I2] Scope stats aggregation to workspace campaigns only
+            $statsStmt = $pdo->prepare("
                 SELECT 
-                    campaign_id, 
+                    vc.campaign_id, 
                     COUNT(*) as totalGenerated,
-                    SUM(CASE WHEN sent_at IS NOT NULL OR subscriber_id IS NOT NULL THEN 1 ELSE 0 END) as totalDistributed,
-                    SUM(CASE WHEN status = 'used' THEN 1 ELSE 0 END) as totalRedeemed
-                FROM voucher_codes 
-                GROUP BY campaign_id
+                    SUM(CASE WHEN vc.sent_at IS NOT NULL OR vc.subscriber_id IS NOT NULL THEN 1 ELSE 0 END) as totalDistributed,
+                    SUM(CASE WHEN vc.status = 'used' THEN 1 ELSE 0 END) as totalRedeemed
+                FROM voucher_codes vc
+                JOIN voucher_campaigns vcamp ON vc.campaign_id = vcamp.id
+                WHERE vcamp.workspace_id = ?
+                GROUP BY vc.campaign_id
             ");
+            $statsStmt->execute([$workspace_id]);
             
             $statsAgg = [];
             while ($r = $statsStmt->fetch(PDO::FETCH_ASSOC)) {
@@ -45,7 +53,9 @@ if ($method === 'GET') {
                 ];
             }
 
-            $stmt = $pdo->query("SELECT * FROM voucher_campaigns ORDER BY created_at DESC");
+            // [FIX P43-I3] Scope list to workspace
+            $stmt = $pdo->prepare("SELECT * FROM voucher_campaigns WHERE workspace_id = ? ORDER BY created_at DESC");
+            $stmt->execute([$workspace_id]);
             $camps = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             foreach ($camps as &$c) {
@@ -79,11 +89,12 @@ if ($method === 'GET') {
         if ($isNew) {
             $stmt = $pdo->prepare("
                 INSERT INTO voucher_campaigns 
-                (id, name, description, thumbnail_url, rewards, code_type, static_code, start_date, end_date, expiration_days, status, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (id, workspace_id, name, description, thumbnail_url, rewards, code_type, static_code, start_date, end_date, expiration_days, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([
                 $campaignId,
+                $workspace_id,
                 $data['name'] ?? 'Untitled Campaign',
                 $data['description'] ?? '',
                 $data['thumbnailUrl'] ?? '',
@@ -102,7 +113,7 @@ if ($method === 'GET') {
                 UPDATE voucher_campaigns 
                 SET name = ?, description = ?, thumbnail_url = ?, rewards = ?, code_type = ?, 
                     static_code = ?, start_date = ?, end_date = ?, expiration_days = ?, status = ?, updated_at = ?
-                WHERE id = ?
+                WHERE id = ? AND workspace_id = ?
             ");
             $stmt->execute([
                 $data['name'] ?? 'Untitled Campaign',
@@ -116,7 +127,8 @@ if ($method === 'GET') {
                 isset($data['expirationDays']) ? (int)$data['expirationDays'] : null,
                 $data['status'] ?? 'draft',
                 $now,
-                $campaignId
+                $campaignId,
+                $workspace_id
             ]);
             
             if (($data['syncMode'] ?? '') === 'reset_unused') {
@@ -130,9 +142,13 @@ if ($method === 'GET') {
     }
 } elseif ($method === 'DELETE' && $id) {
     try {
-        // Also delete codes via constraints if setup properly, but manual here is safe
+        // [FIX P43-I4] Verify workspace ownership before delete
+        $stmtOwn = $pdo->prepare("SELECT id FROM voucher_campaigns WHERE id = ? AND workspace_id = ?");
+        $stmtOwn->execute([$id, $workspace_id]);
+        if (!$stmtOwn->fetchColumn())
+            jsonResponse(false, null, 'Campaign không tồn tại hoặc không có quyền xóa');
         $pdo->prepare("DELETE FROM voucher_codes WHERE campaign_id = ?")->execute([$id]);
-        $pdo->prepare("DELETE FROM voucher_campaigns WHERE id = ?")->execute([$id]);
+        $pdo->prepare("DELETE FROM voucher_campaigns WHERE id = ? AND workspace_id = ?")->execute([$id, $workspace_id]);
         jsonResponse(true, null, 'Campaign deleted successfully');
     } catch (PDOException $e) {
         jsonResponse(false, null, $e->getMessage());

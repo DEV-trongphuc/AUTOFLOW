@@ -9,6 +9,15 @@ $route = $_GET['route'] ?? '';
 
 require_once 'flow_helpers.php';
 
+// [FIX P43-H] CRUD routes require auth + workspace isolation.
+// Public /track route is exempt (external webhooks from third-party apps).
+$isCrudRoute = !($method === 'POST' && $route === 'track');
+if ($isCrudRoute) {
+    require_once 'auth_middleware.php';
+    $workspace_id = get_current_workspace_id();
+} else {
+    $workspace_id = null; // track route resolves workspace from event_id lookup
+}
 
 try {
     // --- TRACKING CUSTOM EVENT (PUBLIC API) ---
@@ -82,12 +91,13 @@ try {
                                     continue;
 
                                 // Get or create tag
-                                $stmtTag = $pdo->prepare("SELECT id FROM tags WHERE name = ?");
-                                $stmtTag->execute([$tagName]);
+                                $stmtTag = $pdo->prepare("SELECT id FROM tags WHERE name = ? AND workspace_id = ?");
+                                $stmtTag->execute([$tagName, $workspace_id ?? '']);
                                 $tagId = $stmtTag->fetchColumn();
                                 if (!$tagId) {
                                     $tagId = bin2hex(random_bytes(8));
-                                    $pdo->prepare("INSERT INTO tags (id, name) VALUES (?, ?)")->execute([$tagId, $tagName]);
+                                    // [FIX P43-H1] workspace_id in auto-create tag from custom_event track
+                                    $pdo->prepare("INSERT INTO tags (id, workspace_id, name) VALUES (?, ?, ?)")->execute([$tagId, $workspace_id ?? '', $tagName]);
                                 }
                                 // Add to subscriber_tags
                                 $stmtInsTag = $pdo->prepare("INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES (?, ?)");
@@ -135,12 +145,12 @@ try {
                         if (empty($tagName))
                             continue;
 
-                        $stmtTag = $pdo->prepare("SELECT id FROM tags WHERE name = ?");
-                        $stmtTag->execute([$tagName]);
+                        $stmtTag = $pdo->prepare("SELECT id FROM tags WHERE name = ? AND workspace_id = ?");
+                        $stmtTag->execute([$tagName, $workspace_id ?? '']);
                         $tagId = $stmtTag->fetchColumn();
                         if (!$tagId) {
                             $tagId = bin2hex(random_bytes(8));
-                            $pdo->prepare("INSERT INTO tags (id, name) VALUES (?, ?)")->execute([$tagId, $tagName]);
+                            $pdo->prepare("INSERT INTO tags (id, workspace_id, name) VALUES (?, ?, ?)")->execute([$tagId, $workspace_id ?? '', $tagName]);
                         }
                         $stmtInsTag = $pdo->prepare("INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES (?, ?)");
                         $stmtInsTag->execute([$sid, $tagId]);
@@ -371,9 +381,10 @@ try {
         case 'GET':
             if (session_id()) session_write_close();
             try {
-                $stmt = $pdo->query("SELECT c.*, 
+                $stmt = $pdo->prepare("SELECT c.*,
                                     (SELECT COUNT(*) FROM subscriber_activity sa WHERE sa.type = 'custom_event' AND sa.reference_id = c.id) as count
-                                    FROM custom_events c ORDER BY c.created_at DESC");
+                                    FROM custom_events c WHERE c.workspace_id = ? ORDER BY c.created_at DESC");
+                $stmt->execute([$workspace_id]);
                 $data = array_map(function ($row) {
                     return [
                         'id' => $row['id'],
@@ -404,7 +415,8 @@ try {
                 $notifEmails = $data['notificationEmails'] ?? null;
                 $notifSubject = $data['notificationSubject'] ?? null;
 
-                $pdo->prepare("INSERT INTO custom_events (id, name, notification_enabled, notification_emails, notification_subject, created_at) VALUES (?, ?, ?, ?, ?, NOW())")->execute([$id, $data['name'], $notifEnabled, $notifEmails, $notifSubject]);
+                // [FIX P43-H2] Include workspace_id in INSERT
+                $pdo->prepare("INSERT INTO custom_events (id, workspace_id, name, notification_enabled, notification_emails, notification_subject, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())")->execute([$id, $workspace_id, $data['name'], $notifEnabled, $notifEmails, $notifSubject]);
                 jsonResponse(true, ['id' => $id], 'Đã tạo sự kiện mới');
             } catch (Exception $e) {
                 jsonResponse(false, null, 'Lỗi khi tạo sự kiện: ' . $e->getMessage());
@@ -423,7 +435,7 @@ try {
                 $notifEmails = $data['notificationEmails'] ?? null;
                 $notifSubject = $data['notificationSubject'] ?? null;
 
-                $pdo->prepare("UPDATE custom_events SET name = ?, notification_enabled = ?, notification_emails = ?, notification_subject = ? WHERE id = ?")->execute([$data['name'], $notifEnabled, $notifEmails, $notifSubject, $path]);
+                $pdo->prepare("UPDATE custom_events SET name = ?, notification_enabled = ?, notification_emails = ?, notification_subject = ? WHERE id = ? AND workspace_id = ?")->execute([$data['name'], $notifEnabled, $notifEmails, $notifSubject, $path, $workspace_id]);
                 jsonResponse(true, $data, 'Đã cập nhật sự kiện');
             } catch (Exception $e) {
                 jsonResponse(false, null, 'Lỗi khi cập nhật sự kiện: ' . $e->getMessage());
@@ -434,7 +446,7 @@ try {
             try {
                 if (!$path)
                     jsonResponse(false, null, 'Thiếu ID sự kiện');
-                $pdo->prepare("DELETE FROM custom_events WHERE id = ?")->execute([$path]);
+                $pdo->prepare("DELETE FROM custom_events WHERE id = ? AND workspace_id = ?")->execute([$path, $workspace_id]);
                 $pdo->prepare("DELETE FROM subscriber_activity WHERE type = 'custom_event' AND reference_id = ?")->execute([$path]);
                 jsonResponse(true, ['id' => $path], 'Đã xóa sự kiện');
             } catch (Exception $e) {
