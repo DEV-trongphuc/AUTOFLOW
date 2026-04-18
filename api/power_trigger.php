@@ -17,11 +17,11 @@ try {
     $targetCampaignId = '6985cffc6c490';
 
     $apiUrl = API_BASE_URL;
-    $stmt = $pdo->query("SELECT * FROM system_settings");
+    // [FIX P42-PT] SELECT * loaded ALL secrets. Only smtp_user needed for Mailer init.
+    $stmt = $pdo->prepare("SELECT `key`, `value` FROM system_settings WHERE `key` = 'smtp_user'");
+    $stmt->execute();
     $settings = [];
-    foreach ($stmt->fetchAll() as $row) {
-        $settings[$row['key']] = $row['value'];
-    }
+    while ($row = $stmt->fetch()) { $settings[$row['key']] = $row['value']; }
     $defaultSender = !empty($settings['smtp_user']) ? $settings['smtp_user'] : "marketing@ka-en.com.vn";
     $mailer = new Mailer($pdo, $apiUrl, $defaultSender);
     $executor = new FlowExecutor($pdo, $mailer, $apiUrl);

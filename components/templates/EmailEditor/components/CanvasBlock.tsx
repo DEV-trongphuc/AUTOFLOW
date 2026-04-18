@@ -416,8 +416,10 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                                                     width: css.width ?? '100%',
                                                     height: imgHeight,
                                                     borderRadius: sanitizeRadius(css.borderRadius),
+                                                    backgroundColor: css.backgroundColor ?? 'transparent',
+                                                    padding: `${css.paddingTop ?? '0'} ${css.paddingRight ?? '0'} ${css.paddingBottom ?? '0'} ${css.paddingLeft ?? '0'}`,
                                                     overflow: 'hidden',
-                                                    display: 'block',
+                                                    display: 'inline-block', // changed from block to fix alignment
                                                     maxWidth: '100%',
                                                 }}>
                                                     <img
@@ -428,17 +430,25 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                                                             objectFit: 'cover',
                                                             objectPosition: 'center',
                                                             display: 'block',
+                                                            borderRadius: sanitizeRadius(css.borderRadius)
                                                         }}
                                                         alt={block.altText}
                                                     />
                                                 </div>
                                             ) : (
                                                 // Default: auto height
-                                                <img
-                                                    src={block.content}
-                                                    style={{ maxWidth: '100%', width: css.width ?? '100%', height: 'auto', borderRadius: sanitizeRadius(css.borderRadius), display: 'block' }}
-                                                    alt={block.altText}
-                                                />
+                                                <div style={{
+                                                    backgroundColor: css.backgroundColor ?? 'transparent',
+                                                    padding: `${css.paddingTop ?? '0'} ${css.paddingRight ?? '0'} ${css.paddingBottom ?? '0'} ${css.paddingLeft ?? '0'}`,
+                                                    borderRadius: sanitizeRadius(css.borderRadius),
+                                                    display: 'inline-block'
+                                                }}>
+                                                    <img
+                                                        src={block.content}
+                                                        style={{ maxWidth: '100%', width: css.width ?? '100%', height: 'auto', display: 'block', borderRadius: sanitizeRadius(css.borderRadius) }}
+                                                        alt={block.altText}
+                                                    />
+                                                </div>
                                             )}
                                         </div>
                                     ) : (

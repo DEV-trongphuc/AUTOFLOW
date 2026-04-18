@@ -1311,4 +1311,4 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
     );
 };
 
-export default EmailProperties;
+export default React.memo(EmailProperties);

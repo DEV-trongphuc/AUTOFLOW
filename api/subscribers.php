@@ -5,9 +5,9 @@ initializeSystem($pdo);
 
 require_once 'trigger_helper.php';
 require_once 'zalo_sync_helpers.php';
+require_once 'auth_middleware.php';
 
-// checkDynamicTriggers moved to trigger_helper.php
-
+$workspace_id = get_current_workspace_id();
 
 $method = $_SERVER['REQUEST_METHOD'];
 $path = isset($_GET['id']) ? $_GET['id'] : null;
@@ -122,10 +122,11 @@ if ($method === 'GET' && $route === 'count_unique') {
     }
 
     $fullWhere = implode(' OR ', $whereGroups);
-    $sql = "SELECT COUNT(*) FROM subscribers s WHERE $fullWhere";
+    $sql = "SELECT COUNT(*) FROM subscribers s WHERE ($fullWhere) AND s.workspace_id = ?";
 
     try {
         $stmt = $pdo->prepare($sql);
+        $params[] = $workspace_id;
         $stmt->execute($params);
         $count = $stmt->fetchColumn();
         jsonResponse(true, ['count' => (int) $count]);
@@ -144,14 +145,15 @@ if ($method === 'POST' && ($route === 'bulk-add-tag' || $route === 'bulk-add-to-
         // FETCH INACTIVE USERS: Logic matched with flows.php
         $sql = "SELECT sfs.subscriber_id
                 FROM subscriber_flow_states sfs
+                JOIN subscribers s ON sfs.subscriber_id = s.id
                 LEFT JOIN subscriber_activity sa ON sa.subscriber_id = sfs.subscriber_id 
                     AND sa.flow_id = sfs.flow_id 
                     AND sa.type IN ('open_email', 'click_link', 'click_zns', 'zns_clicked', 'zns_replied', 'reply_email', 'form_submit', 'purchase')
-                WHERE sfs.flow_id = ?
+                WHERE sfs.flow_id = ? AND s.workspace_id = ?
                 AND sa.id IS NULL
                 AND sfs.status IN ('waiting', 'processing', 'completed', 'failed')";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$flowId]);
+        $stmt->execute([$flowId, $workspace_id]);
         $subscriberIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
@@ -218,11 +220,14 @@ if ($method === 'POST' && ($route === 'bulk-add-tag' || $route === 'bulk-add-to-
         if (!$status)
             jsonResponse(false, null, 'Status required');
 
+        // [FIX P33-S1] Added workspace_id guard to bulk status change.
+        // Without this, any authenticated user could change the status of subscribers
+        // from any workspace by supplying foreign subscriber IDs in the request body.
         $CHUNK = 500;
         foreach (array_chunk($subscriberIds, $CHUNK) as $chunk) {
             $placeholders = implode(',', array_fill(0, count($chunk), '?'));
-            $sql = "UPDATE subscribers SET status = ? WHERE id IN ($placeholders)";
-            $pdo->prepare($sql)->execute(array_merge([$status], $chunk));
+            $sql = "UPDATE subscribers SET status = ? WHERE id IN ($placeholders) AND workspace_id = ?";
+            $pdo->prepare($sql)->execute(array_merge([$status], $chunk, [$workspace_id]));
         }
 
         jsonResponse(true, ['count' => count($subscriberIds)], 'Đã cập nhật trạng thái thành công');
@@ -275,9 +280,10 @@ if ($method === 'POST' && $route === 'subscribers_bulk') {
                 $anniv = !empty($data['anniversaryDate']) ? $data['anniversaryDate'] : null;
 
                 // 10M UPGRADE: Removed 'tags' from main insert (moved to subscriber_tags)
-                $subValues[] = "(?, ?, ?, ?, ?, ?, ?, NOW(), '[]', ?, ?, ?, ?, ?, ?, ?, ?)";
+                $subValues[] = "(?, ?, ?, ?, ?, ?, ?, ?, NOW(), '[]', ?, ?, ?, ?, ?, ?, ?, ?)";
                 array_push(
                     $subParams,
+                    $workspace_id,
                     $id,
                     $email,
                     $firstName,
@@ -318,7 +324,7 @@ if ($method === 'POST' && $route === 'subscribers_bulk') {
             }
 
             if (!empty($subValues)) {
-                $sqlSub = "INSERT INTO subscribers (id, email, first_name, last_name, status, source, salesperson, joined_at, notes,
+                $sqlSub = "INSERT INTO subscribers (workspace_id, id, email, first_name, last_name, status, source, salesperson, joined_at, notes,
 phone_number, job_title, company_name, country, city, gender, date_of_birth, anniversary_date)
 VALUES " . implode(',', $subValues) . "
 ON DUPLICATE KEY UPDATE
@@ -370,14 +376,14 @@ switch ($method) {
         if (session_id()) session_write_close();
         if ($path || isset($_GET['email']) || isset($_GET['visitor_id'])) {
             if (isset($_GET['email'])) {
-                $stmt = $pdo->prepare("SELECT s.* FROM subscribers s WHERE s.email = ?");
-                $stmt->execute([$_GET['email']]);
+                $stmt = $pdo->prepare("SELECT s.* FROM subscribers s WHERE s.email = ? AND s.workspace_id = ?");
+                $stmt->execute([$_GET['email'], $workspace_id]);
             } elseif (isset($_GET['visitor_id'])) {
-                $stmt = $pdo->prepare("SELECT s.* FROM subscribers s JOIN web_visitors v ON s.id = v.subscriber_id WHERE v.id = ?");
-                $stmt->execute([$_GET['visitor_id']]);
+                $stmt = $pdo->prepare("SELECT s.* FROM subscribers s JOIN web_visitors v ON s.id = v.subscriber_id WHERE v.id = ? AND s.workspace_id = ?");
+                $stmt->execute([$_GET['visitor_id'], $workspace_id]);
             } else {
-                $stmt = $pdo->prepare("SELECT s.* FROM subscribers s WHERE s.id = ?");
-                $stmt->execute([$path]);
+                $stmt = $pdo->prepare("SELECT s.* FROM subscribers s WHERE s.id = ? AND s.workspace_id = ?");
+                $stmt->execute([$path, $workspace_id]);
             }
             $sub = $stmt->fetch();
             if ($sub) {
@@ -433,8 +439,10 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
             $verified = $_GET['verified'] ?? 'all';
             $sort = $_GET['sort'] ?? 'newest';
 
-            $whereClauses = ["1=1"];
-            $params = [];
+            // [FIX P0] workspace_id was interpolated directly into SQL — standardized to
+            // prepared param for type-correctness and consistency with all other endpoints.
+            $whereClauses = ["s.workspace_id = ?"];
+            $params = [$workspace_id];
             $joins = []; // New: Handle JOINs for performance
 
             // Search
@@ -757,7 +765,10 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
                 // INJECT: Global stats for Dashboard KPIs when limit=1 (initial load)
                 if ($limit === 1 && $page === 1) {
                     try {
-                        $stmtStats = $pdo->query("SELECT IFNULL(status, 'active') as status_val, COUNT(*) as c FROM subscribers GROUP BY IFNULL(status, 'active')");
+                        // [FIX P0-6] Added workspace_id filter — previously returned aggregate stats
+                        // for ALL workspaces, leaking cross-tenant subscriber counts on dashboard.
+                        $stmtStats = $pdo->prepare("SELECT IFNULL(status, 'active') as status_val, COUNT(*) as c FROM subscribers WHERE workspace_id = ? GROUP BY IFNULL(status, 'active')");
+                        $stmtStats->execute([$workspace_id]);
                         $statusCounts = $stmtStats->fetchAll(PDO::FETCH_KEY_PAIR);
                         $responsePayload['globalStats'] = [
                             'customer' => (int)($statusCounts['customer'] ?? 0),
@@ -793,8 +804,8 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
         }
 
         // Check for duplicates
-        $checkEmail = $pdo->prepare("SELECT id FROM subscribers WHERE email = ? AND id != ?");
-        $checkEmail->execute([$data['email'], $path ?? '']);
+        $checkEmail = $pdo->prepare("SELECT id FROM subscribers WHERE email = ? AND workspace_id = ? AND id != ?");
+        $checkEmail->execute([$data['email'], $workspace_id, $path ?? '']);
         if ($checkEmail->fetch()) {
             jsonResponse(false, null, 'Email đã tồn tại trong hệ thống (Email already exists). Vui lòng sử dụng email khác hoặc
     cập nhật subscriber hiện tại.');
@@ -803,14 +814,18 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
         $attrs = json_encode($data['customAttributes'] ?? (object) []);
         $notes = json_encode($data['notes'] ?? []); // Save notes on POST
 
-        $sql = "INSERT INTO subscribers (id, email, first_name, last_name, gender, custom_attributes, phone_number,
+        // [FIX P11-C3] Added workspace_id to INSERT — previously missing, causing manually-created
+        // subscribers to have workspace_id=NULL and be invisible to all workspace-filtered queries.
+        // Bug existed in single-create POST only; bulk import was already fixed (see [FIX P0] comment).
+        $sql = "INSERT INTO subscribers (id, workspace_id, email, first_name, last_name, gender, custom_attributes, phone_number,
     job_title, company_name, country, city, address, source, salesperson, joined_at, notes, status, date_of_birth,
     anniversary_date)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?)";
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?)";
         $stmt = $pdo->prepare($sql);
         try {
             $stmt->execute([
                 $id,
+                $workspace_id, // [FIX P11-C3] workspace_id was missing — subscribers now correctly isolated
                 $data['email'],
                 $data['firstName'] ?? '',
                 $data['lastName'] ?? '',
@@ -884,8 +899,8 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
         $notes = json_encode($data['notes'] ?? []); // Save notes on PUT
 
         // Check if phone number changed to update list phone_counts
-        $stmtOldPhone = $pdo->prepare("SELECT phone_number FROM subscribers WHERE id = ?");
-        $stmtOldPhone->execute([$path]);
+        $stmtOldPhone = $pdo->prepare("SELECT phone_number FROM subscribers WHERE id = ? AND workspace_id = ?");
+        $stmtOldPhone->execute([$path, $workspace_id]);
         $oldPhone = (string) $stmtOldPhone->fetchColumn();
         $newPhone = (string) ($data['phoneNumber'] ?? '');
         $phoneStatusChanged = 0; // 1: gained phone, -1: lost phone, 0: no change in "has phone" status
@@ -899,7 +914,7 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
         $sql = "UPDATE subscribers SET email=?, first_name=?, last_name=?, gender=?, custom_attributes=?, status=?,
     phone_number=?, job_title=?, company_name=?, country=?, city=?, address=?, source=?, salesperson=?, date_of_birth=?,
     anniversary_date=?, notes=?, updated_at = NOW()
-    WHERE id=?";
+    WHERE id=? AND workspace_id=?";
         $stmt = $pdo->prepare($sql);
         try {
             $stmt->execute([
@@ -920,7 +935,8 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
                 $dob,
                 $anniversary,
                 $notes,
-                $path
+                $path,
+                $workspace_id
             ]);
 
             // If phone status changed, update all lists this subscriber belongs to
@@ -1008,8 +1024,8 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
             $pdo->beginTransaction();
 
             // Giảm count của các list trước khi xóa
-            $stmtSub = $pdo->prepare("SELECT phone_number FROM subscribers WHERE id = ?");
-            $stmtSub->execute([$path]);
+            $stmtSub = $pdo->prepare("SELECT phone_number FROM subscribers WHERE id = ? AND workspace_id = ?");
+            $stmtSub->execute([$path, $workspace_id]);
             $phone = (string) $stmtSub->fetchColumn();
             $hasPhone = (!empty($phone) && trim($phone) !== '') ? 1 : 0;
 
@@ -1026,7 +1042,7 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
             $pdo->prepare("DELETE FROM subscriber_flow_states WHERE subscriber_id = ?")->execute([$path]);
             $pdo->prepare("DELETE FROM subscriber_lists WHERE subscriber_id = ?")->execute([$path]);
 
-            $pdo->prepare("DELETE FROM subscribers WHERE id = ?")->execute([$path]);
+            $pdo->prepare("DELETE FROM subscribers WHERE id = ? AND workspace_id = ?")->execute([$path, $workspace_id]);
 
             $pdo->commit();
             jsonResponse(true, ['id' => $path]);

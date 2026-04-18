@@ -98,6 +98,43 @@ try {
     }
 
     echo "=================================================\n";
+    echo "6. Kiểm tra cột ZNS click stats trong bảng 'flows'...\n";
+    // [P11-C1] tracking_processor.php (P10-H1) writes stat_total_zalo_clicked / stat_unique_zalo_clicked
+    // but these columns were missing from the original schema, causing PDOException on every ZNS click.
+    foreach (['stat_total_zalo_clicked', 'stat_unique_zalo_clicked'] as $col) {
+        try {
+            $pdo->query("SELECT $col FROM flows LIMIT 1");
+            echo "   [OK] Cột '$col' đã tồn tại. Bỏ qua.\n";
+        } catch (PDOException $e) {
+            if (strpos($e->getMessage(), 'Unknown column') !== false) {
+                echo "   Đang bổ sung cột '$col' vào bảng 'flows'...\n";
+                $pdo->exec("ALTER TABLE flows ADD COLUMN IF NOT EXISTS `$col` INT(11) NOT NULL DEFAULT 0 COMMENT 'P11-C1 ZNS click stat'");
+                echo "   [OK] Đã thêm '$col' thành công.\n";
+            } else {
+                throw $e;
+            }
+        }
+    }
+    echo "\n";
+
+    echo "=================================================\n";
+    echo "7. Kiểm tra cột 'html_content' trong bảng 'campaign_reminders'...\n";
+    // [P11-M1] html_content exists in production DB but was never added to database.sql schema.
+    // Fresh installs will be missing this column, causing reminder mail worker to crash.
+    try {
+        $pdo->query("SELECT html_content FROM campaign_reminders LIMIT 1");
+        echo "   [OK] Cột 'html_content' đã tồn tại. Bỏ qua.\n\n";
+    } catch (PDOException $e) {
+        if (strpos($e->getMessage(), 'Unknown column') !== false) {
+            echo "   Đang bổ sung cột 'html_content' vào 'campaign_reminders'...\n";
+            $pdo->exec("ALTER TABLE campaign_reminders ADD COLUMN IF NOT EXISTS `html_content` MEDIUMTEXT DEFAULT NULL COMMENT 'Cached HTML build for reminder (P11-M1)'");
+            echo "   [OK] Đã thêm thành công.\n\n";
+        } else {
+            throw $e;
+        }
+    }
+
+    echo "=================================================\n";
     echo "HOÀN TẤT! HỆ THỐNG ĐÃ ĐƯỢC FIX LỖI DEADLOCK VÀ INDEX.\n";
     echo "BẠN CÓ THỂ ĐÓNG TAB TRÌNH DUYỆT NÀY VÀ YÊN TÂM CHẠY CHIẾN DỊCH.\n";
 

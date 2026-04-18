@@ -9,7 +9,9 @@ import Select from '../../common/Select';
 import TemplateSelector from '../TemplateSelector';
 import EmailPreviewDrawer from './EmailPreviewDrawer';
 import toast from 'react-hot-toast';
-
+import ConfirmModal from '../../common/ConfirmModal';
+import { MultiFileUploadModal } from '../../campaigns/MultiFileUploadModal';
+import FileLibraryModal from '../../common/FileLibraryModal';
 
 interface EmailActionConfigProps {
     config: Record<string, any>;
@@ -44,6 +46,8 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
     const [isUploading, setIsUploading] = useState(false);
     const [isPersonalizedMode, setIsPersonalizedMode] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+    const [isLibraryOpen, setIsLibraryOpen] = useState(false);
     // Flag khi template được cấu hình trong step đã bị xóa khỏi hệ thống
     const [templateDeleted, setTemplateDeleted] = useState(false);
 
@@ -169,18 +173,16 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
 
         setIsUploading(true);
         const newAttachments: Attachment[] = [];
-        const apiUrl = localStorage.getItem('mailflow_api_url') || 'https://automation.ideas.edu.vn/mail_api';
-        const uploadUrl = apiUrl.replace(/\/$/, '') + '/upload.php';
+
 
         for (const file of files) {
             const formData = new FormData();
             formData.append('file', file);
 
             try {
-                const response = await fetch(uploadUrl, { method: 'POST', body: formData });
-                const result = (await response.json()) as any;
+                const result = await api.post<any>('upload', formData);
 
-                if (result.success) {
+                if (result.success && result.data) {
                     newAttachments.push({
                         id: crypto.randomUUID(),
                         name: result.data.name,
@@ -208,9 +210,26 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const removeAttachment = (id: string) => {
-        if (disabled) return;
-        setAttachments(attachments.filter(a => a.id !== id));
+    const [attachmentToDelete, setAttachmentToDelete] = useState<string | null>(null);
+
+    const executeRemoveAttachment = async () => {
+        if (disabled || !attachmentToDelete) return;
+        const id = attachmentToDelete;
+        setAttachmentToDelete(null);
+
+        const attachToRemove = attachments.find(a => a.id === id);
+
+        // Remove from UI immediately for snappy feeling
+        setAttachments(prev => prev.filter(a => a.id !== id));
+
+        // Delete from server to save space
+        if (attachToRemove && attachToRemove.path) {
+            try {
+                await api.post('delete_attachment', { path: attachToRemove.path });
+            } catch (err) {
+                console.error("Failed to auto-remove attachment from host:", err);
+            }
+        }
     };
 
 
@@ -221,7 +240,7 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
                 <div className="relative">
                     <Input
                         label="Tiêu đề Email (Subject)"
-                        placeholder="VD: 🎁 Quà tặng cho {{first_name}}..."
+                        placeholder="VD: Quà tặng cho {{first_name}}..."
                         value={config.subject || ''}
                         onChange={(e) => onChange({ ...config, subject: e.target.value })}
                         error={!config.subject ? "Tiêu đề không được để trống" : ""}
@@ -286,7 +305,7 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
                                     <div>
                                         <p className="text-xs font-black text-slate-800">{email.label}</p>
                                         <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-widest flex items-center">
-                                            Đã xác minh 
+                                            Đã xác minh
                                             {index === 0 && <span className="ml-2 text-[9px] text-blue-600 font-bold uppercase tracking-widest bg-blue-100/80 border border-blue-200/50 px-2 py-0.5 rounded-full shrink-0">Mặc định</span>}
                                         </p>
                                     </div>
@@ -490,11 +509,37 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
                         </div>
                     )}
 
-                    {/* Upload Button */}
-                    <div onClick={() => !disabled && fileInputRef.current?.click()} className={`cursor-pointer w-full py-4 border-2 border-dashed rounded-2xl flex items-center justify-center gap-2 text-slate-400 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50/30 transition-all ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
-                        {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
-                        <span className="text-xs font-bold uppercase">Upload Tệp đính kèm ({isPersonalizedMode ? 'Cá nhân hóa' : 'Gửi Chung'})</span>
-                        <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileUpload} disabled={isUploading || disabled} />
+                    {/* Upload + Library Buttons */}
+                    <div className={`flex gap-2 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                        {/* Upload new file */}
+                        <div
+                            onClick={() => {
+                                if (disabled) return;
+                                if (isPersonalizedMode) setIsUploadModalOpen(true);
+                                else fileInputRef.current?.click();
+                            }}
+                            className="flex-1 cursor-pointer py-3.5 border-2 border-dashed rounded-2xl flex items-center justify-center gap-2 text-slate-400 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50/30 transition-all"
+                        >
+                            {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                            <span className="text-[10px] font-bold uppercase">
+                                {isPersonalizedMode ? 'Upload (Cá nhân)' : 'Upload File'}
+                            </span>
+                            {!isPersonalizedMode && <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileUpload} disabled={isUploading || disabled} />}
+                        </div>
+
+                        {/* Pick from library */}
+                        <button
+                            type="button"
+                            onClick={() => !disabled && setIsLibraryOpen(true)}
+                            className="px-4 py-3.5 border-2 border-dashed border-violet-200 rounded-2xl flex items-center gap-1.5 text-violet-500 hover:text-violet-700 hover:border-violet-400 hover:bg-violet-50/40 transition-all text-[10px] font-bold uppercase shrink-0"
+                            title="Chọn file từ thư viện đã upload"
+                        >
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M3 7h18M3 12h18M3 17h18" strokeLinecap="round"/>
+                                <rect x="3" y="3" width="7" height="7" rx="1"/>
+                            </svg>
+                            Thư viện
+                        </button>
                     </div>
 
                     {/* Attachment List */}
@@ -502,18 +547,20 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
                         <div key={att.id} className={`border rounded-2xl p-3 animate-in fade-in slide-in-from-bottom-2 transition-colors ${att.logic !== 'all' ? 'bg-blue-50/30 border-blue-100' : 'bg-white border-slate-100'}`}>
                             <div className="flex items-start justify-between gap-3">
                                 <div className="flex items-center gap-3 overflow-hidden">
-                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border ${att.logic !== 'all' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
-                                        <FileIcon className="w-5 h-5" />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className="text-xs font-bold text-slate-700 truncate" title={att.name}>{att.name}</p>
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-[9px] text-slate-400 font-mono">{(att.size / 1024).toFixed(1)} KB</p>
-                                            {att.logic !== 'all' && <span className="text-[8px] font-black text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded uppercase">Personalized</span>}
+                                    <a href={att.url || '#'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group flex-1 min-w-0" title="Bấm để xem tệp">
+                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border transition-colors ${att.logic !== 'all' ? 'bg-blue-100 text-blue-600 border-blue-200 group-hover:bg-blue-500 group-hover:text-white' : 'bg-slate-50 text-slate-400 border-slate-100 group-hover:bg-blue-500 group-hover:text-white group-hover:border-blue-500'}`}>
+                                            <FileIcon className="w-5 h-5" />
                                         </div>
-                                    </div>
+                                        <div className="min-w-0 cursor-pointer">
+                                            <p className="text-xs font-bold text-slate-700 truncate group-hover:text-blue-600 transition-colors" title={att.name}>{att.name}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-[9px] text-slate-400 font-mono">{(att.size / 1024).toFixed(1)} KB</p>
+                                                {att.logic !== 'all' && <span className="text-[8px] font-black text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded uppercase">Personalized</span>}
+                                            </div>
+                                        </div>
+                                    </a>
                                 </div>
-                                <button onClick={() => removeAttachment(att.id)} className="text-slate-300 hover:text-rose-500 p-1" disabled={disabled}><X className="w-4 h-4" /></button>
+                                <button onClick={() => setAttachmentToDelete(att.id)} className="text-slate-300 hover:text-rose-500 p-1" disabled={disabled}><X className="w-4 h-4" /></button>
                             </div>
 
                             {att.logic === 'match_email' && (
@@ -556,6 +603,46 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
                 htmlContent={previewData?.html}
                 isOpen={!!previewData}
                 onClose={() => setPreviewData(null)}
+            />
+
+            <ConfirmModal
+                isOpen={!!attachmentToDelete}
+                onClose={() => setAttachmentToDelete(null)}
+                onConfirm={executeRemoveAttachment}
+                title="Xóa tệp đính kèm?"
+                message="Bạn có chắc chắn muốn xóa tệp này vĩnh viễn khỏi server không? Hành động này không thể hoàn tác."
+                variant="danger"
+                cancelText="Hủy"
+                confirmText="Xóa vĩnh viễn"
+            />
+
+            {/* MultiFile Upload Modal */}
+            <MultiFileUploadModal
+                isOpen={isUploadModalOpen}
+                onClose={() => setIsUploadModalOpen(false)}
+                onUploadComplete={(newAttachments) => {
+                    setAttachments(prev => [...prev, ...newAttachments]);
+                    setIsUploadModalOpen(false);
+                }}
+                targetConfig={{}} // Empty target matches against ALL active subscribers since Flow is dynamic 
+            />
+
+            {/* File Library Modal */}
+            <FileLibraryModal
+                isOpen={isLibraryOpen}
+                onClose={() => setIsLibraryOpen(false)}
+                onSelect={(picked) => {
+                    const newAtts = picked.map(f => ({
+                        id: crypto.randomUUID(),
+                        name: f.name,
+                        url: f.url,
+                        path: f.path,
+                        size: f.size,
+                        type: f.type,
+                        logic: (isPersonalizedMode ? 'match_email' : 'all') as 'all' | 'match_email',
+                    }));
+                    setAttachments(prev => [...prev, ...newAtts]);
+                }}
             />
         </div>
     );

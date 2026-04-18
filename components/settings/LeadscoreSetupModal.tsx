@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { X, Target, Mail, MousePointerClick, FileText, Globe, MessageSquare, Bot, Save, AlertCircle, ShoppingBag, Zap } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
 import toast from 'react-hot-toast';
@@ -108,7 +108,7 @@ export const LeadscoreSetupModal: React.FC<Props> = ({ isOpen, onClose }) => {
                         <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                         <div className="text-sm font-medium text-amber-800/80">
                             <strong>Lưu ý:</strong> Điểm Leadscore giúp hệ thống tự động phân loại Khách hàng tiềm năng (Hot/Warm/Cold). 
-                            Tất cả tính năng cộng điểm trong AutoFlow (Email, API, Web, Zalo...) sẽ tự động tham chiếu theo bảng điểm này.
+                            Tất cả tính năng cộng điểm trong DOMATION (Email, API, Web, Zalo...) sẽ tự động tham chiếu theo bảng điểm này.
                         </div>
                     </div>
 

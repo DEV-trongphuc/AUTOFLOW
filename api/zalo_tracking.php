@@ -70,9 +70,39 @@ if ($subId && $url) {
         // 2.5. Update Lead Score
         updateZaloLeadScore($pdo, null, 'click_zns', $stepId, $subId);
 
-        // 3. Mark Flow Interaction (Optional but good for analytics)
+        // 3. Mark Flow Interaction — ZNS clicks
+        // [FIX P14-C1] Route to stat_total_zalo_clicked (not stat_total_clicked which is email-only).
+        // Previously the wrong column was incremented, inflating email CTR and leaving
+        // stat_total_zalo_clicked permanently at 0 for any ZNS step in a flow.
         if ($flowId) {
-            $pdo->prepare("UPDATE flows SET stat_total_clicked = stat_total_clicked + 1 WHERE id = ?")->execute([$flowId]);
+            $pdo->prepare("UPDATE flows SET stat_total_zalo_clicked = stat_total_zalo_clicked + 1 WHERE id = ?")->execute([$flowId]);
+        }
+
+        // [FIX P14-C1] Dispatch a priority queue job so Condition steps waiting for a
+        // ZNS click ('zns_clicked' conditionType → 'click_zns' activity) are evaluated
+        // immediately instead of waiting up to 15 minutes for the next cron cycle.
+        // Mirrors the email click poke in tracking_processor.php (Case A).
+        if ($subId && $flowId) {
+            try {
+                require_once __DIR__ . '/trigger_helper.php';
+                $checkWait = $pdo->prepare("
+                    SELECT sfs.id, sfs.step_type
+                    FROM subscriber_flow_states sfs
+                    WHERE sfs.subscriber_id = ? AND sfs.flow_id = ? AND sfs.status = 'waiting'
+                ");
+                $checkWait->execute([$subId, $flowId]);
+                foreach ($checkWait->fetchAll(PDO::FETCH_ASSOC) as $state) {
+                    if (($state['step_type'] ?? '') === 'condition') {
+                        dispatchQueueJob($pdo, 'flows', [
+                            'priority_queue_id' => $state['id'],
+                            'subscriber_id'     => $subId,
+                            'priority_flow_id'  => $flowId
+                        ]);
+                    }
+                }
+            } catch (Exception $ePoke) {
+                // Silent fail — poke is best-effort; worker cron remains the safety net
+            }
         }
 
     } catch (Exception $e) {

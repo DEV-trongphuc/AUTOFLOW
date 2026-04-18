@@ -81,7 +81,8 @@ try {
                 WHEN queue = 'flows' THEN 2 
                 ELSE 3 
             END ASC,
-            available_at ASC 
+            available_at ASC,
+            id ASC
         LIMIT ? 
         $skipLockedClause
     ");
@@ -369,7 +370,10 @@ foreach ($jobs as $jobItem) {
                 // Grab up to 5 pending chunks for THIS doc from DB, mark as claimed
                 $pdo->beginTransaction();
                 try {
-                    $stmtPending = $pdo->prepare("SELECT chunk_index, page_start, page_end FROM ai_pdf_chunk_results WHERE doc_id = ? AND status = 'pending' ORDER BY chunk_index ASC LIMIT 5 FOR UPDATE SKIP LOCKED");
+                    // [FIX P7-C3] Use $skipLockedClause (computed at startup with MySQL version check)
+                    // instead of hardcoded 'FOR UPDATE SKIP LOCKED' which throws a fatal syntax error
+                    // on MySQL 5.7 hosts — causing ai_pdf_chunk jobs to fail permanently.
+                    $stmtPending = $pdo->prepare("SELECT chunk_index, page_start, page_end FROM ai_pdf_chunk_results WHERE doc_id = ? AND status = 'pending' ORDER BY chunk_index ASC LIMIT 5 $skipLockedClause");
                     $stmtPending->execute([$docId]);
                     $pendingChunks = $stmtPending->fetchAll(PDO::FETCH_ASSOC);
 
@@ -537,8 +541,9 @@ if (rand(1, 100) === 1) {
     $pdo->query("DELETE FROM ai_vector_cache WHERE created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)");
     $pdo->query("DELETE FROM ai_rag_search_cache WHERE created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)");
 
-    // Clean up failed jobs older than 1 day instead of 7 (to keep table light given your high error count)
-    $pdo->query("DELETE FROM queue_jobs WHERE status = 'failed' AND finished_at < DATE_SUB(NOW(), INTERVAL 1 DAY)");
+    // [FIX P7-H3] Keep failed jobs 7 days (was 1 day) for forensic analysis.
+    // When worker_error.log is rotated, DB records are the only backup for systemic failure diagnosis.
+    $pdo->query("DELETE FROM queue_jobs WHERE status = 'failed' AND finished_at < DATE_SUB(NOW(), INTERVAL 7 DAY)");
 }
 
 // 6. [FIX] Always scan subscriber_flow_states for due waiting items.

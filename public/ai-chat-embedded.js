@@ -1705,17 +1705,18 @@
                 quickContainer.style.display = "none";
             } else {
                 quickContainer.style.display = "flex";
-                quickContainer.style.alignItems = "center";
+                quickContainer.style.alignItems = "flex-start";
                 quickContainer.style.gap = "10px";
 
                 const chipsWrapper = document.createElement("div");
-                chipsWrapper.style.cssText = "display:flex; gap:8px; overflow-x:auto; flex:1; scrollbar-width:none; -webkit-overflow-scrolling:touch;";
+                chipsWrapper.style.cssText = "display:flex; flex-direction:column; align-items:stretch; gap:8px; flex:1; width:100%; max-height:200px; overflow-y:auto; scrollbar-width:none;";
                 chipsWrapper.className = "mf-ignore-tracking";
 
                 State.quickActions.forEach((qa) => {
                     const el = document.createElement("button");
                     el.className = "mf-chip mf-ignore-tracking";
-                    el.innerHTML = `${ICONS.sparkles} ${qa}`;
+                    el.style.cssText = "white-space: normal; text-align: left; height: auto; align-items: flex-start; line-height: 1.4; border-radius: 12px; padding: 10px 14px;";
+                    el.innerHTML = `<div style="margin-top: 1px; flex-shrink: 0;">${ICONS.sparkles}</div> <div style="flex: 1;">${qa}</div>`;
                     el.onclick = (e) => {
                         e.preventDefault();
                         State.quickActions = [];

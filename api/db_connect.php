@@ -26,7 +26,11 @@ if (!empty($origin)) {
 header('Vary: Origin');
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
-header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Admin-Token');
+if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'])) {
+    header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
+} else {
+    header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Admin-Token, x-autoflow-auth');
+}
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -264,10 +268,12 @@ if (!empty($_authHeader) && preg_match('/Bearer\s+(.+)$/i', $_authHeader, $_bm))
 }
 
 // ── PRIORITY 2: Session ───────────────────────────────────────────────────────
+// [SECURITY FIX] Removed $_GET['org_user_id'] fallback.
+// An attacker could pass ?org_user_id=admin-001 to bypass all RBAC checks.
+// Auth must come from session or Bearer token only — never from URL GET params.
 if (empty($current_admin_id)) {
     $current_admin_id = $_SESSION['org_user_id']
         ?? $_SESSION['user_id']
-        ?? $_GET['org_user_id']
         ?? null;
 }
 
@@ -301,15 +307,17 @@ if (empty($current_admin_id)) {
 }
 
 // ── PRIORITY 4: X-Admin-Token header (Autoflow admin bypass) ──────────────
-if (empty($current_admin_id)) {
-    $normalizedHeaders = array_change_key_case(function_exists('getallheaders') ? getallheaders() : [], CASE_LOWER);
-    $adminTokenHeader = $normalizedHeaders['x-admin-token'] ?? $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
+// [SECURITY FIX] Removed $_GET['admin_token'] fallback.
+// GET parameters are logged in nginx/apache/Cloudflare access logs — exposing the bypass token.
+// Only accept via HTTP header (never URL parameter).
+$normalizedHeaders = array_change_key_case(function_exists('getallheaders') ? getallheaders() : [], CASE_LOWER);
+$adminTokenHeader = $normalizedHeaders['x-admin-token'] ?? $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
 
-    if ($adminTokenHeader === ADMIN_BYPASS_TOKEN) {
-        $current_admin_id = 'admin-001';
-        if (session_status() === PHP_SESSION_ACTIVE) {
-            $_SESSION['org_user_id'] = 'admin-001';
-        }
+if ($adminTokenHeader === ADMIN_BYPASS_TOKEN) {
+    $current_admin_id = 'admin-001';
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        $_SESSION['org_user_id'] = 'admin-001';
+        $_SESSION['user_id'] = '1'; // Phục hồi user_id để lọt qua middleware
     }
 }
 

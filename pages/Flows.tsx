@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
+import {
     Plus, Trash2, RotateCcw, AlertTriangle, FileText, PauseCircle, PlayCircle, LayoutGrid, Clock, Filter, ChevronDown, Check,
-    Zap, Users, Sparkles, CheckCircle2, BarChart3, ShieldCheck, GitMerge, Split, Lightbulb, Target
+    Zap, Users, Sparkles, CheckCircle2, BarChart3, ShieldCheck, GitMerge, Split, Lightbulb, Target, Send, Layers, Tag, FileInput, BellRing, List
 } from 'lucide-react';
 import { api } from '../services/storageAdapter';
 import { logAction, getLogs, HistoryLog } from '../services/historyService';
@@ -47,6 +47,8 @@ import Tabs from '../components/common/Tabs';
 import TabTransition from '../components/common/TabTransition';
 import TipsModal from '../components/common/TipsModal';
 import { useIsAdmin, useAuthUser } from '../hooks/useAuthUser';
+import { usePermissionGuard } from '../components/common/PermissionGuard';
+
 
 type FlowFilter = 'all' | 'active' | 'draft' | 'paused' | 'archived';
 type TriggerTypeFilter = 'all' | 'segment' | 'date' | 'campaign' | 'form' | 'tag';
@@ -175,6 +177,8 @@ const Flows: React.FC = () => {
     const location = useLocation();
     const isAdmin = useIsAdmin();
     const currentUser = useAuthUser();
+    const { guard: adminGuard, PermModal: AdminPermModal } = usePermissionGuard(isAdmin);
+
     const [flows, setFlows] = useState<Flow[]>([]);
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [forms, setForms] = useState<FormDefinition[]>([]);
@@ -210,6 +214,18 @@ const Flows: React.FC = () => {
     const [activeTab, setActiveTab] = useState<FlowFilter>('all');
     const [filterType, setFilterType] = useState<TriggerTypeFilter>('all');
     const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+    // Date filter (mirrors Campaign page)
+    const [datePreset, setDatePreset] = useState<'7' | '30' | 'month' | 'custom'>('30');
+    const [customDate, setCustomDate] = useState<{ start: string; end: string }>({ start: '', end: '' });
+
+    // Grid vs List view
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+        return (localStorage.getItem('automation_view_mode') as 'grid' | 'list') || 'grid';
+    });
+
+    useEffect(() => {
+        localStorage.setItem('automation_view_mode', viewMode);
+    }, [viewMode]);
 
 
 
@@ -289,8 +305,11 @@ const Flows: React.FC = () => {
                 api.get<any[]>('tags')
             ]);
             if (flowsRes.success) {
-                const data = flowsRes.data;
-                setFlows(Array.isArray(data) ? data : (data as any)?.data || []);
+                const raw = flowsRes.data as any;
+                // Backend now returns { data: Flow[], pagination: {...} }
+                // Backward compat: also handle bare array
+                const flowList: Flow[] = Array.isArray(raw) ? raw : (raw?.data || []);
+                setFlows(flowList);
             }
             if (campaignsRes.success) {
                 const data = campaignsRes.data;
@@ -1058,7 +1077,7 @@ const Flows: React.FC = () => {
             setConfirmModal({
                 isOpen: true,
                 title: '⚠️ CẢNH BÁO: Đang có người dùng',
-                message: `Hiện có ${activeCount} người đang ở trong Flow này (Đang chờ hoặc đang xử lý). Bạn muốn xử lý thế nào?`,
+                message: `Hiện có ${activeCount} người đang ở trong Flow này (đang chạy hoặc đang xử lý). Bạn muốn xử lý thế nào?`,
                 variant: 'danger',
                 confirmLabel: 'Hủy đăng ký & Xóa (Force Exit)',
                 requireConfirmText: 'CONFIRM',
@@ -1098,8 +1117,8 @@ const Flows: React.FC = () => {
 
         const isActive = flow.status === 'active';
         setConfirmModal({
-            isOpen: true, title: isActive ? 'Kịch bản Đang chờ' : 'Xóa vào thùng rác?',
-            message: isActive ? 'Nếu xóa, hệ thống sẽ ngừng xử lý các email Đang chờ' : 'Kịch bản sẽ được giữ trong thùng rác 30 ngày.',
+            isOpen: true, title: isActive ? 'Kịch bản đang chạy' : 'Xóa vào thùng rác?',
+            message: isActive ? 'Nếu xóa, hệ thống sẽ ngừng xử lý các email đang chạy' : 'Kịch bản sẽ được giữ trong thùng rác 30 ngày.',
             variant: isActive ? 'danger' : 'warning',
             onConfirm: async () => {
                 setLoading(true);
@@ -1309,7 +1328,7 @@ const Flows: React.FC = () => {
         // Smart Delete Logic: Find the child of the deleted step to bridge the gap
         // Only bridge for simple steps (Action, Wait, Tag, Link, List) that have a single output
         let bridgeId: string | undefined = undefined;
-        if (['action', 'wait', 'update_tag', 'trigger', 'list_action'].includes(stepToDelete.type)) {
+        if (['action', 'wait', 'update_tag', 'trigger', 'list_action', 'zalo_zns', 'link_flow'].includes(stepToDelete.type)) {
             bridgeId = stepToDelete.nextStepId;
         }
         // For conditions/split tests, bridging is ambiguous, so we break the link (bridgeId = undefined)
@@ -1344,12 +1363,12 @@ const Flows: React.FC = () => {
     };
 
     const triggerTypes = [
-        { id: 'all', label: 'Tất cả loại' },
-        { id: 'campaign', label: 'Chiến dịch' },
-        { id: 'segment', label: 'Phân khúc' },
-        { id: 'date', label: 'Ngày/Sự kiện' },
-        { id: 'form', label: 'Form submit' },
-        { id: 'tag', label: 'Gắn Tag' },
+        { id: 'all', label: 'Tất cả loại', icon: LayoutGrid },
+        { id: 'campaign', label: 'Chiến dịch', icon: Send },
+        { id: 'segment', label: 'Phân khúc', icon: Layers },
+        { id: 'date', label: 'Ngày/Sự kiện', icon: BellRing },
+        { id: 'form', label: 'Form submit', icon: FileInput },
+        { id: 'tag', label: 'Gắn Tag', icon: Tag },
     ];
 
     const handleManualSave = () => {
@@ -1380,9 +1399,27 @@ const Flows: React.FC = () => {
                         if (!res.success) throw new Error(res.message || 'Lỗi khi di chuyển người dùng');
                     }
                     setPendingMigrations([]);
+                    // [FIX] migrate-users thay đổi stats.completed trong DB (người được re-enroll
+                    // về step mới không còn ở trạng thái 'completed' nữa). Fetch lại stats của flow
+                    // này để FlowCard ngoài danh sách hiển thị đúng thay vì giữ giá trị cũ (100%).
+                    try {
+                        const freshRes = await api.get<any>(`flows?id=${selectedFlow!.id}&route=stats`);
+                        if (freshRes.success && freshRes.data) {
+                            const freshStats = freshRes.data;
+                            setFlows(prev => prev.map(f =>
+                                f.id === selectedFlow!.id ? { ...f, stats: freshStats } : f
+                            ));
+                            setSelectedFlow(sf => sf ? { ...sf, stats: freshStats } : sf);
+                        }
+                    } catch { /* Non-critical — stats sẽ đúng sau lần reload tiếp theo */ }
                 }
                 await handleUpdateFlow(selectedFlow, false); // Không log 'Lưu thủ công' vào lịch sử
                 // Snapshot saved automatically inside handleUpdateFlow via API
+                
+                // Clear dirty flags after successful save
+                setHasUnsavedChanges(false); 
+                setIsNewUnsavedFlow(false);
+
                 showToast('Đã lưu thành công.');
             } catch (error: any) {
                 showToast(error.message || 'Lỗi khi lưu kịch bản', 'error');
@@ -1394,7 +1431,7 @@ const Flows: React.FC = () => {
         if (warnings.length > 0) {
             setConfirmModal({
                 isOpen: true,
-                title: 'Cònh báo cấu hình',
+                title: 'Cảnh báo cấu hình',
                 message: `Phát hiện ${warnings.length} cảnh báo. Bạn có chắc chắn muốn lưu?`,
                 variant: 'warning',
                 confirmLabel: 'Xác nhận lưu',
@@ -1405,7 +1442,7 @@ const Flows: React.FC = () => {
                         // Chained modal workaround: setTimeout to allow modal close then open new one
                         setTimeout(() => {
                             setConfirmModal({
-                                isOpen: true, title: 'Xác nhận Lưu Flow Đang chờ',
+                                isOpen: true, title: 'Xác nhận Lưu Flow đang chạy',
                                 message: 'Flow đang hoạt động. Bạn có chắc luồng đã an toàn không?',
                                 variant: 'warning',
                                 confirmLabel: 'Xác nhận lưu',
@@ -1423,7 +1460,7 @@ const Flows: React.FC = () => {
         if (isActive) {
             setConfirmModal({
                 isOpen: true,
-                title: 'Flow Đang chờ',
+                title: 'Flow đang chạy',
                 message: 'Flow đang hoạt động. Bất kỳ thay đổi nào sẽ áp dụng ngay lập tức cho người dùng. Bạn có chắc luồng đã an toàn và không bị ngắt quãng?',
                 variant: 'warning',
                 confirmLabel: 'Xác nhận lưu',
@@ -1435,8 +1472,6 @@ const Flows: React.FC = () => {
         } else {
             performSave();
         }
-        setHasUnsavedChanges(false); // Clear dirty flag on manual save
-        setIsNewUnsavedFlow(false); // Clear new unsaved flag
     };
 
     const durationInfo = useMemo(() => {
@@ -1471,21 +1506,24 @@ const Flows: React.FC = () => {
         <div className="animate-fade-in space-y-8 pb-20">
             {!selectedFlow && (
                 <>
-                    <PageHero 
+                    <PageHero
                         title={<>Automation <span className="text-orange-100/80">Flows</span></>}
                         subtitle="Quản lý vòng đời Khách hàng tự động — nuôi dưỡng & chuyển đổi thông minh đa kênh."
                         showStatus={true}
                         statusText="Orchestrator Online"
-            actions={[
-                ...(isAdmin ? [{ 
-                    label: 'Tạo kịch bản', 
-                    icon: Plus, 
-                    onClick: () => setIsCreateModalOpen(true),
-                    primary: false 
-                }] : []),
-                            { 
-                                label: 'Mẹo Automation', 
-                                icon: Lightbulb, 
+                        actions={[
+                            {
+                                label: 'Tạo kịch bản',
+                                icon: Plus,
+                                onClick: adminGuard(
+                                    () => setIsCreateModalOpen(true),
+                                    'tạo kịch bản automation'
+                                ),
+                                primary: false
+                            },
+                            {
+                                label: 'Mẹo Automation',
+                                icon: Lightbulb,
                                 onClick: () => setIsTipsModalOpen(true),
                                 primary: true
                             }
@@ -1539,125 +1577,183 @@ const Flows: React.FC = () => {
 
                         {/* WHITE CONTENT AREA */}
                         <div className="bg-white dark:bg-slate-900 dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-700/60 dark:border-slate-700/60 shadow-sm p-4 lg:p-6 min-h-[400px] overflow-hidden">
-                        {/* Toolbar */}
-                        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-                            <Tabs
-                                variant="pill"
-                                activeId={activeTab}
-                                onChange={setActiveTab as any}
-                                className="flex-nowrap overflow-x-auto scrollbar-hide"
-                                items={[
-                                    { id: 'all', label: 'Tất cả', icon: LayoutGrid },
-                                    { id: 'active', label: 'Đang chờ', icon: PlayCircle },
-                                    { id: 'paused', label: 'Tạm dừng', icon: PauseCircle },
-                                    { id: 'draft', label: 'Bản nháp', icon: FileText },
-                                    { id: 'archived', label: 'Thùng rác', icon: Trash2 },
-                                ]}
-                            />
-                            {/* Type Filter */}
-                            <div className="relative shrink-0">
-                                <button
-                                    onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-950 dark:bg-slate-950 hover:bg-slate-100 border border-slate-100 dark:border-slate-800 dark:border-slate-800/60 hover:border-slate-200 dark:border-slate-700/60 dark:border-slate-700/60 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 dark:text-slate-200 transition-all"
-                                >
-                                    <Filter className="w-3.5 h-3.5 text-slate-400" />
-                                    <span>{triggerTypes.find(t => t.id === filterType)?.label}</span>
-                                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                                </button>
-                                {isTypeDropdownOpen && (
-                                    <>
-                                        <div className="fixed inset-0 z-10" onClick={() => setIsTypeDropdownOpen(false)} />
-                                        <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-900 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 dark:border-slate-800/60 rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in-95">
-                                            {triggerTypes.map(type => (
-                                                <button key={type.id}
-                                                    onClick={() => { setFilterType(type.id as TriggerTypeFilter); setIsTypeDropdownOpen(false); }}
-                                                    className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-bold text-left hover:bg-slate-50 dark:bg-slate-950 dark:bg-slate-950 transition-colors ${filterType === type.id ? 'text-amber-600 bg-orange-50' : 'text-slate-600 dark:text-slate-300 dark:text-slate-300'}`}
-                                                >
-                                                    {type.label}
-                                                    {filterType === type.id && <Check className="w-3.5 h-3.5" />}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </>
+                            {/* Toolbar */}
+                            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+                                <Tabs
+                                    variant="pill"
+                                    activeId={activeTab}
+                                    onChange={setActiveTab as any}
+                                    className="flex-nowrap overflow-x-auto scrollbar-hide"
+                                    items={[
+                                        { id: 'all', label: 'Tất cả', icon: LayoutGrid },
+                                        { id: 'active', label: 'đang chạy', icon: PlayCircle },
+                                        { id: 'paused', label: 'Tạm dừng', icon: PauseCircle },
+                                        { id: 'draft', label: 'Bản nháp', icon: FileText },
+                                        { id: 'archived', label: 'Thùng rác', icon: Trash2 },
+                                    ]}
+                                />
+                                <div className="flex items-center gap-2 shrink-0">
+                                    {/* Grid/List Toggle */}
+                                    <div className="flex items-center bg-slate-50 dark:bg-slate-950 p-1 rounded-xl border border-slate-100 dark:border-slate-800/60">
+                                        <button
+                                            onClick={() => setViewMode('grid')}
+                                            className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-white dark:bg-slate-800 shadow-sm text-slate-800 dark:text-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
+                                            title="Chế độ lưới"
+                                        >
+                                            <LayoutGrid className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => setViewMode('list')}
+                                            className={`p-1.5 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-white dark:bg-slate-800 shadow-sm text-slate-800 dark:text-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
+                                            title="Chế độ danh sách"
+                                        >
+                                            <List className="w-4 h-4" />
+                                        </button>
+                                    </div>
+
+                                    {/* Type Filter */}
+                                    <div className="relative shrink-0">
+                                        <button
+                                            onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
+                                            className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 border border-slate-100 dark:border-slate-800/60 hover:border-slate-200 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 transition-all"
+                                        >
+                                            <Filter className="w-3.5 h-3.5 text-slate-400" />
+                                            <span>{triggerTypes.find(t => t.id === filterType)?.label}</span>
+                                            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                                        </button>
+                                        {isTypeDropdownOpen && (
+                                            <>
+                                                <div className="fixed inset-0 z-40" onClick={() => setIsTypeDropdownOpen(false)} />
+                                                <div className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/60 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95">
+                                                    {triggerTypes.map(type => {
+                                                        const IconCmp = type.icon;
+                                                        return (
+                                                            <button key={type.id}
+                                                                onClick={() => { setFilterType(type.id as TriggerTypeFilter); setIsTypeDropdownOpen(false); }}
+                                                                className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-bold text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${filterType === type.id ? 'text-amber-600 bg-orange-50 dark:bg-orange-950/20' : 'text-slate-600 dark:text-slate-300'}`}
+                                                            >
+                                                                <div className="flex items-center gap-2.5">
+                                                                    <IconCmp className={`w-4 h-4 ${filterType === type.id ? 'text-amber-500' : 'text-slate-400'}`} />
+                                                                    {type.label}
+                                                                </div>
+                                                                {filterType === type.id && <Check className="w-3.5 h-3.5" />}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* Date Filter — mirrors Campaign page */}
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <select
+                                            value={datePreset}
+                                            onChange={e => setDatePreset(e.target.value as any)}
+                                            className="text-xs font-bold bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-xl px-3 py-2 text-slate-700 dark:text-slate-200 outline-none cursor-pointer hover:border-slate-200 transition-colors"
+                                        >
+                                            <option value="30">30 ngày qua</option>
+                                            <option value="7">7 ngày qua</option>
+                                            <option value="month">Tháng này</option>
+                                            <option value="custom">Tùy chỉnh...</option>
+                                        </select>
+                                        {datePreset === 'custom' && (
+                                            <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-xl px-2 py-1.5">
+                                                <input
+                                                    type="date"
+                                                    value={customDate.start}
+                                                    onChange={e => setCustomDate(p => ({ ...p, start: e.target.value }))}
+                                                    className="bg-transparent text-xs outline-none text-slate-600 dark:text-slate-300 w-[100px] py-0.5"
+                                                />
+                                                <span className="text-slate-300 text-xs">-</span>
+                                                <input
+                                                    type="date"
+                                                    value={customDate.end}
+                                                    onChange={e => setCustomDate(p => ({ ...p, end: e.target.value }))}
+                                                    className="bg-transparent text-xs outline-none text-slate-600 dark:text-slate-300 w-[100px] py-0.5"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="animate-in fade-in duration-300">
+                                <div className="flex items-center justify-between mb-5">
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 dark:text-slate-200">Danh sách kịch bản</h3>
+                                        <p className="text-[11px] text-slate-400">Các luồng tự động trên hệ thống</p>
+                                    </div>
+                                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-950 dark:bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-800 dark:border-slate-800/60">
+                                        Tổng: {filteredFlows.length}
+                                    </div>
+                                </div>
+
+                                {loading ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                                        {[...Array(6)].map((_, i) => (
+                                            <div key={i} className="bg-white dark:bg-slate-900 dark:bg-slate-900 rounded-[24px] border border-slate-100 dark:border-slate-800 dark:border-slate-800/60 p-6 space-y-4 shadow-sm">
+                                                <div className="flex justify-between items-start">
+                                                    <Skeleton variant="rounded" width={44} height={44} className="rounded-xl" />
+                                                    <Skeleton variant="rounded" width={80} height={24} className="rounded-lg" />
+                                                </div>
+                                                <div className="space-y-3">
+                                                    <Skeleton variant="text" width="80%" height={24} />
+                                                    <Skeleton variant="text" width="40%" height={14} />
+                                                </div>
+                                                <div className="pt-6 border-t border-slate-50 flex justify-between gap-4">
+                                                    <Skeleton variant="rounded" width="45%" height={32} className="rounded-xl" />
+                                                    <Skeleton variant="rounded" width="45%" height={32} className="rounded-xl" />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : filteredFlows.length === 0 ? (
+                                    <EmptyState
+                                        icon={LayoutGrid}
+                                        title="Chưa có kịch bản automation"
+                                        description="Bắt đầu tạo kịch bản tự động để tối ưu hóa quy trình chăm sóc Khách hàng của bạn."
+                                        ctaLabel="Khởi tạo Flow ngay"
+                                        onCtaClick={() => setIsCreateModalOpen(true)}
+                                    />
+                                ) : (
+                                    <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5" : "flex flex-col gap-3"}>
+                                        {filteredFlows.map(flow => {
+                                            const trigger = flow.steps?.find(s => s.type === 'trigger');
+                                            const targetId = trigger?.config?.targetId;
+                                            const type = trigger?.config?.type || 'segment';
+                                            const subtype = trigger?.config?.targetSubtype;
+
+                                            return (
+                                                <FlowCard
+                                                    key={flow.id}
+                                                    flow={flow}
+                                                    isList={viewMode === 'list'}
+                                                    linkedCampaign={type === 'campaign' ? campaignsMap.get(targetId!) : undefined}
+                                                    linkedForm={type === 'form' ? formsMap.get(targetId!) : undefined}
+                                                    linkedPurchaseEvent={type === 'purchase' ? purchaseEventsMap.get(targetId!) : undefined}
+                                                    linkedCustomEvent={type === 'custom_event' ? customEventsMap.get(targetId!) : undefined}
+                                                    linkedSegment={(type === 'segment' && subtype !== 'list') ? segmentsMap.get(targetId!) : undefined}
+                                                    linkedList={(type === 'segment' && subtype === 'list') ? listsMap.get(targetId!) : undefined}
+                                                    linkedTag={type === 'tag' ? targetId : undefined}
+                                                    onClick={() => handleFlowClick(flow)}
+                                                    onDelete={(p) => handleDeleteFlow(flow, p)}
+                                                    onRestore={() => handleRestoreFlow(flow)}
+                                                    onDuplicate={handleDuplicateFlow}
+                                                    onOpenCampaign={handleOpenCampaign}
+                                                    onOpenForm={handleOpenForm}
+                                                    onOpenPurchase={handleOpenPurchase}
+                                                    onOpenCustomEvent={handleOpenCustomEvent}
+                                                    onOpenList={handleOpenList}
+                                                    onOpenSegment={handleOpenSegment}
+                                                    onOpenTag={handleOpenTag}
+                                                />
+                                            );
+                                        })}
+                                    </div>
                                 )}
                             </div>
                         </div>
-
-                        <div className="animate-in fade-in duration-300">
-                        <div className="flex items-center justify-between mb-5">
-                            <div>
-                                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 dark:text-slate-200">Danh sách kịch bản</h3>
-                                <p className="text-[11px] text-slate-400">Các luồng tự động trên hệ thống</p>
-                            </div>
-                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-950 dark:bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-800 dark:border-slate-800/60">
-                                Tổng: {filteredFlows.length}
-                            </div>
-                        </div>
-
-                        {loading ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                                {[...Array(6)].map((_, i) => (
-                                    <div key={i} className="bg-white dark:bg-slate-900 dark:bg-slate-900 rounded-[24px] border border-slate-100 dark:border-slate-800 dark:border-slate-800/60 p-6 space-y-4 shadow-sm">
-                                        <div className="flex justify-between items-start">
-                                            <Skeleton variant="rounded" width={44} height={44} className="rounded-xl" />
-                                            <Skeleton variant="rounded" width={80} height={24} className="rounded-lg" />
-                                        </div>
-                                        <div className="space-y-3">
-                                            <Skeleton variant="text" width="80%" height={24} />
-                                            <Skeleton variant="text" width="40%" height={14} />
-                                        </div>
-                                        <div className="pt-6 border-t border-slate-50 flex justify-between gap-4">
-                                            <Skeleton variant="rounded" width="45%" height={32} className="rounded-xl" />
-                                            <Skeleton variant="rounded" width="45%" height={32} className="rounded-xl" />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : filteredFlows.length === 0 ? (
-                            <EmptyState
-                                icon={LayoutGrid}
-                                title="Chưa có kịch bản automation"
-                                description="Bắt đầu tạo kịch bản tự động để tối ưu hóa quy trình chăm sóc Khách hàng của bạn."
-                                ctaLabel="Khởi tạo Flow ngay"
-                                onCtaClick={() => setIsCreateModalOpen(true)}
-                            />
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                                {filteredFlows.map(flow => {
-                                    const trigger = flow.steps?.find(s => s.type === 'trigger');
-                                    const targetId = trigger?.config?.targetId;
-                                    const type = trigger?.config?.type || 'segment';
-                                    const subtype = trigger?.config?.targetSubtype;
-
-                                    return (
-                                        <FlowCard
-                                            key={flow.id}
-                                            flow={flow}
-                                            linkedCampaign={type === 'campaign' ? campaignsMap.get(targetId!) : undefined}
-                                            linkedForm={type === 'form' ? formsMap.get(targetId!) : undefined}
-                                            linkedPurchaseEvent={type === 'purchase' ? purchaseEventsMap.get(targetId!) : undefined}
-                                            linkedCustomEvent={type === 'custom_event' ? customEventsMap.get(targetId!) : undefined}
-                                            linkedSegment={(type === 'segment' && subtype !== 'list') ? segmentsMap.get(targetId!) : undefined}
-                                            linkedList={(type === 'segment' && subtype === 'list') ? listsMap.get(targetId!) : undefined}
-                                            linkedTag={type === 'tag' ? targetId : undefined}
-                                            onClick={() => handleFlowClick(flow)}
-                                            onDelete={(p) => handleDeleteFlow(flow, p)}
-                                            onRestore={() => handleRestoreFlow(flow)}
-                                            onDuplicate={handleDuplicateFlow}
-                                            onOpenCampaign={handleOpenCampaign}
-                                            onOpenForm={handleOpenForm}
-                                            onOpenPurchase={handleOpenPurchase}
-                                            onOpenCustomEvent={handleOpenCustomEvent}
-                                            onOpenList={handleOpenList}
-                                            onOpenSegment={handleOpenSegment}
-                                            onOpenTag={handleOpenTag}
-                                        />
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-                    </div>
                     </div>{/* close space-y-8 */}
                 </>
             )}
@@ -1745,7 +1841,7 @@ const Flows: React.FC = () => {
 
                                     const specificWarning = triggerWarnings[triggerType] || '⚠️ Trigger của Flow này sẽ ngừng hoạt động trong Thời gian tạm dừng.';
                                     const activeWarning = activeCount > 0
-                                        ? `\n\n🔴 Hiện có ${activeCount} người Đang chờ trong flow — tất cả sẽ bị DỪNG và không tiếp tục nhận email cho đến khi Flow được kích hoạt lại.`
+                                        ? `\n\n🔴 Hiện có ${activeCount} người đang chạy trong flow — tất cả sẽ bị DỪNG và không tiếp tục nhận email cho đến khi Flow được kích hoạt lại.`
                                         : '\n\n✅ Hiện không có ai đang trong flow.';
 
                                     setConfirmModal({
@@ -1838,6 +1934,9 @@ const Flows: React.FC = () => {
                     </div>
                 )
             }
+
+            {/* Permission Guard Modal */}
+            {AdminPermModal}
 
             <FlowCreationModal
                 isOpen={isCreateModalOpen}

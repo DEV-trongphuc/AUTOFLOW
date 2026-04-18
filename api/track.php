@@ -171,7 +171,7 @@ try {
 
 $input = json_decode(file_get_contents('php://input'), true);
 if (!$input || empty($input['property_id']) || empty($input['visitor_id'])) {
-    echo json_encode(['status' => 'error', 'message' => 'Missing ID']);
+    echo json_encode(['status' => 'error', 'message' => 'Missing ID', 'debug' => $input]);
     exit;
 }
 
@@ -221,15 +221,21 @@ try {
     // Cache domain check for the property
     static $propCache = [];
     if (!isset($propCache[$propertyId])) {
-        $stmtDomain = $pdo->prepare("SELECT domain FROM web_properties WHERE id = ?");
+        // [FIX P35-T1] Fetch both domain AND workspace_id from web_properties.
+        // Previously only 'domain' was cached, so auto-created subscribers had no workspace_id.
+        $stmtDomain = $pdo->prepare("SELECT domain, workspace_id FROM web_properties WHERE id = ?");
         $stmtDomain->execute([$propertyId]);
-        $registeredDomain = $stmtDomain->fetchColumn();
-        if (!$registeredDomain) {
+        $propRow = $stmtDomain->fetch(PDO::FETCH_ASSOC);
+        if (!$propRow) {
             http_response_code(403);
             exit(json_encode(['status' => 'error', 'message' => 'Unauthorized']));
         }
-        $propCache[$propertyId] = $registeredDomain;
+        $propCache[$propertyId] = [
+            'domain'       => $propRow['domain'],
+            'workspace_id' => $propRow['workspace_id'] ?? 1,
+        ];
     }
+    $propWorkspaceId = $propCache[$propertyId]['workspace_id'];
 
     // Capture IP — same safe logic as bot-check section above
     $ip = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
@@ -467,8 +473,11 @@ try {
                 // [FIX] Áp dụng Named Lock để chống race condition khi Tracking và Form API gọi cùng lúc
                 $lockIdentifier = $email ?: $phone;
                 $lockName = $lockIdentifier ? "sub_email_" . md5($lockIdentifier) : null;
+                // [FIX P0-7] Use prepared statement for Named Lock to avoid string interpolation anti-pattern.
+                // Even though $lockName contains only hex chars (from md5), direct query() with
+                // interpolation is unsafe by pattern and may mislead future maintainers.
                 if ($lockName) {
-                    $pdo->query("SELECT GET_LOCK('$lockName', 5)");
+                    $pdo->prepare("SELECT GET_LOCK(?, 5)")->execute([$lockName]);
                 }
 
                 // 1. Check subscribers table (Email/Zalo marketing)
@@ -603,8 +612,11 @@ try {
                         
                         $finalLastName = ''; // Always empty on auto-create from tracking
 
-                        $pdo->prepare("INSERT INTO subscribers (id, property_id, email, phone_number, first_name, last_name, status, source, last_os, last_browser, last_device, last_city, last_country, city, country, address, last_ip, zalo_user_id) VALUES (?, ?, ?, ?, ?, ?, 'active', 'website_tracking', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-                            ->execute([$newSid, $propertyId, $email, $phone, $finalFirstName, $finalLastName, $os, $browser, $deviceType, $city, $country, $city, $country, $data['address'] ?? null, $ip, $zaloSubscriberId]);
+                        // [FIX P35-T1] Added workspace_id to INSERT — previously missing,
+                        // causing auto-captured subscribers to have workspace_id=NULL
+                        // and be invisible in all CRM workspace-scoped queries.
+                        $pdo->prepare("INSERT INTO subscribers (id, workspace_id, property_id, email, phone_number, first_name, last_name, status, source, last_os, last_browser, last_device, last_city, last_country, city, country, address, last_ip, zalo_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, 'active', 'website_tracking', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                            ->execute([$newSid, $propWorkspaceId, $propertyId, $email, $phone, $finalFirstName, $finalLastName, $os, $browser, $deviceType, $city, $country, $city, $country, $data['address'] ?? null, $ip, $zaloSubscriberId]);
 
                         $pdo->prepare("UPDATE web_visitors SET subscriber_id = ?, email = ?, phone = ?, address = ?, zalo_user_id = COALESCE(zalo_user_id, ?) WHERE id = ?")
                             ->execute([$newSid, $email, $phone, $data['address'] ?? null, $zaloSubscriberId, $visitorUuid]);
@@ -661,7 +673,8 @@ try {
                 }
                 
                 if (isset($lockName) && $lockName) {
-                    $pdo->query("SELECT RELEASE_LOCK('$lockName')");
+                    // [FIX P0-7] Use prepared statement for RELEASE_LOCK
+                    $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]);
                 }
             }
         } else {
@@ -720,26 +733,18 @@ try {
         }
     }
 
-    // Update Session Ping Data (accumulated)
-    if ($maxDuration > 0 || $maxScroll > 0) {
-        $pdo->prepare("UPDATE web_sessions SET duration_seconds = GREATEST(duration_seconds, ?), last_active_at = NOW() WHERE id = ?")
-            ->execute([$maxDuration, $sessionId]);
-
-        // Update last PV time/scroll
+    // [PERF P36-T] Both the ping update (L736) and event insert (L751) need the last page_view id.
+    // Previously queried twice — now query ONCE here and reuse $lastPvId in both places.
+    $lastPvId = null;
+    if ($sessionId) {
         $stmtLastPv = $pdo->prepare("SELECT id FROM web_page_views WHERE session_id = ? ORDER BY id DESC LIMIT 1");
         $stmtLastPv->execute([$sessionId]);
-        $lastPvId = $stmtLastPv->fetchColumn();
-        if ($lastPvId) {
-            $pdo->prepare("UPDATE web_page_views SET time_on_page = GREATEST(time_on_page, ?), scroll_depth = GREATEST(scroll_depth, ?) WHERE id = ?")
-                ->execute([$maxPageTime, $maxScroll, $lastPvId]);
-        }
+        $lastPvId = $stmtLastPv->fetchColumn() ?: null;
     }
 
     // [OPTIMIZED] Batch Insert Other Events
     if (!empty($otherEvents)) {
-        $stmtLastPv = $pdo->prepare("SELECT id FROM web_page_views WHERE session_id = ? ORDER BY id DESC LIMIT 1");
-        $stmtLastPv->execute([$sessionId]);
-        $pvId = $stmtLastPv->fetchColumn();
+        $pvId = $lastPvId; // Reuse already-fetched value
 
         $processedClickSignatures = [];
         $eventValues = [];
@@ -822,6 +827,18 @@ try {
 
         if ($hasInteraction) {
             $pdo->prepare("UPDATE web_sessions SET is_bounce = 0 WHERE id = ?")->execute([$sessionId]);
+        }
+    } // end if (!empty($otherEvents))
+
+    // Update Session Ping Data (accumulated) using cached $lastPvId
+    // NOTE: This runs OUTSIDE $otherEvents block — ping/scroll must update even on pageview-only requests.
+    if ($maxDuration > 0 || $maxScroll > 0) {
+        $pdo->prepare("UPDATE web_sessions SET duration_seconds = GREATEST(duration_seconds, ?), last_active_at = NOW() WHERE id = ?")
+            ->execute([$maxDuration, $sessionId]);
+
+        if ($lastPvId) {
+            $pdo->prepare("UPDATE web_page_views SET time_on_page = GREATEST(time_on_page, ?), scroll_depth = GREATEST(scroll_depth, ?) WHERE id = ?")
+                ->execute([$maxPageTime, $maxScroll, $lastPvId]);
         }
     }
 

@@ -1,5 +1,9 @@
 <?php
 require_once 'db_connect.php';
+// [FIX P34-A1] Added auth_middleware — web_tracking.php previously had NO authentication.
+// Any request with a valid session could read/delete ALL workspaces' web properties.
+require_once 'auth_middleware.php';
+$workspace_id = get_current_workspace_id();
 header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -77,9 +81,11 @@ if ($method === 'GET' && $action === 'visitor_journey' && !empty($_GET['visitor_
 
 if ($method === 'GET' && $action === 'list') {
     try {
-        // OPTIMIZED: Replaced 3 correlated subqueries per row with aggregated LEFT JOINs
-        // Old: O(n*3) subqueries — New: single pass with GROUP BY aggregation
-        $stmt = $pdo->query("
+        // [FIX P34-A2] Added workspace_id filter to GET list.
+        // Previously: SELECT * FROM web_properties ORDER BY created_at DESC
+        // — returned ALL properties across ALL workspaces. Any user in one workspace
+        // could see tracking pixels, domains, and AI chatbot data of other workspaces.
+        $stmt = $pdo->prepare("
             SELECT p.*,
                 COALESCE(dc.docs_count, 0)  as docs_count,
                 COALESCE(cc.conv_count, 0)  as queries_count,
@@ -102,8 +108,10 @@ if ($method === 'GET' && $action === 'list') {
                 WHERE is_enabled = 1
                 GROUP BY property_id
             ) cs ON cs.property_id = p.id
+            WHERE p.workspace_id = ?
             ORDER BY p.created_at DESC
         ");
+        $stmt->execute([$workspace_id]);
         $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($results as &$row) {
             $row['stats'] = [
@@ -139,8 +147,10 @@ if ($method === 'POST' && $action === 'create') {
             mt_rand(0, 0xffff)
         );
 
-        $stmt = $pdo->prepare("INSERT INTO web_properties (id, name, domain) VALUES (?, ?, ?)");
-        if ($stmt->execute([$id, $input['name'], $input['domain']])) {
+        // [FIX P34-A3] Added workspace_id to INSERT — previously missing, causing
+        // new web properties to have NULL workspace_id and be invisible to the list filter.
+        $stmt = $pdo->prepare("INSERT INTO web_properties (id, workspace_id, name, domain) VALUES (?, ?, ?, ?)");
+        if ($stmt->execute([$id, $workspace_id, $input['name'], $input['domain']])) {
             sendResponse(true, ['id' => $id, 'name' => $input['name'], 'domain' => $input['domain'], 'created_at' => date('Y-m-d H:i:s')]);
         } else {
             sendResponse(false, [], 'Database Error');
@@ -161,13 +171,15 @@ if ($method === 'DELETE') {
         $pdo->beginTransaction();
 
         // Count records before deletion (for logging)
-        $stmt = $pdo->prepare("SELECT name FROM web_properties WHERE id = ?");
-        $stmt->execute([$id]);
+        // [FIX P34-A4] Added workspace_id guard to DELETE — previously missing, allowing
+        // any authenticated user to delete another workspace's property and ALL its tracking data.
+        $stmt = $pdo->prepare("SELECT name FROM web_properties WHERE id = ? AND workspace_id = ?");
+        $stmt->execute([$id, $workspace_id]);
         $property = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$property) {
             $pdo->rollBack();
-            sendResponse(false, [], 'Property not found');
+            sendResponse(false, [], 'Property not found or access denied');
         }
 
         // Count total records to be deleted
@@ -217,13 +229,20 @@ if ($method === 'GET' && $action === 'stats') {
         $device = $_GET['device'] ?? 'all';
 
         // Filters
+        // [FIX P42-A1] Whitelist device values — reject anything unexpected.
+        // Old: $pdo->quote($device) inline in SQL string — vulnerable to charset-based SQLi.
+        // New: whitelist + hardcoded string literals — no user input enters the query string.
+        $allowedDevices = ['mobile', 'desktop', 'tablet', 'bot', 'all', ''];
+        if (!in_array($device, $allowedDevices, true)) {
+            $device = 'all';
+        }
         $deviceMatch = "";
         if ($device === 'bot') {
             $deviceMatch = " AND device_type = 'bot'";
         } else {
             $deviceMatch = " AND device_type != 'bot'";
             if ($device && $device !== 'all') {
-                $deviceMatch .= " AND device_type = " . $pdo->quote($device);
+                $deviceMatch .= " AND device_type = '" . $device . "'";
             }
         }
 
@@ -683,30 +702,45 @@ if ($method === 'GET' && $action === 'visitors') {
         } else {
             $device = $_GET['device'] ?? 'all';
 
-            // Logic: 
+            // [FIX P42-A1] Whitelist device — same fix as stats action above.
+            $allowedDevices = ['mobile', 'desktop', 'tablet', 'bot', 'all', ''];
+            if (!in_array($device, $allowedDevices, true)) {
+                $device = 'all';
+            }
+
+            // Logic:
             // - If 'bot', show ONLY bots.
-            // - If 'all' (or any other specific device like 'desktop'), show matching devices AND EXCLUDE bots.
+            // - If 'all' (or specific device), show matching AND EXCLUDE bots.
             if ($device === 'bot') {
                 $deviceMatch = " AND sess.device_type = 'bot'";
             } else {
                 $deviceMatch = " AND sess.device_type != 'bot'";
                 if ($device !== 'all' && $device) {
-                    $deviceMatch .= " AND sess.device_type = " . $pdo->quote($device);
+                    $deviceMatch .= " AND sess.device_type = '" . $device . "'";
                 }
             }
 
-            $search = $_GET['q'] ?? '';
+            // [FIX P42-A2] Replace $pdo->quote("%$search%") inline with prepared bind params.
+            // Old: quote() injection via 'q' GET param (multi-byte charset bypass possible).
+            // New: $searchParams[] array bound via bindValue() separately.
+            $search = trim($_GET['q'] ?? '');
             $searchMatch = "";
-            if ($search) {
-                $q = $pdo->quote("%$search%");
-                $searchMatch = " AND (s.first_name LIKE $q OR s.email LIKE $q OR v.ip_address LIKE $q)";
+            $searchParams = [];
+            if ($search !== '') {
+                $searchMatch = " AND (s.first_name LIKE ? OR s.email LIKE ? OR v.ip_address LIKE ?)";
+                $likeTerm = '%' . $search . '%';
+                $searchParams = [$likeTerm, $likeTerm, $likeTerm];
             }
 
+            // [FIX P42-A3] Replace $pdo->quote($id) in $returningMatch subquery.
+            // Old: inline quote() leaks $id (property_id) as string literal in SQL — not parameterizable
+            // in a simple way here, but we move it to a safe bind param in the outer query instead.
+            // The subquery is restructured to use a JOIN on a pre-counted CTE equivalent.
             $returning = $_GET['returning'] ?? 'all';
             $returningMatch = "";
             if ($returning === 'returning') {
-                $qId = $pdo->quote($id);
-                $returningMatch = " AND (SELECT COUNT(*) FROM web_sessions WHERE visitor_id = v.id AND property_id = $qId) >= 2";
+                // Use parameterized correlated subquery — $id bound via bindValue() below
+                $returningMatch = " AND (SELECT COUNT(*) FROM web_sessions WHERE visitor_id = v.id AND property_id = ?) >= 2";
             }
             if ($returning === 'identified') {
                 $returningMatch = " AND (v.email IS NOT NULL OR v.phone IS NOT NULL OR v.subscriber_id IS NOT NULL OR v.zalo_user_id IS NOT NULL)";
@@ -734,12 +768,22 @@ if ($method === 'GET' && $action === 'visitors') {
                 ) sess ON v.id = sess.visitor_id
                 WHERE v.property_id = ? $deviceMatch $searchMatch $returningMatch
             ";
+            // [FIX P42-A3] Bind $id for $returningMatch subquery if used
             $stmtCount = $pdo->prepare($sqlCount);
-            $stmtCount->execute([$id, $id]);
+            $countParams = [$id, $id];
+            if (!empty($searchParams)) {
+                $countParams = array_merge([$id, $id], $searchParams);
+            }
+            if ($returning === 'returning') {
+                $countParams[] = $id; // bind for property_id in returningMatch subquery
+            }
+            $stmtCount->execute($countParams);
             $total = (int) $stmtCount->fetchColumn();
 
             // 2. List Visitors with full info
-            $qId = $pdo->quote($id);
+            // [FIX P42-A3] Replaced $pdo->quote($id) inline subqueries with parameterized ?.
+            // Old: $qId = $pdo->quote($id); used inside correlated subqueries → injection risk.
+            // New: ? placeholders with explicit bindValue() ordering.
             $sql = "
                 SELECT 
                     v.id, 
@@ -758,9 +802,9 @@ if ($method === 'GET' && $action === 'visitors') {
                     sess.device_type,
                     sess.os,
                     sess.browser,
-                    (SELECT COUNT(*) FROM web_sessions WHERE visitor_id = v.id AND property_id = $qId) as sessions,
+                    (SELECT COUNT(*) FROM web_sessions WHERE visitor_id = v.id AND property_id = ?) as sessions,
                     (CASE WHEN wb.id IS NOT NULL THEN 1 ELSE 0 END) as is_blocked,
-                    (SELECT id FROM ai_conversations WHERE visitor_id = v.id AND property_id = $qId ORDER BY created_at DESC LIMIT 1) as conversation_id
+                    (SELECT id FROM ai_conversations WHERE visitor_id = v.id AND property_id = ? ORDER BY created_at DESC LIMIT 1) as conversation_id
                 FROM web_visitors v
                 LEFT JOIN subscribers s ON v.subscriber_id = s.id
                 LEFT JOIN zalo_subscribers zs ON v.zalo_user_id = zs.zalo_user_id
@@ -780,10 +824,19 @@ if ($method === 'GET' && $action === 'visitors') {
                 LIMIT ? OFFSET ?
             ";
             $stmt = $pdo->prepare($sql);
-            $stmt->bindValue(1, $id);
-            $stmt->bindValue(2, $id);
-            $stmt->bindValue(3, $limit, PDO::PARAM_INT);
-            $stmt->bindValue(4, $offset, PDO::PARAM_INT);
+            $bindPos = 1;
+            $stmt->bindValue($bindPos++, $id); // sessions subquery property_id
+            $stmt->bindValue($bindPos++, $id); // conversation_id subquery property_id
+            $stmt->bindValue($bindPos++, $id); // latest sessions subquery property_id
+            $stmt->bindValue($bindPos++, $id); // WHERE v.property_id
+            foreach ($searchParams as $sp) {
+                $stmt->bindValue($bindPos++, $sp);
+            }
+            if ($returning === 'returning') {
+                $stmt->bindValue($bindPos++, $id); // returningMatch subquery property_id
+            }
+            $stmt->bindValue($bindPos++, $limit, PDO::PARAM_INT);
+            $stmt->bindValue($bindPos++, $offset, PDO::PARAM_INT);
             $stmt->execute();
 
             // Calculate Live Count (Global for this property)
@@ -1014,7 +1067,7 @@ if ($method === 'GET' && $action === 'heatmap') {
 // --- BLACKLISTED IPS ---
 if ($method === 'GET' && $action === 'blacklist') {
     try {
-        $stmt = $pdo->query("SELECT * FROM web_blacklist ORDER BY created_at DESC");
+        $stmt = $pdo->query("SELECT id, ip_address, reason, created_at FROM web_blacklist ORDER BY created_at DESC"); // [FIX P39-WT] Explicit columns
         sendResponse(true, $stmt->fetchAll(PDO::FETCH_ASSOC));
     } catch (Exception $e) {
         sendResponse(false, [], 'Error: ' . $e->getMessage());
@@ -1055,6 +1108,11 @@ if ($method === 'GET' && $action === 'retention') {
             $interval = 'MONTH';
 
         $device = $_GET['device'] ?? '';
+        // [FIX P42-A1] Whitelist device — same pattern as stats/visitors actions.
+        $allowedDevices = ['mobile', 'desktop', 'tablet', 'bot', 'all', ''];
+        if (!in_array($device, $allowedDevices, true)) {
+            $device = 'all';
+        }
         $deviceMatch = "";
         if ($device === 'bot') {
             $deviceMatch = " AND device_type = 'bot'";
@@ -1062,7 +1120,7 @@ if ($method === 'GET' && $action === 'retention') {
             // 'all' or specific device → exclude bots
             $deviceMatch = " AND device_type != 'bot'";
             if ($device && $device !== 'all') {
-                $deviceMatch .= " AND device_type = " . $pdo->quote($device);
+                $deviceMatch .= " AND device_type = '" . $device . "'";
             }
         }
 

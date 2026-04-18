@@ -7,15 +7,29 @@ error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
 ini_set('display_errors', 0);
 set_time_limit(300);
 
-require_once 'db_connect.php';
-require_once 'trigger_helper.php';
-require_once 'segment_helper.php';
+// [FIX P8-H2] Use __DIR__-anchored paths so cron can call this file from any CWD.
+// Relative paths (e.g. 'db_connect.php') fail when PHP process CWD != api/ directory.
+require_once __DIR__ . '/db_connect.php';
+require_once __DIR__ . '/trigger_helper.php';
+require_once __DIR__ . '/segment_helper.php';
 
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 
 $logs = [];
 $logs[] = "--- TRIGGER WORKER START: " . date('Y-m-d H:i:s') . " ---";
 $startGlobalTime = time();
+
+$stmtLock = $pdo->query("SELECT GET_LOCK('worker_trigger_lock', 0)");
+if (!$stmtLock->fetchColumn()) {
+    echo "Worker trigger is already running.\n";
+    exit;
+}
+// [FIX P8-C1] Register shutdown handler to release advisory lock even on crash.
+// Without this, the lock is held until the MySQL connection closes.
+// On PHP-FPM with persistent connections, this blocks ALL subsequent cron runs.
+register_shutdown_function(function () use ($pdo) {
+    try { $pdo->query("SELECT RELEASE_LOCK('worker_trigger_lock')"); } catch (Throwable $e) {}
+});
 
 try {
     // 1. Fetch Active Flows with Polling Triggers
@@ -427,6 +441,14 @@ try {
 }
 
 $logs[] = "--- END TRIGGER WORKER ---";
+
+// [FIX P8-C1] Explicitly release advisory lock before log write.
+// Ensures next cron run can start immediately without waiting for connection close.
+$pdo->query("SELECT RELEASE_LOCK('worker_trigger_lock')");
+
 echo implode("\n", $logs);
-file_put_contents('worker_trigger.log', implode("\n", $logs) . "\n", FILE_APPEND);
+// [FIX P8-M2] Use __DIR__-anchored path for log file.
+// Relative path 'worker_trigger.log' writes to the PHP process CWD (may be webroot, /,
+// or the cron caller's directory — unpredictable and often wrong).
+file_put_contents(__DIR__ . '/worker_trigger.log', implode("\n", $logs) . "\n", FILE_APPEND | LOCK_EX);
 ?>

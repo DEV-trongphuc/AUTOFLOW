@@ -11,6 +11,7 @@ const SidebarItem = React.memo(({
     botSessions,
     sessionId,
     categoryId,
+    viewMode,
     onToggleExpand,
     onNewChat,
     onDeleteSession,
@@ -74,7 +75,9 @@ const SidebarItem = React.memo(({
 
                     {sortedSessions.map((sess: ChatSession) => {
                         const isPinned = pinnedSessionIds?.has(String(sess.id)) || (sess.visitorId && pinnedSessionIds?.has(String(sess.visitorId)));
-                        const isSessionActive = sessionId === sess.id && !isOrganizationView;
+                        // [P17-A2 FIX] Must also check viewMode==='chat'. Without this, when user navigates
+                        // to 'home' or 'global_workspace', the old session item stays highlighted.
+                        const isSessionActive = sessionId === sess.id && viewMode === 'chat' && !isOrganizationView;
                         return (
                             <div key={sess.id} className="relative group/sess">
                                 <div
@@ -213,6 +216,10 @@ const Sidebar = React.memo(({
     pinnedSessionIds
 }: SidebarProps) => {
     const location = useLocation();
+    // [P17-A1 FIX] Guard against orphan sessions from rapid expand/collapse on an empty bot.
+    // Without this, clicking expand quickly on a bot with no sessions triggers multiple handleNewChat
+    // calls, creating duplicate orphan sessions in the database.
+    const isCreatingSessionRef = React.useRef(false);
 
     const isOrganizationView = useMemo(() => {
         return location.pathname.includes('/organization') || window.location.hash.includes('/organization');
@@ -407,6 +414,7 @@ const Sidebar = React.memo(({
                                 <SidebarItem
                                     key={bot.id}
                                     bot={bot}
+                                    viewMode={viewMode}
                                     isActive={activeBot?.id === bot.id && viewMode === 'chat'}
                                     isExpanded={expandedBotId === bot.id}
                                     botSessions={sessions[bot.id] || []}
@@ -426,7 +434,13 @@ const Sidebar = React.memo(({
                                                     const botTarget = b.slug || b.id;
                                                     navigate(`/ai-space/${categoryId}/${botTarget}/${s[0].id}`);
                                                 } else {
-                                                    handleNewChat({ stopPropagation: () => { } } as any, b);
+                                                    // [P17-A1 FIX] Debounce: skip if a session creation is already in-flight
+                                                    if (!isCreatingSessionRef.current) {
+                                                        isCreatingSessionRef.current = true;
+                                                        handleNewChat({ stopPropagation: () => { } } as any, b);
+                                                        // Reset after 500ms so the sidebar can create a new session again if needed
+                                                        setTimeout(() => { isCreatingSessionRef.current = false; }, 500);
+                                                    }
                                                 }
                                             }
                                         } else {

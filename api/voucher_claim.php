@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // api/voucher_claim.php
 require_once 'db_connect.php';
 require_once 'flow_helpers.php';
@@ -138,8 +138,14 @@ try {
         if ($camp['code_type'] === 'static') {
             $codeAssigned = $camp['static_code'];
         } else {
-            // Dynamic: Pick one FOR UPDATE SKIP LOCKED
-            $stmtClaim = $pdo->prepare("SELECT id, code FROM voucher_codes WHERE campaign_id = ? AND status = 'unused' AND subscriber_id IS NULL LIMIT 1 FOR UPDATE SKIP LOCKED");
+            // Dynamic: Pick one with version-aware locking
+            // [FIX P10-C2] SKIP LOCKED requires MySQL >= 8.0; fallback to FOR UPDATE on 5.7.
+            static $vcSkipLocked = null;
+            if ($vcSkipLocked === null) {
+                $v = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
+                $vcSkipLocked = version_compare($v, '8.0.0', '>=') ? 'SKIP LOCKED' : '';
+            }
+            $stmtClaim = $pdo->prepare("SELECT id, code FROM voucher_codes WHERE campaign_id = ? AND status = 'unused' AND subscriber_id IS NULL ORDER BY id ASC LIMIT 1 FOR UPDATE $vcSkipLocked");
             $stmtClaim->execute([$campaignId]);
             $row = $stmtClaim->fetch(PDO::FETCH_ASSOC);
 
@@ -193,8 +199,8 @@ foreach ([$workerUrl1, $workerUrl2] as $url) {
     curl_setopt($ch, CURLOPT_TIMEOUT, 1);
     curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
     @curl_exec($ch);
     curl_close($ch);
 }

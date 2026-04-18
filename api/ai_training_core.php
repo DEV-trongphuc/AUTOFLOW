@@ -48,6 +48,8 @@ if (!function_exists('callGeminiBatchEmbedding')) {
             'Content-Type: application/json',
             'X-goog-api-key: ' . $apiKey
         ]);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // [FIX P37-ATC] Always verify SSL
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);   // [FIX P37-ATC] Hostname verification
         curl_setopt($ch, CURLOPT_TIMEOUT, 60);
 
         $response = curl_exec($ch);
@@ -435,7 +437,7 @@ function trainDocsCore($pdo, $propertyId, $docIds, $adminId = null)
 
         require_once 'file_extractor.php';
         $placeholders = str_repeat('?,', count($docIds) - 1) . '?';
-        $stmtDocs = $pdo->prepare("SELECT * FROM ai_training_docs WHERE id IN ($placeholders)");
+        $stmtDocs = $pdo->prepare("SELECT id, name, source_type, content, metadata, tags, priority FROM ai_training_docs WHERE id IN ($placeholders)"); // [FIX P37-ATC] Explicit columns — content is MEDIUMTEXT but needed for text training
         $stmtDocs->execute($docIds);
 
         // [FIX] Chỉ DELETE chunks của các doc KHÔNG đang trong pipeline chunked_extraction
@@ -646,7 +648,7 @@ function mergePdfChunksAndEmbed($pdo, $docId, $propertyId, $apiKey)
     }
 
     // 1. Load doc row
-    $stmtDoc = $pdo->prepare("SELECT * FROM ai_training_docs WHERE id = ?");
+    $stmtDoc = $pdo->prepare("SELECT id, name, metadata, tags, priority FROM ai_training_docs WHERE id = ?"); // [FIX P37-ATC] Explicit columns — content not needed here (full text built from merged chunks)
     $stmtDoc->execute([$docId]);
     $doc = $stmtDoc->fetch(PDO::FETCH_ASSOC);
     if (!$doc) {

@@ -1,40 +1,38 @@
+/**
+ * ScenarioManager.tsx
+ * Quản lý danh sách kịch bản hội thoại.
+ * - Click vào ScenarioCard → mở modal canvas giống Flow Designer
+ * - Canvas của scenario dùng ScenarioCanvas (dot-grid, zoomable, branching)
+ */
 import * as React from 'react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { api } from '../../services/storageAdapter';
 import { toast } from 'react-hot-toast';
 import {
-    Plus, Trash2, Edit2, Save, X, ChevronDown, ChevronUp,
-    MessageSquare, Zap, AlertCircle, CheckCircle2, ToggleLeft,
-    ToggleRight, GripVertical, Move, ArrowUp, ArrowDown, Eye,
-    EyeOff, Copy, BookOpen, Bot, Play, CircleDashed, Info,
-    Download, Upload, FileText
+    Plus, Trash2, Edit2, Save, X, ChevronUp, ChevronDown,
+    MessageSquare, AlertCircle, CheckCircle2, BookOpen,
+    ArrowUp, ArrowDown, Play, CircleDashed, Download, Upload,
+    FileText, Copy, GripVertical, GitBranch, FormInput,
+    Hash, Regex as RegexIcon, Zap, Settings2, Bot, PieChart
 } from 'lucide-react';
+import ScenarioCanvas, { ScenarioNode } from './ScenarioCanvas';
 
-// ──────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 //  Types
-// ──────────────────────────────────────────────────────────────────
-export interface FlowNode {
-    id: string;
-    text: string;
-    buttons: { id: string; label: string; next_node?: string }[];
-}
-
-export interface ScenarioButton {
-    id: string;
-    label: string;
-    action?: string; // used for legacy
-}
+// ────────────────────────────────────────────────────────────────
+export interface ScenarioButton { id: string; label: string; action?: string; }
 
 export interface Scenario {
     id: string;
     property_id: string;
     title: string;
-    trigger_keywords: string;   // comma-separated keyword/phrase list
-    match_mode: 'contains' | 'exact' | 'regex'; // matching mode
-    reply_text: string;         // Bot reply (fallback)
-    buttons: ScenarioButton[];  // CTA buttons shown below reply (fallback)
-    flow_data?: { nodes: FlowNode[] } | string; // NEW: The flow tree
-    is_active: number;          // 0 | 1
+    trigger_keywords: string;
+    match_mode: 'contains' | 'exact' | 'regex';
+    reply_text: string;
+    buttons: ScenarioButton[];
+    flow_data?: { nodes: ScenarioNode[] } | string;
+    is_active: number;
     priority: number;
     created_at?: string;
     updated_at?: string;
@@ -46,682 +44,366 @@ interface Props {
     brandColor?: string;
 }
 
-// ──────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 //  Helpers
-// ──────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 const uid = () => Math.random().toString(36).slice(2, 10);
 
-const emptyScenario = (propertyId: string): Omit<Scenario, 'id'> => ({
-    property_id: propertyId,
-    title: '',
-    trigger_keywords: '',
-    match_mode: 'contains',
-    reply_text: '',
-    buttons: [],
-    is_active: 1,
-    priority: 0,
-});
+function parseFlowNodes(scenario: Partial<Scenario>): ScenarioNode[] {
+    try {
+        const fd = typeof scenario.flow_data === 'string'
+            ? JSON.parse(scenario.flow_data)
+            : scenario.flow_data;
+        if (fd?.nodes?.length) return fd.nodes;
+    } catch {}
+    // Build from legacy flat fields
+    return [{
+        id: 'root',
+        text: scenario.reply_text || '',
+        buttons: (scenario.buttons || []).map(b => ({ id: b.id, label: b.label, next_node: b.action || '' })),
+        actions: [],
+    }];
+}
 
-// ──────────────────────────────────────────────────────────────────
-//  Sub-component: Scenario Card (collapsed view)
-// ──────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
+//  Scenario Flow Modal — full-screen canvas editor
+// ────────────────────────────────────────────────────────────────
+const ScenarioFlowModal: React.FC<{
+    initialScenario: Partial<Scenario>;
+    propertyId: string;
+    isDark?: boolean;
+    loading?: boolean;
+    onSave: (data: Omit<Scenario, 'id' | 'created_at' | 'updated_at'>) => void;
+    onClose: () => void;
+}> = ({ initialScenario, propertyId, isDark, loading, onSave, onClose }) => {
+
+    const [animateIn, setAnimateIn] = useState(false);
+    const [title, setTitle] = useState(initialScenario.title || '');
+    const [keywords, setKeywords] = useState(initialScenario.trigger_keywords || '');
+    const [matchMode, setMatchMode] = useState<'contains' | 'exact' | 'regex'>(initialScenario.match_mode || 'contains');
+    const [isActive, setIsActive] = useState<number>(initialScenario.is_active ?? 1);
+    const [nodes, setNodes] = useState<ScenarioNode[]>(() => parseFlowNodes(initialScenario));
+    const [showMeta, setShowMeta] = useState(true);
+
+    useEffect(() => { const t = setTimeout(() => setAnimateIn(true), 10); return () => clearTimeout(t); }, []);
+
+    const handleClose = () => { setAnimateIn(false); setTimeout(onClose, 350); };
+
+    const handleSave = () => {
+        if (!title.trim()) { toast.error('Vui lòng nhập tên kịch bản'); return; }
+        if (!keywords.trim()) { toast.error('Vui lòng nhập từ khóa kích hoạt'); return; }
+        const root = nodes.find(n => n.id === 'root');
+        if (!root?.text?.replace(/\|/g, '').trim()) { toast.error('Vui lòng nhập nội dung trả lời ở bước đầu tiên'); return; }
+
+        onSave({
+            property_id: propertyId,
+            title,
+            trigger_keywords: keywords,
+            match_mode: matchMode,
+            reply_text: root.text.split('|||')[0].trim(),
+            buttons: (root.buttons || []).map(b => ({ id: b.id, label: b.label, action: b.next_node || '' })),
+            flow_data: JSON.stringify({ nodes }),
+            is_active: isActive,
+            priority: initialScenario.priority || 0,
+        });
+    };
+
+    const isEditing = !!initialScenario.id;
+
+    return ReactDOM.createPortal(
+        <div className={`fixed inset-0 z-[9999] flex flex-col ${animateIn ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+            {/* Blur overlay – no backdrop click on fullscreen */}
+            <div className={`absolute inset-0 bg-slate-900/40 transition-opacity duration-300 ${animateIn ? 'opacity-100' : 'opacity-0'}`} />
+
+            {/* Main modal – true fullscreen */}
+            <div className={`relative flex flex-col inset-0 overflow-hidden shadow-2xl transition-all duration-300
+                ${isDark ? 'bg-slate-950' : 'bg-[#f4f6f9]'}
+                ${animateIn ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.98]'}`}
+                style={{ position: 'absolute', inset: 0 }}
+            >
+
+                {/* ── Topbar ────────────────────────────────────────── */}
+                <div className={`flex items-center justify-between px-6 py-3.5 border-b shrink-0 z-10
+                    ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`}>
+
+                    {/* Left: Title bar */}
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center text-white shadow-md shrink-0">
+                            <GitBranch className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <input
+                                type="text"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                placeholder="Tên kịch bản (VD: Tư vấn học phí EMBA)..."
+                                className={`w-full max-w-md bg-transparent border-none outline-none text-base font-bold placeholder-slate-400
+                                    ${isDark ? 'text-white' : 'text-slate-800'}`}
+                            />
+                            <p className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                                {isEditing ? 'Chỉnh sửa kịch bản' : 'Kịch bản mới'} · Luồng hội thoại đa tầng
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Center toolbar: match mode */}
+                    <div className="flex items-center gap-2 shrink-0">
+                        {([
+                            { v: 'contains' as const, label: 'Chứa từ', icon: Hash },
+                            { v: 'exact'    as const, label: 'Chính xác', icon: CheckCircle2 },
+                            { v: 'regex'    as const, label: 'Regex', icon: RegexIcon },
+                        ]).map(opt => (
+                            <button key={opt.v} onClick={() => setMatchMode(opt.v)}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all
+                                    ${matchMode === opt.v
+                                        ? 'bg-violet-600 border-violet-600 text-white shadow-sm'
+                                        : (isDark ? 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300')
+                                    }`}
+                            >
+                                <opt.icon className="w-3 h-3" />
+                                {opt.label}
+                            </button>
+                        ))}
+
+                        {/* Active toggle */}
+                        <button
+                            onClick={() => setIsActive(v => v ? 0 : 1)}
+                            className={`w-11 h-6 rounded-full transition-all duration-300 flex items-center px-1 shadow-inner ml-2
+                                ${isActive ? 'bg-emerald-400 justify-end' : (isDark ? 'bg-slate-700 justify-start' : 'bg-slate-200 justify-start')}`}
+                            title={isActive ? 'Đang bật' : 'Đang tắt'}
+                        >
+                            <div className="w-4 h-4 bg-white rounded-full shadow-md ring-1 ring-black/5" />
+                        </button>
+                    </div>
+
+                    {/* Right: actions */}
+                    <div className="flex items-center gap-2 ml-4 shrink-0">
+                        <button onClick={handleClose}
+                            className={`p-2 rounded-xl transition-all ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}>
+                            <X className="w-5 h-5" />
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            disabled={loading}
+                            className="flex items-center gap-2 h-9 px-5 rounded-xl text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/20 active:scale-95 transition-all disabled:opacity-50"
+                        >
+                            {loading ? (
+                                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 12 0 12 12h4z" />
+                                </svg>
+                            ) : <Save className="w-4 h-4" />}
+                            {isEditing ? 'Lưu' : 'Tạo kịch bản'}
+                        </button>
+                    </div>
+                </div>
+
+                {/* ── Keywords bar ──────────────────────────────────── */}
+                <div className={`flex items-center gap-3 px-6 py-2.5 border-b shrink-0 z-10
+                    ${isDark ? 'bg-slate-800/50 border-slate-800' : 'bg-slate-50/80 border-slate-100'}`}>
+                    <span className={`text-[10px] font-black uppercase tracking-widest shrink-0 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                        Từ khóa kích hoạt:
+                    </span>
+                    <input
+                        type="text"
+                        value={keywords}
+                        onChange={e => setKeywords(e.target.value)}
+                        placeholder="học phí, giá, bao nhiêu tiền, chi phí... (cách nhau bằng dấu phẩy)"
+                        className={`flex-1 bg-transparent border-none outline-none text-sm font-medium placeholder-slate-400
+                            ${isDark ? 'text-slate-300' : 'text-slate-700'}`}
+                    />
+                    {/* Info pill */}
+                    <div className={`flex items-center gap-1.5 shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full border
+                        ${isDark ? 'border-blue-500/20 bg-blue-500/10 text-blue-400' : 'border-blue-100 bg-blue-50 text-blue-500'}`}>
+                        <AlertCircle className="w-3 h-3" />
+                        Click node để chỉnh sửa · Kéo thả để di chuyển canvas
+                    </div>
+                </div>
+
+                {/* ── Canvas area ────────────────────────────────────── */}
+                <div className="flex-1 min-h-0" style={{ display: 'flex', flexDirection: 'column' }}>
+                    <ScenarioCanvas
+                        nodes={nodes}
+                        onChange={setNodes}
+                        keywords={keywords}
+                        onKeywordsChange={setKeywords}
+                        isDark={isDark}
+                        readOnly={false}
+                    />
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+};
+
+// ────────────────────────────────────────────────────────────────
+//  Scenario Card
+// ────────────────────────────────────────────────────────────────
 const ScenarioCard: React.FC<{
     scenario: Scenario;
     isDark?: boolean;
-    brandColor?: string;
     onEdit: () => void;
     onDelete: () => void;
     onToggle: () => void;
     onClone: () => void;
     onMoveUp?: () => void;
     onMoveDown?: () => void;
-}> = ({ scenario, isDark, brandColor, onEdit, onDelete, onToggle, onClone, onMoveUp, onMoveDown }) => {
-    const accent = brandColor || '#ffa900';
+}> = ({ scenario, isDark, onEdit, onDelete, onToggle, onClone, onMoveUp, onMoveDown }) => {
     const keywords = scenario.trigger_keywords
-        ? scenario.trigger_keywords.split(',').map(k => k.trim()).filter(Boolean).slice(0, 5)
+        ? scenario.trigger_keywords.split(',').map(k => k.trim()).filter(Boolean)
         : [];
+
+    let nodeCount = 0;
+    try {
+        const fd = typeof scenario.flow_data === 'string'
+            ? JSON.parse(scenario.flow_data as string) : scenario.flow_data;
+        if (fd?.nodes) nodeCount = fd.nodes.length;
+    } catch {}
+
+    const matchColor = {
+        contains: isDark ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-blue-50 border-blue-200 text-blue-600',
+        exact:    isDark ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-600',
+        regex:    isDark ? 'bg-violet-500/10 border-violet-500/20 text-violet-400' : 'bg-violet-50 border-violet-200 text-violet-600',
+    }[scenario.match_mode] || '';
 
     return (
         <div
-            className={`rounded-2xl border transition-all duration-300 group relative overflow-hidden
-                ${isDark
-                    ? 'bg-slate-800/40 border-slate-700 hover:border-slate-600'
-                    : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-md'
-                }
-                ${!scenario.is_active ? 'opacity-50' : ''}
-            `}
+            className={`rounded-[20px] transition-all duration-300 group relative flex flex-col md:flex-row md:items-center p-5 gap-5 border cursor-pointer hover:-translate-y-0.5
+                ${isDark ? 'bg-slate-800/60 border-slate-700 hover:border-blue-500/40 hover:shadow-[0_8px_30px_rgba(59,130,246,0.1)]' : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-[0_12px_30px_rgba(0,0,0,0.06)] shadow-sm'}
+                ${!scenario.is_active ? 'opacity-60 saturate-50' : ''}`}
+            onClick={onEdit}
         >
-            {/* Left accent bar */}
-            <div
-                className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl transition-all duration-300"
-                style={{ backgroundColor: scenario.is_active ? accent : (isDark ? '#475569' : '#cbd5e1') }}
-            />
+            {/* Grab handle */}
+            <div className={`absolute left-2 top-1/2 -translate-y-1/2 shrink-0 cursor-grab flow-interactive opacity-0 group-hover:opacity-100 transition-opacity ${isDark ? 'text-slate-600 hover:text-slate-400' : 'text-slate-300 hover:text-slate-500'}`}
+                onClick={e => e.stopPropagation()}>
+                <GripVertical className="w-5 h-5" />
+            </div>
 
-            <div className="flex items-start gap-4 p-4 pl-5">
-                {/* Drag handle (visual only) */}
-                <div className={`mt-0.5 shrink-0 ${isDark ? 'text-slate-600' : 'text-slate-300'} cursor-grab`}>
-                    <GripVertical className="w-4 h-4" />
-                </div>
+            {/* Icon */}
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-inner ml-2 transition-all ${scenario.is_active ? 'bg-gradient-to-br from-amber-400 to-amber-600 shadow-amber-500/20' : (isDark ? 'bg-slate-700' : 'bg-slate-200')}`}>
+                <PieChart className={`w-6 h-6 ${scenario.is_active ? 'text-white' : (isDark ? 'text-slate-500' : 'text-slate-400')}`} />
+            </div>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className={`text-sm font-bold truncate ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>
-                            {scenario.title || 'Kịch bản chưa đặt tên'}
-                        </h4>
-                        {/* Match mode badge */}
-                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border
-                            ${isDark ? 'bg-slate-700 border-slate-600 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-400'}`}>
-                            {scenario.match_mode}
+            {/* Main Content */}
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2.5 mb-1.5">
+                    <h4 className={`text-[15px] font-bold truncate ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>
+                        {scenario.title || 'Kịch bản chưa đặt tên'}
+                    </h4>
+                    <span className={`text-[9.5px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full border ${matchColor}`}>
+                        {scenario.match_mode}
+                    </span>
+                    {nodeCount > 1 && (
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border flex items-center gap-1.5 ${isDark ? 'bg-slate-700/50 border-slate-600 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
+                            <GitBranch className="w-3 h-3" /> {nodeCount} steps
                         </span>
-                        {!scenario.is_active && (
-                            <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-rose-50 border border-rose-100 text-rose-400">
-                                Tắt
-                            </span>
-                        )}
-                    </div>
-
-                    {/* Keywords */}
-                    <div className="flex flex-wrap gap-1 mt-2">
-                        {keywords.map((kw, i) => (
-                            <span key={i}
-                                className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg border
-                                    ${isDark ? 'bg-slate-700/60 border-slate-600 text-slate-300' : 'bg-slate-50 border-slate-100 text-slate-500'}`}>
-                                {kw}
-                            </span>
-                        ))}
-                        {scenario.trigger_keywords.split(',').filter(Boolean).length > 5 && (
-                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg
-                                ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                                +{scenario.trigger_keywords.split(',').filter(Boolean).length - 5} nữa
-                            </span>
-                        )}
-                    </div>
-
-                    {/* Reply preview */}
-                    <p className={`mt-2 text-xs line-clamp-2 leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                        {scenario.reply_text || <em className="opacity-50">Chưa có nội dung trả lời</em>}
-                    </p>
-
-                    {/* Buttons preview */}
-                    {scenario.buttons && scenario.buttons.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-2">
-                            {scenario.buttons.slice(0, 4).map((btn, i) => (
-                                <span key={i}
-                                    className={`text-[10px] font-bold px-3 py-1 rounded-full border
-                                        ${isDark ? 'border-slate-600 bg-slate-700/50 text-slate-300' : 'border-slate-200 bg-white text-slate-600 shadow-sm'}`}>
-                                    {btn.label}
-                                </span>
-                            ))}
-                            {scenario.buttons.length > 4 && (
-                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                                    +{scenario.buttons.length - 4}
-                                </span>
-                            )}
-                        </div>
+                    )}
+                    {!scenario.is_active && (
+                        <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-rose-100 border border-rose-200 text-rose-500">ĐÃ TẮT</span>
                     )}
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={onMoveUp} title="Tăng độ ưu tiên"
-                        className={`p-1.5 rounded-lg transition-all ${isDark ? 'hover:bg-slate-700 text-slate-500 hover:text-slate-300' : 'hover:bg-slate-100 text-slate-300 hover:text-slate-600'}`}>
-                        <ArrowUp className="w-3.5 h-3.5" />
-                    </button>
-                    <button onClick={onMoveDown} title="Giảm độ ưu tiên"
-                        className={`p-1.5 rounded-lg transition-all ${isDark ? 'hover:bg-slate-700 text-slate-500 hover:text-slate-300' : 'hover:bg-slate-100 text-slate-300 hover:text-slate-600'}`}>
-                        <ArrowDown className="w-3.5 h-3.5" />
-                    </button>
-                    <button onClick={onToggle} title={scenario.is_active ? 'Tắt kịch bản' : 'Bật kịch bản'}
-                        className={`w-10 h-6 rounded-full p-1 transition-all duration-300 flex items-center
-                            ${scenario.is_active 
-                                ? 'bg-emerald-400 justify-end' 
-                                : (isDark ? 'bg-slate-700 justify-start' : 'bg-slate-200 justify-start')}`}>
-                        <div className="w-4 h-4 bg-white rounded-full shadow-sm ring-1 ring-black/5" />
-                    </button>
-                    <button onClick={onClone} title="Nhân bản (Clone)"
-                        className={`p-1.5 rounded-lg transition-all ${isDark ? 'hover:bg-slate-700 text-slate-400 hover:text-slate-200' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-700'}`}>
-                        <Copy className="w-3.5 h-3.5" />
-                    </button>
-                    <button onClick={onEdit} title="Chỉnh sửa"
-                        className={`p-1.5 rounded-lg transition-all ${isDark ? 'hover:bg-slate-700 text-slate-400 hover:text-slate-200' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-700'}`}>
-                        <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button onClick={onDelete} title="Xóa"
-                        className={`p-1.5 rounded-lg transition-all ${isDark ? 'hover:bg-rose-500/10 text-slate-500 hover:text-rose-400' : 'hover:bg-rose-50 text-slate-300 hover:text-rose-500'}`}>
-                        <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// ──────────────────────────────────────────────────────────────────
-//  Sub-component: Scenario Form (create / edit)
-// ──────────────────────────────────────────────────────────────────
-const ScenarioForm: React.FC<{
-    initial?: Partial<Scenario>;
-    propertyId: string;
-    isDark?: boolean;
-    brandColor?: string;
-    onSave: (data: Omit<Scenario, 'id' | 'created_at' | 'updated_at'>) => void;
-    onCancel: () => void;
-    loading?: boolean;
-}> = ({ initial, propertyId, isDark, brandColor, onSave, onCancel, loading }) => {
-    const accent = brandColor || '#ffa900';
-    const [form, setForm] = useState<Omit<Scenario, 'id' | 'created_at' | 'updated_at'>>({
-        property_id: propertyId,
-        title: initial?.title || '',
-        trigger_keywords: initial?.trigger_keywords || '',
-        match_mode: initial?.match_mode || 'contains',
-        reply_text: initial?.reply_text || '',
-        buttons: initial?.buttons || [],
-        is_active: initial?.is_active ?? 1,
-        priority: initial?.priority || 0,
-        flow_data: initial?.flow_data
-    });
-    
-    // Flow Builder State
-    const [nodes, setNodes] = useState<FlowNode[]>(() => {
-        let n: FlowNode[] = [];
-        if (initial?.flow_data) {
-            try {
-                const parsed = typeof initial?.flow_data === 'string' ? JSON.parse(initial.flow_data) : initial.flow_data;
-                if (parsed?.nodes && parsed.nodes.length > 0) n = parsed.nodes;
-            } catch(e){}
-        }
-        if (n.length === 0) {
-            n = [{
-                id: 'root',
-                text: initial?.reply_text || '',
-                buttons: (initial?.buttons || []).map(b => ({ id: b.id, label: b.label, next_node: b.action || '' }))
-            }];
-        }
-        return n;
-    });
-
-    const [newBtnLabels, setNewBtnLabels] = useState<Record<string, string>>({});
-
-    const setField = (key: keyof typeof form, val: any) => setForm(f => ({ ...f, [key]: val }));
-
-    const updateNodeText = (id: string, text: string) => {
-        setNodes(ns => ns.map(n => n.id === id ? { ...n, text } : n));
-    };
-
-    const addNodeButton = (nodeId: string) => {
-        const label = newBtnLabels[nodeId]?.trim();
-        if (!label) return;
-        setNodes(ns => ns.map(n => {
-            if (n.id === nodeId) {
-                if (n.buttons.length >= 4) return n;
-                return { ...n, buttons: [...n.buttons, { id: uid(), label, next_node: '' }] };
-            }
-            return n;
-        }));
-        setNewBtnLabels(prev => ({ ...prev, [nodeId]: '' }));
-    };
-
-    const removeNodeButton = (nodeId: string, btnId: string) => {
-        setNodes(ns => ns.map(n => {
-            if (n.id === nodeId) {
-                return { ...n, buttons: n.buttons.filter(b => b.id !== btnId) };
-            }
-            return n;
-        }));
-    };
-
-    const linkNewNode = (nodeId: string, btnId: string) => {
-        const newNodeId = 'node_' + uid();
-        setNodes(ns => [
-            ...ns.map(n => n.id === nodeId ? 
-                { ...n, buttons: n.buttons.map(b => b.id === btnId ? { ...b, next_node: newNodeId } : b) }
-            : n),
-            { id: newNodeId, text: '', buttons: [] }
-        ]);
-        toast.success('Đã thêm 1 bước nối tiếp!');
-    };
-
-    const unlinkNode = (nodeId: string, btnId: string) => {
-        setNodes(ns => ns.map(n => n.id === nodeId ? 
-            { ...n, buttons: n.buttons.map(b => b.id === btnId ? { ...b, next_node: '' } : b) }
-        : n));
-    };
-
-    const deleteNode = (id: string) => {
-        if (id === 'root') return;
-        setNodes(ns => ns.filter(n => n.id !== id).map(n => ({
-            ...n, buttons: n.buttons.map(b => b.next_node === id ? { ...b, next_node: '' } : b)
-        })));
-    };
-
-    const handleSave = () => {
-        if (!form.title.trim()) { toast.error('Vui lòng nhập tiêu đề kịch bản'); return; }
-        if (!form.trigger_keywords.trim()) { toast.error('Vui lòng nhập từ khóa kích hoạt'); return; }
-        
-        const rootNode = nodes.find(n => n.id === 'root') || nodes[0];
-        if (!rootNode || !rootNode.text.trim()) { toast.error('Vui lòng nhập nội dung trả lời Bước 1 (Root)'); return; }
-
-        onSave({
-            ...form,
-            reply_text: rootNode.text,
-            buttons: rootNode.buttons.map(b => ({ id: b.id, label: b.label, action: b.next_node })),
-            flow_data: JSON.stringify({ nodes })
-        });
-    };
-
-    return (
-        <div className={`rounded-2xl border shadow-xl overflow-hidden transition-all
-            ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b"
-                style={{ borderColor: isDark ? '#334155' : '#f1f5f9', background: isDark ? '#0f172a' : `linear-gradient(135deg, ${accent}08, ${accent}04)` }}>
-                <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm"
-                        style={{ background: `${accent}20`, color: accent }}>
-                        <ArrowDown className="w-5 h-5" />
-                    </div>
-                    <div>
-                        <h3 className={`text-base font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                            {initial?.id ? 'Chỉnh sửa Gói Kịch Bản (Flow)' : 'Tạo Gói Kịch Bản mới'}
-                        </h3>
-                        <p className={`text-[10px] font-black uppercase tracking-widest mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                            Kịch bản đa tầng - Rẽ nhánh luồng chat
-                        </p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <button onClick={onCancel}
-                        className={`p-2 rounded-lg transition-all ${isDark ? 'hover:bg-slate-800 text-slate-500' : 'hover:bg-slate-100 text-slate-400'}`}>
-                        <X className="w-4 h-4" />
-                    </button>
-                </div>
-            </div>
-
-            <div className="grid gap-6 p-6 grid-cols-1">
-                {/* Meta Inputs */}
-                <div className={`grid gap-4 md:grid-cols-2 p-4 rounded-xl border ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
-                    {/* Title */}
-                    <div className="space-y-1.5">
-                        <label className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                            Tên Gói Kịch Bản <span className="text-rose-400">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            value={form.title}
-                            onChange={e => setField('title', e.target.value)}
-                            placeholder="VD: Gói Tư Vấn Học Phí"
-                            className={`w-full h-11 px-4 border rounded-xl text-sm font-medium outline-none transition-all
-                                ${isDark ? 'bg-slate-800 border-slate-700 text-slate-200 focus:border-amber-600/50' : 'bg-white border-slate-200 text-slate-800 focus:border-amber-400'}`}
-                        />
-                    </div>
-
-                    {/* Trigger Keywords */}
-                    <div className="space-y-1.5">
-                        <label className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                            Từ Khóa Kích Hoạt Bước 1 <span className="text-rose-400">*</span>
-                        </label>
-                        <textarea
-                            value={form.trigger_keywords}
-                            onChange={e => setField('trigger_keywords', e.target.value)}
-                            placeholder="VD: học phí, bao nhiêu tiền (cách nhau bằng dấu phẩy)"
-                            rows={2}
-                            className={`w-full px-4 py-3 border rounded-xl text-sm font-medium outline-none transition-all resize-y min-h-[80px]
-                                ${isDark ? 'bg-slate-800 border-slate-700 text-slate-200 focus:border-amber-600/50' : 'bg-white border-slate-200 text-slate-800 focus:border-amber-400'}`}
-                        />
-                    </div>
-                </div>
-
-                {/* Match mode & Toggle inside meta */}
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                        {([
-                            { v: 'contains', label: 'Chứa từ khóa' },
-                            { v: 'exact', label: 'Chính xác' },
-                            { v: 'regex', label: 'Regex' },
-                        ] as const).map(opt => (
-                            <button key={opt.v}
-                                onClick={() => setField('match_mode', opt.v)}
-                                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all
-                                    ${form.match_mode === opt.v
-                                        ? (isDark ? 'bg-amber-600/10 border-amber-600/30 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-700')
-                                        : (isDark ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300')
-                                    }`}>
-                                {opt.label}
-                            </button>
+                <div className="flex items-center gap-2 mb-2">
+                    <span className={`text-[11px] font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Từ khóa:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                        {keywords.slice(0, 4).map((kw, i) => (
+                            <span key={i} className={`text-[10px] font-bold px-2 py-0.5 rounded border inline-block max-w-[120px] truncate ${isDark ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
+                                {kw}
+                            </span>
                         ))}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                         <p className={`text-[11px] font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Tình Trạng (Bật/Tắt)</p>
-                         <button onClick={() => setField('is_active', form.is_active ? 0 : 1)}
-                            className={`w-11 h-6 rounded-full transition-all duration-300 flex items-center px-1 shadow-inner
-                                ${form.is_active ? 'bg-emerald-400 justify-end' : (isDark ? 'bg-slate-700 justify-start' : 'bg-slate-200 justify-start')}`}>
-                            <div className="w-4 h-4 bg-white rounded-full shadow-md ring-1 ring-black/5" />
-                        </button>
+                        {keywords.length > 4 && <span className={`text-[10px] font-bold ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>+{keywords.length - 4}</span>}
                     </div>
                 </div>
 
-                {/* Flow Builder UI */}
-                <div className="space-y-4">
-                     <h4 className={`text-sm font-bold border-b pb-2 ${isDark ? 'text-white border-slate-700' : 'text-slate-800 border-slate-200'}`}>Thiết Kế Luồng Kịch Bản</h4>
-                     
-                     <div className="space-y-6 relative pl-4 border-l-2" style={{ borderColor: `${accent}30` }}>
-                         {nodes.map((node, i) => (
-                             <div key={node.id} id={`node-${node.id}`} className={`p-4 rounded-xl border relative
-                                 ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
-                                 
-                                 {/* Dot on the left line */}
-                                 <div className="absolute -left-[21px] top-5 w-3 h-3 rounded-full border-2 bg-white" 
-                                      style={{ borderColor: accent }} />
-
-                                 <div className="flex items-center justify-between mb-3">
-                                     <h5 className={`text-xs font-bold px-2 py-1 rounded bg-black/5 dark:bg-white/10 ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
-                                         {node.id === 'root' ? 'Bước 1: Từ khóa kích hoạt' : `Bước nối tiếp`} 
-                                         <span className="opacity-50 font-normal ml-2">({node.id})</span>
-                                     </h5>
-                                     {node.id !== 'root' && (
-                                         <button onClick={() => deleteNode(node.id)} className="text-rose-400 hover:text-rose-500 p-1">
-                                             <Trash2 className="w-4 h-4" />
-                                         </button>
-                                     )}
-                                 </div>
-
-                                 {/* Reply Content */}
-                                 <div className="mb-4">
-                                     <label className={`block text-[10px] font-black uppercase tracking-widest mb-1.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                                         Nội dung Chatbot trả lời <span className="text-rose-400">*</span>
-                                     </label>
-                                     <div className="space-y-2">
-                                         {node.text.split('|||').map((txt, tIdx, arr) => (
-                                             <div key={tIdx} className="relative">
-                                                 <textarea
-                                                     id={tIdx === 0 ? `textarea-${node.id}` : undefined}
-                                                     value={txt}
-                                                     onChange={e => {
-                                                         const newArr = [...arr];
-                                                         newArr[tIdx] = e.target.value;
-                                                         updateNodeText(node.id, newArr.join('|||'));
-                                                     }}
-                                                     placeholder="Nhập nội dung trả lời..."
-                                                     rows={i === 0 && arr.length === 1 ? 4 : 3}
-                                                     className={`w-full px-3 py-2 border rounded-lg text-sm outline-none resize-y min-h-[80px] max-h-[400px]
-                                                         ${isDark ? 'bg-slate-900 border-slate-600 text-slate-200 focus:border-amber-600/50' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-amber-400'}
-                                                         ${arr.length > 1 ? 'pr-9' : ''}`}
-                                                 />
-                                                 {arr.length > 1 && (
-                                                     <button
-                                                         onClick={() => {
-                                                             const newArr = arr.filter((_, idx) => idx !== tIdx);
-                                                             updateNodeText(node.id, newArr.join('|||'));
-                                                         }}
-                                                         className={`absolute top-2 right-2 p-1.5 rounded-md transition-all 
-                                                             ${isDark ? 'bg-slate-800 text-rose-400 hover:bg-rose-500/20' : 'bg-white shadow-sm text-rose-500 hover:bg-rose-50'}`}
-                                                         title="Xóa câu trả lời này"
-                                                     >
-                                                         <Trash2 className="w-4 h-4" />
-                                                     </button>
-                                                 )}
-                                             </div>
-                                         ))}
-                                     </div>
-                                     <button
-                                         onClick={() => updateNodeText(node.id, node.text + '|||')}
-                                         className={`inline-flex items-center gap-1.5 text-[11px] font-bold mt-2 px-3 py-1.5 rounded-lg border border-dashed transition-all
-                                             ${isDark ? 'border-amber-600/30 text-amber-400 hover:bg-amber-600/10' : 'border-amber-200 text-amber-600 hover:bg-amber-50'}`}
-                                     >
-                                         <Plus className="w-3.5 h-3.5" /> Thêm khối tin nhắn (Chat nhiều lần liên tiếp)
-                                     </button>
-                                 </div>
-
-                                 {/* Buttons */}
-                                 <div>
-                                     <label className={`block text-[10px] font-black uppercase tracking-widest mb-1.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                                         Các Nút Chọn (Rẽ nhánh) - tối đa 4
-                                     </label>
-                                     
-                                     {!node.buttons.some(b => b.label === '*') && node.buttons.length < 4 && (
-                                         <div className="flex gap-2 mb-3">
-                                             <input
-                                                 type="text"
-                                                 value={newBtnLabels[node.id] || ''}
-                                                 onChange={e => setNewBtnLabels(p => ({ ...p, [node.id]: e.target.value }))}
-                                                 onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addNodeButton(node.id))}
-                                                 placeholder="Nhập tên nút..."
-                                                 className={`flex-1 h-9 px-3 border rounded-lg text-xs outline-none
-                                                     ${isDark ? 'bg-slate-900 border-slate-600 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-700'}`}
-                                             />
-                                             <button onClick={() => addNodeButton(node.id)}
-                                                 className="h-9 px-4 rounded-lg text-xs font-bold text-white transition-all flex items-center gap-1.5 shrink-0"
-                                                 style={{ backgroundColor: accent }}>
-                                                 <Plus className="w-3.5 h-3.5" /> Tạo nút
-                                             </button>
-                                         </div>
-                                     )}
-
-                                     {node.buttons.length > 0 && (
-                                         <div className="space-y-2">
-                                             {node.buttons.map(btn => {
-                                                 const nextNodeExists = nodes.some(n => n.id === btn.next_node);
-                                                 const isWildcard = btn.label === '*';
-
-                                                 return (
-                                                     <div key={btn.id} className={`flex flex-wrap items-center justify-between gap-2 p-2 rounded border
-                                                         ${isWildcard 
-                                                             ? (isDark ? 'bg-amber-900/20 border-amber-600/30' : 'bg-amber-50 border-amber-200')
-                                                             : (isDark ? 'bg-slate-900/50 border-slate-700' : 'bg-white border-slate-200')}`}>
-                                                         
-                                                         <div className="flex items-center gap-2">
-                                                             {isWildcard ? (
-                                                                 <span className={`px-2 py-1 flex items-center gap-1.5 rounded-md text-[11px] font-bold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>
-                                                                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse relative top-[0.5px]"></span>
-                                                                     Người dùng tự do nhập tin nhắn
-                                                                 </span>
-                                                             ) : (
-                                                                 <span className={`px-2 py-1 rounded-md text-[11px] font-bold ${isDark ? 'bg-slate-700' : 'bg-slate-100'}`}>
-                                                                     {btn.label}
-                                                                 </span>
-                                                             )}
-                                                             <button onClick={() => removeNodeButton(node.id, btn.id)} className="text-rose-400/70 hover:text-rose-500">
-                                                                 <X className="w-3.5 h-3.5" />
-                                                             </button>
-                                                         </div>
-
-                                                         {/* Action Link */}
-                                                         <div className="flex items-center gap-2">
-                                                             {btn.next_node && nextNodeExists ? (
-                                                                 <div className="flex items-center gap-1.5">
-                                                                     <button 
-                                                                         onClick={() => {
-                                                                             const el = document.getElementById(`node-${btn.next_node}`);
-                                                                             if (el) {
-                                                                                 el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                                                                 el.classList.add('ring-2', 'ring-amber-400', 'ring-offset-2', 'dark:ring-offset-slate-900', 'transition-all', 'duration-500');
-                                                                                 setTimeout(() => {
-                                                                                     el.classList.remove('ring-2', 'ring-amber-400', 'ring-offset-2', 'dark:ring-offset-slate-900');
-                                                                                     const txt = document.getElementById(`textarea-${btn.next_node}`);
-                                                                                     if (txt) txt.focus();
-                                                                                 }, 800);
-                                                                             }
-                                                                         }}
-                                                                         className="text-[10px] font-medium text-emerald-500 hover:text-emerald-600 flex items-center gap-1 transition-colors">
-                                                                         <CheckCircle2 className="w-3 h-3" /> Nối tới: {btn.next_node}
-                                                                     </button>
-                                                                     <button onClick={() => unlinkNode(node.id, btn.id)} className="text-[10px] text-slate-400 hover:text-rose-400 ml-1">
-                                                                         Hủy nối
-                                                                     </button>
-                                                                 </div>
-                                                             ) : (
-                                                                 <button onClick={() => linkNewNode(node.id, btn.id)} 
-                                                                     className={`text-[10px] font-bold px-2 py-1 rounded-md border flex items-center gap-1.5 transition-colors
-                                                                         ${isDark ? 'border-amber-600/30 text-amber-400 hover:bg-amber-600/10' : 'border-amber-200 text-amber-600 hover:bg-amber-50'}`}>
-                                                                     <ArrowDown className="w-3 h-3" /> Tạo bước tiếp theo
-                                                                 </button>
-                                                             )}
-                                                         </div>
-                                                     </div>
-                                                 );
-                                             })}
-                                         </div>
-                                     )}
-
-                                     {/* Bật nhập tự do button */}
-                                     {!node.buttons.some(b => b.label === '*') && node.buttons.length < 4 && (
-                                         <button onClick={() => {
-                                             setNodes(ns => ns.map(n => n.id === node.id ? 
-                                                 { ...n, buttons: [...n.buttons, { id: 'btn_' + Math.random().toString(36).substring(2, 9), label: '*', next_node: '' }] } 
-                                             : n));
-                                         }}
-                                         className={`inline-flex items-center gap-1.5 text-[11px] font-bold mt-2 px-3 py-1.5 rounded-lg border transition-all
-                                             ${isDark ? 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-white' : 'border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
-                                             <Plus className="w-3 h-3" /> Thêm nhánh "Bắt mọi tin nhắn"
-                                         </button>
-                                     )}
-                                 </div>
-                             </div>
-                         ))}
-                     </div>
-                </div>
-
+                <p className={`text-sm line-clamp-1 pr-4 leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                    {scenario.reply_text || <span className="italic opacity-50">Chưa thiết lập nội dung trả lời đầu tiên</span>}
+                </p>
             </div>
 
-            {/* Footer */}
-            <div className={`flex items-center justify-end gap-3 px-6 py-4 border-t
-                ${isDark ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-slate-50/50'}`}>
-                <button onClick={onCancel}
-                    className={`h-10 px-5 rounded-xl text-sm font-bold border transition-all
-                        ${isDark ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}>
-                    Hủy bỏ
-                </button>
-                <button onClick={handleSave} disabled={loading}
-                    className="h-10 px-6 rounded-xl text-sm font-bold text-white transition-all shadow-md hover:shadow-lg hover:brightness-110 flex items-center gap-2 disabled:opacity-50"
-                    style={{ backgroundColor: accent }}>
-                    {loading ? (
-                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 12 0 12 12h4z" />
-                        </svg>
-                    ) : <Save className="w-4 h-4" />}
-                    Lưu kịch bản
-                </button>
+            {/* Actions (Right) */}
+            <div className="flex md:flex-col items-center justify-between gap-3 shrink-0 md:pl-5 md:border-l border-slate-100/10">
+                <div className="flex items-center gap-1.5 w-full justify-end" onClick={e => e.stopPropagation()}>
+                    <button onClick={onMoveUp} className={`p-1.5 rounded-lg transition-all ${isDark ? 'hover:bg-slate-700 text-slate-500 hover:text-slate-300' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}>
+                        <ArrowUp className="w-4 h-4" />
+                    </button>
+                    <button onClick={onMoveDown} className={`p-1.5 rounded-lg transition-all ${isDark ? 'hover:bg-slate-700 text-slate-500 hover:text-slate-300' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}>
+                        <ArrowDown className="w-4 h-4" />
+                    </button>
+                    
+                    <div className="w-2" /> {/* Space */}
+                    
+                    <button onClick={onClone} title="Nhân bản" className={`p-1.5 rounded-lg transition-all ${isDark ? 'hover:bg-slate-700 text-slate-400 hover:text-slate-200' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-700'}`}>
+                        <Copy className="w-4 h-4" />
+                    </button>
+                    <button onClick={onEdit} title="Sửa Canvas" className={`p-1.5 rounded-lg transition-all ${isDark ? 'hover:bg-slate-700 text-slate-400 hover:text-blue-400' : 'hover:bg-blue-50 text-slate-400 hover:text-blue-600'}`}>
+                        <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} title="Xóa"
+                        className={`p-1.5 rounded-lg transition-all ${isDark ? 'hover:bg-rose-500/20 text-slate-500 hover:text-rose-400' : 'hover:bg-rose-50 text-slate-400 hover:text-rose-500'}`}>
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                </div>
+                
+                <div className="w-full flex justify-end" onClick={e => e.stopPropagation()}>
+                    <button onClick={onToggle}
+                        className={`w-11 h-6 rounded-full p-1 transition-all duration-300 flex items-center shrink-0 shadow-inner ${scenario.is_active ? 'bg-emerald-500 justify-end' : (isDark ? 'bg-slate-700 justify-start' : 'bg-slate-200 justify-start')}`}>
+                        <div className="w-4 h-4 bg-white rounded-full shadow border-black/5" />
+                    </button>
+                </div>
             </div>
         </div>
     );
 };
 
-// ──────────────────────────────────────────────────────────────────
-//  Main component
-// ──────────────────────────────────────────────────────────────────
-// ── CSV helpers ────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
+//  CSV helpers
+// ────────────────────────────────────────────────────────────────
 const CSV_HEADERS = ['title', 'trigger_keywords', 'match_mode', 'reply_text', 'buttons', 'is_active'];
 
 function scenariosToCSV(scenarios: Scenario[]): string {
-    const escape = (v: string) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const header = CSV_HEADERS.join(',');
-    const rows = scenarios.map(s => [
-        escape(s.title),
-        escape(s.trigger_keywords),
-        escape(s.match_mode),
-        escape(s.reply_text),
-        escape(s.buttons.map(b => b.label).join(' | ')),
-        String(s.is_active)
-    ].join(','));
-    return [header, ...rows].join('\n');
+    const e = (v: string) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    return [CSV_HEADERS.join(','), ...scenarios.map(s =>
+        [e(s.title), e(s.trigger_keywords), e(s.match_mode), e(s.reply_text),
+         e(s.buttons.map(b => b.label).join(' | ')), String(s.is_active)].join(',')
+    )].join('\n');
 }
 
 function csvTemplateString(): string {
-    const escape = (v: string) => `"${v.replace(/"/g, '""')}`;
-    const h = CSV_HEADERS.join(',');
-    const ex1 = [
-        '"Hỏi học phí EMBA"',
-        '"học phí, bao nhiêu tiền, giá emba"',
-        'contains',
-        '"Dạ, học phí chương trình EMBA là 120 triệu. Anh/chị muốn tư vấn thêm không?"',
-        '"Tư vấn ngay | Xem lịch học"',
-        '1'
-    ].join(',');
-    const ex2 = [
-        '"Đăng ký xét tuyển"',
-        '"đăng ký, xét tuyển, apply"',
-        'contains',
-        '"Để đăng ký xét tuyển, Anh/chị điền form bên dưới nhé!"',
-        '"Điền form | Gọi tư vấn"',
-        '1'
-    ].join(',');
-    return [h, ex1, ex2].join('\n');
+    return [CSV_HEADERS.join(','),
+        ['"Hỏi học phí EMBA"', '"học phí, bao nhiêu tiền, giá emba"', 'contains', '"Dạ, học phí chương trình EMBA là 120 triệu."', '"Tư vấn ngay | Xem lịch học"', '1'].join(','),
+        ['"Đăng ký xét tuyển"', '"đăng ký, xét tuyển, apply"', 'contains', '"Để đăng ký xét tuyển, Anh/chị điền form nhé!"', '"Điền form | Gọi tư vấn"', '1'].join(','),
+    ].join('\n');
 }
 
-function parseCSVToScenarios(csv: string, propertyId: string): Array<Omit<Scenario, 'id' | 'created_at' | 'updated_at'>> {
-    const results: Array<Omit<Scenario, 'id' | 'created_at' | 'updated_at'>> = [];
-    
-    // Robust CSV parser to handle newlines in quoted fields
+function parseCSVToScenarios(csv: string, propertyId: string) {
     const rows: string[][] = [];
-    let currentRow: string[] = [];
-    let currentField = '';
-    let inQuotes = false;
-
+    let row: string[] = []; let field = ''; let inQ = false;
     for (let i = 0; i < csv.length; i++) {
-        const char = csv[i];
-        const nextChar = csv[i + 1];
-
-        if (char === '"') {
-            if (inQuotes && nextChar === '"') {
-                currentField += '"';
-                i++; // Skip next quote
-            } else {
-                inQuotes = !inQuotes;
-            }
-        } else if (char === ',' && !inQuotes) {
-            currentRow.push(currentField);
-            currentField = '';
-        } else if ((char === '\r' || char === '\n') && !inQuotes) {
-            if (char === '\r' && nextChar === '\n') i++; // Skip \n
-            currentRow.push(currentField);
-            if (currentRow.length > 0 && currentRow.some(f => f.trim())) {
-                rows.push(currentRow);
-            }
-            currentRow = [];
-            currentField = '';
-        } else {
-            currentField += char;
-        }
+        const c = csv[i], nc = csv[i + 1];
+        if (c === '"') { if (inQ && nc === '"') { field += '"'; i++; } else inQ = !inQ; }
+        else if (c === ',' && !inQ) { row.push(field); field = ''; }
+        else if ((c === '\r' || c === '\n') && !inQ) {
+            if (c === '\r' && nc === '\n') i++;
+            row.push(field); if (row.some(f => f.trim())) rows.push(row);
+            row = []; field = '';
+        } else field += c;
     }
-    // Last field/row
-    if (currentRow.length > 0 || currentField) {
-        currentRow.push(currentField);
-        rows.push(currentRow);
-    }
+    if (row.length > 0 || field) { row.push(field); rows.push(row); }
+    if (rows.length < 2) throw new Error('File CSV không hợp lệ hoặc trống');
 
-    if (rows.length < 2) throw new Error('File CSV trống hoặc không đúng định dạng');
-    
-    // Skip header
-    for (let i = 1; i < rows.length; i++) {
-        const cols = rows[i];
-        if (cols.length < 4) continue;
-        
-        const [title, trigger_keywords, match_mode_raw, reply_text, buttons_raw, is_active_raw] = cols.map(c => c.trim());
-        
-        const match_mode = (['contains', 'exact', 'regex'] as const).includes(match_mode_raw as any) 
-            ? match_mode_raw as 'contains' | 'exact' | 'regex' 
-            : 'contains';
-            
-        const btnLabels = buttons_raw ? buttons_raw.split('|').map(b => b.trim()).filter(Boolean).slice(0, 4) : [];
-        const buttons = btnLabels.map(label => ({ id: Math.random().toString(36).slice(2), label }));
-
-        results.push({
-            property_id: propertyId,
-            title,
-            trigger_keywords,
-            match_mode,
-            reply_text,
-            buttons,
-            is_active: is_active_raw === '0' ? 0 : 1,
-            priority: 0
-        });
-    }
-    return results;
+    return rows.slice(1).filter(cols => cols.length >= 4).map(cols => {
+        const [title, trigger_keywords, mm, reply_text, buttons_raw, iar] = cols.map(c => c.trim());
+        const match_mode = (['contains', 'exact', 'regex'] as const).includes(mm as any) ? mm as any : 'contains';
+        const buttons = (buttons_raw || '').split('|').map(b => b.trim()).filter(Boolean).slice(0, 4)
+            .map(label => ({ id: Math.random().toString(36).slice(2), label }));
+        return { property_id: propertyId, title, trigger_keywords, match_mode, reply_text, buttons, is_active: iar === '0' ? 0 : 1, priority: 0 };
+    });
 }
 
+// ────────────────────────────────────────────────────────────────
+//  Main ScenarioManager
+// ────────────────────────────────────────────────────────────────
 const ScenarioManager: React.FC<Props> = ({ propertyId, isDarkTheme, brandColor }) => {
     const isDark = isDarkTheme;
     const accent = brandColor || '#ffa900';
@@ -729,14 +411,14 @@ const ScenarioManager: React.FC<Props> = ({ propertyId, isDarkTheme, brandColor 
     const [scenarios, setScenarios] = useState<Scenario[]>([]);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [isCreating, setIsCreating] = useState(false);
-    const [editingId, setEditingId] = useState<string | null>(null);
     const [globalEnabled, setGlobalEnabled] = useState(true);
     const [globalLoading, setGlobalLoading] = useState(false);
     const [importing, setImporting] = useState(false);
-    const csvInputRef = React.useRef<HTMLInputElement>(null);
+    const csvInputRef = useRef<HTMLInputElement>(null);
 
-    // ── Load scenarios ──────────────────────────────────────────
+    // Modal state
+    const [modalScenario, setModalScenario] = useState<Partial<Scenario> | null>(null);
+
     const fetchScenarios = useCallback(async () => {
         if (!propertyId) return;
         setLoading(true);
@@ -746,373 +428,258 @@ const ScenarioManager: React.FC<Props> = ({ propertyId, isDarkTheme, brandColor 
                 setScenarios((res as any).data || []);
                 setGlobalEnabled((res as any).scenarios_enabled !== false);
             }
-        } catch (e) {
-            toast.error('Không thể tải kịch bản');
-        } finally {
-            setLoading(false);
-        }
+        } catch { toast.error('Không thể tải kịch bản'); }
+        finally { setLoading(false); }
     }, [propertyId]);
 
     useEffect(() => { fetchScenarios(); }, [fetchScenarios]);
 
-    // ── Create scenario ─────────────────────────────────────────
-    const handleCreate = async (data: Omit<Scenario, 'id' | 'created_at' | 'updated_at'>) => {
+    // ── Open modal ───────────────────────────────────────────────
+    const openCreate = () => setModalScenario({});
+    const openEdit = (s: Scenario) => setModalScenario(s);
+    const closeModal = () => setModalScenario(null);
+
+    // ── Save ─────────────────────────────────────────────────────
+    const handleSave = async (data: Omit<Scenario, 'id' | 'created_at' | 'updated_at'>) => {
         setSaving(true);
         try {
-            const res = await api.post<any>('ai_scenarios?action=create', {
-                ...data,
-                property_id: propertyId,
-                buttons: JSON.stringify(data.buttons)
-            });
-            if (res.success) {
-                toast.success('Đã tạo kịch bản mới', { icon: '🎭' });
-                setIsCreating(false);
-                fetchScenarios();
+            if (modalScenario?.id) {
+                const res = await api.post<any>('ai_scenarios?action=update', {
+                    id: modalScenario.id, ...data, property_id: propertyId,
+                    buttons: JSON.stringify(data.buttons)
+                });
+                if (res.success) { toast.success('Đã cập nhật kịch bản'); closeModal(); fetchScenarios(); }
+                else toast.error(res.message || 'Lỗi cập nhật');
             } else {
-                toast.error(res.message || 'Lỗi khi tạo kịch bản');
+                const res = await api.post<any>('ai_scenarios?action=create', {
+                    ...data, property_id: propertyId, buttons: JSON.stringify(data.buttons)
+                });
+                if (res.success) { toast.success('Đã tạo kịch bản mới 🎭'); closeModal(); fetchScenarios(); }
+                else toast.error(res.message || 'Lỗi tạo kịch bản');
             }
-        } catch (e) {
-            toast.error('Lỗi kết nối');
-        } finally {
-            setSaving(false);
-        }
+        } catch { toast.error('Lỗi kết nối'); }
+        finally { setSaving(false); }
     };
 
-    // ── Update scenario ─────────────────────────────────────────
-    const handleUpdate = async (data: Omit<Scenario, 'id' | 'created_at' | 'updated_at'>) => {
-        if (!editingId) return;
-        setSaving(true);
-        try {
-            const res = await api.post<any>('ai_scenarios?action=update', {
-                id: editingId,
-                ...data,
-                property_id: propertyId,
-                buttons: JSON.stringify(data.buttons)
-            });
-            if (res.success) {
-                toast.success('Đã cập nhật kịch bản');
-                setEditingId(null);
-                fetchScenarios();
-            } else {
-                toast.error(res.message || 'Lỗi khi cập nhật');
-            }
-        } catch (e) {
-            toast.error('Lỗi kết nối');
-        } finally {
-            setSaving(false);
-        }
+    const handleDelete = async (id: string) => {
+        // [FIX P42-SC] Replaced window.confirm (thread-blocking) with toast confirmation
+        toast((t) => (
+            <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-slate-700">Xóa kịch bản vĩnh viễn?</span>
+                <button
+                    onClick={async () => {
+                        toast.dismiss(t.id);
+                        try {
+                            const res = await api.post<any>('ai_scenarios?action=delete', { id, property_id: propertyId });
+                            if (res.success) { toast.success('Đã xóa kịch bản'); fetchScenarios(); }
+                        } catch { toast.error('Lỗi kết nối'); }
+                    }}
+                    className="px-3 py-1.5 text-xs font-bold bg-rose-500 hover:bg-rose-600 text-white rounded-lg transition-all"
+                >Xóa ngay</button>
+                <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all">Hủy</button>
+            </div>
+        ), { duration: 6000, position: 'top-center' });
     };
 
-    // ── Clone scenario ──────────────────────────────────────────
     const handleClone = async (id: string) => {
         try {
             const res = await api.post<any>('ai_scenarios?action=clone', { id, property_id: propertyId });
-            if (res.success) {
-                toast.success('Đã nhân bản Kịch Bản');
-                fetchScenarios();
-            } else {
-                toast.error(res.message || 'Lỗi nhân bản');
-            }
-        } catch (e) {
-            toast.error('Lỗi kết nối');
-        }
+            if (res.success) { toast.success('Đã nhân bản'); fetchScenarios(); }
+            else toast.error(res.message || 'Lỗi nhân bản');
+        } catch { toast.error('Lỗi kết nối'); }
     };
 
-    // ── Delete scenario ─────────────────────────────────────────
-    const handleDelete = async (id: string) => {
-        if (!window.confirm('Bạn có chắc muốn xóa kịch bản này?')) return;
+    const handleToggle = async (s: Scenario) => {
+        const nv = s.is_active ? 0 : 1;
+        setScenarios(prev => prev.map(x => x.id === s.id ? { ...x, is_active: nv } : x));
         try {
-            const res = await api.post<any>('ai_scenarios?action=delete', { id, property_id: propertyId });
-            if (res.success) {
-                toast.success('Đã xóa kịch bản');
-                fetchScenarios();
-            }
-        } catch (e) {
-            toast.error('Lỗi kết nối');
-        }
-    };
-
-    // ── Toggle single scenario ──────────────────────────────────
-    const handleToggle = async (scenario: Scenario) => {
-        const newStatus = scenario.is_active ? 0 : 1;
-        setScenarios(prev => prev.map(s => s.id === scenario.id ? { ...s, is_active: newStatus } : s));
-        try {
-            await api.post<any>('ai_scenarios?action=toggle', {
-                id: scenario.id,
-                property_id: propertyId,
-                is_active: newStatus
-            });
-        } catch (e) {
-            // Rollback
-            setScenarios(prev => prev.map(s => s.id === scenario.id ? { ...s, is_active: scenario.is_active } : s));
+            await api.post<any>('ai_scenarios?action=toggle', { id: s.id, property_id: propertyId, is_active: nv });
+        } catch {
+            setScenarios(prev => prev.map(x => x.id === s.id ? { ...x, is_active: s.is_active } : x));
             toast.error('Lỗi cập nhật');
         }
     };
 
-    // ── Toggle global ───────────────────────────────────────────
     const handleToggleGlobal = async () => {
-        const newVal = !globalEnabled;
-        setGlobalEnabled(newVal);
+        const nv = !globalEnabled;
+        setGlobalEnabled(nv);
         setGlobalLoading(true);
         try {
-            await api.post<any>('ai_scenarios?action=toggle_global', {
-                property_id: propertyId,
-                enabled: newVal ? 1 : 0
-            });
-            toast.success(newVal ? 'Đã bật Kịch Bản' : 'Đã tắt toàn bộ Kịch Bản');
-        } catch (e) {
-            setGlobalEnabled(!newVal);
-            toast.error('Lỗi cập nhật');
-        } finally {
-            setGlobalLoading(false);
-        }
+            await api.post<any>('ai_scenarios?action=toggle_global', { property_id: propertyId, enabled: nv ? 1 : 0 });
+            toast.success(nv ? 'Đã bật Kịch Bản' : 'Đã tắt toàn bộ Kịch Bản');
+        } catch { setGlobalEnabled(!nv); toast.error('Lỗi cập nhật'); }
+        finally { setGlobalLoading(false); }
     };
 
-    // ── Priority up/down ────────────────────────────────────────
-    const handleMovePriority = async (idx: number, direction: 'up' | 'down') => {
-        const newList = [...scenarios];
-        const swapWith = direction === 'up' ? idx - 1 : idx + 1;
-        if (swapWith < 0 || swapWith >= newList.length) return;
-        [newList[idx], newList[swapWith]] = [newList[swapWith], newList[idx]];
-        // Reassign priorities
-        const updated = newList.map((s, i) => ({ ...s, priority: newList.length - i }));
+    const handleMovePriority = async (idx: number, dir: 'up' | 'down') => {
+        const si = dir === 'up' ? idx - 1 : idx + 1;
+        if (si < 0 || si >= scenarios.length) return;
+        const list = [...scenarios];
+        [list[idx], list[si]] = [list[si], list[idx]];
+        const updated = list.map((s, i) => ({ ...s, priority: list.length - i }));
         setScenarios(updated);
         try {
-            await api.post<any>('ai_scenarios?action=reorder', {
-                property_id: propertyId,
-                order: updated.map(s => ({ id: s.id, priority: s.priority }))
-            });
-        } catch (e) {
-            toast.error('Lỗi cập nhật thứ tự');
-            fetchScenarios();
-        }
+            await api.post<any>('ai_scenarios?action=reorder', { property_id: propertyId, order: updated.map(s => ({ id: s.id, priority: s.priority })) });
+        } catch { toast.error('Lỗi cập nhật thứ tự'); fetchScenarios(); }
     };
 
-    const editingScenario = editingId ? scenarios.find(s => s.id === editingId) : null;
-    const activeCount = scenarios.filter(s => s.is_active).length;
-
-    // ── CSV export (download existing) ─────────────────────────
     const handleExportCSV = () => {
-        if (scenarios.length === 0) { toast.error('Không có kịch bản nào để xuất'); return; }
-        const csv = scenariosToCSV(scenarios);
-        const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8' });
+        if (!scenarios.length) { toast.error('Không có kịch bản để xuất'); return; }
+        const blob = new Blob(['\uFEFF' + scenariosToCSV(scenarios)], { type: 'text/csv;charset=utf-8' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = `scenarios_${propertyId}.csv`; a.click();
-        URL.revokeObjectURL(url);
-        toast.success('Xuất CSV thành công');
+        const a = document.createElement('a'); a.href = url; a.download = `scenarios_${propertyId}.csv`; a.click();
+        URL.revokeObjectURL(url); toast.success('Xuất CSV thành công');
     };
 
-    // ── CSV template download ────────────────────────────────────
     const handleDownloadTemplate = () => {
-        const csv = csvTemplateString();
-        const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8' });
+        const blob = new Blob(['\uFEFF' + csvTemplateString()], { type: 'text/csv;charset=utf-8' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'scenarios_template.csv'; a.click();
+        const a = document.createElement('a'); a.href = url; a.download = 'scenarios_template.csv'; a.click();
         URL.revokeObjectURL(url);
-        toast.success('Tải mẫu CSV xong');
     };
 
-    // ── CSV import ───────────────────────────────────────────────
     const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (csvInputRef.current) csvInputRef.current.value = '';
         if (!file) return;
         setImporting(true);
-        const tid = toast.loading('Đang import kịch bản...');
+        const tid = toast.loading('Đang import...');
         try {
-            const text = await file.text();
-            const rows = parseCSVToScenarios(text, propertyId);
-            if (rows.length === 0) { toast.error('Không đọc được dữ liệu hợp lệ', { id: tid }); return; }
+            const rows = parseCSVToScenarios(await file.text(), propertyId);
+            if (!rows.length) { toast.error('Không đọc được dữ liệu', { id: tid }); return; }
             let ok = 0, fail = 0;
             for (const row of rows) {
-                try {
-                    const res = await api.post<any>('ai_scenarios?action=create', {
-                        ...row, property_id: propertyId,
-                        buttons: JSON.stringify(row.buttons)
-                    });
-                    if (res.success) {
-                        ok++;
-                    } else {
-                        console.error('Scenario import item failed:', res.message, row);
-                        fail++;
-                    }
-                } catch (err) {
-                    console.error('Scenario import request error:', err);
-                    fail++;
-                }
+                const res = await api.post<any>('ai_scenarios?action=create', { ...row, property_id: propertyId, buttons: JSON.stringify(row.buttons) });
+                res.success ? ok++ : fail++;
             }
-            toast.success(`Import xong: ${ok} thành công${fail ? `, ${fail} lỗi` : ''}`, { id: tid, duration: 5000 });
+            toast.success(`Import: ${ok} thành công${fail ? `, ${fail} lỗi` : ''}`, { id: tid, duration: 5000 });
             fetchScenarios();
-        } catch (err: any) {
-            toast.error('Lỗi: ' + err.message, { id: tid });
-        } finally {
-            setImporting(false);
-        }
+        } catch (err: any) { toast.error('Lỗi: ' + err.message, { id: tid }); }
+        finally { setImporting(false); }
     };
 
+    const activeCount = scenarios.filter(s => s.is_active).length;
 
     return (
-        <div className="space-y-6">
-            {/* Header / Global Toggle */}
-            <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl border
-                ${isDark ? 'bg-slate-800/20 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+        <div className="space-y-5">
+            {/* Flow modal */}
+            {modalScenario !== null && (
+                <ScenarioFlowModal
+                    initialScenario={modalScenario}
+                    propertyId={propertyId}
+                    isDark={isDark}
+                    loading={saving}
+                    onSave={handleSave}
+                    onClose={closeModal}
+                />
+            )}
+
+            {/* Header */}
+            <div className={`flex flex-col md:flex-row md:items-start justify-between gap-5 p-6 rounded-[24px] ${isDark ? 'bg-slate-800' : 'bg-slate-50 border border-slate-100 shadow-sm'}`}>
                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md"
-                        style={{ background: `linear-gradient(135deg, ${accent}, ${accent}cc)` }}>
-                        <Play className="w-6 h-6" />
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-sm border ${isDark ? 'bg-slate-700 border-slate-600' : 'bg-white border-slate-200'}`}>
+                        <Play className={`w-5 h-5 ml-0.5 ${isDark ? 'fill-amber-500 text-amber-500' : 'fill-amber-600 text-amber-600'}`} />
                     </div>
                     <div>
-                        <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                            Kịch Bản Hội Thoại
-                        </h3>
-                        <p className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                            {scenarios.length > 0
-                                ? `${activeCount}/${scenarios.length} kịch bản đang hoạt động · Chatbot ưu tiên kịch bản trước AI`
-                                : 'Tạo kịch bản để chatbot trả lời có kịch bản, có nút bấm'}
-                        </p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                    {/* CSV hidden input */}
-                    <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={handleImportCSV} />
-
-                    {/* Download template */}
-                    <button onClick={handleDownloadTemplate} title="Tải file mẫu CSV"
-                        className={`flex items-center gap-1.5 h-9 px-3 rounded-xl text-[11px] font-bold border transition-all
-                            ${isDark ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 shadow-sm'}`}>
-                        <FileText className="w-3.5 h-3.5" /> Mẫu CSV
-                    </button>
-
-                    {/* Import CSV */}
-                    <button onClick={() => csvInputRef.current?.click()} disabled={importing}
-                        className={`flex items-center gap-1.5 h-9 px-3 rounded-xl text-[11px] font-bold border transition-all
-                            ${isDark ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 shadow-sm'}`}>
-                        <Upload className="w-3.5 h-3.5" /> {importing ? 'Đang import...' : 'Import CSV'}
-                    </button>
-
-                    {/* Export CSV */}
-                    {scenarios.length > 0 && (
-                        <button onClick={handleExportCSV}
-                            className={`flex items-center gap-1.5 h-9 px-3 rounded-xl text-[11px] font-bold border transition-all
-                                ${isDark ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 shadow-sm'}`}>
-                            <Download className="w-3.5 h-3.5" /> Export
-                        </button>
-                    )}
-
-                    {/* Global on/off */}
-                    <div className={`flex items-center gap-3 px-4 py-2 rounded-xl border cursor-pointer select-none transition-all
-                        ${isDark ? 'bg-slate-800 border-slate-700 hover:border-slate-600' : 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'}`}
-                        onClick={handleToggleGlobal}>
-                        <span className={`text-[10px] font-black uppercase tracking-widest
-                            ${globalEnabled ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-slate-500' : 'text-slate-400')}`}>
-                            {globalEnabled ? 'Đang bật' : 'Đã tắt'}
-                        </span>
-                        <div className={`w-11 h-6 rounded-full p-1 transition-all duration-300 flex items-center shadow-inner
-                            ${globalEnabled ? 'bg-emerald-400 justify-end' : (isDark ? 'bg-slate-700 justify-start' : 'bg-slate-200 justify-start')}`}>
-                            <div className="w-4 h-4 bg-white rounded-full shadow-md ring-1 ring-black/5" />
+                        <h3 className={`text-lg font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>Kịch Bản Trả Lời Tự Động</h3>
+                        <div className={`text-[12px] font-medium mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                            Xây dựng luồng tin nhắn tư vấn tự động
                         </div>
                     </div>
+                </div>
 
-                    {/* Add button */}
-                    {!isCreating && !editingId && (
-                        <button onClick={() => setIsCreating(true)}
-                            className="flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-bold text-white shadow-md hover:shadow-lg hover:brightness-110 transition-all"
-                            style={{ backgroundColor: accent }}>
-                            <Plus className="w-4 h-4" /> Tạo kịch bản
+                <div className="flex items-center gap-2.5 flex-wrap">
+                    <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={handleImportCSV} />
+                    <div className="flex items-center p-1 rounded-[16px] bg-white border border-slate-200 shadow-sm">
+                        <button onClick={handleDownloadTemplate} className={`flex items-center gap-1.5 h-10 px-4 rounded-xl text-[12px] font-bold transition-all ${isDark ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-700' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>
+                            <FileText className="w-4 h-4" /> Mẫu CSV
                         </button>
-                    )}
+                        <div className="w-px h-5 bg-slate-200 mx-1" />
+                        <button onClick={() => csvInputRef.current?.click()} disabled={importing} className={`flex items-center gap-1.5 h-10 px-4 rounded-xl text-[12px] font-bold transition-all ${isDark ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-700' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>
+                            <Upload className="w-4 h-4" /> {importing ? 'Đang import...' : 'Import CSV'}
+                        </button>
+                        {scenarios.length > 0 && (
+                            <>
+                                <div className="w-px h-5 bg-slate-200 mx-1" />
+                                <button onClick={handleExportCSV} className={`flex items-center gap-1.5 h-10 px-4 rounded-xl text-[12px] font-bold transition-all ${isDark ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-700' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>
+                                    <Download className="w-4 h-4" /> Export
+                                </button>
+                            </>
+                        )}
+                    </div>
+
+                    <div className="w-px h-6 bg-slate-200 mx-1 hidden md:block" />
+
+                    <div className={`flex items-center gap-3 px-5 py-2.5 rounded-[16px] border cursor-pointer select-none transition-all ${isDark ? 'bg-slate-800 border-slate-700 hover:border-slate-600' : 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'}`} onClick={handleToggleGlobal}>
+                        <span className={`text-[11px] font-black uppercase tracking-widest ${globalEnabled ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-slate-500' : 'text-slate-400')}`}>
+                            {globalEnabled ? 'Trạng thái Bật' : 'Đã tắt toàn bộ'}
+                        </span>
+                        <div className={`w-11 h-6 rounded-full p-1 transition-all duration-300 flex items-center shadow-inner ${globalEnabled ? 'bg-emerald-500 justify-end' : (isDark ? 'bg-slate-700 justify-start' : 'bg-slate-200 justify-start')}`}>
+                            <div className="w-4 h-4 bg-white rounded-full shadow border border-black/5" />
+                        </div>
+                    </div>
+                    
+                    <button onClick={openCreate}
+                        className="flex items-center gap-2 h-11 px-5 rounded-[16px] text-[13px] font-bold bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/30 active:scale-95 transition-all ml-1">
+                        <Plus className="w-4 h-4" /> Tạo Kịch Bản
+                    </button>
                 </div>
             </div>
 
             {/* Global disabled banner */}
             {!globalEnabled && (
                 <div className={`flex items-center gap-3 px-5 py-4 rounded-xl border ${isDark ? 'border-amber-600/20 bg-amber-600/5' : 'border-amber-200 bg-amber-50'}`}>
-                    <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+                    <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
                     <p className={`text-sm font-medium ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>
                         Tính năng Kịch Bản đang <strong>tắt</strong>. Chatbot sẽ dùng AI hoàn toàn. Bật lại để áp dụng kịch bản.
                     </p>
                 </div>
             )}
 
-            {/* Create form */}
-            {isCreating && (
-                <ScenarioForm
-                    propertyId={propertyId}
-                    isDark={isDark}
-                    brandColor={accent}
-                    onSave={handleCreate}
-                    onCancel={() => setIsCreating(false)}
-                    loading={saving}
-                />
-            )}
-
-            {/* Edit form */}
-            {editingId && editingScenario && (
-                <ScenarioForm
-                    initial={editingScenario}
-                    propertyId={propertyId}
-                    isDark={isDark}
-                    brandColor={accent}
-                    onSave={handleUpdate}
-                    onCancel={() => setEditingId(null)}
-                    loading={saving}
-                />
+            {/* Loading */}
+            {loading && (
+                <div className="space-y-3">
+                    {[1, 2, 3].map(i => <div key={i} className={`h-24 rounded-2xl animate-pulse ${isDark ? 'bg-slate-800/50' : 'bg-slate-100'}`} />)}
+                </div>
             )}
 
             {/* Empty state */}
-            {!loading && scenarios.length === 0 && !isCreating && (
-                <div className={`flex flex-col items-center justify-center py-16 px-6 rounded-2xl border border-dashed text-center
-                    ${isDark ? 'border-slate-700 bg-slate-800/10' : 'border-slate-200 bg-slate-50/30'}`}>
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 ${isDark ? 'bg-slate-800' : 'bg-white shadow-sm border border-slate-100'}`}>
-                        <BookOpen className={`w-8 h-8 ${isDark ? 'text-slate-600' : 'text-slate-300'}`} />
+            {!loading && scenarios.length === 0 && (
+                <div className={`flex flex-col items-center justify-center py-20 px-6 rounded-[24px] border border-dashed text-center ${isDark ? 'border-slate-700 bg-slate-800/10' : 'border-slate-200 bg-slate-50/50'}`}>
+                    <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-6 shadow-sm border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'}`}>
+                        <Bot className={`w-10 h-10 ${isDark ? 'text-slate-600' : 'text-blue-300'}`} />
                     </div>
-                    <h4 className={`text-base font-bold mb-2 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                        Chưa có kịch bản nào
-                    </h4>
-                    <p className={`text-sm font-medium mb-6 max-w-sm leading-relaxed ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                        Tạo kịch bản để chatbot trả lời theo flow định sẵn với các nút bấm, giúp dẫn dắt Khách hàng hiệu quả hơn.
+                    <h4 className={`text-lg font-black mb-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Chưa có kịch bản mẫu nào</h4>
+                    <p className={`text-sm font-medium mb-8 max-w-sm leading-relaxed ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                        Tạo luồng tư vấn với canvas thả-nối nhánh chuyên nghiệp, giúp chốt sales tự nhiên và dễ cấu hình.
                     </p>
-                    <button onClick={() => setIsCreating(true)}
-                        className="flex items-center gap-2 h-11 px-6 rounded-xl text-sm font-bold text-white shadow-md hover:brightness-110 transition-all"
-                        style={{ backgroundColor: accent }}>
-                        <Plus className="w-4 h-4" /> Tạo kịch bản đầu tiên
+                    <button onClick={openCreate} className="flex items-center gap-2 h-12 px-8 rounded-2xl text-[14px] font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                        <Plus className="w-5 h-5" /> Bắt đầu tạo ngay
                     </button>
                 </div>
             )}
 
-            {/* Loading skeleton */}
-            {loading && (
-                <div className="space-y-3">
-                    {[1, 2, 3].map(i => (
-                        <div key={i} className={`h-24 rounded-2xl animate-pulse ${isDark ? 'bg-slate-800/50' : 'bg-slate-50'}`} />
-                    ))}
-                </div>
-            )}
-
             {/* Scenario list */}
-            {!loading && scenarios.length > 0 && !isCreating && !editingId && (
+            {!loading && scenarios.length > 0 && (
                 <div className="space-y-3">
                     <div className="flex items-center justify-between px-1">
                         <p className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                            {scenarios.length} kịch bản · Kéo thả để thay đổi độ ưu tiên
+                            {scenarios.length} kịch bản · Click card để mở canvas chỉnh sửa
                         </p>
                         <div className={`flex items-center gap-1.5 text-[10px] font-bold ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                             {activeCount} đang hoạt động
                         </div>
                     </div>
-                    {scenarios.map((scenario, idx) => (
+                    {scenarios.map((s, idx) => (
                         <ScenarioCard
-                            key={scenario.id}
-                            scenario={scenario}
+                            key={s.id}
+                            scenario={s}
                             isDark={isDark}
-                            brandColor={accent}
-                            onEdit={() => setEditingId(scenario.id)}
-                            onDelete={() => handleDelete(scenario.id)}
-                            onToggle={() => handleToggle(scenario)}
-                            onClone={() => handleClone(scenario.id)}
+                            onEdit={() => openEdit(s)}
+                            onDelete={() => handleDelete(s.id)}
+                            onToggle={() => handleToggle(s)}
+                            onClone={() => handleClone(s.id)}
                             onMoveUp={() => handleMovePriority(idx, 'up')}
                             onMoveDown={() => handleMovePriority(idx, 'down')}
                         />
@@ -1120,14 +687,13 @@ const ScenarioManager: React.FC<Props> = ({ propertyId, isDarkTheme, brandColor 
                 </div>
             )}
 
-            {/* Tips box */}
-            {scenarios.length > 0 && !isCreating && !editingId && (
-                <div className={`flex items-start gap-3 p-4 rounded-xl border
-                    ${isDark ? 'border-blue-500/20 bg-blue-500/5' : 'border-blue-100 bg-blue-50/50'}`}>
+            {/* Tips */}
+            {scenarios.length > 0 && (
+                <div className={`flex items-start gap-3 p-4 rounded-xl border ${isDark ? 'border-blue-500/20 bg-blue-500/5' : 'border-blue-100 bg-blue-50/50'}`}>
                     <CircleDashed className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                     <div className={`text-[11px] font-medium leading-relaxed space-y-1 ${isDark ? 'text-blue-400/80' : 'text-blue-600'}`}>
-                        <p><strong>Cách hoạt động:</strong> Khi user gửi tin nhắn, chatbot kiểm tra từ khóa theo thứ tự ưu tiên (từ trên xuống). Nếu khớp → trả lời theo kịch bản + hiển thị nút. Nếu không khớp → AI xử lý bình thường.</p>
-                        <p>Dùng nút <strong>↑ ↓</strong> để thay đổi thứ tự ưu tiên.</p>
+                        <p><strong>Cách hoạt động:</strong> Khi user gửi tin nhắn, chatbot kiểm tra từ khóa theo thứ tự ưu tiên (từ trên xuống). Khớp → trả lời theo kịch bản. Không khớp → AI xử lý.</p>
+                        <p><strong>Click vào card</strong> để mở canvas chỉnh sửa — thêm node, rẽ nhánh, và bước <code className="px-1 bg-black/10 rounded text-[10px] font-mono">[SHOW_LEAD_FORM]</code>.</p>
                     </div>
                 </div>
             )}

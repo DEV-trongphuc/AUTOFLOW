@@ -274,6 +274,9 @@ function _sendZaloPayload($pdo, $zaloUserId, $accessToken, $payload, $logText)
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'access_token: ' . $accessToken]);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);  // [FIX P38-ZH] Enforce TLS verification
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);     // [FIX P38-ZH] Hostname verification
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);           // [FIX P38-ZH] Prevent indefinite hang on Zalo API slowness
     $resRaw = curl_exec($ch);
     curl_close($ch);
 
@@ -310,8 +313,8 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg)
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
 
     // [FIX] Disable SSL verification for internal localhost calls
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
 
     $resRaw = curl_exec($ch);
     $curlErr = curl_error($ch);
@@ -598,13 +601,13 @@ function ensureZaloToken($pdo, $oaId)
 
         $expiresAt = $oa['token_expires_at'] ? date('Y-m-d H:i:s', strtotime($oa['token_expires_at']) - 300) : null;
         if ($oa['access_token'] && ($expiresAt && $expiresAt > $now)) {
-            $pdo->query("SELECT RELEASE_LOCK('$lockName')");
+            $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]); // [FIX P38-ZH] Prepared RELEASE_LOCK
             return $oa['access_token'];
         }
 
         // Need refresh
         if (empty($oa['refresh_token'])) {
-            $pdo->query("SELECT RELEASE_LOCK('$lockName')");
+            $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]); // [FIX P38-ZH]
             return null;
         }
 
@@ -639,7 +642,7 @@ function ensureZaloToken($pdo, $oaId)
                 $stmtU = $pdo->prepare("UPDATE zalo_oa_configs SET access_token = ?, refresh_token = ?, token_expires_at = ?, updated_at = NOW() WHERE id = ?");
                 $stmtU->execute([$new_access_token, $new_refresh_token, $expires_at, $oa['id']]);
 
-                $pdo->query("SELECT RELEASE_LOCK('$lockName')");
+                $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]); // [FIX P38-ZH]
                 return $new_access_token;
             } elseif (isset($result['error']) && $result['error'] != 0) {
                 // [Vòng 33 FIX] Suspend dead token to prevent API hammering
@@ -653,7 +656,7 @@ function ensureZaloToken($pdo, $oaId)
         // Fallback log
     }
 
-    $pdo->query("SELECT RELEASE_LOCK('$lockName')");
+    $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]); // [FIX P38-ZH]
     return null;
 }
 

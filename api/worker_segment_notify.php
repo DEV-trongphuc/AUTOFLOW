@@ -73,6 +73,7 @@ if (!function_exists('runWorkerSegmentNotify')) {
                         SELECT 1 FROM subscriber_activity sa 
                         WHERE sa.subscriber_id = s.id AND sa.type = 'segment_notify' AND sa.reference_id = ?
                     )
+                    ORDER BY s.id ASC
                     LIMIT 20
                     $skipLockedClause
                 ";

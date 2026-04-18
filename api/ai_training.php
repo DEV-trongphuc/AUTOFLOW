@@ -163,6 +163,9 @@ function callGeminiBatchEmbedding($texts, $apiKey)
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);  // [FIX P27-F2] Enforce SSL — protect API key + data
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 60);
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         'Content-Type: application/json',
         'X-goog-api-key: ' . $apiKey
@@ -204,6 +207,9 @@ function callGeminiEmbedding($text, $apiKey)
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);  // [FIX P27-F2] Enforce SSL — protect API key
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         'Content-Type: application/json',
         'X-goog-api-key: ' . $apiKey
@@ -336,13 +342,18 @@ function updatePropertyTermStats($pdo, $propertyId)
             // Gọi beginTransaction() trong khi $stmt->fetch() đang chạy sẽ gây
             // Fatal Error: "Commands out of sync" trên một số driver MySQL.
             // ON DUPLICATE KEY UPDATE đã atomic — không cần Transaction ở đây.
-            if (count($termDf) > 10000) {
-                $stmtIns = $pdo->prepare(
-                    "INSERT INTO ai_term_stats (term, property_id, df) VALUES (?, ?, ?)
-                     ON DUPLICATE KEY UPDATE df = df + VALUES(df)"
-                );
-                foreach ($termDf as $t => $d) {
-                    $stmtIns->execute([mb_substr($t, 0, 100), $propertyId, $d]);
+            if (count($termDf) > 5000) {
+                $chunks = array_chunk($termDf, 1000, true);
+                foreach ($chunks as $chunk) {
+                    $ph = str_repeat('(?, ?, ?),', count($chunk) - 1) . '(?, ?, ?)';
+                    $sql = "INSERT INTO ai_term_stats (term, property_id, df) VALUES $ph ON DUPLICATE KEY UPDATE df = df + VALUES(df)";
+                    $vals = [];
+                    foreach ($chunk as $t => $d) {
+                        $vals[] = mb_substr($t, 0, 100);
+                        $vals[] = $propertyId;
+                        $vals[] = $d;
+                    }
+                    $pdo->prepare($sql)->execute($vals);
                 }
                 $termDf = [];
             }
@@ -350,16 +361,18 @@ function updatePropertyTermStats($pdo, $propertyId)
 
         // Flush phần còn lại
         if (!empty($termDf)) {
-            $pdo->beginTransaction();
-            $stmtIns = $pdo->prepare(
-                "INSERT INTO ai_term_stats (term, property_id, df) VALUES (?, ?, ?)
-                 ON DUPLICATE KEY UPDATE df = df + VALUES(df)"
-            );
-            foreach ($termDf as $t => $d) {
-                $stmtIns->execute([mb_substr($t, 0, 100), $propertyId, $d]);
+            $chunks = array_chunk($termDf, 1000, true);
+            foreach ($chunks as $chunk) {
+                $ph = str_repeat('(?, ?, ?),', count($chunk) - 1) . '(?, ?, ?)';
+                $sql = "INSERT INTO ai_term_stats (term, property_id, df) VALUES $ph ON DUPLICATE KEY UPDATE df = df + VALUES(df)";
+                $vals = [];
+                foreach ($chunk as $t => $d) {
+                    $vals[] = mb_substr($t, 0, 100);
+                    $vals[] = $propertyId;
+                    $vals[] = $d;
+                }
+                $pdo->prepare($sql)->execute($vals);
             }
-            if ($pdo->inTransaction())
-                $pdo->commit();
         }
     } catch (Exception $e) {
         if ($pdo->inTransaction())
@@ -378,6 +391,16 @@ try {
 
     if ($propertyId) {
         $propertyId = resolvePropertyId($pdo, $propertyId);
+
+        // [P19-A1 SECURITY FIX] Verify the authenticated user actually has access to this
+        // property/bot before performing any read or write operation.
+        // This prevents cross-category attacks where an admin of Bot A manipulates
+        // training data of Bot B by supplying a different property_id.
+        // Skip for: public read-only actions that bypass auth above (get_settings, list_all_chatbots)
+        // and for the super-admin (admin-001) who has global access.
+        if ($currentOrgUser && ($currentOrgUser['id'] ?? '') !== 'admin-001') {
+            requireCategoryAccess($propertyId, $currentOrgUser);
+        }
     }
 
     if ($method === 'GET') {
@@ -573,10 +596,35 @@ try {
 
             $file = $_FILES['file'];
             $origName = basename($file['name']);
-            $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
 
-            if (!in_array($ext, ['pdf'])) {
-                echo json_encode(['success' => false, 'message' => 'Chỉ hỗ trợ PDF cho chế độ trích xuất theo trang.']);
+            // [P24-C1] Server-side file size limit (50MB)
+            $maxFileSizeBytes = 50 * 1024 * 1024;
+            if ($file['size'] > $maxFileSizeBytes) {
+                echo json_encode(['success' => false, 'message' => 'File quá lớn. Tối đa 50MB.']);
+                exit;
+            }
+
+            // [P24-C2] Extension check — only allow .pdf, no double-extension tricks
+            // e.g. "shell.php.pdf" -> PATHINFO_EXTENSION returns 'pdf' (OK)
+            // but "shell.pdf.php" -> returns 'php' (blocked)
+            $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+            if ($ext !== 'pdf') {
+                echo json_encode(['success' => false, 'message' => 'Chỉ hỗ trợ file PDF.']);
+                exit;
+            }
+
+            // [P24-C2] Verify MIME type matches PDF magic bytes
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $detectedMime = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+            if ($detectedMime !== 'application/pdf') {
+                echo json_encode(['success' => false, 'message' => 'Nội dung file không phải PDF hợp lệ (MIME: ' . htmlspecialchars($detectedMime) . ').']);
+                exit;
+            }
+
+            // [P24-C2] Null byte guard — blocks "shell.php\0.pdf" bypass
+            if (strpos($origName, "\0") !== false) {
+                echo json_encode(['success' => false, 'message' => 'Tên file không hợp lệ.']);
                 exit;
             }
 
@@ -584,7 +632,11 @@ try {
             $uploadDir = __DIR__ . '/../uploads/ai_training/';
             if (!is_dir($uploadDir))
                 mkdir($uploadDir, 0755, true);
-            $uniqueName = uniqid('pdf_') . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $origName);
+
+            // [P24-C2] CSPRNG filename — no uniqid() (not cryptographically random), no double-extension
+            $safeBase = preg_replace('/[^a-zA-Z0-9_-]/', '_', pathinfo($origName, PATHINFO_FILENAME));
+            $safeBase = mb_substr($safeBase, 0, 60); // cap length
+            $uniqueName = bin2hex(random_bytes(12)) . '_' . $safeBase . '.pdf'; // always .pdf
             $destPath = $uploadDir . $uniqueName;
             if (!move_uploaded_file($file['tmp_name'], $destPath)) {
                 echo json_encode(['success' => false, 'message' => 'Lỗi lưu file lên server.']);
@@ -614,10 +666,19 @@ try {
             // Upload PDF lên Gemini Files API (1 lần duy nhất)
             $uploadResult = uploadFileToGeminiFiles($destPath, $activeKey, 'application/pdf');
             if (isset($uploadResult['error'])) {
+                if (file_exists($destPath)) @unlink($destPath); // cleanup on Gemini error
                 echo json_encode(['success' => false, 'message' => 'Upload lên Gemini thất bại: ' . $uploadResult['error']]);
                 exit;
             }
             $fileUri = $uploadResult['file_uri'];
+
+            // [P24-C3] Validate Gemini file_uri format — must start with 'files/'
+            if (empty($fileUri) || !str_starts_with((string)$fileUri, 'files/')) {
+                training_log("upload_training_file: Invalid Gemini file_uri received: " . json_encode($fileUri));
+                if (file_exists($destPath)) @unlink($destPath);
+                echo json_encode(['success' => false, 'message' => 'Gemini trả về file URI không hợp lệ. Vui lòng thử lại.']);
+                exit;
+            }
 
             // Tạo doc record trong ai_training_docs
             $docId = bin2hex(random_bytes(18));

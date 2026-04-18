@@ -16,10 +16,12 @@ export const automationService = {
     // The actual triggering of flows for these events is now handled by the backend (e.g., forms.php, purchase_events.php calling worker_priority.php)
     // So, this frontend function will primarily query flows, but not directly enroll subscribers here.
 
-    const flowsRes = await api.get<Flow[]>('flows');
-    if (!flowsRes.success) return []; // Return an empty array or throw error as appropriate
+    const flowsRes = await api.get<any>('flows');
+    if (!flowsRes.success) return [];
 
-    const activeFlows = flowsRes.data.filter(f => f.status === 'active');
+    const rawData = flowsRes.data as any;
+    const allFlows: Flow[] = Array.isArray(rawData) ? rawData : (rawData?.data || []);
+    const activeFlows = allFlows.filter(f => f.status === 'active');
     let triggeredFlowsForUI: Flow[] = [];
 
     for (const flow of activeFlows) {

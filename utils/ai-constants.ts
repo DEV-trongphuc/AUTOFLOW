@@ -16,6 +16,23 @@ export const getModelDisplayName = (modelName: string, categoryName: string) => 
     return modelName.replace('Category', categoryName || 'AI');
 };
 
+// [P18-C2] Centralized Expert Model detection — avoids fragile .includes('pro') string checks.
+// Add new expert model IDs here to update ALL components simultaneously.
+export const EXPERT_MODEL_IDS: string[] = [
+    'gemini-2.5-pro',
+    'gemini-3-pro-preview',
+    'gemini-3-pro-image-preview',
+];
+
+/**
+ * Returns true if the given model ID denotes an "Expert Mode" quality model.
+ * Use this instead of ad-hoc string checks like `model.includes('pro')`.
+ */
+export const isExpertModel = (modelId: string | undefined | null): boolean => {
+    if (!modelId) return false;
+    return EXPERT_MODEL_IDS.some(expertId => modelId.toLowerCase().includes(expertId.toLowerCase()));
+};
+
 // Nano Banana Image Generation Configuration
 export const IMAGE_PROVIDERS = [
     { id: 'gemini-2.5-flash-lite-image', name: '🍌 Nano Banana', desc: 'Tốc độ cực cao, hiệu suất tối ưu cho tác vụ lớn.', version: '2.5 Flash' },

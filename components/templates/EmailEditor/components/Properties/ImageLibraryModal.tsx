@@ -1,9 +1,12 @@
 
 // components/templates/EmailEditor/components/Properties/ImageLibraryModal.tsx
+// Style synced with FileLibraryModal (common/FileLibraryModal.tsx)
 import React, { useState, useEffect, useCallback } from 'react';
-import Modal from '../../../../common/Modal';
-import Button from '../../../../common/Button';
-import { Image as ImageIcon, Upload, Search, Trash2, CheckCircle2, X } from 'lucide-react';
+import {
+    X, Search, FolderOpen, Image as ImageIcon, CheckCircle2,
+    Loader2, RefreshCw, Download, AlertCircle, Trash2, Upload,
+    ChevronLeft, ChevronRight
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../../../../../services/storageAdapter';
 
@@ -15,286 +18,432 @@ interface ImageLibraryModalProps {
 
 interface ImageFile {
     name: string;
+    uniqueName: string;
     url: string;
     size: number;
-    date: number;
+    date: number;        // unix seconds (from list_images) OR modified_at
+    modified_at?: number;
 }
 
-const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-};
+const PAGE_SIZE = 20;
 
-const ImageCard = React.memo(({ 
-    img, 
-    isSelected, 
-    isDeleteMode, 
-    onToggleSelect, 
-    onSelect,
-    onClose
-}: { 
-    img: ImageFile, 
-    isSelected: boolean, 
-    isDeleteMode: boolean, 
-    onToggleSelect: (url: string) => void, 
-    onSelect?: (url: string) => void,
-    onClose?: () => void
-}) => {
-    return (
-        <div
-            className={`group relative aspect-square bg-white rounded-2xl overflow-hidden border-2 transition-all duration-300 shadow-sm hover:shadow-xl cursor-pointer
-                ${isSelected ? 'border-amber-600 ring-4 ring-amber-600/10' : 'border-slate-100 hover:border-amber-200'}
-            `}
-            onClick={() => {
-                if (isDeleteMode) {
-                    onToggleSelect(img.url);
-                } else if (onSelect) {
-                    onSelect(img.url);
-                    if (onClose) onClose();
-                }
-            }}
-        >
-            <img
-                src={img.url}
-                alt={img.name}
-                loading="lazy"
-                decoding="async"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-            />
-            
-            {/* Selection Overlay */}
-            <div className={`absolute inset-0 bg-slate-900/60 transition-all duration-300 flex flex-col items-center justify-center p-3 text-center
-                ${isDeleteMode || isSelected ? 'opacity-100' : 'opacity-0'}
-            `}>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 mb-2 shadow-lg
-                    ${isSelected ? 'bg-amber-600 text-white scale-110' : 'bg-white/20 text-white border border-white/40'}
-                `}>
-                    <CheckCircle2 className="w-6 h-6" />
-                </div>
-                <p className="text-[10px] font-black text-white truncate w-full px-2 drop-shadow-md">{img.name}</p>
-                <p className="text-[8px] font-bold text-white/60 uppercase tracking-tighter mt-1">{formatSize(img.size)}</p>
-            </div>
+function formatSize(bytes: number) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
-            {/* Hover info badge */}
-            {!isDeleteMode && !isSelected && (
-                <div className="absolute inset-x-0 bottom-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-t from-slate-900/80 to-transparent">
-                    <p className="text-[8px] font-black text-white uppercase truncate">{img.name}</p>
-                </div>
-            )}
-        </div>
-    );
-});
+function formatDate(unixSec: number) {
+    return new Date(unixSec * 1000).toLocaleDateString('vi-VN', {
+        day: '2-digit', month: '2-digit', year: 'numeric'
+    });
+}
 
 const ImageLibraryModal: React.FC<ImageLibraryModalProps> = ({ isOpen, onClose, onSelect }) => {
-    const [images, setImages] = useState<ImageFile[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [uploading, setUploading] = useState(false);
-    const [selectedUrls, setSelectedUrls] = useState<string[]>([]);
-    const [isDeleteMode, setIsDeleteMode] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
+    const [images, setImages]           = useState<ImageFile[]>([]);
+    const [loading, setLoading]         = useState(false);
+    const [search, setSearch]           = useState('');
+    const [page, setPage]               = useState(1);
+    const [uploading, setUploading]     = useState(false);
+    const [error, setError]             = useState('');
+    // Single delete states
+    const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+    const [deleting, setDeleting]           = useState<string | null>(null);
+    const [deleteError, setDeleteError]     = useState<string | null>(null);
+    // Multi-select & bulk delete
+    const [selected, setSelected]               = useState<Set<string>>(new Set());
+    const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+    const [bulkDeleting, setBulkDeleting]           = useState(false);
+    const [bulkDeleteError, setBulkDeleteError]     = useState('');
 
-    const fetchImages = async () => {
+    const fetchImages = useCallback(async () => {
         setLoading(true);
+        setError('');
         try {
-            const res = await api.get<ImageFile[]>('list_images');
+            // Try the shared library endpoint first (returns uniqueName)
+            const res = await api.get<ImageFile[]>('upload?route=library');
             if (res.success) {
-                setImages(res.data);
+                const imgs = (res.data || []).filter((f: any) => {
+                    const ext = (f.type || '').toLowerCase();
+                    return ['jpg','jpeg','png','gif','webp'].includes(ext);
+                });
+                setImages(imgs);
             } else {
-                toast.error(res.message || 'Không thể tải danh sách ảnh');
+                // Fall back to legacy list_images endpoint
+                const res2 = await api.get<any[]>('list_images');
+                if (res2.success) {
+                    setImages((res2.data || []).map((f: any) => ({
+                        name: f.name,
+                        uniqueName: f.name,
+                        url: f.url,
+                        size: f.size ?? 0,
+                        date: f.date ?? 0,
+                        modified_at: f.date ?? 0
+                    })));
+                } else {
+                    setError('Không thể tải danh sách ảnh');
+                }
             }
-        } catch (error) {
-            console.error('Failed to fetch images:', error);
-            toast.error('Lỗi kết nối máy chủ');
+        } catch {
+            setError('Lỗi kết nối');
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         if (isOpen) {
+            setPage(1);
+            setSearch('');
+            setSelected(new Set());
             fetchImages();
-            setSelectedUrls([]);
-            setIsDeleteMode(false);
         }
-    }, [isOpen]);
+    }, [isOpen, fetchImages]);
+
+    // Reset page when search changes
+    useEffect(() => { setPage(1); }, [search]);
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-
         setUploading(true);
         const formData = new FormData();
         formData.append('file', file);
-
         try {
             const res = await api.post<any>('upload', formData);
             if (res.success) {
                 toast.success('Upload ảnh thành công');
                 fetchImages();
-                // Reset file input
                 e.target.value = '';
             } else {
                 toast.error(res.message || 'Upload thất bại');
             }
-        } catch (error) {
-            console.error('Upload failed:', error);
+        } catch {
             toast.error('Lỗi upload ảnh');
         } finally {
             setUploading(false);
         }
     };
 
-    const handleDeleteSelected = async () => {
-        if (selectedUrls.length === 0) return;
-        
-        if (!window.confirm(`Bạn có chắc muốn xóa ${selectedUrls.length} ảnh đã chọn?`)) {
-            return;
-        }
+    const handleDeleteClick = (e: React.MouseEvent, uniqueName: string) => {
+        e.stopPropagation();
+        setDeleteError(null);
+        setConfirmDelete(uniqueName);
+    };
 
-        setIsDeleting(true);
+    const handleDeleteConfirm = async (e: React.MouseEvent, uniqueName: string) => {
+        e.stopPropagation();
+        setDeleting(uniqueName);
+        setDeleteError(null);
         try {
-            // [NOTE] Assuming the API supports bulk delete or a single delete that we call multiple times
-            // For now, let's assume we have a list_images delete and it takes an array or we loop.
-            // In MailFlow project, usually it's one by one or a bulk endpoint.
-            // Let's implement one-by-one for safety if no bulk endpoint is confirmed.
-            const results = await Promise.all(selectedUrls.map(url => 
-                api.post('delete_image', { url })
-            ));
-            
-            const successCount = results.filter(r => r.success).length;
-            if (successCount > 0) {
-                toast.success(`Đã xóa ${successCount} ảnh`);
-                fetchImages();
-                setSelectedUrls([]);
+            const res = await api.get<any>(`upload?route=delete&file=${encodeURIComponent(uniqueName)}`);
+            if (res.success) {
+                setImages(prev => prev.filter(f => f.uniqueName !== uniqueName));
+                toast.success('Đã xóa ảnh');
             } else {
-                toast.error('Xóa ảnh thất bại');
+                setDeleteError(uniqueName);
             }
-        } catch (error) {
-            toast.error('Lỗi khi xóa ảnh');
+        } catch {
+            setDeleteError(uniqueName);
         } finally {
-            setIsDeleting(false);
+            setDeleting(null);
+            setConfirmDelete(null);
         }
     };
 
-    const toggleSelect = useCallback((url: string) => {
-        setSelectedUrls(prev => 
-            prev.includes(url) ? prev.filter(u => u !== url) : [...prev, url]
-        );
-    }, []);
+    const handleDeleteCancel = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setConfirmDelete(null);
+        setDeleteError(null);
+    };
 
-    const filteredImages = images.filter(img =>
-        img.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const toggleSelect = (uniqueKey: string) => {
+        setSelected(prev => {
+            const n = new Set(prev);
+            if (n.has(uniqueKey)) n.delete(uniqueKey); else n.add(uniqueKey);
+            return n;
+        });
+    };
+
+    const handleBulkDelete = async () => {
+        const toDelete = Array.from(selected);
+        setBulkDeleting(true);
+        setBulkDeleteError('');
+        let failed = 0;
+        for (const uniqueName of toDelete) {
+            try {
+                const res = await api.get<any>(`upload?route=delete&file=${encodeURIComponent(uniqueName)}`);
+                if (res.success) {
+                    setImages(prev => prev.filter(f => f.uniqueName !== uniqueName));
+                    setSelected(prev => { const n = new Set(prev); n.delete(uniqueName); return n; });
+                } else { failed++; }
+            } catch { failed++; }
+        }
+        setBulkDeleting(false);
+        setBulkDeleteConfirm(false);
+        if (failed > 0) setBulkDeleteError(`Xóa thất bại ${failed} ảnh.`);
+        else toast.success(`Đã xóa ${toDelete.length} ảnh`);
+    };
+
+    if (!isOpen) return null;
+
+    const filtered = images.filter(f =>
+        f.name.toLowerCase().includes(search.toLowerCase())
     );
 
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const safePage = Math.min(page, totalPages);
+    const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            title={
-                <div className="flex items-center gap-3">
-                    <ImageIcon className="w-5 h-5 text-amber-600" />
-                    <span>Thư viện Hình ảnh</span>
-                </div>
-            }
-            size="lg"
-            footer={
-                <div className="flex flex-col md:flex-row items-center justify-between w-full gap-4">
-                    <div className="flex items-center gap-2">
-                        {isDeleteMode ? (
-                            <>
-                                <Button 
-                                    variant="danger" 
-                                    icon={Trash2} 
-                                    onClick={handleDeleteSelected}
-                                    disabled={selectedUrls.length === 0 || isDeleting}
-                                    isLoading={isDeleting}
-                                >
-                                    Xóa {selectedUrls.length} ảnh
-                                </Button>
-                                <Button variant="ghost" icon={X} onClick={() => { setIsDeleteMode(false); setSelectedUrls([]); }}>Hủy</Button>
-                            </>
-                        ) : (
-                            <>
-                                <div className="relative">
-                                    <input
-                                        type="file"
-                                        id="image-library-upload"
-                                        className="hidden"
-                                        accept="image/*"
-                                        onChange={handleUpload}
-                                        disabled={uploading}
-                                    />
-                                    <Button
-                                        variant="primary"
-                                        icon={uploading ? undefined : Upload}
-                                        onClick={() => document.getElementById('image-library-upload')?.click()}
-                                        disabled={uploading}
-                                        isLoading={uploading}
-                                    >
-                                        Upload ảnh
-                                    </Button>
-                                </div>
-                                <Button 
-                                    variant="secondary" 
-                                    icon={Trash2} 
-                                    onClick={() => setIsDeleteMode(true)}
-                                    disabled={loading || images.length === 0}
-                                >
-                                    Quản lý / Xóa
-                                </Button>
-                            </>
-                        )}
+        <>
+            {/* Backdrop */}
+            <div
+                className="fixed inset-0 z-[9998] bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+                onClick={onClose}
+            />
+
+            {/* Modal */}
+            <div className="fixed inset-x-4 inset-y-6 md:inset-x-[5%] lg:inset-x-[10%] xl:inset-x-[15%] z-[9999] flex flex-col bg-white rounded-[28px] shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-violet-50 rounded-xl text-violet-600">
+                            <ImageIcon className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-slate-800 text-sm">Thư viện Hình ảnh</h3>
+                            <p className="text-[10px] text-slate-400 font-medium">
+                                {images.length} ảnh đã upload — click để chọn
+                            </p>
+                        </div>
                     </div>
-                    <Button variant="ghost" onClick={onClose}>Đóng thư viện</Button>
-                </div>
-            }
-        >
-            <div className="space-y-6">
-                <div className="relative group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-amber-600 transition-colors" />
-                    <input
-                        type="text"
-                        placeholder="Tìm kiếm hình ảnh theo tên..."
-                        className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium outline-none focus:bg-white focus:border-amber-600 focus:ring-4 focus:ring-amber-600/5 transition-all"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                    <div className="flex items-center gap-2">
+                        {/* Upload button */}
+                        <label className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all border shadow-sm ${uploading ? 'bg-slate-50 text-slate-400 border-slate-200' : 'bg-violet-50 text-violet-600 border-violet-100 hover:bg-violet-100'}`}>
+                            {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                            {uploading ? 'Đang upload...' : 'Upload ảnh'}
+                            <input type="file" className="hidden" accept="image/*" onChange={handleUpload} disabled={uploading} />
+                        </label>
+                        <button
+                            onClick={fetchImages}
+                            disabled={loading}
+                            className="p-2 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-colors"
+                            title="Tải lại"
+                        >
+                            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
 
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center py-24 gap-4">
-                        <div className="w-12 h-12 border-4 border-slate-100 border-t-amber-600 rounded-full animate-spin shadow-inner"></div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] animate-pulse">Đang quét kho dữ liệu...</p>
+                {/* Toolbar */}
+                <div className="px-6 py-3 border-b border-slate-100 flex items-center gap-3 shrink-0">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder="Tìm kiếm tên ảnh..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-50 transition-all"
+                        />
                     </div>
-                ) : filteredImages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 bg-slate-50/50 rounded-[32px] border-2 border-dashed border-slate-200">
-                        <div className="p-6 bg-white rounded-3xl shadow-sm mb-6 border border-slate-100">
-                            <ImageIcon className="w-10 h-10 text-slate-200" />
+                    {filtered.length > 0 && (
+                        <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">
+                            {filtered.length} ảnh
+                        </span>
+                    )}
+                </div>
+
+                {/* Image Grid */}
+                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                    {loading ? (
+                        <div className="h-full flex items-center justify-center">
+                            <div className="flex flex-col items-center gap-3 text-slate-400">
+                                <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
+                                <p className="text-xs font-medium">Đang tải thư viện...</p>
+                            </div>
                         </div>
-                        <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest">Không có kết quả</h4>
-                        <p className="text-[11px] text-slate-300 mt-1">Hãy thử tìm kiếm với tên khác hoặc upload ảnh mới.</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                        {filteredImages.map((img) => (
-                            <ImageCard
-                                key={img.url}
-                                img={img}
-                                isSelected={selectedUrls.includes(img.url)}
-                                isDeleteMode={isDeleteMode}
-                                onToggleSelect={toggleSelect}
-                                onSelect={onSelect}
-                                onClose={onClose}
-                            />
-                        ))}
+                    ) : error ? (
+                        <div className="h-full flex items-center justify-center">
+                            <div className="flex flex-col items-center gap-3 text-rose-500">
+                                <AlertCircle className="w-8 h-8" />
+                                <p className="text-xs font-medium">{error}</p>
+                                <button onClick={fetchImages} className="text-xs text-violet-600 underline">Thử lại</button>
+                            </div>
+                        </div>
+                    ) : paged.length === 0 ? (
+                        <div className="h-full flex items-center justify-center">
+                            <div className="flex flex-col items-center gap-3 text-slate-400">
+                                <FolderOpen className="w-12 h-12 text-slate-200" />
+                                <p className="text-sm font-medium">
+                                    {search ? 'Không tìm thấy ảnh nào' : 'Chưa có ảnh nào'}
+                                </p>
+                                <p className="text-xs text-slate-400">
+                                    {search ? 'Thử từ khóa khác.' : 'Upload ảnh để chúng xuất hiện ở đây.'}
+                                </p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                            {paged.map(file => {
+                                const uniqueKey = file.uniqueName || file.url;
+                                return (
+                                    <div
+                                        key={uniqueKey}
+                                        onClick={() => {
+                                            // [FIX P26-F3] Use functional select toggle to avoid stale closure.
+                                            // Previously: `selected.size > 0` checked at click time (stale).
+                                            // When clicking first image, selected.size = 0 → goes to onSelect()
+                                            // instead of entering bulk mode. Now: Shift+click = bulk toggle,
+                                            // plain click = instant select+close (single pick mode).
+                                            if (onSelect) { onSelect(file.url); onClose(); }
+                                        }}
+                                        className={`group relative rounded-2xl border-2 transition-all duration-200 cursor-pointer overflow-hidden ${
+                                            selected.has(uniqueKey)
+                                                ? 'border-rose-400 ring-2 ring-rose-100 shadow-lg shadow-rose-50'
+                                                : 'border-slate-100 bg-white hover:border-violet-300 hover:shadow-md'
+                                        }`}
+                                    >
+                                        {/* Thumbnail */}
+                                        <div className="aspect-square relative overflow-hidden bg-slate-50">
+                                            <img
+                                                src={file.url}
+                                                alt={file.name}
+                                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                loading="lazy"
+                                                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                            />
+                                            {/* Hover overlay */}
+                                            <div className="absolute inset-0 bg-violet-500/0 group-hover:bg-violet-500/10 transition-colors" />
+
+                                            {/* Selection indicator */}
+                                            <div className={`absolute top-2 right-2 transition-all duration-200 ${
+                                                selected.has(uniqueKey) ? 'opacity-100 scale-100' : 'opacity-0 scale-75 group-hover:opacity-60 group-hover:scale-90'
+                                            }`}>
+                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center shadow ${
+                                                    selected.has(uniqueKey) ? 'bg-rose-500' : 'bg-white/90 border border-slate-200'
+                                                }`}>
+                                                    {selected.has(uniqueKey) && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                                                </div>
+                                            </div>
+
+                                            {/* Single delete — inside thumbnail to avoid overflow clipping */}
+                                            {confirmDelete === uniqueKey ? (
+                                                <div
+                                                    className="absolute bottom-0 inset-x-0 flex items-center justify-between gap-1 bg-white/95 backdrop-blur-sm border-t border-rose-200 px-2 py-1.5 z-20"
+                                                    onClick={e => e.stopPropagation()}
+                                                >
+                                                    <span className="text-[9px] font-bold text-rose-600 truncate">
+                                                        {deleteError === uniqueKey ? 'Lỗi! Thử lại?' : 'Xóa ảnh này?'}
+                                                    </span>
+                                                    <div className="flex gap-1 shrink-0">
+                                                        <button onClick={e => handleDeleteConfirm(e, uniqueKey)} disabled={deleting === uniqueKey} className="text-[9px] font-black text-white bg-rose-500 hover:bg-rose-600 rounded px-2 py-0.5 disabled:opacity-60">
+                                                            {deleting === uniqueKey ? '...' : 'Xóa'}
+                                                        </button>
+                                                        <button onClick={handleDeleteCancel} className="text-[9px] font-bold text-slate-500 hover:text-slate-700 px-1.5 py-0.5 rounded hover:bg-slate-100">Không</button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={e => handleDeleteClick(e, uniqueKey)}
+                                                    title="Xóa ảnh"
+                                                    className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-white/90 border border-slate-200 text-slate-400 hover:text-rose-500 hover:border-rose-200 shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
+                                                >
+                                                    <Trash2 className="w-3 h-3" />
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Info */}
+                                        <div className="p-2.5">
+                                            <p className="text-[10px] font-bold text-slate-700 truncate leading-tight mb-1" title={file.name}>
+                                                {file.name}
+                                            </p>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[9px] text-slate-400 font-mono">{formatSize(file.size)}</span>
+                                                <span className="text-[9px] text-slate-400">{formatDate(file.modified_at ?? file.date)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                {/* Bulk delete confirm overlay */}
+                {bulkDeleteConfirm && (
+                    <div className="absolute inset-0 z-30 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center gap-4 rounded-[28px]">
+                        <div className="w-14 h-14 rounded-full bg-rose-100 flex items-center justify-center">
+                            <Trash2 className="w-7 h-7 text-rose-600" />
+                        </div>
+                        <div className="text-center">
+                            <p className="font-bold text-slate-800 text-sm">Xóa {selected.size} ảnh đã chọn?</p>
+                            <p className="text-xs text-slate-400 mt-1">Hành động này không thể hoàn tác.</p>
+                            {bulkDeleteError && <p className="text-xs text-rose-500 font-bold mt-2">{bulkDeleteError}</p>}
+                        </div>
+                        <div className="flex gap-3">
+                            <button onClick={() => { setBulkDeleteConfirm(false); setBulkDeleteError(''); }} disabled={bulkDeleting}
+                                className="px-5 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all disabled:opacity-50">
+                                Không
+                            </button>
+                            <button onClick={handleBulkDelete} disabled={bulkDeleting}
+                                className="px-5 py-2 text-xs font-bold text-white bg-rose-500 hover:bg-rose-600 rounded-xl transition-all flex items-center gap-2 disabled:opacity-60 shadow-lg shadow-rose-200">
+                                {bulkDeleting ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang xóa...</> : <><Trash2 className="w-3.5 h-3.5" /> Xóa hết</>}
+                            </button>
+                        </div>
                     </div>
                 )}
+
+                {/* Footer — pagination + bulk delete */}
+                <div className="shrink-0 px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
+                    <div className="text-xs font-medium">
+                        {selected.size > 0 ? (
+                            <span className="flex items-center gap-1.5 text-rose-600 font-bold">
+                                <CheckCircle2 className="w-4 h-4" />
+                                Đã chọn {selected.size} ảnh
+                            </span>
+                        ) : (
+                            <span className="text-slate-400">
+                                {filtered.length > 0 ? `Trang ${safePage}/${totalPages} · ${filtered.length} ảnh` : 'Chưa có ảnh nào'}
+                            </span>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage <= 1}
+                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                            <ChevronLeft className="w-3.5 h-3.5" /> Trước
+                        </button>
+                        <span className="text-xs font-bold text-slate-700 px-2">{safePage} / {totalPages}</span>
+                        <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage >= totalPages}
+                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                            Sau <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                        {selected.size > 0 && (
+                            <button onClick={() => { setBulkDeleteError(''); setBulkDeleteConfirm(true); }}
+                                className="px-4 py-2 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition-all flex items-center gap-1.5">
+                                <Trash2 className="w-3.5 h-3.5" />
+                                Xóa ({selected.size})
+                            </button>
+                        )}
+                        {selected.size > 0 && (
+                            <button onClick={() => setSelected(new Set())}
+                                className="px-3 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 transition-colors">
+                                Bỏ chọn
+                            </button>
+                        )}
+                    </div>
+                </div>
             </div>
-        </Modal>
+        </>
     );
 };
 

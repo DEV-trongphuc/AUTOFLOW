@@ -19,7 +19,18 @@ const FlowSummaryModal: React.FC<FlowSummaryModalProps> = ({ isOpen, onClose, fl
 
     const totalSent = stats.totalSent || 0;
     const totalOpened = stats.totalOpened || 0;
-    const openRate = totalSent > 0 ? Math.round((totalOpened / totalSent) * 100) : 0;
+    // [FIX P14-H1] Combine email + ZNS clicks for accurate total CTR.
+    // stats.totalClicked = email link clicks only; stats.totalZaloClicked = ZNS link clicks.
+    // For mixed flows, showing only email clicks would understate engagement significantly.
+    const combinedClicked = (stats.totalClicked || 0) + (stats.totalZaloClicked || 0);
+    const combinedUniqueClicked = (stats.uniqueClicked || 0) + (stats.uniqueZaloClicked || 0);
+    // [FIX P6-M2] Use backend-computed open rate when available.
+    // Raw calculation totalOpened/totalSent is inaccurate because totalSent includes
+    // ZNS and Meta sends that have NO open tracking — artificially deflating the rate.
+    // stat_open_rate from DB is pre-computed against email-only sends.
+    const openRate = stats.openRate != null
+      ? Math.round(stats.openRate * 100)
+      : (totalSent > 0 ? Math.round((totalOpened / totalSent) * 100) : 0);
 
     const StatCard = ({ label, value, icon: Icon, color, subValue }: any) => (
         <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm hover:shadow-md transition-all">
@@ -91,7 +102,8 @@ const FlowSummaryModal: React.FC<FlowSummaryModalProps> = ({ isOpen, onClose, fl
                                 </div>
                                 <div className="text-center">
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">CTR</p>
-                                    <p className="text-3xl font-black text-orange-400">{totalSent > 0 ? Math.round(((stats.totalClicked || 0) / totalSent) * 100) : 0}%</p>
+                                    {/* [FIX P26-F1] Use combinedClicked (email+ZNS) not stats.totalClicked (email only) */}
+                                    <p className="text-3xl font-black text-orange-400">{totalSent > 0 ? Math.round((combinedClicked / totalSent) * 100) : 0}%</p>
                                     <p className="text-[10px] text-slate-500 font-bold mt-1">Average</p>
                                 </div>
                             </div>
@@ -130,18 +142,18 @@ const FlowSummaryModal: React.FC<FlowSummaryModalProps> = ({ isOpen, onClose, fl
                         />
                         <StatCard
                             label="Lượt Click"
-                            value={stats.totalClicked || 0}
+                            value={combinedClicked}
                             icon={MousePointerClick}
                             color="from-orange-500 to-red-600 shadow-orange-500/20"
                         />
                         <StatCard
                             label="Unique Clicks"
-                            value={stats.uniqueClicked || 0}
+                            value={combinedUniqueClicked}
                             icon={TrendingUp}
                             color="from-amber-400 to-orange-500 shadow-amber-600/20"
                         />
                         <StatCard
-                            label="Gửi lại"
+                            label="Gửi lỗi"
                             value={stats.totalFailed || 0}
                             icon={AlertOctagon}
                             color="from-rose-500 to-red-600 shadow-rose-500/20"
@@ -151,8 +163,52 @@ const FlowSummaryModal: React.FC<FlowSummaryModalProps> = ({ isOpen, onClose, fl
                             value={stats.totalUnsubscribed || 0}
                             icon={UserMinus}
                             color="from-slate-600 to-slate-800 shadow-slate-600/20"
-/>
+                        />
                     </div>
+
+                    {/* Per-Channel Breakdown */}
+                    {/* [FIX P6-C1] Show per-channel stats when available */}
+                    {(stats.zaloSent || stats.znsSent || stats.metaSent) ? (
+                        <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm p-6">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Phân tích theo kênh</p>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {/* Email: totalSent minus Zalo/Meta sends */}
+                                <div className="text-center p-4 rounded-2xl bg-indigo-50 border border-indigo-100">
+                                    <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Email</p>
+                                    <p className="text-2xl font-black text-indigo-700">
+                                        {Math.max(0, totalSent - (stats.zaloSent || 0) - (stats.znsSent || 0) - (stats.metaSent || 0)).toLocaleString()}
+                                    </p>
+                                </div>
+                                {stats.zaloSent ? (
+                                    <div className="text-center p-4 rounded-2xl bg-teal-50 border border-teal-100">
+                                        <p className="text-[10px] font-bold text-teal-400 uppercase tracking-wider mb-1">Zalo CS</p>
+                                        <p className="text-2xl font-black text-teal-700">{stats.zaloSent.toLocaleString()}</p>
+                                    </div>
+                                ) : null}
+                                {stats.znsSent ? (
+                                    <div className="text-center p-4 rounded-2xl bg-blue-50 border border-blue-100">
+                                        <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">Zalo ZNS</p>
+                                        <p className="text-2xl font-black text-blue-700">{stats.znsSent.toLocaleString()}</p>
+                                        <p className="text-[10px] text-blue-400 font-bold mt-1">Lượt gửi</p>
+                                    </div>
+                                ) : null}
+                                {/* [FIX P14-M1] Show ZNS click count when available */}
+                                {(stats.totalZaloClicked || 0) > 0 ? (
+                                    <div className="text-center p-4 rounded-2xl bg-cyan-50 border border-cyan-100">
+                                        <p className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider mb-1">ZNS Clicks</p>
+                                        <p className="text-2xl font-black text-cyan-700">{(stats.totalZaloClicked || 0).toLocaleString()}</p>
+                                        <p className="text-[10px] text-cyan-400 font-bold mt-1">Lượt Click Link</p>
+                                    </div>
+                                ) : null}
+                                {stats.metaSent ? (
+                                    <div className="text-center p-4 rounded-2xl bg-sky-50 border border-sky-100">
+                                        <p className="text-[10px] font-bold text-sky-400 uppercase tracking-wider mb-1">Meta</p>
+                                        <p className="text-2xl font-black text-sky-700">{stats.metaSent.toLocaleString()}</p>
+                                    </div>
+                                ) : null}
+                            </div>
+                        </div>
+                    ) : null}
                 </div>
 
                 {/* Footer */}

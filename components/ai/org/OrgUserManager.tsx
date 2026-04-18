@@ -13,6 +13,24 @@ interface OrgUserManagerProps {
     hideHeader?: boolean;
 }
 
+// [P18-A4 FIX] Helper: converts DB last_login timestamp to relative time string.
+// Replaces the hardcoded "Just now" that misled admins about user activity.
+const formatLastLogin = (lastLogin: string | null | undefined): string => {
+    if (!lastLogin) return 'Never';
+    const date = new Date(lastLogin);
+    if (isNaN(date.getTime())) return 'Unknown';
+    const diffMs = Date.now() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 2) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 30) return `${diffDays}d ago`;
+    const diffMonths = Math.floor(diffDays / 30);
+    return `${diffMonths}mo ago`;
+};
+
 const OrgUserManager: React.FC<OrgUserManagerProps> = ({ initialEditUserId, categoryId, isDarkTheme, hideHeader }) => {
     const { orgUser } = useChatPage();
     const [users, setUsers] = useState<OrgUser[]>([]);
@@ -267,7 +285,7 @@ const OrgUserManager: React.FC<OrgUserManagerProps> = ({ initialEditUserId, cate
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex flex-col gap-1">
+                                                <div className="flex flex-col gap-1">
                                                 <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-wide w-fit shadow-sm border ${user.role === 'admin' ? 'bg-rose-700 text-white border-rose-600' :
                                                     user.role === 'assistant' ? 'bg-sky-500 text-white border-sky-400' :
                                                         (isDarkTheme ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-white text-slate-600 border-slate-200')
@@ -275,7 +293,10 @@ const OrgUserManager: React.FC<OrgUserManagerProps> = ({ initialEditUserId, cate
                                                     {user.role === 'admin' ? <ShieldAlert className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
                                                     {user.role}
                                                 </span>
-                                                <span className="text-[9px] text-slate-400 ml-1 font-bold leading-none">Last active: Just now</span>
+                                                {/* [P18-A4 FIX] Show actual last_login timestamp from DB instead of hardcoded "Just now" */}
+                                                <span className="text-[9px] text-slate-400 ml-1 font-bold leading-none">
+                                                    Last active: {formatLastLogin((user as any).last_login)}
+                                                </span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">

@@ -11,6 +11,7 @@ class Mailer
     private $dynamicSender = null; // Dynamic sender for specific campaigns/flows
     private static $pathCache = []; // Optimization: Disk I/O cache for attachments
     private static $htmlTemplateCache = []; // Optimization: Regex-injected HTML cache
+    private static $breovCh = null; // [PERF] Persistent Brevo API cURL handle (connection reuse)
     private $logBuffer = []; // Optimization: Batch logging
 
     public function __construct($pdo, $baseUrl = API_BASE_URL, $defaultSender = 'marketing@ka-en.com.vn')
@@ -31,7 +32,14 @@ class Mailer
 
     private function loadSettings()
     {
-        $stmt = $this->pdo->query("SELECT * FROM system_settings");
+        // [FIX P38-ML] SELECT * loaded ALL settings (tokens, API keys, large text blobs).
+        // Only 9 SMTP-related keys are actually accessed anywhere in this class.
+        $stmt = $this->pdo->prepare(
+            "SELECT `key`, `value` FROM system_settings WHERE `key` IN
+             ('smtp_host','smtp_port','smtp_user','smtp_pass','smtp_from_email',
+              'smtp_from_name','smtp_encryption','smtp_enabled','internal_qa_emails')"
+        );
+        $stmt->execute();
         $this->smtpSettings = [];
         foreach ($stmt->fetchAll() as $row) {
             $this->smtpSettings[$row['key']] = $row['value'];
@@ -65,6 +73,15 @@ class Mailer
             $fromEmail = (isset($this->smtpSettings['smtp_user']) && filter_var($this->smtpSettings['smtp_user'], FILTER_VALIDATE_EMAIL))
                 ? $this->smtpSettings['smtp_user'] : $this->defaultSender;
         }
+
+        // [GUARD] Prevent PHPMailer "From address not set" fatal exception on empty sender.
+        // This can happen when all SMTP settings are misconfigured or defaultSender is blank.
+        if (empty($fromEmail) || !filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
+            $error = "[Mailer] dispatchRaw aborted: no valid from-address resolved. Check smtp_from_email / smtp_user in system_settings.";
+            error_log($error);
+            return false;
+        }
+
         $fromName = $this->smtpSettings['smtp_from_name'] ?? "Marketing System";
 
         $success = false;
@@ -86,8 +103,10 @@ class Mailer
         }
 
         $this->sentInSession++;
-        // [BÀN THỬ] SMTP Pooling: Reconnect every 200 emails to avoid SMTP timeout or memory leak
-        if ($this->sentInSession >= 200) {
+        // [PERF] SMTP Pooling: Reconnect every 500 emails (increased from 200).
+        // At 14 mails/sec, this reduces reconnect frequency: every 36s instead of every 14s.
+        // Each TLS reconnect costs ~0.3-0.5s. Raising to 500 recovers ~2-3% throughput.
+        if ($this->sentInSession >= 500) {
             $this->closeConnection(); // smtpClose() + reset instance
             $this->sentInSession = 0;
         }
@@ -95,7 +114,7 @@ class Mailer
         return $success;
     }
 
-    public function send($toEmail, $subject, $htmlContent, $subscriberId, $campaignId = null, $flowId = null, $flowName = null, $attachments = [], $reminderId = null, $stepId = null, $stepLabel = null, $isQACopy = false, $skipQA = false, $variant = null)
+    public function send($toEmail, $subject, $htmlContent, $subscriberId, $campaignId = null, $flowId = null, $flowName = null, $attachments = [], $reminderId = null, $stepId = null, $stepLabel = null, $isQACopy = false, $skipQA = false, $variant = null, $templateHash = null)
     {
         // 0. HANDLE INTERNAL QA EMAILS (Copy to team)
         if (!$isQACopy && !$skipQA && !empty($this->smtpSettings['internal_qa_emails'])) {
@@ -138,16 +157,25 @@ class Mailer
 
         // 1. Resolve HTML with Tracking (Optimized with Local Cache Template)
         if (!$isQACopy) {
-            $cacheKey = md5($htmlContent . ($campaignId ?? '') . ($flowId ?? '') . ($stepId ?? $reminderId ?? ''));
+            // [PERF FIX] Use caller-supplied templateHash when available so that ALL subscribers
+            // in the same campaign/flow-step share ONE cache slot. Without this, passing
+            // personalized $htmlContent (per-subscriber {{first_name}} replaced) causes
+            // a different md5 key for every subscriber → cache misses 100% of the time.
+            // Callers compute: $templateHash = md5($rawHtml . $campaignId) once per batch.
+            $cacheKey = $templateHash ?? md5($htmlContent . ($campaignId ?? '') . ($flowId ?? '') . ($stepId ?? $reminderId ?? ''));
 
             if (!isset(self::$htmlTemplateCache[$cacheKey])) {
                 // If not cached, build the template with PLACEHOLDERS for sid and email
                 $unsubPlaceholder = "{{unsub_url_placeholder}}";
                 $trackingHtml = $htmlContent;
 
-                if (strpos($trackingHtml, '{{unsubscribe_url}}') !== false) {
-                    $trackingHtml = str_replace('{{unsubscribe_url}}', $unsubPlaceholder, $trackingHtml);
-                } else {
+                // Check for unsubscribe tag with flexible regex (handles whitespace and case)
+                $hasUnsubTag = preg_match('/\{\{\s*unsubscribe_url\s*\}\}/i', $trackingHtml);
+                $skipAutoFooter = (strpos($trackingHtml, '<!-- skip-unsubscribe-footer -->') !== false);
+
+                if ($hasUnsubTag) {
+                    $trackingHtml = preg_replace('/\{\{\s*unsubscribe_url\s*\}\}/i', $unsubPlaceholder, $trackingHtml);
+                } elseif (!$skipAutoFooter) {
                     $footerHtml = "
                         <div style='margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-family: sans-serif; font-size: 12px; color: #999; text-align: center; line-height: 1.5;'>
                             <p>Bạn nhận được email này vì đã đăng ký nhận tin từ hệ thống của chúng tôi.</p>
@@ -167,7 +195,10 @@ class Mailer
                 // Khi gửi chiến dịch 10k subscriber, $htmlContent đã được personalize
                 // nên mỗi subscriber tạo ra 1 cacheKey khác nhau → 10k entries → ~500MB RAM.
                 // array_shift() loại bỏ phần tử cũ nhất (FIFO), giữ cache luôn nhỏ gọn.
-                if (count(self::$htmlTemplateCache) >= 10) {
+                // [PERF B4] Increased cache from 10 → 30 slots.
+                // Worker priority runs multiple flow-step email types simultaneously.
+                // With <10 slots the cache thrashes; 30 covers most realistic flow depths.
+                if (count(self::$htmlTemplateCache) >= 30) {
                     array_shift(self::$htmlTemplateCache);
                 }
 
@@ -193,7 +224,9 @@ class Mailer
         // Batch logging instead of synchronous DB hit
         if (!$isQACopy) {
             $this->logBuffer[] = [$toEmail, $subject, $success ? 'success' : 'failed', $error, $campaignId, $flowId, $reminderId, $subscriberId];
-            if (count($this->logBuffer) >= 10) {
+            // [PERF B5] Flush every 50 emails (up from 10) to reduce DB roundtrips 5x.
+            // __destruct() guarantees a final flush of any remaining buffer at worker exit.
+            if (count($this->logBuffer) >= 50) {
                 $this->flushLogs();
             }
         }
@@ -211,6 +244,14 @@ class Mailer
             } catch (Exception $e) {
             }
             $this->phpMailerInstance = null;
+        }
+        // [FIX] Explicitly close Brevo persistent cURL handle to release socket descriptor.
+        // Previously this handle was never closed — on worker crash / timeout the OS
+        // would eventually reclaim the FD, but it also prevented graceful HTTP keep-alive
+        // teardown with the Brevo API endpoint.
+        if (self::$breovCh !== null) {
+            curl_close(self::$breovCh);
+            self::$breovCh = null;
         }
     }
 
@@ -317,11 +358,28 @@ class Mailer
             if ($logic === 'all') {
                 $filtered[] = ['path' => $path, 'name' => $name];
             } else if ($logic === 'match_email' && !empty($recipientEmail)) {
-                if (preg_match('/_([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/', $name, $matches)) {
-                    if (strtolower($matches[1]) === strtolower($recipientEmail)) {
+                    // [FIX #3] Support two naming conventions for match_email attachments:
+                    // 1. Original: filename contains "_email@domain.com" (e.g. "invoice_john@example.com.pdf")
+                    // 2. Slug format: filename contains "email_at_domain_tld" (e.g. "invoice_john_at_example_com.pdf")
+                    // Both checks are case-insensitive to prevent silent mismatches.
+                    $emailLower = strtolower(trim($recipientEmail));
+                    $emailSlug  = str_replace(['@', '.'], ['_at_', '_dot_'], $emailLower);
+                    $nameLower  = strtolower($name);
+
+                    $directMatch = (stripos($nameLower, $emailLower) !== false);
+                    $slugMatch   = (stripos($nameLower, $emailSlug) !== false);
+
+                    // Legacy regex match: _email@domain.com suffix in filename
+                    $regexMatch = false;
+                    if (!$directMatch && !$slugMatch) {
+                        if (preg_match('/_([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i', $name, $matches)) {
+                            $regexMatch = (strtolower($matches[1]) === $emailLower);
+                        }
+                    }
+
+                    if ($directMatch || $slugMatch || $regexMatch) {
                         $filtered[] = ['path' => $path, 'name' => $name];
                     }
-                }
             }
         }
         return $filtered;
@@ -382,17 +440,25 @@ class Mailer
                 $data['attachments'] = $brevoAttachments;
         }
 
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['api-key: ' . $apiKey, 'Content-Type: application/json']);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-        $res = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        // [PERF] Reuse a class-level static cURL handle instead of creating a new one per email.
+        // Avoids repeated DNS resolution + TCP + TLS setup (~50-200ms per send with cold handle).
+        // CURLOPT_FRESH_CONNECT=false (default) enables HTTP/1.1 keep-alive on the API endpoint.
+        // Now a class property (self::$breovCh) so closeConnection() can explicitly close it.
+        if (self::$breovCh === null) {
+            self::$breovCh = curl_init();
+            curl_setopt(self::$breovCh, CURLOPT_POST, 1);
+            curl_setopt(self::$breovCh, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt(self::$breovCh, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt(self::$breovCh, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P36-M1] Added hostname verification
+            curl_setopt(self::$breovCh, CURLOPT_TIMEOUT, 30);
+            curl_setopt(self::$breovCh, CURLOPT_CONNECTTIMEOUT, 10);
+        }
+        curl_setopt(self::$breovCh, CURLOPT_URL, $url);
+        curl_setopt(self::$breovCh, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt(self::$breovCh, CURLOPT_HTTPHEADER, ['api-key: ' . $apiKey, 'Content-Type: application/json', 'Connection: keep-alive']);
+
+        $res = curl_exec(self::$breovCh);
+        $httpCode = curl_getinfo(self::$breovCh, CURLINFO_HTTP_CODE);
 
         if ($httpCode >= 200 && $httpCode < 300)
             return true;
@@ -487,13 +553,10 @@ class Mailer
             $this->closeConnection();
         }
 
-        if ($result) {
-            $this->sentInSession++;
-            if ($this->sentInSession >= 200) {
-                $this->closeConnection();
-                $this->sentInSession = 0;
-            }
-        }
+        // [FIX BUG-H3] sentInSession counter REMOVED from here.
+        // dispatchRaw() already increments $this->sentInSession++ at its own line.
+        // sendViaPHPMailer() is called BY dispatchRaw(), so counting here caused
+        // each PHPMailer send to be counted twice → SMTP reconnect at 250 instead of 500.
 
         return $result;
     }

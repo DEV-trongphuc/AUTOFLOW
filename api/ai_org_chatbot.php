@@ -98,6 +98,8 @@ function getUrlMetadata($url)
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 5);
     curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (AI Assistant Link Preview)');
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);  // [FIX P37-AOC] Always verify SSL
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);     // [FIX P37-AOC] Hostname verification
     $html = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
@@ -264,8 +266,6 @@ try {
             $sql = "SELECT id, visitor_id, title, summary, created_at, last_message, property_id FROM ai_org_conversations $whereSql
         ORDER BY created_at DESC LIMIT 50";
 
-            error_log("DEBUG SQL: $sql | Params: " . json_encode($params));
-
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -288,7 +288,7 @@ try {
         }
 
         if ($action === 'get_messages' && !empty($_GET['conversation_id'])) {
-            $stmt = $pdo->prepare("SELECT * FROM ai_org_messages WHERE conversation_id = ? ORDER BY created_at ASC");
+            $stmt = $pdo->prepare("SELECT id, conversation_id, sender, message, created_at, tokens, metadata FROM ai_org_messages WHERE conversation_id = ? ORDER BY created_at ASC"); // [FIX P37-AOC] Explicit columns, no SELECT *
             $stmt->execute([$_GET['conversation_id']]);
             echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
             exit;
@@ -312,6 +312,10 @@ try {
             $requestingOrgUserId = $_GET['org_user_id'] ?? null;
             if ($propertyId) {
                 $propertyId = resolvePropertyId($pdo, $propertyId);
+                // [P18-A1 SECURITY FIX] Verify the requesting user has access to this bot/category.
+                // Without this, any authenticated org user could swap property_id in the URL
+                // to read conversation history of a different bot in the same (or different) group.
+                requireCategoryAccess($propertyId, $currentOrgUser);
             }
 
             // Find the conversation: search by visitor_id OR the record ID itself (if hash was passed)
@@ -358,8 +362,8 @@ try {
                 $offset = isset($_GET['offset']) ? (int) $_GET['offset'] : 0;
 
                 // Load messages with pagination (Get latest first, then sort back to ASC)
-                $stmt = $pdo->prepare("SELECT * FROM (
-                    SELECT * FROM ai_org_messages
+                $stmt = $pdo->prepare("SELECT id, conversation_id, sender, message, created_at, tokens, metadata FROM ( -- [FIX P37-AOC] Explicit columns
+                    SELECT id, conversation_id, sender, message, created_at, tokens, metadata FROM ai_org_messages
                     WHERE conversation_id = ?
                     ORDER BY created_at DESC
                     LIMIT ? OFFSET ?
@@ -593,10 +597,49 @@ try {
             }
 
             $file = $_FILES['file'];
+
+            // [P18-A2 SECURITY FIX] Validate file before accepting:
+            // 1. Null byte guard — prevents shell.php\0.jpg tricks
+            if (strpos($file['name'], "\0") !== false) {
+                echo json_encode(['success' => false, 'message' => 'Invalid filename']);
+                exit;
+            }
+            // 2. Server-side size limit (20MB)
+            if ($file['size'] > 20 * 1024 * 1024) {
+                echo json_encode(['success' => false, 'message' => 'File too large (max 20MB)']);
+                exit;
+            }
+            // 3. MIME type validation via magic bytes — extension spoofing won't pass this
+            $fi = finfo_open(FILEINFO_MIME_TYPE);
+            $realMime = finfo_file($fi, $file['tmp_name']);
+            finfo_close($fi);
+            $allowedMimes = [
+                'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+                'application/pdf',
+                'text/plain', 'text/html', 'text/markdown', 'text/csv',
+                'application/json',
+                'application/vnd.ms-excel',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/vnd.ms-powerpoint',
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            ];
+            if (!in_array($realMime, $allowedMimes, true)) {
+                echo json_encode(['success' => false, 'message' => "File type not allowed: $realMime"]);
+                exit;
+            }
+            // 4. Block double-extension tricks (e.g. malware.php.jpg)
+            $baseName = pathinfo($file['name'], PATHINFO_BASENAME);
+            if (preg_match('/\.(php|phtml|phar|php[0-9]|cgi|pl|py|sh|bash|exe|cmd|bat|jsp|asp|aspx|htaccess|htpasswd)($|\.)/i', $baseName)) {
+                echo json_encode(['success' => false, 'message' => 'Blocked file type']);
+                exit;
+            }
+
             $origName = preg_replace('/[^a-zA-Z0-9._-]/', '', pathinfo($file['name'], PATHINFO_FILENAME));
             $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-            // Use uniqid to ensure no conflicts even at the same second
-            $fileName = $origName . '_' . uniqid() . '.' . $ext;
+            // [FIX] Use CSPRNG filename to prevent collision and path-guessing
+            $fileName = bin2hex(random_bytes(10)) . '_' . $origName . '.' . $ext;
             $targetPath = $uploadDir . $fileName;
 
             if (move_uploaded_file($file['tmp_name'], $targetPath)) {
@@ -743,21 +786,46 @@ try {
         }
 
         if ($action === 'workspace_restore_version' && !empty($input['version_id'])) {
-            $stmt = $pdo->prepare("
-        SELECT v.content, f.file_url
-        FROM ai_workspace_versions v
-        JOIN ai_workspace_files f ON v.workspace_file_id = f.id
-        WHERE v.id = ?
-        ");
-            $stmt->execute([$input['version_id']]);
-            $ver = $stmt->fetch(PDO::FETCH_ASSOC);
+            // [P18-A3 SECURITY FIX] Verify the requesting user owns the workspace file
+            // before restoring a version. Without this, any authenticated org user who
+            // knows a version_id can overwrite files belonging to other users.
+            $verifyStmt = $pdo->prepare("
+                SELECT f.file_url, c.user_id, c.visitor_id
+                FROM ai_workspace_versions v
+                JOIN ai_workspace_files f ON v.workspace_file_id = f.id
+                LEFT JOIN ai_org_conversations c ON f.conversation_id = c.id
+                WHERE v.id = ?
+            ");
+            $verifyStmt->execute([$input['version_id']]);
+            $verifyRow = $verifyStmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($ver) {
+            if (!$verifyRow) {
+                echo json_encode(['success' => false, 'error' => 'Version not found']);
+                exit;
+            }
+
+            // Access check: admin-001 sees all; otherwise verify ownership
+            $callerIsAdmin = ($GLOBALS['current_admin_id'] ?? '') === 'admin-001';
+            $callerOrgId = (string)($currentOrgUser['id'] ?? '');
+            $fileOwnerId = (string)($verifyRow['user_id'] ?? '');
+            $fileVisitorId = $verifyRow['visitor_id'] ?? '';
+            if (!$callerIsAdmin && $fileOwnerId !== $callerOrgId && $fileVisitorId !== ($input['visitor_id'] ?? '')) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'error' => 'Access denied: this file does not belong to you']);
+                exit;
+            }
+
+            $ver = ['file_url' => $verifyRow['file_url']];
+            // Reload content
+            $contentStmt = $pdo->prepare("SELECT content FROM ai_workspace_versions WHERE id = ?");
+            $contentStmt->execute([$input['version_id']]);
+            $ver['content'] = $contentStmt->fetchColumn();
+
+            if ($ver['content'] !== false) {
                 $parts = explode('/uploadss/', $ver['file_url']);
                 if (isset($parts[1])) {
                     $localPath = realpath(__DIR__ . '/../uploadss/' . urldecode($parts[1]));
                     if ($localPath && file_exists($localPath)) {
-                        // Optional: save current as another version before restore?
                         file_put_contents($localPath, $ver['content']);
                         $pdo->prepare("UPDATE ai_workspace_files SET file_size = ? WHERE file_url = ?")
                             ->execute([strlen($ver['content']), $ver['file_url']]);
@@ -1326,7 +1394,8 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
             }
 
             // Fetch source conversation - must be public
-            $stmtSrc = $pdo->prepare("SELECT * FROM ai_org_conversations WHERE (id = ? OR visitor_id = ?) LIMIT 1");
+            // [FIX P42-OC] SELECT * loaded all conversation columns including summary (TEXT). Explicit columns only.
+            $stmtSrc = $pdo->prepare("SELECT id, visitor_id, property_id, user_id, title, is_public FROM ai_org_conversations WHERE (id = ? OR visitor_id = ?) LIMIT 1");
             $stmtSrc->execute([$sourceConvId, $sourceConvId]);
             $srcConv = $stmtSrc->fetch(PDO::FETCH_ASSOC);
 
@@ -1591,6 +1660,33 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
         $isKbOnly = $modelConfig['kb_only'] ?? false;
         $isImageGen = $modelConfig['is_image_gen'] ?? false;
         $isCiteMode = $modelConfig['cite_mode'] ?? false;
+
+        // [P18-A5 SECURITY] Enforce mode permissions server-side.
+        // The frontend already restricts UI, but a user could craft a raw API request
+        // with code_mode=true or is_image_gen=true even if their account disallows it.
+        // admin-001 and wildcard-permission users are exempt.
+        $callerPermissions = $currentOrgUser['permissions'] ?? [];
+        if (is_string($callerPermissions)) {
+            $callerPermissions = json_decode($callerPermissions, true) ?? [];
+        }
+        $callerModes = $callerPermissions['modes'] ?? ['chat'];
+        $isAdminCaller = ($GLOBALS['current_admin_id'] ?? '') === 'admin-001'
+            || ($currentOrgUser['id'] ?? '') === 'admin-001'
+            || in_array('*', $callerModes, true)
+            || in_array($currentOrgUser['role'] ?? '', ['admin'], true);
+
+        if (!$isAdminCaller) {
+            if ($isCodeMode && !in_array('code', $callerModes, true)) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Code Mode is not enabled for your account.']);
+                exit;
+            }
+            if ($isImageGen && !in_array('image', $callerModes, true)) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Image Generation is not enabled for your account.']);
+                exit;
+            }
+        }
 
         // AI Persona prefix — injected at top of system instruction
         $personaPrefix = trim($modelConfig['persona_prefix'] ?? '');

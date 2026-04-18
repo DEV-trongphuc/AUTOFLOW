@@ -5,7 +5,8 @@ export enum CampaignStatus {
   SENDING = 'sending',
   SENT = 'sent',
   ARCHIVED = 'archived',
-  WAITING_FLOW = 'waiting_flow'
+  WAITING_FLOW = 'waiting_flow',
+  PAUSED = 'paused'  // [FIX P6-C2] Matches campaigns.status ENUM in database.sql
 }
 
 export interface ResponsiveStyle {
@@ -377,10 +378,12 @@ export interface Campaign {
     oa_config_id?: string;
     mapped_params?: Record<string, string>;
   };
+  reminderCount?: number; // [UI-R1] Count of configured reminders — returned by API list query
+  step_count?: number;    // [P41] From flow list; used in smart hint
 }
 export interface Subscriber { id: string; email: string; firstName: string; lastName: string; status: 'active' | 'unsubscribed' | 'lead' | 'customer' | 'bounced' | 'complained'; tags: string[]; joinedAt: string; dateOfBirth?: string | null; anniversaryDate?: string | null; lastActivityAt?: string | null; leadScore?: number; chatCount?: number; listIds: string[]; notes: SubscriberNote[]; stats: { emailsSent: number; emailsOpened: number; linksClicked: number; lastOpenAt?: string; lastClickAt?: string; }; customAttributes: Record<string, any>; gender?: string; phoneNumber?: string; jobTitle?: string; companyName?: string; address?: string; source?: string; activity?: any[]; verified?: boolean | number; avatar?: string; meta_psid?: string; meta_page_id?: string; }
 export interface Segment { id: string; name: string; description: string; count: number; criteria: string; autoCleanupDays?: number; notifyOnJoin?: boolean; notifySubject?: string; notifyEmail?: string; notifyCc?: string; }
-export interface FlowStep { id: string; type: 'trigger' | 'action' | 'wait' | 'condition' | 'advanced_condition' | 'split_test' | 'link_flow' | 'remove_action' | 'update_tag' | 'list_action' | 'zalo_zns' | 'zalo_cs'; label: string; iconName: string; config: Record<string, any>; nextStepId?: string; yesStepId?: string; noStepId?: string; pathAStepId?: string; pathBStepId?: string; stats?: any; }
+export interface FlowStep { id: string; type: 'trigger' | 'action' | 'wait' | 'condition' | 'advanced_condition' | 'split_test' | 'link_flow' | 'remove_action' | 'update_tag' | 'list_action' | 'zalo_zns' | 'zalo_cs' | 'meta_message'; label: string; iconName: string; config: Record<string, any>; nextStepId?: string; yesStepId?: string; noStepId?: string; pathAStepId?: string; pathBStepId?: string; stats?: any; }
 
 // Updated FlowStats to reflect total counts from DB
 export interface FlowStats {
@@ -393,6 +396,16 @@ export interface FlowStats {
   uniqueClicked: number;
   totalFailed?: number;
   totalUnsubscribed?: number;
+  // [FIX P6-C1] Per-channel stats — mirrors DB columns stat_zalo_sent, stat_zns_sent, stat_meta_sent
+  zaloSent?: number;
+  znsSent?: number;
+  metaSent?: number;
+  openRate?: number;   // stat_open_rate (float)
+  clickRate?: number;  // stat_click_rate (float)
+  // [FIX P14-H1] ZNS/Zalo link click counters — mirrors stat_total_zalo_clicked / stat_unique_zalo_clicked
+  // Added in P11-C1 schema migration; returned by flows.php formatFlow() but were missing from the interface.
+  totalZaloClicked?: number;
+  uniqueZaloClicked?: number;
 }
 
 export interface Flow {
@@ -419,6 +432,7 @@ export interface Flow {
   createdAt: string;
   archivedAt?: string;
   trigger_type?: string | null;
+  step_count?: number; // [P41] Returned by list endpoint — avoids loading full steps array for count
 }
 export interface FormField { id: string; dbField: string; label: string; required: boolean; type: 'text' | 'email' | 'tel' | 'number' | 'date'; isCustom?: boolean; customKey?: string; }
 export interface FormDefinition { id: string; name: string; targetListId: string; fields: FormField[]; stats?: { submissions: number; }; notificationEnabled?: boolean; notificationEmails?: string; notificationCcEmails?: string; notificationSubject?: string; }

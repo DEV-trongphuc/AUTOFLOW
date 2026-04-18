@@ -350,7 +350,8 @@ if (!function_exists('runIntegrationSync')) {
                             $pdo->commit();
 
                             // Update stats
-                            $pdo->exec("UPDATE integrations SET last_sync_at = NOW(), sync_status = 'idle' WHERE id = '{$integration['id']}'");
+                            // [FIX P36-I1] Replace exec() with string interpolation → prepared statement
+                            $pdo->prepare("UPDATE integrations SET last_sync_at = NOW(), sync_status = 'idle' WHERE id = ?")->execute([$integration['id']]);
                             $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM subscriber_lists WHERE list_id = ?");
                             $stmtCount->execute([$targetListId]);
                             $totalCount = $stmtCount->fetchColumn();
@@ -374,7 +375,8 @@ if (!function_exists('runIntegrationSync')) {
                         $ch = curl_init($csvUrl);
                         curl_setopt($ch, CURLOPT_FILE, $fp);
                         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-                        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+                        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P36-I1] Added hostname verification
                         curl_setopt($ch, CURLOPT_TIMEOUT, 300); // 5 min download timeout
                         curl_exec($ch);
                         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -615,7 +617,9 @@ if (!function_exists('runIntegrationSync')) {
 
                         // CRITICAL: Update status BEFORE commit to ensure it's saved even if script dies
                         // Use separate statement outside transaction
-                        $pdo->exec("UPDATE integrations SET last_sync_at = NOW(), sync_status = 'idle' WHERE id = '{$integration['id']}'");
+                        // [FIX P36-I1] Replace exec() with string interpolation → prepared statement.
+                        // This runs BEFORE commit() so it is INSIDE the transaction — ensures status is saved.
+                        $pdo->prepare("UPDATE integrations SET last_sync_at = NOW(), sync_status = 'idle' WHERE id = ?")->execute([$integration['id']]);
 
                         $pdo->commit();
 

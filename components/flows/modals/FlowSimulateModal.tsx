@@ -38,7 +38,7 @@ const getNodeStyle = (step: any) => {
         case 'zalo_zns': return {
             icon: ({ className }: { className?: string }) => (
                 <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Icon_of_Zalo.svg/2048px-Icon_of_Zalo.svg.png"
+                    src="https://automation.ideas.edu.vn/imgs/zalolog.png"
                     alt="Zalo"
                     className={className}
                 />

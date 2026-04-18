@@ -44,7 +44,8 @@ if (!file_exists($fontPath)) {
         curl_setopt($ch, CURLOPT_URL, $fontUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P36-TC] hostname verification
         $fontData = curl_exec($ch);
         curl_close($ch);
     }

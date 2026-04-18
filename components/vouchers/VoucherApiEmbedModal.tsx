@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import { Copy, Code, Terminal, Mail, CheckCircle2 } from 'lucide-react';
@@ -19,7 +19,7 @@ const VoucherApiEmbedModal: React.FC<VoucherApiEmbedModalProps> = ({ isOpen, onC
     
     const shortcode = `[VOUCHER_${campaign.id}]`;
 
-    const htmlEmbed = `<!-- AUTOFLOW VOUCHER FORM -->
+    const htmlEmbed = `<!-- DOMATION VOUCHER FORM -->
 <form action="${rootUrl}/api/voucher_claim.php" method="POST" style="max-width: 400px; margin: auto; padding: 20px; font-family: sans-serif; border: 1px solid #ccc; border-radius: 8px;">
     <h3 style="margin-top:0;">Nhận Ưu Đãi: ${campaign.name}</h3>
     <input type="hidden" name="campaign_id" value="${campaign.id}">
@@ -63,7 +63,7 @@ const VoucherApiEmbedModal: React.FC<VoucherApiEmbedModalProps> = ({ isOpen, onC
                     <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                         <Mail className="w-4 h-4 text-emerald-600" /> 1. Mã nhúng Email (Shortcode)
                     </h4>
-                    <p className="text-xs text-slate-600">Dán mã này vào bất cứ đâu trong Nội dung Email của AutoFlow, hoặc gán vào Nút Bấm. Nó sẽ tự động biến thành 1 mã Voucher thực tế khi gửi.</p>
+                    <p className="text-xs text-slate-600">Dán mã này vào bất cứ đâu trong Nội dung Email của DOMATION, hoặc gán vào Nút Bấm. Nó sẽ tự động biến thành 1 mã Voucher thực tế khi gửi.</p>
                     <div className="flex bg-orange-50/50 border border-orange-200 rounded-lg p-1 items-center">
                         <code className="text-sm font-bold text-orange-600 px-3 flex-1">{shortcode}</code>
                         <Button variant="ghost" size="sm" icon={Copy} className="text-orange-600 hover:bg-orange-100" onClick={() => copyToClipboard(shortcode)}>Copy</Button>

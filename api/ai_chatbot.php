@@ -525,9 +525,15 @@ try {
                          LEFT JOIN zalo_oa_configs zc ON zs.oa_id = zc.oa_id";
             }
 
-            // OPTIMIZED: Use SQL_CALC_FOUND_ROWS for single-pass COUNT + data fetch
-            // This eliminates the expensive separate COUNT query with full JOINs
-            $sql = "SELECT SQL_CALC_FOUND_ROWS $selectFields
+            // SUPER-OPTIMIZATION: Removed deprecated SQL_CALC_FOUND_ROWS
+            // COUNT() without fetching heavy text columns prevents massive memory filesort issues
+            $countSql = "SELECT COUNT(DISTINCT c.id) FROM ai_conversations c $joins $whereSql";
+            $stmtCount = $pdo->prepare($countSql);
+            $stmtCount->execute($params);
+            $totalItems = (int) $stmtCount->fetchColumn();
+
+            // Fetch the lightweight paginated data
+            $sql = "SELECT $selectFields
                     FROM ai_conversations c
                     $joins
                     $whereSql
@@ -539,8 +545,6 @@ try {
             $stmt->execute($params);
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Single fast query, no JOINs needed
-            $totalItems = (int) $pdo->query('SELECT FOUND_ROWS()')->fetchColumn();
             $totalPages = ceil($totalItems / $limit);
 
             echo json_encode([
@@ -2346,6 +2350,8 @@ CHÚ Ý:
         }
 
         // [FLOW-AWARENESS] Silences AI if visitor is linked to a subscriber active in a Flow
+        // DISABLED: This causes the chatbot to return empty responses (message: "") permanently if the user is in a long-running email automation flow.
+        /*
         if ($baseData['subscriber_id'] && !$isTest) {
             $stmtFlowCheck = $pdo->prepare("SELECT 1 FROM subscriber_flow_states WHERE subscriber_id = ? AND status IN ('waiting', 'processing') LIMIT 1");
             $stmtFlowCheck->execute([$baseData['subscriber_id']]);
@@ -2361,6 +2367,7 @@ CHÚ Ý:
                 exit;
             }
         }
+        */
 
         // Set Conversation ID Header for all subsequent responses (Streaming or JSON)
         if ($convId) {
@@ -2682,7 +2689,7 @@ CHÚ Ý:
         $historyLimit = (int) ($settings['history_limit'] ?? 10);
         $history = $input['history'] ?? [];
         if (empty($history) && $convId) {
-            $stmtHist = $pdo->prepare("SELECT * FROM (SELECT sender, message, created_at FROM ai_messages WHERE conversation_id = ? ORDER BY created_at DESC LIMIT ?) as sub ORDER BY created_at ASC");
+            $stmtHist = $pdo->prepare("SELECT sender, message, created_at FROM (SELECT sender, message, created_at FROM ai_messages WHERE conversation_id = ? ORDER BY created_at DESC LIMIT ?) as sub ORDER BY created_at ASC"); // [FIX P37-AC] Explicit columns, no SELECT *
             $stmtHist->bindValue(1, $convId);
             $stmtHist->bindValue(2, $historyLimit, PDO::PARAM_INT);
             $stmtHist->execute();
@@ -2848,9 +2855,9 @@ CHÚ Ý:
         // SOFTEN KB HEADER: Don't break small talk
         $systemInst = buildSystemPrompt($settings, $activityContext, $relevantContext, $isIdentified ? "ĐÃ ĐỊNH DANH" : "ẨN DANH", $currentPage);
         
-        // --- MẠNG XÃ HỘI (META/ZALO) BẮT BUỘC TRẢ LỜI DỰA THEO KNOWLEDGE BASE ---
+        // --- MẠNG XÃ HỘI (META/ZALO) BẮT BUỘC TRẢ LỜI NGẮN GỌN DỰA THEO KNOWLEDGE BASE ---
         if (strpos($visitorUuid, 'meta_') === 0 || strpos($visitorUuid, 'zalo_') === 0) {
-            $systemInst .= "\n\n[STRICT KB MODE - SOCIAL MEDIA]: LƯU Ý TỐI QUAN TRỌNG: KHÁCH HÀNG NÀY ĐẾN TỪ MẠNG XÃ HỘI. BẠN BẮT BUỘC PHẢI SỬ DỤNG VÀ CHỈ ĐƯỢC PHÉP TRẢ LỜI DỰA TRÊN KNOWLEDGE BASE (Organization Knowledge). Tuyệt đối KHÔNG sử dụng định dạng bảng (Markdown Table) trong câu trả lời vì trên nền tảng nhắn tin Zalo/Meta sẽ bị lỗi hiển thị. Nếu thông tin là dạng danh sách, hãy liệt kê từng dòng có gạch đầu dòng ngắn gọn. Tuyệt đối KHÔNG sử dụng kiến thức bên ngoài, KHÔNG tự bịa thông tin. Nếu khách hỏi kiến thức ngoài lề hoặc thông tin KHÔNG có trong tài liệu, hãy đáp khéo léo (VD: 'Dạ thông tin này em chưa được cập nhật...') và từ chối trả lời.";
+            $systemInst .= "\n\n[SOCIAL MEDIA MODE - ZALO/META]: ĐÂY LÀ TIN NHẮN MẠNG XÃ HỘI. TUÂN THỦ NGHIÊM NGẶT CÁC QUY TẮC SAU:\n\n1. ĐỘ DÀI: Trả lời TỐI ĐA 3-5 câu ngắn gọn. Không viết dài dòng.\n2. ĐỊNH DẠNG: TUYỆT ĐỐI không dùng Markdown table, không dùng **bold**, không dùng # heading. Chỉ dùng gạch đầu dòng (•) nếu cần liệt kê.\n3. NGUỒN: Chỉ trả lời dựa trên Knowledge Base. Không bịa thông tin. Nếu không có trong KB, nói: 'Dạ thông tin này em chưa có, để lại SĐT/Email để tư vấn viên hỗ trợ ạ.'\n4. GIỌNG ĐIỆU: Thân thiện, gần gũi như nhắn tin thông thường. Không cứng nhắc như văn bản chính thức.";
         }
 
         // We modify buildSystemPrompt's strictness directly (see changed function below)

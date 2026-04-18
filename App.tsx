@@ -26,6 +26,7 @@ import { seedData } from './services/mockData';
 import { NavigationProvider } from './contexts/NavigationContext';
 import { ChatPageProvider } from './contexts/ChatPageContext';
 import { KeyboardShortcutsProvider } from './components/common/KeyboardShortcutsProvider';
+import { AuthProvider } from './components/contexts/AuthContext';
 import { apiEvents } from './services/storageAdapter';
 
 // Lazy load heavy pages for code splitting
@@ -48,7 +49,9 @@ const Documentation = lazy(() => import('./pages/Documentation'));
 const PublicReport = lazy(() => import('./pages/PublicReport'));
 const LoginPage = lazy(() => import('./pages/CategoryChat/LoginPage'));
 const AdminUsers = lazy(() => import('./pages/AdminUsers'));
+const WorkspaceSettings = lazy(() => import('./pages/WorkspaceSettings'));
 const Profile = lazy(() => import('./pages/Profile'));
+const Landing = lazy(() => import('./pages/Landing'));
 
 import PremiumLoader from './components/common/PremiumLoader';
 
@@ -195,90 +198,96 @@ const App: React.FC = () => {
                 }}
             />
             <GlobalDeleteOverlay />
-            <HashRouter>
-                <KeyboardShortcutsProvider>
-                    <NavigationProvider>
-                        {/* [PERF] Outer Suspense for initial app boot only */}
-                        <Suspense fallback={<PageLoader />}>
-                            <Routes>
-                                {/* Public routes */}
-                                <Route path="/login" element={<P c={Login} />} />
-                                <Route path="/docs" element={<P c={Documentation} />} />
-                                <Route path="/chat/:chatbotId" element={<P c={ChatPage} />} />
-                                <Route
-                                    path="/ai-space/:categoryId/*"
-                                    element={
-                                        <ChatPageProvider>
-                                            <Routes>
-                                                <Route path="login" element={<P c={LoginPage} />} />
-                                                <Route index element={<P c={CategoryChatPage} />} />
-                                                <Route path=":chatbotId" element={<P c={CategoryChatPage} />} />
-                                                <Route path=":chatbotId/:sessionId" element={<P c={CategoryChatPage} />} />
-                                            </Routes>
-                                        </ChatPageProvider>
-                                    }
-                                />
-                                <Route path="/public-report/:propertyId" element={<P c={PublicReport} />} />
-                                <Route path="/public-report/:propertyId/index/:index" element={<P c={PublicReport} />} />
+            <AuthProvider>
+                <HashRouter>
+                    <KeyboardShortcutsProvider>
+                        <NavigationProvider>
+                            {/* [PERF] Outer Suspense for initial app boot only */}
+                            <Suspense fallback={<PageLoader />}>
+                                <Routes>
+                                    {/* Public routes */}
+                                    <Route path="/landing" element={<P c={Landing} />} />
+                                    <Route path="/login" element={<P c={Login} />} />
+                                    <Route path="/docs" element={<P c={Documentation} />} />
+                                    <Route path="/chat/:chatbotId" element={<P c={ChatPage} />} />
+                                    <Route
+                                        path="/ai-space/:categoryId/*"
+                                        element={
+                                            <ChatPageProvider>
+                                                <Routes>
+                                                    <Route path="login" element={<P c={LoginPage} />} />
+                                                    <Route index element={<P c={CategoryChatPage} />} />
+                                                    <Route path=":chatbotId" element={<P c={CategoryChatPage} />} />
+                                                    <Route path=":chatbotId/:sessionId" element={<P c={CategoryChatPage} />} />
+                                                </Routes>
+                                            </ChatPageProvider>
+                                        }
+                                    />
+                                    <Route path="/public-report/:propertyId" element={<P c={PublicReport} />} />
+                                    <Route path="/public-report/:propertyId/index/:index" element={<P c={PublicReport} />} />
 
-                                {/* Protected Routes — each has its own Suspense via P */}
-                                <Route path="/" element={
-                                    <ProtectedRoute><Layout><P c={Dashboard} /></Layout></ProtectedRoute>
-                                } />
-                                <Route path="/campaigns" element={
-                                    <ProtectedRoute><Layout><P c={Campaigns} /></Layout></ProtectedRoute>
-                                } />
-                                <Route path="/templates" element={
-                                    <ProtectedRoute><Layout><P c={Templates} /></Layout></ProtectedRoute>
-                                } />
-                                <Route path="/audience" element={
-                                    <ProtectedRoute><Layout><P c={Audience} /></Layout></ProtectedRoute>
-                                } />
-                                <Route path="/flows" element={
-                                    <ProtectedRoute><Layout><P c={Flows} /></Layout></ProtectedRoute>
-                                } />
-                                <Route path="/tags" element={
-                                    <ProtectedRoute><Layout><P c={Tags} /></Layout></ProtectedRoute>
-                                } />
-                                <Route path="/vouchers" element={
-                                    <ProtectedRoute><Layout><P c={Vouchers} /></Layout></ProtectedRoute>
-                                } />
-                                <Route path="/api-triggers" element={
-                                    <ProtectedRoute><Layout><P c={ApiTriggers} /></Layout></ProtectedRoute>
-                                } />
-                                <Route path="/settings" element={
-                                    <ProtectedRoute><Layout><P c={Settings} /></Layout></ProtectedRoute>
-                                } />
-                                <Route path="/zalo-settings" element={
-                                    <ProtectedRoute><Layout><P c={ZaloSettings} /></Layout></ProtectedRoute>
-                                } />
-                                <Route path="/meta-messenger" element={
-                                    <ProtectedRoute><Layout><P c={MetaMessenger} /></Layout></ProtectedRoute>
-                                } />
-                                <Route path="/web-tracking" element={
-                                    <ProtectedRoute><Layout><P c={WebTracking} /></Layout></ProtectedRoute>
-                                } />
-                                <Route path="/ai-training" element={
-                                    <ProtectedRoute>
-                                        <ChatPageProvider><Layout><P c={AITraining} /></Layout></ChatPageProvider>
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/admin/users" element={
-                                    <ProtectedRoute><Layout><P c={AdminUsers} /></Layout></ProtectedRoute>
-                                } />
-                                <Route path="/profile" element={
-                                    <ProtectedRoute><Layout><P c={Profile} /></Layout></ProtectedRoute>
-                                } />
+                                    {/* Protected Routes — each has its own Suspense via P */}
+                                    <Route path="/" element={
+                                        <ProtectedRoute><Layout><P c={Dashboard} /></Layout></ProtectedRoute>
+                                    } />
+                                    <Route path="/campaigns" element={
+                                        <ProtectedRoute><Layout><P c={Campaigns} /></Layout></ProtectedRoute>
+                                    } />
+                                    <Route path="/templates" element={
+                                        <ProtectedRoute><Layout><P c={Templates} /></Layout></ProtectedRoute>
+                                    } />
+                                    <Route path="/audience" element={
+                                        <ProtectedRoute><Layout><P c={Audience} /></Layout></ProtectedRoute>
+                                    } />
+                                    <Route path="/flows" element={
+                                        <ProtectedRoute><Layout><P c={Flows} /></Layout></ProtectedRoute>
+                                    } />
+                                    <Route path="/tags" element={
+                                        <ProtectedRoute><Layout><P c={Tags} /></Layout></ProtectedRoute>
+                                    } />
+                                    <Route path="/vouchers" element={
+                                        <ProtectedRoute><Layout><P c={Vouchers} /></Layout></ProtectedRoute>
+                                    } />
+                                    <Route path="/api-triggers" element={
+                                        <ProtectedRoute><Layout><P c={ApiTriggers} /></Layout></ProtectedRoute>
+                                    } />
+                                    <Route path="/settings" element={
+                                        <ProtectedRoute><Layout><P c={Settings} /></Layout></ProtectedRoute>
+                                    } />
+                                    <Route path="/zalo-settings" element={
+                                        <ProtectedRoute><Layout><P c={ZaloSettings} /></Layout></ProtectedRoute>
+                                    } />
+                                    <Route path="/meta-messenger" element={
+                                        <ProtectedRoute><Layout><P c={MetaMessenger} /></Layout></ProtectedRoute>
+                                    } />
+                                    <Route path="/web-tracking" element={
+                                        <ProtectedRoute><Layout><P c={WebTracking} /></Layout></ProtectedRoute>
+                                    } />
+                                    <Route path="/ai-training" element={
+                                        <ProtectedRoute>
+                                            <ChatPageProvider><Layout><P c={AITraining} /></Layout></ChatPageProvider>
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/admin/users" element={
+                                        <ProtectedRoute><Layout><P c={AdminUsers} /></Layout></ProtectedRoute>
+                                    } />
+                                    <Route path="/admin/workspace" element={
+                                        <ProtectedRoute><Layout><P c={WorkspaceSettings} /></Layout></ProtectedRoute>
+                                    } />
+                                    <Route path="/profile" element={
+                                        <ProtectedRoute><Layout><P c={Profile} /></Layout></ProtectedRoute>
+                                    } />
 
-                                {/* Fallback */}
-                                <Route path="*" element={
-                                    <ProtectedRoute><Layout><Navigate to="/campaigns" replace /></Layout></ProtectedRoute>
-                                } />
-                            </Routes>
-                        </Suspense>
-                    </NavigationProvider>
-                </KeyboardShortcutsProvider>
-            </HashRouter>
+                                    {/* Fallback */}
+                                    <Route path="*" element={
+                                        <ProtectedRoute><Layout><Navigate to="/campaigns" replace /></Layout></ProtectedRoute>
+                                    } />
+                                </Routes>
+                            </Suspense>
+                        </NavigationProvider>
+                    </KeyboardShortcutsProvider>
+                </HashRouter>
+            </AuthProvider>
         </QueryClientProvider>
     );
 };

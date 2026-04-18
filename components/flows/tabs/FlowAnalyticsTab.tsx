@@ -70,7 +70,8 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
     const triggerStep = useMemo(() => currentFlow.steps.find(s => s.type === 'trigger'), [currentFlow.steps]);
 
     // Safe access to stats with defaults
-    const stats = currentFlow.stats || { enrolled: 0, completed: 0, totalSent: 0, totalOpened: 0, uniqueOpened: 0, totalClicked: 0, totalFailed: 0, totalUnsubscribed: 0 };
+    // [FIX P14-M2] Include totalZaloClicked/uniqueZaloClicked to match updated FlowStats interface (P14-H1)
+    const stats = currentFlow.stats || { enrolled: 0, completed: 0, totalSent: 0, totalOpened: 0, uniqueOpened: 0, totalClicked: 0, totalFailed: 0, totalUnsubscribed: 0, totalZaloClicked: 0, uniqueZaloClicked: 0 };
 
     // Memoize labels for unified usage
     const flowLabels = useMemo(() => generateFlowStepLabels(currentFlow), [currentFlow]);
@@ -114,7 +115,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
             case 'zalo_zns': return {
                 icon: ({ className }: { className?: string }) => (
                     <img
-                        src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Icon_of_Zalo.svg/2048px-Icon_of_Zalo.svg.png"
+                        src="https://automation.ideas.edu.vn/imgs/zalolog.png"
                         alt="Zalo"
                         className={className}
                     />
@@ -246,7 +247,10 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                     const stepOpened = sStats.unique_opened || sStats.opened || 0;
                     displayRate = stepSent > 0 ? Math.round((stepOpened / stepSent) * 100) : 0;
                 } else if (step.type === 'zalo_zns') {
-                    const znsSent = sStats.zns_sent || 0;
+                    // [FIX P11-H3] Use zns_sent / zns_clicked from stepStats — both now mapped
+                    // correctly by flows.php (P10-H1 fixed click routing, P11-H3 separated per-step).
+                    // Previously sStats.zns_clicked was always undefined (ZNS clicks merged into generic 'clicked').
+                    const znsSent = sStats.zns_sent || sStats.sent || 0;
                     const znsClicked = sStats.zns_clicked || 0;
                     displayRate = znsSent > 0 ? Math.round((znsClicked / znsSent) * 100) : 0;
                     detailStat = `Sent: ${znsSent}${znsClicked > 0 ? ` / Clicks: ${znsClicked}` : ''}`;
@@ -801,18 +805,27 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
     const fetchStepErrors = async (stepId: string, stepLabel: string) => {
         const res = await api.get<any>(`flows?id=${flow.id}&route=step-errors&step_id=${stepId}`);
         if (res.success && res.data) {
-            setErrorModal({ isOpen: true, stepId, stepLabel, users: res.data });
+            // API returns { data: [], pagination: {} } — extract inner data array
+            const usersArray = Array.isArray(res.data)
+                ? res.data
+                : (Array.isArray(res.data.data) ? res.data.data : []);
+            setErrorModal({ isOpen: true, stepId, stepLabel, users: usersArray });
         } else {
             setErrorModal({ isOpen: true, stepId, stepLabel, users: [] });
         }
     };
 
+
     // Fetch step unsubscribes
     const fetchStepUnsubscribes = async (stepId: string, stepLabel: string) => {
         const res = await api.get<any>(`flows?id=${flow.id}&route=step-unsubscribes&step_id=${stepId}`);
         if (res.success && res.data) {
-            setUnsubscribeModal({ isOpen: true, stepId, stepLabel, users: res.data });
+            const usersArray = Array.isArray(res.data)
+                ? res.data
+                : (Array.isArray(res.data.data) ? res.data.data : []);
+            setUnsubscribeModal({ isOpen: true, stepId, stepLabel, users: usersArray });
         } else {
+
             setUnsubscribeModal({ isOpen: true, stepId, stepLabel, users: [] });
         }
     };
@@ -991,7 +1004,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                 </div>
                             </div>
                             <div className="bg-white/5 p-3 rounded-xl border border-white/5 lg:bg-transparent lg:p-0 lg:border-0">
-                                <p className="text-[8px] md:text-[9px] font-bold uppercase text-slate-400 tracking-widest mb-1.5 md:mb-2 text-center lg:text-left">Gửi lại</p>
+                                <p className="text-[8px] md:text-[9px] font-bold uppercase text-slate-400 tracking-widest mb-1.5 md:mb-2 text-center lg:text-left">Gửi lỗi</p>
                                 <div className="flex items-center justify-center lg:justify-start gap-2">
                                     <div className="p-1 px-1.5 bg-white/5 rounded-lg border border-white/5 hidden md:block">
                                         <AlertOctagon className={`w-3 h-3 ${(stats.totalFailed || 0) > 0 ? 'text-rose-400' : 'text-slate-300'}`} />
@@ -1161,7 +1174,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                                 ) : item.type !== 'wait' ? (
                                                                     <>
                                                                         <div className="flex items-center gap-1.5" title="Đang ở đây (Waiting)">
-                                                                            <div 
+                                                                            <div
                                                                                 onClick={(e) => { e.stopPropagation(); handleStepClick(item.id, item.type, 'waiting'); }}
                                                                                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-amber-50/70 border border-amber-200/40 shadow-sm transition-colors hover:bg-amber-500 hover:border-amber-500 group/pill cursor-pointer"
                                                                             >
@@ -1172,7 +1185,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                                             </div>
                                                                         </div>
                                                                         <div className="flex items-center gap-1.5" title="Đã đi qua (Processed)">
-                                                                            <div 
+                                                                            <div
                                                                                 onClick={(e) => { e.stopPropagation(); handleStepClick(item.id, item.type, 'all_touched'); }}
                                                                                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-emerald-50/70 border border-emerald-200/40 shadow-sm transition-colors hover:bg-emerald-500 hover:border-emerald-500 group/pill2 cursor-pointer"
                                                                             >
@@ -1364,7 +1377,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                 </div>
                             </div>
                         </div>
-                        <div className="flex-1 overflow-y-auto max-h-[600px] p-0 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                        <div className="flex-1 overflow-y-auto p-0 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
                             {loadingLogs ? (
                                 <div className="space-y-3 p-4">
                                     {[...Array(5)].map((_, i) => (

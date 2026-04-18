@@ -50,7 +50,10 @@ function callMetaApi($url, $method = 'GET', $data = [])
 
     curl_setopt($ch, CURLOPT_URL, $url . $params);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For local dev/debugging
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P36-MH] hostname verification
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);        // [FIX P36-MH] prevent infinite hang on slow Meta API
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
 
     if ($method === 'POST') {
         curl_setopt($ch, CURLOPT_POST, true);

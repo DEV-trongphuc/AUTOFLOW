@@ -227,8 +227,80 @@ $requiredSchema = [
     'raw_event_buffer' => [
         'columns' => ['id', 'payload', 'processed', 'created_at'],
         'indexes' => ['processed', 'created_at']
-    ]
+    ],
+    // ── AI Space tables (added P23-DB audit) ─────────────────────────────────
+    'ai_org_users' => [
+        'columns' => ['id', 'email', 'password_hash', 'role', 'status', 'admin_id', 'last_login'],
+        'indexes' => [
+            ['columns' => ['email'], 'name' => 'email', 'unique' => true],
+            'admin_id',
+        ]
+    ],
+    'ai_org_access_tokens' => [
+        'columns' => ['id', 'user_id', 'token', 'expires_at', 'is_active', 'last_used_at'],
+        'indexes' => [
+            ['columns' => ['token'], 'name' => 'token', 'unique' => true],
+            ['columns' => ['user_id', 'is_active'], 'name' => 'idx_user_active'],
+        ]
+    ],
+    'ai_org_refresh_tokens' => [
+        'columns' => ['id', 'user_id', 'token', 'expires_at', 'is_active', 'last_used_at'],
+        'indexes' => [
+            ['columns' => ['token'], 'name' => 'token', 'unique' => true],
+            ['columns' => ['user_id', 'is_active'], 'name' => 'idx_user_active'],
+        ]
+    ],
+    'ai_org_conversations' => [
+        'columns' => ['id', 'user_id', 'property_id', 'status', 'last_message_at', 'created_at'],
+        'indexes' => [
+            ['columns' => ['user_id', 'property_id', 'last_message_at'], 'name' => 'idx_user_prop_time'],
+        ]
+    ],
+    'ai_org_messages' => [
+        'columns' => ['id', 'conversation_id', 'sender', 'message', 'created_at'],
+        'indexes' => [
+            ['columns' => ['conversation_id', 'created_at'], 'name' => 'idx_conv_created'],
+        ]
+    ],
+    'ai_org_user_categories' => [
+        'columns' => ['id', 'user_id', 'category_id'],
+        'indexes' => [
+            ['columns' => ['user_id', 'category_id'], 'name' => 'idx_user_cat', 'unique' => true],
+        ]
+    ],
+    'ai_chatbot_categories' => [
+        'columns' => ['id', 'name', 'slug', 'admin_id', 'gemini_api_key'],
+        'indexes' => ['admin_id']
+    ],
+    'ai_chatbot_settings' => [
+        'columns' => ['property_id', 'is_enabled', 'bot_name', 'gemini_api_key', 'model_id'],
+        'indexes' => [
+            ['columns' => ['property_id', 'is_enabled'], 'name' => 'idx_acs_property_enabled'],
+        ]
+    ],
+    'ai_training_docs' => [
+        'columns' => ['id', 'property_id', 'chatbot_id', 'name', 'status', 'is_active', 'updated_at'],
+        'indexes' => [
+            'chatbot_id',
+            'status',
+            ['columns' => ['property_id', 'status', 'updated_at'], 'name' => 'idx_prop_status_updated'],
+        ]
+    ],
+    'ai_training_chunks' => [
+        'columns' => ['id', 'doc_id', 'property_id', 'content', 'token_count'],
+        'indexes' => [
+            ['columns' => ['property_id', 'doc_id'], 'name' => 'idx_prop_doc'],
+        ]
+    ],
+    'ai_pdf_chunk_results' => [
+        'columns' => ['id', 'doc_id', 'chunk_index', 'status', 'error_message'],
+        'indexes' => [
+            ['columns' => ['doc_id', 'chunk_index'], 'name' => 'uq_doc_chunk', 'unique' => true],
+            ['columns' => ['doc_id', 'status'], 'name' => 'idx_doc_status'],
+        ]
+    ],
 ];
+
 
 // 2. Perform Checks
 try {
@@ -317,7 +389,7 @@ try {
                                 $pdo->exec("ALTER TABLE zalo_automation_scenarios ADD COLUMN priority_override TINYINT(1) DEFAULT 0");
                             } elseif ($table === 'web_sessions' && $col === 'duration_seconds') {
                                 $pdo->exec("ALTER TABLE web_sessions ADD COLUMN duration_seconds INT DEFAULT 0");
-                            } elseif ($table === 'web_sessions' && $row['is_bounce']) {
+                            } elseif ($table === 'web_sessions' && $col === 'is_bounce') {
                                 $pdo->exec("ALTER TABLE web_sessions ADD COLUMN is_bounce TINYINT(1) DEFAULT 1");
                             } elseif ($table === 'web_page_views' && $col === 'time_on_page') {
                                 $pdo->exec("ALTER TABLE web_page_views ADD COLUMN time_on_page INT DEFAULT 0");

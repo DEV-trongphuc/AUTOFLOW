@@ -17,7 +17,13 @@ require_once 'flow_helpers.php';
 require_once 'trigger_helper.php';
 
 date_default_timezone_set('Asia/Ho_Chi_Minh');
-$pdo->exec("SET NAMES utf8mb4");
+// [FIX P0-4] Added COLLATE to match db_connect.php setting (utf8mb4_unicode_ci).
+// Without COLLATE, MySQL may use the server default collation in this session,
+// causing collation mismatch warnings and potential comparison failures on text columns.
+$pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+// [PERF FIX] Fail-fast on row lock contention (5s vs MySQL default 50s).
+// Prevents campaign/flow workers from queuing behind each other for ~50s per lock.
+$pdo->exec("SET SESSION innodb_lock_wait_timeout = 5");
 header('Content-Type: application/json; charset=utf-8');
 
 if (!function_exists('traceLog')) {
@@ -40,7 +46,10 @@ if (!function_exists('runWorkerFlow')) {
 
         // Shared objects
         $apiUrl = API_BASE_URL;
-        $stmt = $pdo->query("SELECT * FROM system_settings");
+        // [FIX P37-WF] Replaced SELECT * (returned ALL settings incl. passwords, API keys, large blobs)
+        // with targeted column fetch. Only smtp_user is actually used below.
+        $stmt = $pdo->prepare("SELECT `key`, `value` FROM system_settings WHERE `key` IN ('smtp_user','smtp_host')");
+        $stmt->execute();
         $settings = [];
         foreach ($stmt->fetchAll() as $row) {
             $settings[$row['key']] = $row['value'];
@@ -75,7 +84,35 @@ if (!function_exists('runWorkerFlow')) {
                                  WHERE (q.id = ? OR (q.id > 0 AND ? = '0' AND q.subscriber_id = ? AND q.flow_id = ?))
                                  AND q.status IN ('waiting', 'processing') AND f.status = 'active'
                                  LIMIT 1 FOR UPDATE");
+            // [FIX P10-H3] Priority path: use SKIP LOCKED on MySQL >= 8.0 so a racing second
+            // priority worker exits cleanly instead of blocking then re-reading the same item.
+            // The double-check lock at L210 remains as defense-in-depth for MySQL 5.7 (FOR UPDATE).
+            $mysqlVersionFlow = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
+            if (version_compare($mysqlVersionFlow, '8.0.0', '>=')) {
+                // Re-prepare with SKIP LOCKED for MySQL 8+
+                $stmtPriority = $pdo->prepare(
+                    str_replace('LIMIT 1 FOR UPDATE', 'LIMIT 1 FOR UPDATE SKIP LOCKED',
+                        "SELECT q.id as queue_id, q.subscriber_id, q.flow_id, q.step_id, q.status, q.scheduled_at, q.updated_at, q.created_at as queue_created_at, q.last_step_at, 
+                         f.steps as flow_steps, f.config as flow_config, f.name as flow_name, 
+                         s.email as sub_email, s.first_name, s.last_name, s.company_name, s.phone_number, s.job_title,
+                         s.status as sub_status, s.tags as sub_tags, s.id as sub_id, s.date_of_birth, s.anniversary_date, s.joined_at,
+                         s.city, s.country, s.gender, s.last_os, s.last_device, s.last_browser, s.last_city,
+                         s.stats_opened, s.stats_clicked, s.last_open_at, s.last_click_at, s.timezone, s.is_zalo_follower,
+                         s.custom_attributes
+                         FROM subscriber_flow_states q 
+                         JOIN flows f ON q.flow_id = f.id 
+                         JOIN subscribers s ON q.subscriber_id = s.id 
+                         WHERE (q.id = ? OR (q.id > 0 AND ? = '0' AND q.subscriber_id = ? AND q.flow_id = ?))
+                         AND q.status IN ('waiting', 'processing') AND f.status = 'active'
+                         LIMIT 1 FOR UPDATE")
+                );
+            }
             try {
+                // [FIX V3-M3] Wrap priority fetch in a transaction so the FOR UPDATE lock is held
+                // until the status is committed to 'processing'. Without this, MySQL autocommit releases
+                // the row lock immediately after SELECT, creating a race window where two simultaneous
+                // priority workers could both pick up the same item \u2014 causing duplicate sends.
+                $pdo->beginTransaction();
                 $stmtPriority->execute([$priorityQueueId, $priorityQueueId, $prioritySubId, $priorityFlowId]);
                 $priorityItem = $stmtPriority->fetch();
                 if ($priorityItem) {
@@ -83,7 +120,9 @@ if (!function_exists('runWorkerFlow')) {
                     $items[] = $priorityItem;
                     $logs[] = "[Flow-Priority] Enqueued priority item: Sub {$prioritySubId} Flow {$priorityFlowId}";
                 }
+                $pdo->commit();
             } catch (Throwable $e) {
+                if ($pdo->inTransaction()) $pdo->rollBack();
                 $logs[] = "[ERROR] Priority fetch failed: " . $e->getMessage();
             }
         }
@@ -104,7 +143,7 @@ if (!function_exists('runWorkerFlow')) {
                         WHERE ((q.status = 'waiting' AND q.scheduled_at <= ?) OR 
                               (q.status = 'processing' AND q.updated_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE) AND q.scheduled_at <= NOW()))
                         AND f.status = 'active'
-                        ORDER BY q.scheduled_at ASC, q.updated_at ASC LIMIT {$BATCH_SIZE}";
+                        ORDER BY q.scheduled_at ASC, q.updated_at ASC, q.id ASC LIMIT {$BATCH_SIZE}";
 
                 $mysqlVersion = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
                 if (version_compare($mysqlVersion, '8.0.0', '>=')) {
@@ -141,22 +180,35 @@ if (!function_exists('runWorkerFlow')) {
         $flowCache = [];
         $subscriberFreqCache = []; // Optimization: Cache frequency check per sub/flow
 
-        // [OPTIMIZATION] Batch Fetch Frequency Counts for the entire batch
+        // [OPTIMIZATION] Batch Fetch Frequency Counts for the entire batch per channel
         if (!empty($items)) {
             $subIds = array_unique(array_column($items, 'subscriber_id'));
             if (!empty($subIds)) {
                 $todayStart = date('Y-m-d 00:00:00');
                 $placeholders = implode(',', array_fill(0, count($subIds), '?'));
                 $stmtCapBatch = $pdo->prepare("
-            SELECT subscriber_id, COUNT(*) as count 
-            FROM subscriber_activity 
-            WHERE subscriber_id IN ($placeholders) 
-            AND type IN ('receive_email', 'zalo_sent', 'meta_sent', 'zns_sent') 
-            AND created_at >= ?
-            GROUP BY subscriber_id
-        ");
+                    SELECT subscriber_id, type, COUNT(*) as count 
+                    FROM subscriber_activity 
+                    WHERE subscriber_id IN ($placeholders) 
+                    AND type IN ('receive_email', 'zalo_sent', 'meta_sent', 'zns_sent') 
+                    AND created_at >= ?
+                    GROUP BY subscriber_id, type
+                ");
                 $stmtCapBatch->execute(array_merge($subIds, [$todayStart]));
-                $subscriberFreqCache = $stmtCapBatch->fetchAll(PDO::FETCH_KEY_PAIR);
+                $freqRows = $stmtCapBatch->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($freqRows as $r) {
+                    $sId = $r['subscriber_id']; // [BUG FIX] Keep as raw string UUID — (int) cast converts UUIDs to 0, making all subscribers share cache key 0
+                    if (!isset($subscriberFreqCache[$sId])) {
+                        $subscriberFreqCache[$sId] = ['email' => 0, 'zalo' => 0, 'meta' => 0];
+                    }
+                    if ($r['type'] === 'receive_email') {
+                        $subscriberFreqCache[$sId]['email'] += $r['count'];
+                    } elseif (in_array($r['type'], ['zalo_sent', 'zns_sent'])) {
+                        $subscriberFreqCache[$sId]['zalo'] += $r['count'];
+                    } elseif ($r['type'] === 'meta_sent') {
+                        $subscriberFreqCache[$sId]['meta'] += $r['count'];
+                    }
+                }
             }
         }
 
@@ -222,6 +274,11 @@ if (!function_exists('runWorkerFlow')) {
 
                 $flowSteps = $flowCache[$flowId]['steps'];
                 $fConfig = $flowCache[$flowId]['config'];
+                // [PERF #10] Build a hash map keyed by step id for O(1) step lookups.
+                // Without this, every step iteration in the chain does a O(n) foreach.
+                // With MAX_STEPS=50 and a 20-step flow: 50×20=1000 iterations per subscriber.
+                // With $stepIndex: 20 iterations (one-time build) + O(1) per lookup = ~20 total.
+                $stepIndex = [];
 
                 // [FIX #1] Guard: nếu flow_steps không hợp lệ → fail item thay vì crash toàn worker
                 if (!is_array($flowSteps) || empty($flowSteps)) {
@@ -229,6 +286,12 @@ if (!function_exists('runWorkerFlow')) {
                     $logs[] = "[ERROR] Flow {$flowId} has invalid steps JSON. Item {$queueId} marked failed.";
                     $pdo->commit();
                     continue;
+                }
+                // [PERF #10] Populate $stepIndex now that $flowSteps is confirmed valid.
+                foreach ($flowSteps as $_si) {
+                    if (!empty($_si['id'])) {
+                        $stepIndex[trim((string) $_si['id'])] = $_si;
+                    }
                 }
 
                 // [EXIT CHECK] Specific exit conditions for the flow
@@ -333,14 +396,8 @@ if (!function_exists('runWorkerFlow')) {
 
                 while ($shouldContinueChain && $stepsProcessedInRun < $MAX_STEPS) {
                     $stepsProcessedInRun++;
-                    $currentStep = null;
-                    foreach ($flowSteps as $s) {
-                        // [FIX #2] Cast sang string trước trim() — PHP 8.1+ throw Deprecated nếu value là null
-                        if (trim((string) ($s['id'] ?? '')) === trim((string) $currentStepId)) {
-                            $currentStep = $s;
-                            break;
-                        }
-                    }
+                    // [PERF #10] O(1) step lookup using prebuilt $stepIndex map.
+                    $currentStep = $stepIndex[trim((string) $currentStepId)] ?? null;
 
                     if (!$currentStep) {
                         $pdo->prepare("UPDATE subscriber_flow_states SET status = 'failed', last_error = 'Step not found', updated_at = NOW() WHERE id = ?")->execute([$queueId]);
@@ -366,11 +423,13 @@ if (!function_exists('runWorkerFlow')) {
                             $startTime = '00:00';
                             $endTime = '23:59';
                         }
-                        
+
                         $isZaloStep = in_array($chkStepType, ['zalo_zns', 'zalo_cs']);
                         if ($isZaloStep) {
-                            if ($startTime < '06:00') $startTime = '06:00';
-                            if ($endTime > '21:59' || $endTime < '06:00') $endTime = '21:59';
+                            if ($startTime < '06:00')
+                                $startTime = '06:00';
+                            if ($endTime > '21:59' || $endTime < '06:00')
+                                $endTime = '21:59';
                         }
 
                         $currentDayOfWeek = (int) date('w');
@@ -388,7 +447,7 @@ if (!function_exists('runWorkerFlow')) {
                                 $nextSendAt = date('Y-m-d') . ' ' . $startTime . ':00';
                             } else {
                                 $dtBase = new DateTime('now', new DateTimeZone('Asia/Ho_Chi_Minh'));
-                                $dtBase->setTime((int)substr($startTime, 0, 2), (int)substr($startTime, 3, 2), 0);
+                                $dtBase->setTime((int) substr($startTime, 0, 2), (int) substr($startTime, 3, 2), 0);
                                 $nextSendAt = $dtBase->format('Y-m-d H:i:s');
                                 for ($i = 1; $i <= 7; $i++) {
                                     $dtCheck = clone $dtBase;
@@ -409,10 +468,10 @@ if (!function_exists('runWorkerFlow')) {
                     }
 
                     // [OPTIMIZATION] Frequency Cap check - Uses batch-fetched data
-                    $cacheKey = (int) $subscriberId;
+                    $cacheKey = $subscriberId; // [BUG FIX] Keep as raw string UUID — must match the string key used when building $subscriberFreqCache above
                     // [FIX] PHP 8: initialize key before ++ to prevent Undefined array key Warning
                     if (!isset($subscriberFreqCache[$cacheKey])) {
-                        $subscriberFreqCache[$cacheKey] = 0;
+                        $subscriberFreqCache[$cacheKey] = ['email' => 0, 'zalo' => 0, 'meta' => 0];
                     }
                     $todaySent = $subscriberFreqCache[$cacheKey];
 
@@ -449,9 +508,17 @@ if (!function_exists('runWorkerFlow')) {
                     if ($execResult['status'] === 'completed' && $execResult['next_step_id']) {
                         $currentStepId = $execResult['next_step_id'];
                         if ($execResult['is_instant']) {
-                            // Update freq cache locally if a message was sent
+                            // [FIX] Only update freq cache if a message was ACTUALLY sent (not on fail).
+                            // Previously: any Zalo/email step (including failures) incremented the cap,
+                            // causing future sends to be incorrectly throttled.
                             if (!empty($execResult['message_sent'])) {
-                                $subscriberFreqCache[$cacheKey]++;
+                                if (strpos(strtolower($currentStep['type']), 'zalo') !== false) {
+                                    $subscriberFreqCache[$cacheKey]['zalo']++;
+                                } elseif (strtolower($currentStep['type']) === 'meta_message') {
+                                    $subscriberFreqCache[$cacheKey]['meta']++;
+                                } elseif (strtolower($currentStep['type']) === 'action') {
+                                    $subscriberFreqCache[$cacheKey]['email']++;
+                                }
                             }
                             // [BUG-FIX] CRASH RECOVERY: Persist step_id progress to DB BEFORE commit.
                             // Previously: commit() without updating step_id → DB still shows the old wait step.
@@ -460,25 +527,17 @@ if (!function_exists('runWorkerFlow')) {
                             // Fix: always write step_id + updated_at so crash recovery resumes correctly.
                             // [PERF] Also persist step_type — used by tracking_processor to avoid
                             // json_decode on every open/click event (eliminates full flow.steps scan).
-                            $nextStepType = null;
-                            foreach ($flowSteps as $_ns) {
-                                if (trim((string)($_ns['id'] ?? '')) === trim((string)$currentStepId)) {
-                                    $nextStepType = $_ns['type'] ?? null;
-                                    break;
-                                }
-                            }
+                            // [PERF #10] $stepIndex is built once per flow item (O(n) total),
+                            // making each next-step type lookup O(1) instead of O(n).
+                            // When a flow has 20 steps and MAX_STEPS=30, old code did up to 600 iterations;
+                            // now it's always exactly 1 array access.
+                            $nextStepType = $stepIndex[$currentStepId]['type'] ?? null;
                             $pdo->prepare("UPDATE subscriber_flow_states SET step_id = ?, step_type = ?, last_step_at = NOW(), updated_at = NOW() WHERE id = ?")->execute([$currentStepId, $nextStepType, $queueId]);
                             $pdo->commit();
                             $pdo->beginTransaction();
                             continue;
                         } else {
-                            $waitStepType = null;
-                            foreach ($flowSteps as $_ws) {
-                                if (trim((string)($_ws['id'] ?? '')) === trim((string)$currentStepId)) {
-                                    $waitStepType = $_ws['type'] ?? null;
-                                    break;
-                                }
-                            }
+                            $waitStepType = $stepIndex[$currentStepId]['type'] ?? null;
                             $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = ?, step_id = ?, step_type = ?, updated_at = NOW(), last_step_at = NOW() WHERE id = ?")->execute([$execResult['scheduled_at'], $currentStepId, $waitStepType, $queueId]);
                             $shouldContinueChain = false;
                         }
@@ -510,15 +569,37 @@ if (!function_exists('runWorkerFlow')) {
 
                 $pdo->commit();
             } catch (Throwable $e) {
+                if ($pdo->inTransaction()) $pdo->rollBack();
 
-                if ($pdo->inTransaction())
-                    $pdo->rollBack();
-                $logs[] = "[ERROR] Subscriber chain failed: " . $e->getMessage();
+                // [FIX] After rollback, explicitly reset status to 'waiting' with +5min retry.
+                // Previously this left status='processing' indefinitely, relying on the implicit
+                // 5-minute stale recovery — which works but: (a) provides no error trace,
+                // (b) means the item silently retries with no visibility into what went wrong.
+                // Now: write last_error for traceability + schedule explicit clean retry.
+                $retryAt = date('Y-m-d H:i:s', time() + 300); // 5 minutes
+                try {
+                    $pdo->prepare(
+                        "UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = ?, last_error = ?, updated_at = NOW() WHERE id = ?"
+                    )->execute([$retryAt, substr($e->getMessage(), 0, 500), $queueId]);
+                } catch (Throwable $resetEx) {
+                    // last_error column may not exist on older schema — fall back to status-only reset
+                    try {
+                        $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = ?, updated_at = NOW() WHERE id = ?")->execute([$retryAt, $queueId]);
+                    } catch (Throwable $ignored) {}
+                }
+
+                $logs[] = "[ERROR] Subscriber {$subscriberId} chain failed (retry at {$retryAt}): " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine();
+                error_log("[worker_flow] Queue {$queueId} sub {$subscriberId} failed: " . $e->getMessage());
             }
+
         }
 
         if (function_exists('flushActivityLogBuffer')) {
             flushActivityLogBuffer($pdo);
+        }
+        // [PHASE 8] Flush FlowExecutor RAM Buffer before exit context
+        if (isset($executor) && method_exists($executor, 'flushStatsBuffer')) {
+            $executor->flushStatsBuffer();
         }
         $mailer->closeConnection();
         // [FIX] LOCK_EX prevents log corruption when multiple worker processes write concurrently

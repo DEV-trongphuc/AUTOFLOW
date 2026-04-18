@@ -9,8 +9,11 @@ import Checkbox from '../common/Checkbox';
 import Select from '../common/Select';
 import Input from '../common/Input';
 import toast from 'react-hot-toast';
-import { CampaignStatus, Flow } from '../../types'; // Assuming types exist
+import { CampaignStatus, Flow } from '../../types';
 import { api } from '../../services/storageAdapter';
+import ConfirmModal from '../common/ConfirmModal';
+import { MultiFileUploadModal } from './MultiFileUploadModal';
+import FileLibraryModal from '../common/FileLibraryModal';
 
 
 
@@ -18,6 +21,7 @@ interface Attachment {
     id: string;
     name: string;
     url: string;
+    path: string; // Required for backend SMTP Mailer to resolve physical file
     size: number;
     type: string;
     logic: 'all' | 'match_email';
@@ -171,38 +175,33 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
 
         setIsUploading(true);
         const newAttachments: Attachment[] = [];
-        const apiUrl = 'https://automation.ideas.edu.vn/mail_api';
-        const uploadUrl = apiUrl.replace(/\/$/, '') + '/upload.php';
 
         // Process sequentially to maintain order and manage errors
         for (const file of files) {
             const formData = new FormData();
-            // Fix: 'file' is now typed as File which extends Blob
             formData.append('file', file);
 
             try {
-                const response = await fetch(uploadUrl, {
-                    method: 'POST',
-                    body: formData
-                });
-                // Fix: Cast response.json() to any to bypass 'unknown' type check for property access
-                const result = (await response.json()) as any;
+                // Use the authenticated API wrapper
+                const result = await api.post<any>('upload', formData);
 
-                if (result.success) {
+                if (result.success && result.data) {
                     newAttachments.push({
                         id: crypto.randomUUID(),
                         name: result.data.name,
                         url: result.data.url,
+                        path: result.data.path,
                         size: result.data.size,
                         type: result.data.type,
                         logic: isPersonalizedMode ? 'match_email' : 'all'
                     });
                 } else {
-                    // Fix: result is now cast to any
                     console.error(`Upload failed for ${file.name}: ${result.message}`);
+                    toast.error(`Upload lỗi: ${result.message || 'Không thể upload file này.'}`);
                 }
             } catch (error) {
                 console.error(`Upload error for ${file.name}`, error);
+                toast.error(`Lỗi hệ thống khi tải lên ${file.name}`);
             }
         }
 
@@ -216,8 +215,25 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const removeAttachment = (id: string) => {
-        setAttachments(attachments.filter(a => a.id !== id));
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+    const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+    const [attachmentToDelete, setAttachmentToDelete] = useState<string | null>(null);
+
+    const executeRemoveAttachment = async () => {
+        if (!attachmentToDelete) return;
+        const id = attachmentToDelete;
+        setAttachmentToDelete(null);
+
+        const attachToRemove = attachments.find(a => a.id === id);
+        setAttachments(prev => prev.filter(a => a.id !== id));
+
+        if (attachToRemove && attachToRemove.path) {
+            try {
+                await api.post('delete_attachment', { path: attachToRemove.path });
+            } catch (err) {
+                console.error("Failed to auto-remove attachment from host:", err);
+            }
+        }
     };
 
     const [estimatedReach, setEstimatedReach] = useState<number>(0);
@@ -480,6 +496,36 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                                     );
                                 })()}
                             </div>
+
+                            {/* [BUG-13 FIX] SES Send-Time Estimate — show when email audience > 1,000 */}
+                            {!isZns && estimatedReach > 1000 && (() => {
+                                // SES rate: 10 emails/s shared total (sesAcquireRateSlot global limiter)
+                                const SES_RATE = 10;
+                                const totalSeconds = Math.ceil(estimatedReach / SES_RATE);
+                                const minutes = Math.floor(totalSeconds / 60);
+                                const seconds = totalSeconds % 60;
+                                const timeLabel = minutes > 0
+                                    ? `${minutes} phút${seconds > 0 ? ` ${seconds} giây` : ''}`
+                                    : `${seconds} giây`;
+                                return (
+                                    <div className="mt-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 animate-in slide-in-from-bottom-2 duration-300">
+                                        <div className="p-1.5 bg-amber-400 text-white rounded-lg shrink-0 mt-0.5">
+                                            <Clock className="w-3.5 h-3.5" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Thời gian gửi ước tính</p>
+                                            <p className="text-sm font-black text-amber-900 mt-0.5">
+                                                ~{timeLabel}
+                                                <span className="text-[10px] font-bold text-amber-600 ml-2">({estimatedReach.toLocaleString()} emails × 10/s)</span>
+                                            </p>
+                                            <p className="text-[10px] text-amber-700 font-medium mt-1">
+                                                Hệ thống giới hạn 10 email/giây để đảm bảo ổn định SES. Không cần giữ trình duyệt mở — worker chạy ngầm độc lập.
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
                         </div>
                     </div>
                 </div>
@@ -612,29 +658,100 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                                 </div>
                             </div>
 
-                            <div className="space-y-4">
-                                <div onClick={() => !isAlreadySent && fileInputRef.current?.click()} className={`cursor-pointer w-full py-4 border-2 border-dashed rounded-2xl flex items-center justify-center gap-2 text-slate-400 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50/30 transition-all ${isAlreadySent ? 'opacity-50 pointer-events-none' : ''}`}>
-                                    {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
-                                    <span className="text-xs font-bold uppercase">{isPersonalizedMode ? 'Upload Nhiều File (Có kèm Email)' : 'Upload File Gửi Chung (Multi)'}</span>
-                                    <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileUpload} disabled={isUploading || isAlreadySent} />
+                            {isPersonalizedMode && (
+                                <div className="mb-6 p-5 rounded-[24px] bg-slate-50 border border-slate-200 shadow-sm animate-in slide-in-from-top-2">
+                                    <h5 className="text-[11px] font-black uppercase text-slate-800 tracking-widest mb-4 flex items-center gap-2">
+                                        <Info className="w-4 h-4 text-blue-500" />
+                                        Quy trình gửi tệp cá nhân hóa
+                                    </h5>
+                                    <div className="space-y-5">
+                                        <div className="flex gap-4 items-start">
+                                            <div className="w-6 h-6 shrink-0 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[10px] font-black shadow-sm">1</div>
+                                            <div>
+                                                <p className="text-xs font-bold text-slate-800 mb-1.5">Quy tắc đặt tên file nghiêm ngặt</p>
+                                                <p className="text-[11px] text-slate-600 leading-relaxed">
+                                                    Tên của mỗi tệp tin bắt buộc phải chứa dấu gạch dưới <code>_</code> nằm liền trước địa chỉ email của Khách hàng mục tiêu. Toàn bộ phần phía trước dấu gạch dưới là tùy chọn.
+                                                </p>
+                                                <div className="mt-2 bg-white px-3 py-2.5 rounded-xl border border-slate-200 text-[10px] shadow-sm font-mono flex flex-col gap-1.5">
+                                                    <div className="flex items-center gap-2"><span className="text-emerald-600 font-bold w-12 shrink-0">✅ ĐÚNG:</span> <span className="text-slate-500">BangDiem<span className="text-blue-600 font-black bg-blue-50 px-1 py-0.5 rounded">_nguyenvana@gmail.com</span>.pdf</span></div>
+                                                    <div className="flex items-center gap-2"><span className="text-rose-600 font-bold w-12 shrink-0">❌ SAI:</span> <span className="text-slate-400">BangDiem_nguyenvana.pdf (Thiếu đuôi email hợp lệ)</span></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-4 items-start">
+                                            <div className="w-6 h-6 shrink-0 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] font-black shadow-sm">2</div>
+                                            <div>
+                                                <p className="text-xs font-bold text-slate-800 mb-1.5">Hệ thống Mapping tự động</p>
+                                                <p className="text-[11px] text-slate-600 leading-relaxed">
+                                                    Khi tải lên danh sách multi-file ở nút bên dưới, tệp sẽ được tải vào bộ nhớ đệm. Trong quá trình gửi Email thực tế, DOMATION AI sẽ tự động phân tích và <strong>chỉ đính kèm tệp cho đúng người có email khớp.</strong> Bảo mật dữ liệu tuyệt đối. 
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-4 items-start">
+                                            <div className="w-6 h-6 shrink-0 rounded-full bg-orange-100 text-[#ca7900] flex items-center justify-center text-[10px] font-black shadow-sm">3</div>
+                                            <div>
+                                                <p className="text-xs font-bold text-slate-800 mb-1.5">Khách hàng nhận tệp đã làm sạch tên</p>
+                                                <p className="text-[11px] text-slate-600 leading-relaxed">
+                                                    Trước khi gửi đến tay khách hàng, cấu trúc <code>_email@domain.com</code> sẽ tự động bị cắt đi. Khách hàng chỉ nhận được tệp File sạch sẽ với đúng tên ban đầu (VD: <strong>BangDiem.pdf</strong> thay vì BangDiem_nguyenvana@gmail.com.pdf).
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className={`space-y-3 ${isAlreadySent ? 'opacity-50 pointer-events-none' : ''}`}>
+                                {/* Row: Upload + Library */}
+                                <div className="flex gap-2">
+                                    {/* Upload new */}
+                                    <div
+                                        onClick={() => {
+                                            if (isAlreadySent) return;
+                                            if (isPersonalizedMode) setIsUploadModalOpen(true);
+                                            else fileInputRef.current?.click();
+                                        }}
+                                        className="flex-1 cursor-pointer py-3.5 border-2 border-dashed rounded-2xl flex items-center justify-center gap-2 text-slate-400 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50/30 transition-all"
+                                    >
+                                        {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                                        <span className="text-[10px] font-bold uppercase">
+                                            {isPersonalizedMode ? 'Upload (Email)' : 'Upload File'}
+                                        </span>
+                                        {!isPersonalizedMode && <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileUpload} disabled={isUploading || isAlreadySent} />}
+                                    </div>
+
+                                    {/* Pick from library */}
+                                    <button
+                                        type="button"
+                                        onClick={() => !isAlreadySent && setIsLibraryOpen(true)}
+                                        className="px-4 py-3.5 border-2 border-dashed border-violet-200 rounded-2xl flex items-center gap-1.5 text-violet-500 hover:text-violet-700 hover:border-violet-400 hover:bg-violet-50/40 transition-all text-[10px] font-bold uppercase shrink-0"
+                                        title="Chọn file từ thư viện đã upload"
+                                    >
+                                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M3 7h18M3 12h18M3 17h18" strokeLinecap="round"/>
+                                            <rect x="3" y="3" width="7" height="7" rx="1"/>
+                                        </svg>
+                                        Thư viện
+                                    </button>
                                 </div>
 
                                 {attachments.length > 0 ? attachments.map((att) => (
                                     <div key={att.id} className={`border rounded-2xl p-3 animate-in fade-in slide-in-from-bottom-2 transition-colors ${att.logic !== 'all' ? 'bg-blue-50/30 border-blue-100' : 'bg-white border-slate-100'}`}>
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="flex items-center gap-3 overflow-hidden">
-                                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border ${att.logic !== 'all' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
-                                                    <FileIcon className="w-5 h-5" />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-xs font-bold text-slate-700 truncate" title={att.name}>{att.name}</p>
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="text-[9px] text-slate-400 font-mono">{(att.size / 1024).toFixed(1)} KB</p>
-                                                        {att.logic !== 'all' && <span className="text-[8px] font-black text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded uppercase">Personalized</span>}
+                                                <a href={att.url || '#'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group flex-1 min-w-0" title="Bấm để xem tệp">
+                                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border transition-colors ${att.logic !== 'all' ? 'bg-blue-100 text-blue-600 border-blue-200 group-hover:bg-blue-500 group-hover:text-white' : 'bg-slate-50 text-slate-400 border-slate-100 group-hover:bg-blue-500 group-hover:text-white group-hover:border-blue-500'}`}>
+                                                        <FileIcon className="w-5 h-5" />
                                                     </div>
-                                                </div>
+                                                    <div className="min-w-0 cursor-pointer">
+                                                        <p className="text-xs font-bold text-slate-700 truncate group-hover:text-blue-600 transition-colors" title={att.name}>{att.name}</p>
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="text-[9px] text-slate-400 font-mono">{(att.size / 1024).toFixed(1)} KB</p>
+                                                            {att.logic !== 'all' && <span className="text-[8px] font-black text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded uppercase">Personalized</span>}
+                                                        </div>
+                                                    </div>
+                                                </a>
                                             </div>
-                                            <button onClick={() => !isAlreadySent && removeAttachment(att.id)} className="text-slate-300 hover:text-rose-500 p-1" disabled={isAlreadySent}><X className="w-4 h-4" /></button>
+                                            <button onClick={() => !isAlreadySent && setAttachmentToDelete(att.id)} className="text-slate-300 hover:text-rose-500 p-1" disabled={isAlreadySent}><X className="w-4 h-4" /></button>
                                         </div>
 
                                         {att.logic === 'match_email' && (
@@ -825,12 +942,51 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                                 srcDoc={contentToRender || ''}
                                 className="w-full h-full border-none bg-white"
                                 title="Email Preview"
-                                sandbox="allow-same-origin"
+                                sandbox="allow-same-origin allow-scripts"
                             />
                         )}
                     </div>
                 </div>
             </div>
+            {/* Confirm Modal */}
+            <ConfirmModal
+                isOpen={!!attachmentToDelete}
+                onClose={() => setAttachmentToDelete(null)}
+                onConfirm={executeRemoveAttachment}
+                title="Xóa tệp đính kèm?"
+                message="Bạn có chắc chắn muốn xóa tệp này vĩnh viễn khỏi server không? Hành động này không thể hoàn tác."
+                variant="danger"
+                cancelText="Hủy"
+                confirmText="Xóa vĩnh viễn"
+            />
+            {/* MultiFile Upload Modal */}
+            <MultiFileUploadModal
+                isOpen={isUploadModalOpen}
+                onClose={() => setIsUploadModalOpen(false)}
+                onUploadComplete={(newAttachments) => {
+                    setAttachments(prev => [...prev, ...newAttachments]);
+                    setIsUploadModalOpen(false);
+                }}
+                targetConfig={formData.target}
+            />
+
+            {/* File Library Modal */}
+            <FileLibraryModal
+                isOpen={isLibraryOpen}
+                onClose={() => setIsLibraryOpen(false)}
+                onSelect={(picked) => {
+                    const newAtts = picked.map(f => ({
+                        id: crypto.randomUUID(),
+                        name: f.name,
+                        url: f.url,
+                        path: f.path,
+                        size: f.size,
+                        type: f.type,
+                        logic: (isPersonalizedMode ? 'match_email' : 'all') as 'all' | 'match_email',
+                    }));
+                    setAttachments(prev => [...prev, ...newAtts]);
+                }}
+            />
         </div>
     );
 };

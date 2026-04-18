@@ -188,7 +188,7 @@ const Tags: React.FC = () => {
                         </h4>
                         <ul className="list-disc pl-4 space-y-1.5 text-xs text-rose-700 font-medium leading-relaxed">
                             <li>Hệ thống sẽ <b>GỠ BỎ</b> nhãn khỏi toàn bộ {subCount.toLocaleString()} Khách hàng này.</li>
-                            <li>Các <b>Automation Flow</b> có điều kiện lọc theo nhãn này sẽ bị dừng hoặc lỗi.</li>
+                            <li>Các <b></b> có điều kiện lọc theo nhãn này sẽ bị dừng hoặc lỗi.</li>
                             <li>Bạn <b>KHÔNG THỂ</b> khôi phục lại liên kết dữ liệu cũ ngay cả khi tạo lại nhãn trùng tên.</li>
                         </ul>
                     </div>
@@ -307,22 +307,22 @@ const Tags: React.FC = () => {
 
     return (
         <div className="animate-fade-in space-y-8 pb-40">
-            <PageHero 
+            <PageHero
                 title={<>Tag <span className="text-orange-100/80">Classifier</span></>}
                 subtitle="Phân loại Khách hàng tự động để cá nhân hóa chiến dịch và luồng Automation."
                 showStatus={true}
                 statusText="Tagging Engine Active"
                 actions={[
-                    { 
-                        label: 'Tạo nhãn', 
-                        icon: Plus, 
+                    {
+                        label: 'Tạo nhãn',
+                        icon: Plus,
                         onClick: () => setIsCreateModalOpen(true),
-                        primary: true 
+                        primary: true
                     },
-                    { 
-                        label: 'Đồng bộ', 
-                        icon: RefreshCw, 
-                        onClick: fetchTags 
+                    {
+                        label: 'Đồng bộ',
+                        icon: RefreshCw,
+                        onClick: fetchTags
                     }
                 ]}
             />

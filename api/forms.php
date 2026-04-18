@@ -3,6 +3,7 @@
 require_once 'db_connect.php';
 require_once 'flow_helpers.php';
 require_once 'tracking_helper.php';
+require_once 'auth_middleware.php';
 
 /** @var \PDO $pdo */
 
@@ -11,6 +12,7 @@ apiHeaders();
 $method = $_SERVER['REQUEST_METHOD'];
 $path = isset($_GET['id']) ? $_GET['id'] : null;
 $route = $_GET['route'] ?? '';
+$admin_workspace_id = get_current_workspace_id();
 
 
 try {
@@ -29,13 +31,15 @@ try {
             if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL))
                 jsonResponse(false, null, 'Email không hợp lệ');
 
-            // [FIX] Áp dụng Named Lock để chống race condition khi Tracking và Form API gọi cùng lúc
+            // [FIX P0] Named Lock: was using raw string interpolation inside query()
+            // which broke on emails with apostrophes (e.g. o'brien@...) and is
+            // inconsistent with the GET_LOCK fix already applied in track.php.
             $lockName = "sub_email_" . md5($email);
-            $pdo->query("SELECT GET_LOCK('$lockName', 5)");
+            $pdo->prepare("SELECT GET_LOCK(?, 5)")->execute([$lockName]);
 
             $pdo->beginTransaction();
 
-            $stmtF = $pdo->prepare("SELECT name, target_list_id, fields_json, notification_enabled, notification_emails, notification_cc_emails, notification_subject FROM forms WHERE id = ?");
+            $stmtF = $pdo->prepare("SELECT name, target_list_id, workspace_id, fields_json, notification_enabled, notification_emails, notification_cc_emails, notification_subject FROM forms WHERE id = ?");
             $stmtF->execute([$formId]);
             $formData = $stmtF->fetch();
 
@@ -57,8 +61,10 @@ try {
                 }
             }
 
-            $stmtCheck = $pdo->prepare("SELECT id, status, first_name, last_name, phone_number, job_title, company_name, country, city, gender, date_of_birth, anniversary_date, tags, custom_attributes FROM subscribers WHERE email = ? LIMIT 1");
-            $stmtCheck->execute([$email]);
+            $form_ws_id = $formData['workspace_id'] ?? 1;
+
+            $stmtCheck = $pdo->prepare("SELECT id, status, first_name, last_name, phone_number, job_title, company_name, country, city, gender, date_of_birth, anniversary_date, tags, custom_attributes FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
+            $stmtCheck->execute([$email, $form_ws_id]);
             $sub = $stmtCheck->fetch();
 
             $formFieldsMap = [
@@ -124,20 +130,26 @@ try {
                 $sid = $sub['id'];
 
                 $updateSqlParts = [];
+                // [FIX P0] Initialize $updateValues ONCE here — previously it was reset to []
+                // at the foreach loop below, wiping lead_score and source params added above.
+                // This caused PDO param-count mismatch → UPDATE executed with wrong bindings.
+                $updateValues = [];
+
                 // [FIX] Chỉ upgrade status, không downgrade.
                 $currentStatus = $sub['status'] ?? '';
                 if (!in_array($currentStatus, ['active', 'lead', 'customer'])) {
                     $updateSqlParts[] = "status = 'lead'";
                 }
-                $updateSqlParts[] = "lead_score = lead_score + $pForm";
+                $updateSqlParts[] = "lead_score = lead_score + ?";
+                $updateValues[] = (int)$pForm;
 
-                // [FIX] Nếu source đang là 'website_tracking' (do tracking tạo trước) → upgrade sang Form source
+                // [FIX P1] source update: parameterized (not interpolated)
                 $currentSource = $sub['source'] ?? '';
                 if (in_array($currentSource, ['website_tracking', '', null])) {
-                    $updateSqlParts[] = "source = 'Form: " . addslashes($formName) . "'";
+                    $updateSqlParts[] = "source = ?";
+                    $updateValues[] = "Form: " . $formName;
                 }
 
-                $updateValues = [];
                 foreach ($formFieldsMap as $dataKey => $dbField) {
                     if (isset($data[$dataKey]) && $data[$dataKey] !== '' && $data[$dataKey] !== null) {
                         if ($dbField === 'tags') {
@@ -149,12 +161,12 @@ try {
                     }
                 }
                 if (!empty($updateSqlParts)) {
-                    $pdo->prepare("UPDATE subscribers SET " . implode(', ', $updateSqlParts) . " WHERE id = ?")->execute(array_merge($updateValues, [$sid]));
+                    $pdo->prepare("UPDATE subscribers SET " . implode(', ', $updateSqlParts) . " WHERE id = ? AND workspace_id = ?")->execute(array_merge($updateValues, [$sid, $form_ws_id]));
                 }
 
                 // Merge custom attributes atomically to prevent race condition data loss (Vòng 93)
                 if (!empty($newCustomAttrs)) {
-                    $pdo->prepare("UPDATE subscribers SET custom_attributes = JSON_MERGE_PATCH(COALESCE(custom_attributes, '{}'), ?) WHERE id = ?")->execute([json_encode($newCustomAttrs, JSON_UNESCAPED_UNICODE), $sid]);
+                    $pdo->prepare("UPDATE subscribers SET custom_attributes = JSON_MERGE_PATCH(COALESCE(custom_attributes, '{}'), ?) WHERE id = ? AND workspace_id = ?")->execute([json_encode($newCustomAttrs, JSON_UNESCAPED_UNICODE), $sid, $form_ws_id]);
                 }
 
                 // [FIX] Tag N+1 eliminated: bulk-lookup all submitted tags in ONE query,
@@ -189,8 +201,8 @@ try {
                 // see $sub=false and both try INSERT → Duplicate entry crash.
                 // UPSERT handles both new and existing emails atomically in one SQL.
                 $sid = bin2hex(random_bytes(16));
-                $upsertFields = 'id, email, status, source, joined_at, lead_score';
-                $upsertValues = [$sid, $email, 'active', "Form: " . $formName, date('Y-m-d H:i:s'), $pForm];
+                $upsertFields = 'workspace_id, id, email, status, source, joined_at, lead_score';
+                $upsertValues = [$form_ws_id, $sid, $email, 'active', "Form: " . $formName, date('Y-m-d H:i:s'), $pForm];
                 $upsertSet = "lead_score = lead_score + VALUES(lead_score),
                                source = IF(source IS NULL OR source = '' OR source = 'website_tracking', VALUES(source), source)";
 
@@ -229,8 +241,8 @@ try {
                 $lastId = $pdo->lastInsertId();
                 if ($lastId && $lastId != $sid) {
                     // Row existed — use the original ID
-                    $stmtGetId = $pdo->prepare("SELECT id FROM subscribers WHERE email = ?");
-                    $stmtGetId->execute([$email]);
+                    $stmtGetId = $pdo->prepare("SELECT id FROM subscribers WHERE email = ? AND workspace_id = ?");
+                    $stmtGetId->execute([$email, $form_ws_id]);
                     $sid = $stmtGetId->fetchColumn() ?: $sid;
                 }
 
@@ -309,7 +321,8 @@ try {
                     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
                     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                     curl_setopt($ch, CURLOPT_TIMEOUT, 2);
-                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P34-F1] Added hostname verification — VERIFYPEER alone does not check the hostname
                     curl_exec($ch);
                     curl_close($ch);
                 } catch (Exception $e) {
@@ -328,12 +341,31 @@ try {
             curl_setopt($ch, CURLOPT_TIMEOUT, 1);
             curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
             @curl_exec($ch);
             curl_close($ch);
 
-            // ---- [NOTIFICATION EMAIL] Gửi thông báo khi có leads mới ----
+            // [OPTIMIZED - UX FAST RESPONSE]
+            // Xả kết nối về client ngay lập tức để người dùng không phải chờ quá trình gửi Email (Mất 2-5 giây)
+            // [FIX P0] RELEASE_LOCK: same pattern — must be prepared statement
+            $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]);
+            
+            if (ob_get_length()) ob_clean();
+            header("Content-Type: application/json; charset=UTF-8");
+            $outJson = json_encode(['success' => true, 'data' => ['id' => $sid], 'message' => 'Đăng ký thành công!']);
+            header("Connection: close");
+            header("Content-Length: " . strlen($outJson));
+            echo $outJson;
+            
+            if (function_exists('fastcgi_finish_request')) {
+                fastcgi_finish_request();
+            } else {
+                @ob_flush();
+                @flush();
+            }
+
+            // ---- [NOTIFICATION EMAIL] Gửi thông báo khi có leads mới (CHẠY THỰC THI NGẦM) ----
             if (!empty($formData['notification_enabled']) && !empty($formData['notification_emails'])) {
                 try {
                     require_once 'Mailer.php';
@@ -459,29 +491,42 @@ try {
 </body>
 </html>";
 
-                    foreach ($notifEmails as $notifTo) {
-                        $errTmp = '';
-                        // Build CC list from notification_cc_emails
-                        $ccEmails = [];
-                        if (!empty($formData['notification_cc_emails'])) {
-                            $ccEmails = array_filter(array_map('trim',
-                                preg_split('/[,\n;]+/', $formData['notification_cc_emails'])
-                            ), fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL));
-                        }
-                        $mailer->dispatchRaw($notifTo, $subject, $html, [], $errTmp, array_values($ccEmails));
+                    // Tách CC Emails
+                    $ccEmails = [];
+                    if (!empty($formData['notification_cc_emails'])) {
+                        $ccEmails = array_filter(array_map('trim', preg_split('/[,\n;]+/', $formData['notification_cc_emails'])), fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL));
                     }
+                    
+                    $notifyPayload = [
+                        'emails' => array_values($notifEmails),
+                        'cc_emails' => array_values($ccEmails),
+                        'subject' => $subject,
+                        'html' => $html
+                    ];
+
+                    $notifyUrl = API_BASE_URL . "/worker_notify.php";
+                    $chNotif = curl_init($notifyUrl);
+                    curl_setopt($chNotif, CURLOPT_POST, true);
+                    curl_setopt($chNotif, CURLOPT_POSTFIELDS, json_encode($notifyPayload));
+                    curl_setopt($chNotif, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+                    curl_setopt($chNotif, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($chNotif, CURLOPT_TIMEOUT, 1);
+                    curl_setopt($chNotif, CURLOPT_NOSIGNAL, 1);
+                    curl_setopt($chNotif, CURLOPT_SSL_VERIFYPEER, true);
+                    curl_setopt($chNotif, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
+                    @curl_exec($chNotif);
+                    curl_close($chNotif);
                 } catch (Exception $eNotif) {
                     error_log("Form Notification Error: " . $eNotif->getMessage());
                 }
             }
-
-            $pdo->query("SELECT RELEASE_LOCK('$lockName')");
-            jsonResponse(true, ['id' => $sid], 'Đăng ký thành công!');
+            
+            exit; // Must end here since jsonResponse was bypassed
         } catch (Exception $e) {
             if (isset($pdo) && $pdo->inTransaction())
                 $pdo->rollBack();
             if (isset($lockName)) {
-                $pdo->query("SELECT RELEASE_LOCK('$lockName')");
+                $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]);
             }
             jsonResponse(false, null, 'Lỗi khi gửi form: ' . $e->getMessage());
         }
@@ -502,8 +547,8 @@ try {
 
             try {
                 if ($path) {
-                    $stmt = $pdo->prepare("SELECT * FROM forms WHERE id = ?");
-                    $stmt->execute([$path]);
+                    $stmt = $pdo->prepare("SELECT * FROM forms WHERE id = ? AND workspace_id = ?");
+                    $stmt->execute([$path, $admin_workspace_id]);
                     $form = $stmt->fetch();
                     if ($form) {
                         $form['fields'] = json_decode($form['fields_json'] ?? '[]');
@@ -522,14 +567,14 @@ try {
                         jsonResponse(false, null, 'Không tìm thấy Form');
                 } elseif (!empty($_GET['list_id'])) {
                     // NEW: Check which forms are linked to this list
-                    $stmt = $pdo->prepare("SELECT id, name FROM forms WHERE target_list_id = ?");
-                    $stmt->execute([$_GET['list_id']]);
+                    $stmt = $pdo->prepare("SELECT id, name FROM forms WHERE target_list_id = ? AND workspace_id = ?");
+                    $stmt->execute([$_GET['list_id'], $admin_workspace_id]);
                     jsonResponse(true, $stmt->fetchAll(PDO::FETCH_ASSOC));
                 } else {
                     // [OPTIMIZED] Use correlated subquery for small rowsets (forms).
                     // This hits the index (type, reference_id) directly per row,
-                    // avoiding the overhead of a large GROUP BY materialization.
-                    $stmt = $pdo->query(
+                     // avoiding the overhead of a large GROUP BY materialization.
+                    $stmt = $pdo->prepare(
                         "SELECT f.*, COALESCE(sa_count.cnt, 0) as submission_count
                          FROM forms f
                          LEFT JOIN (
@@ -538,8 +583,10 @@ try {
                              WHERE type = 'form_submit'
                              GROUP BY reference_id
                          ) sa_count ON sa_count.reference_id = f.id
+                         WHERE f.workspace_id = ?
                          ORDER BY f.created_at DESC"
                     );
+                    $stmt->execute([$admin_workspace_id]);
                     $data = array_map(function ($f) {
                         $f['fields'] = json_decode($f['fields_json'] ?? '[]');
                         $f['targetListId'] = $f['target_list_id'];
@@ -567,8 +614,8 @@ try {
                 $notifEmails  = trim($data['notificationEmails'] ?? '');
                 $notifCcEmails = trim($data['notificationCcEmails'] ?? '');
                 $notifSubject = trim($data['notificationSubject'] ?? '');
-                $pdo->prepare("INSERT INTO forms (id, name, target_list_id, fields_json, notification_enabled, notification_emails, notification_cc_emails, notification_subject, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())")
-                    ->execute([$id, $data['name'], $data['targetListId'], $fields, $notifEnabled, $notifEmails ?: null, $notifCcEmails ?: null, $notifSubject ?: null]);
+                $pdo->prepare("INSERT INTO forms (workspace_id, id, name, target_list_id, fields_json, notification_enabled, notification_emails, notification_cc_emails, notification_subject, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())")
+                    ->execute([$admin_workspace_id, $id, $data['name'], $data['targetListId'], $fields, $notifEnabled, $notifEmails ?: null, $notifCcEmails ?: null, $notifSubject ?: null]);
                 jsonResponse(true, ['id' => $id]);
             } catch (Exception $e) {
                 jsonResponse(false, null, 'Lỗi khi tạo biểu mẫu: ' . $e->getMessage());
@@ -584,8 +631,8 @@ try {
                 $notifEmails  = trim($data['notificationEmails'] ?? '');
                 $notifCcEmails = trim($data['notificationCcEmails'] ?? '');
                 $notifSubject = trim($data['notificationSubject'] ?? '');
-                $pdo->prepare("UPDATE forms SET name = ?, target_list_id = ?, fields_json = ?, notification_enabled = ?, notification_emails = ?, notification_cc_emails = ?, notification_subject = ? WHERE id = ?")
-                    ->execute([$data['name'], $data['targetListId'], $fields, $notifEnabled, $notifEmails ?: null, $notifCcEmails ?: null, $notifSubject ?: null, $path]);
+                $pdo->prepare("UPDATE forms SET name = ?, target_list_id = ?, fields_json = ?, notification_enabled = ?, notification_emails = ?, notification_cc_emails = ?, notification_subject = ? WHERE id = ? AND workspace_id = ?")
+                    ->execute([$data['name'], $data['targetListId'], $fields, $notifEnabled, $notifEmails ?: null, $notifCcEmails ?: null, $notifSubject ?: null, $path, $admin_workspace_id]);
                 jsonResponse(true, $data);
             } catch (Exception $e) {
                 jsonResponse(false, null, 'Lỗi khi cập nhật biểu mẫu: ' . $e->getMessage());
@@ -595,7 +642,8 @@ try {
             try {
                 if (!$path)
                     jsonResponse(false, null, 'ID required');
-                $pdo->prepare("DELETE FROM forms WHERE id = ?")->execute([$path]);
+                $pdo->prepare("DELETE FROM forms WHERE id = ? AND workspace_id = ?")->execute([$path, $admin_workspace_id]);
+                // Subscriber activity deletion is secondary and safe
                 $pdo->prepare("DELETE FROM subscriber_activity WHERE type = 'form_submit' AND reference_id = ?")->execute([$path]);
                 jsonResponse(true, ['id' => $path]);
             } catch (Exception $e) {

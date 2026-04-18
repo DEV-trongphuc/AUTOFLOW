@@ -10,9 +10,17 @@
  * 0 2 * * 0 /usr/local/bin/php /home/vhvxoigh/automation.ideas.edu.vn/mail_api/cron_auto_cleanup.php > /dev/null 2>&1
  */
 
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+ini_set('display_errors', 0); // [FIX H-4] Tắt display_errors trong production — lỗi vẫn được ghi vào error_log
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
 set_time_limit(600);
+
+// [SECURITY FIX] Chỉ cho phép chạy từ CLI (cron server-side).
+// Block HTTP access vì file này không cần auth và expose thông tin DB nội bộ.
+if (isset($_SERVER['HTTP_HOST']) && php_sapi_name() !== 'cli') {
+    http_response_code(403);
+    echo 'This script is for server-side cron execution only.';
+    exit;
+}
 
 require __DIR__ . '/db_connect.php';
 
@@ -29,7 +37,7 @@ try {
     // ============================================
     // 1. CLEAN QUEUE JOBS
     // ============================================
-    echo "$logPrefix [1/5] Cleaning queue jobs...\n";
+    echo "$logPrefix [1/6] Cleaning queue jobs...\n";
 
     // 1a. Clean ALL completed jobs (no retention needed)
     $stmt = $pdo->query("
@@ -101,12 +109,12 @@ try {
     // 2. ACTIVITY LOGS - DISABLED
     // ============================================
     // Per user request: Keep ALL activity logs permanently
-    echo "$logPrefix [2/5] Activity log cleanup: DISABLED (keeping all records)\n";
+    echo "$logPrefix [2/6] Activity log cleanup: DISABLED (keeping all records)\n";
 
     // ============================================
     // 3. CLEAN OLD WEB TRACKING (>90 days)
     // ============================================
-    echo "$logPrefix [3/5] Cleaning old web tracking data...\n";
+    echo "$logPrefix [3/6] Cleaning old web tracking data...\n";
 
     $trackingTables = [
         'web_events' => 'created_at',
@@ -147,7 +155,7 @@ try {
     // ============================================
     // 4. CLEAN OLD PROCESSED BUFFERS (>30 days)
     // ============================================
-    echo "$logPrefix [4/5] Cleaning old processed buffers...\n";
+    echo "$logPrefix [4/6] Cleaning old processed buffers...\n";
 
     $bufferCleaned = 0;
 
@@ -185,7 +193,7 @@ try {
         $bufferCleaned += $deleted;
     }
 
-    // [NEW] Timestamp buffer cleanup
+    // Timestamp buffer cleanup
     try {
         $stmt = $pdo->query("SELECT COUNT(*) FROM timestamp_buffer WHERE processed = 1 AND created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)");
         $oldTsCount = $stmt->fetchColumn();
@@ -197,7 +205,7 @@ try {
     } catch (Exception $e) {
     }
 
-    // [NEW] Zalo activity buffer cleanup
+    // Zalo activity buffer cleanup
     try {
         $stmt = $pdo->query("SELECT COUNT(*) FROM zalo_activity_buffer WHERE processed = 1 AND created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)");
         $oldZaCount = $stmt->fetchColumn();
@@ -218,7 +226,7 @@ try {
     // ============================================
     // 5. OPTIMIZE FRAGMENTED TABLES (if needed)
     // ============================================
-    echo "$logPrefix [5/5] Checking for fragmentation...\n";
+    echo "$logPrefix [5/6] Checking for fragmentation...\n";
 
     $stmt = $pdo->query("
         SELECT TABLE_NAME, ROUND((DATA_FREE / 1024 / 1024), 2) AS free_mb
@@ -256,24 +264,53 @@ try {
 
     // ============================================
     // 6. LOG ROTATION (Prevent Disk Full)
+    // [FIX] Reduced threshold from 20MB → 5MB, added backup cleanup.
+    // Original 20MB threshold too large — individual logs hit 24MB+ before rotating.
     // ============================================
     echo "$logPrefix [6/6] Rotating large log files...\n";
     $logRotated = 0;
     $logDirs = [__DIR__, __DIR__ . '/_debug', __DIR__ . '/logs'];
+    $maxLogSize = 5 * 1024 * 1024; // [FIX] 5MB threshold (was 20MB)
     foreach ($logDirs as $ldir) {
         if (!is_dir($ldir)) continue;
         $files = glob($ldir . '/*.log');
         foreach ($files as $file) {
-            if (filesize($file) > 20 * 1024 * 1024) { // 20 MB Limit
-                @rename($file, $file . '.old');
-                echo "$logPrefix   Rotated: " . basename($file) . "\n";
-                $logRotated++;
-                $totalFreed += 20;
+            if (!file_exists($file)) continue;
+            $size = filesize($file);
+            if ($size > $maxLogSize) {
+                $backup = $file . '.' . date('Ymd_His') . '.bak';
+                if (@rename($file, $backup)) {
+                    touch($file); // Create fresh empty log
+                    echo "$logPrefix   Rotated: " . basename($file) . " (" . round($size/1024/1024, 1) . "MB)\n";
+                    $logRotated++;
+                    $totalFreed += round($size/1024/1024, 2);
+                }
             }
         }
-        // Delete extremely old log backups (.old.old if exists or just let .old overwritten)
+        // [FIX] Delete old backups — keep 2 most recent per log file
+        $allLogs = glob($ldir . '/*.log');
+        foreach ($allLogs as $baseLog) {
+            $backups = glob($baseLog . '.*.bak');
+            if ($backups && count($backups) > 2) {
+                sort($backups);
+                $toDelete = array_slice($backups, 0, count($backups) - 2);
+                foreach ($toDelete as $old) {
+                    @unlink($old);
+                    $logRotated++;
+                }
+            }
+        }
     }
-    echo "$logPrefix   Rotated $logRotated log files.\n";
+
+    // [FIX] Also clean orphaned lock files (>10 min old)
+    $lockFiles = glob(__DIR__ . '/*.lock');
+    foreach ($lockFiles ?? [] as $lock) {
+        if (file_exists($lock) && (time() - filemtime($lock)) > 600) {
+            @unlink($lock);
+        }
+    }
+
+    echo "$logPrefix   Rotated/cleaned $logRotated log files.\n";
 
     // ============================================
     // SUMMARY
@@ -287,6 +324,7 @@ try {
     echo "$logPrefix ========================================\n\n";
 
 } catch (Exception $e) {
+    error_log("[cron_auto_cleanup] FATAL: " . $e->getMessage());
     echo "$logPrefix ERROR: " . $e->getMessage() . "\n";
     echo "$logPrefix Status: FAILED\n\n";
 }

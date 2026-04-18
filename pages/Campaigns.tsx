@@ -10,6 +10,7 @@ import {
     Search, ChevronLeft, ChevronRight, X, Lightbulb, ShieldCheck, Zap, Target, Sparkles, Clock
 } from 'lucide-react';
 import Button from '../components/common/Button';
+import Select from '../components/common/Select';
 import PageHero from '../components/common/PageHero';
 import toast from 'react-hot-toast';
 import CampaignList from './Campaigns/CampaignList';
@@ -25,11 +26,29 @@ import { SYSTEM_TEMPLATES } from '../services/systemTemplates';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import TipsModal from '../components/common/TipsModal';
 import { useIsAdmin } from '../hooks/useAuthUser';
+import { usePermissionGuard } from '../components/common/PermissionGuard';
+
+import SesQuotaWidget from '../components/common/SesQuotaWidget';
+
+const TAB_ITEMS = [
+    { id: 'all', label: 'Tất cả', icon: PieChart },
+    { id: 'sent', label: 'Đã gửi', icon: CheckCircle2 },
+    { id: 'waiting', label: 'Chờ Flow', icon: GitMerge },
+    { id: 'scheduled', label: 'Đang xử lý', icon: CalendarClock },
+    { id: 'draft', label: 'Bản nháp', icon: FileText }
+] as const;
+
+const TYPE_TABS = [
+    { value: 'all', label: 'Tất cả' },
+    { value: 'email', label: 'Email' },
+    { value: 'zalo_zns', label: 'Zalo ZNS' }
+] as const;
 
 const Campaigns: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const isAdmin = useIsAdmin();
+    const { guard: adminGuard, PermModal: AdminPermModal } = usePermissionGuard(isAdmin);
 
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
@@ -47,6 +66,8 @@ const Campaigns: React.FC = () => {
     // Filtering & Viewing
     const [activeTab, setActiveTab] = useState<'all' | 'sent' | 'scheduled' | 'draft' | 'waiting'>('all');
     const [activeType, setActiveType] = useState<'all' | 'email' | 'zalo_zns'>('all');
+    const [datePreset, setDatePreset] = useState<'7' | '30' | 'month' | 'custom'>('30');
+    const [customDate, setCustomDate] = useState<{ start: string, end: string }>({ start: '', end: '' });
     const [selectedDetailCampaign, setSelectedDetailCampaign] = useState<Campaign | null>(null);
 
     // Flow Review State
@@ -71,6 +92,9 @@ const Campaigns: React.FC = () => {
     }>({ isOpen: false, campaignId: null, flows: [], deleteFlowMode: 0 });
 
     const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
+    const [isQuotaModalOpen, setIsQuotaModalOpen] = useState(false);
+    // Quick AWS quota preview for hero button badge
+    const [awsQuickInfo, setAwsQuickInfo] = useState<{ remaining: number; usage_pct: number } | null>(null);
 
     // Data
     const [allLists, setAllLists] = useState<any[]>([]);
@@ -94,10 +118,16 @@ const Campaigns: React.FC = () => {
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
-    useEffect(() => { 
+    useEffect(() => {
         if (initialLoadDone.current) return;
         initialLoadDone.current = true;
-        fetchInitialData(); 
+        fetchInitialData();
+        // Pre-fetch AWS quick info for QUOTA hero button badge
+        api.get<any>('ses_quota').then(r => {
+            if (r.success && r.data?.aws) {
+                setAwsQuickInfo({ remaining: r.data.aws.remaining, usage_pct: r.data.aws.usage_pct });
+            }
+        }).catch(() => {});
     }, []);
 
     useKeyboardShortcuts({
@@ -108,42 +138,95 @@ const Campaigns: React.FC = () => {
         }
     }, [setIsWizardOpen, setSelectedDetailCampaign, setWizardInitialData]);
 
-    // Re-fetch campaigns when search or page changes (but not on initial mount)
+    // Re-fetch campaigns when search, page, or dates change (but not on initial mount)
     const isFirstRun = React.useRef(true);
     useEffect(() => {
         if (isFirstRun.current) {
             isFirstRun.current = false;
             return;
         }
+        if (datePreset === 'custom' && (!customDate.start || !customDate.end)) return;
         loadCampaigns(pagination.page, debouncedSearch);
-    }, [debouncedSearch, pagination.page]);
+    }, [debouncedSearch, pagination.page, datePreset, customDate.start, customDate.end]);
 
-    // Fast polling (2s) for active campaigns
-    useEffect(() => {
-        const hasPending = campaigns.some(c => c.status === CampaignStatus.SCHEDULED || c.status === CampaignStatus.SENDING);
-        if (hasPending) {
-            const interval = setInterval(() => {
-                const query = new URLSearchParams({
-                    page: pagination.page.toString(),
-                    limit: pagination.limit.toString(),
-                    search: debouncedSearch
-                });
-                api.get<any>(`campaigns?${query.toString()}`).then(res => {
-                    if (res.success && res.data.data) setCampaigns(res.data.data);
-                });
-            }, 5000);
-            return () => clearInterval(interval);
+    // Fast polling (5s) for active campaigns - Refactored to avoid remounting
+    const campaignsRef = React.useRef(campaigns);
+    useEffect(() => { campaignsRef.current = campaigns; }, [campaigns]);
+
+    const getActiveDates = React.useCallback(() => {
+        const today = new Date();
+        let start = new Date();
+        let end = new Date();
+        
+        switch(datePreset) {
+            case '7':
+                start.setDate(today.getDate() - 7);
+                break;
+            case '30':
+                start.setDate(today.getDate() - 30);
+                break;
+            case 'month':
+                start = new Date(today.getFullYear(), today.getMonth(), 1);
+                end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                break;
+            case 'custom':
+                if (!customDate.start || !customDate.end) return { startDate: '', endDate: '' };
+                return { startDate: customDate.start, endDate: customDate.end };
         }
-    }, [campaigns, pagination.page, debouncedSearch]);
+        
+        const formatDate = (d: Date) => {
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        };
+        
+        return { startDate: formatDate(start), endDate: formatDate(end) };
+    }, [datePreset, customDate]);
+
+    const pollingData = React.useRef({ page: pagination.page, limit: pagination.limit, search: debouncedSearch, dates: getActiveDates() });
+    useEffect(() => { pollingData.current = { page: pagination.page, limit: pagination.limit, search: debouncedSearch, dates: getActiveDates() }; }, [pagination.page, pagination.limit, debouncedSearch, getActiveDates]);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            // [FIX P7-H4] Include PAUSED in hasPending so auto-refresh continues after Circuit Breaker trips.
+            // Without this, the UI stops polling when paused — manual campaign resume from another tab never reflects.
+            const hasPending = campaignsRef.current.some(c => c.status === CampaignStatus.SCHEDULED || c.status === CampaignStatus.SENDING || c.status === CampaignStatus.PAUSED);
+            if (hasPending) {
+                const { startDate, endDate } = pollingData.current.dates;
+                const queryParams: Record<string, string> = {
+                    page: pollingData.current.page.toString(),
+                    limit: pollingData.current.limit.toString(),
+                    search: pollingData.current.search
+                };
+                if (startDate) queryParams.startDate = startDate;
+                if (endDate) queryParams.endDate = endDate;
+                const query = new URLSearchParams(queryParams);
+                api.get<any>(`campaigns?${query.toString()}`).then(res => {
+                    if (res.success && res.data.data) {
+                        setCampaigns(prev => {
+                            // Cực đại hoá Render: Chỉ update Memory Reference nếu Dữ liệu thực sự thay đổi string
+                            const newString = JSON.stringify(res.data.data);
+                            const oldString = JSON.stringify(prev);
+                            if (newString !== oldString) return res.data.data;
+                            return prev;
+                        });
+                    }
+                });
+            }
+        }, 5000);
+        return () => clearInterval(interval);
+    }, []);
 
     const loadCampaigns = async (page = 1, search = '') => {
         setLoading(true);
         try {
-            const query = new URLSearchParams({
+            const { startDate, endDate } = getActiveDates();
+            const queryParams: Record<string, string> = {
                 page: page.toString(),
                 limit: pagination.limit.toString(),
                 search: search
-            });
+            };
+            if (startDate) queryParams.startDate = startDate;
+            if (endDate) queryParams.endDate = endDate;
+            const query = new URLSearchParams(queryParams);
             const res = await api.get<any>(`campaigns?${query.toString()}`);
             if (res.success) {
                 if (res.data.pagination) {
@@ -175,7 +258,7 @@ const Campaigns: React.FC = () => {
             if (tRes.success) {
                 setAllTemplates(tRes.data);
             }
-            if (fRes.success) setAllFlows(fRes.data);
+            if (fRes.success) { const raw = fRes.data as any; setAllFlows(Array.isArray(raw) ? raw : (raw?.data || [])); }
 
             if (tagRes.success) {
                 setAllTags(tagRes.data.map(tag => ({
@@ -184,7 +267,7 @@ const Campaigns: React.FC = () => {
                     count: tag.subscriber_count || 0
                 })));
             }
-            
+
             // Initial Campaigns Fetch (parallellized by the backend thanks to session unlock, but handled after the UI gets settings to avoid huge bundle stalls in JS thread)
             await loadCampaigns(1, debouncedSearch);
 
@@ -226,7 +309,9 @@ const Campaigns: React.FC = () => {
 
         // Filter by Status Tab
         if (activeTab === 'sent') list = list.filter(c => c.status === CampaignStatus.SENT);
-        else if (activeTab === 'scheduled') list = list.filter(c => c.status === CampaignStatus.SCHEDULED || c.status === CampaignStatus.SENDING);
+        // [FIX P7-H2] Include PAUSED in 'scheduled' tab so Circuit Breaker paused campaigns
+        // remain visible instead of disappearing from all tabs.
+        else if (activeTab === 'scheduled') list = list.filter(c => c.status === CampaignStatus.SCHEDULED || c.status === CampaignStatus.SENDING || c.status === CampaignStatus.PAUSED);
         else if (activeTab === 'waiting') list = list.filter(c => c.status === CampaignStatus.WAITING_FLOW);
         else if (activeTab === 'draft') list = list.filter(c => c.status === CampaignStatus.DRAFT);
 
@@ -257,7 +342,13 @@ const Campaigns: React.FC = () => {
 
             if (res.success) {
                 showToast('Đã lưu nháp chiến dịch!', 'success');
-                fetchInitialData();
+                // [OPTIMISTIC UI] Update list immediately without full reload
+                if (data.id) {
+                    setCampaigns(prev => prev.map(c => c.id === data.id ? { ...c, ...res.data } : c));
+                } else {
+                    setCampaigns(prev => [res.data, ...prev]);
+                    setPagination(prev => ({ ...prev, total: prev.total + 1 }));
+                }
                 setWizardInitialData(res.data);
                 return res.data;
             } else {
@@ -267,7 +358,7 @@ const Campaigns: React.FC = () => {
             showToast('Đã xảy ra lỗi hệ thống khi lưu bản nháp', 'error');
         }
         return null;
-    }, []);
+    }, [pagination.page, debouncedSearch]);
 
     const handlePublish = React.useCallback(async (data: Partial<Campaign>, options: { connectFlow: boolean, activateFlowId: string | null }) => {
         let finalStatus = CampaignStatus.SCHEDULED;
@@ -332,7 +423,17 @@ const Campaigns: React.FC = () => {
                 }
 
                 showToast(finalStatus === CampaignStatus.SENDING ? 'Chiến dịch đang được gửi!' : 'Đã lên lịch gửi chiến dịch!', 'success');
-                fetchInitialData();
+                // [OPTIMISTIC UI] Add/update campaign in list immediately
+                if (data.id) {
+                    setCampaigns(prev => prev.map(c => c.id === data.id ? { ...c, ...res.data } : c));
+                } else {
+                    setCampaigns(prev => [res.data, ...prev]);
+                    setPagination(prev => ({ ...prev, total: prev.total + 1 }));
+                }
+                // Reload flows in background if connected (non-blocking)
+                if (options.connectFlow && options.activateFlowId) {
+                    api.get<any>('flows').then(r => { if (r.success) { const raw = r.data as any; setAllFlows(Array.isArray(raw) ? raw : (raw?.data || [])); } });
+                }
                 // [FIX] focus on the new campaign report after publishing
                 setSelectedDetailCampaign(res.data);
                 return res.data;
@@ -346,21 +447,26 @@ const Campaigns: React.FC = () => {
     }, [allFlows, navigate]);
 
     const executeDelete = async (id: string, deleteFlowMode: number) => {
-        setLoading(true);
+        // [OPTIMISTIC UI] Remove from list immediately before API call
+        setCampaigns(prev => prev.filter(c => c.id !== id));
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        setAdvancedDeleteModal(prev => ({ ...prev, isOpen: false }));
         try {
             const res = await api.delete(`campaigns/${id}?delete_flow=${deleteFlowMode}`);
             if (res.success) {
                 showToast('Đã xóa chiến dịch thành công!');
-                fetchInitialData();
+                // Refresh flows list if flows were deleted too
+                if (deleteFlowMode === 1) {
+                    api.get<any>('flows').then(r => { if (r.success) { const raw = r.data as any; setAllFlows(Array.isArray(raw) ? raw : (raw?.data || [])); } });
+                }
             } else {
+                // Rollback: re-fetch if API failed
                 showToast(res.message || 'Lỗi khi xóa chiến dịch', 'error');
+                loadCampaigns(pagination.page, debouncedSearch);
             }
         } catch (error) {
             showToast('Đã xảy ra lỗi hệ thống khi xóa chiến dịch', 'error');
-        } finally {
-            setLoading(false);
-            setConfirmModal(prev => ({ ...prev, isOpen: false }));
-            setAdvancedDeleteModal(prev => ({ ...prev, isOpen: false }));
+            loadCampaigns(pagination.page, debouncedSearch);
         }
     };
 
@@ -414,7 +520,8 @@ const Campaigns: React.FC = () => {
             const res = await api.put(`flows/${flowReviewData.flow.id}`, { status: 'active' });
             if (res.success) {
                 showToast('Kịch bản chăm sóc đã được kích hoạt!');
-                fetchInitialData();
+                // [OPTIMISTIC UI] Update flow status in local state
+                setAllFlows(prev => prev.map(f => f.id === flowReviewData.flow!.id ? { ...f, status: 'active' } : f));
             }
         } catch (e) {
             showToast('Không thể kích hoạt kịch bản.', 'error');
@@ -423,31 +530,58 @@ const Campaigns: React.FC = () => {
             setFlowReviewData(null);
         }
     };
+    const heroActions = useMemo(() => [
+        {
+            label: 'Chiến dịch mới',
+            icon: Plus,
+            onClick: adminGuard(
+                () => { setSelectedDetailCampaign(null); setWizardInitialData(undefined); setIsWizardOpen(true); },
+                'tạo chiến dịch mới'
+            ),
+        },
+        {
+            label: 'Mẹo tăng trưởng',
+            icon: Lightbulb,
+            onClick: () => setIsTipsModalOpen(true),
+            primary: true
+        }
+    ], [adminGuard]);
+
     return (
         <div className="animate-fade-in space-y-8 pb-20">
 
-            <PageHero 
-                title={<>Campaign <span className="text-orange-100/80">Marketing</span></>}
-                subtitle="Gửi Email & Zalo ZNS · theo dõi hiệu suất Thời gian thực với sức mạnh từ Trí tuệ nhân tạo."
-                showStatus={true}
-                statusText="AI Engine Active"
-                actions={[
-                    ...(isAdmin ? [{ 
-                        label: 'Chiến dịch mới', 
-                        icon: Plus, 
-                        onClick: () => { setSelectedDetailCampaign(null); setWizardInitialData(undefined); setIsWizardOpen(true); },
-                        primary: false 
-                    }] : []),
-                    { 
-                        label: 'Mẹo tăng trưởng', 
-                        icon: Lightbulb, 
-                        onClick: () => setIsTipsModalOpen(true),
-                        primary: true
-                    }
-                ]}
-            />
+                {/* PageHero with floating QUOTA button */}
+                <div className="relative">
+                    <PageHero
+                        title={<>Campaign <span className="text-orange-100/80">Marketing</span></>}
+                        subtitle="Gửi Email & Zalo ZNS · theo dõi hiệu suất Thời gian thực với sức mạnh từ Trí tuệ nhân tạo."
+                        showStatus={true}
+                        statusText="AI Engine Active"
+                        actions={heroActions}
+                    />
+                    {/* QUOTA button — bottom-right corner of hero */}
+                    <button
+                        onClick={() => setIsQuotaModalOpen(true)}
+                        className="absolute bottom-6 right-6 md:bottom-7 md:right-8 flex items-center gap-2 px-3.5 py-2 bg-black/20 hover:bg-black/30 backdrop-blur-md border border-white/20 hover:border-white/40 rounded-xl transition-all group z-20"
+                        title="Xem AWS SES Quota"
+                    >
+                        <Zap className="w-3.5 h-3.5 text-amber-300" />
+                        <span className="text-[10px] font-black text-white/90 uppercase tracking-widest">QUOTA</span>
+                        {awsQuickInfo !== null ? (
+                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md leading-none ${
+                                awsQuickInfo.usage_pct > 80 ? 'bg-red-500 text-white'
+                                : awsQuickInfo.usage_pct > 60 ? 'bg-amber-400 text-amber-900'
+                                : 'bg-white/90 text-slate-700'
+                            }`}>
+                                {awsQuickInfo.remaining.toLocaleString()} left
+                            </span>
+                        ) : (
+                            <span className="text-[10px] font-bold text-white/50 px-1">24h</span>
+                        )}
+                    </button>
+                </div>
 
-            <div className="space-y-8">
+            <div className="space-y-6">
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="bg-white dark:bg-slate-900 p-5 rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-sm flex items-center justify-between group">
                         <div>
@@ -492,105 +626,150 @@ const Campaigns: React.FC = () => {
 
                 {/* Table section */}
                 <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-700/60 shadow-sm overflow-hidden">
-                {/* Tabs + Search + Filter — single clean row */}
-                <div className="px-4 lg:px-6 py-3 border-b border-slate-100 dark:border-slate-800/60 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                    {/* Left: Status tabs */}
-                    <div className="overflow-x-auto pb-1 -mx-4 px-4 lg:mx-0 lg:px-0 lg:pb-0 scrollbar-hide">
-                        <Tabs
-                            variant="pill"
-                            activeId={activeTab}
-                            onChange={setActiveTab as any}
-                            items={[
-                                { id: 'all', label: 'Tất cả', icon: PieChart },
-                                { id: 'sent', label: 'đã gửi', icon: CheckCircle2 },
-                                { id: 'waiting', label: 'Chờ Flow', icon: GitMerge },
-                                { id: 'scheduled', label: 'Đang xử lý', icon: CalendarClock },
-                                { id: 'draft', label: 'Bản nháp', icon: FileText }
-                            ]}
-                        />
-                    </div>
-
-                    {/* Right: Search + Type filter */}
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0 w-full lg:w-auto">
-                        {/* Search */}
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Tìm chiến dịch..."
-                                className="w-full lg:w-44 pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-lg text-xs focus:bg-white dark:bg-slate-900 focus:ring-2 focus:ring-amber-600/20 focus:border-amber-400/50 transition-all outline-none"
+                    {/* Tabs + Search + Filter — single clean row */}
+                    <div className="px-4 lg:px-6 py-3 border-b border-slate-100 dark:border-slate-800/60 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                        {/* Left: Status tabs */}
+                        <div className="overflow-x-auto pb-1 -mx-4 px-4 lg:mx-0 lg:px-0 lg:pb-0 scrollbar-hide">
+                            <Tabs
+                                variant="pill"
+                                activeId={activeTab}
+                                onChange={setActiveTab as any}
+                                items={TAB_ITEMS as any}
                             />
                         </div>
 
-                        {/* Type segmented control */}
-                        <div className="flex bg-slate-100 p-0.5 rounded-lg overflow-x-auto scrollbar-hide shrink-0">
-                            {[
-                                { value: 'all', label: 'Tất cả' },
-                                { value: 'email', label: 'Email' },
-                                { value: 'zalo_zns', label: 'Zalo ZNS' },
-                            ].map(({ value, label }) => (
-                                <button
-                                    key={value}
-                                    onClick={() => setActiveType(value as any)}
-                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all whitespace-nowrap flex-1 text-center ${
-                                        activeType === value
+                        {/* Right: Date filter + Search + Type filter */}
+                        <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-2 shrink-0 w-full lg:w-auto">
+                            {/* Date Filter */}
+                            <div className="flex items-center gap-2 shrink-0">
+                                <Select
+                                    value={datePreset}
+                                    onChange={(val) => setDatePreset(val as any)}
+                                    options={[
+                                        { value: '30', label: '30 ngày qua' },
+                                        { value: '7', label: '7 ngày qua' },
+                                        { value: 'month', label: 'Tháng này' },
+                                        { value: 'custom', label: 'Tùy chỉnh...' }
+                                    ]}
+                                    className="w-[120px] !text-xs !py-1.5"
+                                />
+                                {datePreset === 'custom' && (
+                                    <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-lg p-0.5 px-2">
+                                        <input 
+                                            type="date" 
+                                            value={customDate.start} 
+                                            onChange={e => setCustomDate({...customDate, start: e.target.value})} 
+                                            className="bg-transparent text-xs outline-none text-slate-600 dark:text-slate-300 w-[100px] py-1" 
+                                        />
+                                        <span className="text-slate-300">-</span>
+                                        <input 
+                                            type="date" 
+                                            value={customDate.end} 
+                                            onChange={e => setCustomDate({...customDate, end: e.target.value})} 
+                                            className="bg-transparent text-xs outline-none text-slate-600 dark:text-slate-300 w-[100px] py-1" 
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Search */}
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                                <input
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder="Tìm chiến dịch..."
+                                    className="w-full lg:w-44 pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-lg text-xs focus:bg-white dark:bg-slate-900 focus:ring-2 focus:ring-amber-600/20 focus:border-amber-400/50 transition-all outline-none"
+                                />
+                            </div>
+
+                            {/* Type segmented control */}
+                            <div className="flex bg-slate-100 p-0.5 rounded-lg overflow-x-auto scrollbar-hide shrink-0">
+                                {TYPE_TABS.map(({ value, label }) => (
+                                    <button
+                                        key={value}
+                                        onClick={() => setActiveType(value as any)}
+                                        className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all whitespace-nowrap flex-1 text-center ${activeType === value
                                             ? 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-sm'
                                             : 'text-slate-400 hover:text-slate-600'
-                                    }`}
-                                >
-                                    {label}
-                                </button>
-                            ))}
+                                            }`}
+                                    >
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
+                    </div>
+
+                    {/* List Component */}
+                    <TabTransition key={activeTab + activeType}>
+                        <CampaignList
+                            campaigns={filteredCampaigns}
+                            loading={loading}
+                            onSelect={React.useCallback((c: Campaign) => setSelectedDetailCampaign(c), [])}
+                            onEdit={React.useCallback((c: Campaign) => {
+                                setSelectedDetailCampaign(null); // [FIX] Clear old report when editing
+                                setWizardInitialData(c);
+                                setIsWizardOpen(true);
+                            }, [])}
+                            onDelete={handleDeleteCampaign}
+                            onPlayFlow={handlePlayClick}
+                        />
+                    </TabTransition>
+
+                    {/* Pagination */}
+                    {pagination.totalPages > 1 && (
+                        <div className="px-6 py-4 border-t border-slate-50 bg-slate-50 dark:bg-slate-950/30 flex items-center justify-between">
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                Trang {pagination.page.toLocaleString()} / {pagination.totalPages.toLocaleString()}
+                            </p>
+                            <div className="flex gap-2">
+                                <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    icon={ChevronLeft}
+                                    onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
+                                    disabled={pagination.page === 1}
+                                />
+                                <Button
+                                    size="sm"
+                                    variant="secondary"
+
+                                    icon={ChevronRight}
+                                    onClick={() => setPagination(prev => ({ ...prev, page: Math.min(pagination.totalPages, pagination.page + 1) }))}
+                                    disabled={pagination.page === pagination.totalPages}
+                                />
+                            </div>
+                        </div>
+
+                    )}
+                </div>{/* close overflow-hidden */}
+            </div>{/* close space-y-8 */}
+
+            {/* Permission Modal */}
+            {AdminPermModal}
+
+            {/* ── QUOTA Modal ─────────────────────────────────────────── */}
+            {isQuotaModalOpen && (
+                <div
+                    className="fixed inset-0 z-[9998] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+                    onClick={() => setIsQuotaModalOpen(false)}
+                >
+                    <div
+                        className="relative bg-white dark:bg-slate-900 rounded-[28px] shadow-2xl shadow-slate-900/20 border border-slate-200 dark:border-slate-700 overflow-hidden w-full max-w-[360px] animate-in fade-in zoom-in-95 duration-200"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button
+                            onClick={() => setIsQuotaModalOpen(false)}
+                            className="absolute top-3.5 right-3.5 w-6 h-6 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all z-10"
+                        >
+                            <X className="w-3 h-3" />
+                        </button>
+                        <SesQuotaWidget mode="sidebar" />
                     </div>
                 </div>
-
-                {/* List Component */}
-                <TabTransition key={activeTab + activeType}>
-                    <CampaignList
-                        campaigns={filteredCampaigns}
-                        loading={loading}
-                        onSelect={React.useCallback((c: Campaign) => setSelectedDetailCampaign(c), [])}
-                        onEdit={React.useCallback((c: Campaign) => {
-                            setSelectedDetailCampaign(null); // [FIX] Clear old report when editing
-                            setWizardInitialData(c);
-                            setIsWizardOpen(true);
-                        }, [])}
-                        onDelete={handleDeleteCampaign}
-                        onPlayFlow={handlePlayClick}
-                    />
-                </TabTransition>
-
-                {/* Pagination */}
-                {pagination.totalPages > 1 && (
-                    <div className="px-6 py-4 border-t border-slate-50 bg-slate-50 dark:bg-slate-950/30 flex items-center justify-between">
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                            Trang {pagination.page.toLocaleString()} / {pagination.totalPages.toLocaleString()}
-                        </p>
-                        <div className="flex gap-2">
-                            <Button
-                                size="sm"
-                                variant="secondary"
-                                icon={ChevronLeft}
-                                onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
-                                disabled={pagination.page === 1}
-                            />
-                            <Button
-                                size="sm"
-                                variant="secondary"
-
-                                icon={ChevronRight}
-                                onClick={() => setPagination(prev => ({ ...prev, page: Math.min(pagination.totalPages, pagination.page + 1) }))}
-                                disabled={pagination.page === pagination.totalPages}
-                            />
-                        </div>
-                    </div>
-
-                )}
-            </div>{/* close overflow-hidden */}
-        </div>{/* close space-y-8 */}
+            )}
 
             {/* Modals */}
             <CampaignWizard
@@ -644,9 +823,9 @@ const Campaigns: React.FC = () => {
                         <div className="space-y-2 mt-4">
                             <label className={`block border p-4 rounded-xl cursor-pointer transition-all ${advancedDeleteModal.deleteFlowMode === 0 ? 'bg-amber-50 border-amber-300 ring-1 ring-amber-300' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700/60'}`}>
                                 <div className="flex items-start gap-3">
-                                    <input 
-                                        type="radio" 
-                                        name="delete_flow" 
+                                    <input
+                                        type="radio"
+                                        name="delete_flow"
                                         checked={advancedDeleteModal.deleteFlowMode === 0}
                                         onChange={() => setAdvancedDeleteModal(prev => ({ ...prev, deleteFlowMode: 0 }))}
                                         className="mt-1"
@@ -657,12 +836,12 @@ const Campaigns: React.FC = () => {
                                     </div>
                                 </div>
                             </label>
-                            
+
                             <label className={`block border p-4 rounded-xl cursor-pointer transition-all ${advancedDeleteModal.deleteFlowMode === 1 ? 'bg-rose-50 border-rose-300 ring-1 ring-rose-300' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700/60'}`}>
                                 <div className="flex items-start gap-3">
-                                    <input 
-                                        type="radio" 
-                                        name="delete_flow" 
+                                    <input
+                                        type="radio"
+                                        name="delete_flow"
                                         checked={advancedDeleteModal.deleteFlowMode === 1}
                                         onChange={() => setAdvancedDeleteModal(prev => ({ ...prev, deleteFlowMode: 1 }))}
                                         className="mt-1 accent-rose-600"

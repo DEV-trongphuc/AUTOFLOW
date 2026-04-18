@@ -7,6 +7,15 @@
         console.warn('MailFlow Tracker: Already loaded');
         return;
     }
+    
+    // BOT & CRAWLER PROTECTION
+    var botRegex = /bot|crawler|spider|crawling|headless|lighthouse|slurp|facebookexternalhit|whatsapp|telegram|discordbot|google|bing|yahoo|duckduckbot|baiduspider|yandex|qwant|sogou|curl|wget/i;
+    if (botRegex.test(navigator.userAgent || '') || navigator.webdriver) {
+        window._mfTrackerLoaded = true;
+        console.warn('MailFlow Tracker: Bot/Crawler detected. Tracking disabled to prevent 0s noise.');
+        return;
+    }
+    
     window._mfTrackerLoaded = true;
 
     var CONFIG = {
@@ -101,7 +110,7 @@
     function track(type, data) {
         eventQueue.push({ type: type, data: data || {}, timestamp: Date.now() });
         saveQueue();
-        if (type === 'pageview' || type === 'identify' || eventQueue.length >= 5) flush();
+        if (type === 'identify' || type === 'pageview' || eventQueue.length >= 5) flush();
     }
 
     function saveQueue() { setStorage('_mf_queue', JSON.stringify(eventQueue)); }
@@ -762,4 +771,15 @@
     loadQueue();
     setInterval(flush, CONFIG.batchInterval);
 
-})(window, document, 'https://automation.ideas.edu.vn/mail_api/track.php', document.currentScript ? document.currentScript.getAttribute('data-website-id') : null);
+    // --- AI CHATBOT INJECTION ---
+    if (window._mf_config && window._mf_config.ai_chat) {
+        var chatScript = document.createElement('script');
+        chatScript.src = 'https://automation.ideas.edu.vn/ai-chat-embedded.js';
+        chatScript.async = true;
+        document.head.appendChild(chatScript);
+    }
+
+})(window, document, 'https://automation.ideas.edu.vn/mail_api/track.php', (function(){ if(window._mf_config && window._mf_config.property_id) return window._mf_config.property_id; var c = document.currentScript; if(c && c.getAttribute('data-website-id')) return c.getAttribute('data-website-id'); var s = document.querySelector('script[data-website-id]'); if(s) return s.getAttribute('data-website-id'); return window._mf_property_id || null; })());
+
+
+

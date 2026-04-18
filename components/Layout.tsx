@@ -62,22 +62,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <div className="flex-1 flex flex-col overflow-hidden relative">
         <Header onMenuClick={() => setSidebarOpen(true)} />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 lg:p-10 scroll-smooth relative">
-          {/* Golden glow decor — top-right corner accent */}
-          <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[400px] z-0" style={{ background: 'radial-gradient(ellipse at 100% 0%, rgba(251,191,36,0.13) 0%, transparent 65%)' }} />
-          {/* Slide-Up with slower overshoot spring (bouncing back) */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              initial={{ y: 30 }}
-              animate={{ y: 0 }}
-              exit={{ opacity: 0, transition: { duration: 0 } }}
-              transition={{ type: "spring", bounce: 0.45, duration: 0.85 }}
-              className="max-w-[1400px] mx-auto origin-top"
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-0 scroll-smooth relative">
+          <div className="grid p-3 lg:p-10 min-h-full">
+            {/* Golden glow decor — top-right corner accent */}
+            <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[400px] z-0" style={{ background: 'radial-gradient(ellipse at 100% 0%, rgba(251,191,36,0.13) 0%, transparent 65%)' }} />
+
+            {/* True Overlapping Crossfade (CSS Grid) to eliminate white flashes */}
+            <AnimatePresence>
+              <motion.div
+                key={location.pathname}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, transition: { duration: 0.15, ease: "easeOut" } }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                className="max-w-[1400px] w-full mx-auto col-start-1 row-start-1 z-1000"
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </main>
       </div>
     </div>

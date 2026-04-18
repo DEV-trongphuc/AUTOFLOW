@@ -40,6 +40,8 @@ import TabTransition from '../components/common/TabTransition';
 import AudienceTipsModal from '../components/audience/AudienceTipsModal';
 import FilterPills from '../components/audience/FilterPills';
 import { Lightbulb } from 'lucide-react';
+import { useIsAdmin } from '../hooks/useAuthUser';
+import { usePermissionGuard } from '../components/common/PermissionGuard';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -86,6 +88,9 @@ import { useNavigation } from '../contexts/NavigationContext';
 const Audience: React.FC = () => {
     const { setCustomBackAction } = useNavigation();
     const navigate = useNavigate();
+    const isAdmin = useIsAdmin();
+    const { guard: adminGuard, PermModal: AdminPermModal } = usePermissionGuard(isAdmin);
+    
     const [activeTab, setActiveTab] = useState<'lists' | 'segments' | 'contacts' | 'integrations' | 'meta' | 'zalo'>('contacts');
 
     // Main Subscriber List State (Paginated)
@@ -377,7 +382,7 @@ const Audience: React.FC = () => {
                 setAllStaticLists(listRes.data);
                 setListsPagination(prev => ({ ...prev, total: listRes.data.length }));
             }
-            if (flowRes.success) setFlows(flowRes.data);
+            if (flowRes.success) { const rawF = flowRes.data as any; setFlows(Array.isArray(rawF) ? rawF : (rawF?.data || [])); }
             if (tagRes.success) setTags(tagRes.data);
             if (integRes.success) setIntegrations(integRes.data);
 
@@ -973,17 +978,19 @@ const Audience: React.FC = () => {
                             label: 'Import liên hệ',
                             icon: UserPlus,
                             onClick: () => setImportModalOpen(true),
-                            primary: true
                         },
                         {
-                            label: 'Auto Sync',
+                            label: 'Connect & Auto Sync',
                             icon: RefreshCw,
-                            onClick: () => setIsIntegrationsModalOpen(true)
+                            onClick: () => setIsIntegrationsModalOpen(true),
+
                         },
                         {
                             label: 'Mẹo tăng trưởng',
                             icon: Lightbulb,
-                            onClick: () => setIsTipsModalOpen(true)
+                            onClick: () => setIsTipsModalOpen(true),
+                            primary: true
+
                         }
                     ]}
                 />
@@ -1218,7 +1225,7 @@ const Audience: React.FC = () => {
                             )}
                             {activeTab === 'segments' && (
                                 <>
-                                    <Button variant="secondary" size="sm" icon={RefreshCw} onClick={async () => {
+                                    <Button variant="secondary" size="sm" icon={RefreshCw} onClick={adminGuard(async () => {
                                         setLoading(true);
                                         const res = await api.post('segments?route=sync', {});
                                         if (res.success) {
@@ -1227,11 +1234,11 @@ const Audience: React.FC = () => {
                                             showToast('Đã đồng bộ lại dữ liệu phân khúc', 'success');
                                         }
                                         setLoading(false);
-                                    }}>Làm mới</Button>
-                                    <Button size="sm" onClick={() => { setEditingSegment(null); setSegmentBuilderOpen(true); }}>Tạo phân khúc</Button>
+                                    }, 'đồng bộ phân khúc')}>Làm mới</Button>
+                                    <Button size="sm" onClick={adminGuard(() => { setEditingSegment(null); setSegmentBuilderOpen(true); }, 'tạo phân khúc')}>Tạo phân khúc</Button>
                                 </>
                             )}
-                            {activeTab === 'lists' && <Button size="sm" onClick={() => setIsCreateListModalOpen(true)}>Tạo danh sách</Button>}
+                            {activeTab === 'lists' && <Button size="sm" onClick={adminGuard(() => setIsCreateListModalOpen(true), 'tạo danh sách')}>Tạo danh sách</Button>}
                         </div>
                     </div>
 
@@ -1269,8 +1276,8 @@ const Audience: React.FC = () => {
                                     totalPages={listsPagination.totalPages}
                                     onPageChange={(p) => setListsPagination(prev => ({ ...prev, page: p }))}
                                     onView={(list) => setViewingGroup({ id: list.id, name: list.name, type: 'list', count: list.count })}
-                                    onEdit={setEditingList}
-                                    onDelete={async (id) => {
+                                    onEdit={adminGuard(setEditingList, 'sửa danh sách')}
+                                    onDelete={adminGuard(async (id) => {
                                         // Check if this list is linked to any form before allowing delete
                                         const list = staticLists.find(l => l.id === id);
                                         const checkRes = await api.get<{ id: string; name: string }[]>(`forms?list_id=${id}`);
@@ -1304,7 +1311,7 @@ const Audience: React.FC = () => {
                                                                     <div className="space-y-3">
                                                                         <p className="text-sm text-slate-600 dark:text-slate-300 font-bold">{res.message}</p>
                                                                         <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-xs text-rose-600 font-medium leading-relaxed">
-                                                                            ⚠️ Cònh báo: Việc xóa này có thể khiến các Automation Flow Đang chờ gặp lỗi. Bạn vẫn muốn tiếp tục xóa cưỡng chế danh sách này?
+                                                                            ⚠️ Cảnh báo: Việc xóa này có thể khiến các DOMATION Flow đang chạy gặp lỗi. Bạn vẫn muốn tiếp tục xóa cưỡng chế danh sách này?
                                                                         </div>
                                                                     </div>
                                                                 ),
@@ -1326,15 +1333,15 @@ const Audience: React.FC = () => {
                                                 }
                                             }
                                         });
-                                    }}
-                                    onBulkDelete={handleBulkDeleteLists}
-                                    onMerge={(listIds) => {
+                                    }, 'xóa danh sách')}
+                                    onBulkDelete={adminGuard(handleBulkDeleteLists, 'xóa danh sách')}
+                                    onMerge={adminGuard((listIds) => {
                                         const lists = staticLists.filter(l => listIds.includes(l.id));
                                         setMergingLists(lists);
                                         setIsMergeModalOpen(true);
-                                    }}
-                                    onCleanup={(list) => setCleanupTarget({ id: list.id, name: list.name, type: 'list' })}
-                                    onSplit={(list) => { setSplittingTarget({ id: list.id, name: list.name, type: 'list', count: list.count }); setSplitSelectedIds([]); }}
+                                    }, 'gộp danh sách')}
+                                    onCleanup={adminGuard((list) => setCleanupTarget({ id: list.id, name: list.name, type: 'list' }), 'dọn rác danh sách')}
+                                    onSplit={adminGuard((list) => { setSplittingTarget({ id: list.id, name: list.name, type: 'list', count: list.count }); setSplitSelectedIds([]); }, 'tách danh sách')}
                                 />
                             </TabTransition>
                         )}
@@ -1347,19 +1354,19 @@ const Audience: React.FC = () => {
                                     totalPages={segmentsPagination.totalPages}
                                     onPageChange={(p) => setSegmentsPagination(prev => ({ ...prev, page: p }))}
                                     onView={(seg) => setViewingGroup({ id: seg.id, name: seg.name, type: 'segment', count: seg.count })}
-                                    onEdit={(seg) => { setEditingSegment(seg); setSegmentBuilderOpen(true); }}
-                                    onDelete={(id) => setConfirmModal({
+                                    onEdit={adminGuard((seg) => { setEditingSegment(seg); setSegmentBuilderOpen(true); }, 'sửa phân khúc')}
+                                    onDelete={adminGuard((id) => setConfirmModal({
                                         isOpen: true, title: 'Xóa phân khúc?', message: 'Dữ liệu phân khúc động sẽ bị xóa.', variant: 'danger', onConfirm: async () => {
                                             setConfirmModal(prev => ({ ...prev, isOpen: false }));
                                             await api.delete(`segments/${id}`);
                                             fetchSegments(segmentsPagination.page);
                                             showToast('Đã xóa phân khúc thành công', 'success');
                                         }
-                                    })}
-                                    onBulkDelete={handleBulkDeleteSegments}
-                                    onSplit={(seg) => { setSplittingTarget({ id: seg.id, name: seg.name, type: 'segment', count: seg.count }); setSplitSelectedIds([]); }}
+                                    }), 'xóa phân khúc')}
+                                    onBulkDelete={adminGuard(handleBulkDeleteSegments, 'xóa phân khúc')}
+                                    onSplit={adminGuard((seg) => { setSplittingTarget({ id: seg.id, name: seg.name, type: 'segment', count: seg.count }); setSplitSelectedIds([]); }, 'tách phân khúc')}
                                     onRefresh={fetchInitialData}
-                                    onCleanup={(seg) => setCleanupTarget({ id: seg.id, name: seg.name, type: 'segment' })}
+                                    onCleanup={adminGuard((seg) => setCleanupTarget({ id: seg.id, name: seg.name, type: 'segment' }), 'dọn rác phân khúc')}
                                 />
                             </TabTransition>
                         )}
@@ -1396,10 +1403,10 @@ const Audience: React.FC = () => {
                                 <IntegrationsTab
                                     integrations={integrations}
                                     lists={allStaticLists}
-                                    onEdit={(item) => {
+                                    onEdit={adminGuard((item) => {
                                         setEditingIntegration(item);
                                         setIsIntegrationsModalOpen(true);
-                                    }}
+                                    }, 'sửa cấu hình')}
                                     onView={(item) => {
                                         const config = JSON.parse(item.config || '{}');
                                         if (config.targetListId) {
@@ -1413,7 +1420,7 @@ const Audience: React.FC = () => {
                                             showToast('Kết nối này chưa được cấu hình danh sách đích', 'error');
                                         }
                                     }}
-                                    onCleanup={(item) => {
+                                    onCleanup={adminGuard((item) => {
                                         const config = JSON.parse(item.config || '{}');
                                         if (config.targetListId) {
                                             const targetList = allStaticLists.find(l => l.id == config.targetListId);
@@ -1421,8 +1428,8 @@ const Audience: React.FC = () => {
                                                 setCleanupTarget({ id: targetList.id, name: targetList.name, type: 'list' });
                                             }
                                         }
-                                    }}
-                                    onSplit={(item) => {
+                                    }, 'dọn rác kết nối')}
+                                    onSplit={adminGuard((item) => {
                                         const config = JSON.parse(item.config || '{}');
                                         if (config.targetListId) {
                                             const targetList = allStaticLists.find(l => l.id == config.targetListId);
@@ -1431,8 +1438,8 @@ const Audience: React.FC = () => {
                                                 setSplitSelectedIds([]);
                                             }
                                         }
-                                    }}
-                                    onDelete={(id) => {
+                                    }, 'tách danh sách kết nối')}
+                                    onDelete={adminGuard((id) => {
                                         const integration = integrations.find(i => i.id === id);
                                         const config = integration ? JSON.parse(integration.config || '{}') : {};
                                         const targetListId = config.targetListId;
@@ -1465,8 +1472,8 @@ const Audience: React.FC = () => {
                                                 );
                                             }
                                         });
-                                    }}
-                                    onSyncNow={async (id) => {
+                                    }, 'xóa kết nối')}
+                                    onSyncNow={adminGuard(async (id) => {
                                         setConfirmModal({
                                             isOpen: true,
                                             title: 'Đồng bộ ngay',
@@ -1493,7 +1500,7 @@ const Audience: React.FC = () => {
                                                 }
                                             }
                                         });
-                                    }}
+                                    }, 'đồng bộ kết nối')}
                                 />
                             </TabTransition>
                         )}
@@ -1509,7 +1516,11 @@ const Audience: React.FC = () => {
                 if (res.success) {
                     const sRes = await api.get<Segment[]>('segments');
                     if (sRes.success) setAllSegments(sRes.data);
-                    fetchSegments(segmentsPagination.page);
+                    if (isNew) {
+                        setSegmentsPagination(prev => ({ ...prev, page: 1 }));
+                    } else {
+                        fetchSegments(segmentsPagination.page);
+                    }
                     showToast('Đã lưu phân khúc động', 'success');
                 }
             }} initialSegment={editingSegment} subscribers={[]} />
@@ -1528,7 +1539,11 @@ const Audience: React.FC = () => {
                     if (res?.success) {
                         const lRes = await api.get<any[]>('lists');
                         if (lRes.success) setAllStaticLists(lRes.data);
-                        fetchLists(listsPagination.page);
+                        if (isNew) {
+                            setListsPagination(prev => ({ ...prev, page: 1 }));
+                        } else {
+                            fetchLists(listsPagination.page);
+                        }
                         setIsCreateListModalOpen(false);
                         setEditingList(null);
                     } else {
@@ -1792,6 +1807,9 @@ const Audience: React.FC = () => {
                     }}
                     onSuccess={() => {
                         fetchInitialData();
+                        if (activeTab === 'lists') setListsPagination(prev => ({ ...prev, page: 1 }));
+                        if (activeTab === 'segments') setSegmentsPagination(prev => ({ ...prev, page: 1 }));
+                        
                         // Also refresh group members if we are viewing that group
                         if (viewingGroup && viewingGroup.id === splittingTarget.id) {
                             fetchGroupMembers(viewingGroup, groupPagination.page, groupSearch);
@@ -2024,6 +2042,8 @@ const Audience: React.FC = () => {
                     </div>
                 </div>
             )}
+            
+            {AdminPermModal}
         </>
     );
 };

@@ -256,33 +256,33 @@ const GlobalWorkspaceView = React.memo(({
                                         Make Global
                                     </button>
                                 )}
-                                    <button
-                                        onClick={async () => {
+                                <button
+                                    onClick={async () => {
 
-                                            const toDeleteNames = selectedGlobalDocs;
-                                            const toDeleteIds = globalDbAssets
-                                                .filter(a => toDeleteNames.includes(a.name))
-                                                .map(a => a.id)
-                                                .filter(id => id != null && !String(id).startsWith('training_'));
+                                        const toDeleteNames = selectedGlobalDocs;
+                                        const toDeleteIds = globalDbAssets
+                                            .filter(a => toDeleteNames.includes(a.name))
+                                            .map(a => a.id)
+                                            .filter(id => id != null && !String(id).startsWith('training_'));
 
-                                            if (toDeleteIds.length > 0) {
-                                                handleDeleteFromDb(toDeleteIds);
-                                            } else {
-                                                setWorkspaceDocs(prev => prev.filter(d => !toDeleteNames.includes(d.name)));
-                                                setIsGlobalSelectMode(false);
-                                            }
-
-                                            const chatImgUrls = chatAssets.images
-                                                .filter(img => toDeleteNames.includes(img.name))
-                                                .map(img => img.previewUrl!)
-                                                .filter(Boolean);
-                                            if (chatImgUrls.length > 0) {
-                                                setDeletedGalleryImages(prev => [...prev, ...chatImgUrls]);
-                                            }
-
-                                            setSelectedGlobalDocs([]);
+                                        if (toDeleteIds.length > 0) {
+                                            handleDeleteFromDb(toDeleteIds);
+                                        } else {
+                                            setWorkspaceDocs(prev => prev.filter(d => !toDeleteNames.includes(d.name)));
                                             setIsGlobalSelectMode(false);
-                                        }}
+                                        }
+
+                                        const chatImgUrls = chatAssets.images
+                                            .filter(img => toDeleteNames.includes(img.name))
+                                            .map(img => img.previewUrl!)
+                                            .filter(Boolean);
+                                        if (chatImgUrls.length > 0) {
+                                            setDeletedGalleryImages(prev => [...prev, ...chatImgUrls]);
+                                        }
+
+                                        setSelectedGlobalDocs([]);
+                                        setIsGlobalSelectMode(false);
+                                    }}
                                     disabled={selectedGlobalDocs.length === 0}
                                     className="h-10 px-5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-2 active:scale-95 shadow-sm"
                                 >
@@ -387,7 +387,7 @@ const GlobalWorkspaceView = React.memo(({
                                                             <button
                                                                 onClick={async (e) => {
                                                                     e.stopPropagation();
-                                                                    const tid = toast.loading('Đang chờ...');
+                                                                    const tid = toast.loading('đang chạy...');
 
                                                                     try {
                                                                         const data = await api.post<any>('ai_org_chatbot', {
@@ -417,7 +417,7 @@ const GlobalWorkspaceView = React.memo(({
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                
+
                                                                 const idStr = String(doc.id);
                                                                 if (doc.id != null && !idStr.startsWith('training_')) {
                                                                     handleDeleteFromDb([doc.id]);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, Shield, ShieldAlert, Trash2, CheckCircle, XCircle, Search, Mail, Calendar, UserPlus, UserCheck, UserX, AlertTriangle, UserMinus } from 'lucide-react';
 import PageHero from '../components/common/PageHero';
 import toast from 'react-hot-toast';
@@ -6,6 +7,9 @@ import Modal from '../components/common/Modal';
 import ConfirmModal from '../components/common/ConfirmModal';
 import Button from '../components/common/Button';
 import AuditLogModal from '../components/settings/AuditLogModal';
+import { useIsAdmin } from '../hooks/useAuthUser';
+import { Lock } from 'lucide-react';
+
 
 interface ManagedUser {
     id: any;
@@ -164,16 +168,39 @@ const AdminUsers: React.FC = () => {
         u.email.toLowerCase().includes(search.toLowerCase())
     );
 
+    const navigate = useNavigate();
+    const isAdmin = useIsAdmin();
+
+    // ─── Permission Gate ────────────────────────────────────────────────────
+    if (!isAdmin) {
+        return (
+            <div className="min-h-[70vh] flex items-center justify-center p-8">
+                <div className="text-center max-w-sm">
+                    <div className="w-20 h-20 rounded-3xl bg-rose-50 flex items-center justify-center mx-auto mb-6">
+                        <Lock className="w-10 h-10 text-rose-400" />
+                    </div>
+                    <h2 className="text-2xl font-black text-slate-900 mb-2">Không đủ quyền truy cập</h2>
+                    <p className="text-sm text-slate-500 leading-relaxed">
+                        Trang <b>Quản lý người dùng</b> chỉ dành cho tài khoản <b className="text-amber-600">Admin</b>.<br />
+                        Vui lòng liên hệ quản trị viên để được cấp quyền.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+
             <PageHero
                 title={<>User <span className="text-amber-100/80">Management</span></>}
                 subtitle="Quản lý quyền truy cập, nâng cấp/hạ cấp và phê duyệt người dùng mới."
                 showStatus={true}
                 statusText="System Security Active"
                 actions={[
-                    { label: 'Check logs', icon: ShieldAlert, onClick: () => setIsAuditModalOpen(true), primary: false },
-                    { label: 'Mời thành viên', icon: UserPlus, onClick: () => toast('Tính năng mời qua email đang phát triển'), primary: true }
+                    { label: 'Admin Logs', title: 'System Audit Logs', icon: ShieldAlert, onClick: () => setIsAuditModalOpen(true), primary: true },
+                    { label: 'Cài đặt Phân quyền', icon: Shield, onClick: () => navigate('/admin/workspace'), primary: false }
                 ]}
             />
 
@@ -220,16 +247,15 @@ const AdminUsers: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="px-8 py-5">
-                                        <button
-                                            onClick={() => handleToggleRole(user.email, user.role, user.id)}
-                                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all ${user.role === 'admin'
+                                        <span
+                                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${user.role === 'admin'
                                                 ? 'bg-amber-50 text-amber-600 border-amber-100'
                                                 : 'bg-slate-50 text-slate-500 border-slate-100'
                                                 }`}
                                         >
                                             {user.role === 'admin' ? <Shield className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
                                             {user.role}
-                                        </button>
+                                        </span>
                                     </td>
                                     <td className="px-8 py-5">
                                         <button
@@ -308,7 +334,7 @@ const AdminUsers: React.FC = () => {
                         <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl">
                             <div className="flex items-start gap-3">
                                 <AlertTriangle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-                                <p className="text-xs text-blue-800 font-medium leading-relaxed">Người dùng này đang chờ được phê duyệt để truy cập vào hệ thống. Bạn có thể chọn phê duyệt ngay hoặc từ chối để xóa người dùng này.</p>
+                                <p className="text-xs text-blue-800 font-medium leading-relaxed">Người dùng này đang chạy được phê duyệt để truy cập vào hệ thống. Bạn có thể chọn phê duyệt ngay hoặc từ chối để xóa người dùng này.</p>
                             </div>
                         </div>
 

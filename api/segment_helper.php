@@ -1,24 +1,30 @@
 <?php
 // api/segment_helper.php
 
-// Ensure segment_exclusions table exists
+// [PERF FIX] Removed: ALTER TABLE segment_exclusions CONVERT TO CHARACTER SET
+// That DDL statement ran on EVERY request that included segment_helper.php
+// (campaigns, flows, lists, triggers, cron jobs) and acquired a per-request
+// metadata lock → blocked concurrent reads/writes. It was a one-time migration
+// for installations that created the table with the wrong collation.
+// The migration is now in: api/db_indexes_audit.sql (run once on production).
+//
+// We still CREATE TABLE IF NOT EXISTS on each boot so new installations work.
 try {
     if (isset($pdo)) {
-        // Create table with correct collation
         $pdo->exec("CREATE TABLE IF NOT EXISTS segment_exclusions (
             id INT AUTO_INCREMENT PRIMARY KEY,
             segment_id VARCHAR(50) NOT NULL,
-            subscriber_id char(36) NOT NULL,
+            subscriber_id CHAR(36) NOT NULL,
             excluded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE KEY unique_exclusion (segment_id, subscriber_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
-
-        // Migration: Ensure existing table columns use the correct collation to avoid "Illegal mix of collations"
-        // This is necessary because the previous version might have created it with the server default (often general_ci)
-        $pdo->exec("ALTER TABLE segment_exclusions CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
+            UNIQUE KEY unique_exclusion (segment_id, subscriber_id),
+            INDEX idx_seg_exclusions_seg (segment_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
 } catch (Throwable $e) {
-    error_log("Segment Exclusions Table Error: " . $e->getMessage());
+    // Table already exists — safe to ignore
+    if (strpos($e->getMessage(), 'already exists') === false) {
+        error_log("[segment_helper] CREATE TABLE segment_exclusions failed: " . $e->getMessage());
+    }
 }
 
 function buildSegmentWhereClause($criteriaJson, $segmentId = null)

@@ -1,4 +1,4 @@
-import * as React from 'react';
+﻿import * as React from 'react';
 import {
     Send, Users, FileEdit, BarChart3, GitMerge, Tag, Webhook, Zap, Bot,
     Facebook, Globe, Settings, ChevronRight, MousePointer,
@@ -65,7 +65,7 @@ export const SectionAIChat = () => (
     position: "bottom-right"
   };
 </script>
-<script src="https://cdn.autoflow.io/widget.js"
+<script src="https://cdn.DOMATION.io/widget.js"
         async defer></script>`} />
                 </div>
             </div>
@@ -208,7 +208,7 @@ export const SectionZaloMeta = () => (
 /* ─── SECTION 11: API TRIGGERS ──────────────────────── */
 export const SectionAPITriggers = () => (
     <div className="space-y-16 animate-in fade-in duration-700">
-        <SectionHeader label="API & Integrations" title={<>API Triggers <span className="text-amber-600">& Webhooks</span></>} desc="Kết nối Autoflow với bất kỳ hệ thống nào qua REST API và real-time Webhooks." />
+        <SectionHeader label="API & Integrations" title={<>API Triggers <span className="text-amber-600">& Webhooks</span></>} desc="Kết nối DOMATION với bất kỳ hệ thống nào qua REST API và real-time Webhooks." />
         <div className="grid lg:grid-cols-2 gap-10">
             <div className="space-y-6">
                 <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm">
@@ -216,7 +216,7 @@ export const SectionAPITriggers = () => (
                     <div className="space-y-3">
                         {[
                             { method: 'POST', path: '/api/contacts', desc: 'Tạo / cập nhật contact trong CDP.' },
-                            { method: 'POST', path: '/api/trigger-flow', desc: 'Kích hoạt một automation flow cho contact.' },
+                            { method: 'POST', path: '/api/trigger-flow', desc: 'Kích hoạt m\u1ed9t DOMATION Flow cho contact.' },
                             { method: 'GET', path: '/api/contacts/:id', desc: 'Lấy thông tin và history của một contact.' },
                             { method: 'POST', path: '/api/tags/assign', desc: 'Gắn / gỡ tag cho contact theo email/phone.' },
                             { method: 'POST', path: '/api/campaigns/send', desc: 'Trigger gửi campaign ngay lập tức.' },
@@ -240,10 +240,10 @@ export const SectionAPITriggers = () => (
                 <div className="p-8 bg-slate-950 rounded-3xl text-white shadow-xl">
                     <h3 className="font-black text-amber-600 uppercase tracking-widest text-xs mb-5">Ví dụ: Trigger Flow từ CRM/POS</h3>
                     <CodeBlock lang="JavaScript" code={`// Gửi event từ hệ thống ngoài để kích hoạt Automation
-const response = await fetch("https://api.autoflow.io/v1/events", {
+const response = await fetch("https://api.DOMATION.io/v1/events", {
   method: "POST",
   headers: {
-    "X-Autoflow-Key": "af_live_8kjs...",
+    "X-DOMATION-Key": "af_live_8kjs...",
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
@@ -290,7 +290,7 @@ export const SectionWebTracking = () => (
   w.AutoflowTrack=w.AutoflowTrack||[];
   w.afq=function(){w.AutoflowTrack.push(arguments)};
   var el=d.createElement(s);
-  el.src="https://cdn.autoflow.io/track.min.js";
+  el.src="https://cdn.DOMATION.io/track.min.js";
   el.setAttribute("data-pid","YOUR_PROPERTY_ID");
   d.head.appendChild(el);
 }(window,document,"script");
@@ -464,7 +464,7 @@ export const SectionSettings = () => (
                 <h3 className="font-black text-amber-600 uppercase tracking-widest text-xs mb-5">SMTP Configuration (Mailgun)</h3>
                 <CodeBlock lang="Settings" code={`Host:     smtp.mailgun.org
 Port:     587 (TLS)
-User:     postmaster@mg.autoflow.vn
+User:     postmaster@mg.DOMATION.vn
 Pass:     ••••••••••••••••
 
 DNS Records Required:
@@ -495,7 +495,7 @@ DKIM: k=rsa; p=MIGfMA0GCSqGSIb3DQE...`} />
 /* ─── SECTION 15: MARKETPLACE ──────────────────────── */
 export const SectionMarketplace = () => (
     <div className="space-y-16 animate-in fade-in duration-700">
-        <SectionHeader label="App Marketplace" title={<>Mini App & <span className="text-amber-600">Mở rộng</span></>} desc="Khám phá kho ứng dụng, plugins và các mini-app giúp mở rộng sức mạnh cho Autoflow." />
+        <SectionHeader label="App Marketplace" title={<>Mini App & <span className="text-amber-600">Mở rộng</span></>} desc="Khám phá kho ứng dụng, plugins và các mini-app giúp mở rộng sức mạnh cho DOMATION." />
         <div className="grid lg:grid-cols-3 gap-8">
             {[
                 { name: 'Lark Base Connector', desc: 'Đồng bộ data Khách hàng 2 chiều với Lark Base.', cat: 'Integration', icon: Link2 },
@@ -519,7 +519,7 @@ export const SectionMarketplace = () => (
             <div className="relative z-10 grid lg:grid-cols-2 gap-12 items-center">
                 <div>
                     <h3 className="text-3xl font-black mb-6">Bạn là Developer?</h3>
-                    <p className="text-slate-400 leading-relaxed mb-8">Xây dựng Mini App của riêng bạn và chia sẻ/bán trên Autoflow Marketplace. Chúng lôi hỗ trợ đầy đủ SDK, Hosting và Sandbox để bạn phát triển nhanh nhất.</p>
+                    <p className="text-slate-400 leading-relaxed mb-8">Xây dựng Mini App của riêng bạn và chia sẻ/bán trên DOMATION Marketplace. Chúng lôi hỗ trợ đầy đủ SDK, Hosting và Sandbox để bạn phát triển nhanh nhất.</p>
                     <div className="flex gap-4">
                         <button className="px-6 py-3 bg-amber-600 text-slate-900 font-black rounded-xl text-sm">Xem Document SDK</button>
                         <button className="px-6 py-3 bg-white/5 border border-white/10 text-white font-black rounded-xl text-sm hover:bg-white/10">Đăng ký Partner</button>

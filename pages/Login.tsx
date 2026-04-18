@@ -32,7 +32,7 @@ const Login: React.FC = () => {
                     window.location.reload();
                 } else {
                     setIsPending(true);
-                    toast.error('Tài khoản của bạn Đang chờ phê duyệt từ Admin.');
+                    toast.error('Tài khoản của bạn đang chạy phê duyệt từ Admin.');
                 }
             } else {
                 toast.error(result.message || 'Lỗi đăng nhập');
@@ -84,15 +84,15 @@ const Login: React.FC = () => {
                     </div>
                     <div className="p-4 bg-amber-500/5 rounded-2xl border border-amber-500/20 text-xs font-bold text-amber-500/80 uppercase tracking-widest text-left">
                         <div className="flex gap-2">
-                             <div className="w-1 h-1 bg-amber-500 rounded-full mt-1.5 shrink-0" />
-                             <span>Hệ thống bảo mật đa lớp chặn truy cập trái phép.</span>
+                            <div className="w-1 h-1 bg-amber-500 rounded-full mt-1.5 shrink-0" />
+                            <span>Hệ thống bảo mật đa lớp chặn truy cập trái phép.</span>
                         </div>
                         <div className="flex gap-2 mt-2">
-                             <div className="w-1 h-1 bg-amber-500 rounded-full mt-1.5 shrink-0" />
-                             <span>Chúng tôi đã thông Báo cáo quản trị viên.</span>
+                            <div className="w-1 h-1 bg-amber-500 rounded-full mt-1.5 shrink-0" />
+                            <span>Chúng tôi đã thông Báo cáo quản trị viên.</span>
                         </div>
                     </div>
-                    <button 
+                    <button
                         onClick={() => {
                             localStorage.clear();
                             setIsPending(false);
@@ -111,7 +111,7 @@ const Login: React.FC = () => {
             {/* Background Effects */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-600/10 blur-[100px] rounded-full -mr-64 -mt-64" />
             <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/10 blur-[100px] rounded-full -ml-64 -mb-64" />
-            
+
             {/* Left Side: Brand & Visuals */}
             <div className="relative flex-1 p-8 lg:p-20 flex flex-col justify-center min-h-[50vh] lg:min-h-screen overflow-hidden">
                 <div className="relative z-10 space-y-12">
@@ -123,9 +123,9 @@ const Login: React.FC = () => {
 
                     <div className="space-y-6">
                         <h1 className="text-5xl lg:text-7xl font-black text-white leading-[1.1] tracking-tighter">
-                            AUTOFLOW <br /> 
+                            DOMATION <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">
-                                VISION 2026.
+                                AI VISION 2026.
                             </span>
                         </h1>
                         <p className="max-w-md text-lg text-slate-400 font-medium leading-relaxed">
@@ -158,7 +158,7 @@ const Login: React.FC = () => {
                 <div className="relative z-10 w-full max-w-sm space-y-12">
                     <div className="text-center space-y-4">
                         <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-amber-600 rounded-[28px] flex items-center justify-center mx-auto shadow-2xl shadow-amber-600/30 rotate-3 overflow-hidden p-2">
-                             <img src="/imgs/ICON.png" className="w-full h-full object-contain" alt="Brand Icon" />
+                            <img src="/imgs/ICON.png" className="w-full h-full object-contain" alt="Brand Icon" />
                         </div>
                         <div className="pt-4">
                             <h2 className="text-3xl font-black text-white tracking-tight">Identity Check</h2>
@@ -168,7 +168,7 @@ const Login: React.FC = () => {
 
                     <div className="p-8 bg-white/5 border border-white/5 rounded-[40px] shadow-inner">
                         <div className="flex justify-center flex-col items-center gap-6">
-                            <GoogleLogin 
+                            <GoogleLogin
                                 onSuccess={handleGoogleSuccess}
                                 onError={() => toast.error('Google Sign In failed')}
                                 useOneTap
@@ -177,7 +177,7 @@ const Login: React.FC = () => {
                                 size="large"
                                 width="320"
                             />
-                            
+
                             <div className="flex items-center gap-4 w-full">
                                 <div className="h-px flex-1 bg-white/5" />
                                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Enterprise Only</span>
@@ -192,18 +192,18 @@ const Login: React.FC = () => {
 
                     {/* Trust Badges */}
                     <div className="flex items-center justify-center gap-8 pt-8 opacity-40">
-                         <div className="flex flex-col items-center gap-2">
-                             <History className="w-5 h-5 text-white" />
-                             <span className="text-[8px] font-black uppercase tracking-tighter text-white">Log Tracking</span>
-                         </div>
-                         <div className="flex flex-col items-center gap-2">
-                             <CheckCircle2 className="w-5 h-5 text-white" />
-                             <span className="text-[8px] font-black uppercase tracking-tighter text-white">Verified Users</span>
-                         </div>
-                         <div className="flex flex-col items-center gap-2">
-                             <Zap className="w-5 h-5 text-white" />
-                             <span className="text-[8px] font-black uppercase tracking-tighter text-white">Quick Access</span>
-                         </div>
+                        <div className="flex flex-col items-center gap-2">
+                            <History className="w-5 h-5 text-white" />
+                            <span className="text-[8px] font-black uppercase tracking-tighter text-white">Log Tracking</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                            <CheckCircle2 className="w-5 h-5 text-white" />
+                            <span className="text-[8px] font-black uppercase tracking-tighter text-white">Verified Users</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                            <Zap className="w-5 h-5 text-white" />
+                            <span className="text-[8px] font-black uppercase tracking-tighter text-white">Quick Access</span>
+                        </div>
                     </div>
                 </div>
 

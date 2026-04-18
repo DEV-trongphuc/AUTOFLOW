@@ -15,6 +15,10 @@ require_once __DIR__ . '/flow_helpers.php';
 
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+// [FIX P0-5] Fail-fast lock timeout: prevents campaign worker from blocking for MySQL's
+// default 50s when a flow worker or concurrent campaign holds a subscriber row lock.
+// At 5s timeout, the job is re-queued and retried on the next cron run instead.
+$pdo->exec("SET SESSION innodb_lock_wait_timeout = 5");
 header('Content-Type: application/json; charset=utf-8');
 
 // NOTE: $apiUrl, $settings, $mailer are initialized inside runWorkerCampaign()
@@ -41,7 +45,10 @@ if (!function_exists('runWorkerCampaign')) {
 
         // Initialize shared resources inside function scope
         $apiUrl = API_BASE_URL;
-        $stmt = $pdo->query("SELECT * FROM system_settings");
+        // [FIX P38-WC] Only load the 2 settings keys this worker actually needs.
+        // Old SELECT * loaded 50+ key/value pairs (SMTP passwords, API keys, etc.)
+        // into memory on every single worker boot — a significant security and memory footprint.
+        $stmt = $pdo->query("SELECT `key`, `value` FROM system_settings WHERE `key` IN ('smtp_user','max_messages_per_day')");
         $settings = [];
         foreach ($stmt->fetchAll() as $row) {
             $settings[$row['key']] = $row['value'];
@@ -49,12 +56,20 @@ if (!function_exists('runWorkerCampaign')) {
         $defaultSender = !empty($settings['smtp_user']) ? $settings['smtp_user'] : "marketing@ka-en.com.vn";
         $mailer = new Mailer($pdo, $apiUrl, $defaultSender);
 
+        // [FIX P9-C1] MySQL version guard for FOR UPDATE SKIP LOCKED.
+        // SKIP LOCKED requires MySQL ≥ 8.0 — identical to fix in worker_queue.php (P7-C3).
+        // On MySQL 5.7: hardcoded SKIP LOCKED → SQLState[42000] Syntax Error → campaign batch crash.
+        $mysqlVersion = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
+        $skipLockedClause = version_compare($mysqlVersion, '8.0.0', '>=') ? 'SKIP LOCKED' : '';
+
         // Check for valid request (from Cron or Direct Trigger)
         $manualCampaignId = $campaignId ?? $_GET['campaign_id'] ?? null;
         // [INFINITE LOOP GUARD] Track how many consecutive "continuous mode" retries have been made.
         // Passed via ?retry_count=N in the async trigger URL. If count exceeds MAX, auto-pause.
-        $retryCount = (int) ($_GET['retry_count'] ?? 0);
+        // [SECURITY FIX] Cap retry_count to MAX_RETRIES+1 to prevent circuit-breaker bypass
+        // via crafted URL (e.g. ?retry_count=999999 would skip the guard entirely).
         $MAX_RETRIES = 8;
+        $retryCount = min((int) ($_GET['retry_count'] ?? 0), $MAX_RETRIES + 1);
         if ($manualCampaignId) {
             $logs[] = "-> Direct trigger received for Campaign ID: $manualCampaignId (retry #$retryCount)";
             writeWorkerLog("Direct trigger for Campaign ID: $manualCampaignId (retry #$retryCount)");
@@ -151,6 +166,12 @@ if (!function_exists('runWorkerCampaign')) {
                             }
                         }
                     }
+                    // D. INDIVIDUAL IDs (hand-picked subscribers)
+                    if (!empty($targetConf['individualIds'])) {
+                        $indPlaceholders = implode(',', array_fill(0, count($targetConf['individualIds']), '?'));
+                        $countWheres[] = "s.id IN ($indPlaceholders)";
+                        $countParams = array_merge($countParams, $targetConf['individualIds']);
+                    }
 
                     $totalAudience = (int) ($campaign['total_target_audience'] ?? 0);
                     if (!empty($countWheres) && ($totalAudience === 0 || $manualCampaignId)) {
@@ -175,7 +196,11 @@ if (!function_exists('runWorkerCampaign')) {
                 $skipQA = true; // Optimization for amazon 14/s capacity
                 $linkedFlow = null;
                 $flowTriggerNextStepId = null;
-                $stmtAllActive = $pdo->query("SELECT id, name, steps FROM flows WHERE status = 'active'");
+                // [PERF #12] Only load flows that contain a campaign-type trigger step.
+                // Previously: SELECT * loaded ALL active flows (100s of rows, each with large JSON steps column).
+                // Now: A JSON search filter (steps LIKE '%\"campaign\"%') pre-filters at DB level,
+                // then PHP validates the exact trigger match. Saves significant RAM + query time.
+                $stmtAllActive = $pdo->query("SELECT id, name, steps FROM flows WHERE status = 'active' AND steps LIKE '%\"campaign\"%'");
                 $activeFlows = $stmtAllActive->fetchAll();
 
                 foreach ($activeFlows as $f) {
@@ -209,6 +234,12 @@ if (!function_exists('runWorkerCampaign')) {
 
                 $htmlContent = resolveEmailContent($pdo, $campaign['template_id'], $campaign['custom_html'] ?? '', $campaign['content_body']);
                 $htmlContentB = $hasVariantB ? resolveEmailContent($pdo, $abConfig['variant_b']['template_id'] ?? $campaign['template_id'], $abConfig['variant_b']['custom_html'] ?? '', $abConfig['variant_b']['content_body'] ?? '') : null;
+
+                // [PERF FIX REMOVED] Previously, we hashed raw HTML to cache the Mailer.
+                // However, this broke per-subscriber personalization (like first_name and Vouchers)
+                // because the tracking injection would cache the FIRST subscriber's personalized HTML
+                // and serve it to everyone else. The Mailer now correctly handles unique personalized 
+                // HTML strings per subscriber.
 
                 $campaignAttachments = json_decode($campaign['attachments'] ?? '[]', true);
 
@@ -246,15 +277,33 @@ if (!function_exists('runWorkerCampaign')) {
                         }
                     }
                 }
+                // D. INDIVIDUAL IDs — [BUG FIX] Previously missing: campaigns targeting hand-picked
+                // subscribers had empty $wheres → worker sent to ALL workspace subscribers instead.
+                if (!empty($target['individualIds'])) {
+                    $indPlaceholders = implode(',', array_fill(0, count($target['individualIds']), '?'));
+                    $wheres[] = "s.id IN ($indPlaceholders)";
+                    $queryBaseParams = array_merge($queryBaseParams, $target['individualIds']);
+                }
 
                 // 2. Micro-Batch Processing Loop
                 $BATCH_SIZE = 200;   // [PERF] Increased from 50 → 200 to boost throughput per batch
-                $MAX_BATCHES = 60;  // [PERF] Increased from 30 → 60 — max 12,000 emails per worker run
+                $MAX_BATCHES = 90;  // [PERF] Increased from 60 → 90 — max 18,000 emails per worker run
                                     // 450s time guard still protects against FPM exhaustion
                 $batchCount = 0;
                 $hasMore = true;
                 $totalProcessed = 0;
                 $startTimeRun = microtime(true);
+
+                // [PERF B2] Pre-decode linked flow JSON once — avoids 200x json_decode per batch.
+                // linkedFlow config/steps are the same for every subscriber in the batch.
+                $linkedFlowConfig = $linkedFlow ? (json_decode($linkedFlow['config'], true) ?: []) : null;
+                $linkedFlowSteps  = $linkedFlow ? (json_decode($linkedFlow['steps'], true) ?: []) : null;
+
+                // [PERF B3] Pre-decode ZNS campaign config once per worker run (same for every subscriber).
+                $znsConfigPreloaded = null;
+                if (($campaign['type'] ?? 'email') === 'zalo_zns' && !empty($campaign['config'])) {
+                    $znsConfigPreloaded = json_decode($campaign['config'], true) ?: [];
+                }
 
                 // Commit the initialization transaction
                 $pdo->commit();
@@ -281,16 +330,30 @@ if (!function_exists('runWorkerCampaign')) {
                         if (!empty($wheres))
                             $sql .= " AND (" . implode(' OR ', $wheres) . ")";
 
-                        // Exclude already sent or failed
+                        // Exclude already sent or failed (permanent) OR currently in-progress (temporary).
+                        // [STALE-LOCK FIX] processing_campaign is a temporary lock written BEFORE the send.
+                        // If the campaign worker crashes after this lock is committed (TX1) but before
+                        // the email is sent and receive_email is recorded (TX2), the subscriber would
+                        // be permanently skipped with the old unlimited check.
+                        // Fix: processing_campaign only blocks for 10 minutes (the max realistic send time
+                        // per batch). After that, the lock is treated as stale and the subscriber
+                        // becomes eligible again — preventing ghost-skips from crashed workers.
                         $sql .= " AND NOT EXISTS (
-                    SELECT 1 FROM subscriber_activity sa 
-                    WHERE sa.subscriber_id = s.id 
-                    AND (sa.type IN ('receive_email', 'failed_email', 'zalo_sent', 'meta_sent', 'zns_sent', 'zns_failed', 'enter_flow', 'processing_campaign')) 
+                    SELECT 1 FROM subscriber_activity sa
+                    WHERE sa.subscriber_id = s.id
                     AND sa.campaign_id = ?
+                    AND (
+                        -- Permanent exclusions: subscriber already received or hard-failed this campaign
+                        sa.type IN ('receive_email', 'failed_email', 'zalo_sent', 'meta_sent', 'zns_sent', 'zns_failed', 'enter_flow')
+                        OR
+                        -- Temporary lock: in-progress (only block if lock is < 10 minutes old)
+                        (sa.type = 'processing_campaign' AND sa.created_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE))
+                    )
                 )";
                         $execParams[] = $cid;
 
-                        $sql .= " LIMIT $BATCH_SIZE FOR UPDATE SKIP LOCKED";
+                        // [FIX P9-C1] Use version-aware $skipLockedClause; cast BATCH_SIZE to int [P9-H4]
+                        $sql .= " ORDER BY s.id ASC LIMIT " . (int)$BATCH_SIZE . " FOR UPDATE " . $skipLockedClause;
 
                         $stmtSubs = $pdo->prepare($sql);
                         $stmtSubs->execute($execParams);
@@ -323,23 +386,36 @@ if (!function_exists('runWorkerCampaign')) {
                         $flowEnrollments = [];
                         $jobDispatches = [];
 
-                        // [OPTIMIZATION] Pre-fetch Frequency Caps for entire batch
+                        // [OPTIMIZATION] Pre-fetch Frequency Caps for entire batch (Per Channel)
                         $capCache = [];
                         $maxPerDay = (int) ($settings['max_messages_per_day'] ?? 0);
                         if ($maxPerDay > 0) {
                             $subIdList = array_column($recipients, 'id');
                             $placeholdersSub = implode(',', array_fill(0, count($subIdList), '?'));
                             $stmtBatchCap = $pdo->prepare("
-                        SELECT subscriber_id, COUNT(*) as total 
-                        FROM subscriber_activity 
-                        WHERE subscriber_id IN ($placeholdersSub) 
-                        AND type IN ('receive_email', 'zalo_sent', 'meta_sent', 'zns_sent') 
-                        AND created_at >= CURDATE()
-                        GROUP BY subscriber_id
-                    ");
+                                SELECT subscriber_id, type, COUNT(*) as count 
+                                FROM subscriber_activity 
+                                WHERE subscriber_id IN ($placeholdersSub) 
+                                AND type IN ('receive_email', 'zalo_sent', 'meta_sent', 'zns_sent') 
+                                AND created_at >= CURDATE()
+                                GROUP BY subscriber_id, type
+                            ");
                             $stmtBatchCap->execute($subIdList);
-                            foreach ($stmtBatchCap->fetchAll() as $row) {
-                                $capCache[$row['subscriber_id']] = (int) $row['total'];
+                            foreach ($stmtBatchCap->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                                // [FIX] Use string key to match $sub['id'] which is a string UUID.
+                                // PHP array keys cast integers automatically only for numeric strings.
+                                // UUID strings are non-numeric — both sides must use the raw string.
+                                $sId = $row['subscriber_id'];
+                                if (!isset($capCache[$sId])) {
+                                    $capCache[$sId] = ['email' => 0, 'zalo' => 0, 'meta' => 0];
+                                }
+                                if ($row['type'] === 'receive_email') {
+                                    $capCache[$sId]['email'] += $row['count'];
+                                } elseif (in_array($row['type'], ['zalo_sent', 'zns_sent'])) {
+                                    $capCache[$sId]['zalo'] += $row['count'];
+                                } elseif ($row['type'] === 'meta_sent') {
+                                    $capCache[$sId]['meta'] += $row['count'];
+                                }
                             }
                         }
 
@@ -369,7 +445,7 @@ if (!function_exists('runWorkerCampaign')) {
                         // [OPTIMIZATION] Pre-fetch ZNS Token for entire batch
                         $preloadedZnsToken = null;
                         if (($campaign['type'] ?? 'email') === 'zalo_zns') {
-                            $znsConfig = $campaign['config'] ? json_decode($campaign['config'], true) : [];
+                            $znsConfig = $znsConfigPreloaded ?? [];
                             $oaConfigId = $znsConfig['oa_config_id'] ?? '';
                             if ($oaConfigId) {
                                 // 1 DB call for token instead of N calls inside loop
@@ -382,6 +458,11 @@ if (!function_exists('runWorkerCampaign')) {
 
                         $recipientIndexInBatch = 0;
                         $bouncedIds = [];
+
+                        // [RATE LIMITER] Uses sesAcquireRateSlot() — shared file-lock across ALL
+                        // PHP workers (campaign + flow). Guarantees combined total ≤ 10/s regardless
+                        // of how many workers are active. Defined in flow_helpers.php.
+
                         foreach ($recipients as $sub) {
                             $subId = $sub['id'];
                             $attachments = Mailer::filterAttachments($campaignAttachments, $sub['email']);
@@ -391,9 +472,13 @@ if (!function_exists('runWorkerCampaign')) {
                             $variationLabel = "A";
 
                             if ($isABTest && $hasVariantB) {
-                                $hash = hexdec(substr(md5($subId . $cid), 0, 8));
+                                // [BUG FIX] hexdec() on 8-char hex = up to 0xFFFFFFFF = 4294967295.
+                                // On 32-bit PHP, values > 2^31-1 wrap to negative int.
+                                // Negative % 100 is negative in PHP → subscriber always lands in variant A.
+                                // Fix: abs() guarantees a non-negative value before modulo.
+                                $hash = abs(hexdec(substr(md5($subId . $cid), 0, 8))) % 100;
                                 $ratioA = (int) ($abConfig['ratio_a'] ?? 50);
-                                if (($hash % 100) >= $ratioA) {
+                                if ($hash >= $ratioA) {
                                     $currentSubject = $abConfig['variant_b']['subject'] ?? $currentSubject;
                                     $currentHtml = $htmlContentB ?? $currentHtml;
                                     $variationLabel = "B";
@@ -408,20 +493,24 @@ if (!function_exists('runWorkerCampaign')) {
                             // [TURBO] Send QA only for the first subscriber of the campaign run to avoid exponential slowdown
                             $skipQA = ($totalProcessed > 0 || $recipientIndexInBatch > 1);
 
-                            // [OPTIMIZED] Frequency Cap Check
+                            // [OPTIMIZED] Frequency Cap Check (Per Channel)
                             if ($maxPerDay > 0) {
-                                $totalToday = $capCache[$subId] ?? 0;
+                                $campChannel = (($campaign['type'] ?? 'email') === 'zalo_zns') ? 'zalo' : 'email';
+                                $subCapData = $capCache[$subId] ?? ['email' => 0, 'zalo' => 0, 'meta' => 0];
+                                $totalToday = $subCapData[$campChannel] ?? 0;
                                 if ($totalToday >= $maxPerDay) {
-                                    $logs[] = "  -> Skipping {$sub['email']}: Frequency cap reached ($totalToday/$maxPerDay)";
+                                    $logs[] = "  -> Skipping {$sub['email']}: Frequency cap reached ($totalToday/$maxPerDay) for channel $campChannel";
                                     continue;
                                 }
-                                $capCache[$subId]++; // Increment local cache for this batch
+                                // Increment local cache for this batch
+                                if (!isset($capCache[$subId])) $capCache[$subId] = ['email' => 0, 'zalo' => 0, 'meta' => 0];
+                                $capCache[$subId][$campChannel]++; 
                             }
 
                             if (($campaign['type'] ?? 'email') === 'zalo_zns') {
-                                // ZNS SENDING LOGIC
-                                $znsConfig = $campaign['config'] ? json_decode($campaign['config'], true) : [];
-                                $oaConfigId = $znsConfig['oa_config_id'] ?? '';
+                                // [PERF B3] Use pre-decoded ZNS config instead of re-decoding per subscriber
+                                $znsConfig    = $znsConfigPreloaded ?? [];
+                                $oaConfigId   = $znsConfig['oa_config_id'] ?? '';
                                 $mappedParams = $znsConfig['mapped_params'] ?? [];
 
                                 $templateData = [];
@@ -472,6 +561,10 @@ if (!function_exists('runWorkerCampaign')) {
                                     $mailer->setDynamicSender($campaign['sender_email']);
                                 }
 
+                                // [SES SHARED RATE LIMITER] Acquire slot from cross-process file-lock.
+                                // Shared with FlowExecutor → campaign + flow combined ≤ 10/s total.
+                                sesAcquireRateSlot(); // 100ms interval = 10/s shared total
+
                                 $res = $mailer->send($sub['email'], $personalSubject, $personalHtml, $sub['id'], $cid, null, null, $attachments, null, null, $cName, false, $skipQA, $variationLabel);
                             }
 
@@ -484,7 +577,8 @@ if (!function_exists('runWorkerCampaign')) {
                                 // Flow Logic (Optimized using cache)
                                 if ($linkedFlow && $flowTriggerNextStepId) {
                                     $fid = $linkedFlow['id'];
-                                    $fConfig = json_decode($linkedFlow['config'], true) ?: [];
+                                    // [PERF B2] Use pre-decoded config hoisted before subscriber loop
+                                    $fConfig = $linkedFlowConfig ?? [];
                                     $frequency = $fConfig['frequency'] ?? 'one-time';
                                     $allowMultiple = !empty($fConfig['allowMultiple']);
                                     $cooldownHours = (int) ($fConfig['enrollmentCooldownHours'] ?? 24);
@@ -511,7 +605,8 @@ if (!function_exists('runWorkerCampaign')) {
                                     if ($shouldEnroll) {
                                         $initialSchedule = $now;
                                         // [SMART SCHEDULE] Check if first step is WAIT
-                                        $fSteps = json_decode($linkedFlow['steps'], true) ?: [];
+                                        // [PERF B2] Use pre-decoded steps hoisted before subscriber loop
+                                        $fSteps = $linkedFlowSteps ?? [];
                                         foreach ($fSteps as $fs) {
                                             if ($fs['id'] === $flowTriggerNextStepId && $fs['type'] === 'wait') {
                                                 $fsWaitConfig = $fs['config'] ?? [];
@@ -729,13 +824,19 @@ if (!function_exists('runWorkerCampaign')) {
                 if (!empty($wheres))
                     $sqlLeft .= " AND (" . implode(' OR ', $wheres) . ")";
 
+                // [FIX P35-W1] Mirror main batch query: also exclude fresh processing_campaign locks (<10min).
+                // Previously this comment was INSIDE the SQL string → MySQL parse error → campaign stuck at 'sending'.
                 $sqlLeft .= " AND NOT EXISTS (
             SELECT 1 FROM subscriber_activity sa 
             WHERE sa.subscriber_id = s.id 
-            AND (sa.type IN ('receive_email', 'failed_email', 'zalo_sent', 'meta_sent', 'zns_sent', 'zns_failed', 'enter_flow')) 
             AND sa.campaign_id = ?
+            AND (
+                sa.type IN ('receive_email', 'failed_email', 'zalo_sent', 'meta_sent', 'zns_sent', 'zns_failed', 'enter_flow')
+                OR (sa.type = 'processing_campaign' AND sa.created_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE))
+            )
         )";
                 $execFinal[] = $cid;
+
 
                 $stmtLeft = $pdo->prepare($sqlLeft);
                 $stmtLeft->execute($execFinal);

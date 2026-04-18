@@ -8,6 +8,11 @@ $startTime = time();
 $maxRuntime = 240; // 4 minutes to allow graceful shutdown
 $batchSize = 10;
 
+$lockStmt = $pdo->query("SELECT GET_LOCK('worker_segment_counts_lock', 0)");
+if ($lockStmt->fetchColumn() !== 1) {
+    die("[SKIPPED] Already running.\n");
+}
+
 try {
     $logs = [];
     $logs[] = "[START] Segment count update worker started at " . date('Y-m-d H:i:s');
@@ -81,4 +86,5 @@ try {
 foreach ($logs as $log) {
     echo $log . "\n";
 }
+$pdo->query("DO RELEASE_LOCK('worker_segment_counts_lock')");
 ?>

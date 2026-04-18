@@ -64,7 +64,8 @@ try {
                 $exchangeUrl = "https://graph.facebook.com/v24.0/oauth/access_token?grant_type=fb_exchange_token&client_id=$appId&client_secret=$appSecret&fb_exchange_token=$userAccessToken";
                 $ch = curl_init($exchangeUrl);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);  // [FIX P15-C1] External Meta API — must verify cert
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);     // [FIX P15-C1] Verify hostname matches cert CN
                 $exchResponse = curl_exec($ch);
                 curl_close($ch);
                 $exchData = json_decode($exchResponse, true);
@@ -78,7 +79,8 @@ try {
             $debugUrl = "https://graph.facebook.com/v24.0/debug_token?input_token=$userAccessToken&access_token=$userAccessToken";
             $ch = curl_init($debugUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);  // [FIX P15-C1]
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);     // [FIX P15-C1]
             $debugResponse = curl_exec($ch);
             curl_close($ch);
 
@@ -99,7 +101,8 @@ try {
 
             $ch = curl_init($pagesUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);  // [FIX P15-C1]
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);     // [FIX P15-C1]
             $pagesResponse = curl_exec($ch);
             curl_close($ch);
 
@@ -144,6 +147,8 @@ try {
 
             $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);  // [FIX P27-F1] Missing SSL verify — added for consistency
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);     // [FIX P27-F1] Verify hostname matches cert CN
             $response = curl_exec($ch);
             curl_close($ch);
 
@@ -174,7 +179,8 @@ try {
             $debugUrl = "https://graph.facebook.com/v24.0/debug_token?input_token=$accessToken&access_token=$accessToken";
             $ch = curl_init($debugUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);  // [FIX P15-C1]
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);     // [FIX P15-C1]
             $debugResponse = curl_exec($ch);
             curl_close($ch);
             $debugData = json_decode($debugResponse, true);
@@ -183,7 +189,8 @@ try {
             $permUrl = "https://graph.facebook.com/v24.0/me/permissions?access_token=$accessToken";
             $ch = curl_init($permUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);  // [FIX P15-C1]
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);     // [FIX P15-C1]
             $permResponse = curl_exec($ch);
             curl_close($ch);
             $permData = json_decode($permResponse, true);
@@ -292,6 +299,8 @@ function subscribeAppToPage($pageId, $accessToken)
         'access_token' => $accessToken
     ]));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);  // [FIX P27-F1] SSL verify for subscribeAppToPage
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);     // [FIX P27-F1] Verify hostname
     curl_exec($ch);
     curl_close($ch);
 }

@@ -487,7 +487,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
         } else if (activeTab === 'opened') {
             headers = ['Email', 'Tên', 'SĐT', 'Số lần mở', 'Thiết bị', 'Hệ điều hành', 'Trình duyệt', 'Vị trí', 'Thời gian mở đầu'];
         }
-        
+
         const rows = participants.map(p => {
             if (activeTab === 'clicks' || activeTab === 'zns_clicked') {
                 return [
@@ -496,11 +496,11 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                 ];
             } else if (activeTab === 'opened') {
                 return [
-                     p.email || '', p.name || '', p.phone || '', p.open_count || '', p.device || '', p.os || '', p.browser || '', p.location || '',
-                     p.firstOpenAt ? new Date(p.firstOpenAt).toLocaleString('vi-VN') : ''
+                    p.email || '', p.name || '', p.phone || '', p.open_count || '', p.device || '', p.os || '', p.browser || '', p.location || '',
+                    p.firstOpenAt ? new Date(p.firstOpenAt).toLocaleString('vi-VN') : ''
                 ];
             }
-            
+
             const error = p.lastError || p.last_error || p.error_message || '';
             const errorStr = typeof error === 'object' ? JSON.stringify(error) : error;
 
@@ -515,9 +515,9 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
             ];
         });
 
-        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + 
+        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" +
             [headers.join(','), ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))].join("\n");
-            
+
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
@@ -564,7 +564,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
             />
             <div
                 style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
-                className={`bg-white w-full max-w-4xl rounded-[24px] shadow-2xl border border-slate-100 flex flex-col max-h-[90vh] transform transition-all duration-500 ${animateIn ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-8'}`}
+                className={`bg-white w-full max-w-5xl rounded-[24px] shadow-2xl border border-slate-100 flex flex-col max-h-[92vh] transform transition-all duration-500 ${animateIn ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-8'}`}
             >
                 {/* Header */}
                 <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-[24px]">
@@ -572,7 +572,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                         <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm border border-blue-100">
                             {stepType === 'zalo_zns' ? (
                                 <img
-                                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Icon_of_Zalo.svg/2048px-Icon_of_Zalo.svg.png"
+                                    src="https://automation.ideas.edu.vn/imgs/zalolog.png"
                                     alt="Zalo"
                                     className="w-5 h-5"
                                 />
@@ -694,7 +694,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                             onClick={() => onTabChange('waiting')}
                             className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'waiting' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}
                         >
-                            Đang chờ Gửi
+                            Đang chờ gửi
                         </button>
                         <button
                             onClick={() => onTabChange('opened')}
@@ -706,7 +706,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                             onClick={() => onTabChange('failed')}
                             className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'failed' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}
                         >
-                            Gửi lại
+                            Gửi lỗi
                         </button>
                         <button
                             onClick={() => onTabChange('unsubscribed')}
@@ -732,10 +732,10 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                 {stepType === 'zalo_zns' && (
                     <div className="px-6 py-3 border-b border-slate-50 flex gap-2 overflow-x-auto" style={{ minHeight: '56px' }}>
                         <button onClick={() => onTabChange('zns_sent')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'zns_sent' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>Gửi thành công</button>
-                        <button onClick={() => onTabChange('waiting')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'waiting' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>Đang chờ</button>
+                        <button onClick={() => onTabChange('waiting')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'waiting' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>Đang chờ gửi</button>
                         <button onClick={() => onTabChange('zns_clicked')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'zns_clicked' ? 'bg-cyan-50 text-cyan-600 border-cyan-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>Đã Click Link</button>
                         <button onClick={() => onTabChange('zns_replied')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'zns_replied' ? 'bg-violet-50 text-violet-600 border-violet-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>Đã Phản hồi</button>
-                        <button onClick={() => onTabChange('zns_failed')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'zns_failed' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>Gửi lại</button>
+                        <button onClick={() => onTabChange('zns_failed')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'zns_failed' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>Gửi lỗi</button>
                         <button onClick={() => onTabChange('zns_skipped')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'zns_skipped' ? 'bg-slate-50 text-slate-600 border-slate-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}>Bỏ qua</button>
                     </div>
                 )}
@@ -753,7 +753,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                             onClick={() => onTabChange('waiting')}
                             className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${activeTab === 'waiting' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'}`}
                         >
-                            Đang chờ
+                            đang chạy
                         </button>
                     </div>
                 )}
@@ -914,37 +914,37 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                     </div>
                                                 </th>
                                             )}
-                                            <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-[320px]">
+                                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
                                                 Khách hàng
                                             </th>
-                                            {(stepType === 'action' || stepType === 'zalo_zns') && activeTab !== 'waiting' && activeTab !== 'unsubscribed' && (
-                                                <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider w-[120px]">
+                                            {(stepType === 'action' || stepType === 'zalo_zns') && activeTab !== 'waiting' && activeTab !== 'unsubscribed' && !['failed', 'zns_failed'].includes(activeTab as string) && (
+                                                <th className="px-4 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap w-[80px]">
                                                     Gửi lại
                                                 </th>
                                             )}
                                             {stepType === 'completed' ? (
                                                 <>
-                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Bước cuối cùng</th>
-                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Trạng thái</th>
-                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Số lần</th>
-                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Thời gian</th>
+                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Bước cuối cùng</th>
+                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center whitespace-nowrap">Trạng thái</th>
+                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center whitespace-nowrap">Số lần</th>
+                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right whitespace-nowrap">Thời gian</th>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-[200px]">Trạng thái</th>
+                                                    <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap w-[100px]">Trạng thái</th>
                                                     {activeTab === 'opened' && (
                                                         <>
-                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Số lần</th>
-                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Thời gian</th>
+                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center whitespace-nowrap">Số lần</th>
+                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Thời gian</th>
                                                         </>
                                                     )}
                                                     {activeTab === 'waiting' ? (
                                                         <>
-                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Thời gian vào</th>
-                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Thời gian chờ</th>
+                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Thời gian vào</th>
+                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Thời gian chờ</th>
                                                         </>
                                                     ) : activeTab !== 'opened' ? (
-                                                        <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-left">
+                                                        <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-left whitespace-nowrap">
                                                             {['failed', 'zns_failed'].includes(activeTab as string) ? 'Chi tiết lỗi' : 'Thời gian'}
                                                         </th>
                                                     ) : null}
@@ -959,7 +959,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                         </tr>
                                     )}
                                 </thead>
-                                <tbody className="divide-y divide-slate-50 relative">
+                                <tbody className="divide-y divide-slate-100 relative">
                                     {/* "Select All" row - Show when all on page are selected and there are more */}
                                     {selectedIds.size === participants.length && participants.length > 0 && pagination.total > participants.length && ['waiting', 'failed', 'unsubscribed', 'zns_failed', 'zns_skipped'].includes(activeTab) && (
                                         <tr className="bg-orange-50/50">
@@ -1013,23 +1013,23 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                         </div>
                                                     </td>
                                                 )}
-                                                <td className="px-6 py-3">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-xs uppercase">
+                                                <td className={['failed', 'zns_failed'].includes(activeTab as string) ? 'px-4 py-3' : 'px-6 py-4'}>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-[10px] uppercase shrink-0">
                                                             {p.email.substring(0, 2)}
                                                         </div>
-                                                        <div>
-                                                            <p className="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors">{p.name || 'Unknown'}</p>
-                                                            <p className="text-[10px] text-slate-400">
+                                                        <div className="min-w-0">
+                                                            <p className="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors truncate">{p.name || 'Unknown'}</p>
+                                                            <p className="text-[10px] text-slate-400 truncate">
                                                                 {stepType === 'zalo_zns' ? (p.phone || p.phone_number || p.phoneNumber || p.email) : p.email}
                                                             </p>
                                                         </div>
                                                     </div>
                                                 </td>
 
-                                                {/* Dedicated Action Column */}
-                                                {(stepType === 'action' || stepType === 'zalo_zns') && activeTab !== 'waiting' && activeTab !== 'unsubscribed' && (
-                                                    <td className="px-6 py-3 text-center">
+                                                {/* Dedicated Action Column - hidden for failed tabs (error detail needs space) */}
+                                                {(stepType === 'action' || stepType === 'zalo_zns') && activeTab !== 'waiting' && activeTab !== 'unsubscribed' && !['failed', 'zns_failed'].includes(activeTab as string) && (
+                                                    <td className="px-4 py-3 text-center">
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -1072,7 +1072,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <td className="px-6 py-3">
+                                                        <td className={`whitespace-nowrap ${['failed', 'zns_failed'].includes(activeTab as string) ? 'px-4 py-3' : 'px-6 py-4'}`}>
                                                             {p.status === 'completed' ? (
                                                                 <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md text-[10px] font-bold border border-emerald-100 inline-flex items-center gap-1">
                                                                     <Check className="w-3 h-3" /> Hoàn thành
@@ -1168,20 +1168,27 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
 
                                                         {['failed', 'zns_failed'].includes(activeTab as string) && (
                                                             <>
-                                                                <td className="px-6 py-3">
-                                                                    <div className="flex flex-col gap-1.5">
+                                                                <td className="px-4 py-2 max-w-[260px]">
+                                                                    <div className="flex flex-col gap-1">
                                                                         {(() => {
-                                                                            const error = p.lastError || p.last_error || p.error_message || 'Lỗi không xác định';
+                                                                            // Priority: errorMessage (step-errors API), lastError (participants API), last_error, error_message, fallback
+                                                                            const error = p.errorMessage || p.lastError || p.last_error || p.error_message || 'Lỗi không xác định';
+                                                                            // Extract short readable part (before first comma or max 80 chars)
+                                                                            const shortError = error.length > 80 ? error.substring(0, 80) + '...' : error;
                                                                             return (
-                                                                                <div className="p-2 bg-rose-50 border border-rose-100 rounded-xl text-[10px] text-rose-600 font-bold flex items-start gap-2 shadow-sm animate-in fade-in slide-in-from-left-2 duration-300">
-                                                                                    <AlertOctagon className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                                                                                    <span className="leading-relaxed">{error}</span>
+                                                                                <div
+                                                                                    className="px-2 py-1.5 bg-rose-50 border border-rose-100 rounded-lg text-[10px] text-rose-600 font-semibold flex items-start gap-1.5"
+                                                                                    title={error}
+                                                                                >
+                                                                                    <AlertOctagon className="w-3 h-3 shrink-0 mt-0.5" />
+                                                                                    <span className="line-clamp-2 leading-tight">{shortError}</span>
                                                                                 </div>
                                                                             );
                                                                         })()}
-                                                                        <span className="text-[9px] text-slate-400 flex items-center gap-1 ml-1">
-                                                                            <Clock className="w-2.5 h-2.5" />
-                                                                            Xảy ra lúc: {formatTime(p.updated_at || p.updatedAt || p.completedAt)}
+                                                                        <span className="text-[9px] text-slate-400 flex items-center gap-1 ml-0.5">
+                                                                            <Clock className="w-2.5 h-2.5 shrink-0" />
+                                                                            {/* timestamp from step-errors API, fallback to updated_at / completedAt */}
+                                                                            {formatTime(p.timestamp || p.updated_at || p.updatedAt || p.completedAt)}
                                                                         </span>
                                                                     </div>
                                                                 </td>

@@ -1,4 +1,4 @@
-import * as React from 'react';
+﻿import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import {
     Send, Users, FileEdit, BarChart3, GitMerge, Tag, Webhook, Zap, Bot,
@@ -39,7 +39,7 @@ const navGroups = [
     {
         title: '?? Automation',
         items: [
-            { id: 'automation', name: 'Automation Flows', icon: GitMerge },
+            { id: 'automation', name: 'DOMATION Flows', icon: GitMerge },
             { id: 'api-triggers', name: 'API Triggers', icon: Webhook },
         ]
     },
@@ -96,7 +96,7 @@ const sectionLabel: Record<string, string> = {
     campaigns: 'Chi?n d?ch',
     'email-builder': 'Email Builder',
     templates: 'Templates',
-    automation: 'Automation Flows',
+    automation: 'DOMATION Flows',
     'api-triggers': 'API Triggers',
     audience: 'Audience CDP',
     tags: 'Tags & Segments',
@@ -176,7 +176,7 @@ const Documentation: React.FC = () => {
                         </div>
                         {sidebar && (
                             <div className="flex flex-col min-w-0">
-                                <h1 className="text-xl font-black text-slate-900 tracking-tighter leading-none">AUTOFLOW</h1>
+                                <h1 className="text-xl font-black text-slate-900 tracking-tighter leading-none">DOMATION</h1>
                                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Documentation</span>
                             </div>
                         )}

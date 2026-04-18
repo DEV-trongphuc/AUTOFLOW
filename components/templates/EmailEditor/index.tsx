@@ -1,6 +1,7 @@
 
 // components/templates/EmailEditor/index.tsx
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { EmailBlock, EmailBodyStyle, EmailBlockType, EmailBlockStyle, Template, TemplateGroup } from '../../../types';
 import EmailTopBar from './EmailTopBar';
 import EmailToolbox from './EmailToolbox';
@@ -473,8 +474,8 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
         }
     };
 
-    return (
-        <div className="fixed inset-0 z-[200] bg-[#f1f5f9] flex flex-col animate-in fade-in duration-300 font-sans">
+    const editorContent = (
+        <div className="fixed inset-0 z-[100000] bg-[#f1f5f9] flex flex-col animate-in zoom-in-[0.98] fade-in slide-in-from-bottom-4 duration-300 font-sans shadow-2xl">
             <EmailTopBar
                 name={name} setName={setName}
                 groupId={groupId} setGroupId={setGroupId}
@@ -685,6 +686,8 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
 
         </div>
     );
+
+    return createPortal(editorContent, document.body);
 };
 
 export default EmailEditor;

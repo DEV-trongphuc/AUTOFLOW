@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Mail, MessageSquare, Code, Globe, Zap, CheckCircle2, ChevronRight, Activity, ArrowRight, Server, Smartphone, MonitorSmartphone, Bot, Link, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../services/storageAdapter';
@@ -26,7 +27,7 @@ export const SystemConnectionsModal: React.FC<Props> = ({ isOpen, onClose }) => 
             const res = await api.get<any>('system_connections');
             if (res.success && res.data) {
                 setFetchedStatus(res.data);
-                
+
                 // Hiệu ứng "đang kiểm tra" tuần tự từng card
                 const keys = ['smtp', 'zalo', 'mess', 'api', 'tracking', 'ai'];
                 keys.forEach((key, index) => {
@@ -57,7 +58,7 @@ export const SystemConnectionsModal: React.FC<Props> = ({ isOpen, onClose }) => 
             name: 'Zalo OA (ZNS)',
             desc: 'Kết nối Official Account gửi tin nhắn Zalo chăm sóc khách hàng.',
             icon: MessageSquare,
-            imageUrl: 'https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Zalo-Arc.png',
+            imageUrl: 'https://automation.ideas.edu.vn/imgs/zalolog.png',
             color: 'from-[#0068FF] to-[#00c6ff]',
             status: fetchedStatus ? fetchedStatus.zalo : false,
             path: '/zalo-settings'
@@ -107,15 +108,15 @@ export const SystemConnectionsModal: React.FC<Props> = ({ isOpen, onClose }) => 
         window.scrollTo(0, 0);
     };
 
-    return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+    const modalContent = (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm shadow-2xl" onClick={onClose} />
 
-            <div className="relative bg-white w-full max-w-4xl max-h-[90vh] rounded-[24px] shadow-2xl overflow-hidden flex flex-col animate-scale-in">
+            <div className="relative bg-white w-full max-w-4xl max-h-[90vh] rounded-[24px] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50 relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600" />
-                    
+
                     <div className="flex items-center gap-4 relative z-10">
                         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
                             <Link className="w-6 h-6" />
@@ -134,57 +135,59 @@ export const SystemConnectionsModal: React.FC<Props> = ({ isOpen, onClose }) => 
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto bg-slate-50/50 p-6 relative">
+                <div className="flex-1 overflow-y-auto bg-slate-50/50 p-6 relative custom-scrollbar">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {connections.map((item, idx) => (
-                                <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all flex flex-col group">
-                                    <div className="flex items-start gap-4 mb-4">
-                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-lg transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 overflow-hidden ${item.imageUrl ? 'bg-white border border-slate-100' : `bg-gradient-to-br ${item.color} text-white`}`}>
-                                            {item.imageUrl ? (
-                                                <img src={item.imageUrl} alt={item.name} className="w-full h-full object-contain p-1.5" />
-                                            ) : (
-                                                <item.icon className="w-7 h-7" />
-                                            )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-bold text-slate-800 text-[15px] truncate">{item.name}</h3>
-                                            <p className="text-[11px] text-slate-500 font-medium leading-relaxed mt-1 line-clamp-2">
-                                                {item.desc}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
-                                        {!revealed[item.id] ? (
-                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100/50 text-slate-500 rounded-lg text-xs font-bold border border-slate-200/50">
-                                                <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />
-                                                <span>Đang quét...</span>
-                                            </div>
-                                        ) : item.status ? (
-                                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100 text-xs font-bold animate-in zoom-in-95 duration-300">
-                                                <CheckCircle2 className="w-4 h-4" />
-                                                <span>Sẵn sàng</span>
-                                            </div>
+                            <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all flex flex-col group">
+                                <div className="flex items-start gap-4 mb-4">
+                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-lg transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 overflow-hidden ${item.imageUrl ? 'bg-white border border-slate-100' : `bg-gradient-to-br ${item.color} text-white`}`}>
+                                        {item.imageUrl ? (
+                                            <img src={item.imageUrl} alt={item.name} className="w-full h-full object-contain p-1.5" />
                                         ) : (
-                                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-xs font-bold animate-in zoom-in-95 duration-300">
-                                                <div className="w-2 h-2 rounded-full bg-slate-400" />
-                                                <span>Chưa liên kết</span>
-                                            </div>
+                                            <item.icon className="w-7 h-7" />
                                         )}
-
-                                        <button 
-                                            onClick={() => handleNavigate(item.path)}
-                                            disabled={!revealed[item.id]}
-                                            className={`flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-lg transition-colors ${!revealed[item.id] ? 'opacity-50 cursor-not-allowed bg-slate-100 text-slate-400' : item.status ? 'text-slate-600 hover:bg-slate-100' : 'bg-[#ffa900] hover:bg-[#e69800] text-white shadow-md shadow-orange-500/20'}`}
-                                        >
-                                            {item.status ? 'Cấu hình' : 'Thiết lập ngay'} <ArrowRight className="w-3.5 h-3.5" />
-                                        </button>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-bold text-slate-800 text-[15px] truncate">{item.name}</h3>
+                                        <p className="text-[11px] text-slate-500 font-medium leading-relaxed mt-1 line-clamp-2">
+                                            {item.desc}
+                                        </p>
                                     </div>
                                 </div>
-                            ))}
+
+                                <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                                    {!revealed[item.id] ? (
+                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100/50 text-slate-500 rounded-lg text-xs font-bold border border-slate-200/50">
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />
+                                            <span>Đang quét...</span>
+                                        </div>
+                                    ) : item.status ? (
+                                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100 text-xs font-bold animate-in zoom-in-95 duration-300">
+                                            <CheckCircle2 className="w-4 h-4" />
+                                            <span>Sẵn sàng</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-xs font-bold animate-in zoom-in-95 duration-300">
+                                            <div className="w-2 h-2 rounded-full bg-slate-400" />
+                                            <span>Chưa liên kết</span>
+                                        </div>
+                                    )}
+
+                                    <button
+                                        onClick={() => handleNavigate(item.path)}
+                                        disabled={!revealed[item.id]}
+                                        className={`flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-lg transition-colors ${!revealed[item.id] ? 'opacity-50 cursor-not-allowed bg-slate-100 text-slate-400' : item.status ? 'text-slate-600 hover:bg-slate-100' : 'bg-[#ffa900] hover:bg-[#e69800] text-white shadow-md shadow-orange-500/20'}`}
+                                    >
+                                        {item.status ? 'Cấu hình' : 'Thiết lập ngay'} <ArrowRight className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 };

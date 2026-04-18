@@ -355,7 +355,7 @@ function findZaloScenario($pdo, $oaConfig, $zId, $subId, $event, $msgLower)
     $skipAI = isAiPaused($pdo, $subId, $zId);
 
     // 1. Holiday
-    $stmtH = $pdo->prepare("SELECT * FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'holiday' AND status = 'active'");
+    $stmtH = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, schedule_type, active_days, start_time, end_time, holiday_start_at, holiday_end_at, priority_override, trigger_text FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'holiday' AND status = 'active'"); // [FIX P38-ZIP]
     $stmtH->execute([$oaId]);
     while ($h = $stmtH->fetch()) {
         if (isScenarioActive($h, $nowTime, $nowDay)) {
@@ -370,7 +370,7 @@ function findZaloScenario($pdo, $oaConfig, $zId, $subId, $event, $msgLower)
 
     // 2. Exact Keywords / Contains
     if ($event === 'user_send_text') {
-        $stmtS = $pdo->prepare("SELECT * FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type IN ('keyword', 'ai_reply') AND status = 'active' ORDER BY created_at DESC");
+        $stmtS = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, trigger_text, match_type, schedule_type, active_days, start_time, end_time, priority_override FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type IN ('keyword', 'ai_reply') AND status = 'active' ORDER BY created_at DESC"); // [FIX P38-ZIP]
         $stmtS->execute([$oaId]);
         $scenarios = $stmtS->fetchAll();
 
@@ -392,7 +392,7 @@ function findZaloScenario($pdo, $oaConfig, $zId, $subId, $event, $msgLower)
 
     // 3. Fallback AI / Welcome
     if ($event === 'follow') {
-        $stmtW = $pdo->prepare("SELECT * FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'welcome' AND status = 'active' LIMIT 1");
+        $stmtW = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, schedule_type, active_days, start_time, end_time, priority_override, trigger_text FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'welcome' AND status = 'active' LIMIT 1"); // [FIX P38-ZIP]
         $stmtW->execute([$oaId]);
         $row = $stmtW->fetch();
         if ($row && isScenarioActive($row, $nowTime, $nowDay))
@@ -400,7 +400,7 @@ function findZaloScenario($pdo, $oaConfig, $zId, $subId, $event, $msgLower)
     }
 
     if ($event === 'user_send_text' && !$skipAI) {
-        $stmtAI = $pdo->prepare("SELECT * FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' AND (trigger_text IS NULL OR trigger_text = '' OR trigger_text = '*') AND status = 'active' LIMIT 1");
+        $stmtAI = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, trigger_text FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' AND (trigger_text IS NULL OR trigger_text = '' OR trigger_text = '*') AND status = 'active' LIMIT 1"); // [FIX P38-ZIP]
         $stmtAI->execute([$oaId]);
         $rowAI = $stmtAI->fetch();
         if ($rowAI && isScenarioActive($rowAI, $nowTime, $nowDay))

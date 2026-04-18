@@ -12,8 +12,11 @@ class FlowExecutor
     private $pdo;
     private $mailer;
     private $apiUrl;
-    private static $tagCache = [];
-    private static $profileCache = [];
+    // [MEMORY] Static caches are class-level singletons shared across all instances within
+    // one PHP process. Cap size to prevent unbounded growth during long worker runs
+    // (e.g. flow worker processing 10k+ subscribers without restart).
+    private static $tagCache = [];     // Max 200 entries — see pruneStaticCache() calls below
+    private static $profileCache = []; // Max 200 entries
 
     public function __construct($pdo, $mailer, $apiUrl)
     {
@@ -22,18 +25,86 @@ class FlowExecutor
         $this->apiUrl = $apiUrl;
     }
 
+    private $statsBuffer = []; // [PHASE 8] RAM Buffer for heavy stats
+
     /**
-     * Buffer stats update instead of direct write to reduce locking
+     * Buffer stats update internally into RAM (Phase 8 - Extreme Scale)
      */
     private function bufferStatsUpdate($table, $id, $column, $value = 1)
     {
-        try {
-            $stmt = $this->pdo->prepare("INSERT INTO stats_update_buffer (target_table, target_id, column_name, increment, created_at) VALUES (?, ?, ?, ?, NOW())");
-            $stmt->execute([$table, $id, $column, $value]);
-        } catch (Exception $e) {
-            // Fallback
-            $this->pdo->prepare("UPDATE $table SET $column = $column + ? WHERE id = ?")->execute([$value, $id]);
+        // [SECURITY] Whitelist valid table/column combinations to prevent SQL injection
+        static $ALLOWED = [
+            'flows'       => ['stat_total_sent', 'stat_total_failed', 'stat_completed', 'stat_enrolled', 'stat_zalo_sent', 'stat_zns_sent', 'stat_zns_failed', 'stat_meta_sent'],
+            'subscribers' => ['stats_sent', 'stats_opened', 'stats_clicked'],
+        ];
+        if (!isset($ALLOWED[$table]) || !in_array($column, $ALLOWED[$table], true)) {
+            error_log("[bufferStatsUpdate] Blocked invalid table/column: $table.$column");
+            return;
         }
+
+        $key = "{$table}_{$id}_{$column}";
+        if (!isset($this->statsBuffer[$key])) {
+            $this->statsBuffer[$key] = [
+                'table' => $table,
+                'id' => $id,
+                'column' => $column,
+                'increment' => 0
+            ];
+        }
+        $this->statsBuffer[$key]['increment'] += $value;
+        
+        // Auto-flush to prevent unbounded memory growth during huge loops
+        if (count($this->statsBuffer) >= 100) {
+            $this->flushStatsBuffer();
+        }
+    }
+
+    /**
+     * Flush memory stats buffer to DB in a single bulk INSERT (Phase 8 Multi-Million Scale)
+     */
+    public function flushStatsBuffer()
+    {
+        if (empty($this->statsBuffer)) return;
+
+        try {
+            $ph = [];
+            $vals = [];
+            foreach ($this->statsBuffer as $stat) {
+                if ($stat['increment'] === 0) continue;
+                $ph[] = "(?, ?, ?, ?, NOW())";
+                $vals[] = $stat['table'];
+                $vals[] = $stat['id'];
+                $vals[] = $stat['column'];
+                $vals[] = $stat['increment'];
+            }
+            if (!empty($ph)) {
+                $sql = "INSERT INTO stats_update_buffer (target_table, target_id, column_name, increment, created_at) VALUES " . implode(',', $ph);
+                $this->pdo->prepare($sql)->execute($vals);
+            }
+        } catch (Exception $e) {
+            error_log("[FlowExecutor] Flush stats failed: " . $e->getMessage());
+            // Fallback for strict modes or max_allowed_packet
+            // [FIX P9-H3] Defense-in-depth: re-validate whitelist INSIDE fallback path.
+            // bufferStatsUpdate() already filters, but the fallback UPDATE interpolates
+            // table/column directly into SQL — if $statsBuffer is ever externally mutated
+            // (future regression), SQL injection is possible without this guard.
+            static $FALLBACK_ALLOWED = [
+                'flows'       => ['stat_total_sent', 'stat_total_failed', 'stat_completed', 'stat_enrolled', 'stat_zalo_sent', 'stat_zns_sent', 'stat_zns_failed', 'stat_meta_sent'],
+                'subscribers' => ['stats_sent', 'stats_opened', 'stats_clicked'],
+            ];
+            foreach ($this->statsBuffer as $stat) {
+                if ($stat['increment'] === 0) continue;
+                if (!isset($FALLBACK_ALLOWED[$stat['table']]) || !in_array($stat['column'], $FALLBACK_ALLOWED[$stat['table']], true)) {
+                    error_log("[FlowExecutor] Fallback blocked invalid table/column: {$stat['table']}.{$stat['column']}");
+                    continue;
+                }
+                try {
+                    $this->pdo->prepare("UPDATE {$stat['table']} SET {$stat['column']} = {$stat['column']} + ? WHERE id = ?")
+                        ->execute([$stat['increment'], $stat['id']]);
+                } catch (\Throwable $th) {}
+            }
+        }
+        $this->statsBuffer = []; // Clear RAM
     }
 
     /**
@@ -74,9 +145,59 @@ class FlowExecutor
         try {
             switch ($step['type']) {
                 case 'action': // Send Email
-                    // [OPTIMIZATION] Frequency Cap Check
+                    // [IDEMPOTENCY GUARD] Check if this step's email was already sent.
+                    // Scenario: worker sends email → crashes before committing step_id advance
+                    // → 5-min stale recovery picks up same item → would re-send duplicate.
+                    // Fix: Check BOTH activity_buffer (recently written, not yet synced) AND
+                    // subscriber_activity (synced rows) for an existing send record.
+                    // reference_id = $currentStepId uniquely identifies "this step for this flow".
+                    //
+                    // [SCOPE FIX] Must also scope to queue_created_at to prevent false positives on
+                    // recurring/allowMultiple flows. Without scoping, a subscriber's 2nd enrollment
+                    // would find 'receive_email' from their 1st enrollment (same step_id) and
+                    // SILENTLY SKIP every email step — never sending on re-enrollment.
+                    try {
+                        $dedupParams = [$subscriberId, $currentStepId];
+                        $dedupCreatedAtClause = '';
+                        if (!empty($queueCreatedAt)) {
+                            $dedupCreatedAtClause = ' AND created_at >= ?';
+                            $dedupParams[] = $queueCreatedAt;
+                        }
+                        $bufferParams = [$subscriberId, $currentStepId];
+                        if (!empty($queueCreatedAt)) {
+                            $bufferParams[] = $queueCreatedAt;
+                        }
+
+                        $stmtDedup = $this->pdo->prepare("
+                            SELECT 1 FROM subscriber_activity
+                            WHERE subscriber_id = ? AND type IN ('receive_email','failed_email') AND reference_id = ?{$dedupCreatedAtClause}
+                            UNION ALL
+                            SELECT 1 FROM activity_buffer
+                            WHERE subscriber_id = ? AND type IN ('receive_email','failed_email') AND reference_id = ?{$dedupCreatedAtClause}
+                            LIMIT 1
+                        ");
+                        $stmtDedup->execute(array_merge($dedupParams, $bufferParams));
+                        if ($stmtDedup->fetchColumn()) {
+                            // Email already sent (or permanently failed) for this step in THIS enrollment.
+                            $stepLabel = $step['label'] ?? $step['type'] ?? 'unknown'; // [FIX] Guard missing 'label' key
+                            $logs[] = "  -> [IDEMPOTENCY] Step '{$stepLabel}' already sent for sub {$subscriberId} in this enrollment. Advancing.";
+
+                            $nextStepId = $step['nextStepId'] ?? null;
+                            $isInstantStep = true;
+                            $messageSent = false;
+                            break;
+                        }
+                    } catch (\Exception $eDup) {
+                        // If check fails (e.g. table doesn't exist), fall through and attempt send normally.
+                        error_log('[FlowExecutor] Idempotency check failed: ' . $eDup->getMessage());
+                    }
+
+
+                    // [OPTIMIZATION] Frequency Cap Check (Per Channel)
                     $maxPerDay = (int) ($flowConfig['maxMessagesPerDay'] ?? 0);
-                    $todaySent = (int) ($contextData['total_sent_today'] ?? 0);
+                    $todaySentData = $contextData['total_sent_today'] ?? ['email' => 0];
+                    $todaySent = is_array($todaySentData) ? ($todaySentData['email'] ?? 0) : (int)$todaySentData;
+
                     if ($maxPerDay > 0 && $todaySent >= $maxPerDay) {
                         $logs[] = "  -> Frequency cap reached ($todaySent/$maxPerDay). Rescheduling to tomorrow.";
                         logActivity($this->pdo, $subscriberId, 'frequency_cap_reached', $currentStepId, $flowName, "Cap: $maxPerDay", $flowId);
@@ -106,17 +227,36 @@ class FlowExecutor
 
 
                     // Attachments
-                    $attRaw = $config['attachments'] ?? '[]';
-                    $emailAttachments = is_array($attRaw) ? $attRaw : (json_decode($attRaw, true) ?: []);
-                    $attachments = Mailer::filterAttachments($emailAttachments, $subscriber['email']);
+                    // [PERF] Cache decoded attachment arrays per step to avoid re-decoding JSON
+                    // for every subscriber in a flow batch (same step config is identical per subscriber).
+                    static $attachmentCache = [];
+                    if (!isset($attachmentCache[$currentStepId])) {
+                        $attRaw = $config['attachments'] ?? '[]';
+                        $attachmentCache[$currentStepId] = is_array($attRaw) ? $attRaw : (json_decode($attRaw, true) ?: []);
+                        // Guard against cache growing unbounded for very long worker runs
+                        if (count($attachmentCache) > 50) {
+                            array_shift($attachmentCache);
+                        }
+                    }
+                    $attachments = Mailer::filterAttachments($attachmentCache[$currentStepId], $subscriber['email']);
 
                     // [MULTI-EMAIL] Inject sender_email if specified in Flow Step
                     if (!empty($config['senderEmail'])) {
                         $this->mailer->setDynamicSender($config['senderEmail']);
                     }
 
+                    // [SES SHARED RATE LIMITER] Acquire slot from cross-process file-lock.
+                    // Shared with worker_campaign.php → campaign + flow combined ≤ 10/s total.
+                    // Full implementation in sesAcquireRateSlot() (flow_helpers.php).
+                    sesAcquireRateSlot(); // 100ms interval = 10/s shared across all workers
+
                     // Send
-                    $res = $this->mailer->send($subscriber['email'], $finalSubject, $finalHtml, $subscriberId, $campaignId, $flowId, $flowName, $attachments, null, $currentStepId, $step['label']);
+                    // [PERF] skipQA=true: Flow emails are per-subscriber automation, not broadcast campaigns.
+                    // QA copies for each individual flow email would: (a) double SMTP traffic,
+                    // (b) force SMTP reconnect after each QA batch (closeConnection() in Mailer),
+                    // (c) spam internal QA recipients with subscriber-specific triggered emails.
+                    $res = $this->mailer->send($subscriber['email'], $finalSubject, $finalHtml, $subscriberId, $campaignId, $flowId, $flowName, $attachments, null, $currentStepId, $step['label'], false, true);
+
 
                     if ($res === true) {
                         $this->bufferStatsUpdate('flows', $flowId, 'stat_total_sent');
@@ -159,9 +299,14 @@ class FlowExecutor
                     $config = $step['config'];
                     $oaConfigId = $config['zalo_oa_id'] ?? null;
 
-                    $stmtZ = $this->pdo->prepare("SELECT zalo_user_id FROM zalo_subscribers WHERE id = ? OR zalo_user_id = ? LIMIT 1");
+                    // [PERF #6] Fetch zalo_user_id AND last_interaction_at in a single query.
+                    // Previously: 2 identical SELECT queries with same WHERE condition.
+                    // Saves 1 DB round-trip per Zalo CS step execution.
+                    $stmtZ = $this->pdo->prepare("SELECT zalo_user_id, last_interaction_at FROM zalo_subscribers WHERE id = ? OR zalo_user_id = ? LIMIT 1");
                     $stmtZ->execute([$subscriberId, $subscriberId]);
-                    $zaloUserId = $stmtZ->fetchColumn();
+                    $zaloRow = $stmtZ->fetch();
+                    $zaloUserId = $zaloRow['zalo_user_id'] ?? null;
+                    $lastInteract = $zaloRow['last_interaction_at'] ?? null;
 
                     if (!$zaloUserId || !$oaConfigId) {
                         $logs[] = "  -> Zalo CS step skipped: Missing Zalo User ID or OA config.";
@@ -169,11 +314,6 @@ class FlowExecutor
                         $isInstantStep = true;
                         break;
                     }
-
-                    // 48h Window Check
-                    $stmtLastInteract = $this->pdo->prepare("SELECT last_interaction_at FROM zalo_subscribers WHERE id = ? OR zalo_user_id = ? LIMIT 1");
-                    $stmtLastInteract->execute([$subscriberId, $subscriberId]);
-                    $lastInteract = $stmtLastInteract->fetchColumn();
 
                     // 48h window check — Zalo CS requires subscriber to have interacted within 48h
                     // [BUG-FIX] Bug #6: Previously using `$lastInteract && (time() - strtotime() > 48h)`
@@ -187,9 +327,10 @@ class FlowExecutor
                         break;
                     }
 
-                    // [OPTIMIZATION] Frequency Cap Check
+                    // [OPTIMIZATION] Frequency Cap Check (Per Channel)
                     $maxPerDay = (int) ($flowConfig['maxMessagesPerDay'] ?? 0);
-                    $todaySent = (int) ($contextData['total_sent_today'] ?? 0);
+                    $todaySentData = $contextData['total_sent_today'] ?? ['zalo' => 0];
+                    $todaySent = is_array($todaySentData) ? ($todaySentData['zalo'] ?? 0) : (int)$todaySentData;
                     if ($maxPerDay > 0 && $todaySent >= $maxPerDay) {
                         $logs[] = "  -> Frequency cap reached ($todaySent/$maxPerDay). Rescheduling Zalo to tomorrow.";
                         logActivity($this->pdo, $subscriberId, 'frequency_cap_reached', $currentStepId, $flowName, "Cap: $maxPerDay (Zalo)", $flowId);
@@ -274,6 +415,32 @@ class FlowExecutor
                         break;
                     }
 
+                    // [IDEMPOTENCY GUARD] Prevent duplicate ZNS on crash recovery.
+                    // Same pattern as email: check activity log scoped to current enrollment.
+                    try {
+                        $znsDedupParams = [$subscriberId, $currentStepId];
+                        $znsDedupCreatedAt = '';
+                        if (!empty($queueCreatedAt)) {
+                            $znsDedupCreatedAt = ' AND created_at >= ?';
+                            $znsDedupParams[] = $queueCreatedAt;
+                        }
+                        $stmtZnsDedup = $this->pdo->prepare("
+                            SELECT 1 FROM subscriber_activity
+                            WHERE subscriber_id = ? AND type IN ('zns_sent','zns_failed') AND reference_id = ?{$znsDedupCreatedAt}
+                            LIMIT 1
+                        ");
+                        $stmtZnsDedup->execute($znsDedupParams);
+                        if ($stmtZnsDedup->fetchColumn()) {
+                            $logs[] = "  -> [IDEMPOTENCY] ZNS already sent/failed for sub {$subscriberId} in this enrollment. Advancing.";
+                            $nextStepId = $step['nextStepId'] ?? null;
+                            $isInstantStep = true;
+                            break;
+                        }
+                    } catch (\Exception $eZnsDedup) {
+                        error_log('[FlowExecutor] ZNS Idempotency check failed: ' . $eZnsDedup->getMessage());
+                    }
+
+
                     $currentHour = (int) date('H');
                     if ($currentHour < 6 || $currentHour >= 22) {
                         $nextScheduledAt = date('Y-m-d 06:00:00', strtotime($currentHour < 6 ? 'today' : '+1 day'));
@@ -298,9 +465,10 @@ class FlowExecutor
                         break;
                     }
 
-                    // [OPTIMIZATION] Frequency Cap Check
+                    // [OPTIMIZATION] Frequency Cap Check (Per Channel)
                     $maxPerDay = (int) ($flowConfig['maxMessagesPerDay'] ?? 0);
-                    $todaySent = (int) ($contextData['total_sent_today'] ?? 0);
+                    $todaySentData = $contextData['total_sent_today'] ?? ['zalo' => 0];
+                    $todaySent = is_array($todaySentData) ? ($todaySentData['zalo'] ?? 0) : (int)$todaySentData;
                     if ($maxPerDay > 0 && $todaySent >= $maxPerDay) {
                         $logs[] = "  -> Frequency cap reached ($todaySent/$maxPerDay). Rescheduling ZNS to tomorrow.";
                         logActivity($this->pdo, $subscriberId, 'frequency_cap_reached', $currentStepId, $flowName, "Cap: $maxPerDay (ZNS)", $flowId);
@@ -426,9 +594,10 @@ class FlowExecutor
                     $pageId = $metaConn['page_id'];
                     $psid = $metaConn['psid'];
 
-                    // [OPTIMIZATION] Frequency Cap Check
+                    // [OPTIMIZATION] Frequency Cap Check (Per Channel)
                     $maxPerDay = (int) ($flowConfig['maxMessagesPerDay'] ?? 0);
-                    $todaySent = (int) ($contextData['total_sent_today'] ?? 0);
+                    $todaySentData = $contextData['total_sent_today'] ?? ['meta' => 0];
+                    $todaySent = is_array($todaySentData) ? ($todaySentData['meta'] ?? 0) : (int)$todaySentData;
                     if ($maxPerDay > 0 && $todaySent >= $maxPerDay) {
                         $logs[] = "  -> Frequency cap reached ($todaySent/$maxPerDay). Rescheduling Meta to tomorrow.";
                         logActivity($this->pdo, $subscriberId, 'frequency_cap_reached', $currentStepId, $flowName, "Cap: $maxPerDay (Meta)", $flowId);
@@ -453,9 +622,17 @@ class FlowExecutor
 
                     if ($res['success']) {
                         $this->bufferStatsUpdate('flows', $flowId, 'stat_total_sent');
-                        // Optional: Buffer specific meta stat if column exists
+                        // [FIX P6-C1] Track Meta messages per-channel (mirrors stat_zalo_sent / stat_zns_sent pattern)
+                        $this->bufferStatsUpdate('flows', $flowId, 'stat_meta_sent');
                         logActivity($this->pdo, $subscriberId, 'meta_sent', $currentStepId, $flowName, 'Meta Msg Sent: ' . ($step['label'] ?? 'Message'), $flowId, $campaignId);
                         $logs[] = "  -> Meta Msg Sent.";
+                        // [FIX P6-H1] Increment per-channel frequency cap counter.
+                        // Without this, $contextData['total_sent_today']['meta'] stays 0
+                        // across the entire worker run → frequency cap NEVER triggers for Meta.
+                        if (!isset($contextData['total_sent_today']) || !is_array($contextData['total_sent_today'])) {
+                            $contextData['total_sent_today'] = [];
+                        }
+                        $contextData['total_sent_today']['meta'] = ($contextData['total_sent_today']['meta'] ?? 0) + 1;
                         $messageSent = true;
                     } else {
                         logActivity($this->pdo, $subscriberId, 'meta_failed', $currentStepId, $flowName, "Meta Failed: " . ($res['message'] ?? ''), $flowId, $campaignId);
@@ -507,7 +684,7 @@ class FlowExecutor
                         // Calculate Wait
                         if ($mode === 'until') {
                             $targetTime = $step['config']['untilTime'] ?? '09:00';
-                            $targetDay = $step['config']['untilDay'];
+                            $targetDay = $step['config']['untilDay'] ?? null;
                             $dt = new DateTime($scheduleNow);
                             $targetTimeParts = explode(':', $targetTime);
                             $dt->setTime((int) $targetTimeParts[0], (int) ($targetTimeParts[1] ?? 0), 0);
@@ -849,6 +1026,13 @@ class FlowExecutor
                         $subProfile = self::$profileCache[$subscriberId];
                     } else {
                         $subProfile = getSubscriberProfileForFlow($this->pdo, $subscriberId);
+                        // [MEMORY GUARD] Prune cache before writing to prevent unbounded growth.
+                        // Comment at class header said "Max 200 entries — see pruneStaticCache() calls"
+                        // but the function was never implemented. Added here: remove oldest entry (FIFO).
+                        if (count(self::$profileCache) >= 200) {
+                            reset(self::$profileCache);
+                            unset(self::$profileCache[key(self::$profileCache)]);
+                        }
                         self::$profileCache[$subscriberId] = $subProfile;
                     }
 
@@ -873,7 +1057,11 @@ class FlowExecutor
 
                 case 'split_test':
                     $ratioA = (int) ($step['config']['ratioA'] ?? 50);
-                    $hash = hexdec(substr(md5($subscriberId . $currentStepId), 0, 8));
+                    // [FIX BUG-C2] hexdec() on 8-char hex can overflow on 32-bit PHP, returning
+                    // a negative integer. ($negativeInt % 100) is also negative → always < $ratioA
+                    // → always Path A or always Path B depending on value. abs(crc32()) is safe
+                    // on both 32-bit and 64-bit PHP and produces a uniform distribution.
+                    $hash = abs(crc32($subscriberId . $currentStepId));
                     $isPathA = (($hash % 100) < $ratioA);
                     $nextStepId = $isPathA ? ($step['pathAStepId'] ?? null) : ($step['pathBStepId'] ?? null);
 
@@ -908,6 +1096,11 @@ class FlowExecutor
                                     $stmtT->execute([$tagName]);
                                     $tagId = $stmtT->fetchColumn();
                                 }
+                            }
+                            // [MEMORY GUARD] Prune tagCache at 200 entries (FIFO, same as profileCache)
+                            if (count(self::$tagCache) >= 200) {
+                                reset(self::$tagCache);
+                                unset(self::$tagCache[key(self::$tagCache)]);
                             }
                             self::$tagCache[$tagName] = $tagId;
                         }
@@ -964,6 +1157,20 @@ class FlowExecutor
                         $this->pdo->prepare("DELETE FROM subscriber_tags WHERE subscriber_id=?")->execute([$subscriberId]);
                         $this->pdo->prepare("DELETE FROM subscriber_flow_states WHERE subscriber_id=?")->execute([$subscriberId]);
                         $this->pdo->prepare("DELETE FROM subscriber_activity WHERE subscriber_id=?")->execute([$subscriberId]);
+                        // [FIX QUAL-5] Also clean up orphan records in related log tables
+                        // to prevent ghost data accumulation after contact deletion.
+                        $this->pdo->prepare("DELETE FROM mail_delivery_logs WHERE subscriber_id=?")->execute([$subscriberId]);
+                        $this->pdo->prepare("DELETE FROM activity_buffer WHERE subscriber_id=?")->execute([$subscriberId]);
+                        // [FIX F-1] Remove orphan ZNS delivery logs — without this, deleting subscriber
+                        // can fail silently if FK constraint exists on zalo_delivery_logs.subscriber_id.
+                        $this->pdo->prepare("DELETE FROM zalo_delivery_logs WHERE subscriber_id=?")->execute([$subscriberId]);
+                        // [FIX V3-M2] Unlink subscriber from zalo_subscribers to prevent ghost data.
+                        // zalo_subscribers has no FK CASCADE on subscriber_id — rows would orphan silently,
+                        // causing this Zalo contact to appear "linked" to a deleted account.
+                        $this->pdo->prepare("UPDATE zalo_subscribers SET subscriber_id = NULL WHERE subscriber_id = ?")->execute([$subscriberId]);
+                        // [FIX F-4] Reclaim voucher codes so they can be reassigned to future subscribers.
+                        // Without this, claimed codes orphan with a deleted subscriber_id, wasting the pool.
+                        $this->pdo->prepare("UPDATE voucher_codes SET subscriber_id = NULL, status = 'unused', sent_at = NULL WHERE subscriber_id = ? AND status = 'available'")->execute([$subscriberId]);
                         $this->pdo->prepare("DELETE FROM subscribers WHERE id=?")->execute([$subscriberId]);
                     }
                     $this->bufferStatsUpdate('flows', $flowId, 'stat_completed');
@@ -1052,28 +1259,34 @@ class FlowExecutor
                                         }
                                     }
 
+                                    // [FIX P0] Status was 'processing' — workers only poll WHERE status='waiting',
+                                    // so linked-flow subscribers were invisible until a timeout reclaim cycle.
+                                    // Changed to 'waiting' so the dispatched priority worker picks up instantly.
                                     $this->pdo->prepare(
                                         "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at)
-                                         VALUES (?, ?, ?, ?, 'processing', NOW(), NOW(), NOW())"
+                                         VALUES (?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW())"
                                     )->execute([$subscriberId, $linkedId, $lStart, $linkedInitialSchedule]);
                                     $newQ = $this->pdo->lastInsertId();
                                     if ($newQ) {
                                         dispatchFlowWorker($this->pdo, 'flows', ['priority_queue_id' => $newQ, 'subscriber_id' => $subscriberId, 'priority_flow_id' => $linkedId]);
                                         logActivity($this->pdo, $subscriberId, 'enter_flow', $linkedId, "Linked Flow", "Linked to $linkedId", $linkedId);
                                         $logs[] = "  -> Linked to flow $linkedId.";
-                                        // [FIX] Only count stat_completed when link actually succeeded
-                                        $this->bufferStatsUpdate('flows', $flowId, 'stat_completed');
                                     }
+
                                 } else {
                                     $logs[] = "  -> Link Flow skipped: Subscriber already enrolled or in cooldown for flow $linkedId.";
                                 }
                             }
                         }
                     }
+                    // [FIX] Single stat_completed increment here (terminal step for current flow).
+                    // DO NOT also increment inside the canEnroll block — that causes double-counting
+                    // when a linked enrollment succeeds.
                     $this->bufferStatsUpdate('flows', $flowId, 'stat_completed');
                     $shouldContinueChain = false;
                     $status = 'completed';
                     break;
+
 
                 default:
                     $logs[] = "  -> Unknown step type: {$step['type']}";

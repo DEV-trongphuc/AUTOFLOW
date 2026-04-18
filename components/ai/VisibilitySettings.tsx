@@ -145,7 +145,7 @@ const VisibilitySettings: React.FC<VisibilitySettingsProps> = ({
             </div>
 
             <div className="flex gap-4 pt-4">
-                <Button size="lg" className="w-full shadow-xl bg-gradient-to-r from-brand to-brand-dark border-none text-white font-bold hover:shadow-brand/40 hover:-translate-y-0.5 transition-all active:translate-y-0" icon={Save} onClick={handleSaveSettings} isLoading={loading}>Lưu cấu hình AI</Button>
+                <Button size="lg" className="w-full shadow-xl bg-orange-500 hover:bg-orange-600 border-none text-white font-bold shadow-orange-500/30 hover:-translate-y-0.5 transition-all active:translate-y-0" icon={Save} onClick={handleSaveSettings} isLoading={loading}>Lưu cấu hình AI</Button>
             </div>
         </div>
     );

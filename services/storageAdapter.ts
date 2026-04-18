@@ -86,15 +86,10 @@ async function executeRequest(url: string, method: string, body?: any, signal?: 
         headers['X-Autoflow-Auth'] = '1';
       }
 
-      if (isLocal) {
-        console.log('[Auth Headers]', {
-          hasUser: !!savedUser,
-          userId: savedUser?.id,
-          userRole: savedUser?.role,
-          isAuthenticated,
-          isAdminById,
-          headers: Object.keys(headers)
-        });
+      if (isAdminById && isLocal) {
+        // [FIX P38-SA] Moved auth debug log inside isLocal guard and scope-reduced
+        // to avoid leaking auth state in staging/test consoles
+        console.log('[Auth] Admin mode active, headers:', Object.keys(headers));
       }
     } catch { /* ignore */ }
   }
@@ -155,8 +150,28 @@ async function request<T>(
       return cached.data;
     }
   } else {
-    // Clear cache on mutations
-    Object.keys(apiCache).forEach(key => delete apiCache[key]);
+    // [FIX P38-SA] SMART cache invalidation: only clear keys matching the mutated resource.
+    // Old behavior: full wipe on every POST/PUT/DELETE (tags, flows, campaigns all cleared
+    // just because user updated a subscriber — causing N unnecessary API round-trips).
+    // New: extract resource prefix from endpoint and only clear matching cache entries.
+    const mutatedResource = endpoint.split('?')[0].split('/')[0].replace(/\.php$/, '');
+    const relatedPrefixes: Record<string, string[]> = {
+      subscribers: ['subscribers', 'segments', 'audience_report', 'overview_stats'],
+      campaigns:   ['campaigns', 'overview_stats'],
+      flows:       ['flows', 'overview_stats'],
+      segments:    ['segments', 'subscribers'],
+      lists:       ['lists', 'subscribers'],
+      tags:        ['tags', 'subscribers'],
+      templates:   ['templates'],
+      vouchers:    ['vouchers'],
+    };
+    const toInvalidate = relatedPrefixes[mutatedResource] ?? [mutatedResource];
+    Object.keys(apiCache).forEach(key => {
+      if (toInvalidate.some(prefix => key.startsWith(prefix))) {
+        delete apiCache[key];
+      }
+    });
+    if (isLocal) console.log(`[⚡ CACHE] Invalidated prefixes: [${toInvalidate.join(', ')}] after ${method} on ${mutatedResource}`);
   }
 
   // Force production API URL
@@ -304,7 +319,7 @@ export const clearApiCache = (prefix?: string) => {
 };
 
 export const api = {
-  get: <T>(endpoint: string) => request<T>(endpoint, 'GET'),
+  get: <T>(endpoint: string, options?: { signal?: AbortSignal }) => request<T>(endpoint, 'GET', undefined, options),
   post: <T>(endpoint: string, data: any, options?: { signal?: AbortSignal }) => request<T>(endpoint, 'POST', data, options),
   put: <T>(endpoint: string, data: any) => request<T>(endpoint, 'PUT', data),
   delete: <T>(endpoint: string, data?: any) => request<T>(endpoint, 'DELETE', data),

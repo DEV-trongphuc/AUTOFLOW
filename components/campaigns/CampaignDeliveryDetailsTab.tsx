@@ -32,7 +32,7 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
     // Pagination State
-    const [pagination, setPagination] = useState({ page: 1, limit: 50, total: 0, totalPages: 1 });
+    const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
 
     // Stats State (fetched from API)
     const [stats, setStats] = useState({ total: 0, sent: 0, failed: 0, opened: 0 });
@@ -84,7 +84,7 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
             route: 'recipients',
             id: campaign.id,
             page: page.toString(),
-            limit: '50',
+            limit: '10',
             status: filter,
             type: typeFilter,
             search: debouncedSearch,
@@ -95,7 +95,7 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
         const res = await api.get<any>(`campaigns?${query.toString()}`);
         if (res.success) {
             setRecipients(res.data.data || []);
-            setPagination(res.data.pagination || { page: 1, limit: 50, total: 0, totalPages: 1 });
+            setPagination(res.data.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 });
             if (res.data.stats) {
                 setStats(res.data.stats);
             }
@@ -560,28 +560,35 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
                     </table>
                 </div>
 
-                {/* Pagination Footer */}
-                {pagination.totalPages > 1 && (
-                    <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
-                        <button
-                            disabled={pagination.page <= 1}
-                            onClick={() => fetchRecipients(pagination.page - 1)}
-                            className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                            Previous
-                        </button>
-                        <span className="text-xs font-semibold text-slate-500">
-                            Page {pagination.page.toLocaleString()} of {pagination.totalPages.toLocaleString()} <span className="text-slate-300 mx-2">|</span> Total {pagination.total.toLocaleString()}
-                        </span>
-                        <button
-                            disabled={pagination.page >= pagination.totalPages}
-                            onClick={() => fetchRecipients(pagination.page + 1)}
-                            className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                            Next
-                        </button>
-                    </div>
-                )}
+                {/* Result Count and Pagination Footer */}
+                <div className="px-6 py-4 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <span className="text-xs font-bold text-slate-500">
+                        Tất cả: <span className="text-orange-600 text-sm font-black">{pagination.total.toLocaleString()}</span> kết quả
+                        {(filter !== 'all' || debouncedSearch || typeFilter !== 'all' || minOpens || minClicks) && ' (đã lọc)'}
+                    </span>
+
+                    {pagination.totalPages > 1 && (
+                        <div className="flex items-center gap-2">
+                            <button
+                                disabled={pagination.page <= 1}
+                                onClick={() => fetchRecipients(pagination.page - 1)}
+                                className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Trang trước
+                            </button>
+                            <span className="text-[10px] font-semibold text-slate-400 bg-slate-50 px-2 py-1 rounded">
+                                {pagination.page.toLocaleString()} / {pagination.totalPages.toLocaleString()}
+                            </span>
+                            <button
+                                disabled={pagination.page >= pagination.totalPages}
+                                onClick={() => fetchRecipients(pagination.page + 1)}
+                                className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Trang sau
+                            </button>
+                        </div>
+                    )}
+                </div>
             </Card>
 
             <ConfirmModal

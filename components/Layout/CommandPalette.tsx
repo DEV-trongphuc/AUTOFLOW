@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Command, X, ArrowRight, Star, Zap, Users, Layout as LayoutIcon, Settings, Mail, List, Layers, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -14,7 +14,7 @@ const CommandPalette: React.FC = () => {
         { id: 'dashboard', title: 'Dashboard', icon: LayoutIcon, path: '/', category: 'General' },
         { id: 'audience', title: 'Kh\u00E1ch h\u00E0ng', icon: Users, path: '/audience', category: 'Audience' },
         { id: 'campaigns', title: 'Chi\u1EBFn d\u1ECBch', icon: Mail, path: '/campaigns', category: 'Marketing' },
-        { id: 'flows', title: 'Automation Flows', icon: Zap, path: '/flows', category: 'Marketing' },
+        { id: 'flows', title: 'DOMATION Flows', icon: Zap, path: '/flows', category: 'Marketing' },
         { id: 'templates', title: 'M\u1EABu Email', icon: FileText, path: '/templates', category: 'Assets' },
         { id: 'settings', title: 'C\u00E0i \u0111\u1EB7t', icon: Settings, path: '/settings', category: 'System' },
     ];

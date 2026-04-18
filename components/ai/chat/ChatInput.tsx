@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useRef, useState } from 'react';
 import {
     Mic, Paperclip, Upload, ArrowRight, BookOpen, Sparkles, Loader2,
@@ -212,21 +212,25 @@ const ChatInput: React.FC<ChatInputProps> = React.memo(({
                                     <ChevronDown className="w-3 h-3 opacity-50" />
                                 </button>
                                 {isModelModalOpen && (
-                                    <div className={`absolute bottom-full left-0 mb-3 w-64 border rounded-2xl shadow-2xl overflow-hidden z-50 ${isDarkTheme ? 'bg-[#0D1117] border-slate-700' : 'bg-white border-slate-200'}`}>
-                                        {AI_MODELS.map(m => (
-                                            <button key={m.id} onClick={() => {
-                                                setSelectedModel(m.id);
-                                                setIsModelModalOpen(false);
-                                                // Auto-reset to Expert Mode when model changes
-                                                setIsCodeMode(false);
-                                                setIsImageGenMode(false);
-                                                setIsKbOnlyMode(true);
-                                            }} className={`w-full px-4 py-3 flex items-center gap-3 transition-colors ${selectedModel === m.id ? 'bg-brand/10 text-brand border-l-2 border-brand' : (isDarkTheme ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50')}`}>
-                                                <m.icon className="w-4 h-4" />
-                                                <div className="text-left text-xs font-bold">{getModelDisplayName(m.name, categoryName)}</div>
-                                            </button>
-                                        ))}
-                                    </div>
+                                    <>
+                                        {/* [P18-C3] Click-outside dismiss */}
+                                        <div className="fixed inset-0 z-40" onClick={() => setIsModelModalOpen(false)} />
+                                        <div className={`absolute bottom-full left-0 mb-3 w-64 border rounded-2xl shadow-2xl overflow-hidden z-50 ${isDarkTheme ? 'bg-[#0D1117] border-slate-700' : 'bg-white border-slate-200'}`}>
+                                            {AI_MODELS.map(m => (
+                                                <button key={m.id} onClick={() => {
+                                                    setSelectedModel(m.id);
+                                                    setIsModelModalOpen(false);
+                                                    // Auto-reset to Expert Mode when model changes
+                                                    setIsCodeMode(false);
+                                                    setIsImageGenMode(false);
+                                                    setIsKbOnlyMode(true);
+                                                }} className={`w-full px-4 py-3 flex items-center gap-3 transition-colors ${selectedModel === m.id ? 'bg-brand/10 text-brand border-l-2 border-brand' : (isDarkTheme ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50')}`}>
+                                                    <m.icon className="w-4 h-4" />
+                                                    <div className="text-left text-xs font-bold">{getModelDisplayName(m.name, categoryName)}</div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
                                 )}
                             </div>
 
@@ -247,27 +251,31 @@ const ChatInput: React.FC<ChatInputProps> = React.memo(({
                             <ChevronDown className="w-3 h-3 opacity-50" />
                         </button>
                         {isAiModeModalOpen && (
-                            <div className={`absolute bottom-full left-0 mb-3 w-56 border rounded-2xl shadow-2xl overflow-hidden z-50 ${isDarkTheme ? 'bg-[#0D1117] border-slate-700' : 'bg-white border-slate-200'}`}>
-                                <div className="p-1.5 space-y-1">
-                                    {[
-                                        { id: 'expert', label: 'Expert Mode', icon: Sparkles, active: !isCodeMode && !isImageGenMode, onClick: () => { setIsCodeMode(false); setIsImageGenMode(false); setIsKbOnlyMode(true); } },
-                                        { id: 'code', label: 'Code Mode', icon: FileCode, active: isCodeMode, onClick: () => { setIsCodeMode(true); setIsImageGenMode(false); setIsKbOnlyMode(false); } },
-                                        { id: 'image', label: 'Image Mode', icon: ImageIcon, active: isImageGenMode, onClick: () => { setIsImageGenMode(true); setIsCodeMode(false); setIsKbOnlyMode(false); setIsImageSettingsOpen(true); } }
-                                    ].filter(mode => {
-                                        if (mode.id === 'expert') return true; // Expert mode always available
-                                        if (!orgUser || orgUser.role === 'admin') return true;
-                                        if (!orgUser.permissions?.modes) return true; // Default to allow if no specific rules
-                                        return orgUser.permissions.modes.includes(mode.id);
-                                    }).map(mode => (
-                                        <button key={mode.id} onClick={() => { mode.onClick(); setIsAiModeModalOpen(false); setSuggestedQuestions([]); }} className={`w-full p-2.5 rounded-xl flex items-center gap-3 transition-all ${mode.active ? 'bg-brand text-white' : (isDarkTheme ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-brand')}`}>
-                                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${mode.active ? 'bg-white/20' : 'bg-brand text-white'}`}>
-                                                <mode.icon className="w-4 h-4" />
-                                            </div>
-                                            <span className="text-xs font-bold">{mode.label}</span>
-                                        </button>
-                                    ))}
+                            <>
+                                {/* [P18-C3] Click-outside dismiss for mode dropdown */}
+                                <div className="fixed inset-0 z-40" onClick={() => setIsAiModeModalOpen(false)} />
+                                <div className={`absolute bottom-full left-0 mb-3 w-56 border rounded-2xl shadow-2xl overflow-hidden z-50 ${isDarkTheme ? 'bg-[#0D1117] border-slate-700' : 'bg-white border-slate-200'}`}>
+                                    <div className="p-1.5 space-y-1">
+                                        {[
+                                            { id: 'expert', label: 'Expert Mode', icon: Sparkles, active: !isCodeMode && !isImageGenMode, onClick: () => { setIsCodeMode(false); setIsImageGenMode(false); setIsKbOnlyMode(true); } },
+                                            { id: 'code', label: 'Code Mode', icon: FileCode, active: isCodeMode, onClick: () => { setIsCodeMode(true); setIsImageGenMode(false); setIsKbOnlyMode(false); } },
+                                            { id: 'image', label: 'Image Mode', icon: ImageIcon, active: isImageGenMode, onClick: () => { setIsImageGenMode(true); setIsCodeMode(false); setIsKbOnlyMode(false); setIsImageSettingsOpen(true); } }
+                                        ].filter(mode => {
+                                            if (mode.id === 'expert') return true; // Expert mode always available
+                                            if (!orgUser || orgUser.role === 'admin') return true;
+                                            if (!orgUser.permissions?.modes) return true; // Default to allow if no specific rules
+                                            return orgUser.permissions.modes.includes(mode.id);
+                                        }).map(mode => (
+                                            <button key={mode.id} onClick={() => { mode.onClick(); setIsAiModeModalOpen(false); setSuggestedQuestions([]); }} className={`w-full p-2.5 rounded-xl flex items-center gap-3 transition-all ${mode.active ? 'bg-brand text-white' : (isDarkTheme ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-brand')}`}>
+                                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${mode.active ? 'bg-white/20' : 'bg-brand text-white'}`}>
+                                                    <mode.icon className="w-4 h-4" />
+                                                </div>
+                                                <span className="text-xs font-bold">{mode.label}</span>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
+                            </>
                         )}
                     </div>
 

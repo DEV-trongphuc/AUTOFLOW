@@ -9,13 +9,31 @@ set_time_limit(300);
 
 require_once __DIR__ . '/db_connect.php';
 require_once __DIR__ . '/Mailer.php';
-require_once __DIR__ . '/segment_helper.php'; // For resolveEmailContent if needed
+require_once __DIR__ . '/segment_helper.php';
+require_once __DIR__ . '/flow_helpers.php'; // [BUG-1 FIX] sesAcquireRateSlot() shared SES rate limiter
+                                             // [BUG-4 FIX] replaceMergeTags() for full merge tag support
 
 date_default_timezone_set('Asia/Ho_Chi_Minh');
+
+$lockName = 'worker_reminder_lock';
+// [FIX P16-B4] Prepared statement for GET_LOCK — consistent with project locking standard (P15-B1, P16-B1)
+$_stmtGetLock = $pdo->prepare("SELECT GET_LOCK(?, 0)");
+$_stmtGetLock->execute([$lockName]);
+if (!$_stmtGetLock->fetchColumn()) {
+    echo "Worker reminder is already running.\n";
+    exit;
+}
+// [FIX P7-M2] Register shutdown handler to release advisory lock even on crash.
+// MySQL GET_LOCK is connection-scoped: on PHP-FPM with persistent connections the lock
+// can persist between requests, permanently blocking the next cron run.
+register_shutdown_function(function () use ($pdo, $lockName) {
+    try { $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]); } catch (Throwable $e) {}
+});
+
 $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
 
 $apiUrl = API_BASE_URL;
-$stmt = $pdo->query("SELECT * FROM system_settings");
+$stmt = $pdo->query("SELECT `key`, `value` FROM system_settings WHERE `key` IN ('smtp_user','smtp_from_email','smtp_from_name','smtp_host','smtp_port','smtp_pass','smtp_secure','ses_region','ses_key','ses_secret','mail_driver')");
 $settings = [];
 foreach ($stmt->fetchAll() as $row) {
     $settings[$row['key']] = $row['value'];
@@ -32,10 +50,15 @@ $logs = ["--- REMINDER WORKER START: $now ---"];
 // AND Reminder NOT sent to this user yet (check mail_delivery_logs for this reminder_id)
 
 $stmtReminders = $pdo->prepare("
-    SELECT cr.*, c.sent_at as campaign_sent_at, c.id as campaign_id, c.name as campaign_name, c.sender_email
+    SELECT cr.id, cr.campaign_id, cr.type, cr.subject, cr.template_id, cr.sender_email,
+           cr.trigger_mode, cr.scheduled_at, cr.delay_days, cr.delay_hours,
+           c.sent_at as campaign_sent_at, c.id as campaign_id, c.name as campaign_name,
+           c.sender_email as campaign_sender_email, c.sender_name as campaign_sender_name
     FROM campaign_reminders cr
     JOIN campaigns c ON cr.campaign_id = c.id
-    WHERE c.status = 'sent' 
+    WHERE c.status = 'sent'
+    -- [FIX P10-M4] Explicit columns instead of cr.* to avoid fetching html_content blob
+    -- (template HTML can be many KB; multiplied by all reminder rows = wasteful full-scan load)
 ");
 $stmtReminders->execute();
 $reminders = $stmtReminders->fetchAll();
@@ -91,7 +114,7 @@ foreach ($reminders as $rem) {
         // Base candidates: Received Main Campaign AND NOT (Received This Reminder OR Clicked/Opened based on settings)
         // Optimized for PERFORMANCE (Round 41): Replaced NOT IN with NOT EXISTS or simpler JOIN logic
         $sql = "
-            SELECT DISTINCT l.recipient, s.id as subscriber_id, s.first_name, s.last_name, s.email, a_main.created_at as individual_sent_at
+            SELECT DISTINCT l.recipient, s.id as subscriber_id, s.first_name, s.last_name, s.email, s.phone_number, s.custom_attributes, a_main.created_at as individual_sent_at
             FROM mail_delivery_logs l
             JOIN subscribers s ON l.subscriber_id = s.id
             JOIN subscriber_activity a_main ON s.id = a_main.subscriber_id 
@@ -142,7 +165,7 @@ foreach ($reminders as $rem) {
             $params = array_merge($params, $processedIds);
         }
 
-        $sql .= " LIMIT $BATCH_SIZE";
+        $sql .= " LIMIT " . (int)$BATCH_SIZE; // [FIX P10-H4] Cast to int for consistency with P9-H4 pattern
 
         $stmtCandidates = $pdo->prepare($sql);
         $stmtCandidates->execute($params);
@@ -165,9 +188,30 @@ foreach ($reminders as $rem) {
                         continue;
                 }
 
-                // Personalize
-                $personalSubject = resolveMergeTags($rem['subject'], $sub);
-                $personalHtml = resolveMergeTags($htmlContent, $sub);
+                // [BUG-4 FIX] Use replaceMergeTags() from flow_helpers.php instead of local stub.
+                // Old resolveMergeTags() only handled 4 fields — templates with {{phone}},
+                // {{unsubscribeLink}}, {{company}}, custom_attributes all rendered as raw tags.
+                $personalSubject = replaceMergeTags($rem['subject'], $sub);
+                $personalHtml    = replaceMergeTags($htmlContent, $sub);
+
+                // [FIX P7-C2] Inject dynamic sender with priority chain:
+                // 1. reminder.sender_email (per-reminder override)
+                // 2. campaign.sender_email (campaign-level branding)
+                // 3. system default (already set in Mailer constructor)
+                // Previously all reminders always sent from system default — branding was lost.
+                // NOTE: Mailer::setDynamicSender() only accepts email. Sender name is taken
+                // from smtp_from_name in system_settings (Mailer internal resolution).
+                $remSender = !empty($rem['sender_email']) ? $rem['sender_email']
+                    : (!empty($rem['campaign_sender_email']) ? $rem['campaign_sender_email'] : null);
+                if ($remSender) {
+                    $mailer->setDynamicSender($remSender);
+                }
+
+                // [BUG-1 FIX] Acquire shared SES rate-limit slot before sending.
+                // Reminder worker was bypassing the cross-process file-lock rate limiter,
+                // contributing to combined send rate exceeding SES 14/s limit.
+                // sesAcquireRateSlot() (flow_helpers.php) coordinates across campaign + flow + reminder workers.
+                sesAcquireRateSlot(); // 100ms interval = 10/s shared total across all senders
 
                 // Send
                 $res = $mailer->send($sub['email'], $personalSubject, $personalHtml, $sub['subscriber_id'], $rem['campaign_id'], null, null, [], $rem['id'], null, "Reminder: " . $rem['subject']);
@@ -193,6 +237,12 @@ foreach ($reminders as $rem) {
                 }
                 $sqlIns = "INSERT INTO subscriber_activity (subscriber_id, type, campaign_id, reminder_id, reference_name, details, created_at) VALUES " . implode(',', $binds);
                 $pdo->prepare($sqlIns)->execute($vals);
+
+                // [FIX P7-H1] Update campaigns.count_sent to include reminder sends.
+                // Previously reminder sends were tracked in subscriber_activity but
+                // never reflected in campaigns.count_sent — causing understated sent counts in reports.
+                $pdo->prepare("UPDATE campaigns SET count_sent = count_sent + ? WHERE id = ?")
+                    ->execute([count($successActivities), $rem['campaign_id']]);
             }
 
             // Check if we should continue
@@ -219,13 +269,18 @@ $logs[] = "--- END REMINDER WORKER ---";
 // If the last batch had < 10 emails, those logs would be silently lost without this call.
 $mailer->closeConnection();
 
+// [AUDIT-M4 FIX] Explicitly release advisory lock before exit.
+// Without this, persistent connections or pooled environments may retain the lock between
+// PHP invocations, preventing the next cron run from acquiring it.
+$pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]); // [FIX P16-B4]
+
 // Log to file
 file_put_contents(__DIR__ . '/worker_reminder.log', implode("\n", $logs) . "\n", FILE_APPEND | LOCK_EX);
 echo implode("\n", $logs);
 
 
 // Helper for Merge Tags (Simplified)
-function resolveMergeTags($text, $sub)
+function resolveMergeTags_Deprecated($text, $sub)
 {
     $map = [
         '{{first_name}}' => $sub['first_name'],

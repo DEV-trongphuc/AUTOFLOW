@@ -1,7 +1,10 @@
 <?php
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
+
 apiHeaders();
 
+$workspace_id = get_current_workspace_id();
 $method = $_SERVER['REQUEST_METHOD'];
 $path = isset($_GET['id']) ? $_GET['id'] : null;
 
@@ -13,22 +16,36 @@ switch ($method) {
         try {
             // NEW: Stats Route
             if (isset($_GET['route']) && $_GET['route'] === 'stats' && $path) {
-                $sql = "SELECT s.status, COUNT(*) as count 
+                // Verify ownership first
+                $stmtAuth = $pdo->prepare("SELECT id FROM lists WHERE id = ? AND workspace_id = ?");
+                $stmtAuth->execute([$path, $workspace_id]);
+                if (!$stmtAuth->fetch()) {
+                    jsonResponse(false, null, 'Không tìm thấy danh sách');
+                    return;
+                }
+
+                // [PERF FIX P2-4] Merged phone count into the same query via SUM(CASE WHEN).
+                // Previously: 2 separate queries (status GROUP BY + phone COUNT) = 2 round-trips.
+                // Now: single scan computes both status breakdown AND phone count simultaneously.
+                $sql = "SELECT 
+                            s.status, 
+                            COUNT(*) as count,
+                            SUM(CASE WHEN s.phone_number IS NOT NULL AND s.phone_number != '' THEN 1 ELSE 0 END) as phone_total
                         FROM subscriber_lists sl 
                         JOIN subscribers s ON sl.subscriber_id = s.id 
                         WHERE sl.list_id = ? 
                         GROUP BY s.status";
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute([$path]);
-                $stats = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+                $rawStats = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-                // Add phone count
-                $sqlPhone = "SELECT COUNT(*) FROM subscriber_lists sl 
-                             JOIN subscribers s ON sl.subscriber_id = s.id 
-                             WHERE sl.list_id = ? AND (s.phone_number IS NOT NULL AND s.phone_number != '')";
-                $stmtPhone = $pdo->prepare($sqlPhone);
-                $stmtPhone->execute([$path]);
-                $stats['has_phone'] = (int) $stmtPhone->fetchColumn();
+                $stats = [];
+                $totalPhone = 0;
+                foreach ($rawStats as $row) {
+                    $stats[$row['status']] = (int) $row['count'];
+                    $totalPhone += (int) $row['phone_total'];
+                }
+                $stats['has_phone'] = $totalPhone;
 
                 jsonResponse(true, $stats);
                 return;
@@ -36,8 +53,9 @@ switch ($method) {
 
             if (!isset($_GET['page']) && !isset($_GET['limit']) && !isset($_GET['search'])) {
                 $sql = "SELECT l.id, l.name, l.source, l.type, l.subscriber_count as count, l.phone_count, DATE_FORMAT(l.created_at, '%d/%m/%Y') as created
-                        FROM lists l ORDER BY l.created_at DESC";
-                $stmt = $pdo->query($sql);
+                        FROM lists l WHERE l.workspace_id = ? ORDER BY l.created_at DESC";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([$workspace_id]);
                 jsonResponse(true, $stmt->fetchAll());
                 return;
             }
@@ -47,16 +65,16 @@ switch ($method) {
             $offset = ($page - 1) * $limit;
             $search = $_GET['search'] ?? '';
 
-            $params = [];
-            $whereClauses = [];
+            $params = [$workspace_id];
+            $whereClauses = ["l.workspace_id = ?"];
             if ($search) {
-                $whereClauses[] = "(name LIKE ? OR source LIKE ?)";
+                $whereClauses[] = "(l.name LIKE ? OR l.source LIKE ?)";
                 $params[] = "%$search%";
                 $params[] = "%$search%";
             }
-            $whereSql = count($whereClauses) > 0 ? " WHERE " . implode(" AND ", $whereClauses) : "";
+            $whereSql = " WHERE " . implode(" AND ", $whereClauses);
 
-            $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM lists" . $whereSql);
+            $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM lists l" . $whereSql);
             $stmtCount->execute($params);
             $total = (int) $stmtCount->fetchColumn();
 
@@ -103,6 +121,14 @@ switch ($method) {
 
                 if (!$targetId) {
                     jsonResponse(false, null, 'Thiếu thông tin đối tượng (Target ID)');
+                    return;
+                }
+
+                // Verify Ownership
+                $stmtCheckOwn = $pdo->prepare("SELECT id FROM " . ($targetType === 'list' ? 'lists' : 'segments') . " WHERE id = ? AND workspace_id = ?");
+                $stmtCheckOwn->execute([$targetId, $workspace_id]);
+                if (!$stmtCheckOwn->fetch()) {
+                    jsonResponse(false, null, 'Đối tượng không hợp lệ hoặc không thuộc workspace của bạn.');
                     return;
                 }
 
@@ -271,8 +297,18 @@ switch ($method) {
                     return;
                 }
 
-                // Get all unique subscriber IDs from selected lists
+                // Verify Ownership of all lists
                 $placeholders = implode(',', array_fill(0, count($listIds), '?'));
+                $stmtCheckLists = $pdo->prepare("SELECT COUNT(*) FROM lists WHERE id IN ($placeholders) AND workspace_id = ?");
+                $checkParams = $listIds;
+                $checkParams[] = $workspace_id;
+                $stmtCheckLists->execute($checkParams);
+                if ($stmtCheckLists->fetchColumn() != count($listIds)) {
+                    jsonResponse(false, null, 'Một hoặc nhiều danh sách không thuộc workspace của bạn.');
+                    return;
+                }
+
+                // Get all unique subscriber IDs from selected lists
                 $sql = "SELECT DISTINCT subscriber_id FROM subscriber_lists WHERE list_id IN ($placeholders)";
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($listIds);
@@ -369,8 +405,8 @@ switch ($method) {
                     $newListId = uniqid();
 
                     // Create new list (static type)
-                    $insertListSql = "INSERT INTO lists (id, name, source, type, subscriber_count, created_at) VALUES (?, ?, 'Merged', 'static', ?, NOW())";
-                    $pdo->prepare($insertListSql)->execute([$newListId, $newListName, $totalMembers]);
+                    $insertListSql = "INSERT INTO lists (workspace_id, id, name, source, type, subscriber_count, created_at) VALUES (?, ?, ?, 'Merged', 'static', ?, NOW())";
+                    $pdo->prepare($insertListSql)->execute([$workspace_id, $newListId, $newListName, $totalMembers]);
 
                     // Bulk Insert all subscribers into new list
                     if (!empty($subscriberIds)) {
@@ -426,8 +462,8 @@ switch ($method) {
         try {
             $data = json_decode(file_get_contents("php://input"), true);
             $id = $data['id'] ?? uniqid();
-            $stmt = $pdo->prepare("INSERT INTO lists (id, name, source, type, subscriber_count, created_at) VALUES (?, ?, ?, ?, ?, NOW())");
-            $stmt->execute([$id, $data['name'], $data['source'], $data['type'] ?? 'static', $data['count'] ?? 0]);
+            $stmt = $pdo->prepare("INSERT INTO lists (workspace_id, id, name, source, type, subscriber_count, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+            $stmt->execute([$workspace_id, $id, $data['name'], $data['source'], $data['type'] ?? 'static', $data['count'] ?? 0]);
             $data['id'] = $id;
             jsonResponse(true, $data);
         } catch (Exception $e) {
@@ -440,8 +476,8 @@ switch ($method) {
             if (!$path)
                 jsonResponse(false, null, 'ID required');
             $data = json_decode(file_get_contents("php://input"), true);
-            $stmt = $pdo->prepare("UPDATE lists SET name = ?, source = ?, subscriber_count = ? WHERE id = ?");
-            $stmt->execute([$data['name'], $data['source'] ?? 'Manual', $data['count'], $path]);
+            $stmt = $pdo->prepare("UPDATE lists SET name = ?, source = ?, subscriber_count = ? WHERE id = ? AND workspace_id = ?");
+            $stmt->execute([$data['name'], $data['source'] ?? 'Manual', $data['count'], $path, $workspace_id]);
             jsonResponse(true, $data);
         } catch (Throwable $e) {
             error_log("Lists PUT Error: " . $e->getMessage());
@@ -482,7 +518,11 @@ switch ($method) {
                 ->execute(['%"list_id":"' . $path . '"%']); // Just a heuristic, maybe not perfect
 
             // 4. Delete List (Subscribers relation removed via CASCADE)
-            $pdo->prepare("DELETE FROM lists WHERE id = ?")->execute([$path]);
+            $stmtDel = $pdo->prepare("DELETE FROM lists WHERE id = ? AND workspace_id = ?");
+            $stmtDel->execute([$path, $workspace_id]);
+            if ($stmtDel->rowCount() == 0) {
+                throw new Exception("Không tìm thấy danh sách hoặc không có quyền xóa");
+            }
 
             $pdo->commit();
             jsonResponse(true, ['id' => $path]);

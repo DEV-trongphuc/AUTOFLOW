@@ -6,6 +6,9 @@ interface TabItem {
   label: string;
   icon?: React.ElementType;
   count?: number;
+  // [FIX P8-C1] countLabel: optional suffix text rendered after the count badge
+  // (e.g. "đã gửi" in the Campaign Drawer Audience tab)
+  countLabel?: string;
 }
 
 interface TabsProps {
@@ -63,6 +66,12 @@ const Tabs: React.FC<TabsProps> = ({ items, activeId, onChange, variant = 'under
                   {item.count.toLocaleString()}
                 </span>
               )}
+              {/* [FIX P8-H3] Render countLabel suffix after count badge */}
+              {item.countLabel && (
+                <span className={`ml-0.5 text-[8px] font-medium ${isActive ? (isDarkTheme ? 'text-slate-300' : 'text-slate-500') : 'text-slate-400'}`}>
+                  {item.countLabel}
+                </span>
+              )}
             </button>
           );
         })}
@@ -94,6 +103,12 @@ const Tabs: React.FC<TabsProps> = ({ items, activeId, onChange, variant = 'under
                 ${isActive ? (isDarkTheme ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-700') : (isDarkTheme ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-400')}
               `}>
                 {item.count.toLocaleString()}
+              </span>
+            )}
+            {/* [FIX P8-H3] Render countLabel suffix after count badge (Underline variant) */}
+            {item.countLabel && (
+              <span className={`ml-0.5 text-[8px] font-medium ${isActive ? (isDarkTheme ? 'text-slate-300' : 'text-slate-500') : 'text-slate-400'}`}>
+                {item.countLabel}
               </span>
             )}
           </button>

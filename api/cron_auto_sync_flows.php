@@ -10,15 +10,40 @@
  * 0,30 * * * * /usr/local/bin/php /home/vhvxoigh/automation.ideas.edu.vn/mail_api/cron_auto_sync_flows.php > /dev/null 2>&1
  */
 
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 ini_set('log_errors', 1);
-error_reporting(E_ALL);
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
+// [SECURITY] Prevent web browsers from triggering this cron job (it has no auth).
+// It is safe to run via CLI cron (no HTTP_HOST), or direct CLI invocation.
+// Any HTTP request to this file is rejected — cron must be server-side only.
+if (isset($_SERVER['HTTP_HOST']) && php_sapi_name() !== 'cli') {
+    http_response_code(403);
+    header('Content-Type: text/plain');
+    echo 'This script is for server-side cron execution only.';
+    exit;
+}
 header('Content-Type: text/plain; charset=utf-8');
+
+// [FIX P13-H1] Non-blocking exclusive file lock to prevent concurrent cron overlaps.
+// If a previous run is still executing (heavy DB), flock() returns false → exit immediately.
+// Lock is automatically released when the process ends (file handle closed on exit).
+$_cronLockFile = sys_get_temp_dir() . '/autoflow_cron_sync.lock';
+$_cronLockFp   = @fopen($_cronLockFile, 'c');
+if (!$_cronLockFp || !flock($_cronLockFp, LOCK_EX | LOCK_NB)) {
+    echo "[" . date('Y-m-d H:i:s') . "] Another cron_auto_sync_flows instance is still running. Skipping this invocation.\n";
+    if ($_cronLockFp) fclose($_cronLockFp);
+    exit;
+}
+register_shutdown_function(function () use ($_cronLockFp) {
+    @flock($_cronLockFp, LOCK_UN);
+    @fclose($_cronLockFp);
+});
 
 try {
     require __DIR__ . '/db_connect.php';
 } catch (Exception $e) {
     die("Database connection failed: " . $e->getMessage());
+
 }
 
 $logPrefix = "[" . date('Y-m-d H:i:s') . "]";

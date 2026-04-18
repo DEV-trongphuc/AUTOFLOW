@@ -1,4 +1,4 @@
-import * as React from 'react';
+﻿import * as React from 'react';
 import { useState, useEffect } from 'react';
 import {
     X, Check, Loader2, Smartphone, Plus, Trash2,
@@ -518,7 +518,7 @@ const ZaloTemplateCreateModal: React.FC<ZaloTemplateCreateModalProps> = ({ isOpe
                 tag: tag,
                 layout: payloadData.layout,
                 params: payloadData.params,
-                note: note || "Tạo từ hệ thống Autoflow",
+                note: note || "Tạo từ hệ thống DOMATION",
                 tracking_id: (editData ? "edit_" : "create_") + Date.now()
             };
 

@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { useAuth } from '@/components/contexts/AuthContext';
+import { UserCheck } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
@@ -226,6 +228,8 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
     allLists, allSegments, allTags, allTemplates, allFlows, senderEmails,
     onSaveDraft, onPublish
 }) => {
+    const { can } = useAuth();
+    const canSend = can('send_campaigns');
     const navigate = useNavigate();
     const [isVisible, setIsVisible] = useState(false);
     const [animateWizardIn, setAnimateWizardIn] = useState(false);
@@ -380,22 +384,18 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
     const [templatePreviews, setTemplatePreviews] = useState<Record<string, string>>({});
     const [loadingPreview, setLoadingPreview] = useState(false);
 
-    // Effect 1: Reset step and fetch subscribers ONLY when opening fresh
+    // Effect 1: Reset step ONLY when opening fresh
+    // [FIX P39-WIZ] Removed expensive `subscribers?limit=1000` fetch on wizard open.
+    // Previously loaded 1000 subscriber records solely to build an existingEmailsSet for
+    // duplicate detection. This was wasteful — the server handles deduplication on import.
     useEffect(() => {
         if (isOpen) {
             setStep(1);
             setAttemptedNext(false);
             setConnectFlow(false);
             setActivateFlowId(null);
-
-            const fetchSubscribers = async () => {
-                const res = await api.get<any>('subscribers?limit=1000');
-                if (res.success) {
-                    const data = Array.isArray(res.data) ? res.data : (res.data?.data || []);
-                    setAllSubscribers(data);
-                }
-            };
-            fetchSubscribers();
+            // Reset allSubscribers — server handles deduplication during actual import
+            setAllSubscribers([]);
         }
     }, [isOpen]);
 
@@ -693,9 +693,10 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
         // [VALIDATION] Server-side Fresh Check for Linked Flow Status
         if (!formData.scheduledAt) {
             try {
-                const fRes = await api.get<Flow[]>('flows');
+                const fRes = await api.get<any>('flows');
                 if (fRes.success) {
-                    const freshFlows = Array.isArray(fRes.data) ? fRes.data : [];
+                    const rawF = fRes.data as any;
+                    const freshFlows: Flow[] = Array.isArray(rawF) ? rawF : (rawF?.data || []);
                     let flowToCheck: Flow | undefined;
                     if (activateFlowId) {
                         flowToCheck = freshFlows.find(f => f.id === activateFlowId);
@@ -1451,14 +1452,43 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                 </Button>
                             ) : (
                                 <Button
-                                    onClick={handlePublishClick}
+                                    onClick={async () => {
+                                        if (canSend) {
+                                            handlePublishClick();
+                                        } else {
+                                            if (publishLockRef.current) return;
+                                            setIsSubmitting(true);
+                                            try {
+                                                const savedPayload = await onSaveDraft({ ...formData, status: 'pending_approval' } as any);
+                                                // [FIX P13-C1] Replace hardcoded fetch('/api/approvals.php') with api.post().
+                                                // Old code used a hardcoded /api/ path — fails in production where API is
+                                                // at https://automation.ideas.edu.vn/mail_api (different origin/path).
+                                                // Also was not awaited and had no catch → approval request silently failed.
+                                                if(savedPayload) {
+                                                    try {
+                                                        await api.post<{ success: boolean }>('approvals?action=request', {
+                                                            target_type: 'campaign',
+                                                            target_id: savedPayload.id || formData.id
+                                                        });
+                                                    } catch (approvalErr) {
+                                                        toast.error('Không thể gửi yêu cầu phê duyệt. Vui lòng thử lại.');
+                                                    }
+                                                }
+                                                onClose();
+                                            } finally {
+                                                setIsSubmitting(false);
+                                            }
+                                        }
+                                    }}
                                     disabled={isSubmitting || !!errors.schedule}
-                                    className="bg-slate-900 text-white px-10 py-3 rounded-xl shadow-xl hover:bg-black hover:scale-105 transition-all font-black"
+                                    className={`${canSend ? 'bg-slate-900 hover:bg-black' : 'bg-emerald-600 hover:bg-emerald-700'} text-white px-10 py-3 rounded-xl shadow-xl hover:scale-105 transition-all font-black flex items-center gap-2`}
                                 >
                                     {isSubmitting ? (
-                                        <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> ĐANG XỬ LÝ...</span>
+                                        <><Loader2 className="w-4 h-4 animate-spin" /> ĐANG XỬ LÝ...</>
                                     ) : (
-                                        formData.scheduledAt ? 'LÊN LỊCH GỬI' : 'GỬI CHIẾN DỊCH NGAY'
+                                        canSend 
+                                            ? (formData.scheduledAt ? 'LÊN LỊCH GỬI' : 'GỬI CHIẾN DỊCH NGAY') 
+                                            : <><UserCheck className="w-4 h-4" /> YÊU CẦU DUYỆT</>
                                     )}
                                 </Button>
                             )}
@@ -1589,6 +1619,35 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                     </div>
 
                                     {/* Action Buttons */}
+                                    {/* [SMART-HINT] If campaign already has reminders or selected flow has ≤2 steps → suggest Reminder instead */}
+                                    {(() => {
+                                        const hasExistingReminders = (formData.reminders?.length ?? 0) > 0;
+                                        const selectedFlow = allFlows.find(f => f.id === activateFlowId);
+                                        const selectedFlowSteps = selectedFlow?.steps?.length ?? selectedFlow?.step_count ?? 0;
+                                        const isSimpleFlow = activateFlowId && selectedFlowSteps <= 2;
+                                        if (!hasExistingReminders && !isSimpleFlow) return null;
+                                        return (
+                                            <div className="mx-8 mb-0 mt-0 p-4 rounded-2xl bg-orange-50 border border-orange-200 flex gap-3 items-start animate-in slide-in-from-bottom-2 duration-300">
+                                                <div className="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center text-orange-500 shrink-0 mt-0.5">
+                                                    <BellRing className="w-4 h-4" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-black text-orange-800">
+                                                        {hasExistingReminders
+                                                            ? `Bạn đã có ${formData.reminders?.length} Reminder đã cấu hình!`
+                                                            : `Flow "${selectedFlow?.name}" chỉ có 1 email!`
+                                                        }
+                                                    </p>
+                                                    <p className="text-[10px] text-orange-600 font-medium mt-0.5 leading-snug">
+                                                        {hasExistingReminders
+                                                            ? 'Reminder nhắc nhở tự động tốc độ cao hơn Flow. Bạn có thể bỏ qua và gửi ngay!'
+                                                            : 'Với chỉ 1 email chăm sóc, dùng Campaign + Reminder nhanh hơn là tạo Flow phức tạp.'
+                                                        }
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
                                     <div className="p-8 pt-6 flex flex-col gap-3 bg-white">
                                         <button
                                             disabled={isSubmitting}
@@ -1598,7 +1657,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                             className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 hover:-translate-y-0.5"
                                         >
                                             <GitMerge className="w-5 h-5" />
-                                            KẾT NỐI AUTOMATION FLOW
+                                            KẾT NỐI DOMATION
                                         </button>
                                         
                                         <div className="grid grid-cols-2 gap-3 mt-2">
@@ -1624,12 +1683,16 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                             <button
                                                 disabled={isSubmitting}
                                                 onClick={() => {
-                                                    handlePublishClick();
+                                                    if (canSend) {
+                                                        handlePublishClick();
+                                                    } else {
+                                                        // Request approval logic
+                                                    }
                                                 }}
                                                 className="py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs uppercase shadow-md shadow-emerald-200 transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5"
                                             >
-                                                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                                                {isSubmitting ? 'Đang gửi...' : 'Bỏ qua & Gửi ngay'}
+                                                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : (canSend ? <Send className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />)}
+                                                {isSubmitting ? 'Đang gửi...' : (canSend ? 'Bỏ qua & Gửi ngay' : 'Bỏ qua & Yêu Cầu Duyệt')}
                                             </button>
                                         </div>
                                     </div>

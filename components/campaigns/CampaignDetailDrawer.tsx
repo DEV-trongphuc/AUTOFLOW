@@ -3,9 +3,9 @@ import { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import {
     Plus, TrendingUp, MousePointerClick,
-    CheckCircle2, GitMerge, GitBranch, RefreshCw, FileText, CalendarClock, PieChart, Send, MailOpen,
+    CheckCircle2, GitMerge, GitBranch, RefreshCw, FileText, CalendarClock, PieChart, Send, MailOpen, Paperclip, File as FileIcon,
     Search, ChevronLeft, ChevronRight, X, BarChart2, Calendar, Users, MailCheck, Activity, Zap, ExternalLink, Mail, Bell, Clock, Activity as ActivityIcon, MousePointer2, BadgeCheck, FileBarChart, MousePointerClick as ClickIcon,
-    Layers, List, AlertOctagon, UserMinus, History, Tag, Loader2, ShieldCheck, Smartphone, Globe, Laptop, Trash2, Monitor, Flame, Link as LinkIcon
+    Layers, List, AlertOctagon, UserMinus, History, Tag, Loader2, ShieldCheck, Smartphone, Globe, Laptop, Trash2, Monitor, Flame, Link as LinkIcon, PauseCircle, PlayCircle
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart as RePieChart, Pie, AreaChart, Area, FunnelChart, Funnel, LabelList
@@ -152,12 +152,14 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
             };
             fetchCampaign();
 
-            if (['sending', 'scheduled'].includes(localCampaign.status?.toLowerCase() || '')) {
+            // [FIX P8-C3] Include 'paused' in polling — admin may resume via backend,
+            // drawer should auto-refresh without requiring full page reload.
+            if (['sending', 'scheduled', 'paused'].includes(localCampaign.status?.toLowerCase() || '')) {
                 pollTimer = setInterval(async () => {
                     const res = await api.get<any>(`campaigns?id=${localCampaign.id}`);
                     if (res.success) {
                         setLocalCampaign(res.data);
-                        if (!['sending', 'scheduled'].includes(res.data.status?.toLowerCase() || '')) {
+                        if (!['sending', 'scheduled', 'paused'].includes(res.data.status?.toLowerCase() || '')) {
                             clearInterval(pollTimer);
                         }
                     }
@@ -297,10 +299,17 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
         }
     };
 
+    const parsedAttachments = React.useMemo(() => {
+        try {
+            return typeof localCampaign?.attachments === 'string' ? JSON.parse(localCampaign.attachments) : localCampaign?.attachments || [];
+        } catch (e) {
+            return [];
+        }
+    }, [localCampaign?.attachments]);
+
     if (!localCampaign) return null;
 
     const stats = localCampaign.stats || { sent: 0, opened: 0, clicked: 0, bounced: 0, spam: 0, unsubscribed: 0, failed: 0 };
-
     // Real Calculations
     const isSent = localCampaign.status === CampaignStatus.SENT;
     const sentCount = stats.sent || 0;
@@ -334,7 +343,10 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
     const targetSegments = localCampaign.target?.segmentIds.map(id => allSegments.find(s => s.id === id)).filter(Boolean) || [];
     const targetTags = localCampaign.target?.tagIds?.map(name => allTags.find(t => t.name === name)).filter(Boolean) || [];
 
-    const totalAudience = localCampaign.totalTargetAudience || 0;
+    // For SENT campaigns: show actual sent count (truth). For others: show configured estimate.
+    const totalAudience = (localCampaign.status === 'sent' || localCampaign.status === 'sending')
+        ? (stats.sent || localCampaign.totalTargetAudience || 0)
+        : (localCampaign.totalTargetAudience || 0);
 
     const StatBox = ({ label, value, subValue, icon: Icon, colorClass }: any) => {
         const getGradient = (clr: string) => {
@@ -369,12 +381,16 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                 <div className="bg-white border-b border-slate-100 px-4 md:px-8 py-4 md:py-5 flex flex-col sm:flex-row justify-between items-start gap-4 shrink-0 shadow-sm z-30">
                     <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-1.5">
+                            {/* [FIX P8-C3] Paused badge: orange to match CampaignList PauseCircle badge */}
                             <Badge variant={
                                 localCampaign.status === 'sent' ? 'success' :
                                     localCampaign.status === 'sending' ? 'info' :
                                         localCampaign.status === 'scheduled' ? 'warning' : 'neutral'
-                            } className="px-2 py-0.5 md:px-3 md:py-1 text-[9px] md:text-xs">
+                            } className={`px-2 py-0.5 md:px-3 md:py-1 text-[9px] md:text-xs ${
+                                localCampaign.status === 'paused' ? '!bg-orange-50 !text-orange-700 !border-orange-200' : ''
+                            }`}>
                                 {localCampaign.status === 'sending' && <RefreshCw className="w-2.5 h-2.5 animate-spin" />}
+                                {localCampaign.status === 'paused' && <PauseCircle className="w-2.5 h-2.5" />}
                                 {localCampaign.status.toUpperCase()}
                             </Badge>
                             {localCampaign.status === 'sending' && localCampaign.totalTargetAudience > 0 && (
@@ -440,7 +456,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                         items={[
                             { id: 'overview', label: 'Báo cáo', icon: BarChart2 },
                             { id: 'content', label: localCampaign.type === 'zalo_zns' ? 'Nội dung' : 'Nội dung', icon: FileText },
-                            { id: 'audience', label: 'Đối tượng', icon: Users, count: totalAudience },
+                            { id: 'audience', label: 'Đối tượng', icon: Users, count: totalAudience, countLabel: localCampaign.status === 'sent' ? 'đã gửi' : undefined },
                             { id: 'delivery', label: 'Lịch sử', icon: MailCheck },
                             ...(localCampaign.type !== 'zalo_zns' ? [
                                 { id: 'links', label: 'Click Heatmap', icon: ClickIcon },
@@ -500,6 +516,52 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                     Kích hoạt lại
                                                 </button>
                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* [FIX P8-C3] Dedicated PAUSED banner — shows Circuit Breaker warning + Resume button */}
+                            {localCampaign.status === 'paused' && (
+                                <div className="p-1 bg-orange-50 rounded-[28px] overflow-hidden border border-orange-100">
+                                    <div className="bg-white p-6 rounded-[24px] border border-orange-100 shadow-sm flex flex-col gap-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-orange-50 text-orange-600 border border-orange-200 rounded-xl flex items-center justify-center">
+                                                    <PauseCircle className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <h5 className="text-sm font-black text-orange-800 uppercase tracking-tight">Chiến dịch bị tạm dừng (Circuit Breaker)</h5>
+                                                    <p className="text-[11px] text-orange-500 font-bold uppercase tracking-widest mt-0.5">Hệ thống đã phát hiện lỗi SMTP liên tiếp và tự động tạm dừng để bảo vệ domain</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-2xl font-black text-orange-600 tracking-tight">
+                                                    {Math.min(100, Math.round(((localCampaign.stats?.sent || 0) / (localCampaign.totalTargetAudience || 1)) * 100))}%
+                                                </p>
+                                                <p className="text-[10px] text-orange-400 font-bold uppercase">Đã hoàn thành</p>
+                                            </div>
+                                        </div>
+                                        <div className="w-full h-3 bg-orange-50 border border-orange-100 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-gradient-to-r from-orange-400 to-amber-500 transition-all duration-1000 ease-out shadow-lg shadow-orange-500/20"
+                                                style={{ width: `${Math.min(100, ((localCampaign.stats?.sent || 0) / (localCampaign.totalTargetAudience || 1)) * 100)}%` }}
+                                            />
+                                        </div>
+                                        <div className="flex justify-between items-center text-[11px] font-bold">
+                                            <div className="flex gap-4">
+                                                <span className="text-slate-500 uppercase tracking-wider">Đã gửi: <span className="text-orange-600 font-black">{(localCampaign.stats?.sent || 0).toLocaleString()}</span></span>
+                                                <span className="text-slate-400 uppercase tracking-widest">/ {localCampaign.totalTargetAudience?.toLocaleString() || '...'} mục tiêu</span>
+                                            </div>
+                                            <button
+                                                onClick={handleTriggerRefresh}
+                                                disabled={refreshLoading}
+                                                className="px-4 py-2 bg-orange-500 text-white text-[10px] font-black uppercase rounded-xl hover:bg-orange-600 transition-all flex items-center gap-2 shadow-md shadow-orange-500/20"
+                                                title="Khởi động lại chiến dịch — hệ thống sẽ tiếp tục gửi từ subscriber chưa nhận được email"
+                                            >
+                                                {refreshLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PlayCircle className="w-3.5 h-3.5" />}
+                                                Tiếp tục Chiến dịch
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -885,13 +947,51 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                         </div>
                                     )}
 
+                                    {/* Attachments Section */}
+                                    {parsedAttachments && parsedAttachments.length > 0 && (
+                                        <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                                                    <Paperclip className="w-4 h-4 text-blue-500" />
+                                                    Tệp đính kèm ({parsedAttachments.length})
+                                                </h4>
+                                            </div>
+                                            <div className="space-y-3">
+                                                {parsedAttachments.map((file: any, i: number) => (
+                                                    <a 
+                                                        key={file.id || i} 
+                                                        href={file.url || '#'} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-blue-300 hover:bg-blue-50/50 hover:shadow-sm transition-all group"
+                                                    >
+                                                        <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                                                            <FileIcon className="w-4 h-4" />
+                                                        </div>
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="text-xs font-bold text-slate-700 truncate group-hover:text-blue-700 transition-colors">{file.name}</p>
+                                                            <div className="flex items-center gap-2 mt-0.5">
+                                                                <span className="text-[10px] text-slate-400 font-medium">{file.type?.toUpperCase() || 'FILE'}</span>
+                                                                <span className="text-slate-300">•</span>
+                                                                <span className="text-[10px] text-slate-400 font-medium">={(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                                                            </div>
+                                                        </div>
+                                                        <Badge variant={file.logic === 'match_email' ? 'warning' : 'neutral'} className="text-[9px]">
+                                                            {file.logic === 'match_email' ? 'Cá nhân hóa' : 'Gửi chung'}
+                                                        </Badge>
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Link Summary Card */}
                                     {previewType === 'main' && uniqueLinks.length > 0 && (
                                         <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col">
                                             <div className="flex items-center justify-between mb-4">
                                                 <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
                                                     <LinkIcon className="w-4 h-4 text-orange-500" />
-                                                    Đính kèm ({uniqueLinks.length} Links)
+                                                    Liên kết trong nội dung ({uniqueLinks.length})
                                                 </h4>
                                             </div>
                                             <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-2 mb-5">

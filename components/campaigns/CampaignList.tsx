@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Send, MoreVertical, CheckCircle2, CalendarClock, FileText, Loader2, BarChart2, GitMerge, Mail, Calendar, Play, Copy, Trash2, ChevronRight, AlertCircle, Clock } from 'lucide-react';
+import { Send, MoreVertical, CheckCircle2, CalendarClock, FileText, Loader2, BarChart2, GitMerge, Mail, Calendar, Play, Copy, Trash2, ChevronRight, AlertCircle, Clock, Paperclip } from 'lucide-react';
 import { Campaign, CampaignStatus } from '../../types';
 import Badge from '../../components/common/Badge';
 
@@ -80,6 +80,12 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
                                                 {c.type === 'zalo_zns' && <span className="px-1.5 py-0.5 rounded bg-[#0068ff] text-white text-[9px] font-black uppercase tracking-wider shadow-sm shadow-[#0068ff]/20">ZNS</span>}
+                                                {c.attachments && c.attachments.length > 0 && (
+                                                    <span className="flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 bg-slate-50 border border-slate-200 rounded shrink-0 shadow-sm" title={`${c.attachments.length} tệp đính kèm`}>
+                                                        <Paperclip className="w-3 h-3 text-slate-400" />
+                                                        {c.attachments.length}
+                                                    </span>
+                                                )}
                                                 <p className="font-bold text-slate-800 text-sm leading-tight group-hover:text-[#ca7900] transition-colors truncate">{c.name}</p>
                                                 <span className="px-2.5 py-0.5 bg-slate-50 text-slate-500 border border-slate-200 rounded-full text-[10px] font-black font-mono">ID: {c.id}</span>
                                             </div>

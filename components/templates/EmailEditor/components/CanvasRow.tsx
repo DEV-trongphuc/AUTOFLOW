@@ -39,7 +39,12 @@ const CanvasRow: React.FC<CanvasRowProps> = (props) => {
     } = props;
 
     const css = buildCss(row.style, viewMode, bodyStyle.fontFamily);
-    const { backgroundColor, borderRadius, paddingTop, paddingBottom, paddingLeft, paddingRight, textAlign, backgroundImage, backgroundSize, backgroundPosition, backgroundRepeat } = css;
+    const { 
+        backgroundColor, borderRadius, paddingTop, paddingBottom, paddingLeft, paddingRight, 
+        marginTop, marginBottom, marginLeft, marginRight, width,
+        textAlign, backgroundImage, backgroundSize, backgroundPosition, backgroundRepeat,
+        borderStyle, borderColor, borderTopWidth, borderRightWidth, borderBottomWidth, borderLeftWidth
+    } = css;
     const isSelected = selectedBlockId === row.id;
 
     // ✅ Resize handle hiện khi ROW hoặc bất kỳ block bên trong được select
@@ -241,8 +246,24 @@ const CanvasRow: React.FC<CanvasRowProps> = (props) => {
                 />
 
                 <table
-                    width="100%" border={0} cellPadding={0} cellSpacing={0} role="presentation"
-                    style={{ backgroundColor, borderRadius: sanitizeRadius(borderRadius), backgroundImage: finalBackgroundImage, backgroundSize, backgroundPosition, backgroundRepeat, overflow: borderRadius ? 'hidden' : 'visible' }}
+                    width={typeof width === 'string' && !width.includes('px') ? width : undefined} 
+                    border={0} cellPadding={0} cellSpacing={0} role="presentation"
+                    style={{ 
+                        backgroundColor, 
+                        width: width || '100%',
+                        margin: `${marginTop || 0} ${marginRight || 'auto'} ${marginBottom || 0} ${marginLeft || 'auto'}`,
+                        borderRadius: sanitizeRadius(borderRadius), 
+                        backgroundImage: finalBackgroundImage, 
+                        backgroundSize, 
+                        backgroundPosition, 
+                        backgroundRepeat, 
+                        borderTop: borderTopWidth && borderStyle !== 'none' ? `${borderTopWidth} ${borderStyle || 'solid'} ${borderColor || '#000'}` : 'none',
+                        borderRight: borderRightWidth && borderStyle !== 'none' ? `${borderRightWidth} ${borderStyle || 'solid'} ${borderColor || '#000'}` : 'none',
+                        borderBottom: borderBottomWidth && borderStyle !== 'none' ? `${borderBottomWidth} ${borderStyle || 'solid'} ${borderColor || '#000'}` : 'none',
+                        borderLeft: borderLeftWidth && borderStyle !== 'none' ? `${borderLeftWidth} ${borderStyle || 'solid'} ${borderColor || '#000'}` : 'none',
+                        overflow: borderRadius ? 'hidden' : 'visible',
+                        boxSizing: 'border-box'
+                    }}
                 >
                     <tbody>
                         <tr>

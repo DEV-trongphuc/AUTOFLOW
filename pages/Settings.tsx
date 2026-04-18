@@ -15,10 +15,14 @@ import Select from '../components/common/Select';
 import Tabs from '../components/common/Tabs';
 // @ts-ignore: Added missing import for api from storageAdapter
 import { api } from '../services/storageAdapter';
+import { useIsAdmin } from '../hooks/useAuthUser';
+
 
 
 const Settings: React.FC = () => {
+    const isAdmin = useIsAdmin();
     const [activeTab, setActiveTab] = useState('system');
+
     // Hardcoded production URL, ignoring localStorage
     const [apiUrl, setApiUrl] = useState('https://automation.ideas.edu.vn/mail_api');
     const [smtp, setSmtp] = useState({
@@ -34,7 +38,9 @@ const Settings: React.FC = () => {
         imap_user: '',
         imap_pass: '',
         internal_qa_emails: '',
-        gemini_api_key: ''
+        gemini_api_key: '',
+        aws_access_key: '',
+        aws_secret_key: ''
     });
 
     // Data for Selects
@@ -88,7 +94,9 @@ const Settings: React.FC = () => {
                 smtp_port: res.data.smtp_port || '587', // 587 is best for TLS
                 smtp_encryption: res.data.smtp_encryption || 'tls',
                 smtp_from_email: res.data.smtp_from_email || 'tuyensinh@ideas.edu.vn',
-                smtp_from_name: res.data.smtp_from_name || 'Tuyển Sinh IDEAS'
+                smtp_from_name: res.data.smtp_from_name || 'Tuyển Sinh IDEAS',
+                aws_access_key: res.data.aws_access_key || '',
+                aws_secret_key: res.data.aws_secret_key || ''
             }));
         }
 
@@ -288,9 +296,7 @@ const Settings: React.FC = () => {
         try {
             // Calling the relative path through storageAdapter's api if possible, 
             // but health_check.php is new so we use fetch or api.get
-            console.log('Fetching Health Check from production API...');
             const res = await api.get<any>('health_check');
-            console.log('Health Check Response:', res);
             if (res.success) {
                 setHealthResults(res.data);
                 toast.success('Kiểm tra hệ thống hoàn tất!');
@@ -304,8 +310,28 @@ const Settings: React.FC = () => {
         }
     };
 
+    // ─── Permission Gate ──────────────────────────────────────────────────────
+    if (!isAdmin) {
+        return (
+            <div className="min-h-[70vh] flex items-center justify-center p-8">
+                <div className="text-center max-w-sm">
+                    <div className="w-20 h-20 rounded-3xl bg-rose-50 flex items-center justify-center mx-auto mb-6">
+                        <Lock className="w-10 h-10 text-rose-400" />
+                    </div>
+                    <h2 className="text-2xl font-black text-slate-900 mb-2">Không đủ quyền truy cập</h2>
+                    <p className="text-sm text-slate-500 leading-relaxed">
+                        Trang <b>Cài đặt hệ thống</b> chỉ dành cho tài khoản <b className="text-amber-600">Admin</b>.<br />
+                        Vui lòng liên hệ quản trị viên để được cấp quyền.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     return (
         <div className="animate-fade-in px-3.5 lg:px-0 max-w-6xl mx-auto pb-24">
+
             <div className="mb-8 lg:mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div className="flex-1">
                     <h2 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">Cài đặt hệ thống</h2>
@@ -541,7 +567,20 @@ const Settings: React.FC = () => {
                                 </div>
 
                                 <div className="md:col-span-2 border-t border-slate-100 pt-6">
-                                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">2. Thông tin Người gửi (Hiển thị cho khách)</h4>
+                                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        2. Khóa API (Dùng để check Quota AWS)
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <Input label="AWS Access Key ID" placeholder="AKIA..." value={(smtp as any).aws_access_key} onChange={e => setSmtp({ ...smtp, aws_access_key: e.target.value } as any)} icon={Key} />
+                                        <Input label="AWS Secret Access Key (IAM)" type="password" placeholder="Khoảng 40 ký tự..." value={(smtp as any).aws_secret_key} onChange={e => setSmtp({ ...smtp, aws_secret_key: e.target.value } as any)} icon={KeyRound} />
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 mt-2 italic px-2">
+                                        *IAM Secret Key dùng để kết nối Dashboard Quota. Nó là chuỗi dài ~40 ký tự, KHÔNG PHẢI Mật khẩu SMTP ở trên.
+                                    </p>
+                                </div>
+
+                                <div className="md:col-span-2 border-t border-slate-100 pt-6">
+                                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">3. Thông tin Người gửi (Hiển thị cho khách)</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <Input
                                             label="Tên người gửi (From Name)"

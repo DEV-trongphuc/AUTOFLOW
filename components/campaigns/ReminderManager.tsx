@@ -209,7 +209,7 @@ const ReminderManager: React.FC<ReminderManagerProps> = ({ reminders, templates,
                           <img src={selectedTemplate(rem.templateId)?.thumbnail} className="w-16 h-12 object-cover rounded-lg border border-slate-100" />
                           <div className="flex-1">
                             <p className="text-sm font-bold text-slate-800">{selectedTemplate(rem.templateId)?.name}</p>
-                            <p className="text-[10px] text-slate-500 font-medium">Đang chờ mẫu riêng</p>
+                            <p className="text-[10px] text-slate-500 font-medium">đang chạy mẫu riêng</p>
                           </div>
                         </>
                       ) : (

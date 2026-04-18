@@ -147,7 +147,7 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
                 .shadow-brand { box-shadow: 0 4px 12px -2px var(--brand-shadow) !important; }
             `}} />
             <div className="space-y-8">
-                <PageHero 
+                <PageHero
                     title={<>AI <span className={hideWebsiteTab ? "text-white/70" : "text-orange-100/80"}>Training Center</span></>}
                     subtitle="Nạp kiến thức và huấn luyện bộ não AI cho từng website hoặc các kênh chatbot tập trung của bạn."
                     showStatus={true}
@@ -155,17 +155,15 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
                     customGradient={hideWebsiteTab ? "from-brand to-brand-dark" : undefined}
                     shadowColor={hideWebsiteTab ? "shadow-brand/30" : undefined}
                     actions={[
-                        { 
-                            label: 'Mẹo Training', 
-                            icon: Sparkles, 
+                        {
+                            label: 'Mẹo Training',
+                            icon: Sparkles,
                             onClick: () => setIsOptimizationModalOpen(true),
-                            primary: true 
                         },
-                        { 
-                            label: 'Hướng dẫn AI', 
-                            icon: BookOpen, 
+                        {
+                            label: 'Hướng dẫn AI',
+                            icon: BookOpen,
                             onClick: () => setIsTipsModalOpen(true),
-                            primary: true
                         }
                     ]}
                 />
@@ -478,15 +476,15 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
                                         >
                                             <div className="flex items-center justify-between mb-4">
                                                 <div className="flex items-center gap-4">
-                                                    <div 
-                                                        className="w-12 h-12 rounded-[18px] flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-all duration-500 overflow-hidden" 
-                                                        style={{ 
-                                                            background: !hideWebsiteTab 
-                                                                ? 'linear-gradient(135deg, #f59e0b, #d97706)' 
-                                                                : `linear-gradient(135deg, ${c.brand_color || '#ffa900'}, ${c.brand_color ? c.brand_color + 'dd' : '#ffc107'})`, 
-                                                            boxShadow: !hideWebsiteTab 
-                                                                ? '0 8px 20px -6px rgba(245, 158, 11, 0.6)' 
-                                                                : `0 8px 20px -6px ${c.brand_color ? c.brand_color + '55' : 'rgba(0,0,0,0.1)'}` 
+                                                    <div
+                                                        className="w-12 h-12 rounded-[18px] flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-all duration-500 overflow-hidden"
+                                                        style={{
+                                                            background: !hideWebsiteTab
+                                                                ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                                                                : `linear-gradient(135deg, ${c.brand_color || '#ffa900'}, ${c.brand_color ? c.brand_color + 'dd' : '#ffc107'})`,
+                                                            boxShadow: !hideWebsiteTab
+                                                                ? '0 8px 20px -6px rgba(245, 158, 11, 0.6)'
+                                                                : `0 8px 20px -6px ${c.brand_color ? c.brand_color + '55' : 'rgba(0,0,0,0.1)'}`
                                                         }}
                                                     >
                                                         <Building className="w-6 h-6" />
@@ -562,10 +560,10 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
                                                         <div className="flex items-center gap-4">
                                                             <div className="relative w-12 h-12 shrink-0 transition-transform duration-500 group-hover:scale-110">
                                                                 {c.settings?.bot_avatar || c.bot_avatar ? (
-                                                                    <img 
-                                                                        src={c.settings?.bot_avatar || c.bot_avatar} 
-                                                                        className={`w-full h-full object-cover rounded-2xl ${hideWebsiteTab ? 'grayscale group-hover:grayscale-0 transition-all duration-500' : ''}`} 
-                                                                        alt="" 
+                                                                    <img
+                                                                        src={c.settings?.bot_avatar || c.bot_avatar}
+                                                                        className={`w-full h-full object-cover rounded-2xl ${hideWebsiteTab ? 'grayscale group-hover:grayscale-0 transition-all duration-500' : ''}`}
+                                                                        alt=""
                                                                     />
                                                                 ) : (
                                                                     <div className={`w-full h-full rounded-[18px] flex items-center justify-center text-white shadow-lg overflow-hidden transition-all duration-500 ${hideWebsiteTab ? 'bg-brand shadow-brand/20' : 'bg-gradient-to-br from-[#c2410c] to-[#9a3412] shadow-orange-950/20 group-hover:shadow-orange-900/40'}`}>

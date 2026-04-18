@@ -3,7 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Send, Users, FileEdit, BarChart3,
   Settings, Mail, GitMerge, Tag, Webhook,
-  ExternalLink, Zap, ChevronRight, LogOut, Globe,
+  ExternalLink, Zap, ChevronRight, LogOut, Globe, Shield,
   LayoutDashboard, Key, Bot, PanelLeftClose, PanelLeft, Facebook, Gift
 } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
@@ -67,7 +67,7 @@ const updateRecentModules = (href: string) => {
   } catch (e) { }
 };
 
-const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed: boolean }> = ({ item, onClose, isCollapsed }) => {
+const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed: boolean }> = React.memo(({ item, onClose, isCollapsed }) => {
   const navigate = useNavigate();
   const [isPending, startTransition] = useTransition();
 
@@ -101,7 +101,7 @@ const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed:
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       className={({ isActive }) => `
-        relative flex items-center ${isCollapsed ? 'justify-center px-3' : 'justify-between px-5'} py-3.5 mx-4 rounded-xl transition-all duration-300 group
+        relative flex items-center ${isCollapsed ? 'justify-center px-3' : 'justify-between px-5'} py-3.5 mx-4 rounded-xl transition-all duration-300 group outline-none focus:outline-none focus:ring-0
         ${isPending ? 'opacity-70 scale-[0.98]' : ''}
         ${isActive
           ? 'bg-amber-500/10 backdrop-blur-md text-amber-950 shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-amber-500/20 shadow-[inset_0_1px_rgba(255,255,255,0.7)]'
@@ -137,9 +137,9 @@ const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed:
       )}
     </NavLink>
   );
-};
+});
 
-const SidebarSection: React.FC<{ title: string; children: React.ReactNode; isCollapsed: boolean }> = ({ title, children, isCollapsed }) => (
+const SidebarSection: React.FC<{ title: string; children: React.ReactNode; isCollapsed: boolean }> = React.memo(({ title, children, isCollapsed }) => (
   <div className="mb-8">
     {!isCollapsed && (
       <h4 className="px-8 mb-3 text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">
@@ -155,7 +155,28 @@ const SidebarSection: React.FC<{ title: string; children: React.ReactNode; isCol
       {children}
     </div>
   </div>
-);
+));
+
+export const MAIN_NAV: NavItemConfig[] = [
+  { name: 'Trang chủ', href: '/', icon: LayoutDashboard, prefetch: () => import('../../pages/Dashboard') },
+  { name: 'Chiến dịch', href: '/campaigns', icon: Send, prefetch: () => import('../../pages/Campaigns') },
+  { name: 'Automation', href: '/flows', icon: GitMerge, badge: 'Hot', prefetch: () => import('../../pages/Flows'), prefetchApis: ['flows'] },
+  { name: 'Khách hàng', href: '/audience', icon: Users, prefetch: () => import('../../pages/Audience') },
+  { name: 'Quản lý Nhãn', href: '/tags', icon: Tag, prefetch: () => import('../../pages/Tags'), prefetchApis: ['tags'] },
+  { name: 'Kho Voucher', href: '/vouchers', icon: Gift, badge: 'Promo', prefetch: () => import('../../pages/Vouchers') },
+  { name: 'Mẫu Email', href: '/templates', icon: FileEdit, prefetch: () => import('../../pages/Templates') },
+];
+
+export const CONFIG_NAV: NavItemConfig[] = [
+  { name: 'AI System', href: '/ai-training', icon: Bot, prefetch: () => import('../../pages/AITraining') },
+  { name: 'Zalo OA', href: '/zalo-settings', icon: Send, prefetch: () => import('../../pages/SocialSettings') },
+  { name: 'Meta Messenger', href: '/meta-messenger', icon: Facebook, prefetch: () => import('../../pages/MetaMessenger') },
+];
+
+export const ANALYTICS_NAV: NavItemConfig[] = [
+  { name: 'Website Tracking', href: '/web-tracking', icon: Globe, prefetch: () => import('../../pages/WebTracking') },
+  { name: 'API Triggers', href: '/api-triggers', icon: Webhook, badge: 'Dev', prefetch: () => import('../../pages/ApiTriggers') },
+];
 
 const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollapse }) => {
   const location = useLocation();
@@ -164,26 +185,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
     updateRecentModules(location.pathname);
   }, [location.pathname]);
 
-  const mainNav: NavItemConfig[] = [
-    { name: 'Trang chủ', href: '/', icon: LayoutDashboard, prefetch: () => import('../../pages/Dashboard') },
-    { name: 'Chiến dịch', href: '/campaigns', icon: Send, prefetch: () => import('../../pages/Campaigns') },
-    { name: 'Automation', href: '/flows', icon: GitMerge, badge: 'Hot', prefetch: () => import('../../pages/Flows'), prefetchApis: ['flows'] },
-    { name: 'Khách hàng', href: '/audience', icon: Users, prefetch: () => import('../../pages/Audience') },
-    { name: 'Quản lý Nhãn', href: '/tags', icon: Tag, prefetch: () => import('../../pages/Tags'), prefetchApis: ['tags'] },
-    { name: 'Kho Voucher', href: '/vouchers', icon: Gift, badge: 'Promo', prefetch: () => import('../../pages/Vouchers') },
-    { name: 'Mẫu Email', href: '/templates', icon: FileEdit, prefetch: () => import('../../pages/Templates') },
-  ];
 
-  const configNav: NavItemConfig[] = [
-    { name: 'AI System', href: '/ai-training', icon: Bot, prefetch: () => import('../../pages/AITraining') },
-    { name: 'Zalo OA', href: '/zalo-settings', icon: Send, prefetch: () => import('../../pages/SocialSettings') },
-    { name: 'Meta Messenger', href: '/meta-messenger', icon: Facebook, prefetch: () => import('../../pages/MetaMessenger') },
-  ];
-
-  const analyticsNav: NavItemConfig[] = [
-    { name: 'Website Tracking', href: '/web-tracking', icon: Globe, prefetch: () => import('../../pages/WebTracking') },
-    { name: 'API Triggers', href: '/api-triggers', icon: Webhook, badge: 'Dev', prefetch: () => import('../../pages/ApiTriggers') },
-  ];
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isAdmin = user.role === 'admin';
@@ -214,7 +216,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
 
             <div className="flex flex-col min-w-0">
               <h1 className="text-2xl font-black text-slate-900 tracking-tighter leading-none group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-amber-600 group-hover:to-amber-700 transition-all duration-500">
-                AUTOFLOW
+                DOMATION
               </h1>
               <div className="flex items-center gap-2 mt-1.5 opacity-60 group-hover:opacity-100 transition-opacity duration-500">
                 <span className="h-3 w-[2px] bg-amber-300 rotate-12"></span>
@@ -243,20 +245,21 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
       {/* SCROLLABLE NAV - Hidden scrollbar */}
       <nav className="flex-1 overflow-y-auto py-6 space-y-2 scrollbar-hide">
         <SidebarSection title="Marketing" isCollapsed={isCollapsed}>
-          {mainNav.map((item) => <NavItem key={item.name} item={item} onClose={onClose} isCollapsed={isCollapsed} />)}
+          {MAIN_NAV.map((item) => <NavItem key={item.name} item={item} onClose={onClose} isCollapsed={isCollapsed} />)}
         </SidebarSection>
 
         <SidebarSection title="AI System" isCollapsed={isCollapsed}>
-          {configNav.map((item) => <NavItem key={item.name} item={item} onClose={onClose} isCollapsed={isCollapsed} />)}
+          {CONFIG_NAV.map((item) => <NavItem key={item.name} item={item} onClose={onClose} isCollapsed={isCollapsed} />)}
         </SidebarSection>
 
         <SidebarSection title="Tracking" isCollapsed={isCollapsed}>
-          {analyticsNav.map((item) => <NavItem key={item.name} item={item} onClose={onClose} isCollapsed={isCollapsed} />)}
+          {ANALYTICS_NAV.map((item) => <NavItem key={item.name} item={item} onClose={onClose} isCollapsed={isCollapsed} />)}
         </SidebarSection>
 
         {isAdmin && (
           <SidebarSection title="Administration" isCollapsed={isCollapsed}>
             <NavItem item={{ name: 'Quản lý User', href: '/admin/users', icon: Users }} onClose={onClose} isCollapsed={isCollapsed} />
+            {/* <NavItem item={{ name: 'DS Workspace', href: '/admin/workspace', icon: Shield }} onClose={onClose} isCollapsed={isCollapsed} /> */}
           </SidebarSection>
         )}
       </nav>

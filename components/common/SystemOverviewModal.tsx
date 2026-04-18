@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { X, Activity, Server, Zap, Users, ShieldCheck, Mail, Database, Bot, BarChart3, TrendingUp, Globe, Loader2, Sparkles, MessageSquare } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
 import {
@@ -297,7 +297,7 @@ export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose }) => {
                                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/25 flex items-center justify-center">
                                             <Zap className="w-5 h-5 text-white" />
                                         </div>
-                                        <h3 className="font-bold text-slate-800">Top Automation Flow Kích hoạt</h3>
+                                        <h3 className="font-bold text-slate-800">Top DOMATION Kích hoạt</h3>
                                         <span className="ml-auto text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-500 rounded uppercase">All Time</span>
                                     </div>
                                     <div className="space-y-3">

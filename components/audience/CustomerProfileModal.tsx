@@ -389,7 +389,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
             const websiteTypes = ['web_pageview', 'web_click', 'web_canvas_click', 'web_scroll', 'web_identify', 'web_form', 'web_lead_capture'];
             // Everything else is system (including join, tags, flows, Zalo, and specifically web_track leads)
             list = list.filter(act => !mailTypes.includes(act.type) && !websiteTypes.includes(act.type));
-        // 'all' tab - no filtering needed
+            // 'all' tab - no filtering needed
         }
 
         // USER REQUEST: Exclude 'join' (gia nhập hệ thống) and 'enter' (tham gia) from recent interaction filter view
@@ -1186,7 +1186,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                 <section className="space-y-4">
                                     <div className="flex items-center justify-between px-1">
                                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                                            <GitMerge className="w-3.5 h-3.5" /> Automation Đang chờ
+                                            <GitMerge className="w-3.5 h-3.5" /> Automation đang chạy
                                         </h4>
                                         <button
                                             onClick={() => setIsManualTriggerOpen(true)}
@@ -1909,8 +1909,8 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
                                 </div>
                                 <div className="relative z-10 flex items-center justify-between gap-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-white dark:bg-slate-900/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30">
-                                            <Facebook className="w-6 h-6 text-white" />
+                                        <div className="w-12 h-12 bg-white dark:bg-slate-900/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 overflow-hidden">
+                                            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" alt="Facebook" className="w-full h-full object-contain p-1.5" />
                                         </div>
                                         <div>
                                             <p className="text-[9px] font-black text-blue-100 uppercase tracking-[0.2em] mb-0.5">Facebook</p>

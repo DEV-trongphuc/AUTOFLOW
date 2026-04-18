@@ -3820,7 +3820,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Kênh Đang chờ</label>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Kênh đang chạy</label>
 
                                 <div className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 uppercase flex items-center gap-2">
                                     {source === 'web' ? <Globe className="w-3.5 h-3.5 text-blue-500" /> :

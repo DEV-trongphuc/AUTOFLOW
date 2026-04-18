@@ -8,6 +8,11 @@ require_once 'db_connect.php';
 
 echo "Starting Geo Worker...\n";
 
+$lockStmt = $pdo->query("SELECT GET_LOCK('worker_web_geo_lock', 0)");
+if ($lockStmt->fetchColumn() !== 1) {
+    die("Skipped. Already running.\n");
+}
+
 // 1. Select visitors with IP but no Country (Limit 40 to stay within 1 min limit roughly)
 $stmt = $pdo->prepare("SELECT id, ip_address FROM web_visitors WHERE ip_address IS NOT NULL AND ip_address != '' AND country IS NULL LIMIT 40");
 $stmt->execute();
@@ -15,6 +20,7 @@ $visitors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if (empty($visitors)) {
     echo "No visitors to process.\n";
+    $pdo->query("DO RELEASE_LOCK('worker_web_geo_lock')");
     exit;
 }
 
@@ -59,5 +65,6 @@ foreach ($visitors as $v) {
     usleep(1500000); // 1.5 seconds
 }
 
+$pdo->query("DO RELEASE_LOCK('worker_web_geo_lock')");
 echo "Done. Updated $updated visitors.\n";
 ?>

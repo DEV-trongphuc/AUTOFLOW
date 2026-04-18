@@ -138,4 +138,4 @@ const CanvasSection: React.FC<CanvasSectionProps> = (props) => {
     );
 };
 
-export default CanvasSection;
+export default React.memo(CanvasSection);

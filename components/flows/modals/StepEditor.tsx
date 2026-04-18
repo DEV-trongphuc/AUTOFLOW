@@ -229,7 +229,7 @@ const StepEditor: React.FC<StepEditorProps> = ({ step, onClose, onSave, onDelete
             <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex gap-3 text-amber-800">
               <AlertCircle className="w-6 h-6 shrink-0" />
               <p className="text-sm font-medium leading-relaxed">
-                Flow này Đang chờ (Active). Để đảm bảo tính toàn vẹn dữ liệu cho các liên hệ Đang chờ trong luồng, bạn <b>không thể xóa bước</b> khi Flow đang hoạt động.
+                Flow này đang chạy (Active). Để đảm bảo tính toàn vẹn dữ liệu cho các liên hệ đang chạy trong luồng, bạn <b>không thể xóa bước</b> khi Flow đang hoạt động.
               </p>
             </div>
             <p className="text-xs text-slate-500 text-center font-bold">

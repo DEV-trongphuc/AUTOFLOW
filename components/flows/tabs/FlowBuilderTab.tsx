@@ -1,5 +1,5 @@
-
 import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
+import { createPortal } from 'react-dom';
 import { ZoomIn, ZoomOut, Move, Undo2, Redo2, Plus, Keyboard, Maximize, Minimize } from 'lucide-react';
 import { Flow, FlowStep, FormDefinition } from '../../../types';
 import FlowTree from '../builder/FlowTree';
@@ -33,7 +33,6 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
     isReportMode, realtimeDistribution, onReportClick
 }) => {
     const [scale, setScale] = useState(1.0);
-    const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [draggedStepId, setDraggedStepId] = useState<string | null>(null);
@@ -43,11 +42,17 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
     const [isFullscreen, setIsFullscreen] = useState(false);
 
     const transformRef = useRef({ scale: 1, x: 0, y: 0 });
-
-    // Sync Ref with State for Event Handlers
-    useEffect(() => {
-        transformRef.current = { scale, x: position.x, y: position.y };
-    }, [scale, position]);
+    const bgRef = useRef<HTMLDivElement>(null);
+    
+    const updateDOMTransform = (x: number, y: number, s: number) => {
+        transformRef.current = { scale: s, x, y };
+        if (wrapperRef.current) {
+            wrapperRef.current.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
+        }
+        if (bgRef.current) {
+            bgRef.current.style.transform = `translate(${x % 24}px, ${y % 24}px)`;
+        }
+    };
 
     const performZoom = (delta: number, focusX: number, focusY: number) => {
         const { scale: currentScale, x: currentX, y: currentY } = transformRef.current;
@@ -68,11 +73,8 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
         const newX = focusX - (focusX - currentX) * scaleRatio;
         const newY = focusY - (focusY - currentY) * scaleRatio;
 
-        // Optimistic Update for fast scrolling
-        transformRef.current = { scale: nextScale, x: newX, y: newY };
-
         setScale(nextScale);
-        setPosition({ x: newX, y: newY });
+        updateDOMTransform(newX, newY, nextScale);
     };
 
     const containerRef = useRef<HTMLDivElement>(null);
@@ -115,7 +117,7 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
             const newY = currentPos.y + dy;
 
             setScale(targetScale);
-            setPosition({ x: newX, y: newY });
+            updateDOMTransform(newX, newY, targetScale);
 
         }, delay);
     }, [flow.steps]);
@@ -176,9 +178,9 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
                 // PANNING
                 const { x, y } = transformRef.current;
                 if (e.shiftKey) {
-                    setPosition({ x: x - e.deltaY, y });
+                    updateDOMTransform(x - e.deltaY, y, scale);
                 } else {
-                    setPosition({ x: x - e.deltaX, y: y - e.deltaY });
+                    updateDOMTransform(x - e.deltaX, y - e.deltaY, scale);
                 }
             }
         };
@@ -191,8 +193,7 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
         // Reset position first so delta calculation starts from a clean state,
         // then center after a brief moment for DOM to update.
         setScale(1.0);
-        setPosition({ x: 0, y: 0 });
-        transformRef.current = { scale: 1, x: 0, y: 0 };
+        updateDOMTransform(0, 0, 1.0);
         centerView(1.0);
     }, [flow.id]);
 
@@ -200,14 +201,14 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
         if ((e.target as HTMLElement).closest('.flow-interactive')) return;
 
         setIsDragging(true);
-        setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+        setDragStart({ x: e.clientX - transformRef.current.x, y: e.clientY - transformRef.current.y });
         if (containerRef.current) containerRef.current.style.cursor = 'grabbing';
     };
 
     const handleMouseMove = (e: React.MouseEvent) => {
         if (!isDragging) return;
         e.preventDefault();
-        setPosition({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
+        updateDOMTransform(e.clientX - dragStart.x, e.clientY - dragStart.y, transformRef.current.scale);
     };
 
     const handleMouseUp = () => {
@@ -217,19 +218,20 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
 
     const trigger = flow.steps?.find(s => s.type === 'trigger');
 
-    return (
+    const canvasContent = (
         <div
             ref={containerRef}
-            // z-[140] puts it above sidebar/header (z-110) but below Modals (z-200)
-            className={`w-full h-full overflow-hidden bg-[#f8fafc] select-none font-sans transition-all duration-300 ${isFullscreen ? 'fixed inset-0 z-[140]' : 'relative'}`}
+            // z-[100000] ensures it sits above the app layout
+            className={`w-full h-full overflow-hidden bg-[#f8fafc] select-none font-sans transition-all duration-300 ${isFullscreen ? 'fixed inset-0 z-[100000] animate-in zoom-in-[0.98] fade-in duration-300 shadow-2xl' : 'relative'}`}
         >
-            {/* Grid background */}
+            {/* Dot Grid Background */}
             <div
-                className="absolute inset-0 pointer-events-none opacity-40"
+                ref={bgRef}
+                className="absolute inset-0 pointer-events-none opacity-40 will-change-transform"
                 style={{
                     backgroundImage: 'radial-gradient(#cbd5e1 1.5px, transparent 1.5px)',
                     backgroundSize: '24px 24px',
-                    transform: `translate(${position.x % 24}px, ${position.y % 24}px)`
+                    transform: `translate(${transformRef.current.x % 24}px, ${transformRef.current.y % 24}px)`
                 }}
             />
 
@@ -328,9 +330,9 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
             >
                 <div
                     ref={wrapperRef}
-                    className="relative w-fit h-fit min-w-full min-h-full transition-transform duration-100 origin-top-left will-change-transform pt-24 pb-[2000px] px-[2000px]"
+                    className="relative w-fit h-fit min-w-full min-h-full origin-top-left will-change-transform pt-24 pb-[2000px] px-[2000px]"
                     style={{
-                        transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`
+                        transform: `translate(${transformRef.current.x}px, ${transformRef.current.y}px) scale(${scale})`
                     }}
                 >
                     {trigger ? (
@@ -354,6 +356,9 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
             </div>
         </div>
     );
+
+    // Provide the portal when fullscreen
+    return isFullscreen ? createPortal(canvasContent, document.body) : canvasContent;
 });
 
 export default FlowBuilderTab;

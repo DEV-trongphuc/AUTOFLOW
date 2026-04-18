@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Star, Sparkles, LayoutDashboard, Activity, Mail, Zap, FileText, Bot, Globe, Users, BarChart3, Settings, Clock, ArrowRight, MessageSquare, Facebook, Share2, Ticket, Webhook, Code2, Link, Play, Target
@@ -7,6 +7,7 @@ import PageHero from '../components/common/PageHero';
 import { SystemOverviewModal } from '../components/common/SystemOverviewModal';
 import { SystemConnectionsModal } from '../components/common/SystemConnectionsModal';
 import { LeadscoreSetupModal } from '../components/settings/LeadscoreSetupModal';
+
 
 interface Module {
     id: string;
@@ -252,7 +253,7 @@ const Dashboard: React.FC = () => {
                             {/* Decorative background logo */}
                             <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
                                 {module.id === 'zalo-oa' ? (
-                                    <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Zalo-Arc.png" className="w-24 h-24 grayscale group-hover:grayscale-0 transition-all duration-700 object-contain" alt="Zalo" />
+                                    <img src="https://automation.ideas.edu.vn/imgs/zalolog.png" className="w-24 h-24 grayscale group-hover:grayscale-0 transition-all duration-700 object-contain" alt="Zalo" />
                                 ) : module.id === 'meta-api' ? (
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" className="w-24 h-24 grayscale group-hover:grayscale-0 transition-all duration-700 object-contain" alt="Meta" />
                                 ) : (
@@ -263,7 +264,7 @@ const Dashboard: React.FC = () => {
                             <div className="relative z-10 flex-1 flex flex-col">
                                 <div className={`w-14 h-14 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500`}>
                                     {module.id === 'zalo-oa' ? (
-                                        <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Zalo-Arc.png" className="w-full h-full object-contain" alt="Zalo" />
+                                        <img src="https://automation.ideas.edu.vn/imgs/zalolog.png" className="w-full h-full object-contain" alt="Zalo" />
                                     ) : module.id === 'meta-api' ? (
                                         <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" className="w-full h-full object-contain" alt="Meta" />
                                     ) : (
@@ -309,14 +310,13 @@ const Dashboard: React.FC = () => {
                     ))}
                 </div>
             </div>
-
             {/* Bottom Section: Quick Tip */}
             <div className="mt-16 p-8 rounded-[32px] bg-gradient-to-br from-slate-800 to-slate-900 text-white relative overflow-hidden shadow-2xl">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-amber-600/10 blur-[60px] rounded-full -mr-32 -mt-32" />
                 <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
                     <div className="text-center md:text-left">
                         <h3 className="text-2xl font-bold mb-2">Sẵn sàng để bùng nổ? 🚀</h3>
-                        <p className="text-slate-400 font-medium max-w-md">Sử dụng AI Training phối hợp với Automation Flows để tối ưu hóa tỷ lệ chuyển đổi Khách hàng gấp 3 lần.</p>
+                        <p className="text-slate-400 font-medium max-w-md">Sử dụng AI Training phối hợp với DOMATION Flows để tối ưu hóa tỷ lệ chuyển đổi Khách hàng gấp 3 lần.</p>
                     </div>
                     <button
                         onClick={() => navigate('/docs')}

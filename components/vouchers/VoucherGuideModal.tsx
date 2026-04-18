@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import Tabs from '../common/Tabs';
@@ -62,7 +62,7 @@ const VoucherGuideModal: React.FC<VoucherGuideModalProps> = ({ isOpen, onClose }
 
                     {activeTab === 'flow' && (
                         <div className="space-y-5 text-slate-700 leading-relaxed text-sm">
-                            <h3 className="text-lg font-black text-amber-600 mb-2">Voucher & Automation Flow (Chuẩn Enterprise)</h3>
+                            <h3 className="text-lg font-black text-amber-600 mb-2">Voucher & DOMATION (Chuẩn Enterprise)</h3>
                             <p className="font-bold text-slate-800">Hệ sinh thái Voucher đã hòa nhập 100% vào Flow Engine!</p>
                             
                             <p className="font-bold text-slate-800 border-b pb-2 pt-2">Trigger Tự động (Mốc kích hoạt bằng Voucher)</p>
@@ -105,7 +105,7 @@ const VoucherGuideModal: React.FC<VoucherGuideModalProps> = ({ isOpen, onClose }
                             <ul className="space-y-2 list-disc pl-5">
                                 <li><strong>Người chưa từng tồn tại:</strong> Hệ thống tự động múc SĐT/Email đó khởi tạo thành một <span className="bg-emerald-100 text-emerald-700 px-1 rounded">Lead</span> mới tinh khôi vào kho khách hàng. Tặng mã trót lọt!</li>
                                 <li><strong>Nhập Sai Mã / Thiếu Mã:</strong> Hệ thống sẽ tự khước từ dòng đó, Báo Đỏ cảnh báo, các dòng còn lại vẫn Map chạy tít. Tiền trảm hậu tấu.</li>
-                                <li><strong>Ứng dụng:</strong> Sau khi Map xong, anh có thể vào Automation Flow, chọn mục tiêu "Gửi một nhóm Sinh Viên" &gt; Gắn Email có cái Voucher đó. AutoFlow cam kết Cậu Sinh viên A nhận đúng tờ thẻ cào XMAS2024 như anh chỉ định!</li>
+                                <li><strong>Ứng dụng:</strong> Sau khi Map xong, anh có thể vào DOMATION, chọn mục tiêu "Gửi một nhóm Sinh Viên" &gt; Gắn Email có cái Voucher đó. DOMATION cam kết Cậu Sinh viên A nhận đúng tờ thẻ cào XMAS2024 như anh chỉ định!</li>
                             </ul>
                         </div>
                     )}

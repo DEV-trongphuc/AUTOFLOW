@@ -12,6 +12,13 @@ require_once 'segment_helper.php';
 require_once 'flow_helpers.php';
 
 date_default_timezone_set('Asia/Ho_Chi_Minh');
+
+$stmtLock = $pdo->query("SELECT GET_LOCK('worker_campaign_dryrun_lock', 0)");
+if (!$stmtLock->fetchColumn()) {
+    echo "Dry-run worker is already running.\n";
+    exit;
+}
+
 $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
 header('Content-Type: text/html; charset=utf-8');
 

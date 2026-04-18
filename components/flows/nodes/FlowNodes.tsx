@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Zap, Mail, Clock, GitMerge, Tag, Link as LinkIcon, Edit3, AlertOctagon, AlertTriangle, Beaker, Hourglass, MousePointer2, MailOpen, MoreHorizontal, MessageSquare, UserMinus, Filter, Calendar, FileInput, Users, CheckCircle2, Send, Plus, Minus, Trash2, List, ShoppingCart, Layers, Cake, Snowflake, ArrowRight } from 'lucide-react';
+import { Zap, Mail, Clock, GitMerge, Tag, Link as LinkIcon, Edit3, AlertOctagon, AlertTriangle, Beaker, Hourglass, MousePointer2, MailOpen, MoreHorizontal, MessageSquare, UserMinus, Filter, Calendar, FileInput, Users, CheckCircle2, Send, Plus, Minus, Trash2, List, ShoppingCart, Layers, Cake, Snowflake, ArrowRight, Paperclip } from 'lucide-react';
 import { FlowStep, Flow, FormDefinition } from '../../../types';
 
 interface NodeProps {
@@ -151,9 +151,17 @@ export const ActionNode: React.FC<NodeProps> = ({ step, hasError, hasWarning, on
                 </div>
 
                 <div className="flex-1 overflow-hidden pt-0.5">
-                    <p className={`text-[9px] font-bold uppercase tracking-widest leading-none mb-2 ${isTag ? (tagAction === 'remove' ? 'text-rose-600' : 'text-emerald-600') : 'text-blue-600'}`}>
-                        {isTag ? (tagAction === 'remove' ? 'Remove Tag' : 'Add Tag') : 'Send Email'}
-                    </p>
+                    <div className="flex items-center justify-between mb-2">
+                        <p className={`text-[9px] font-bold uppercase tracking-widest leading-none ${isTag ? (tagAction === 'remove' ? 'text-rose-600' : 'text-emerald-600') : 'text-blue-600'}`}>
+                            {isTag ? (tagAction === 'remove' ? 'Remove Tag' : 'Add Tag') : 'Send Email'}
+                        </p>
+                        {!isTag && step.config.attachments?.length > 0 && (
+                            <div className="flex items-center gap-1 text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100" title={`${step.config.attachments.length} tệp đính kèm`}>
+                                <Paperclip className="w-3 h-3" />
+                                <span className="text-[10px] font-bold">{step.config.attachments.length}</span>
+                            </div>
+                        )}
+                    </div>
                     <p className="text-sm font-bold text-slate-800 truncate leading-tight">{step.label}</p>
 
                     {isTag && tags.length > 0 && (
@@ -464,7 +472,7 @@ export const ZaloZNSNode: React.FC<NodeProps> = ({ step, hasError, hasWarning, o
                     bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-blue-200
                 `}>
                     <img
-                        src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Icon_of_Zalo.svg/2048px-Icon_of_Zalo.svg.png"
+                        src="https://automation.ideas.edu.vn/imgs/zalolog.png"
                         alt="Zalo"
                         className="w-6 h-6"
                     />

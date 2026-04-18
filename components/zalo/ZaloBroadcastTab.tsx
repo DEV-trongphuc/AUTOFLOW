@@ -15,7 +15,7 @@ import Select from '../common/Select';
 import TabTransition from '../common/TabTransition';
 import ConfirmModal from '../common/ConfirmModal';
 
-const ZALO_LOGO = "https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Zalo-Arc.png";
+const ZALO_LOGO = "https://automation.ideas.edu.vn/imgs/zalolog.png";
 
 interface ZaloBroadcastTabProps {
     initialSelectedIds?: string[];

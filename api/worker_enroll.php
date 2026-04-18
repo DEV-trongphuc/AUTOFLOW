@@ -18,6 +18,20 @@ $now = date('Y-m-d H:i:s');
 $logs = [];
 $logs[] = "--- ENROLLMENT WORKER START: $now ---";
 
+$lockStmt = $pdo->query("SELECT GET_LOCK('worker_enroll_lock', 0)");
+if ($lockStmt->fetchColumn() !== 1) {
+    die(json_encode(['status' => 'skipped', 'message' => 'Already running']));
+}
+
+// [FIX P11-H5] Register shutdown handler to guarantee lock release even on PHP fatal/OOM.
+// Without this, an unexpected crash holds the advisory lock until the DB connection closes
+// (MySQL wait_timeout, typically 8h), blocking all subsequent enrollment runs.
+register_shutdown_function(function () use ($pdo) {
+    try {
+        $pdo->query("DO RELEASE_LOCK('worker_enroll_lock')");
+    } catch (Throwable $e) { /* ignore — connection may already be closed */ }
+});
+
 // 1. Segment Sync — QUEUE-BASED (replaces full blocking scan)
 // [FIX] Old approach: SELECT COUNT(*) for ALL segments before any enrollment.
 // With 200 segments × 1s each = 200s wasted → timeout before enrollment starts.
@@ -43,8 +57,14 @@ try {
     foreach ($queuedSegs as $seg) {
         $segId = $seg['segment_id'];
         if (empty($seg['criteria'])) {
-            $pdo->prepare("UPDATE segments SET subscriber_count = (SELECT COUNT(*) FROM subscribers), synced_at = NOW() WHERE id = ?")
-                ->execute([$segId]);
+            // [FIX P30-D1] Use explicit COUNT query instead of inline correlated subquery.
+            // The subquery pattern (SELECT COUNT(*) FROM subscribers) inside UPDATE runs fine
+            // but is harder to extend (e.g. add workspace_id scope later).
+            // Consistent with the criteria branch pattern: count first, then update.
+            $stmtAll = $pdo->query("SELECT COUNT(*) FROM subscribers WHERE status IN ('active','lead','customer')");
+            $allCount = (int) $stmtAll->fetchColumn();
+            $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ?")
+                ->execute([$allCount, $segId]);
         } else {
             $segRes = buildSegmentWhereClause($seg['criteria'], $segId);
             $stmtC = $pdo->prepare("SELECT COUNT(*) FROM subscribers s WHERE " . $segRes['sql']);
@@ -70,8 +90,11 @@ try {
         $stmtStale->execute([$remaining]);
         foreach ($stmtStale->fetchAll() as $seg) {
             if (empty($seg['criteria'])) {
-                $pdo->prepare("UPDATE segments SET subscriber_count = (SELECT COUNT(*) FROM subscribers), synced_at = NOW() WHERE id = ?")
-                    ->execute([$seg['id']]);
+                // [FIX P30-D1] Mirror of queue branch — explicit count for consistency
+                $stmtAll2 = $pdo->query("SELECT COUNT(*) FROM subscribers WHERE status IN ('active','lead','customer')");
+                $allCount2 = (int) $stmtAll2->fetchColumn();
+                $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ?")
+                    ->execute([$allCount2, $seg['id']]);
             } else {
                 $segRes = buildSegmentWhereClause($seg['criteria'], $seg['id']);
                 $stmtC = $pdo->prepare("SELECT COUNT(*) FROM subscribers s WHERE " . $segRes['sql']);
@@ -93,7 +116,10 @@ $logs[] = "[Segment] Synced $syncedSegments segment(s) (queue-based, max $syncLi
 
 // 2. Standard Flow Enrollment
 $logs[] = "[Enrollment] Checking active flows for new enrollments...";
-$stmtActiveFlows = $pdo->query("SELECT id, name, steps, config FROM flows WHERE status = 'active'");
+// [FIX P30-W1] Include workspace_id so enrollment logs and stat updates can be
+// workspace-scoped. Also guards against enrolling into archived flows from
+// other workspaces that somehow share the same segment.
+$stmtActiveFlows = $pdo->query("SELECT id, name, steps, config, workspace_id FROM flows WHERE status = 'active'");
 $activeFlows = $stmtActiveFlows->fetchAll();
 
 foreach ($activeFlows as $flow) {
@@ -224,5 +250,6 @@ foreach ($activeFlows as $flow) {
     }
 }
 
+$pdo->query("DO RELEASE_LOCK('worker_enroll_lock')");
 $logs[] = "--- ENROLLMENT WORKER END ---";
 echo json_encode(['status' => 'completed', 'logs' => $logs]);

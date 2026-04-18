@@ -54,7 +54,7 @@ const FlowContinuationModal: React.FC<FlowContinuationModalProps> = ({
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={isAffected ? "Flow Đang chờ - Quyết định tiếp tục" : "Thông báo thêm bước"}>
+        <Modal isOpen={isOpen} onClose={onClose} title={isAffected ? "Flow đang chạy - Quyết định tiếp tục" : "Thông báo thêm bước"}>
             <div className="space-y-6">
                 {/* Warning/Info Banner */}
                 {isAffected ? (
@@ -63,7 +63,7 @@ const FlowContinuationModal: React.FC<FlowContinuationModalProps> = ({
                         <div>
                             <h4 className="text-sm font-bold text-amber-900 mb-1">Flow đang hoạt động</h4>
                             <p className="text-xs text-amber-700 leading-relaxed">
-                                Bạn đang thêm bước mới vào flow Đang chờ Hiện có <strong>{completedUsers.total} người dùng</strong> đã Hoàn thành flow cũ.
+                                Bạn đang thêm bước mới vào flow đang chạy Hiện có <strong>{completedUsers.total} người dùng</strong> đã Hoàn thành flow cũ.
                                 Họ có nên tiếp tục thực hiện các bước mới không?
                             </p>
                         </div>

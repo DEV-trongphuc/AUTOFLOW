@@ -180,7 +180,7 @@ const GlobalWorkspaceView = React.memo(({
                                                     const toPromote = globalDbAssets.filter(a => selectedGlobalDocs.includes(a.name) && a.source !== 'workspace' && a.source !== 'global_training' && !(a as any).isGlobal);
                                                     if (toPromote.length === 0) return;
 
-                                                    const tid = toast.loading(`Đang chờ ${toPromote.length} tệp thành Global...`);
+                                                    const tid = toast.loading(`đang chạy ${toPromote.length} tệp thành Global...`);
                                                     try {
                                                         for (const asset of toPromote) {
                                                             await api.post('ai_org_chatbot', {
@@ -441,7 +441,7 @@ const GlobalWorkspaceView = React.memo(({
                                                             <button
                                                                 onClick={async (e) => {
                                                                     e.stopPropagation();
-                                                                    const tid = toast.loading('Đang chờ...');
+                                                                    const tid = toast.loading('đang chạy...');
                                                                     try {
                                                                         const data = await api.post<any>('ai_org_chatbot', {
                                                                             action: 'workspace_save', // Sync to both local and global

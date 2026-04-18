@@ -97,4 +97,80 @@ if ($method === 'GET' && $action === 'chart') {
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
 }
+if ($method === 'GET' && $action === 'detailed_ai_insights') {
+    require_once 'chat_gemini.php';
+    try {
+        $days = isset($_GET['days']) ? (int)$_GET['days'] : 7;
+        
+        $paramDates = [$start, $end . ' 23:59:59'];
+        $paramMsgs = [$start, $end . ' 23:59:59'];
+        if (!empty($property_id)) {
+            $paramDates[] = $property_id;
+            $paramMsgs[] = $property_id;
+        }
+
+        // 1. Total Convs & Visitors
+        $sqlC = "SELECT COUNT(DISTINCT id) as total_convs, COUNT(DISTINCT visitor_id) as total_visitors FROM ai_conversations WHERE created_at BETWEEN ? AND ?" . $propFilterConvs;
+        $stmt = $pdo->prepare($sqlC);
+        $stmt->execute($paramDates);
+        $stats = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // 2. Hourly Distribution
+        $sqlH = "SELECT HOUR(created_at) as hr, COUNT(*) as count FROM ai_messages WHERE created_at BETWEEN ? AND ?" . $propFilterMsgs . " GROUP BY hr ORDER BY hr ASC";
+        $stmtH = $pdo->prepare($sqlH);
+        $stmtH->execute($paramMsgs);
+        $hourly = $stmtH->fetchAll(PDO::FETCH_ASSOC);
+
+        // 3. Messages Total
+        $sqlM = "SELECT COUNT(*) FROM ai_messages WHERE created_at BETWEEN ? AND ?" . $propFilterMsgs;
+        $stmtM = $pdo->prepare($sqlM);
+        $stmtM->execute($paramMsgs);
+        $totalMsgs = $stmtM->fetchColumn();
+
+        // 4. Time chart formatting
+        $chartData = array_fill(0, 24, ['hr' => 0, 'count' => 0]);
+        for ($i = 0; $i < 24; $i++) { $chartData[$i]['hr'] = $i; }
+        foreach ($hourly as $h) {
+            $chartData[(int)$h['hr']]['count'] = (int)$h['count'];
+        }
+
+        // 5. Build AI Prompt
+        $statsText = "Tổng lượng khách: " . $stats['total_visitors'] . "\n" .
+                     "Tổng hội thoại: " . $stats['total_convs'] . "\n" .
+                     "Tổng tin nhắn: " . $totalMsgs . "\n" .
+                     "Tải phân bổ theo giờ: \n";
+        foreach ($chartData as $c) { $statsText .= $c['hr'] . "h: " . $c['count'] . " tin nhắn\n"; }
+
+        $globalKey = getenv('GEMINI_API_KEY') ?: '';
+        $aiReport = "";
+        
+        if (!empty($globalKey)) {
+            $prompt = "Bạn là chuyên gia phân tích dữ liệu AI Chatbot. Dưới đây là thống kê 7 ngày gần nhất của một Chatbot bán hàng/CSKH: \n" . 
+                      $statsText . 
+                      "\nHãy viết một đoạn báo cáo phân tích thật chuyên sâu bằng tiếng Việt (Format Markdown siêu đẹp, KHÔNG DÙNG header h1 h2, chỉ dùng in đậm, in nghiêng, list, blockquote). Đánh giá về traffic, chỉ ra giờ cao điểm thực sự (peak hours) khách hàng tương tác nhiều nhất để bộ phận marketing biết đường tung khuyến mãi. Nhận xét ngắn gọn, ấn tượng, chuyên nghiệp.";
+            
+            $contents = [
+                ["role" => "user", "parts" => [["text" => $prompt]]]
+            ];
+            $systemInst = "Bạn là AI phân tích dữ liệu xuất sắc nhất.";
+            try {
+                $aiReport = generateResponse($contents, $systemInst, $globalKey, 'gemini-2.5-flash-lite', 0.7);
+            } catch (Throwable $e) {
+                $aiReport = "Lỗi khi gọi AI: " . $e->getMessage();
+            }
+        } else {
+            $aiReport = "Vui lòng cấu hình GEMINI_API_KEY để sử dụng tính năng phân tích tự động.";
+        }
+
+        echo json_encode(['success' => true, 'stats' => [
+            'visitors' => (int)$stats['total_visitors'],
+            'conversations' => (int)$stats['total_convs'],
+            'messages' => (int)$totalMsgs
+        ], 'chart' => $chartData, 'ai_report' => $aiReport]);
+
+    } catch (Throwable $e) {
+        error_log("AI Report Fatal: " . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => "Lỗi truy xuất: " . $e->getMessage()]);
+    }
+}
 ?>

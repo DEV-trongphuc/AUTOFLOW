@@ -70,8 +70,8 @@ try {
                 }
                 $LSC = function_exists('getGlobalLeadScoreConfig') ? getGlobalLeadScoreConfig($pdo) : [];
                 $pPurch = $LSC['leadscore_purchase'] ?? 10;
-                $updateSqlParts[] = "lead_score = lead_score + $pPurch";
-                $updateValues = [];
+                $updateSqlParts[] = "lead_score = lead_score + ?"; // [FIX P36-CE] No interpolation
+                $updateValues[] = (int) $pPurch;
 
                 foreach ($subscriberFieldsMap as $dataKey => $dbField) {
                     if (isset($data[$dataKey]) && $data[$dataKey] !== '' && $data[$dataKey] !== null) {
@@ -197,7 +197,8 @@ try {
                     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
                     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                     curl_setopt($ch, CURLOPT_TIMEOUT, 2);
-                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P36-CE] hostname verification
                     curl_exec($ch);
                     curl_close($ch);
                 } catch (Exception $e) {
@@ -214,12 +215,28 @@ try {
             curl_setopt($ch, CURLOPT_TIMEOUT, 1);
             curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
             @curl_exec($ch);
             curl_close($ch);
 
-            // ---- [NOTIFICATION EMAIL] Gửi thông báo khi có đơn hàng mới ----
+            // [OPTIMIZED - UX FAST RESPONSE]
+            // Xả kết nối về client/webhook ngay lập tức để máy chủ đối tác không bị Timeout lúc chờ SMTP gửi email
+            if (ob_get_length()) ob_clean();
+            header("Content-Type: application/json; charset=UTF-8");
+            $outJson = json_encode(['success' => true, 'data' => ['id' => $sid], 'message' => 'Ghi nhận đơn hàng thành công']);
+            header("Connection: close");
+            header("Content-Length: " . strlen($outJson));
+            echo $outJson;
+            
+            if (function_exists('fastcgi_finish_request')) {
+                fastcgi_finish_request();
+            } else {
+                @ob_flush();
+                @flush();
+            }
+
+            // ---- [NOTIFICATION EMAIL] Gửi thông báo khi có đơn hàng mới (CHẠY THỰC THI NGẦM) ----
             if (!empty($eventRow['notification_enabled']) && !empty($eventRow['notification_emails'])) {
                 try {
                     require_once 'Mailer.php';
@@ -321,16 +338,30 @@ try {
 </body>
 </html>";
 
-                    foreach ($notifEmails as $notifTo) {
-                        $errTmp = '';
-                        $mailer->dispatchRaw($notifTo, $subject, $html, [], $errTmp);
-                    }
+                    $notifyPayload = [
+                        'emails' => array_values($notifEmails),
+                        'cc_emails' => [],
+                        'subject' => $subject,
+                        'html' => $html
+                    ];
+
+                    $notifyUrl = API_BASE_URL . "/worker_notify.php";
+                    $chNotif = curl_init($notifyUrl);
+                    curl_setopt($chNotif, CURLOPT_POST, true);
+                    curl_setopt($chNotif, CURLOPT_POSTFIELDS, json_encode($notifyPayload));
+                    curl_setopt($chNotif, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+                    curl_setopt($chNotif, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($chNotif, CURLOPT_TIMEOUT, 1);
+                    curl_setopt($chNotif, CURLOPT_NOSIGNAL, 1);
+                    curl_setopt($chNotif, CURLOPT_SSL_VERIFYPEER, true);
+                    curl_setopt($chNotif, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
+                    @curl_exec($chNotif);
+                    curl_close($chNotif);
                 } catch (Exception $eNotif) {
                     error_log("Purchase Notification Error: " . $eNotif->getMessage());
                 }
             }
-
-            jsonResponse(true, ['id' => $sid], 'Ghi nhận đơn hàng thành công');
+            exit; // Must end here since jsonResponse was bypassed
         } catch (Exception $e) {
             if (isset($pdo) && $pdo->inTransaction())
                 $pdo->rollBack();

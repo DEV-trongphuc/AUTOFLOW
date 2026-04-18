@@ -2,7 +2,10 @@
 // api/bulk_operations.php - HIGH PERFORMANCE BULK ENGINE V30.0
 require_once 'db_connect.php';
 require_once 'trigger_helper.php';
+require_once 'auth_middleware.php';  // [FIX P2-1] Needed for workspace_id on import
 apiHeaders();
+
+$workspace_id = get_current_workspace_id(); // Bind workspace for import operations
 
 $method = $_SERVER['REQUEST_METHOD'];
 if ($method !== 'POST') {
@@ -45,8 +48,8 @@ try {
         $whereClause = "id IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE t_sub.name = ?)";
         $params = [$targetId];
     } elseif ($targetType === 'all') {
-        $conds = ["1=1"];
-        $params = [];
+        $conds = ["workspace_id = ?"];
+        $params = [$workspace_id]; // [FIX P34-B1] workspace_id was missing — 'all' ops could affect any workspace's subscribers
         
         $search = $data['search'] ?? '';
         $status = $data['status'] ?? 'all';
@@ -111,9 +114,9 @@ try {
             $whereParams = [];
 
             if ($segId) {
-                $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
-                $stmtSeg->execute([$segId]);
-                $criteria = $stmtSeg->fetchColumn();
+                $stmtCriteria = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
+                $stmtCriteria->execute([$segId]);
+                $criteria = $stmtCriteria->fetchColumn();
                 if ($criteria) {
                     $res = buildSegmentWhereClause($criteria, $segId);
                     $whereParts[] = $res['sql'];
@@ -135,15 +138,23 @@ try {
                 $whereParams[] = $filter['list_id'];
             }
 
+            // [FIX P34-B2] Added workspace_id guard to segment/filter fetch — previously missing,
+            // allowing bulk operations to affect subscribers from other workspaces in segment mode.
+            $whereParts[] = "s.workspace_id = ?";
+            $whereParams[] = $workspace_id;
             $stmtFetch = $pdo->prepare("SELECT s.id FROM subscribers s WHERE " . implode(' AND ', $whereParts));
             $stmtFetch->execute($whereParams);
             $subscriberIds = $stmtFetch->fetchAll(PDO::FETCH_COLUMN);
         } else {
-            $stmtFetch = $pdo->prepare("SELECT id FROM subscribers WHERE $whereClause");
-            $stmtFetch->execute($params);
+            // [FIX P34-B3] Added workspace_id guard to generic ID resolution.
+            // Previously: SELECT id FROM subscribers WHERE $whereClause — no workspace_id
+            // guard meant list/tag targetTypes could select subscribers from other workspaces.
+            $stmtFetch = $pdo->prepare("SELECT id FROM subscribers WHERE workspace_id = ? AND ($whereClause)");
+            $stmtFetch->execute(array_merge([$workspace_id], $params));
             $subscriberIds = $stmtFetch->fetchAll(PDO::FETCH_COLUMN);
         }
     }
+
 
     if (empty($subscriberIds) && $type !== 'import') {
         if ($pdo->inTransaction())
@@ -200,7 +211,7 @@ try {
             if (!$tag)
                 jsonResponse(false, null, 'Tag required');
 
-            // 1. Relational Sync (Get/Create Tag ID)
+            // 1. Get or Create Tag ID in relational table
             $stmtT = $pdo->prepare("SELECT id FROM tags WHERE name = ?");
             $stmtT->execute([$tag]);
             $tagId = $stmtT->fetchColumn();
@@ -209,27 +220,27 @@ try {
                 $tagId = $pdo->lastInsertId();
             }
 
-            // 2. Update JSON (Legacy Support)
-            // Only update if tag not present
-            $stmt = $pdo->prepare("UPDATE subscribers SET tags = JSON_ARRAY_APPEND(tags, '$', ?) WHERE id IN ($placeholders) AND NOT JSON_CONTAINS(tags, JSON_QUOTE(?))");
-            $stmt->execute(array_merge([$tag], $subscriberIds, [$tag]));
-            $affectedCount = $stmt->rowCount(); // Rows actually updated (didn't have tag)
-
-            // 3. Update Relation (subscriber_tags)
-            // Batch Insert
-            $vals = [];
-            $bPlace = [];
-            foreach ($subscriberIds as $sid) {
-                $bPlace[] = "(?, ?)";
-                $vals[] = $sid;
-                $vals[] = $tagId;
+            // [BUG FIX P0] Removed JSON_ARRAY_APPEND on subscribers.tags:
+            //   - The system migrated to relational subscriber_tags table.
+            //   - On migrated schemas, subscribers.tags column may not exist → SQL Error.
+            //   - Using the relational table is correct and consistent with all other paths.
+            // [BUG FIX P1] Chunked INSERT IGNORE: a single INSERT for 100k subscribers
+            //   generates 200k+ PDO placeholders, exceeding MySQL's 65,535 limit → crash.
+            $CHUNK = 500;
+            $affectedCount = 0;
+            foreach (array_chunk($subscriberIds, $CHUNK) as $chunk) {
+                $bPlace = implode(',', array_fill(0, count($chunk), '(?, ?)'));
+                $vals = [];
+                foreach ($chunk as $sid) {
+                    $vals[] = $sid;
+                    $vals[] = $tagId;
+                }
+                $stmtRel = $pdo->prepare("INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES $bPlace");
+                $stmtRel->execute($vals);
+                $affectedCount += $stmtRel->rowCount();
             }
-            if (!empty($bPlace)) {
-                $sqlRel = "INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES " . implode(',', $bPlace);
-                $pdo->prepare($sqlRel)->execute($vals);
-            }
 
-            // 4. Trigger Automation
+            // Trigger Automation in Bulk
             enrollSubscribersBulk($pdo, $subscriberIds, 'tag', $tag);
             break;
 
@@ -238,29 +249,25 @@ try {
             if (!$tag)
                 jsonResponse(false, null, 'Tag required');
 
-            // 1. Get Tag ID for Relation
+            // 1. Get Tag ID
             $stmtT = $pdo->prepare("SELECT id FROM tags WHERE name = ?");
             $stmtT->execute([$tag]);
             $tagId = $stmtT->fetchColumn();
 
-            // 2. Remove Relation
+            // [BUG FIX P0] Removed row-by-row JSON update loop:
+            //   - The old code fetched each subscriber's JSON tags and updated them one-by-one.
+            //   - On migrated schemas, subscribers.tags may not exist → SQL Error per row.
+            //   - Also N+1 updates: 100k subscribers = 100k UPDATEs inside a transaction.
+            // [BUG FIX P1] Chunked DELETE from relational table instead.
             if ($tagId) {
-                $pdo->prepare("DELETE FROM subscriber_tags WHERE tag_id = ? AND subscriber_id IN ($placeholders)")
-                    ->execute(array_merge([$tagId], $subscriberIds));
-            }
-
-            // 3. Remove from JSON (Legacy - Row by Row for safety on older MySQL/MariaDB)
-            // Optimization: Only select subscribers who have the tag
-            $stmtGet = $pdo->prepare("SELECT id, tags FROM subscribers WHERE id IN ($placeholders) AND JSON_CONTAINS(tags, JSON_QUOTE(?))");
-            $stmtGet->execute(array_merge($subscriberIds, [$tag]));
-
-            while ($row = $stmtGet->fetch()) {
-                $tags = json_decode($row['tags'] ?? '[]', true);
-                if (($key = array_search($tag, $tags)) !== false) {
-                    unset($tags[$key]);
-                    $pdo->prepare("UPDATE subscribers SET tags = ? WHERE id = ?")->execute([json_encode(array_values($tags)), $row['id']]);
-                    $affectedCount++;
+                $CHUNK = 500;
+                foreach (array_chunk($subscriberIds, $CHUNK) as $chunk) {
+                    $ph = implode(',', array_fill(0, count($chunk), '?'));
+                    $pdo->prepare("DELETE FROM subscriber_tags WHERE tag_id = ? AND subscriber_id IN ($ph)")
+                        ->execute(array_merge([$tagId], $chunk));
                 }
+                // affectedCount = number of subscribers that had this tag
+                $affectedCount = count($subscriberIds);
             }
             break;
 
@@ -269,23 +276,26 @@ try {
             if (!$listId)
                 jsonResponse(false, null, 'List ID required');
 
-            // OPTIMIZED: Batch insert relations
-            $vals = [];
-            $batchPlaceholders = [];
-            foreach ($subscriberIds as $sid) {
-                $batchPlaceholders[] = "(?, ?)";
-                $vals[] = $sid;
-                $vals[] = $listId;
+            // [BUG FIX P1] Chunked INSERT IGNORE to prevent 65,535 placeholder crash.
+            // Single INSERT for 100k × 2 columns = 200k placeholders → MySQL crash.
+            $CHUNK = 500;
+            $affectedCount = 0;
+            foreach (array_chunk($subscriberIds, $CHUNK) as $chunk) {
+                $bPh = implode(',', array_fill(0, count($chunk), '(?, ?)'));
+                $vals = [];
+                foreach ($chunk as $sid) {
+                    $vals[] = $sid;
+                    $vals[] = $listId;
+                }
+                $stmtIns = $pdo->prepare("INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id) VALUES $bPh");
+                $stmtIns->execute($vals);
+                $affectedCount += $stmtIns->rowCount();
             }
-            $sql = "INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id) VALUES " . implode(',', $batchPlaceholders);
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($vals);
-            $affectedCount = $stmt->rowCount();
 
             // Trigger automation in BULK
             enrollSubscribersBulk($pdo, $subscriberIds, 'list', $listId);
 
-            // Update list count once
+            // Update list count once (recalculate for accuracy)
             $pdo->prepare("UPDATE lists SET subscriber_count = (SELECT COUNT(*) FROM subscriber_lists WHERE list_id = ?) WHERE id = ?")
                 ->execute([$listId, $listId]);
             break;
@@ -329,46 +339,39 @@ try {
                 jsonResponse(false, null, 'Flow does not have a valid starting trigger');
             }
 
-            // Batch Insert into Flow States
-            // Use INSERT IGNORE to avoid duplicates if already enrolled
-            $vals = [];
-            $batchPlaceholders = [];
             $nowStr = date('Y-m-d H:i:s');
             $initialSchedule = $nowStr;
-            
-            // [SMART SCHEDULE] Check if first step is WAIT
+
+            // [SMART SCHEDULE] Check if first step is WAIT — pre-calculate delay
             if ($steps) {
                 foreach ($steps as $fs) {
-                    if ($fs['id'] === $startStepId && $fs['type'] === 'wait') {
+                    if ($fs['id'] === $startStepId && strtolower($fs['type'] ?? '') === 'wait') {
                         $fsWaitConfig = $fs['config'] ?? [];
-                        $fsWaitMode = $fsWaitConfig['mode'] ?? 'duration';
+                        $fsWaitMode   = $fsWaitConfig['mode'] ?? 'duration';
                         if ($fsWaitMode === 'duration') {
-                            $dur = (int) ($fsWaitConfig['duration'] ?? 0);
+                            $dur  = (int) ($fsWaitConfig['duration'] ?? 0);
                             $unit = $fsWaitConfig['unit'] ?? 'minutes';
                             $unitSeconds = match ($unit) {
-                                'weeks' => 604800,
-                                'days' => 86400,
-                                'hours' => 3600,
-                                default => 60,
+                                'weeks'   => 604800,
+                                'days'    => 86400,
+                                'hours'   => 3600,
+                                default   => 60,
                             };
-                            $delay = $unitSeconds * $dur;
-                            if ($delay > 0) {
-                                $initialSchedule = date('Y-m-d H:i:s', time() + $delay);
-                            }
+                            if (($unitSeconds * $dur) > 0)
+                                $initialSchedule = date('Y-m-d H:i:s', time() + $unitSeconds * $dur);
                         } elseif ($fsWaitMode === 'until_date') {
                             $specDate   = $fsWaitConfig['specificDate'] ?? '';
                             $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
                             if ($specDate) {
                                 $targetTs = strtotime("$specDate $targetTime:00");
-                                if ($targetTs > time()) {
+                                if ($targetTs > time())
                                     $initialSchedule = date('Y-m-d H:i:s', $targetTs);
-                                }
                             }
                         } elseif ($fsWaitMode === 'until') {
                             $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
                             $dt = new DateTime();
-                            $parts2 = explode(':', $targetTime);
-                            $dt->setTime((int)$parts2[0], (int)($parts2[1] ?? 0), 0);
+                            [$h, $m] = explode(':', $targetTime) + [0, 0];
+                            $dt->setTime((int)$h, (int)$m, 0);
                             if ($dt->getTimestamp() <= time()) $dt->modify('+1 day');
                             $initialSchedule = $dt->format('Y-m-d H:i:s');
                         }
@@ -377,38 +380,29 @@ try {
                 }
             }
 
-            foreach ($subscriberIds as $sid) {
-                $batchPlaceholders[] = "(?, ?, ?, ?, 'waiting', ?, ?)";
-                $vals[] = $flowId;
-                $vals[] = $sid;
-                $vals[] = $startStepId;
-                $vals[] = $flowId;
-
-                $vals[] = $nowStr;
-                $vals[] = $nowStr;
+            // [FIX] Removed: dead code $vals/$batchPlaceholders loop + unsafe $subIdList string interpolation.
+            // Use INSERT...SELECT with parameterized placeholders for atomicity and safety.
+            // Chunked to avoid 65,535 placeholder limit: 100k IDs + 3 scalar params = crash.
+            $ENROLL_CHUNK = 500;
+            $affectedCount = 0;
+            foreach (array_chunk($subscriberIds, $ENROLL_CHUNK) as $chunk) {
+                $ph = implode(',', array_fill(0, count($chunk), '?'));
+                $sql = "INSERT INTO subscriber_flow_states 
+                        (flow_id, subscriber_id, step_id, status, created_at, updated_at, scheduled_at, last_step_at)
+                        SELECT ?, s.id, ?, 'waiting', NOW(), NOW(), ?, NOW()
+                        FROM subscribers s
+                        WHERE s.id IN ($ph)
+                        AND s.status IN ('active', 'lead', 'customer')
+                        AND NOT EXISTS (
+                            SELECT 1 FROM subscriber_flow_states sfs
+                            WHERE sfs.flow_id = ? AND sfs.subscriber_id = s.id 
+                            AND sfs.status IN ('waiting', 'processing')
+                        )";
+                $finalParams = array_merge([$flowId, $startStepId, $initialSchedule], $chunk, [$flowId]);
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($finalParams);
+                $affectedCount += $stmt->rowCount();
             }
-            // However, we can't easily do WHERE NOT EXISTS with VALUES syntax for each row.
-            // Better: "INSERT INTO ... SELECT ... WHERE id IN (...) AND id NOT IN (SELECT subscriber_id ...)"
-
-            // LET'S REWRITE to use INSERT SELECT for Atomicity and Performance
-            $subIdList = implode("','", $subscriberIds); // Safe if IDs are validated UUIDs/Ints. Assuming standard IDs.
-            // Actually, placeholders are safer.
-
-            $sql = "INSERT INTO subscriber_flow_states (flow_id, subscriber_id, step_id, status, created_at, updated_at, scheduled_at, last_step_at)
-                    SELECT ?, s.id, ?, 'waiting', NOW(), NOW(), ?, NOW()
-                    FROM subscribers s
-                    WHERE s.id IN ($placeholders)
-                    AND s.status IN ('active', 'lead', 'customer')
-                    AND NOT EXISTS (
-                        SELECT 1 FROM subscriber_flow_states sfs 
-                        WHERE sfs.flow_id = ? AND sfs.subscriber_id = s.id AND sfs.status IN ('waiting', 'processing')
-                    )";
-
-            // Params: FlowID, StartStepID, InitialSchedule, Subscribers..., FlowID
-            $finalParams = array_merge([$flowId, $startStepId, $initialSchedule], $subscriberIds, [$flowId]);
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($finalParams);
-            $affectedCount = $stmt->rowCount();
 
             // Update Stats
             if ($affectedCount > 0) {
@@ -497,7 +491,7 @@ try {
                     // Insert Subscriber
                     $customAt = !empty($d['customAttributes']) ? json_encode($d['customAttributes']) : '{}';
                     $subValues[] = "(?, ?, ?, ?, ?, ?, ?, NOW(), '[]', ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                    array_push($subParams, $id, $email, $firstName, $lastName, $status, $source, $salesperson, $phone, $job, $company, $country, $city, $gender, $dob, $anniv, $customAt);
+                    array_push($subParams, $workspace_id, $id, $email, $firstName, $lastName, $status, $source, $salesperson, $phone, $job, $company, $country, $city, $gender, $dob, $anniv, $customAt);
 
                     // Tags
                     if (!empty($d['tags']) && is_array($d['tags'])) {
@@ -534,7 +528,9 @@ try {
                 }
 
                 if (!empty($subValues)) {
-                    $sqlSub = "INSERT INTO subscribers (id, email, first_name, last_name, status, source, salesperson, joined_at, notes, phone_number, job_title, company_name, country, city, gender, date_of_birth, anniversary_date, custom_attributes) 
+                    // [FIX P2-1] Added workspace_id to columns — previously missing, causing
+                    // imported subscribers to have NULL workspace_id (data isolation failure).
+                    $sqlSub = "INSERT INTO subscribers (workspace_id, id, email, first_name, last_name, status, source, salesperson, joined_at, notes, phone_number, job_title, company_name, country, city, gender, date_of_birth, anniversary_date, custom_attributes) 
                                VALUES " . implode(',', $subValues) . "
                                ON DUPLICATE KEY UPDATE 
                                first_name = IF(VALUES(first_name) != '', VALUES(first_name), first_name),

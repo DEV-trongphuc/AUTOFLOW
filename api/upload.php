@@ -22,6 +22,62 @@ if (!function_exists('jsonResponse')) {
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS')
     exit(0);
 
+// GET: Thư viện file — liệt kê tất cả file đã upload
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['route']) && $_GET['route'] === 'library') {
+    $uploadDir = '../uploadss/';
+    if (!is_dir($uploadDir)) {
+        jsonResponse(true, []);
+    }
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443)
+        ? "https://" : "http://";
+    $host = $_SERVER['HTTP_HOST'];
+    $baseUrl = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false)
+        ? "https://automation.ideas.edu.vn/uploadss/"
+        : $protocol . $host . "/uploadss/";
+
+    $allowed = ['jpg','jpeg','png','gif','webp','pdf','doc','docx','xls','xlsx','zip','txt','csv'];
+    $files = [];
+    foreach (new DirectoryIterator($uploadDir) as $f) {
+        if ($f->isDot() || $f->isDir()) continue;
+        $fn  = $f->getFilename();
+        $ext = strtolower(pathinfo($fn, PATHINFO_EXTENSION));
+        if (!in_array($ext, $allowed)) continue;
+        // Strip uniqid prefix (13 hex chars + _)
+        $origName = preg_replace('/^[a-f0-9]{13}_/', '', $fn);
+        $files[] = [
+            'name'        => $origName,
+            'uniqueName'  => $fn,
+            'url'         => $baseUrl . $fn,
+            'path'        => $uploadDir . $fn,
+            'size'        => $f->getSize(),
+            'type'        => $ext,
+            'modified_at' => $f->getMTime(),
+        ];
+    }
+    usort($files, fn($a, $b) => $b['modified_at'] - $a['modified_at']);
+    jsonResponse(true, array_slice($files, 0, 300));
+}
+
+// DELETE (via GET với route=delete): Xóa file khỏi thư viện
+if (isset($_GET['route']) && $_GET['route'] === 'delete') {
+    $rawName  = $_GET['file'] ?? '';
+    // SECURITY: chỉ lấy basename để ngăn path traversal (../, /, \)
+    $safeName = basename($rawName);
+    if (empty($safeName) || $safeName !== $rawName || strpbrk($safeName, '/\\') !== false) {
+        jsonResponse(false, null, 'Tên file không hợp lệ');
+    }
+    $uploadDir = '../uploadss/';
+    $filePath  = $uploadDir . $safeName;
+    if (!file_exists($filePath)) {
+        jsonResponse(false, null, 'File không tồn tại');
+    }
+    if (unlink($filePath)) {
+        jsonResponse(true, ['deleted' => $safeName]);
+    } else {
+        jsonResponse(false, null, 'Không thể xóa file');
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonResponse(false, null, 'Method not allowed');
 }
@@ -41,10 +97,38 @@ $allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx'
 $fileName = $file['name'];
 $fileSize = $file['size'];
 $fileTmp = $file['tmp_name'];
+
+// [FIX P16-B3] Null-byte guard: "shell.php\0.jpg" → pathinfo() sees ".jpg" but storage sees "shell.php"
+if (strpos($fileName, "\0") !== false) {
+    jsonResponse(false, null, 'Invalid filename');
+}
+
 $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
 if (!in_array($fileExt, $allowedExts)) {
     jsonResponse(false, null, 'File type not allowed');
+}
+
+// [FIX P16-B3] MIME type validation — extension alone can be faked.
+// Verify actual file content matches allowed types.
+$allowedMimes = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+    'application/pdf',
+    'application/msword',                                                            // .doc
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',      // .docx
+    'application/vnd.ms-excel',                                                     // .xls
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',            // .xlsx
+    'application/zip', 'application/x-zip-compressed',
+    'text/plain', 'text/csv', 'application/csv',
+    'application/octet-stream', // fallback for some docx/xlsx on older systems
+];
+if (function_exists('finfo_open')) {
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $detectedMime = finfo_file($finfo, $fileTmp);
+    finfo_close($finfo);
+    if (!in_array($detectedMime, $allowedMimes)) {
+        jsonResponse(false, null, 'File content does not match allowed types (' . $detectedMime . ')');
+    }
 }
 
 if ($fileSize > 10 * 1024 * 1024) { // 10MB Limit

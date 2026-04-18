@@ -11,6 +11,14 @@ require_once 'db_connect.php';
 require_once 'tracking_processor.php';
 require_once 'tracking_helper.php';
 
+// [FIX P10-C1] MySQL version-aware SKIP LOCKED guard.
+// SKIP LOCKED is only valid on MySQL >= 8.0. On 5.7 it throws a fatal syntax error
+// that crashes the entire aggregator, causing activity/stats buffers to stall indefinitely.
+// Pattern matches worker_campaign.php (P9-C1) and worker_priority.php (P9-C2).
+$_trackerMysqlVersion = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
+$skipLockedClause = version_compare($_trackerMysqlVersion, '8.0.0', '>=') ? 'SKIP LOCKED' : '';
+unset($_trackerMysqlVersion); // avoid polluting global scope
+
 $batchSize = 1000;
 $now = date('Y-m-d H:i:s');
 
@@ -36,7 +44,7 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'worker_tracking_aggregator.php') 
         $pdo->beginTransaction();
         $stmt = $pdo->prepare(
             "SELECT id, type, payload FROM raw_event_buffer
-             WHERE processed = 0 ORDER BY id ASC LIMIT ? FOR UPDATE SKIP LOCKED"
+             WHERE processed = 0 ORDER BY id ASC LIMIT ? FOR UPDATE $skipLockedClause"
         );
         $stmt->execute([$batchSize]);
         $events = $stmt->fetchAll();
@@ -214,7 +222,7 @@ function syncActivityBuffer($pdo)
     try {
         $pdo->beginTransaction();
         $stmt = $pdo->prepare(
-            "SELECT * FROM activity_buffer WHERE processed = 0 ORDER BY id ASC LIMIT 500 FOR UPDATE SKIP LOCKED"
+            "SELECT * FROM activity_buffer WHERE processed = 0 ORDER BY id ASC LIMIT 500 FOR UPDATE $skipLockedClause"
         );
         $stmt->execute();
         $logs = $stmt->fetchAll();
@@ -290,10 +298,12 @@ function syncActivityBuffer($pdo)
         }
     }
 
-    // Delete processed rows to keep buffer table small
-    $ids = implode(',', array_column($logs, 'id'));
+    // [FIX P5-M1] Use prepared statement instead of raw exec() with interpolated IDs.
+    // IDs are internal integer PKs so direct injection is low risk, but exec() with
+    // string interpolation is an unsafe pattern — standardize to prepared statements.
     try {
-        $pdo->exec("DELETE FROM activity_buffer WHERE id IN ($ids)");
+        $deletePh = implode(',', array_fill(0, count($claimIds), '?'));
+        $pdo->prepare("DELETE FROM activity_buffer WHERE id IN ($deletePh)")->execute($claimIds);
     } catch (Exception $e) { /* ignore */
     }
 }
@@ -309,7 +319,7 @@ function syncZaloActivityBuffer($pdo)
     try {
         $pdo->beginTransaction();
         $stmt = $pdo->prepare(
-            "SELECT * FROM zalo_activity_buffer WHERE processed = 0 ORDER BY id ASC LIMIT 500 FOR UPDATE SKIP LOCKED"
+            "SELECT * FROM zalo_activity_buffer WHERE processed = 0 ORDER BY id ASC LIMIT 500 FOR UPDATE $skipLockedClause"
         );
         $stmt->execute();
         $logs = $stmt->fetchAll();
@@ -362,9 +372,10 @@ function syncZaloActivityBuffer($pdo)
         }
     }
 
-    $ids = implode(',', array_column($logs, 'id'));
+    // [FIX P5-M2] Use prepared statement instead of raw exec() with interpolated IDs.
     try {
-        $pdo->exec("DELETE FROM zalo_activity_buffer WHERE id IN ($ids)");
+        $deletePh = implode(',', array_fill(0, count($claimIds), '?'));
+        $pdo->prepare("DELETE FROM zalo_activity_buffer WHERE id IN ($deletePh)")->execute($claimIds);
     } catch (Exception $e) { /* ignore */
     }
 }
@@ -392,7 +403,7 @@ function syncTimestampBuffer($pdo)
         // because all workers scan and lock the same full set => deadlock / lock wait timeout.
         // ksort($updates) in PHP handles deadlock prevention without any DB-side sort.
         $stmt = $pdo->prepare(
-            "SELECT * FROM timestamp_buffer WHERE processed = 0 ORDER BY id ASC LIMIT 1000 FOR UPDATE SKIP LOCKED"
+            "SELECT * FROM timestamp_buffer WHERE processed = 0 ORDER BY id ASC LIMIT 1000 FOR UPDATE $skipLockedClause"
         );
         $stmt->execute();
         $rows = $stmt->fetchAll();
@@ -446,9 +457,10 @@ function syncTimestampBuffer($pdo)
         }
     }
 
-    $ids = implode(',', array_column($rows, 'id'));
+    // [FIX P5-M3] Use prepared statement instead of raw exec() with interpolated IDs.
     try {
-        $pdo->exec("DELETE FROM timestamp_buffer WHERE id IN ($ids)");
+        $deletePh = implode(',', array_fill(0, count($claimIds), '?'));
+        $pdo->prepare("DELETE FROM timestamp_buffer WHERE id IN ($deletePh)")->execute($claimIds);
     } catch (Exception $e) { /* ignore */
     }
 }
@@ -513,7 +525,7 @@ function syncStatsBuffer($pdo)
              FROM stats_update_buffer
              WHERE processed = 0 AND batch_id IS NULL
              ORDER BY id ASC
-             LIMIT 1000 FOR UPDATE SKIP LOCKED"
+             LIMIT 1000 FOR UPDATE $skipLockedClause"
         );
         $stmt->execute();
         $rows = $stmt->fetchAll();

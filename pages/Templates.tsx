@@ -20,6 +20,8 @@ import Input from '../components/common/Input';
 import Select from '../components/common/Select';
 import { SYSTEM_TEMPLATES } from '../services/systemTemplates';
 import { CardGridSkeleton } from '../components/common/PageSkeleton';
+import { useIsAdmin } from '../hooks/useAuthUser';
+import { usePermissionGuard } from '../components/common/PermissionGuard';
 
 const VisualTemplate: React.FC<{ template: Template, html: string }> = ({ template, html }) => {
     const containerRef = React.useRef<HTMLDivElement>(null);
@@ -68,6 +70,9 @@ const VisualTemplate: React.FC<{ template: Template, html: string }> = ({ templa
 };
 
 const Templates: React.FC = () => {
+    const isAdmin = useIsAdmin();
+    const { guard: adminGuard, PermModal: AdminPermModal } = usePermissionGuard(isAdmin);
+
     const [userTemplates, setUserTemplates] = useState<Template[]>([]);
     const [groups, setGroups] = useState<TemplateGroup[]>([]);
     const [loading, setLoading] = useState(true);
@@ -99,7 +104,7 @@ const Templates: React.FC = () => {
     const [isMovingGroups, setIsMovingGroups] = useState(false);
     // Modal hiển thị khi xóa bị block do template đang dùng trong flow/campaign
     const [usageBlockModal, setUsageBlockModal] = useState<{ isOpen: boolean, errors: string[] }>({ isOpen: false, errors: [] });
-    
+
     // Category scroll ref
     const categoryScrollRef = React.useRef<HTMLDivElement>(null);
 
@@ -161,12 +166,16 @@ const Templates: React.FC = () => {
         }
     };
 
-    const handleSaveTemplate = async (data: Partial<Template>, shouldExit: boolean = false) => {
+    const handleSaveTemplate = adminGuard(async (data: Partial<Template>, shouldExit: boolean = false) => {
         try {
             let res;
             if (editingTemplate && editingTemplate.id && !editingTemplate.id.startsWith('sys_')) {
                 res = await api.put(`templates/${editingTemplate.id}`, { ...editingTemplate, ...data, lastModified: new Date().toISOString() });
-                if (res.success) showToast('Đã cập nhật mẫu email');
+                if (res.success) {
+                    showToast('Đã cập nhật mẫu email');
+                    // [OPTIMISTIC UI] Update in-place, no network round-trip
+                    setUserTemplates(prev => prev.map(t => t.id === editingTemplate.id ? { ...t, ...res.data } : t));
+                }
             } else {
                 res = await api.post('templates', {
                     ...data,
@@ -176,12 +185,12 @@ const Templates: React.FC = () => {
                 if (res.success) {
                     showToast('Đã tạo mẫu email mới');
                     setEditingTemplate(res.data);
-                    fetchUserTemplates();
+                    // [OPTIMISTIC UI] Prepend new template to list
+                    setUserTemplates(prev => [res.data, ...prev]);
                 }
             }
 
             if (res && res.success) {
-                fetchUserTemplates();
                 if (shouldExit) {
                     setIsEditorOpen(false);
                     setEditingTemplate(undefined);
@@ -194,9 +203,9 @@ const Templates: React.FC = () => {
             console.error('Save template error:', error);
             showToast('Không thể lưu mẫu email. Vui lòng thử lại.', 'error');
         }
-    };
+    }, 'lưu mẫu thiết kế');
 
-    const handleDelete = async (ids: string[], type: 'template' | 'group' = 'template') => {
+    const handleDelete = adminGuard(async (ids: string[], type: 'template' | 'group' = 'template') => {
         try {
             if (type === 'group') {
                 const res = await api.delete(`template_groups/${ids[0]}`);
@@ -223,7 +232,7 @@ const Templates: React.FC = () => {
                     } else {
                         showToast(res.message || 'Lỗi khi xóa mẫu email', 'error');
                     }
-                    fetchUserTemplates(); // Refresh to show what was deleted
+                    // No re-fetch needed: delete failed so local state is still accurate
                 }
             }
         } catch (error) {
@@ -231,9 +240,9 @@ const Templates: React.FC = () => {
             showToast(`Không thể xóa ${type}`, 'error');
         }
         setDeleteConfirm({ isOpen: false, ids: [], type: 'template' });
-    };
+    }, 'xóa mẫu/nhóm');
 
-    const handleBulkMove = async (toGroupId: string) => {
+    const handleBulkMove = adminGuard(async (toGroupId: string) => {
         if (selectedIds.length === 0) return;
         setIsMovingGroups(true);
         try {
@@ -244,7 +253,9 @@ const Templates: React.FC = () => {
             });
             if (res.success) {
                 showToast(res.message || 'Đã cập nhật nhóm cho các mẫu đã chọn');
-                fetchUserTemplates();
+                // [OPTIMISTIC UI] Update groupId on affected templates locally
+                const newGroupId = toGroupId === 'null' ? null : toGroupId;
+                setUserTemplates(prev => prev.map(t => selectedIds.includes(t.id) ? { ...t, groupId: newGroupId } : t));
                 setSelectedIds([]);
             } else {
                 showToast(res.message || 'Lỗi khi di chuyển mẫu', 'error');
@@ -254,7 +265,7 @@ const Templates: React.FC = () => {
         } finally {
             setIsMovingGroups(false);
         }
-    };
+    }, 'di chuyển vị trí mẫu');
 
     const toggleSelect = (id: string) => {
         setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
@@ -270,7 +281,7 @@ const Templates: React.FC = () => {
         }
     };
 
-    const handleSaveGroup = async () => {
+    const handleSaveGroup = adminGuard(async () => {
         if (!newGroupName.trim()) return;
         setIsSavingGroup(true);
         try {
@@ -292,9 +303,9 @@ const Templates: React.FC = () => {
         } finally {
             setIsSavingGroup(false);
         }
-    };
+    }, 'tạo nhóm');
 
-    const handleDuplicate = async (tpl: Template) => {
+    const handleDuplicate = adminGuard(async (tpl: Template) => {
         try {
             const baseName = tpl.name.replace(' (Copy)', '');
             const newName = `${baseName} (Copy)`;
@@ -315,7 +326,8 @@ const Templates: React.FC = () => {
 
             const res = await api.post('templates', newTpl);
             if (res.success) {
-                await fetchUserTemplates();
+                // [OPTIMISTIC UI] Prepend duplicated template immediately
+                setUserTemplates(prev => [res.data as Template, ...prev]);
                 setCurrentPage(1);
                 showToast('Đã nhân bản mẫu thành công', 'success');
             } else {
@@ -325,7 +337,7 @@ const Templates: React.FC = () => {
             console.error('Duplicate template error:', error);
             showToast('Không thể nhân bản mẫu email', 'error');
         }
-    };
+    }, 'nhân bản mẫu');
 
     // --- Filtering Logic ---
     // Merge all templates: personal first, system appended
@@ -376,29 +388,30 @@ const Templates: React.FC = () => {
                 />
             ) : (
                 <>
-                    <PageHero 
+                    <PageHero
                         title={<>Email <span className="text-orange-100/80">Templates</span></>}
                         subtitle="Thư viện mẫu email chuyên nghiệp & bộ sưu tập thiết kế cá nhân của bạn."
                         showStatus={true}
                         statusText="Library Synced"
                         actions={[
-                            { 
-                                label: 'Thiết kế mới', 
-                                icon: Plus, 
+                            {
+                                label: 'Thiết kế mới',
+                                icon: Plus,
                                 onClick: () => { setEditingTemplate(undefined); setIsEditorOpen(true); },
-                                primary: true 
                             },
-                            { 
-                                label: 'Thư viện Ảnh', 
-                                icon: ImageIcon, 
-                                onClick: () => setIsImageLibraryOpen(true) 
+                            {
+                                label: 'Thư viện Ảnh',
+                                icon: ImageIcon,
+                                onClick: () => setIsImageLibraryOpen(true),
+                                primary: true
+
                             }
                         ]}
                     />
 
-                    <ImageLibraryModal 
-                        isOpen={isImageLibraryOpen} 
-                        onClose={() => setIsImageLibraryOpen(false)} 
+                    <ImageLibraryModal
+                        isOpen={isImageLibraryOpen}
+                        onClose={() => setIsImageLibraryOpen(false)}
                     />
 
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 py-2">
@@ -417,14 +430,14 @@ const Templates: React.FC = () => {
 
                     <div className="space-y-8">
                         <div className="flex items-center gap-4 relative group/categories">
-                            <button 
+                            <button
                                 onClick={() => scrollCategories('left')}
                                 className="hidden group-hover/categories:flex absolute -left-4 z-10 w-10 h-10 bg-white dark:bg-slate-900 shadow-xl border border-slate-100 dark:border-slate-800/60 rounded-full items-center justify-center text-slate-400 hover:text-amber-600 hover:scale-110 transition-all active:scale-95"
                             >
                                 <ChevronLeft className="w-5 h-5" />
                             </button>
 
-                            <div 
+                            <div
                                 ref={categoryScrollRef}
                                 className="flex-1 bg-white dark:bg-slate-900 rounded-2xl lg:rounded-full p-1.5 lg:p-2 shadow-sm border border-slate-200 dark:border-slate-700/60 flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth"
                             >
@@ -477,7 +490,7 @@ const Templates: React.FC = () => {
                                 </button>
                             </div>
 
-                            <button 
+                            <button
                                 onClick={() => scrollCategories('right')}
                                 className="hidden group-hover/categories:flex absolute -right-4 z-10 w-10 h-10 bg-white dark:bg-slate-900 shadow-xl border border-slate-100 dark:border-slate-800/60 rounded-full items-center justify-center text-slate-400 hover:text-amber-600 hover:scale-110 transition-all active:scale-95"
                             >
@@ -778,19 +791,24 @@ const Templates: React.FC = () => {
                     htmlContent={getPreviewHTML(previewTemplate)}
                     isOpen={!!previewTemplate}
                     onClose={() => setPreviewTemplate(null)}
-                    onEdit={() => { 
-                        setEditingTemplate(previewTemplate); 
-                        setIsEditorOpen(true); 
-                        setPreviewTemplate(null); 
+                    onEdit={() => {
+                        // For the drawer button
+                        if (!isAdmin) {
+                            adminGuard(() => {})();
+                            return;
+                        }
+                        setEditingTemplate(previewTemplate);
+                        setIsEditorOpen(true);
+                        setPreviewTemplate(null);
                     }}
-                    onDuplicate={() => { 
-                        handleDuplicate(previewTemplate); 
-                        setPreviewTemplate(null); 
+                    onDuplicate={() => {
+                        handleDuplicate(previewTemplate);
+                        setPreviewTemplate(null);
                     }}
                 />
             )}
 
-
+            {AdminPermModal}
         </div>
     );
 };

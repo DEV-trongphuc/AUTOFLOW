@@ -26,7 +26,9 @@ function processTrackingEvent($pdo, $type, $payload)
         }
 
         // [DEBOUNCE] Prevent duplicate logging and stats bloat if email pixel/click fires multiple times rapidly (AMPP proxy clones)
-        if (in_array($subType, ['open_email', 'click_link', 'zalo_clicked'])) {
+        // [FIX P10-M1] Include 'click_zns' in debounce — it is the actual type logged by zalo_track.php for ZNS link clicks.
+        // 'zalo_clicked' was a legacy type name from older Zalo CS path; both must be debounced.
+        if (in_array($subType, ['open_email', 'click_link', 'zalo_clicked', 'click_zns'])) {
             try {
                 // [FIX] Buffer Gap: Check both main activity table AND the pending activity buffer.
                 // Without checking the buffer, multiple events in the same queue batch will all pass
@@ -34,15 +36,34 @@ function processTrackingEvent($pdo, $type, $payload)
                 $stmtSpam = $pdo->prepare("
                     SELECT 1 FROM subscriber_activity 
                     WHERE subscriber_id = ? AND type = ? AND (reference_id = ? OR (reference_id IS NULL AND ? IS NULL)) AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MINUTE)
-                    UNION ALL
-                    SELECT 1 FROM activity_buffer
-                    WHERE subscriber_id = ? AND type = ? AND (reference_id = ? OR (reference_id IS NULL AND ? IS NULL))
                     LIMIT 1
                 ");
-                $stmtSpam->execute([$sid, $subType, $rid, $rid, $sid, $subType, $rid, $rid]);
+                $stmtSpam->execute([$sid, $subType, $rid, $rid]);
                 if ($stmtSpam->fetchColumn()) {
-                    // Exact same event within the last 60 seconds (or pending in buffer). Skip processing.
                     return true;
+                }
+
+                // [FIX P8-M1] Check activity_buffer in a SEPARATE try/catch.
+                // If the table doesn't exist yet (migrate_optimizations.php not run),
+                // we log a hint but DO NOT bypass debouncing entirely — we already
+                // checked the main activity table above, which is sufficient.
+                try {
+                    $stmtBuf = $pdo->prepare("
+                        SELECT 1 FROM activity_buffer
+                        WHERE subscriber_id = ? AND type = ? AND (reference_id = ? OR (reference_id IS NULL AND ? IS NULL))
+                        LIMIT 1
+                    ");
+                    $stmtBuf->execute([$sid, $subType, $rid, $rid]);
+                    if ($stmtBuf->fetchColumn()) {
+                        return true;
+                    }
+                } catch (Exception $eBuf) {
+                    if (strpos($eBuf->getMessage(), "doesn't exist") !== false) {
+                        // activity_buffer table not yet provisioned. Run migrate_optimizations.php.
+                        // Debounce is still partially effective via the subscriber_activity check above.
+                        error_log('[tracking_processor] activity_buffer table missing — run migrate_optimizations.php for full debounce coverage.');
+                    }
+                    // Continue processing regardless
                 }
             } catch (Exception $e) {
                 // Ignore DB check error
@@ -64,7 +85,8 @@ function processTrackingEvent($pdo, $type, $payload)
             $pointValue = $pOpen;
             $activityLabel = 'Email Open';
             $detailLabel = "Opened Email";
-        } elseif ($subType === 'zalo_clicked') {
+        } elseif ($subType === 'zalo_clicked' || $subType === 'click_zns') {
+            // [FIX P10-M1] Normalize both Zalo click types — 'click_zns' (ZNS link) + 'zalo_clicked' (Zalo CS)
             $pointValue = $pZaloClick;
             $activityLabel = 'Zalo Click';
             $detailLabel = "Zalo Clicked link/button";
@@ -90,7 +112,7 @@ function processTrackingEvent($pdo, $type, $payload)
         $col = 'last_activity_at';
         if ($subType === 'open_email')
             $col = 'last_open_at';
-        elseif ($subType === 'click_link' || $subType === 'zalo_clicked')
+        elseif ($subType === 'click_link' || $subType === 'zalo_clicked' || $subType === 'click_zns')
             $col = 'last_click_at';
 
         try {
@@ -121,9 +143,17 @@ function processTrackingEvent($pdo, $type, $payload)
 
         // 3. Handle Flow Stats
         if ($fid) {
-            // Total
+            // [FIX P10-H1] Route click_zns to stat_total_zalo_clicked (new column from P9-M4 migration).
+            // Previously 'click_zns' fell into the else branch → stat_total_clicked (email counter) was
+            // incorrectly incremented, and stat_total_zalo_clicked (added in P9-M4) stayed permanently 0.
+            $flowTotalCol = 'stat_total_clicked'; // email link click default
+            if ($subType === 'open_email') {
+                $flowTotalCol = 'stat_total_opened';
+            } elseif ($subType === 'click_zns' || $subType === 'zalo_clicked') {
+                $flowTotalCol = 'stat_total_zalo_clicked';
+            }
             $pdo->prepare("INSERT INTO stats_update_buffer (target_table, target_id, column_name, increment) VALUES ('flows', ?, ?, 1)")
-                ->execute([$fid, ($subType === 'open_email' ? 'stat_total_opened' : 'stat_total_clicked')]);
+                ->execute([$fid, $flowTotalCol]);
 
             // [FIX] Unique Check — must include reference_key (step ID or URL) in the cache key.
             // Without it: subscriber clicks link A → cache row created (sub+flow+click).
@@ -152,9 +182,15 @@ function processTrackingEvent($pdo, $type, $payload)
                 }
             }
             if (isset($stmtUnique) && $stmtUnique && $stmtUnique->rowCount() > 0) {
-                $column = ($subType === 'open_email' ? 'stat_unique_opened' : 'stat_unique_clicked');
+                // [FIX P10-H1] Route click_zns unique to stat_unique_zalo_clicked.
+                $flowUniqueCol = 'stat_unique_clicked'; // email default
+                if ($subType === 'open_email') {
+                    $flowUniqueCol = 'stat_unique_opened';
+                } elseif ($subType === 'click_zns' || $subType === 'zalo_clicked') {
+                    $flowUniqueCol = 'stat_unique_zalo_clicked';
+                }
                 $pdo->prepare("INSERT INTO stats_update_buffer (target_table, target_id, column_name, increment) VALUES ('flows', ?, ?, 1)")
-                    ->execute([$fid, $column]);
+                    ->execute([$fid, $flowUniqueCol]);
             }
         }
 
@@ -258,8 +294,12 @@ function processTrackingEvent($pdo, $type, $payload)
             if ($cid) {
                 try {
                     static $campaignFlowCache = [];
+                    // [FIX P8-H1] Add TTL to prevent stale data when flows are activated/deactivated
+                    // during a long worker run, and to prevent unbounded memory growth.
+                    static $campaignFlowCacheTime = [];
+                    $CACHE_TTL = 300; // 5 minutes
 
-                    if (!isset($campaignFlowCache[$cid])) {
+                    if (!isset($campaignFlowCache[$cid]) || (time() - ($campaignFlowCacheTime[$cid] ?? 0)) > $CACHE_TTL) {
                         $stmtFlows = $pdo->prepare("SELECT id, steps FROM flows WHERE status = 'active' AND (trigger_type = 'campaign' OR steps LIKE ?)");
                         $stmtFlows->execute(['%"targetId":"' . $cid . '"%']);
                         $associatedFlows = $stmtFlows->fetchAll();
@@ -275,6 +315,7 @@ function processTrackingEvent($pdo, $type, $payload)
                             }
                         }
                         $campaignFlowCache[$cid] = $matchedFlows;
+                        $campaignFlowCacheTime[$cid] = time(); // [FIX P8-H1] record TTL timestamp
                     }
 
                     foreach ($campaignFlowCache[$cid] as $fId) {
@@ -340,8 +381,27 @@ function processTrackingEvent($pdo, $type, $payload)
         $stmtStatus->execute([$sid]);
         $currentStatus = $stmtStatus->fetchColumn();
 
-        $pdo->prepare("UPDATE subscribers SET status = 'unsubscribed', updated_at = NOW() WHERE id = ?")->execute([$sid]);
-        $pdo->prepare("UPDATE subscriber_flow_states SET status = 'cancelled', updated_at = NOW() WHERE subscriber_id = ? AND status IN ('waiting', 'processing')")->execute([$sid]);
+        // [ATOMIC FIX] Wrap both UPDATEs in a transaction.
+        // Previously two separate auto-commit statements: if the connection dropped between them,
+        // subscriber would be marked 'unsubscribed' but flow_states would remain 'waiting',
+        // causing the flow worker to continue sending automated emails to the opted-out subscriber.
+        // [GUARD] Check inTransaction() before beginTransaction() — if a caller (e.g. webhook.php
+        // with an outer TX) is already in a transaction, calling beginTransaction() again would throw
+        // PDOException: "There is already an active transaction".
+        try {
+            $alreadyInTx = $pdo->inTransaction();
+            if (!$alreadyInTx) $pdo->beginTransaction();
+            $pdo->prepare("UPDATE subscribers SET status = 'unsubscribed', updated_at = NOW() WHERE id = ?")->execute([$sid]);
+            $pdo->prepare("UPDATE subscriber_flow_states SET status = 'cancelled', updated_at = NOW() WHERE subscriber_id = ? AND status IN ('waiting', 'processing')")->execute([$sid]);
+            if (!$alreadyInTx) $pdo->commit();
+        } catch (Exception $e) {
+            if (!isset($alreadyInTx) || !$alreadyInTx) {
+                if ($pdo->inTransaction()) $pdo->rollBack();
+            }
+            error_log('[tracking_processor] Unsubscribe transaction failed for sid=' . $sid . ': ' . $e->getMessage());
+            return false;
+        }
+
 
         // Only increment counters if they weren't already unsubscribed previously or from another click
         if ($currentStatus !== 'unsubscribed') {

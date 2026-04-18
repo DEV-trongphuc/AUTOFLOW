@@ -164,16 +164,20 @@ try {
 
         // Members — combine all linkage methods: user_categories + category owner + session admin scope
         if ($categoryId) {
-            // Count users explicitly linked to this category
+            // [FIX P42-B3] Replace pdo->quote() of session-derived admin IDs with bind params.
+            // These come from the authed session, so low risk — but bind params are the standard.
+            $memberParams = [$categoryId];
+            $memberWhere = "";
+            if ($orgScopeAdminId = ($currentOrgUser['admin_id'] ?? $currentOrgUser['id'])) {
+                $memberWhere = " AND (u.admin_id = ? OR u.id = ?)";
+                $memberParams[] = (string) $orgScopeAdminId;
+                $memberParams[] = (string) $orgScopeAdminId;
+            }
             $sql = "SELECT COUNT(DISTINCT u.id) FROM ai_org_users u
                     JOIN ai_org_user_categories uc ON u.id = uc.user_id
-                    WHERE uc.category_id = ?";
-            // We also need to ensure isolation: only people who SHOULD be in this org
-            if ($orgScopeAdminId = ($currentOrgUser['admin_id'] ?? $currentOrgUser['id'])) {
-                $sql .= " AND (u.admin_id = " . $pdo->quote((string) $orgScopeAdminId) . " OR u.id = " . $pdo->quote((string) $orgScopeAdminId) . ")";
-            }
+                    WHERE uc.category_id = ?$memberWhere";
             $stmtUsers = $pdo->prepare($sql);
-            $stmtUsers->execute([$categoryId]);
+            $stmtUsers->execute($memberParams);
             $totalUsers = (int) $stmtUsers->fetchColumn();
         } else {
             // Scope to Org
@@ -279,18 +283,27 @@ try {
 
         // Filter users by category: user_categories + categoryAdminId + sessionAdminId
         if ($categoryId) {
+            // [FIX P42-B3] Parameterized admin scope filter — replace inline quote() with bind.
             $adminIdParts2 = [];
-            if ($categoryAdminId)
-                $adminIdParts2[] = "u.admin_id = " . $pdo->quote($categoryAdminId);
+            $adminIdParams2 = [];
+            if ($categoryAdminId) {
+                $adminIdParts2[] = "u.admin_id = ?";
+                $adminIdParams2[] = (string) $categoryAdminId;
+            }
             if ($sessionAdminId && $sessionAdminId != $categoryAdminId) {
-                $adminIdParts2[] = "u.admin_id = " . $pdo->quote((string) $sessionAdminId);
-                $adminIdParts2[] = "u.id = " . $pdo->quote((string) $sessionAdminId);
+                $adminIdParts2[] = "u.admin_id = ?";
+                $adminIdParts2[] = "u.id = ?";
+                $adminIdParams2[] = (string) $sessionAdminId;
+                $adminIdParams2[] = (string) $sessionAdminId;
             }
             $adminIdExtra = !empty($adminIdParts2) ? "OR " . implode(" OR ", $adminIdParts2) : "";
             $fromClause = "FROM ai_org_users u
-               WHERE (u.id IN (SELECT user_id FROM ai_org_user_categories WHERE category_id = '$categoryId') $adminIdExtra)";
+               WHERE (u.id IN (SELECT user_id FROM ai_org_user_categories WHERE category_id = ?) $adminIdExtra)";
+            // prepend categoryId + adminIdParams2 into execution params below
+            $fromParams = array_merge([$categoryId], $adminIdParams2);
         } else {
             $fromClause = "FROM ai_org_users u";
+            $fromParams = [];
         }
 
         $sql = "SELECT u.id, u.full_name, u.email, u.role,
@@ -328,17 +341,19 @@ try {
             $params[] = $categoryId;
             $params[] = $startDate . ' 00:00:00';
             $params[] = $endDate . ' 23:59:59';
-            // Duplicate for ai_conversations part
             $params[] = $categoryId;
             $params[] = $startDate . ' 00:00:00';
             $params[] = $endDate . ' 23:59:59';
         } else {
             $params[] = $startDate . ' 00:00:00';
             $params[] = $endDate . ' 23:59:59';
-            // Duplicate for ai_conversations part
             $params[] = $startDate . ' 00:00:00';
             $params[] = $endDate . ' 23:59:59';
         }
+
+        // [FIX P42-B3] Merge $fromParams (categoryId + admin scope binds) at the end
+        // These bind to the WHERE clause in $fromClause (user_categories subquery + adminIdExtra).
+        $params = array_merge($params, $fromParams ?? []);
 
         $stmt->execute($params);
         $users = $stmt->fetchAll(PDO::FETCH_ASSOC);

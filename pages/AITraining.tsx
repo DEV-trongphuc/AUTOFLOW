@@ -424,6 +424,12 @@ const AITraining: React.FC = () => {
 
 
     useEffect(() => {
+        // [P17-C3] Clear multi-selections when switching main tabs (website/chat)
+        // to prevent stale cross-tab selection state.
+        setSelectedIds([]);
+    }, [mainTab]);
+
+    useEffect(() => {
         // Clear selections when switching properties to avoid cross-property selection bugs
         setSelectedIds([]);
         if (selectedProperty) {
@@ -464,6 +470,13 @@ const AITraining: React.FC = () => {
             pollingTimeoutRef.current = setTimeout(async () => {
                 if (cancelled) return;
 
+                // [P17-C1] Skip API call when tab is hidden — saves server load & avoids
+                // unnecessary requests while user is on a different tab.
+                if (document.visibilityState !== 'visible') {
+                    if (!cancelled) schedulePoll();
+                    return;
+                }
+
                 // Check latest docs state via ref
                 const hasWIP = docsRef.current.some(
                     d => d.status === 'pending' || d.status === 'processing'
@@ -486,7 +499,11 @@ const AITraining: React.FC = () => {
                 }
 
                 // Always schedule the next tick while the property is active
-                if (!cancelled) schedulePoll();
+                // [P19-A3 ADAPTIVE POLLING] Use a short interval when training is in progress
+                // (for real-time status updates), and a long interval when idle
+                // (to reduce server load by ~10x when nothing is happening).
+                const nextInterval = hasWIP ? 3000 : 30000;
+                if (!cancelled) pollingTimeoutRef.current = setTimeout(schedulePoll, nextInterval - 3000);
             }, 3000);
         };
 

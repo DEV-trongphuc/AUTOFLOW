@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     Send, CheckCircle2, CalendarClock, FileText, Loader2,
-    GitMerge, Play, Trash2, ChevronRight, Clock, Calendar, PieChart
+    GitMerge, Play, Trash2, ChevronRight, Clock, Calendar, PieChart, PauseCircle
 } from 'lucide-react';
 import { Campaign, CampaignStatus } from '../../types';
 import Badge from '../../components/common/Badge';
@@ -31,9 +31,14 @@ const CampaignTableRow = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, on
     const isSent = c.status === CampaignStatus.SENT;
     const isWaiting = c.status === CampaignStatus.WAITING_FLOW;
     const isSending = c.status === CampaignStatus.SENDING;
+    // [FIX P7-C1] Paused = Circuit Breaker triggered — needs distinct orange badge, not neutral grey
+    const isPaused = c.status === CampaignStatus.PAUSED;
     const sentCount = c.stats?.sent || 0;
     const linkedFlow = c.linkedFlow;
     const showFlowStatus = isSent && linkedFlow;
+    // [UI-R1] Campaign has pending reminders → orange clock instead of green sent badge
+    const hasReminders = (c.reminderCount ?? (c.reminders?.length ?? 0)) > 0;
+    const showReminderBadge = isSent && hasReminders;
 
     const openRate = sentCount > 0 ? Math.round(((c.stats?.opened || 0) / sentCount) * 100) : 0;
 
@@ -52,17 +57,22 @@ const CampaignTableRow = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, on
                 <div className="flex items-center gap-4">
                     <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all shadow-sm border ${c.type === 'zalo_zns' ? 'bg-white text-[#0068ff] border-[#0068ff]/20 shadow-[0_0_15px_rgba(0,104,255,0.1)] p-2 group-hover:border-[#0068ff]/40 group-hover:shadow-[0_0_20px_rgba(0,104,255,0.15)]' :
                         (showFlowStatus ? 'bg-violet-50 text-violet-600 border-violet-100' :
-                            (isSent ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                (isWaiting ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                    (isSending ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                        (c.status === CampaignStatus.SCHEDULED ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-50 text-slate-400 border-slate-100')))))
+                            (showReminderBadge ? 'bg-orange-50 text-orange-500 border-orange-100' :
+                                (isSent ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                    (isWaiting ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                        (isSending ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                            (isPaused ? 'bg-orange-50 text-orange-600 border-orange-200' :
+                                                (c.status === CampaignStatus.SCHEDULED ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-50 text-slate-400 border-slate-100')))))))
                         }`}>
-                        {c.type === 'zalo_zns' ? <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Zalo-Arc.png" alt="Zalo" className="w-full h-full object-contain" /> :
+                        {c.type === 'zalo_zns' ? <img src="https://automation.ideas.edu.vn/imgs/zalolog.png" alt="Zalo" className="w-full h-full object-contain" /> :
                             (showFlowStatus ? <GitMerge className="w-5 h-5" /> :
-                                (isSent ? <CheckCircle2 className="w-5 h-5" /> :
-                                    (isWaiting ? <GitMerge className="w-5 h-5" /> :
-                                        (isSending ? <Loader2 className="w-5 h-5 animate-spin" /> :
-                                            (c.status === CampaignStatus.SCHEDULED ? <CalendarClock className="w-5 h-5" /> : <FileText className="w-5 h-5" />)))))}
+                                (showReminderBadge ? <Clock className="w-5 h-5" /> :
+                                    (isSent ? <CheckCircle2 className="w-5 h-5" /> :
+                                        (isWaiting ? <GitMerge className="w-5 h-5" /> :
+                                            (isSending ? <Loader2 className="w-5 h-5 animate-spin" /> :
+                                                (isPaused ? <PauseCircle className="w-5 h-5" /> :
+                                                    (c.status === CampaignStatus.SCHEDULED ? <CalendarClock className="w-5 h-5" /> : <FileText className="w-5 h-5" />)))))))}
+
                     </div>
                     <div className="min-w-0">
                         <p className="font-bold text-slate-800 text-sm leading-tight mb-1 group-hover:text-amber-600 transition-colors truncate pr-4">{c.name}</p>
@@ -95,6 +105,11 @@ const CampaignTableRow = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, on
                 ) : isSent ? (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-black uppercase tracking-wide">
                         <><CheckCircle2 className="w-3 h-3" /> Sent</>
+                    </span>
+                ) : isPaused ? (
+                    // [FIX P7-C1] Dedicated orange badge for Circuit Breaker paused campaigns
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-50 text-orange-700 border border-orange-200 text-[10px] font-black uppercase tracking-wide" title="Campaign bị tạm dừng bởi Circuit Breaker">
+                        <PauseCircle className="w-3 h-3" /> PAUSED
                     </span>
                 ) : c.status === CampaignStatus.SCHEDULED ? (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-black uppercase tracking-wide">
@@ -140,20 +155,30 @@ const CampaignTableRow = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, on
             </td>
 
             <td className="px-6 py-5">
-                {isSent ? (
+                {(isSent || isSending) ? (
                     <div className="w-full min-w-[160px] max-w-[180px] space-y-2">
                         <div>
                             <div className="flex justify-between items-end mb-1 gap-2 flex-nowrap">
-                                <span translate="no" className="text-[9px] font-bold text-slate-400 uppercase whitespace-nowrap">{c.type === 'zalo_zns' ? 'Tổng tiền' : 'Hiệu suất Open'}</span>
+                                <span translate="no" className="text-[9px] font-bold text-slate-400 uppercase whitespace-nowrap">
+                                    {isSending ? 'Tiến độ' : (c.type === 'zalo_zns' ? 'Tổng tiền' : 'Hiệu suất Open')}
+                                </span>
                                 <div className="flex items-center gap-1">
                                     <span className="text-[9px] font-medium text-slate-400">
-                                        {c.type === 'zalo_zns' ? `${(sentCount * 300).toLocaleString()}đ` : `${(c.stats?.opened || 0).toLocaleString()}/${sentCount.toLocaleString()}`}
+                                        {isSending
+                                            ? `${sentCount.toLocaleString()} / ${(c.totalTargetAudience || 0).toLocaleString()}`
+                                            : (c.type === 'zalo_zns' ? `${(sentCount * 300).toLocaleString()}đ` : `${(c.stats?.opened || 0).toLocaleString()}/${sentCount.toLocaleString()}`)
+                                        }
                                     </span>
-                                    {c.type !== 'zalo_zns' && <span className={`text-[9px] font-black ${openRate > 0 ? 'text-emerald-500' : 'text-slate-300'}`}>({openRate}%)</span>}
+                                    {isSending && (
+                                        <span className="text-[9px] font-black text-blue-500">
+                                            ({c.totalTargetAudience ? Math.round((sentCount / c.totalTargetAudience) * 100) : 0}%)
+                                        </span>
+                                    )}
+                                    {!isSending && c.type !== 'zalo_zns' && <span className={`text-[9px] font-black ${openRate > 0 ? 'text-emerald-500' : 'text-slate-300'}`}>({openRate}%)</span>}
                                 </div>
                             </div>
                             <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <div className={`h-full bg-gradient-to-r ${c.type === 'zalo_zns' ? 'from-blue-500 to-blue-700 shadow-[0_0_10px_rgba(0,104,255,0.2)]' : 'from-emerald-400 to-emerald-600'} rounded-full transition-all duration-1000`} style={{ width: `${c.type === 'zalo_zns' ? 100 : Math.min(openRate, 100)}%` }}></div>
+                                <div className={`h-full bg-gradient-to-r ${isSending ? 'from-blue-400 to-blue-600 animate-pulse' : (c.type === 'zalo_zns' ? 'from-blue-500 to-blue-700 shadow-[0_0_10px_rgba(0,104,255,0.2)]' : 'from-emerald-400 to-emerald-600')} rounded-full transition-all duration-1000`} style={{ width: `${isSending ? (c.totalTargetAudience ? Math.min((sentCount / c.totalTargetAudience) * 100, 100) : 0) : (c.type === 'zalo_zns' ? 100 : Math.min(openRate, 100))}%` }}></div>
                             </div>
                         </div>
                     </div>
@@ -202,9 +227,14 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
     const isSent = c.status === CampaignStatus.SENT;
     const isWaiting = c.status === CampaignStatus.WAITING_FLOW;
     const isSending = c.status === CampaignStatus.SENDING;
+    // [FIX P7-C1] Mobile card: also needs dedicated paused state
+    const isPaused = c.status === CampaignStatus.PAUSED;
     const sentCount = c.stats?.sent || 0;
     const linkedFlow = c.linkedFlow;
     const showFlowStatus = isSent && linkedFlow;
+    // [UI-R1] Reminder badge for mobile
+    const hasReminders = (c.reminderCount ?? (c.reminders?.length ?? 0)) > 0;
+    const showReminderBadge = isSent && hasReminders;
 
     const openRate = sentCount > 0 ? Math.round(((c.stats?.opened || 0) / sentCount) * 100) : 0;
 
@@ -222,12 +252,13 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
             <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${c.type === 'zalo_zns' ? 'bg-white p-1.5 border-[#0068ff]/20' : 'bg-slate-50 border-slate-100'}`}>
-                        {c.type === 'zalo_zns' ? <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Zalo-Arc.png" alt="Zalo" className="w-full h-full object-contain" /> :
+                        {c.type === 'zalo_zns' ? <img src="https://automation.ideas.edu.vn/imgs/zalolog.png" alt="Zalo" className="w-full h-full object-contain" /> :
                             (showFlowStatus ? <GitMerge className="w-4 h-4 text-violet-600" /> :
-                                (isSent ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> :
-                                    (isWaiting ? <GitMerge className="w-4 h-4 text-amber-600" /> :
-                                        (isSending ? <Loader2 className="w-4 h-4 animate-spin text-blue-600" /> :
-                                            (c.status === CampaignStatus.SCHEDULED ? <CalendarClock className="w-4 h-4 text-indigo-600" /> : <FileText className="w-4 h-4 text-slate-400" />)))))}
+                                (showReminderBadge ? <Clock className="w-4 h-4 text-orange-500" /> :
+                                    (isSent ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> :
+                                        (isWaiting ? <GitMerge className="w-4 h-4 text-amber-600" /> :
+                                            (isSending ? <Loader2 className="w-4 h-4 animate-spin text-blue-600" /> :
+                                                (c.status === CampaignStatus.SCHEDULED ? <CalendarClock className="w-4 h-4 text-indigo-600" /> : <FileText className="w-4 h-4 text-slate-400" />))))))}
                     </div>
                     <div className="min-w-0">
                         <p className="font-bold text-slate-800 text-[13px] leading-tight truncate">{c.name}</p>
@@ -247,8 +278,18 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
                             <Badge variant="warning" className="text-[8px] px-1.5 py-0.5">WAITING</Badge>
                         ) : isSending ? (
                             <Badge variant="info" className="text-[8px] px-1.5 py-0.5 animate-pulse-subtle">SENDING</Badge>
+                        ) : showReminderBadge ? (
+                            // [UI-R1] Mobile sent+reminder badge
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-orange-50 text-orange-600 border border-orange-200 text-[8px] font-black uppercase tracking-wide">
+                                <Clock className="w-2.5 h-2.5" /> +Reminder
+                            </span>
                         ) : isSent ? (
                             <Badge variant="success" className="text-[8px] px-1.5 py-0.5">SENT</Badge>
+                        ) : isPaused ? (
+                            // [FIX P7-C1] Mobile paused badge — orange to match desktop
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-orange-50 text-orange-700 border border-orange-200 text-[8px] font-black uppercase tracking-wide">
+                                <PauseCircle className="w-2.5 h-2.5" /> PAUSED
+                            </span>
                         ) : (
                             <Badge variant="neutral" className="text-[8px] px-1.5 py-0.5">{(c.status || 'DRAFT').toUpperCase()}</Badge>
                         )}
@@ -263,17 +304,27 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
                 </div>
             </div>
 
-            {isSent && (
+            {(isSent || isSending) && (
                 <div className="bg-slate-50/50 p-2 rounded-xl border border-slate-100">
                     <div className="flex justify-between items-center mb-1">
                         <div className="flex items-center gap-1.5 flex-nowrap">
                             <Send className="w-3 h-3 text-blue-500 shrink-0" />
-                            <span translate="no" className="text-[9px] font-black text-slate-700 whitespace-nowrap">{sentCount.toLocaleString()} {c.type === 'zalo_zns' ? 'ZNS' : 'Emails'}</span>
+                            <span translate="no" className="text-[9px] font-black text-slate-700 whitespace-nowrap">
+                                {isSending
+                                    ? `${sentCount.toLocaleString()} / ${(c.totalTargetAudience || 0).toLocaleString()} ${c.type === 'zalo_zns' ? 'ZNS' : 'Emails'}`
+                                    : `${sentCount.toLocaleString()} ${c.type === 'zalo_zns' ? 'ZNS' : 'Emails'}`
+                                }
+                            </span>
                         </div>
-                        <span translate="no" className="text-[9px] font-black text-emerald-600 whitespace-nowrap">{openRate}% {c.type === 'zalo_zns' ? '' : 'Open'}</span>
+                        <span translate="no" className={`text-[9px] font-black whitespace-nowrap ${isSending ? 'text-blue-500' : 'text-emerald-600'}`}>
+                            {isSending
+                                ? `${c.totalTargetAudience ? Math.round((sentCount / c.totalTargetAudience) * 100) : 0}% Tiến độ`
+                                : `${openRate}% ${c.type === 'zalo_zns' ? '' : 'Open'}`
+                            }
+                        </span>
                     </div>
                     <div className="h-1 w-full bg-white rounded-full overflow-hidden border border-slate-200">
-                        <div className={`h-full bg-gradient-to-r ${c.type === 'zalo_zns' ? 'from-blue-500 to-blue-700' : 'from-emerald-400 to-emerald-600'} transition-all`} style={{ width: `${c.type === 'zalo_zns' ? 100 : Math.min(openRate, 100)}%` }}></div>
+                        <div className={`h-full bg-gradient-to-r ${isSending ? 'from-blue-400 to-blue-600 animate-pulse' : (c.type === 'zalo_zns' ? 'from-blue-500 to-blue-700' : 'from-emerald-400 to-emerald-600')} transition-all`} style={{ width: `${isSending ? (c.totalTargetAudience ? Math.min((sentCount / c.totalTargetAudience) * 100, 100) : 0) : (c.type === 'zalo_zns' ? 100 : Math.min(openRate, 100))}%` }}></div>
                     </div>
                 </div>
             )}

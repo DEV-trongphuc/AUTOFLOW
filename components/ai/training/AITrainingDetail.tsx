@@ -11,6 +11,8 @@ import VisibilitySettings from '../VisibilitySettings';
 import FastRepliesSettings from '../FastRepliesSettings';
 import ScenarioManager from '../ScenarioManager';
 import UnifiedChat from '../UnifiedChat';
+import AIStatsModal from './AIStatsModal';
+import PageHero from '../../common/PageHero';
 import { MessageSquare } from 'lucide-react';
 import InputModal from '../../common/InputModal';
 import { api } from '../../../services/storageAdapter';
@@ -104,7 +106,10 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
     const [localCompanyName, setLocalCompanyName] = useState(settings.company_name || '');
     const [localTeaser, setLocalTeaser] = useState(settings.teaser_msg || '');
     const [triggerAnalysisModal, setTriggerAnalysisModal] = useState<number | boolean>(false);
+    const [showAIStats, setShowAIStats] = useState(false);
     const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+
+    const [activeFeatureTab, setActiveFeatureTab] = useState<'scenarios' | 'knowledge'>('scenarios');
 
     // [NEW] Page-count modal state for chunked PDF upload
     const [pendingPdfFile, setPendingPdfFile] = useState<File | null>(null);
@@ -411,7 +416,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
     const hsl = hexToHSL(brandColor);
 
     return (
-        <div className={`rounded-2xl lg:rounded-[32px] border shadow-sm p-4 lg:p-6 min-h-[600px] transition-colors duration-500 ${isDarkTheme ? 'bg-slate-900/50 border-slate-800 shadow-none' : 'bg-white border-slate-200 shadow-sm'}`}>
+        <div className="relative">
             <style dangerouslySetInnerHTML={{
                 __html: `
                 :root {
@@ -435,22 +440,20 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                 .from-brand { --tw-gradient-from: var(--brand-primary) !important; --tw-gradient-to: var(--brand-primary-dark) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
             `}} />
 
-            {/* Integrated Header */}
-            <div className={`flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-6 lg:mb-10 pb-4 lg:pb-8 border-b ${isDarkTheme ? 'border-slate-800' : 'border-slate-50'}`}>
-                <div className="space-y-2">
-                    <div className="flex items-center gap-3 mb-1">
+            <div className="space-y-6 md:space-y-8">
+                <PageHero
+                title={
+                    <div className="flex items-center gap-3">
                         {props.onBack && (
                             <button
                                 onClick={props.onBack}
-                                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${isDarkTheme ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
+                                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-white/10 text-white/50 hover:text-white"
                                 title="Quay lại"
                             >
                                 <ArrowLeft className="w-5 h-5" />
                             </button>
                         )}
-                        <div className={`w-12 h-12 rounded-[1.25rem] bg-gradient-to-br flex items-center justify-center text-white shadow-md transition-all duration-500 overflow-hidden ${settings.is_enabled
-                            ? 'from-brand shadow-brand/20'
-                            : (isDarkTheme ? 'from-slate-700 to-slate-800 shadow-slate-900 border border-slate-700' : 'from-slate-400 to-slate-500 shadow-slate-200')}`}>
+                        <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-[1.25rem] bg-white flex items-center justify-center shadow-md overflow-hidden relative shrink-0">
                             {settings.bot_avatar ? (
                                 <img
                                     src={settings.bot_avatar}
@@ -458,64 +461,66 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                     alt=""
                                 />
                             ) : (
-                                <div className={`w-full h-full flex items-center justify-center transition-all duration-500 ${categoryId ? 'bg-brand' : 'bg-gradient-to-br from-[#c2410c] to-[#9a3412]'}`}>
-                                    <Bot className="w-6 h-6" />
+                                <div className={`w-full h-full flex items-center justify-center transition-all duration-500 ${categoryId ? 'bg-brand' : 'bg-gradient-to-br from-orange-600 to-orange-800'}`}>
+                                    <Bot className="w-6 h-6 text-white" />
                                 </div>
                             )}
                         </div>
-                        <h1 className={`text-3xl font-black tracking-tight ${isDarkTheme ? 'text-white' : 'text-slate-800'}`}>
+                        <span className="flex items-center gap-2 truncate">
                             {currentProperty?.name || 'Cấu hình AI'}
-                        </h1>
-                        <button
-                            onClick={() => setIsRenameModalOpen(true)}
-                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${isDarkTheme ? 'hover:bg-slate-800 text-slate-500 hover:text-slate-300' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}
-                            title="Sửa tên AI"
-                        >
-                            <Pencil className="w-4 h-4" />
-                        </button>
+                            <button
+                                onClick={() => setIsRenameModalOpen(true)}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:bg-white/20 text-white/70 hover:text-white shrink-0"
+                                title="Sửa tên AI"
+                            >
+                                <Pencil className="w-4 h-4" />
+                            </button>
+                        </span>
                     </div>
-                    <p className={`font-medium max-w-xl leading-relaxed text-sm ${isDarkTheme ? 'text-slate-500' : 'text-slate-400 opacity-80'}`}>
-                        {currentProperty?.description || 'Quản lý kiến thức và cấu hình nâng cao cho AI của bạn.'}
-                    </p>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                    {!props.hideLogsTab && (
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            icon={Activity}
-                            iconClassName="text-brand"
-                            className={`h-10 px-4 shadow-sm text-[11px] font-bold gap-2 ${isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-slate-200 hover:border-brand/30' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-brand/30'}`}
-                            onClick={() => {
-                                setSelectedBotLogsId(selectedProperty);
-                                setActiveTab('logs');
-                            }}
-                        >
-                            LOGS & STATS
-                        </Button>
-                    )}
-                    {!chatbots.some(c => c.id === selectedProperty) && properties.some(p => p.id === selectedProperty) && (
-                        <a
-                            href={`#/web-tracking?propertyId=${selectedProperty}&view=report`}
-                            className={`h-10 px-6 rounded-xl border text-[11px] font-bold uppercase tracking-widest transition-all flex items-center gap-2 shadow-sm ${isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700 hover:border-slate-600' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'}`}
-                        >
-                            <BarChart2 className="w-4 h-4 text-slate-400" />
-                            Web Tracking
-                        </a>
-                    )}
-                    <button
-                        onClick={() => {
+                }
+                subtitle={currentProperty?.description || 'Quản lý kiến thức và cấu hình nâng cao cho AI của bạn.'}
+                showStatus={true}
+                statusText={settings.is_enabled ? 'Active Mode' : 'AI Muted'}
+                customGradient={categoryId ? "from-brand to-brand-dark" : undefined}
+                shadowColor={categoryId ? "shadow-brand/30" : undefined}
+                actions={[
+                    ...(!props.hideLogsTab ? [{
+                        label: 'LOGS & STATS',
+                        icon: Activity,
+                        onClick: () => {
+                            setSelectedBotLogsId(selectedProperty);
+                            setActiveTab('logs');
+                        }
+                    }] : []),
+                    ...(!chatbots.some(c => c.id === selectedProperty) && properties.some(p => p.id === selectedProperty) ? [
+                        {
+                            label: 'WEB TRACKING',
+                            icon: Globe,
+                            onClick: () => {
+                                window.location.hash = `#/web-tracking?propertyId=${selectedProperty}&view=report`;
+                            }
+                        },
+                        {
+                            label: 'THỐNG KÊ AI',
+                            icon: BarChart2,
+                            onClick: () => setShowAIStats(true)
+                        }
+                    ] : []),
+                    {
+                        label: 'PHÂN TÍCH AI',
+                        title: 'Phân tích & Tối ưu luồng chat',
+                        icon: Zap,
+                        primary: true,
+                        onClick: () => {
                             setActiveTab('inbox');
                             setTriggerAnalysisModal(Date.now());
-                        }}
-                        className="h-10 px-6 rounded-xl text-white text-[11px] font-black uppercase tracking-widest shadow-md hover:shadow-lg hover:translate-y-[-2px] active:translate-y-0 transition-all flex items-center gap-2"
-                        style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}20` }}
-                    >
-                        <Zap className="w-4 h-4 text-white fill-white animate-pulse" />
-                        Phân tích AI
-                    </button>
-                </div>
-            </div>
+                        }
+                    }
+                ]}
+            />
+
+            <div className={`rounded-[24px] lg:rounded-[32px] border shadow-sm p-4 lg:p-6 min-h-[600px] transition-colors duration-500 animate-in fade-in slide-in-from-bottom-5 delay-200 ${isDarkTheme ? 'bg-[rgba(13,17,23,0.6)] backdrop-blur-md border-slate-800 shadow-none' : 'bg-white border-slate-200 shadow-sm'}`}>
+
 
             {/* Tabs */}
             <div className={`flex items-center gap-2 lg:gap-3 mb-6 lg:mb-8 border-b pb-5 overflow-x-auto scrollbar-hide ${isDarkTheme ? 'border-slate-800' : 'border-slate-100'}`}>
@@ -546,14 +551,6 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                             <MessageSquare className="w-4 h-4" />
                             HỘP THƯ
                         </button>
-                        <button
-                            onClick={() => setActiveTab('scenarios')}
-                            className={`flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-[10px] lg:text-[11px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${activeTab === 'scenarios'
-                                ? (isDarkTheme ? 'bg-slate-800 text-slate-200 border border-slate-700 shadow-sm' : 'bg-slate-100 text-slate-700 shadow-sm border border-slate-200')
-                                : (isDarkTheme ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600')}`}
-                        >
-                            <Zap className="w-4 h-4" /> KỊCH BẢN
-                        </button>
                     </>
                 ) : (
                     <>
@@ -573,14 +570,6 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                 : (isDarkTheme ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600')}`}
                         >
                             <BookOpen className="w-4 h-4" /> DỮ LIỆU HUẤN LUYỆN
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('scenarios')}
-                            className={`flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-[10px] lg:text-[11px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${activeTab === 'scenarios'
-                                ? (isDarkTheme ? 'bg-slate-800 text-slate-200 border border-slate-700 shadow-sm' : 'bg-slate-100 text-slate-700 shadow-sm border border-slate-200')
-                                : (isDarkTheme ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600')}`}
-                        >
-                            <Zap className="w-4 h-4" /> KỊCH BẢN
                         </button>
                         <button
                             onClick={() => setActiveTab('instruction')}
@@ -608,19 +597,56 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
             {/* Tab Content */}
             <div className="tab-content-container">
                 <div className={activeTab === 'training' ? "block animate-in fade-in duration-300" : "hidden"}>
-                    <div className="space-y-6">
-                        <div className={`flex flex-col lg:flex-row justify-between lg:items-center p-4 lg:p-6 rounded-2xl lg:rounded-[24px] border gap-4 ${isDarkTheme ? 'bg-slate-800/20 border-slate-800' : 'bg-slate-50/50 border-slate-100'}`}>
+                    {/* FEATURE SELECTOR TABS */}
+                    <div className={`flex items-center gap-8 border-b mb-8 px-2 ${isDarkTheme ? 'border-slate-800' : 'border-slate-200/80'}`}>
+                        <button 
+                            onClick={() => setActiveFeatureTab('scenarios')}
+                            className={`relative pb-4 flex items-center gap-2.5 text-[15px] font-bold transition-all ${activeFeatureTab === 'scenarios' ? (isDarkTheme ? 'text-white' : 'text-slate-900') : (isDarkTheme ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600')}`}
+                        >
+                            <Zap className={`w-4 h-4 ${activeFeatureTab === 'scenarios' ? 'text-orange-500' : 'opacity-70'}`} />
+                            Kịch bản hội thoại
+                            {activeFeatureTab === 'scenarios' && (
+                                <span className="absolute bottom-[-1px] left-0 w-full h-[3px] bg-orange-500 rounded-t-full"></span>
+                            )}
+                        </button>
+
+                        <button 
+                            onClick={() => setActiveFeatureTab('knowledge')}
+                            className={`relative pb-4 flex items-center gap-2.5 text-[15px] font-bold transition-all ${activeFeatureTab === 'knowledge' ? (isDarkTheme ? 'text-white' : 'text-slate-900') : (isDarkTheme ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600')}`}
+                        >
+                            <Database className={`w-4 h-4 ${activeFeatureTab === 'knowledge' ? 'text-orange-500' : 'opacity-70'}`} />
+                            Kho kiến thức AI
+                            {activeFeatureTab === 'knowledge' && (
+                                <span className="absolute bottom-[-1px] left-0 w-full h-[3px] bg-orange-500 rounded-t-full"></span>
+                            )}
+                        </button>
+                    </div>
+
+                    {/* CONTENT: SCENARIOS */}
+                    <div className={`transition-all duration-500 py-4 ${activeFeatureTab === 'scenarios' ? 'block animate-in fade-in slide-in-from-top-4' : 'hidden'}`}>
+                        <ScenarioManager
+                            propertyId={selectedProperty}
+                            isDarkTheme={isDarkTheme}
+                            brandColor={brandColor}
+                        />
+                    </div>
+
+                    {/* CONTENT: KNOWLEDGE BASE */}
+                    <div className={`transition-all duration-500 py-4 space-y-6 ${activeFeatureTab === 'knowledge' ? 'block animate-in fade-in slide-in-from-top-4' : 'hidden'}`}>
+                        <div className={`flex flex-col lg:flex-row justify-between lg:items-center p-5 lg:p-6 rounded-[24px] border gap-5 shadow-sm ${isDarkTheme ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
                             <div className="flex items-center gap-4">
-                                <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl flex items-center justify-center shadow-sm border ${isDarkTheme ? 'bg-slate-900 border-slate-700 text-slate-400' : 'bg-white border-slate-100 text-slate-800'}`}>
-                                    <Database className="w-5 h-5 lg:w-6 lg:h-6" />
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-sm border hidden md:flex ${isDarkTheme ? 'bg-slate-700 border-slate-600' : 'bg-white border-slate-200'}`}>
+                                    <Database className={`w-5 h-5 ${isDarkTheme ? 'text-orange-400' : 'text-orange-500'}`} />
                                 </div>
-                                <div>
-                                    <h3 className={`text-base lg:text-lg font-bold ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`}>Kho kiến thức AI</h3>
-                                    <p className="text-[9px] lg:text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">Sắp xếp thứ tự ưu tiên kéo thả Folder</p>
+                                <div className="hidden md:block">
+                                    <h3 className={`text-lg font-black tracking-tight ${isDarkTheme ? 'text-white' : 'text-slate-800'}`}>Kho Kiến Thức AI</h3>
+                                    <div className={`text-[12px] font-medium mt-0.5 ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
+                                        Công cụ quản lý dữ liệu
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 lg:pb-0 shrink-0">
-                                <button onClick={() => setIsFolderModalOpen(true)} className={`h-9 lg:h-11 px-3 lg:px-5 rounded-lg lg:rounded-xl text-[10px] lg:text-[11px] font-bold border transition-all flex items-center gap-2 shadow-sm whitespace-nowrap ${isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'}`}>
+                            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide shrink-0">
+                                <button onClick={() => setIsFolderModalOpen(true)} className={`h-9 lg:h-11 px-3 lg:px-5 rounded-lg lg:rounded-xl text-[10px] lg:text-[11px] font-bold border transition-all flex items-center gap-2 shadow-sm whitespace-nowrap ${isDarkTheme ? 'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'}`}>
                                     <FolderPlus className={`w-3.5 h-3.5 lg:w-4 h-4 ${isDarkTheme ? 'fill-[#ffc800] text-[#ffc800]' : 'fill-[#fbbf24] text-[#fbbf24]'}`} /> Tạo Thư Mục
                                 </button>
                                 <button
@@ -642,16 +668,16 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                     <button
                                         onClick={() => setIsSynonymsModalOpen(true)}
                                         disabled={loading}
-                                        className={`h-9 lg:h-11 px-3 lg:px-5 rounded-lg lg:rounded-xl text-[10px] lg:text-[11px] font-bold border transition-all duration-500 flex items-center gap-2 shadow-sm whitespace-nowrap ${isDarkTheme ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+                                        className={`h-9 lg:h-11 px-3 lg:px-5 rounded-lg lg:rounded-xl text-[10px] lg:text-[11px] font-bold border transition-all duration-500 flex items-center gap-2 shadow-sm whitespace-nowrap ${isDarkTheme ? 'bg-slate-700 text-slate-300 border-slate-600 hover:bg-slate-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
                                     >
                                         <BrainCircuit className="w-3.5 h-3.5 lg:w-4 h-4 text-slate-400" />
                                         Học Đồng Nghĩa
                                     </button>
-                                    <div className={`hidden lg:block h-8 w-px mx-1 ${isDarkTheme ? 'bg-slate-800' : 'bg-slate-200'}`}></div>
+                                    <div className={`hidden lg:block h-8 w-px mx-1 ${isDarkTheme ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
                                     {mainTab !== 'chat' && (
                                         <button
                                             onClick={handleTestAI}
-                                            className={`h-9 lg:h-11 px-3 lg:px-5 rounded-lg lg:rounded-xl border font-bold text-[10px] lg:text-[11px] transition-all flex items-center gap-2 group active:scale-95 shadow-sm whitespace-nowrap ${isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-slate-100' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900'}`}
+                                            className={`h-9 lg:h-11 px-3 lg:px-5 rounded-lg lg:rounded-xl border font-bold text-[10px] lg:text-[11px] transition-all flex items-center gap-2 group active:scale-95 shadow-sm whitespace-nowrap ${isDarkTheme ? 'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600 hover:text-slate-100' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900'}`}
                                         >
                                             <FlaskConical className={`w-3.5 h-3.5 lg:w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors ${isDarkTheme ? 'group-hover:text-slate-200' : ''}`} />
                                             <span>Test AI</span>
@@ -659,10 +685,10 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                     )}
                                     <div
                                         onClick={() => toggleChatbotStatus(settings.is_enabled ? 0 : 1)}
-                                        className={`flex items-center gap-3 px-3 lg:px-5 py-2 rounded-lg lg:rounded-xl border cursor-pointer transition-all select-none shadow-sm h-9 lg:h-11 whitespace-nowrap ${isDarkTheme ? 'bg-slate-800 border-slate-700 hover:border-slate-600' : 'bg-white border-slate-200 hover:border-slate-400'}`}
+                                        className={`flex items-center gap-3 px-3 lg:px-5 py-2 rounded-lg lg:rounded-xl border cursor-pointer transition-all select-none shadow-sm h-9 lg:h-11 whitespace-nowrap ${isDarkTheme ? 'bg-slate-700 border-slate-600 hover:border-slate-500' : 'bg-white border-slate-200 hover:border-slate-300'}`}
                                     >
                                         <span className={`text-[9px] lg:text-[10px] font-black uppercase tracking-tight ${settings.is_enabled ? (isDarkTheme ? 'text-slate-200' : 'text-slate-700') : 'text-slate-400'}`}>{settings.is_enabled ? 'Đang chờ' : 'Tạm dừng'}</span>
-                                        <div className={`w-8 h-4 lg:w-9 lg:h-5 rounded-full p-0.5 transition-all duration-300 flex items-center ${settings.is_enabled ? 'bg-emerald-500 justify-end' : (isDarkTheme ? 'bg-slate-700 justify-start' : 'bg-slate-300 justify-start')}`}>
+                                        <div className={`w-8 h-4 lg:w-9 lg:h-5 rounded-full p-0.5 transition-all duration-300 flex items-center ${settings.is_enabled ? 'bg-emerald-500 justify-end' : (isDarkTheme ? 'bg-slate-800 justify-start' : 'bg-slate-200 justify-start')}`}>
                                             <div className="w-3 h-3 lg:w-4 lg:h-4 bg-white rounded-full shadow-sm"></div>
                                         </div>
                                     </div>
@@ -695,8 +721,8 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                     onClick={handleTrainDocs}
                                     disabled={loading || docs.some(d => d.status === 'processing')}
                                     className={`
-                                        h-11 px-8 rounded-xl bg-gradient-to-br from-brand to-brand-dark text-white text-[11px] font-black uppercase tracking-widest shadow-md transition-all flex items-center gap-2 shrink-0 border-none
-                                        ${(loading || docs.some(d => d.status === 'processing')) ? 'opacity-70 cursor-wait' : 'hover:-translate-y-0.5 active:translate-y-0 hover:shadow-brand/20'}
+                                        h-11 px-8 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-black uppercase tracking-widest shadow-md transition-all flex items-center gap-2 shrink-0 border-none
+                                        ${(loading || docs.some(d => d.status === 'processing')) ? 'opacity-70 cursor-wait' : 'hover:-translate-y-0.5 active:translate-y-0 hover:shadow-orange-500/30'}
                                     `}
                                 >
                                     {(loading || docs.some(d => d.status === 'processing')) ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
@@ -1157,7 +1183,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                     placeholder="Nhập câu hỏi gợi ý..."
                                                     className={`flex-1 h-11 px-4 border-2 rounded-xl text-xs font-bold outline-none transition-all ${isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-200 focus:border-brand' : 'bg-white border-slate-200 focus:border-amber-400'}`}
                                                 />
-                                                <Button size="md" className="bg-gradient-to-br from-brand to-brand-dark border-none text-white font-bold shadow-md hover:brightness-110 transition-all" onClick={addQuickAction}>Thêm</Button>
+                                                <Button size="md" className="bg-orange-500 hover:bg-orange-600 border-none text-white font-bold shadow-md shadow-orange-500/20 active:scale-95 transition-all" onClick={addQuickAction}>Thêm</Button>
                                             </div>
                                             <div className="flex flex-wrap gap-2">
                                                 {settings.quick_actions.map((qa: string, idx: number) => (
@@ -1685,8 +1711,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                             <button
                                 onClick={handleLocalSaveSettings}
                                 disabled={loading}
-                                className="w-full py-6 rounded-2xl text-white text-sm font-black uppercase tracking-widest shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                                style={{ backgroundColor: brandColor, boxShadow: `0 20px 40px ${brandColor}30` }}
+                                className="w-full py-6 rounded-2xl text-white text-sm font-black uppercase tracking-widest shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed bg-orange-500 hover:bg-orange-600 shadow-orange-500/30"
                             >
                                 {loading ? (
                                     <RefreshCw className="w-5 h-5 animate-spin" />
@@ -1707,8 +1732,23 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                         brandColor={brandColor}
                     />
                 </div>
-            </div >
+            </div>
+            {/* END MAIN DASHBOARD CONTAINER */}
+            </div>
+        </div>
 
+            {showAIStats && (
+                <AIStatsModal 
+                    onClose={() => setShowAIStats(false)} 
+                    propertyId={selectedProperty} 
+                    brandColor={brandColor}
+                    onOpenAnalysis={() => {
+                        setShowAIStats(false);
+                        setActiveTab('inbox');
+                        setTriggerAnalysisModal(Date.now());
+                    }}
+                />
+            )}
 
             <InputModal
                 isOpen={isRenameModalOpen}
@@ -1730,3 +1770,5 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
 };
 
 export default React.memo(AITrainingDetail);
+
+

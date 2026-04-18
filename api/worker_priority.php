@@ -50,10 +50,15 @@ try {
     $priorityFlowId = $_GET['priority_flow_id'] ?? null;
     $priorityDepth = (int) ($_GET['depth'] ?? 0);
 
-    if ($priorityDepth > 5) {
-        traceLog("[Priority] ABORT: Max depth (5)");
-        file_put_contents($debugLogFile, "Aborting: Max depth reached (5)\n", FILE_APPEND);
+    if ($priorityDepth > 8) {
+        traceLog("[Priority] ABORT: Max depth (8) exceeded. Possible infinite loop.");
+        file_put_contents($debugLogFile, "Aborting: Max depth reached (8)\n", FILE_APPEND);
         exit;
+    }
+
+    // [MONITOR] Warn at depth 6+ without hard-failing — helps detect unexpectedly deep chains
+    if ($priorityDepth >= 6) {
+        traceLog("[Priority] WARNING: Deep chain detected (depth={$priorityDepth}). Review flow triggers for loops.");
     }
 
     $logs = [];
@@ -70,7 +75,9 @@ try {
 
 // Hardcoded production URL for tracking
 $apiUrl = API_BASE_URL;
-$stmtSettings = $pdo->query("SELECT `key`, `value` FROM system_settings");
+// [FIX P39-WP1] Only fetch required settings keys — avoids loading ALL secrets (smtp_password, API keys) into memory
+$stmtSettings = $pdo->prepare("SELECT `key`, `value` FROM system_settings WHERE `key` IN ('smtp_user','smtp_host','max_messages_per_day')");
+$stmtSettings->execute();
 $settings = [];
 while ($row = $stmtSettings->fetch()) {
     $settings[$row['key']] = $row['value'];
@@ -78,6 +85,12 @@ while ($row = $stmtSettings->fetch()) {
 $defaultSender = !empty($settings['smtp_user']) ? $settings['smtp_user'] : "marketing@ka-en.com.vn";
 $mailer = new Mailer($pdo, $apiUrl, $defaultSender);
 $flowExecutor = new FlowExecutor($pdo, $mailer, $apiUrl);
+
+// [FIX P9-C2] MySQL version guard — SKIP LOCKED requires MySQL ≥ 8.0.
+// worker_priority.php uses SKIP LOCKED in 2 places (Scenario B chain lock + Scenario D batch).
+// Without this guard: Fatal Syntax Error on MySQL 5.7 → ALL priority enrollments fail.
+$mysqlVersionPrio = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
+$skipLockedClause = version_compare($mysqlVersionPrio, '8.0.0', '>=') ? 'SKIP LOCKED' : '';
 
 $now = date('Y-m-d H:i:s');
 $currentTime = date('H:i');
@@ -283,9 +296,13 @@ try {
                     $stmtCheck->execute([$prioritySid, $flow['id']]);
                     $existingState = $stmtCheck->fetch();
 
+                    // [FIX BUG-H5] Initialize defaults BEFORE the if-block to prevent
+                    // PHP 8.1+ "Undefined variable" notices when $existingState is null/false.
+                    // These vars are used in $debugInfo below regardless of enrollment state.
+                    $allowMultiple = $fConfig['allowMultiple'] ?? false;
+                    $maxEnrollments = (int) ($fConfig['maxEnrollments'] ?? 0);
+
                     if ($existingState) {
-                        $allowMultiple = $fConfig['allowMultiple'] ?? false;
-                        $maxEnrollments = (int) ($fConfig['maxEnrollments'] ?? 0);
 
                         // Check Max Enrollments if applicable
                         if ($maxEnrollments > 0) {
@@ -417,7 +434,10 @@ try {
                             $blockCondition = "1=1"; // Always block if any record exists
                         } else {
                             // For recurring: Block if (in progress) OR (recently completed within cooldown)
-                            $blockCondition = "status IN ('waiting', 'processing') OR updated_at > DATE_SUB(NOW(), INTERVAL $cooldownHours HOUR)";
+                        // [FIX] $cooldownHours is cast (int) on L285 — safe to use in INTERVAL.
+                        // PDO does not accept params inside INTERVAL expressions.
+                        $safeChHours = (int)$cooldownHours;
+                        $blockCondition = "status IN ('waiting', 'processing') OR updated_at > DATE_SUB(NOW(), INTERVAL $safeChHours HOUR)";
                         }
 
                         $sqlIns = "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at)
@@ -497,37 +517,62 @@ try {
                                  s.email as sub_email, s.first_name, s.last_name, s.company_name, s.phone_number, s.job_title,
                                  s.status as sub_status, s.tags as sub_tags, s.id as sub_id, s.date_of_birth, s.anniversary_date, s.joined_at,
                                  s.city, s.country, s.gender, s.last_os, s.last_device, s.last_browser, s.last_city,
-                                 s.stats_opened, s.stats_clicked, s.last_open_at, s.last_click_at,
+                                 s.stats_opened, s.stats_clicked, s.last_open_at, s.last_click_at, s.timezone, s.is_zalo_follower,
                                  s.custom_attributes
                                  FROM subscriber_flow_states q 
                                  JOIN flows f ON q.flow_id = f.id 
                                  JOIN subscribers s ON q.subscriber_id = s.id 
                                  WHERE q.id = ? AND q.subscriber_id = ? AND q.flow_id = ? AND q.status IN ('waiting', 'processing') AND f.status = 'active'
-                                 LIMIT 1 FOR UPDATE");
+                                 LIMIT 1 FOR UPDATE $skipLockedClause");
+        // [FIX] Added SKIP LOCKED to prevent duplicate chain execution when two concurrent priority
+        // workers are fired for the same queue_id (e.g. double-click webhook, network retry).
+        // Without SKIP LOCKED: Worker-B blocks → A commits → B finds 'waiting' row → re-executes → duplicate send.
+        // With SKIP LOCKED: Worker-B finds 0 rows while A holds the lock → exits cleanly.
 
         $stmtItem->execute([$priorityQueueId, $prioritySid, $priorityFlowId]);
         $priorityItem = $stmtItem->fetch();
 
         if ($priorityItem) {
             $initialStatus = $priorityItem['status'];
+
+            // [DOUBLE-CHECK LOCK] Only execute if the item was genuinely 'waiting'.
+            // If status is already 'processing', another worker claimed it first.
+            // This shouldn't happen with SKIP LOCKED (we'd have gotten 0 rows),
+            // but acts as a defensive safety net for MySQL versions without SKIP LOCKED support.
+            if ($initialStatus === 'processing') {
+                $logs[] = "[Priority-Chain] Item $priorityQueueId already 'processing' (race condition guard). Skipping to prevent duplicate.";
+                $pdo->commit();
+                exit;
+            }
+
             $pdo->prepare("UPDATE subscriber_flow_states SET status = 'processing', updated_at = NOW() WHERE id = ?")->execute([$priorityQueueId]);
             $item = $priorityItem;
+            // [FIX] The JOIN query aliases s.email as 'sub_email'. FlowExecutor and
+            // replaceMergeTags both need the 'email' key — map it here to prevent
+            // empty {{email}} merge tags and wrong Mailer send-to address.
+            $item['email'] = $item['sub_email'] ?? '';
             $queueIdToUpdate = $priorityQueueId;
             $logs[] = "[Priority-Chain] Item $priorityQueueId found. Initial status: '{$initialStatus}'. Now 'processing'.";
+
         } else {
-            $logs[] = "[Priority-Chain] Item $priorityQueueId not found or not in 'waiting'/'processing' state. Exiting without further action.";
+            $logs[] = "[Priority-Chain] Item $priorityQueueId not found, locked by another worker, or not in 'waiting'/'processing' state. Exiting without further action.";
             $pdo->commit();
             exit;
         }
+
     }
     // Scenario D: Batch Mode (Triggered by enrollSubscribersBulk or Cron)
     else if (($_GET['mode'] ?? '') === 'batch') {
         $logs[] = "[Priority-Batch] Processing top 50 waiting priority items.";
+        // [FIX] Added FOR UPDATE SKIP LOCKED to prevent double-dispatch when two cron instances
+        // execute simultaneously. Without it, both instances SELECT the same 50 'waiting' rows
+        // and each dispatches a separate priority worker for the same subscriber \u2192 duplicate sends.
+        // SKIP LOCKED allows each concurrent cron to acquire a distinct, non-overlapping subset.
         $stmtBatch = $pdo->prepare("SELECT q.id as queue_id, q.subscriber_id, q.flow_id 
                                    FROM subscriber_flow_states q
                                    JOIN flows f ON q.flow_id = f.id
                                    WHERE q.status = 'waiting' AND q.scheduled_at <= NOW() AND f.status = 'active'
-                                   ORDER BY q.created_at ASC LIMIT 50");
+                                   ORDER BY q.created_at ASC LIMIT 50 FOR UPDATE $skipLockedClause");
         $stmtBatch->execute();
         $batchItems = $stmtBatch->fetchAll();
 
@@ -563,8 +608,8 @@ try {
                 curl_setopt($ch, CURLOPT_TIMEOUT, 30);       // Give each worker 30s to complete
                 curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3); // Fail fast on connection errors
                 curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
                 curl_multi_add_handle($mh, $ch);
                 $handles[] = $ch;
             }
@@ -629,10 +674,12 @@ try {
     $stmtCap->execute([$subscriberId, $todayStart]);
     $totalSentToday = (int) $stmtCap->fetchColumn();
 
+    // [BUG-FIX] Decode fConfig from item FIRST so exitConditions below read the CORRECT flow's config.
+    // Previously fConfig here referenced the last-iterated $flow['config'] from Scenario A loop,
+    // which could be a DIFFERENT flow when multiple flows matched the same trigger.
+    $fConfig = is_string($item['flow_config']) ? json_decode($item['flow_config'], true) : ($item['flow_config'] ?: []);
+
     // [EXIT CHECK] Pre-compute exit types BEFORE the activity SELECT.
-    // [FIX] Mirrors the same optimization applied to worker_flow.php:
-    // build exitActivityTypes first → query ONLY those types with no LIMIT for exit checks.
-    // The general LIMIT 500 cache below still covers condition-step logic.
     $exitConditionsEarly = $fConfig['exitConditions'] ?? [];
     $exitActivityTypesEarly = [];
     if (!empty($exitConditionsEarly)) {
@@ -674,9 +721,9 @@ try {
     // Note: We use intermediate commits for each step
     $pdo->beginTransaction();
 
-    // FIX: flow_steps might already be an array if from scenario A enrollment
+    // [DECODED ABOVE] flow_steps might already be an array if from scenario A enrollment
     $flowSteps = is_string($item['flow_steps']) ? json_decode($item['flow_steps'], true) : $item['flow_steps'];
-    $fConfig = is_string($item['flow_config']) ? json_decode($item['flow_config'], true) : ($item['flow_config'] ?: []);
+    // $fConfig already decoded above (before exit-condition pre-fetch) — do NOT redeclare here
 
     $currentStepId = trim($item['step_id'] ?? '');
     $stepsProcessedInRun = 0;
@@ -868,6 +915,10 @@ try {
     // processed < 10 email steps, those logs would be silently lost without this call.
     if (function_exists('flushActivityLogBuffer')) {
         flushActivityLogBuffer($pdo);
+    }
+    // [PHASE 8] Flush FlowExecutor RAM Buffer before exit context
+    if (isset($flowExecutor) && method_exists($flowExecutor, 'flushStatsBuffer')) {
+        $flowExecutor->flushStatsBuffer();
     }
     $mailer->closeConnection();
 

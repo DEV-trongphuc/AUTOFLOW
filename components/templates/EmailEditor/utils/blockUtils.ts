@@ -28,7 +28,7 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
         }));
         return {
             id, type: 'section', content: '',
-            style: createStyle({ paddingTop: '0px', paddingBottom: '0px', backgroundColor: 'transparent', contentBackgroundColor: 'transparent' }),
+            style: createStyle({ paddingTop: '0px', paddingBottom: '0px', backgroundColor: '#ffffff', contentBackgroundColor: 'transparent' }),
             children: [{ id: createUniqueId(), type: 'row', content: '', style: createStyle({ display: 'table', backgroundColor: 'transparent', width: '100%', paddingTop: '15px', paddingRight: '15px', paddingBottom: '15px', paddingLeft: '15px' }), children: cols }]
         };
     }
@@ -511,32 +511,36 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
         };
     }
 
-    // NEW: Feature Card (Jules Style)
+    // NEW: Feature Card (Couple / Partners Style)
     if (type === 'feature_card') {
         return {
             id, type: 'section', content: '',
-            style: createStyle({ backgroundColor: 'transparent', paddingBottom: '24px' }),
+            style: createStyle({ backgroundColor: 'transparent', paddingBottom: '16px' }),
             children: [{
                 id: createUniqueId(), type: 'row' as const, content: '',
                 style: createStyle({
-                    display: 'table', width: '100%', backgroundColor: '#ffffff', // White BG
-                    paddingTop: '0px', paddingRight: '0px', paddingBottom: '0px', paddingLeft: '0px',
-                    borderRadius: '16px', borderTopWidth: '1px', borderBottomWidth: '1px', borderLeftWidth: '1px', borderRightWidth: '1px', borderStyle: 'solid', borderColor: '#e2e8f0', // Card border
+                    display: 'table', width: '90%', backgroundColor: '#f1f5f9', // Slate 100 Background
+                    marginTop: '0', marginRight: 'auto', marginBottom: '0', marginLeft: 'auto',
+                    paddingTop: '16px', paddingRight: '20px', paddingBottom: '16px', paddingLeft: '20px',
+                    borderRadius: '12px', borderTopWidth: '0px', borderBottomWidth: '0px', borderLeftWidth: '0px', borderRightWidth: '0px', borderStyle: 'none', 
                     noStack: true
                 }),
                 children: [
                     {
                         id: createUniqueId(), type: 'column' as const, content: '',
-                        style: createStyle({ width: '40%', verticalAlign: 'middle', paddingLeft: '24px', paddingRight: '24px', paddingTop: '24px', paddingBottom: '24px', textAlign: 'center' }),
-                        children: [{ id: createUniqueId(), type: 'image' as const, content: 'https://cdn-icons-png.flaticon.com/512/2040/2040504.png', style: createStyle({ width: '120px', height: 'auto', display: 'block', marginLeft: 'auto', marginRight: 'auto' }), altText: 'Icon' }]
+                        style: createStyle({ width: '25%', verticalAlign: 'top', paddingRight: '16px', textAlign: 'center' }),
+                        children: [{ 
+                            id: createUniqueId(), type: 'image' as const, 
+                            content: 'https://img.icons8.com/ios-filled/50/ffffff/user-group-man-man.png', 
+                            style: createStyle({ width: '44px', height: 'auto', display: 'inline-block', backgroundColor: '#4f46e5', borderRadius: '12px', paddingTop: '10px', paddingBottom: '10px', paddingLeft: '10px', paddingRight: '10px' }), 
+                            altText: 'Icon' 
+                        }]
                     },
                     {
                         id: createUniqueId(), type: 'column' as const, content: '',
-                        style: createStyle({ width: '60%', verticalAlign: 'middle', paddingRight: '24px', paddingLeft: '24px', paddingTop: '24px', paddingBottom: '24px' }),
+                        style: createStyle({ width: '75%', verticalAlign: 'middle' }),
                         children: [
-                            { id: createUniqueId(), type: 'text' as const, content: '<h3 style="font-size: 20px; font-weight: bold; margin: 0 0 8px; color: #1e1b4b; text-align: left;">Hệ sinh thái học tập</h3>', style: createStyle({ textAlign: 'left' }) },
-                            { id: createUniqueId(), type: 'text' as const, content: '<p style="font-size: 14px; color: #475569; margin: 0 0 16px; line-height: 1.6; text-align: left;">Mô tả ngắn gọn về tính năng hoặc dịch vụ của bạn tại đây để thu hút người dùng.</p>', style: createStyle({ textAlign: 'left' }) },
-                            { id: createUniqueId(), type: 'text' as const, content: '<p style="margin: 0; text-align: left;"><a href="#" style="font-size: 14px; font-weight: 600; color: #2563eb; text-decoration: none; text-align: left;">Xem chi tiết ></a></p>', style: createStyle({ textAlign: 'left' }) }
+                            { id: createUniqueId(), type: 'text' as const, content: '<h3 style="font-size: 16px; font-weight: bold; margin: 0 0 4px; color: #1e293b; text-align: left;">Couples and partners:</h3><p style="font-size: 14px; color: #475569; margin: 0; line-height: 1.5; text-align: left;">One for each person keeps habits aligned.</p>', style: createStyle({ textAlign: 'left' }) }
                         ]
                     }
                 ]
@@ -580,7 +584,7 @@ export const wrapElement = (block: EmailBlock): EmailBlock => {
 
     const sec = {
         id: createUniqueId(), type: 'section' as const, content: '',
-        style: createStyle({ paddingTop: '0px', paddingBottom: '0px', backgroundColor: 'transparent', contentBackgroundColor: 'transparent' }),
+        style: createStyle({ paddingTop: '0px', paddingBottom: '0px', backgroundColor: '#ffffff', contentBackgroundColor: 'transparent' }),
         children: [row]
     };
 

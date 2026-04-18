@@ -144,11 +144,14 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
                     $checks[] = "NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ? AND sfs.status IN ('waiting', 'processing'))";
                 } else {
                     // Recurring (Standard)
+                    // [FIX] $cooldownHours is cast (int) above — safe to interpolate in INTERVAL expr.
+                    // PDO does not support params inside INTERVAL, so explicit (int) cast is the correct pattern.
+                    $safeHours = (int)$cooldownHours;
                     $checks[] = "NOT EXISTS (
                         SELECT 1 FROM subscriber_flow_states sfs 
                         WHERE sfs.subscriber_id = s.id 
                         AND sfs.flow_id = ? 
-                        AND (sfs.status IN ('waiting', 'processing') OR sfs.updated_at > DATE_SUB(NOW(), INTERVAL $cooldownHours HOUR))
+                        AND (sfs.status IN ('waiting', 'processing') OR sfs.updated_at > DATE_SUB(NOW(), INTERVAL $safeHours HOUR))
                     )";
                 }
                 $existsCheckSql = "AND " . implode(" AND ", $checks);
@@ -192,7 +195,12 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
     }
 
     // 2. Trigger worker via Job Queue (10M UPGRADE)
-    dispatchQueueJob($pdo, 'flows', ['mode' => 'batch']);
+    // [PERF FIX] Only dispatch if at least one subscriber was actually enrolled.
+    // Previously this fired unconditionally — even when all 500 candidates were already
+    // in the flow — creating queue noise and unnecessary worker wake-ups.
+    if ($enrolledTotal > 0) {
+        dispatchQueueJob($pdo, 'flows', ['mode' => 'batch']);
+    }
 
     return $enrolledTotal;
 }

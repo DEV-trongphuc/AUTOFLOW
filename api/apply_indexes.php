@@ -1,52 +1,42 @@
 <?php
 require_once 'db_connect.php';
-apiHeaders();
+header('Content-Type: text/plain');
 
 try {
-    $pdo->query("CREATE INDEX idx_subact_type_ref ON subscriber_activity (type, reference_id)");
-    echo "Index idx_subact_type_ref examined.<br>";
-} catch (Throwable $e) {}
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-try {
-    $pdo->query("CREATE INDEX idx_subact_feed ON subscriber_activity (subscriber_id, created_at DESC)");
-    echo "Index idx_subact_feed examined.<br>";
-} catch (Throwable $e) {}
+    $indexes = [
+        ['table' => 'ai_messages', 'column' => 'conversation_id', 'idx_name' => 'idx_conversation_id'],
+        ['table' => 'ai_messages', 'column' => 'created_at', 'idx_name' => 'idx_created_at'],
+        ['table' => 'ai_conversations', 'column' => 'property_id', 'idx_name' => 'idx_property_id'],
+        ['table' => 'ai_conversations', 'column' => 'last_message_at', 'idx_name' => 'idx_last_msg_at'],
+        ['table' => 'meta_subscribers', 'column' => 'psid', 'idx_name' => 'idx_psid'],
+        ['table' => 'zalo_subscribers', 'column' => 'zalo_user_id', 'idx_name' => 'idx_zalo_user_id'],
+        ['table' => 'zalo_message_queue', 'columns' => 'zalo_user_id, processed', 'idx_name' => 'idx_queue_user_proc'],
+        ['table' => 'meta_message_logs', 'column' => 'mid', 'idx_name' => 'idx_meta_mid'],
+        ['table' => 'web_page_views', 'column' => 'visitor_id', 'idx_name' => 'idx_visitor_pv'],
+        ['table' => 'web_page_views', 'column' => 'loaded_at', 'idx_name' => 'idx_loaded_pv'],
+        ['table' => 'web_events', 'column' => 'visitor_id', 'idx_name' => 'idx_visitor_ev'],
+        ['table' => 'web_events', 'column' => 'created_at', 'idx_name' => 'idx_created_ev'],
+        ['table' => 'voucher_codes', 'columns' => 'campaign_id, status', 'idx_name' => 'idx_voucher_camp_stat']
+    ];
 
-try {
-    $pdo->query("CREATE INDEX idx_subtags_tag ON subscriber_tags (tag_id)");
-    echo "Index idx_subtags_tag created.<br>";
-} catch (Throwable $e) { }
+    foreach ($indexes as $idx) {
+        $table = $idx['table'];
+        $idx_name = $idx['idx_name'];
+        $cols = $idx['columns'] ?? $idx['column'];
 
-try {
-    $pdo->query("CREATE INDEX idx_subact_flow_type ON subscriber_activity (flow_id, type)");
-    echo "Index idx_subact_flow_type created.<br>";
-} catch (Throwable $e) { }
-
-try {
-    $pdo->query("CREATE INDEX idx_subact_ref_type ON subscriber_activity (reference_id, type)");
-    echo "Index idx_subact_ref_type created.<br>";
-} catch (Throwable $e) { }
-
-try {
-    $pdo->query("CREATE INDEX idx_sublists_list ON subscriber_lists (list_id)");
-    echo "Index idx_sublists_list created.<br>";
-} catch (Throwable $e) { }
-
-try {
-    $pdo->query("CREATE INDEX idx_flow_states_step ON subscriber_flow_states (flow_id, step_id, status)");
-    echo "Index idx_flow_states_step created.<br>";
-} catch (Throwable $e) { }
-
-try {
-    $pdo->query("CREATE INDEX idx_zalo_sub_oa ON zalo_subscribers (zalo_user_id, admin_id)");
-    echo "Index idx_zalo_sub_oa created.<br>";
-} catch (Throwable $e) {
-    if (strpos($e->getMessage(), 'Duplicate key') !== false) {
-        echo "Index idx_zalo_sub_oa already exists.<br>";
-    } else {
-        echo "Error creating idx_zalo_sub_oa: " . $e->getMessage() . "<br>";
+        $stmt = $pdo->query("SHOW INDEX FROM `$table` WHERE Key_name = '$idx_name'");
+        if (!$stmt->fetch()) {
+            echo "Adding index $idx_name to $table ($cols)...\n";
+            $pdo->exec("ALTER TABLE `$table` ADD INDEX `$idx_name` ($cols)");
+            echo "  -> SUCCESS\n";
+        } else {
+            echo "Index $idx_name already exists on $table.\n";
+        }
     }
-}
 
-echo "<b>Database Indexes Checked and Applied Successfully.</b>";
-?>
+    echo "\nAll indexes checked and applied.\n";
+} catch (Exception $e) {
+    echo "ERROR: " . $e->getMessage();
+}

@@ -3041,7 +3041,7 @@ const CategoryChatPage: React.FC = () => {
                         onClick={() => navigate('/')}
                         className="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest text-sm hover:scale-105 active:scale-95 transition-all shadow-xl"
                     >
-                        Về trĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐang chờ
+                        Về trĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐđang chạy
                     </button>
                 </div>
             </div>

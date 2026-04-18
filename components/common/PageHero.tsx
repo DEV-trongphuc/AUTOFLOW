@@ -62,7 +62,7 @@ const PageHero: React.FC<PageHeroProps> = ({
                                     className={`flex items-center justify-center transition-all shadow-xl ${
                                         action.label 
                                             ? 'gap-2 px-6 h-[40px] rounded-xl font-black text-xs uppercase tracking-wider' 
-                                            : `h-[40px] w-[40px] rounded-xl ${isFirstIconOnly ? 'ml-auto' : ''}`
+                                            : `h-[40px] w-[40px] rounded-xl`
                                     } ${
                                         action.primary 
                                         ? 'bg-white text-[#333] hover:bg-slate-50 shadow-amber-950/20' 

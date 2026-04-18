@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { api } from '../../services/storageAdapter';
 import Card from '../common/Card';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
-import { Smartphone, Monitor, Globe, Laptop, MapPin, Loader2 } from 'lucide-react';
+import { Smartphone, Monitor, Globe, Laptop, MapPin, Loader2, Lock } from 'lucide-react';
+import { useAuth } from '@/components/contexts/AuthContext';
 import TabTransition from '../common/TabTransition';
 
 interface TechStatItem {
@@ -27,6 +28,8 @@ interface TechStatsTabProps {
 const COLORS = ['#3b82f6', '#10b981', '#d97706', '#06b6d4', '#6366f1']; // Blue, Green, Amber, Cyan, Indigo
 
 const TechStatsTab: React.FC<TechStatsTabProps> = ({ type = 'campaign', id, stepId, isZns = false }) => {
+    const { can } = useAuth();
+    const canView = can('view_analytics');
     const [stats, setStats] = useState<TechStatsData | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -63,6 +66,18 @@ const TechStatsTab: React.FC<TechStatsTabProps> = ({ type = 'campaign', id, step
         return (
             <div className="flex items-center justify-center py-40">
                 <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
+            </div>
+        );
+    }
+
+    if (!canView) {
+        return (
+            <div className="flex flex-col items-center justify-center py-32 text-slate-400 bg-slate-50/50 rounded-[32px] border-2 border-dashed border-slate-100 italic">
+                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4">
+                    <Lock className="w-8 h-8 text-rose-300" />
+                </div>
+                <p className="text-sm font-bold uppercase tracking-widest text-slate-500">Truy cập bị hạn chế</p>
+                <p className="text-[10px] mt-1">Bạn cần quyền 'view_analytics' để xem các báo cáo này.</p>
             </div>
         );
     }

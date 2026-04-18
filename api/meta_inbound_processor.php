@@ -122,9 +122,44 @@ function processMessagingEventAsync($pdo, $pageId, $event, $channel = 'messaging
         $attachments = $message['attachments'] ?? [];
         $appId = $message['app_id'] ?? null;
 
+        // [SECURE FIX] Idempotency Lock MUST wrap the entire block, including Echoes
+        if ($mid) {
+            $lockName = "meta_msg_" . md5($mid);
+            // [FIX P15-B1] Use prepared statement for GET_LOCK — consistent with project-wide
+            // advisory lock pattern (see track.php, forms.php). Even though md5($mid) is hex-only
+            // (no injection risk), string interpolation is inconsistent with code standards.
+            $pdo->prepare("SELECT GET_LOCK(?, 10)")->execute([$lockName]);
+            
+            $stmt = $pdo->prepare("SELECT id FROM meta_message_logs WHERE mid = ?");
+            $stmt->execute([$mid]);
+            if ($stmt->fetch()) {
+                $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]); // [FIX P15-B1]
+                return;
+            }
+        }
+
         if ($isEcho) {
-            logMetaDebug("Echo detected for Page: $pageId (Staff/Automation reply). Logging outbound.");
-            // [LOG] Store outbound echo messages in DB
+            logMetaDebug("Echo detected for Page: $pageId. Logging outbound.");
+            
+            // Try to identify if this is our bot or a human
+            $appId = $message['app_id'] ?? null;
+            $metadata = $message['metadata'] ?? '';
+            $isOurBot = false;
+            
+            if (strpos($metadata, 'autoflow_ai_bot') !== false) {
+                $isOurBot = true;
+            } else if ($appId) {
+                try {
+                    $stmtOurApp = $pdo->prepare("SELECT app_id FROM meta_app_configs WHERE page_id = ? LIMIT 1");
+                    $stmtOurApp->execute([$pageId]);
+                    $ourAppId = $stmtOurApp->fetchColumn();
+                    if ($ourAppId && $appId == $ourAppId) {
+                        $isOurBot = true;
+                    }
+                } catch (Exception $e) {}
+            }
+
+            // [LOG] Store ALL outbound echo messages in DB
             try {
                 $type = !empty($attachments) ? 'attachment' : 'text';
                 $content = $text ?? json_encode($attachments);
@@ -140,23 +175,29 @@ function processMessagingEventAsync($pdo, $pageId, $event, $channel = 'messaging
                     json_encode($attachments),
                     $event['timestamp']
                 ]);
-            } catch (Exception $e) {
-            }
+            } catch (Exception $e) {}
 
-            // Handle Human Reply (Inbox/Business Suite) to pause AI
-            $ourAppId = null;
-            try {
-                $stmtOurApp = $pdo->prepare("SELECT app_id FROM meta_app_configs WHERE page_id = ? LIMIT 1");
-                $stmtOurApp->execute([$pageId]);
-                $ourAppId = $stmtOurApp->fetchColumn();
-            } catch (Exception $e) {
-            }
-
-            $isOurBot = ($appId && $ourAppId && (string) $appId === (string) $ourAppId);
-
+            // [FIX] ONLY process further if it's a HUMAN reply, NOT our AI bot
             if (!$isOurBot && !empty($recipientId)) {
-                $pdo->prepare("UPDATE meta_subscribers SET ai_paused_until = DATE_ADD(NOW(), INTERVAL 30 MINUTE) WHERE page_id = ? AND psid = ?")
-                    ->execute([$pageId, $recipientId]);
+                // 1. Insert echo to ai_messages so it shows in UnifiedChat as 'human'
+                try {
+                    $stmtProp = $pdo->prepare("SELECT ai_chatbot_id FROM meta_automation_scenarios WHERE meta_config_id = (SELECT id FROM meta_app_configs WHERE page_id = ? LIMIT 1) AND type = 'ai_reply' AND ai_chatbot_id IS NOT NULL LIMIT 1");
+                    $stmtProp->execute([$pageId]);
+                    $aiPropId = $stmtProp->fetchColumn();
+                    if ($aiPropId) {
+                        $metaVid = "meta_" . $recipientId;
+                        $stmtConv = $pdo->prepare("SELECT id FROM ai_conversations WHERE visitor_id = ? AND property_id = ? LIMIT 1");
+                        $stmtConv->execute([$metaVid, $aiPropId]);
+                        $convId = $stmtConv->fetchColumn();
+                        if ($convId) {
+                            $pdo->prepare("INSERT INTO ai_messages (conversation_id, sender, message, created_at) VALUES (?, 'human', ?, NOW())")->execute([$convId, $content]);
+                            $pdo->prepare("UPDATE ai_conversations SET last_message = ?, last_message_at = NOW() WHERE id = ?")->execute([$content, $convId]);
+                        }
+                    }
+                } catch (Exception $e) {}
+
+                // Pause AI for 30 minutes
+                $pdo->prepare("UPDATE meta_subscribers SET ai_paused_until = DATE_ADD(NOW(), INTERVAL 30 MINUTE) WHERE page_id = ? AND psid = ?")->execute([$pageId, $recipientId]);
 
                 // Log activity to timeline
                 try {
@@ -424,8 +465,8 @@ function upsertSubscriberAsync($pdo, $pageId, $psid, $messageText = null, $event
     }
 
     $finalName = $extractedName ?: $fullName;
-    $sqlPart = "last_active_at = NOW(), lead_score = lead_score + $points";
-    $params = [];
+    $sqlPart = "last_active_at = NOW(), lead_score = lead_score + ?"; // [FIX P36-MIP] No interpolation
+    $params = [(int) $points]; // lead_score param injected first
     if ($finalName) {
         $sqlPart .= ", name = ?, first_name = ?";
         array_push($params, $finalName, $finalName);
@@ -448,9 +489,9 @@ function upsertSubscriberAsync($pdo, $pageId, $psid, $messageText = null, $event
     }
 
     $insertSql = "INSERT INTO meta_subscribers (id, page_id, psid, name, first_name, last_name, profile_pic, locale, timezone, gender, email, phone, last_active_at, created_at, lead_score, notes, profile_link)
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), $points, ?, ?)
-                  ON DUPLICATE KEY UPDATE $sqlPart";
-    $execParams = array_merge([$id, $pageId, $psid, $finalName, $firstName, $lastName, $profilePic, $locale, $timezone, $gender, $newEmail, $newPhone, json_encode($mergedNotes), $profileLink], $params);
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), ?, ?, ?)
+                  ON DUPLICATE KEY UPDATE $sqlPart"; // [FIX P36-MIP] lead_score via ? binding
+    $execParams = array_merge([$id, $pageId, $psid, $finalName, $firstName, $lastName, $profilePic, $locale, $timezone, $gender, $newEmail, $newPhone, (int)$points, json_encode($mergedNotes), $profileLink], $params);
     $pdo->prepare($insertSql)->execute($execParams);
 
     $mainSubId = syncMetaToMain($pdo, $id);
@@ -491,7 +532,7 @@ function triggerAutomationAsync($pdo, $pageId, $senderId, $text, $skipKeywords =
     }
 
     // Holiday Check
-    $stmtH = $pdo->prepare("SELECT * FROM meta_automation_scenarios WHERE meta_config_id = ? AND type = 'holiday' AND status = 'active'");
+    $stmtH = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, image_url, schedule_type, active_days, start_time, end_time, holiday_start_at, holiday_end_at, priority_override, trigger_text FROM meta_automation_scenarios WHERE meta_config_id = ? AND type = 'holiday' AND status = 'active'"); // [FIX P38-MIP] Explicit columns
     $stmtH->execute([$configId]);
     while ($h = $stmtH->fetch()) {
         if (isScenarioActive($h, $nowTime, $nowDay)) {
@@ -504,7 +545,7 @@ function triggerAutomationAsync($pdo, $pageId, $senderId, $text, $skipKeywords =
 
     if (!$skipKeywords) {
         $msgLower = mb_strtolower($text, 'UTF-8');
-        $stmtS = $pdo->prepare("SELECT * FROM meta_automation_scenarios WHERE meta_config_id = ? AND type IN ('keyword', 'ai_reply') AND status = 'active' ORDER BY created_at DESC");
+        $stmtS = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, image_url, trigger_text, match_type, priority_override, schedule_type, active_days, start_time, end_time FROM meta_automation_scenarios WHERE meta_config_id = ? AND type IN ('keyword', 'ai_reply') AND status = 'active' ORDER BY created_at DESC"); // [FIX P38-MIP] Explicit columns
         $stmtS->execute([$configId]);
         $scenarios = $stmtS->fetchAll();
         logMetaDebug("Found " . count($scenarios) . " potential scenarios for this page.");
@@ -580,7 +621,8 @@ function processMetaAIMessage($pdo, $pageId, $senderId, $userMsg, $scenario)
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postFields));
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P36-MIP] hostname verification
         curl_setopt($ch, CURLOPT_TIMEOUT, 60);
 
         $response = curl_exec($ch);

@@ -49,7 +49,11 @@ class WorkerTriggerService
         }
 
         // Fallback to file-based lock
-        $lockFile = sys_get_temp_dir() . '/worker_trigger.lock';
+        // [FIX] Use __DIR__ instead of sys_get_temp_dir().
+        // sys_get_temp_dir() can be isolated per PHP-FPM pool on some hosts,
+        // causing the lock to vanish and allowing duplicate worker triggers.
+        // __DIR__ (the api/ folder) is always consistent across all pools.
+        $lockFile = __DIR__ . '/worker_trigger.lock';
         if (file_exists($lockFile)) {
             $lastTrigger = @file_get_contents($lockFile);
             if ($lastTrigger && ($now - (int) $lastTrigger) < 1) {
@@ -58,6 +62,7 @@ class WorkerTriggerService
         }
         @file_put_contents($lockFile, $now);
         return false;
+
     }
 
     private function executeTrigger($url, $hasPriority = false)

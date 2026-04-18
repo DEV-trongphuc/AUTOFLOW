@@ -308,7 +308,10 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                 return `<td class="${colClass}" align="${textAlign}" valign="${cs.verticalAlign || 'top'}" width="${width}" ${getBgColorHtmlAttr(cs)} style="width:${width}; padding: ${cs.paddingTop || '0'} ${cs.paddingRight || '0'} ${cs.paddingBottom || '0'} ${cs.paddingLeft || '0'}; text-align: ${textAlign}; ${getBackgroundStyle(cs)} ${colBorderStyle} ${colRadius} overflow: hidden;"><table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" align="${textAlign}"><tbody>${colChildrenHtml}</tbody></table></td>`;
             }).join('');
             const rowClass = noStack ? "" : "row-resp";
-            return wrapWithMargin(`<td align="${s.textAlign || 'center'}" ${getBgColorHtmlAttr(s)} style="${getBackgroundStyle(s)} ${paddingCss} ${radiusStyle}"><table class="${rowClass}" role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="width: 100%;"><tr>${columnsHtml}</tr></table></td>`);
+            const rowWidth = s.width || '100%';
+            const rowWidthHtml = typeof rowWidth === 'string' && rowWidth.includes('%') ? rowWidth : String(rowWidth).replace('px', '');
+            const rowMargin = `margin: ${s.marginTop || 0} ${s.marginRight || 'auto'} ${s.marginBottom || 0} ${s.marginLeft || 'auto'};`;
+            return wrapWithMargin(`<td align="${s.textAlign || 'center'}"><table class="${rowClass}" role="presentation" border="0" cellspacing="0" cellpadding="0" width="${rowWidthHtml}" align="${s.textAlign || 'center'}" style="width: ${rowWidth}; ${rowMargin} ${getBackgroundStyle(s)} ${paddingCss} ${radiusStyle} ${getBorderStyle(s)} overflow: hidden;"><tr>${columnsHtml}</tr></table></td>`);
         }
 
         if (b.type === 'button') {

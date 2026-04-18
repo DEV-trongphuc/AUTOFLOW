@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "audit": "node scripts/audit.mjs",
+    "audit:verbose": "node scripts/audit.mjs --url https://automation.ideas.edu.vn/mail_api"
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.4",
@@ -25,6 +27,7 @@
     "react-apexcharts": "^1.9.0",
     "react-dom": "^19.2.3",
     "react-hot-toast": "^2.6.0",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.11.0",
     "react-syntax-highlighter": "^16.1.0",
     "recharts": "^3.6.0",

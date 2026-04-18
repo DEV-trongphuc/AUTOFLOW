@@ -1,8 +1,9 @@
 # Enable CORS for all API endpoints
 <IfModule mod_headers.c>
-    # Allow requests from any origin
-    Header always set Access-Control-Allow-Origin "*"
-    
+    # Dynamically reflect the Origin header. NEVER use "*" when credentials are true!
+    SetEnvIf Origin "^(.+)$" ORIGIN_DOMAIN=$1
+    Header always set Access-Control-Allow-Origin "%{ORIGIN_DOMAIN}e" env=ORIGIN_DOMAIN
+
     # Allow common HTTP methods
     Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS, PATCH"
     
@@ -47,3 +48,18 @@
     # Prevent clickjacking
     Header always set X-Frame-Options "SAMEORIGIN"
 </IfModule>
+
+# ─── PROTECT LOG FILES AND SENSITIVE SCRIPTS ─────────────────────────────────
+# [SECURITY] Block direct HTTP access to log files, lock files, and SQL dumps.
+# error_log alone contains 24MB of stack traces, subscriber IDs, and query data.
+<FilesMatch "\.(log|lock|sql|bak|tmp|md)$">
+    Order deny,allow
+    Deny from all
+</FilesMatch>
+
+# [SECURITY] Block direct access to diagnostic, debug, and recovery scripts.
+# These files expose full DB schema, performance data, and allow destructive admin ops.
+<FilesMatch "^(diagnostic_tracking|db_schema_check|db_optimization_check|autoflow_health|system_health_check|system_perf_check|generate_diagnostic_log|recover|recover2|recover3|hard_clean_logs|clear_pauses|admin_fix_bounce|analyze_|trace_|forms_debug|timer_debug|worker_campaign_dryrun|campaign_audit|journey_audit|perf_audit|quick_check|debug_ai|check\.php|test_sync|test_states)\.php$">
+    Order deny,allow
+    Deny from all
+</FilesMatch>

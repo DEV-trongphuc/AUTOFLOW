@@ -1,8 +1,11 @@
 <?php
 // api/tags.php - DEEP SYNC LOGIC V2.0
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
+
 apiHeaders();
 
+$workspace_id = get_current_workspace_id();
 $method = $_SERVER['REQUEST_METHOD'];
 $path = isset($_GET['id']) ? $_GET['id'] : null;
 
@@ -11,8 +14,15 @@ switch ($method) {
         // [PERF] Release session lock immediately to prevent "Pending" state in DevTools
         if (session_id()) session_write_close();
         try {
-            // NEW: Stats Route
             if (isset($_GET['route']) && $_GET['route'] === 'stats' && $path) {
+                // Verify ownership first
+                $stmtAuth = $pdo->prepare("SELECT id FROM tags WHERE id = ? AND workspace_id = ?");
+                $stmtAuth->execute([$path, $workspace_id]);
+                if (!$stmtAuth->fetch()) {
+                    jsonResponse(false, null, 'Không tìm thấy nhãn');
+                    return;
+                }
+
                 $sql = "SELECT s.status, COUNT(*) as count 
                         FROM subscriber_tags st 
                         JOIN subscribers s ON st.subscriber_id = s.id 
@@ -38,8 +48,10 @@ switch ($method) {
                     (SELECT COUNT(*) FROM subscriber_tags st 
                      WHERE st.tag_id = t.id) as subscriber_count 
                     FROM tags t 
+                    WHERE t.workspace_id = ?
                     ORDER BY name ASC";
-            $stmt = $pdo->query($sql);
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$workspace_id]);
             jsonResponse(true, $stmt->fetchAll());
         } catch (Exception $e) {
             jsonResponse(false, null, $e->getMessage());
@@ -54,14 +66,14 @@ switch ($method) {
             if (!$name)
                 jsonResponse(false, null, 'Tên nhãn không được để trống');
 
-            $stmt = $pdo->prepare("SELECT id FROM tags WHERE name = ?");
-            $stmt->execute([$name]);
+            $stmt = $pdo->prepare("SELECT id FROM tags WHERE name = ? AND workspace_id = ?");
+            $stmt->execute([$name, $workspace_id]);
             if ($stmt->fetch())
                 jsonResponse(false, null, 'Nhãn này đã tồn tại');
 
             $id = bin2hex(random_bytes(8)); // [FIX] uniqid() is time-based; race condition in high-concurrency → use CSPRNG instead
-            $stmt = $pdo->prepare("INSERT INTO tags (id, name, description) VALUES (?, ?, ?)");
-            $stmt->execute([$id, $name, $description]);
+            $stmt = $pdo->prepare("INSERT INTO tags (workspace_id, id, name, description) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$workspace_id, $id, $name, $description]);
             jsonResponse(true, ['id' => $id, 'name' => $name, 'description' => $description, 'subscriber_count' => 0]);
         } catch (Exception $e) {
             jsonResponse(false, null, $e->getMessage());
@@ -86,8 +98,8 @@ switch ($method) {
         // Without this, renaming Tag B to the same name as Tag A would either:
         //   a) Throw a DB UNIQUE constraint error inside the transaction (ugly rollback), OR
         //   b) Create ["VIP", "VIP"] duplicates in subscriber JSON arrays (data corruption).
-        $stmtDup = $pdo->prepare("SELECT id FROM tags WHERE name = ? AND id != ?");
-        $stmtDup->execute([$newName, $path]);
+        $stmtDup = $pdo->prepare("SELECT id FROM tags WHERE name = ? AND id != ? AND workspace_id = ?");
+        $stmtDup->execute([$newName, $path, $workspace_id]);
         if ($stmtDup->fetch()) {
             jsonResponse(false, null, 'Tên nhãn này đã tồn tại trong hệ thống');
         }
@@ -95,16 +107,16 @@ switch ($method) {
         $pdo->beginTransaction();
         try {
             // 1. Lấy thông tin cũ
-            $stmtOld = $pdo->prepare("SELECT name FROM tags WHERE id = ?");
-            $stmtOld->execute([$path]);
+            $stmtOld = $pdo->prepare("SELECT name FROM tags WHERE id = ? AND workspace_id = ?");
+            $stmtOld->execute([$path, $workspace_id]);
             $oldName = $stmtOld->fetchColumn();
 
             if (!$oldName)
-                throw new Exception("Không tìm thấy nhãn");
+                throw new Exception("Không tìm thấy nhãn hoặc không có quyền");
 
             // 2. Cập nhật bảng tags
-            $stmtUp = $pdo->prepare("UPDATE tags SET name = ?, description = ? WHERE id = ?");
-            $stmtUp->execute([$newName, $newDesc, $path]);
+            $stmtUp = $pdo->prepare("UPDATE tags SET name = ?, description = ? WHERE id = ? AND workspace_id = ?");
+            $stmtUp->execute([$newName, $newDesc, $path, $workspace_id]);
 
             // 3. Nếu đổi tên -> Cập nhật TOÀN BỘ subscriber VÀ Flows
             if ($oldName !== $newName) {
@@ -170,8 +182,8 @@ switch ($method) {
         $pdo->beginTransaction();
         try {
             // 1. Lấy tên nhãn
-            $stmtN = $pdo->prepare("SELECT name FROM tags WHERE id = ?");
-            $stmtN->execute([$path]);
+            $stmtN = $pdo->prepare("SELECT name FROM tags WHERE id = ? AND workspace_id = ?");
+            $stmtN->execute([$path, $workspace_id]);
             $tagName = $stmtN->fetchColumn();
 
             if ($tagName) {
@@ -214,7 +226,7 @@ switch ($method) {
             $pdo->prepare("DELETE FROM stats_update_buffer WHERE target_id = ? AND target_table = 'tags'")->execute([$path]);
 
             // 3. Xóa bản ghi tag
-            $pdo->prepare("DELETE FROM tags WHERE id = ?")->execute([$path]);
+            $pdo->prepare("DELETE FROM tags WHERE id = ? AND workspace_id = ?")->execute([$path, $workspace_id]);
 
             $pdo->commit();
             jsonResponse(true, ['id' => $path], 'Đã xóa nhãn hoàn toàn');

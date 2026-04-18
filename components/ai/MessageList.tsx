@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Message, FileAttachment, ChatbotInfo } from '../../types';
+import { isExpertModel } from '../../utils/ai-constants';
 
 const EXT_MAP: Record<string, string> = {
     'javascript': 'js',
@@ -171,7 +172,7 @@ const MessageList = React.memo(({
     canLoadMore,
     chatSearchTerm
 }: any) => {
-    const isExpertMode = selectedModel?.toLowerCase().includes('pro') || selectedModel?.toLowerCase().includes('thinking');
+    const isExpertMode = isExpertModel(selectedModel);
     const parentRef = useRef<HTMLDivElement>(null);
     const isInitialLoadRef = useRef(true);
 

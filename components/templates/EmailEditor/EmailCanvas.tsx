@@ -531,4 +531,4 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
     );
 };
 
-export default EmailCanvas;
+export default React.memo(EmailCanvas);

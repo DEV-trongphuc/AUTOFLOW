@@ -39,11 +39,16 @@ const checkSpamDownstreamRecursive = (
   const currentStep = currentFlow.steps.find(s => s.id === currentStepId);
   if (!currentStep) return false;
 
-  // "Sending" Actions (Email, Zalo) are SPAM points
+  // "Sending" Actions (Email, Zalo, Meta) are SPAM points
   // If we hit another sending action, it's spam!
-  const isSendingAction = ['action', 'zalo_zns', 'zalo_cs'].includes(currentStep.type);
+  const isSendingAction = ['action', 'zalo_zns', 'zalo_cs', 'meta_message'].includes(currentStep.type);
   if (isSendingAction) {
-    const typeLabel = currentStep.type === 'action' ? 'Email' : 'Zalo';
+    // [FIX P6-H2] Distinguish Meta Facebook from Zalo in spam warning messages.
+    // Previously meta_message fell through to the 'Zalo' label causing confusing
+    // "Zalo → Zalo" warnings when two Meta steps were chained without a wait.
+    const typeLabel = currentStep.type === 'action' ? 'Email'
+      : currentStep.type === 'meta_message' ? 'Meta Facebook'
+      : 'Zalo';
     errors.push({
       msg: `RỦI RO SPAM: ${typeLabel} ("${emailSourceStep.label}") dẫn trực tiếp đến ${typeLabel} ("${currentStep.label}") mà không có bước Chờ (Flow: ${flowPath.join(' -> ')}).`,
       type: 'critical',
@@ -146,7 +151,8 @@ const checkBurstLimit = (
 
   let newCount = consecutiveCount;
   // All these are "Fast Actions" that expend API/DB resources or obscure logic if bunched
-  const isFastAction = ['action', 'update_tag', 'list_action', 'remove_action', 'zalo_zns', 'zalo_cs', 'split_test'].includes(step.type);
+  // [FIX V3-H1] Added meta_message — it's a messaging channel (META API calls) and must count toward burst limits.
+  const isFastAction = ['action', 'update_tag', 'list_action', 'remove_action', 'zalo_zns', 'zalo_cs', 'meta_message', 'split_test'].includes(step.type);
   const isWait = step.type === 'wait';
 
   if (isWait) {
@@ -197,68 +203,82 @@ const checkBurstLimit = (
   }
 };
 /**
- * [NEW] Helper to check time consistency across the flow.
- * Ensures that specific wait times (Until Date) are at least 10 minutes after the estimated arrival time.
+ * Helper to check time consistency across the flow.
+ * [FIX] CRITICAL only fires when an until_date step B comes BEFORE a previous until_date step A
+ * (sequential ordering violation). Duration waits no longer contribute to the critical check
+ * — they are tracked separately and only used for warning thresholds.
+ * Previous logic compared B's date against (now + cumulativeDuration), causing false CRITICAL
+ * errors whenever a date was already past or within a few minutes of now.
  */
 const checkTimeConsistency = (
   currentStepId: string | undefined,
   currentFlow: Flow,
   errors: ValidationError[],
-  cumulativeOffsetMins: number,
+  cumulativeDurationMins: number,      // accumulated minutes from duration-mode wait steps only
+  lastAbsoluteMs: number | null,       // absolute timestamp (ms) of the last until_date step seen
   visited: Set<string>,
-  isDirty: boolean = false // [ISSUE #5 FIX] Add isDirty parameter
+  isDirty: boolean = false
 ) => {
   if (!currentStepId || visited.has(currentStepId)) return;
   visited.add(currentStepId);
   const step = currentFlow.steps.find(s => s.id === currentStepId);
   if (!step) return;
-  let nextOffset = cumulativeOffsetMins;
+
+  let nextDuration = cumulativeDurationMins;
+  let nextAbsoluteMs = lastAbsoluteMs;
+
   if (step.type === 'wait') {
     const config = step.config;
     const mode = config.mode || 'duration';
+
     if (mode === 'duration') {
+      // Accumulate duration minutes for downstream checks
       let mins = 0;
       if (config.unit === 'minutes') mins = config.duration;
       else if (config.unit === 'hours') mins = config.duration * 60;
       else if (config.unit === 'days') mins = config.duration * 1440;
-      nextOffset += mins;
+      nextDuration += mins;
+
     } else if (mode === 'until_date') {
       const dateStr = config.specificDate;
       const timeStr = config.untilTime || '00:00';
       if (dateStr) {
-        // We use local time for UI validation consistency
         const target = new Date(`${dateStr}T${timeStr}`);
-        const now = new Date();
-        const targetOffset = (target.getTime() - now.getTime()) / 60000;
-        // Logic: Target Time must be >= ArrivalTime + 10 mins
-        // [ISSUE #5 FIX] Only show warning if editing or flow is draft
-        if (targetOffset < cumulativeOffsetMins + 10 && (currentFlow.status !== 'active' || isDirty)) {
-          const expectedArrival = new Date(now.getTime() + cumulativeOffsetMins * 60000);
-          const arrivalStr = expectedArrival.getHours().toString().padStart(2, '0') + ':' + expectedArrival.getMinutes().toString().padStart(2, '0');
-          errors.push({
-            msg: `Lỗi thời gian bước trước (Bước này bắt đầu sớm nhất phải là ${arrivalStr}) bấm để tự sửa`,
-            type: currentFlow.status === 'active' ? 'warning' : 'critical',
-            stepId: step.id
-          });
+        if (!isNaN(target.getTime()) && (currentFlow.status !== 'active' || isDirty)) {
+
+          // CRITICAL: B is before A — compare B against the last seen until_date (A)
+          // This is the ONLY critical case: sequential until_date ordering violation.
+          if (lastAbsoluteMs !== null && target.getTime() < lastAbsoluteMs) {
+            const prevDateStr = new Date(lastAbsoluteMs).toLocaleDateString('vi-VN', {
+              day: '2-digit', month: '2-digit', year: 'numeric'
+            });
+            errors.push({
+              msg: `LỖI THỜI GIAN: Ngày chờ bước này (${target.toLocaleDateString('vi-VN')}) nằm trước ngày chờ của bước phía trên (${prevDateStr}). Subscriber không thể đến đây trước khi bước trên kết thúc — vui lòng chọn lại ngày muộn hơn.`,
+              type: 'critical',
+              stepId: step.id
+            });
+          }
         }
-        // Advance offset to the target time for subsequent steps
-        nextOffset = Math.max(nextOffset, targetOffset);
+        // Advance the absolute watermark for downstream steps
+        nextAbsoluteMs = Math.max(lastAbsoluteMs ?? 0, target.getTime());
+        // Reset duration accumulator — until_date is a hard anchor point
+        nextDuration = 0;
       }
     }
   }
-  // Follow all possible paths - [ISSUE #5 FIX] Pass isDirty to recursive calls
-  if (step.nextStepId) checkTimeConsistency(step.nextStepId, currentFlow, errors, nextOffset, new Set(visited), isDirty);
-  if (step.yesStepId) checkTimeConsistency(step.yesStepId, currentFlow, errors, nextOffset, new Set(visited), isDirty);
-  if (step.noStepId) checkTimeConsistency(step.noStepId, currentFlow, errors, nextOffset, new Set(visited), isDirty);
-  if (step.pathAStepId) checkTimeConsistency(step.pathAStepId, currentFlow, errors, nextOffset, new Set(visited), isDirty);
-  if (step.pathBStepId) checkTimeConsistency(step.pathBStepId, currentFlow, errors, nextOffset, new Set(visited), isDirty);
+
+  // Recurse all downstream paths
+  const recurse = (nextId: string | undefined) => {
+    if (nextId) checkTimeConsistency(nextId, currentFlow, errors, nextDuration, nextAbsoluteMs, new Set(visited), isDirty);
+  };
+  recurse(step.nextStepId);
+  recurse(step.yesStepId);
+  recurse(step.noStepId);
+  recurse(step.pathAStepId);
+  recurse(step.pathBStepId);
   if (step.type === 'advanced_condition') {
-    step.config?.branches?.forEach((b: any) => {
-      if (b.stepId) checkTimeConsistency(b.stepId, currentFlow, errors, nextOffset, new Set(visited), isDirty);
-    });
-    if (step.config?.defaultStepId) {
-      checkTimeConsistency(step.config.defaultStepId, currentFlow, errors, nextOffset, new Set(visited), isDirty);
-    }
+    step.config?.branches?.forEach((b: any) => { if (b.stepId) recurse(b.stepId); });
+    if (step.config?.defaultStepId) recurse(step.config.defaultStepId);
   }
 };
 
@@ -421,12 +441,13 @@ export const findDuplicateTriggerFlow = (currentFlow: Flow, allFlows: Flow[]): {
   return null;
 }
 
-// Helper: Check Frequency Cap Risk
+// Helper: Check Frequency Cap Risk (Per Channel)
 const checkFrequencyCapRisk = (
   startStepId: string | undefined,
   currentFlow: Flow,
   errors: ValidationError[],
-  actionCount: number,
+  emailCount: number,
+  zaloCount: number,
   visited: Set<string>,
   cap: number,
   simulatedTimeMs: number
@@ -437,9 +458,10 @@ const checkFrequencyCapRisk = (
   const step = currentFlow.steps.find(s => s.id === startStepId);
   if (!step) return;
 
-  let newCount = actionCount;
+  let newEmailCount = emailCount;
+  let newZaloCount = zaloCount;
   let nextSimulatedTime = simulatedTimeMs;
-  const isAction = ['action', 'zalo_zns', 'zalo_cs'].includes(step.type);
+  
   const isWait = step.type === 'wait';
 
   if (isWait) {
@@ -452,64 +474,63 @@ const checkFrequencyCapRisk = (
       else if (config.unit === 'hours') waitMinutes = config.duration * 60;
       else if (config.unit === 'days') waitMinutes = config.duration * 1440;
 
-      // Advance time
       nextSimulatedTime += waitMinutes * 60000;
     } else if (mode === 'until_date') {
-      // Calculate gap from current simulated time to target date
       if (config.specificDate) {
         const timeStr = config.untilTime || '00:00';
         const targetDate = new Date(`${config.specificDate}T${timeStr}`);
         if (!isNaN(targetDate.getTime())) {
-          // If target is in future compared to current simulated flow time
+          // Calculate wait time relative to the simulated offset, regardless of 'real' time
           if (targetDate.getTime() > simulatedTimeMs) {
             waitMinutes = (targetDate.getTime() - simulatedTimeMs) / 60000;
             nextSimulatedTime = targetDate.getTime();
+          } else {
+             // If target date is in the past, assume 0 wait (immediate execution)
+             waitMinutes = 0;
           }
         }
       }
-    } else if (mode === 'until') {
-      // "Wait until 08:00" (daily recurrence or next occurrence)
-      // Hard to predict without knowing current day, but usually implies waiting for next slot.
-      // If we are at 07:00, it's 1 hour. If 09:00, it's 23 hours.
-      // Conservatively, we don't reset unless we are sure.
-      // Or we can assume it's at least a 'break' in immediate spam.
-      // For Frequency Cap (Day), we might not reset unless it's clearly > 20h.
-      // Let's stick to 0 waitMinutes for 'until' to be safe (conservative counting -> more warnings), 
-      // or maybe 12 hours? No, keep 0 to avoid false negatives.
     }
 
-    // Reset count if wait is significant (> 20 hours)
+    // Reset counts if wait is significant (> 20 hours/1200 mins)
     if (waitMinutes >= 1200) {
-      newCount = 0;
+      newEmailCount = 0;
+      newZaloCount = 0;
     }
-  } else if (isAction) {
-    newCount++;
+  } else if (step.type === 'action') {
+    newEmailCount++;
+  } else if (['zalo_zns', 'zalo_cs'].includes(step.type)) {
+    newZaloCount++;
+  } else if (step.type === 'meta_message') {
+    // [FIX V3-H1] Count Meta messages in frequency cap simulation.
+    // meta_message uses META Graph API — same daily rate limit concern as Zalo.
+    newZaloCount++; // reuse zaloCount as "social channel" counter
   }
 
-  if (newCount > cap) {
-    // Only report once per step to avoid spamming errors
+  if (newEmailCount > cap || newZaloCount > cap) {
     const already = errors.some(e => e.stepId === step.id && e.msg.includes('Frequency Cap'));
     if (!already) {
+      const channel = newEmailCount > cap ? 'Email' : 'Zalo';
+      const count = newEmailCount > cap ? newEmailCount : newZaloCount;
       errors.push({
-        msg: `CẢNH BÁO FREQUENCY CAP: Flow này có thể gửi ${newCount} tin trong vòng 1 ngày, vượt quá giới hạn ${cap} tin/ngày được cài đặt. Hệ thống sẽ hoãn các tin thừa sang ngày hôm sau.`,
+        msg: `CẢNH BÁO FREQUENCY CAP: Flow này có thể gửi ${count} ${channel} trong vòng 1 ngày, vượt quá giới hạn ${cap} tin/ngày/kênh. Hệ thống sẽ hoãn gửi các tin thừa sang ngày hôm sau.`,
         type: 'warning',
         stepId: step.id
       });
     }
-    // Don't return, allow verifying downstream
   }
 
-  if (step.nextStepId) checkFrequencyCapRisk(step.nextStepId, currentFlow, errors, newCount, new Set(visited), cap, nextSimulatedTime);
-  if (step.yesStepId) checkFrequencyCapRisk(step.yesStepId, currentFlow, errors, newCount, new Set(visited), cap, nextSimulatedTime);
-  if (step.noStepId) checkFrequencyCapRisk(step.noStepId, currentFlow, errors, newCount, new Set(visited), cap, nextSimulatedTime);
-  if (step.pathAStepId) checkFrequencyCapRisk(step.pathAStepId, currentFlow, errors, newCount, new Set(visited), cap, nextSimulatedTime);
-  if (step.pathBStepId) checkFrequencyCapRisk(step.pathBStepId, currentFlow, errors, newCount, new Set(visited), cap, nextSimulatedTime);
+  if (step.nextStepId) checkFrequencyCapRisk(step.nextStepId, currentFlow, errors, newEmailCount, newZaloCount, new Set(visited), cap, nextSimulatedTime);
+  if (step.yesStepId) checkFrequencyCapRisk(step.yesStepId, currentFlow, errors, newEmailCount, newZaloCount, new Set(visited), cap, nextSimulatedTime);
+  if (step.noStepId) checkFrequencyCapRisk(step.noStepId, currentFlow, errors, newEmailCount, newZaloCount, new Set(visited), cap, nextSimulatedTime);
+  if (step.pathAStepId) checkFrequencyCapRisk(step.pathAStepId, currentFlow, errors, newEmailCount, newZaloCount, new Set(visited), cap, nextSimulatedTime);
+  if (step.pathBStepId) checkFrequencyCapRisk(step.pathBStepId, currentFlow, errors, newEmailCount, newZaloCount, new Set(visited), cap, nextSimulatedTime);
   if (step.type === 'advanced_condition') {
     step.config?.branches?.forEach((b: any) => {
-      if (b.stepId) checkFrequencyCapRisk(b.stepId, currentFlow, errors, newCount, new Set(visited), cap, nextSimulatedTime);
+      if (b.stepId) checkFrequencyCapRisk(b.stepId, currentFlow, errors, newEmailCount, newZaloCount, new Set(visited), cap, nextSimulatedTime);
     });
     if (step.config?.defaultStepId) {
-      checkFrequencyCapRisk(step.config.defaultStepId, currentFlow, errors, newCount, new Set(visited), cap, nextSimulatedTime);
+      checkFrequencyCapRisk(step.config.defaultStepId, currentFlow, errors, newEmailCount, newZaloCount, new Set(visited), cap, nextSimulatedTime);
     }
   }
 };
@@ -554,18 +575,20 @@ export const validateFlow = (flowToCheck: Flow, allFlows: Flow[] = [], isStrict:
 
   if (trigger) {
     checkBurstLimit(trigger.nextStepId, flowToCheck, errors, 0, new Set());
-    checkTimeConsistency(trigger.nextStepId, flowToCheck, errors, 0, new Set(), isDirty); // [ISSUE #5 FIX] Pass isDirty
+    checkTimeConsistency(trigger.nextStepId, flowToCheck, errors, 0, null, new Set(), isDirty);
 
     // NEW: Check Frequency Cap Risk
     const cap = (flowToCheck.config as any)?.frequencyCap ?? 3;
     if (cap > 0) { // Only check if cap is active
-      checkFrequencyCapRisk(trigger.nextStepId, flowToCheck, errors, 0, new Set(), cap, Date.now());
+      checkFrequencyCapRisk(trigger.nextStepId, flowToCheck, errors, 0, 0, new Set(), cap, Date.now());
     }
   }
 
-  // SPAM Check: For each email step, check if it leads to another email without a wait
-  steps.forEach(s => {
-    if (['action', 'zalo_zns', 'zalo_cs'].includes(s.type)) {
+    // SPAM Check: For each email/ZNS/Meta step, check if it leads to another sending step without a wait
+    // [FIX P12-M1] Added 'meta_message' to source list: previously meta→meta chains without Wait
+    // were not flagged because meta_message was only handled as a destination, not as a source.
+    steps.forEach(s => {
+      if (['action', 'zalo_zns', 'zalo_cs', 'meta_message'].includes(s.type)) {
       const nextId = s.type === 'action' ? s.nextStepId : (s as any).nextStepId; // Zalo also uses nextStepId
       if (nextId) {
         checkSpamDownstreamRecursive(
@@ -673,27 +696,15 @@ export const validateFlow = (flowToCheck: Flow, allFlows: Flow[] = [], isStrict:
         if (!dateStr) {
           errors.push({ msg: `Bước "${s.label}": Chưa chọn ngày chờ cụ thể`, type: 'critical', stepId: s.id });
         } else {
-          // Validate date isn't in past or too soon
           const target = new Date(`${dateStr}T${timeStr}`);
-          const now = new Date();
-          const tenMins = new Date(now.getTime() + 10 * 60 * 1000);
-
           if (isNaN(target.getTime())) {
             errors.push({ msg: `Bước "${s.label}": Định dạng ngày giờ không hợp lệ`, type: 'critical', stepId: s.id });
-          } else if (target < now) {
-            // [ISSUE #5 FIX] Only show past date warning if:
-            // 1. Flow is draft (not active yet), OR
-            // 2. Flow is active AND being edited (isDirty = true)
-            // Skip warning when just viewing an active flow (view mode)
-            if (flowToCheck.status !== 'active' || isDirty) {
-              errors.push({ msg: `Bước "${s.label}": Thời gian chờ đã ở quá khứ (bấm để tự sửa)`, type: flowToCheck.status === 'active' ? 'warning' : 'critical', stepId: s.id });
-            }
-          } else if (target < tenMins) {
-            // Same logic for "too soon" warnings
-            if (flowToCheck.status !== 'active' || isDirty) {
-              errors.push({ msg: `Bước "${s.label}": Thời gian chờ quá gần (bấm để tự sửa)`, type: flowToCheck.status === 'active' ? 'warning' : 'critical', stepId: s.id });
-            }
           }
+          // NOTE: "date in past" and "date too soon" checks are intentionally removed here.
+          // checkTimeConsistency() already validates timing relative to estimated arrival time
+          // from upstream steps (more accurate). The backend (FlowExecutor) gracefully handles
+          // past until_date by setting isWaitOver=true (immediate pass-through), so it is NOT
+          // a blocking error. Flagging it twice causes duplicate/confusing warnings.
         }
       } else if (waitMode === 'until') {
         if (!s.config.untilTime) {
@@ -786,6 +797,14 @@ export const validateFlow = (flowToCheck: Flow, allFlows: Flow[] = [], isStrict:
       if (!s.config.content) errors.push({ msg: `Bước "${s.label}": Chưa nhập nội dung tin nhắn tư vấn`, type: 'critical', stepId: s.id });
     }
 
+    // [FIX V3-H2] Validate meta_message step config.
+    // Previously no validation — user could activate flow with an empty Meta message step.
+    if (s.type === 'meta_message') {
+      if (!s.config.content && !s.config.attachment_url) {
+        errors.push({ msg: `Bước "${s.label}": Tin nhắn Meta phải có nội dung văn bản hoặc đính kèm file/ảnh`, type: 'critical', stepId: s.id });
+      }
+    }
+
     if (s.type === 'update_tag') {
       if (!s.config.tags || s.config.tags.length === 0) {
         errors.push({ msg: `Bước "${s.label}": Chưa chọn nhãn cần cập nhật`, type: 'critical', stepId: s.id });
@@ -862,16 +881,14 @@ export const validateFlow = (flowToCheck: Flow, allFlows: Flow[] = [], isStrict:
     });
   }
 
-  // [USER REQUEST] Filter and group time-related warnings if active and not dirty
+  // [USER REQUEST] Filter and group time-related WARNINGS only if active and not dirty.
+  // NOTE: Critical timing errors (date conflict between steps) are ALWAYS shown, never collapsed.
   if (flowToCheck.status === 'active' && !isDirty && !isStrict) {
-    const timeErrorKeywords = ['thời gian chờ đã ở quá khứ', 'Lỗi thời gian bước trước', 'thời gian chờ quá gần'];
-    const timeErrorsFound = errors.filter(e => timeErrorKeywords.some(key => e.msg.includes(key)));
+    const timeWarningKeyword = 'Lỗi thời gian bước trước';
+    const timeWarningsFound = errors.filter(e => e.type === 'warning' && e.msg.includes(timeWarningKeyword));
 
-    if (timeErrorsFound.length > 0) {
-      // Remove specific errors
-      errors = errors.filter(e => !timeErrorKeywords.some(key => e.msg.includes(key)));
-
-      // Add a single generic warning
+    if (timeWarningsFound.length > 0) {
+      errors = errors.filter(e => !(e.type === 'warning' && e.msg.includes(timeWarningKeyword)));
       errors.unshift({
         msg: "Các bước 'Chờ' kích hoạt trong quá khứ cần check lại nếu có người mới vào kịch bản.",
         type: 'warning'

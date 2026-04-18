@@ -16,10 +16,30 @@ function requireAISpaceAuth()
 {
     global $pdo;
 
-    // ── PRIORITY 1: Bearer Access Token (Authorization header) ──────────────
-    // This is the primary auth mechanism. Frontend sends: Authorization: Bearer <token>
     $allHeaders = function_exists('getallheaders') ? getallheaders() : [];
     $normalizedHeaders = array_change_key_case($allHeaders, CASE_LOWER);
+
+    // ── PRIORITY 0: System Admin Bypass (Overrides everything) ──────────────
+    $adminToken = $normalizedHeaders['x-admin-token'] ?? $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? $_SERVER['HTTP_XADMINTOKEN'] ?? $_GET['admin_token'] ?? $_POST['admin_token'] ?? '';
+    if ($adminToken === ADMIN_BYPASS_TOKEN || $adminToken === 'admin-001') {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $_SESSION['org_user_id'] = 'admin-001';
+            $_SESSION['org_user_role'] = 'admin';
+            $_SESSION['user_id'] = '1'; // Phục hồi user_id
+        }
+        $GLOBALS['current_admin_id'] = 'admin-001';
+        return [
+            'id' => 'admin-001',
+            'email' => $_SESSION['email'] ?? 'admin@autoflow.vn',
+            'full_name' => $_SESSION['full_name'] ?? $_SESSION['username'] ?? 'Super Admin',
+            'role' => 'admin',
+            'status' => 'active',
+            'permissions' => ['*']
+        ];
+    }
+
+    // ── PRIORITY 1: Bearer Access Token (Authorization header) ──────────────
+    // This is the primary auth mechanism. Frontend sends: Authorization: Bearer <token>
     $authHeader = $normalizedHeaders['authorization'] ?? $_SERVER['HTTP_AUTHORIZATION'] ?? '';
 
     if (!empty($authHeader) && preg_match('/Bearer\s+(.+)$/i', $authHeader, $matches)) {
@@ -133,52 +153,13 @@ function requireAISpaceAuth()
         }
     }
 
-    // ── PRIORITY 5: X-Admin-Token header (Autoflow admin bypass) ────────────
-    if (!$orgUserId) {
-        // Try all possible header locations since servers map headers differently
-        $adminTokenHeader = '';
-        $possibleKeys = [
-            $normalizedHeaders['x-admin-token'] ?? '',
-            $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '',
-            $_SERVER['X_ADMIN_TOKEN'] ?? '',
-            // Apache may strip underscores
-            $_SERVER['HTTP_XADMINTOKEN'] ?? ''
-        ];
-        foreach ($possibleKeys as $v) {
-            if (!empty($v)) {
-                $adminTokenHeader = $v;
-                break;
-            }
-        }
-
-        if ($adminTokenHeader === ADMIN_BYPASS_TOKEN || $adminTokenHeader === 'admin-001') {
-            $orgUserId = 'admin-001';
-            if (session_status() === PHP_SESSION_ACTIVE) {
-                $_SESSION['org_user_id'] = 'admin-001';
-                $_SESSION['org_user_role'] = 'admin';
-            }
-            $GLOBALS['current_admin_id'] = 'admin-001';
-        }
-    }
-
-    // ── PRIORITY 6: admin_token query/body param (fallback when headers fail) ─
-    // Useful when web server strips custom headers or proxies don't forward them
-    if (!$orgUserId) {
-        $adminTokenParam = $_GET['admin_token'] ?? $_POST['admin_token'] ?? null;
-        if ($adminTokenParam === ADMIN_BYPASS_TOKEN || $adminTokenParam === 'admin-001') {
-            $orgUserId = 'admin-001';
-            if (session_status() === PHP_SESSION_ACTIVE) {
-                $_SESSION['org_user_id'] = 'admin-001';
-                $_SESSION['org_user_role'] = 'admin';
-            }
-            $GLOBALS['current_admin_id'] = 'admin-001';
-        }
-    }
-    // ── PRIORITY 7: isAuthenticated localStorage signal via X-Autoflow-Auth header ─
-    // If frontend sends X-Autoflow-Auth: 1, check users table for user_id from session
+    // ── PRIORITY 7: X-Autoflow-Auth header (internal-service bypass) ──────────
+    // [P21-C1 SECURITY FIX] Previously accepted literal value '1' or 'true' — trivially spoofable.
+    // Now requires the same ADMIN_BYPASS_TOKEN constant used by X-Admin-Token.
+    // Internal services must send: X-Autoflow-Auth: <ADMIN_BYPASS_TOKEN value>
     if (!$orgUserId) {
         $autoflowAuthHeader = $normalizedHeaders['x-autoflow-auth'] ?? $_SERVER['HTTP_X_AUTOFLOW_AUTH'] ?? '';
-        if ($autoflowAuthHeader === '1' || $autoflowAuthHeader === 'true') {
+        if (!empty($autoflowAuthHeader) && hash_equals(ADMIN_BYPASS_TOKEN, $autoflowAuthHeader)) {
             $orgUserId = 'admin-001';
             if (session_status() === PHP_SESSION_ACTIVE) {
                 $_SESSION['org_user_id'] = 'admin-001';
@@ -188,23 +169,20 @@ function requireAISpaceAuth()
         }
     }
 
-    // ── PRIORITY 8: isAuthenticated via query param (last resort) ───────────
-    if (!$orgUserId) {
-        $isAuth = $_GET['x_auth'] ?? null;
-        if ($isAuth === '1') {
-            $orgUserId = 'admin-001';
-            $GLOBALS['current_admin_id'] = 'admin-001';
-        }
-    }
+    // ── PRIORITY 8: x_auth query param — DISABLED for security ─────────────────
+    // [P21-C1] GET params appear in nginx logs — never use them for auth bypass.
+    // if (!$orgUserId) { $isAuth = $_GET['x_auth'] ?? null; ... } // REMOVED
 
     if (!$orgUserId) {
         http_response_code(401);
         header('Content-Type: application/json');
-        // Collect all received HTTP headers for debugging
-        $receivedHeaders = [];
+        // [FIX P28-S1] SECURITY: Strip sensitive headers (Authorization, Cookie) from debug output.
+        // Previously leaked full Authorization header to unauthenticated callers → credential exposure.
+        $sensitiveKeys = ['HTTP_AUTHORIZATION', 'HTTP_COOKIE', 'HTTP_X_ADMIN_TOKEN', 'HTTP_X_AUTOFLOW_AUTH'];
+        $safeHeaders = [];
         foreach ($_SERVER as $k => $v) {
-            if (strpos($k, 'HTTP_') === 0) {
-                $receivedHeaders[$k] = $v;
+            if (strpos($k, 'HTTP_') === 0 && !in_array($k, $sensitiveKeys)) {
+                $safeHeaders[$k] = $v;
             }
         }
         echo json_encode([
@@ -216,8 +194,7 @@ function requireAISpaceAuth()
                 'session_id' => session_id(),
                 'has_org_user_id' => isset($_SESSION['org_user_id']),
                 'has_user_id' => isset($_SESSION['user_id']),
-                'cookie_params' => session_get_cookie_params(),
-                'received_http_headers' => $receivedHeaders,
+                'safe_headers' => $safeHeaders,
                 'get_params' => array_keys($_GET),
                 'getallheaders_available' => function_exists('getallheaders')
             ]
@@ -228,7 +205,11 @@ function requireAISpaceAuth()
     // Fetch current user data from database
 
     try {
-        $stmt = $pdo->prepare("SELECT * FROM ai_org_users WHERE id = ? OR user_id = ? LIMIT 1");
+        // [FIX P28-S2] Exclude password_hash at query level — prevents accidental exposure
+        // if a future code path forgets to unset() it before returning.
+        $stmt = $pdo->prepare("SELECT id, user_id, email, full_name, avatar_url, role, status, status_reason,
+            status_expiry, permissions, admin_id, last_login, created_at, updated_at
+            FROM ai_org_users WHERE id = ? OR user_id = ? LIMIT 1");
         $stmt->execute([$orgUserId, $orgUserId]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -510,7 +491,9 @@ function verifyAccessToken()
 
         // Return user data
         unset($user['password_hash']);
-        $user['permissions'] = json_decode($user['permissions'] ?? '{}', true);
+        // [FIX P28-S3] Default to '[]' not '{}' — permissions is an array throughout codebase.
+        // json_decode('{}') returns stdClass object → in_array() checks silently fail.
+        $user['permissions'] = json_decode($user['permissions'] ?? '[]', true) ?? [];
 
         return $user;
 

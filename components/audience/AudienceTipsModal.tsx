@@ -1,4 +1,4 @@
-
+﻿
 import React from 'react';
 import {
     X, Lightbulb, Zap, Users, ShieldCheck,
@@ -97,7 +97,7 @@ const AudienceTipsModal: React.FC<AudienceTipsModalProps> = ({ isOpen, onClose }
                         <TipCard
                             icon={Zap}
                             title="Kích hoạt Automation"
-                            description="Gia nhập segment và đồng bộ Google Sheets để kích hoạt automation flows ngay lập tức."
+                            description="Gia nhập segment và đồng bộ Google Sheets để kích hoạt DOMATION Flows ngay lập tức."
                             colorClass="bg-gradient-to-br from-emerald-400 to-emerald-500 shadow-emerald-200"
                             highlight="Khuyên dùng"
                         />

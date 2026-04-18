@@ -1,4 +1,4 @@
-import * as React from 'react';
+﻿import * as React from 'react';
 import {
     Send, Users, FileEdit, BarChart3, GitMerge, Tag, Webhook, Zap, Bot,
     Facebook, Globe, Settings, ChevronRight, Search, MousePointer,
@@ -55,7 +55,7 @@ export const SectionOverview = () => (
                 <div className="lg:col-span-3 space-y-8">
                     <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
                         <div className="w-2 h-2 rounded-full bg-amber-600 animate-ping" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-600">Autoflow Platform Docs v3.0</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-600">DOMATION Platform Docs v3.0</span>
                     </div>
                     <h1 className="text-5xl lg:text-7xl font-black tracking-tight leading-[0.95]">
                         Tự động hóa<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">Tăng trưởng</span>
@@ -394,7 +394,7 @@ export const SectionTemplates = () => (
             <div className="p-8 bg-white border border-slate-100 rounded-3xl">
                 <h3 className="font-black text-slate-900 mb-5">Quản lý Template</h3>
                 <div className="space-y-3">
-                    {[{ icon: Share2, t: 'Workspace Shared', d: 'Template chia sẻ toàn bộ team trong workspace.' }, { icon: Lock, t: 'Private Template', d: 'Chỉ owner mới xem và chỉnh sửa.' }, { icon: Globe, t: 'Global Library', d: 'System templates của Autoflow — không thể xóa.' }].map((f, i) => <FeatureRow key={i} {...{ icon: f.icon, title: f.t, desc: f.d }} />)}
+                    {[{ icon: Share2, t: 'Workspace Shared', d: 'Template chia sẻ toàn bộ team trong workspace.' }, { icon: Lock, t: 'Private Template', d: 'Chỉ owner mới xem và chỉnh sửa.' }, { icon: Globe, t: 'Global Library', d: 'System templates của DOMATION — không thể xóa.' }].map((f, i) => <FeatureRow key={i} {...{ icon: f.icon, title: f.t, desc: f.d }} />)}
                 </div>
             </div>
         </div>
