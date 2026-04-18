@@ -300,6 +300,51 @@ try {
                 'location' => $location
             ];
 
+            // [FIX P43-A1] Form Attribution: link this submission back to the email/flow click that brought the user here.
+            // Two-layer approach:
+            //   Layer 1 (preferred): frontend embeds utm_campaign, mc_cid, mc_fid from URL params into form payload.
+            //   Layer 2 (fallback): query web_sessions via _mf_vid cookie for last email session within 2 hours.
+            $attrCampaignId = $data['mc_cid']     // Our internal campaign tracker (appended to email links)
+                           ?? $data['campaign_id'] // Explicit from smart embeds
+                           ?? $data['utm_campaign'] // Generic UTM
+                           ?? null;
+            $attrFlowId = $data['mc_fid'] ?? $data['flow_id'] ?? null;
+            $attrSource  = $data['utm_source']  ?? null;
+            $attrMedium  = $data['utm_medium']  ?? null;
+
+            // Layer 2: fallback via visitor cookie → web_sessions
+            if (!$attrCampaignId && !$attrFlowId) {
+                $visitorCookieId = $_COOKIE['_mf_vid'] ?? $_COOKIE['_mfp_vid'] ?? null;
+                if ($visitorCookieId) {
+                    try {
+                        $stmtSess = $pdo->prepare(
+                            "SELECT utm_campaign, utm_source, utm_medium, utm_content
+                             FROM web_sessions
+                             WHERE visitor_id = ?
+                               AND utm_source IN ('email', 'zns', 'flow')
+                               AND started_at > DATE_SUB(NOW(), INTERVAL 2 HOUR)
+                             ORDER BY id DESC LIMIT 1"
+                        );
+                        $stmtSess->execute([$visitorCookieId]);
+                        $sessRow = $stmtSess->fetch(PDO::FETCH_ASSOC);
+                        if ($sessRow) {
+                            $attrCampaignId = $sessRow['utm_campaign'] ?: null; // mc_cid stored here
+                            $attrSource     = $sessRow['utm_source']   ?: null;
+                            $attrMedium     = $sessRow['utm_medium']   ?: null;
+                        }
+                    } catch (Exception $eAttr) {
+                        // Non-fatal: attribution best-effort
+                        error_log("Form attribution lookup failed: " . $eAttr->getMessage());
+                    }
+                }
+            }
+
+            // Merge attribution into extra payload
+            if ($attrCampaignId) $extra['attributed_campaign_id'] = $attrCampaignId;
+            if ($attrFlowId)     $extra['attributed_flow_id']     = $attrFlowId;
+            if ($attrSource)     $extra['utm_source']             = $attrSource;
+            if ($attrMedium)     $extra['utm_medium']             = $attrMedium;
+
             logActivity($pdo, $sid, 'form_submit', $formId, $formName, "Điền Form (+$pForm điểm)", null, null, $extra);
 
             // [POKE] Immediate Flow Interruption check

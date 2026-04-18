@@ -305,12 +305,18 @@ try {
             if (!$listId)
                 jsonResponse(false, null, 'List ID required');
 
-            // OPTIMIZED: Bulk delete relations
-            $stmt = $pdo->prepare("DELETE FROM subscriber_lists WHERE list_id = ? AND subscriber_id IN ($placeholders)");
-            $stmt->execute(array_merge([$listId], $subscriberIds));
-            $affectedCount = $stmt->rowCount();
+            // [FIX P43-B1] Chunked DELETE — same 65k placeholder limit as list_add.
+            // Old: single DELETE with $placeholders from L166 = crash for 100k IDs.
+            $CHUNK = 500;
+            $affectedCount = 0;
+            foreach (array_chunk($subscriberIds, $CHUNK) as $chunk) {
+                $ph = implode(',', array_fill(0, count($chunk), '?'));
+                $stmt = $pdo->prepare("DELETE FROM subscriber_lists WHERE list_id = ? AND subscriber_id IN ($ph)");
+                $stmt->execute(array_merge([$listId], $chunk));
+                $affectedCount += $stmt->rowCount();
+            }
 
-            // Update list count once
+            // Update list count once after all chunks
             $pdo->prepare("UPDATE lists SET subscriber_count = (SELECT COUNT(*) FROM subscriber_lists WHERE list_id = ?) WHERE id = ?")
                 ->execute([$listId, $listId]);
             break;
@@ -571,6 +577,24 @@ try {
             }
 
             $affectedCount = $totalProcessed;
+            break;
+
+        case 'status_change':
+            // [NEW P43-B2] Bulk status update — previously missing, causing silent failure
+            // when UI sent 'status_change' bulk action from Subscriber modal.
+            $newStatus = $data['status'] ?? '';
+            $allowedStatuses = ['active', 'lead', 'customer', 'unsubscribed', 'bounced', 'inactive'];
+            if (!in_array($newStatus, $allowedStatuses))
+                jsonResponse(false, null, 'Invalid status: ' . $newStatus);
+
+            $CHUNK = 500;
+            $affectedCount = 0;
+            foreach (array_chunk($subscriberIds, $CHUNK) as $chunk) {
+                $ph = implode(',', array_fill(0, count($chunk), '?'));
+                $stmt = $pdo->prepare("UPDATE subscribers SET status = ? WHERE id IN ($ph) AND workspace_id = ?");
+                $stmt->execute(array_merge([$newStatus], $chunk, [$workspace_id]));
+                $affectedCount += $stmt->rowCount();
+            }
             break;
 
         default:

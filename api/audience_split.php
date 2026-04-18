@@ -1,8 +1,10 @@
 <?php
 require_once 'db_connect.php';
 require_once 'segment_helper.php';
+require_once 'auth_middleware.php'; // [FIX P43-C] Needed for workspace_id
 apiHeaders();
 
+$workspace_id = get_current_workspace_id(); // [FIX P43-C] Workspace isolation
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'POST') {
@@ -65,7 +67,10 @@ if ($method === 'POST') {
                     $sourceLabel = "Split from List: " . ($srcName ?: $sourceId);
                 }
 
-                $pdo->prepare("INSERT INTO lists (id, name, source, type, created_at) VALUES (?, ?, ?, 'static', NOW())")->execute([$listId, $destListName, $sourceLabel]);
+                // [FIX P43-C1] Added workspace_id to INSERT — previously missing, causing
+                // newly created split lists to have NULL workspace_id and be invisible
+                // in all workspace-scoped list queries.
+                $pdo->prepare("INSERT INTO lists (id, workspace_id, name, source, type, created_at) VALUES (?, ?, ?, ?, 'static', NOW())")->execute([$listId, $workspace_id, $destListName, $sourceLabel]);
             }
         }
 
@@ -181,10 +186,18 @@ if ($method === 'POST') {
                 $orderBy = "ORDER BY s.joined_at DESC";
             }
 
-            $sql .= " $orderBy LIMIT $quantity";
+            // [FIX P43-C2] Replaced LIMIT interpolation with bindValue(PDO::PARAM_INT).
+            // Direct "LIMIT $quantity" allows injection if client sends non-integer (e.g. "1; DROP").
+            // PDO bindValue with PARAM_INT casts to integer and prevents any SQL injection.
+            $sql .= " $orderBy LIMIT ?";
 
             $stmt = $pdo->prepare($sql);
-            $stmt->execute($params);
+            // Bind all source WHERE params first, then quantity as INT
+            foreach ($params as $idx => $val) {
+                $stmt->bindValue($idx + 1, $val);
+            }
+            $stmt->bindValue(count($params) + 1, $quantity, PDO::PARAM_INT);
+            $stmt->execute();
             $targetIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
         }
 
