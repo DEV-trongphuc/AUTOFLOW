@@ -20,6 +20,7 @@ interface EmailValidationPanelProps {
     onFocusBlock: (blockId: string) => void;
     onRerun: () => void;
     onAutoFixDuplicates?: (groupIds: string[], baseUrl: string) => void;
+    onAutoFixUnsubscribe?: (blockId: string, badHref?: string) => void;
 }
 
 const ISSUE_META: Record<ValidationIssue['type'], { icon: React.ElementType; color: string; bg: string; border: string; title: string }> = {
@@ -70,7 +71,7 @@ const ISSUE_META: Record<ValidationIssue['type'], { icon: React.ElementType; col
 };
 
 const EmailValidationPanel: React.FC<EmailValidationPanelProps> = ({
-    issues, onClose, onFocusBlock, onRerun, onAutoFixDuplicates
+    issues, onClose, onFocusBlock, onRerun, onAutoFixDuplicates, onAutoFixUnsubscribe
 }) => {
     // For duplicate_link: only show one issue per group (the "representative" one is the first in group)
     const deduplicatedIssues = React.useMemo(() => {
@@ -133,10 +134,28 @@ const EmailValidationPanel: React.FC<EmailValidationPanelProps> = ({
                         {issues.some(i => i.type === 'missing_unsubscribe') && (
                             <div className="p-3 bg-red-100 border-2 border-red-300 rounded-xl flex items-start gap-3">
                                 <MailX className="w-5 h-5 text-red-700 mt-0.5 shrink-0" />
-                                <p className="text-xs text-red-800 font-bold leading-snug">
-                                    Email chưa có link hủy đăng ký (Unsubscribe)! Bắt buộc phải có để tránh bị đánh dấu Spam.
-                                    <br /><span className="font-normal opacity-80">Thêm Footer block hoặc dùng merge tag <code className="bg-red-200 px-1 rounded">{'{{unsubscribe_url}}'}</code> trong bất kỳ text block nào.</span>
-                                </p>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs text-red-800 font-bold leading-snug">
+                                        Email chưa có link hủy đăng ký (Unsubscribe)! Bắt buộc phải có để tránh bị đánh dấu Spam.
+                                        <br /><span className="font-normal opacity-80">Thêm Footer block hoặc dùng merge tag <code className="bg-red-200 px-1 rounded">{'{{'+'unsubscribe_url'+'}}' }</code> trong bất kỳ text block nào.</span>
+                                    </p>
+                                    {/* Quick-fix: nếu có block chứa chữ Unsubscribe chưa gắn href */}
+                                    {onAutoFixUnsubscribe && (() => {
+                                        const candidate = issues.find(i => i.type === 'wrong_unsubscribe_url');
+                                        if (candidate) return null; // đã có wrong_url, sẽ hiện nút ở issue riêng
+                                        // Check if missing_unsubscribe issue has a blockId that’s a real block (not root)
+                                        const missingIssue = issues.find(i => i.type === 'missing_unsubscribe');
+                                        if (!missingIssue || missingIssue.blockId === '__email_root__') return null;
+                                        return (
+                                            <button
+                                                onClick={() => onAutoFixUnsubscribe(missingIssue.blockId)}
+                                                className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-700 hover:bg-red-800 text-white text-[10px] font-bold transition-colors"
+                                            >
+                                                <Wand2 className="w-3 h-3" /> Fix nhanh
+                                            </button>
+                                        );
+                                    })()}
+                                </div>
                             </div>
                         )}
 
@@ -217,6 +236,17 @@ const EmailValidationPanel: React.FC<EmailValidationPanelProps> = ({
                                                     >
                                                         <Wand2 className="w-3 h-3" />
                                                         Gắn tracking tự động ({issue.duplicateGroupIds.length} link)
+                                                    </button>
+                                                )}
+
+                                                {/* Quick-fix for wrong_unsubscribe_url */}
+                                                {issue.type === 'wrong_unsubscribe_url' && onAutoFixUnsubscribe && (
+                                                    <button
+                                                        onClick={() => onAutoFixUnsubscribe(issue.blockId, issue.badHref)}
+                                                        className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-700 text-[10px] font-bold transition-colors"
+                                                    >
+                                                        <Wand2 className="w-3 h-3" />
+                                                        Fix nhanh — gắn {'{{unsubscribe_url}}'}
                                                     </button>
                                                 )}
                                             </div>

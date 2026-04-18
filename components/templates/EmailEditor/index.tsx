@@ -409,6 +409,43 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
         toast.success(`Đã tự động gắn tracking (mc_cta) cho ${groupIds.length} liên kết trùng.`, { icon: '🔗' });
     }, [blocks, addToHistory]);
 
+    /**
+     * Auto-fix wrong unsubscribe URL: replace badHref with {{unsubscribe_url}} in the block's HTML content.
+     * Also handles missing_unsubscribe case: if text "Unsubscribe" exists without an href, wraps it.
+     */
+    const handleAutoFixUnsubscribe = useCallback((blockId: string, badHref?: string) => {
+        const fixDeep = (list: EmailBlock[]): EmailBlock[] => {
+            return list.map(b => {
+                if (b.id === blockId && (b.type === 'text' || b.type === 'quote')) {
+                    let html = b.content || '';
+                    if (badHref) {
+                        // Case 1: wrong_unsubscribe_url — replace specific href
+                        const escaped = badHref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        html = html.replace(
+                            new RegExp(`href=["']${escaped}["']`, 'gi'),
+                            'href="{{unsubscribe_url}}"'
+                        );
+                    } else {
+                        // Case 2: text "Unsubscribe" exists as plain text → wrap in <a>
+                        html = html.replace(
+                            /(?<!<a[^>]*>)(Unsubscribe|Hủy đăng ký)(?!<\/a>)/gi,
+                            '<a href="{{unsubscribe_url}}" style="color:inherit">$1</a>'
+                        );
+                    }
+                    return { ...b, content: html };
+                }
+                if (b.children?.length) return { ...b, children: fixDeep(b.children) };
+                return b;
+            });
+        };
+        const newBlocks = fixDeep(blocks);
+        addToHistory(newBlocks);
+        const newIssues = scanBlocks(newBlocks);
+        setValidationIssues(newIssues);
+        if (newIssues.filter(i => i.type !== 'missing_unsubscribe' && i.type !== 'wrong_unsubscribe_url').length === 0 && newIssues.length === 0) setShowValidation(false);
+        toast.success('Đã gắn {{unsubscribe_url}} thành công!', { icon: '✅' });
+    }, [blocks, addToHistory]);
+
     const handleUndo = useCallback(() => {
         if (historyIndex > 0) {
             const newIndex = historyIndex - 1;
@@ -629,6 +666,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
                         onFocusBlock={handleFocusValidationBlock}
                         onRerun={runValidation}
                         onAutoFixDuplicates={handleAutoFixDuplicates}
+                        onAutoFixUnsubscribe={handleAutoFixUnsubscribe}
                     />
                 ) : editorMode === 'visual' && (
                     <EmailProperties selectedBlock={(function find(list: EmailBlock[]): EmailBlock | null { for (let b of list) { if (b.id === selectedBlockId) return b; if (b.children) { const f = find(b.children); if (f) return f; } } return null; })(blocks)} bodyStyle={bodyStyle} deviceMode={viewMode}
