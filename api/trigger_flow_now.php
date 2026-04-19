@@ -17,8 +17,10 @@ try {
     $fp = @fsockopen($parts['scheme'] === 'https' ? "ssl://$host" : $host, $parts['port'] ?? ($parts['scheme'] === 'https' ? 443 : 80), $errno, $errstr, 1);
 
     if ($fp) {
+        $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
         $out = "GET {$parts['path']} HTTP/1.1\r\n";
         $out .= "Host: $host\r\n";
+        $out .= "X-Cron-Secret: $cronSecret\r\n";
         $out .= "Connection: Close\r\n\r\n";
         fwrite($fp, $out);
         fclose($fp);

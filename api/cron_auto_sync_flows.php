@@ -178,11 +178,13 @@ try {
 
         // Trigger the aggregator worker
         $workerUrl = API_BASE_URL . '/worker_tracking_aggregator.php';
+        $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
         $ch = curl_init($workerUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
         $result = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
@@ -296,3 +298,4 @@ try {
 }
 
 echo "$logPrefix Auto-sync cron job finished.\n\n";
+

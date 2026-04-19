@@ -40,6 +40,7 @@ if (isset($codes['ids']) && is_array($codes['ids'])) {
                 'target_id' => $subData['campaign_id'],
                 'subscriber_id' => $subData['subscriber_id']
             ]);
+            $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $workerUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
@@ -47,6 +48,7 @@ if (isset($codes['ids']) && is_array($codes['ids'])) {
             curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
             curl_multi_add_handle($mh, $ch);
             $handles[] = $ch;
         }
@@ -94,6 +96,7 @@ if ($staticCamp) {
         'subscriber_id' => ''
     ]);
     
+    $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $workerUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
@@ -102,6 +105,7 @@ if ($staticCamp) {
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
     @curl_exec($ch);
     curl_close($ch);
 
@@ -154,6 +158,7 @@ $workerUrl = API_BASE_URL . "/worker_priority.php?" . http_build_query([
     'target_id' => $voucher['campaign_id'], 
     'subscriber_id' => $voucher['subscriber_id'] ?? ''
 ]);
+$cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $workerUrl);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
@@ -162,6 +167,7 @@ curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
 @curl_exec($ch);
 curl_close($ch);
 

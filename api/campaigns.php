@@ -109,6 +109,7 @@ if ($method === 'POST' && $route === 'resend_failed_emails') {
         // [AUDIT-H1 FIX] Fire worker immediately — without this, campaign stays stuck in 'sending'
         // until the next cron run (up to 60s delay).
         $workerUrl = API_BASE_URL . "/worker_campaign.php?campaign_id=" . urlencode($campaignId);
+        $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
         $chResend = curl_init();
         curl_setopt($chResend, CURLOPT_URL, $workerUrl);
         curl_setopt($chResend, CURLOPT_RETURNTRANSFER, false);
@@ -116,6 +117,7 @@ if ($method === 'POST' && $route === 'resend_failed_emails') {
         curl_setopt($chResend, CURLOPT_NOSIGNAL, 1);
         curl_setopt($chResend, CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($chResend, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P11-H1] was 0, disabling hostname verification
+        curl_setopt($chResend, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
         curl_exec($chResend);
         curl_close($chResend);
         jsonResponse(true, ['count' => count($subIdsToRetry)], 'Emails re-queued successfully.');
@@ -588,6 +590,7 @@ WHERE t_sub.name = ?)";
 for campaign $campaignId. URL: $workerUrl\n", FILE_APPEND);
             }
 
+            $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $workerUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Changed to true to capture result
@@ -595,6 +598,7 @@ for campaign $campaignId. URL: $workerUrl\n", FILE_APPEND);
             curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P11-H1] was 0, disabling hostname verification
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
             $curlResult = curl_exec($ch);
             $curlError = curl_error($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

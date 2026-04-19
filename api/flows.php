@@ -1835,7 +1835,8 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-next-step') {
 
             // 2. Trigger worker with priority if applicable
             $refreshUrl = API_BASE_URL . "/worker_flow.php?flow_id=$flowId" . $priorityParam;
-            $ctx = stream_context_create(['http' => ['timeout' => 0.1]]);
+            $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
+            $ctx = stream_context_create(['http' => ['timeout' => 0.1, 'header' => "X-Cron-Secret: $cronSecret\r\n"]]);
             @file_get_contents($refreshUrl, false, $ctx);
 
             // Update stats immediately
@@ -1930,7 +1931,8 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-next-step') {
                 $priorityParam = "&priority_sub_id=" . end($subscriberIds) . "&priority_flow_id=$flowId";
             }
             $refreshUrl = API_BASE_URL . "/worker_flow.php?flow_id=$flowId" . $priorityParam;
-            $ctx = stream_context_create(['http' => ['timeout' => 0.1]]);
+            $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
+            $ctx = stream_context_create(['http' => ['timeout' => 0.1, 'header' => "X-Cron-Secret: $cronSecret\r\n"]]);
             @file_get_contents($refreshUrl, false, $ctx);
 
             // Update stats immediately

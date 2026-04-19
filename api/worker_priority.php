@@ -604,6 +604,7 @@ try {
                 $workerUrl = API_BASE_URL . "/worker_priority.php?" . $workerParams;
 
                 $ch = curl_init();
+                $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
                 curl_setopt($ch, CURLOPT_URL, $workerUrl);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                 curl_setopt($ch, CURLOPT_TIMEOUT, 30);       // Give each worker 30s to complete
@@ -611,6 +612,7 @@ try {
                 curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
                 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
                 curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
+                curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
                 curl_multi_add_handle($mh, $ch);
                 $handles[] = $ch;
             }
@@ -950,3 +952,4 @@ try {
 $logs[] = "--- PRIORITY WORKER FINISHED: " . date('Y-m-d H:i:s') . " ---";
 file_put_contents(__DIR__ . '/worker_priority.log', implode("\n", $logs) . "\n", FILE_APPEND | LOCK_EX);
 echo implode("\n", $logs);
+
