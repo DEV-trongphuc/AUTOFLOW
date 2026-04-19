@@ -4,7 +4,7 @@ import { ShieldCheck, AlertTriangle, Image, MousePointer2, CheckCircle2, X, Chev
 
 export interface ValidationIssue {
     blockId: string;
-    type: 'button_no_link' | 'image_no_link' | 'image_no_alt' | 'duplicate_link' | 'missing_unsubscribe' | 'wrong_unsubscribe_url';
+    type: 'spam_words' | 'button_no_link' | 'image_no_link' | 'image_no_alt' | 'duplicate_link' | 'missing_unsubscribe' | 'wrong_unsubscribe_url';
     label: string;
     preview?: string;
     // For duplicate_link: the group of blockIds sharing the same URL
@@ -12,6 +12,8 @@ export interface ValidationIssue {
     currentUrl?: string;
     // For wrong_unsubscribe_url: the href that was detected
     badHref?: string;
+    // For spam_words: list of detected words
+    spamWords?: string[];
 }
 
 interface EmailValidationPanelProps {
@@ -24,6 +26,14 @@ interface EmailValidationPanelProps {
 }
 
 const ISSUE_META: Record<ValidationIssue['type'], { icon: React.ElementType; color: string; bg: string; border: string; title: string }> = {
+    // [NEW] Spam words detection
+    spam_words: {
+        icon: AlertTriangle,
+        color: 'text-amber-600',
+        bg: 'bg-amber-50',
+        border: 'border-amber-200',
+        title: 'Từ khóa dễ vào Spam',
+    },
     // [NEW] Critical: email has no unsubscribe link at all
     missing_unsubscribe: {
         icon: MailX,

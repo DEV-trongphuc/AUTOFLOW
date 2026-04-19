@@ -30,6 +30,13 @@ interface EmailEditorProps {
 
 // ─── Validation helpers ───────────────────────────────────────────────────────
 
+const SPAM_WORDS = [
+    'miễn phí', '100%', 'cam kết', 'trúng thưởng', 'rút tiền', 'không rủi ro',
+    'bí quyết', 'làm giàu', 'việc nhẹ', 'cơ hội cuối', 'chỉ hôm nay',
+    'độc đắc', 'thu nhập thụ động', 'hoàn tiền', 'kết quả bất ngờ', 'đột phá',
+    'chiến thắng', 'cơ hội vàng', 'tiền mặt', 'vốn 0 đồng'
+];
+
 /** Strip HTML tags and return plain text preview (max 40 chars) */
 const stripHtml = (html: string): string => {
     return html.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 40) || '';
@@ -149,6 +156,28 @@ const scanBlocks = (blocks: EmailBlock[]): ValidationIssue[] => {
                             preview: stripHtml(html).slice(0, 40),
                         });
                     }
+                }
+            }
+
+            // ── Scan for SPAM_WORDS ──────────────────────────────────────────
+            if (block.type === 'text' || block.type === 'quote' || block.type === 'button') {
+                const html = block.content || '';
+                const textOnly = stripHtml(html).toLowerCase();
+                const foundSpamWords = new Set<string>();
+                SPAM_WORDS.forEach(word => {
+                    if (textOnly.includes(word.toLowerCase())) {
+                        foundSpamWords.add(word);
+                    }
+                });
+
+                if (foundSpamWords.size > 0) {
+                    issues.push({
+                        blockId: block.id,
+                        type: 'spam_words',
+                        label: `Phát hiện ${foundSpamWords.size} cụm từ dễ vào thẻ Spam`,
+                        preview: Array.from(foundSpamWords).join(', '),
+                        spamWords: Array.from(foundSpamWords)
+                    });
                 }
             }
 
