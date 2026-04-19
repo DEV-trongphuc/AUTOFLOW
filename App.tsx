@@ -135,9 +135,8 @@ const App: React.FC = () => {
         const pingWorker = () => {
             // Only ping when tab is visible to avoid unnecessary load in background
             if (document.visibilityState !== 'visible') return;
-            // Fire-and-forget: we don't need the response
-            fetch(`${apiBase}/worker_queue.php`, { method: 'GET', credentials: 'include' }).catch(() => { });
-            fetch(`${apiBase}/worker_flow.php`, { method: 'GET', credentials: 'include' }).catch(() => { });
+            // Fire-and-forget: workers are now handled securely by Server CRON
+            // and internal self-triggers. Frontend no longer calls workers directly.
         };
 
         // [NEW] Ping auth.php to refresh last_login every 5 minutes

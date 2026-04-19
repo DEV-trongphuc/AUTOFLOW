@@ -84,6 +84,7 @@ class WorkerTriggerService
         $port = isset($parts['port']) ? $parts['port'] : ($scheme === 'https' ? 443 : 80);
         $path = $parts['path'] ?? '/';
         $query = isset($parts['query']) ? '?' . $parts['query'] : '';
+        $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
 
         // Method 1: fsockopen TRUE fire-and-forget
         // Key: set stream non-blocking + zero timeout, write request, close immediately
@@ -94,6 +95,7 @@ class WorkerTriggerService
             stream_set_timeout($fp, 0);        // ← zero read timeout
             $req = "GET {$path}{$query} HTTP/1.1\r\n";
             $req .= "Host: {$host}\r\n";
+            $req .= "X-Cron-Secret: {$cronSecret}\r\n";
             $req .= "Connection: Close\r\n\r\n";
             @fwrite($fp, $req);
             @fclose($fp);                      // ← close WITHOUT reading response
@@ -104,9 +106,9 @@ class WorkerTriggerService
         // Method 2: cURL detached background process
         if (function_exists('exec')) {
             if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-                @pclose(@popen("start /B curl -s --max-time 300 \"$url\" > NUL 2>&1", "r"));
+                @pclose(@popen("start /B curl -s -H \"X-Cron-Secret: {$cronSecret}\" --max-time 300 \"$url\" > NUL 2>&1", "r"));
             } else {
-                @exec("curl -s --max-time 300 \"$url\" > /dev/null 2>&1 &");
+                @exec("curl -s -H \"X-Cron-Secret: {$cronSecret}\" --max-time 300 \"$url\" > /dev/null 2>&1 &");
             }
             $this->log("Triggered via exec curl background: $url");
             return true;
@@ -125,7 +127,7 @@ class WorkerTriggerService
             curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Internal self-trigger: no peer cert needed
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);     // Internal self-trigger: no hostname check
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Connection: Close']);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Connection: Close', "X-Cron-Secret: {$cronSecret}"]);
             @curl_exec($ch); // Will timeout but request is already sent
             curl_close($ch);
             $this->log("Triggered via curl (100ms timeout abandon): $url");
