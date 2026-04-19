@@ -149,7 +149,7 @@ if ($method === 'GET' && $action === 'check') {
 // [NEW] Lightweight activity ping — only updates last_login, no profile fetch
 // Called by App.tsx heartbeat every 5 min to keep last_activity fresh while user is active
 if ($method === 'GET' && $action === 'ping') {
-        if (empty($GLOBALS['current_admin_id']) && empty($_SESSION['user_id'])) {
+        if (empty($GLOBALS['current_admin_id']) && !isset($_SESSION['user_id'])) {
         jsonResponse(false, null, 'Not authenticated'); // Silently ignored by frontend
     }
     try {

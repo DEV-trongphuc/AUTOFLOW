@@ -327,7 +327,7 @@ $GLOBALS['current_admin_id'] = $current_admin_id;
 // ── UPDATE LAST_LOGIN FOOTPRINT (TRACK ACTIVITY) ─────────────────────────
 if (session_status() === PHP_SESSION_ACTIVE) {
     $sessionUserId = $_SESSION['user_id'] ?? null;
-    if (!empty($sessionUserId)) {
+    if ($sessionUserId !== null && $sessionUserId !== false) {
         $lastUpdate = $_SESSION['last_login_update_time'] ?? 0;
         if (time() - $lastUpdate > 300) { // 5 minutes throttle
             try {
