@@ -14,7 +14,6 @@ import PageHero from '../components/common/PageHero';
 
 import Tabs from '../components/common/Tabs';
 import Select from '../components/common/Select';
-import { DateRange } from 'react-day-picker';
 import toast from 'react-hot-toast';
 import CustomerProfileModal from '../components/audience/CustomerProfileModal';
 import SegmentBuilderModal from '../components/audience/SegmentBuilderModal';
