@@ -5,6 +5,7 @@
 
 set_time_limit(300);
 require_once 'db_connect.php';
+require_once __DIR__ . '/worker_guard.php';
 
 echo "Starting Geo Worker...\n";
 

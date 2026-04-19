@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // api/worker_tracking_aggregator.php - HIGH-PERFORMANCE TRACKING AGGREGATOR V2.0
 // Handles millions of raw events using Buffer-First + Short-lived Transaction pattern.
 
@@ -8,6 +8,7 @@ set_time_limit(300); // 5 minutes
 ignore_user_abort(true);
 
 require_once 'db_connect.php';
+require_once __DIR__ . '/worker_guard.php';
 require_once 'tracking_processor.php';
 require_once 'tracking_helper.php';
 

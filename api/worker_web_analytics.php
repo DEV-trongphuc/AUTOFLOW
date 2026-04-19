@@ -1,8 +1,9 @@
-<?php
+﻿<?php
 // api/worker_web_analytics.php - Aggregate web analytics data for fast reporting
 // Run this via cron every hour: php worker_web_analytics.php
 
 require_once 'db_connect.php';
+require_once __DIR__ . '/worker_guard.php';
 
 try {
     $pdo = getDbConnection();

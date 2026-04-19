@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // api/worker_queue.php - MISSION-CRITICAL QUEUE ENGINE V1.0
 // This is the heart of the 10M scalability upgrade.
 // It processes background jobs from the queue_jobs table.
@@ -43,6 +43,7 @@ register_shutdown_function(function () use ($workerLock, $isPriority) {
 });
 
 require_once __DIR__ . '/db_connect.php';
+require_once __DIR__ . '/worker_guard.php';
 // RELEASE SESSION LOCK: Workers don't need to hold the user's session lock.
 if (session_id())
     session_write_close();

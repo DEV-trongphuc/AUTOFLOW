@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Zalo Token Refresh Worker
  * Automatically refreshes Zalo OA tokens before they expire
@@ -6,6 +6,7 @@
  */
 
 require_once __DIR__ . '/db_connect.php';
+require_once __DIR__ . '/worker_guard.php';
 require_once __DIR__ . '/zalo_helpers.php';
 
 header('Content-Type: application/json');

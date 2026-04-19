@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // api/worker_trigger.php - OMNI-ENGINE V29.6 (POLLING TRIGGERS: DATE, CAMPAIGN, DORMANT)
 // Trigger this via CRON every hour or 15 mins.
 // Example: php /path/to/api/worker_trigger.php
@@ -10,6 +10,7 @@ set_time_limit(300);
 // [FIX P8-H2] Use __DIR__-anchored paths so cron can call this file from any CWD.
 // Relative paths (e.g. 'db_connect.php') fail when PHP process CWD != api/ directory.
 require_once __DIR__ . '/db_connect.php';
+require_once __DIR__ . '/worker_guard.php';
 require_once __DIR__ . '/trigger_helper.php';
 require_once __DIR__ . '/segment_helper.php';
 

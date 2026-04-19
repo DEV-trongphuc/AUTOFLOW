@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // api/worker_priority.php - OMNI-ENGINE V29.6 (PRIORITY CHAINING ENGINE - FINAL FIX FOR INSTANT EXECUTION)
 // This worker is triggered directly by API calls (forms.php, purchase_events.php, custom_events.php, worker_campaign.php)
 // to immediately enroll a SPECIFIC subscriber into relevant flows AND execute the *initial chain of instant steps*.
@@ -30,6 +30,7 @@ try {
     ini_set('display_errors', 0); // Disable for production
 
     require_once __DIR__ . '/db_connect.php';
+require_once __DIR__ . '/worker_guard.php';
     traceLog("[Priority] DB Connected");
     file_put_contents($debugLogFile, "DB connected\n", FILE_APPEND | LOCK_EX);
 

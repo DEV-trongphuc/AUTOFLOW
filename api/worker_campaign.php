@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // api/worker_campaign.php - OMNI-ENGINE V30.0 (IMMEDIATE SEND & FLOW ENROLLMENT OPTIMIZED)
 // This worker is designed to be run by a cron job OR triggered directly for immediate send.
 
@@ -8,6 +8,7 @@ set_time_limit(600); // Allow up to 10 minutes for sending a batch
 ignore_user_abort(true); // Fix: Continue running even if client (curl) disconnects
 
 require_once __DIR__ . '/db_connect.php';
+require_once __DIR__ . '/worker_guard.php';
 require_once __DIR__ . '/Mailer.php'; // Mailer is required here for sending emails
 require_once __DIR__ . '/segment_helper.php';
 require_once __DIR__ . '/zalo_sender.php';

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // api/worker_reminder.php - REMINDER SYSTEM WORKER
 // Run via Cron every 5-10 minutes
 // Example: */5 * * * * php /path/to/api/worker_reminder.php
@@ -8,6 +8,7 @@ ini_set('display_errors', 0);
 set_time_limit(300);
 
 require_once __DIR__ . '/db_connect.php';
+require_once __DIR__ . '/worker_guard.php';
 require_once __DIR__ . '/Mailer.php';
 require_once __DIR__ . '/segment_helper.php';
 require_once __DIR__ . '/flow_helpers.php'; // [BUG-1 FIX] sesAcquireRateSlot() shared SES rate limiter

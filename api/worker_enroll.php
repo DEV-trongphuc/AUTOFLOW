@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // api/worker_enroll.php - OMNI-ENGINE V28.2 (OPTIMIZED ATOMIC ENROLLMENT)
 // This worker handles standard flow triggers like segment entry using direct SQL.
 
@@ -7,6 +7,7 @@ ini_set('display_errors', 0);
 set_time_limit(300);
 
 require_once 'db_connect.php';
+require_once __DIR__ . '/worker_guard.php';
 require_once 'flow_helpers.php';
 require_once 'segment_helper.php';
 

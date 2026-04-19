@@ -1,7 +1,8 @@
-<?php
+﻿<?php
 // api/worker_notify.php
 // Background worker để gửi Notification Emails bất đồng bộ (tránh block luồng API chính)
 require_once 'db_connect.php';
+require_once __DIR__ . '/worker_guard.php';
 require_once 'Mailer.php';
 
 $data = json_decode(file_get_contents("php://input"), true);

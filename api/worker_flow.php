@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // api/worker_flow.php - OMNI-ENGINE V30.3 (RELIABILITY & PERFORMANCE OPTIMIZED)
 // Engine for processing flow automation jobs with chain execution.
 
@@ -8,6 +8,7 @@ ignore_user_abort(true);
 set_time_limit(300);
 
 require_once __DIR__ . '/db_connect.php';
+require_once __DIR__ . '/worker_guard.php';
 // RELEASE SESSION LOCK: Workers don't need to hold the user's session lock.
 if (session_id())
     session_write_close();

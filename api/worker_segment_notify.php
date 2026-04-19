@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // api/worker_segment_notify.php - OMNI-ENGINE V30.0 (REAL-TIME NOTIFICATION WORKER)
 // This worker evaluates subscribers against notification-enabled segments and emails admins.
 
@@ -8,6 +8,7 @@ set_time_limit(300);
 ignore_user_abort(true);
 
 require_once __DIR__ . '/db_connect.php';
+require_once __DIR__ . '/worker_guard.php';
 require_once __DIR__ . '/Mailer.php';
 require_once __DIR__ . '/segment_helper.php';
 require_once __DIR__ . '/flow_helpers.php'; // For replaceMergeTags()
