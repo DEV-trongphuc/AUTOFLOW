@@ -81,22 +81,6 @@ const UndoToastContent = ({ t, icon: Icon, iconColorClass, title, subtitle, dura
     );
 };
 
-import ListMergeModal from '../components/audience/ListMergeModal';
-import CleanupModal from '../components/audience/CleanupModal';
-import ConfirmModal from '../components/common/ConfirmModal';
-import InfoCard from '../components/common/InfoCard';
-import { isManualList } from '../utils/listHelpers';
-import ColumnCustomizer from '../components/audience/ColumnCustomizer';
-import ItemsPerPageSelector from '../components/audience/ItemsPerPageSelector';
-import AdvancedFilters from '../components/audience/AdvancedFilters';
-import MetaCustomers from '../components/meta/MetaCustomers';
-import ZaloAudienceTab from '../components/zalo/ZaloAudienceTab';
-import TabTransition from '../components/common/TabTransition';
-import AudienceTipsModal from '../components/audience/AudienceTipsModal';
-import FilterPills from '../components/audience/FilterPills';
-import { Lightbulb } from 'lucide-react';
-import { useIsAdmin } from '../hooks/useAuthUser';
-import { usePermissionGuard } from '../components/common/PermissionGuard';
 
 const ITEMS_PER_PAGE = 20;
 
