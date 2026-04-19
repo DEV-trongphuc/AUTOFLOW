@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // api/worker_campaign.php - OMNI-ENGINE V30.0 (IMMEDIATE SEND & FLOW ENROLLMENT OPTIMIZED)
 // This worker is designed to be run by a cron job OR triggered directly for immediate send.
 
@@ -48,7 +48,7 @@ if (!function_exists('runWorkerCampaign')) {
         $apiUrl = API_BASE_URL;
         // [FIX P38-WC] Only load the 2 settings keys this worker actually needs.
         // Old SELECT * loaded 50+ key/value pairs (SMTP passwords, API keys, etc.)
-        // into memory on every single worker boot — a significant security and memory footprint.
+        // into memory on every single worker boot � a significant security and memory footprint.
         $stmt = $pdo->query("SELECT `key`, `value` FROM system_settings WHERE workspace_id = 0 AND `key` IN ('smtp_user','max_messages_per_day')");
         $settings = [];
         foreach ($stmt->fetchAll() as $row) {
@@ -58,8 +58,8 @@ if (!function_exists('runWorkerCampaign')) {
         $mailer = new Mailer($pdo, $apiUrl, $defaultSender);
 
         // [FIX P9-C1] MySQL version guard for FOR UPDATE SKIP LOCKED.
-        // SKIP LOCKED requires MySQL ≥ 8.0 — identical to fix in worker_queue.php (P7-C3).
-        // On MySQL 5.7: hardcoded SKIP LOCKED → SQLState[42000] Syntax Error → campaign batch crash.
+        // SKIP LOCKED requires MySQL = 8.0 � identical to fix in worker_queue.php (P7-C3).
+        // On MySQL 5.7: hardcoded SKIP LOCKED ? SQLState[42000] Syntax Error ? campaign batch crash.
         $mysqlVersion = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
         $skipLockedClause = version_compare($mysqlVersion, '8.0.0', '>=') ? 'SKIP LOCKED' : '';
 
@@ -278,8 +278,8 @@ if (!function_exists('runWorkerCampaign')) {
                         }
                     }
                 }
-                // D. INDIVIDUAL IDs — [BUG FIX] Previously missing: campaigns targeting hand-picked
-                // subscribers had empty $wheres → worker sent to ALL workspace subscribers instead.
+                // D. INDIVIDUAL IDs � [BUG FIX] Previously missing: campaigns targeting hand-picked
+                // subscribers had empty $wheres ? worker sent to ALL workspace subscribers instead.
                 if (!empty($target['individualIds'])) {
                     $indPlaceholders = implode(',', array_fill(0, count($target['individualIds']), '?'));
                     $wheres[] = "s.id IN ($indPlaceholders)";
@@ -287,15 +287,15 @@ if (!function_exists('runWorkerCampaign')) {
                 }
 
                 // 2. Micro-Batch Processing Loop
-                $BATCH_SIZE = 200;   // [PERF] Increased from 50 → 200 to boost throughput per batch
-                $MAX_BATCHES = 90;  // [PERF] Increased from 60 → 90 — max 18,000 emails per worker run
+                $BATCH_SIZE = 200;   // [PERF] Increased from 50 ? 200 to boost throughput per batch
+                $MAX_BATCHES = 90;  // [PERF] Increased from 60 ? 90 � max 18,000 emails per worker run
                                     // 450s time guard still protects against FPM exhaustion
                 $batchCount = 0;
                 $hasMore = true;
                 $totalProcessed = 0;
                 $startTimeRun = microtime(true);
 
-                // [PERF B2] Pre-decode linked flow JSON once — avoids 200x json_decode per batch.
+                // [PERF B2] Pre-decode linked flow JSON once � avoids 200x json_decode per batch.
                 // linkedFlow config/steps are the same for every subscriber in the batch.
                 $linkedFlowConfig = $linkedFlow ? (json_decode($linkedFlow['config'], true) ?: []) : null;
                 $linkedFlowSteps  = $linkedFlow ? (json_decode($linkedFlow['steps'], true) ?: []) : null;
@@ -338,7 +338,7 @@ if (!function_exists('runWorkerCampaign')) {
                         // be permanently skipped with the old unlimited check.
                         // Fix: processing_campaign only blocks for 10 minutes (the max realistic send time
                         // per batch). After that, the lock is treated as stale and the subscriber
-                        // becomes eligible again — preventing ghost-skips from crashed workers.
+                        // becomes eligible again � preventing ghost-skips from crashed workers.
                         $sql .= " AND NOT EXISTS (
                     SELECT 1 FROM subscriber_activity sa
                     WHERE sa.subscriber_id = s.id
@@ -405,7 +405,7 @@ if (!function_exists('runWorkerCampaign')) {
                             foreach ($stmtBatchCap->fetchAll(PDO::FETCH_ASSOC) as $row) {
                                 // [FIX] Use string key to match $sub['id'] which is a string UUID.
                                 // PHP array keys cast integers automatically only for numeric strings.
-                                // UUID strings are non-numeric — both sides must use the raw string.
+                                // UUID strings are non-numeric � both sides must use the raw string.
                                 $sId = $row['subscriber_id'];
                                 if (!isset($capCache[$sId])) {
                                     $capCache[$sId] = ['email' => 0, 'zalo' => 0, 'meta' => 0];
@@ -460,8 +460,8 @@ if (!function_exists('runWorkerCampaign')) {
                         $recipientIndexInBatch = 0;
                         $bouncedIds = [];
 
-                        // [RATE LIMITER] Uses sesAcquireRateSlot() — shared file-lock across ALL
-                        // PHP workers (campaign + flow). Guarantees combined total ≤ 10/s regardless
+                        // [RATE LIMITER] Uses sesAcquireRateSlot() � shared file-lock across ALL
+                        // PHP workers (campaign + flow). Guarantees combined total = 10/s regardless
                         // of how many workers are active. Defined in flow_helpers.php.
 
                         foreach ($recipients as $sub) {
@@ -475,7 +475,7 @@ if (!function_exists('runWorkerCampaign')) {
                             if ($isABTest && $hasVariantB) {
                                 // [BUG FIX] hexdec() on 8-char hex = up to 0xFFFFFFFF = 4294967295.
                                 // On 32-bit PHP, values > 2^31-1 wrap to negative int.
-                                // Negative % 100 is negative in PHP → subscriber always lands in variant A.
+                                // Negative % 100 is negative in PHP ? subscriber always lands in variant A.
                                 // Fix: abs() guarantees a non-negative value before modulo.
                                 $hash = abs(hexdec(substr(md5($subId . $cid), 0, 8))) % 100;
                                 $ratioA = (int) ($abConfig['ratio_a'] ?? 50);
@@ -516,7 +516,7 @@ if (!function_exists('runWorkerCampaign')) {
 
                                 $templateData = [];
                                 $missingParams = [];
-                                // [FIX] Per-field length limits — same as FlowExecutor zalo_zns
+                                // [FIX] Per-field length limits � same as FlowExecutor zalo_zns
                                 // Zalo ZNS short fields (id, ma_giao_dich...) max 20 chars; others max 100
                                 $znsShortFieldMap = [
                                     'id'           => 20,
@@ -563,7 +563,7 @@ if (!function_exists('runWorkerCampaign')) {
                                 }
 
                                 // [SES SHARED RATE LIMITER] Acquire slot from cross-process file-lock.
-                                // Shared with FlowExecutor → campaign + flow combined ≤ 10/s total.
+                                // Shared with FlowExecutor ? campaign + flow combined = 10/s total.
                                 sesAcquireRateSlot(); // 100ms interval = 10/s shared total
 
                                 $res = $mailer->send($sub['email'], $personalSubject, $personalHtml, $sub['id'], $cid, null, null, $attachments, null, null, $cName, false, $skipQA, $variationLabel);
@@ -625,10 +625,10 @@ if (!function_exists('runWorkerCampaign')) {
                                                     $delay = $unitSeconds * $dur;
                                                     if ($delay > 0)
                                                         $initialSchedule = date('Y-m-d H:i:s', time() + $delay);
-                                                // else: dura=0 → keep $initialSchedule = $now → immediate
+                                                // else: dura=0 ? keep $initialSchedule = $now ? immediate
                                                 } elseif ($fsWaitMode === 'until_date') {
                                                     // [BUG-2 FIX] SMART SCHEDULE for until_date:
-                                                    // Without this: scheduled_at=NOW → priority worker sees NOW<=NOW → is_resumed_wait=TRUE → wait SKIPPED!
+                                                    // Without this: scheduled_at=NOW ? priority worker sees NOW<=NOW ? is_resumed_wait=TRUE ? wait SKIPPED!
                                                     $specDate   = $fsWaitConfig['specificDate'] ?? '';
                                                     $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
                                                     if ($specDate) {
@@ -636,7 +636,7 @@ if (!function_exists('runWorkerCampaign')) {
                                                         if ($targetTs > time()) {
                                                             $initialSchedule = date('Y-m-d H:i:s', $targetTs);
                                                         }
-                                                        // If date already past: keep $initialSchedule=$now → FlowExecutor isWaitOver=TRUE → skip correctly
+                                                        // If date already past: keep $initialSchedule=$now ? FlowExecutor isWaitOver=TRUE ? skip correctly
                                                     }
                                                 } elseif ($fsWaitMode === 'until') {
                                                     // [BUG-2 FIX] SMART SCHEDULE for until (time-of-day):
@@ -826,7 +826,7 @@ if (!function_exists('runWorkerCampaign')) {
                     $sqlLeft .= " AND (" . implode(' OR ', $wheres) . ")";
 
                 // [FIX P35-W1] Mirror main batch query: also exclude fresh processing_campaign locks (<10min).
-                // Previously this comment was INSIDE the SQL string → MySQL parse error → campaign stuck at 'sending'.
+                // Previously this comment was INSIDE the SQL string ? MySQL parse error ? campaign stuck at 'sending'.
                 $sqlLeft .= " AND NOT EXISTS (
             SELECT 1 FROM subscriber_activity sa 
             WHERE sa.subscriber_id = s.id 

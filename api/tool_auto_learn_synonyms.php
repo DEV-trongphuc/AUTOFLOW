@@ -1,4 +1,4 @@
-ï»¿<?php
+<?php
 // api/tool_auto_learn_synonyms.php
 // AI Tool to analyze training data and generate Domain Synonyms automatically
 
@@ -54,8 +54,8 @@ Focus on:
 Return ONLY a valid JSON object where keys are the main keyword and values are arrays of synonyms.
 Example format:
 {
-  \"giÃ¡\": [\"chi phÃ­\", \"há»c phÃ­\", \"bao nhiÃªu\"],
-  \"Ä‘Äƒng kÃ½\": [\"ghi danh\", \"mua\", \"tham gia\"]
+  \"giá\": [\"chi phí\", \"h?c phí\", \"bao nhiêu\"],
+  \"dang ký\": [\"ghi danh\", \"mua\", \"tham gia\"]
 }
 
 Text to analyze:

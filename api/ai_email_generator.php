@@ -21,7 +21,7 @@ require_once $_base . '/auth_middleware.php';
 require_once $_base . '/chat_gemini.php';
 
 // [SECURITY] Require authenticated workspace session — uses workspace Gemini API quota
-if (!isset($_SESSION['user_id'])) {
+if (empty($GLOBALS['current_admin_id']) && empty($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'error' => 'Unauthorized']);
     exit;

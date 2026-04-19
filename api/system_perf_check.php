@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // api/system_perf_check.php - ULTIMATE INTEGRITY & PERFORMANCE CHECKER (V1.0)
 // This script validates if the system is correctly optimized for mass volume.
 
@@ -29,7 +29,7 @@ echo "
     pre { background: #1e293b; color: #f8fafc; padding: 12px; border-radius: 8px; font-size: 12px; overflow-x: auto; }
 </style>
 
-<h1>🚀 OMNI-ENGINE Performance & Systems Integrity Check</h1>
+<h1>?? OMNI-ENGINE Performance & Systems Integrity Check</h1>
 ";
 
 function checkStatus($ok, $label)
@@ -40,7 +40,7 @@ function checkStatus($ok, $label)
 echo "<div class='grid'>";
 
 // --- 1. CORE ENVIRONMENT ---
-echo "<div class='card'><h2>🖥️ Environment</h2>";
+echo "<div class='card'><h2>??? Environment</h2>";
 $phpMem = ini_get('memory_limit');
 $phpTime = ini_get('max_execution_time');
 $fpm = function_exists('fastcgi_finish_request');
@@ -54,7 +54,7 @@ echo "</div>";
 echo "</div>";
 
 // --- 2. DATABASE PERFORMANCE ---
-echo "<div class='card'><h2>📊 Database & Indexes</h2>";
+echo "<div class='card'><h2>?? Database & Indexes</h2>";
 try {
     // Check key tables
     $tables = ['subscribers', 'subscriber_activity', 'subscriber_flow_states', 'stats_update_buffer'];
@@ -85,7 +85,7 @@ try {
 echo "</div>";
 
 // --- 3. QUEUE & BUFFER HEALTH ---
-echo "<div class='card'><h2>📥 Queues & Buffers</h2>";
+echo "<div class='card'><h2>?? Queues & Buffers</h2>";
 try {
     // Stats Update Buffer
     $stmtBuff = $pdo->query("SELECT COUNT(*) FROM stats_update_buffer WHERE processed = 0");
@@ -112,7 +112,7 @@ try {
 echo "</div>";
 
 // --- 4. WORKER PULSE ---
-echo "<div class='card'><h2>💓 Worker Pulse</h2>";
+echo "<div class='card'><h2>?? Worker Pulse</h2>";
 $logFiles = [
     'Campaign' => 'worker_campaign.log',
     'Flow' => 'worker_flow.log',
@@ -138,7 +138,7 @@ foreach ($logFiles as $name => $file) {
 echo "</div>";
 
 // --- 5. SMTP CONNECTIVITY ---
-echo "<div class='card'><h2>📧 SMTP Integrity</h2>";
+echo "<div class='card'><h2>?? SMTP Integrity</h2>";
 $stmtSett = $pdo->query("SELECT `key`, `value` FROM system_settings WHERE workspace_id = 0 AND `key` IN ('smtp_enabled', 'smtp_host', 'smtp_user')");
 $setts = $stmtSett->fetchAll(PDO::FETCH_KEY_PAIR);
 $smtpOn = ($setts['smtp_enabled'] ?? '0') === '1';
@@ -156,11 +156,11 @@ echo "</div>";
 
 echo "</div>"; // End Grid
 
-echo "<div class='card'><h2>🏁 Conclusion</h2>";
+echo "<div class='card'><h2>?? Conclusion</h2>";
 echo "<p>Your system is currently in <b>Mass-Volume Mode</b>. All core components (Stats Buffering, Queue Locking, and Async Webhooks) are detected and functional. </p>";
-echo "<p>🚀 <b>Next Steps:</b> If you see 'STUCK' jobs, check if your cron triggers are running at least every minute.</p></div>";
+echo "<p>?? <b>Next Steps:</b> If you see 'STUCK' jobs, check if your cron triggers are running at least every minute.</p></div>";
 
-echo "<div class='card'><h2>📄 Recent Tracking Pulse (Last 5 Events)</h2>";
+echo "<div class='card'><h2>?? Recent Tracking Pulse (Last 5 Events)</h2>";
 try {
     $stmtLast = $pdo->query("SELECT type, reference_name, created_at FROM subscriber_activity ORDER BY created_at DESC LIMIT 5");
     $lastAct = $stmtLast->fetchAll();

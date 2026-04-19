@@ -5,7 +5,7 @@ initializeSystem($pdo);
 require_once 'auth_middleware.php';
 
 // [SECURITY] Require authenticated workspace session
-if (!isset($_SESSION['user_id'])) {
+if (empty($GLOBALS['current_admin_id']) && empty($_SESSION['user_id'])) {
     http_response_code(401);
     jsonResponse(false, null, 'Unauthorized');
 }

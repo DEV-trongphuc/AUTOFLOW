@@ -1,12 +1,12 @@
-﻿<?php
+<?php
 /**
  * CRON JOB: Auto-sync Flow States (ENHANCED VERSION)
- * Chạy định kỳ mỗi giờ để tự động fix các vấn đề đồng bộ
+ * Ch?y d?nh k? m?i gi? d? t? d?ng fix c�c v?n d? d?ng b?
  * 
- * Crontab entry (chạy mỗi giờ):
+ * Crontab entry (ch?y m?i gi?):
  * 0 * * * * /usr/local/bin/php /home/vhvxoigh/automation.ideas.edu.vn/mail_api/cron_auto_sync_flows.php > /dev/null 2>&1
  * 
- * Hoặc chạy mỗi 30 phút (thay dấu * đầu tiên bằng dấu sao-gạch-30):
+ * Ho?c ch?y m?i 30 ph�t (thay d?u * d?u ti�n b?ng d?u sao-g?ch-30):
  * 0,30 * * * * /usr/local/bin/php /home/vhvxoigh/automation.ideas.edu.vn/mail_api/cron_auto_sync_flows.php > /dev/null 2>&1
  */
 
@@ -15,7 +15,7 @@ ini_set('log_errors', 1);
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
 // [SECURITY] Prevent web browsers from triggering this cron job (it has no auth).
 // It is safe to run via CLI cron (no HTTP_HOST), or direct CLI invocation.
-// Any HTTP request to this file is rejected — cron must be server-side only.
+// Any HTTP request to this file is rejected � cron must be server-side only.
 if (isset($_SERVER['HTTP_HOST']) && php_sapi_name() !== 'cli') {
     http_response_code(403);
     header('Content-Type: text/plain');
@@ -25,7 +25,7 @@ if (isset($_SERVER['HTTP_HOST']) && php_sapi_name() !== 'cli') {
 header('Content-Type: text/plain; charset=utf-8');
 
 // [FIX P13-H1] Non-blocking exclusive file lock to prevent concurrent cron overlaps.
-// If a previous run is still executing (heavy DB), flock() returns false → exit immediately.
+// If a previous run is still executing (heavy DB), flock() returns false ? exit immediately.
 // Lock is automatically released when the process ends (file handle closed on exit).
 $_cronLockFile = sys_get_temp_dir() . '/autoflow_cron_sync.lock';
 $_cronLockFp   = @fopen($_cronLockFile, 'c');
@@ -55,7 +55,7 @@ echo "$logPrefix ========================================\n\n";
 
 try {
     // ============================================
-    // 1. Fix mismatched completed states (có log nhưng chưa mark completed)
+    // 1. Fix mismatched completed states (c� log nhung chua mark completed)
     // ============================================
     echo "$logPrefix [1/6] Checking for mismatched completed states...\n";
 
@@ -102,7 +102,7 @@ try {
     echo "$logPrefix   Result: Fixed $totalFixed mismatches.\n\n";
 
     // ============================================
-    // 2. REVERSE CHECK: Mark completed nhưng KHÔNG có complete_flow log
+    // 2. REVERSE CHECK: Mark completed nhung KH�NG c� complete_flow log
     // ============================================
     echo "$logPrefix [2/6] Checking for false completed states...\n";
 

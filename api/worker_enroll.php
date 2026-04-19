@@ -1,4 +1,4 @@
-ï»¿<?php
+<?php
 // api/worker_enroll.php - OMNI-ENGINE V28.2 (OPTIMIZED ATOMIC ENROLLMENT)
 // This worker handles standard flow triggers like segment entry using direct SQL.
 
@@ -30,12 +30,12 @@ if ($lockStmt->fetchColumn() !== 1) {
 register_shutdown_function(function () use ($pdo) {
     try {
         $pdo->query("DO RELEASE_LOCK('worker_enroll_lock')");
-    } catch (Throwable $e) { /* ignore â€” connection may already be closed */ }
+    } catch (Throwable $e) { /* ignore — connection may already be closed */ }
 });
 
-// 1. Segment Sync â€” QUEUE-BASED (replaces full blocking scan)
+// 1. Segment Sync — QUEUE-BASED (replaces full blocking scan)
 // [FIX] Old approach: SELECT COUNT(*) for ALL segments before any enrollment.
-// With 200 segments Ã— 1s each = 200s wasted â†’ timeout before enrollment starts.
+// With 200 segments × 1s each = 200s wasted ? timeout before enrollment starts.
 // New approach: Only sync segments that have pending updates in segment_count_update_queue
 // (inserted by cleanup/split/exclude operations), plus any segment not synced in >1 hour.
 // Cap at 20 per run to bound worst-case sync time to ~20s.
@@ -80,7 +80,7 @@ try {
         $syncedSegments++;
     }
 
-    // Priority 2: Stale segments (not synced in 1 hour) â€” fill up remaining slots
+    // Priority 2: Stale segments (not synced in 1 hour) — fill up remaining slots
     $remaining = $syncLimit - $syncedSegments;
     if ($remaining > 0) {
         $stmtStale = $pdo->prepare(
@@ -91,7 +91,7 @@ try {
         $stmtStale->execute([$remaining]);
         foreach ($stmtStale->fetchAll() as $seg) {
             if (empty($seg['criteria'])) {
-                // [FIX P30-D1] Mirror of queue branch â€” explicit count for consistency
+                // [FIX P30-D1] Mirror of queue branch — explicit count for consistency
                 $stmtAll2 = $pdo->query("SELECT COUNT(*) FROM subscribers WHERE status IN ('active','lead','customer')");
                 $allCount2 = (int) $stmtAll2->fetchColumn();
                 $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ?")

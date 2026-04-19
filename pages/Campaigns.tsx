@@ -130,7 +130,7 @@ const Campaigns: React.FC = () => {
             if (r.success && r.data?.aws) {
                 setAwsQuickInfo({ remaining: r.data.aws.remaining, usage_pct: r.data.aws.usage_pct });
             }
-        }).catch(() => {});
+        }).catch(() => { });
     }, []);
 
     useKeyboardShortcuts({
@@ -160,8 +160,8 @@ const Campaigns: React.FC = () => {
         const today = new Date();
         let start = new Date();
         let end = new Date();
-        
-        switch(datePreset) {
+
+        switch (datePreset) {
             case '7':
                 start.setDate(today.getDate() - 7);
                 break;
@@ -176,11 +176,11 @@ const Campaigns: React.FC = () => {
                 if (!customDate.start || !customDate.end) return { startDate: '', endDate: '' };
                 return { startDate: customDate.start, endDate: customDate.end };
         }
-        
+
         const formatDate = (d: Date) => {
             return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
         };
-        
+
         return { startDate: formatDate(start), endDate: formatDate(end) };
     }, [datePreset, customDate]);
 
@@ -538,36 +538,35 @@ const Campaigns: React.FC = () => {
     return (
         <div className="animate-fade-in space-y-8 pb-20">
 
-                {/* PageHero with floating QUOTA button */}
-                <div className="relative">
-                    <PageHero
-                        title={<>Campaign <span className="text-orange-100/80">Marketing</span></>}
-                        subtitle="Gửi Email & Zalo ZNS · theo dõi hiệu suất Thời gian thực với sức mạnh từ Trí tuệ nhân tạo."
-                        showStatus={true}
-                        statusText="AI Engine Active"
-                        actions={heroActions}
-                    />
-                    {/* QUOTA button — bottom-right corner of hero */}
-                    <button
-                        onClick={() => setIsQuotaModalOpen(true)}
-                        className="absolute bottom-6 right-6 md:bottom-7 md:right-8 flex items-center gap-2 px-3.5 py-2 bg-black/20 hover:bg-black/30 backdrop-blur-md border border-white/20 hover:border-white/40 rounded-xl transition-all group z-20"
-                        title="Xem AWS SES Quota"
-                    >
-                        <Zap className="w-3.5 h-3.5 text-amber-300" />
-                        <span className="text-[10px] font-black text-white/90 uppercase tracking-widest">QUOTA</span>
-                        {awsQuickInfo !== null ? (
-                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md leading-none ${
-                                awsQuickInfo.usage_pct > 80 ? 'bg-red-500 text-white'
+            {/* PageHero with floating QUOTA button */}
+            <div className="relative">
+                <PageHero
+                    title={<>Campaign <span className="text-orange-100/80">Marketing</span></>}
+                    subtitle="Gửi Email & Zalo ZNS · theo dõi hiệu suất Thời gian thực với sức mạnh từ Trí tuệ nhân tạo."
+                    showStatus={true}
+                    statusText="AI Engine Active"
+                    actions={heroActions}
+                />
+                {/* QUOTA button — bottom-right corner of hero */}
+                <button
+                    onClick={() => setIsQuotaModalOpen(true)}
+                    className="absolute bottom-6 right-6 md:bottom-7 md:right-8 flex items-center gap-2 px-3.5 py-2 bg-black/20 hover:bg-black/30 backdrop-blur-md border border-white/20 hover:border-white/40 rounded-xl transition-all group z-20"
+                    title="Xem AWS SES Quota"
+                >
+                    <Zap className="w-3.5 h-3.5 text-amber-300" />
+                    <span className="text-[10px] font-black text-white/90 uppercase tracking-widest">QUOTA</span>
+                    {awsQuickInfo !== null ? (
+                        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md leading-none ${awsQuickInfo.usage_pct > 80 ? 'bg-red-500 text-white'
                                 : awsQuickInfo.usage_pct > 60 ? 'bg-amber-400 text-amber-900'
-                                : 'bg-white/90 text-slate-700'
+                                    : 'bg-white/90 text-slate-700'
                             }`}>
-                                {awsQuickInfo.remaining.toLocaleString()} left
-                            </span>
-                        ) : (
-                            <span className="text-[10px] font-bold text-white/50 px-1">24h</span>
-                        )}
-                    </button>
-                </div>
+                            {awsQuickInfo.remaining.toLocaleString()} left
+                        </span>
+                    ) : (
+                        <span className="text-[10px] font-bold text-white/50 px-1">24h</span>
+                    )}
+                </button>
+            </div>
 
             <div className="space-y-6">
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -643,18 +642,18 @@ const Campaigns: React.FC = () => {
                                 />
                                 {datePreset === 'custom' && (
                                     <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-lg p-0.5 px-2">
-                                        <input 
-                                            type="date" 
-                                            value={customDate.start} 
-                                            onChange={e => setCustomDate({...customDate, start: e.target.value})} 
-                                            className="bg-transparent text-xs outline-none text-slate-600 dark:text-slate-300 w-[100px] py-1" 
+                                        <input
+                                            type="date"
+                                            value={customDate.start}
+                                            onChange={e => setCustomDate({ ...customDate, start: e.target.value })}
+                                            className="bg-transparent text-xs outline-none text-slate-600 dark:text-slate-300 w-[100px] py-1"
                                         />
                                         <span className="text-slate-300">-</span>
-                                        <input 
-                                            type="date" 
-                                            value={customDate.end} 
-                                            onChange={e => setCustomDate({...customDate, end: e.target.value})} 
-                                            className="bg-transparent text-xs outline-none text-slate-600 dark:text-slate-300 w-[100px] py-1" 
+                                        <input
+                                            type="date"
+                                            value={customDate.end}
+                                            onChange={e => setCustomDate({ ...customDate, end: e.target.value })}
+                                            className="bg-transparent text-xs outline-none text-slate-600 dark:text-slate-300 w-[100px] py-1"
                                         />
                                     </div>
                                 )}
@@ -863,7 +862,7 @@ const Campaigns: React.FC = () => {
                     },
                     {
                         icon: Sparkles,
-                        title: "Cònhân hóa nội dung",
+                        title: "Cá nhân hóa nội dung",
                         description: "Sử dụng tag {first_name} trong tiêu đề để tăng tới 25% tỷ lệ click.",
                         colorClass: "bg-gradient-to-br from-blue-400 to-indigo-500",
                         highlight: "Mẹo hay"

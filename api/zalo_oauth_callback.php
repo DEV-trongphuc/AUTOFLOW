@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Zalo OAuth Callback Handler (Stateful / DB-backed)
  * Handles default redirections and token exchange using DB-stored PKCE verifier.
@@ -189,7 +189,7 @@ if ($oa_real_id) {
 <html>
 
 <head>
-    <title>Kết nối thành công</title>
+    <title>K?t n?i th�nh c�ng</title>
     <style>
         body {
             font-family: -apple-system, sans-serif;
@@ -211,13 +211,13 @@ if ($oa_real_id) {
 </head>
 
 <body>
-    <div class="success-icon">✓</div>
-    <h2>Kết nối OA "<?php echo htmlspecialchars($oa_name); ?>" thành công!</h2>
-    <p>Bạn có thể đóng cửa sổ này và quay lại trang quản trị.</p>
+    <div class="success-icon">?</div>
+    <h2>K?t n?i OA "<?php echo htmlspecialchars($oa_name); ?>" th�nh c�ng!</h2>
+    <p>B?n c� th? d�ng c?a s? n�y v� quay l?i trang qu?n tr?.</p>
 
     <button onclick="closeWindow()"
-        style="background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 20px;">Đóng
-        cửa sổ</button>
+        style="background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 20px;">��ng
+        c?a s?</button>
 
     <script>
         function closeWindow() {

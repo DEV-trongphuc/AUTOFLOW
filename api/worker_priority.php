@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // api/worker_priority.php - OMNI-ENGINE V29.6 (PRIORITY CHAINING ENGINE - FINAL FIX FOR INSTANT EXECUTION)
 // This worker is triggered directly by API calls (forms.php, purchase_events.php, custom_events.php, worker_campaign.php)
 // to immediately enroll a SPECIFIC subscriber into relevant flows AND execute the *initial chain of instant steps*.
@@ -57,7 +57,7 @@ require_once __DIR__ . '/worker_guard.php';
         exit;
     }
 
-    // [MONITOR] Warn at depth 6+ without hard-failing — helps detect unexpectedly deep chains
+    // [MONITOR] Warn at depth 6+ without hard-failing � helps detect unexpectedly deep chains
     if ($priorityDepth >= 6) {
         traceLog("[Priority] WARNING: Deep chain detected (depth={$priorityDepth}). Review flow triggers for loops.");
     }
@@ -76,7 +76,7 @@ require_once __DIR__ . '/worker_guard.php';
 
 // Hardcoded production URL for tracking
 $apiUrl = API_BASE_URL;
-// [FIX P39-WP1] Only fetch required settings keys — avoids loading ALL secrets (smtp_password, API keys) into memory
+// [FIX P39-WP1] Only fetch required settings keys � avoids loading ALL secrets (smtp_password, API keys) into memory
 $stmtSettings = $pdo->prepare("SELECT `key`, `value` FROM system_settings WHERE workspace_id = 0 AND `key` IN ('smtp_user','smtp_host','max_messages_per_day')");
 $stmtSettings->execute();
 $settings = [];
@@ -87,9 +87,9 @@ $defaultSender = !empty($settings['smtp_user']) ? $settings['smtp_user'] : "mark
 $mailer = new Mailer($pdo, $apiUrl, $defaultSender);
 $flowExecutor = new FlowExecutor($pdo, $mailer, $apiUrl);
 
-// [FIX P9-C2] MySQL version guard — SKIP LOCKED requires MySQL ≥ 8.0.
+// [FIX P9-C2] MySQL version guard � SKIP LOCKED requires MySQL = 8.0.
 // worker_priority.php uses SKIP LOCKED in 2 places (Scenario B chain lock + Scenario D batch).
-// Without this guard: Fatal Syntax Error on MySQL 5.7 → ALL priority enrollments fail.
+// Without this guard: Fatal Syntax Error on MySQL 5.7 ? ALL priority enrollments fail.
 $mysqlVersionPrio = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
 $skipLockedClause = version_compare($mysqlVersionPrio, '8.0.0', '>=') ? 'SKIP LOCKED' : '';
 
@@ -150,7 +150,7 @@ try {
                 if ($trigger && isset($trigger['nextStepId'])) {
                     $pdo->prepare("DELETE FROM subscriber_flow_states WHERE subscriber_id = ? AND flow_id = ? AND status IN ('waiting', 'processing')")->execute([$prioritySid, $manualFlow['id']]);
 
-                    // [OPT] Explicit column select — avoid SELECT * on heavy subscribers table
+                    // [OPT] Explicit column select � avoid SELECT * on heavy subscribers table
                     // Columns needed: all fields used by FlowExecutor + flow_helpers for merge tags,
                     // send logic, phone validation, custom_attributes merge tags.
                     $stmtSubDetails = $pdo->prepare(
@@ -255,7 +255,7 @@ try {
                     continue;
 
                 $tConfig = $trigger['config'];
-                $flowTriggerType = $tConfig['type'] ?? ''; // [FIX] was undefined — caused all standard triggers to never match
+                $flowTriggerType = $tConfig['type'] ?? ''; // [FIX] was undefined � caused all standard triggers to never match
                 $flowTargetSubtype = $tConfig['targetSubtype'] ?? '';
                 $flowTargetId = $tConfig['targetId'] ?? '';
 
@@ -273,7 +273,7 @@ try {
                 // SPECIAL CASE: Inbound Message Keyword Logic
                 if ($isMatch && $priorityTriggerType === 'inbound_message' && !empty($flowTargetId) && $flowTargetId !== 'all') {
                     // [FIX] Use mb_strtolower + mb_stripos for proper Vietnamese Unicode matching
-                    // Previously strpos() would fail on "Tư Vấn" vs "tư vấn" etc.
+                    // Previously strpos() would fail on "Tu V?n" vs "tu v?n" etc.
                     $keywords = array_map('trim', explode(',', mb_strtolower($flowTargetId, 'UTF-8')));
                     $msgLower = mb_strtolower($priorityTargetId, 'UTF-8');
                     $kwFound = false;
@@ -339,7 +339,7 @@ try {
                     }
 
                     // Proceed with enrollment
-                    // [OPT] Explicit column select — same column list as manual trigger above
+                    // [OPT] Explicit column select � same column list as manual trigger above
                     $stmtSubDetails = $pdo->prepare(
                         "SELECT id, email, status, first_name, last_name, phone_number,
                                 company_name, job_title, city, country, gender,
@@ -435,7 +435,7 @@ try {
                             $blockCondition = "1=1"; // Always block if any record exists
                         } else {
                             // For recurring: Block if (in progress) OR (recently completed within cooldown)
-                        // [FIX] $cooldownHours is cast (int) on L285 — safe to use in INTERVAL.
+                        // [FIX] $cooldownHours is cast (int) on L285 � safe to use in INTERVAL.
                         // PDO does not accept params inside INTERVAL expressions.
                         $safeChHours = (int)$cooldownHours;
                         $blockCondition = "status IN ('waiting', 'processing') OR updated_at > DATE_SUB(NOW(), INTERVAL $safeChHours HOUR)";
@@ -527,8 +527,8 @@ try {
                                  LIMIT 1 FOR UPDATE $skipLockedClause");
         // [FIX] Added SKIP LOCKED to prevent duplicate chain execution when two concurrent priority
         // workers are fired for the same queue_id (e.g. double-click webhook, network retry).
-        // Without SKIP LOCKED: Worker-B blocks → A commits → B finds 'waiting' row → re-executes → duplicate send.
-        // With SKIP LOCKED: Worker-B finds 0 rows while A holds the lock → exits cleanly.
+        // Without SKIP LOCKED: Worker-B blocks ? A commits ? B finds 'waiting' row ? re-executes ? duplicate send.
+        // With SKIP LOCKED: Worker-B finds 0 rows while A holds the lock ? exits cleanly.
 
         $stmtItem->execute([$priorityQueueId, $prioritySid, $priorityFlowId]);
         $priorityItem = $stmtItem->fetch();
@@ -549,7 +549,7 @@ try {
             $pdo->prepare("UPDATE subscriber_flow_states SET status = 'processing', updated_at = NOW() WHERE id = ?")->execute([$priorityQueueId]);
             $item = $priorityItem;
             // [FIX] The JOIN query aliases s.email as 'sub_email'. FlowExecutor and
-            // replaceMergeTags both need the 'email' key — map it here to prevent
+            // replaceMergeTags both need the 'email' key � map it here to prevent
             // empty {{email}} merge tags and wrong Mailer send-to address.
             $item['email'] = $item['sub_email'] ?? '';
             $queueIdToUpdate = $priorityQueueId;
@@ -587,7 +587,7 @@ try {
         // Old approach: foreach + curl_exec() fires up to 50 HTTP requests back-to-back,
         // exhausting PHP-FPM workers and acting like a local DDoS if cron runs every minute.
         // New approach: fire at most 5 requests concurrently, wait for them to finish,
-        // then fire the next batch of 5 — controlled parallelism with no server overload.
+        // then fire the next batch of 5 � controlled parallelism with no server overload.
         $CONCURRENCY = 5;
         $chunks = array_chunk($batchItems, $CONCURRENCY);
 
@@ -657,7 +657,7 @@ try {
 
     // [ELIGIBILITY CHECK]
     if (trim($item['sub_status']) === 'unsubscribed') {
-        // Use 'unsubscribed' status — DB ENUM includes: waiting, processing, completed, failed, unsubscribed
+        // Use 'unsubscribed' status � DB ENUM includes: waiting, processing, completed, failed, unsubscribed
         $pdo->prepare("UPDATE subscriber_flow_states SET status = 'unsubscribed', updated_at = NOW() WHERE id = ?")->execute([$queueId]);
         $logs[] = "[Priority-Exit] Sub {$subscriberId} is unsubscribed. Marking unsubscribed and skipping chain.";
         $pdo->commit();
@@ -695,7 +695,7 @@ try {
         }
     }
 
-    // Exit-specific activity cache — unlimited, filtered by type (no LIMIT risk)
+    // Exit-specific activity cache � unlimited, filtered by type (no LIMIT risk)
     if (!empty($exitActivityTypesEarly)) {
         $exitPlaceholdersEarly = implode(',', array_fill(0, count($exitActivityTypesEarly), '?'));
         $stmtExitActEarly = $pdo->prepare(
@@ -710,7 +710,7 @@ try {
         $exitActivityCacheEarly = [];
     }
 
-    // General activity cache — LIMIT 500 for condition-chain logic
+    // General activity cache � LIMIT 500 for condition-chain logic
     $stmtAct = $pdo->prepare("SELECT type, reference_id, campaign_id, details, created_at FROM subscriber_activity WHERE subscriber_id = ? AND created_at >= ? ORDER BY created_at DESC LIMIT 500");
     $stmtAct->execute([$subscriberId, $item['queue_created_at']]);
     $activityCache = $stmtAct->fetchAll();
@@ -724,7 +724,7 @@ try {
 
     // [DECODED ABOVE] flow_steps might already be an array if from scenario A enrollment
     $flowSteps = is_string($item['flow_steps']) ? json_decode($item['flow_steps'], true) : $item['flow_steps'];
-    // $fConfig already decoded above (before exit-condition pre-fetch) — do NOT redeclare here
+    // $fConfig already decoded above (before exit-condition pre-fetch) � do NOT redeclare here
 
     $currentStepId = trim($item['step_id'] ?? '');
     $stepsProcessedInRun = 0;
@@ -838,7 +838,7 @@ try {
             // [CRITICAL FIX] Must also check $item['status'] === 'waiting' (original status before UPDATE to 'processing').
             // If item was picked up as stale 'processing' (crash recovery), its step_id may already point to
             // a fresh/unscheduled wait step. Treating it as is_resumed_wait=TRUE would skip that wait entirely.
-            // Only genuine 'waiting' → time-expired → picked-up items can be considered resumed.
+            // Only genuine 'waiting' ? time-expired ? picked-up items can be considered resumed.
             'is_resumed_wait' => ($stepsProcessedInRun === 1
                 && ($item['status'] ?? '') === 'waiting'  // GUARD: only original 'waiting' items, not crash recovery
                 && trim((string) ($item['step_id'] ?? '')) === trim((string) $currentStepId)

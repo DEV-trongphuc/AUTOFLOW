@@ -598,7 +598,7 @@ export const SectionWorkspace = () => (
 /* ─── SECTION 17: LOGIC & LIQUID ───────────────────── */
 export const SectionLogic = () => (
     <div className="space-y-16 animate-in fade-in duration-700">
-        <SectionHeader label="Logic & Dynamic Content" title={<>Cònhân hóa <span className="text-amber-600">Cực hạn với Liquid</span></>} desc="Sử dụng cú pháp Logic để tạo ra những nội dung Email & Message biến đổi theo từng Khách hàng." />
+        <SectionHeader label="Logic & Dynamic Content" title={<>Cá nhân hóa <span className="text-amber-600">Cực hạn với Liquid</span></>} desc="Sử dụng cú pháp Logic để tạo ra những nội dung Email & Message biến đổi theo từng Khách hàng." />
         <div className="grid lg:grid-cols-2 gap-10">
             <div className="space-y-6">
                 <div className="p-8 bg-slate-950 rounded-[32px] text-white">
@@ -649,7 +649,7 @@ Hãy dùng mã {{ contact.tags | first }} để nhận ưu đãi!`} />
                     </div>
                 </div>
                 <div className="p-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-[32px] text-slate-900">
-                    <h4 className="text-2xl font-black mb-4">Cònhân hóa 1:1</h4>
+                    <h4 className="text-2xl font-black mb-4">Cá nhân hóa 1:1</h4>
                     <p className="font-bold text-slate-900/70 leading-relaxed">Kết hợp giữa dữ liệu CDP và Liquid Logic để đảm bảo 100,000 Khách hàng nhận được 100,000 nội dung khác nhau.</p>
                     <button className="mt-8 px-6 py-3 bg-slate-900 text-white font-black rounded-xl text-xs hover:bg-slate-800 transition-all">Thử nghiệm Logic ngay</button>
                 </div>

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // api/voucher_claim.php
 require_once 'db_connect.php';
 require_once 'flow_helpers.php';
@@ -52,15 +52,15 @@ function doResponse($isAjax, $success, $message, $httpRedirect, $extraData = [])
 }
 
 if (!$campaignId) {
-    doResponse($isAjax, false, "Thiếu tham số chiến dịch (campaign_id)", $redirectEmpty);
+    doResponse($isAjax, false, "Thi?u tham s? chi?n d?ch (campaign_id)", $redirectEmpty);
 }
 
 if (!$email && !$phone) {
-    doResponse($isAjax, false, "Cần cung cấp Email hoặc Số điện thoại để nhận mã", $redirectEmpty);
+    doResponse($isAjax, false, "C?n cung c?p Email ho?c S? di?n tho?i d? nh?n m�", $redirectEmpty);
 }
 
 // 1. Identiy / Upsert Subscriber
-// [FIX] Áp dụng Named Lock để chống race condition
+// [FIX] �p d?ng Named Lock d? ch?ng race condition
 $lockTarget = $email ? "sub_email_" . md5($email) : "sub_phone_" . md5($phone);
 $pdo->query("SELECT GET_LOCK('$lockTarget', 5)");
 
@@ -103,31 +103,31 @@ try {
     
 } catch (Exception $e) {
     $pdo->query("SELECT RELEASE_LOCK('$lockTarget')");
-    doResponse($isAjax, false, "Lỗi khi xử lý dữ liệu hồ sơ.", $redirectEmpty);
+    doResponse($isAjax, false, "L?i khi x? l� d? li?u h? so.", $redirectEmpty);
 }
 
-// 2. Kiểm tra Campaign
+// 2. Ki?m tra Campaign
 $stmtCamp = $pdo->prepare("SELECT * FROM voucher_campaigns WHERE id = ?");
 $stmtCamp->execute([$campaignId]);
 $camp = $stmtCamp->fetch(PDO::FETCH_ASSOC);
 
 if (!$camp || $camp['status'] !== 'active') {
-    doResponse($isAjax, false, "Chiến dịch không tồn tại hoặc đã bị tắt.", $redirectEmpty);
+    doResponse($isAjax, false, "Chi?n d?ch kh�ng t?n t?i ho?c d� b? t?t.", $redirectEmpty);
 }
 
-// Kiểm tra Hạn
+// Ki?m tra H?n
 if (!empty($camp['end_date']) && strtotime($camp['end_date']) < time()) {
-    doResponse($isAjax, false, "Chiến dịch đã kết thúc.", $redirectEmpty);
+    doResponse($isAjax, false, "Chi?n d?ch d� k?t th�c.", $redirectEmpty);
 }
 
-// 3. Tiến hành Xí Mã (Atomic Claim)
+// 3. Ti?n h�nh X� M� (Atomic Claim)
 $codeAssigned = null;
 
 try {
     $alreadyInTx = $pdo->inTransaction();
     if (!$alreadyInTx) $pdo->beginTransaction();
 
-    // Check nếu đã xí rồi
+    // Check n?u d� x� r?i
     $stmtExist = $pdo->prepare("SELECT code FROM voucher_codes WHERE campaign_id = ? AND subscriber_id = ? LIMIT 1");
     $stmtExist->execute([$campaignId, $sid]);
     $existing = $stmtExist->fetchColumn();
@@ -150,7 +150,7 @@ try {
             $row = $stmtClaim->fetch(PDO::FETCH_ASSOC);
 
             if ($row) {
-                // Update Owner ngay lập tức (Check Expiration)
+                // Update Owner ngay l?p t?c (Check Expiration)
                 $expiresAt = null;
                 if (!empty($camp['expiration_days'])) {
                     $expiresAt = date('Y-m-d H:i:s', strtotime("+{$camp['expiration_days']} days"));
@@ -165,21 +165,21 @@ try {
     if (!$alreadyInTx) $pdo->commit();
 } catch (Exception $e) {
     if (!$alreadyInTx && $pdo->inTransaction()) $pdo->rollBack();
-    doResponse($isAjax, false, "Hệ thống quá tải, vui lòng thử lại.", $redirectEmpty);
+    doResponse($isAjax, false, "H? th?ng qu� t?i, vui l�ng th? l?i.", $redirectEmpty);
 }
 
 if (!$codeAssigned) {
-    // Hết mã
-    doResponse($isAjax, false, "Hết mã! Số lượng Voucher của chương trình đã cạn.", $redirectEmpty);
+    // H?t m�
+    doResponse($isAjax, false, "H?t m�! S? lu?ng Voucher c?a chuong tr�nh d� c?n.", $redirectEmpty);
 }
 
-// 4. Kích hoạt Automation (Custom Event)
-// Ghi nhận Activity
+// 4. K�ch ho?t Automation (Custom Event)
+// Ghi nh?n Activity
 require_once 'tracking_helper.php';
-logActivity($pdo, $sid, 'custom_event', $eventName, null, "Xí mã Voucher: $codeAssigned (Campaign: {$camp['name']})", null, null, ['campaign_id' => $campaignId, 'code' => $codeAssigned]);
+logActivity($pdo, $sid, 'custom_event', $eventName, null, "X� m� Voucher: $codeAssigned (Campaign: {$camp['name']})", null, null, ['campaign_id' => $campaignId, 'code' => $codeAssigned]);
 
-// Dispatch Queue (Worker sẽ bắt Trigger có Loai = voucher & Target ID = campaign_id)
-// Đồng thời vẫn bắn custom_event nếu có kịch bản cũ đang xài.
+// Dispatch Queue (Worker s? b?t Trigger c� Loai = voucher & Target ID = campaign_id)
+// �?ng th?i v?n b?n custom_event n?u c� k?ch b?n cu dang x�i.
 $workerUrl1 = API_BASE_URL . "/worker_priority.php?" . http_build_query([
     'trigger_type' => 'custom_event', 
     'target_id' => $eventName, 
@@ -205,7 +205,7 @@ foreach ([$workerUrl1, $workerUrl2] as $url) {
     curl_close($ch);
 }
 
-// Nếu có custom success redirect, có thể nối thêm mã code vào param nếu muốn
+// N?u c� custom success redirect, c� th? n?i th�m m� code v�o param n?u mu?n
 $finalRedirect = $redirectSuccess;
 if ($finalRedirect && strpos($finalRedirect, '?') === false) {
     $finalRedirect .= '?voucher=' . urlencode($codeAssigned);
@@ -213,7 +213,7 @@ if ($finalRedirect && strpos($finalRedirect, '?') === false) {
     $finalRedirect .= '&voucher=' . urlencode($codeAssigned);
 }
 
-doResponse($isAjax, true, "Lấy mã thành công! Mã của bạn là: " . $codeAssigned, $finalRedirect, [
+doResponse($isAjax, true, "L?y m� th�nh c�ng! M� c?a b?n l�: " . $codeAssigned, $finalRedirect, [
     'code' => $codeAssigned,
     'event_triggered' => $eventName
 ]);

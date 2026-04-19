@@ -1,4 +1,4 @@
-ï»¿<?php
+<?php
 /**
  * api/ai_force_retrain_all.php
  * Script to force retrain ALL active documents across ALL properties.
@@ -12,12 +12,12 @@ require_once 'db_connect.php';
 require_once 'auth_middleware.php';
 require_once 'ai_training.php'; // Provides: callGeminiBatchEmbedding, chunkText, updatePropertyTermStats
 
-// [SECURITY] Maintenance script â€” CLI or secret token required
+// [SECURITY] Maintenance script — CLI or secret token required
 $cliSecret = getenv('RETRAINING_SECRET') ?: '';
 $reqSecret = $_GET['secret'] ?? '';
 if (PHP_SAPI !== 'cli' && (empty($cliSecret) || $reqSecret !== $cliSecret)) {
     http_response_code(403);
-    echo json_encode(['error' => 'Forbidden â€” CLI or secret required']);
+    echo json_encode(['error' => 'Forbidden — CLI or secret required']);
     exit;
 }
 
@@ -164,7 +164,7 @@ try {
             }
         }
 
-        // Update BM25 term stats â€” updatePropertyTermStats() from ai_training.php
+        // Update BM25 term stats — updatePropertyTermStats() from ai_training.php
         updatePropertyTermStats($pdo, $propertyId);
 
         // Mark docs as trained + clear RAG cache

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Star, Sparkles, LayoutDashboard, Activity, Mail, Zap, FileText, Bot, Globe, Users, BarChart3, Settings, Clock, ArrowRight, MessageSquare, Facebook, Share2, Ticket, Webhook, Code2, Link, Play, Target
@@ -193,7 +193,7 @@ const Dashboard: React.FC = () => {
                 showStatus={true}
                 statusText="Multi-Channel Active"
                 actions={[
-                    { label: 'KẾT NỐI CẤU HÌNH', icon: Play, onClick: () => setIsConnectionsOpen(true), primary: true },
+                    { label: 'KẾT NỐI CẤU HÌNH', icon: (props: any) => <Play {...props} className={`${props.className} text-orange-500 fill-orange-500`} />, onClick: () => setIsConnectionsOpen(true), primary: true },
                     { label: 'CẤU HÌNH LEADSCORE', icon: Target, onClick: () => setIsLeadscoreOpen(true), primary: false },
                     { label: 'TỔNG QUAN HỆ THỐNG', icon: BarChart3, onClick: () => setIsOverviewOpen(true) }
                 ]}

@@ -1,8 +1,8 @@
-﻿<?php
-// api/chat_rag.php – Optimized Hybrid Search with Synonym Boosting & MySQL Scoring
+<?php
+// api/chat_rag.php � Optimized Hybrid Search with Synonym Boosting & MySQL Scoring
 
 // ============================================================
-// RAG TUNING CONSTANTS — adjust per domain without touching logic
+// RAG TUNING CONSTANTS � adjust per domain without touching logic
 // ============================================================
 if (!defined('RAG_RRF_SCALE'))
     define('RAG_RRF_SCALE', 1800);  // Normalize RRF score to 0-100 range
@@ -21,7 +21,7 @@ if (!defined('RAG_EMBED_DIM'))
 // ============================================================
 
 /**
- * Tính Cosine Similarity giữa 2 vector
+ * T�nh Cosine Similarity gi?a 2 vector
  */
 function fastCosineSimilarity($vecQ, $vecB, $normQ, $normB)
 {
@@ -31,7 +31,7 @@ function fastCosineSimilarity($vecQ, $vecB, $normQ, $normB)
     $dimQ = count($vecQ);
     $dimB = count($vecB);
 
-    // GUARD: Dimension mismatch = data corruption or model change — log and bail out
+    // GUARD: Dimension mismatch = data corruption or model change � log and bail out
     if ($dimQ !== $dimB) {
         error_log("[RAG WARNING] fastCosineSimilarity: dimension mismatch (query={$dimQ}, doc={$dimB}). Expected " . RAG_EMBED_DIM . ". Check embedding model or vector_binary integrity.");
         return 0;
@@ -48,32 +48,32 @@ function fastCosineSimilarity($vecQ, $vecB, $normQ, $normB)
 
 /**
  * OPTIMIZATION B: Query Expansion with Vietnamese Synonyms
- * Giúp MySQL tìm thấy bản ghi kể cả khi user dùng từ khác (VD: "mắc không" -> "giá cost")
+ * Gi�p MySQL t�m th?y b?n ghi k? c? khi user d�ng t? kh�c (VD: "m?c kh�ng" -> "gi� cost")
  */
 function expandQueryWithSynonyms($query, $customSynonyms = [])
 {
     // Default Hardcoded Synonyms (Fallback)
     $synonyms = [
-        // ===== GIÁ / TIỀN =====
-        'giá' => ['chi phí', 'bao nhiêu', 'tốn kém', 'mắc', 'đắt', 'rẻ', 'vnd', 'vnđ', 'đồng', 'tiền', 'báo giá', 'price', 'cost', 'học phí', 'phí', 'fee', 'budget'],
-        // ===== MUA / ĐĂNG KÝ =====
-        'mua' => ['đặt hàng', 'order', 'thanh toán', 'sở hữu', 'đăng ký', 'ghi danh', 'apply', 'enroll', 'buy', 'purchase', 'sign up', 'đóng tiền', 'ck'],
-        // ===== Ở ĐÂU / ĐỊA CHỈ =====
-        'ở đâu' => ['địa chỉ', 'vị trí', 'chỗ nào', 'tọa độ', 'map', 'location', 'address', 'nơi', 'cơ sở', 'tại đâu'],
-        // ===== LIÊN HỆ =====
-        'liên hệ' => ['gọi', 'sđt', 'hotline', 'email', 'nhắn tin', 'inbox', 'contact', 'hỗ trợ', 'tư vấn', 'chat', 'zalo'],
-        // ===== ĐÁNH GIÁ =====
-        'tốt không' => ['review', 'đánh giá', 'feedback', 'chất lượng', 'uy tín', 'có nên', 'ok không', 'ổn không', 'scam'],
-        // ===== HƯỚNG DẪN =====
-        'hướng dẫn' => ['cách làm', 'làm sao', 'thế nào', 'các bước', 'quy trình', 'guide', 'tutorial', 'how to'],
-        // ===== KHUYẾN MÃI =====
-        'khuyến mãi' => ['ưu đãi', 'giảm giá', 'voucher', 'code', 'quà tặng', 'bonus', 'deal', 'sale', 'free'],
-        // ===== THỜI GIAN =====
-        'khi nào' => ['thời gian', 'khai giảng', 'lịch học', 'hạn chót', 'deadline', 'mở khóa', 'bắt đầu', 'bao giờ'],
-        // ===== ĐIỀU KIỆN / TRÌNH ĐỘ =====
-        'điều kiện' => ['yêu cầu', 'đầu vào', 'cần gì', 'bằng cấp', 'kinh nghiệm', 'ielts', 'tiếng anh', 'ngoại ngữ', 'english', 'trình độ', 'năng lực', 'level'],
-        'tiếng anh' => ['english', 'ngoại ngữ', 'ielts', 'toeic', 'toefl', 'vstep', 'b1', 'b2', 'giao tiếp'],
-        'yếu' => ['kém', 'chưa tốt', 'mất gốc', 'không biết', 'lâu rồi không dùng', 'chậm', 'thấp', 'nợ bằng', 'thiếu'],
+        // ===== GI� / TI?N =====
+        'gi�' => ['chi ph�', 'bao nhi�u', 't?n k�m', 'm?c', 'd?t', 'r?', 'vnd', 'vnd', 'd?ng', 'ti?n', 'b�o gi�', 'price', 'cost', 'h?c ph�', 'ph�', 'fee', 'budget'],
+        // ===== MUA / �ANG K� =====
+        'mua' => ['d?t h�ng', 'order', 'thanh to�n', 's? h?u', 'dang k�', 'ghi danh', 'apply', 'enroll', 'buy', 'purchase', 'sign up', 'd�ng ti?n', 'ck'],
+        // ===== ? ��U / �?A CH? =====
+        '? d�u' => ['d?a ch?', 'v? tr�', 'ch? n�o', 't?a d?', 'map', 'location', 'address', 'noi', 'co s?', 't?i d�u'],
+        // ===== LI�N H? =====
+        'li�n h?' => ['g?i', 'sdt', 'hotline', 'email', 'nh?n tin', 'inbox', 'contact', 'h? tr?', 'tu v?n', 'chat', 'zalo'],
+        // ===== ��NH GI� =====
+        't?t kh�ng' => ['review', 'd�nh gi�', 'feedback', 'ch?t lu?ng', 'uy t�n', 'c� n�n', 'ok kh�ng', '?n kh�ng', 'scam'],
+        // ===== HU?NG D?N =====
+        'hu?ng d?n' => ['c�ch l�m', 'l�m sao', 'th? n�o', 'c�c bu?c', 'quy tr�nh', 'guide', 'tutorial', 'how to'],
+        // ===== KHUY?N M�I =====
+        'khuy?n m�i' => ['uu d�i', 'gi?m gi�', 'voucher', 'code', 'qu� t?ng', 'bonus', 'deal', 'sale', 'free'],
+        // ===== TH?I GIAN =====
+        'khi n�o' => ['th?i gian', 'khai gi?ng', 'l?ch h?c', 'h?n ch�t', 'deadline', 'm? kh�a', 'b?t d?u', 'bao gi?'],
+        // ===== �I?U KI?N / TR�NH �? =====
+        'di?u ki?n' => ['y�u c?u', 'd?u v�o', 'c?n g�', 'b?ng c?p', 'kinh nghi?m', 'ielts', 'ti?ng anh', 'ngo?i ng?', 'english', 'tr�nh d?', 'nang l?c', 'level'],
+        'ti?ng anh' => ['english', 'ngo?i ng?', 'ielts', 'toeic', 'toefl', 'vstep', 'b1', 'b2', 'giao ti?p'],
+        'y?u' => ['k�m', 'chua t?t', 'm?t g?c', 'kh�ng bi?t', 'l�u r?i kh�ng d�ng', 'ch?m', 'th?p', 'n? b?ng', 'thi?u'],
     ];
 
     // Merge with Custom Synonyms from DB
@@ -120,7 +120,7 @@ function expandQueryWithSynonyms($query, $customSynonyms = [])
         return $query;
 
     // GUARD: For long queries, synonym expansion adds noise more than signal.
-    // Only append synonyms when query is short/medium (≤60 chars).
+    // Only append synonyms when query is short/medium (=60 chars).
     // Long queries already contain enough semantic signal for embedding.
     if (mb_strlen($query) > 60)
         return $query;
@@ -134,13 +134,13 @@ function classifyQuery($query)
     $qLower = mb_strtolower($query);
 
     $patterns = [
-        'social' => '/^(chào|hi|hello|helo|hê lô|hey|alo|ê|hoi|hỏi|cho hỏi|chúc|cảm ơn|thanks|tạm biệt|bye|ok|vâng|dạ|ừa|ừ|yes|no)/ui',
-        'price' => '/giá|bao nhiêu|chi phí|phí|tiền|cost|price/ui',
-        'howto' => '/làm sao|cách|hướng dẫn|thế nào|how to|how do/ui',
-        'comparison' => '/khác|so sánh|hơn|tốt hơn|vs|versus|compare/ui',
-        'factual' => '/là gì|định nghĩa|nghĩa là|what is|define/ui',
-        'location' => '/ở đâu|địa chỉ|nơi nào|where|location/ui',
-        'timing' => '/(?:^|[^a-z0-9àáạảãâầấyậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹ])(khi nào|lúc nào|bao giờ|mấy giờ|thời điểm|lịch|ngày|tháng|năm|deadline|kỳ|khai giảng|when|time|schedule|deadline)(?![a-z0-9àáạảãâầấyậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹ])/ui',
+        'social' => '/^(ch�o|hi|hello|helo|h� l�|hey|alo|�|hoi|h?i|cho h?i|ch�c|c?m on|thanks|t?m bi?t|bye|ok|v�ng|d?|?a|?|yes|no)/ui',
+        'price' => '/gi�|bao nhi�u|chi ph�|ph�|ti?n|cost|price/ui',
+        'howto' => '/l�m sao|c�ch|hu?ng d?n|th? n�o|how to|how do/ui',
+        'comparison' => '/kh�c|so s�nh|hon|t?t hon|vs|versus|compare/ui',
+        'factual' => '/l� g�|d?nh nghia|nghia l�|what is|define/ui',
+        'location' => '/? d�u|d?a ch?|noi n�o|where|location/ui',
+        'timing' => '/(?:^|[^a-z0-9��??��??y???a?????��???�?????��??i��??��?????o?????��??uu??????�???])(khi n�o|l�c n�o|bao gi?|m?y gi?|th?i di?m|l?ch|ng�y|th�ng|nam|deadline|k?|khai gi?ng|when|time|schedule|deadline)(?![a-z0-9��??��??y???a?????��???�?????��??i��??��?????o?????��??uu??????�???])/ui',
     ];
 
     $types = [];
@@ -254,7 +254,7 @@ function getEmbeddingAsyncWait($handle, $pdo)
             if ($active > 0) {
                 $wait = curl_multi_select($mh, 1.0);
                 if ($wait === -1) {
-                    // select() failed — tiny sleep to avoid busy-loop
+                    // select() failed � tiny sleep to avoid busy-loop
                     usleep(10000);
                 }
             }
@@ -285,7 +285,7 @@ function getEmbeddingAsyncWait($handle, $pdo)
 
     if (!$vector) {
         $errMsg = $res['error']['message'] ?? "Unknown (HTTP {$httpCode})";
-        error_log("[RAG ERROR] getEmbeddingAsyncWait: API error — {$errMsg}");
+        error_log("[RAG ERROR] getEmbeddingAsyncWait: API error � {$errMsg}");
         return null;
     }
 
@@ -361,9 +361,9 @@ function retrieveContext($pdo, $propertyId, $userMsg, $contextParams, $apiKey, $
     }
 
     // 2. Query Analysis & Expansion
-    // ⚡ OPTIMIZATION: Chỉ loại bỏ các chỉ dẫn cụ thể trong ngoặc (VD: [Trả lời ngắn gọn])
-    // Tránh nuốt mất text quan trọng của người dùng.
-    $cleanUserMsg = preg_replace('/\[(trả lời|ngắn gọn|chi tiết|bằng tiếng|ngôn ngữ).*?\]/ui', '', $userMsg);
+    // ? OPTIMIZATION: Ch? lo?i b? c�c ch? d?n c? th? trong ngo?c (VD: [Tr? l?i ng?n g?n])
+    // Tr�nh nu?t m?t text quan tr?ng c?a ngu?i d�ng.
+    $cleanUserMsg = preg_replace('/\[(tr? l?i|ng?n g?n|chi ti?t|b?ng ti?ng|ng�n ng?).*?\]/ui', '', $userMsg);
     $cleanUserMsg = trim($cleanUserMsg) ?: $userMsg;
 
     $queryTypes = classifyQuery($cleanUserMsg);
@@ -501,7 +501,7 @@ function retrieveContext($pdo, $propertyId, $userMsg, $contextParams, $apiKey, $
     $uniqueResults = [];
     $maxFtsScore = 1.0; // Safe default: prevents division-by-zero; harmless when pool is empty
 
-    // Log empty FTS pool early — helps diagnose misconfigured FULLTEXT indexes
+    // Log empty FTS pool early � helps diagnose misconfigured FULLTEXT indexes
     if (empty($rawResults)) {
         error_log("[RAG DEBUG] FTS pool is empty for property_id={$propertyId}. Check FULLTEXT index and query: " . mb_substr($cleanQuery, 0, 120));
     }
@@ -582,7 +582,7 @@ function retrieveContext($pdo, $propertyId, $userMsg, $contextParams, $apiKey, $
     }
 
     // Sort and keep only top 100 candidates for RRF Stage 2
-    // NOTE: Raised from 50→100. RRF works on *rank* not raw score, so cutting too
+    // NOTE: Raised from 50?100. RRF works on *rank* not raw score, so cutting too
     // aggressively at Stage-1 (weighted blend) risks dropping candidates that RRF
     // would rerank highly. 100 is a good balance vs. memory cost.
     usort($preliminaryScores, function ($a, $b) {
@@ -611,8 +611,8 @@ function retrieveContext($pdo, $propertyId, $userMsg, $contextParams, $apiKey, $
             $formattedContent = $row['content'];
 
             // Read cite_mode from caller context.
-            // - ai_chatbot.php: does NOT pass cite_mode → defaults to false (customer bot, no citations)
-            // - ai_org_chatbot.php: passes $isCiteMode from UI toggle → respects user's setting
+            // - ai_chatbot.php: does NOT pass cite_mode ? defaults to false (customer bot, no citations)
+            // - ai_org_chatbot.php: passes $isCiteMode from UI toggle ? respects user's setting
             $citeMode = filter_var($contextParams['cite_mode'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
             if ($citeMode) {
@@ -632,12 +632,12 @@ function retrieveContext($pdo, $propertyId, $userMsg, $contextParams, $apiKey, $
                     $citations[] = "**{$bookTitle}**";
 
                 if ($fileUrl)
-                    $citations[] = "File gốc: $fileUrl";
+                    $citations[] = "File g?c: $fileUrl";
 
                 if (!empty($row['chapter_title']))
-                    $citations[] = "Chương: {$row['chapter_title']}";
+                    $citations[] = "Chuong: {$row['chapter_title']}";
                 if (!empty($row['section_title']) && $row['section_title'] !== $row['chapter_title'])
-                    $citations[] = "Mục: {$row['section_title']}";
+                    $citations[] = "M?c: {$row['section_title']}";
 
                 if (!empty($row['page_start'])) {
                     $pageRange = ($row['page_end'] && $row['page_end'] > $row['page_start']) ? "Trang {$row['page_start']}-{$row['page_end']}" : "Trang {$row['page_start']}";
@@ -650,7 +650,7 @@ function retrieveContext($pdo, $propertyId, $userMsg, $contextParams, $apiKey, $
                 }
 
                 // if (!empty($citations)) {
-                //     $row['content'] = "[" . implode(" | ", $citations) . "]\n$formattedContent\n(Note: Bạn BẮT BUỘC phải trích dẫn nguồn bằng format [Trang X](link_file_goc) nếu sử dụng thông tin này)";
+                //     $row['content'] = "[" . implode(" | ", $citations) . "]\n$formattedContent\n(Note: B?n B?T BU?C ph?i tr�ch d?n ngu?n b?ng format [Trang X](link_file_goc) n?u s? d?ng th�ng tin n�y)";
                 // }
             }
 
@@ -671,10 +671,10 @@ function retrieveContext($pdo, $propertyId, $userMsg, $contextParams, $apiKey, $
 
     if (empty($intentConfigs)) {
         $intentConfigs = [
-            ['name' => 'price', 'regex' => '(?:^|[^a-z0-9àáạảãâầấyậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹ])(giá|phí|tiền|vnd|bao nhiêu|nhiêu|đ|k)(?![a-z0-9àáạảãâầấyậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹ])', 'boost' => 1.3],
-            ['name' => 'howto', 'regex' => '(?:^|[^a-z0-9àáạảãâầấyậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹ])(cách|làm sao|hướng dẫn|bước|quy trình|thủ tục)(?![a-z0-9àáạảãâầấyậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹ])', 'boost' => 1.25],
-            ['name' => 'location', 'regex' => '(?:^|[^a-z0-9àáạảãâầấyậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹ])(địa chỉ|ở đâu|vị trí|map|nơi|tọa độ)(?![a-z0-9àáạảãâầấyậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹ])', 'boost' => 1.2],
-            ['name' => 'timing', 'regex' => '(?:^|[^a-z0-9àáạảãâầấyậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹ])(khi nào|lúc nào|bao giờ|lịch|ngày|tháng|deadline|khai giảng)(?![a-z0-9àáạảãâầấyậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹ])', 'boost' => 1.5],
+            ['name' => 'price', 'regex' => '(?:^|[^a-z0-9��??��??y???a?????��???�?????��??i��??��?????o?????��??uu??????�???])(gi�|ph�|ti?n|vnd|bao nhi�u|nhi�u|d|k)(?![a-z0-9��??��??y???a?????��???�?????��??i��??��?????o?????��??uu??????�???])', 'boost' => 1.3],
+            ['name' => 'howto', 'regex' => '(?:^|[^a-z0-9��??��??y???a?????��???�?????��??i��??��?????o?????��??uu??????�???])(c�ch|l�m sao|hu?ng d?n|bu?c|quy tr�nh|th? t?c)(?![a-z0-9��??��??y???a?????��???�?????��??i��??��?????o?????��??uu??????�???])', 'boost' => 1.25],
+            ['name' => 'location', 'regex' => '(?:^|[^a-z0-9��??��??y???a?????��???�?????��??i��??��?????o?????��??uu??????�???])(d?a ch?|? d�u|v? tr�|map|noi|t?a d?)(?![a-z0-9��??��??y???a?????��???�?????��??i��??��?????o?????��??uu??????�???])', 'boost' => 1.2],
+            ['name' => 'timing', 'regex' => '(?:^|[^a-z0-9��??��??y???a?????��???�?????��??i��??��?????o?????��??uu??????�???])(khi n�o|l�c n�o|bao gi?|l?ch|ng�y|th�ng|deadline|khai gi?ng)(?![a-z0-9��??��??y???a?????��???�?????��??i��??��?????o?????��??uu??????�???])', 'boost' => 1.5],
         ];
     }
 
@@ -738,7 +738,7 @@ function retrieveContext($pdo, $propertyId, $userMsg, $contextParams, $apiKey, $
         $keywordRanks[$r['id']] = $rankIdx++;
     }
 
-    // RRF Constants — sourced from tuning constants at file top
+    // RRF Constants � sourced from tuning constants at file top
     $k = RAG_RRF_K;
 
     $candidates = [];
@@ -749,7 +749,7 @@ function retrieveContext($pdo, $propertyId, $userMsg, $contextParams, $apiKey, $
     $hasProperNouns = false;
     if ($qLen < 40) {
         $hasNumbers = preg_match('/[0-9]+/', $userMsg);
-        $hasProperNouns = preg_match('/[A-ZĐ][a-zàáâãèéêìíòóôõùúýăđĩũơưạảấầẩẫậắằẳẵặẹẻẽềếểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]{2,}/u', $userMsg);
+        $hasProperNouns = preg_match('/[A-Z�][a-z����������������adiuou?????????????????????????????????????????????]{2,}/u', $userMsg);
     }
 
     // FIX: Standardize RRF Scale to be independent of candidate pool size
@@ -794,20 +794,20 @@ function retrieveContext($pdo, $propertyId, $userMsg, $contextParams, $apiKey, $
         }
 
         // --- ALGORITHM C: RECENCY BOOST ---
-        // Ưu tiên doc mới cập nhật hơn khi nội dung tương tự (VD: học phí v1 vs học phí v2)
+        // Uu ti�n doc m?i c?p nh?t hon khi n?i dung tuong t? (VD: h?c ph� v1 vs h?c ph� v2)
         $recencyBoost = 1.0;
         if (!empty($row['doc_updated_at'])) {
             $updatedTs = strtotime($row['doc_updated_at']);
             if ($updatedTs > 0) {
                 $daysSinceUpdate = max(0, (time() - $updatedTs) / 86400);
                 if ($daysSinceUpdate <= 7) {
-                    $recencyBoost = 1.30; // Cập nhật trong 7 ngày: boost mạnh
+                    $recencyBoost = 1.30; // C?p nh?t trong 7 ng�y: boost m?nh
                 } elseif ($daysSinceUpdate <= 30) {
-                    $recencyBoost = 1.15; // Trong 30 ngày: boost vừa
+                    $recencyBoost = 1.15; // Trong 30 ng�y: boost v?a
                 } elseif ($daysSinceUpdate <= 90) {
-                    $recencyBoost = 1.05; // Trong 90 ngày: boost nhẹ
+                    $recencyBoost = 1.05; // Trong 90 ng�y: boost nh?
                 }
-                // Sau 90 ngày: không boost (1.0)
+                // Sau 90 ng�y: kh�ng boost (1.0)
             }
         }
 
@@ -818,7 +818,7 @@ function retrieveContext($pdo, $propertyId, $userMsg, $contextParams, $apiKey, $
         $fuzzyBoost = 1.0;
         if ($qLen < 20 && mb_strlen($row['source_name'] ?? '') < 40) {
             // Check Source Name for typo tolerance - Optimized with length guards
-            // [FIX] PHP levenshtein() has a hard limit of 255 chars — returns -1 for longer strings.
+            // [FIX] PHP levenshtein() has a hard limit of 255 chars � returns -1 for longer strings.
             // $userMsgLower can exceed this if the user sends a long message. Guard both strings.
             $s1 = mb_substr(mb_strtolower($row['source_name'] ?? ''), 0, 255);
             $s2 = mb_substr($userMsgLower, 0, 255);

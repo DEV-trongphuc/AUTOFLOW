@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // api/worker_web_analytics.php - Aggregate web analytics data for fast reporting
 // Run this via cron every hour: php worker_web_analytics.php
 
@@ -89,7 +89,7 @@ function aggregatePageData($pdo, $date, $pageUrl)
         $eventCount['total_events']
     ]);
 
-    echo "    ✓ Aggregated: {$metrics['total_views']} views, {$metrics['unique_visitors']} unique visitors\n";
+    echo "    ? Aggregated: {$metrics['total_views']} views, {$metrics['unique_visitors']} unique visitors\n";
 }
 
 // Optional: Clean up old raw data (older than 90 days)

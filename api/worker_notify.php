@@ -1,6 +1,6 @@
-﻿<?php
+<?php
 // api/worker_notify.php
-// Background worker để gửi Notification Emails bất đồng bộ (tránh block luồng API chính)
+// Background worker d? g?i Notification Emails b?t d?ng b? (tr�nh block lu?ng API ch�nh)
 require_once 'db_connect.php';
 require_once __DIR__ . '/worker_guard.php';
 require_once 'Mailer.php';
@@ -8,11 +8,11 @@ require_once 'Mailer.php';
 $data = json_decode(file_get_contents("php://input"), true);
 if (!$data || empty($data['emails']) || empty($data['html'])) {
     http_response_code(400);
-    echo "Thiếu dữ liệu: emails, html";
+    echo "Thi?u d? li?u: emails, html";
     exit;
 }
 
-// 1. Phản hồi cho người gọi (API script) ngay lập tức để ngắt kết nối cURL
+// 1. Ph?n h?i cho ngu?i g?i (API script) ngay l?p t?c d? ng?t k?t n?i cURL
 if (session_id()) session_write_close();
 ob_start();
 echo json_encode(["status" => "processing", "message" => "Background notification queued."]);
@@ -25,7 +25,7 @@ if (function_exists('fastcgi_finish_request')) {
     fastcgi_finish_request();
 }
 
-// 2. Bắt đầu gửi email ngầm (Mất 2-10 giây)
+// 2. B?t d?u g?i email ng?m (M?t 2-10 gi�y)
 try {
     $mailer = new Mailer($pdo);
     $errTmp = '';

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Zalo Follower Sync API
  * Syncs Zalo OA Followers to Subscribers table

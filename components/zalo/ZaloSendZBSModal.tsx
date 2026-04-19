@@ -478,7 +478,7 @@ const ZaloSendZBSModal: React.FC<ZaloSendZBSModalProps> = ({ isOpen, onClose: _o
                                         <div className="p-2 bg-amber-50 rounded-xl text-amber-600 border border-amber-100"><FileSpreadsheet className="w-5 h-5" /></div>
                                         <div>
                                             <h5 className="text-xs font-bold text-slate-800">Dữ liệu liên hệ nâng cao</h5>
-                                            <p className="text-[10px] text-slate-400 font-bold tracking-tight uppercase">Cònhân hóa theo tệp Khách hàng</p>
+                                            <p className="text-[10px] text-slate-400 font-bold tracking-tight uppercase">Cá nhân hóa theo tệp Khách hàng</p>
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-3">

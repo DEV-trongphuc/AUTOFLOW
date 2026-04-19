@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // api/system_logs_ultimate.php - THE "BLACK BOX" LOGGER (V1.0)
 // High-visibility dashboard for monitoring all engine logs in real-time.
 
@@ -44,7 +44,7 @@ echo "
 </style>
 
 <div class='header'>
-    <h1>🛸 OMNI-ENGINE : System logs Blackbox</h1>
+    <h1>?? OMNI-ENGINE : System logs Blackbox</h1>
     <a href='?' class='refresh'>SYNC NOW</a>
 </div>
 
@@ -52,25 +52,25 @@ echo "
 
     <!-- 1. CAMPAIGN LOGS -->
     <div class='card'>
-        <div class='card-header'>📦 Campaign Worker Log <span class='info'>worker_campaign.log</span></div>
+        <div class='card-header'>?? Campaign Worker Log <span class='info'>worker_campaign.log</span></div>
         <div class='card-body'><pre>" . htmlspecialchars(tailFile(__DIR__ . '/worker_campaign.log', 40)) . "</pre></div>
     </div>
 
     <!-- 2. FLOW LOGS -->
     <div class='card'>
-        <div class='card-header'>🌊 Flow Worker Log <span class='info'>worker_flow.log</span></div>
+        <div class='card-header'>?? Flow Worker Log <span class='info'>worker_flow.log</span></div>
         <div class='card-body'><pre>" . htmlspecialchars(tailFile(__DIR__ . '/worker_flow.log', 40)) . "</pre></div>
     </div>
 
     <!-- 3. WEBHOOK/TRACKING LOGS -->
     <div class='card'>
-        <div class='card-header'>📡 Webhook & Tracking <span class='info'>webhook_debug.log</span></div>
+        <div class='card-header'>?? Webhook & Tracking <span class='info'>webhook_debug.log</span></div>
         <div class='card-body'><pre>" . htmlspecialchars(tailFile(__DIR__ . '/webhook_debug.log', 40)) . "</pre></div>
     </div>
 
     <!-- 4. MAIL DELIVERY ERROR LOGS -->
     <div class='card'>
-        <div class='card-header'>⚠️ System Errors <span class='err'>log_error.log</span></div>
+        <div class='card-header'>?? System Errors <span class='err'>log_error.log</span></div>
         <div class='card-body'><pre class='err'>" . htmlspecialchars(tailFile(__DIR__ . '/log_error.log', 40)) . "</pre></div>
     </div>
 
@@ -80,7 +80,7 @@ echo "
 
 <!-- 5. REAL-TIME ACTIVITY (DB) -->
 <div class='card' style='grid-column: span 2;'>
-    <div class='card-header'>📜 Real-time Activity Timeline (DB: subscriber_activity)</div>
+    <div class='card-header'>?? Real-time Activity Timeline (DB: subscriber_activity)</div>
     <div class='card-body' style='max-height: 500px;'>
         <table>
             <thead>
@@ -117,7 +117,7 @@ echo "      </tbody>
 
 <!-- 6. MAIL DELIVERY LOGS (DB) -->
 <div class='card' style='grid-column: span 2;'>
-    <div class='card-header'>✉️ Mail Delivery History (DB: mail_delivery_logs)</div>
+    <div class='card-header'>?? Mail Delivery History (DB: mail_delivery_logs)</div>
     <div class='card-body' style='max-height: 500px;'>
         <table>
             <thead>

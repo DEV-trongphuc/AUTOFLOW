@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // worker_segment_counts.php - Background worker for segment count updates
 require_once 'db_connect.php';
 require_once __DIR__ . '/worker_guard.php';

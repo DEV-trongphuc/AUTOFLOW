@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Zalo Broadcast API (Enhanced)
  * Manage Campaigns, Send Messages, Track Stats
@@ -106,7 +106,7 @@ try {
             $input = json_decode(file_get_contents('php://input'), true);
 
             $oaConfigId = $input['oa_config_id'] ?? '';
-            $title = $input['title'] ?? 'Chiến dịch mới';
+            $title = $input['title'] ?? 'Chi?n d?ch m?i';
             $content = $input['content'] ?? '';
             $messageType = $input['message_type'] ?? 'text';
             $attachmentId = $input['attachment_id'] ?? '';
@@ -237,7 +237,7 @@ try {
                     $subId = $stmtS->fetchColumn();
                     if ($subId) {
                         // Removed logging broadcast receive to activity timeline as requested
-                        // logZaloSubscriberActivity($pdo, $subId, 'receive_broadcast', $campId, "Đã nhận tin nhắn Broadcast: $title", $title);
+                        // logZaloSubscriberActivity($pdo, $subId, 'receive_broadcast', $campId, "�� nh?n tin nh?n Broadcast: $title", $title);
                     }
                 } else {
                     $failed++;

@@ -149,7 +149,7 @@ if ($method === 'GET' && $action === 'check') {
 // [NEW] Lightweight activity ping — only updates last_login, no profile fetch
 // Called by App.tsx heartbeat every 5 min to keep last_activity fresh while user is active
 if ($method === 'GET' && $action === 'ping') {
-    if (!isset($_SESSION['user_id'])) {
+        if (empty($GLOBALS['current_admin_id']) && empty($_SESSION['user_id'])) {
         jsonResponse(false, null, 'Not authenticated'); // Silently ignored by frontend
     }
     try {
@@ -168,7 +168,7 @@ if ($method === 'GET' && $action === 'ping') {
 // Get access logs for current user (Sync real history)
 if ($method === 'GET' && $action === 'logs') {
 
-    if (!isset($_SESSION['user_id'])) {
+        if (empty($GLOBALS['current_admin_id']) && empty($_SESSION['user_id'])) {
         jsonResponse(false, null, 'Unauthorized');
     }
     
@@ -190,7 +190,7 @@ if ($method === 'POST' && $action === 'logout') {
 
 // Change password
 if ($method === 'POST' && $action === 'change-password') {
-    if (!isset($_SESSION['user_id'])) {
+        if (empty($GLOBALS['current_admin_id']) && empty($_SESSION['user_id'])) {
         jsonResponse(false, null, 'Chưa đăng nhập');
     }
 

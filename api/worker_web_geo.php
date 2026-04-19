@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // api/worker_web_geo.php
 // Geolocates web visitors using IP address
 // Rate Limit: 45 req/min (ip-api.com)

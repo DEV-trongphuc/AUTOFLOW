@@ -1,4 +1,4 @@
-Ôªø<?php
+<?php
 // api/worker_tracking_aggregator.php - HIGH-PERFORMANCE TRACKING AGGREGATOR V2.0
 // Handles millions of raw events using Buffer-First + Short-lived Transaction pattern.
 
@@ -35,7 +35,7 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'worker_tracking_aggregator.php') 
     // AFTER:
     //   Phase A (Short TX): Claim batch by marking processed=2 ('in-progress'), commit immediately.
     //                        Rows are "owned" by this worker. Lock released in milliseconds.
-    //   Phase B (Outside TX): Slow work ‚Äî getDeviceDetails(), getLocationFromIP(), processTrackingEvent().
+    //   Phase B (Outside TX): Slow work ó getDeviceDetails(), getLocationFromIP(), processTrackingEvent().
     //   Phase C (Fast cleanup): DELETE claimed rows (done). No transaction needed.
     // =========================================================================
 
@@ -65,7 +65,7 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'worker_tracking_aggregator.php') 
     }
 
     if (empty($events)) {
-        // No raw events ‚Äî still sync the activity/stats buffers
+        // No raw events ó still sync the activity/stats buffers
         syncStatsBuffer($pdo);
         syncActivityBuffer($pdo);
         syncZaloActivityBuffer($pdo);
@@ -75,7 +75,7 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'worker_tracking_aggregator.php') 
 
     // --- PHASE B: PROCESS OUTSIDE TRANSACTION (slow: external API calls, geo-lookup etc.) ---
     // [TIMEOUT SAFETY FIX] set_time_limit(300) means PHP kills script at 300s.
-    // With 1000 events √ó ~1s per getLocationFromIP() = up to 1000s total.
+    // With 1000 events ◊ ~1s per getLocationFromIP() = up to 1000s total.
     // If PHP kills at 300s, events 301-1000 stay marked processed=2 forever,
     // then prune_queues.php deletes them after 1h => SILENT DATA LOSS.
     //
@@ -83,7 +83,7 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'worker_tracking_aggregator.php') 
     // Phase C2 resets unfinished events back to processed=0 so next worker retries them.
     $processedIds = [];
     $startTime = microtime(true);
-    $timeLimit = 260; // Break at 260s ‚Äî leaves 40s for Phase C/C2 cleanup + sync buffers
+    $timeLimit = 260; // Break at 260s ó leaves 40s for Phase C/C2 cleanup + sync buffers
 
     // [ANTI-SPAM IN-MEMORY DEBOUNCE]
     // Drops multiple identical click events hitting the same batch (e.g. from rapid-fire email scanners).
@@ -92,8 +92,8 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'worker_tracking_aggregator.php') 
     foreach ($events as $event) {
         // [TIMEOUT GUARD] Check elapsed time before starting each potentially slow event
         if ((microtime(true) - $startTime) > $timeLimit) {
-            error_log('[worker_aggregator] Timeout guard ‚Äî processed ' . count($processedIds) . '/' . count($events) . ' events. Remaining will be retried.');
-            break; // Safe exit ‚Äî unprocessed IDs NOT added to $processedIds
+            error_log('[worker_aggregator] Timeout guard ó processed ' . count($processedIds) . '/' . count($events) . ' events. Remaining will be retried.');
+            break; // Safe exit ó unprocessed IDs NOT added to $processedIds
         }
 
         $payload = json_decode($event['payload'], true);
@@ -138,7 +138,7 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'worker_tracking_aggregator.php') 
                     }
                 }
 
-                // Resolve Geo Location ‚Äî SAFE here: outside transaction, won't block DB locks
+                // Resolve Geo Location ó SAFE here: outside transaction, won't block DB locks
                 if (empty($extra['location']) && $ip) {
                     if (!empty($extra['device']) && $extra['device'] === 'Proxy') {
                         $extra['location'] = $extra['os'] ?? null; // Proxy: use OS as label, skip API
@@ -260,8 +260,8 @@ function syncActivityBuffer($pdo)
         $variation = $extra['variation'] ?? null;
 
         $insertBinds[] = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        // [O(N¬≤) FIX] array_push with splat instead of array_merge.
-        // array_merge creates a brand-new array each iteration: O(N¬≤) total copies.
+        // [O(N≤) FIX] array_push with splat instead of array_merge.
+        // array_merge creates a brand-new array each iteration: O(N≤) total copies.
         // array_push appends in-place: O(1) per call, O(N) total.
         array_push(
             $insertValues,
@@ -301,7 +301,7 @@ function syncActivityBuffer($pdo)
 
     // [FIX P5-M1] Use prepared statement instead of raw exec() with interpolated IDs.
     // IDs are internal integer PKs so direct injection is low risk, but exec() with
-    // string interpolation is an unsafe pattern ‚Äî standardize to prepared statements.
+    // string interpolation is an unsafe pattern ó standardize to prepared statements.
     try {
         $deletePh = implode(',', array_fill(0, count($claimIds), '?'));
         $pdo->prepare("DELETE FROM activity_buffer WHERE id IN ($deletePh)")->execute($claimIds);
@@ -345,7 +345,7 @@ function syncZaloActivityBuffer($pdo)
 
     foreach ($logs as $log) {
         $insertBinds[] = "(?, ?, ?, ?, ?, ?, ?)";
-        // [O(N¬≤) FIX] array_push with splat ‚Äî O(N) total vs array_merge O(N¬≤)
+        // [O(N≤) FIX] array_push with splat ó O(N) total vs array_merge O(N≤)
         array_push(
             $insertValues,
             $log['subscriber_id'],
@@ -396,11 +396,11 @@ function syncTimestampBuffer($pdo)
     $rows = [];
     try {
         $pdo->beginTransaction();
-        // [FILESORT FIX] ORDER BY id ASC ‚Äî id is the Primary Key (B-Tree clustered).
+        // [FILESORT FIX] ORDER BY id ASC ó id is the Primary Key (B-Tree clustered).
         // MySQL scans exactly 1000 rows in physical order: ~0.001s, minimal locking.
         // ORDER BY subscriber_id (non-PK, no index for ordering) forces Full Table Scan
         // + filesort on all processed=0 rows BEFORE applying LIMIT.
-        // With FOR UPDATE, this locks ALL scanned rows during sort ‚Äî SKIP LOCKED becomes useless
+        // With FOR UPDATE, this locks ALL scanned rows during sort ó SKIP LOCKED becomes useless
         // because all workers scan and lock the same full set => deadlock / lock wait timeout.
         // ksort($updates) in PHP handles deadlock prevention without any DB-side sort.
         $stmt = $pdo->prepare(
@@ -518,7 +518,7 @@ function syncStatsBuffer($pdo)
     $rows = [];
     try {
         $pdo->beginTransaction();
-        // [FILESORT FIX] ORDER BY id ASC ‚Äî same reasoning as syncTimestampBuffer.
+        // [FILESORT FIX] ORDER BY id ASC ó same reasoning as syncTimestampBuffer.
         // ORDER BY target_table, target_id causes filesort on non-indexed columns.
         // ksort($grouped) in PHP achieves deadlock-safe ordering without DB filesort.
         $stmt = $pdo->prepare(
@@ -588,7 +588,7 @@ function syncStatsBuffer($pdo)
 
         // [CONFLICT-2 FIX] database.sql ENUM only includes: 'campaigns','flows','subscribers'
         // But FlowExecutor.php also inserts 'zalo_subscribers'. ENUM strict mode FAILs silently.
-        // ‚ö†Ô∏è  ONE-TIME migration needed:
+        // ??  ONE-TIME migration needed:
         //   ALTER TABLE stats_update_buffer MODIFY COLUMN target_table VARCHAR(50) NOT NULL;
         if (!in_array($table, ['campaigns', 'flows', 'subscribers', 'zalo_subscribers']))
             continue;

@@ -23,6 +23,7 @@ import { Subscriber, Segment, Flow, SubscriberNote } from '../../types';
 import { useNavigate } from 'react-router-dom';
 import ManualTriggerFlowModal from '../flows/ManualTriggerFlowModal';
 import { isSyncList } from '../../utils/listHelpers';
+import ReactMarkdown from 'react-markdown';
 import { MetaCustomerProfileModal } from '../meta/MetaCustomerProfileModal';
 
 export const GoogleSheetsIcon = ({ className }: { className?: string }) => (
@@ -100,6 +101,41 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
     const [isMetaModalOpen, setIsMetaModalOpen] = useState(false);
     const [activityFilter, setActivityFilter] = useState('');
     const [activitySubTab, setActivitySubTab] = useState<'all' | 'mail' | 'system' | 'website'>('all');
+    const [isSummarizing, setIsSummarizing] = useState(false);
+
+    const handleAISummarize = async () => {
+        setIsSummarizing(true);
+        const tid = toast.loading('AI đang phân tích dữ liệu...');
+        try {
+            const res = await api.post<any>('subscriber_ai_summary', { subscriber_id: subscriber.id });
+            if (res.success && res.data?.summary) {
+                toast.success('Đã tóm tắt thành công!', { id: tid });
+                const newNoteObj: SubscriberNote = {
+                    id: Date.now().toString(),
+                    content: res.data.summary,
+                    createdAt: new Date().toISOString(),
+                    createdBy: 'AI Summary'
+                };
+                setFormData((prev: any) => ({
+                    ...prev,
+                    notes: [newNoteObj, ...(Array.isArray(prev.notes) ? prev.notes : [])]
+                }));
+                // Cập nhật lên backend
+                const updatedNotes = [newNoteObj, ...(Array.isArray(formData.notes) ? formData.notes : [])];
+                const updatedSubscriber = { ...formData, notes: updatedNotes } as Subscriber;
+                onUpdate(updatedSubscriber);
+                
+                setActiveTab('notes');
+            } else {
+                toast.error(res.message || 'Lỗi khi tóm tắt AI!', { id: tid });
+            }
+        } catch (e) {
+            console.error(e);
+            toast.error('Lỗi kết nối khi tóm tắt!', { id: tid });
+        } finally {
+            setIsSummarizing(false);
+        }
+    };
 
     const resetState = async () => {
         if (subscriber) {
@@ -642,7 +678,12 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                 ))}
                             </div>
                         </div>
-                        {!isEditing && <button onClick={() => setIsEditing(true)} className="px-3 py-1.5 md:px-4 md:py-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] md:text-xs font-black border border-slate-200 dark:border-slate-700/60 transition-all duration-500 flex items-center gap-2 hover:shadow-sm w-fit self-start shrink-0"><Edit3 className="w-3 md:w-3.5 h-3 md:h-3.5" /> Sửa hồ sơ</button>}
+                        {!isEditing && (
+                            <div className="flex flex-col gap-2 shrink-0 self-start w-[120px] md:w-[140px]">
+                                <button onClick={() => setIsEditing(true)} className="px-3 py-1.5 md:px-4 md:py-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] md:text-xs font-black border border-slate-200 dark:border-slate-700/60 transition-all duration-500 flex items-center justify-center gap-2 hover:shadow-sm w-full"><Edit3 className="w-3 md:w-3.5 h-3 md:h-3.5" /> Sửa hồ sơ</button>
+                                <button onClick={handleAISummarize} disabled={isSummarizing} className="px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white rounded-xl text-[10px] md:text-xs font-black border-none transition-all duration-500 flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 w-full disabled:opacity-50 active:scale-95"><Sparkles className="w-3 md:w-3.5 h-3 md:h-3.5 fill-white" /> {isSummarizing ? "Đang xử lý..." : "Tóm tắt AI"}</button>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -1513,38 +1554,67 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Nội dung ghi chú</label>
                                     {!isEditing && <span className="text-[10px] text-slate-300 italic">Bấm "Sửa hồ sơ" để chỉnh sửa</span>}
                                 </div>
-                                <textarea
-                                    className="flex-1 w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-2xl p-5 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-4 focus:ring-orange-50/5 focus:border-[#ffa900] focus:bg-white dark:bg-slate-900 transition-all shadow-inner leading-relaxed resize-none"
-                                    placeholder="Nhập ghi chú chi tiết cho Khách hàng này..."
-                                    value={(() => {
-                                        // Handle different note formats
-                                        if (typeof formData.notes === 'string') {
-                                            return formData.notes;
-                                        } else if (Array.isArray(formData.notes)) {
-                                            return formData.notes.map((n: any) => {
-                                                // If note is a plain string (from MISA sync)
-                                                if (typeof n === 'string') return n;
-                                                // If note is an object with createdAt/content (manual notes)
-                                                if (n?.createdAt && n?.content) {
-                                                    return `[${new Date(n.createdAt).toLocaleDateString()}] ${n.content}`;
+                                {isEditing ? (
+                                    <>
+                                        <textarea
+                                            className="flex-1 w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-2xl p-5 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-4 focus:ring-orange-50/5 focus:border-[#ffa900] focus:bg-white dark:bg-slate-900 transition-all shadow-inner leading-relaxed resize-none"
+                                            placeholder="Nhập ghi chú chi tiết cho Khách hàng này..."
+                                            value={(() => {
+                                                // Handle different note formats
+                                                if (typeof formData.notes === 'string') {
+                                                    return formData.notes;
+                                                } else if (Array.isArray(formData.notes)) {
+                                                    return formData.notes.map((n: any) => {
+                                                        // If note is a plain string (from MISA sync)
+                                                        if (typeof n === 'string') return n;
+                                                        // If note is an object with createdAt/content (manual notes)
+                                                        if (n?.createdAt && n?.content) {
+                                                            return `[${new Date(n.createdAt).toLocaleDateString()}] ${n.content}`;
+                                                        }
+                                                        // Handle snake_case from Meta Sync
+                                                        if (n?.created_at && n?.content) {
+                                                            // Format Date nice if possible
+                                                            return `[${new Date(n.created_at).toLocaleDateString()}] ${n.content}`;
+                                                        }
+                                                        return String(n);
+                                                    }).join('\n\n');
                                                 }
-                                                // Handle snake_case from Meta Sync
-                                                if (n?.created_at && n?.content) {
-                                                    // Format Date nice if possible
-                                                    return `[${new Date(n.created_at).toLocaleDateString()}] ${n.content}`;
+                                                return '';
+                                            })()}
+                                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                        />
+                                        <p className="text-[10px] text-slate-400 mt-2 px-1 text-right">
+                                            Hỗ trợ Markdown cơ bản. Nội dung sẽ được đồng bộ với trường Description.
+                                        </p>
+                                    </>
+                                ) : (
+                                    <div className="flex-1 w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-2xl p-5 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-inner overflow-y-auto max-w-none 
+                                    [&_p]:mb-4 [&_p:last-child]:mb-0 
+                                    [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-4 
+                                    [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-4 
+                                    [&_li]:mb-1 
+                                    [&_strong]:font-bold [&_strong]:text-slate-900 dark:[&_strong]:text-white 
+                                    [&_hr]:border-slate-200 dark:[&_hr]:border-slate-800 [&_hr]:my-4">
+                                        <ReactMarkdown>
+                                            {(() => {
+                                                if (typeof formData.notes === 'string') {
+                                                    return formData.notes;
+                                                } else if (Array.isArray(formData.notes)) {
+                                                    return formData.notes.map((n: any) => {
+                                                        if (typeof n === 'string') return n;
+                                                        if (n?.createdAt && n?.content) {
+                                                            return `**[${new Date(n.createdAt).toLocaleDateString()}]**\n\n${n.content}`;
+                                                        }
+                                                        if (n?.created_at && n?.content) {
+                                                            return `**[${new Date(n.created_at).toLocaleDateString()}]**\n\n${n.content}`;
+                                                        }
+                                                        return String(n);
+                                                    }).join('\n\n---\n\n');
                                                 }
-                                                return String(n);
-                                            }).join('\n\n');
-                                        }
-                                        return '';
-                                    })()}
-                                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                    disabled={!isEditing}
-                                />
-                                {isEditing && (
-                                    <p className="text-[10px] text-slate-400 mt-2 px-1 text-right">
-                                        Hỗ trợ Markdown cơ bản. Nội dung sẽ được đồng bộ với trường Description.
-                                    </p>
+                                                return '*Chưa có ghi chú*';
+                                            })()}
+                                        </ReactMarkdown>
+                                    </div>
                                 )}
                             </div>
                         )}

@@ -1,11 +1,11 @@
-﻿<?php
+<?php
 // api/chat_gemini.php
 require_once 'chat_helpers.php';
 
 function generateResponse($contents, $systemInst, $apiKey, $model = 'gemini-2.5-flash-lite', $temperature = 0.9, $maxOutputTokens = 16384)
 {
     if (empty($apiKey))
-        return "Lỗi: Chưa cấu hình API Key.";
+        return "L?i: Chua c?u h�nh API Key.";
 
     // OPTIMIZATION: Close session early to prevent locking other requests from same user
     if (session_status() === PHP_SESSION_ACTIVE) {
@@ -108,10 +108,10 @@ function generateResponse($contents, $systemInst, $apiKey, $model = 'gemini-2.5-
                 }
             }
         }
-        return $fullText ?: "Dạ, em chưa tìm thấy câu trả lời phù hợp nhất lúc này.";
+        return $fullText ?: "D?, em chua t�m th?y c�u tr? l?i ph� h?p nh?t l�c n�y.";
     }
 
-    return "Dạ, em chưa tìm thấy câu trả lời phù hợp nhất lúc này. Anh/Chị có thể hỏi cụ thể hơn không ạ?";
+    return "D?, em chua t�m th?y c�u tr? l?i ph� h?p nh?t l�c n�y. Anh/Ch? c� th? h?i c? th? hon kh�ng ??";
 }
 
 /**
@@ -169,7 +169,7 @@ function generateResponseAsyncInit($contents, $systemInst, $apiKey, $model = 'ge
 function generateResponseAsyncWait($asyncHandle)
 {
     if (!$asyncHandle)
-        return "Lỗi: Handle không hợp lệ.";
+        return "L?i: Handle kh�ng h?p l?.";
 
     $mh = $asyncHandle['mh'];
     $ch = $asyncHandle['ch'];
@@ -217,10 +217,10 @@ function generateResponseAsyncWait($asyncHandle)
                 }
             }
         }
-        return $fullText ?: "Dạ, em chưa tìm thấy câu trả lời phù hợp nhất lúc này.";
+        return $fullText ?: "D?, em chua t�m th?y c�u tr? l?i ph� h?p nh?t l�c n�y.";
     }
 
-    return "Dạ, em chưa tìm thấy câu trả lời phù hợp nhất lúc này.";
+    return "D?, em chua t�m th?y c�u tr? l?i ph� h?p nh?t l�c n�y.";
 }
 function streamResponse($contents, $systemInst, $apiKey, $onChunk, $model = 'gemini-2.5-flash-lite', $temperature = 0.9, $maxOutputTokens = 2048)
 {
@@ -296,7 +296,7 @@ function streamResponse($contents, $systemInst, $apiKey, $onChunk, $model = 'gem
         return strlen($data);
     });
 
-    // Ensure no output buffering is active — buffering kills streaming.
+    // Ensure no output buffering is active � buffering kills streaming.
     // [FIX] Disable zlib.output_compression FIRST: even after all ob_* levels are cleared,
     // PHP's zlib handler keeps an invisible compression buffer that prevents real-time
     // SSE streaming until the request ends. Must be disabled at runtime before flushing.

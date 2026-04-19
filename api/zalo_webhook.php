@@ -1,4 +1,4 @@
-ï»¿<?php
+<?php
 /**
  * Zalo Webhook Handler (Zalo Notification Service)
  * Handles events related to ZNS Templates: status changes, user feedback, etc.
@@ -61,8 +61,8 @@ if ($secretKey) {
         exit;
     }
 } else {
-    // No secretKey configured â€” log warning but continue (OA not fully set up yet)
-    error_log("[Zalo Webhook] WARNING: No secretKey found for OA:$oaId â€” skipping signature check");
+    // No secretKey configured — log warning but continue (OA not fully set up yet)
+    error_log("[Zalo Webhook] WARNING: No secretKey found for OA:$oaId — skipping signature check");
 }
 
 // 4. Log the event (Crucial for debugging and audit)

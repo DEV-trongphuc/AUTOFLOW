@@ -1,6 +1,6 @@
-﻿<?php
+<?php
 /**
- * AutoFlow Master Health Check v2 — Full-Stack Deep Audit
+ * AutoFlow Master Health Check v2 � Full-Stack Deep Audit
  * Covers: Code correctness, DB integrity, table health, worker liveness, conflict detection.
  * GET ?admin_token=autoflow-admin-001
  * DELETE AFTER USE.
@@ -44,21 +44,21 @@ $FILES = [
     'db_connect'              => @file_get_contents(__DIR__ . '/db_connect.php'),
 ];
 
-// ─── 1. CODE FIX VERIFICATION (Non-comment line checks) ──────────────────────
+// --- 1. CODE FIX VERIFICATION (Non-comment line checks) ----------------------
 $items = [];
 
 // BUG-C2: A/B split test uses abs(crc32) not hexdec
 $items[] = chk('BUG-C2 A/B split: abs(crc32()) used',
     countInCode($FILES['FlowExecutor'], 'abs(crc32(') >= 1 ? 'PASS' : 'FAIL',
     countInCode($FILES['FlowExecutor'], 'abs(crc32(') . ' occurrence(s)',
-    'Was hexdec() — can overflow on 32-bit → always Path B');
+    'Was hexdec() � can overflow on 32-bit ? always Path B');
 
 // BUG-H3: sentInSession incremented exactly once (in dispatchRaw, NOT in sendViaPHPMailer)
 $smCount = countInCode($FILES['Mailer'], '$this->sentInSession++');
 $items[] = chk('BUG-H3 SMTP sentInSession: exactly 1 increment in code (excl. comments)',
     $smCount === 1 ? 'PASS' : 'FAIL',
     "Found $smCount non-comment line(s) with sentInSession++",
-    $smCount !== 1 ? 'Expected only in dispatchRaw(). Second one causes double-count → reconnect at 250 not 500' : '');
+    $smCount !== 1 ? 'Expected only in dispatchRaw(). Second one causes double-count ? reconnect at 250 not 500' : '');
 
 // BUG-C1: ZNS seen verifies campaign before UPDATE
 $items[] = chk('BUG-C1 ZNS seen: verifies campaign ID before UPDATE',
@@ -117,7 +117,7 @@ $items[] = chk('flow_helpers.php: activity buffer auto-flush at 150',
     strpos($FILES['flow_helpers'], '>= 150') !== false ? 'PASS' : 'WARN',
     'Prevents max_allowed_packet overload on bulk campaigns');
 
-// WORKER_TRACKING: checkStrategicIndexes re-add risk — verify it won't re-add dropped indexes
+// WORKER_TRACKING: checkStrategicIndexes re-add risk � verify it won't re-add dropped indexes
 $dangerIdx = ['idx_sub_type_date', 'idx_sub_flow_status', 'idx_flow_states_processing'];
 $trackSrc = $FILES['worker_tracking_aggregator'];
 $foundDanger = [];
@@ -132,7 +132,7 @@ $items[] = chk('worker_tracking_aggregator: checkStrategicIndexes() won\'t re-ad
 $report['sections'][] = sec('Code Fix Verification', $items);
 
 
-// ─── 2. CONFLICT DETECTION BETWEEN FILES ─────────────────────────────────────
+// --- 2. CONFLICT DETECTION BETWEEN FILES -------------------------------------
 $items = [];
 
 // Check: worker_flow and worker_campaign both release mailer connection
@@ -155,7 +155,7 @@ $items[] = chk('worker_flow.php: executor->flushStatsBuffer() called',
 // (worker_tracking_aggregator line 580 has a comment warning about this)
 $items[] = chk('worker_tracking_aggregator: zalo_subscribers in target_table whitelist',
     strpos($FILES['worker_tracking_aggregator'], "'zalo_subscribers'") !== false ? 'PASS' : 'FAIL',
-    strpos($FILES['worker_tracking_aggregator'], "'zalo_subscribers'") !== false ? 'Present' : 'MISSING — zalo stat increments silently skipped',
+    strpos($FILES['worker_tracking_aggregator'], "'zalo_subscribers'") !== false ? 'Present' : 'MISSING � zalo stat increments silently skipped',
     'FlowExecutor inserts zalo_subscribers; aggregator must accept it');
 
 // Check: flow_helpers.php uses SAVEPOINT-safe voucher claim
@@ -166,7 +166,7 @@ $items[] = chk('flow_helpers.php: Voucher claim uses SAVEPOINT or inTransaction 
 // Check: webhook.php uses fastcgi_finish_request (non-blocking response)
 $items[] = chk('webhook.php: fastcgi_finish_request() for non-blocking response',
     strpos($FILES['webhook'], 'fastcgi_finish_request') !== false ? 'PASS' : 'WARN',
-    strpos($FILES['webhook'], 'fastcgi_finish_request') !== false ? 'Present' : 'Missing — Zalo may timeout waiting for response');
+    strpos($FILES['webhook'], 'fastcgi_finish_request') !== false ? 'Present' : 'Missing � Zalo may timeout waiting for response');
 
 // Check: worker_flow DOUBLE-LOCK guard present
 $items[] = chk('worker_flow.php: DOUBLE-LOCK guard (re-read status before processing)',
@@ -183,12 +183,12 @@ $items[] = chk('worker_flow.php: MAX_STEPS infinite loop guard',
 // Check: zalo_helpers.php has ensureZaloToken function
 $items[] = chk('zalo_helpers.php: ensureZaloToken() function exists',
     strpos($FILES['zalo_helpers'], 'function ensureZaloToken') !== false ? 'PASS' : 'FAIL',
-    strpos($FILES['zalo_helpers'], 'function ensureZaloToken') !== false ? 'Present' : 'MISSING — BUG-C3 fix calls a non-existent function!');
+    strpos($FILES['zalo_helpers'], 'function ensureZaloToken') !== false ? 'Present' : 'MISSING � BUG-C3 fix calls a non-existent function!');
 
 $report['sections'][] = sec('Conflict Detection', $items);
 
 
-// ─── 3. MYSQL CONFIG (Workers override per-session, global is secondary) ──────
+// --- 3. MYSQL CONFIG (Workers override per-session, global is secondary) ------
 $items = [];
 $mv = [];
 try {
@@ -217,7 +217,7 @@ $items[] = chk('max_allowed_packet', round((int)($mv['max_allowed_packet'] ?? 0)
 $report['sections'][] = sec('MySQL Configuration', $items);
 
 
-// ─── 4. TABLE HEALTH (Fixed index count query) ───────────────────────────────
+// --- 4. TABLE HEALTH (Fixed index count query) -------------------------------
 $items = [];
 try {
     $stmt = $pdo->query("
@@ -239,7 +239,7 @@ try {
         $st = ($ratio > 8 && $r['data_mb'] > 0.5) ? 'WARN' : 'PASS';
         $items[] = chk("Table: {$r['table_name']}", $st,
             "~" . number_format($r['table_rows']) . " rows | data={$r['data_mb']}MB | idx={$r['idx_mb']}MB",
-            $ratio > 8 && $r['data_mb'] > 0.5 ? "Index/data ratio {$ratio}x — further dedup possible" : '');
+            $ratio > 8 && $r['data_mb'] > 0.5 ? "Index/data ratio {$ratio}x � further dedup possible" : '');
     }
 
     // Fixed: COUNT DISTINCT index names, not rows
@@ -263,7 +263,7 @@ try {
     // Check required buffer tables exist
     foreach (['raw_event_buffer','activity_buffer','stats_update_buffer','timestamp_buffer'] as $bt) {
         $exists = $pdo->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='$bt'")->fetchColumn();
-        $items[] = chk("Buffer table exists: $bt", $exists ? 'PASS' : 'FAIL', $exists ? 'Exists' : 'MISSING — workers will crash');
+        $items[] = chk("Buffer table exists: $bt", $exists ? 'PASS' : 'FAIL', $exists ? 'Exists' : 'MISSING � workers will crash');
     }
 
     // stats_update_buffer: verify target_table column type (ENUM vs VARCHAR)
@@ -276,14 +276,14 @@ try {
         $items[] = chk('stats_update_buffer.target_table column type',
             !$isEnum ? 'PASS' : 'WARN',
             $colType ?? 'not found',
-            $isEnum ? 'ENUM restricts to (campaigns,flows,subscribers) — zalo_subscribers inserts will silently fail. Run: ALTER TABLE stats_update_buffer MODIFY COLUMN target_table VARCHAR(50) NOT NULL' : '');
+            $isEnum ? 'ENUM restricts to (campaigns,flows,subscribers) � zalo_subscribers inserts will silently fail. Run: ALTER TABLE stats_update_buffer MODIFY COLUMN target_table VARCHAR(50) NOT NULL' : '');
     } catch(Exception $e){ $items[] = chk('stats_update_buffer schema', 'WARN', $e->getMessage()); }
 
 } catch(Exception $e){ $items[] = chk('Table health', 'FAIL', $e->getMessage()); }
 $report['sections'][] = sec('Table Health', $items);
 
 
-// ─── 5. DATA INTEGRITY ───────────────────────────────────────────────────────
+// --- 5. DATA INTEGRITY -------------------------------------------------------
 $items = [];
 try {
     // Orphan flow states
@@ -307,9 +307,9 @@ try {
     $items[] = chk('Duplicate active enrollments per flow', $r == 0 ? 'PASS' : 'WARN',
         "$r subscriber+flow pairs", $r > 0 ? 'Possible double-processing' : '');
 
-    // Orphan ZNS delivery logs — check against BOTH subscribers AND zalo_subscribers.
+    // Orphan ZNS delivery logs � check against BOTH subscribers AND zalo_subscribers.
     // subscriber_id in zalo_delivery_logs primarily references subscribers.id (see campaigns.php, flows.php JOINs).
-    // sendZNSMessage() fallback may also store zalo_subscribers.id — so check both to avoid false positives.
+    // sendZNSMessage() fallback may also store zalo_subscribers.id � so check both to avoid false positives.
     $r = $pdo->query("
         SELECT COUNT(*) FROM zalo_delivery_logs zdl
         LEFT JOIN subscribers s ON s.id = zdl.subscriber_id
@@ -328,7 +328,7 @@ try {
     ")->fetchAll();
     $items[] = chk('Campaign sent count drift (|count_sent - logs| > 50)', count($drift) == 0 ? 'PASS' : 'WARN',
         count($drift) . ' campaigns',
-        count($drift) > 0 ? 'IDs: ' . implode(', ', array_column($drift,'id')) . ' — run: UPDATE campaigns c SET count_sent=(SELECT COUNT(*) FROM mail_delivery_logs WHERE campaign_id=c.id) WHERE id IN (...)' : '');
+        count($drift) > 0 ? 'IDs: ' . implode(', ', array_column($drift,'id')) . ' � run: UPDATE campaigns c SET count_sent=(SELECT COUNT(*) FROM mail_delivery_logs WHERE campaign_id=c.id) WHERE id IN (...)' : '');
 
     // Activity buffer: unprocessed rows older than 2h
     $r = $pdo->query("SELECT COUNT(*) FROM activity_buffer WHERE processed=0 AND created_at < DATE_SUB(NOW(), INTERVAL 2 HOUR)")->fetchColumn();
@@ -355,7 +355,7 @@ try {
 $report['sections'][] = sec('Data Integrity', $items);
 
 
-// ─── 6. BUSINESS LOGIC ───────────────────────────────────────────────────────
+// --- 6. BUSINESS LOGIC -------------------------------------------------------
 $items = [];
 try {
     $items[] = chk('Active flows', 'INFO', $pdo->query("SELECT COUNT(*) FROM flows WHERE status='active'")->fetchColumn() . ' flows');
@@ -369,21 +369,21 @@ try {
     // Check: any flow state with empty/null step_id in waiting status (stuck at start)
     $r = $pdo->query("SELECT COUNT(*) FROM subscriber_flow_states WHERE status='waiting' AND (step_id IS NULL OR step_id='')")->fetchColumn();
     $items[] = chk('Waiting flow states with NULL step_id', $r == 0 ? 'PASS' : 'WARN',
-        "$r rows", $r > 0 ? 'These subscribers may be stuck — check trigger_helper.php enrollment' : '');
+        "$r rows", $r > 0 ? 'These subscribers may be stuck � check trigger_helper.php enrollment' : '');
 
     // Flow states with scheduled_at in the past not yet processed
     $overdue = $pdo->query("SELECT COUNT(*) FROM subscriber_flow_states WHERE status='waiting' AND scheduled_at < DATE_SUB(NOW(), INTERVAL 30 MINUTE)")->fetchColumn();
     $items[] = chk('Overdue waiting states (scheduled >30min ago)', $overdue == 0 ? 'PASS' : ($overdue < 100 ? 'WARN' : 'FAIL'),
-        "$overdue rows", $overdue > 0 ? 'Worker not picking these up — check cron/worker triggers' : '');
+        "$overdue rows", $overdue > 0 ? 'Worker not picking these up � check cron/worker triggers' : '');
 
-    // Last flow state completed (worker liveness — fixed metric)
+    // Last flow state completed (worker liveness � fixed metric)
     $lastComplete = $pdo->query("SELECT MAX(updated_at) FROM subscriber_flow_states WHERE status='completed'")->fetchColumn();
     $ageMins = $lastComplete ? round((time()-strtotime($lastComplete))/60) : null;
     $items[] = chk('Last completed flow state', $ageMins !== null && $ageMins < 120 ? 'PASS' : 'WARN',
         $ageMins !== null ? "{$ageMins} min ago ($lastComplete)" : 'No completions',
         $ageMins > 120 ? 'Flow workers may not be running. Check cron.' : '');
 
-    // Worker_tracking_aggregator liveness — check last subscriber_activity INSERT (not activity_buffer processed=1 which always deletes)
+    // Worker_tracking_aggregator liveness � check last subscriber_activity INSERT (not activity_buffer processed=1 which always deletes)
     $lastSaInsert = $pdo->query("SELECT MAX(created_at) FROM subscriber_activity WHERE created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)")->fetchColumn();
     $saMins = $lastSaInsert ? round((time()-strtotime($lastSaInsert))/60) : null;
     $items[] = chk('Last subscriber_activity INSERT (aggregator liveness)',
@@ -399,7 +399,7 @@ try {
 $report['sections'][] = sec('Business Logic Sanity', $items);
 
 
-// ─── 7. LOG FILE HEALTH ───────────────────────────────────────────────────────
+// --- 7. LOG FILE HEALTH -------------------------------------------------------
 $items = [];
 $logs = [
     'error_log'            => [10, 50],
@@ -423,7 +423,7 @@ foreach ($logs as $file => [$warn, $fail]) {
 $report['sections'][] = sec('Log File Sizes', $items);
 
 
-// ─── Summary ─────────────────────────────────────────────────────────────────
+// --- Summary -----------------------------------------------------------------
 $totals = ['PASS'=>0,'WARN'=>0,'FAIL'=>0,'INFO'=>0];
 foreach ($report['sections'] as $sec) {
     foreach ($sec['items'] as $item) {

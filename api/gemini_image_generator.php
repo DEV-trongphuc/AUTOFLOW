@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // api/gemini_image_generator.php
 // Gemini Nano Banana Image Generation Handler
 

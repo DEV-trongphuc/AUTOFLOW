@@ -1,4 +1,4 @@
-ï»¿<?php
+<?php
 // api/worker_reminder.php - REMINDER SYSTEM WORKER
 // Run via Cron every 5-10 minutes
 // Example: */5 * * * * php /path/to/api/worker_reminder.php
@@ -17,7 +17,7 @@ require_once __DIR__ . '/flow_helpers.php'; // [BUG-1 FIX] sesAcquireRateSlot() 
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 
 $lockName = 'worker_reminder_lock';
-// [FIX P16-B4] Prepared statement for GET_LOCK â€” consistent with project locking standard (P15-B1, P16-B1)
+// [FIX P16-B4] Prepared statement for GET_LOCK — consistent with project locking standard (P15-B1, P16-B1)
 $_stmtGetLock = $pdo->prepare("SELECT GET_LOCK(?, 0)");
 $_stmtGetLock->execute([$lockName]);
 if (!$_stmtGetLock->fetchColumn()) {
@@ -107,7 +107,7 @@ foreach ($reminders as $rem) {
     // [CRITICAL FIX] Track ALL processed subscriber IDs this run (success AND failure).
     // Mailer.php buffers logs in memory and only flushes to DB every 10 emails.
     // If an email fails, it won't appear in subscriber_activity yet, so the next loop
-    // iteration's NOT EXISTS check would still select it â€” infinite retry until timeout.
+    // iteration's NOT EXISTS check would still select it — infinite retry until timeout.
     // Excluding by ID in SQL prevents this regardless of Mailer buffer state.
     $processedIds = [];
 
@@ -190,7 +190,7 @@ foreach ($reminders as $rem) {
                 }
 
                 // [BUG-4 FIX] Use replaceMergeTags() from flow_helpers.php instead of local stub.
-                // Old resolveMergeTags() only handled 4 fields â€” templates with {{phone}},
+                // Old resolveMergeTags() only handled 4 fields — templates with {{phone}},
                 // {{unsubscribeLink}}, {{company}}, custom_attributes all rendered as raw tags.
                 $personalSubject = replaceMergeTags($rem['subject'], $sub);
                 $personalHtml    = replaceMergeTags($htmlContent, $sub);
@@ -199,7 +199,7 @@ foreach ($reminders as $rem) {
                 // 1. reminder.sender_email (per-reminder override)
                 // 2. campaign.sender_email (campaign-level branding)
                 // 3. system default (already set in Mailer constructor)
-                // Previously all reminders always sent from system default â€” branding was lost.
+                // Previously all reminders always sent from system default — branding was lost.
                 // NOTE: Mailer::setDynamicSender() only accepts email. Sender name is taken
                 // from smtp_from_name in system_settings (Mailer internal resolution).
                 $remSender = !empty($rem['sender_email']) ? $rem['sender_email']
@@ -241,7 +241,7 @@ foreach ($reminders as $rem) {
 
                 // [FIX P7-H1] Update campaigns.count_sent to include reminder sends.
                 // Previously reminder sends were tracked in subscriber_activity but
-                // never reflected in campaigns.count_sent â€” causing understated sent counts in reports.
+                // never reflected in campaigns.count_sent — causing understated sent counts in reports.
                 $pdo->prepare("UPDATE campaigns SET count_sent = count_sent + ? WHERE id = ?")
                     ->execute([count($successActivities), $rem['campaign_id']]);
             }

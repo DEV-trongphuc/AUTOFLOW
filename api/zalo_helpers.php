@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Zalo Helper Functions
  * Shared logic for OAuth and PKCE
@@ -226,17 +226,17 @@ function sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $scenario, $user
         return;
     }
 
-    // Text Template: strip markdown trước
+    // Text Template: strip markdown tru?c
     $textContent = $scenario['content'] ?? '';
     if (!empty($scenario['title'])) {
         $textContent = $scenario['title'] . "\n\n" . $textContent;
     }
     $textContent = formatZaloMessage($textContent);
 
-    // Chia tin nhắn dài thành nhiều đoạn (Zalo giới hạn ~1000 ký tự)
+    // Chia tin nh?n d�i th�nh nhi?u do?n (Zalo gi?i h?n ~1000 k� t?)
     $parts = splitLongMessage($textContent, 900);
 
-    // Gửi từng đoạn; chỉ đoạn cuối mới gắn buttons
+    // G?i t?ng do?n; ch? do?n cu?i m?i g?n buttons
     foreach ($parts as $i => $part) {
         $isLastPart = ($i === count($parts) - 1);
         $partPayload = ['recipient' => ['user_id' => $zaloUserId]];
@@ -257,15 +257,15 @@ function sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $scenario, $user
 
         _sendZaloPayload($pdo, $zaloUserId, $accessToken, $partPayload, $part);
 
-        // Delay nhỏ giữa các tin để tránh rate limit
+        // Delay nh? gi?a c�c tin d? tr�nh rate limit
         if (!$isLastPart) {
-            usleep(300000); // 0.3 giây
+            usleep(300000); // 0.3 gi�y
         }
     }
 }
 
 /**
- * Internal helper: Gọi Zalo CS API và log kết quả
+ * Internal helper: G?i Zalo CS API v� log k?t qu?
  */
 function _sendZaloPayload($pdo, $zaloUserId, $accessToken, $payload, $logText)
 {
@@ -354,7 +354,7 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg)
         return;
     }
 
-    // 2. Strip toàn bộ Markdown trước khi xử lý (bỏ *, **, #, v.v.)
+    // 2. Strip to�n b? Markdown tru?c khi x? l� (b? *, **, #, v.v.)
     $aiText = formatZaloMessage($aiText);
 
     // 3. Parse AI Response for Zalo elements (URL, phone, links)
@@ -383,7 +383,7 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg)
 
     $cleanText = $parsed['text'];
 
-    // 4. Nếu có image, xử lý riêng
+    // 4. N?u c� image, x? l� ri�ng
     if ($parsed['image_url']) {
         $attachmentId = uploadZaloImageFromUrl($accessToken, $parsed['image_url']);
         if ($attachmentId) {
@@ -402,7 +402,7 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg)
                 }
             }
 
-            // Gửi image kèm buttons
+            // G?i image k�m buttons
             $imgScenario = [
                 'id' => ($scenario['id'] ?? 'ai') . '_img',
                 'title' => '',
@@ -415,10 +415,10 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg)
             sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $imgScenario);
             return;
         }
-        // Upload fail → dùng text với URL giữ nguyên
+        // Upload fail ? d�ng text v?i URL gi? nguy�n
     }
 
-    // 5. Chia tin nhắn dài thành nhiều đoạn (Zalo giới hạn ~900 ký tự)
+    // 5. Chia tin nh?n d�i th�nh nhi?u do?n (Zalo gi?i h?n ~900 k� t?)
     $parts = splitLongMessage($cleanText, 900);
 
     foreach ($parts as $i => $part) {
@@ -442,7 +442,7 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg)
         _sendZaloPayload($pdo, $zaloUserId, $accessToken, $partPayload, $part);
 
         if (!$isLastPart) {
-            usleep(300000); // 0.3 giây
+            usleep(300000); // 0.3 gi�y
         }
     }
 }
@@ -463,7 +463,7 @@ function parseAIResponseForZalo($text)
     // Detect Phone
     if (preg_match('/(0|\+84)[3|5|7|8|9][0-9]{8}/', $text, $matches)) {
         $phone = $matches[0];
-        $buttons[] = ['title' => 'Gọi điện tư vấn', 'type' => 'oa.open.phone', 'payload' => $phone];
+        $buttons[] = ['title' => 'G?i di?n tu v?n', 'type' => 'oa.open.phone', 'payload' => $phone];
     }
 
     // Detect Links (Exclude the one already picked as image)
@@ -486,11 +486,11 @@ function parseAIResponseForZalo($text)
                 continue;
 
             // Tailor the label
-            $label = 'Xem trên Website';
+            $label = 'Xem tr�n Website';
             if (strpos($cleanUrl, 'zalo.me/s/') !== false) {
-                $label = 'Mở Form đăng ký';
+                $label = 'M? Form dang k�';
             } else if (preg_match('/\.(pdf|docx|doc|xlsx|xls|pptx|ppt|zip|rar)$/i', $cleanUrl)) {
-                $label = 'Tải tài liệu';
+                $label = 'T?i t�i li?u';
             }
 
             $buttons[] = ['title' => $label, 'type' => 'oa.open.url', 'payload' => $cleanUrl];
@@ -655,7 +655,7 @@ function ensureZaloToken($pdo, $oaId)
                 $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]); // [FIX P38-ZH]
                 return $new_access_token;
             } elseif (isset($result['error']) && $result['error'] != 0) {
-                // [Vòng 33 FIX] Suspend dead token to prevent API hammering
+                // [V�ng 33 FIX] Suspend dead token to prevent API hammering
                 try {
                     $pdo->prepare("UPDATE zalo_oa_configs SET status = 'error_refresh', updated_at = NOW() WHERE id = ?")->execute([$oa['id']]);
                     error_log("Zalo OA Refresh Failed. Status set to error_refresh. OA: {$oa['id']}");

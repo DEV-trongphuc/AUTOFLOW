@@ -218,7 +218,7 @@ export const MetaCustomerProfileModal: React.FC<MetaCustomerProfileModalProps> =
                                 <ProfileTab
                                     active={activeTab === 'personal'}
                                     onClick={() => setActiveTab('personal')}
-                                    label="Cònhân"
+                                    label="Cá nhân"
                                     icon={User}
                                 />
                                 <ProfileTab

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // api/worker_trigger.php - OMNI-ENGINE V29.6 (POLLING TRIGGERS: DATE, CAMPAIGN, DORMANT)
 // Trigger this via CRON every hour or 15 mins.
 // Example: php /path/to/api/worker_trigger.php
@@ -450,6 +450,6 @@ $pdo->query("SELECT RELEASE_LOCK('worker_trigger_lock')");
 echo implode("\n", $logs);
 // [FIX P8-M2] Use __DIR__-anchored path for log file.
 // Relative path 'worker_trigger.log' writes to the PHP process CWD (may be webroot, /,
-// or the cron caller's directory — unpredictable and often wrong).
+// or the cron caller's directory � unpredictable and often wrong).
 file_put_contents(__DIR__ . '/worker_trigger.log', implode("\n", $logs) . "\n", FILE_APPEND | LOCK_EX);
 ?>

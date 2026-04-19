@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Zalo ZNS Sender - Core sending logic
  * Handles phone validation, quota management, and ZNS API calls
@@ -105,7 +105,7 @@ function checkQuotaAvailable($pdo, $oaConfigId, $count = 1)
 
     $remaining = $oa['daily_quota'] - $oa['quota_used_today'];
 
-    // [FIX] daily_quota = 0 means "not configured" → treat as unlimited (skip check)
+    // [FIX] daily_quota = 0 means "not configured" ? treat as unlimited (skip check)
     // This prevents false quota_exceeded errors when quota hasn't been synced from Zalo yet
     if ($oa['daily_quota'] <= 0) {
         return ['available' => true, 'remaining' => 9999];
@@ -247,7 +247,7 @@ function sendZNSMessage($pdo, $oaConfigId, $templateId, $phoneNumber, $templateD
         }
     }
 
-    // Get access token — use preloaded token from batch caller if available
+    // Get access token � use preloaded token from batch caller if available
     if ($preloadedToken !== null) {
         $accessToken = $preloadedToken;
     } else {
@@ -289,7 +289,7 @@ function sendZNSMessage($pdo, $oaConfigId, $templateId, $phoneNumber, $templateD
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 20);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);           // [FIX] 20s max — prevents worker hang causing infinite 'processing' loop
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);           // [FIX] 20s max � prevents worker hang causing infinite 'processing' loop
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);    // [FIX] 10s connect timeout
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         'Content-Type: application/json',
@@ -460,9 +460,9 @@ function sendZNSMessageByUID($pdo, $oaId, $templateId, $uid, $templateData, $flo
         // Enrich message with conversion info & price
         if ($res['success']) {
             $price = $res['data']['price'] ?? $res['data']['quota']['price'] ?? 'Standard';
-            $res['message'] = "✅ Auto-switched to Phone ($phone). Cost: $price quota.";
+            $res['message'] = "? Auto-switched to Phone ($phone). Cost: $price quota.";
         } else {
-            $res['message'] = "❌ Failed via Phone ($phone): " . ($res['error_message'] ?? 'Unknown');
+            $res['message'] = "? Failed via Phone ($phone): " . ($res['error_message'] ?? 'Unknown');
         }
         return $res;
     }
@@ -579,7 +579,7 @@ function batchSendZNS($pdo, $oaConfigId, $messages)
 
     // [FIX] Pre-fetch token and quota ONCE before loop.
     // Old behavior: sendZNSMessage called checkQuotaAvailable() + getAccessToken() per message.
-    // At 4,000 msg/min that was 12,000–16,000 DB queries just for config lookups.
+    // At 4,000 msg/min that was 12,000�16,000 DB queries just for config lookups.
     // New behavior: 2 DB calls total for the whole batch.
     $quotaCheck = checkQuotaAvailable($pdo, $oaConfigId, count($messages));
     if (!$quotaCheck['available']) {
@@ -633,7 +633,7 @@ function batchSendZNS($pdo, $oaConfigId, $messages)
         // [FIX] Circuit breaker: if token is rejected by Zalo API (expired mid-batch),
         // stop immediately instead of burning through all remaining messages.
         if (($result['status'] ?? '') === 'auth_failed') {
-            error_log("[batchSendZNS] auth_failed at index $index — aborting batch. OA: $oaConfigId");
+            error_log("[batchSendZNS] auth_failed at index $index � aborting batch. OA: $oaConfigId");
             break;
         }
 
@@ -720,7 +720,7 @@ function sendConsultationMessage($pdo, $oaConfigId, $zaloUserId, $text, $attachm
             if ($subId) {
                 require_once 'zalo_helpers.php';
                 logZaloMsg($pdo, $zaloUserId, 'outbound', $text);
-                logZaloSubscriberActivity($pdo, $subId, 'staff_reply', null, "Tư vấn viên trả lời (Dashboard): $text", "Zalo Dashboard", $msgId);
+                logZaloSubscriberActivity($pdo, $subId, 'staff_reply', null, "Tu v?n vi�n tr? l?i (Dashboard): $text", "Zalo Dashboard", $msgId);
             }
         } catch (Exception $e) {
             // Log error but don't fail the response

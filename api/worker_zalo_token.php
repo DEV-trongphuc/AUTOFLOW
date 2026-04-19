@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Zalo Token Refresh Worker
  * Automatically refreshes Zalo OA tokens before they expire
