@@ -617,3 +617,4 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
     $result = runWorkerFlow($pdo);
     echo json_encode($result);
 }
+

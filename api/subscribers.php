@@ -451,13 +451,14 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
 
             // Search
             if (!empty($search)) {
-                $whereClauses[] = "(s.email LIKE ? OR s.first_name LIKE ? OR s.last_name LIKE ? OR s.phone_number LIKE ? OR s.company_name LIKE ?)";
-                $wildcard = "%$search%";
-                $params[] = $wildcard;
-                $params[] = $wildcard;
-                $params[] = $wildcard;
-                $params[] = $wildcard;
-                $params[] = $wildcard;
+                // [PERF FIX] Prevent Full Table Scan: Use exact match for highly-selective structural fields (email, phone)
+                // and keep wildcard search only for names/companies.
+                $whereClauses[] = "(s.email = ? OR s.phone_number = ? OR s.first_name LIKE ? OR s.last_name LIKE ? OR s.company_name LIKE ?)";
+                $params[] = trim($search); // s.email exact
+                $params[] = trim($search); // s.phone exact
+                $params[] = "%$search%";   // s.first_name wildcard
+                $params[] = "%$search%";   // s.last_name wildcard
+                $params[] = "%$search%";   // s.company_name wildcard
             }
 
             // Status Filter

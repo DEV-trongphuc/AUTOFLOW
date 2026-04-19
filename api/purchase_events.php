@@ -189,6 +189,9 @@ try {
             }
             logActivity($pdo, $sid, 'purchase', $eventId, $eventName, "Mua hàng: {$eventName} (+$pPurch điểm). {$details}", null, null, $extra);
 
+            // [PERF FIX] Aggregate revenue immediately to avoid Full Table Scans when loading the dashboard
+            $pdo->prepare("UPDATE purchase_events SET revenue = revenue + ? WHERE id = ?")->execute([$totalValue, $eventId]);
+
             // [POKE] Immediate Flow Interruption check
             // [FIX] Don't force NOW() here, just let the worker_priority call below re-evaluate.
 
@@ -389,7 +392,7 @@ try {
             try {
                 $stmt = $pdo->prepare("SELECT p.*,
                                     (SELECT COUNT(*) FROM subscriber_activity sa WHERE sa.type = 'purchase' AND sa.reference_id = p.id) as count,
-                                    (SELECT SUM(CAST(REGEXP_REPLACE(SUBSTRING_INDEX(details, 'Order value: ', -1), '[^0-9]', '') AS UNSIGNED)) FROM subscriber_activity sa WHERE sa.type = 'purchase' AND sa.reference_id = p.id) as revenue
+                                    p.revenue
                                     FROM purchase_events p WHERE p.workspace_id = ? ORDER BY p.created_at DESC");
                 $stmt->execute([$workspace_id]);
                 $data = array_map(function ($row) {
