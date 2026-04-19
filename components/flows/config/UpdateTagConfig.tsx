@@ -21,7 +21,7 @@ const UpdateTagConfig: React.FC<UpdateTagConfigProps> = ({ config, onChange, dis
   useEffect(() => {
     const fetchTags = async () => {
         const res = await api.get<{id: string, name: string}[]>('tags');
-        if (res.success) {
+        if (res.success && Array.isArray(res.data)) {
             setGlobalTags(res.data.map(t => t.name));
         }
     };

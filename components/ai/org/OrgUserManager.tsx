@@ -41,6 +41,7 @@ const OrgUserManager: React.FC<OrgUserManagerProps> = ({ initialEditUserId, cate
     const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'assistant' | 'user'>('all');
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState<number | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -91,6 +92,8 @@ const OrgUserManager: React.FC<OrgUserManagerProps> = ({ initialEditUserId, cate
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isSubmitting) return;
+        setIsSubmitting(true);
         const action = editingUser ? 'update' : 'add';
         const payload = editingUser
             ? { ...formData, id: editingUser.id, category_id: categoryId }
@@ -113,6 +116,8 @@ const OrgUserManager: React.FC<OrgUserManagerProps> = ({ initialEditUserId, cate
             }
         } catch (error) {
             toast.error('Error saving user');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -592,9 +597,10 @@ const OrgUserManager: React.FC<OrgUserManagerProps> = ({ initialEditUserId, cate
                             <button
                                 type="submit"
                                 form="user-form"
-                                className="px-10 py-3.5 bg-brand text-white hover:bg-brand-dark rounded-2xl text-[11px] font-bold uppercase tracking-wider transition-all shadow-xl shadow-brand/20 flex items-center gap-2 hover:scale-[1.02] active:scale-95"
+                                disabled={isSubmitting}
+                                className="px-10 py-3.5 bg-brand text-white hover:bg-brand-dark rounded-2xl text-[11px] font-bold uppercase tracking-wider transition-all shadow-xl shadow-brand/20 flex items-center gap-2 hover:scale-[1.02] active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100"
                             >
-                                {editingUser ? 'Sync Updates' : 'Confirm Registration'}
+                                {isSubmitting ? 'Saving...' : (editingUser ? 'Sync Updates' : 'Confirm Registration')}
                                 <ArrowRight className="w-4 h-4 ml-1" />
                             </button>
                         </div>

@@ -36,7 +36,7 @@ export const useGlobalAssets = ({
 
             const res = await api.get<any>(`get_global_assets.php?action=list&property_id=${chatbotId || ''}&group_id=${categoryId || ''}&type=${typeParam}&source=${source}&search=${search}&limit=${pageSize}&offset=${offset}${orgUser?.id ? `&org_user_id=${orgUser.id}` : ''}`);
 
-            if (res.success) {
+            if (res.success && Array.isArray(res.data)) {
                 const mapped: FileAttachment[] = res.data.map((item: any) => ({
                     id: item.id,
                     name: item.name,
