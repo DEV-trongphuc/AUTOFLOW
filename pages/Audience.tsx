@@ -14,6 +14,7 @@ import PageHero from '../components/common/PageHero';
 
 import Tabs from '../components/common/Tabs';
 import Select from '../components/common/Select';
+import { DateRange } from 'react-day-picker';
 import toast from 'react-hot-toast';
 import CustomerProfileModal from '../components/audience/CustomerProfileModal';
 import SegmentBuilderModal from '../components/audience/SegmentBuilderModal';
@@ -26,6 +27,61 @@ import SegmentsTab from '../components/audience/tabs/SegmentsTab';
 import ContactsTab from '../components/audience/tabs/ContactsTab';
 import IntegrationsTab from '../components/audience/tabs/IntegrationsTab';
 import AudienceSplitModal from '../components/audience/AudienceSplitModal';
+import ListMergeModal from '../components/audience/ListMergeModal';
+import CleanupModal from '../components/audience/CleanupModal';
+import ConfirmModal from '../components/common/ConfirmModal';
+import InfoCard from '../components/common/InfoCard';
+import { isManualList } from '../utils/listHelpers';
+import ColumnCustomizer from '../components/audience/ColumnCustomizer';
+import ItemsPerPageSelector from '../components/audience/ItemsPerPageSelector';
+import AdvancedFilters from '../components/audience/AdvancedFilters';
+import MetaCustomers from '../components/meta/MetaCustomers';
+import ZaloAudienceTab from '../components/zalo/ZaloAudienceTab';
+import TabTransition from '../components/common/TabTransition';
+import AudienceTipsModal from '../components/audience/AudienceTipsModal';
+import FilterPills from '../components/audience/FilterPills';
+import { Lightbulb } from 'lucide-react';
+import { useIsAdmin } from '../hooks/useAuthUser';
+import { usePermissionGuard } from '../components/common/PermissionGuard';
+
+const UndoToastContent = ({ t, icon: Icon, iconColorClass, title, subtitle, durationMs, onUndo }: any) => {
+    const [timeLeft, setTimeLeft] = useState(Math.floor(durationMs / 1000));
+    
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTimeLeft(prev => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    return (
+        <div className="flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${iconColorClass}`}>
+                <Icon className="w-4 h-4" />
+            </div>
+            <div className="flex-1 min-w-[150px]">
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{title}</p>
+                <div className="flex items-center gap-1 mt-0.5">
+                    <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">{subtitle}</p>
+                    <span className="text-[10px] font-black text-rose-500 tabular-nums">({timeLeft}s)</span>
+                </div>
+            </div>
+            <button
+                onClick={onUndo}
+                className="px-3 py-1.5 bg-slate-900 text-white text-[10px] font-black rounded-lg hover:bg-slate-800 transition-all uppercase tracking-widest shrink-0 shadow-sm"
+            >
+                Hoàn tác
+            </button>
+        </div>
+    );
+};
+
 import ListMergeModal from '../components/audience/ListMergeModal';
 import CleanupModal from '../components/audience/CleanupModal';
 import ConfirmModal from '../components/common/ConfirmModal';
@@ -772,27 +828,21 @@ const Audience: React.FC = () => {
                 pendingActionsRef.current[actionId] = timeout;
 
                 toast((t) => (
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center animate-pulse-subtle">
-                            <Trash2 className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1">
-                            <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Đã xóa {countLabel} liên hệ</p>
-                            <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Đang thực hiện trong 5 giây...</p>
-                        </div>
-                        <button
-                            onClick={() => {
-                                clearTimeout(timeout);
-                                delete pendingActionsRef.current[actionId];
-                                setSelectedIds(new Set(currentSelectedIds)); // Restore
-                                toast.dismiss(t.id);
-                                toast.success('Đã hoàn tác xóa liên hệ', { icon: '↩️' });
-                            }}
-                            className="px-3 py-1.5 bg-slate-900 text-white text-[10px] font-black rounded-lg hover:bg-slate-800 transition-all uppercase tracking-widest"
-                        >
-                            Hoàn tác
-                        </button>
-                    </div>
+                    <UndoToastContent
+                        t={t}
+                        icon={Trash2}
+                        iconColorClass="bg-rose-100 text-rose-600 animate-pulse-subtle"
+                        title={`Đã xóa ${countLabel} liên hệ`}
+                        subtitle="Hệ thống sẽ thực hiện thao tác xóa danh tính khách hàng... "
+                        durationMs={5000}
+                        onUndo={() => {
+                            clearTimeout(timeout);
+                            delete pendingActionsRef.current[actionId];
+                            setSelectedIds(new Set(currentSelectedIds)); // Restore
+                            toast.dismiss(t.id);
+                            toast.success('Đã hoàn tác xóa liên hệ', { icon: '↩️' });
+                        }}
+                    />
                 ), { duration: 6000, position: 'bottom-center' });
             }
         });
@@ -869,36 +919,30 @@ const Audience: React.FC = () => {
                 if (tagRes.success) setTags(tagRes.data);
 
                 toast((t) => (
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center">
-                            <Tag className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1">
-                            <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Đã gắn nhãn #{tagName}</p>
-                            <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Cho {res.data.affected} liên hệ</p>
-                        </div>
-                        <button
-                            onClick={async () => {
-                                toast.dismiss(t.id);
-                                setLoading(true);
-                                const undoRes = await api.post<any>('bulk_operations', {
-                                    type: 'tag_remove',
-                                    tag: tagName,
-                                    subscriberIds: idsToTag
-                                });
-                                if (undoRes.success) {
-                                    fetchSubscribers(pagination.page);
-                                    const tagRes = await api.get<{ id: string, name: string }[]>('tags');
-                                    if (tagRes.success) setTags(tagRes.data);
-                                    toast.success('Đã hoàn tác gắn nhãn', { icon: '↩️' });
-                                }
-                                setLoading(false);
-                            }}
-                            className="px-3 py-1.5 bg-slate-900 text-white text-[10px] font-black rounded-lg hover:bg-slate-800 transition-all uppercase tracking-widest"
-                        >
-                            Hoàn tác
-                        </button>
-                    </div>
+                    <UndoToastContent
+                        t={t}
+                        icon={Tag}
+                        iconColorClass="bg-orange-100 text-orange-600"
+                        title={`Đã gắn nhãn #${tagName}`}
+                        subtitle={`Cho ${res.data.affected} liên hệ`}
+                        durationMs={6000}
+                        onUndo={async () => {
+                            toast.dismiss(t.id);
+                            setLoading(true);
+                            const undoRes = await api.post<any>('bulk_operations', {
+                                type: 'tag_remove',
+                                tag: tagName,
+                                subscriberIds: idsToTag
+                            });
+                            if (undoRes.success) {
+                                fetchSubscribers(pagination.page);
+                                const tagRes = await api.get<{ id: string, name: string }[]>('tags');
+                                if (tagRes.success) setTags(tagRes.data);
+                                toast.success('Đã hoàn tác gắn nhãn', { icon: '↩️' });
+                            }
+                            setLoading(false);
+                        }}
+                    />
                 ), { duration: 6000, position: 'bottom-center' });
             } else {
                 showToast(res.message || 'Lỗi khi gắn tag', 'error');
