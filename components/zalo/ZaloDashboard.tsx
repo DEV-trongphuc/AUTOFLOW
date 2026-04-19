@@ -78,7 +78,8 @@ const ZaloDashboard: React.FC = () => {
 
                         <button
                             onClick={() => fetchTemplates(selectedOA)}
-                            className="p-3 bg-white hover:bg-slate-50 rounded-2xl border border-slate-100 shadow-sm transition-all group"
+                            disabled={templatesLoading}
+                            className="p-3 bg-white hover:bg-slate-50 rounded-2xl border border-slate-100 shadow-sm transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Làm mới danh sách"
                         >
                             <RefreshCw className={`w-5 h-5 text-slate-400 group-hover:text-amber-600 ${templatesLoading ? 'animate-spin' : ''}`} />
@@ -95,7 +96,7 @@ const ZaloDashboard: React.FC = () => {
                             <div className="text-center py-20 bg-slate-50/50 rounded-[32px] border-2 border-dashed border-slate-100">
                                 <MessageSquare className="w-16 h-16 text-slate-100 mx-auto mb-4" />
                                 <p className="text-slate-400 text-xs font-black uppercase tracking-widest italic">Chưa có templates nào được đồng bộ</p>
-                                <button onClick={() => fetchTemplates(selectedOA)} className="mt-4 text-[10px] font-black text-amber-600 uppercase tracking-widest hover:underline px-6 py-2 bg-amber-50 rounded-full">
+                                <button disabled={templatesLoading} onClick={() => fetchTemplates(selectedOA)} className="mt-4 text-[10px] font-black text-amber-600 uppercase tracking-widest hover:underline px-6 py-2 bg-amber-50 rounded-full disabled:opacity-50">
                                     Đồng bộ ngay
                                 </button>
                             </div>
