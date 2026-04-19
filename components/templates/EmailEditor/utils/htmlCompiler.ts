@@ -1,3 +1,4 @@
+import { API_BASE_URL, EXTERNAL_API_BASE } from '@/utils/config';
 import { EmailBlock, EmailBodyStyle, EmailBlockStyle } from '../../../../types';
 import { SHARED_EMAIL_CSS } from '../constants/editorStyles';
 
@@ -465,7 +466,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const bg = 'transparent'; // Future: s.backgroundColor ...
 
             // Use server-side generated image for email compatibility
-            const timerUrl = `https://automation.ideas.edu.vn/mail_api/timer.php?target=${encodeURIComponent(targetDateStr)}&color=${digitColor}&bg=${bg}&v=${Date.now()}`;
+            const timerUrl = `${EXTERNAL_API_BASE}/timer.php?target=${encodeURIComponent(targetDateStr)}&color=${digitColor}&bg=${bg}&v=${Date.now()}`;
 
             return wrapWithMargin(`\n                    <td align="center" style="${paddingCss} ${getBackgroundStyle(s)}">\n                        <!-- Timer Container -->
                         <table role="presentation" border="0" cellspacing="0" cellpadding="0" align="center" style="max-width: 400px;">

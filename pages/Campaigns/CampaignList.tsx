@@ -1,3 +1,4 @@
+import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import React from 'react';
 import {
     Send, CheckCircle2, CalendarClock, FileText, Loader2,
@@ -64,7 +65,7 @@ const CampaignTableRow = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, on
                                             (isPaused ? 'bg-orange-50 text-orange-600 border-orange-200' :
                                                 (c.status === CampaignStatus.SCHEDULED ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-50 text-slate-400 border-slate-100')))))))
                         }`}>
-                        {c.type === 'zalo_zns' ? <img src="https://automation.ideas.edu.vn/imgs/zalolog.png" alt="Zalo" className="w-full h-full object-contain" /> :
+                        {c.type === 'zalo_zns' ? <img src={`${EXTERNAL_ASSET_BASE}/imgs/zalolog.png`} alt="Zalo" className="w-full h-full object-contain" /> :
                             (showFlowStatus ? <GitMerge className="w-5 h-5" /> :
                                 (showReminderBadge ? <Clock className="w-5 h-5" /> :
                                     (isSent ? <CheckCircle2 className="w-5 h-5" /> :
@@ -252,7 +253,7 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
             <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${c.type === 'zalo_zns' ? 'bg-white p-1.5 border-[#0068ff]/20' : 'bg-slate-50 border-slate-100'}`}>
-                        {c.type === 'zalo_zns' ? <img src="https://automation.ideas.edu.vn/imgs/zalolog.png" alt="Zalo" className="w-full h-full object-contain" /> :
+                        {c.type === 'zalo_zns' ? <img src={`${EXTERNAL_ASSET_BASE}/imgs/zalolog.png`} alt="Zalo" className="w-full h-full object-contain" /> :
                             (showFlowStatus ? <GitMerge className="w-4 h-4 text-violet-600" /> :
                                 (showReminderBadge ? <Clock className="w-4 h-4 text-orange-500" /> :
                                     (isSent ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> :

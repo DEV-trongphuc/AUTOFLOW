@@ -1,3 +1,4 @@
+import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import * as React from 'react';
 import { useState } from 'react';
 import {
@@ -38,7 +39,7 @@ const getNodeStyle = (step: any) => {
         case 'zalo_zns': return {
             icon: ({ className }: { className?: string }) => (
                 <img
-                    src="https://automation.ideas.edu.vn/imgs/zalolog.png"
+                    src={`${EXTERNAL_ASSET_BASE}/imgs/zalolog.png`}
                     alt="Zalo"
                     className={className}
                 />

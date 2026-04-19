@@ -4,8 +4,9 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { MousePointerClick, Users, Clock, ArrowUpRight, Globe } from 'lucide-react';
 import axios from 'axios';
 import Select from '../common/Select';
+import { API_BASE_URL } from '@/utils/config';
 
-const API_BASE = 'https://automation.ideas.edu.vn/mail_api';
+
 
 interface WebReportProps {
     dateRange: { start: string; end: string };
@@ -22,7 +23,7 @@ const WebJourneyReport: React.FC<WebReportProps> = ({ dateRange }) => {
     useEffect(() => {
         const fetchProperties = async () => {
             try {
-                const res = await axios.get(`${API_BASE}/web_tracking.php?action=list`);
+                const res = await axios.get(`${API_BASE_URL}/web_tracking.php?action=list`);
                 if (res.data.success && res.data.data.length > 0) {
                     setProperties(res.data.data);
                     setPropertyId(res.data.data[0].id);
@@ -39,7 +40,7 @@ const WebJourneyReport: React.FC<WebReportProps> = ({ dateRange }) => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`${API_BASE}/web_tracking.php?action=stats&id=${propertyId}&start_date=${dateRange.start}&end_date=${dateRange.end}`);
+            const res = await axios.get(`${API_BASE_URL}/web_tracking.php?action=stats&id=${propertyId}&start_date=${dateRange.start}&end_date=${dateRange.end}`);
             if (res.data.success) setData(res.data.data);
         } catch (error) {
             console.error("Failed to fetch Web report", error);

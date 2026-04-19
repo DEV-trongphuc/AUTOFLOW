@@ -1,3 +1,4 @@
+import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { X, Search, RefreshCcw, Check, MailOpen, Clock, Download, MousePointer2, MessageSquare, AlertOctagon, Reply, MousePointerClick, Monitor, Smartphone, Tablet, Globe, FastForward, Trash2, Play, SkipForward, UserPlus, UserMinus, Send, Loader2, ChevronDown, Tag, List } from 'lucide-react';
@@ -572,7 +573,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                         <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm border border-blue-100">
                             {stepType === 'zalo_zns' ? (
                                 <img
-                                    src="https://automation.ideas.edu.vn/imgs/zalolog.png"
+                                    src={`${EXTERNAL_ASSET_BASE}/imgs/zalolog.png`}
                                     alt="Zalo"
                                     className="w-5 h-5"
                                 />

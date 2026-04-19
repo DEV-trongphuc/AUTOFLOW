@@ -1,3 +1,4 @@
+import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, useAnimation, useInView, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -12,7 +13,7 @@ import {
 
 // ─── Constants ────────────────────────────────────────────────
 const LOGOS = {
-    zalo: 'https://automation.ideas.edu.vn/imgs/zalolog.png',
+    zalo: `${EXTERNAL_ASSET_BASE}/imgs/zalolog.png`,
     meta: 'https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg',
     aws_ses: 'https://www.eetasia.com/wp-content/uploads/sites/2/2021/03/amazon-AWS_1200.jpg?w=600'
 };

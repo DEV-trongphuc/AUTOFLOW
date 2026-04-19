@@ -1,3 +1,4 @@
+import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import React from 'react';
 import { X, Copy, Check, AlertTriangle, Trash2 } from 'lucide-react';
 import Button from '../common/Button';
@@ -132,10 +133,10 @@ const WebTrackingModals: React.FC<WebTrackingModalsProps> = ({
     ai_chat: true
   };
 </script>
-<script src="https://automation.ideas.edu.vn/tracker.js" async></script>`
+<script src="${EXTERNAL_ASSET_BASE}/tracker.js" async></script>`
                                 ) : (
                                     `<!-- MailFlow Pro Tracker -->
-<script src="https://automation.ideas.edu.vn/tracker.js" data-website-id="${selectedWebsite.id}" async></script>`
+<script src="${EXTERNAL_ASSET_BASE}/tracker.js" data-website-id="${selectedWebsite.id}" async></script>`
                                 )}
                             </pre>
                             <button

@@ -1,3 +1,4 @@
+import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -254,7 +255,7 @@ const Dashboard: React.FC = () => {
                             {/* Decorative background logo */}
                             <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
                                 {module.id === 'zalo-oa' ? (
-                                    <img src="https://automation.ideas.edu.vn/imgs/zalolog.png" className="w-24 h-24 grayscale group-hover:grayscale-0 transition-all duration-700 object-contain" alt="Zalo" />
+                                    <img src={`${EXTERNAL_ASSET_BASE}/imgs/zalolog.png`} className="w-24 h-24 grayscale group-hover:grayscale-0 transition-all duration-700 object-contain" alt="Zalo" />
                                 ) : module.id === 'meta-api' ? (
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" className="w-24 h-24 grayscale group-hover:grayscale-0 transition-all duration-700 object-contain" alt="Meta" />
                                 ) : (
@@ -265,7 +266,7 @@ const Dashboard: React.FC = () => {
                             <div className="relative z-10 flex-1 flex flex-col">
                                 <div className={`w-14 h-14 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500`}>
                                     {module.id === 'zalo-oa' ? (
-                                        <img src="https://automation.ideas.edu.vn/imgs/zalolog.png" className="w-full h-full object-contain" alt="Zalo" />
+                                        <img src={`${EXTERNAL_ASSET_BASE}/imgs/zalolog.png`} className="w-full h-full object-contain" alt="Zalo" />
                                     ) : module.id === 'meta-api' ? (
                                         <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" className="w-full h-full object-contain" alt="Meta" />
                                     ) : (

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/utils/config';
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -112,8 +113,7 @@ const CustomEventsTab: React.FC = () => {
         setTimeout(() => setCopied(null), 2000);
     };
 
-    const apiUrl = localStorage.getItem('mailflow_api_url') || 'https://automation.ideas.edu.vn/mail_api';
-    const endpoint = `${apiUrl.replace(/\/$/, '')}/custom_events.php?route=track`;
+        const endpoint = `${API_BASE_URL.replace(/\/$/, '')}/custom_events.php?route=track`;
 
     const getJsSnippet = (evtId: string) => `// Tracking Custom Event
 const trackCustomEvent = async () => {

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/utils/config';
 ﻿import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { api } from '../../services/storageAdapter';
@@ -317,7 +318,7 @@ const AITrainingManager: React.FC<AITrainingManagerProps> = ({ onClose, category
         // 1. Set global config
         (window as any)._mf_config = {
             property_id: selectedProperty,
-            endpoint: 'https://automation.ideas.edu.vn/mail_api/track.php',
+            endpoint: `${API_BASE_URL}/track.php`,
             is_test: true,
             auto_open: 1,
             welcome_msg: settings.welcome_msg,

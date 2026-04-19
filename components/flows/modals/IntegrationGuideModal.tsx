@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/utils/config';
 
 import React, { useState } from 'react';
 import { Copy, Check, Code, Globe, Terminal, FileCode, CheckCircle2, Info, BookOpen, Braces, List, Tag } from 'lucide-react';
@@ -14,8 +15,7 @@ interface IntegrationGuideModalProps {
 
 const IntegrationGuideModal: React.FC<IntegrationGuideModalProps> = ({ isOpen, onClose, formId, formName, fields }) => {
     const [copied, setCopied] = useState<string | null>(null);
-    const apiUrl = localStorage.getItem('mailflow_api_url') || 'https://automation.ideas.edu.vn/mail_api';
-    const endpoint = `${apiUrl.replace(/\/$/, '')}/forms.php?route=submit`;
+        const endpoint = `${API_BASE_URL.replace(/\/$/, '')}/forms.php?route=submit`;
 
     const handleCopy = (text: string, key: string) => {
         navigator.clipboard.writeText(text);

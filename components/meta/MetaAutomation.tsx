@@ -5,9 +5,10 @@ import MetaScenarioModal from './MetaScenarioModal';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import ConfirmModal from '../common/ConfirmModal';
+import { API_BASE_URL } from '@/utils/config';
 
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port !== '';
-const API_BASE = isLocal ? '/mail_api' : 'https://automation.ideas.edu.vn/mail_api';
+
 
 // Helper to get headers
 const getHeaders = () => {
@@ -69,7 +70,7 @@ const MetaAutomation: React.FC = () => {
 
     const fetchConfigs = async () => {
         try {
-            const res = await axios.get(`${API_BASE}/meta_config.php`);
+            const res = await axios.get(`${API_BASE_URL}/meta_config.php`);
             if (res.data.success && res.data.data.length > 0) {
                 setConfigs(res.data.data);
                 setSelectedConfigId(res.data.data[0].id); // Select first by default
@@ -85,7 +86,7 @@ const MetaAutomation: React.FC = () => {
     const fetchScenarios = async (configId: string) => {
         setLoading(true);
         try {
-            const res = await axios.get(`${API_BASE}/meta_automation.php?route=list&meta_config_id=${configId}`);
+            const res = await axios.get(`${API_BASE_URL}/meta_automation.php?route=list&meta_config_id=${configId}`);
             if (res.data.success) {
                 setScenarios(res.data.data);
             }
@@ -104,7 +105,7 @@ const MetaAutomation: React.FC = () => {
             onConfirm: async () => {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 try {
-                    await axios.delete(`${API_BASE}/meta_automation.php?route=delete&id=${id}`);
+                    await axios.delete(`${API_BASE_URL}/meta_automation.php?route=delete&id=${id}`);
                     toast.success('Đã xóa kịch bản');
                     fetchScenarios(selectedConfigId);
                 } catch (error) {
@@ -117,7 +118,7 @@ const MetaAutomation: React.FC = () => {
     const toggleStatus = async (scenario: MetaScenario) => {
         const newStatus = scenario.status === 'active' ? 'inactive' : 'active';
         try {
-            await axios.post(`${API_BASE}/meta_automation.php?route=save`, {
+            await axios.post(`${API_BASE_URL}/meta_automation.php?route=save`, {
                 ...scenario,
                 status: newStatus
             });
@@ -151,7 +152,7 @@ const MetaAutomation: React.FC = () => {
                 meta_config_id: selectedConfigId,
                 ...data
             };
-            const res = await axios.post(`${API_BASE}/meta_automation.php?route=save`, payload);
+            const res = await axios.post(`${API_BASE_URL}/meta_automation.php?route=save`, payload);
             if (res.data.success) {
                 toast.success('Lưu kịch bản thành công');
                 setIsModalOpen(false);

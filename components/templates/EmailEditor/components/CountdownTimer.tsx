@@ -1,6 +1,7 @@
 import React from 'react';
 import { EmailBlock } from '../../../../types';
 import { AlertTriangle } from 'lucide-react';
+import { API_BASE_URL, EXTERNAL_API_BASE } from '@/utils/config';
 
 interface CountdownTimerProps {
     block: EmailBlock;
@@ -23,7 +24,7 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ block, boxStyle, labelS
     const timerUrl = React.useMemo(() => {
         // Use block.id + timestamp for stronger cache busting
         const cacheBuster = `${block.id}_${Date.now()}`;
-        return `https://automation.ideas.edu.vn/mail_api/timer.php?target=${encodeURIComponent(targetDateStr)}&color=${digitColor}&bg=${bg}&v=${cacheBuster}`;
+        return `${EXTERNAL_API_BASE}/timer.php?target=${encodeURIComponent(targetDateStr)}&color=${digitColor}&bg=${bg}&v=${cacheBuster}`;
     }, [targetDateStr, digitColor, bg, block.id]);
 
     return (

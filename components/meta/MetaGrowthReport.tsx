@@ -4,6 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { TrendingUp, MessageSquare, Zap, RefreshCw, Users, MessageSquareDashed } from 'lucide-react';
 import axios from 'axios';
 import Select from '../common/Select';
+import { API_BASE_URL } from '@/utils/config';
 
 // Interfaces matching Zalo Report Data Structure
 interface ReportData {
@@ -21,7 +22,7 @@ interface MetaConfig {
     avatar_url?: string;
 }
 
-const API_BASE = 'https://automation.ideas.edu.vn/mail_api';
+
 
 interface MetaReportProps {
     dateRange?: { start: string; end: string };
@@ -46,7 +47,7 @@ const MetaGrowthReport: React.FC<MetaReportProps> = ({ dateRange }) => {
 
     const fetchConfigs = async () => {
         try {
-            const res = await axios.get(`${API_BASE}/meta_config.php`);
+            const res = await axios.get(`${API_BASE_URL}/meta_config.php`);
             if (res.data.success && res.data.data.length > 0) {
                 setConfigs(res.data.data);
                 setSelectedConfigId(res.data.data[0].id);
@@ -66,7 +67,7 @@ const MetaGrowthReport: React.FC<MetaReportProps> = ({ dateRange }) => {
 
         try {
             // Using refined API endpoint that mirrors Zalo structure
-            const res = await axios.get(`${API_BASE}/meta_report.php?period=${activePeriod}&meta_config_id=${selectedConfigId}&start_date=${activeStart}&end_date=${activeEnd}`);
+            const res = await axios.get(`${API_BASE_URL}/meta_report.php?period=${activePeriod}&meta_config_id=${selectedConfigId}&start_date=${activeStart}&end_date=${activeEnd}`);
             if (res.data.success) {
                 setData(res.data.data);
                 setSummary(res.data.summary || {});

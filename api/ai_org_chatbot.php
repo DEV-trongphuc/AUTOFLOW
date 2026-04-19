@@ -499,27 +499,39 @@ try {
             $userFilter = "(" . implode(" OR ", $identityFilters) . ")";
             $userFilterJoined = str_replace(['user_id', 'user_email'], ['c.user_id', 'c.user_email'], $userFilter);
 
-            // 1. Basic Counts
-            $sqlCounts = "SELECT 
-                (SELECT COUNT(*) FROM ai_org_conversations WHERE $userFilter AND status != 'deleted') as total_convs,
-                (SELECT COUNT(*) FROM ai_org_messages m JOIN ai_org_conversations c ON m.conversation_id = c.id WHERE $userFilterJoined AND c.status != 'deleted') as total_msgs,
-                (SELECT COALESCE(SUM(tokens), 0) FROM ai_org_messages m JOIN ai_org_conversations c ON m.conversation_id = c.id WHERE $userFilterJoined AND c.status != 'deleted') as total_tokens,
-                (SELECT COUNT(DISTINCT property_id) FROM ai_org_conversations WHERE $userFilter AND status != 'deleted') as total_bots";
-
-            $stmt = $pdo->prepare($sqlCounts);
-
-            // Replicate params for 4 subqueries
-            $allParams = [];
-            // The first subquery uses $userFilter (which has $identityFilters and $params)
-            // The second subquery uses $userFilterJoined (which has $identityFilters and $params)
-            // The third subquery uses $userFilterJoined (which has $identityFilters and $params)
-            // The fourth subquery uses $userFilter (which has $identityFilters and $params)
-            // So, $params are used 4 times in total.
-            for ($i = 0; $i < 4; $i++) {
-                $allParams = array_merge($allParams, $params);
+            // 1. Basic Counts (OPTIMIZED WITH 5-MINUTE CACHE TO PREVENT FULL-TABLE SCANS)
+            $cacheDir = __DIR__ . '/../uploadss/cache';
+            if (!is_dir($cacheDir)) {
+                @mkdir($cacheDir, 0755, true);
             }
-            $stmt->execute($allParams);
-            $counts = $stmt->fetch(PDO::FETCH_ASSOC);
+            $cacheKey = md5($userFilterJoined . json_encode($params));
+            $cacheFile = $cacheDir . '/dashboard_stats_' . $cacheKey . '.json';
+
+            $counts = null;
+            if (file_exists($cacheFile) && time() - filemtime($cacheFile) < 300) { // 5 minutes TTL
+                $counts = json_decode(file_get_contents($cacheFile), true);
+            }
+
+            if (!$counts || !is_array($counts)) {
+                $sqlCounts = "SELECT 
+                    (SELECT COUNT(*) FROM ai_org_conversations WHERE $userFilter AND status != 'deleted') as total_convs,
+                    (SELECT COUNT(*) FROM ai_org_messages m JOIN ai_org_conversations c ON m.conversation_id = c.id WHERE $userFilterJoined AND c.status != 'deleted') as total_msgs,
+                    (SELECT COALESCE(SUM(tokens), 0) FROM ai_org_messages m JOIN ai_org_conversations c ON m.conversation_id = c.id WHERE $userFilterJoined AND c.status != 'deleted') as total_tokens,
+                    (SELECT COUNT(DISTINCT property_id) FROM ai_org_conversations WHERE $userFilter AND status != 'deleted') as total_bots";
+
+                $stmt = $pdo->prepare($sqlCounts);
+
+                // Replicate params for 4 subqueries
+                $allParams = [];
+                for ($i = 0; $i < 4; $i++) {
+                    $allParams = array_merge($allParams, $params);
+                }
+                $stmt->execute($allParams);
+                $counts = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                // Save cache
+                @file_put_contents($cacheFile, json_encode($counts));
+            }
 
             // 2. Chatbots list
             $sqlBots = "SELECT b.name, b.id, COUNT(c.id) as conv_count 
@@ -758,9 +770,12 @@ try {
 
                     file_put_contents($localPath, $input['new_content']);
 
-                    // Also update file size in DB
+                    $newSize = strlen($input['new_content']);
                     $stmt = $pdo->prepare("UPDATE ai_workspace_files SET file_size = ? WHERE file_url = ?");
-                    $stmt->execute([strlen($input['new_content']), $fileUrl]);
+                    $stmt->execute([$newSize, $fileUrl]);
+
+                    // Sync metadata to global_assets if this file was ever made global
+                    $pdo->prepare("UPDATE global_assets SET size = ? WHERE url = ?")->execute([$newSize, $fileUrl]);
 
                     echo json_encode(['success' => true]);
                 } else {
@@ -889,8 +904,8 @@ try {
                         }
                     }
 
-                    // Hard delete from global_assets by exact URL
-                    $stmtGlobal = $pdo->prepare("DELETE FROM global_assets WHERE url = ?");
+                    // Hard delete from global_assets by exact URL (Protect explicitly promoted workspace files)
+                    $stmtGlobal = $pdo->prepare("DELETE FROM global_assets WHERE url = ? AND (source IS NULL OR source != 'workspace')");
                     $stmtGlobal->execute([$fileUrl]);
                 }
             }
@@ -1556,8 +1571,8 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
                             }
                         }
 
-                        // 3. Hard delete from global_assets
-                        $stmtGlobal = $pdo->prepare("DELETE FROM global_assets WHERE url = ?");
+                        // 3. Hard delete from global_assets (Protect explicitly promoted workspace files)
+                        $stmtGlobal = $pdo->prepare("DELETE FROM global_assets WHERE url = ? AND (source IS NULL OR source != 'workspace')");
                         $stmtGlobal->execute([$fileUrl]);
 
                         // 4. Delete from ai_workspace_files
@@ -2110,7 +2125,7 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
             1. DYNAMIC ACTIONS: Ở CUỐI CÙNG của câu trả lời, bạn BẮT BUỘC phải đưa ra 2-3 hành động gợi ý dưới dạng MỆNH LỆNH ngắn gọn, trực tiếp.
             - Viết trên một dòng mới hoàn toàn ở tận cùng của văn bản.
             - KHÔNG đặt trong dấu nháy kép hay block code (```), KHÔNG đặt giữa các đoạn văn.
-            - TUYỆT ĐỐI không dùng dạng câu hỏi.
+            - TUYỆT ĐỐI không dùng dạng câu hỏi. ĐẶC BIỆT CHÚ Ý: Nút bấm phải NGẮN GỌN TỐI ĐA (1-3 từ). BỎ NGAY các từ thừa thãi như 'Tìm hiểu về', 'Xem', 'Tôi muốn', 'Chi tiết'. (Ví dụ: Thay vì 'Tìm hiểu về MBA', hãy viết 'Chương trình MBA'. Thay vì 'Xem chính sách', hãy viết 'Chính sách').
             - Định dạng chính xác: [ACTIONS: Hành động 1 | Hành động 2 | Hành động 3]
             2. VISION ANALYSIS: Nếu có ảnh đính kèm, hãy phân tích chi tiết, giải thích nội dung và trả lời các thắc mắc về ảnh đó.
             3. PERSONALIZATION: Sử dụng thông tin USER PROFILE (nếu có) để xưng hô và cá nhân hóa câu trả lời.

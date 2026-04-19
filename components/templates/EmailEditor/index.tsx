@@ -19,6 +19,7 @@ import AIEmailGeneratorModal from './AIEmailGeneratorModal';
 import { DEFAULT_BODY_STYLE, DEFAULT_BLOCKS } from './constants/editorConstants';
 import { compileHTML } from './utils/htmlCompiler';
 import { createBlock, insertDeep, deleteBlockDeep, duplicateBlockDeep } from './utils/blockUtils'; // Import necessary block utils
+import { API_BASE_URL } from '@/utils/config';
 
 interface EmailEditorProps {
     template?: Template;
@@ -578,7 +579,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
             const finalHtml = editorMode === 'code' ? customHtml : compileHTML(blocks, bodyStyle, name);
 
             // Fixed: Use absolute production URL as requested
-            const response = await fetch('https://automation.ideas.edu.vn/mail_api/send_test_email.php', {
+            const response = await fetch(`${API_BASE_URL}/send_test_email.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

@@ -1,4 +1,5 @@
 
+import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/storageAdapter';
 import toast from 'react-hot-toast';
@@ -305,10 +306,10 @@ const WebTracking: React.FC = () => {
     ai_chat: true
   };
 </script>
-<script src="https://automation.ideas.edu.vn/tracker.js" async></script>`;
+<script src="${EXTERNAL_ASSET_BASE}/tracker.js" async></script>`;
         } else {
             actualScript = `<!-- MailFlow Pro Tracker -->
-<script src="https://automation.ideas.edu.vn/tracker.js" data-website-id="${selectedWebsite.id}" async></script>`;
+<script src="${EXTERNAL_ASSET_BASE}/tracker.js" data-website-id="${selectedWebsite.id}" async></script>`;
         }
 
         navigator.clipboard.writeText(actualScript);

@@ -1,3 +1,4 @@
+import { EXTERNAL_API_BASE } from '@/utils/config';
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { ShoppingCart, Code2, Copy, CheckCircle2, X } from 'lucide-react';
@@ -43,7 +44,7 @@ const PurchaseEventDetailModal: React.FC<PurchaseEventDetailModalProps> = ({ eve
   });
 </script>`;
 
-    const curlSnippet = `curl -X POST https://automation.ideas.edu.vn/mail_api/webhook.php \\
+    const curlSnippet = `curl -X POST ${EXTERNAL_API_BASE}/webhook.php \\
   -H "Content-Type: application/json" \\
   -d '{
     "type": "purchase",

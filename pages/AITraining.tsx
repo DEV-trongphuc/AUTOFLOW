@@ -13,6 +13,7 @@ import { Lightbulb, Target, Sparkles, Zap, ShieldCheck, Brain, MessageSquare, Us
 import { useChatPage } from '../contexts/ChatPageContext';
 import OrgUserManager from '../components/ai/org/OrgUserManager';
 import FeedbackAdminPanel from '../components/ai/training/FeedbackAdminPanel';
+import { API_BASE_URL } from '@/utils/config';
 
 
 interface AIDoc {
@@ -355,7 +356,7 @@ const AITraining: React.FC = () => {
         // 1. Set global config
         (window as any)._mf_config = {
             property_id: selectedProperty,
-            endpoint: 'https://automation.ideas.edu.vn/mail_api/track.php',
+            endpoint: `${API_BASE_URL}/track.php`,
             is_test: true,
             auto_open: 1,
             welcome_msg: settings.welcome_msg,

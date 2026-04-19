@@ -4,6 +4,7 @@ import { X, Trash2, Moon, AlertTriangle, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Segment } from '../../types';
+import { API_BASE_URL } from '@/utils/config';
 
 interface SegmentCleanupModalProps {
     segment: Segment;
@@ -23,7 +24,7 @@ const SegmentCleanupModal: React.FC<SegmentCleanupModalProps> = ({ segment, onCl
     const handleCleanup = async () => {
         setIsLoading(true);
         try {
-            const res = await axios.post(`https://automation.ideas.edu.vn/mail_api/segments.php?route=cleanup`, {
+            const res = await axios.post(`${API_BASE_URL}/segments.php?route=cleanup`, {
                 segment_id: segment.id,
                 days,
                 move_to_dormant: moveToDormant

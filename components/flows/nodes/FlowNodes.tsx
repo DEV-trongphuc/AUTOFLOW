@@ -1,4 +1,5 @@
 
+import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import React from 'react';
 import { Zap, Mail, Clock, GitMerge, Tag, Link as LinkIcon, Edit3, AlertOctagon, AlertTriangle, Beaker, Hourglass, MousePointer2, MailOpen, MoreHorizontal, MessageSquare, UserMinus, Filter, Calendar, FileInput, Users, CheckCircle2, Send, Plus, Minus, Trash2, List, ShoppingCart, Layers, Cake, Snowflake, ArrowRight, Paperclip } from 'lucide-react';
 import { FlowStep, Flow, FormDefinition } from '../../../types';
@@ -472,7 +473,7 @@ export const ZaloZNSNode: React.FC<NodeProps> = ({ step, hasError, hasWarning, o
                     bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-blue-200
                 `}>
                     <img
-                        src="https://automation.ideas.edu.vn/imgs/zalolog.png"
+                        src={`${EXTERNAL_ASSET_BASE}/imgs/zalolog.png`}
                         alt="Zalo"
                         className="w-6 h-6"
                     />

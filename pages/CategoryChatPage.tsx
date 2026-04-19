@@ -75,6 +75,7 @@ import { AI_MODELS, getModelDisplayName, IMAGE_PROVIDERS } from '../utils/ai-con
 import { renderMarkdown as utilityRenderMarkdown } from '../utils/markdownRenderer';
 import { useFileHandler } from '../hooks/useFileHandler';
 import { useCategorySlug } from '../hooks/useCategorySlug';
+import { API_BASE_URL } from '@/utils/config';
 
 const IMAGE_STYLES = [
     { id: 'professional', name: 'Professional', prompt: 'professional business style, clean, modern, corporate', preview: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=300&h=300&auto=format&fit=crop' },
@@ -653,8 +654,8 @@ const CategoryChatPage: React.FC = () => {
         return () => clearTimeout(timer);
     }, [globalSearchInput]);
 
-    const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-    const API_BASE_URL = isLocal ? '/mail_api' : 'https://automation.ideas.edu.vn/mail_api';
+    
+    
 
     // ==================== FILE HANDLERS (HOOK) ====================
     const {

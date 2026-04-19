@@ -2,6 +2,7 @@ import React from 'react';
 import { HelpCircle, ExternalLink, CheckCircle, AlertCircle, Copy } from 'lucide-react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
+import { API_BASE_URL, EXTERNAL_API_BASE } from '@/utils/config';
 
 interface ZaloSetupGuideProps {
     isOpen: boolean;
@@ -175,10 +176,10 @@ const ZaloSetupGuide: React.FC<ZaloSetupGuideProps> = ({ isOpen, onClose }) => {
 
                             <div className="mt-3 flex items-center gap-2">
                                 <code className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-mono break-all">
-                                    https://automation.ideas.edu.vn/mail_api/zalo_oauth_callback.php
+                                    {EXTERNAL_API_BASE}/zalo_oauth_callback.php
                                 </code>
                                 <button
-                                    onClick={() => copyToClipboard('https://automation.ideas.edu.vn/mail_api/zalo_oauth_callback.php')}
+                                    onClick={() => copyToClipboard(`${EXTERNAL_API_BASE}/zalo_oauth_callback.php`)}
                                     className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shrink-0"
                                     title="Copy URL"
                                 >
@@ -212,10 +213,10 @@ const ZaloSetupGuide: React.FC<ZaloSetupGuideProps> = ({ isOpen, onClose }) => {
 
                             <div className="mt-3 flex items-center gap-2">
                                 <code className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-mono break-all">
-                                    https://automation.ideas.edu.vn/mail_api/zalo_webhook.php
+                                    {EXTERNAL_API_BASE}/zalo_webhook.php
                                 </code>
                                 <button
-                                    onClick={() => copyToClipboard('https://automation.ideas.edu.vn/mail_api/zalo_webhook.php')}
+                                    onClick={() => copyToClipboard(`${EXTERNAL_API_BASE}/zalo_webhook.php`)}
                                     className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shrink-0"
                                     title="Copy URL"
                                 >

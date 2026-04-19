@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/utils/config';
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -97,8 +98,8 @@ const Purchases: React.FC = () => {
         setTimeout(() => setCopied(null), 2000);
     };
 
-    const apiUrl = localStorage.getItem('mailflow_api_url') || 'https://automation.ideas.edu.vn/mail_api';
-    const endpoint = `${apiUrl.replace(/\/$/, '')}/purchase_events.php?route=track`;
+    
+    const endpoint = `${API_BASE_URL.replace(/\/$/, '')}/purchase_events.php?route=track`;
 
     const getJsSnippet = (evtId: string) => `// Tracking Mua hàng (JavaScript Fetch)
 const trackPurchase = async () => {

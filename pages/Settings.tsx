@@ -1,4 +1,5 @@
 
+import { API_BASE_URL } from '@/utils/config';
 import React, { useState, useEffect } from 'react';
 import {
     Save, Database, Mail, ShieldCheck, Globe,
@@ -24,7 +25,7 @@ const Settings: React.FC = () => {
     const [activeTab, setActiveTab] = useState('system');
 
     // Hardcoded production URL, ignoring localStorage
-    const [apiUrl, setApiUrl] = useState('https://automation.ideas.edu.vn/mail_api');
+    const [apiUrl, setApiUrl] = useState(API_BASE_URL);
     const [smtp, setSmtp] = useState({
         smtp_enabled: '0',
         smtp_host: '',

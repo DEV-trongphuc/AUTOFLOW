@@ -7,6 +7,7 @@ import ConfirmModal from '../common/ConfirmModal';
 import InfoCard from '../common/InfoCard';
 import axios from 'axios';
 import { format } from 'date-fns';
+import { API_BASE_URL } from '@/utils/config';
 
 const SkRow = ({ w, h, r }: { w: number | string; h: number; r: number }) => (
     <div style={{ width: w, height: h, borderRadius: r, background: '#e2e8f0', position: 'relative', overflow: 'hidden', display: 'inline-block' }}>
@@ -15,7 +16,7 @@ const SkRow = ({ w, h, r }: { w: number | string; h: number; r: number }) => (
 );
 
 // API Base URL
-const API_BASE = 'https://automation.ideas.edu.vn/mail_api';
+
 
 interface MetaConfig {
     id: string;
@@ -87,7 +88,7 @@ const MetaConfig: React.FC = () => {
     const fetchConfigs = async () => {
         setIsLoading(true);
         try {
-            const res = await axios.get(`${API_BASE}/meta_config.php`);
+            const res = await axios.get(`${API_BASE_URL}/meta_config.php`);
             if (res.data.success) {
                 setConfigs(res.data.data);
             }
@@ -108,7 +109,7 @@ const MetaConfig: React.FC = () => {
         const toastId = toast.loading('Đang lấy danh sách Pages...');
 
         try {
-            const res = await axios.post(`${API_BASE}/meta_config.php?route=get-pages`, {
+            const res = await axios.post(`${API_BASE_URL}/meta_config.php?route=get-pages`, {
                 user_access_token: userToken,
                 app_id: appId,
                 app_secret: appSecret
@@ -141,7 +142,7 @@ const MetaConfig: React.FC = () => {
             if (!page) continue;
 
             try {
-                const saveRes = await axios.post(`${API_BASE}/meta_config.php?route=save`, {
+                const saveRes = await axios.post(`${API_BASE_URL}/meta_config.php?route=save`, {
                     page_id: page.page_id,
                     page_name: page.page_name,
                     avatar_url: page.avatar_url,
@@ -189,7 +190,7 @@ const MetaConfig: React.FC = () => {
     const handleDelete = async (id: string) => {
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
         try {
-            const res = await axios.delete(`${API_BASE}/meta_config.php?id=${id}`);
+            const res = await axios.delete(`${API_BASE_URL}/meta_config.php?id=${id}`);
             if (res.data.success) {
                 toast.success('Đã xóa thành công');
                 fetchConfigs();
@@ -210,7 +211,7 @@ const MetaConfig: React.FC = () => {
         });
 
         try {
-            const res = await axios.post(`${API_BASE}/meta_config.php?route=debug-token`, {
+            const res = await axios.post(`${API_BASE_URL}/meta_config.php?route=debug-token`, {
                 page_access_token: cfg.page_access_token
             });
 

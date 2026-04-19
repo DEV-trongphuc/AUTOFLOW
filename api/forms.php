@@ -353,51 +353,9 @@ try {
 
             $pdo->commit();
 
-            // Identify visitor via API (checks both subscribers and zalo_subscribers)
-            $visitorId = $_COOKIE['_mf_vid'] ?? null;
-            if ($visitorId) {
-                try {
-                    $phone = $data['phoneNumber'] ?? null;
-                    $identifyUrl = API_BASE_URL . "/identify_visitor.php";
-                    $ch = curl_init();
-                    curl_setopt($ch, CURLOPT_URL, $identifyUrl);
-                    curl_setopt($ch, CURLOPT_POST, true);
-                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['visitor_id' => $visitorId, 'email' => $email, 'phone' => $phone]));
-                    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                    curl_setopt($ch, CURLOPT_TIMEOUT, 2);
-                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-                    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P34-F1] Added hostname verification — VERIFYPEER alone does not check the hostname
-                    curl_exec($ch);
-                    curl_close($ch);
-                } catch (Exception $e) {
-                    error_log("Visitor identification failed: " . $e->getMessage());
-                }
-            }
-
-            // [FIX] Fire-and-forget: Timeout 1s thay vì 5s (blocking).
-            // Nếu SMTP chậm > 5s, curl abort cũ sẽ kill worker_priority giữa chừng
-            // → subscriber stuck ở 'waiting'. Với timeout 1s + RETURNTRANSFER=false,
-            // forms.php trả về ngay, worker_priority chạy độc lập hoàn toàn.
-            $workerUrl = API_BASE_URL . "/worker_priority.php?" . http_build_query(['trigger_type' => 'form', 'target_id' => $formId, 'subscriber_id' => $sid]);
-            $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $workerUrl);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 1);
-            curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
-            @curl_exec($ch);
-            curl_close($ch);
+            $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]);
 
             // [OPTIMIZED - UX FAST RESPONSE]
-            // Xả kết nối về client ngay lập tức để người dùng không phải chờ quá trình gửi Email (Mất 2-5 giây)
-            // [FIX P0] RELEASE_LOCK: same pattern — must be prepared statement
-            $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]);
-            
             if (ob_get_length()) ob_clean();
             header("Content-Type: application/json; charset=UTF-8");
             $outJson = json_encode(['success' => true, 'data' => ['id' => $sid], 'message' => 'Đăng ký thành công!']);
@@ -411,6 +369,47 @@ try {
                 @ob_flush();
                 @flush();
             }
+
+            // --- BACKGROUND EXECUTION --- (Does not block webhook response)
+
+            // Identify visitor via API
+            $visitorId = $_COOKIE['_mf_vid'] ?? null;
+            if ($visitorId) {
+                try {
+                    $phone = $data['phoneNumber'] ?? null;
+                    $identifyUrl = API_BASE_URL . "/identify_visitor.php";
+                    $ch = curl_init();
+                    curl_setopt($ch, CURLOPT_URL, $identifyUrl);
+                    curl_setopt($ch, CURLOPT_POST, true);
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['visitor_id' => $visitorId, 'email' => $email, 'phone' => $phone]));
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P34-F1] Added hostname verification
+                    curl_exec($ch);
+                    curl_close($ch);
+                } catch (Exception $e) {
+                    error_log("Visitor identification failed: " . $e->getMessage());
+                }
+            }
+
+            // Priority trigger worker
+            $workerUrl = API_BASE_URL . "/worker_priority.php?" . http_build_query(['trigger_type' => 'form', 'target_id' => $formId, 'subscriber_id' => $sid]);
+            $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $workerUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 2); // Safe to increase slightly in background
+            curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
+            @curl_exec($ch);
+            curl_close($ch);
+
+            // (Moved fast flush and release lock to top of background execution block)
 
             // ---- [NOTIFICATION EMAIL] Gửi thông báo khi có leads mới (CHẠY THỰC THI NGẦM) ----
             if (!empty($formData['notification_enabled']) && !empty($formData['notification_emails'])) {

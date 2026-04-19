@@ -197,43 +197,7 @@ try {
 
             $pdo->commit();
 
-            // Identify visitor via API (checks both subscribers and zalo_subscribers)
-            $visitorId = $_COOKIE['_mf_vid'] ?? null;
-            if ($visitorId) {
-                try {
-                    $phone = $data['phoneNumber'] ?? null;
-                    $identifyUrl = API_BASE_URL . "/identify_visitor.php";
-                    $ch = curl_init();
-                    curl_setopt($ch, CURLOPT_URL, $identifyUrl);
-                    curl_setopt($ch, CURLOPT_POST, true);
-                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['visitor_id' => $visitorId, 'email' => $email, 'phone' => $phone]));
-                    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                    curl_setopt($ch, CURLOPT_TIMEOUT, 2);
-                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-                    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P36-CE] hostname verification
-                    curl_exec($ch);
-                    curl_close($ch);
-                } catch (Exception $e) {
-                    error_log("Visitor identification failed: " . $e->getMessage());
-                }
-            }
-
-            // [FIX] Fire-and-forget: Timeout 1s thay vì 5s (blocking).
-            // SMTP chậm > 5s → curl abort cũ kill worker giữa chừng → stuck 'waiting'.
-            $workerUrl = API_BASE_URL . "/worker_priority.php?" . http_build_query(['trigger_type' => 'purchase', 'target_id' => $eventId, 'subscriber_id' => $sid]);
-            $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $workerUrl);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 1);
-            curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
-            @curl_exec($ch);
-            curl_close($ch);
+            // (Moved cURL calls to after the flush to prevent webhook timeouts)
 
             // [OPTIMIZED - UX FAST RESPONSE]
             // Xả kết nối về client/webhook ngay lập tức để máy chủ đối tác không bị Timeout lúc chờ SMTP gửi email
@@ -250,6 +214,45 @@ try {
                 @ob_flush();
                 @flush();
             }
+
+            // --- BACKGROUND EXECUTION --- (Does not block webhook response)
+
+            // Identify visitor via API
+            $visitorId = $_COOKIE['_mf_vid'] ?? null;
+            if ($visitorId) {
+                try {
+                    $phone = $data['phoneNumber'] ?? null;
+                    $identifyUrl = API_BASE_URL . "/identify_visitor.php";
+                    $ch = curl_init();
+                    curl_setopt($ch, CURLOPT_URL, $identifyUrl);
+                    curl_setopt($ch, CURLOPT_POST, true);
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['visitor_id' => $visitorId, 'email' => $email, 'phone' => $phone]));
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+                    curl_exec($ch);
+                    curl_close($ch);
+                } catch (Exception $e) {
+                    error_log("Visitor identification failed: " . $e->getMessage());
+                }
+            }
+
+            // Priority trigger worker
+            $workerUrl = API_BASE_URL . "/worker_priority.php?" . http_build_query(['trigger_type' => 'purchase', 'target_id' => $eventId, 'subscriber_id' => $sid]);
+            $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $workerUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 2); // Safe to increase slightly now that it's in background
+            curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
+            @curl_exec($ch);
+            curl_close($ch);
 
             // ---- [NOTIFICATION EMAIL] Gửi thông báo khi có đơn hàng mới (CHẠY THỰC THI NGẦM) ----
             if (!empty($eventRow['notification_enabled']) && !empty($eventRow['notification_emails'])) {

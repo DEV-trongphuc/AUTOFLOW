@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/utils/config';
 import { ApiResponse } from '../types';
 import { getValidAccessToken, getRawRefreshToken, clearTokens, updateAccessToken } from './tokenManager';
 
@@ -10,7 +11,6 @@ const isLocal = typeof window !== 'undefined' && (
   window.location.hostname.startsWith('172.') ||
   window.location.port !== ''
 );
-const DEFAULT_API_URL = isLocal ? '/mail_api' : 'https://automation.ideas.edu.vn/mail_api';
 
 const SIMULATE_DELAY = 0;
 const CACHE_TTL = 60000; // 60 seconds — [PERF] increased for instant tab switching
@@ -55,7 +55,7 @@ async function executeRequest(url: string, method: string, body?: any, signal?: 
 
   // ── PRIORITY 1: Bearer Token (AI Space JWT-style token auth) ─────────────
   try {
-    const accessToken = await getValidAccessToken(DEFAULT_API_URL);
+    const accessToken = await getValidAccessToken(API_BASE_URL);
     if (accessToken) {
       headers['Authorization'] = `Bearer ${accessToken}`;
     }
@@ -158,7 +158,7 @@ async function request<T>(
   }
 
   // Force production API URL
-  const baseUrl = DEFAULT_API_URL;
+  const baseUrl = API_BASE_URL;
   const isDeleteAction = method === 'DELETE' || (method === 'POST' && endpoint.includes('delete'));
   
   if (isDeleteAction) updateDeleteState(true);
@@ -185,7 +185,7 @@ async function request<T>(
         }
       }
 
-      const url = `${baseUrl}/${phpFile}.php${finalQueryParams}`;
+      const url = `${API_BASE_URL}/${phpFile}.php${finalQueryParams}`;
 
       // ── First attempt ──────────────────────────────────────────────────────
       const startTime = performance.now();
@@ -201,7 +201,7 @@ async function request<T>(
         try {
           const refreshToken = getRawRefreshToken();
           if (refreshToken) {
-            const refreshRes = await fetch(`${baseUrl}/ai_org_auth.php?action=refresh_token`, {
+            const refreshRes = await fetch(`${API_BASE_URL}/ai_org_auth.php?action=refresh_token`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               credentials: 'include',
@@ -306,6 +306,6 @@ export const api = {
   post: <T>(endpoint: string, data: any, options?: { signal?: AbortSignal }) => request<T>(endpoint, 'POST', data, options),
   put: <T>(endpoint: string, data: any) => request<T>(endpoint, 'PUT', data),
   delete: <T>(endpoint: string, data?: any) => request<T>(endpoint, 'DELETE', data),
-  baseUrl: DEFAULT_API_URL,
+  baseUrl: API_BASE_URL,
   clearCache: clearApiCache
 };

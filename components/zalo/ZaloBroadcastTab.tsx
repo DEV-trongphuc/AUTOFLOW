@@ -1,3 +1,4 @@
+import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import * as React from 'react';
 import { useEffect, useState, useMemo } from 'react';
 import { api } from '../../services/storageAdapter';
@@ -15,7 +16,7 @@ import Select from '../common/Select';
 import TabTransition from '../common/TabTransition';
 import ConfirmModal from '../common/ConfirmModal';
 
-const ZALO_LOGO = "https://automation.ideas.edu.vn/imgs/zalolog.png";
+const ZALO_LOGO = `${EXTERNAL_ASSET_BASE}/imgs/zalolog.png`;
 
 interface ZaloBroadcastTabProps {
     initialSelectedIds?: string[];

@@ -55,6 +55,7 @@ const Profile = lazy(() => import('./pages/Profile'));
 const Landing = lazy(() => import('./pages/Landing'));
 
 import PremiumLoader from './components/common/PremiumLoader';
+import { API_BASE_URL } from '@/utils/config';
 
 // Loading fallback component — only for initial cold boot
 const PageLoader = () => <PremiumLoader title="AI-SPACE" subtitle="Đang tải ứng dụng..." />;
@@ -130,7 +131,7 @@ const App: React.FC = () => {
             window.location.hostname === 'localhost' ||
             window.location.hostname === '127.0.0.1' ||
             window.location.port !== '';
-        const apiBase = isLocal ? '/mail_api' : 'https://automation.ideas.edu.vn/mail_api';
+        const apiBase = isLocal ? '/mail_api' : `${API_BASE_URL}`;
 
         const pingWorker = () => {
             // Only ping when tab is visible to avoid unnecessary load in background

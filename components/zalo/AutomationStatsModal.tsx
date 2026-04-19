@@ -5,6 +5,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import Input from '../common/Input';
 import { Search } from 'lucide-react';
+import { API_BASE_URL } from '@/utils/config';
 
 interface AutomationStatsModalProps {
     scenario: any;
@@ -31,7 +32,7 @@ const AutomationStatsModal: React.FC<AutomationStatsModalProps> = ({ scenario, o
 
     const fetchSummary = async () => {
         try {
-            const res = await axios.get(`https://automation.ideas.edu.vn/mail_api/zalo_stats.php?route=summary&id=${scenario.id}`);
+            const res = await axios.get(`${API_BASE_URL}/zalo_stats.php?route=summary&id=${scenario.id}`);
             if (res.data.success) {
                 setSummary(res.data.data);
             }
@@ -43,7 +44,7 @@ const AutomationStatsModal: React.FC<AutomationStatsModalProps> = ({ scenario, o
     const fetchLogs = async (pageNum: number, reset = false) => {
         setLoading(true);
         try {
-            const res = await axios.get(`https://automation.ideas.edu.vn/mail_api/zalo_stats.php?route=logs&id=${scenario.id}&page=${pageNum}&q=${searchTerm}&btn=${selectedBtn}`);
+            const res = await axios.get(`${API_BASE_URL}/zalo_stats.php?route=logs&id=${scenario.id}&page=${pageNum}&q=${searchTerm}&btn=${selectedBtn}`);
             if (res.data.success) {
                 const newLogs = res.data.data;
                 if (newLogs.length < 20) setHasMore(false);

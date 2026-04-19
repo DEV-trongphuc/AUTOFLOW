@@ -8,6 +8,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import Input from '../common/Input';
 import TabTransition from '../common/TabTransition';
+import { API_BASE_URL } from '@/utils/config';
 
 interface Scenario {
     id: string;
@@ -52,7 +53,7 @@ const ZaloAutomationTab: React.FC = () => {
 
     const fetchOAs = async () => {
         try {
-            const res = await axios.get('https://automation.ideas.edu.vn/mail_api/zalo_oa.php');
+            const res = await axios.get(`${API_BASE_URL}/zalo_oa.php`);
             if (res.data.success && res.data.data.length > 0) {
                 setOaConfigs(res.data.data);
                 setSelectedOAId(res.data.data[0].id);
@@ -66,7 +67,7 @@ const ZaloAutomationTab: React.FC = () => {
         if (!selectedOAId) return;
         setLoading(true);
         try {
-            const res = await axios.get(`https://automation.ideas.edu.vn/mail_api/zalo_automation.php?route=list&oa_config_id=${selectedOAId}`);
+            const res = await axios.get(`${API_BASE_URL}/zalo_automation.php?route=list&oa_config_id=${selectedOAId}`);
             if (res.data.success) {
                 setScenarios(res.data.data);
             }
@@ -85,7 +86,7 @@ const ZaloAutomationTab: React.FC = () => {
             onConfirm: async () => {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 try {
-                    await axios.delete(`https://automation.ideas.edu.vn/mail_api/zalo_automation.php?route=delete&id=${id}`);
+                    await axios.delete(`${API_BASE_URL}/zalo_automation.php?route=delete&id=${id}`);
                     toast.success('Đã xóa kịch bản');
                     fetchScenarios();
                 } catch (error) {
@@ -98,7 +99,7 @@ const ZaloAutomationTab: React.FC = () => {
     const toggleStatus = async (scenario: Scenario) => {
         const newStatus = scenario.status === 'active' ? 'inactive' : 'active';
         try {
-            await axios.post('https://automation.ideas.edu.vn/mail_api/zalo_automation.php?route=save', {
+            await axios.post(`${API_BASE_URL}/zalo_automation.php?route=save`, {
                 ...scenario,
                 status: newStatus
             });

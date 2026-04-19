@@ -1,4 +1,5 @@
-﻿import React, { useState } from 'react';
+﻿import { EXTERNAL_ASSET_BASE } from '@/utils/config';
+import React, { useState } from 'react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import { Copy, Code, Terminal, Mail, CheckCircle2 } from 'lucide-react';
@@ -14,7 +15,7 @@ interface VoucherApiEmbedModalProps {
 
 const VoucherApiEmbedModal: React.FC<VoucherApiEmbedModalProps> = ({ isOpen, onClose, campaign }) => {
     
-    const rootUrl = typeof window !== 'undefined' ? window.location.origin : 'https://automation.ideas.edu.vn';
+    const rootUrl = typeof window !== 'undefined' ? window.location.origin : EXTERNAL_ASSET_BASE;
     const apiLink = `${rootUrl}/api/voucher_claim.php?campaign_id=${campaign.id}&email=khachhang@gmail.com&event=voucher_claimed`;
     
     const shortcode = `[VOUCHER_${campaign.id}]`;

@@ -14,6 +14,7 @@ import { api } from '../../services/storageAdapter';
 import ConfirmModal from '../common/ConfirmModal';
 import { MultiFileUploadModal } from './MultiFileUploadModal';
 import FileLibraryModal from '../common/FileLibraryModal';
+import { API_BASE_URL } from '@/utils/config';
 
 
 
@@ -52,7 +53,7 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
 
     const testUnsubscribeLink = () => {
         // Open test unsubscribe page with dummy subscriber ID
-        const testUrl = `https://automation.ideas.edu.vn/mail_api/webhook.php?type=unsubscribe&sid=test_preview&cid=${formData.id}`;
+        const testUrl = `${API_BASE_URL}/webhook.php?type=unsubscribe&sid=test_preview&cid=${formData.id}`;
         window.open(testUrl, '_blank');
     };
 

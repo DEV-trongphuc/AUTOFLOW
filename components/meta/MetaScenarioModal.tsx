@@ -4,9 +4,10 @@ import { X, Plus, Trash2, Link, Phone, Globe, MessageCircle, MessageSquare, Star
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import Modal from '../common/Modal';
+import { API_BASE_URL } from '@/utils/config';
 
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port !== '';
-const API_BASE = isLocal ? '/mail_api' : 'https://automation.ideas.edu.vn/mail_api';
+
 
 // Helper to get headers
 const getHeaders = () => {
@@ -114,7 +115,7 @@ const MetaScenarioModal: React.FC<MetaScenarioModalProps> = ({ scenario, onClose
 
     const fetchMetaConfigs = async () => {
         try {
-            const res = await axios.get(`${API_BASE}/meta_config.php`, { headers: getHeaders() });
+            const res = await axios.get(`${API_BASE_URL}/meta_config.php`, { headers: getHeaders() });
             if (res.data.success) {
                 setMetaConfigs(res.data.data);
                 if (!formData.meta_config_id && res.data.data.length > 0) {
@@ -128,7 +129,7 @@ const MetaScenarioModal: React.FC<MetaScenarioModalProps> = ({ scenario, onClose
 
     const fetchActiveChatbots = async () => {
         try {
-            const res = await axios.get(`${API_BASE}/ai_training.php?action=list_all_chatbots`, { headers: getHeaders() });
+            const res = await axios.get(`${API_BASE_URL}/ai_training.php?action=list_all_chatbots`, { headers: getHeaders() });
             if (res.data.success) {
                 setActiveChatbots(res.data.data);
             }
@@ -202,7 +203,7 @@ const MetaScenarioModal: React.FC<MetaScenarioModalProps> = ({ scenario, onClose
             // 1. Upload to Server (for URL and Preview)
             const serverFormData = new FormData();
             serverFormData.append('file', file);
-            const serverRes = await axios.post(`${API_BASE}/upload.php`, serverFormData, { headers: getHeaders() });
+            const serverRes = await axios.post(`${API_BASE_URL}/upload.php`, serverFormData, { headers: getHeaders() });
 
             let imageUrl = '';
             if (serverRes.data.success) {
@@ -213,7 +214,7 @@ const MetaScenarioModal: React.FC<MetaScenarioModalProps> = ({ scenario, onClose
             const metaFormData = new FormData();
             metaFormData.append('file', file);
             metaFormData.append('meta_config_id', metaConfigId);
-            const metaRes = await axios.post(`${API_BASE}/meta_upload.php`, metaFormData, { headers: getHeaders() });
+            const metaRes = await axios.post(`${API_BASE_URL}/meta_upload.php`, metaFormData, { headers: getHeaders() });
 
             if (metaRes.data.success) {
                 setFormData(prev => ({

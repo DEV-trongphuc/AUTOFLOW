@@ -4,8 +4,9 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Bot, MessageSquare, User, Zap } from 'lucide-react';
 import axios from 'axios';
 import Select from '../common/Select';
+import { API_BASE_URL } from '@/utils/config';
 
-const API_BASE = 'https://automation.ideas.edu.vn/mail_api';
+
 
 interface AIReportProps {
     dateRange: { start: string; end: string };
@@ -22,7 +23,7 @@ const AIChatReport: React.FC<AIReportProps> = ({ dateRange }) => {
         const fetchProperties = async () => {
             try {
                 // Fetch domains/properties from web_tracking (since AI widget uses property_id)
-                const res = await axios.get(`${API_BASE}/web_tracking.php?action=list`);
+                const res = await axios.get(`${API_BASE_URL}/web_tracking.php?action=list`);
                 if (res.data.success) {
                     setProperties(res.data.data);
                     if (res.data.data.length > 0) {
@@ -42,8 +43,8 @@ const AIChatReport: React.FC<AIReportProps> = ({ dateRange }) => {
         setLoading(true);
         try {
             const [summaryRes, chartRes] = await Promise.all([
-                axios.get(`${API_BASE}/ai_report.php?action=summary&start_date=${dateRange.start}&end_date=${dateRange.end}&property_id=${propertyId}`),
-                axios.get(`${API_BASE}/ai_report.php?action=chart&period=day&start_date=${dateRange.start}&end_date=${dateRange.end}&property_id=${propertyId}`)
+                axios.get(`${API_BASE_URL}/ai_report.php?action=summary&start_date=${dateRange.start}&end_date=${dateRange.end}&property_id=${propertyId}`),
+                axios.get(`${API_BASE_URL}/ai_report.php?action=chart&period=day&start_date=${dateRange.start}&end_date=${dateRange.end}&property_id=${propertyId}`)
             ]);
 
             if (summaryRes.data.success) setSummary(summaryRes.data.data);

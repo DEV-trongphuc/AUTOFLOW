@@ -5,9 +5,10 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import Modal from '../common/Modal';
 import Input from '../common/Input';
+import { API_BASE_URL } from '@/utils/config';
 
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port !== '';
-const API_BASE = isLocal ? '/mail_api' : 'https://automation.ideas.edu.vn/mail_api';
+
 
 // Helper to get headers
 const getHeaders = () => {
@@ -169,7 +170,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
 
     const fetchOas = async () => {
         try {
-            const res = await axios.get(`${API_BASE}/zalo_oa.php?route=list`, { headers: getHeaders() });
+            const res = await axios.get(`${API_BASE_URL}/zalo_oa.php?route=list`, { headers: getHeaders() });
             if (res.data.success) {
                 const oas = res.data.data;
                 setOaConfigs(oas);
@@ -184,7 +185,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
 
     const fetchAudienceLists = async () => {
         try {
-            const res = await axios.get(`${API_BASE}/zalo_audience.php?route=lists`, { headers: getHeaders() });
+            const res = await axios.get(`${API_BASE_URL}/zalo_audience.php?route=lists`, { headers: getHeaders() });
             if (res.data.success) {
                 setAudienceLists(res.data.data);
             }
@@ -195,7 +196,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
 
     const fetchActiveChatbots = async () => {
         try {
-            const res = await axios.get(`${API_BASE}/ai_training.php?action=list_all_chatbots`, { headers: getHeaders() });
+            const res = await axios.get(`${API_BASE_URL}/ai_training.php?action=list_all_chatbots`, { headers: getHeaders() });
             if (res.data.success) {
                 setActiveChatbots(res.data.data);
             }
@@ -218,7 +219,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
             const list = audienceLists.find(l => l.oa_config_id === formData.oa_config_id);
             if (list) formDataUpload.append('list_id', list.id);
 
-            const res = await axios.post(`${API_BASE}/zalo_audience.php?route=upload_image`, formDataUpload, { headers: getHeaders() });
+            const res = await axios.post(`${API_BASE_URL}/zalo_audience.php?route=upload_image`, formDataUpload, { headers: getHeaders() });
             if (res.data.success) {
                 setFormData(prev => ({
                     ...prev,
@@ -289,7 +290,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
 
         setLoading(true);
         try {
-            const conflictRes = await axios.get(`${API_BASE}/zalo_automation.php?route=check_conflicts&oa_config_id=${formData.oa_config_id}&type=${formData.type}&trigger_text=${formData.trigger_text}&id=${formData.id}`, { headers: getHeaders() });
+            const conflictRes = await axios.get(`${API_BASE_URL}/zalo_automation.php?route=check_conflicts&oa_config_id=${formData.oa_config_id}&type=${formData.type}&trigger_text=${formData.trigger_text}&id=${formData.id}`, { headers: getHeaders() });
             if (conflictRes.data.success && conflictRes.data.conflicts.length > 0) {
                 toast.error(conflictRes.data.conflicts[0]);
                 setLoading(false);
@@ -301,7 +302,7 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
                 payload.active_days = JSON.stringify(perDaySchedule);
             }
 
-            const res = await axios.post(`${API_BASE}/zalo_automation.php?route=save`, payload, { headers: getHeaders() });
+            const res = await axios.post(`${API_BASE_URL}/zalo_automation.php?route=save`, payload, { headers: getHeaders() });
             if (res.data.success) {
                 toast.success('Đã lưu kịch bản');
                 onSave();

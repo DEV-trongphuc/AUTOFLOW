@@ -261,7 +261,7 @@ EOD;
         $platform = 'Facebook Messenger';
 
     if ($platform) {
-        $prompt .= "\n\n---\nKÊNH: $platform. Yêu cầu trả lời NGẮN GỌN, súc tích, đúng trọng tâm (tối đa 3-4 câu nếu đủ ý). Không liệt kê dài dòng trừ danh sách cần thiết. Không dùng header/bullet dư thừa. Ngôn ngữ thân thiện, tự nhiên như nhắn tin.";
+        $prompt .= "\n\n---\nKÊNH: $platform. Yêu cầu trả lời NGẮN GỌN, súc tích, đúng trọng tâm (tối đa 3-4 câu nếu đủ ý). Không liệt kê dài dòng trừ danh sách cần thiết. Không dùng header/bullet dư thừa. Ngôn ngữ thân thiện, tự nhiên như nhắn tin. NẾU CÓ DYNAMIC ACTIONS: Nút bấm phải NGẮN GỌN TỐI ĐA (1-3 từ). BỎ NGAY các từ thừa thãi như 'Tìm hiểu về', 'Xem', 'Tôi muốn', 'Chi tiết'. (Ví dụ: Thay vì 'Tìm hiểu về MBA', hãy viết 'Chương trình MBA'. Thay vì 'Xem chính sách', hãy viết 'Chính sách').";
     }
 
     return $prompt;
@@ -2878,7 +2878,7 @@ CHÚ Ý:
 
         // --- MẠNG XÃ HỘI (META/ZALO) BẮT BUỘC TRẢ LỜI NGẮN GỌN DỰA THEO KNOWLEDGE BASE ---
         if (strpos($visitorUuid, 'meta_') === 0 || strpos($visitorUuid, 'zalo_') === 0) {
-            $systemInst .= "\n\n[SOCIAL MEDIA MODE - ZALO/META]: ĐÂY LÀ TIN NHẮN MẠNG XÃ HỘI. TUÂN THỦ NGHIÊM NGẶT CÁC QUY TẮC SAU:\n\n1. ĐỘ DÀI: Trả lời TỐI ĐA 3-5 câu ngắn gọn. Không viết dài dòng.\n2. ĐỊNH DẠNG: TUYỆT ĐỐI không dùng Markdown table, không dùng **bold**, không dùng # heading. Chỉ dùng gạch đầu dòng (•) nếu cần liệt kê.\n3. NGUỒN: Chỉ trả lời dựa trên Knowledge Base. Không bịa thông tin. Nếu không có trong KB, nói: 'Dạ thông tin này em chưa có, để lại SĐT/Email để tư vấn viên hỗ trợ ạ.'\n4. GIỌNG ĐIỆU: Thân thiện, gần gũi như nhắn tin thông thường. Không cứng nhắc như văn bản chính thức.";
+            $systemInst .= "\n\n[SOCIAL MEDIA MODE - ZALO/META]: ĐÂY LÀ TIN NHẮN MẠNG XÃ HỘI. TUÂN THỦ NGHIÊM NGẶT CÁC QUY TẮC SAU:\n\n1. ĐỘ DÀI: Trả lời TỐI ĐA 3-5 câu ngắn gọn. Không viết dài dòng.\n2. ĐỊNH DẠNG: TUYỆT ĐỐI không dùng Markdown table, không dùng **bold**, không dùng # heading. Chỉ dùng gạch đầu dòng (•) nếu cần liệt kê.\n3. NGUỒN: Chỉ trả lời dựa trên Knowledge Base. Không bịa thông tin. Nếu không có trong KB, nói: 'Dạ thông tin này em chưa có, để lại SĐT/Email để tư vấn viên hỗ trợ ạ.'\n4. GIỌNG ĐIỆU: Thân thiện, gần gũi như nhắn tin thông thường. Không cứng nhắc như văn bản chính thức.\n5. QUY TẮC NÚT BẤM (NẾU CÓ [ACTIONS: ...]): Các nút gợi ý phải NGẮN GỌN TỐI ĐA (1-3 từ). TUYỆT ĐỐI KHÔNG dùng từ thừa như 'Tìm hiểu về', 'Xem', 'Chi tiết' (Ví dụ: ghi 'Chính sách', KHÔNG ghi 'Xem chính sách').";
         }
 
         // We modify buildSystemPrompt's strictness directly (see changed function below)

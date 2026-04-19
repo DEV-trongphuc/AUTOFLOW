@@ -13,6 +13,7 @@ import CustomerProfileModal from '../../audience/CustomerProfileModal';
 import { ZaloUserProfileModal } from '../../zalo/ZaloUserProfileModal';
 import { api } from '../../../services/storageAdapter';
 import { toast } from 'react-hot-toast';
+import { API_BASE_URL } from '@/utils/config';
 
 // Local helper for date formatting
 const formatDate = (dateStr: string, mode: 'time' | 'datetime' = 'datetime') => {
@@ -690,11 +691,11 @@ export default function ConversationsTab({ propertyId, initialConversationId }: 
     };
 
     const confirmExport = () => {
-        const baseUrl = 'https://automation.ideas.edu.vn/mail_api';
+        
         let start = exportRange === 'current' ? startDate : customExportStart;
         let end = exportRange === 'current' ? endDate : customExportEnd;
 
-        let url = `${baseUrl}/ai_chatbot.php?action=export_conversations&property_id=${propertyId}&search=${encodeURIComponent(searchQuery)}&source=${exportSource}`;
+        let url = `${API_BASE_URL}/ai_chatbot.php?action=export_conversations&property_id=${propertyId}&search=${encodeURIComponent(searchQuery)}&source=${exportSource}`;
         if (ipSearch) url += `&ip=${encodeURIComponent(ipSearch)}`;
         if (start) url += `&from_date=${start}`;
         if (end) url += `&to_date=${end}`;

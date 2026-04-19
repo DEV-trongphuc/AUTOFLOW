@@ -1,3 +1,4 @@
+import { EXTERNAL_API_BASE } from '@/utils/config';
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Zap, Code2, Copy, CheckCircle2, X } from 'lucide-react';
@@ -40,7 +41,7 @@ const CustomEventDetailModal: React.FC<CustomEventDetailModalProps> = ({ event, 
   });
 </script>`;
 
-    const curlSnippet = `curl -X POST https://automation.ideas.edu.vn/mail_api/webhook.php \\
+    const curlSnippet = `curl -X POST ${EXTERNAL_API_BASE}/webhook.php \\
   -H "Content-Type: application/json" \\
   -d '{
     "type": "custom_event",

@@ -206,8 +206,9 @@ const MessageList = React.memo(({
         const isNewUserMessage = lastMsg?.role === 'user';
         // Skeleton just appeared = assistant message with empty content
         const isNewSkeleton = lastMsg?.role === 'assistant' && lastMsg?.content === '';
+        const isInitial = isInitialLoadRef.current;
 
-        if (isNewUserMessage) {
+        if (isNewUserMessage || isInitial) {
             userHasScrolledUp.current = false;
         }
 
@@ -221,7 +222,7 @@ const MessageList = React.memo(({
         let interval: any;
         const startTime = performance.now();
 
-        if (isNewUserMessage || isNewSkeleton) {
+        if (isNewUserMessage || isNewSkeleton || isInitial) {
             // KEY FIX: virtualizer hasn't rendered the new row yet when this runs.
             // scrollToIndex forces it to mount the last item so scrollHeight expands,
             // then we finalize with el.scrollTop in the next frame.
@@ -229,11 +230,14 @@ const MessageList = React.memo(({
 
             frameId = requestAnimationFrame(() => {
                 el.scrollTop = el.scrollHeight;
-                // Lock for 600ms to cover skeleton's initial size measurement
+                // Lock for 600ms to cover skeleton's initial size measurement or history load
                 const lockScroll = (now: number) => {
-                    snapToBottom(false);
+                    snapToBottom(isInitial); // force snap on initial load
                     if (now - startTime < 600) {
                         frameId = requestAnimationFrame(lockScroll);
+                    } else if (isInitial) {
+                        isInitialLoadRef.current = false;
+                        setIsScrollReady(true);
                     }
                 };
                 frameId = requestAnimationFrame(lockScroll);
@@ -250,12 +254,6 @@ const MessageList = React.memo(({
         return () => {
             cancelAnimationFrame(frameId);
             if (interval) clearInterval(interval);
-            if (isInitialLoadRef.current) {
-                setTimeout(() => {
-                    setIsScrollReady(true);
-                    isInitialLoadRef.current = false;
-                }, 100);
-            }
         };
     }, [messages.length, displayItems.length, loadingChat, rowVirtualizer]);
 
@@ -512,7 +510,7 @@ const MessageList = React.memo(({
                                                 </div>
                                             )}
 
-                                            <div className={`content-area selection:bg-brand selection:text-white ${isDarkTheme ? 'text-white' : 'text-slate-800'}`}>
+                                            <div className={`content-area selection:bg-brand selection:text-white ${isDarkTheme ? 'text-white' : 'text-slate-800'} ${isUser ? (isDarkTheme ? '[&_a]:!text-white [&_a]:underline [&_a]:underline-offset-2' : '[&_a]:!text-slate-900 [&_a]:underline') : '[&_a]:!text-brand hover:[&_a]:underline'}`}>
                                                 {/* Cross-fade: skeleton fades OUT, content fades IN — no jarring flash */}
                                                 {(() => {
                                                     const isSkeleton = loadingChat && idx === messages.length - 1 && msg.role === 'assistant' && !isImageGenMode;

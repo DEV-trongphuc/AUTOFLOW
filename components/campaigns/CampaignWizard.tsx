@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/utils/config';
 import * as React from 'react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { UserCheck } from 'lucide-react';
@@ -788,8 +789,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
 
         setLoadingPreview(true);
         try {
-            const apiUrl = localStorage.getItem('mailflow_api_url') || 'https://automation.ideas.edu.vn/mail_api';
-            const response = await fetch(`${apiUrl}/campaign_preview.php`, {
+                        const response = await fetch(`${API_BASE_URL}/campaign_preview.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

@@ -1,4 +1,5 @@
 
+import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import React, { useState, useMemo, useEffect, memo } from 'react';
 import {
     Users, CheckCircle2, Mail, MousePointerClick, Activity, Filter,
@@ -140,7 +141,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
             case 'zalo_zns': return {
                 icon: ({ className }: { className?: string }) => (
                     <img
-                        src="https://automation.ideas.edu.vn/imgs/zalolog.png"
+                        src={`${EXTERNAL_ASSET_BASE}/imgs/zalolog.png`}
                         alt="Zalo"
                         className={className}
                     />

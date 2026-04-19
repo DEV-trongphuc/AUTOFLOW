@@ -1,3 +1,4 @@
+import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Mail, MessageSquare, Code, Globe, Zap, CheckCircle2, ChevronRight, Activity, ArrowRight, Server, Smartphone, MonitorSmartphone, Bot, Link, Loader2 } from 'lucide-react';
@@ -58,7 +59,7 @@ export const SystemConnectionsModal: React.FC<Props> = ({ isOpen, onClose }) => 
             name: 'Zalo OA (ZNS)',
             desc: 'Kết nối Official Account gửi tin nhắn Zalo chăm sóc khách hàng.',
             icon: MessageSquare,
-            imageUrl: 'https://automation.ideas.edu.vn/imgs/zalolog.png',
+            imageUrl: `${EXTERNAL_ASSET_BASE}/imgs/zalolog.png`,
             color: 'from-[#0068FF] to-[#00c6ff]',
             status: fetchedStatus ? fetchedStatus.zalo : false,
             path: '/zalo-settings'

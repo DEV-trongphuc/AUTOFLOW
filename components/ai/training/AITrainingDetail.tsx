@@ -16,6 +16,7 @@ import PageHero from '../../common/PageHero';
 import { MessageSquare } from 'lucide-react';
 import InputModal from '../../common/InputModal';
 import { api } from '../../../services/storageAdapter';
+import { API_BASE_URL, EXTERNAL_API_BASE } from '@/utils/config';
 
 interface AITrainingDetailProps {
     selectedProperty: string;
@@ -1396,7 +1397,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
     ai_chat: true
   };
 </script>
-<script src="https://automation.ideas.edu.vn/mail_api/tracker.js?v=${v}" async></script>`);
+<script src=\"${EXTERNAL_API_BASE}/tracker.js?v=${v}\" async></script>`);
                                                     toast.success('Đã copy mã nhúng (Version mới nhất)');
                                                 }}
                                                 className="p-2 bg-white/10 hover:bg-amber-600 text-white rounded-lg transition-all"
@@ -1770,5 +1771,6 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
 };
 
 export default React.memo(AITrainingDetail);
+
 
 
