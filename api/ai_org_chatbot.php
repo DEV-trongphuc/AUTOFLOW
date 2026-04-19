@@ -1749,6 +1749,8 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
                 $ch = curl_init('https://google.serper.dev/search');
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                 curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
                 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['q' => $searchQuery, 'gl' => 'vn', 'hl' => 'vi']));
                 curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-KEY: ' . $serperKey, 'Content-Type: application/json']);
                 $searchRes = curl_exec($ch);
@@ -1991,6 +1993,8 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
             $checkUrl = "https://generativelanguage.googleapis.com/v1beta/{$fileName}?key={$checkApiKey}";
             $ch = curl_init($checkUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
             curl_setopt($ch, CURLOPT_TIMEOUT, 8);
             curl_setopt($ch, CURLOPT_NOBODY, false); // GET so we get the JSON body
             $resp = curl_exec($ch);

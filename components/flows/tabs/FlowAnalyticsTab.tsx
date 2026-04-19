@@ -70,11 +70,32 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
     const triggerStep = useMemo(() => currentFlow.steps.find(s => s.type === 'trigger'), [currentFlow.steps]);
 
     // Safe access to stats with defaults
-    // [FIX P14-M2] Include totalZaloClicked/uniqueZaloClicked to match updated FlowStats interface (P14-H1)
-    const stats = currentFlow.stats || { enrolled: 0, completed: 0, totalSent: 0, totalOpened: 0, uniqueOpened: 0, totalClicked: 0, totalFailed: 0, totalUnsubscribed: 0, totalZaloClicked: 0, uniqueZaloClicked: 0 };
+    const rawStats = currentFlow.stats || { enrolled: 0, completed: 0, totalSent: 0, totalOpened: 0, uniqueOpened: 0, totalClicked: 0, totalFailed: 0, totalUnsubscribed: 0, totalZaloClicked: 0, uniqueZaloClicked: 0 };
 
-    // Memoize labels for unified usage
-    const flowLabels = useMemo(() => generateFlowStepLabels(currentFlow), [currentFlow]);
+    // [FIX] Tổng gửi/mở/lỗi phải cộng từ TỪNG step action thay vì dùng stat_total_sent
+    // stat_total_sent chỉ lưu campaign stats (campaign gốc), không gồm email steps trong flow
+    const stepAggregated = useMemo(() => {
+        const actionSteps = currentFlow.steps.filter((s: any) => s.type === 'action' || s.type === 'zalo_zns');
+        return actionSteps.reduce((acc: any, s: any) => {
+            const st = s.stats || {};
+            acc.totalSent    += (st.sent            || 0);
+            acc.totalFailed  += (st.failed          || 0);
+            acc.totalOpened  += (st.opened          || 0);
+            acc.uniqueOpened += (st.unique_opened   || 0);
+            acc.totalClicked += (st.clicked         || 0);
+            return acc;
+        }, { totalSent: 0, totalFailed: 0, totalOpened: 0, uniqueOpened: 0, totalClicked: 0 });
+    }, [currentFlow.steps]);
+
+    // Sử dụng step-aggregated cho send/open/fail; enrolled/completed/unsub lấy từ rawStats (backend tính đúng)
+    const stats = {
+        ...rawStats,
+        totalSent:    stepAggregated.totalSent    > 0 ? stepAggregated.totalSent    : rawStats.totalSent,
+        totalFailed:  stepAggregated.totalFailed  > 0 ? stepAggregated.totalFailed  : rawStats.totalFailed,
+        totalOpened:  stepAggregated.totalOpened  > 0 ? stepAggregated.totalOpened  : rawStats.totalOpened,
+        uniqueOpened: stepAggregated.uniqueOpened > 0 ? stepAggregated.uniqueOpened : rawStats.uniqueOpened,
+        totalClicked: stepAggregated.totalClicked > 0 ? stepAggregated.totalClicked : rawStats.totalClicked,
+    };
 
     // Calculate Rates
     const realOpenRate = (stats.totalSent || 0) > 0
@@ -88,6 +109,10 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
     const completionRate = (stats.enrolled || 0) > 0
         ? Math.round(((stats.completed || 0) / stats.enrolled) * 100)
         : 0;
+
+
+    // Memoize labels for unified usage
+    const flowLabels = useMemo(() => generateFlowStepLabels(currentFlow), [currentFlow]);
 
     // --- HELPER: GET VISUAL STYLE FOR NODE ---
     const getNodeStyle = (step: any) => {
@@ -1349,8 +1374,9 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
 
                 </div >
 
-                <div className="space-y-6">
-                    <Card className="rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-xl shadow-slate-200/40 bg-white dark:bg-slate-900 overflow-hidden h-full flex flex-col" title="Live Events" noPadding>
+                <div className="lg:col-span-1">
+                    <div className="sticky top-4 flex flex-col" style={{ maxHeight: 'calc(100vh - 80px)' }}>
+                    <Card className="rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-xl shadow-slate-200/40 bg-white dark:bg-slate-900 overflow-hidden flex-1 min-h-0 flex flex-col" title="Live Events" noPadding>
                         <div className="px-4 py-3 border-b border-slate-50 bg-slate-50 dark:bg-slate-950/30 backdrop-blur-sm sticky top-0 z-10">
                             <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2">
@@ -1426,9 +1452,9 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                 </div>
                             )}
                         </div>
-                        {/* Pagination UI */}
+                        {/* Pagination UI — sticky bottom */}
                         {logs.length > 0 && logPagination.totalPages > 1 && (
-                            <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-950/30">
+                            <div className="sticky bottom-0 px-4 py-3 border-t border-slate-100 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-950/30 shrink-0">
                                 <div className="flex items-center justify-between">
                                     <div className="text-[9px] text-slate-500 dark:text-slate-400 font-bold">
                                         Trang {logPagination.page} / {logPagination.totalPages} • Tổng {logPagination.total} sự kiện
@@ -1454,9 +1480,12 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                 </div>
                             </div>
                         )}
+
                     </Card>
+                    </div>{/* end sticky wrapper */}
                 </div>
             </div >
+
 
             {/* Error Modal */}
             <StepErrorModal

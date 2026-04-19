@@ -122,12 +122,29 @@ function buildAuthResponse($pdo, array $user, bool $remember = false): array
 // ─────────────────────────────────────────────────────────────────────────────
 if ($method === 'POST' && $action === 'login') {
     $input = isset($peekInput) ? $peekInput : json_decode(file_get_contents('php://input'), true);
-    $email = $input['email'] ?? '';
+    $email = trim($input['email'] ?? '');
     $password = $input['password'] ?? '';
     $remember = !empty($input['remember']) && $input['remember'] === true;
 
     if (empty($email) || empty($password)) {
         jsonResponse(false, null, 'Email and password are required');
+    }
+
+    // [SECURITY] Brute-force protection: max 5 failed attempts per IP per 10 minutes
+    $clientIp = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    $clientIp = trim(explode(',', $clientIp)[0]); // Take first IP if behind proxy
+    $ipKey = 'login_attempt_' . md5($clientIp);
+    $attemptData = json_decode($_SESSION[$ipKey] ?? '{}', true);
+    $now = time();
+    $windowStart = $now - 600; // 10-minute window
+
+    // Clean up old timestamps outside the window
+    $attemptData['timestamps'] = array_filter($attemptData['timestamps'] ?? [], fn($t) => $t > $windowStart);
+
+    if (count($attemptData['timestamps']) >= 5) {
+        $waitSeconds = (int)(min($attemptData['timestamps']) + 600 - $now);
+        http_response_code(429);
+        jsonResponse(false, null, "Quá nhiều lần thử đăng nhập. Vui lòng thử lại sau {$waitSeconds} giây.");
     }
 
     try {
@@ -138,15 +155,18 @@ if ($method === 'POST' && $action === 'login') {
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$user) {
+        if (!$user || !password_verify($password, $user['password_hash'])) {
+            // Record failed attempt
+            $attemptData['timestamps'][] = $now;
+            $_SESSION[$ipKey] = json_encode($attemptData);
             jsonResponse(false, null, 'Invalid email or password');
         }
         if ($user['status'] === 'banned') {
             jsonResponse(false, null, 'Your account has been banned due to policy violations.');
         }
-        if (!password_verify($password, $user['password_hash'])) {
-            jsonResponse(false, null, 'Invalid email or password');
-        }
+
+        // Successful login — clear rate limit counter for this IP
+        unset($_SESSION[$ipKey]);
 
         // Update last login
         $pdo->prepare("UPDATE ai_org_users SET last_login = NOW() WHERE id = ?")->execute([$user['id']]);
@@ -173,10 +193,15 @@ if ($method === 'POST' && $action === 'google_login') {
         jsonResponse(false, null, 'No credential provided');
     }
 
-    $googleApiUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=" . $credential;
+    $googleApiUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=" . urlencode($credential);
     $ch = curl_init($googleApiUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    // [SECURITY FIX] Enable SSL peer verification for Google API calls.
+    // Without CURLOPT_SSL_VERIFYPEER=true, a MITM attacker could intercept the tokeninfo
+    // response and inject a fake token that bypasses Google OAuth verification.
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
@@ -190,6 +215,11 @@ if ($method === 'POST' && $action === 'google_login') {
 
     if (empty($email)) {
         jsonResponse(false, null, 'Could not retrieve email from Google');
+    }
+
+    // [SECURITY] Validate email is verified by Google
+    if (($googleData['email_verified'] ?? 'false') !== 'true') {
+        jsonResponse(false, null, 'Google email is not verified. Please verify your Google account first.');
     }
 
     try {
@@ -216,6 +246,7 @@ if ($method === 'POST' && $action === 'google_login') {
         jsonResponse(true, $authData, 'Google login successful');
 
     } catch (Exception $e) {
+        error_log("Org Auth Google Login Error: " . $e->getMessage());
         jsonResponse(false, null, 'System error during Google login');
     }
 }

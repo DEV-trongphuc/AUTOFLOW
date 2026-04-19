@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // Debug script to check timer.php font status
 header('Content-Type: text/html; charset=utf-8');
 
@@ -42,6 +42,8 @@ if (!file_exists($fontPath)) {
         echo "file_get_contents failed, trying cURL...<br>";
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $fontUrl);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // api/system_logs_ultimate.php - THE "BLACK BOX" LOGGER (V1.0)
 // High-visibility dashboard for monitoring all engine logs in real-time.
 
@@ -6,6 +6,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 if (ob_get_length())
     ob_clean();
 header('Content-Type: text/html; charset=utf-8');

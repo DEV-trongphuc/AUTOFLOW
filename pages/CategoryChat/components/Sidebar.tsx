@@ -100,7 +100,7 @@ const Sidebar = React.memo(({
                         <div className="flex items-center gap-2 mt-1.5 opacity-60">
                             <span className="h-3 w-[2px] bg-brand bg-opacity-30 rotate-12"></span>
                             <span className={`text-[9px] font-black uppercase tracking-[0.2em] truncate ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
-                                Power by {categoryName}
+                                Powered by {categoryName}
                             </span>
                         </div>
                     </div>
@@ -186,6 +186,14 @@ const Sidebar = React.memo(({
                         <div className="animate-in fade-in duration-500">
                             <div className="px-4 pb-2 flex items-center justify-between">
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{searchTermSessions ? 'Results' : 'Recent'}</span>
+                                {!searchTermSessions && recentSessions.length > 3 && (
+                                    <button
+                                        onClick={() => setSearchTermSessions('')}
+                                        className="text-[9px] font-black text-brand/60 hover:text-brand uppercase tracking-widest transition-colors"
+                                    >
+                                        Xem thêm
+                                    </button>
+                                )}
                             </div>
                             <div className="space-y-1">
                                 {recentSessions.slice(0, searchTermSessions ? undefined : 3).map(sess => (

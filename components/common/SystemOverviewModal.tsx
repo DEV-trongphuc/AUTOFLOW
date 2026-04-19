@@ -1,8 +1,8 @@
-﻿import React, { useState, useEffect } from 'react';
-import { X, Activity, Server, Zap, Users, ShieldCheck, Mail, Database, Bot, BarChart3, TrendingUp, Globe, Loader2, Sparkles, MessageSquare } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { X, Activity, Server, Zap, Users, ShieldCheck, Mail, Database, Bot, BarChart3, TrendingUp, Globe, Loader2, Sparkles, MessageSquare, ChevronLeft, ChevronRight, Send } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
 import {
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, Legend
 } from 'recharts';
 import Tabs from './Tabs';
 import MetaGrowthReport from '../meta/MetaGrowthReport';
@@ -225,7 +225,10 @@ export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose }) => {
                                 />
                             </div>
 
-                            {/* Chart Area */}
+                            {/* Email Sent Bar Chart */}
+                            <EmailSentChart />
+
+                            {/* Traffic Chart Area */}
                             <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                                 <div className="flex items-center gap-2 mb-6">
                                     <BarChart3 className="w-5 h-5 text-indigo-500" />
@@ -353,6 +356,237 @@ export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose }) => {
         </div>
     );
 }
+
+// ─── Email Sent Chart Component ─────────────────────────────────────────────
+const VI_MONTHS = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+
+const CustomBarTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null;
+    return (
+        <div className="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700">
+            <p className="text-xs text-slate-400 font-bold mb-1">{label}</p>
+            <p className="text-lg font-black text-amber-400">{payload[0].value.toLocaleString()}</p>
+            <p className="text-[10px] text-slate-400 font-medium">email đã gửi</p>
+        </div>
+    );
+};
+
+const EmailSentChart: React.FC = () => {
+    const now = new Date();
+    const [mode, setMode] = useState<'yearly' | 'monthly'>('yearly');
+    const [year, setYear] = useState(now.getFullYear());
+    const [month, setMonth] = useState(now.getMonth() + 1);
+    const [chartData, setChartData] = useState<any[]>([]);
+    const [summary, setSummary] = useState({ total: 0, peak: 0 });
+    const [availableYears, setAvailableYears] = useState<number[]>([now.getFullYear()]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchChart = useCallback(async () => {
+        setLoading(true);
+        try {
+            const url = `overview_stats?route=email_sent_chart&mode=${mode}&year=${year}&month=${month}`;
+            // Cast to `any` — backend returns { success, data, summary, years } at root level
+            // which doesn't match the generic ApiResponse<T> shape (only has success/data/message)
+            const res = await api.get<any>(url) as any;
+            if (res.success) {
+                setChartData(res.data || []);
+                setSummary(res.summary || { total: 0, peak: 0 });
+                if (res.years?.length) setAvailableYears(res.years);
+            }
+        } catch (e) {
+            console.error('[EmailSentChart]', e);
+        } finally {
+            setLoading(false);
+        }
+    }, [mode, year, month]);
+
+    useEffect(() => { fetchChart(); }, [fetchChart]);
+
+    const prevPeriod = () => {
+        if (mode === 'yearly') setYear(y => y - 1);
+        else {
+            if (month === 1) { setMonth(12); setYear(y => y - 1); }
+            else setMonth(m => m - 1);
+        }
+    };
+    const nextPeriod = () => {
+        if (mode === 'yearly') setYear(y => y + 1);
+        else {
+            if (month === 12) { setMonth(1); setYear(y => y + 1); }
+            else setMonth(m => m + 1);
+        }
+    };
+
+    const maxVal = summary.peak || 1;
+
+    return (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            {/* Header */}
+            <div className="px-6 pt-5 pb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-50">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-orange-400/30 flex items-center justify-center">
+                        <Send className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                        <h3 className="font-black text-slate-800 text-sm">Email & ZNS đã gửi</h3>
+                        <p className="text-[11px] text-slate-400 font-medium">
+                            {mode === 'yearly' ? `Năm ${year}` : `${VI_MONTHS[month - 1]} ${year}`}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    {/* Mode switcher */}
+                    <div className="flex p-1 bg-slate-100 rounded-xl border border-slate-200">
+                        <button
+                            onClick={() => setMode('yearly')}
+                            className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
+                                mode === 'yearly' ? 'bg-white shadow text-amber-600' : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                        >Theo tháng</button>
+                        <button
+                            onClick={() => setMode('monthly')}
+                            className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
+                                mode === 'monthly' ? 'bg-white shadow text-amber-600' : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                        >Theo ngày</button>
+                    </div>
+
+                    {/* Period navigator */}
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={prevPeriod}
+                            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+                        ><ChevronLeft className="w-4 h-4" /></button>
+                        
+                        {mode === 'yearly' ? (
+                            <select
+                                value={year}
+                                onChange={e => setYear(Number(e.target.value))}
+                                className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                            >
+                                {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+                            </select>
+                        ) : (
+                            <select
+                                value={month}
+                                onChange={e => setMonth(Number(e.target.value))}
+                                className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                            >
+                                {VI_MONTHS.map((mn, i) => <option key={i+1} value={i+1}>{mn}</option>)}
+                            </select>
+                        )}
+
+                        <button
+                            onClick={nextPeriod}
+                            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+                        ><ChevronRight className="w-4 h-4" /></button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Summary strip */}
+            <div className="grid grid-cols-2 divide-x divide-slate-100 border-b border-slate-100">
+                <div className="px-6 py-3 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
+                        <Send className="w-4 h-4 text-amber-500" />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tổng gửi</p>
+                        <p className="text-xl font-black text-slate-800">{loading ? '—' : summary.total.toLocaleString()}</p>
+                    </div>
+                </div>
+                <div className="px-6 py-3 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center">
+                        <TrendingUp className="w-4 h-4 text-orange-500" />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cao nhất / kỳ</p>
+                        <p className="text-xl font-black text-slate-800">{loading ? '—' : summary.peak.toLocaleString()}</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Chart */}
+            <div className="px-2 pt-4 pb-3 relative" style={{ height: 280 }}>
+                {loading ? (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="flex flex-col items-center gap-2">
+                            <Loader2 className="w-6 h-6 text-amber-500 animate-spin" />
+                            <span className="text-xs text-slate-400 font-medium">Đang tải dữ liệu...</span>
+                        </div>
+                    </div>
+                ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData} margin={{ top: 8, right: 12, left: -10, bottom: 0 }} barCategoryGap="20%">
+                            <defs>
+                                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#f59e0b" stopOpacity={1} />
+                                    <stop offset="100%" stopColor="#ea580c" stopOpacity={0.85} />
+                                </linearGradient>
+                                <linearGradient id="barGradientPeak" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#fbbf24" stopOpacity={1} />
+                                    <stop offset="100%" stopColor="#f97316" stopOpacity={1} />
+                                </linearGradient>
+                                <linearGradient id="barGradientZero" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#e2e8f0" stopOpacity={1} />
+                                    <stop offset="100%" stopColor="#cbd5e1" stopOpacity={1} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <XAxis
+                                dataKey="label"
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fontSize: mode === 'monthly' ? 10 : 12, fill: '#94a3b8', fontWeight: 700 }}
+                                dy={8}
+                                interval={mode === 'monthly' ? 2 : 0}
+                            />
+                            <YAxis
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }}
+                                tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(1)}k` : v}
+                            />
+                            <Tooltip content={<CustomBarTooltip />} cursor={{ fill: 'rgba(245,158,11,0.06)', radius: 6 }} />
+                            <Bar dataKey="sent" radius={[6, 6, 0, 0]} maxBarSize={mode === 'monthly' ? 18 : 48}>
+                                {chartData.map((entry, index) => (
+                                    <Cell
+                                        key={`cell-${index}`}
+                                        fill={
+                                            entry.sent === 0
+                                                ? 'url(#barGradientZero)'
+                                                : entry.sent === maxVal
+                                                ? 'url(#barGradientPeak)'
+                                                : 'url(#barGradient)'
+                                        }
+                                    />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                )}
+            </div>
+
+            {/* Legend */}
+            <div className="px-6 pb-4 flex items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-br from-amber-400 to-orange-500" />
+                    <span className="text-[10px] font-bold text-slate-500">Email / ZNS đã gửi</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-br from-amber-300 to-orange-400 ring-2 ring-amber-300" />
+                    <span className="text-[10px] font-bold text-slate-500">Cao nhất</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-slate-200" />
+                    <span className="text-[10px] font-bold text-slate-400">Không có gửi</span>
+                </div>
+            </div>
+        </div>
+    );
+};
+// ─────────────────────────────────────────────────────────────────────────────
 
 const StatCard = ({ title, value, growth, icon, gradient, trendColor }: any) => {
     return (

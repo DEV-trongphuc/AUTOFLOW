@@ -15,6 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/db_connect.php';
+require_once __DIR__ . '/ai_org_middleware.php';
+
+// [SECURITY] Require authenticated AI Space session before any analytics access
+$currentOrgUser = requireAISpaceAuth();
+
 require_once __DIR__ . '/ai_group_members.php';
 
 $action = $_GET['action'] ?? 'group_stats';

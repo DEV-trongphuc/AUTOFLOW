@@ -8,6 +8,9 @@ export function useSpeech() {
     const recognitionRef = useRef<any>(null);
     const synthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
 
+    // Use a ref for stopListening so recognition callbacks always call the latest version
+    const stopListeningRef = useRef<() => void>(() => {});
+
     useEffect(() => {
         const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
         if (SpeechRecognition) {
@@ -19,13 +22,17 @@ export function useSpeech() {
 
         return () => {
             if (recognitionRef.current) {
-                recognitionRef.current.stop();
+                try { recognitionRef.current.stop(); } catch { /* ignore if already stopped */ }
             }
-            window.speechSynthesis.cancel();
+            // Guard: speechSynthesis may not be available in all environments
+            if (typeof window !== 'undefined' && window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+            }
         };
-    }, []);
+    }, [])
 
     const speakMessage = useCallback((text: string) => {
+        if (!window.speechSynthesis) return;
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'vi-VN';
@@ -41,7 +48,7 @@ export function useSpeech() {
     }, []);
 
     const stopSpeaking = useCallback(() => {
-        window.speechSynthesis.cancel();
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
         setIsSpeaking(false);
     }, []);
 
@@ -66,13 +73,14 @@ export function useSpeech() {
             setRealtimeTranscript(finalTranscript || interimTranscript);
             if (finalTranscript) {
                 onResult(finalTranscript);
-                stopListening();
+                // Use ref to avoid stale closure on stopListening
+                stopListeningRef.current();
             }
         };
 
         recognitionRef.current.onerror = (event: any) => {
             console.error('Speech recognition error:', event.error);
-            stopListening();
+            stopListeningRef.current();
         };
 
         recognitionRef.current.onend = () => {
@@ -88,6 +96,11 @@ export function useSpeech() {
         }
         setIsListening(false);
     }, []);
+
+    // Keep stopListeningRef in sync so recognition callbacks always call the latest version
+    useEffect(() => {
+        stopListeningRef.current = stopListening;
+    }, [stopListening]);
 
     return {
         isListening,

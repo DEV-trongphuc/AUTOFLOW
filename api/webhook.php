@@ -111,18 +111,18 @@ if ($method === 'POST') {
                     $stmt->execute([$zaloOaId]);
                     $oaConfig = $stmt->fetch(PDO::FETCH_ASSOC);
 
+                    // [TRACE] OA lookup result
+                    $traceLog = __DIR__ . '/zalo_debug.log';
+                    file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] Event=$event OA_ID=$zaloOaId User=$zaloUserId MsgID=$eventId OAFound=" . ($oaConfig ? $oaConfig['name'] : 'NULL') . "\n", FILE_APPEND);
+
                     if ($oaConfig) {
                         // [SECURE FIX] Add Idempotency Lock for Zalo Events to prevent duplicate AI triggers
                         $lockName = "zalo_msg_" . md5($eventId);
-                        // [FIX P4-C1] Use prepared statement for GET_LOCK — consistent with track.php pattern.
-                        // $eventId comes from untrusted Zalo webhook payload (msg_id field).
-                        // While md5() prevents direct injection, raw query() with interpolation
-                        // is an unsafe pattern that must be standardized across the codebase.
                         $stmtGetLock = $pdo->prepare("SELECT GET_LOCK(?, 3)");
                         $stmtGetLock->execute([$lockName]);
                         $lockResult = $stmtGetLock->fetchColumn();
                         if ($lockResult !== '1' && $lockResult !== 1) {
-                            // Could not acquire lock — another instance is processing this event
+                            file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ⛔ Lock timeout — concurrent processing\n", FILE_APPEND);
                             echo json_encode(['status' => 'lock_timeout', 'reason' => 'concurrent_processing']);
                             exit;
                         }
@@ -130,11 +130,11 @@ if ($method === 'POST') {
                         $stmtCheck = $pdo->prepare("SELECT id FROM zalo_subscriber_activity WHERE zalo_msg_id = ? LIMIT 1");
                         $stmtCheck->execute([$eventId]);
                         if ($stmtCheck->fetchColumn()) {
-                            // [FIX P4-C1] Use prepared statement for RELEASE_LOCK
-                            $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]);
+                            file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ⛔ Duplicate event, skipping\n", FILE_APPEND);
+                            $pdo->prepare("SELECT RELEASE_LOCK(?)") ->execute([$lockName]);
                             echo json_encode(['status' => 'ignored', 'reason' => 'duplicate']);
                             exit;
-                        }
+                        }  // end idempotency check
 
 
                         if (in_array($event, array_merge(['follow', 'user_submit_info', 'user_reacted_message', 'user_feedback'], $msgEvents))) {
@@ -557,6 +557,8 @@ if ($method === 'POST') {
                             }
                             // ------------------------------------------
 
+                            file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] skipAI=$skipAI event=$event\n", FILE_APPEND);
+
                             if ($event === 'follow') {
                                 $stmtS = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, schedule_type, active_days, start_time, end_time, priority_override, trigger_text FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'welcome' AND status = 'active' LIMIT 1"); // [FIX P38-WH] Explicit columns
                                 $stmtS->execute([$oaConfig['id']]);
@@ -889,13 +891,27 @@ if ($method === 'POST') {
                                 }
 
                                 if (!$scenario && !$skipAI) {
-                                    $stmtAI = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, trigger_text FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' AND (trigger_text IS NULL OR trigger_text = '' OR trigger_text = '*' OR trigger_text = 'default') AND status = 'active' LIMIT 1"); // [FIX P38-WH] Explicit columns
+                                    $stmtAI = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, trigger_text, schedule_type, active_days, start_time, end_time FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' AND (trigger_text IS NULL OR trigger_text = '' OR trigger_text = '*' OR trigger_text = 'default') AND status = 'active' LIMIT 1");
                                     $stmtAI->execute([$oaConfig['id']]);
                                     $rowAI = $stmtAI->fetch(PDO::FETCH_ASSOC);
-                                    if ($rowAI && isScenarioActive($rowAI, $nowTime, $nowDay)) {
-                                        $scenario = $rowAI;
+
+                                    // [TRACE] AI scenario query result
+                                    if ($rowAI) {
+                                        $schedActive = isScenarioActive($rowAI, $nowTime, $nowDay);
+                                        file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] AI row found: id={$rowAI['id']} trigger='" . ($rowAI['trigger_text'] ?? 'NULL') . "' schedule={$rowAI['schedule_type']} isActive=" . ($schedActive ? 'YES' : 'NO') . " nowDay=$nowDay nowTime=$nowTime\n", FILE_APPEND);
+                                        if ($schedActive) {
+                                            $scenario = $rowAI;
+                                        }
+                                    } else {
+                                        // Count ALL ai_reply scenarios regardless of trigger_text to see if there's a mismatch
+                                        $stmtDbg = $pdo->prepare("SELECT id, trigger_text, status, schedule_type FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' LIMIT 5");
+                                        $stmtDbg->execute([$oaConfig['id']]);
+                                        $dbgRows = $stmtDbg->fetchAll(PDO::FETCH_ASSOC);
+                                        $dbgInfo = empty($dbgRows) ? 'NO ai_reply scenarios at all!' : json_encode(array_map(fn($r) => ['trigger' => $r['trigger_text'], 'status' => $r['status']], $dbgRows));
+                                        file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ❌ AI query returned NULL for oa_config_id={$oaConfig['id']}. All ai_reply rows: $dbgInfo\n", FILE_APPEND);
                                     }
                                 }
+
 
                                 // First Message Logic
                                 if (!$scenario) {
@@ -913,15 +929,16 @@ if ($method === 'POST') {
                             }
 
                             if ($scenario && empty($batchProcessedBySibling)) {
+                                file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ✅ Scenario found: " . ($scenario['title'] ?? $scenario['type']) . " → sending reply\n", FILE_APPEND);
                                 if (!empty($subId) && !empty($scenario['id'])) {
                                     logZaloSubscriberActivity($pdo, $subId, 'automation_trigger', $scenario['id'], "Kích hoạt kịch bản: " . ($scenario['title'] ?? 'Auto Response'), $scenario['title'] ?? 'Auto Response', $eventId);
                                 }
-                                // [FIX P33-Z1] Use ensureZaloToken() instead of $oaConfig['access_token'].
-                                // $oaConfig['access_token'] is fetched once at request start and may be
-                                // expired by the time we reach this point (e.g. after 1s debounce sleep).
-                                // ensureZaloToken() auto-refreshes if the token is expired or near-expiry.
                                 $freshScenarioToken = ensureZaloToken($pdo, $oaConfig['id']);
                                 sendZaloScenarioReply($pdo, $zaloUserId, $freshScenarioToken, $scenario, $msgText);
+                            } elseif (empty($batchProcessedBySibling)) {
+                                file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ❌ No scenario matched. skipAI=$skipAI batchSibling=" . (empty($batchProcessedBySibling)?'0':'1') . "\n", FILE_APPEND);
+                            } else {
+                                file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ⛔ batchProcessedBySibling=true — skipped\n", FILE_APPEND);
                             }
                         }
                     }
@@ -1434,6 +1451,7 @@ function upsertZaloSubscriberWebhook($pdo, $zaloUserId, $payload, $oaConfigId, $
                             $pdo->prepare("UPDATE subscribers SET is_zalo_follower = ? WHERE id = ?")->execute([$newIsFollower, $linkedId]);
                         }
                     } catch (Exception $e) {
+                        error_log('[webhook] is_zalo_follower sync failed for subId=' . $subId . ': ' . $e->getMessage());
                     }
                 }
             }

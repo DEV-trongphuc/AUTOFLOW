@@ -48,7 +48,7 @@ if (!function_exists('runWorkerFlow')) {
         $apiUrl = API_BASE_URL;
         // [FIX P37-WF] Replaced SELECT * (returned ALL settings incl. passwords, API keys, large blobs)
         // with targeted column fetch. Only smtp_user is actually used below.
-        $stmt = $pdo->prepare("SELECT `key`, `value` FROM system_settings WHERE `key` IN ('smtp_user','smtp_host')");
+        $stmt = $pdo->prepare("SELECT `key`, `value` FROM system_settings WHERE workspace_id = 0 AND `key` IN ('smtp_user','smtp_host')");
         $stmt->execute();
         $settings = [];
         foreach ($stmt->fetchAll() as $row) {

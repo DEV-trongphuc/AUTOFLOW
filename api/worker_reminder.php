@@ -33,7 +33,7 @@ register_shutdown_function(function () use ($pdo, $lockName) {
 $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
 
 $apiUrl = API_BASE_URL;
-$stmt = $pdo->query("SELECT `key`, `value` FROM system_settings WHERE `key` IN ('smtp_user','smtp_from_email','smtp_from_name','smtp_host','smtp_port','smtp_pass','smtp_secure','ses_region','ses_key','ses_secret','mail_driver')");
+$stmt = $pdo->query("SELECT `key`, `value` FROM system_settings WHERE workspace_id = 0 AND `key` IN ('smtp_user','smtp_from_email','smtp_from_name','smtp_host','smtp_port','smtp_pass','smtp_secure','ses_region','ses_key','ses_secret','mail_driver')");
 $settings = [];
 foreach ($stmt->fetchAll() as $row) {
     $settings[$row['key']] = $row['value'];

@@ -1,5 +1,10 @@
 <?php
-// api/power_trigger.php
+// api/power_trigger.php — CLI-only maintenance script
+// DO NOT expose via HTTP in production
+if (php_sapi_name() !== 'cli') {
+    http_response_code(403);
+    die(json_encode(['error' => 'This script must be run via CLI only.']));
+}
 require_once 'db_connect.php';
 require_once 'Mailer.php';
 require_once 'FlowExecutor.php';
@@ -8,7 +13,8 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 set_time_limit(600);
 
-echo "<pre>--- POWER TRIGGER (V4 - CHAIN EXECUTION) ---\n";
+echo "--- POWER TRIGGER (V4 - CHAIN EXECUTION) ---\n";
+
 
 try {
     $now = date('Y-m-d H:i:s');
@@ -18,7 +24,7 @@ try {
 
     $apiUrl = API_BASE_URL;
     // [FIX P42-PT] SELECT * loaded ALL secrets. Only smtp_user needed for Mailer init.
-    $stmt = $pdo->prepare("SELECT `key`, `value` FROM system_settings WHERE `key` = 'smtp_user'");
+    $stmt = $pdo->prepare("SELECT `key`, `value` FROM system_settings WHERE workspace_id = 0 AND `key` = 'smtp_user'");
     $stmt->execute();
     $settings = [];
     while ($row = $stmt->fetch()) { $settings[$row['key']] = $row['value']; }

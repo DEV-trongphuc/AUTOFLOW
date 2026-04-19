@@ -41,7 +41,16 @@ try {
                     VALUES (?, ?, ?) 
                     ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `updated_at` = NOW()
                 ");
+                // Sensitive fields: skip update if value is empty (prevents accidental wipe)
+                $sensitiveKeys = ['smtp_pass', 'api_key', 'gemini_api_key', 'openai_key', 'secret_key', 'webhook_secret'];
                 foreach ($data as $key => $value) {
+                    $isSensitive = in_array(strtolower($key), $sensitiveKeys) ||
+                                   str_contains(strtolower($key), 'password') ||
+                                   str_contains(strtolower($key), 'secret') ||
+                                   str_contains(strtolower($key), 'api_key');
+                    if ($isSensitive && $value === '') {
+                        continue; // Don't overwrite existing non-empty value with empty
+                    }
                     $stmt->execute([$workspace_id, $key, (string) $value]);
                 }
                 $pdo->commit();

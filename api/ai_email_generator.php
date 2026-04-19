@@ -6,7 +6,7 @@
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS')
   exit;
@@ -17,14 +17,22 @@ if (!file_exists($_base . '/db_connect.php')) {
   $_base = dirname(__DIR__) . '/api';
 }
 require_once $_base . '/db_connect.php';
+require_once $_base . '/auth_middleware.php';
 require_once $_base . '/chat_gemini.php';
+
+// [SECURITY] Require authenticated workspace session — uses workspace Gemini API quota
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    exit;
+}
 
 
 // ── Fetch Gemini API key from system_settings (Cấu hình Trí tuệ Nhân tạo) ──
 function getGeminiKey($pdo)
 {
   // Lấy từ bảng system_settings — cùng nơi lưu khi dùng trang "Cấu hình AI"
-  $stmt = $pdo->prepare("SELECT `value` FROM system_settings WHERE `key` = 'gemini_api_key' LIMIT 1");
+  $stmt = $pdo->prepare("SELECT `value` FROM system_settings WHERE workspace_id = 0 AND `key` = 'gemini_api_key' LIMIT 1");
   $stmt->execute();
   $val = $stmt->fetchColumn();
   if (!empty($val))

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // Set CORS headers FIRST before any other code
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
@@ -10,6 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 require_once 'meta_helpers.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -239,6 +240,14 @@ try {
                 // Preserve existing verify_token if not regenerating
                 if (empty($input['verify_token'])) {
                     $verifyToken = $existing['verify_token'];
+                }
+
+                // [FIX] Preserve existing app_secret if not provided — prevents signature check breakage
+                // Updating a config (e.g. refresh token) without re-entering app_secret should NOT clear it.
+                if (empty($appSecret)) {
+                    $stmtExistSecret = $pdo->prepare("SELECT app_secret FROM meta_app_configs WHERE id = ?");
+                    $stmtExistSecret->execute([$currentId]);
+                    $appSecret = $stmtExistSecret->fetchColumn();
                 }
 
                 $sql = "UPDATE meta_app_configs SET 

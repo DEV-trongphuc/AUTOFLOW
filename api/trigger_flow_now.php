@@ -1,11 +1,12 @@
 <?php
 // api/trigger_flow_now.php
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 
-echo "--- TRIGGERING FLOW WORKER (FORCE) ---\n";
+header('Content-Type: application/json');
 
 try {
     // Gọi worker_flow.php qua URL để nó chạy ngầm

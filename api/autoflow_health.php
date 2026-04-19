@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * AutoFlow Master Health Check v2 — Full-Stack Deep Audit
  * Covers: Code correctness, DB integrity, table health, worker liveness, conflict detection.
@@ -6,6 +6,7 @@
  * DELETE AFTER USE.
  */
 require_once __DIR__ . '/db_connect.php';
+require_once 'auth_middleware.php';
 if (($_GET['admin_token'] ?? '') !== ADMIN_BYPASS_TOKEN) { http_response_code(403); die('Unauthorized'); }
 
 header('Content-Type: application/json; charset=utf-8');

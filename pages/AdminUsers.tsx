@@ -9,6 +9,7 @@ import Button from '../components/common/Button';
 import AuditLogModal from '../components/settings/AuditLogModal';
 import { useIsAdmin } from '../hooks/useAuthUser';
 import { Lock } from 'lucide-react';
+import { api } from '../services/storageAdapter';
 
 
 interface ManagedUser {
@@ -51,10 +52,10 @@ const AdminUsers: React.FC = () => {
 
     const fetchUsers = async () => {
         try {
-            const res = await fetch('/mail_api/admin_users.php?action=list');
-            const result = await res.json();
-            if (result.success) setUsers(result.data);
+            const result = await api.get<{ data: ManagedUser[] }>('admin_users?action=list');
+            if (result.success) setUsers((result as any).data);
         } catch (e) {
+            console.error('[AdminUsers] fetchUsers failed:', e);
             toast.error('Lỗi tải danh sách người dùng');
         }
     };
@@ -70,17 +71,13 @@ const AdminUsers: React.FC = () => {
             setConfirmModal(prev => ({ ...prev, isOpen: false }));
             setIsLoading(true);
             try {
-                const res = await fetch('/mail_api/admin_users.php?action=update_role', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id, role: currentRole === 'admin' ? 'user' : 'admin' })
-                });
-                const result = await res.json();
+                const result = await api.post('admin_users?action=update_role', { id, role: currentRole === 'admin' ? 'user' : 'admin' });
                 if (result.success) {
                     toast.success('Đã cập nhật vai trò người dùng');
                     fetchUsers();
-                } else toast.error(result.message);
+                } else toast.error((result as any).message || 'Lỗi cập nhật vai trò');
             } catch (e) {
+                console.error('[AdminUsers] toggleRole failed:', e);
                 toast.error('Lỗi kết nối');
             } finally {
                 setIsLoading(false);
@@ -120,18 +117,15 @@ const AdminUsers: React.FC = () => {
 
         setIsLoading(true);
         try {
-            const res = await fetch('/mail_api/admin_users.php?action=update_status', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, status: currentStatus === 'approved' ? 'pending' : 'approved' })
-            });
-            const result = await res.json();
+            const result = await api.post('admin_users?action=update_status', { id, status: currentStatus === 'approved' ? 'pending' : 'approved' });
             if (result.success) {
                 toast.success('Đã cập nhật trạng thái người dùng');
                 fetchUsers();
-            } else toast.error(result.message);
-        } catch (e) { toast.error('Lỗi kết nối'); }
-        finally { setIsLoading(false); }
+            } else toast.error((result as any).message || 'Lỗi cập nhật trạng thái');
+        } catch (e) {
+            console.error('[AdminUsers] toggleStatus failed:', e);
+            toast.error('Lỗi kết nối');
+        } finally { setIsLoading(false); }
     };
 
     const handleApproveUser = async (user: ManagedUser) => {
@@ -151,21 +145,22 @@ const AdminUsers: React.FC = () => {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 setIsLoading(true);
                 try {
-                    const res = await fetch(`/mail_api/admin_users.php?action=delete&id=${id}`, { method: 'POST' });
-                    const result = await res.json();
+                    const result = await api.post(`admin_users?action=delete&id=${id}`, {});
                     if (result.success) {
                         toast.success('Đã xóa người dùng');
                         fetchUsers();
-                    } else toast.error(result.message);
-                } catch (e) { toast.error('Lỗi kết nối'); }
-                finally { setIsLoading(false); }
+                    } else toast.error((result as any).message || 'Lỗi xóa người dùng');
+                } catch (e) {
+                    console.error('[AdminUsers] delete failed:', e);
+                    toast.error('Lỗi kết nối');
+                } finally { setIsLoading(false); }
             }
         });
     };
 
     const filteredUsers = users.filter(u =>
-        u.name.toLowerCase().includes(search.toLowerCase()) ||
-        u.email.toLowerCase().includes(search.toLowerCase())
+        u.name?.toLowerCase().includes(search.toLowerCase()) ||
+        u.email?.toLowerCase().includes(search.toLowerCase())
     );
 
     const navigate = useNavigate();
@@ -175,7 +170,7 @@ const AdminUsers: React.FC = () => {
     if (!isAdmin) {
         return (
             <div className="min-h-[70vh] flex items-center justify-center p-8">
-                <div className="text-center max-w-sm">
+                <div className="text-center max-sm">
                     <div className="w-20 h-20 rounded-3xl bg-rose-50 flex items-center justify-center mx-auto mb-6">
                         <Lock className="w-10 h-10 text-rose-400" />
                     </div>
@@ -278,16 +273,26 @@ const AdminUsers: React.FC = () => {
                                     <td className="px-8 py-5">
                                         <div className="flex items-center gap-2 text-slate-500">
                                             <Calendar className="w-3.5 h-3.5" />
-                                            <span className="text-[11px] font-bold">{(user.last_login || user.lastLogin) ? new Date(user.last_login || user.lastLogin).toLocaleString('vi-VN') : 'Chưa đăng nhập'}</span>
+                                            <span className="text-[11px] font-bold">{(user.last_login || user.lastLogin) ? new Date(user.last_login || user.lastLogin!).toLocaleString('vi-VN') : 'Chưa đăng nhập'}</span>
                                         </div>
                                     </td>
                                     <td className="px-8 py-5 text-right">
-                                        <button
-                                            onClick={() => handleDelete(user.email, user.id)}
-                                            className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
+                                        <div className="flex items-center gap-2 justify-end">
+                                            <button
+                                                onClick={() => handleToggleRole(user.email, user.role, user.id)}
+                                                className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-xl transition-all"
+                                                title="Thay đổi quyền"
+                                            >
+                                                <Shield className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(user.email, user.id)}
+                                                className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                                                title="Xóa người dùng"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -334,7 +339,7 @@ const AdminUsers: React.FC = () => {
                         <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl">
                             <div className="flex items-start gap-3">
                                 <AlertTriangle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-                                <p className="text-xs text-blue-800 font-medium leading-relaxed">Người dùng này đang chạy được phê duyệt để truy cập vào hệ thống. Bạn có thể chọn phê duyệt ngay hoặc từ chối để xóa người dùng này.</p>
+                                <p className="text-xs text-blue-800 font-medium leading-relaxed">Người dùng này đang chờ được phê duyệt để truy cập vào hệ thống. Bạn có thể chọn phê duyệt ngay hoặc từ chối để xóa người dùng này.</p>
                             </div>
                         </div>
 
@@ -382,4 +387,3 @@ const AdminUsers: React.FC = () => {
 };
 
 export default AdminUsers;
-

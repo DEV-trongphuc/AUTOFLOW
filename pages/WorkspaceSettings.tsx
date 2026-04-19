@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import toast from 'react-hot-toast';
 import { Users, Shield, Plus, Trash2, ShieldAlert, KeyRound, ChevronDown, Check, AlertTriangle, X } from 'lucide-react';
 import PageHero from '../components/common/PageHero';
 import Tabs from '../components/common/Tabs';
@@ -182,15 +183,15 @@ const WorkspaceSettings: React.FC = () => {
                 role_id: newUserRole
             });
             if (res.success) {
+                toast.success('Đã mời thành viên thành công!');
                 setIsAddModalOpen(false);
                 setNewUserEmail('');
                 fetchData();
-                // We can use a nice toast here eventually
             } else {
-                alert(res.message || "Không thể thêm nhân sự.");
+                toast.error(res.message || 'Không thể thêm nhân sự.');
             }
         } catch (error) {
-            alert("Đã xảy ra lỗi hệ thống.");
+            toast.error('Đã xảy ra lỗi hệ thống.');
         } finally {
             setIsSubmitting(false);
         }
@@ -208,9 +209,12 @@ const WorkspaceSettings: React.FC = () => {
                 try {
                     const res = await api.post(`workspaces?action=remove_user&workspace_id=${currentWorkspace?.id}`, { mapping_id });
                     if (res.success) {
+                        toast.success('Đã xóa thành viên khỏi workspace.');
                         setMembers(prev => prev.filter(m => m.mapping_id !== mapping_id));
+                    } else {
+                        toast.error((res as any).message || 'Lỗi khi xóa thành viên.');
                     }
-                } catch (err) { }
+                } catch (err) { console.error('[WorkspaceSettings] remove_user failed:', err); toast.error('Lỗi kết nối máy chủ.'); }
             }
         });
     };
@@ -232,9 +236,12 @@ const WorkspaceSettings: React.FC = () => {
                         mapping_id, role_id: new_role_id
                     });
                     if (res.success && roleObj) {
+                        toast.success(`Đã cập nhật chức vụ thành [${roleObj.name}].`);
                         setMembers(prev => prev.map(m => m.mapping_id === mapping_id ? { ...m, role_id: new_role_id, role_name: roleObj.name } : m));
+                    } else {
+                        toast.error((res as any).message || 'Lỗi khi cập nhật chức vụ.');
                     }
-                } catch (error) { }
+                } catch (error) { console.error('[WorkspaceSettings] update_user failed:', error); toast.error('Lỗi kết nối máy chủ.'); }
             }
         });
     };

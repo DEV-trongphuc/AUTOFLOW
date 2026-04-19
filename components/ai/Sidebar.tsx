@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Bot, ChevronDown, CornerDownRight, Plus, Zap, LayoutGrid, Database, Search, Trash2, Settings, LogOut, Pin, Keyboard } from 'lucide-react';
 import { ChatbotInfo, ChatSession } from '../../types';
@@ -225,6 +225,8 @@ const Sidebar = React.memo(({
         return location.pathname.includes('/organization') || window.location.hash.includes('/organization');
     }, [location]);
 
+    const [showAllRecent, setShowAllRecent] = useState(false);
+
     return (
         <aside className={`
             fixed inset-y-0 left-0 z-50 w-[275px] border-r transform transition-all duration-500 ease-in-out lg:relative lg:translate-x-0
@@ -249,7 +251,7 @@ const Sidebar = React.memo(({
                         <div className="flex items-center gap-2 mt-1.5 opacity-60">
                             <span className="h-3 w-[2px] bg-brand bg-opacity-30 rotate-12"></span>
                             <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] truncate">
-                                Power by {categoryName}
+                                Powered by {categoryName}
                             </span>
                         </div>
                     </div>
@@ -320,9 +322,17 @@ const Sidebar = React.memo(({
                         <div className="animate-in fade-in duration-500">
                             <div className="px-4 pb-2 flex items-center justify-between">
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{searchTermSessions ? 'Results' : 'Recent'}</span>
+                                {!searchTermSessions && recentSessions.length > 3 && (
+                                    <button
+                                        onClick={() => setShowAllRecent(v => !v)}
+                                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md transition-colors ${isDarkTheme ? 'bg-slate-800 text-slate-400 hover:text-slate-200' : 'bg-slate-100 text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        {showAllRecent ? 'Thu gọn' : `Xem thêm (${recentSessions.length - 3})`}
+                                    </button>
+                                )}
                             </div>
                             <div className="space-y-1">
-                                {recentSessions.slice(0, searchTermSessions ? undefined : 3).map(sess => {
+                                {recentSessions.slice(0, searchTermSessions ? undefined : (showAllRecent ? undefined : 3)).map(sess => {
                                     const isSessionActive = sessionId === sess.id && viewMode === 'chat' && !isOrganizationView;
                                     const isPinned = pinnedSessionIds?.has(String(sess.id)) || (sess.visitorId && pinnedSessionIds?.has(String(sess.visitorId)));
                                     return (

@@ -1,11 +1,14 @@
-﻿<?php
+<?php
 // api/redeem_voucher.php
 require_once 'bootstrap.php';
 initializeSystem($pdo);
+require_once 'auth_middleware.php';
 
-// Temporarily require login, or you can implement a static API_KEY later.
-require_once 'AuthMiddleware.php';
-AuthMiddleware::check();
+// [SECURITY] Require authenticated workspace session
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    jsonResponse(false, null, 'Unauthorized');
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonResponse(false, null, 'Method not allowed');

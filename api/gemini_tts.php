@@ -1,4 +1,5 @@
-<?php
+﻿<?php
+require_once 'auth_middleware.php';
 // api/gemini_tts.php
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
@@ -73,6 +74,8 @@ try {
     // Faster connection
     curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
     curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
 
     $response = curl_exec($ch);

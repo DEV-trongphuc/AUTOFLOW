@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // api/gemini_image_generator.php
 // Gemini Nano Banana Image Generation Handler
 
@@ -110,6 +110,8 @@ function generateGeminiImage($prompt, $apiKey, $model = 'gemini-2.5-flash-lite-i
     curl_setopt($ch, CURLOPT_ENCODING, 'gzip');
     curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
     curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [SECURITY] Enforce TLS
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

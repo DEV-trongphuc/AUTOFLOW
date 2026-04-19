@@ -135,6 +135,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
                         if (isDocWorkspaceOpen && globalTab === 'files') {
                             setIsDocWorkspaceOpen(false);
                         } else {
+                            // If workspace is already open but on images tab → switch to files tab
                             setIsDocWorkspaceOpen(true);
                             setGlobalTab('files');
                         }

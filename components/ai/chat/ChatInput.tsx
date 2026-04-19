@@ -150,11 +150,13 @@ const ChatInput: React.FC<ChatInputProps> = React.memo(({
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder={
-                            isResearchMode
-                                ? "Nghiên cứu kiến thức bên ngoài (Research Mode)..."
-                                : isKbOnlyMode
-                                    ? `Message ${activeBot?.name}...`
-                                    : `Message ${activeBot?.name || 'AI Assistant'}...`
+                            isImageGenMode
+                                ? "Mô tả hình ảnh bạn muốn tạo..."
+                                : isResearchMode
+                                    ? "Nghiên cứu kiến thức bên ngoài (Research Mode)..."
+                                    : isKbOnlyMode
+                                        ? `Message ${activeBot?.name}...`
+                                        : `Message ${activeBot?.name || 'AI Assistant'}...`
                         }
                         className={`w-full bg-transparent border-0 focus:ring-0 outline-none focus:outline-none py-2 px-2 text-[15px] leading-relaxed resize-none transition-all font-medium selection:bg-brand selection:text-white ${isDarkTheme ? 'text-white placeholder:text-slate-500/50' : 'text-slate-700 placeholder:text-slate-300'}`}
                         style={{ minHeight: '40px', maxHeight: '200px' }}
@@ -386,19 +388,19 @@ const ChatInput: React.FC<ChatInputProps> = React.memo(({
                                 <>
                                     <div className="fixed inset-0 z-40" onClick={() => setIsMoreMenuOpen(false)} />
                                     <div className={`absolute bottom-full right-0 mb-3 w-64 border rounded-2xl shadow-2xl overflow-hidden z-50 p-1.5 space-y-1 animate-in fade-in slide-in-from-bottom-2 duration-300 ${isDarkTheme ? 'bg-[#0D1117] border-slate-700' : 'bg-white border-slate-200'}`}>
-                                        <button onClick={() => setIsKbOnlyMode(!isKbOnlyMode)} className={`w-full px-4 py-3 rounded-xl flex items-center justify-between transition-colors ${isKbOnlyMode ? 'bg-brand/5' : (isDarkTheme ? 'hover:bg-slate-800' : 'hover:bg-slate-50')}`}>
+                                        <button onClick={() => { setIsKbOnlyMode(!isKbOnlyMode); if (!isKbOnlyMode) setIsResearchMode(false); }} className={`w-full px-4 py-3 rounded-xl flex items-center justify-between transition-colors ${isKbOnlyMode ? 'bg-brand/5' : (isDarkTheme ? 'hover:bg-slate-800' : 'hover:bg-slate-50')}`}>
                                             <div className="flex items-center gap-3">
                                                 <Database className={`w-4 h-4 ${isKbOnlyMode ? 'text-emerald-500' : 'text-slate-400'}`} />
                                                 <span className={`text-[13px] font-bold ${isKbOnlyMode ? (isDarkTheme ? 'text-white' : 'text-slate-900') : 'text-slate-500'}`}>Chế độ Kiến thức (Knowledge Mode)</span>
                                             </div>
-                                            <ToggleSwitch active={isKbOnlyMode} onClick={() => setIsKbOnlyMode(!isKbOnlyMode)} isDarkTheme={isDarkTheme} />
+                                            <ToggleSwitch active={isKbOnlyMode} onClick={() => { setIsKbOnlyMode(!isKbOnlyMode); if (!isKbOnlyMode) setIsResearchMode(false); }} isDarkTheme={isDarkTheme} />
                                         </button>
-                                        <button onClick={() => setIsResearchMode(!isResearchMode)} className={`w-full px-4 py-3 rounded-xl flex items-center justify-between transition-colors ${isResearchMode ? 'bg-brand/5' : (isDarkTheme ? 'hover:bg-slate-800' : 'hover:bg-slate-50')}`}>
+                                        <button onClick={() => { setIsResearchMode(!isResearchMode); if (!isResearchMode) setIsKbOnlyMode(false); }} className={`w-full px-4 py-3 rounded-xl flex items-center justify-between transition-colors ${isResearchMode ? 'bg-brand/5' : (isDarkTheme ? 'hover:bg-slate-800' : 'hover:bg-slate-50')}`}>
                                             <div className="flex items-center gap-3">
                                                 <Globe className={`w-4 h-4 ${isResearchMode ? 'text-sky-500' : 'text-slate-400'}`} />
                                                 <span className={`text-[13px] font-bold ${isResearchMode ? (isDarkTheme ? 'text-white' : 'text-slate-900') : 'text-slate-500'}`}>Chế độ Nghiên cứu (Research Mode)</span>
                                             </div>
-                                            <ToggleSwitch active={isResearchMode} onClick={() => setIsResearchMode(!isResearchMode)} isDarkTheme={isDarkTheme} />
+                                            <ToggleSwitch active={isResearchMode} onClick={() => { setIsResearchMode(!isResearchMode); if (!isResearchMode) setIsKbOnlyMode(false); }} isDarkTheme={isDarkTheme} />
                                         </button>
                                         <button onClick={() => setAutoTTS(!autoTTS)} className={`w-full px-4 py-3 rounded-xl flex items-center justify-between transition-colors ${autoTTS ? 'bg-brand/5' : (isDarkTheme ? 'hover:bg-slate-800' : 'hover:bg-slate-50')}`}>
                                             <div className="flex items-center gap-3">

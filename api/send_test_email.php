@@ -7,7 +7,15 @@ ini_set('display_errors', 0);
 header('Content-Type: application/json; charset=utf-8');
 
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 require_once 'Mailer.php';
+
+// [SECURITY] Require authenticated workspace session — SMTP credentials must not be accessible unauthenticated
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    exit;
+}
 
 // --- RATE LIMITING: Max 5 test emails per IP per 10 minutes ---
 // [FIX] Prevent SMTP abuse — unauthenticated endpoint can be hammered without this guard.

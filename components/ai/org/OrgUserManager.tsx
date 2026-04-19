@@ -262,7 +262,7 @@ const OrgUserManager: React.FC<OrgUserManagerProps> = ({ initialEditUserId, cate
                                 {loading && users.length === 0 ? (
                                     <tr><td colSpan={4} className="p-12 text-center text-slate-400 font-medium italic">Loading database...</td></tr>
                                 ) : filteredUsers.length === 0 ? (
-                                    <tr><td colSpan={4} className="p-12 text-center text-slate-400 font-medium italic">No users found for "{searchTerm}"</td></tr>
+                                    <tr><td colSpan={4} className="p-12 text-center text-slate-400 font-medium italic">{searchTerm ? `No users found for "${searchTerm}"` : 'No users have been added yet.'}</td></tr>
                                 ) : filteredUsers.map(user => (
                                     <tr key={user.id} className={`transition-colors group ${isDarkTheme ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50/50'}`}>
                                         <td className="px-6 py-4">

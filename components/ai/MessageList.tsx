@@ -132,6 +132,159 @@ const MemoizedContent = React.memo(({
     );
 });
 
+const MemoizedEmptyState = React.memo(({
+    isCodeMode,
+    isImageGenMode,
+    isResearchMode,
+    isKbOnlyMode,
+    setIsCodeMode,
+    setIsImageGenMode,
+    setIsResearchMode,
+    setIsKbOnlyMode,
+    setIsImageSettingsOpen,
+    activeBot,
+    isDarkTheme
+}: {
+    isCodeMode: boolean;
+    isImageGenMode: boolean;
+    isResearchMode: boolean;
+    isKbOnlyMode: boolean;
+    setIsCodeMode: (val: boolean) => void;
+    setIsImageGenMode: (val: boolean) => void;
+    setIsResearchMode: (val: boolean) => void;
+    setIsKbOnlyMode: (val: boolean) => void;
+    setIsImageSettingsOpen?: (val: boolean) => void;
+    activeBot?: ChatbotInfo;
+    isDarkTheme?: boolean;
+}) => {
+    const modes = [
+        {
+            id: 'standard',
+            title: 'Trò chuyện Chuẩn',
+            desc: 'Hội thoại thông minh, đa năng và nhanh chóng.',
+            icon: <Sparkles className="w-5 h-5 text-brand" />,
+            active: !isCodeMode && !isImageGenMode && !isResearchMode,
+            onClick: () => {
+                setIsCodeMode(false);
+                setIsImageGenMode(false);
+                setIsResearchMode(false);
+                setIsKbOnlyMode(true);
+            }
+        },
+        {
+            id: 'research',
+            title: 'Chế độ Nghiên cứu',
+            desc: 'Truy cập Internet Thời gian thực để cập nhật tin tức mới nhất.',
+            icon: <Globe className="w-5 h-5 text-brand" />,
+            active: isResearchMode,
+            onClick: () => {
+                setIsResearchMode(true);
+                setIsCodeMode(false);
+                setIsImageGenMode(false);
+                setIsKbOnlyMode(false);
+            }
+        },
+        {
+            id: 'code',
+            title: 'Chế độ Code',
+            desc: 'Tự động trích xuất và lưu mã nguồn vào Workspace của bạn.',
+            icon: <FileCode className="w-5 h-5 text-brand" />,
+            active: isCodeMode,
+            onClick: () => {
+                setIsCodeMode(true);
+                setIsImageGenMode(false);
+                setIsResearchMode(false);
+                setIsKbOnlyMode(false);
+            }
+        },
+        {
+            id: 'image',
+            title: 'Chế độ Hình ảnh',
+            desc: 'Tạo ảnh nghệ thuật và quản lý thư vận hành ảnh AI.',
+            icon: <ImageIcon className="w-5 h-5 text-brand" />,
+            active: isImageGenMode,
+            onClick: () => {
+                setIsImageGenMode(true);
+                setIsCodeMode(false);
+                setIsResearchMode(false);
+                setIsKbOnlyMode(false);
+                if (setIsImageSettingsOpen) setIsImageSettingsOpen(true);
+            }
+        }
+    ];
+
+    return (
+        <div className="max-w-4xl mx-auto px-4 py-12 flex flex-col items-center animate-in fade-in duration-700">
+            <div className="w-20 h-20 rounded-[28px] bg-gradient-to-br from-brand to-brand-accent flex items-center justify-center text-white shadow-2xl shadow-brand/20 mb-8 animate-in zoom-in duration-700">
+                {activeBot?.settings?.bot_avatar ? (
+                    <img src={activeBot.settings.bot_avatar} className="w-full h-full object-cover rounded-[28px]" alt="Avatar" />
+                ) : (
+                    <Bot className="w-10 h-10" />
+                )}
+            </div>
+
+            <h2 className={`text-3xl font-black mb-3 tracking-tight text-center animate-in fade-in slide-in-from-bottom-2 duration-700 delay-100 ${isDarkTheme ? 'text-slate-100' : 'text-slate-900'}`}>
+                Sẵn sàng trợ giúp, {activeBot?.name || 'AI Assistant'}
+            </h2>
+            <p className={`font-medium mb-12 text-center max-w-lg animate-in fade-in slide-in-from-bottom-2 duration-700 delay-200 ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
+                Hãy bắt đầu một cuộc hội thoại mới hoặc chọn một chế độ chuyên dụng bên dưới để tối ưu hiệu quả công việc.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
+                {modes.map((mode) => (
+                    <button
+                        key={mode.id}
+                        onClick={mode.onClick}
+                        className={`group p-5 rounded-3xl border-2 transition-all duration-300 text-left flex gap-4 items-start ${mode.active && mode.id !== 'standard'
+                            ? (isDarkTheme ? 'bg-slate-800 border-slate-600 shadow-xl scale-[1.02]' : 'bg-white border-slate-200 shadow-xl scale-[1.02]')
+                            : (isDarkTheme ? 'bg-slate-800/50 border-slate-700 hover:border-slate-600 hover:bg-slate-800 hover:shadow-lg' : 'bg-slate-50/50 border-slate-100 hover:border-slate-200 hover:bg-white hover:shadow-lg')
+                            }`}
+                    >
+                        <div className={`p-3 rounded-2xl shrink-0 transition-transform group-hover:scale-110 duration-300 ${mode.active && mode.id !== 'standard' ? 'bg-brand/10' : (isDarkTheme ? 'bg-slate-700 shadow-sm border border-slate-600' : 'bg-white shadow-sm border border-slate-100')
+                            }`}>
+                            {mode.icon}
+                        </div>
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                                <h4 className={`font-bold text-sm ${mode.active && mode.id !== 'standard' ? 'text-brand' : (isDarkTheme ? 'text-slate-200' : 'text-slate-800')}`}>
+                                    {mode.title}
+                                </h4>
+                                {mode.active && mode.id !== 'standard' && (
+                                    <div className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
+                                )}
+                            </div>
+                            <p className={`text-xs leading-relaxed font-medium ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
+                                {mode.desc}
+                            </p>
+                        </div>
+                    </button>
+                ))}
+            </div>
+
+            <div className="mt-12 flex flex-wrap justify-center gap-6 animate-in fade-in duration-1000 delay-700">
+                <div className={`flex items-center gap-2 grayscale hover:grayscale-0 transition-all opacity-40 hover:opacity-100 cursor-default`}>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDarkTheme ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-500/10 text-blue-600'}`}>
+                        <FileText className="w-4 h-4" />
+                    </div>
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkTheme ? 'text-slate-400' : 'text-slate-600'}`}>Phân tích Tài liệu</span>
+                </div>
+                <div className={`flex items-center gap-2 grayscale hover:grayscale-0 transition-all opacity-40 hover:opacity-100 cursor-default`}>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDarkTheme ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-500/10 text-emerald-600'}`}>
+                        <Globe className="w-4 h-4" />
+                    </div>
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkTheme ? 'text-slate-400' : 'text-slate-600'}`}>Kết nối Internet</span>
+                </div>
+                <div className={`flex items-center gap-2 grayscale hover:grayscale-0 transition-all opacity-40 hover:opacity-100 cursor-default`}>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDarkTheme ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-500/10 text-violet-600'}`}>
+                        <Sparkles className="w-4 h-4" />
+                    </div>
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkTheme ? 'text-slate-400' : 'text-slate-600'}`}>Prompt thông minh</span>
+                </div>
+            </div>
+        </div>
+    );
+});
+
 const MessageList = React.memo(({
     messages,
     activeBot,
@@ -246,157 +399,6 @@ const MessageList = React.memo(({
         }
     }, [messages.length, rowVirtualizer, activeBot?.id]);
 
-    const MemoizedEmptyState = React.memo(({
-        isCodeMode,
-        isImageGenMode,
-        isResearchMode,
-        isKbOnlyMode,
-        setIsCodeMode,
-        setIsImageGenMode,
-        setIsResearchMode,
-        setIsKbOnlyMode,
-        setIsImageSettingsOpen,
-        activeBot
-    }: {
-        isCodeMode: boolean;
-        isImageGenMode: boolean;
-        isResearchMode: boolean;
-        isKbOnlyMode: boolean;
-        setIsCodeMode: (val: boolean) => void;
-        setIsImageGenMode: (val: boolean) => void;
-        setIsResearchMode: (val: boolean) => void;
-        setIsKbOnlyMode: (val: boolean) => void;
-        setIsImageSettingsOpen?: (val: boolean) => void;
-        activeBot?: ChatbotInfo;
-    }) => {
-        const modes = [
-            {
-                id: 'standard',
-                title: 'Trò chuyện Chuẩn',
-                desc: 'Hội thoại thông minh, đa năng và nhanh chóng.',
-                icon: <Sparkles className="w-5 h-5 text-brand" />,
-                active: !isCodeMode && !isImageGenMode && !isResearchMode,
-                onClick: () => {
-                    setIsCodeMode(false);
-                    setIsImageGenMode(false);
-                    setIsResearchMode(false);
-                    setIsKbOnlyMode(true);
-                }
-            },
-            {
-                id: 'research',
-                title: 'Chế độ Nghiên cứu',
-                desc: 'Truy cập Internet Thời gian thực để cập nhật tin tức mới nhất.',
-                icon: <Globe className="w-5 h-5 text-brand" />,
-                active: isResearchMode,
-                onClick: () => {
-                    setIsResearchMode(true);
-                    setIsCodeMode(false);
-                    setIsImageGenMode(false);
-                    setIsKbOnlyMode(false);
-                }
-            },
-            {
-                id: 'code',
-                title: 'Chế độ Code',
-                desc: 'Tự động trích xuất và lưu mã nguồn vào Workspace của bạn.',
-                icon: <FileCode className="w-5 h-5 text-brand" />,
-                active: isCodeMode,
-                onClick: () => {
-                    setIsCodeMode(true);
-                    setIsImageGenMode(false);
-                    setIsResearchMode(false);
-                    setIsKbOnlyMode(false);
-                }
-            },
-            {
-                id: 'image',
-                title: 'Chế độ Hình ảnh',
-                desc: 'Tạo ảnh nghệ thuật và quản lý thư vận hành ảnh AI.',
-                icon: <ImageIcon className="w-5 h-5 text-brand" />,
-                active: isImageGenMode,
-                onClick: () => {
-                    setIsImageGenMode(true);
-                    setIsCodeMode(false);
-                    setIsResearchMode(false);
-                    setIsKbOnlyMode(false);
-                    if (setIsImageSettingsOpen) setIsImageSettingsOpen(true);
-                }
-            }
-        ];
-
-        return (
-            <div className="max-w-4xl mx-auto px-4 py-12 flex flex-col items-center animate-in fade-in duration-700">
-                <div className="w-20 h-20 rounded-[28px] bg-gradient-to-br from-brand to-brand-accent flex items-center justify-center text-white shadow-2xl shadow-brand/20 mb-8 animate-in zoom-in duration-700">
-                    {activeBot?.settings?.bot_avatar ? (
-                        <img src={activeBot.settings.bot_avatar} className="w-full h-full object-cover rounded-[28px]" alt="Avatar" />
-                    ) : (
-                        <Bot className="w-10 h-10" />
-                    )}
-                </div>
-
-                <h2 className={`text-3xl font-black mb-3 tracking-tight text-center animate-in fade-in slide-in-from-bottom-2 duration-700 delay-100 ${isDarkTheme ? 'text-slate-100' : 'text-slate-900'}`}>
-                    Sẵn sàng trợ giúp, {activeBot?.name || 'AI Assistant'}
-                </h2>
-                <p className={`font-medium mb-12 text-center max-w-lg animate-in fade-in slide-in-from-bottom-2 duration-700 delay-200 ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
-                    Hãy bắt đầu một cuộc hội thoại mới hoặc chọn một chế độ chuyên dụng bên dưới để tối ưu hiệu quả công việc.
-                </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
-                    {modes.map((mode) => (
-                        <button
-                            key={mode.id}
-                            onClick={mode.onClick}
-                            className={`group p-5 rounded-3xl border-2 transition-all duration-300 text-left flex gap-4 items-start ${mode.active && mode.id !== 'standard'
-                                ? (isDarkTheme ? 'bg-slate-800 border-slate-600 shadow-xl scale-[1.02]' : 'bg-white border-slate-200 shadow-xl scale-[1.02]')
-                                : (isDarkTheme ? 'bg-slate-800/50 border-slate-700 hover:border-slate-600 hover:bg-slate-800 hover:shadow-lg' : 'bg-slate-50/50 border-slate-100 hover:border-slate-200 hover:bg-white hover:shadow-lg')
-                                }`}
-                        >
-                            <div className={`p-3 rounded-2xl shrink-0 transition-transform group-hover:scale-110 duration-300 ${mode.active && mode.id !== 'standard' ? 'bg-brand/10' : (isDarkTheme ? 'bg-slate-700 shadow-sm border border-slate-600' : 'bg-white shadow-sm border border-slate-100')
-                                }`}>
-                                {mode.icon}
-                            </div>
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <h4 className={`font-bold text-sm ${mode.active && mode.id !== 'standard' ? 'text-brand' : (isDarkTheme ? 'text-slate-200' : 'text-slate-800')}`}>
-                                        {mode.title}
-                                    </h4>
-                                    {mode.active && mode.id !== 'standard' && (
-                                        <div className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
-                                    )}
-                                </div>
-                                <p className={`text-xs leading-relaxed font-medium ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
-                                    {mode.desc}
-                                </p>
-                            </div>
-                        </button>
-                    ))}
-                </div>
-
-                <div className="mt-12 flex flex-wrap justify-center gap-6 animate-in fade-in duration-1000 delay-700">
-                    <div className={`flex items-center gap-2 grayscale hover:grayscale-0 transition-all opacity-40 hover:opacity-100 cursor-default`}>
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDarkTheme ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-500/10 text-blue-600'}`}>
-                            <FileText className="w-4 h-4" />
-                        </div>
-                        <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkTheme ? 'text-slate-400' : 'text-slate-600'}`}>Phân tích Tài liệu</span>
-
-                    </div>
-                    <div className={`flex items-center gap-2 grayscale hover:grayscale-0 transition-all opacity-40 hover:opacity-100 cursor-default`}>
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDarkTheme ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-500/10 text-emerald-600'}`}>
-                            <Globe className="w-4 h-4" />
-                        </div>
-                        <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkTheme ? 'text-slate-400' : 'text-slate-600'}`}>Kết nối Internet</span>
-                    </div>
-                    <div className={`flex items-center gap-2 grayscale hover:grayscale-0 transition-all opacity-40 hover:opacity-100 cursor-default`}>
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDarkTheme ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-500/10 text-violet-600'}`}>
-                            <Sparkles className="w-4 h-4" />
-                        </div>
-                        <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkTheme ? 'text-slate-400' : 'text-slate-600'}`}>Prompt thông minh</span>
-                    </div>
-                </div>
-            </div>
-        );
-    });
 
     return (
         <div
@@ -416,6 +418,7 @@ const MessageList = React.memo(({
                     setIsKbOnlyMode={setIsKbOnlyMode}
                     setIsImageSettingsOpen={setIsImageSettingsOpen}
                     activeBot={activeBot}
+                    isDarkTheme={isDarkTheme}
                 />
             ) : (
                 <div
@@ -464,7 +467,7 @@ const MessageList = React.memo(({
                                 {/* Message Body Container */}
                                 <div className={`flex flex-col max-w-[90%] md:max-w-[85%] ${isUser ? 'items-end' : 'items-start'}`}>
                                     <div className="flex items-center gap-2 mb-1.5 opacity-50 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                                        {isUser ? 'You' : activeBot?.name || 'AI Assistant'}
+                                        {isUser ? 'Bạn' : activeBot?.name || 'AI Assistant'}
                                     </div>
 
                                     <div className={`
@@ -618,10 +621,10 @@ const MessageList = React.memo(({
                                                             <div className="absolute -inset-4 bg-brand bg-opacity-20 rounded-full blur-2xl animate-pulse -z-10" />
                                                         </div>
                                                         <div className="flex flex-col items-center gap-1.5">
-                                                            <span className="text-[13px] font-black text-slate-800 uppercase tracking-widest">Nano Banana Pro</span>
+                                                            <span className="text-[13px] font-black text-slate-800 uppercase tracking-widest">AI Image Studio</span>
                                                             <span className="text-[11px] font-bold text-brand flex items-center gap-2">
                                                                 <span className="w-1.5 h-1.5 rounded-full bg-brand animate-ping" />
-                                                                Materializing your imagination...
+                                                                Đang tạo hình ảnh...
                                                             </span>
                                                         </div>
                                                         <div className="w-48 h-1.5 bg-slate-200 rounded-full overflow-hidden mt-2">

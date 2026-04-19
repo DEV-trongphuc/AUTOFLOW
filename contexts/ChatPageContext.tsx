@@ -299,14 +299,15 @@ export const ChatPageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
                 setOrgUser(userData);
                 localStorage.setItem('orgUser', JSON.stringify(userData));
-                toast.success(`Đăng nhập Google thành công!`, { id: tid });
+                toast.success('Đăng nhập thành công!', { id: tid });
                 return true;
             }
-            toast.error(res.message || 'Lỗi đăng nhập Google', { id: tid });
-            throw new Error(res.message);
+            // Dismiss loading toast — caller (LoginPage) will show the actual error
+            toast.dismiss(tid);
+            return false;
         } catch (error: any) {
-            console.error("Google Login Error:", error);
-            toast.error('Không thể kết nối với Google Auth', { id: tid });
+            // Network / parse error — dismiss loading toast, let caller handle UI
+            toast.dismiss(tid);
             throw error;
         }
     };

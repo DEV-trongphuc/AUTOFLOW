@@ -1,6 +1,7 @@
 <?php
 // api/meta_bulk_sync_profiles.php - Bulk Sync Meta Subscriber Data
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 require_once 'meta_helpers.php';
 require_once 'meta_sync_helpers.php';
 

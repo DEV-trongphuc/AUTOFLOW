@@ -63,7 +63,8 @@ if ($orgScopeAdminId) {
         // Only update non-admin users (regular users/assistants with no org assigned)
         $pdo->prepare("UPDATE ai_org_users SET admin_id = ? WHERE (admin_id IS NULL OR admin_id = '') AND role != 'admin' AND id != ?")->execute([$orgScopeAdminId, $currentUserId]);
         // Also link them to the category if categoryId context is available
-    } catch (Exception $e) { /* silent */
+    } catch (Exception $e) {
+        error_log('[ai_org_users] admin_id migration warning: ' . $e->getMessage());
     }
 }
 
@@ -169,16 +170,6 @@ if ($method === 'GET' && ($action === 'list' || $action === '')) {
         echo json_encode([
             'success' => true,
             'data' => $users,
-            'debug' => [
-                'count_in_category' => count($users),
-                'total_users_in_system' => (int) $totalUsers,
-                'total_links_in_system' => (int) $totalLinks,
-                'is_admin_registered' => $hasAdmin,
-                'raw_input_category' => $_GET['category_id'] ?? null,
-                'resolved_category_id' => $categoryId,
-                'current_session_uid' => $currentUserId,
-                'current_session_role' => $currentUserRole
-            ]
         ]);
         exit;
     } catch (Exception $e) {
@@ -229,6 +220,7 @@ if ($method === 'POST' && $action === 'add') {
                     $pdo->prepare("INSERT IGNORE INTO ai_org_user_categories (user_id, category_id) VALUES (?, ?)")
                         ->execute([$existingId, $categoryId]);
                 } catch (Exception $e) {
+                    error_log('[ai_org_users] category link (update) warning: ' . $e->getMessage());
                 }
             }
 
@@ -252,6 +244,7 @@ if ($method === 'POST' && $action === 'add') {
                     $pdo->prepare("INSERT IGNORE INTO ai_org_user_categories (user_id, category_id) VALUES (?, ?)")
                         ->execute([$userId, $categoryId]);
                 } catch (Exception $e) {
+                    error_log('[ai_org_users] category link (create) warning: ' . $e->getMessage());
                 }
             }
 

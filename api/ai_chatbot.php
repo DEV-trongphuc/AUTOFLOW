@@ -192,11 +192,11 @@ function cleanupOldCacheFiles($cacheDir, $maxAge)
 
 // --- HELPER: Centralized Prompt Builder ---
 // --- HELPER: Centralized Prompt Builder (Optimized for Gemini 2.0 Flash) ---
-function buildSystemPrompt($settings, $activityContext, $relevantContext, $isIdentified, $currentPage)
+function buildSystemPrompt($settings, $activityContext, $relevantContext, $isIdentified, $currentPage, $visitorId = '')
 {
     // 1. Setup Variables
     $botName = $settings['bot_name'] ?? 'AI Consultant';
-    $companyName = $settings['company_name'] ?? 'MailFlow Pro';
+    $companyName = $settings['company_name'] ?? 'DOMATION FLOW';
     $today = date("d/m/Y");
     $kbContent = (!empty($relevantContext)) ? $relevantContext : "Hiện chưa có thông tin cụ thể trong Knowledge Base.";
 
@@ -253,8 +253,20 @@ EOD;
 
     $prompt = str_replace(array_keys($replacements), array_values($replacements), $fullPromptTemplate);
 
+    // [PLATFORM] Zalo/Meta: Append concise-reply instruction — mobile chat users expect short answers
+    $platform = '';
+    if (strpos($visitorId, 'zalo_') === 0)
+        $platform = 'Zalo';
+    elseif (strpos($visitorId, 'meta_') === 0)
+        $platform = 'Facebook Messenger';
+
+    if ($platform) {
+        $prompt .= "\n\n---\nKÊNH: $platform. Yêu cầu trả lời NGẮN GỌN, súc tích, đúng trọng tâm (tối đa 3-4 câu nếu đủ ý). Không liệt kê dài dòng trừ danh sách cần thiết. Không dùng header/bullet dư thừa. Ngôn ngữ thân thiện, tự nhiên như nhắn tin.";
+    }
+
     return $prompt;
 }
+
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -563,7 +575,7 @@ try {
             $isGroup = isset($_GET['is_group']) && $_GET['is_group'] == '1';
             $keySuffix = $isGroup ? "group_$propertyId" : "$propertyId";
             $key = "last_analysis_$keySuffix";
-            $stmt = $pdo->prepare("SELECT value, updated_at FROM system_settings WHERE `key` = ? LIMIT 1");
+            $stmt = $pdo->prepare("SELECT value, updated_at FROM system_settings WHERE workspace_id = 0 AND `key` = ? LIMIT 1");
             $stmt->execute([$key]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -1029,7 +1041,7 @@ try {
             $isGroup = isset($_GET['is_group']) && $_GET['is_group'] == '1';
             $keySuffix = $isGroup ? "group_$propertyId" : "$propertyId";
             $key = "analysis_history_$keySuffix";
-            $stmt = $pdo->prepare("SELECT value, updated_at FROM system_settings WHERE `key` = ? LIMIT 1");
+            $stmt = $pdo->prepare("SELECT value, updated_at FROM system_settings WHERE workspace_id = 0 AND `key` = ? LIMIT 1");
             $stmt->execute([$key]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -1051,7 +1063,7 @@ try {
                     // JSON corrupt (e.g. truncated by TEXT column limit) → fallback to old key
                     error_log("[ANALYSIS] analysis_history_ JSON corrupt (json_err=" . json_last_error_msg() . "), falling back to last_analysis_");
                     $oldKey = "last_analysis_$keySuffix";
-                    $stmtOld = $pdo->prepare("SELECT value, updated_at FROM system_settings WHERE `key` = ? LIMIT 1");
+                    $stmtOld = $pdo->prepare("SELECT value, updated_at FROM system_settings WHERE workspace_id = 0 AND `key` = ? LIMIT 1");
                     $stmtOld->execute([$oldKey]);
                     $oldRow = $stmtOld->fetch(PDO::FETCH_ASSOC);
                     if ($oldRow) {
@@ -1073,7 +1085,8 @@ try {
             // Auto-upgrade system_settings.value to MEDIUMTEXT to prevent future truncation
             try {
                 $pdo->exec("ALTER TABLE system_settings MODIFY COLUMN value MEDIUMTEXT");
-            } catch (Exception $e) { /* already MEDIUMTEXT or no ALTER permission - ignore */ }
+            } catch (Exception $e) { /* already MEDIUMTEXT or no ALTER permission - ignore */
+            }
 
             echo json_encode([
                 'success' => true,
@@ -1093,7 +1106,7 @@ try {
             $isGroup = isset($_GET['is_group']) && $_GET['is_group'] == '1';
             $keySuffix = $isGroup ? "group_$propertyId" : "$propertyId";
             $key = "analysis_history_$keySuffix";
-            $stmt = $pdo->prepare("SELECT value FROM system_settings WHERE `key` = ? LIMIT 1");
+            $stmt = $pdo->prepare("SELECT value FROM system_settings WHERE workspace_id = 0 AND `key` = ? LIMIT 1");
             $stmt->execute([$key]);
             $rawVal = $stmt->fetchColumn();
             $history = is_string($rawVal) ? json_decode($rawVal, true) : null;
@@ -1102,7 +1115,7 @@ try {
             $usingOldKey = false;
             if (!is_array($history) || !isset($history[0])) {
                 $oldKey = "last_analysis_$keySuffix";
-                $stmtOld = $pdo->prepare("SELECT value FROM system_settings WHERE `key` = ? LIMIT 1");
+                $stmtOld = $pdo->prepare("SELECT value FROM system_settings WHERE workspace_id = 0 AND `key` = ? LIMIT 1");
                 $stmtOld->execute([$oldKey]);
                 $oldRaw = $stmtOld->fetchColumn();
                 $oldDecoded = is_string($oldRaw) ? json_decode($oldRaw, true) : null;
@@ -1118,7 +1131,7 @@ try {
                 array_splice($history, $index, 1);
                 $encoded = json_encode(array_values($history));
                 // Always save back to the canonical analysis_history_ key
-                $pdo->prepare("INSERT INTO system_settings (`key`, value, updated_at) VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE value = ?, updated_at = NOW()")
+                $pdo->prepare("INSERT INTO system_settings (`workspace_id`, `key`, value, updated_at) VALUES (0, ?, ?, NOW()) ON DUPLICATE KEY UPDATE value = ?, updated_at = NOW()")
                     ->execute([$key, $encoded, $encoded]);
                 echo json_encode(['success' => true]);
             } else {
@@ -1138,7 +1151,7 @@ try {
 
             // Try to load from history array first (new system)
             $historyKey = "analysis_history_$keySuffix";
-            $stmt = $pdo->prepare("SELECT value FROM system_settings WHERE `key` = ? LIMIT 1");
+            $stmt = $pdo->prepare("SELECT value FROM system_settings WHERE workspace_id = 0 AND `key` = ? LIMIT 1");
             $stmt->execute([$historyKey]);
             $historyRaw = $stmt->fetchColumn();
 
@@ -1154,7 +1167,7 @@ try {
             } else {
                 // Fallback to old key for backward compatibility
                 $key = "last_analysis_$propertyId";
-                $stmt2 = $pdo->prepare("SELECT value FROM system_settings WHERE `key` = ?");
+                $stmt2 = $pdo->prepare("SELECT value FROM system_settings WHERE workspace_id = 0 AND `key` = ?");
                 $stmt2->execute([$key]);
                 $rawData = $stmt2->fetchColumn();
                 if (!$rawData)
@@ -1815,7 +1828,7 @@ CHÚ Ý:
 
                 // SAVE TO DATABASE - History of 5 (Strict Cap for performance)
                 $key = "analysis_history_$keySuffix";
-                $stmtHistory = $pdo->prepare("SELECT value FROM system_settings WHERE `key` = ? LIMIT 1");
+                $stmtHistory = $pdo->prepare("SELECT value FROM system_settings WHERE workspace_id = 0 AND `key` = ? LIMIT 1");
                 $stmtHistory->execute([$key]);
                 $history = json_decode($stmtHistory->fetchColumn() ?: '[]', true);
 
@@ -1840,7 +1853,7 @@ CHÚ Ý:
 
                 try {
                     // Use a single statement for insert/update
-                    $stmt = $pdo->prepare("INSERT INTO system_settings (`key`, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?, updated_at = NOW()");
+                    $stmt = $pdo->prepare("INSERT INTO system_settings (`workspace_id`, `key`, value) VALUES (0, ?, ?) ON DUPLICATE KEY UPDATE value = ?, updated_at = NOW()");
                     $stmt->execute([$key, $historyJson, $historyJson]);
                 } catch (PDOException $e) {
                     error_log("CRITICAL: AI Analysis Save Failed: " . $e->getMessage());
@@ -2018,16 +2031,19 @@ CHÚ Ý:
                             $currentPart = '';
                             foreach ($paragraphs as $para) {
                                 $para = trim($para);
-                                if (empty($para)) continue;
+                                if (empty($para))
+                                    continue;
                                 $candidate = $currentPart ? $currentPart . "\n\n" . $para : $para;
                                 if (mb_strlen($candidate) <= 640) {
                                     $currentPart = $candidate;
                                 } else {
-                                    if ($currentPart !== '') $metaParts[] = trim($currentPart);
+                                    if ($currentPart !== '')
+                                        $metaParts[] = trim($currentPart);
                                     $currentPart = $para;
                                 }
                             }
-                            if ($currentPart !== '') $metaParts[] = trim($currentPart);
+                            if ($currentPart !== '')
+                                $metaParts[] = trim($currentPart);
                         } else {
                             $metaParts = [$formattedMsg];
                         }
@@ -2182,7 +2198,7 @@ CHÚ Ý:
                 }
 
                 // 3. Force cache invalidation if needed (not implemented yet but good to note)
-                
+
                 // [NEW] Trigger flow for AI Lead Capture
                 if (!empty($email) || !empty($phone)) {
                     try {
@@ -2601,17 +2617,22 @@ CHÚ Ý:
             // Build reply text: split into multiple bubbles if ||| separator is used
             $scenarioReplyText = $scenarioMatch['reply_text'];
             $bubbles = array_map('trim', explode('|||', $scenarioReplyText));
-            $bubbles = array_filter($bubbles, function($b) { return $b !== ''; });
-            if (empty($bubbles)) $bubbles = [''];
-            
+            $bubbles = array_filter($bubbles, function ($b) {
+                return $b !== '';
+            });
+            if (empty($bubbles))
+                $bubbles = [''];
+
             $scenarioButtons = $scenarioMatch['buttons'] ?? [];
             if (!empty($scenarioButtons)) {
                 // Filter out wildcard buttons (*) from UI
-                $scenarioButtons = array_values(array_filter($scenarioButtons, function($b) {
+                $scenarioButtons = array_values(array_filter($scenarioButtons, function ($b) {
                     return trim($b['label'] ?? '') !== '*' && trim($b['label'] ?? '') !== '';
                 }));
-                
-                $btnLabels = array_map(function($b) { return $b['label'] ?? ''; }, $scenarioButtons);
+
+                $btnLabels = array_map(function ($b) {
+                    return $b['label'] ?? '';
+                }, $scenarioButtons);
                 $btnLabels = array_filter($btnLabels);
                 if (!empty($btnLabels)) {
                     // Append actions only to the last bubble
@@ -2619,7 +2640,7 @@ CHÚ Ý:
                     $bubbles[$lastIndex] .= "\n[ACTIONS: " . implode(' | ', $btnLabels) . "]";
                 }
             }
-            
+
             // Insert each bubble as a separate message
             foreach ($bubbles as $bubble) {
                 if (trim($bubble) !== '') {
@@ -2627,14 +2648,14 @@ CHÚ Ý:
                     updateConversationStats($pdo, $convId, $bubble);
                 }
             }
-            
+
             // For the frontend response, return the combined text so the widget renders all of them
             // AI Chatbot Embedded widget handles \n\n natively to separate paragraphs, or we can just send the last bubble
             // with `message`. Actually, the widget expects one string and parses it to multiple bubbles if we want,
             // but the DB has them as separate messages now, so history load will show them correctly.
             // For immediate return, we'll join them with double linebreaks so it renders cohesively.
             $combinedReplyForFrontend = implode("\n\n\n\n", $bubbles);
-            
+
             logAIChat($visitorUuid, $propertyId, 'SCENARIO', 'HIT', "Scenario: " . ($scenarioMatch['scenario_title'] ?? 'unknown'));
             header('Content-Type: application/json');
             header('X-Conversation-Id: ' . $convId);
@@ -2642,10 +2663,10 @@ CHÚ Ý:
                 'success' => true,
                 'version' => API_VERSION,
                 'data' => [
-                    'message'         => $combinedReplyForFrontend,
+                    'message' => $combinedReplyForFrontend,
                     'conversation_id' => $convId,
-                    'scenario_hit'    => true,
-                    'buttons'         => $scenarioButtons,
+                    'scenario_hit' => true,
+                    'buttons' => $scenarioButtons,
                 ]
             ]);
             exit;
@@ -2853,8 +2874,8 @@ CHÚ Ý:
         $currentPage = $context['current_url'] ?? 'trang web';
 
         // SOFTEN KB HEADER: Don't break small talk
-        $systemInst = buildSystemPrompt($settings, $activityContext, $relevantContext, $isIdentified ? "ĐÃ ĐỊNH DANH" : "ẨN DANH", $currentPage);
-        
+        $systemInst = buildSystemPrompt($settings, $activityContext, $relevantContext, $isIdentified ? "ĐÃ ĐỊNH DANH" : "ẨN DANH", $currentPage, $visitorUuid ?? '');
+
         // --- MẠNG XÃ HỘI (META/ZALO) BẮT BUỘC TRẢ LỜI NGẮN GỌN DỰA THEO KNOWLEDGE BASE ---
         if (strpos($visitorUuid, 'meta_') === 0 || strpos($visitorUuid, 'zalo_') === 0) {
             $systemInst .= "\n\n[SOCIAL MEDIA MODE - ZALO/META]: ĐÂY LÀ TIN NHẮN MẠNG XÃ HỘI. TUÂN THỦ NGHIÊM NGẶT CÁC QUY TẮC SAU:\n\n1. ĐỘ DÀI: Trả lời TỐI ĐA 3-5 câu ngắn gọn. Không viết dài dòng.\n2. ĐỊNH DẠNG: TUYỆT ĐỐI không dùng Markdown table, không dùng **bold**, không dùng # heading. Chỉ dùng gạch đầu dòng (•) nếu cần liệt kê.\n3. NGUỒN: Chỉ trả lời dựa trên Knowledge Base. Không bịa thông tin. Nếu không có trong KB, nói: 'Dạ thông tin này em chưa có, để lại SĐT/Email để tư vấn viên hỗ trợ ạ.'\n4. GIỌNG ĐIỆU: Thân thiện, gần gũi như nhắn tin thông thường. Không cứng nhắc như văn bản chính thức.";

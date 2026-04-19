@@ -1,9 +1,10 @@
-<?php
+﻿<?php
 // api/ses_quota.php — Lightweight SES Health API for Dashboard Widget
 // Returns local DB stats instantly + cached AWS quota (if IAM credentials configured)
 // Cache TTL: 5 minutes to avoid hammering AWS API
 
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 apiHeaders();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
@@ -11,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 // ─── Load Settings (single query) ────────────────────────────────────────────
-$settingsStmt = $pdo->query("SELECT `key`, `value` FROM system_settings WHERE `key` IN (
+$settingsStmt = $pdo->query("SELECT `key`, `value` FROM system_settings WHERE workspace_id = 0 AND `key` IN (
     'smtp_host','smtp_enabled','smtp_from_email','smtp_user',
     'aws_access_key','aws_secret_key','ses_quota_cache','ses_quota_cache_at'
 )");
@@ -115,9 +116,9 @@ if ($cacheValid && !empty($settings['ses_quota_cache'])) {
     if ($result['ok']) {
         $awsQuota = $result['data'];
         // Cache in DB
-        $pdo->prepare("INSERT INTO system_settings (`key`,`value`) VALUES ('ses_quota_cache',?),('ses_quota_cache_at',NOW())
+        $pdo->prepare("INSERT INTO system_settings (`workspace_id`,`key`,`value`) VALUES (0,'ses_quota_cache',?),(0,'ses_quota_cache_at',NOW())
             ON DUPLICATE KEY UPDATE `value`=VALUES(`value`)")->execute([json_encode($awsQuota)]);
-        $pdo->prepare("INSERT INTO system_settings (`key`,`value`) VALUES ('ses_quota_cache_at',NOW())
+        $pdo->prepare("INSERT INTO system_settings (`workspace_id`,`key`,`value`) VALUES (0,'ses_quota_cache_at',NOW())
             ON DUPLICATE KEY UPDATE `value`=VALUES(`value`)")->execute([]);
         $cacheAge = 0;
     } else {

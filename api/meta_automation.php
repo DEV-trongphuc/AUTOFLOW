@@ -6,6 +6,7 @@
  */
 
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 require_once 'meta_helpers.php';
 require_once 'zalo_helpers.php';
 

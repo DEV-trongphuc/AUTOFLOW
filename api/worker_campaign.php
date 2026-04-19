@@ -48,7 +48,7 @@ if (!function_exists('runWorkerCampaign')) {
         // [FIX P38-WC] Only load the 2 settings keys this worker actually needs.
         // Old SELECT * loaded 50+ key/value pairs (SMTP passwords, API keys, etc.)
         // into memory on every single worker boot — a significant security and memory footprint.
-        $stmt = $pdo->query("SELECT `key`, `value` FROM system_settings WHERE `key` IN ('smtp_user','max_messages_per_day')");
+        $stmt = $pdo->query("SELECT `key`, `value` FROM system_settings WHERE workspace_id = 0 AND `key` IN ('smtp_user','max_messages_per_day')");
         $settings = [];
         foreach ($stmt->fetchAll() as $row) {
             $settings[$row['key']] = $row['value'];

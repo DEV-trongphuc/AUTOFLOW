@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { api } from '../../services/storageAdapter';
+import toast from 'react-hot-toast';
 import {
     Mail, TrendingDown, AlertTriangle, CheckCircle2, RefreshCw,
     Zap, Shield, Info, ExternalLink, Key, KeyRound, X, Save, CalendarDays
@@ -87,7 +88,9 @@ const SesQuotaWidget: React.FC<Props> = ({ mode = 'sidebar', className = '', sta
             const qs = params.toString() ? `?${params.toString()}` : '';
             const res = await api.get<SesData>(`ses_quota${qs}`);
             if (res.success) setData(res.data);
-        } catch (_) { }
+        } catch (e) {
+            console.error('[SesQuotaWidget] Failed to load SES quota:', e);
+        }
         setLoading(false);
         setRefreshing(false);
     }, [startDate, endDate]);
@@ -118,10 +121,16 @@ const SesQuotaWidget: React.FC<Props> = ({ mode = 'sidebar', className = '', sta
                 aws_secret_key: iamKeys.secret
             });
             if (res.success) {
+                toast.success('Đã cập nhật khóa IAM thành công!');
                 setShowIamModal(false);
                 load(true);
+            } else {
+                toast.error((res as any).message || 'Không thể lưu khóa IAM.');
             }
-        } catch (e) { }
+        } catch (e) {
+            console.error('[SesQuotaWidget] Failed to save IAM keys:', e);
+            toast.error('Lỗi kết nối khi lưu khóa.');
+        }
         setIsSavingIam(false);
     };
 

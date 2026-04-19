@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // api/tool_auto_learn_synonyms.php
 // AI Tool to analyze training data and generate Domain Synonyms automatically
 
@@ -6,6 +6,7 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 header('Content-Type: application/json; charset=UTF-8');
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 
 $propertyId = $_GET['property_id'] ?? null;
 $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 50;
@@ -85,6 +86,8 @@ $payload = [
 
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);

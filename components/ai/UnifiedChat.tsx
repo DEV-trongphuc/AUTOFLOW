@@ -1277,7 +1277,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
             if (segments.success) setAllSegments(segments.data);
             if (flows.success) setAllFlows(flows.data);
             if (tags.success) setAllTags(tags.data);
-        } catch (e) { }
+        } catch (e) { console.error('[UnifiedChat] fetchCrmMetadata failed:', e); }
     }
 
     const checkSegmentMatch = (segId: string) => false; // Simplified

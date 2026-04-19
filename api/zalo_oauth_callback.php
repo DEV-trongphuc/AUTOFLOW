@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Zalo OAuth Callback Handler (Stateful / DB-backed)
  * Handles default redirections and token exchange using DB-stored PKCE verifier.
@@ -53,6 +53,8 @@ curl_setopt($ch, CURLOPT_URL, $token_url);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Content-Type: application/x-www-form-urlencoded',
     'secret_key: ' . $app_secret
@@ -82,6 +84,8 @@ $info_url = 'https://openapi.zalo.me/v2.0/oa/getoa';
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $info_url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'access_token: ' . $access_token
 ]);

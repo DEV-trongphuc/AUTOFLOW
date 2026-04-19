@@ -1,6 +1,7 @@
-<?php
+﻿<?php
 // api/api_finalize_campaign.php
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);

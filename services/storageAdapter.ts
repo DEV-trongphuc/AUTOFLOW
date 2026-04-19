@@ -103,26 +103,9 @@ async function executeRequest(url: string, method: string, body?: any, signal?: 
   });
 }
 
-/** Append admin_token query param as fallback when headers may be blocked by proxy */
-function withAdminToken(url: string): string {
-  try {
-    const savedUser = JSON.parse(
-      localStorage.getItem('user') || localStorage.getItem('currentUser') ||
-      localStorage.getItem('authUser') || localStorage.getItem('admin_user') || 'null'
-    );
-    const isAdmin = savedUser && (
-      savedUser.id === 1 || savedUser.id === '1' ||
-      savedUser.role === 'admin' || savedUser.is_admin ||
-      savedUser.isAdmin || savedUser.admin === true ||
-      savedUser.type === 'admin' || savedUser.user_type === 'admin'
-    );
-    if (isAdmin) {
-      const sep = url.includes('?') ? '&' : '?';
-      return `${url}${sep}admin_token=autoflow-admin-001`;
-    }
-  } catch { /* ignore */ }
-  return url;
-}
+// [SECURITY FIX] withAdminToken() was removed — it appended admin_token as a URL query param.
+// URL params appear in server/nginx/CDN/proxy access logs → token exposure risk.
+// The X-Admin-Token header in executeRequest() already handles admin bypass securely.
 
 async function request<T>(
   endpoint: string,
@@ -202,7 +185,7 @@ async function request<T>(
         }
       }
 
-      const url = withAdminToken(`${baseUrl}/${phpFile}.php${finalQueryParams}`);
+      const url = `${baseUrl}/${phpFile}.php${finalQueryParams}`;
 
       // ── First attempt ──────────────────────────────────────────────────────
       const startTime = performance.now();
@@ -231,7 +214,7 @@ async function request<T>(
               if (refreshData.success && refreshData.data?.access_token) {
                 updateAccessToken(refreshData.data.access_token, refreshData.data.expires_in ?? 900);
                 // Retry the original request with the fresh token
-                response = await executeRequest(url, method, body);
+                response = await executeRequest(url, method, body, options?.signal);
               }
             } else {
               // Refresh token is expired — force logout

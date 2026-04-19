@@ -1,4 +1,4 @@
-import * as React from 'react';
+﻿import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { api } from '../../services/storageAdapter';
 import { toast } from 'react-hot-toast';

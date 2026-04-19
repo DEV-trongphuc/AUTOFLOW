@@ -1,4 +1,5 @@
-<?php
+﻿<?php
+require_once 'auth_middleware.php';
 /**
  * COMPREHENSIVE SYSTEM DEBUG & HEALTH CHECK
  * Kiểm tra toàn bộ hệ thống flow automation để phát hiện lỗi

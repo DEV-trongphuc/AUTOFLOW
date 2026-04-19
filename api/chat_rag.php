@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // api/chat_rag.php – Optimized Hybrid Search with Synonym Boosting & MySQL Scoring
 
 // ============================================================
@@ -182,6 +182,8 @@ function getEmbedding($pdo, $text, $apiKey)
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
     curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
@@ -193,6 +195,7 @@ function getEmbedding($pdo, $text, $apiKey)
         try {
             $pdo->prepare("INSERT INTO ai_vector_cache (hash, vector, vector_binary, created_at) VALUES (?, ?, ?, NOW()) ON DUPLICATE KEY UPDATE vector=VALUES(vector), vector_binary=VALUES(vector_binary), created_at=NOW()")->execute([$hash, json_encode($vector), $packed]);
         } catch (Exception $e) {
+            error_log("[chat_rag] Vector cache insert failed: " . $e->getMessage());
         }
     } else {
         $errorMsg = $res['error']['message'] ?? 'Unknown API Error (HTTP ' . $httpCode . ')';
@@ -216,6 +219,8 @@ function getEmbeddingAsyncInit($text, $apiKey)
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
     curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
     curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
 
     $mh = curl_multi_init();

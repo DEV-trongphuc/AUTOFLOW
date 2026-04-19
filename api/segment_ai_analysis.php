@@ -1,10 +1,18 @@
 <?php
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 require_once 'chat_gemini.php';
 require_once 'chat_helpers.php';
 require_once 'segment_helper.php';
 
 apiHeaders();
+
+// [SECURITY] Require authenticated workspace session — endpoint accesses subscriber PII
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    exit;
+}
 
 $method = $_SERVER['REQUEST_METHOD'];
 if ($method !== 'POST') {
@@ -128,7 +136,7 @@ Ngôn ngữ: Tiếng Việt, chuyên nghiệp. Báo cáo trình bày đẹp, rõ
     ];
 
     // Get API Key from settings
-    $stmtSet = $pdo->query("SELECT value FROM system_settings WHERE `key` = 'gemini_api_key' LIMIT 1");
+    $stmtSet = $pdo->query("SELECT value FROM system_settings WHERE workspace_id = 0 AND `key` = 'gemini_api_key' LIMIT 1");
     $apiKey = $stmtSet->fetchColumn();
 
     if (!$apiKey) {

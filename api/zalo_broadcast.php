@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Zalo Broadcast API (Enhanced)
  * Manage Campaigns, Send Messages, Track Stats
@@ -211,6 +211,8 @@ try {
                 curl_setopt($ch, CURLOPT_POST, true);
                 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
                 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'access_token: ' . $token]);
                 $resRaw = curl_exec($ch);
                 curl_close($ch);

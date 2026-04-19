@@ -17,14 +17,14 @@ try {
     $newUser = '9ec212001@smtp-brevo.com';
 
     // Check if smtp_user exists
-    $stmt = $pdo->prepare("SELECT value FROM system_settings WHERE `key` = 'smtp_user'");
+    $stmt = $pdo->prepare("SELECT value FROM system_settings WHERE workspace_id = 0 AND `key` = 'smtp_user'");
     $stmt->execute();
     $current = $stmt->fetchColumn();
 
     if ($current === false) {
-        $stmt = $pdo->prepare("INSERT INTO system_settings (`key`, `value`) VALUES ('smtp_user', ?)");
+        $stmt = $pdo->prepare("INSERT INTO system_settings (`workspace_id`, `key`, `value`) VALUES (0, 'smtp_user', ?)");
     } else {
-        $stmt = $pdo->prepare("UPDATE system_settings SET `value` = ? WHERE `key` = 'smtp_user'");
+        $stmt = $pdo->prepare("UPDATE system_settings SET `value` = ? WHERE workspace_id = 0 AND `key` = 'smtp_user'");
     }
 
     $stmt->execute([$newUser]);

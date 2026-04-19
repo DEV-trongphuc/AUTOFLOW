@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * api/file_extractor.php
  * Trích xuất text có cấu trúc từ PDF, DOCX, TXT
@@ -267,6 +267,8 @@ if (!function_exists('extractTextFromFile')) {
         $ch = curl_init($startUrl);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_POST => true,
             CURLOPT_HTTPHEADER => [
                 "X-Goog-Upload-Protocol: resumable",
@@ -295,6 +297,8 @@ if (!function_exists('extractTextFromFile')) {
         $ch = curl_init($uploadUrl);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_PUT => true,
             CURLOPT_INFILE => $fh,
             CURLOPT_INFILESIZE => $fileSize,
@@ -393,6 +397,8 @@ PROMPT;
         $ch = curl_init($apiUrl);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => json_encode($payload),
             CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
@@ -509,6 +515,8 @@ PROMPT;
             $ch = curl_init($apiUrl);
             curl_setopt_array($ch, [
                 CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
                 CURLOPT_POST => true,
                 CURLOPT_POSTFIELDS => json_encode($payload),
                 CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
@@ -650,6 +658,8 @@ PROMPT;
         $ch = curl_init($startUrl);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_POST => true,
             CURLOPT_HTTPHEADER => [
                 "X-Goog-Upload-Protocol: resumable",
@@ -679,6 +689,8 @@ PROMPT;
         $ch = curl_init($uploadUrl);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_PUT => true,
             CURLOPT_INFILE => $fileHandle,
             CURLOPT_INFILESIZE => $fileSize,
@@ -758,6 +770,8 @@ PROMPT;
         $ch = curl_init($apiUrl);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => json_encode($payload),
             CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
@@ -833,6 +847,8 @@ PROMPT;
         $ch = curl_init($startUrl);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_POST => true,
             CURLOPT_HTTPHEADER => [
                 "X-Goog-Upload-Protocol: resumable",
@@ -857,6 +873,8 @@ PROMPT;
         $ch = curl_init($uploadUrl);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_PUT => true,
             CURLOPT_INFILE => $fh,
             CURLOPT_INFILESIZE => $fileSize,
@@ -894,6 +912,8 @@ PROMPT;
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => json_encode($payload),
             CURLOPT_HTTPHEADER => ['Content-Type: application/json'],

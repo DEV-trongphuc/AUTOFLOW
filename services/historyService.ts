@@ -18,14 +18,34 @@ export const logAction = (action: string, details: string, flowId?: string): His
     flowId
   };
 
-  const logs = JSON.parse(localStorage.getItem('mailflow_logs') || '[]');
-  // Limit to 50 entries for better history tracking (up from 10)
-  const updatedLogs = [newLog, ...logs].slice(0, 50);
-  localStorage.setItem('mailflow_logs', JSON.stringify(updatedLogs));
-
-  return updatedLogs;
+  try {
+    const logs = JSON.parse(localStorage.getItem('mailflow_logs') || '[]');
+    // Limit to 50 entries for better history tracking (up from 10)
+    const updatedLogs = [newLog, ...logs].slice(0, 50);
+    try {
+      localStorage.setItem('mailflow_logs', JSON.stringify(updatedLogs));
+    } catch (quotaErr) {
+      // QuotaExceededError: trim aggressively and retry
+      if (quotaErr instanceof DOMException && quotaErr.name === 'QuotaExceededError') {
+        const trimmed = updatedLogs.slice(0, 10);
+        try {
+          localStorage.setItem('mailflow_logs', JSON.stringify(trimmed));
+        } catch {
+          // Storage completely full — clear only logs key, keep auth tokens
+          localStorage.removeItem('mailflow_logs');
+        }
+      }
+    }
+    return JSON.parse(localStorage.getItem('mailflow_logs') || '[]');
+  } catch {
+    return [newLog];
+  }
 };
 
 export const getLogs = (): HistoryLog[] => {
-  return JSON.parse(localStorage.getItem('mailflow_logs') || '[]');
+  try {
+    return JSON.parse(localStorage.getItem('mailflow_logs') || '[]');
+  } catch {
+    return [];
+  }
 };

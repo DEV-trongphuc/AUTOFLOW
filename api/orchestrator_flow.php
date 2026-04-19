@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // api/orchestrator_flow.php
 // FILE ĐIỀU PHỐI (ORCHESTRATOR) - GỌI LUỒNG WORKER FLOW 
 // Mục đích: Ép xung tốc độ xử lý hàng chờ Flow (Auto-responder) lên 10x tốc độ gốc bằng multi-curl
@@ -45,9 +45,9 @@ for ($i = 0; $i < $NUM_WORKERS; $i++) {
     curl_setopt($ch, CURLOPT_TIMEOUT, 1);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     
-    // Bỏ qua SSL check để tránh lỗi ở môi trường dev/local
+    // [FIX] SSL: VERIFYPEER=true validates server cert, VERIFYHOST=2 validates hostname CN/SAN
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
     
     curl_multi_add_handle($multiHandle, $ch);
     $curlHandles[] = $ch;

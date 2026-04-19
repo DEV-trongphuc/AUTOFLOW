@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // api/check_ses_quota.php — Amazon SES Quota & Health Check Dashboard
 // Không cần AWS SDK — dùng raw SES Query API với HMAC-SHA256 signature (SigV4 tương thích SES v1).
 // Truy cập: https://your-domain.com/api/check_ses_quota.php
@@ -7,6 +7,7 @@
 error_reporting(E_ALL & ~E_NOTICE);
 ini_set('display_errors', 0);
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 
 // ─── Security Gate ───────────────────────────────────────────────────────────
 // Chấp nhận: admin session HOẶC tham số ?key= khớp với smtp_pass (dùng làm API key tạm)
@@ -22,7 +23,7 @@ if (!$isAuth) {
 
 // ─── Load Settings ──────────────────────────────────────────────────────────
 // [FIX P39-SES] Only load required SMTP settings — avoids loading ALL secrets into memory
-$stmtS = $pdo->prepare("SELECT `key`, `value` FROM system_settings WHERE `key` IN ('smtp_host','smtp_user','smtp_pass','smtp_port','smtp_from_email','smtp_enabled')");
+$stmtS = $pdo->prepare("SELECT `key`, `value` FROM system_settings WHERE workspace_id = 0 AND `key` IN ('smtp_host','smtp_user','smtp_pass','smtp_port','smtp_from_email','smtp_enabled')");
 $stmtS->execute();
 $settings = [];
 foreach ($stmtS->fetchAll() as $row) {

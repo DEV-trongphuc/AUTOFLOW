@@ -10,6 +10,7 @@ import { EmailBlock, EmailBodyStyle } from '../../../types';
 import { compileHTML } from './utils/htmlCompiler';
 import { DEFAULT_BODY_STYLE } from './constants/editorConstants';
 import ImageLibraryModal from './components/Properties/ImageLibraryModal';
+import { api } from '../../../services/storageAdapter';
 
 interface AIEmailGeneratorModalProps {
     isOpen: boolean;
@@ -175,11 +176,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                 payload.existing_blocks = currentBlocks;
                 payload.body_style = bodyStyle;
             }
-            const res = await fetch('/mail_api/ai_email_generator.php', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const data = await res.json();
+            const data = await api.post('ai_email_generator', payload);
             if (data.success && Array.isArray(data.data)) {
                 setGeneratedBlocks(data.data);
                 setPreviewHtml(compileHTML(data.data, bodyStyle, templateName));

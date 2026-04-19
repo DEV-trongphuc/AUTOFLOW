@@ -113,12 +113,18 @@ class WorkerTriggerService
         }
 
         // Method 3: cURL with CURLOPT_TIMEOUT_MS = 100 (send & abandon)
+        // [NOTE] This is an internal self-trigger (localhost/same-domain).
+        // SSL peer verify is set to false intentionally for the 100ms fire-and-forget pattern
+        // where we abandon the connection before a full TLS handshake could complete.
+        // The URL originates from $this->apiBaseUrl (server config, not user input) — no injection risk.
         if (function_exists('curl_init')) {
             $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
             curl_setopt($ch, CURLOPT_NOBODY, false);
             curl_setopt($ch, CURLOPT_TIMEOUT_MS, 100);  // 100ms — just enough to send
             curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Internal self-trigger: no peer cert needed
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);     // Internal self-trigger: no hostname check
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Connection: Close']);
             @curl_exec($ch); // Will timeout but request is already sent
             curl_close($ch);

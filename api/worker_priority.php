@@ -76,7 +76,7 @@ try {
 // Hardcoded production URL for tracking
 $apiUrl = API_BASE_URL;
 // [FIX P39-WP1] Only fetch required settings keys — avoids loading ALL secrets (smtp_password, API keys) into memory
-$stmtSettings = $pdo->prepare("SELECT `key`, `value` FROM system_settings WHERE `key` IN ('smtp_user','smtp_host','max_messages_per_day')");
+$stmtSettings = $pdo->prepare("SELECT `key`, `value` FROM system_settings WHERE workspace_id = 0 AND `key` IN ('smtp_user','smtp_host','max_messages_per_day')");
 $stmtSettings->execute();
 $settings = [];
 while ($row = $stmtSettings->fetch()) {

@@ -5,6 +5,7 @@
  */
 
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 require_once 'zalo_helpers.php';
 
 // CORS Headers
@@ -15,6 +16,14 @@ header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
+}
+
+// [SECURITY] Require authenticated workspace session — accesses Zalo OA credentials & subscriber data
+// Exception: upload_image route is called during broadcast create (checked below), still needs auth
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    exit;
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -143,6 +152,8 @@ try {
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, ['file' => $cfile]);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
             curl_setopt($ch, CURLOPT_HTTPHEADER, ["access_token: " . $oa['access_token']]);
             $response = curl_exec($ch);
             curl_close($ch);

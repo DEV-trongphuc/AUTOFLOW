@@ -607,6 +607,7 @@ const AIChatWidget: React.FC<AIChatWidgetProps> = ({
     };
 
     if (!isOpen) {
+        if (!shouldRender) return null;
         return (
             <button
                 onClick={() => setIsOpen(true)}

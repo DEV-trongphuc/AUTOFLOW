@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // api/chat_gemini.php
 require_once 'chat_helpers.php';
 
@@ -38,7 +38,9 @@ function generateResponse($contents, $systemInst, $apiKey, $model = 'gemini-2.5-
         ]);
         curl_setopt($ch, CURLOPT_ENCODING, 'gzip'); // OPTIMIZED: Decompress gzip response
         curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0); // OPTIMIZED: Use HTTP/2
-        curl_setopt($ch, CURLOPT_TIMEOUT, 120); // Increased Timeout for reasoning/retries
+        curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [SECURITY] Enforce TLS for Gemini API // Increased Timeout for reasoning/retries
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -146,6 +148,8 @@ function generateResponseAsyncInit($contents, $systemInst, $apiKey, $model = 'ge
     curl_setopt($ch, CURLOPT_ENCODING, 'gzip');
     curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
     curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [SECURITY] Enforce TLS for Gemini API
 
     $mh = curl_multi_init();
     curl_multi_add_handle($mh, $ch);
@@ -253,6 +257,8 @@ function streamResponse($contents, $systemInst, $apiKey, $onChunk, $model = 'gem
     curl_setopt($ch, CURLOPT_ENCODING, 'gzip'); // OPTIMIZED: Decompress gzip response
     curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0); // OPTIMIZED: Use HTTP/2
     curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [SECURITY] Enforce TLS for Gemini API
     curl_setopt($ch, CURLOPT_TCP_NODELAY, true);
     curl_setopt($ch, CURLOPT_BUFFERSIZE, 1024); // Small buffer for low-latency streaming
 

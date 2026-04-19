@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // api/system_perf_check.php - ULTIMATE INTEGRITY & PERFORMANCE CHECKER (V1.0)
 // This script validates if the system is correctly optimized for mass volume.
 
@@ -6,6 +6,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 
 if (ob_get_length())
     ob_clean();
@@ -138,7 +139,7 @@ echo "</div>";
 
 // --- 5. SMTP CONNECTIVITY ---
 echo "<div class='card'><h2>📧 SMTP Integrity</h2>";
-$stmtSett = $pdo->query("SELECT `key`, `value` FROM system_settings WHERE `key` IN ('smtp_enabled', 'smtp_host', 'smtp_user')");
+$stmtSett = $pdo->query("SELECT `key`, `value` FROM system_settings WHERE workspace_id = 0 AND `key` IN ('smtp_enabled', 'smtp_host', 'smtp_user')");
 $setts = $stmtSett->fetchAll(PDO::FETCH_KEY_PAIR);
 $smtpOn = ($setts['smtp_enabled'] ?? '0') === '1';
 

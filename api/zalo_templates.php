@@ -126,6 +126,8 @@ function editTemplate($pdo)
     $url = 'https://business.openapi.zalo.me/template/edit';
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -191,6 +193,8 @@ function syncTemplatesFromZalo($pdo, $oa_id)
         $url = "https://business.openapi.zalo.me/template/all?offset=$offset&limit=$limit";
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         // GET request headers (No Content-Type)
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'access_token: ' . $accessToken
@@ -243,6 +247,8 @@ function syncTemplatesFromZalo($pdo, $oa_id)
             $sampleUrl = "https://business.openapi.zalo.me/template/sample-data?template_id=$tId";
             $chSample = curl_init($sampleUrl);
             curl_setopt($chSample, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($chSample, CURLOPT_SSL_VERIFYPEER, true); // [SECURITY] Enforce TLS for Zalo API
+            curl_setopt($chSample, CURLOPT_SSL_VERIFYHOST, 2);
             curl_setopt($chSample, CURLOPT_HTTPHEADER, ['access_token: ' . $accessToken]);
             $sampleRes = curl_exec($chSample);
             curl_close($chSample);
@@ -268,6 +274,8 @@ function syncTemplatesFromZalo($pdo, $oa_id)
             $detailUrl = "https://business.openapi.zalo.me/template/info?template_id=$tId";
             $chDet = curl_init($detailUrl);
             curl_setopt($chDet, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($chDet, CURLOPT_SSL_VERIFYPEER, true); // [SECURITY] Enforce TLS for Zalo API
+            curl_setopt($chDet, CURLOPT_SSL_VERIFYHOST, 2);
             curl_setopt($chDet, CURLOPT_HTTPHEADER, ['access_token: ' . $accessToken]);
             $detRes = curl_exec($chDet);
             curl_close($chDet);
@@ -485,6 +493,8 @@ function createTemplate($pdo)
     $url = 'https://business.openapi.zalo.me/template/create';
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -688,6 +698,8 @@ function getTemplateDetail($pdo, $id)
     $url = "https://business.openapi.zalo.me/template/info/v2?template_id=$zaloTemplateId";
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['access_token: ' . $accessToken]);
     $res = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -752,6 +764,8 @@ function uploadTemplateImage($pdo)
 
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, ['file' => $cfile]);
     curl_setopt($ch, CURLOPT_HTTPHEADER, [

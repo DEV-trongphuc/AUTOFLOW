@@ -100,8 +100,11 @@ const ZaloBroadcastTab: React.FC<ZaloBroadcastTabProps> = ({ initialSelectedIds,
                 const list = oaList.find(l => l.oa_config_id === newCamp.oa_config_id);
                 if (list) formData.append('list_id', list.id);
 
-                const upRes = await fetch('https://automation.ideas.edu.vn/mail_api/zalo_audience.php?route=upload_image', {
+                // [SECURITY] Relative URL (no hardcoded domain) + inject auth token for multipart upload
+                const _upToken = localStorage.getItem('auth_token') || '';
+                const upRes = await fetch('/mail_api/zalo_audience.php?route=upload_image', {
                     method: 'POST',
+                    headers: _upToken ? { 'Authorization': `Bearer ${_upToken}` } : {},
                     body: formData
                 }).then(r => r.json());
 

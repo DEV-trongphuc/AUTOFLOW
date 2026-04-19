@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // api/integrations.php - Integrations Management
 require_once 'db_connect.php';
 require_once 'auth_middleware.php'; // [FIX P43-D] Add workspace isolation
@@ -73,7 +73,7 @@ try {
             jsonResponse(false, null, 'Thiếu Spreadsheet ID');
 
         // Note: For Truly "Real" fetch, we use Google Sheets API v4
-        $stmtKey = $pdo->prepare("SELECT value FROM system_settings WHERE `key` = 'google_api_key' LIMIT 1");
+        $stmtKey = $pdo->prepare("SELECT value FROM system_settings WHERE workspace_id = 0 AND `key` = 'google_api_key' LIMIT 1");
         $stmtKey->execute();
         $apiKey = $stmtKey->fetchColumn() ?: '';
 
@@ -104,6 +104,8 @@ try {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);

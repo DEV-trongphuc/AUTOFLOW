@@ -5,6 +5,9 @@
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
 ini_set('display_errors', 0);
 
+// Auth guard
+require_once 'auth_middleware.php';
+
 $campaignId = $_GET['campaign_id'] ?? null;
 
 if (!$campaignId) {

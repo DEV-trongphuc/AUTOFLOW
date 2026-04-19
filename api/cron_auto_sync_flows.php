@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * CRON JOB: Auto-sync Flow States (ENHANCED VERSION)
  * Chạy định kỳ mỗi giờ để tự động fix các vấn đề đồng bộ
@@ -180,6 +180,8 @@ try {
         $workerUrl = API_BASE_URL . '/worker_tracking_aggregator.php';
         $ch = curl_init($workerUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
         $result = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

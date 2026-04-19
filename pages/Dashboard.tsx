@@ -44,7 +44,8 @@ const ALL_MODULES: Module[] = [
         sub: 'Thư viện mẫu thiết kế chuyên nghiệp, kéo thả linh hoạt. Hỗ trợ đầy đủ các khối nội dung và biến cá nhân hóa.',
         icon: FileText,
         color: 'from-purple-500 to-pink-600',
-        path: '/templates'
+        path: '/templates',
+        tags: ['Drag & Drop', 'Design']
     },
     {
         id: 'ai-training',
@@ -162,7 +163,7 @@ const Dashboard: React.FC = () => {
             try {
                 const parsed = JSON.parse(user);
                 if (parsed.name) setUserName(parsed.name);
-            } catch (e) { }
+            } catch (e) { console.error('[Dashboard] Failed to parse user from localStorage', e); }
         }
     }, []);
 

@@ -130,8 +130,17 @@ function pruneQueues($pdo)
     }
 }
 
-// Execution block — run via CLI or ?run=1
-if (php_sapi_name() === 'cli' || isset($_GET['run'])) {
+// Execution block — run via CLI or authenticated HTTP (?run=1&secret=...)
+$isCli = (php_sapi_name() === 'cli');
+if (!$isCli && isset($_GET['run'])) {
+    $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
+    if (($_GET['secret'] ?? '') !== $cronSecret) {
+        http_response_code(403);
+        echo json_encode(['error' => '403 Forbidden: Invalid cron secret.']);
+        exit(1);
+    }
+}
+if ($isCli || isset($_GET['run'])) {
     header('Content-Type: text/plain');
     $results = pruneQueues($pdo);
     if ($results) {

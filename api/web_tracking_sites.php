@@ -1,6 +1,7 @@
-<?php
+﻿<?php
 // api/web_tracking_sites.php - Manage tracked websites
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 apiHeaders();
 
 $method = $_SERVER['REQUEST_METHOD'];

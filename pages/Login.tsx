@@ -1,9 +1,10 @@
-import * as React from 'react';
+﻿import * as React from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { Mail, Sparkles, Zap, Bot, Globe, Users, ShieldCheck, Clock, CheckCircle2, History, User } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { api } from '../services/storageAdapter';
 
 const ADMIN_EMAIL = 'dom.marketing.vn@gmail.com';
 
@@ -13,16 +14,10 @@ const Login: React.FC = () => {
 
     const handleGoogleSuccess = async (credentialResponse: any) => {
         try {
-            const response = await fetch('/mail_api/login_google.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ credential: credentialResponse.credential })
-            });
-
-            const result = await response.json();
+            const result = await api.post<any>('login_google', { credential: credentialResponse.credential });
 
             if (result.success) {
-                const userData = result.data;
+                const userData = (result as any).data;
                 localStorage.setItem('user', JSON.stringify(userData));
                 localStorage.setItem('isAuthenticated', 'true');
 
@@ -32,12 +27,13 @@ const Login: React.FC = () => {
                     window.location.reload();
                 } else {
                     setIsPending(true);
-                    toast.error('Tài khoản của bạn đang chạy phê duyệt từ Admin.');
+                    toast.error('Tài khoản của bạn đang chờ phê duyệt từ Admin.');
                 }
             } else {
-                toast.error(result.message || 'Lỗi đăng nhập');
+                toast.error((result as any).message || 'Lỗi đăng nhập');
             }
         } catch (error) {
+            console.error('[Login] Google login failed:', error);
             toast.error('Lỗi kết nối máy chủ. Vui lòng thử lại.');
         }
     };
@@ -79,7 +75,7 @@ const Login: React.FC = () => {
                     <div className="space-y-4">
                         <h2 className="text-3xl font-black tracking-tight">Access Locked 🔒</h2>
                         <p className="text-slate-400 font-medium leading-relaxed">
-                            Chào <span className="text-white font-bold">{JSON.parse(localStorage.getItem('user') || '{}').name}</span>! Tài khoản của bạn đã được đăng ký thành công nhưng cần Admin phê duyệt để truy cập hệ thống.
+                            Chào <span className="text-white font-bold">{(()=>{try{return JSON.parse(localStorage.getItem('user')||'{}')}catch{return{}}})().name}</span>! Tài khoản của bạn đã được đăng ký thành công nhưng cần Admin phê duyệt để truy cập hệ thống.
                         </p>
                     </div>
                     <div className="p-4 bg-amber-500/5 rounded-2xl border border-amber-500/20 text-xs font-bold text-amber-500/80 uppercase tracking-widest text-left">

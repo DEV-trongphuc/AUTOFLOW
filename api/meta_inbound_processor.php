@@ -156,7 +156,7 @@ function processMessagingEventAsync($pdo, $pageId, $event, $channel = 'messaging
                     if ($ourAppId && $appId == $ourAppId) {
                         $isOurBot = true;
                     }
-                } catch (Exception $e) {}
+                } catch (Exception $e) { error_log('[meta_inbound] bot_detect fail: ' . $e->getMessage()); }
             }
 
             // [LOG] Store ALL outbound echo messages in DB
@@ -175,7 +175,7 @@ function processMessagingEventAsync($pdo, $pageId, $event, $channel = 'messaging
                     json_encode($attachments),
                     $event['timestamp']
                 ]);
-            } catch (Exception $e) {}
+            } catch (Exception $e) { error_log('[meta_inbound] outbound_log fail: ' . $e->getMessage()); }
 
             // [FIX] ONLY process further if it's a HUMAN reply, NOT our AI bot
             if (!$isOurBot && !empty($recipientId)) {
@@ -194,7 +194,7 @@ function processMessagingEventAsync($pdo, $pageId, $event, $channel = 'messaging
                             $pdo->prepare("UPDATE ai_conversations SET last_message = ?, last_message_at = NOW() WHERE id = ?")->execute([$content, $convId]);
                         }
                     }
-                } catch (Exception $e) {}
+                } catch (Exception $e) { error_log('[meta_inbound] echo_ai_sync fail: ' . $e->getMessage()); }
 
                 // Pause AI for 30 minutes
                 $pdo->prepare("UPDATE meta_subscribers SET ai_paused_until = DATE_ADD(NOW(), INTERVAL 30 MINUTE) WHERE page_id = ? AND psid = ?")->execute([$pageId, $recipientId]);
@@ -212,6 +212,7 @@ function processMessagingEventAsync($pdo, $pageId, $event, $channel = 'messaging
                         logActivity($pdo, $mainSubId, 'staff_reply', null, 'Facebook Messenger', $fullLogDetails, null, null);
                     }
                 } catch (Exception $e) {
+                    error_log('[meta_inbound] staff_reply log fail: ' . $e->getMessage());
                 }
             }
             return;
@@ -277,6 +278,7 @@ function processMessagingEventAsync($pdo, $pageId, $event, $channel = 'messaging
                     triggerFlows($pdo, $mainSubId, 'inbound_message', $text);
                 }
             } catch (Exception $e) {
+                error_log('[meta_inbound] flow_trigger log fail: ' . $e->getMessage());
             }
 
             // Sync AI Conversations
@@ -298,6 +300,7 @@ function processMessagingEventAsync($pdo, $pageId, $event, $channel = 'messaging
                     $pdo->prepare("UPDATE ai_conversations SET last_message = ?, last_message_at = NOW() WHERE id = ?")->execute([$content, $convId]);
                 }
             } catch (Exception $e) {
+                error_log('[meta_inbound] conv_track fail: ' . $e->getMessage());
             }
 
             // ONLY Reply if channel is messaging (don't reply to standby)
@@ -327,6 +330,7 @@ function processMessagingEventAsync($pdo, $pageId, $event, $channel = 'messaging
                 logActivity($pdo, $mainId, 'meta_postback', null, 'Facebook Messenger', "Click nút (+2 điểm): $title", null, null);
             }
         } catch (Exception $e) {
+            error_log('[meta_inbound] postback_log fail: ' . $e->getMessage());
         }
 
         if ($channel === 'messaging') {

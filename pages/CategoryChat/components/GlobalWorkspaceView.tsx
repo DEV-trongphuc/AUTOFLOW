@@ -387,7 +387,7 @@ const GlobalWorkspaceView = React.memo(({
                                                             <button
                                                                 onClick={async (e) => {
                                                                     e.stopPropagation();
-                                                                    const tid = toast.loading('đang chạy...');
+                                                                    const tid = toast.loading('Đang chuyển thành Global...');
 
                                                                     try {
                                                                         const data = await api.post<any>('ai_org_chatbot', {
@@ -403,9 +403,11 @@ const GlobalWorkspaceView = React.memo(({
                                                                         if (data.success) {
                                                                             toast.success('Đã chuyển thành file Global', { id: tid });
                                                                             fetchGlobalAssets();
+                                                                        } else {
+                                                                            toast.error('Lỗi khi chuyển thành file Global', { id: tid });
                                                                         }
                                                                     } catch (err) {
-                                                                        toast.error('Lỗi khi chuyển thành file Global');
+                                                                        toast.error('Lỗi khi chuyển thành file Global', { id: tid });
                                                                     }
                                                                 }}
                                                                 className="p-2 bg-white/90 backdrop-blur-md shadow-lg rounded-xl text-slate-400 hover:text-emerald-500 hover:scale-110 transition-all border border-slate-100"

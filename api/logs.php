@@ -1,6 +1,15 @@
 <?php
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 apiHeaders();
+
+// [SECURITY] Require authenticated workspace session
+$_logWorkspaceId = get_current_workspace_id();
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    exit;
+}
 
 $type = $_GET['type'] ?? 'worker_flow'; // Default to worker_flow for general log
 $campaignId = $_GET['campaign_id'] ?? null;

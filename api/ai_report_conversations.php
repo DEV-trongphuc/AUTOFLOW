@@ -1,14 +1,22 @@
 <?php
 // api/ai_report_conversations.php
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 require_once 'chat_security.php';
 
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, X-Requested-With');
+header('Access-Control-Allow-Headers: Content-Type, X-Requested-With, Authorization');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS')
     exit;
+
+// [SECURITY] Require authenticated workspace session
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    exit;
+}
 
 $propertyId = $_GET['property_id'] ?? null;
 $action = $_GET['action'] ?? '';

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { User, Lock, Sun, Moon, LogOut, Save, X, Shield, Mail, BarChart3, RefreshCcw, Trash2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { api } from '../../../services/storageAdapter';
 
 interface UserProfileModalProps {
     isOpen: boolean;
@@ -22,10 +23,6 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
     onLogout,
     onUpdateUser
 }) => {
-    const getAuthHeader = () => {
-        const token = localStorage.getItem('ai_space_access_token');
-        return token ? { 'Authorization': `Bearer ${token}` } : {};
-    };
     const [fullName, setFullName] = useState(orgUser?.full_name || '');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -49,12 +46,9 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
         if (isLoadingStats) return;
         setIsLoadingStats(true);
         try {
-            const res = await fetch('mail_api/ai_org_chatbot.php?action=get_user_stats', {
-                headers: { ...getAuthHeader() }
-            });
-            const data = await res.json();
+            const data = await api.get<any>('ai_org_chatbot?action=get_user_stats') as any;
             if (data.success) {
-                setStatsData(data.stats);
+                setStatsData(data.stats ?? data.data?.stats);
             }
         } catch (e) {
             console.error(e);
@@ -85,19 +79,11 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
         setIsSaving(true);
         try {
-            const response = await fetch('mail_api/ai_org_auth.php?action=update_profile', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...getAuthHeader()
-                },
-                body: JSON.stringify({
-                    full_name: activeTab === 'profile' ? fullName : undefined,
-                    gender: activeTab === 'profile' ? gender : undefined,
-                    password: activeTab === 'security' ? password : undefined
-                })
+            const result = await api.post('ai_org_auth?action=update_profile', {
+                full_name: activeTab === 'profile' ? fullName : undefined,
+                gender: activeTab === 'profile' ? gender : undefined,
+                password: activeTab === 'security' ? password : undefined
             });
-            const result = await response.json();
 
             if (result.success) {
                 toast.success('Cập nhật thông tin thành công');
@@ -121,8 +107,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
     const handleResetHistory = async () => {
         setIsSaving(true);
         try {
-            const res = await fetch('mail_api/ai_org_chatbot.php?action=reset_history', { method: 'POST', headers: { ...getAuthHeader() } });
-            const data = await res.json();
+            const data = await api.post<any>('ai_org_chatbot?action=reset_history', {});
             if (data.success) {
                 toast.success('Đã làm mới dữ liệu thành công');
                 setIsResetConfirmOpen(false);

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Zalo OA Management API
  * Handles CRUD operations, OAuth flow, and Quota Management
@@ -82,6 +82,12 @@ function getAllOAs($pdo)
     ensureZaloConfigSchema($pdo);
     // [FIX P43-L1] workspace_id passed as global — OA configs scoped per workspace
     global $workspace_id;
+    
+    // Auto-assign existing OAs to the current workspace if they lack one
+    try {
+        $pdo->exec("UPDATE zalo_oa_configs SET workspace_id = '$workspace_id' WHERE workspace_id IS NULL OR workspace_id = ''");
+    } catch (Exception $e) {}
+
     try {
         $stmt = $pdo->prepare("
             SELECT 
@@ -172,6 +178,8 @@ function syncZaloQuota($pdo, $id, $accessToken)
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $urlQuota);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['access_token: ' . $accessToken, 'Content-Type: application/json']);
     $resQuota = curl_exec($ch);
     curl_close($ch);
@@ -194,6 +202,8 @@ function syncZaloQuota($pdo, $id, $accessToken)
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $urlQuality);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['access_token: ' . $accessToken, 'Content-Type: application/json']);
     $resQuality = curl_exec($ch);
     curl_close($ch);
@@ -292,6 +302,8 @@ function refreshAccessToken($pdo, $id)
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         'Content-Type: application/x-www-form-urlencoded',
         'secret_key: ' . $secret_key
@@ -343,6 +355,8 @@ function testConnection($pdo, $id)
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['access_token: ' . $oa['access_token']]);
 
     $response = curl_exec($ch);
@@ -459,6 +473,8 @@ function syncFollowers($pdo, $oa_config_id)
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['access_token: ' . $accessToken]);
         $response = curl_exec($ch);
         curl_close($ch);
@@ -514,6 +530,7 @@ function ensureZaloSubscriberSchema($pdo)
 function ensureZaloConfigSchema($pdo)
 {
     $columns = [
+        'workspace_id' => "ALTER TABLE zalo_oa_configs ADD COLUMN workspace_id VARCHAR(50) NULL AFTER id",
         'remaining_quota' => "ALTER TABLE zalo_oa_configs ADD COLUMN remaining_quota INT DEFAULT 0",
         'monthly_promo_quota' => "ALTER TABLE zalo_oa_configs ADD COLUMN monthly_promo_quota INT DEFAULT 0",
         'remaining_promo_quota' => "ALTER TABLE zalo_oa_configs ADD COLUMN remaining_promo_quota INT DEFAULT 0",

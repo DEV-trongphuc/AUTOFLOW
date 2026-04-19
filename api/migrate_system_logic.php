@@ -89,14 +89,25 @@ function runSystemMigration($pdo, $targetVersion)
 
     // 3. Update System Version
     try {
-        // Ensure system_settings exists
+        // Ensure system_settings exists with new composite PK schema
         $pdo->exec("CREATE TABLE IF NOT EXISTS system_settings (
-            `key` VARCHAR(64) PRIMARY KEY,
-            `value` TEXT,
-            `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            `workspace_id` int(11) NOT NULL DEFAULT 0,
+            `key` VARCHAR(255) NOT NULL,
+            `value` MEDIUMTEXT,
+            `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`workspace_id`, `key`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
-        $stmt = $pdo->prepare("INSERT INTO system_settings (`key`, `value`) VALUES ('schema_version', ?) 
+        // Migrate old schema (key-only PK) if workspace_id column missing
+        try {
+            $colCheck = $pdo->query("SHOW COLUMNS FROM system_settings LIKE 'workspace_id'")->fetch();
+            if (!$colCheck) {
+                $pdo->exec("ALTER TABLE system_settings ADD COLUMN `workspace_id` int(11) NOT NULL DEFAULT 0 FIRST");
+                $pdo->exec("ALTER TABLE system_settings DROP PRIMARY KEY, ADD PRIMARY KEY (`workspace_id`, `key`)");
+            }
+        } catch (Exception $e) { /* ignore if already migrated */ }
+
+        $stmt = $pdo->prepare("INSERT INTO system_settings (`workspace_id`, `key`, `value`) VALUES (0, 'schema_version', ?) 
                                ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)");
         $stmt->execute([$targetVersion]);
     } catch (Exception $e) { /* Silent fails */

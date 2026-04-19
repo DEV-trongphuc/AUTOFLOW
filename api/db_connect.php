@@ -423,7 +423,7 @@ function getGlobalLeadScoreConfig($pdo) {
     ];
 
     try {
-        $stmt = $pdo->query("SELECT `key`, `value` FROM system_settings WHERE `key` LIKE 'leadscore_%'");
+        $stmt = $pdo->query("SELECT `key`, `value` FROM system_settings WHERE workspace_id = 0 AND `key` LIKE 'leadscore_%'");
         while ($row = $stmt->fetch()) {
             if (is_numeric($row['value'])) {
                 $config[$row['key']] = (int) $row['value'];

@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { api } from '../services/storageAdapter';
 
 const Profile: React.FC = () => {
-    const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem('user') || '{}'));
+    const [user, setUser] = useState<any>(() => { try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch { return {}; } });
     const [isEditing, setIsEditing] = useState(false);
     const [name, setName] = useState(user.name);
     const [loginHistory, setLoginHistory] = useState<any[]>([]);

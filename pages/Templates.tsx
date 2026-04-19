@@ -390,7 +390,7 @@ const Templates: React.FC = () => {
                 <>
                     <PageHero
                         title={<>Email <span className="text-orange-100/80">Templates</span></>}
-                        subtitle="Thư viện mẫu email chuyên nghiệp & bộ sưu tập thiết kế cá nhân của bạn."
+                        subtitle="Thư viện mẫu email chuyên nghiệp, bộ sưu tập thiết kế cá nhân và AI hỗ trợ templete của bạn."
                         showStatus={true}
                         statusText="Library Synced"
                         actions={[
@@ -794,7 +794,7 @@ const Templates: React.FC = () => {
                     onEdit={() => {
                         // For the drawer button
                         if (!isAdmin) {
-                            adminGuard(() => {})();
+                            adminGuard(() => { })();
                             return;
                         }
                         setEditingTemplate(previewTemplate);

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Zalo Helper Functions
  * Shared logic for OAuth and PKCE
@@ -273,6 +273,8 @@ function _sendZaloPayload($pdo, $zaloUserId, $accessToken, $payload, $logText)
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'access_token: ' . $accessToken]);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);  // [FIX P38-ZH] Enforce TLS verification
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);     // [FIX P38-ZH] Hostname verification
@@ -308,6 +310,8 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg)
 
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
@@ -518,6 +522,8 @@ function uploadZaloImageFromUrl($accessToken, $imageUrl)
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, ['file' => $cfile]);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 
     $resRaw = curl_exec($ch);
     curl_close($ch);
@@ -541,6 +547,8 @@ function getZaloUserProfile($accessToken, $userId)
     $ch = curl_init("$url?$params");
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['access_token: ' . $accessToken]);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 
     $res = curl_exec($ch);
     curl_close($ch);
@@ -623,6 +631,8 @@ function ensureZaloToken($pdo, $oaId)
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/x-www-form-urlencoded',
             'secret_key: ' . $oa['app_secret']

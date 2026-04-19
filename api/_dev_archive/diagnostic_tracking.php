@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // api/diagnostic_tracking.php - COMPREHENSIVE TRACKING DIAGNOSTIC
 header('Content-Type: text/html; charset=utf-8');
 ini_set('display_errors', 1);
@@ -105,6 +105,8 @@ foreach ($testUrls as $name => $url) {
     if (function_exists('curl_init')) {
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_TIMEOUT, 5);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
         $response = curl_exec($ch);

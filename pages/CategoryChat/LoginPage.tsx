@@ -2,12 +2,12 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Mail, Lock, AlertCircle, ArrowRight, CheckCircle2, Bot, Shield, Zap, Globe, Sparkles, Cpu } from 'lucide-react';
 import { useChatPage } from '../../contexts/ChatPageContext';
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin } from '@react-oauth/google';
 import { useCategorySettings } from '../../hooks/useCategorySettings';
 import SpaceBackground from '../../components/ai/SpaceBackground';
 
-// Default Google Client ID (Replace with your actual Client ID)
-const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"; // TODO: Configure this
+// GoogleOAuthProvider is already mounted at the root in index.tsx with the real Client ID.
+// No need to re-wrap here.
 
 // Helper to convert Hex to HSL
 const hexToHSL = (hex: string) => {
@@ -136,8 +136,7 @@ const LoginPage = () => {
     };
 
     return (
-        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-            <div className="min-h-screen flex items-center justify-center font-sans relative overflow-hidden bg-black">
+        <div className="min-h-screen flex items-center justify-center font-sans relative overflow-hidden bg-black">
 
                 {/* Dynamic Brand Styles */}
                 <style dangerouslySetInnerHTML={{
@@ -401,17 +400,21 @@ const LoginPage = () => {
                                 </div>
                             </div>
 
-                            <div className="mt-8 flex justify-center animate-in slide-in-from-bottom-4 duration-500 delay-300">
+                            <div className="mt-6 flex flex-col items-center gap-3 animate-in slide-in-from-bottom-4 duration-500 delay-300">
                                 <GoogleLogin
                                     onSuccess={handleGoogleSuccess}
-                                    onError={() => setError('Đăng nhập Google thất bại')}
-                                    shape="circle"
-                                    width="100%"
-                                    logo_alignment="center"
+                                    onError={() => setError('Đăng nhập Google thất bại. Vui lòng thử lại.')}
+                                    shape="pill"
+                                    width="400"
                                     theme="filled_blue"
                                     text="continue_with"
                                     size="large"
+                                    useOneTap
+                                    cancel_on_tap_outside={false}
                                 />
+                                <p className="text-[10px] text-slate-400 font-medium text-center">
+                                    Chỉ tài khoản được Admin tổ chức phê duyệt mới có thể truy cập.
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -425,8 +428,7 @@ const LoginPage = () => {
                         animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
                     }
                 `}</style>
-            </div>
-        </GoogleOAuthProvider>
+        </div>
     );
 };
 

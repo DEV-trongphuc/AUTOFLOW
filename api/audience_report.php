@@ -5,7 +5,15 @@
  */
 
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 apiHeaders();
+
+// [SECURITY] Require authenticated workspace session
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    exit;
+}
 
 $method = $_SERVER['REQUEST_METHOD'];
 if ($method !== 'GET') {
@@ -66,10 +74,16 @@ switch ($period) {
         break;
 }
 
-$currentSubWhere = "joined_at >= '$currentStart' AND joined_at <= '$currentEnd'";
-$prevSubWhere = "joined_at >= '$prevStart' AND joined_at <= '$prevEnd'";
-$currentActWhere = "created_at >= '$currentStart' AND created_at <= '$currentEnd'";
-$prevActWhere = "created_at >= '$prevStart' AND created_at <= '$prevEnd'";
+// [FIX] Use bound params instead of string interpolation to prevent SQL injection
+$currentSubWhere = "joined_at >= ? AND joined_at <= ?";
+$prevSubWhere    = "joined_at >= ? AND joined_at <= ?";
+$currentActWhere = "created_at >= ? AND created_at <= ?";
+$prevActWhere    = "created_at >= ? AND created_at <= ?";
+
+$paramsCurrent      = [$currentStart, $currentEnd];
+$paramsPrev         = [$prevStart, $prevEnd];
+$paramsActCurrent   = [$currentStart, $currentEnd];
+$paramsActPrev      = [$prevStart, $prevEnd];
 
 try {
     // Define what constitutes a "proactive" interaction (engagement)
@@ -102,29 +116,29 @@ try {
 
     // 1. Khách hàng mới (Growth)
     $stmtGrowth = $pdo->prepare("SELECT COUNT(*) FROM subscribers WHERE $currentSubWhere");
-    $stmtGrowth->execute();
+    $stmtGrowth->execute($paramsCurrent);
     $growth = (int) $stmtGrowth->fetchColumn();
 
     $stmtPrevGrowth = $pdo->prepare("SELECT COUNT(*) FROM subscribers WHERE $prevSubWhere");
-    $stmtPrevGrowth->execute();
+    $stmtPrevGrowth->execute($paramsPrev);
     $prevGrowth = (int) $stmtPrevGrowth->fetchColumn();
 
     // 2. Khách hoạt động (Active Users) - Unique users with proactive activity in period
     $stmtActive = $pdo->prepare("SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_activity WHERE type IN ($engTypesSql) AND $currentActWhere");
-    $stmtActive->execute();
+    $stmtActive->execute($paramsActCurrent);
     $active = (int) $stmtActive->fetchColumn();
 
     $stmtPrevActive = $pdo->prepare("SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_activity WHERE type IN ($engTypesSql) AND $prevActWhere");
-    $stmtPrevActive->execute();
+    $stmtPrevActive->execute($paramsActPrev);
     $prevActive = (int) $stmtPrevActive->fetchColumn();
 
     // 3. Rời bỏ (Churn) - Exact unsubscriptions recorded in history
     $stmtChurn = $pdo->prepare("SELECT COUNT(*) FROM subscriber_activity WHERE type = 'unsubscribe' AND $currentActWhere");
-    $stmtChurn->execute();
+    $stmtChurn->execute($paramsActCurrent);
     $churn = (int) $stmtChurn->fetchColumn();
 
     $stmtPrevChurn = $pdo->prepare("SELECT COUNT(*) FROM subscriber_activity WHERE type = 'unsubscribe' AND $prevActWhere");
-    $stmtPrevChurn->execute();
+    $stmtPrevChurn->execute($paramsActPrev);
     $prevChurn = (int) $stmtPrevChurn->fetchColumn();
 
     // 5. Trend Calculations

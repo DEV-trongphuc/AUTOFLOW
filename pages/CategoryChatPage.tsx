@@ -4383,8 +4383,11 @@ const CategoryChatPage: React.FC = () => {
                 {
                     contextMenu && (
                         <div
-                            className={`fixed z-[100] rounded-xl shadow-2xl border py-1.5 w-48 anim-scale-in origin-top-left ${isDarkTheme ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-100'}`}
-                            style={{ top: contextMenu.y, left: contextMenu.x }}
+                            className={`fixed z-[100] rounded-xl shadow-2xl border py-1.5 w-48 anim-scale-in ${isDarkTheme ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-100'}`}
+                            style={{
+                                top: Math.min(contextMenu.y, window.innerHeight - 160),
+                                left: Math.min(contextMenu.x, window.innerWidth - 200),
+                            }}
                         >
                             <div className={`px-3 py-1.5 border-b mb-1 ${isDarkTheme ? 'border-slate-700' : 'border-slate-50'}`}>
                                 <p className={`text-[10px] font-bold uppercase tracking-widest truncate ${isDarkTheme ? 'text-slate-400' : 'text-slate-400'}`}>{contextMenu.doc.name}</p>
@@ -4624,8 +4627,8 @@ const CategoryChatPage: React.FC = () => {
 
                         // ... logic ...
                         const doMakeGlobal = async () => {
+                            const tid = toast.loading('Đang xử lý...');
                             try {
-                                const tid = toast.loading('ĐĐang xử lýý...');
                                 await api.post('ai_org_chatbot', {
                                     action: 'workspace_save', // Use workspace_save for consistency
                                     url: previewImage,
@@ -4640,7 +4643,7 @@ const CategoryChatPage: React.FC = () => {
                                 // Refresh global assets
                                 fetchGlobalAssets();
                             } catch (e) {
-                                toast.error('Lỗi khi thêm');
+                                toast.error('Lỗi khi thêm', { id: tid });
                             }
                         };
                         doMakeGlobal();

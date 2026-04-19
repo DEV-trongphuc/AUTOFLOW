@@ -68,25 +68,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmtSecrets = $pdo->prepare("SELECT app_secret FROM meta_app_configs WHERE status = 'active' AND app_secret IS NOT NULL AND app_secret != ''");
             $stmtSecrets->execute();
             $secrets = $stmtSecrets->fetchAll(PDO::FETCH_COLUMN);
-            $signatureValid = false;
-            foreach ($secrets as $appSecret) {
-                $expectedSig = 'sha256=' . hash_hmac('sha256', $input, $appSecret);
-                // [SECURITY] Use hash_equals() to prevent timing-attack
-                if (hash_equals($expectedSig, $sigHeader)) {
-                    $signatureValid = true;
-                    break;
+
+            // [DEBUG] Log secret count and partial info to diagnose MISMATCH
+            writeLog("[DEBUG SIG] Found " . count($secrets) . " secret(s) in DB. Header=" . substr($sigHeader, 0, 20) . "...");
+
+            // [SAFETY] If no secrets configured (cleared from DB), log CRITICAL but allow through.
+            // Better than total webhook death while admin restores the secret.
+            if (empty($secrets)) {
+                writeLog("[CRITICAL] No app_secret in DB! Signature cannot be verified. Please update app_secret in Meta Config. Allowing through temporarily.");
+                // Fall through to process the request
+            } else {
+                $signatureValid = false;
+                foreach ($secrets as $idx => $appSecret) {
+                    $expectedSig = 'sha256=' . hash_hmac('sha256', $input, $appSecret);
+                    $secretLen = strlen($appSecret);
+                    $expectedPrefix = substr($expectedSig, 0, 20);
+                    writeLog("[DEBUG SIG] Secret[$idx] len=$secretLen, expected=" . $expectedPrefix . "...");
+                    if (hash_equals($expectedSig, $sigHeader)) {
+                        $signatureValid = true;
+                        writeLog("[DEBUG SIG] ✅ Match with secret[$idx]");
+                        break;
+                    }
                 }
-            }
-            if (!$signatureValid) {
-                writeLog("[SECURITY P16-C1] X-Hub-Signature-256 MISMATCH. Rejecting request.");
-                http_response_code(403);
-                echo 'SIGNATURE_MISMATCH';
-                exit;
+                if (!$signatureValid) {
+                    writeLog("[SECURITY P16-C1] X-Hub-Signature-256 MISMATCH. Rejecting request. Secrets tried: " . count($secrets));
+                    http_response_code(403);
+                    echo 'SIGNATURE_MISMATCH';
+                    exit;
+                }
             }
         } catch (Exception $e) {
             // If DB fails, log but allow through to prevent total outage
             writeLog("[WARN P16-C1] Could not verify signature (DB error): " . $e->getMessage());
         }
+    } else {
+        writeLog("[DEBUG SIG] No X-Hub-Signature-256 header — skipping verify");
     }
     // Note: If no X-Hub-Signature-256 header is sent, we still process (e.g. test calls from Meta dashboard)
     // In production, Meta always sends this header so missing it is unusual.

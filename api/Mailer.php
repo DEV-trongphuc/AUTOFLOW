@@ -34,8 +34,10 @@ class Mailer
     {
         // [FIX P38-ML] SELECT * loaded ALL settings (tokens, API keys, large text blobs).
         // Only 9 SMTP-related keys are actually accessed anywhere in this class.
+        // [FIX SCHEMA-30] system_settings now has composite PK (workspace_id, key).
+        // SMTP keys are stored under workspace_id=0 (global/shared), so we filter explicitly.
         $stmt = $this->pdo->prepare(
-            "SELECT `key`, `value` FROM system_settings WHERE `key` IN
+            "SELECT `key`, `value` FROM system_settings WHERE workspace_id = 0 AND `key` IN
              ('smtp_host','smtp_port','smtp_user','smtp_pass','smtp_from_email',
               'smtp_from_name','smtp_encryption','smtp_enabled','internal_qa_emails')"
         );

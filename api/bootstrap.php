@@ -29,7 +29,7 @@ function initializeSystem($pdo)
         return;
 
     try {
-        $stmt = $pdo->prepare("SELECT value FROM system_settings WHERE `key` = 'schema_version' LIMIT 1");
+        $stmt = $pdo->prepare("SELECT value FROM system_settings WHERE workspace_id = 0 AND `key` = 'schema_version' LIMIT 1");
         $stmt->execute();
         $installedVersion = $stmt->fetchColumn();
 
