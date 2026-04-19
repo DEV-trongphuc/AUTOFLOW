@@ -380,6 +380,7 @@ try {
             // → subscriber stuck ở 'waiting'. Với timeout 1s + RETURNTRANSFER=false,
             // forms.php trả về ngay, worker_priority chạy độc lập hoàn toàn.
             $workerUrl = API_BASE_URL . "/worker_priority.php?" . http_build_query(['trigger_type' => 'form', 'target_id' => $formId, 'subscriber_id' => $sid]);
+            $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $workerUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
@@ -388,6 +389,7 @@ try {
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
             @curl_exec($ch);
             curl_close($ch);
 
@@ -550,10 +552,11 @@ try {
                     ];
 
                     $notifyUrl = API_BASE_URL . "/worker_notify.php";
+                    $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
                     $chNotif = curl_init($notifyUrl);
                     curl_setopt($chNotif, CURLOPT_POST, true);
                     curl_setopt($chNotif, CURLOPT_POSTFIELDS, json_encode($notifyPayload));
-                    curl_setopt($chNotif, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+                    curl_setopt($chNotif, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'X-Cron-Secret: ' . $cronSecret]);
                     curl_setopt($chNotif, CURLOPT_RETURNTRANSFER, true);
                     curl_setopt($chNotif, CURLOPT_TIMEOUT, 1);
                     curl_setopt($chNotif, CURLOPT_NOSIGNAL, 1);

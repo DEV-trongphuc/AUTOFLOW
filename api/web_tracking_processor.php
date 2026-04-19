@@ -404,6 +404,12 @@ function syncWebJourney($pdo, $payload)
         } elseif ($type === 'click') {
             $refName = "Website Click";
             $text = $data['text'] ?? 'phần tử';
+            
+            // Do not track "Close modal" clicks
+            if (trim(strtolower($text)) === 'close modal') {
+                continue;
+            }
+            
             $pageInfo = ($data['page_title'] ?? 'trang web');
             if (!empty($data['url'])) {
                 $pageInfo .= " [" . $data['url'] . "]";
