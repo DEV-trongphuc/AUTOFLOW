@@ -404,7 +404,7 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                             <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[60px] -mr-10 -mt-10"></div>
                             <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4 flex items-center gap-2"><Target className="w-3 h-3 text-orange-500" /> Tổng quan chiến dịch</h5>
                             <div className="space-y-1 relative z-10">
-                                <p className="text-2xl font-black text-slate-800 leading-tight">{formData.name}</p>
+                                <p className="text-xl font-black text-slate-800 leading-tight truncate" title={formData.name}>{formData.name}</p>
                                 <p className="text-sm font-medium text-slate-500 truncate">{isZns ? selectedTemplate?.template_name : formData.subject}</p>
                             </div>
                             <div className="flex items-center gap-2 mt-4 relative z-10">

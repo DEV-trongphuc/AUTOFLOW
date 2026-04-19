@@ -330,7 +330,7 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
             >
                 <div
                     ref={wrapperRef}
-                    className="relative w-fit h-fit min-w-full min-h-full origin-top-left will-change-transform pt-24 pb-[2000px] px-[2000px]"
+                    className="relative w-fit h-fit min-w-full min-h-full origin-top-left pt-24 pb-[500px] px-[500px]"
                     style={{
                         transform: `translate(${transformRef.current.x}px, ${transformRef.current.y}px) scale(${scale})`
                     }}

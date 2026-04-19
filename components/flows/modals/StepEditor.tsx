@@ -96,7 +96,20 @@ const StepEditor: React.FC<StepEditorProps> = ({ step, onClose, onSave, onDelete
     });
   };
 
-  const stepErrors = validationErrors.filter(e => e.stepId === localStep.id);
+  let stepErrors = validationErrors.filter(e => e.stepId === localStep.id);
+
+  // Auto-hide validation errors if they are fixed locally before saving
+  if (localStep.type === 'action') {
+    if (localStep.config.subject) stepErrors = stepErrors.filter(e => !e.msg.includes('tiêu đề'));
+    if (localStep.config.templateId || localStep.config.customHtml) stepErrors = stepErrors.filter(e => !e.msg.includes('nội dung'));
+    if (localStep.config.senderEmail) stepErrors = stepErrors.filter(e => !e.msg.includes('người gửi'));
+  } else if (localStep.type === 'zalo_zns') {
+    if (localStep.config.template_id) stepErrors = stepErrors.filter(e => !e.msg.includes('Template'));
+    if (localStep.config.zalo_oa_id) stepErrors = stepErrors.filter(e => !e.msg.includes('OA'));
+    if (localStep.config.senderEmail) stepErrors = stepErrors.filter(e => !e.msg.includes('nguồn Zalo') && !e.msg.includes('nguồn Email'));
+  } else if (localStep.type === 'update_tag') {
+    if (localStep.config.tags && localStep.config.tags.length > 0) stepErrors = stepErrors.filter(e => !e.msg.includes('Tags'));
+  }
 
   // Logic: Nếu Flow đã có người tham gia (enrolled > 0) VÀ đây là bước Trigger,
   // không cho sửa Trigger để bảo toàn dữ liệu.

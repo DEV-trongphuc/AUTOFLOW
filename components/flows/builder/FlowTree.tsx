@@ -205,12 +205,12 @@ const FlowTree: React.FC<FlowTreeProps> = memo(({
     return (
         <div className="flex flex-col items-center relative animate-in fade-in duration-500 w-max min-w-full">
 
-            {parentId && !hasSpamError && !branch && !isViewMode && (
+            {parentId && !hasSpamError && (!branch || parentType === 'advanced_condition') && !isViewMode && (
                 <AddBtn
-                    onClick={() => onAddStep(parentId, undefined, true)}
-                    onQuickWait={() => onQuickAddWait(parentId)}
+                    onClick={() => onAddStep(parentId, branch as any, true)}
+                    onQuickWait={() => onQuickAddWait(parentId, branch as any)}
                     isDropTarget={!!draggedStepId}
-                    onDrop={(e) => handleDropOnAdd(e, parentId)}
+                    onDrop={(e) => handleDropOnAdd(e, parentId, branch)}
                     isReportMode={isReportMode}
                 />
             )}
@@ -348,6 +348,7 @@ const FlowTree: React.FC<FlowTreeProps> = memo(({
                                             stepId={b.stepId}
                                             parentId={step.id}
                                             parentType={step.type}
+                                            branch={b.id as any}
                                         />
                                     ) : (
                                         <div className={`pt-10`}>

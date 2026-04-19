@@ -7,7 +7,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
     Settings2, Mail, Users, BellRing, CheckCircle2, Wand2, Check, X,
-    ShieldCheck, Code, FileCode, Eye, Save, ChevronRight, ChevronLeft, Calendar, Send, GitMerge, Layout, Braces, ChevronDown, Loader2, ArrowRight, Zap, Sparkles, Smartphone, FileText, Download, Upload, Target, Plus
+    ShieldCheck, Code, FileCode, Eye, Save, ChevronRight, ChevronLeft, Calendar, Send, GitMerge, Layout, Braces, ChevronDown, Loader2, ArrowRight, Zap, Sparkles, Smartphone, FileText, Download, Upload, Target, Plus, AlertCircle, Edit3
 } from 'lucide-react';
 import { Campaign, CampaignStatus, Template, Segment, Flow, Subscriber } from '../../types'; // Fix: Import Subscriber
 import { api } from '../../services/storageAdapter'; // Fix: Import api
@@ -21,6 +21,7 @@ import ReminderManager from './ReminderManager';
 import LaunchPreview from './LaunchPreview';
 import TestEmailModal from './TestEmailModal';
 import TabTransition from '../common/TabTransition';
+import EmailEditor from '../templates/EmailEditor/index';
 
 interface CampaignWizardProps {
     isOpen: boolean;
@@ -202,7 +203,7 @@ const VariablePicker: React.FC<{ onSelect: (val: string) => void }> = ({ onSelec
             </button>
 
             {isVisible && (
-                <div className={`absolute right-0 bottom-full mb-2 z-[100] w-48 bg-white border border-slate-100 rounded-xl shadow-2xl py-2 transform transition-all duration-200 ${animateIn ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-2'}`}>
+                <div className={`absolute right-0 top-full mt-2 z-[100] w-48 bg-white border border-slate-100 rounded-xl shadow-2xl py-2 transform transition-all duration-200 ${animateIn ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-2'}`}>
                     <p className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1">Chọn biến...</p>
                     {vars.map(v => (
                         <button
@@ -250,6 +251,14 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
     const onClose = () => {
         setAnimateWizardIn(false);
         setTimeout(_onClose, 500);
+    };
+
+    const handleIntentClose = () => {
+        if (formData.name || formData.subject || formData.templateId || (formData.target?.listIds && formData.target.listIds.length > 0)) {
+            setShowCloseConfirm(true);
+        } else {
+            onClose();
+        }
     };
 
     const [step, setStep] = useState(1);
@@ -384,6 +393,11 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
     // Template Preview State
     const [templatePreviews, setTemplatePreviews] = useState<Record<string, string>>({});
     const [loadingPreview, setLoadingPreview] = useState(false);
+    
+    // UI Enhancements State
+    const [isEditingTemplate, setIsEditingTemplate] = useState(false);
+    const [activeEditTemplateId, setActiveEditTemplateId] = useState<string | null>(null);
+    const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
     // Effect 1: Reset step ONLY when opening fresh
     // [FIX P39-WIZ] Removed expensive `subscribers?limit=1000` fetch on wizard open.
@@ -431,13 +445,13 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                     const dateStr = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
                     setFormData(prev => ({
                         ...prev,
-                        name: prev.name && prev.name !== `[${dateStr}] - Chiến dịch mới` ? prev.name : `[${dateStr}] - Chiến dịch mới`, 
-                        subject: prev.subject || '', 
-                        senderEmail: (prev.senderEmail && senderEmails.includes(prev.senderEmail)) ? prev.senderEmail : (senderEmails[0] || ''), 
+                        name: prev.name && prev.name !== `[${dateStr}] - Chiến dịch mới` ? prev.name : `[${dateStr}] - Chiến dịch mới`,
+                        subject: prev.subject || '',
+                        senderEmail: (prev.senderEmail && senderEmails.includes(prev.senderEmail)) ? prev.senderEmail : (senderEmails[0] || ''),
                         templateId: prev.templateId || '',
                         target: prev.target?.listIds ? prev.target : { listIds: [], segmentIds: [], tagIds: [], individualIds: [] },
-                        reminders: prev.reminders || [], 
-                        trackingEnabled: prev.trackingEnabled ?? true, 
+                        reminders: prev.reminders || [],
+                        trackingEnabled: prev.trackingEnabled ?? true,
                         status: prev.status || CampaignStatus.DRAFT,
                         contentBody: prev.contentBody || '',
                         attachments: prev.attachments || [],
@@ -670,7 +684,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
         if (formData.type === 'zalo_zns') {
             if (!formData.templateId) return;
             if (!formData.config?.oa_config_id) return;
-            
+
             // Check mapped params
             const t = znsTemplates.find(x => x.template_id === formData.templateId);
             const params = t?.template_data?.detail?.listParams || t?.template_data?.raw?.listParams || [];
@@ -742,7 +756,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                 setFormData(prev => ({ ...prev, ...update }));
 
                 // Close modal immediately as requested
-                onClose();
+                handleIntentClose();
             }
         } finally {
             publishLockRef.current = false;
@@ -789,7 +803,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
 
         setLoadingPreview(true);
         try {
-                        const response = await fetch(`${API_BASE_URL}/campaign_preview.php`, {
+            const response = await fetch(`${API_BASE_URL}/campaign_preview.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -878,13 +892,13 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
             <div className="fixed inset-0 z-[150] flex justify-end">
                 <div
                     className={`absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-500 ${animateWizardIn ? 'opacity-100' : 'opacity-0'}`}
-                    onClick={onClose}
+                    onClick={handleIntentClose}
                 />
-                <div className={`relative w-full lg:max-w-[1500px] bg-[#fdfdfd] shadow-2xl h-full flex flex-col border-l border-slate-100 transform transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${animateWizardIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}>
+                <div className={`relative w-full lg:max-w-[1400px] bg-[#fdfdfd] shadow-2xl h-full flex flex-col border-l border-slate-100 transform transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${animateWizardIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}>
                     <div className="px-4 lg:px-8 py-4 lg:py-5 bg-white flex justify-between items-center shrink-0 border-b border-slate-100">
-                        <div className="flex items-center gap-3 lg:gap-4">
-                            <div className="w-9 h-9 lg:w-10 lg:h-10 bg-[#ffa900] rounded-xl flex items-center justify-center shadow-md text-white"><Wand2 className="w-5 h-5" /></div>
-                            <div><h3 className="text-sm lg:text-lg font-bold text-slate-800 line-clamp-1">{formData.name || 'Chiến dịch mới'}</h3><p className="text-[9px] lg:text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Bước {step} / 5</p></div>
+                        <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0 mr-4">
+                            <div className="w-9 h-9 lg:w-10 lg:h-10 bg-[#ffa900] rounded-xl flex items-center justify-center shadow-md text-white shrink-0"><Wand2 className="w-5 h-5" /></div>
+                            <div className="min-w-0"><h3 className="text-sm lg:text-lg font-bold text-slate-800 truncate">{formData.name || 'Chiến dịch mới'}</h3><p className="text-[9px] lg:text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Bước {step} / 5</p></div>
                         </div>
                         <div className="hidden sm:flex items-center gap-2">
                             {steps.map(s => {
@@ -897,10 +911,10 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                         </div>
                                         {s.id < steps.length && <div className={`w-6 h-0.5 mx-2 transition-all ${done ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>}
                                     </div>
-                                );
+                            );
                             })}
                         </div>
-                        <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-400 hover:text-slate-800"><X className="w-5 h-5" /></button>
+                        <button onClick={handleIntentClose} className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-400 hover:text-slate-800"><X className="w-5 h-5" /></button>
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 lg:p-10 custom-scrollbar bg-[#f8fafc]">
@@ -964,6 +978,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                             value={formData.name}
                                             onChange={e => setFormData({ ...formData, name: e.target.value })}
                                             error={attemptedNext && !formData.name?.trim() ? 'Vui lòng nhập tên' : ''}
+                                            maxLength={100}
                                         />
                                         <p className="text-[10px] text-slate-400 font-medium px-1 flex items-center gap-1.5">
                                             <Sparkles className="w-3 h-3 text-blue-500" />
@@ -1225,7 +1240,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
 
                                 <div className="space-y-6">
                                     <div className="bg-white p-6 rounded-[24px] border border-slate-200 shadow-sm space-y-6">
-                                        <div>
+                                        <div className="relative">
                                             <Input
                                                 label="Tiêu đề hiển thị (Subject)"
                                                 required
@@ -1235,6 +1250,14 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                 maxLength={100}
                                                 error={errors.subject || (attemptedNext && !formData.subject?.trim() ? 'Vui lòng nhập tiêu đề' : '')}
                                             />
+                                            <div className="absolute right-3 top-[27px]">
+                                                <VariablePicker
+                                                    onSelect={(val) => {
+                                                        const current = formData.subject || '';
+                                                        setFormData({ ...formData, subject: current + val });
+                                                    }}
+                                                />
+                                            </div>
                                             <div className="flex justify-between items-center text-xs mt-1.5 px-1">
                                                 <div className="flex items-center gap-2">
                                                     <span className={`font-medium transition-colors ${(formData.subject?.length || 0) > 60 ? 'text-orange-600' : 'text-slate-400'}`}>
@@ -1243,17 +1266,6 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                     <span className="text-slate-200">|</span>
                                                     <p className="text-[10px] text-slate-400 hidden sm:block italic">Gợi ý: Dùng {MERGE_TAGS[1].value} để cá nhân hóa tên khách hàng ngay tại tiêu đề.</p>
                                                 </div>
-                                                {(formData.subject?.length || 0) > 60 ? (
-                                                    <span className="text-orange-600 font-semibold flex items-center gap-1">
-                                                        Gmail hiển thị tối đa 60 ký tự
-                                                    </span>
-                                                ) : (formData.subject?.length || 0) >= 40 ? (
-                                                    <span className="text-emerald-600 font-semibold flex items-center gap-1">
-                                                        ✓ Độ dài tối ưu cho Gmail
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-slate-400">Nên dùng 40-60 ký tự</span>
-                                                )}
                                             </div>
                                         </div>
 
@@ -1264,7 +1276,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                             <div className="flex gap-3 max-w-sm">
                                                 <button
                                                     onClick={() => setFormData({ ...formData, templateId: '' })}
-                                                    className={`flex-1 py-3 border-2 rounded-xl flex items-center justify-center gap-2 transition-all ${!formData.templateId && formData.templateId !== 'custom-html' ? 'border-[#ffa900] bg-orange-50 text-orange-600 shadow-sm ring-2 ring-orange-100' : 'border-slate-100 hover:border-slate-300 text-slate-500'}`}
+                                                    className={`flex-1 py-3 border-2 rounded-xl flex items-center justify-center gap-2 transition-all ${formData.templateId !== 'custom-html' ? 'border-[#ffa900] bg-orange-50 text-orange-600 shadow-sm ring-2 ring-orange-100' : 'border-slate-100 hover:border-slate-300 text-slate-500'}`}
                                                 >
                                                     <Eye className="w-4 h-4" />
                                                     <span className="text-[10px] font-black uppercase">Chọn mẫu</span>
@@ -1309,9 +1321,9 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                 {isHtmlPreview ? <div className="flex-1 w-full bg-white rounded-2xl overflow-hidden shadow-inner relative z-10"><iframe className="w-full h-full" srcDoc={formData.contentBody} title="Preview" sandbox="allow-scripts allow-same-origin" /></div> : <textarea ref={textAreaRef} value={formData.contentBody} onChange={e => setFormData({ ...formData, contentBody: e.target.value })} className="flex-1 w-full bg-black/50 border border-white/10 rounded-2xl p-6 text-indigo-300 font-mono text-sm focus:border-indigo-500 outline-none transition-all resize-none shadow-inner custom-scrollbar relative z-10" placeholder="<html><body><h1>Nhập mã HTML tại đây...</h1></body></html>" spellCheck={false} />}
                                             </div>
                                         ) : (
-                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                                                 {/* Left: Template Selector */}
-                                                <div className="space-y-4">
+                                                <div className="space-y-4 lg:col-span-5">
                                                     <div className="flex items-center justify-between px-1">
                                                         <label className="text-[11px] font-bold uppercase text-slate-500 tracking-widest">Chọn mẫu thư</label>
                                                         <span className="text-[10px] font-bold text-blue-500">Mới nhất</span>
@@ -1319,7 +1331,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                     <TemplateSelector
                                                         templates={allTemplates}
                                                         selectedId={formData.templateId}
-                                                        gridClassName="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 p-1 pb-8"
+                                                        gridClassName="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-3 p-1 pb-8"
                                                         onSelect={t => {
                                                             setFormData({ ...formData, templateId: t.id, subject: t.name });
                                                             fetchTemplatePreview(t.id);
@@ -1328,16 +1340,30 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                 </div>
 
                                                 {/* Right: Live Preview */}
-                                                <div className="bg-slate-100 rounded-[24px] p-4 border border-slate-200 shadow-sm sticky top-0 h-fit">
-                                                    <div className="flex items-center justify-between mb-3">
-                                                        <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                                            <Eye className="w-4 h-4 text-orange-500" />
-                                                            Preview Email
-                                                        </h4>
+                                                <div className="bg-slate-100 rounded-[24px] p-4 border border-slate-200 shadow-sm sticky top-0 h-fit lg:col-span-7">
+                                                    <div className="mb-3">
+                                                        <div className="flex items-center justify-between mb-1.5 min-h-[40px]">
+                                                            <div className="flex items-center gap-2">
+                                                                <Eye className="w-4 h-4 text-orange-500 shrink-0" />
+                                                                <h4 className="text-sm font-bold text-slate-700 shrink-0">Preview Email</h4>
+                                                            </div>
+                                                            {formData.templateId && formData.templateId !== 'custom-html' && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setActiveEditTemplateId(formData.templateId || null);
+                                                                        setIsEditingTemplate(true);
+                                                                    }}
+                                                                    className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-full text-xs font-bold hover:text-[#ffa900] hover:border-orange-200 hover:bg-orange-50 transition-all flex items-center gap-1.5 shadow-sm"
+                                                                >
+                                                                    <Edit3 className="w-3.5 h-3.5" /> Chỉnh sửa Email
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                         {formData.templateId && (
-                                                            <span className="text-xs text-slate-500 font-medium">
-                                                                {allTemplates.find(t => t.id === formData.templateId)?.name}
-                                                            </span>
+                                                            <div className="text-[13px] text-slate-600 font-bold bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm leading-snug">
+                                                                <span className="text-slate-400 font-normal mr-2">Subject:</span>
+                                                                {formData.subject || allTemplates.find(t => t.id === formData.templateId)?.name}
+                                                            </div>
                                                         )}
                                                     </div>
 
@@ -1353,11 +1379,15 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                                 <p className="text-xs text-slate-500">Loading preview...</p>
                                                             </div>
                                                         ) : (
-                                                            <iframe
-                                                                srcDoc={(templatePreviews[formData.templateId] || '').replace('</body>', '<style>body{transform:scale(0.85);transform-origin:top left;width:117%;}</style></body>')}
-                                                                className="w-full h-[600px] bg-white border-none"
-                                                                title="Template Preview"
-                                                            />
+                                                            <div className="w-full h-[600px] bg-white relative overflow-hidden">
+                                                                <iframe
+                                                                    srcDoc={templatePreviews[formData.templateId] || ''}
+                                                                    className="absolute top-0 left-0 w-[150%] h-[150%] border-none origin-top-left"
+                                                                    style={{ transform: 'scale(0.666666)' }}
+                                                                    title="Template Preview"
+                                                                    sandbox="allow-same-origin"
+                                                                />
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </div>
@@ -1397,6 +1427,13 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                     onChange={r => setFormData({ ...formData, reminders: r })}
                                     mainSubject={formData.subject || ''}
                                     isZns={formData.type === 'zalo_zns'}
+                                    mainTemplateId={formData.templateId || ''}
+                                    templatePreviews={templatePreviews}
+                                    onEditTemplate={(tid) => {
+                                        setActiveEditTemplateId(tid);
+                                        setIsEditingTemplate(true);
+                                    }}
+                                    onFetchPreview={fetchTemplatePreview}
                                 />
                             </TabTransition>
                         )}
@@ -1426,7 +1463,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                     <div className="px-8 py-5 bg-white border-t border-slate-100 flex justify-between items-center shrink-0">
                         <Button
                             variant="ghost"
-                            onClick={step === 1 ? onClose : () => setStep(step - 1)}
+                            onClick={step === 1 ? handleIntentClose : () => setStep(step - 1)}
                             className="text-slate-500 font-bold"
                         >
                             <ChevronLeft className="w-4 h-4 mr-2" />
@@ -1437,7 +1474,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                             <Button
                                 variant="ghost"
                                 onClick={() => onSaveDraft(formData)}
-                                className="text-slate-400 hover:text-slate-600 font-bold hidden sm:flex items-center gap-2"
+                                className="text-slate-500 hover:text-slate-700 bg-slate-100/80 hover:bg-slate-200 px-6 font-bold hidden sm:flex items-center gap-2 transition-colors border border-slate-200"
                             >
                                 <Save className="w-4 h-4" /> LƯU NHÁP
                             </Button>
@@ -1464,7 +1501,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                 // Old code used a hardcoded /api/ path — fails in production where API is
                                                 // at https://automation.ideas.edu.vn/mail_api (different origin/path).
                                                 // Also was not awaited and had no catch → approval request silently failed.
-                                                if(savedPayload) {
+                                                if (savedPayload) {
                                                     try {
                                                         await api.post<{ success: boolean }>('approvals?action=request', {
                                                             target_type: 'campaign',
@@ -1486,8 +1523,8 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                     {isSubmitting ? (
                                         <><Loader2 className="w-4 h-4 animate-spin" /> ĐANG XỬ LÝ...</>
                                     ) : (
-                                        canSend 
-                                            ? (formData.scheduledAt ? 'LÊN LỊCH GỬI' : 'GỬI CHIẾN DỊCH NGAY') 
+                                        canSend
+                                            ? (formData.scheduledAt ? 'LÊN LỊCH GỬI' : 'GỬI CHIẾN DỊCH NGAY')
                                             : <><UserCheck className="w-4 h-4" /> YÊU CẦU DUYỆT</>
                                     )}
                                 </Button>
@@ -1542,7 +1579,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                 </div>
                                             </button>
                                         )) : null}
-                                        
+
                                         <button
                                             disabled={isSubmitting}
                                             onClick={async () => {
@@ -1659,7 +1696,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                             <GitMerge className="w-5 h-5" />
                                             KẾT NỐI DOMATION
                                         </button>
-                                        
+
                                         <div className="grid grid-cols-2 gap-3 mt-2">
                                             <button
                                                 disabled={isSubmitting}
@@ -1709,6 +1746,81 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                 campaignName={formData.name || ''}
                 campaignType={formData.type}
             />
+            {/* AI Email Editor Modal (Quick edit) */}
+            {isEditingTemplate && activeEditTemplateId && (
+                <EmailEditor
+                    template={allTemplates.find(t => t.id === activeEditTemplateId)!}
+                    groups={[]}
+                    onSave={async (data) => {
+                        if (activeEditTemplateId.startsWith('sys_')) {
+                            toast.error('Lỗi: Bạn không thể sửa mẫu mặc định của hệ thống.');
+                            return;
+                        }
+                        const res = await api.put(`templates/${activeEditTemplateId}`, { ...allTemplates.find(t => t.id === activeEditTemplateId), ...data, lastModified: new Date().toISOString() });
+                        if (res.success) {
+                            toast.success('Đã lưu mẫu!');
+                            setIsEditingTemplate(false);
+                            setActiveEditTemplateId(null);
+                            // Update preview
+                            const detail = await api.get<Template>(`templates?id=${activeEditTemplateId}`);
+                            if (detail.success && detail.data) {
+                                setTemplatePreviews(prev => ({ ...prev, [activeEditTemplateId]: detail.data!.htmlContent }));
+                            }
+                        } else {
+                            toast.error('Lỗi lưu mẫu: ' + (res.message || 'Không rõ lý do'));
+                        }
+                    }}
+                    onCancel={() => {
+                        setIsEditingTemplate(false);
+                        setActiveEditTemplateId(null);
+                    }}
+                />
+            )}
+            {/* Confirm modal when closing wizard with unsaved changes */}
+            {showCloseConfirm && (
+                <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowCloseConfirm(false)}/>
+                    <div className="relative bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full animate-in zoom-in-95 duration-200">
+                        <button
+                            onClick={() => setShowCloseConfirm(false)}
+                            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors p-1"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                        <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 mb-4 mx-auto">
+                            <AlertCircle className="w-6 h-6" />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800 text-center mb-2">Chưa lưu chiến dịch</h3>
+                        <p className="text-sm text-slate-500 text-center mb-6">Bạn có muốn lưu thành bản nháp trước khi thoát không?</p>
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={async () => {
+                                    setIsSubmitting(true);
+                                    try {
+                                        await onSaveDraft(formData);
+                                        setShowCloseConfirm(false);
+                                        onClose();
+                                    } finally {
+                                        setIsSubmitting(false);
+                                    }
+                                }}
+                                className="w-full py-3 bg-[#ffa900] hover:bg-[#ca7900] text-white rounded-xl font-bold transition-colors"
+                            >
+                                Lưu thành Bản nháp
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowCloseConfirm(false);
+                                    onClose();
+                                }}
+                                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-colors"
+                            >
+                                Bỏ qua & Thoát
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>,
         document.body
     );

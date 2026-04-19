@@ -757,6 +757,130 @@ if (isset($_GET['route']) && $_GET['route'] === 'completed-users') {
     }
 }
 
+// --- NEW ROUTE: Estimate Manual Add (Deduplication UI) ---
+if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'estimate-manual-add') {
+    try {
+        $flowId = $_GET['id'] ?? null;
+        if (!$flowId) jsonResponse(false, null, 'Flow ID required');
+
+        $inputData = json_decode(file_get_contents('php://input'), true);
+        $rawInputs = $inputData['inputs'] ?? [];
+        $listIds = $inputData['list_ids'] ?? [];
+
+        if (is_string($rawInputs)) {
+            $rawInputs = preg_split('/[\r\n,;]+/', $rawInputs, -1, PREG_SPLIT_NO_EMPTY);
+        }
+        $rawInputs = array_map('trim', $rawInputs);
+        $rawInputs = array_filter($rawInputs);
+
+        $mergedIdentifiers = $rawInputs; // email/phone/uid
+
+        // If lists are selected, get their subscribers
+        if (!empty($listIds)) {
+            $placeholders = implode(',', array_fill(0, count($listIds), '?'));
+            $params = $listIds;
+            // Also enforce workspace_id
+            $params[] = $workspace_id;
+            $stmt = $pdo->prepare("SELECT s.email, s.phone_number, s.zalo_user_id 
+                                   FROM subscriber_lists ls
+                                   JOIN subscribers s ON ls.subscriber_id = s.id
+                                   WHERE ls.list_id IN ($placeholders) AND s.workspace_id = ?");
+            $stmt->execute($params);
+            
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                if (!empty($row['email'])) $mergedIdentifiers[] = $row['email'];
+                elseif (!empty($row['phone_number'])) $mergedIdentifiers[] = $row['phone_number'];
+                elseif (!empty($row['zalo_user_id'])) $mergedIdentifiers[] = $row['zalo_user_id'];
+            }
+        }
+
+        $segmentIds = $inputData['segment_ids'] ?? [];
+        if (!empty($segmentIds)) {
+            require_once 'segment_helper.php';
+            foreach ($segmentIds as $segId) {
+                $stmt = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
+                $stmt->execute([$segId, $workspace_id]);
+                $criteria = $stmt->fetchColumn();
+                if ($criteria) {
+                    $res = buildSegmentWhereClause($criteria, $segId);
+                    $sql = "SELECT s.email, s.phone_number, s.zalo_user_id FROM subscribers s WHERE s.workspace_id = ? AND s.status != 'unsubscribed' AND " . $res['sql'];
+                    $mergedParams = array_merge([$workspace_id], $res['params']);
+                    $stmtUsers = $pdo->prepare($sql);
+                    $stmtUsers->execute($mergedParams);
+                    while ($row = $stmtUsers->fetch(PDO::FETCH_ASSOC)) {
+                        if (!empty($row['email'])) $mergedIdentifiers[] = $row['email'];
+                        elseif (!empty($row['phone_number'])) $mergedIdentifiers[] = $row['phone_number'];
+                        elseif (!empty($row['zalo_user_id'])) $mergedIdentifiers[] = $row['zalo_user_id'];
+                    }
+                }
+            }
+        }
+
+        // Deduplicate locally
+        $mergedIdentifiers = array_unique($mergedIdentifiers);
+        $totalFound = count($mergedIdentifiers);
+
+        if ($totalFound === 0) {
+            jsonResponse(true, ['total_found' => 0, 'duplicated' => 0, 'valid' => 0]);
+        }
+
+        // We want to exclude anyone who has EVER been in this flow (record exists in subscriber_flow_states)
+        // Wait, what if they were completed and user wants to re-enroll? 
+        // Following USER REQUEST: "đã từng vào flow là đc" (cấn trừ ra).
+        
+        // Find existing IDs for these identifiers first
+        // Break into chunks if too large to prevent query crash
+        $chunkedInputs = array_chunk($mergedIdentifiers, 1000);
+        $allSubIds = [];
+
+        foreach ($chunkedInputs as $chunk) {
+            $chunkPlaceholders = implode(',', array_fill(0, count($chunk), '?'));
+            // Check emails
+            $stmt = $pdo->prepare("SELECT id FROM subscribers WHERE email IN ($chunkPlaceholders) AND workspace_id = ?");
+            $params = $chunk; $params[] = $workspace_id;
+            $stmt->execute($params);
+            $allSubIds = array_merge($allSubIds, $stmt->fetchAll(PDO::FETCH_COLUMN));
+
+            // Check phones
+            $stmt = $pdo->prepare("SELECT id FROM subscribers WHERE phone_number IN ($chunkPlaceholders) AND workspace_id = ?");
+            $stmt->execute($params);
+            $allSubIds = array_merge($allSubIds, $stmt->fetchAll(PDO::FETCH_COLUMN));
+
+            // Check UIDS
+            $stmt = $pdo->prepare("SELECT id FROM subscribers WHERE zalo_user_id IN ($chunkPlaceholders) AND workspace_id = ?");
+            $stmt->execute($params);
+            $allSubIds = array_merge($allSubIds, $stmt->fetchAll(PDO::FETCH_COLUMN));
+        }
+
+        $allSubIds = array_unique($allSubIds);
+        
+        $duplicatedCount = 0;
+        if (!empty($allSubIds)) {
+            $chunkedIds = array_chunk($allSubIds, 1000);
+            foreach ($chunkedIds as $chunk) {
+                $idPlaceholders = implode(',', array_fill(0, count($chunk), '?'));
+                $stmt = $pdo->prepare("SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_flow_states WHERE flow_id = ? AND subscriber_id IN ($idPlaceholders)");
+                $params = array_merge([$flowId], $chunk);
+                $stmt->execute($params);
+                $duplicatedCount += (int)$stmt->fetchColumn();
+            }
+        }
+
+        // Technically, some raw inputs might map to the SAME new subscriber. The true 'valid' is approx.
+        // We will return total identifier inputs and duplicated matched.
+        $valid = max(0, $totalFound - $duplicatedCount);
+
+        jsonResponse(true, [
+            'total_found' => $totalFound,
+            'duplicated' => $duplicatedCount,
+            'valid' => $valid
+        ]);
+
+    } catch (Exception $e) {
+        jsonResponse(false, null, 'Error: ' . $e->getMessage());
+    }
+}
+
 // --- NEW ROUTE: Manual Add Participant ---
 if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-add-participant') {
     try {
@@ -766,6 +890,8 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
 
         $inputData = json_decode(file_get_contents('php://input'), true);
         $stepId = trim($inputData['step_id'] ?? '');
+        $timingMode = $inputData['timing_mode'] ?? 'immediate'; // 'immediate' or 'native'
+        $listIds = $inputData['list_ids'] ?? [];
 
         // Support mixed inputs (Email, Phone, UID)
         $rawInputs = $inputData['inputs'] ?? $inputData['emails'] ?? $inputData['email'] ?? '';
@@ -776,6 +902,50 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
         } else {
             $items = preg_split('/[\r\n,;]+/', $rawInputs, -1, PREG_SPLIT_NO_EMPTY);
         }
+        
+        $items = array_filter($items);
+
+        // Fetch List Users
+        if (!empty($listIds)) {
+            $placeholders = implode(',', array_fill(0, count($listIds), '?'));
+            $params = $listIds;
+            $params[] = $workspace_id;
+            $stmt = $pdo->prepare("SELECT s.email, s.phone_number, s.zalo_user_id 
+                                   FROM subscriber_lists ls
+                                   JOIN subscribers s ON ls.subscriber_id = s.id
+                                   WHERE ls.list_id IN ($placeholders) AND s.workspace_id = ?");
+            $stmt->execute($params);
+            
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                if (!empty($row['email'])) $items[] = $row['email'];
+                elseif (!empty($row['phone_number'])) $items[] = $row['phone_number'];
+                elseif (!empty($row['zalo_user_id'])) $items[] = $row['zalo_user_id'];
+            }
+        }
+
+        $segmentIds = $inputData['segment_ids'] ?? [];
+        if (!empty($segmentIds)) {
+            require_once 'segment_helper.php';
+            foreach ($segmentIds as $segId) {
+                $stmt = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
+                $stmt->execute([$segId, $workspace_id]);
+                $criteria = $stmt->fetchColumn();
+                if ($criteria) {
+                    $res = buildSegmentWhereClause($criteria, $segId);
+                    $sql = "SELECT s.email, s.phone_number, s.zalo_user_id FROM subscribers s WHERE s.workspace_id = ? AND s.status != 'unsubscribed' AND " . $res['sql'];
+                    $mergedParams = array_merge([$workspace_id], $res['params']);
+                    $stmtUsers = $pdo->prepare($sql);
+                    $stmtUsers->execute($mergedParams);
+                    while ($row = $stmtUsers->fetch(PDO::FETCH_ASSOC)) {
+                        if (!empty($row['email'])) $items[] = $row['email'];
+                        elseif (!empty($row['phone_number'])) $items[] = $row['phone_number'];
+                        elseif (!empty($row['zalo_user_id'])) $items[] = $row['zalo_user_id'];
+                    }
+                }
+            }
+        }
+        
+        $items = array_unique($items);
 
         if (empty($items) || !$stepId)
             jsonResponse(false, null, 'Danh sách liên hệ và Step ID không được để trống');
@@ -974,15 +1144,89 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
             }
         }
 
-        // 6. Execute Batch Flow Enrollment
-        if (!empty($statesToInsert)) {
+        // 6. Deduplicate & Fetch Target Step Logic
+        // Calculate Deduplication beforehand
+        $dedupCheck = array_unique($statesToInsert);
+        $finalStatesToInsert = [];
+        if (!empty($dedupCheck)) {
+            $chunked = array_chunk($dedupCheck, 1000);
+            $duplicatedSubs = [];
+            foreach ($chunked as $chunk) {
+                $placeholders = implode(',', array_fill(0, count($chunk), '?'));
+                $stmt = $pdo->prepare("SELECT DISTINCT subscriber_id FROM subscriber_flow_states WHERE flow_id = ? AND subscriber_id IN ($placeholders)");
+                $params = array_merge([$flowId], $chunk);
+                $stmt->execute($params);
+                $duplicatedSubs = array_merge($duplicatedSubs, $stmt->fetchAll(PDO::FETCH_COLUMN));
+            }
+            $finalStatesToInsert = array_diff($dedupCheck, $duplicatedSubs);
+        }
+
+        if (empty($finalStatesToInsert)) {
+            jsonResponse(true, ['added' => 0, 'errors' => $errors], "Các liên hệ đã bị loại bỏ vì trùng lặp đã từng chạy trong Flow này.");
+        }
+
+        // Analyze Timing based on Target Step
+        $stmtFlow = $pdo->prepare("SELECT steps FROM flows WHERE id = ?");
+        $stmtFlow->execute([$flowId]);
+        $flowSteps = json_decode($stmtFlow->fetchColumn(), true) ?: [];
+        $targetStepData = null;
+        foreach ($flowSteps as $fs) {
+            if ($fs['id'] === $stepId) {
+                $targetStepData = $fs;
+                break;
+            }
+        }
+
+        $baseNow = date('Y-m-d H:i:s');
+        $resolvedScheduledAt = date('Y-m-d H:i:s', strtotime('+5 minutes')); // Default for "immediate"
+        
+        if ($timingMode === 'native' && $targetStepData && ($targetStepData['type'] ?? '') === 'wait') {
+            // Calculate native wait time
+            $mode = trim($targetStepData['config']['mode'] ?? 'duration');
+            if ($mode === 'until') {
+                $targetTime = $targetStepData['config']['untilTime'] ?? '09:00';
+                $targetDay = $targetStepData['config']['untilDay'] ?? null;
+                $dt = new DateTime($baseNow);
+                $targetTimeParts = explode(':', $targetTime);
+                $dt->setTime((int) $targetTimeParts[0], (int) ($targetTimeParts[1] ?? 0), 0);
+                if ($targetDay !== null && $targetDay !== '') {
+                    $currentDay = (int) date('w', strtotime($baseNow));
+                    $daysToWait = ((int) $targetDay - $currentDay + 7) % 7;
+                    if ($daysToWait === 0 && $dt->getTimestamp() <= time()) $daysToWait = 7;
+                    if ($daysToWait > 0) $dt->modify("+$daysToWait days");
+                } else {
+                    if ($dt->getTimestamp() <= time()) $dt->modify("+1 day");
+                }
+                $resolvedScheduledAt = $dt->format('Y-m-d H:i:s');
+            } elseif ($mode === 'until_date') {
+                $specDate = $targetStepData['config']['specificDate'] ?? '';
+                $targetTime = $targetStepData['config']['untilTime'] ?? '09:00';
+                if ($specDate) {
+                    $dt = new DateTime("$specDate $targetTime:00");
+                    if ($dt->getTimestamp() <= time()) {
+                        // Passed, wait 5 mins
+                        $resolvedScheduledAt = date('Y-m-d H:i:s', strtotime('+5 minutes'));
+                    } else {
+                        $resolvedScheduledAt = $dt->format('Y-m-d H:i:s');
+                    }
+                }
+            } else { // duration
+                $dur = (int) ($targetStepData['config']['duration'] ?? 1);
+                $unit = $targetStepData['config']['unit'] ?? 'hours';
+                $modVal = "+$dur " . ($unit === 'mins' ? 'minutes' : $unit);
+                $dt = new DateTime($baseNow);
+                $dt->modify($modVal);
+                $resolvedScheduledAt = $dt->format('Y-m-d H:i:s');
+            }
+        } elseif ($timingMode === 'native') {
+            // Native timing for a non-wait step means execute immediately (status = waiting, scheduled = now)
+            $resolvedScheduledAt = date('Y-m-d H:i:s');
+        }
+
+        // 7. Execute Batch Flow Enrollment
+        if (!empty($finalStatesToInsert)) {
             $pdo->beginTransaction();
             try {
-                // [CONCURRENCY FIX] Replaced DELETE + INSERT with INSERT ... ON DUPLICATE KEY UPDATE.
-                // Old approach had a race window: worker_flow could read the gap between
-                // the DELETE completing and the INSERT starting, causing the subscriber to
-                // be dropped from the queue mid-enrollment. IODKU is fully atomic — it
-                // updates an existing row or inserts a new one with zero gap.
                 $sqlState = "INSERT INTO subscriber_flow_states 
                     (flow_id, subscriber_id, step_id, status, created_at, updated_at, last_step_at, scheduled_at)
                     VALUES (?, ?, ?, 'waiting', ?, ?, ?, ?)
@@ -993,13 +1237,8 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
                         last_step_at = VALUES(last_step_at),
                         scheduled_at = VALUES(scheduled_at)";
                 $stmt = $pdo->prepare($sqlState);
-                foreach ($statesToInsert as $subId) {
-                    $stmt->execute([$flowId, $subId, $stepId, $nowStr, $nowStr, $nowStr, $nowStr]);
-                    // [BUG FIX] IODKU rowCount semantics:
-                    //   0 = row existed, nothing changed (no-op duplicate) → NOT a new enrollment
-                    //   1 = fresh INSERT (new enrollment)
-                    //   2 = row existed, was updated (manual re-enroll to reset step/schedule) → count as added
-                    // Old code incremented unconditionally, inflating the "added" count for no-ops.
+                foreach ($finalStatesToInsert as $subId) {
+                    $stmt->execute([$flowId, $subId, $stepId, $nowStr, $nowStr, $nowStr, $resolvedScheduledAt]);
                     $rc = $stmt->rowCount();
                     if ($rc > 0) $addedCount++;
                     if (function_exists('logActivity') && $rc > 0) {

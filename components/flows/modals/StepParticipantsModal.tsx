@@ -1,14 +1,27 @@
 import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { X, Search, RefreshCcw, Check, MailOpen, Clock, Download, MousePointer2, MessageSquare, AlertOctagon, Reply, MousePointerClick, Monitor, Smartphone, Tablet, Globe, FastForward, Trash2, Play, SkipForward, UserPlus, UserMinus, Send, Loader2, ChevronDown, Tag, List } from 'lucide-react';
+import { X, Search, RefreshCcw, Check, MailOpen, Clock, Download, MousePointer2, MessageSquare, AlertOctagon, Reply, MousePointerClick, Monitor, Smartphone, Tablet, Globe, FastForward, Trash2, Play, SkipForward, UserPlus, UserMinus, Send, Loader2, ChevronDown, Tag, List, Circle, CheckCircle2, Layers } from 'lucide-react';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { api } from '../../../services/storageAdapter';
+import { toast } from 'react-hot-toast';
 import Skeleton from '../../common/Skeleton';
 import LinkClicksTab from '../../common/LinkClicksTab';
 import TechStatsTab from '../../campaigns/TechStatsTab';
-import toast from 'react-hot-toast';
 import ConfirmModal from '../../common/ConfirmModal';
 import SelectBranchModal from '../../common/SelectBranchModal';
+
+const GoogleSheetsIcon = ({ className }: { className?: string }) => (
+    <div className={className} style={{ width: className?.includes('w-3') ? '12px' : '20px', height: className?.includes('h-3') ? '12px' : '20px' }}>
+        <img src="https://mailmeteor.com/logos/assets/PNG/Google_Sheets_Logo_512px.png" className="w-full h-full max-w-full max-h-full object-contain block" alt="Google Sheets" />
+    </div>
+);
+
+const MisaIcon = ({ className }: { className?: string }) => (
+    <div className={className} style={{ width: className?.includes('w-3') ? '12px' : '20px', height: className?.includes('h-3') ? '12px' : '20px' }}>
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlIpztniIEN5ZYvLlwwqBvhzdodvu2NfPSbg&s" className="w-full h-full max-w-full max-h-full object-contain block rounded-full" alt="MISA CRM" />
+    </div>
+);
 
 interface StepParticipantsModalProps {
     isOpen: boolean;
@@ -66,6 +79,10 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [addEmails, setAddEmails] = useState('');
     const [addingUsers, setAddingUsers] = useState(false);
+    const [addListIds, setAddListIds] = useState<string[]>([]);
+    const [timingMode, setTimingMode] = useState<'immediate' | 'native'>('immediate');
+    const [estimateData, setEstimateData] = useState<{ total_found: number, duplicated: number, valid: number } | null>(null);
+    const [isEstimating, setIsEstimating] = useState(false);
     // NEW: Branch Selection State
     const [targetAddStepId, setTargetAddStepId] = useState<string>('');
     const [availableBranches, setAvailableBranches] = useState<any[]>([]);
@@ -89,6 +106,44 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
     const [selectedStatus, setSelectedStatus] = useState('');
     const [availableTags, setAvailableTags] = useState<any[]>([]);
     const [availableLists, setAvailableLists] = useState<any[]>([]);
+    
+    // NEW: Source Tab & Search State for Add User Modal
+    const [addSourceTab, setAddSourceTab] = useState<'list' | 'sync' | 'segment'>('list');
+    const [addSearchTerm, setAddSearchTerm] = useState('');
+    const [availableSegments, setAvailableSegments] = useState<any[]>([]);
+    const [addSegmentIds, setAddSegmentIds] = useState<string[]>([]);
+
+    const isManualList = (l: any) => l.source === 'Manual' || !l.source || l.type === 'static';
+    const isSyncList = (l: any) => l.source !== 'Manual' && l.source && l.type !== 'static';
+
+    useEffect(() => {
+        if (!isAddModalOpen || (!addEmails.trim() && addListIds.length === 0 && addSegmentIds.length === 0)) {
+            setEstimateData(null);
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            setIsEstimating(true);
+            const emailsList = addEmails.split(/[\n,;]+/).map(e => e.trim()).filter(e => e);
+            
+            api.post(`flows?id=${flowId}&route=estimate-manual-add`, {
+                inputs: emailsList,
+                list_ids: addListIds,
+                segment_ids: addSegmentIds
+            }).then(res => {
+                const data = res.data as any;
+                if (res.success && data) {
+                    setEstimateData(data);
+                }
+            }).catch(err => {
+                console.error("Estimate Error:", err);
+            }).finally(() => {
+                setIsEstimating(false);
+            });
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [addEmails, addListIds, addSegmentIds, isAddModalOpen, flowId]);
 
     useEffect(() => {
         if (isOpen) setTimeout(() => setAnimateIn(true), 10);
@@ -530,9 +585,10 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
     };
     const fetchTagsAndLists = async () => {
         try {
-            const [tagsRes, listsRes] = await Promise.all([
+            const [tagsRes, listsRes, segmentsRes] = await Promise.all([
                 api.get('tags'),
-                api.get('lists')
+                api.get('lists'),
+                api.get('segments')
             ]);
 
             if (tagsRes.success && tagsRes.data) {
@@ -542,6 +598,10 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
             if (listsRes.success && listsRes.data) {
                 setAvailableLists(Array.isArray(listsRes.data) ? listsRes.data : []);
             }
+
+            if (segmentsRes.success && segmentsRes.data) {
+                setAvailableSegments(Array.isArray(segmentsRes.data) ? segmentsRes.data : []);
+            }
         } catch (error) {
             console.error('Error fetching tags and lists:', error);
         }
@@ -549,10 +609,10 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
 
     // Load tags and lists when modal opens
     useEffect(() => {
-        if (isOpen && stepType === 'inactive') {
+        if (isOpen) {
             fetchTagsAndLists();
         }
-    }, [isOpen, stepType]);
+    }, [isOpen]);
 
 
     if (!isOpen && !animateIn) return null;
@@ -1383,8 +1443,8 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
             {/* Add User Modal */}
             {isAddModalOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
-                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-2xl">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-2xl shrink-0">
                             <h3 className="font-bold text-slate-800 flex items-center gap-2">
                                 <UserPlus className="w-5 h-5 text-blue-600" />
                                 Thêm người dùng vào bước này
@@ -1393,19 +1453,110 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
-                        <div className="p-6 space-y-4">
+                        <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar flex-1">
+                            
+                            {/* Danh sách List Multi-select */}
                             <div>
-                                <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wide">
-                                    Danh sách Email / SĐT / Zalo UID (Mỗi dòng 1 thông tin)
+                                <label className="block text-[11px] font-black text-slate-500 mb-2 uppercase tracking-wide">
+                                    Thêm từ dữ liệu hệ thống
+                                </label>
+                                
+                                <div className="space-y-3">
+                                    {/* Sub-Tabs */}
+                                    <div className="flex bg-slate-100 p-0.5 rounded-lg w-full mb-1">
+                                        <button
+                                            onClick={() => setAddSourceTab('list')}
+                                            className={`flex-1 py-1.5 rounded-md text-[9px] font-bold uppercase transition-all flex items-center justify-center gap-1.5 ${addSourceTab === 'list' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                        >
+                                            <List className="w-3 h-3" /> Danh sách
+                                        </button>
+                                        <button
+                                            onClick={() => setAddSourceTab('sync')}
+                                            className={`flex-1 py-1.5 rounded-md text-[9px] font-bold uppercase transition-all flex items-center justify-center gap-1.5 ${addSourceTab === 'sync' ? 'bg-white shadow-sm text-green-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                        >
+                                            <Globe className="w-3 h-3" /> Đồng bộ
+                                        </button>
+                                        <button
+                                            onClick={() => setAddSourceTab('segment')}
+                                            className={`flex-1 py-1.5 rounded-md text-[9px] font-bold uppercase transition-all flex items-center justify-center gap-1.5 ${addSourceTab === 'segment' ? 'bg-white shadow-sm text-orange-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                        >
+                                            <Layers className="w-3 h-3" /> Phân khúc
+                                        </button>
+                                    </div>
+
+                                    {/* Search Bar */}
+                                    <div className="relative group">
+                                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-300 group-focus-within:text-slate-500 transition-colors" />
+                                        <input 
+                                            value={addSearchTerm} 
+                                            onChange={e => setAddSearchTerm(e.target.value)} 
+                                            placeholder="Tìm kiếm nhanh..." 
+                                            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:border-slate-400 transition-all" 
+                                        />
+                                    </div>
+
+                                    <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-3 p-1">
+                                        {availableLists.length === 0 && availableSegments.length === 0 ? (
+                                            <div className="p-get bg-slate-50 border border-slate-200 rounded-2xl text-center">
+                                                <p className="text-sm text-slate-500 italic">Hệ thống chưa có danh sách này.</p>
+                                            </div>
+                                        ) : (
+                                            (addSourceTab === 'segment' ? availableSegments : availableLists)
+                                                .filter(l => addSourceTab === 'list' ? isManualList(l) : (addSourceTab === 'sync' ? isSyncList(l) : true))
+                                                .filter(l => l.name.toLowerCase().includes(addSearchTerm.toLowerCase()))
+                                                .map(list => {
+                                                const isSelected = addSourceTab === 'segment' ? addSegmentIds.includes(list.id) : addListIds.includes(list.id);
+                                                return (
+                                                <label 
+                                                    key={list.id} 
+                                                    className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all duration-300 group relative overflow-hidden ${isSelected ? 'border-blue-500 bg-blue-50 shadow-md ring-4 ring-blue-500/5' : 'border-transparent bg-slate-50 hover:bg-white hover:border-slate-200 hover:shadow-sm'} cursor-pointer`}
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl transition-all duration-500 ${isSelected ? 'bg-blue-500 text-white shadow-lg' : 'bg-white border border-slate-200 text-slate-400 group-hover:text-slate-600 shadow-sm'}`}>
+                                                            {addSourceTab === 'list' ? <List className="w-5 h-5" /> : (addSourceTab === 'segment' ? <Layers className="w-5 h-5" /> : (list.source === 'MISA CRM' ? <MisaIcon className="w-5 h-5" /> : <GoogleSheetsIcon className="w-5 h-5" />))}
+                                                        </div>
+                                                        <div className="text-left overflow-hidden">
+                                                            <p className={`text-[13px] font-black tracking-tight transition-colors ${isSelected ? 'text-slate-900' : 'text-slate-700'}`}>{list.name}</p>
+                                                            <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 transition-colors ${isSelected ? 'text-blue-600/70' : 'text-slate-400'}`}>{list.count || 0} LIÊN HỆ {list.source && list.source !== 'Manual' && `- ${list.source}`}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ml-2 ${isSelected ? 'border-blue-500 bg-blue-500 text-white scale-110 shadow-sm' : 'border-slate-200 bg-white group-hover:border-slate-400'}`}>
+                                                        {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
+                                                    </div>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        className="hidden"
+                                                        checked={isSelected}
+                                                        onChange={(e) => {
+                                                            if (addSourceTab === 'segment') {
+                                                                if (e.target.checked) setAddSegmentIds([...addSegmentIds, list.id]);
+                                                                else setAddSegmentIds(addSegmentIds.filter(id => id !== list.id));
+                                                            } else {
+                                                                if (e.target.checked) setAddListIds([...addListIds, list.id]);
+                                                                else setAddListIds(addListIds.filter(id => id !== list.id));
+                                                            }
+                                                        }}
+                                                    />
+                                                </label>
+                                        )})
+                                    )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Raw Data Textarea */}
+                            <div>
+                                <label className="block text-[11px] font-black text-slate-500 mb-2 uppercase tracking-wide">
+                                    Danh sách Email / SĐT / UID (Nhập thủ công)
                                 </label>
                                 <textarea
-                                    className="w-full h-32 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-mono text-slate-700 resize-none"
+                                    className="w-full h-28 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-mono text-slate-700 resize-none"
                                     placeholder="example@gmail.com&#10;0912345678&#10;84912345678..."
                                     value={addEmails}
                                     onChange={e => setAddEmails(e.target.value)}
                                 ></textarea>
-                                <p className="mt-2 text-xs text-slate-400">
-                                    * Những liên hệ chưa có trong hệ thống sẽ được tự động tạo mới.
+                                <p className="mt-2 text-[11px] text-slate-400">
+                                    * Mỗi dòng một thông tin. Liên hệ chưa có sẽ được tự động tạo mới.
                                 </p>
                             </div>
 
@@ -1511,8 +1662,55 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                 </div>
                             )}
 
+                            {/* Timing Options for Wait step */}
+                            {((targetAddStepId ? availableBranches.find(b => b.id === targetAddStepId) : stepData)?.type === 'wait' || stepData?.type === 'wait') && (
+                                <div>
+                                    <label className="block text-[11px] font-black text-slate-500 mb-2 uppercase tracking-wide">
+                                        Thời gian thực thi (Cho bước Wait)
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <label className={`flex flex-col gap-1 p-3 rounded-xl border border-slate-200 cursor-pointer transition-all ${timingMode === 'native' ? 'bg-blue-50 border-blue-300 ring-1 ring-blue-500/50' : 'hover:bg-slate-50'}`}>
+                                            <div className="flex items-center gap-2">
+                                                <input type="radio" checked={timingMode === 'native'} onChange={() => setTimingMode('native')} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                                                <span className="text-sm font-bold text-slate-700">Chờ theo cài đặt</span>
+                                            </div>
+                                            <p className="text-[10px] text-slate-500 ml-6 leading-tight">Tuân thủ thời gian đợi của bước này.</p>
+                                        </label>
+                                        <label className={`flex flex-col gap-1 p-3 rounded-xl border border-slate-200 cursor-pointer transition-all ${timingMode === 'immediate' ? 'bg-orange-50 border-orange-300 ring-1 ring-orange-500/50' : 'hover:bg-slate-50'}`}>
+                                            <div className="flex items-center gap-2">
+                                                <input type="radio" checked={timingMode === 'immediate'} onChange={() => setTimingMode('immediate')} className="w-4 h-4 text-orange-600 focus:ring-orange-500" />
+                                                <span className="text-sm font-bold text-slate-700">Bỏ qua Wait</span>
+                                            </div>
+                                            <p className="text-[10px] text-slate-500 ml-6 leading-tight">Thời gian Wait = 0. Gửi ngay lập tức (Chỉ đợi 5p chống Spam).</p>
+                                        </label>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Deduplication Estimate Display */}
+                            {(!addEmails.trim() && addListIds.length === 0) ? null : isEstimating ? (
+                                <div className="flex items-center gap-2 text-blue-600 bg-blue-50 p-3 rounded-xl text-xs font-medium border border-blue-100">
+                                    <Loader2 className="w-4 h-4 animate-spin text-blue-500" /> Đang kiểm tra trùng lặp hệ thống...
+                                </div>
+                            ) : estimateData ? (
+                                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-white shadow-sm border border-emerald-100 flex items-center justify-center shrink-0">
+                                            <Check className="w-5 h-5 text-emerald-600" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-bold text-emerald-800">Sẽ thêm <span className="text-xl mx-0.5">{estimateData.valid}</span> Khách hàng vào Flow</h4>
+                                            <p className="text-[11px] text-emerald-700 mt-1.5 opacity-90 leading-relaxed">
+                                                Tổng hợp được <b>{estimateData.total_found}</b> liên hệ từ danh sách.<br/>
+                                                Hệ thống tự động cấn trừ <b>{estimateData.duplicated}</b> Khách hàng <span className="underline decoration-emerald-300 underline-offset-2">đã từng</span> tham gia Flow này.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : null}
+
                         </div>
-                        <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 rounded-b-2xl">
+                        <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 rounded-b-2xl shrink-0">
                             <button
                                 onClick={() => setIsAddModalOpen(false)}
                                 className="px-4 py-2 text-slate-600 font-semibold text-sm hover:bg-white hover:shadow-sm rounded-lg transition-all border border-transparent hover:border-slate-200"
@@ -1521,25 +1719,30 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                             </button>
                             <button
                                 onClick={() => {
-                                    if (!addEmails.trim()) return toast.error('Vui lòng nhập ít nhất 1 liên hệ');
+                                    if (!addEmails.trim() && addListIds.length === 0) return toast.error('Vui lòng nhập email hoặc chọn Danh sách');
                                     setAddingUsers(true);
 
-                                    // Split and cleanup
                                     const emails = addEmails.split(/[\n,;]+/).map(e => e.trim()).filter(e => e);
 
                                     api.post(`flows?id=${flowId}&route=manual-add-participant`, {
-                                        inputs: emails, // Send array as 'inputs' to support mixed types
-                                        step_id: targetAddStepId || stepId // Use selected target or fallback to current
+                                        inputs: emails, 
+                                        list_ids: addListIds,
+                                        segment_ids: addSegmentIds,
+                                        timing_mode: timingMode,
+                                        step_id: targetAddStepId || stepId 
                                     }).then(res => {
-                                        const data = res.data as any; // Cast to any to access dynamic props
+                                        const data = res.data as any; 
                                         if (res.success) {
                                             toast.success(res.message || `Đã thêm ${data?.added || 0} Khách hàng`);
-                                            setAddEmails(''); // Clear input
-                                            setIsAddModalOpen(false); // Close modal
-                                            onRefresh(); // Refresh list AND stats
+                                            setAddEmails(''); 
+                                            setAddListIds([]);
+                                            setAddSegmentIds([]);
+                                            setTimingMode('immediate');
+                                            setEstimateData(null);
+                                            setIsAddModalOpen(false); 
+                                            onRefresh(); 
                                         } else {
                                             toast.error(res.message || 'Lỗi thêm Khách hàng');
-                                            // Provide more detail if errors array exists
                                             if (data?.errors && data.errors.length > 0) {
                                                 console.error(data.errors);
                                                 toast.error(`Chi tiết lỗi: ${data.errors[0]}...`);
@@ -1550,7 +1753,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                         console.error(err);
                                     }).finally(() => setAddingUsers(false));
                                 }}
-                                disabled={addingUsers}
+                                disabled={addingUsers || isEstimating}
                                 className="px-4 py-2 bg-blue-600 text-white font-bold text-sm rounded-lg hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                             >
                                 {addingUsers ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}

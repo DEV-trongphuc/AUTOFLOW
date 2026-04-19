@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, AlertCircle, Layers, Globe, Smartphone, Monitor, User, MapPin, Calendar, List, X, GitMerge, ChevronDown } from 'lucide-react';
 import Select from '../../common/Select';
@@ -316,7 +316,7 @@ const AdvancedConditionConfig: React.FC<AdvancedConditionConfigProps> = ({ confi
                                             </div>
 
                                             {/* VALUE INPUT (Dynamic) */}
-                                            <div className={cond.field === 'web_activity' ? "col-span-3 min-w-0 overflow-hidden" : "col-span-5 min-w-0 overflow-hidden"}>
+                                            <div className={cond.field === 'web_activity' ? "col-span-3 min-w-0" : "col-span-5 min-w-0"}>
                                                 {renderValueInput(fieldDef, cond.operator, cond.value, (val) => updateCondition(bIdx, cIdx, { value: val }))}
                                             </div>
 
