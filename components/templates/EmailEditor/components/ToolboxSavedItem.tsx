@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Trash2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface SavedItemProps {
     item: { id: string; name: string; data: any };
@@ -15,12 +16,28 @@ const ToolboxSavedItem: React.FC<SavedItemProps> = ({ item, onDragStart, onDelet
     >
         {/* Delete button */}
         <button
-            onClick={(e) => { 
+                    onClick={(e) => { 
                 e.preventDefault();
-                e.stopPropagation(); 
-                if (window.confirm(`Bạn có chắc muốn xóa mẫu "${item.name}" khỏi thư viện?`)) {
-                    onDelete?.(item.id); 
-                }
+                e.stopPropagation();
+                const tid = toast(
+                    (t) => (
+                        React.createElement('div', { className: 'flex flex-col gap-2 min-w-[200px]' },
+                            React.createElement('p', { className: 'text-sm font-semibold text-slate-800' }, `Xóa mẫu "${item.name}"?`),
+                            React.createElement('p', { className: 'text-xs text-slate-500' }, 'Mẫu sẽ bị xóa khỏi thư viện.'),
+                            React.createElement('div', { className: 'flex gap-2 mt-1' },
+                                React.createElement('button', {
+                                    className: 'flex-1 px-3 py-1.5 bg-rose-500 text-white text-xs font-bold rounded-lg hover:bg-rose-600',
+                                    onClick: () => { toast.dismiss(tid); onDelete?.(item.id); }
+                                }, 'Xóa'),
+                                React.createElement('button', {
+                                    className: 'flex-1 px-3 py-1.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-200',
+                                    onClick: () => toast.dismiss(tid)
+                                }, 'Hủy')
+                            )
+                        )
+                    ),
+                    { duration: 8000 }
+                );
             }}
             className="absolute top-2 right-2 p-1.5 bg-rose-50 text-rose-500 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500 hover:text-white shadow-sm z-10"
             title="Xóa mẫu"

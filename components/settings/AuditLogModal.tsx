@@ -56,10 +56,11 @@ const AuditLogModal: React.FC<AuditLogModalProps> = ({ isOpen, onClose }) => {
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center">
-            {/* Backdrop */}
+            {/* Backdrop — click outside to close */}
             <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose}></div>
             
-            <div className="relative w-full max-w-4xl bg-white rounded-3xl shadow-2xl flex flex-col h-[80vh] overflow-hidden animate-fade-in mx-4">
+            {/* Panel — stop propagation so clicking inside doesn't close modal */}
+            <div className="relative w-full max-w-4xl bg-white rounded-3xl shadow-2xl flex flex-col h-[80vh] overflow-hidden animate-fade-in mx-4" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center shadow-inner">
