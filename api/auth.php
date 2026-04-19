@@ -154,14 +154,16 @@ if ($method === 'GET' && $action === 'ping') {
     }
     try {
         // Throttle server-side: only update if last_login > 5 minutes ago
-        $pdo->prepare("
+        $stmt = $pdo->prepare("
             UPDATE users SET last_login = NOW()
             WHERE id = ?
             AND (last_login IS NULL OR last_login < DATE_SUB(NOW(), INTERVAL 5 MINUTE))
-        ")->execute([$_SESSION['user_id']]);
-        jsonResponse(true, null, 'ok');
+        ");
+        $stmt->execute([$_SESSION['user_id']]);
+        $rows = $stmt->rowCount();
+        jsonResponse(true, ['user_id' => $_SESSION['user_id'], 'affected' => $rows], 'ok');
     } catch (Exception $e) {
-        jsonResponse(true, null, 'ok'); // Don't expose errors for ping
+        jsonResponse(true, ['error' => $e->getMessage(), 'user_id' => $_SESSION['user_id'] ?? null], 'error'); 
     }
 }
 
