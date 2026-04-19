@@ -331,7 +331,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         $lastUpdate = $_SESSION['last_login_update_time'] ?? 0;
         if (time() - $lastUpdate > 300) { // 5 minutes throttle
             try {
-                $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?")->execute([$sessionUserId]);
+                if ($sessionUserId === '1' || $sessionUserId === 'admin-001') {
+                    $pdo->prepare("UPDATE users SET last_login = NOW() WHERE (id = ? OR email = 'dom.marketing.vn@gmail.com' OR email = 'admin@mailflow.com')")->execute([$sessionUserId]);
+                } else {
+                    $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?")->execute([$sessionUserId]);
+                }
                 $_SESSION['last_login_update_time'] = time();
             } catch (Exception $e) {
                 error_log("LAST_LOGIN UPDATE FAILED: " . $e->getMessage());
