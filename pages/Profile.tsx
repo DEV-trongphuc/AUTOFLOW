@@ -11,6 +11,7 @@ const Profile: React.FC = () => {
     const [name, setName] = useState(user.name);
     const [loginHistory, setLoginHistory] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
     const navigate = useNavigate();
     const isAdmin = user && user.role === 'admin';
 
@@ -38,8 +39,9 @@ const Profile: React.FC = () => {
     };
 
     const handleSave = async () => {
+        if (isSaving) return;
+        setIsSaving(true);
         try {
-            // Update via Admin API (which handles name updates)
             const res = await api.put(`admin_users/${user.id}`, { name });
             if (res.success) {
                 const updated = { ...user, name };
@@ -52,6 +54,8 @@ const Profile: React.FC = () => {
             }
         } catch (error) {
             toast.error('Lỗi hệ thống');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -109,8 +113,8 @@ const Profile: React.FC = () => {
                                         onChange={(e) => setName(e.target.value)}
                                         className="w-full px-4 py-2 bg-slate-50 border-2 border-amber-500/20 rounded-xl text-center font-bold outline-none focus:border-amber-500"
                                     />
-                                    <button onClick={handleSave} className="flex items-center justify-center gap-2 py-2 bg-amber-500 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-amber-500/20">
-                                        <Save className="w-3.5 h-3.5" /> Save Changes
+                                    <button onClick={handleSave} disabled={isSaving} className="flex items-center justify-center gap-2 py-2 bg-amber-500 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 disabled:opacity-60 disabled:cursor-not-allowed">
+                                        <Save className="w-3.5 h-3.5" /> {isSaving ? 'Saving...' : 'Save Changes'}
                                     </button>
                                 </div>
                             ) : (

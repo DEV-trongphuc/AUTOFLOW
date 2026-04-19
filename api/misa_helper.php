@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // api/misa_helper.php
 class MisaHelper
 {
@@ -56,11 +56,12 @@ class MisaHelper
 
         // User provided response: { "success": true, "data": "TOKEN_STRING", ... }
         if ($data && isset($data['success']) && $data['success'] && isset($data['data'])) {
-            file_put_contents(__DIR__ . '/misa_sync_debug.log', "[" . date('Y-m-d H:i:s') . "] [MISA DEBUG] Token Acquired Successfully.\n", FILE_APPEND);
+            error_log('[MISA] Token acquired successfully.');
             return $data['data'];
         }
 
-        file_put_contents(__DIR__ . '/misa_sync_debug.log', "[" . date('Y-m-d H:i:s') . "] [MISA DEBUG] Token Acquisition FAILED. URL: $tokenUrl HTTP $httpCode Response: $response\n", FILE_APPEND);
+        // Redact response body to avoid logging credentials/tokens
+        error_log("[MISA] Token acquisition FAILED. URL: $tokenUrl HTTP: $httpCode");
         return null;
     }
 
@@ -131,8 +132,7 @@ class MisaHelper
                 $normalizedRows[] = $this->normalizeContact($contact);
             }
 
-            $msg = "[MISA DEBUG] Fetch $entity Page $page, Size $pageSize => Received " . count($normalizedRows) . " records (Total $totalFound). URL: $url\n";
-            file_put_contents(__DIR__ . '/misa_sync_debug.log', "[" . date('Y-m-d H:i:s') . "] " . $msg, FILE_APPEND);
+            error_log("[MISA] Fetch $entity Page $page => " . count($normalizedRows) . " records.");
 
             return [
                 'success' => true,

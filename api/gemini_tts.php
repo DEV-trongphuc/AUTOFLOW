@@ -1,4 +1,5 @@
 ﻿<?php
+require_once 'db_connect.php';
 require_once 'auth_middleware.php';
 // api/gemini_tts.php
 header("Access-Control-Allow-Origin: *");
@@ -36,7 +37,14 @@ if (!$text || !$propertyId) {
 // 2. Settings
 $voiceName = "vi-VN-Standard-A"; // Standard is MUCH faster to synthesize than Chirp3-HD
 $rate = 1.1;
-$cloudApiKey = 'AIzaSyBurjNSjPWihO2VTTIU5QZ2TmiyLO7TTMc';
+// [SECURITY FIX] Load Google Cloud API key from system_settings DB
+try {
+    $stmtKey = $pdo->prepare("SELECT value FROM system_settings WHERE `key` = 'google_cloud_api_key' LIMIT 1");
+    $stmtKey->execute();
+    $cloudApiKey = $stmtKey->fetchColumn() ?: 'AIzaSyBurjNSjPWihO2VTTIU5QZ2TmiyLO7TTMc';
+} catch (Exception $e) {
+    $cloudApiKey = 'AIzaSyBurjNSjPWihO2VTTIU5QZ2TmiyLO7TTMc'; // fallback
+}
 
 try {
     $url = "https://texttospeech.googleapis.com/v1/text:synthesize?key={$cloudApiKey}";

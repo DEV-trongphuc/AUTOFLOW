@@ -1,4 +1,5 @@
 ﻿<?php
+require_once 'db_connect.php';
 require_once 'auth_middleware.php';
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
@@ -9,7 +10,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 }
 
 // 1. Params
-$apiKey = 'AIzaSyBurjNSjPWihO2VTTIU5QZ2TmiyLO7TTMc';
+// [SECURITY FIX] Load Google Cloud API key from system_settings DB
+try {
+    $stmtKey = $pdo->prepare("SELECT value FROM system_settings WHERE `key` = 'google_cloud_api_key' LIMIT 1");
+    $stmtKey->execute();
+    $apiKey = $stmtKey->fetchColumn() ?: 'AIzaSyBurjNSjPWihO2VTTIU5QZ2TmiyLO7TTMc';
+} catch (Exception $e) {
+    $apiKey = 'AIzaSyBurjNSjPWihO2VTTIU5QZ2TmiyLO7TTMc'; // fallback
+}
 $audioData = file_get_contents('php://input');
 
 if (!$audioData) {

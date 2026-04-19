@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Zalo OA Management API
  * Handles CRUD operations, OAuth flow, and Quota Management
@@ -85,7 +85,8 @@ function getAllOAs($pdo)
     
     // Auto-assign existing OAs to the current workspace if they lack one
     try {
-        $pdo->exec("UPDATE zalo_oa_configs SET workspace_id = '$workspace_id' WHERE workspace_id IS NULL OR workspace_id = ''");
+        $stmtFix = $pdo->prepare("UPDATE zalo_oa_configs SET workspace_id = ? WHERE workspace_id IS NULL OR workspace_id = ''");
+        $stmtFix->execute([$workspace_id]);
     } catch (Exception $e) {}
 
     try {
