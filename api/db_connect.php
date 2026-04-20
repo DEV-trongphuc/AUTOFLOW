@@ -378,7 +378,21 @@ function logSystemActivity($pdo, $module, $action, $target_id = null, $target_na
     // Fallback thông tin User
     $userId = $_SESSION['user_id'] ?? $GLOBALS['current_admin_id'] ?? 'unknown';
     $userName = $_SESSION['full_name'] ?? $_SESSION['username'] ?? 'System';
-    if ($userId === 'admin-001') $userName = 'Admin Master';
+
+    if (($userName === 'System' || trim($userName) === '') && is_numeric($userId)) {
+        try {
+            $uStmt = $pdo->prepare("SELECT COALESCE(NULLIF(full_name, ''), NULLIF(name, ''), username) FROM users WHERE id = ? LIMIT 1");
+            $uStmt->execute([$userId]);
+            $fetchedName = $uStmt->fetchColumn();
+            if ($fetchedName) {
+                $userName = $fetchedName;
+            }
+        } catch (Exception $e) { /* fallback to System if table error */ }
+    }
+
+    if ($userId === 'admin-001' && $userName === 'System') {
+        $userName = 'Admin Master';
+    }
 
     $ip = $_SERVER['REMOTE_ADDR'] ?? null;
     $detailsJson = null;

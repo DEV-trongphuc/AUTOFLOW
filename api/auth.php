@@ -105,6 +105,7 @@ if ($method === 'POST' && $action === 'login') {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'] ?? '';
         $_SESSION['full_name'] = $user['full_name'] ?? $user['name'] ?? '';
+        $_SESSION['role'] = $user['role'] ?? 'user';
 
         // user object already has no password — safe to return
         jsonResponse(true, $user, 'Đăng nhập thành công');

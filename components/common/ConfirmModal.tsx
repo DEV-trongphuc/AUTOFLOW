@@ -16,6 +16,8 @@ interface ConfirmModalProps {
     requireConfirmText?: string;
     confirmPlaceholder?: string;
     confirmLabel?: string; // New prop for confirm button label (alias for confirmText)
+    dangerText?: string;
+    dangerAction?: () => void;
     isDarkTheme?: boolean;
 }
 
@@ -32,6 +34,8 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     isLoading = false,
     requireConfirmText,
     confirmPlaceholder,
+    dangerText,
+    dangerAction,
     isDarkTheme
 }) => {
     const [isVisible, setIsVisible] = useState(false);
@@ -134,6 +138,15 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
                 {/* Footer */}
                 <div className={`px-6 py-4 rounded-b-3xl flex items-center justify-end gap-3 ${isDarkTheme ? 'bg-[#1E2532]/20' : 'bg-slate-50/50'}`}>
+                    {dangerText && dangerAction && (
+                        <button
+                            onClick={dangerAction}
+                            disabled={isLoading}
+                            className={`px-4 py-2 text-sm font-bold rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${isDarkTheme ? 'text-rose-400 bg-rose-900/20 hover:bg-rose-900/40 border border-transparent' : 'text-rose-600 bg-rose-50 hover:bg-rose-100 border border-transparent'} mr-auto`}
+                        >
+                            {dangerText}
+                        </button>
+                    )}
                     <button
                         onClick={onClose}
                         disabled={isLoading}

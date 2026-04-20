@@ -383,11 +383,9 @@ const ZaloAudienceTab: React.FC = () => {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="bg-slate-50/50 p-6 rounded-[32px] border border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-5">
-                    <div className="w-12 h-12 bg-amber-600 rounded-[18px] shadow-lg shadow-amber-600/20 flex items-center justify-center text-white flex-shrink-0">
-                        <List className="w-6 h-6" />
-                    </div>
+                    <img src="https://automation.ideas.edu.vn/imgs/zalolog.png" alt="Zalo" className="w-12 h-12 object-contain drop-shadow-md shrink-0" />
                     <div>
-                        <h2 className="text-lg font-black text-slate-800 tracking-tight uppercase">Danh sách đối tượng Zalo</h2>
+                        <h2 className="text-base font-black text-slate-800 tracking-tight uppercase">Danh sách đối tượng Zalo</h2>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 opacity-80 flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                             Tự động đồng bộ từ Zalo OA
@@ -399,16 +397,21 @@ const ZaloAudienceTab: React.FC = () => {
             {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm">
-                            <div className="flex items-start justify-between mb-8">
-                                <ZaloSkRow w={56} h={56} r={16} />
-                                <ZaloSkRow w={80} h={28} r={20} />
-                            </div>
-                            <ZaloSkRow w="70%" h={20} r={8} />
-                            <div className="mt-2 mb-8"><ZaloSkRow w="50%" h={12} r={6} /></div>
-                            <div className="flex items-center justify-between border-t border-slate-50 pt-8">
-                                <ZaloSkRow w={80} h={40} r={10} />
+                        <div key={i} className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm">
+                            <div className="flex items-start justify-between mb-5">
                                 <ZaloSkRow w={48} h={48} r={16} />
+                                <ZaloSkRow w={60} h={24} r={20} />
+                            </div>
+                            <div className="mb-6">
+                                <div className="mb-2"><ZaloSkRow w="70%" h={16} r={6} /></div>
+                                <ZaloSkRow w="40%" h={12} r={4} />
+                            </div>
+                            <div className="flex items-center justify-between border-t border-slate-100 pt-5 mt-auto">
+                                <div className="flex flex-col gap-1">
+                                    <ZaloSkRow w={80} h={10} r={4} />
+                                    <ZaloSkRow w={40} h={20} r={6} />
+                                </div>
+                                <ZaloSkRow w={40} h={40} r={20} />
                             </div>
                         </div>
                     ))}
@@ -425,35 +428,38 @@ const ZaloAudienceTab: React.FC = () => {
                                     setActiveList(list);
                                     setPagination({ page: 1, limit: itemsPerPage, total: 0, totalPages: 1 });
                                 }}
-                                className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-2xl hover:border-amber-100 transition-all cursor-pointer group relative overflow-hidden"
+                                className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-300 transition-all cursor-pointer flex flex-col h-full group"
                             >
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50/50 rounded-full -mr-16 -mt-16 group-hover:bg-amber-100 transition-colors"></div>
-
-                                <div className="relative z-10 flex flex-col h-full">
-                                    <div className="flex items-start justify-between mb-8">
-                                        <div className="w-14 h-14 bg-white rounded-2xl shadow-sm border border-slate-50 overflow-hidden flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
-                                            {oa && oa.avatar ? (
-                                                <img src={oa.avatar} alt={oa.name} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <Users className="w-7 h-7" />
+                                <div className="flex items-start justify-between mb-5">
+                                    <div className="relative shrink-0">
+                                        <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center text-white shadow-sm overflow-hidden border border-slate-50 relative">
+                                            <span className="font-black text-base uppercase absolute">{list.name ? list.name.charAt(0) : 'Z'}</span>
+                                            {oa && oa.avatar && (
+                                                <img src={oa.avatar} alt={oa.name} className="w-full h-full object-cover bg-white relative z-10" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
                                             )}
                                         </div>
-                                        <span className="text-[9px] font-black px-4 py-2 bg-amber-50 text-amber-600 rounded-full border border-amber-100 uppercase tracking-widest flex items-center gap-2">
-                                            <Plus className="w-3.5 h-3.5" /> Thêm mới
-                                        </span>
                                     </div>
+                                    <span className="px-2.5 py-1 bg-slate-50 text-slate-600 text-[10px] font-black rounded-full uppercase tracking-wider flex items-center gap-1.5 border border-slate-200/60">
+                                        <Plus className="w-3 h-3" /> THÊM MỚI
+                                    </span>
+                                </div>
 
-                                    <h3 className="text-xl font-black text-slate-800 mb-2 truncate pr-6 tracking-tight uppercase">{list.name}</h3>
-                                    <p className="text-slate-400 text-[10px] font-bold opacity-60 mb-8 uppercase tracking-[0.1em] line-clamp-1">{list.description || 'Không có mô tả cho danh sách này'}</p>
+                                <div className="mb-6 flex-1">
+                                    <h3 className="text-[15px] font-black text-slate-800 mb-1.5 line-clamp-2">{list.name}</h3>
+                                    <p className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-wide">
+                                        <Minus className="w-3 h-3 text-slate-300" /> {list.description || 'Không có mô tả'}
+                                    </p>
+                                </div>
 
-                                    <div className="mt-auto flex items-center justify-between border-t border-slate-50 pt-8">
-                                        <div className="flex flex-col text-left">
-                                            <span className="text-4xl font-black text-slate-800 tracking-tighter">{(list.real_count || list.subscriber_count || 0).toLocaleString()}</span>
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1.5 px-0.5">Thành viên</span>
-                                        </div>
-                                        <div className="w-12 h-12 bg-slate-50 text-slate-300 rounded-2xl group-hover:bg-amber-600 group-hover:text-white group-hover:shadow-xl group-hover:shadow-amber-600/20 transition-all flex items-center justify-center">
-                                            <ArrowRight className="w-6 h-6" />
-                                        </div>
+                                <div className="flex items-center justify-between border-t border-slate-100 pt-5 mt-auto">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                                            <Users className="w-3 h-3" /> THÀNH VIÊN ZALO
+                                        </span>
+                                        <span className="text-xl font-black text-slate-800">{(list.real_count || list.subscriber_count || 0).toLocaleString()}</span>
+                                    </div>
+                                    <div className="w-10 h-10 bg-slate-50 text-slate-400 rounded-full group-hover:bg-slate-100 group-hover:text-amber-600 transition-colors flex items-center justify-center shrink-0">
+                                        <ArrowRight className="w-5 h-5" />
                                     </div>
                                 </div>
                             </div>

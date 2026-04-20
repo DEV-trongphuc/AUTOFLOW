@@ -72,12 +72,12 @@ async function executeRequest(url: string, method: string, body?: any, signal?: 
       );
       const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
       const isAdminById = savedUser && (
-        savedUser.id === 1 || savedUser.id === '1' ||
-        savedUser.role === 'admin' || savedUser.is_admin ||
-        savedUser.isAdmin || savedUser.admin === true ||
-        savedUser.type === 'admin' || savedUser.user_type === 'admin'
+        savedUser.id === 1 || savedUser.id === '1'
       );
 
+      // Fix: Secondary admins (role=admin) shouldn't spoof X-Admin-Token to avoid 
+      // backend db_connect.php forcing $_SESSION['user_id'] = 1 permanently.
+      // db_connect.php natively respects $_SESSION['role'] now.
       if (isAdminById) {
         headers['X-Admin-Token'] = 'autoflow-admin-001';
       }

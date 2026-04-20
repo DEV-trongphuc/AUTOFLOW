@@ -542,7 +542,7 @@ const Campaigns: React.FC = () => {
             <div className="relative">
                 <PageHero
                     title={<>Campaign <span className="text-orange-100/80">Marketing</span></>}
-                    subtitle="Gửi Email & Zalo ZNS · theo dõi hiệu suất Thời gian thực với sức mạnh từ Trí tuệ nhân tạo."
+                    subtitle="Gửi Email & Zalo ZNS · Theo dõi hành trình khách hàng, tracking đa điểm chạm & báo cáo hiệu suất chi tiết theo thời gian thực."
                     showStatus={true}
                     statusText="AI Engine Active"
                     actions={heroActions}
@@ -557,8 +557,8 @@ const Campaigns: React.FC = () => {
                     <span className="text-[10px] font-black text-white/90 uppercase tracking-widest">QUOTA</span>
                     {awsQuickInfo !== null ? (
                         <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md leading-none ${awsQuickInfo.usage_pct > 80 ? 'bg-red-500 text-white'
-                                : awsQuickInfo.usage_pct > 60 ? 'bg-amber-400 text-amber-900'
-                                    : 'bg-white/90 text-slate-700'
+                            : awsQuickInfo.usage_pct > 60 ? 'bg-amber-400 text-amber-900'
+                                : 'bg-white/90 text-slate-700'
                             }`}>
                             {awsQuickInfo.remaining.toLocaleString()} left
                         </span>
@@ -625,7 +625,7 @@ const Campaigns: React.FC = () => {
                             />
                         </div>
 
-                        {/* Right: Date filter + Search + Type filter */}
+                        {/* Right: Date filter + Type filter + Search */}
                         <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-2 shrink-0 w-full lg:w-auto">
                             {/* Date Filter */}
                             <div className="flex items-center gap-2 shrink-0">
@@ -638,7 +638,7 @@ const Campaigns: React.FC = () => {
                                         { value: 'month', label: 'Tháng này' },
                                         { value: 'custom', label: 'Tùy chỉnh...' }
                                     ]}
-                                    className="w-[120px] !text-xs !py-1.5"
+                                    className="w-[130px] !text-xs !py-1.5"
                                 />
                                 {datePreset === 'custom' && (
                                     <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-lg p-0.5 px-2">
@@ -659,32 +659,26 @@ const Campaigns: React.FC = () => {
                                 )}
                             </div>
 
+                            {/* Type Filter Select */}
+                            <div className="shrink-0 w-auto">
+                                <Select
+                                    value={activeType}
+                                    onChange={(val) => setActiveType(val as any)}
+                                    options={TYPE_TABS as any}
+                                    className="!w-[130px] !text-xs !py-1.5"
+                                />
+                            </div>
+
                             {/* Search */}
-                            <div className="relative flex-1">
+                            <div className="relative flex-1 lg:w-56">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                                 <input
                                     type="text"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     placeholder="Tìm chiến dịch..."
-                                    className="w-full lg:w-44 pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-lg text-xs focus:bg-white dark:bg-slate-900 focus:ring-2 focus:ring-amber-600/20 focus:border-amber-400/50 transition-all outline-none"
+                                    className="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-lg text-xs focus:bg-white dark:bg-slate-900 focus:ring-2 focus:ring-amber-600/20 focus:border-amber-400/50 transition-all outline-none"
                                 />
-                            </div>
-
-                            {/* Type segmented control */}
-                            <div className="flex bg-slate-100 p-0.5 rounded-lg overflow-x-auto scrollbar-hide shrink-0">
-                                {TYPE_TABS.map(({ value, label }) => (
-                                    <button
-                                        key={value}
-                                        onClick={() => setActiveType(value as any)}
-                                        className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all whitespace-nowrap flex-1 text-center ${activeType === value
-                                            ? 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-sm'
-                                            : 'text-slate-400 hover:text-slate-600'
-                                            }`}
-                                    >
-                                        {label}
-                                    </button>
-                                ))}
                             </div>
                         </div>
                     </div>

@@ -235,7 +235,7 @@ const Flows: React.FC = () => {
     const [addStepContext, setAddStepContext] = useState<{ parentId: string; branch?: 'yes' | 'no' | 'A' | 'B'; isInsert?: boolean } | null>(null);
 
     const [confirmModal, setConfirmModal] = useState<{
-        isOpen: boolean; title: string; message: string; onConfirm: () => void; variant?: 'danger' | 'warning'; confirmLabel?: string; requireConfirmText?: string;
+        isOpen: boolean; title: string; message: string; onConfirm: () => void; variant?: 'danger' | 'warning'; confirmLabel?: string; requireConfirmText?: string; dangerText?: string; dangerAction?: () => void;
     }>({ isOpen: false, title: '', message: '', onConfirm: () => { } });
 
     // NEW: Activation Modal State
@@ -1793,7 +1793,9 @@ const Flows: React.FC = () => {
                                         title: 'Thay đổi chưa lưu',
                                         message: 'Bạn có thay đổi chưa lưu. Bạn có muốn lưu trước khi thoát không?',
                                         onConfirm: () => { handleManualSave(); setSelectedFlow(null); setConfirmModal(prev => ({ ...prev, isOpen: false })); },
-                                        confirmLabel: 'Lưu & Thoát'
+                                        confirmLabel: 'Lưu & Thoát',
+                                        dangerText: 'Thoát luôn',
+                                        dangerAction: () => { setSelectedFlow(null); setConfirmModal(prev => ({ ...prev, isOpen: false })); setHasUnsavedChanges(false); }
                                     });
                                 } else {
                                     setSelectedFlow(null);
@@ -2081,6 +2083,8 @@ const Flows: React.FC = () => {
                 variant={confirmModal.variant || 'danger'}
                 confirmLabel={confirmModal.confirmLabel}
                 requireConfirmText={confirmModal.requireConfirmText}
+                dangerText={confirmModal.dangerText}
+                dangerAction={confirmModal.dangerAction}
             />
 
             <TipsModal

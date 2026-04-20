@@ -65,7 +65,7 @@ try {
                 $exchangeUrl = "https://graph.facebook.com/v24.0/oauth/access_token?grant_type=fb_exchange_token&client_id=$appId&client_secret=$appSecret&fb_exchange_token=$userAccessToken";
                 $ch = curl_init($exchangeUrl);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);  // [FIX P15-C1] External Meta API — must verify cert
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);  // [FIX P15-C1] External Meta API â€” must verify cert
                 curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);     // [FIX P15-C1] Verify hostname matches cert CN
                 $exchResponse = curl_exec($ch);
                 curl_close($ch);
@@ -111,12 +111,47 @@ try {
 
             if (isset($pagesData['data']) && count($pagesData['data']) > 0) {
                 $pages = [];
+                $uploadDir = __DIR__ . '/uploads/meta_avatars/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                
+                $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
+                $host = $_SERVER['HTTP_HOST'];
+                $scriptDir = dirname($_SERVER['SCRIPT_NAME']);
+                if ($scriptDir === '\\' || $scriptDir === '/') $scriptDir = '';
+                $baseUrl = $protocol . '://' . $host . $scriptDir . '/uploads/meta_avatars/';
+
                 foreach ($pagesData['data'] as $page) {
+                    $rawAvatarUrl = $page['picture']['data']['url'] ?? '';
+                    $savedAvatarUrl = '';
+                    
+                    if ($rawAvatarUrl) {
+                        $ext = 'jpg';
+                        $fileName = $page['id'] . '_' . time() . '.' . $ext;
+                        $filePath = $uploadDir . $fileName;
+                        
+                        $chImg = curl_init($rawAvatarUrl);
+                        curl_setopt($chImg, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($chImg, CURLOPT_SSL_VERIFYPEER, false);
+                        curl_setopt($chImg, CURLOPT_FOLLOWLOCATION, true);
+                        curl_setopt($chImg, CURLOPT_TIMEOUT, 10);
+                        $imgData = curl_exec($chImg);
+                        curl_close($chImg);
+                        
+                        if ($imgData) {
+                            file_put_contents($filePath, $imgData);
+                            $savedAvatarUrl = $baseUrl . $fileName;
+                        } else {
+                            $savedAvatarUrl = $rawAvatarUrl;
+                        }
+                    }
+
                     $pages[] = [
                         'page_id' => $page['id'],
                         'page_name' => $page['name'],
                         'page_access_token' => $page['access_token'],
-                        'avatar_url' => $page['picture']['data']['url'] ?? '',
+                        'avatar_url' => $savedAvatarUrl,
                         'token_expires_at' => $formattedExpiry
                     ];
                 }
@@ -148,7 +183,7 @@ try {
 
             $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);  // [FIX P27-F1] Missing SSL verify — added for consistency
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);  // [FIX P27-F1] Missing SSL verify â€” added for consistency
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);     // [FIX P27-F1] Verify hostname matches cert CN
             $response = curl_exec($ch);
             curl_close($ch);
@@ -242,7 +277,7 @@ try {
                     $verifyToken = $existing['verify_token'];
                 }
 
-                // [FIX] Preserve existing app_secret if not provided — prevents signature check breakage
+                // [FIX] Preserve existing app_secret if not provided â€” prevents signature check breakage
                 // Updating a config (e.g. refresh token) without re-entering app_secret should NOT clear it.
                 if (empty($appSecret)) {
                     $stmtExistSecret = $pdo->prepare("SELECT app_secret FROM meta_app_configs WHERE id = ?");

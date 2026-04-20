@@ -118,7 +118,7 @@ const Select: React.FC<SelectProps> = ({
             exit={{ opacity: 0, y: direction === 'top' ? 5 : -5, scale: 0.98, transition: { duration: 0.1 } }}
             transition={{ type: 'spring', damping: 20, stiffness: 300 }}
             className={`
-              absolute z-[500] min-w-[240px] w-full border rounded-[22px] shadow-[0_20px_50px_rgba(0,0,0,0.2)] p-2
+              absolute z-[500] min-w-[160px] w-full border rounded-[22px] shadow-[0_20px_50px_rgba(0,0,0,0.2)] p-2
               ${direction === 'top' ? 'bottom-full mb-3 origin-bottom' : 'top-full mt-3 right-0 origin-top'}
               ${variant === 'premium'
               ? 'bg-slate-900 border-white/10 shadow-black/50'

@@ -2,7 +2,7 @@
 
 
 import React, { useEffect, useState, useRef, lazy, Suspense } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -92,6 +92,17 @@ const P = ({ c: C }: { c: React.LazyExoticComponent<React.FC<any>> }) => (
     <Suspense fallback={<TabLoader />}><C /></Suspense>
 );
 
+const HashRedirect = () => {
+    const navigate = useNavigate();
+    useEffect(() => {
+        if (window.location.hash && window.location.hash.startsWith('#/')) {
+            const path = window.location.hash.slice(1);
+            navigate(path, { replace: true });
+        }
+    }, [navigate]);
+    return null;
+};
+
 const GlobalDeleteOverlay = () => {
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -116,6 +127,23 @@ const GlobalDeleteOverlay = () => {
 
 const App: React.FC = () => {
     useEffect(() => {
+        // --- FORCE ONE-TIME LOGOUT TO FIX CORRUPTED SESSIONS ---
+        if (!localStorage.getItem('auth_fix_v1_logout_done')) {
+            localStorage.setItem('auth_fix_v1_logout_done', 'true');
+            if (localStorage.getItem('user')) {
+                localStorage.removeItem('user');
+                localStorage.removeItem('isAuthenticated');
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port !== '';
+                const apiBase = isLocal ? '/mail_api' : API_BASE_URL;
+                fetch(`${apiBase}/auth.php?action=logout`, { method: 'POST', credentials: 'include' })
+                    .finally(() => {
+                        window.location.href = '/login'; 
+                    });
+                return;
+            }
+        }
+        // -------------------------------------------------------
+
         // [PERF] Only seed mock data if real data doesn't exist yet
         if (!localStorage.getItem('user')) seedData();
     }, []);
@@ -213,7 +241,8 @@ const App: React.FC = () => {
             <GlobalDeleteOverlay />
             <AuthProvider>
                 <SettingsProvider>
-                <HashRouter>
+                <BrowserRouter>
+                    <HashRedirect />
                     <KeyboardShortcutsProvider>
                         <NavigationProvider>
                             {/* [PERF] Outer Suspense for initial app boot only */}
@@ -300,7 +329,7 @@ const App: React.FC = () => {
                             </Suspense>
                         </NavigationProvider>
                     </KeyboardShortcutsProvider>
-                </HashRouter>
+                </BrowserRouter>
                 </SettingsProvider>
             </AuthProvider>
         </QueryClientProvider>

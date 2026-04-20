@@ -469,46 +469,48 @@ const MetaCustomers: React.FC = () => {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-amber-600 rounded-[14px] shadow-lg shadow-amber-600/10 flex items-center justify-center !text-white flex-shrink-0">
-                        <Facebook className="w-5 h-5" />
-                    </div>
+            <div className="bg-slate-50/50 p-6 rounded-[32px] border border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-5">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" alt="Facebook" className="w-12 h-12 object-contain drop-shadow-md shrink-0" />
                     <div>
-                        <h2 className="text-sm font-black text-slate-800 tracking-tight uppercase">Danh sách Khách hàng Messenger</h2>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 opacity-80">Tự động đồng bộ từ Facebook Pages</p>
+                        <h2 className="text-base font-black text-slate-800 tracking-tight uppercase">Danh sách khách hàng Messenger</h2>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 opacity-80">Tự động đồng bộ từ Facebook Pages</p>
                     </div>
                 </div>
-                <div className="hidden lg:flex items-center gap-4 px-6 border-l border-slate-200/50">
-                    <div className="text-right">
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Tổng Khách hàng</p>
-                        <p className="text-lg font-black text-slate-800 tracking-tighter">
-                            {Array.isArray(pages) ? pages.reduce((acc, p) => acc + Number(p.subscriber_count || 0), 0).toLocaleString() : '0'}
-                        </p>
-                    </div>
+                <div className="flex items-center gap-3">
+                    <Button variant="secondary" icon={RefreshCw} size="sm" onClick={() => fetchPages()}>
+                        Đồng bộ Pages
+                    </Button>
                 </div>
             </div>
 
             {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
-                            <div className="flex items-start justify-between mb-8">
+                        <div key={i} className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm">
+                            <div className="flex items-start justify-between mb-5">
                                 <MetaSkRow w={48} h={48} r={16} />
-                                <MetaSkRow w={80} h={26} r={20} />
+                                <MetaSkRow w={60} h={24} r={20} />
                             </div>
-                            <MetaSkRow w="70%" h={18} r={8} />
-                            <div className="mt-2 mb-8"><MetaSkRow w="50%" h={11} r={6} /></div>
-                            <div className="flex items-center justify-between border-t border-slate-50 pt-6">
-                                <MetaSkRow w={70} h={36} r={8} />
-                                <MetaSkRow w={40} h={40} r={16} />
+                            <div className="mb-6">
+                                <div className="mb-2"><MetaSkRow w="70%" h={16} r={6} /></div>
+                                <MetaSkRow w="40%" h={12} r={4} />
+                            </div>
+                            <div className="flex items-center justify-between border-t border-slate-100 pt-5 mt-auto">
+                                <div className="flex flex-col gap-1">
+                                    <MetaSkRow w={80} h={10} r={4} />
+                                    <MetaSkRow w={40} h={20} r={6} />
+                                </div>
+                                <MetaSkRow w={40} h={40} r={20} />
                             </div>
                         </div>
                     ))}
                 </div>
             ) : !Array.isArray(pages) || pages.length === 0 ? (
-                <div className="text-center py-20 bg-slate-50/30 rounded-[40px] border-2 border-dashed border-slate-100">
-                    <Facebook className="w-16 h-16 text-slate-100 mx-auto mb-4" />
+                <div className="bg-slate-50/50 border border-slate-100 rounded-3xl p-12 text-center flex flex-col items-center justify-center min-h-[300px]">
+                    <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-300 mb-4">
+                        <Facebook className="w-8 h-8" />
+                    </div>
                     <p className="text-slate-400 font-black uppercase tracking-widest text-[11px] italic">Chưa có kết nối Fanpage nào.</p>
                 </div>
             ) : (
@@ -517,41 +519,45 @@ const MetaCustomers: React.FC = () => {
                         <div
                             key={page.id}
                             onClick={() => handlePageClick(page)}
-                            className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-2xl hover:border-amber-100 transition-all cursor-pointer group relative overflow-hidden"
+                            className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-300 transition-all cursor-pointer flex flex-col h-full group"
                         >
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50/50 rounded-full -mr-16 -mt-16 group-hover:bg-amber-50 transition-colors"></div>
-
-                            <div className="relative z-10">
-                                <div className="flex items-start justify-between mb-8">
-                                    <div className="relative w-12 h-12 bg-[#fff4e0] rounded-2xl shadow-sm border border-[#ffe8cc] overflow-hidden flex items-center justify-center text-[#ffa900] group-hover:scale-110 transition-transform font-black text-2xl uppercase shrink-0">
-                                        {page.page_name || page.name ? (page.page_name || page.name).charAt(0) : 'F'}
+                            <div className="flex items-start justify-between mb-5">
+                                <div className="relative shrink-0">
+                                    <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center text-white shadow-sm overflow-hidden border border-slate-50 relative">
+                                        <span className="font-black text-base uppercase absolute">{page.page_name || page.name ? (page.page_name || page.name).charAt(0) : 'M'}</span>
                                         {page.avatar_url && (
                                             <img
                                                 src={page.avatar_url}
                                                 alt=""
-                                                className="absolute inset-0 w-full h-full object-cover bg-white"
+                                                className="w-full h-full object-cover bg-white relative z-10"
                                                 onError={(e) => {
                                                     (e.currentTarget as HTMLImageElement).style.display = 'none';
                                                 }}
                                             />
                                         )}
                                     </div>
-                                    <span className="text-[9px] font-black px-3 py-1.5 bg-amber-50 text-amber-600 rounded-full border border-amber-100/50 uppercase tracking-widest flex items-center gap-1.5">
-                                        <RefreshCw className="w-3 h-3 animate-spin duration-[15s]" /> Live Sync
-                                    </span>
                                 </div>
+                                <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black rounded-full uppercase tracking-wider flex items-center gap-1.5 border border-emerald-100/50">
+                                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> LIVE SYNC
+                                </span>
+                            </div>
 
-                                <h3 className="text-base font-black text-slate-800 mb-1 line-clamp-1 pr-6 tracking-tight uppercase">{page.page_name || page.name}</h3>
-                                <p className="text-slate-400 text-[10px] font-bold opacity-60 mb-8 uppercase tracking-tighter">PAGE ID: {page.page_id}</p>
+                            <div className="mb-6 flex-1">
+                                <h3 className="text-[15px] font-black text-slate-800 mb-1.5 line-clamp-2">{page.page_name || page.name}</h3>
+                                <p className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-wide">
+                                    <Minus className="w-3 h-3 text-slate-300" /> PAGE ID: {page.page_id}
+                                </p>
+                            </div>
 
-                                <div className="flex items-center justify-between border-t border-slate-50 pt-6">
-                                    <div className="flex flex-col text-left">
-                                        <span className="text-3xl font-black text-slate-800 tracking-tighter">{(page.subscriber_count || 0).toLocaleString()}</span>
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Khách hàng Meta</span>
-                                    </div>
-                                    <div className="w-10 h-10 bg-slate-50 text-slate-400 rounded-2xl group-hover:bg-amber-600 group-hover:!text-white group-hover:shadow-lg group-hover:shadow-amber-600/20 transition-all flex items-center justify-center">
-                                        <ArrowLeft className="w-5 h-5 rotate-180" />
-                                    </div>
+                            <div className="flex items-center justify-between border-t border-slate-100 pt-5 mt-auto">
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                                        <Users className="w-3 h-3" /> KHÁCH HÀNG META
+                                    </span>
+                                    <span className="text-xl font-black text-slate-800">{(page.subscriber_count || 0).toLocaleString()}</span>
+                                </div>
+                                <div className="w-10 h-10 bg-slate-50 text-slate-400 rounded-full group-hover:bg-slate-100 group-hover:text-amber-600 transition-colors flex items-center justify-center shrink-0">
+                                    <ArrowLeft className="w-5 h-5 rotate-180" />
                                 </div>
                             </div>
                         </div>
