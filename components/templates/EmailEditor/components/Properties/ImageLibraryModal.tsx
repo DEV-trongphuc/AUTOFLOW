@@ -2,6 +2,7 @@
 // components/templates/EmailEditor/components/Properties/ImageLibraryModal.tsx
 // Style synced with FileLibraryModal (common/FileLibraryModal.tsx)
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import {
     X, Search, FolderOpen, Image as ImageIcon, CheckCircle2,
     Loader2, RefreshCw, Download, AlertCircle, Trash2, Upload,
@@ -195,16 +196,16 @@ const ImageLibraryModal: React.FC<ImageLibraryModalProps> = ({ isOpen, onClose, 
     const safePage = Math.min(page, totalPages);
     const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-    return (
+    return createPortal(
         <>
             {/* Backdrop */}
             <div
-                className="fixed inset-0 z-[9998] bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+                className="fixed inset-0 z-[100005] bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
                 onClick={onClose}
             />
 
             {/* Modal */}
-            <div className="fixed inset-x-4 top-2 md:top-4 bottom-2 md:bottom-4 md:inset-x-[5%] lg:inset-x-[10%] xl:inset-x-[15%] z-[9999] flex flex-col bg-white rounded-[28px] shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+            <div className="fixed inset-x-4 top-2 md:top-4 bottom-2 md:bottom-4 md:inset-x-[5%] lg:inset-x-[10%] xl:inset-x-[15%] z-[100006] flex flex-col bg-white rounded-[28px] shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
@@ -448,7 +449,8 @@ const ImageLibraryModal: React.FC<ImageLibraryModalProps> = ({ isOpen, onClose, 
                     </div>
                 </div>
             </div>
-        </>
+        </>,
+        document.body
     );
 };
 

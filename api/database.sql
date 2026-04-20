@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost:3306
--- Thời gian đã tạo: Th4 20, 2026 lúc 01:05 PM
+-- Thời gian đã tạo: Th4 20, 2026 lúc 09:34 PM
 -- Phiên bản máy phục vụ: 10.6.18-MariaDB-cll-lve-log
 -- Phiên bản PHP: 8.4.19
 
@@ -1394,6 +1394,95 @@ CREATE TABLE `subscriber_tags` (
 -- --------------------------------------------------------
 
 --
+-- Cấu trúc bảng cho bảng `surveys`
+--
+
+CREATE TABLE `surveys` (
+  `id` char(36) NOT NULL,
+  `workspace_id` int(11) NOT NULL DEFAULT 1,
+  `name` varchar(255) NOT NULL,
+  `slug` varchar(128) NOT NULL,
+  `status` enum('draft','active','paused','closed') DEFAULT 'draft',
+  `cover_style` longtext DEFAULT NULL CHECK (json_valid(`cover_style`)),
+  `blocks_json` longtext DEFAULT NULL CHECK (json_valid(`blocks_json`)),
+  `settings_json` longtext DEFAULT NULL CHECK (json_valid(`settings_json`)),
+  `thank_you_page` longtext DEFAULT NULL CHECK (json_valid(`thank_you_page`)),
+  `target_list_id` char(36) DEFAULT NULL,
+  `flow_trigger_id` char(36) DEFAULT NULL,
+  `response_limit` int(11) DEFAULT NULL,
+  `close_at` datetime DEFAULT NULL,
+  `require_login` tinyint(1) DEFAULT 0,
+  `allow_anonymous` tinyint(1) DEFAULT 1,
+  `one_per_email` tinyint(1) DEFAULT 0,
+  `created_by` char(36) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `survey_answer_details`
+--
+
+CREATE TABLE `survey_answer_details` (
+  `id` char(36) NOT NULL,
+  `response_id` char(36) NOT NULL,
+  `survey_id` char(36) NOT NULL,
+  `question_id` char(36) NOT NULL,
+  `answer_text` text DEFAULT NULL,
+  `answer_num` decimal(10,2) DEFAULT NULL,
+  `answer_json` longtext DEFAULT NULL CHECK (json_valid(`answer_json`)),
+  `submitted_at` timestamp NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `survey_questions`
+--
+
+CREATE TABLE `survey_questions` (
+  `id` char(36) NOT NULL,
+  `survey_id` char(36) NOT NULL,
+  `block_id` char(36) NOT NULL,
+  `type` varchar(64) NOT NULL,
+  `label` text NOT NULL,
+  `options_json` longtext DEFAULT NULL CHECK (json_valid(`options_json`)),
+  `required` tinyint(1) DEFAULT 0,
+  `order_index` int(11) DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `survey_responses`
+--
+
+CREATE TABLE `survey_responses` (
+  `id` char(36) NOT NULL,
+  `survey_id` char(36) NOT NULL,
+  `subscriber_id` char(36) DEFAULT NULL,
+  `session_token` char(64) NOT NULL,
+  `answers_json` longtext NOT NULL CHECK (json_valid(`answers_json`)),
+  `completion_rate` tinyint(3) DEFAULT 100,
+  `time_spent_sec` int(11) DEFAULT NULL,
+  `source_channel` enum('direct_link','qr_code','email_embed','widget','api') DEFAULT 'direct_link',
+  `utm_source` varchar(255) DEFAULT NULL,
+  `utm_medium` varchar(255) DEFAULT NULL,
+  `utm_campaign` varchar(255) DEFAULT NULL,
+  `ip_hash` char(64) DEFAULT NULL,
+  `user_agent` varchar(512) DEFAULT NULL,
+  `device_type` enum('desktop','tablet','mobile','unknown') DEFAULT 'unknown',
+  `referrer_url` varchar(1024) DEFAULT NULL,
+  `geo_country` varchar(64) DEFAULT NULL,
+  `geo_city` varchar(128) DEFAULT NULL,
+  `submitted_at` timestamp NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Cấu trúc bảng cho bảng `system_audit_logs`
 --
 
@@ -2758,6 +2847,41 @@ ALTER TABLE `subscriber_tags`
   ADD UNIQUE KEY `uq_sub_tag` (`subscriber_id`,`tag_id`),
   ADD KEY `idx_tag_lookup` (`tag_id`,`subscriber_id`),
   ADD KEY `idx_subtags_tag` (`tag_id`);
+
+--
+-- Chỉ mục cho bảng `surveys`
+--
+ALTER TABLE `surveys`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_survey_slug` (`slug`),
+  ADD KEY `idx_surveys_workspace` (`workspace_id`),
+  ADD KEY `idx_surveys_status` (`status`);
+
+--
+-- Chỉ mục cho bảng `survey_answer_details`
+--
+ALTER TABLE `survey_answer_details`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_answer_response` (`response_id`),
+  ADD KEY `idx_answer_question` (`question_id`),
+  ADD KEY `idx_answer_survey` (`survey_id`);
+
+--
+-- Chỉ mục cho bảng `survey_questions`
+--
+ALTER TABLE `survey_questions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_survey_questions_survey` (`survey_id`);
+
+--
+-- Chỉ mục cho bảng `survey_responses`
+--
+ALTER TABLE `survey_responses`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_session_token` (`session_token`),
+  ADD KEY `idx_survey_responses_survey` (`survey_id`),
+  ADD KEY `idx_survey_responses_subscriber` (`subscriber_id`),
+  ADD KEY `idx_survey_responses_submitted` (`submitted_at`);
 
 --
 -- Chỉ mục cho bảng `system_audit_logs`

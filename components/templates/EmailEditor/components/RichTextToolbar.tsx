@@ -41,7 +41,7 @@ const MERGE_TAGS = [
     { label: 'Chức vụ', val: '{{jobTitle}}' },
     { label: 'Thành phố', val: '{{city}}' },
     { label: 'Quốc gia', val: '{{country}}' },
-    { label: 'Link Hủy đăng ký', value: '{{unsubscribeLink}}' },
+    { label: 'Link Hủy đăng ký', val: '{{unsubscribe_url}}' },
     { label: 'Tên chiến dịch', val: '{{campaignName}}' },
 ];
 

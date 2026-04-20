@@ -2010,7 +2010,7 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
                                 </div>
                                 <div className="relative z-10 flex items-center justify-between gap-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-white dark:bg-slate-900/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30">
+                                        <div className="w-12 h-12 bg-white dark:bg-slate-900/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 text-blue-600 dark:text-white">
                                             <span className="font-black text-xs">ZALO</span>
                                         </div>
                                         <div>
@@ -2037,8 +2037,8 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
                                 </div>
                                 <div className="relative z-10 flex items-center justify-between gap-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-white dark:bg-slate-900/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30">
-                                            <Globe className="w-6 h-6 text-white" />
+                                        <div className="w-12 h-12 bg-white dark:bg-slate-900/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 text-slate-800 dark:text-white">
+                                            <Globe className="w-6 h-6" />
                                         </div>
                                         <div>
                                             <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] mb-0.5">Website Chat</p>

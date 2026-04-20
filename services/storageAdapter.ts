@@ -147,6 +147,7 @@ async function request<T>(
       tags:        ['tags', 'subscribers'],
       templates:   ['templates'],
       vouchers:    ['vouchers'],
+      surveys:     ['surveys'],
     };
     const toInvalidate = relatedPrefixes[mutatedResource] ?? [mutatedResource];
     Object.keys(apiCache).forEach(key => {

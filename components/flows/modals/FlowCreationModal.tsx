@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Sparkles, ArrowRight, Gift, Zap, Info, Cake, Tag, Users, RefreshCw, Send, PartyPopper, Ghost, Crown, UserPlus, Snowflake, Check, List, FileInput, Layers, ListPlus, ShoppingCart, Plug, FileSpreadsheet, BellRing, Calendar, MessageSquare, UserMinus, Ticket, Bot } from 'lucide-react';
+import { Sparkles, ArrowRight, Gift, Zap, Info, Cake, Tag, Users, RefreshCw, Send, PartyPopper, Ghost, Crown, UserPlus, Snowflake, Check, List, FileInput, Layers, ListPlus, ShoppingCart, Plug, FileSpreadsheet, BellRing, Calendar, MessageSquare, UserMinus, Ticket, Bot, ClipboardList } from 'lucide-react';
 import Modal from '../../common/Modal';
 import Button from '../../common/Button';
 import Input from '../../common/Input';
@@ -97,6 +97,18 @@ const FLOW_TEMPLATES = [
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi khách gửi Form', iconName: 'zap', config: { type: 'form', targetId: '' }, nextStepId: 'a1' },
       { id: 'a1', type: 'action', label: 'Email Phản hồi Form', iconName: 'mail', config: { subject: 'Cảm ơn bạn đã quan tâm! Tài liệu của bạn đây' } }
+    ]
+  },
+  {
+    id: 'survey_response',
+    name: 'Phản hồi Khảo sát',
+    desc: 'Tự động gửi Email cảm ơn hoặc gắn Tag ngay khi khách hàng nộp phản hồi khảo sát.',
+    icon: ClipboardList,
+    theme: 'amber',
+    gradient: 'from-amber-500 to-orange-500',
+    steps: [
+      { id: 't1', type: 'trigger', label: 'Khi nộp Khảo sát', iconName: 'zap', config: { type: 'survey', targetId: '' }, nextStepId: 'a1' },
+      { id: 'a1', type: 'action', label: 'Email Cảm ơn', iconName: 'mail', config: { subject: 'Cảm ơn ý kiến đóng góp của bạn! 🙏' } }
     ]
   },
   {

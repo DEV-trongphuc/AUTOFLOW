@@ -130,7 +130,7 @@ function requireAISpaceAuth()
     // ── PRIORITY 4: Autoflow admin session fallback ──────────────────────────
     // If admin is logged into Autoflow (user_id = 1 / is_admin / role = admin in session),
     // grant full AI Space access as admin-001 even if AI Space token has expired/missing.
-    if (!$orgUserId) {
+    if (!$orgUserId || $orgUserId === ($_SESSION['user_id'] ?? null)) {
         $autoflowUserId = $_SESSION['user_id'] ?? null;
         $autoflowIsAdmin = $_SESSION['is_admin'] ?? null;
         $autoflowRole = $_SESSION['role'] ?? null;
@@ -220,7 +220,7 @@ function requireAISpaceAuth()
                 return [
                     'id' => 'admin-001',
                     'email' => $_SESSION['email'] ?? 'admin@autoflow.vn',
-                    'full_name' => $_SESSION['full_name'] ?? $_SESSION['username'] ?? 'Super Admin',
+                    'full_name' => $_SESSION['full_name'] ?? $_SESSION['name'] ?? $_SESSION['username'] ?? 'Super Admin',
                     'role' => 'admin',
                     'status' => 'active',
                     'permissions' => ['*']

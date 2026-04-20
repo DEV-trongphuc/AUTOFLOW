@@ -1,4 +1,4 @@
-import { API_BASE_URL, EXTERNAL_API_BASE } from '@/utils/config';
+﻿import { API_BASE_URL, EXTERNAL_API_BASE } from '@/utils/config';
 import { EmailBlock, EmailBodyStyle, EmailBlockStyle } from '../../../../types';
 import { SHARED_EMAIL_CSS } from '../constants/editorStyles';
 
@@ -313,7 +313,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const rowWidth = s.width || '100%';
             const rowWidthHtml = typeof rowWidth === 'string' && rowWidth.includes('%') ? rowWidth : String(rowWidth).replace('px', '');
             const rowMargin = `margin: ${s.marginTop || 0} ${s.marginRight || 'auto'} ${s.marginBottom || 0} ${s.marginLeft || 'auto'};`;
-            return wrapWithMargin(`<td align="${s.textAlign || 'center'}"><table class="${rowClass}" role="presentation" border="0" cellspacing="0" cellpadding="0" width="${rowWidthHtml}" align="${s.textAlign || 'center'}" style="width: ${rowWidth}; ${rowMargin} ${getBackgroundStyle(s)} ${paddingCss} ${radiusStyle} ${getBorderStyle(s)} overflow: hidden;"><tr>${columnsHtml}</tr></table></td>`);
+            return wrapWithMargin(`<td align="${s.textAlign || 'center'}" style="${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${getBorderStyle(s)}"><table class="${rowClass}" role="presentation" border="0" cellspacing="0" cellpadding="0" width="${rowWidthHtml}" align="${s.textAlign || 'center'}" style="width: ${rowWidth}; ${rowMargin} overflow: hidden; border-collapse: collapse;"><tr>${columnsHtml}</tr></table></td>`);
         }
 
         if (b.type === 'button') {
@@ -409,7 +409,22 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
         if (b.type === 'video') {
             const videoAlign = s.textAlign || 'center';
             const playBtnColor = s.playButtonColor || '#d97706';
-            return wrapWithMargin(`<td align="${videoAlign}" style="${paddingCss} ${getBackgroundStyle(s)}"><a href="${b.videoUrl || '#'}" target="_blank" style="display: inline-block; text-decoration: none;"><table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%"><tr><td style="padding: 0;"><img src="${b.thumbnailUrl || 'https://via.placeholder.com/600x340?text=Video+Thumbnail'}" width="100%" style="display: block; max-width: 100%; border-radius: ${sanitizeRadius(s.borderRadius || '12px')};" /></td></tr><tr><td align="center" style="margin-top: -80px; position: relative;"><table role="presentation" border="0" cellspacing="0" cellpadding="0"><tr><td align="center" valign="middle" bgcolor="${playBtnColor}" style="width: 60px; height: 60px; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.4);"><img src="https://cdn-icons-png.flaticon.com/512/0/375.png" width="30" height="30" style="display: block; filter: invert(1); margin-left: 4px;" /></td></tr></table></td></tr></table></a></td>`);
+            const radius = sanitizeRadius(s.borderRadius || '12px');
+            return wrapWithMargin(`
+                <td align="${videoAlign}" style="${paddingCss} ${getBackgroundStyle(s)}">
+                    <a href="${b.videoUrl || '#'}" target="_blank" style="display: inline-block; text-decoration: none; position: relative; width: 100%; max-width: 100%;">
+                        <img src="${b.thumbnailUrl || 'https://via.placeholder.com/600x340?text=Video+Thumbnail'}" width="100%" style="display: block; max-width: 100%; width: 100%; height: auto; border-radius: ${radius};" alt="Video Thumbnail" />
+                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.3); border-radius: ${radius}; pointer-events: none;"></div>
+                        <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                            <tr>
+                                <td align="center" valign="middle" bgcolor="${playBtnColor}" style="width: 60px; height: 60px; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+                                    <img src="https://cdn-icons-png.flaticon.com/512/0/375.png" width="30" height="30" style="display: block; filter: invert(1); margin-left: 4px;" alt="Play" />
+                                </td>
+                            </tr>
+                        </table>
+                    </a>
+                </td>
+            `);
         }
 
         if (b.type === 'order_list') {
@@ -854,6 +869,11 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             setInterval(updateTimers, 1000);
             updateTimers();
         })();
+            // Fixed DOMATION branding badge - bottom right
+            var badge = document.createElement('div');
+            badge.style.cssText = 'position:fixed;bottom:20px;right:20px;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.97);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(0,0,0,0.07);border-radius:16px;padding:9px 18px 9px 9px;box-shadow:0 8px 32px rgba(0,0,0,0.13);z-index:99999;';
+            badge.innerHTML = '<div style="position:relative;width:44px;height:44px;flex-shrink:0;"><div style="position:absolute;inset:0;background:#fbbf24;filter:blur(12px);opacity:0.35;border-radius:50%;"></div><div style="position:relative;width:44px;height:44px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,0.9);box-shadow:0 2px 12px rgba(245,158,11,0.25);"><img src="/imgs/ICON.png" style="width:100%;height:100%;object-fit:contain;" /></div></div><div style="display:flex;flex-direction:column;"><span style="font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:19px;font-weight:900;color:#0f172a;letter-spacing:-0.5px;line-height:1;">DOMATION</span><div style="display:flex;align-items:center;gap:5px;margin-top:3px;opacity:0.65;"><span style="display:inline-block;width:2px;height:10px;background:#fbbf24;transform:rotate(12deg);border-radius:1px;"></span><span style="font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:8.5px;font-weight:800;color:#64748b;letter-spacing:0.18em;text-transform:uppercase;">Digital AI Vision</span></div></div>';
+            document.body.appendChild(badge);
     </script>
     `;
 
@@ -887,6 +907,7 @@ ${HEAD_CSS}
 <center>
 <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 0 auto;">
 <tbody>
+${isPreview ? '<tr><td height="40" style="font-size: 40px; line-height: 40px; mso-line-height-rule: exactly;">&nbsp;</td></tr>' : ''}
 ${allBlocksHtml}
 ${unsubFallbackRow}
 </tbody>

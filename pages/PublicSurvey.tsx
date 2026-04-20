@@ -1,0 +1,854 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { Survey, SurveyBlock, SurveyAnswer } from '../types/survey';
+import { ChevronRight, ChevronLeft, Send, Star, ChevronDown, ExternalLink, Check } from 'lucide-react';
+import { API_BASE_URL } from '../utils/config';
+
+const PUBLIC_API = `${API_BASE_URL}/survey_public.php`;
+
+const PublicSurvey: React.FC = () => {
+    const { slug } = useParams<{ slug: string }>();
+    const [searchParams] = useSearchParams();
+    const [survey, setSurvey] = useState<Survey | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [answers, setAnswers] = useState<Record<string, SurveyAnswer>>({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+    const [thankYouData, setThankYouData] = useState<any>(null);
+    const startTime = useRef(Date.now());
+    const sessionToken = useRef(crypto.randomUUID());
+
+    const srcParam = searchParams.get('src') || searchParams.get('utm_source') || 'direct_link';
+    const utmMedium  = searchParams.get('utm_medium') || undefined;
+    const utmCampaign = searchParams.get('utm_campaign') || undefined;
+    const uid = searchParams.get('uid') || undefined;
+    const isPreview = !!searchParams.get('preview');
+
+    useEffect(() => {
+        fetch(`${PUBLIC_API}?slug=${slug}${searchParams.get('preview') ? '&preview=1' : ''}`)
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    const d = res.data;
+                    setSurvey({
+                        ...d,
+                        theme: d.cover_style || {},
+                        thankYouPage: d.thank_you_page || {},
+                    });
+                }
+                else setError(res.error);
+            })
+            .finally(() => setIsLoading(false));
+    }, [slug]);
+
+    // Split blocks into pages by page_break
+    const pages: SurveyBlock[][] = [];
+    if (survey) {
+        let cur: SurveyBlock[] = [];
+        for (const b of survey.blocks) {
+            if (b.type === 'page_break') { pages.push(cur); cur = []; }
+            else cur.push(b);
+        }
+        if (cur.length > 0) pages.push(cur);
+    }
+    if (pages.length === 0) pages.push([]);
+
+    const totalPages = pages.length;
+    const currentBlocks = pages[currentPage] ?? [];
+    const theme = survey?.theme ?? {
+        primaryColor: '#f59e0b',
+        backgroundColor: '#f8fafc',
+        cardBackground: '#ffffff',
+        textColor: '#1e293b',
+        fontFamily: "'Inter', sans-serif",
+        borderRadius: '12px',
+    };
+
+    const setAnswer = (blockId: string, questionId: string, type: string, val: Partial<SurveyAnswer>) => {
+        setAnswers(prev => ({
+            ...prev,
+            [blockId]: { question_id: questionId, block_id: blockId, type: type as any, label: '', ...prev[blockId], ...val }
+        }));
+    };
+
+    const handleSubmit = async () => {
+        if (!survey) return;
+        if (isPreview) {
+            alert('Đây là màn hình Preview (Xem trước). Bạn không thể điền/nộp trên màn hình này.');
+            return;
+        }
+        setIsSubmitting(true);
+        try {
+            const res = await fetch(`${PUBLIC_API}?slug=${slug}&action=submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Session-Token': sessionToken.current, 'X-Survey-Source': srcParam },
+                body: JSON.stringify({
+                    session_token: sessionToken.current,
+                    answers: Object.values(answers),
+                    uid,
+                    completion_rate: 100,
+                    time_spent_sec: Math.round((Date.now() - startTime.current) / 1000),
+                    source_channel: ['qr_code', 'email_embed', 'widget', 'api'].includes(srcParam) ? srcParam : 'direct_link',
+                    utm_medium: utmMedium,
+                    utm_campaign: utmCampaign,
+                }),
+            }).then(r => r.json());
+
+            if (res.success) {
+                setSubmitted(true);
+                setThankYouData(res.thank_you);
+                if (res.redirect_url) {
+                    setTimeout(() => { window.location.href = res.redirect_url; }, (res.thank_you?.redirectDelay ?? 3) * 1000);
+                }
+            } else {
+                alert('Lỗi: ' + (res.error || 'Không thể nộp'));
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // ─── Loading ────────────────────────────────────────────────────────────
+    if (isLoading) return (
+        <div className="min-h-screen flex items-center justify-center" style={{ background: theme.backgroundColor }}>
+            <div className="flex flex-col items-center gap-3">
+                <div className="w-10 h-10 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: theme.primaryColor, borderTopColor: 'transparent' }} />
+                <p className="text-sm font-medium text-slate-500">Đang tải khảo sát...</p>
+            </div>
+        </div>
+    );
+
+    // ─── Error states ───────────────────────────────────────────────────────
+    if (error) {
+        const msgs: Record<string, { icon: string; title: string; desc: string }> = {
+            SURVEY_NOT_FOUND:     { icon: '🔍', title: 'Không tìm thấy khảo sát', desc: 'Link không hợp lệ hoặc đã bị xoá.' },
+            SURVEY_NOT_PUBLISHED: { icon: '🔒', title: 'Khảo sát chưa mở', desc: 'Khảo sát này chưa được xuất bản.' },
+            SURVEY_CLOSED:        { icon: '🚫', title: 'Khảo sát đã đóng', desc: 'Khảo sát này đã ngừng nhận phản hồi.' },
+            SURVEY_EXPIRED:       { icon: '⏰', title: 'Khảo sát đã hết hạn', desc: 'Thời hạn thu thập phản hồi đã kết thúc.' },
+            SURVEY_LIMIT_REACHED: { icon: '✅', title: 'Đã đủ phản hồi', desc: 'Khảo sát đã đạt đủ số lượng phản hồi.' },
+        };
+        const m = msgs[error] ?? { icon: '❌', title: 'Có lỗi xảy ra', desc: error };
+        return (
+            <div className="min-h-screen flex items-center justify-center p-6" style={{ background: theme.backgroundColor }}>
+                <div className="text-center max-w-sm">
+                    <div className="text-5xl mb-4">{m.icon}</div>
+                    <h1 className="text-xl font-bold text-slate-800 mb-2">{m.title}</h1>
+                    <p className="text-sm text-slate-500">{m.desc}</p>
+                </div>
+            </div>
+        );
+    }
+
+    // ─── Thank you page ─────────────────────────────────────────────────────
+    if (submitted) {
+        const ty = thankYouData ?? survey?.thankYouPage;
+        return (
+            <div className="min-h-screen flex items-center justify-center p-6" style={{ background: theme.backgroundColor }}>
+                <div className="text-center max-w-md">
+                    {ty?.imageUrl && <img src={ty.imageUrl} alt="" className="w-32 h-32 object-contain mx-auto mb-4 rounded-2xl" />}
+                    <div className="text-5xl mb-4">{ty?.emoji ?? '🎉'}</div>
+                    <h1 className="text-2xl font-black mb-3" style={{ color: theme.textColor }}>{ty?.title ?? 'Cảm ơn!'}</h1>
+                    <p className="text-base text-slate-500 leading-relaxed">{ty?.message ?? 'Phản hồi của bạn đã được ghi nhận.'}</p>
+                    {ty?.ctaText && ty?.ctaUrl && (
+                        <a href={ty.ctaUrl} target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-2xl font-bold text-white shadow-lg transition-all hover:brightness-105"
+                            style={{ background: theme.primaryColor }}
+                        >
+                            {ty.ctaText} <ExternalLink className="w-4 h-4" />
+                        </a>
+                    )}
+                    <div className="mt-8 flex items-center justify-center gap-3">
+                        <div className="relative w-8 h-8 shrink-0">
+                            <div className="absolute inset-0 bg-amber-400 blur-lg opacity-30 rounded-full"></div>
+                            <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-full border border-white/80 shadow-md shadow-amber-600/20">
+                                <img src="/imgs/ICON.png" className="w-full h-full object-contain" alt="Logo" />
+                            </div>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-[13px] font-black text-slate-700 tracking-tighter leading-none">DOMATION</span>
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Digital AI Vision</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!survey) return null;
+
+    const progress = totalPages > 1 ? ((currentPage + 1) / totalPages) * 100 : 100;
+
+    return (
+        <div className="min-h-screen py-8 px-4" style={{ background: theme.backgroundColor, fontFamily: theme.fontFamily }}>
+            <div className="max-w-2xl mx-auto">
+
+                {/* Progress bar — always shown if multipage */}
+                {totalPages > 1 && (
+                    <div className="mb-6">
+                        <div className="flex items-center justify-between text-xs text-slate-400 mb-1.5">
+                            <span className="font-semibold">Trang {currentPage + 1} / {totalPages}</span>
+                            <span>{Math.round(progress)}%</span>
+                        </div>
+                        <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, background: theme.primaryColor }} />
+                        </div>
+                    </div>
+                )}
+
+                {/* Survey header */}
+                {currentPage === 0 && (
+                    <SurveyCoverPublic survey={survey} />
+                )}
+
+                {/* Blocks */}
+                <div className="flex flex-col gap-4 mt-4">
+                    {currentBlocks.map((block, idx) => (
+                        <BlockRenderer
+                            key={block.id}
+                            block={block}
+                            index={idx}
+                            theme={theme}
+                            answer={answers[block.id]}
+                            onAnswer={(val) => setAnswer(block.id, block.id, block.type, val)}
+                        />
+                    ))}
+                </div>
+
+                {/* Navigation */}
+                <div className="flex flex-col gap-2.5 mt-6">
+                    {/* Next / Submit */}
+                    {currentPage < totalPages - 1 ? (
+                        <button
+                            onClick={() => setCurrentPage(p => p + 1)}
+                            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-white transition-all shadow-lg text-base"
+                            style={{ background: theme.primaryColor }}
+                        >
+                            Tiếp theo <ChevronRight className="w-4 h-4" />
+                        </button>
+                    ) : (
+                        <button
+                            onClick={handleSubmit}
+                            disabled={isSubmitting}
+                            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-white transition-all shadow-lg text-base"
+                            style={{ background: theme.primaryColor }}
+                        >
+                            {isSubmitting ? (
+                                <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                            ) : <Send className="w-4 h-4" />}
+                            {isSubmitting ? 'Đang gửi...' : 'Nộp khảo sát'}
+                        </button>
+                    )}
+                    {/* Back */}
+                    {currentPage > 0 && (
+                        <button
+                            onClick={() => setCurrentPage(p => p - 1)}
+                            className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl border-2 border-slate-200 text-slate-600 font-semibold hover:border-slate-300 transition-all text-sm"
+                        >
+                            <ChevronLeft className="w-4 h-4" /> Trang trước
+                        </button>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-center gap-3 mt-8">
+                    <div className="relative w-7 h-7 shrink-0">
+                        <div className="absolute inset-0 bg-amber-400 blur-lg opacity-30 rounded-full"></div>
+                        <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-full border border-white/80 shadow-md shadow-amber-600/20">
+                            <img src="/imgs/ICON.png" className="w-full h-full object-contain" alt="Logo" />
+                        </div>
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-[12px] font-black text-slate-600 tracking-tighter leading-none">DOMATION</span>
+                        <span className="text-[7px] font-black text-slate-400 uppercase tracking-[0.2em]">Digital AI Vision</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ─── Survey Cover (public) ────────────────────────────────────────────────────
+const SurveyCoverPublic: React.FC<{ survey: Survey }> = ({ survey }) => {
+    const theme = (survey.theme ?? {}) as any;
+    const coverStyle = theme.coverStyle ?? 'minimal';
+    const coverHeight = theme.coverHeight ?? 'md';
+    const primaryColor = theme.primaryColor || '#ea9310';
+    const heightMap: Record<string, string> = { sm: '80px', md: '120px', lg: '200px' };
+
+    const getBg = () => {
+        if (coverStyle === 'image' && theme.coverImageUrl) {
+            return {
+                backgroundImage: `url(${theme.coverImageUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+            };
+        }
+        if (coverStyle === 'gradient') {
+            const from = theme.gradientFrom ?? `${primaryColor}dd`;
+            const to = theme.gradientTo ?? `${primaryColor}66`;
+            if (theme.coverImageUrl) {
+                return {
+                    backgroundImage: `linear-gradient(135deg, ${from}cc, ${to}cc), url(${theme.coverImageUrl})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                };
+            }
+            return { background: `linear-gradient(135deg, ${from}, ${to})` };
+        }
+        return { background: primaryColor };
+    };
+
+    const textColor = '#ffffff';
+
+    // Countdown Logic
+    const targetDate = theme.coverCountdown ? new Date(theme.coverCountdown).getTime() : null;
+    const [timeLeft, setTimeLeft] = useState<{ d: string, h: string, m: string, s: string } | null>(null);
+
+    useEffect(() => {
+        if (!targetDate) return;
+        const tick = () => {
+            const now = Date.now();
+            const distance = targetDate - now;
+            if (distance < 0) {
+                setTimeLeft({ d: '00', h: '00', m: '00', s: '00' });
+                return;
+            }
+            const d = Math.floor(distance / (1000 * 60 * 60 * 24)).toString().padStart(2, '0');
+            const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)).toString().padStart(2, '0');
+            const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+            const s = Math.floor((distance % (1000 * 60)) / 1000).toString().padStart(2, '0');
+            setTimeLeft({ d, h, m, s });
+        };
+        tick();
+        const interval = setInterval(tick, 1000);
+        return () => clearInterval(interval);
+    }, [targetDate]);
+
+    return (
+        <div 
+            className="w-full rounded-2xl mb-4 overflow-hidden relative transition-all" 
+            style={{ ...getBg(), minHeight: heightMap[coverHeight] }}
+        >
+            {(coverStyle === 'image') && (
+                <div className="absolute inset-0" style={{ background: theme.coverOverlay ?? 'rgba(0,0,0,0.3)' }} />
+            )}
+            <div className="relative px-8 py-8 flex flex-col justify-end h-full" style={{ minHeight: heightMap[coverHeight] }}>
+                {timeLeft && theme.coverCountdownPos === 'top_right' && (
+                    <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-md rounded-xl p-2 border border-white/20 flex items-center gap-2.5 z-20 shadow-xl">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse ring-2 ring-amber-400/50" />
+                        <div className="flex gap-1.5">
+                            {[timeLeft.h, timeLeft.m, timeLeft.s].map((v, i) => (
+                                <div key={i} className="bg-white/10 border border-white/10 rounded flex items-center justify-center p-1 font-mono">
+                                    <span className="text-[11px] font-black text-white">{v}</span>
+                                    <span className="text-[7px] text-white/50 ml-0.5">{['h', 'm', 's'][i]}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                
+                <div className="w-full relative z-10">
+                    {theme.coverBadge && (
+                        <span className="inline-block px-3 py-1 mb-4 rounded-full text-[10px] font-black tracking-widest text-white shadow-lg uppercase border border-white/20 relative" style={{ background: 'linear-gradient(90deg, #f59e0b, #ea580c)' }}>
+                            <span className="absolute inset-0 rounded-full animate-ping opacity-20 bg-amber-500" />
+                            {theme.coverBadge}
+                        </span>
+                    )}
+
+                    {theme.logoUrl && (
+                        <img src={theme.logoUrl} alt="logo" className="h-10 mb-5 object-contain drop-shadow-md" />
+                    )}
+
+                    <h1 className="text-2xl md:text-3xl font-black leading-tight drop-shadow-md" style={{ color: textColor, fontFamily: theme.fontFamily }}>
+                        {survey.name}
+                    </h1>
+
+                    {theme.coverDescription && (
+                        <p className="mt-3 text-base leading-relaxed drop-shadow-sm whitespace-pre-wrap" style={{ color: textColor, opacity: 0.9 }}>
+                            {theme.coverDescription}
+                        </p>
+                    )}
+
+                    {(theme.coverFeatures ?? []).length > 0 && (
+                        <div className="mt-6 space-y-2.5">
+                            {theme.coverFeatures!.map((feat: string, i: number) => (
+                                theme.coverFeaturesStyle === 'dot' ? (
+                                    <div key={i} className="flex items-start gap-2.5 max-w-2xl">
+                                        <div className="w-1.5 h-1.5 rounded-full mt-2 shrink-0 bg-white/70" />
+                                        <span className="text-sm font-medium drop-shadow-md leading-snug" style={{ color: textColor }}>{feat}</span>
+                                    </div>
+                                ) : (
+                                    <div key={i} className="flex items-center gap-3 bg-white/5 w-fit pr-4 py-1.5 rounded-full border border-white/10 backdrop-blur-sm">
+                                        <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 ml-1">
+                                            <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3]" />
+                                        </div>
+                                        <span className="text-sm font-semibold drop-shadow-md" style={{ color: textColor }}>{feat}</span>
+                                    </div>
+                                )
+                            ))}
+                        </div>
+                    )}
+
+                    {timeLeft && theme.coverCountdownPos !== 'top_right' && (
+                        <div className="mt-8 bg-black/20 backdrop-blur-md rounded-2xl p-4 w-fit border border-white/10">
+                            <p className="text-[10px] uppercase tracking-widest text-amber-300 font-bold mb-3 flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                                Ưu đãi kết thúc sau
+                            </p>
+                            <div className="flex gap-2">
+                                {[timeLeft.d, timeLeft.h, timeLeft.m, timeLeft.s].map((v, i) => (
+                                    <div key={i} className="bg-white/10 border border-white/20 rounded-xl w-12 h-12 flex flex-col items-center justify-center shadow-inner relative overflow-hidden">
+                                        <div className="absolute inset-x-0 top-1/2 h-px bg-black/10" />
+                                        <span className="text-lg font-black text-white z-10">{v}</span>
+                                        <span className="text-[7px] uppercase font-bold text-white/70 mt-0.5 z-10">{['Ng', 'Giờ', 'Ph', 'Gi'][i]}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ─── Block Renderer ───────────────────────────────────────────────────────────
+const BlockRenderer: React.FC<{
+    block: SurveyBlock;
+    index: number;
+    theme: any;
+    answer?: SurveyAnswer;
+    onAnswer: (val: Partial<SurveyAnswer>) => void;
+}> = ({ block, index, theme, answer, onAnswer }) => {
+    const [otherText, setOtherText] = useState('');
+    const [otherSelected, setOtherSelected] = useState(false);
+    const accent = block.style?.accentColor ?? theme.primaryColor;
+    const bgColor = block.style?.backgroundColor ?? theme.cardBackground;
+    const textColor = block.style?.textColor ?? theme.textColor;
+    const textAlign = block.style?.textAlign ?? 'left';
+    const boxShadow = block.style?.boxShadow && block.style.boxShadow !== 'none' 
+        ? block.style.boxShadow 
+        : (theme.cardShadow && theme.cardShadow !== 'none' ? theme.cardShadow : undefined);
+
+    const cardStyle: React.CSSProperties = {
+        background: bgColor,
+        borderRadius: theme.borderRadius,
+        textAlign,
+        boxShadow,
+    };
+
+    // ─ Layout-only blocks ─
+    if (block.type === 'section_header') {
+        return (
+            <div className="pt-2" style={{ textAlign }}>
+                <h2 className="text-lg font-bold" style={{ color: textColor }}>{block.label}</h2>
+                {block.description && <p className="text-sm text-slate-500 mt-1">{block.description}</p>}
+            </div>
+        );
+    }
+    if (block.type === 'divider') return <hr className="border-slate-200" />;
+    if (block.type === 'image_block') {
+        return block.imageUrl ? (
+            <div style={{ textAlign: block.imageAlign ?? 'center' }}>
+                <img src={block.imageUrl} alt={block.imageAlt} style={{ width: block.imageWidth ?? '100%' }} className="rounded-2xl object-cover max-h-64 inline-block" />
+            </div>
+        ) : null;
+    }
+    if (block.type === 'button_block') {
+        const style = block.buttonStyle ?? 'filled';
+        const color = block.buttonColor ?? accent;
+        const shadow = block.buttonShadow && block.buttonShadow !== 'none' ? block.buttonShadow : undefined;
+        return (
+            <div style={{ textAlign: block.buttonAlign ?? 'center' }}>
+                <a href={block.buttonUrl || '#'} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all"
+                    style={style === 'filled' ? { background: color, color: '#fff', boxShadow: shadow } : style === 'outline' ? { border: `2px solid ${color}`, color, boxShadow: shadow } : { color, textDecoration: 'underline', textShadow: shadow }}
+                >
+                    {block.buttonText || 'Nhấn vào đây'} <ExternalLink className="w-4 h-4" />
+                </a>
+            </div>
+        );
+    }
+    if (block.type === 'link_block') {
+        return (
+            <div style={{ textAlign: block.linkAlign ?? 'left' }}>
+                <a href={block.linkUrl || '#'} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold underline underline-offset-2"
+                    style={{ color: accent }}
+                >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    {block.linkText || 'Xem thêm'}
+                </a>
+            </div>
+        );
+    }
+    if (block.type === 'banner_block') {
+        return (
+            <div className="w-full rounded-2xl overflow-hidden relative flex items-end"
+                style={{ height: block.bannerHeight ?? 160, backgroundImage: block.bannerImageUrl ? `url(${block.bannerImageUrl})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center', background: block.bannerImageUrl ? undefined : `linear-gradient(135deg, ${accent}cc, ${accent}44)` }}
+            >
+                <div className="absolute inset-0" style={{ background: block.bannerOverlay ?? 'rgba(0,0,0,0.35)' }} />
+                <div className="relative px-6 pb-6">
+                    <p className="font-bold text-lg" style={{ color: block.bannerTextColor ?? '#fff' }}>{block.label}</p>
+                    {block.description && <p className="text-sm mt-1" style={{ color: (block.bannerTextColor ?? '#fff') + 'bb' }}>{block.description}</p>}
+                </div>
+            </div>
+        );
+    }
+
+    // ─ Question blocks ─
+    return (
+        <div className="p-5 shadow-sm border border-slate-100" style={cardStyle}>
+            <label className="block font-semibold mb-3 text-sm" style={{ color: textColor }}>
+                {block.label}
+                {block.required && <span style={{ color: accent }} className="ml-1">*</span>}
+            </label>
+            {block.description && <p className="text-xs text-slate-400 mb-3">{block.description}</p>}
+
+            {/* Short/Email/Phone/Number */}
+            {(block.type === 'short_text' || block.type === 'email' || block.type === 'phone' || block.type === 'number') && (
+                <input
+                    type={block.type === 'email' ? 'email' : block.type === 'number' ? 'number' : 'text'}
+                    value={answer?.answer_text ?? ''}
+                    onChange={e => onAnswer({ answer_text: e.target.value })}
+                    placeholder={block.placeholder || 'Nhập câu trả lời...'}
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:outline-none transition-colors text-sm"
+                    style={{ borderColor: answer?.answer_text ? accent : undefined } as any}
+                />
+            )}
+
+            {/* Long text */}
+            {block.type === 'long_text' && (
+                <textarea
+                    value={answer?.answer_text ?? ''}
+                    onChange={e => onAnswer({ answer_text: e.target.value })}
+                    placeholder={block.placeholder || 'Nhập câu trả lời...'}
+                    rows={4}
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:outline-none resize-none transition-colors text-sm"
+                />
+            )}
+
+            {/* Date */}
+            {block.type === 'date' && (
+                <input
+                    type="date"
+                    value={answer?.answer_text ?? ''}
+                    onChange={e => onAnswer({ answer_text: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:outline-none text-sm"
+                />
+            )}
+
+            {/* Single choice */}
+            {(block.type === 'single_choice' || block.type === 'yes_no') && (
+                <div className="flex flex-col gap-2">
+                    {(block.options ?? []).map(opt => {
+                        const isSelected = answer?.answer_text === opt.value;
+                        return (
+                            <button key={opt.id} onClick={() => { onAnswer({ answer_text: opt.value }); setOtherSelected(false); }}
+                                className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left text-sm font-medium"
+                                style={{ borderColor: isSelected ? accent : '#e2e8f0', background: isSelected ? accent + '12' : undefined, color: isSelected ? accent : textColor }}
+                            >
+                                <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
+                                    style={{ borderColor: isSelected ? accent : '#cbd5e1', background: isSelected ? accent : undefined }}>
+                                    {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                                </div>
+                                {opt.label}
+                            </button>
+                        );
+                    })}
+                    {block.allowOther && (
+                        <div>
+                            <button onClick={() => { setOtherSelected(true); onAnswer({ answer_text: `__other__:${otherText}` }); }}
+                                className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left text-sm font-medium w-full"
+                                style={{ borderColor: otherSelected ? accent : '#e2e8f0', background: otherSelected ? accent + '12' : undefined, color: otherSelected ? accent : '#94a3b8' }}
+                            >
+                                <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0"
+                                    style={{ borderColor: otherSelected ? accent : '#cbd5e1', background: otherSelected ? accent : undefined }}>
+                                    {otherSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                                </div>
+                                Khác...
+                            </button>
+                            {otherSelected && (
+                                <input
+                                    autoFocus
+                                    value={otherText}
+                                    onChange={e => { setOtherText(e.target.value); onAnswer({ answer_text: `__other__:${e.target.value}` }); }}
+                                    placeholder="Nhập ý kiến của bạn..."
+                                    className="mt-2 w-full px-4 py-2.5 rounded-xl border-2 text-sm focus:outline-none"
+                                    style={{ borderColor: accent }}
+                                />
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Multi choice */}
+            {block.type === 'multi_choice' && (
+                <div className="flex flex-col gap-2">
+                    {(block.options ?? []).map(opt => {
+                        const selected: string[] = (answer?.answer_json as string[]) ?? [];
+                        const isSelected = selected.includes(opt.value);
+                        const toggle = () => onAnswer({ answer_json: isSelected ? selected.filter(v => v !== opt.value) : [...selected, opt.value] });
+                        return (
+                            <button key={opt.id} onClick={toggle}
+                                className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left text-sm font-medium"
+                                style={{ borderColor: isSelected ? accent : '#e2e8f0', background: isSelected ? accent + '12' : undefined, color: isSelected ? accent : textColor }}
+                            >
+                                <div className="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0"
+                                    style={{ borderColor: isSelected ? accent : '#cbd5e1', background: isSelected ? accent : undefined }}>
+                                    {isSelected && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                </div>
+                                {opt.label}
+                            </button>
+                        );
+                    })}
+                    {block.allowOther && (
+                        <div>
+                            <button onClick={() => {
+                                const selected: string[] = (answer?.answer_json as string[]) ?? [];
+                                const hasOther = selected.some(v => v.startsWith('__other__'));
+                                if (hasOther) { onAnswer({ answer_json: selected.filter(v => !v.startsWith('__other__')) }); setOtherSelected(false); }
+                                else { setOtherSelected(true); onAnswer({ answer_json: [...selected, `__other__:${otherText}`] }); }
+                            }}
+                                className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left text-sm font-medium w-full"
+                                style={{ borderColor: otherSelected ? accent : '#e2e8f0', background: otherSelected ? accent + '12' : undefined, color: otherSelected ? accent : '#94a3b8' }}
+                            >
+                                <div className="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0"
+                                    style={{ borderColor: otherSelected ? accent : '#cbd5e1', background: otherSelected ? accent : undefined }}>
+                                    {otherSelected && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                </div>
+                                Khác...
+                            </button>
+                            {otherSelected && (
+                                <input autoFocus value={otherText}
+                                    onChange={e => {
+                                        setOtherText(e.target.value);
+                                        const selected: string[] = (answer?.answer_json as string[]) ?? [];
+                                        onAnswer({ answer_json: [...selected.filter(v => !v.startsWith('__other__')), `__other__:${e.target.value}`] });
+                                    }}
+                                    placeholder="Nhập ý kiến của bạn..."
+                                    className="mt-2 w-full px-4 py-2.5 rounded-xl border-2 text-sm focus:outline-none"
+                                    style={{ borderColor: accent }}
+                                />
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Dropdown */}
+            {block.type === 'dropdown' && (
+                <div className="relative">
+                    <select value={answer?.answer_text ?? ''} onChange={e => onAnswer({ answer_text: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:outline-none text-sm appearance-none bg-white"
+                    >
+                        <option value="">— Chọn một đáp án —</option>
+                        {(block.options ?? []).map(opt => <option key={opt.id} value={opt.value}>{opt.label}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                </div>
+            )}
+
+            {/* Star rating */}
+            {block.type === 'star_rating' && (
+                <div className="flex gap-2">
+                    {Array.from({ length: block.maxValue ?? 5 }).map((_, i) => {
+                        const val = i + 1;
+                        const filled = (answer?.answer_num ?? 0) >= val;
+                        return (
+                            <button key={i} onClick={() => onAnswer({ answer_num: val })} className="transition-transform hover:scale-110">
+                                <Star className="w-8 h-8" fill={filled ? accent : 'none'} stroke={filled ? accent : '#cbd5e1'} />
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* NPS — no scale on active, grayscale on inactive */}
+            {block.type === 'nps' && (
+                <div className="space-y-2">
+                    <div className="flex gap-1 flex-wrap">
+                        {Array.from({ length: 11 }).map((_, i) => {
+                            const isSelected = answer?.answer_num === i;
+                            const bgColor = i <= 6 ? '#fca5a5' : i <= 8 ? '#fde68a' : '#86efac';
+                            return (
+                                <button key={i} onClick={() => onAnswer({ answer_num: i })}
+                                    className="w-9 h-9 rounded-xl font-bold text-sm transition-all"
+                                    style={{
+                                        background: isSelected ? accent : bgColor + '80',
+                                        color: isSelected ? 'white' : '#475569',
+                                        filter: isSelected ? 'none' : 'grayscale(60%)',
+                                        boxShadow: isSelected ? `0 0 0 2px ${accent}` : undefined,
+                                    }}
+                                >{i}</button>
+                            );
+                        })}
+                    </div>
+                    <div className="flex justify-between text-xs text-slate-400 px-1">
+                        <span>{block.minLabel ?? 'Hoàn toàn không'}</span>
+                        <span>{block.maxLabel ?? 'Chắc chắn có'}</span>
+                    </div>
+                </div>
+            )}
+
+            {/* Likert */}
+            {block.type === 'likert' && (
+                <div className="flex gap-2 flex-wrap">
+                    {(block.likertLabels ?? ['1', '2', '3', '4', '5']).map((label, i) => {
+                        const isSelected = answer?.answer_num === i + 1;
+                        return (
+                            <button key={i} onClick={() => onAnswer({ answer_num: i + 1 })}
+                                className="flex flex-col items-center gap-1 flex-1 min-w-[50px] py-2 px-1 rounded-xl border-2 transition-all"
+                                style={{
+                                    borderColor: isSelected ? accent : '#e2e8f0',
+                                    background: isSelected ? accent + '15' : undefined,
+                                    filter: isSelected ? 'none' : 'grayscale(30%)',
+                                }}
+                            >
+                                <span className="text-base font-black" style={{ color: isSelected ? accent : '#64748b' }}>{i + 1}</span>
+                                <span className="text-[9px] text-slate-400 text-center leading-tight">{label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* Emoji rating */}
+            {block.type === 'emoji_rating' && (
+                <div className="flex gap-4 flex-wrap">
+                    {(block.emojis ?? ['😠', '😕', '😐', '🙂', '😁']).map((emoji, i) => {
+                        const isSelected = answer?.answer_num === i + 1;
+                        return (
+                            <button key={i} onClick={() => onAnswer({ answer_num: i + 1 })}
+                                className="flex flex-col items-center gap-1.5 transition-all hover:scale-105"
+                                style={{ filter: isSelected ? 'none' : 'grayscale(50%) opacity(0.7)' }}
+                            >
+                                <span className="text-3xl">{emoji}</span>
+                                <div className="w-6 h-1.5 rounded-full transition-all" style={{ background: isSelected ? accent : '#e2e8f0' }} />
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* Slider */}
+            {block.type === 'slider' && (
+                <div className="space-y-2">
+                    <input
+                        type="range" min={block.minValue ?? 0} max={block.maxValue ?? 100} step={block.step ?? 1}
+                        value={answer?.answer_num ?? Math.round(((block.minValue ?? 0) + (block.maxValue ?? 100)) / 2)}
+                        onChange={e => onAnswer({ answer_num: +e.target.value })}
+                        className="w-full"
+                        style={{ accentColor: accent }}
+                    />
+                    <div className="flex justify-between text-xs text-slate-400">
+                        <span>{block.minLabel ?? block.minValue ?? 0}</span>
+                        <span className="font-bold" style={{ color: accent }}>{answer?.answer_num ?? '—'}</span>
+                        <span>{block.maxLabel ?? block.maxValue ?? 100}</span>
+                    </div>
+                </div>
+            )}
+
+            {/* Matrix single/multi */}
+            {(block.type === 'matrix_single' || block.type === 'matrix_multi') && (
+                <div className="overflow-x-auto w-full mt-2">
+                    <table className="w-full text-sm text-left border-collapse">
+                        <thead>
+                            <tr>
+                                <th className="p-2 border-b border-slate-200"></th>
+                                {(block.matrixCols ?? []).map(col => (
+                                    <th key={col.id} className="p-2 border-b border-slate-200 text-center font-semibold text-slate-600 leading-tight">{col.label}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {(block.matrixRows ?? []).map((row, rIdx) => (
+                                <tr key={row.id} className={rIdx % 2 === 0 ? 'bg-slate-50/50' : 'bg-white'}>
+                                    <td className="p-2.5 font-medium text-slate-700 min-w-[120px]">{row.label}</td>
+                                    {(block.matrixCols ?? []).map(col => {
+                                        const ansObj = (answer?.answer_json as Record<string, string[]>) ?? {};
+                                        const isSelected = (ansObj[row.id] ?? []).includes(col.id);
+                                        const toggle = () => {
+                                            const curList = ansObj[row.id] ?? [];
+                                            const newList = block.type === 'matrix_single'
+                                                ? [col.id]
+                                                : (isSelected ? curList.filter(id => id !== col.id) : [...curList, col.id]);
+                                            onAnswer({ answer_json: { ...ansObj, [row.id]: newList } as any });
+                                        };
+                                        return (
+                                            <td key={col.id} className="p-2.5 text-center" onClick={toggle}>
+                                                <div className={`mx-auto w-5 h-5 flex items-center justify-center cursor-pointer transition-all ${block.type === 'matrix_single' ? 'rounded-full' : 'rounded-md'} border-2`}
+                                                    style={{ borderColor: isSelected ? accent : '#cbd5e1', background: isSelected ? accent : 'white' }}
+                                                >
+                                                    {isSelected && (block.type === 'matrix_single' ? <div className="w-2 h-2 bg-white rounded-full" /> : <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>)}
+                                                </div>
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            {/* Ranking */}
+            {block.type === 'ranking' && (
+                <div className="flex flex-col gap-2">
+                    {(() => {
+                        const allStrs = block.options?.map(o => o.value) ?? [];
+                        const currentRank: string[] = Array.isArray(answer?.answer_json) && (answer?.answer_json as string[]).length === allStrs.length
+                            ? (answer?.answer_json as string[])
+                            : allStrs;
+                        return currentRank.map((val, idx) => {
+                            const opt = block.options?.find(o => o.value === val);
+                            return (
+                                <div key={val} className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-white shadow-sm">
+                                    <div className="w-7 h-7 rounded bg-slate-100 flex items-center justify-center font-black text-slate-500 text-xs shrink-0">
+                                        #{idx + 1}
+                                    </div>
+                                    <div className="flex-1 text-sm font-medium text-slate-700">{opt?.label ?? val}</div>
+                                    <div className="flex flex-col gap-0.5 shrink-0">
+                                        <button disabled={idx === 0} onClick={() => {
+                                            const copy = [...currentRank];
+                                            [copy[idx - 1], copy[idx]] = [copy[idx], copy[idx - 1]];
+                                            onAnswer({ answer_json: copy });
+                                        }} className={`p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors ${idx === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}>
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7"/></svg>
+                                        </button>
+                                        <button disabled={idx === currentRank.length - 1} onClick={() => {
+                                            const copy = [...currentRank];
+                                            [copy[idx + 1], copy[idx]] = [copy[idx], copy[idx + 1]];
+                                            onAnswer({ answer_json: copy });
+                                        }} className={`p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors ${idx === currentRank.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}>
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        });
+                    })()}
+                </div>
+            )}
+
+            {/* File Upload (Mock) */}
+            {block.type === 'file_upload' && (
+                <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-slate-50 transition-colors hover:bg-slate-100">
+                    <svg className="w-8 h-8 text-slate-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    <p className="text-sm font-semibold text-slate-600 mb-1">Click tải lên hoặc kéo thả tệp vào đây</p>
+                    <p className="text-xs text-slate-400 mb-4">Các định dạng hỗ trợ: {(block.acceptedTypes ?? []).join(', ') || 'Tất cả'}. Tối đa {block.maxFileSizeMB ?? 5}MB</p>
+                    <input type="file" className="hidden" id={`file_${block.id}`} onChange={() => {}} />
+                    <label htmlFor={`file_${block.id}`} className="px-5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-bold hover:bg-slate-50 cursor-pointer transition-colors shadow-sm text-slate-700">
+                        Chọn tệp
+                    </label>
+                    <p className="mt-4 text-[10px] text-amber-600 bg-amber-50 px-2 py-1 rounded-md border border-amber-200 font-medium">Chức năng upload đang bảo trì, tạm thời bỏ qua.</p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default PublicSurvey;

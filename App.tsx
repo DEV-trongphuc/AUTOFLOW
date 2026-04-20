@@ -53,6 +53,9 @@ const AdminUsers = lazy(() => import('./pages/AdminUsers'));
 const WorkspaceSettings = lazy(() => import('./pages/WorkspaceSettings'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Landing = lazy(() => import('./pages/Landing'));
+const Surveys = lazy(() => import('./pages/Surveys'));
+const SurveyEditorPage = lazy(() => import('./components/surveys/SurveyEditor' as any));
+const PublicSurvey = lazy(() => import('./pages/PublicSurvey' as any));
 
 import PremiumLoader from './components/common/PremiumLoader';
 import { API_BASE_URL } from '@/utils/config';
@@ -88,7 +91,7 @@ function mountComponent() {
 // [PERF] Per-route Suspense wrapper — only THIS route's chunk triggers TabLoader,
 // NOT the whole app. Combined with startTransition in Sidebar: old page visible
 // while new chunk loads, TabLoader shows subtle progress at top.
-const P = ({ c: C }: { c: React.LazyExoticComponent<React.FC<any>> }) => (
+const P = ({ c: C }: { c: React.LazyExoticComponent<React.ComponentType<any>> }) => (
     <Suspense fallback={<TabLoader />}><C /></Suspense>
 );
 
@@ -268,6 +271,8 @@ const App: React.FC = () => {
                                     />
                                     <Route path="/public-report/:propertyId" element={<P c={PublicReport} />} />
                                     <Route path="/public-report/:propertyId/index/:index" element={<P c={PublicReport} />} />
+                                    {/* Public survey renderer */}
+                                    <Route path="/s/:slug" element={<P c={PublicSurvey} />} />
 
                                     {/* Protected Routes — each has its own Suspense via P */}
                                     <Route path="/" element={
@@ -319,6 +324,16 @@ const App: React.FC = () => {
                                     } />
                                     <Route path="/profile" element={
                                         <ProtectedRoute><Layout><P c={Profile} /></Layout></ProtectedRoute>
+                                    } />
+                                    {/* Survey Builder Routes */}
+                                    <Route path="/surveys" element={
+                                        <ProtectedRoute><Layout><P c={Surveys} /></Layout></ProtectedRoute>
+                                    } />
+                                    <Route path="/surveys/:id/edit" element={
+                                        <ProtectedRoute><P c={SurveyEditorPage} /></ProtectedRoute>
+                                    } />
+                                    <Route path="/surveys/:id/analytics" element={
+                                        <ProtectedRoute><Layout><P c={Surveys} /></Layout></ProtectedRoute>
                                     } />
 
                                     {/* Fallback */}

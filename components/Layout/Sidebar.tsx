@@ -4,7 +4,7 @@ import {
   Send, Users, FileEdit, BarChart3,
   Settings, Mail, GitMerge, Tag, Webhook,
   ExternalLink, Zap, ChevronRight, LogOut, Globe, Shield,
-  LayoutDashboard, Key, Bot, PanelLeftClose, PanelLeft, Facebook, Gift
+  LayoutDashboard, Key, Bot, PanelLeftClose, PanelLeft, Facebook, Gift, FileText
 } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
 
@@ -163,8 +163,9 @@ export const MAIN_NAV: NavItemConfig[] = [
   { name: 'Automation', href: '/flows', icon: GitMerge, badge: 'Hot', prefetch: () => import('../../pages/Flows'), prefetchApis: ['flows'] },
   { name: 'Khách hàng', href: '/audience', icon: Users, prefetch: () => import('../../pages/Audience') },
   { name: 'Quản lý Nhãn', href: '/tags', icon: Tag, prefetch: () => import('../../pages/Tags'), prefetchApis: ['tags'] },
-  { name: 'Kho Voucher', href: '/vouchers', icon: Gift, badge: 'Promo', prefetch: () => import('../../pages/Vouchers') },
   { name: 'Mẫu Email', href: '/templates', icon: FileEdit, prefetch: () => import('../../pages/Templates') },
+  { name: 'Kho Voucher', href: '/vouchers', icon: Gift, badge: 'Promo', prefetch: () => import('../../pages/Vouchers') },
+  { name: 'Khảo Sát', href: '/surveys', icon: FileText, badge: 'New', prefetch: () => import('../../pages/Surveys') },
 ];
 
 export const CONFIG_NAV: NavItemConfig[] = [

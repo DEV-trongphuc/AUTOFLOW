@@ -171,13 +171,22 @@ class Mailer
                 $unsubPlaceholder = "{{unsub_url_placeholder}}";
                 $trackingHtml = $htmlContent;
 
-                // Check for unsubscribe tag with flexible regex (handles whitespace and case)
-                $hasUnsubTag = preg_match('/\{\{\s*unsubscribe_url\s*\}\}/i', $trackingHtml);
-                $skipAutoFooter = (strpos($trackingHtml, '<!-- skip-unsubscribe-footer -->') !== false);
+                // Check for unsubscribe tags matching {{unsubscribe_url}} or {{unsubscribeLink}} (including URL encoded brackets)
+                $trackingHtml = preg_replace('/(?:\{\{|%7B%7B)\s*unsubscribe(?:_url|Link)\s*(?:\}\}|%7D%7D)/i', $unsubPlaceholder, $trackingHtml);
 
-                if ($hasUnsubTag) {
-                    $trackingHtml = preg_replace('/\{\{\s*unsubscribe_url\s*\}\}/i', $unsubPlaceholder, $trackingHtml);
-                } elseif (!$skipAutoFooter) {
+                // Auto-fix any link that visually contains "unsubscribe" or "hủy đăng ký", replacing its href
+                $trackingHtml = preg_replace_callback(
+                    '/<a[^>]*href=["\']([^"\']*)["\'][^>]*>(?P<text>.*?(?:unsubscribe|hủy đăng ký|huy dang ky).*?)<\/a>/si',
+                    function($m) use ($unsubPlaceholder) {
+                        return preg_replace('/href=(["\'])' . preg_quote($m[1], '/') . '\1/i', 'href="' . $unsubPlaceholder . '"', $m[0], 1);
+                    },
+                    $trackingHtml
+                );
+
+                $skipAutoFooter = (strpos($trackingHtml, '<!-- skip-unsubscribe-footer -->') !== false);
+                $hasUnsubTag = (strpos($trackingHtml, $unsubPlaceholder) !== false);
+
+                if (!$hasUnsubTag && !$skipAutoFooter) {
                     $footerHtml = "
                         <div style='margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-family: sans-serif; font-size: 12px; color: #999; text-align: center; line-height: 1.5;'>
                             <p>Bạn nhận được email này vì đã đăng ký nhận tin từ hệ thống của chúng tôi.</p>
