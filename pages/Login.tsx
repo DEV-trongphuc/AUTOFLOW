@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
@@ -23,8 +23,7 @@ const Login: React.FC = () => {
 
                 if (userData.status === 'approved') {
                     toast.success(`Chào mừng trở lại, ${userData.name}!`);
-                    navigate('/');
-                    window.location.reload();
+                    window.location.href = '/';
                 } else {
                     setIsPending(true);
                     toast.error('Tài khoản của bạn đang chờ phê duyệt từ Admin.');
