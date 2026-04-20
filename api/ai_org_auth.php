@@ -151,7 +151,7 @@ if ($method === 'POST' && $action === 'login') {
         // [FIX P42-A1] SELECT * exposed password_hash and other sensitive fields in memory.
         // Explicit columns — password_hash needed for verification, then stripped in buildAuthResponse().
         $stmt = $pdo->prepare("SELECT id, user_id, email, password_hash, full_name, role, status, permissions, gender,
-            avatar_url, last_login, created_at, updated_at FROM ai_org_users WHERE email = ? LIMIT 1");
+            last_login, created_at, updated_at FROM ai_org_users WHERE email = ? LIMIT 1");
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -225,7 +225,7 @@ if ($method === 'POST' && $action === 'google_login') {
     try {
         // [FIX P42-A2] Explicit columns for Google login user lookup
         $stmt = $pdo->prepare("SELECT id, user_id, email, password_hash, full_name, role, status, permissions, gender,
-            avatar_url, last_login, created_at, updated_at FROM ai_org_users WHERE email = ? LIMIT 1");
+            last_login, created_at, updated_at FROM ai_org_users WHERE email = ? LIMIT 1");
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -415,7 +415,7 @@ if ($method === 'GET' && $action === 'check') {
         try {
             // [FIX P42-A3] SELECT * on session check — explicit columns, password_hash excluded
             $stmt = $pdo->prepare("SELECT id, user_id, email, full_name, role, status, permissions, gender,
-                avatar_url, last_login, created_at, updated_at FROM ai_org_users WHERE id = ? OR user_id = ?");
+                last_login, created_at, updated_at FROM ai_org_users WHERE id = ? OR user_id = ?");
             $stmt->execute([$orgUserId, $orgUserId]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -562,7 +562,7 @@ if ($method === 'POST' && $action === 'admin_auto_login') {
         // Try to issue real tokens for admin-001
         try {
             $stmt = $pdo->prepare("SELECT id, user_id, email, full_name, role, status, permissions, gender,
-                avatar_url, last_login, created_at, updated_at FROM ai_org_users WHERE id = 'admin-001' OR user_id = 1 LIMIT 1");
+                last_login, created_at, updated_at FROM ai_org_users WHERE id = 'admin-001' OR user_id = 1 LIMIT 1");
             $stmt->execute();
             $adminUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -636,7 +636,7 @@ if ($method === 'POST' && $action === 'admin_auto_login') {
             // Try to get real user data from ai_org_users
             try {
                 $stmtAdmin = $pdo->prepare("SELECT id, user_id, email, full_name, role, status, permissions, gender,
-                    avatar_url, last_login, created_at, updated_at FROM ai_org_users WHERE id = 'admin-001' OR user_id = 1 LIMIT 1");
+                    last_login, created_at, updated_at FROM ai_org_users WHERE id = 'admin-001' OR user_id = 1 LIMIT 1");
                 $stmtAdmin->execute();
                 $adminUser = $stmtAdmin->fetch(PDO::FETCH_ASSOC);
                 if ($adminUser) {

@@ -370,12 +370,23 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
 
 
     useEffect(() => {
-        const saved = localStorage.getItem('mailflow_saved_sections');
-        if (saved) {
+        const fetchSections = async () => {
             try {
-                setSavedSections(JSON.parse(saved));
-            } catch (e) { }
-        }
+                const res = await fetch(`${API_BASE_URL}/email_sections.php`);
+                const data = await res.json();
+                if (data.success && Array.isArray(data.data)) {
+                    setSavedSections(data.data);
+                } else {
+                    const saved = localStorage.getItem('mailflow_saved_sections');
+                    if (saved) {
+                        try { setSavedSections(JSON.parse(saved)); } catch (e) { }
+                    }
+                }
+            } catch (err) {
+                console.error('Lỗi khi tải mẫu section từ DB:', err);
+            }
+        };
+        fetchSections();
 
         // Prevent accidental tab close or reload while editing
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -444,36 +455,55 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
      * Also handles missing_unsubscribe case: if text "Unsubscribe" exists without an href, wraps it.
      */
     const handleAutoFixUnsubscribe = useCallback((blockId: string, badHref?: string) => {
+        let changedAny = false;
         const fixDeep = (list: EmailBlock[]): EmailBlock[] => {
             return list.map(b => {
-                if (b.id === blockId && (b.type === 'text' || b.type === 'quote')) {
+                let currentChanged = false;
+                let bCopied = { ...b };
+                if ((blockId === '__email_root__' || b.id === blockId) && (b.type === 'text' || b.type === 'quote')) {
                     let html = b.content || '';
+                    const oldHtml = html;
                     if (badHref) {
-                        // Case 1: wrong_unsubscribe_url — replace specific href
-                        const escaped = badHref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        const escaped = badHref.replace(/[.*+?^\$\{\}()|[\]\\\/]/g, '\\$&');
                         html = html.replace(
                             new RegExp(`href=["']${escaped}["']`, 'gi'),
                             'href="{{unsubscribe_url}}"'
                         );
                     } else {
-                        // Case 2: text "Unsubscribe" exists as plain text → wrap in <a>
                         html = html.replace(
                             /(?<!<a[^>]*>)(Unsubscribe|Hủy đăng ký)(?!<\/a>)/gi,
-                            '<a href="{{unsubscribe_url}}" style="color:inherit">$1</a>'
+                            '<a href="{{unsubscribe_url}}" style="color:inherit; text-decoration:underline;">$1</a>'
                         );
                     }
-                    return { ...b, content: html };
+                    if (html !== oldHtml) {
+                        changedAny = true;
+                        currentChanged = true;
+                        bCopied.content = html;
+                    }
                 }
-                if (b.children?.length) return { ...b, children: fixDeep(b.children) };
-                return b;
+                if (b.children?.length) {
+                    bCopied.children = fixDeep(b.children);
+                }
+                return bCopied;
             });
         };
         const newBlocks = fixDeep(blocks);
-        addToHistory(newBlocks);
-        const newIssues = scanBlocks(newBlocks);
-        setValidationIssues(newIssues);
-        if (newIssues.filter(i => i.type !== 'missing_unsubscribe' && i.type !== 'wrong_unsubscribe_url').length === 0 && newIssues.length === 0) setShowValidation(false);
-        toast.success('Đã gắn {{unsubscribe_url}} thành công!', { icon: '✅' });
+        if (changedAny || blockId !== '__email_root__') {
+            addToHistory(newBlocks);
+            const newIssues = scanBlocks(newBlocks);
+            setValidationIssues(newIssues);
+            
+            const len1 = newIssues.filter(i => i.type !== 'missing_unsubscribe' && i.type !== 'wrong_unsubscribe_url').length;
+            if (len1 === 0 && newIssues.length === 0) setShowValidation(false);
+            
+            if (changedAny && blockId === '__email_root__') {
+                toast.success('Đã tự động gán link Unsubscribe thành công!', { icon: '✅' });
+            } else {
+                toast.success('Đã gắn {{unsubscribe_url}} thành công!', { icon: '✅' });
+            }
+        } else if (blockId === '__email_root__') {
+            toast.error('Không tìm thấy từ khóa "Unsubscribe" hoặc "Hủy đăng ký" trong văn bản để tự gắn link. Vui lòng tự thêm khối Footer.');
+        }
     }, [blocks, addToHistory]);
 
     const handleUndo = useCallback(() => {
@@ -552,26 +582,54 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
         setSaveSectionModal({ isOpen: true, block, name: `Section ${savedSections.length + 1}` });
     };
 
-    const confirmSaveSection = () => {
+    const confirmSaveSection = async () => {
         if (saveSectionModal.block && saveSectionModal.name) {
+            const blockData = duplicateBlockDeep(saveSectionModal.block);
             const newSaved = {
                 id: crypto.randomUUID(),
                 name: saveSectionModal.name,
-                data: duplicateBlockDeep(saveSectionModal.block) // Use utility for deep duplication
+                data: blockData
             };
+            
             const updatedList = [newSaved, ...savedSections];
             setSavedSections(updatedList);
-            localStorage.setItem('mailflow_saved_sections', JSON.stringify(updatedList));
-            toast.success('Đã lưu mẫu giao diện vào thư viện cá nhân.');
             setSaveSectionModal({ isOpen: false, block: null, name: '' });
+            
+            try {
+                const res = await fetch(`${API_BASE_URL}/email_sections.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newSaved)
+                });
+                const result = await res.json();
+                if (result.success) {
+                    toast.success('Đã lưu mẫu giao diện vào CSDL an toàn.');
+                } else {
+                    toast.error(result.error || 'Lỗi khi lưu DB, giao diện mới chỉ nằm trên trình duyệt.');
+                }
+            } catch (error) {
+                toast.error('Lỗi kết nối máy chủ.');
+            }
         }
     };
 
-    const handleDeleteSavedSection = (id: string) => {
+    const handleDeleteSavedSection = async (id: string) => {
         const updatedList = savedSections.filter(s => s.id !== id);
         setSavedSections(updatedList);
-        localStorage.setItem('mailflow_saved_sections', JSON.stringify(updatedList));
-        toast.success('Đã xóa mẫu khỏi thư viện.');
+        
+        try {
+            const res = await fetch(`${API_BASE_URL}/email_sections.php?id=${id}`, {
+                method: 'DELETE'
+            });
+            const result = await res.json();
+            if (result.success) {
+                toast.success('Đã xóa mẫu khỏi thư viện (Database).');
+            } else {
+                toast.error(result.error || 'Xóa thất bại trên CSDL.');
+            }
+        } catch (error) {
+           toast.error('Lỗi khi xóa khỏi máy chủ.'); 
+        }
     };
 
     const handleSendTest = async (email: string) => {

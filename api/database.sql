@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost:3306
--- Thời gian đã tạo: Th4 20, 2026 lúc 09:50 AM
+-- Thời gian đã tạo: Th4 20, 2026 lúc 01:05 PM
 -- Phiên bản máy phục vụ: 10.6.18-MariaDB-cll-lve-log
 -- Phiên bản PHP: 8.4.19
 
@@ -695,6 +695,20 @@ CREATE TABLE `custom_events` (
   `notification_enabled` tinyint(1) DEFAULT 0,
   `notification_emails` text DEFAULT NULL,
   `notification_subject` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `email_sections`
+--
+
+CREATE TABLE `email_sections` (
+  `id` char(36) NOT NULL,
+  `workspace_id` int(11) DEFAULT 1,
+  `name` varchar(255) NOT NULL,
+  `data_json` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`data_json`)),
+  `created_at` timestamp NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -2353,6 +2367,13 @@ ALTER TABLE `custom_events`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Chỉ mục cho bảng `email_sections`
+--
+ALTER TABLE `email_sections`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_workspace` (`workspace_id`);
+
+--
 -- Chỉ mục cho bảng `flows`
 --
 ALTER TABLE `flows`
@@ -2655,7 +2676,9 @@ ALTER TABLE `subscribers`
   ADD KEY `idx_workspace_status` (`workspace_id`,`status`),
   ADD KEY `idx_sub_email` (`email`),
   ADD KEY `idx_sub_workspace_score` (`workspace_id`,`lead_score`),
-  ADD KEY `idx_sub_ws_status_created` (`workspace_id`,`status`,`created_at`);
+  ADD KEY `idx_sub_ws_status_created` (`workspace_id`,`status`,`created_at`),
+  ADD KEY `idx_sub_zalo_uid` (`zalo_user_id`),
+  ADD KEY `idx_sub_meta_psid` (`meta_psid`);
 ALTER TABLE `subscribers` ADD FULLTEXT KEY `ft_subscriber_search` (`email`,`first_name`,`last_name`,`phone_number`,`company_name`);
 
 --

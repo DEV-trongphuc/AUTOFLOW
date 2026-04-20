@@ -258,8 +258,8 @@ try {
             $email = $input['email'] ?? '';
             $notes = $input['notes'] ?? '';
 
-            $stmt = $pdo->prepare("UPDATE meta_subscribers SET name = ?, gender = ?, phone = ?, birthday = ?, email = ?, notes = ? WHERE id = ?");
-            $stmt->execute([$name, $gender, $phone, $birthday, $email, $notes, $id]);
+            $stmt = $pdo->prepare("UPDATE meta_subscribers SET name = ?, gender = ?, phone = ?, email = ?, notes = ? WHERE id = ?");
+            $stmt->execute([$name, $gender, $phone, $email, $notes, $id]);
 
             jsonResponse(true, null, 'Cập nhật thành công');
         } elseif ($route === 'update_notes') {

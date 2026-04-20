@@ -37,9 +37,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['route']) && $_GET['rout
 
     $allowed = ['jpg','jpeg','png','gif','webp','pdf','doc','docx','xls','xlsx','zip','txt','csv'];
     $files = [];
-    foreach (new DirectoryIterator($uploadDir) as $f) {
-        if ($f->isDot() || $f->isDir()) continue;
-        $fn  = $f->getFilename();
+    try {
+        foreach (new DirectoryIterator($uploadDir) as $f) {
+            if ($f->isDot() || $f->isDir()) continue;
+            $fn  = $f->getFilename();
         $ext = strtolower(pathinfo($fn, PATHINFO_EXTENSION));
         if (!in_array($ext, $allowed)) continue;
         // Strip uniqid prefix (13 hex chars + _)
@@ -53,6 +54,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['route']) && $_GET['rout
             'type'        => $ext,
             'modified_at' => $f->getMTime(),
         ];
+        }
+    } catch (Exception $e) {
+        error_log("DirectoryIterator error: " . $e->getMessage());
     }
     usort($files, fn($a, $b) => $b['modified_at'] - $a['modified_at']);
     jsonResponse(true, array_slice($files, 0, 300));

@@ -113,7 +113,7 @@ export const CanvasHandleOverlay: React.FC<HandleOverlayProps> = ({
                         top: barPos.top - 28,
                         left: barPos.left,
                         width: barPos.width,
-                        zIndex: 9999,
+                        zIndex: 100050,
                         pointerEvents: 'none',
                     }}
                 >

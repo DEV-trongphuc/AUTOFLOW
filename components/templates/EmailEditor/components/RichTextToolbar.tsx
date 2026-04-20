@@ -179,7 +179,7 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
     return createPortal(
         <>
             <div
-                className={`fixed z-[9999] flex flex-col bg-slate-900 text-white rounded-2xl shadow-2xl px-1 py-1 gap-0.5 border border-slate-700/50 ${!isVisible ? 'invisible pointer-events-none' : 'animate-in fade-in zoom-in-95 duration-150'}`}
+                className={`fixed z-[100100] flex flex-col bg-slate-900 text-white rounded-2xl shadow-2xl px-1 py-1 gap-0.5 border border-slate-700/50 ${!isVisible ? 'invisible pointer-events-none' : 'animate-in fade-in zoom-in-95 duration-150'}`}
                 style={{ top: position.top, left: position.left, transform: 'translate(-50%, -100%)', width: 'max-content', marginTop: '-12px' }}
                 onMouseDown={(e) => e.preventDefault()}
                 onMouseEnter={onToolbarMouseEnter}

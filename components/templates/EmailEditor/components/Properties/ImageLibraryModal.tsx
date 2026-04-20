@@ -298,13 +298,12 @@ const ImageLibraryModal: React.FC<ImageLibraryModalProps> = ({ isOpen, onClose, 
                                 return (
                                     <div
                                         key={uniqueKey}
-                                        onClick={() => {
-                                            // [FIX P26-F3] Use functional select toggle to avoid stale closure.
-                                            // Previously: `selected.size > 0` checked at click time (stale).
-                                            // When clicking first image, selected.size = 0 → goes to onSelect()
-                                            // instead of entering bulk mode. Now: Shift+click = bulk toggle,
-                                            // plain click = instant select+close (single pick mode).
-                                            if (onSelect) { onSelect(file.url); onClose(); }
+                                        onClick={(e) => {
+                                            if (selected.size > 0 || e.shiftKey || e.ctrlKey || e.metaKey) {
+                                                toggleSelect(uniqueKey);
+                                            } else {
+                                                if (onSelect) { onSelect(file.url); onClose(); }
+                                            }
                                         }}
                                         className={`group relative rounded-2xl border-2 transition-all duration-200 cursor-pointer overflow-hidden ${
                                             selected.has(uniqueKey)
@@ -325,9 +324,15 @@ const ImageLibraryModal: React.FC<ImageLibraryModalProps> = ({ isOpen, onClose, 
                                             <div className="absolute inset-0 bg-violet-500/0 group-hover:bg-violet-500/10 transition-colors" />
 
                                             {/* Selection indicator */}
-                                            <div className={`absolute top-2 right-2 transition-all duration-200 ${
-                                                selected.has(uniqueKey) ? 'opacity-100 scale-100' : 'opacity-0 scale-75 group-hover:opacity-60 group-hover:scale-90'
-                                            }`}>
+                                            <div 
+                                                className={`absolute top-2 right-2 transition-all duration-200 cursor-pointer ${
+                                                    selected.has(uniqueKey) ? 'opacity-100 scale-100' : 'opacity-0 scale-75 group-hover:opacity-60 group-hover:scale-90'
+                                                }`}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleSelect(uniqueKey);
+                                                }}
+                                            >
                                                 <div className={`w-5 h-5 rounded-full flex items-center justify-center shadow ${
                                                     selected.has(uniqueKey) ? 'bg-rose-500' : 'bg-white/90 border border-slate-200'
                                                 }`}>

@@ -87,6 +87,9 @@ const EmailValidationPanel: React.FC<EmailValidationPanelProps> = ({
     const deduplicatedIssues = React.useMemo(() => {
         const seenGroupUrls = new Set<string>();
         return issues.filter(issue => {
+            // Exclude missing_unsubscribe from being grouped below since it has its own prominent red banner
+            if (issue.type === 'missing_unsubscribe') return false;
+            
             if (issue.type !== 'duplicate_link') return true;
             const key = issue.currentUrl || issue.blockId;
             if (seenGroupUrls.has(key)) return false;
@@ -153,15 +156,14 @@ const EmailValidationPanel: React.FC<EmailValidationPanelProps> = ({
                                     {onAutoFixUnsubscribe && (() => {
                                         const candidate = issues.find(i => i.type === 'wrong_unsubscribe_url');
                                         if (candidate) return null; // đã có wrong_url, sẽ hiện nút ở issue riêng
-                                        // Check if missing_unsubscribe issue has a blockId that’s a real block (not root)
                                         const missingIssue = issues.find(i => i.type === 'missing_unsubscribe');
-                                        if (!missingIssue || missingIssue.blockId === '__email_root__') return null;
+                                        if (!missingIssue) return null;
                                         return (
                                             <button
                                                 onClick={() => onAutoFixUnsubscribe(missingIssue.blockId)}
-                                                className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-700 hover:bg-red-800 text-white text-[10px] font-bold transition-colors"
+                                                className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-700 hover:bg-red-800 text-white text-[10px] font-bold transition-colors shadow-sm"
                                             >
-                                                <Wand2 className="w-3 h-3" /> Fix nhanh
+                                                <Wand2 className="w-3 h-3" /> Tự động gán link
                                             </button>
                                         );
                                     })()}

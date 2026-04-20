@@ -14,8 +14,6 @@ require_once 'db_connect.php';
 require_once 'tracking_helper.php';
 
 try {
-    $pdo = getDbConnection();
-
     // Read JSON payload
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
@@ -107,11 +105,7 @@ function handlePageView($pdo, $visitorId, $sessionId, $pageUrl, $pageTitle, $ref
     if (!$session) {
         // Create new session
         $stmt = $pdo->prepare("
-            INSERT INTO web_sessions (
-                id, visitor_id, session_start, landing_page, page_views, 
-                device_type, browser, os, country, city, referrer,
-                utm_source, utm_medium, utm_campaign
-            ) VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO web_sessions (id, visitor_id, property_id, started_at, last_active_at, entry_url, page_count, referrer_source) VALUES (?, ?, 'unknown', ?, ?, ?, 1, ?)
         ");
         $stmt->execute([
             $sessionId,
@@ -130,16 +124,15 @@ function handlePageView($pdo, $visitorId, $sessionId, $pageUrl, $pageTitle, $ref
         ]);
     } else {
         // Update existing session
-        $pdo->prepare("UPDATE web_sessions SET page_views = page_views + 1, session_end = ? WHERE id = ?")
+        $pdo->prepare("UPDATE web_sessions SET page_count = page_count + 1, last_active_at = ? WHERE id = ?")
             ->execute([$timestamp, $sessionId]);
     }
 
     // Record page view
     $stmt = $pdo->prepare("
-        INSERT INTO web_page_views (session_id, visitor_id, page_url, page_title, viewed_at)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO web_page_views (session_id, visitor_id, property_id, url_hash, url, title, loaded_at) VALUES (?, ?, 'unknown', md5(?), ?, ?, ?)
     ");
-    $stmt->execute([$sessionId, $visitorId, $pageUrl, $pageTitle, $timestamp]);
+    $stmt->execute([$sessionId, $visitorId, $pageUrl, $pageTitle, $timestamp, 'unknown', md5($pageUrl)]);
 }
 
 function handlePageExit($pdo, $sessionId, $pageUrl, $duration, $scrollDepth, $timestamp)
@@ -147,15 +140,15 @@ function handlePageExit($pdo, $sessionId, $pageUrl, $duration, $scrollDepth, $ti
     // Update the last page view with duration and scroll depth
     $stmt = $pdo->prepare("
         UPDATE web_page_views 
-        SET duration = ?, scroll_depth = ?
-        WHERE session_id = ? AND page_url = ?
+        SET time_on_page = ?, scroll_depth = ?
+        WHERE session_id = ? AND url = ?
         ORDER BY viewed_at DESC
         LIMIT 1
     ");
     $stmt->execute([$duration, $scrollDepth, $sessionId, $pageUrl]);
 
     // Update session total duration
-    $pdo->prepare("UPDATE web_sessions SET total_duration = total_duration + ?, session_end = ? WHERE id = ?")
+    $pdo->prepare("UPDATE web_sessions SET duration_seconds = duration_seconds + ?, last_active_at = ? WHERE id = ?")
         ->execute([$duration, $timestamp, $sessionId]);
 }
 
@@ -164,25 +157,17 @@ function handleClick($pdo, $visitorId, $sessionId, $pageUrl, $data, $timestamp, 
     $subscriberId = getSubscriberIdByVisitor($pdo, $visitorId);
 
     // Record event
-    $stmt = $pdo->prepare("
-        INSERT INTO web_events (
-            session_id, visitor_id, subscriber_id, event_type, event_name,
-            page_url, element_text, element_id, element_class, target_url, metadata, occurred_at
-        ) VALUES (?, ?, ?, 'click', ?, ?, ?, ?, ?, ?, ?, ?)
-    ");
-    $stmt->execute([
-        $sessionId,
-        $visitorId,
-        $subscriberId,
-        $data['event_name'] ?? 'click',
-        $pageUrl,
-        $data['element_text'] ?? null,
-        $data['element_id'] ?? null,
-        $data['element_class'] ?? null,
-        $data['target_url'] ?? null,
-        json_encode($data),
-        $timestamp
-    ]);
+        $stmt = $pdo->prepare("
+            INSERT INTO web_events (session_id, visitor_id, property_id, event_type, meta_data, target_selector, target_text, created_at) VALUES (?, ?, 'unknown', 'click', ?, ?, ?, ?)
+        ");
+        $stmt->execute([
+            $sessionId,
+            $visitorId,
+            json_encode($data),
+            $data['element_id'] ?? $data['element_class'] ?? $pageUrl,
+            $data['element_text'] ?? $data['event_name'] ?? 'click',
+            $timestamp
+        ]);
 
     // Record heatmap data
     if (isset($data['x_position']) && isset($data['y_position'])) {
@@ -210,13 +195,10 @@ function handleFormSubmit($pdo, $visitorId, $sessionId, $pageUrl, $data, $timest
     $formFields = $data['form_fields'] ?? [];
 
     if (!$email && !$phone) {
-        // No identifiable info, just log the event
         $stmt = $pdo->prepare("
-            INSERT INTO web_events (
-                session_id, visitor_id, event_type, event_name, page_url, metadata, occurred_at
-            ) VALUES (?, ?, 'form_submit', 'form_submit', ?, ?, ?)
+            INSERT INTO web_events (session_id, visitor_id, property_id, event_type, meta_data, target_selector, target_text, created_at) VALUES (?, ?, 'unknown', 'form_submit', ?, ?, ?, ?)
         ");
-        $stmt->execute([$sessionId, $visitorId, $pageUrl, json_encode($data), $timestamp]);
+        $stmt->execute([$sessionId, $visitorId, json_encode($data), $pageUrl, 'form_submit', $timestamp]);
         return;
     }
 
@@ -255,16 +237,13 @@ function handleFormSubmit($pdo, $visitorId, $sessionId, $pageUrl, $data, $timest
     // Link visitor to subscriber
     if ($subscriberId) {
         // Update all sessions for this visitor
-        $pdo->prepare("UPDATE web_sessions SET subscriber_id = ? WHERE visitor_id = ?")
-            ->execute([$subscriberId, $visitorId]);
+        $pdo->prepare("UPDATE web_visitors SET subscriber_id = ? WHERE visitor_id = ?")->execute([$subscriberId, $visitorId]);
 
         // Update all page views
-        $pdo->prepare("UPDATE web_page_views SET subscriber_id = ? WHERE visitor_id = ?")
-            ->execute([$subscriberId, $visitorId]);
+        
 
         // Update all events
-        $pdo->prepare("UPDATE web_events SET subscriber_id = ? WHERE visitor_id = ?")
-            ->execute([$subscriberId, $visitorId]);
+        
 
         // Record form submission
         $stmt = $pdo->prepare("
@@ -312,12 +291,9 @@ function handleIdentify($pdo, $visitorId, $sessionId, $email, $userData)
         $subscriberId = $subscriber['id'];
 
         // Link visitor to subscriber
-        $pdo->prepare("UPDATE web_sessions SET subscriber_id = ? WHERE visitor_id = ?")
-            ->execute([$subscriberId, $visitorId]);
-        $pdo->prepare("UPDATE web_page_views SET subscriber_id = ? WHERE visitor_id = ?")
-            ->execute([$subscriberId, $visitorId]);
-        $pdo->prepare("UPDATE web_events SET subscriber_id = ? WHERE visitor_id = ?")
-            ->execute([$subscriberId, $visitorId]);
+        $pdo->prepare("UPDATE web_visitors SET subscriber_id = ? WHERE visitor_id = ?")->execute([$subscriberId, $visitorId]);
+        
+        
     }
 }
 
@@ -326,24 +302,14 @@ function handleCustomEvent($pdo, $visitorId, $sessionId, $pageUrl, $data, $times
     $subscriberId = getSubscriberIdByVisitor($pdo, $visitorId);
 
     $stmt = $pdo->prepare("
-        INSERT INTO web_events (
-            session_id, visitor_id, subscriber_id, event_type, event_name, page_url, metadata, occurred_at
-        ) VALUES (?, ?, ?, 'custom', ?, ?, ?, ?)
+        INSERT INTO web_events (session_id, visitor_id, property_id, event_type, meta_data, target_selector, target_text, created_at) VALUES (?, ?, 'unknown', 'custom', ?, ?, ?, ?)
     ");
-    $stmt->execute([
-        $sessionId,
-        $visitorId,
-        $subscriberId,
-        $data['event_name'] ?? 'custom_event',
-        $pageUrl,
-        json_encode($data),
-        $timestamp
-    ]);
+    $stmt->execute([$sessionId, $visitorId, json_encode($data), $pageUrl, $data['event_name'] ?? 'custom_event', $timestamp]);
 }
 
 function getSubscriberIdByVisitor($pdo, $visitorId)
 {
-    $stmt = $pdo->prepare("SELECT subscriber_id FROM web_sessions WHERE visitor_id = ? AND subscriber_id IS NOT NULL LIMIT 1");
+    $stmt = $pdo->prepare("SELECT subscriber_id FROM web_visitors WHERE visitor_id = ? AND subscriber_id IS NOT NULL LIMIT 1");
     $stmt->execute([$visitorId]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     return $result ? $result['subscriber_id'] : null;

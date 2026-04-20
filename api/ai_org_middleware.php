@@ -207,7 +207,7 @@ function requireAISpaceAuth()
     try {
         // [FIX P28-S2] Exclude password_hash at query level — prevents accidental exposure
         // if a future code path forgets to unset() it before returning.
-        $stmt = $pdo->prepare("SELECT id, user_id, email, full_name, avatar_url, role, status, status_reason,
+        $stmt = $pdo->prepare("SELECT id, user_id, email, full_name, role, status, status_reason,
             status_expiry, permissions, admin_id, last_login, created_at, updated_at
             FROM ai_org_users WHERE id = ? OR user_id = ? LIMIT 1");
         $stmt->execute([$orgUserId, $orgUserId]);

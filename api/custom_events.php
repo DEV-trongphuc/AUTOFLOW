@@ -422,7 +422,7 @@ try {
                 $notifSubject = $data['notificationSubject'] ?? null;
 
                 // [FIX P43-H2] Include workspace_id in INSERT
-                $pdo->prepare("INSERT INTO custom_events (id, workspace_id, name, notification_enabled, notification_emails, notification_subject, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())")->execute([$id, $workspace_id, $data['name'], $notifEnabled, $notifEmails, $notifSubject]);
+                $pdo->prepare("INSERT INTO custom_events (id, name, notification_enabled, notification_emails, notification_subject, created_at) VALUES (?, ?, ?, ?, ?, NOW())")->execute([$id, $data['name'], $notifEnabled, $notifEmails, $notifSubject]);
                 jsonResponse(true, ['id' => $id], 'Đã tạo sự kiện mới');
             } catch (Exception $e) {
                 jsonResponse(false, null, 'Lỗi khi tạo sự kiện: ' . $e->getMessage());

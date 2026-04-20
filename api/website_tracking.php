@@ -38,12 +38,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $totalPageviews = $stmtPv->fetchColumn();
 
         // Avg Duration
-        $stmtDur = $pdo->prepare("SELECT AVG(duration_seconds) FROM web_page_views WHERE property_id = ? AND $dateFilter");
+        $stmtDur = $pdo->prepare("SELECT AVG(time_on_page) FROM web_page_views WHERE property_id = ? AND $dateFilter");
         $stmtDur->execute([$pid]);
         $avgDuration = round($stmtDur->fetchColumn(), 1);
 
         // Top Pages
-        $stmtTop = $pdo->prepare("SELECT url, title, COUNT(*) as views, AVG(duration_seconds) as avg_time FROM web_page_views WHERE property_id = ? AND $dateFilter GROUP BY url ORDER BY views DESC LIMIT 10");
+        $stmtTop = $pdo->prepare("SELECT url, title, COUNT(*) as views, AVG(time_on_page) as avg_time FROM web_page_views WHERE property_id = ? AND $dateFilter GROUP BY url ORDER BY views DESC LIMIT 10");
         $stmtTop->execute([$pid]);
         $topPages = $stmtTop->fetchAll(PDO::FETCH_ASSOC);
 
@@ -65,11 +65,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
         // Return raw points for client side rendering
         // In real app, we might cluster these server side
-        $stmt = $pdo->prepare("SELECT x_pos, y_pos, viewport_width, viewport_height FROM web_events WHERE property_id = ? AND event_type = 'click' LIMIT 1000");
+        $stmt = $pdo->prepare("SELECT JSON_UNQUOTE(JSON_EXTRACT(meta_data, '$.x_position')) as x_pos, JSON_UNQUOTE(JSON_EXTRACT(meta_data, '$.y_position')) as y_pos, JSON_UNQUOTE(JSON_EXTRACT(meta_data, '$.viewport_width')) as viewport_width, JSON_UNQUOTE(JSON_EXTRACT(meta_data, '$.viewport_height')) as viewport_height FROM web_events WHERE property_id = ? AND event_type = 'click' LIMIT 1000");
         // Note: Filter by URL needs joining page_view or storing URL in event. 
         // To fix: In track.php, we didn't store URL in web_events, only in web_page_views. 
         // We link via page_view_id.
-        $stmt = $pdo->prepare("SELECT e.x_pos, e.y_pos, e.viewport_width, e.viewport_height 
+        $stmt = $pdo->prepare("SELECT JSON_UNQUOTE(JSON_EXTRACT(e.meta_data, '$.x_position')) as x_pos, JSON_UNQUOTE(JSON_EXTRACT(e.meta_data, '$.y_position')) as y_pos, JSON_UNQUOTE(JSON_EXTRACT(e.meta_data, '$.viewport_width')) as viewport_width, JSON_UNQUOTE(JSON_EXTRACT(e.meta_data, '$.viewport_height')) as viewport_height 
                                FROM web_events e 
                                JOIN web_page_views pv ON e.page_view_id = pv.id
                                WHERE e.property_id = ? AND e.event_type = 'click' AND pv.url = ? 

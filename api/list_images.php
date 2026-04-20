@@ -20,14 +20,16 @@ if (empty($GLOBALS['current_admin_id']) && empty($_SESSION['user_id'])) {
     exit;
 }
 
-function jsonResponse($success, $data = null, $message = '')
-{
-    echo json_encode([
-        'success' => $success,
-        'data' => $data,
-        'message' => $message
-    ]);
-    exit;
+if (!function_exists('jsonResponse')) {
+    function jsonResponse($success, $data = null, $message = '')
+    {
+        echo json_encode([
+            'success' => $success,
+            'data' => $data,
+            'message' => $message
+        ]);
+        exit;
+    }
 }
 
 $uploadDir = '../uploadss/';
@@ -37,6 +39,8 @@ if (!is_dir($uploadDir)) {
 
 $files = scandir($uploadDir);
 $images = [];
+
+if ($files !== false) {
 
 // Always use absolute URL for email and editor compatibility
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
@@ -73,6 +77,7 @@ foreach ($files as $file) {
     }
 }
 
+} // End if files !== false
 // Sort by date descending
 usort($images, function ($a, $b) {
     return $b['date'] - $a['date'];

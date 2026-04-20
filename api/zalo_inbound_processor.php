@@ -256,7 +256,7 @@ function processZaloTrackingEvent($pdo, $event, $payload, $subId, $zaloUserId)
             $logEntry = $stmtLog->fetch();
 
             if ($logEntry) {
-                $stmtMain = $pdo->prepare("SELECT linked_subscriber_id FROM zalo_subscribers WHERE zalo_user_id = ? LIMIT 1");
+                $stmtMain = $pdo->prepare("SELECT subscriber_id FROM zalo_subscribers WHERE zalo_user_id = ? LIMIT 1");
                 $stmtMain->execute([$zaloUserId]);
                 $mainId = $stmtMain->fetchColumn();
 

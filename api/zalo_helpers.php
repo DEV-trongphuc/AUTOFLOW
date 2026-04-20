@@ -233,7 +233,7 @@ function sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $scenario, $user
     }
     $textContent = formatZaloMessage($textContent);
 
-    // Chia tin nh?n dài thành nhi?u do?n (Zalo gi?i h?n ~1000 ký t?)
+    // Chia tin nh?n dï¿½i thï¿½nh nhi?u do?n (Zalo gi?i h?n ~1000 kï¿½ t?)
     $parts = splitLongMessage($textContent, 900);
 
     // G?i t?ng do?n; ch? do?n cu?i m?i g?n buttons
@@ -257,15 +257,15 @@ function sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $scenario, $user
 
         _sendZaloPayload($pdo, $zaloUserId, $accessToken, $partPayload, $part);
 
-        // Delay nh? gi?a các tin d? tránh rate limit
+        // Delay nh? gi?a cï¿½c tin d? trï¿½nh rate limit
         if (!$isLastPart) {
-            usleep(300000); // 0.3 giây
+            usleep(300000); // 0.3 giï¿½y
         }
     }
 }
 
 /**
- * Internal helper: G?i Zalo CS API và log k?t qu?
+ * Internal helper: G?i Zalo CS API vï¿½ log k?t qu?
  */
 function _sendZaloPayload($pdo, $zaloUserId, $accessToken, $payload, $logText)
 {
@@ -354,7 +354,7 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg)
         return;
     }
 
-    // 2. Strip toàn b? Markdown tru?c khi x? lý (b? *, **, #, v.v.)
+    // 2. Strip toï¿½n b? Markdown tru?c khi x? lï¿½ (b? *, **, #, v.v.)
     $aiText = formatZaloMessage($aiText);
 
     // 3. Parse AI Response for Zalo elements (URL, phone, links)
@@ -383,7 +383,7 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg)
 
     $cleanText = $parsed['text'];
 
-    // 4. N?u có image, x? lý riêng
+    // 4. N?u cï¿½ image, x? lï¿½ riï¿½ng
     if ($parsed['image_url']) {
         $attachmentId = uploadZaloImageFromUrl($accessToken, $parsed['image_url']);
         if ($attachmentId) {
@@ -402,7 +402,7 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg)
                 }
             }
 
-            // G?i image kèm buttons
+            // G?i image kï¿½m buttons
             $imgScenario = [
                 'id' => ($scenario['id'] ?? 'ai') . '_img',
                 'title' => '',
@@ -415,10 +415,10 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg)
             sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $imgScenario);
             return;
         }
-        // Upload fail ? dùng text v?i URL gi? nguyên
+        // Upload fail ? dï¿½ng text v?i URL gi? nguyï¿½n
     }
 
-    // 5. Chia tin nh?n dài thành nhi?u do?n (Zalo gi?i h?n ~900 ký t?)
+    // 5. Chia tin nh?n dï¿½i thï¿½nh nhi?u do?n (Zalo gi?i h?n ~900 kï¿½ t?)
     $parts = splitLongMessage($cleanText, 900);
 
     foreach ($parts as $i => $part) {
@@ -442,7 +442,7 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg)
         _sendZaloPayload($pdo, $zaloUserId, $accessToken, $partPayload, $part);
 
         if (!$isLastPart) {
-            usleep(300000); // 0.3 giây
+            usleep(300000); // 0.3 giï¿½y
         }
     }
 }
@@ -486,11 +486,11 @@ function parseAIResponseForZalo($text)
                 continue;
 
             // Tailor the label
-            $label = 'Xem trên Website';
+            $label = 'Xem trï¿½n Website';
             if (strpos($cleanUrl, 'zalo.me/s/') !== false) {
-                $label = 'M? Form dang ký';
+                $label = 'M? Form dang kï¿½';
             } else if (preg_match('/\.(pdf|docx|doc|xlsx|xls|pptx|ppt|zip|rar)$/i', $cleanUrl)) {
-                $label = 'T?i tài li?u';
+                $label = 'T?i tï¿½i li?u';
             }
 
             $buttons[] = ['title' => $label, 'type' => 'oa.open.url', 'payload' => $cleanUrl];
@@ -655,7 +655,7 @@ function ensureZaloToken($pdo, $oaId)
                 $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]); // [FIX P38-ZH]
                 return $new_access_token;
             } elseif (isset($result['error']) && $result['error'] != 0) {
-                // [Vòng 33 FIX] Suspend dead token to prevent API hammering
+                // [Vï¿½ng 33 FIX] Suspend dead token to prevent API hammering
                 try {
                     $pdo->prepare("UPDATE zalo_oa_configs SET status = 'error_refresh', updated_at = NOW() WHERE id = ?")->execute([$oa['id']]);
                     error_log("Zalo OA Refresh Failed. Status set to error_refresh. OA: {$oa['id']}");
@@ -784,8 +784,8 @@ function upsertZaloSubscriber($pdo, $zaloUserId, $profile, $oaConfigId = null)
                 $newZId = bin2hex(random_bytes(16));
                 $pdo->prepare("
                     INSERT INTO zalo_subscribers 
-                    (id, zalo_list_id, zalo_user_id, display_name, avatar, status, is_follower, oa_id, joined_at, last_interaction_at, created_at)
-                    VALUES (?, ?, ?, ?, ?, 'active', 1, ?, NOW(), NOW(), NOW())
+                    (id, zalo_list_id, zalo_user_id, display_name, avatar, status, is_follower, oa_id, joined_at, last_interaction_at)
+                    VALUES (?, ?, ?, ?, ?, 'active', 1, ?, NOW(), NOW())
                 ")->execute([$newZId, $listId, $zaloUserId, $name, $avatar, $oaRealId]);
             }
 

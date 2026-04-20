@@ -30,7 +30,7 @@ const PopoverColorPicker: React.FC<PopoverColorPickerProps> = ({ onSelect, onClo
     const [style, setStyle] = useState<React.CSSProperties>({
         position: 'fixed',
         visibility: 'hidden', // Hide initially to wait for math
-        zIndex: 99999,
+        zIndex: 100200,
     });
     const [arrowLeft, setArrowLeft] = useState<number | string>('1.25rem'); // 20px (left-5)
 
@@ -64,7 +64,7 @@ const PopoverColorPicker: React.FC<PopoverColorPickerProps> = ({ onSelect, onClo
         if (left < 10) left = 10;
         if (top + h > viewportHeight - 10) top = position.top - h - 8;
 
-        setStyle({ position: 'fixed', top, left, visibility: 'visible', zIndex: 99999 });
+        setStyle({ position: 'fixed', top, left, visibility: 'visible', zIndex: 100200 });
         setArrowLeft(arrowPos);
     }, [position, mounted]); // trigger after mounted is true
 
