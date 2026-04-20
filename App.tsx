@@ -137,7 +137,7 @@ const App: React.FC = () => {
                 const apiBase = isLocal ? '/mail_api' : API_BASE_URL;
                 fetch(`${apiBase}/auth.php?action=logout`, { method: 'POST', credentials: 'include' })
                     .finally(() => {
-                        window.location.href = '/login'; 
+                        window.location.href = '/#/login'; 
                     });
                 return;
             }
