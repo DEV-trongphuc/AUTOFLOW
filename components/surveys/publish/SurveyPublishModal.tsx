@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Survey } from '../../../types/survey';
 import { X, Link, QrCode, Code, Globe, Send, Copy, Check, ExternalLink, Loader2 } from 'lucide-react';
 
@@ -58,8 +59,8 @@ Content-Type: application/json
   "time_spent_sec": 45
 }`;
 
-    return (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={onClose}>
             <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl" onClick={e => e.stopPropagation()}>
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
@@ -223,7 +224,8 @@ Content-Type: application/json
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

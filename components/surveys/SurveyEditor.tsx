@@ -7,7 +7,7 @@ import { DEFAULT_THEME, DEFAULT_SETTINGS, DEFAULT_THANK_YOU, createDefaultBlock,
 import SurveyToolbox from './toolbox/SurveyToolbox';
 import SurveyCanvas from './canvas/SurveyCanvas';
 import SurveyProperties from './properties/SurveyProperties';
-import SurveyTopBar from './SurveyTopBar';
+import SurveyTopBar from './SurveyTopBar.tsx';
 import { toast } from 'react-hot-toast';
 import { api } from '../../services/storageAdapter';
 import { X, Monitor, Tablet, Smartphone } from 'lucide-react';
@@ -62,6 +62,7 @@ const SurveyEditor: React.FC = () => {
                         theme: d.cover_style || DEFAULT_THEME,
                         settings: d.settings_json || DEFAULT_SETTINGS,
                         thankYouPage: d.thank_you_page || DEFAULT_THANK_YOU,
+                        thankYouPages: d.thank_you_page?.extraScreens || [],
                     });
                 }
             })
@@ -94,7 +95,10 @@ const SurveyEditor: React.FC = () => {
                     name: survey.name,
                     blocks_json: survey.blocks,
                     settings_json: survey.settings,
-                    thank_you_page: survey.thankYouPage,
+                    thank_you_page: {
+                        ...survey.thankYouPage,
+                        extraScreens: survey.thankYouPages || []
+                    },
                     cover_style: survey.theme,
                     target_list_id: survey.target_list_id,
                     flow_trigger_id: survey.flow_trigger_id,
@@ -231,6 +235,7 @@ const SurveyEditor: React.FC = () => {
                             onDeleteBlock={deleteBlock}
                             onDuplicateBlock={duplicateBlock}
                             onMoveBlock={moveBlock}
+                            onUpdateBlock={updateBlock}
                         />
                     </div>
 

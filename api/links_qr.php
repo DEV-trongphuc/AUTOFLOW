@@ -1,0 +1,145 @@
+<?php
+/**
+ * api/links_qr.php - Link & QR Tracking Management
+ * Upgraded to follow modern system architecture (Auth Middleware + Workspace Isolation)
+ */
+require_once __DIR__ . '/bootstrap.php';
+initializeSystem($pdo);
+require_once __DIR__ . '/auth_middleware.php';
+
+// Workspace Isolation
+$workspaceId = get_current_workspace_id();
+
+$method = $_SERVER['REQUEST_METHOD'];
+$action = $_GET['action'] ?? '';
+
+if ($method === 'GET') {
+    // ─── LIST ────────────────────────────────────────────────────────────────
+    if ($action === 'list') {
+        try {
+            $stmt = $pdo->prepare("SELECT * FROM short_links WHERE workspace_id = ? ORDER BY created_at DESC");
+            $stmt->execute([$workspaceId]);
+            $links = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Fetch click stats
+            foreach ($links as &$link) {
+                $st = $pdo->prepare("SELECT COUNT(*) as clicks, COUNT(DISTINCT ip_hash) as unique_clicks FROM link_clicks WHERE short_link_id = ?");
+                $st->execute([$link['id']]);
+                $res = $st->fetch(PDO::FETCH_ASSOC);
+                $link['stats'] = [
+                    'clicks' => (int)($res['clicks'] ?? 0),
+                    'unique' => (int)($res['unique_clicks'] ?? 0)
+                ];
+            }
+
+            jsonResponse(true, $links);
+        } catch (\Throwable $e) {
+            // Graceful error handling for missing tables or DB issues
+            jsonResponse(true, [], 'Ready but no data or schema needs update: ' . $e->getMessage());
+        }
+    }
+
+    // ─── STATS ───────────────────────────────────────────────────────────────
+    if ($action === 'stats') {
+        $id = $_GET['id'] ?? '';
+        if (!$id) jsonResponse(false, null, 'ID required');
+
+        try {
+            // Verify ownership
+            $stmtOwn = $pdo->prepare("SELECT id FROM short_links WHERE id = ? AND workspace_id = ?");
+            $stmtOwn->execute([$id, $workspaceId]);
+            if (!$stmtOwn->fetchColumn()) jsonResponse(false, null, 'Unauthorized');
+
+            $stmt = $pdo->prepare("SELECT DATE(clicked_at) as date, COUNT(*) as clicks FROM link_clicks WHERE short_link_id = ? GROUP BY DATE(clicked_at) ORDER BY date ASC LIMIT 30");
+            $stmt->execute([$id]);
+            $timeline = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $stmtDev = $pdo->prepare("SELECT device_type, COUNT(*) as clicks FROM link_clicks WHERE short_link_id = ? GROUP BY device_type");
+            $stmtDev->execute([$id]);
+            $devices = $stmtDev->fetchAll(PDO::FETCH_ASSOC);
+
+            $stmtOs = $pdo->prepare("SELECT os, COUNT(*) as clicks FROM link_clicks WHERE short_link_id = ? GROUP BY os");
+            $stmtOs->execute([$id]);
+            $osData = $stmtOs->fetchAll(PDO::FETCH_ASSOC);
+
+            $stmtCountry = $pdo->prepare("SELECT country, COUNT(*) as clicks FROM link_clicks WHERE short_link_id = ? GROUP BY country");
+            $stmtCountry->execute([$id]);
+            $countryData = $stmtCountry->fetchAll(PDO::FETCH_ASSOC);
+
+            jsonResponse(true, ['timeline' => $timeline, 'devices' => $devices, 'os' => $osData, 'country' => $countryData]);
+        } catch (\Throwable $e) {
+            jsonResponse(true, ['timeline' => [], 'devices' => [], 'os' => [], 'country' => [], 'error' => $e->getMessage()]);
+        }
+    }
+}
+
+if ($method === 'POST') {
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+
+    // ─── CREATE ──────────────────────────────────────────────────────────────
+    if ($action === 'create') {
+        $id = uniqid('lnk_');
+        $name = $input['name'] ?? 'Untitled Link';
+        $targetUrl = $input['target_url'] ?? '';
+        $slug = !empty($input['slug']) ? $input['slug'] : substr(md5(uniqid()), 0, 8);
+        $isSurvey = $input['is_survey_checkin'] ?? 0;
+        $surveyId = !empty($input['survey_id']) ? $input['survey_id'] : null;
+        $qrConfig = json_encode(['color' => '#000000', 'bg' => '#ffffff', 'logo' => null]);
+
+        try {
+            $stmt = $pdo->prepare("INSERT INTO short_links (id, workspace_id, name, slug, target_url, is_survey_checkin, survey_id, qr_config_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$id, $workspaceId, $name, $slug, $targetUrl, $isSurvey, $surveyId, $qrConfig]);
+            jsonResponse(true, ['id' => $id, 'slug' => $slug]);
+        } catch (\Throwable $e) {
+            if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
+                jsonResponse(false, null, 'Slug (tên miền phụ) đã tồn tại. Vui lòng chọn từ khác.');
+            } else {
+                jsonResponse(false, null, $e->getMessage());
+            }
+        }
+    }
+}
+
+if ($method === 'PUT' || ($method === 'POST' && $action === 'update')) {
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    $id = $_GET['id'] ?? $input['id'] ?? '';
+    
+    if (!$id) jsonResponse(false, null, 'ID required');
+
+    $updates = [];
+    $params = [];
+    if (isset($input['name'])) { $updates[] = "name = ?"; $params[] = $input['name']; }
+    if (isset($input['target_url'])) { $updates[] = "target_url = ?"; $params[] = $input['target_url']; }
+    if (isset($input['is_survey_checkin'])) { $updates[] = "is_survey_checkin = ?"; $params[] = $input['is_survey_checkin']; }
+    if (isset($input['survey_id'])) { $updates[] = "survey_id = ?"; $params[] = $input['survey_id']; }
+    if (isset($input['qr_config_json'])) { $updates[] = "qr_config_json = ?"; $params[] = $input['qr_config_json']; }
+
+    if (count($updates) > 0) {
+        $sql = "UPDATE short_links SET " . implode(', ', $updates) . " WHERE id = ? AND workspace_id = ?";
+        $params[] = $id;
+        $params[] = $workspaceId;
+        try {
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            jsonResponse(true, null, 'Updated successfully');
+        } catch (\Throwable $e) {
+            jsonResponse(false, null, $e->getMessage());
+        }
+    }
+    jsonResponse(true, null, 'No fields to update');
+}
+
+if ($method === 'DELETE') {
+    $id = $_GET['id'] ?? '';
+    if (!$id) jsonResponse(false, null, 'ID required');
+
+    try {
+        $pdo->prepare("DELETE FROM link_clicks WHERE short_link_id = ?")->execute([$id]);
+        $pdo->prepare("DELETE FROM short_links WHERE id = ? AND workspace_id = ?")->execute([$id, $workspaceId]);
+        jsonResponse(true, null, 'Deleted successfully');
+    } catch (\Throwable $e) {
+        jsonResponse(false, null, $e->getMessage());
+    }
+}
+
+jsonResponse(false, null, 'Action not handled');

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from '../common/Modal';
-import { Lightbulb, MousePointerClick, MessageSquareText, PenTool, Link2, Sparkles, Navigation2 } from 'lucide-react';
+import { Lightbulb, MousePointerClick, MessageSquareText, PenTool, Link2, Sparkles, Navigation2, ClipboardList, Mail } from 'lucide-react';
 
 interface SurveyGuideModalProps {
     isOpen: boolean;
@@ -12,22 +12,22 @@ const SurveyGuideModal: React.FC<SurveyGuideModalProps> = ({ isOpen, onClose }) 
 
     const steps = [
         {
+            id: 'canvas',
             icon: <PenTool className="w-8 h-8 text-amber-500" />,
             title: "Trải nghiệm Tùy biến Không giới hạn",
             description: "Thêm logo, sửa màu sắc thương hiệu, tải ảnh nền và điều chỉnh từng khối khảo sát trực tiếp (Kéo - Thả) với thanh công cụ bên trái.",
-            image: "/imgs/ks.png"
         },
         {
+            id: 'export',
             icon: <Link2 className="w-8 h-8 text-blue-500" />,
             title: "Tích hợp và Xuất bản Bất cứ đâu",
             description: "Sau khi thiết kế xong, lấy link gốc để chia sẻ qua Email, SMS hoặc Zalo. Hệ thống sẽ tự động bắt ID khách hàng (uid) để theo dõi kết quả chuẩn xác.",
-            image: "/imgs/ks2.png"
         },
         {
+            id: 'automation',
             icon: <Sparkles className="w-8 h-8 text-emerald-500" />,
             title: "Kích hoạt Kịch bản (Automation Flow)",
             description: "Khảo sát có thể trở thành điểm chạm đầu tiên! Tự động gắn tag, phân luồng khách hàng hoặc gửi Email cảm ơn ngay lập tức khi họ nộp phản hồi.",
-            image: "/imgs/ks3.png"
         }
     ];
 
@@ -36,7 +36,7 @@ const SurveyGuideModal: React.FC<SurveyGuideModalProps> = ({ isOpen, onClose }) 
     if (!isOpen) return null;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="lg" noPadding>
+        <Modal isOpen={isOpen} onClose={onClose} size="xl" noPadding>
             <div className="flex flex-col md:flex-row min-h-[460px] bg-white rounded-[32px] overflow-hidden">
                 {/* Left panel */}
                 <div className="w-full md:w-2/5 bg-slate-50 p-8 flex flex-col border-r border-slate-100">
@@ -89,12 +89,86 @@ const SurveyGuideModal: React.FC<SurveyGuideModalProps> = ({ isOpen, onClose }) 
                             {currentStep.description}
                         </p>
                         
-                        {/* Mock Image Placeholder */}
-                        <div className="mt-auto w-full rounded-2xl border border-slate-200 overflow-hidden shadow-lg shadow-slate-200/50 bg-slate-100 flex items-center justify-center min-h-[200px] relative">
-                            {currentStep.image ? (
-                                <img src={currentStep.image} alt="Feature preview" className="w-full h-full object-cover" />
-                            ) : (
-                                <span className="text-sm font-bold text-slate-300 uppercase tracking-widest">Illustration</span>
+                        {/* Code-based feature previews */}
+                        <div className="mt-auto w-full rounded-2xl border border-slate-200 overflow-hidden shadow-lg shadow-slate-200/50 bg-slate-50 flex items-center justify-center h-[280px] relative shrink-0">
+                            {currentStep.id === 'canvas' && (
+                                <div className="w-full h-full p-4 flex gap-3 opacity-90 hover:opacity-100 transition-opacity bg-slate-100">
+                                    <div className="w-1/3 bg-white rounded-xl shadow-sm border border-slate-200 p-3 flex flex-col gap-2">
+                                        <div className="h-2 w-16 bg-amber-100 rounded-full mb-2"></div>
+                                        <div className="flex gap-2">
+                                            <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center"><PenTool className="w-4 h-4 text-slate-400" /></div>
+                                            <div className="w-8 h-8 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-center"><Sparkles className="w-4 h-4 text-amber-500" /></div>
+                                        </div>
+                                        <div className="h-6 w-full border-2 border-dashed border-slate-200 rounded-md mt-4 flex items-center justify-center">
+                                            <div className="w-4 h-0.5 bg-slate-300 rounded"></div>
+                                        </div>
+                                    </div>
+                                    <div className="w-2/3 bg-white rounded-xl shadow-sm border border-slate-200 p-4 border-t-4 border-t-amber-400 relative overflow-hidden">
+                                        <div className="absolute top-2 right-2 w-12 h-12 bg-amber-500/5 blur-xl rounded-full"></div>
+                                        <div className="h-4 w-32 bg-slate-100 rounded mb-2"></div>
+                                        <div className="h-2 w-48 bg-slate-50 rounded mb-6"></div>
+                                        <div className="w-full h-10 border border-amber-200 rounded-lg bg-amber-50/50 flex flex-col justify-center px-3 mb-2 shadow-sm">
+                                            <div className="w-24 h-1.5 bg-amber-200/60 rounded"></div>
+                                        </div>
+                                        <div className="w-full h-10 border border-slate-100 rounded-lg bg-slate-50 flex flex-col justify-center px-3">
+                                            <div className="w-16 h-1.5 bg-slate-200 rounded"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {currentStep.id === 'export' && (
+                                <div className="w-full h-full p-6 flex flex-col items-center justify-center gap-4 bg-slate-100">
+                                   <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl shadow-blue-900/5 border border-blue-100 p-5 scale-95 hover:scale-100 transition-transform">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-10 h-10 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center ring-4 ring-blue-50/50">
+                                                <Link2 className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <div className="h-3 w-24 bg-slate-800 rounded-full mb-1.5"></div>
+                                                <div className="h-2 w-32 bg-slate-400 rounded-full"></div>
+                                            </div>
+                                        </div>
+                                        <div className="w-full bg-slate-50 p-3 rounded-lg border border-slate-200 flex items-center justify-between mb-3">
+                                            <span className="text-[10px] text-slate-500 font-mono truncate">https://domation.vn/s/xy72k</span>
+                                            <div className="px-3 py-1 bg-white border border-slate-200 rounded shadow-sm text-[10px] font-bold text-slate-700">Copy</div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <div className="flex-1 py-2 bg-emerald-50 text-emerald-600 rounded-lg text-center text-[10px] font-bold">Zalo ZNS</div>
+                                            <div className="flex-1 py-2 bg-blue-50 text-blue-600 rounded-lg text-center text-[10px] font-bold">Email</div>
+                                        </div>
+                                   </div>
+                                </div>
+                            )}
+
+                            {currentStep.id === 'automation' && (
+                                <div className="w-full h-full p-6 flex items-center justify-center bg-[#f8f9fa] relative overflow-hidden">
+                                     {/* Background grid */}
+                                    <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(#e5e7eb 1px, transparent 1px)', backgroundSize: '16px 16px' }}></div>
+                                    <div className="relative flex flex-col gap-6 items-center">
+                                        <div className="px-5 py-3 bg-white border-2 border-emerald-500 rounded-xl shadow-lg flex items-center gap-3 z-10 hover:-translate-y-1 transition-transform">
+                                            <div className="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center">
+                                                <ClipboardList className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <div className="text-xs font-bold text-slate-800">Trigger: Nộp khảo sát</div>
+                                                <div className="text-[10px] text-slate-500">Form: Phản hồi sản phẩm</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="w-px h-6 bg-slate-300 z-10 -my-6"></div>
+                                        
+                                        <div className="px-5 py-3 bg-white border border-slate-200 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center gap-3 z-10 ml-16 opacity-90 scale-95">
+                                            <div className="w-8 h-8 bg-orange-50 text-orange-500 rounded-lg flex items-center justify-center">
+                                                <Mail className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <div className="text-xs font-bold text-slate-700">Action: Gửi Email</div>
+                                                <div className="text-[10px] text-slate-400">Template: Thank you</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             )}
                         </div>
                     </div>

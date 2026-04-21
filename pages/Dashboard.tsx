@@ -1,8 +1,8 @@
-import { EXTERNAL_ASSET_BASE } from '@/utils/config';
+﻿import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Star, Sparkles, LayoutDashboard, Activity, Mail, Zap, FileText, Bot, Globe, Users, BarChart3, Settings, Clock, ArrowRight, MessageSquare, Facebook, Share2, Ticket, Webhook, Code2, Link, Play, Target
+    Star, Sparkles, LayoutDashboard, Activity, Mail, Zap, FileText, Bot, Globe, Users, BarChart3, Settings, Clock, ArrowRight, MessageSquare, Facebook, Share2, Ticket, Webhook, Code2, Link, Play, Target, ClipboardList
 } from 'lucide-react';
 import PageHero from '../components/common/PageHero';
 import { SystemOverviewModal } from '../components/common/SystemOverviewModal';
@@ -74,6 +74,15 @@ const ALL_MODULES: Module[] = [
         color: 'from-[#F59E0B] to-[#D97706]',
         path: '/vouchers',
         tags: ['Promo', 'Loyalty']
+    },
+    {
+        id: 'surveys',
+        title: 'Survey Builder',
+        sub: 'Thiết kế form khảo sát chuyên nghiệp. Thu thập thông tin Khách hàng, báo cáo Real-time.',
+        icon: ClipboardList,
+        color: 'from-amber-400 to-orange-500',
+        path: '/surveys',
+        tags: ['Feedback', 'Form']
     },
     {
         id: 'zalo-oa',
@@ -279,12 +288,12 @@ const Dashboard: React.FC = () => {
                                 <div className="mb-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <h3 className="text-lg font-black text-slate-800 dark:text-slate-200 tracking-tight">{module.title}</h3>
-                                        {['ai-training', 'ai-space', 'zalo-oa', 'meta-api', 'vouchers', 'api-triggers'].includes(module.id) && (
+                                        {['ai-training', 'ai-space', 'zalo-oa', 'meta-api', 'vouchers', 'api-triggers', 'surveys'].includes(module.id) && (
                                             <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border ${module.id === 'ai-training' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
                                                 module.id === 'ai-space' ? 'bg-rose-50 text-rose-700 border-rose-100' :
                                                     module.id === 'vouchers' ? 'bg-amber-50 text-amber-600 border-amber-100' :
                                                         module.id === 'api-triggers' ? 'bg-orange-50 text-orange-600 border-orange-100' :
-                                                            'bg-blue-50 text-blue-600 border-blue-100'
+                                                            module.id === 'surveys' ? 'bg-fuchsia-50 text-fuchsia-600 border-fuchsia-100' : 'bg-blue-50 text-blue-600 border-blue-100'
                                                 }`}>
                                                 {module.id === 'ai-training' ? 'A.I Core' : module.id === 'ai-space' ? 'A.I Hub' : module.id === 'vouchers' ? 'New' : module.id === 'api-triggers' ? 'Dev' : 'Hot'}
                                             </span>
@@ -335,3 +344,5 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+
+

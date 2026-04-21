@@ -81,9 +81,10 @@ $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
 // which would trick bot detection and bypass blacklists.
 // Cloudflare's HTTP_CF_CONNECTING_IP is injected server-side by Cloudflare and cannot be spoofed.
 // We trust it first; only fall back to REMOTE_ADDR (the direct connection IP).
-$ip = $_SERVER['HTTP_CF_CONNECTING_IP']   // Cloudflare: real client IP (cannot be spoofed)
+$rawIp = $_SERVER['HTTP_CF_CONNECTING_IP']   // Cloudflare: real client IP (cannot be spoofed)
     ?? $_SERVER['REMOTE_ADDR']             // Direct connection (no proxy)
     ?? '0.0.0.0';
+$ip = md5($rawIp); // MD5 Hash for Privacy/GDPR Compliance
 // Note: HTTP_X_FORWARDED_FOR is intentionally NOT used here at the bot-check stage
 // to prevent spoofing. It can be re-added later only for trusted Load Balancer IPs.
 
@@ -127,16 +128,16 @@ $isBot = false;
 $detectedBotName = null;
 
 // A. Check by IP Range (Highest Priority for known Good Bots)
-if (strpos($ip, '66.249.') === 0 || strpos($ip, '64.233.') === 0 || strpos($ip, '72.14.') === 0 || strpos($ip, '209.85.') === 0) {
+if (strpos($rawIp, '66.249.') === 0 || strpos($rawIp, '64.233.') === 0 || strpos($rawIp, '72.14.') === 0 || strpos($rawIp, '209.85.') === 0) {
     $isBot = true;
     $detectedBotName = 'Googlebot';
 } elseif (
-    strpos($ip, '40.77.') === 0 || strpos($ip, '40.78.') === 0 ||
-    strpos($ip, '40.80.') === 0 || strpos($ip, '40.90.') === 0 ||
-    strpos($ip, '157.55.') === 0 || strpos($ip, '157.56.') === 0 ||
-    strpos($ip, '207.46.') === 0 || strpos($ip, '104.47.') === 0 ||
-    strpos($ip, '52.148.') === 0 || strpos($ip, '13.107.') === 0 ||
-    strpos($ip, '13.106.') === 0 || strpos($ip, '40.') === 0
+    strpos($rawIp, '40.77.') === 0 || strpos($rawIp, '40.78.') === 0 ||
+    strpos($rawIp, '40.80.') === 0 || strpos($rawIp, '40.90.') === 0 ||
+    strpos($rawIp, '157.55.') === 0 || strpos($rawIp, '157.56.') === 0 ||
+    strpos($rawIp, '207.46.') === 0 || strpos($rawIp, '104.47.') === 0 ||
+    strpos($rawIp, '52.148.') === 0 || strpos($rawIp, '13.107.') === 0 ||
+    strpos($rawIp, '13.106.') === 0 || strpos($rawIp, '40.') === 0
 ) {
     $isBot = true;
     $detectedBotName = 'Bing/Microsoft Bot';
@@ -238,7 +239,8 @@ try {
     $propWorkspaceId = $propCache[$propertyId]['workspace_id'];
 
     // Capture IP — same safe logic as bot-check section above
-    $ip = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    $rawCaptureIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    $ip = md5($rawCaptureIp);
 
     // --- GEOLOCATION DETECTION (CLOUDFLARE FIRST) ---
     // Cloudflare sends Country in 'HTTP_CF_IPCOUNTRY'

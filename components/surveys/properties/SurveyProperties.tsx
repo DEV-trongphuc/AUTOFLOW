@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Survey, SurveyBlock, MatrixRow, MatrixCol } from '../../../types/survey';
+import { Survey, SurveyBlock, MatrixRow, MatrixCol, ThankYouPage } from '../../../types/survey';
 import {
     Settings, Plus, Trash2, GripVertical, Upload, Link, AlignLeft, AlignCenter, AlignRight,
     Image, Palette, Settings2, Heart, Calendar, Clock, Hash, Zap, GitMerge, ChevronDown
@@ -7,6 +7,7 @@ import {
 import { API_BASE_URL } from '../../../utils/config';
 import { api } from '../../../services/storageAdapter';
 import FileLibraryModal from '../../common/FileLibraryModal';
+import Select from '../../common/Select';
 
 interface Props {
     survey: Survey;
@@ -106,14 +107,26 @@ const FieldTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>>
     <textarea {...props} className={`w-full px-3 py-2.5 text-xs bg-white border border-slate-200 hover:border-slate-300 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-[3px] focus:ring-amber-500/20 transition-all shadow-sm resize-none ${props.className ?? ''}`} />
 );
 
-const FieldSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement>> = (props) => (
-    <div className={`relative ${props.className?.includes('w-fit') ? 'w-fit' : 'w-full'}`}>
-        <select {...props} className={`appearance-none w-full px-3 py-2 text-xs bg-white border border-slate-200 hover:border-slate-300 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-[3px] focus:ring-amber-500/20 transition-all shadow-sm pr-8 ${props.className ?? ''}`}>
-            {props.children}
-        </select>
-        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-    </div>
-);
+const FieldSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement>> = (props) => {
+    const options = React.Children.toArray(props.children)
+        .filter(React.isValidElement)
+        .map((child: any) => ({
+            value: child.props.value,
+            label: child.props.children
+        }));
+    return (
+        <div className={`relative ${props.className?.includes('w-fit') ? 'w-fit' : 'w-full'}`}>
+            <Select 
+                size="sm" 
+                variant="outline" 
+                options={options} 
+                value={props.value as string} 
+                onChange={(v) => props.onChange && props.onChange({ target: { value: v } } as any)}
+                className={`!bg-white ${props.className}`}
+            />
+        </div>
+    );
+};
 
 const Toggle: React.FC<{ value: boolean; onChange: () => void; label: string }> = ({ value, onChange, label }) => (
     <div className="flex items-center justify-between py-0.5">
@@ -172,14 +185,17 @@ const ShadowRow: React.FC<{ label: string; value: string; onChange: (v: string) 
         <div>
             <Label>{label}</Label>
             <div className="flex flex-col gap-2">
-                <select 
+                <Select 
+                    size="sm"
+                    variant="outline"
                     value={presets.find(p => p.value === value) ? value : 'custom'} 
-                    onChange={e => { if (e.target.value !== 'custom') onChange(e.target.value); }}
-                    className="w-full text-xs p-2 rounded-lg border border-slate-200 bg-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-500/20"
-                >
-                    {presets.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
-                    {!presets.find(p => p.value === value) && value && <option value="custom">Tùy chỉnh CSS...</option>}
-                </select>
+                    onChange={v => { if (v !== 'custom') onChange(v); }}
+                    options={[
+                        ...presets,
+                        ...(!presets.find(p => p.value === value) && value ? [{ value: 'custom', label: 'Tùy chỉnh CSS...' }] : [])
+                    ]}
+                    className="!bg-white"
+                />
                 <FieldInput value={value || 'none'} onChange={e => onChange(e.target.value)} className="font-mono text-[10px]" />
             </div>
         </div>
@@ -358,13 +374,88 @@ const MatrixEditor: React.FC<{
 const ThankYouDesigner: React.FC<{
     survey: Survey;
     onUpdate: (changes: Partial<Survey>) => void;
-}> = ({ survey, onUpdate }) => {
-    const ty = survey.thankYouPage;
-    const upd = (changes: Partial<typeof ty>) => onUpdate({ thankYouPage: { ...ty, ...changes } });
+    selectedBlockId: string | null;
+}> = ({ survey, onUpdate, selectedBlockId }) => {
+    const [activeIndex, setActiveIndex] = useState<number>(-1);
+    const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
+
+    React.useEffect(() => {
+        if (selectedBlockId === '__thankyou__') setActiveIndex(-1);
+        else if (selectedBlockId?.startsWith('__thankyou_')) {
+            const idx = parseInt(selectedBlockId.replace('__thankyou_', '').replace('__', ''), 10);
+            if (!isNaN(idx)) setActiveIndex(idx);
+        }
+    }, [selectedBlockId]);
+
+    const extraPages = survey.thankYouPages ?? [];
+    const ty = (activeIndex === -1 ? survey.thankYouPage : extraPages[activeIndex]) as ThankYouPage || {} as ThankYouPage;
+
+    const upd = (changes: Partial<typeof ty>) => {
+        if (activeIndex === -1) {
+            onUpdate({ thankYouPage: { ...ty, ...changes } as any });
+        } else {
+            const newPages = [...extraPages];
+            newPages[activeIndex] = { ...ty, ...changes } as any;
+            onUpdate({ thankYouPages: newPages });
+        }
+    };
+
     const EMOJIS = ['🎉', '🙏', '✅', '💎', '🚀', '❤️', '⭐', '🔥', '💐', '👏'];
 
+    const addExtraPage = () => {
+        const newId = crypto.randomUUID();
+        onUpdate({ thankYouPages: [...extraPages, { id: newId, title: 'Trang phụ mới', message: '', emoji: '🎉', showSocialShare: false }] });
+        setActiveIndex(extraPages.length);
+    };
+
+    const deleteExtraPage = (idx: number) => {
+        const newPages = extraPages.filter((_, i) => i !== idx);
+        onUpdate({ thankYouPages: newPages });
+        setActiveIndex(-1);
+    };
+
     return (
-        <div className="space-y-3">
+        <div className="space-y-3 relative">
+            {deletingIndex !== null && (
+                <div className="absolute top-0 inset-x-0 z-50 bg-white/95 backdrop-blur-sm border border-slate-200 p-4 rounded-xl shadow-lg border-l-4 border-l-red-500 animate-in fade-in zoom-in-95">
+                    <h3 className="font-bold text-slate-800 text-sm mb-1">Xoá trang kết thúc này?</h3>
+                    <p className="text-[10px] text-slate-500 mb-3 leading-relaxed">Người xem đang nhảy đến trang này sẽ bị trả về màn hình cảm ơn mặc định.</p>
+                    <div className="flex gap-2">
+                        <button onClick={() => setDeletingIndex(null)} className="flex-1 py-1.5 bg-slate-100 font-semibold text-slate-600 rounded-lg text-xs hover:bg-slate-200">Huỷ bỏ</button>
+                        <button onClick={() => { deleteExtraPage(deletingIndex); setDeletingIndex(null); }} className="flex-1 py-1.5 bg-red-500 font-semibold text-white rounded-lg text-xs hover:bg-red-600 shadow-sm">Xác nhận xoá</button>
+                    </div>
+                </div>
+            )}
+            {/* Screen Selector */}
+            <div className="bg-slate-50 border border-slate-200 p-1.5 rounded-xl flex flex-wrap gap-1">
+                <button
+                    onClick={() => setActiveIndex(-1)}
+                    className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
+                        activeIndex === -1 ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-200'
+                    }`}
+                >Mặc định</button>
+                {extraPages.map((p, i) => (
+                    <div key={p.id ?? i} className={`flex items-center rounded-lg transition-all ${
+                        activeIndex === i ? 'bg-amber-500 text-white shadow-sm' : 'bg-transparent text-slate-500 hover:bg-slate-200'
+                    }`}>
+                        <button
+                            onClick={() => setActiveIndex(i)}
+                            className="px-3 py-1.5 text-[10px] font-bold truncate max-w-[80px]"
+                            title={p.title || `Phụ ${i + 1}`}
+                        >
+                            {p.title || `Phụ ${i + 1}`}
+                        </button>
+                        {activeIndex === i && (
+                            <button onClick={() => setDeletingIndex(i)} className="pr-2 pl-1 hover:text-amber-200 transition-colors">
+                                <Trash2 className="w-3 h-3" />
+                            </button>
+                        )}
+                    </div>
+                ))}
+                <button onClick={addExtraPage} className="px-2 py-1.5 text-amber-600 hover:bg-amber-100 rounded-lg">
+                    <Plus className="w-3 h-3" />
+                </button>
+            </div>
             <div>
                 <Label>Emoji</Label>
                 <div className="flex flex-wrap gap-1.5 mb-1">
@@ -415,8 +506,8 @@ const SurveyProperties: React.FC<Props> = ({ survey, selectedBlock, selectedBloc
     const [settingsTab, setSettingsTab] = useState<'theme' | 'settings' | 'thankyou'>('theme');
 
     // Auto-switch to thankyou tab when __thankyou__ block is clicked
-    useEffect(() => {
-        if (selectedBlockId === '__thankyou__') setSettingsTab('thankyou');
+    React.useEffect(() => {
+        if (selectedBlockId?.startsWith('__thankyou')) setSettingsTab('thankyou');
         else if (selectedBlockId === '__cover__') setSettingsTab('theme');
     }, [selectedBlockId]);
 
@@ -456,7 +547,7 @@ const SurveyProperties: React.FC<Props> = ({ survey, selectedBlock, selectedBloc
                     {settingsTab === 'theme' && (
                         <>
                             <ColorRow label="Màu chủ đạo" value={survey.theme?.primaryColor ?? '#f59e0b'} onChange={v => onUpdateSurvey({ theme: { ...survey.theme, primaryColor: v } })} />
-                            <ColorRow label="Màu nền trang" value={survey.theme?.backgroundColor ?? '#f8fafc'} onChange={v => onUpdateSurvey({ theme: { ...survey.theme, backgroundColor: v } })} />
+                            <ColorRow label="Màu nền trang" value={survey.theme?.backgroundColor ?? '#0f172a'} onChange={v => onUpdateSurvey({ theme: { ...survey.theme, backgroundColor: v } })} />
                             <ColorRow label="Màu card" value={survey.theme?.cardBackground ?? '#ffffff'} onChange={v => onUpdateSurvey({ theme: { ...survey.theme, cardBackground: v } })} />
                             <ShadowRow label="Đổ bóng Card" value={survey.theme?.cardShadow ?? 'none'} onChange={v => onUpdateSurvey({ theme: { ...survey.theme, cardShadow: v } as any })} />
                             <ColorRow label="Màu chữ" value={survey.theme?.textColor ?? '#1e293b'} onChange={v => onUpdateSurvey({ theme: { ...survey.theme, textColor: v } })} />
@@ -578,6 +669,53 @@ const SurveyProperties: React.FC<Props> = ({ survey, selectedBlock, selectedBloc
                             <Toggle value={survey.settings?.showProgressBar} onChange={() => onUpdateSurvey({ settings: { ...survey.settings, showProgressBar: !survey.settings?.showProgressBar } })} label="Thanh tiến trình" />
                             <Toggle value={survey.settings?.allowPartialSubmit} onChange={() => onUpdateSurvey({ settings: { ...survey.settings, allowPartialSubmit: !survey.settings?.allowPartialSubmit } })} label="Cho phép nộp một phần" />
                             <Toggle value={survey.settings?.trackIp} onChange={() => onUpdateSurvey({ settings: { ...survey.settings, trackIp: !survey.settings?.trackIp } })} label="Ghi nhận IP" />
+                            
+                            <SectionDivider label="Tính năng Trắc nghiệm (Quiz)" />
+                            <div>
+                                <Toggle
+                                    value={!!survey.settings?.quiz?.enabled}
+                                    onChange={() => onUpdateSurvey({ settings: { ...survey.settings, quiz: { ...survey.settings?.quiz, enabled: !survey.settings?.quiz?.enabled, scoringType: survey.settings?.quiz?.scoringType || 'immediate', allowRetry: !!survey.settings?.quiz?.allowRetry } } })}
+                                    label="Bật chế độ Trắc nghiệm"
+                                />
+                                <p className="text-[9px] text-slate-400 mt-0.5 leading-relaxed pl-9">
+                                    Tính điểm cho từng câu hỏi và hiển thị kết quả đúng/sai.
+                                </p>
+                            </div>
+                            
+                            {survey.settings?.quiz?.enabled && (
+                                <div className="pl-4 border-l-2 border-amber-200 ml-2 space-y-3 mt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <div>
+                                        <Label>Cơ chế chấm điểm</Label>
+                                        <FieldSelect 
+                                            value={survey.settings?.quiz?.scoringType || 'immediate'}
+                                            onChange={e => onUpdateSurvey({ settings: { ...survey.settings, quiz: { ...survey.settings?.quiz!, scoringType: e.target.value as any } } })}
+                                        >
+                                            <option value="immediate">Chấm ngay (Hiển thị điểm)</option>
+                                            <option value="backend">Ghi nhận (Ẩn điểm số)</option>
+                                        </FieldSelect>
+                                        {survey.settings?.quiz?.scoringType === 'backend' && (
+                                            <p className="text-[9px] text-slate-400 mt-1">Sử dụng trong Automation để rẽ nhánh điểm số ngầm.</p>
+                                        )}
+                                    </div>
+                                    
+                                    <div>
+                                        <Label>Thời gian làm bài (Phút)</Label>
+                                        <FieldInput 
+                                            type="number" 
+                                            placeholder="0 = Không giới hạn" 
+                                            value={survey.settings?.quiz?.timeLimitMins || ''} 
+                                            onChange={e => onUpdateSurvey({ settings: { ...survey.settings, quiz: { ...survey.settings?.quiz!, timeLimitMins: e.target.value ? Number(e.target.value) : undefined } } })} 
+                                        />
+                                    </div>
+                                    
+                                    <Toggle
+                                        value={!!survey.settings?.quiz?.allowRetry}
+                                        onChange={() => onUpdateSurvey({ settings: { ...survey.settings, quiz: { ...survey.settings?.quiz!, allowRetry: !survey.settings?.quiz?.allowRetry } } })}
+                                        label="Cho phép làm lại bài"
+                                    />
+                                </div>
+                            )}
+
                             <SectionDivider label="Nhận diện người dùng" />
                             <div>
                                 <Toggle
@@ -600,8 +738,10 @@ const SurveyProperties: React.FC<Props> = ({ survey, selectedBlock, selectedBloc
                                 </p>
                             </div>
                             <SectionDivider label="Automation Flow" />
-                            <div className="bg-gradient-to-br from-amber-50 to-orange-50/30 border border-amber-200/60 rounded-2xl p-4 shadow-sm relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-amber-400/10 rounded-full blur-xl transform translate-x-1/2 -translate-y-1/2" />
+                            <div className="bg-gradient-to-br from-amber-50 to-orange-50/30 border border-amber-200/60 rounded-2xl p-4 shadow-sm relative">
+                                <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-amber-400/10 rounded-full blur-xl transform translate-x-1/2 -translate-y-1/2" />
+                                </div>
                                 <div className="flex items-center gap-2 mb-3 relative z-10">
                                     <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-amber-500">
                                         <Zap className="w-4 h-4" />
@@ -640,7 +780,7 @@ const SurveyProperties: React.FC<Props> = ({ survey, selectedBlock, selectedBloc
                     )}
 
                     {settingsTab === 'thankyou' && (
-                        <ThankYouDesigner survey={survey} onUpdate={onUpdateSurvey} />
+                        <ThankYouDesigner survey={survey} onUpdate={onUpdateSurvey} selectedBlockId={selectedBlockId} />
                     )}
                 </div>
             </div>
@@ -680,6 +820,55 @@ const SurveyProperties: React.FC<Props> = ({ survey, selectedBlock, selectedBloc
                 {/* Required */}
                 {!isLayout && (
                     <Toggle value={block.required} onChange={() => update({ required: !block.required })} label="Bắt buộc trả lời" />
+                )}
+
+                {/* ─ Quiz config ─ */}
+                {survey.settings?.quiz?.enabled && !isLayout && (
+                    <div className="bg-amber-50/50 p-2.5 rounded-xl border border-amber-100 space-y-2.5 mt-2">
+                        <div className="flex items-center gap-1.5 mb-1">
+                            <Zap className="w-3.5 h-3.5 text-amber-500" />
+                            <span className="text-[10px] font-black uppercase tracking-wider text-amber-700">Cấu hình Đáp án & Điểm</span>
+                        </div>
+                        <div>
+                            <Label>Điểm số định mức</Label>
+                            <FieldInput type="number" placeholder="Ví dụ: 10" value={block.quizPoints ?? ''} onChange={e => update({ quizPoints: Number(e.target.value) })} />
+                        </div>
+                        {['single_choice', 'dropdown', 'yes_no'].includes(block.type) && (
+                            <div>
+                                <Label>Đáp án đúng</Label>
+                                <FieldSelect value={String(block.correctAnswer ?? '')} onChange={e => update({ correctAnswer: e.target.value })}>
+                                    <option value="">-- Chọn đáp án đúng --</option>
+                                    {(block.options ?? []).map(o => (
+                                        <option key={o.id} value={o.value}>{o.label}</option>
+                                    ))}
+                                </FieldSelect>
+                            </div>
+                        )}
+                        {block.type === 'multi_choice' && (
+                            <div>
+                                <Label>Đáp án đúng (Nhập Value, cách nhau bởi phẩy)</Label>
+                                <FieldInput placeholder="Ví dụ: value_1, value_2" value={Array.isArray(block.correctAnswer) ? block.correctAnswer.join(', ') : block.correctAnswer ?? ''} onChange={e => update({ correctAnswer: e.target.value.split(',').map(s => s.trim()) })} />
+                            </div>
+                        )}
+                        {['short_text', 'number'].includes(block.type) && (
+                            <div className="space-y-2.5">
+                                <div>
+                                    <Label>Kiểu khớp đáp án</Label>
+                                    <FieldSelect
+                                        value={block.correctAnswerMatch || 'exact'}
+                                        onChange={e => update({ correctAnswerMatch: e.target.value as any })}
+                                    >
+                                        <option value="exact">Khớp chính xác</option>
+                                        <option value="contains">Bao hàm (Chứa từ khoá)</option>
+                                    </FieldSelect>
+                                </div>
+                                <div>
+                                    <Label>Đáp án đúng ({block.correctAnswerMatch === 'contains' ? 'chứa chuỗi' : 'khớp chính xác'})</Label>
+                                    <FieldInput placeholder="Ví dụ: 100 hoặc Paris" value={String(block.correctAnswer ?? '')} onChange={e => update({ correctAnswer: e.target.value })} />
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 {/* ─ Text input config ─ */}
@@ -968,6 +1157,8 @@ const SurveyProperties: React.FC<Props> = ({ survey, selectedBlock, selectedBloc
                         </div>
                     </>
                 )}
+
+
             </div>
         </div>
     );

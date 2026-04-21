@@ -5,10 +5,10 @@ import {
     CheckCircle2, Send, Cake, Lock,
     List, Snowflake, History, Layers, Search, MessageSquare,
     Info, Filter, ArrowRight, MousePointer2, Check, ShoppingCart, Zap,
-    UserPlus, UserMinus, AlertCircle, Ticket, PartyPopper, Bot
+    UserPlus, UserMinus, AlertCircle, Ticket, PartyPopper, Bot, ClipboardList
 } from 'lucide-react';
 import { api } from '../../../services/storageAdapter';
-import { Campaign, Flow, Segment, FormDefinition, PurchaseEvent, CustomEvent, VoucherCampaign } from '../../../types';
+import { Campaign, Flow, Segment, FormDefinition, PurchaseEvent, CustomEvent, VoucherCampaign, Survey } from '../../../types';
 import IntegrationGuideModal from '../modals/IntegrationGuideModal';
 import { isManualList, isSyncList } from '../../../utils/listHelpers';
 import Input from '../../common/Input';
@@ -44,7 +44,7 @@ const MisaIcon = ({ className }: { className?: string }) => (
 );
 
 const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disabled, locked }) => {
-    const [triggerType, setTriggerType] = useState<'segment' | 'tag' | 'form' | 'date' | 'campaign' | 'purchase' | 'custom_event' | 'voucher' | 'voucher_redeem' | 'inbound_message' | 'zalo_follow' | 'unsubscribe' | 'ai_capture'>(config.type || 'segment');
+    const [triggerType, setTriggerType] = useState<'segment' | 'tag' | 'form' | 'survey' | 'date' | 'campaign' | 'purchase' | 'custom_event' | 'voucher' | 'voucher_redeem' | 'inbound_message' | 'zalo_follow' | 'unsubscribe' | 'ai_capture'>(config.type || 'segment');
     const [targetSubtype, setTargetSubtype] = useState<'list' | 'segment' | 'sync'>(config.targetSubtype || 'list');
     const [lists, setLists] = useState<any[]>([]);
     const [segments, setSegments] = useState<Segment[]>([]);
@@ -54,6 +54,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
     const [purchases, setPurchases] = useState<PurchaseEvent[]>([]);
     const [customEvents, setCustomEvents] = useState<CustomEvent[]>([]);
     const [voucherCampaigns, setVoucherCampaigns] = useState<VoucherCampaign[]>([]);
+    const [surveys, setSurveys] = useState<Survey[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [showGuide, setShowGuide] = useState(false);
@@ -99,7 +100,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
     useEffect(() => {
         const loadInitialData = async () => {
             setLoading(true);
-            const [listRes, segRes, campRes, tagRes, formRes, purchRes, customRes] = await Promise.all([
+            const [listRes, segRes, campRes, tagRes, formRes, purchRes, customRes, surveyRes] = await Promise.all([
                 api.get<any[]>('lists'),
                 api.get<Segment[]>('segments'),
                 api.get<Campaign[]>('campaigns'),
@@ -107,7 +108,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                 api.get<FormDefinition[]>('forms'),
                 api.get<PurchaseEvent[]>('purchase_events'),
                 api.get<CustomEvent[]>('custom_events'),
-                api.get<VoucherCampaign[]>('voucher_campaigns')
+                api.get<Survey[]>('surveys')
             ]);
             if (listRes.success) setLists(listRes.data);
             if (segRes.success) setSegments(segRes.data);
@@ -116,6 +117,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
             if (formRes.success) setForms(formRes.data);
             if (purchRes.success) setPurchases(purchRes.data);
             if (customRes.success) setCustomEvents(customRes.data);
+            if (surveyRes.success) setSurveys(surveyRes.data);
 
             if (customRes) {
                 const arr = await Promise.all([api.get<VoucherCampaign[]>('voucher_campaigns')]);
@@ -136,6 +138,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
     const triggerOptions = [
         { id: 'segment', label: 'Phân khúc động', icon: Layers, color: 'orange', desc: 'Bộ lọc thông minh' },
         { id: 'form', label: 'Gửi Biểu mẫu', icon: FileInput, color: 'amber', desc: 'Từ Landing Page' },
+        { id: 'survey', label: 'Làm Khảo sát', icon: ClipboardList, color: 'emerald', desc: 'Hoàn thành Survey' },
         { id: 'purchase', label: 'Khách hàng Mua', icon: ShoppingCart, color: 'pink', desc: 'Sự kiện API' },
         { id: 'inbound_message', label: 'Tin nhắn đến', icon: MessageSquare, color: 'blue', desc: 'Meta / Zalo OA / Keyword' },
         { id: 'zalo_follow', label: 'Quan tâm Zalo', icon: UserPlus, color: 'cyan', desc: 'Khi khách nhấn Follow' },
@@ -165,6 +168,9 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
             case 'form':
                 const form = forms.find(f => f.id === targetId);
                 return form ? `Gửi Form: ${form.name}` : 'Khi đã gửi Biểu mẫu';
+            case 'survey':
+                const surv = surveys.find(s => s.id === targetId);
+                return surv ? `Khảo sát: ${surv.name}` : 'Khi hoàn thành Khảo sát';
             case 'purchase':
                 const purch = purchases.find(p => p.id === targetId);
                 return purch ? `Mua hàng: ${purch.name}` : 'Khi khách Mua hàng';
@@ -438,6 +444,21 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                         icon={FileInput}
                                         isSelected={config.targetId === f.id}
                                         onClick={() => handleTargetChange(f.id)}
+                                    />
+                                ))
+                            }
+
+                            {/* CASE: SURVEY SUBMIT */}
+                            {triggerType === 'survey' && surveys
+                                .filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                                .map(s => (
+                                    <ConfigItem
+                                        key={s.id}
+                                        label={s.name}
+                                        desc={`${s.status === 'published' ? 'Đang kích hoạt' : 'Chưa xuất bản'}`}
+                                        icon={ClipboardList}
+                                        isSelected={config.targetId === s.id}
+                                        onClick={() => handleTargetChange(s.id)}
                                     />
                                 ))
                             }

@@ -87,6 +87,14 @@ try {
     // ─── SUBMIT ──────────────────────────────────────────────────────────────
     if ($action === 'submit' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
+        // Enforce countdown expiration lock
+        $themeObj = json_decode($survey['cover_style'] ?? '{}', true);
+        if (!empty($themeObj['coverCountdown']) && strtotime($themeObj['coverCountdown']) <= time()) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'SURVEY_EXPIRED']);
+            exit;
+        }
+
         // Rate limiting by IP hash
         $ipHash = hash('sha256', $_SERVER['REMOTE_ADDR'] ?? '');
         $rateLimitStmt = $pdo->prepare("
@@ -150,6 +158,10 @@ try {
         $allowedSources = ['direct_link', 'qr_code', 'email_embed', 'widget', 'api'];
         if (!in_array($sourceChannel, $allowedSources)) $sourceChannel = 'direct_link';
 
+        // Geo Location (from Cloudflare if available)
+        $geoCountry = $_SERVER['HTTP_CF_IPCOUNTRY'] ?? null;
+        $geoCity = $_SERVER['HTTP_CF_IPCITY'] ?? null;
+
         $subscriberId = null;
         $submittedName = null;
         foreach ($answers as $ans) {
@@ -192,14 +204,75 @@ try {
             }
         }
 
+        // Auto-migrate schema for quiz scores
+        try {
+            $checkCol = $pdo->query("SHOW COLUMNS FROM survey_responses LIKE 'total_score'")->fetch();
+            if (!$checkCol) {
+                $pdo->exec("ALTER TABLE survey_responses ADD COLUMN total_score FLOAT DEFAULT NULL, ADD COLUMN max_score FLOAT DEFAULT NULL");
+            }
+            $checkColScreen = $pdo->query("SHOW COLUMNS FROM survey_responses LIKE 'end_screen_id'")->fetch();
+            if (!$checkColScreen) {
+                $pdo->exec("ALTER TABLE survey_responses ADD COLUMN end_screen_id VARCHAR(100) DEFAULT 'default'");
+            }
+        } catch (Exception $e) {}
+
         // INSERT response
         $responseId = generateUUID();
+        
+        // --- QUIZ ANTI-CHEAT SERVER-SIDE VALIDATION ---
+        $totalScore = null;
+        $maxScore = null;
+        $blocks = json_decode($survey['blocks_json'] ?? '[]', true);
+        if (!empty($settingsObj['quiz']['enabled'])) {
+            $totalScore = 0;
+            $maxScore = 0;
+            $ansMap = [];
+            foreach ($answers as $ans) {
+                if (!empty($ans['block_id'])) {
+                    $ansMap[$ans['block_id']] = $ans;
+                }
+            }
+            foreach ($blocks as $block) {
+                if (!empty($block['quizPoints'])) {
+                    $maxScore += (float)$block['quizPoints'];
+                    if (isset($ansMap[$block['id']])) {
+                        $ans = $ansMap[$block['id']];
+                        $matchType = $block['correctAnswerMatch'] ?? 'exact';
+                        $correct = $block['correctAnswer'] ?? null;
+                        
+                        $isCorrect = false;
+                        if ($correct !== null) {
+                            $type = $ans['type'] ?? '';
+                            if (in_array($type, ['single_choice', 'dropdown', 'yes_no', 'short_text', 'number'])) {
+                                $val = strtolower((string)($ans['answer_text'] ?? $ans['answer_num'] ?? ''));
+                                $target = strtolower((string)$correct);
+                                if ($matchType === 'contains' && strpos($val, $target) !== false) $isCorrect = true;
+                                else if ($val === $target) $isCorrect = true;
+                            } else if ($type === 'multi_choice' && is_array($ans['answer_json'] ?? null) && is_array($correct)) {
+                                $arrAns = $ans['answer_json'];
+                                $arrCorr = $correct;
+                                sort($arrAns);
+                                sort($arrCorr);
+                                if (json_encode($arrAns) === json_encode($arrCorr)) $isCorrect = true;
+                            }
+                        }
+                        if ($isCorrect) {
+                            $totalScore += (float)$block['quizPoints'];
+                        }
+                    }
+                }
+            }
+        }
+        
+        $endScreenId = $input['end_screen_id'] ?? 'default';
+
         $pdo->prepare("
             INSERT INTO survey_responses
               (id, survey_id, subscriber_id, session_token, answers_json, completion_rate,
                time_spent_sec, source_channel, utm_source, utm_medium, utm_campaign,
-               ip_hash, user_agent, device_type, referrer_url)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               ip_hash, user_agent, device_type, referrer_url, geo_country, geo_city,
+               total_score, max_score, end_screen_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ")->execute([
             $responseId, $survey['id'], $subscriberId, $sessionToken,
             json_encode($answers),
@@ -210,7 +283,9 @@ try {
             $input['utm_medium'] ?? null,
             $input['utm_campaign'] ?? null,
             $ipHash, substr($ua, 0, 512), $device,
-            substr($_SERVER['HTTP_REFERER'] ?? '', 0, 1024)
+            substr($_SERVER['HTTP_REFERER'] ?? '', 0, 1024),
+            $geoCountry, $geoCity,
+            $totalScore, $maxScore, $endScreenId
         ]);
 
         // INSERT answer details

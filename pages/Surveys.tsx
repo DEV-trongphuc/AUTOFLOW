@@ -280,6 +280,10 @@ const CreateSurveyModal: React.FC<{
                                   svg: (<svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>) },
                                 { label: 'Khảo sát thị trường', desc: 'Nghiên cứu thói quen người dùng', color: '#8b5cf6', bg: '#f5f3ff',
                                   svg: (<svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>) },
+                                { label: 'Mẫu Quiz (Trắc nghiệm)', desc: 'Kiểm tra kiến thức, đánh giá', color: '#ec4899', bg: '#fdf2f8',
+                                  svg: (<svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>) },
+                                { label: 'Mẫu Check-in Event', desc: 'Đăng ký tham gia sự kiện, quét QR', color: '#14b8a6', bg: '#f0fdfa',
+                                  svg: (<svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>) },
                             ] as const).map((t: any) => {
                                 const isActive = name === t.label;
                                 return (
@@ -397,10 +401,7 @@ const SurveyCard: React.FC<{
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Lượt trả lời</span>
                     <span className="text-xs font-black text-slate-700">{responses.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hoàn thành</span>
-                    <span className="text-xs font-black text-amber-700">{completion ? `${completion}%` : '—'}</span>
-                </div>
+
                 {nps !== undefined && (
                     <div className="flex justify-between items-center">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">NPS Score</span>

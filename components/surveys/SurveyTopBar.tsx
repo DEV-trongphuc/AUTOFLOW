@@ -1,3 +1,4 @@
+// Survey Editor Top Bar Component
 import React, { useState } from 'react';
 import { Survey } from '../../types/survey';
 import * as LucideIcons from 'lucide-react';

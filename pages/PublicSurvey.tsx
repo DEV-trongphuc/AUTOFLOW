@@ -3,6 +3,8 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { Survey, SurveyBlock, SurveyAnswer } from '../types/survey';
 import { ChevronRight, ChevronLeft, Send, Star, ChevronDown, ExternalLink, Check } from 'lucide-react';
 import { API_BASE_URL } from '../utils/config';
+import Select from '../components/common/Select';
+import toast from 'react-hot-toast';
 
 const PUBLIC_API = `${API_BASE_URL}/survey_public.php`;
 
@@ -13,18 +15,22 @@ const PublicSurvey: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(0);
+    const [pageHistory, setPageHistory] = useState<number[]>([]);
     const [answers, setAnswers] = useState<Record<string, SurveyAnswer>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [thankYouData, setThankYouData] = useState<any>(null);
+    const [quizResult, setQuizResult] = useState<{ score: number; maxScore: number } | null>(null);
+    const [timeLeft, setTimeLeft] = useState<number | null>(null);
     const startTime = useRef(Date.now());
     const sessionToken = useRef(crypto.randomUUID());
 
     const srcParam = searchParams.get('src') || searchParams.get('utm_source') || 'direct_link';
-    const utmMedium  = searchParams.get('utm_medium') || undefined;
+    const utmMedium = searchParams.get('utm_medium') || undefined;
     const utmCampaign = searchParams.get('utm_campaign') || undefined;
     const uid = searchParams.get('uid') || undefined;
     const isPreview = !!searchParams.get('preview');
+    const nextUrl = searchParams.get('next');
 
     useEffect(() => {
         fetch(`${PUBLIC_API}?slug=${slug}${searchParams.get('preview') ? '&preview=1' : ''}`)
@@ -32,16 +38,82 @@ const PublicSurvey: React.FC = () => {
             .then(res => {
                 if (res.success) {
                     const d = res.data;
+                    const themeObj = d.cover_style || {};
+                    // Check initial expiration
+                    if (themeObj.coverCountdown && new Date(themeObj.coverCountdown).getTime() <= Date.now()) {
+                        setError('SURVEY_EXPIRED');
+                        return; // do not set survey
+                    }
                     setSurvey({
                         ...d,
-                        theme: d.cover_style || {},
+                        theme: themeObj,
                         thankYouPage: d.thank_you_page || {},
+                        thankYouPages: d.thank_you_page?.extraScreens || [],
                     });
                 }
                 else setError(res.error);
             })
             .finally(() => setIsLoading(false));
     }, [slug]);
+
+    // Active Expiration Checker
+    useEffect(() => {
+        if (!survey || error || submitted) return;
+        const targetDate = survey.theme?.coverCountdown ? new Date(survey.theme.coverCountdown).getTime() : null;
+        if (!targetDate) return;
+
+        const checkExpiration = () => {
+            if (Date.now() >= targetDate) {
+                setError('SURVEY_EXPIRED');
+            }
+        };
+        const interval = setInterval(checkExpiration, 1000);
+        return () => clearInterval(interval);
+    }, [survey, error, submitted]);
+
+    // Timer logic for Quiz
+    useEffect(() => {
+        if (!survey || error || submitted || !survey.settings?.quiz?.enabled || !survey.settings?.quiz?.timeLimitMins) return;
+        setTimeLeft(survey.settings.quiz.timeLimitMins * 60);
+    }, [survey, error, submitted]);
+
+    useEffect(() => {
+        if (timeLeft === null || submitted) return;
+        if (timeLeft <= 0) {
+            handleForceSubmit();
+            return;
+        }
+        const t = setInterval(() => setTimeLeft(l => (l ? l - 1 : 0)), 1000);
+        return () => clearInterval(t);
+    }, [timeLeft, submitted]);
+
+    const formatTime = (sec: number) => {
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        return `${m}:${s < 10 ? '0' + s : s}`;
+    };
+
+    // Helper functions
+    const isAnswerEmpty = (ans: SurveyAnswer | undefined) => {
+        if (!ans) return true;
+        if (ans.type === 'short_text' || ans.type === 'long_text' || ans.type === 'email' || ans.type === 'phone' || ans.type === 'number' || ans.type === 'date') {
+            return !ans.answer_text?.trim();
+        }
+        if (['single_choice', 'dropdown', 'yes_no'].includes(ans.type)) {
+            return !ans.answer_text;
+        }
+        if (ans.type === 'multi_choice' || ans.type === 'ranking') {
+            return !ans.answer_json || !Array.isArray(ans.answer_json) || ans.answer_json.length === 0;
+        }
+        if (ans.type === 'matrix_single' || ans.type === 'matrix_multi') {
+            if (!ans.answer_json) return true;
+            return Object.values(ans.answer_json).every((v: any) => !v || (Array.isArray(v) && v.length === 0));
+        }
+        if (['star_rating', 'nps', 'emoji_rating', 'slider', 'likert'].includes(ans.type)) {
+            return ans.answer_num == null; // loosely equals checks undefined/null
+        }
+        return false;
+    };
 
     // Split blocks into pages by page_break
     const pages: SurveyBlock[][] = [];
@@ -59,12 +131,15 @@ const PublicSurvey: React.FC = () => {
     const currentBlocks = pages[currentPage] ?? [];
     const theme = survey?.theme ?? {
         primaryColor: '#f59e0b',
-        backgroundColor: '#f8fafc',
+        backgroundColor: '#0f1931ff',
         cardBackground: '#ffffff',
         textColor: '#1e293b',
         fontFamily: "'Inter', sans-serif",
         borderRadius: '12px',
     };
+
+    // Support old surveys that formally defaulted to #f8fafc but visually rendered as #0f172a
+    const pageBgColor = theme.backgroundColor === '#f8fafc' ? '#0f172a' : (theme.backgroundColor || '#0f172a');
 
     const setAnswer = (blockId: string, questionId: string, type: string, val: Partial<SurveyAnswer>) => {
         setAnswers(prev => ({
@@ -73,14 +148,119 @@ const PublicSurvey: React.FC = () => {
         }));
     };
 
-    const handleSubmit = async () => {
+    const evaluateLogic = (condition: any, ans: SurveyAnswer | undefined) => {
+        if (!ans) {
+            return condition.operator === 'is_empty';
+        }
+        if (condition.operator === 'is_empty') return isAnswerEmpty(ans);
+        if (condition.operator === 'is_answered') return !isAnswerEmpty(ans);
+
+        let val: any = undefined;
+        if (['short_text', 'long_text', 'email', 'phone', 'date'].includes(ans.type)) val = ans.answer_text;
+        else if (['single_choice', 'dropdown', 'yes_no'].includes(ans.type)) val = ans.answer_text;
+        else if (['number', 'star_rating', 'nps', 'emoji_rating', 'slider', 'likert'].includes(ans.type)) val = ans.answer_num ?? ans.answer_text;
+
+        // Multi choice logic: answer_json is array of values
+        if (ans.type === 'multi_choice' && Array.isArray(ans.answer_json)) {
+            if (condition.operator === 'contains') return ans.answer_json.includes(String(condition.value));
+            if (condition.operator === 'equals') return ans.answer_json.join(',') === String(condition.value);
+            return false;
+        }
+
+        if (val === undefined || val === null) return false;
+
+        switch (condition.operator) {
+            case 'equals': return String(val).toLowerCase() === String(condition.value).toLowerCase();
+            case 'not_equals': return String(val).toLowerCase() !== String(condition.value).toLowerCase();
+            case 'contains': return String(val).toLowerCase().includes(String(condition.value).toLowerCase());
+            case 'greater_than': return Number(val) > Number(condition.value);
+            case 'less_than': return Number(val) < Number(condition.value);
+            default: return false;
+        }
+    };
+
+    const handleForceSubmit = () => {
+        handleSubmit(undefined);
+    };
+
+    const handleNext = () => {
+        // Evaluate Branching Logic
+        for (const block of currentBlocks) {
+            if (block.logic && block.logic.length > 0) {
+                const ans = answers[block.id];
+                for (const rule of block.logic) {
+                    if (evaluateLogic(rule.condition, ans)) {
+                        if (rule.action === 'skip_to') {
+                            const targetIdx = pages.findIndex(page => page.some(b => b.id === rule.target));
+                            if (targetIdx !== -1) {
+                                setPageHistory(prev => [...prev, currentPage]);
+                                setCurrentPage(targetIdx);
+                                return;
+                            }
+                        } else if (rule.action === 'end_survey') {
+                            handleSubmit(undefined);
+                            return;
+                        } else if (rule.action === 'end_survey_screen') {
+                            handleSubmit(rule.target);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        setPageHistory(prev => [...prev, currentPage]);
+        setCurrentPage(p => p + 1);
+    };
+
+    const handleBack = () => {
+        if (pageHistory.length > 0) {
+            const prev = pageHistory[pageHistory.length - 1];
+            setCurrentPage(prev);
+            setPageHistory(h => h.slice(0, -1));
+        } else {
+            setCurrentPage(p => Math.max(0, p - 1));
+        }
+    };
+
+    const evaluateCorrect = (correct: any, ans: SurveyAnswer | undefined, matchType?: 'exact' | 'contains') => {
+        if (!ans || !correct) return false;
+        if (['single_choice', 'dropdown', 'yes_no', 'short_text', 'number'].includes(ans.type)) {
+            const val = String(ans.answer_text ?? ans.answer_num ?? '').toLowerCase();
+            const target = String(correct).toLowerCase();
+            if (matchType === 'contains') return val.includes(target);
+            return val === target;
+        }
+        if (ans.type === 'multi_choice' && Array.isArray(ans.answer_json) && Array.isArray(correct)) {
+            const arrAns = [...ans.answer_json].sort();
+            const arrCorr = [...correct].sort();
+            return JSON.stringify(arrAns) === JSON.stringify(arrCorr);
+        }
+        return false;
+    };
+
+    const handleSubmit = async (overrideThanksId?: string) => {
         if (!survey) return;
         if (isPreview) {
-            alert('Đây là màn hình Preview (Xem trước). Bạn không thể điền/nộp trên màn hình này.');
+            toast.error('Đây là màn hình Preview (Xem trước). Bạn không thể điền/nộp trên màn hình này.', { duration: 3000 });
             return;
         }
         setIsSubmitting(true);
         try {
+            // Check Quiz points
+            let score = 0;
+            let maxScore = 0;
+            if (survey.settings?.quiz?.enabled) {
+                Object.values(answers).forEach((ans: any) => {
+                    const block = survey.blocks.find(b => b.id === ans.block_id);
+                    if (block && block.quizPoints) {
+                        maxScore += block.quizPoints;
+                        if (evaluateCorrect(block.correctAnswer, ans, block.correctAnswerMatch)) {
+                            score += block.quizPoints;
+                        }
+                    }
+                });
+            }
+
             const res = await fetch(`${PUBLIC_API}?slug=${slug}&action=submit`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-Session-Token': sessionToken.current, 'X-Survey-Source': srcParam },
@@ -93,17 +273,38 @@ const PublicSurvey: React.FC = () => {
                     source_channel: ['qr_code', 'email_embed', 'widget', 'api'].includes(srcParam) ? srcParam : 'direct_link',
                     utm_medium: utmMedium,
                     utm_campaign: utmCampaign,
+                    total_score: survey.settings?.quiz?.enabled ? score : null,
+                    max_score: survey.settings?.quiz?.enabled ? maxScore : null,
+                    end_screen_id: overrideThanksId || 'default'
                 }),
             }).then(r => r.json());
 
             if (res.success) {
                 setSubmitted(true);
-                setThankYouData(res.thank_you);
-                if (res.redirect_url) {
-                    setTimeout(() => { window.location.href = res.redirect_url; }, (res.thank_you?.redirectDelay ?? 3) * 1000);
+                let tyScreen = overrideThanksId ? (survey.thankYouPages?.find(p => p.id === overrideThanksId) || survey.thankYouPage) : survey.thankYouPage;
+                setThankYouData(res.thank_you || tyScreen);
+                if (survey.settings?.quiz?.enabled && survey.settings?.quiz?.scoringType === 'immediate') {
+                    setQuizResult({ score, maxScore });
+                }
+
+                const safeRedirect = (url: string) => {
+                    try {
+                        const parsed = new URL(url, window.location.origin);
+                        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+                            window.location.href = url;
+                        }
+                    } catch {
+                        if (url.startsWith('/')) window.location.href = url;
+                    }
+                };
+
+                if (nextUrl) {
+                    setTimeout(() => { safeRedirect(nextUrl); }, (tyScreen?.redirectDelay ?? 3) * 1000);
+                } else if (tyScreen?.redirectUrl) {
+                    setTimeout(() => { safeRedirect(tyScreen.redirectUrl!); }, (tyScreen?.redirectDelay ?? 3) * 1000);
                 }
             } else {
-                alert('Lỗi: ' + (res.error || 'Không thể nộp'));
+                toast.error('Lỗi: ' + (res.error || 'Không thể nộp form.'));
             }
         } finally {
             setIsSubmitting(false);
@@ -112,10 +313,13 @@ const PublicSurvey: React.FC = () => {
 
     // ─── Loading ────────────────────────────────────────────────────────────
     if (isLoading) return (
-        <div className="min-h-screen flex items-center justify-center" style={{ background: theme.backgroundColor }}>
-            <div className="flex flex-col items-center gap-3">
-                <div className="w-10 h-10 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: theme.primaryColor, borderTopColor: 'transparent' }} />
-                <p className="text-sm font-medium text-slate-500">Đang tải khảo sát...</p>
+        <div className="min-h-screen flex items-center justify-center relative overflow-hidden" style={{ background: pageBgColor, fontFamily: theme.fontFamily }}>
+            {/* Ambient glow */}
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-600/10 blur-[120px] rounded-full -mr-64 -mt-64 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-amber-800/8 blur-[100px] rounded-full -ml-48 -mb-48 pointer-events-none" />
+            <div className="flex flex-col items-center gap-3 relative z-10">
+                <div className="w-10 h-10 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: theme.primaryColor ?? '#f59e0b', borderTopColor: 'transparent' }} />
+                <p className="text-sm font-medium text-slate-400">Đang tải khảo sát...</p>
             </div>
         </div>
     );
@@ -123,19 +327,21 @@ const PublicSurvey: React.FC = () => {
     // ─── Error states ───────────────────────────────────────────────────────
     if (error) {
         const msgs: Record<string, { icon: string; title: string; desc: string }> = {
-            SURVEY_NOT_FOUND:     { icon: '🔍', title: 'Không tìm thấy khảo sát', desc: 'Link không hợp lệ hoặc đã bị xoá.' },
+            SURVEY_NOT_FOUND: { icon: '🔍', title: 'Không tìm thấy khảo sát', desc: 'Link không hợp lệ hoặc đã bị xoá.' },
             SURVEY_NOT_PUBLISHED: { icon: '🔒', title: 'Khảo sát chưa mở', desc: 'Khảo sát này chưa được xuất bản.' },
-            SURVEY_CLOSED:        { icon: '🚫', title: 'Khảo sát đã đóng', desc: 'Khảo sát này đã ngừng nhận phản hồi.' },
-            SURVEY_EXPIRED:       { icon: '⏰', title: 'Khảo sát đã hết hạn', desc: 'Thời hạn thu thập phản hồi đã kết thúc.' },
+            SURVEY_CLOSED: { icon: '🚫', title: 'Khảo sát đã đóng', desc: 'Khảo sát này đã ngừng nhận phản hồi.' },
+            SURVEY_EXPIRED: { icon: '⏰', title: 'Khảo sát đã hết hạn', desc: 'Thời hạn thu thập phản hồi đã kết thúc.' },
             SURVEY_LIMIT_REACHED: { icon: '✅', title: 'Đã đủ phản hồi', desc: 'Khảo sát đã đạt đủ số lượng phản hồi.' },
         };
         const m = msgs[error] ?? { icon: '❌', title: 'Có lỗi xảy ra', desc: error };
         return (
-            <div className="min-h-screen flex items-center justify-center p-6" style={{ background: theme.backgroundColor }}>
-                <div className="text-center max-w-sm">
+            <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden" style={{ background: pageBgColor, fontFamily: theme.fontFamily }}>
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-600/10 blur-[120px] rounded-full -mr-64 -mt-64 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-amber-800/8 blur-[100px] rounded-full -ml-48 -mb-48 pointer-events-none" />
+                <div className="relative z-10 text-center max-w-sm bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-10 shadow-2xl">
                     <div className="text-5xl mb-4">{m.icon}</div>
-                    <h1 className="text-xl font-bold text-slate-800 mb-2">{m.title}</h1>
-                    <p className="text-sm text-slate-500">{m.desc}</p>
+                    <h1 className="text-xl font-bold text-white mb-2">{m.title}</h1>
+                    <p className="text-sm text-slate-400">{m.desc}</p>
                 </div>
             </div>
         );
@@ -145,20 +351,33 @@ const PublicSurvey: React.FC = () => {
     if (submitted) {
         const ty = thankYouData ?? survey?.thankYouPage;
         return (
-            <div className="min-h-screen flex items-center justify-center p-6" style={{ background: theme.backgroundColor }}>
-                <div className="text-center max-w-md">
+            <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden" style={{ background: pageBgColor, fontFamily: theme.fontFamily }}>
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-600/10 blur-[120px] rounded-full -mr-64 -mt-64 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-amber-800/8 blur-[100px] rounded-full -ml-48 -mb-48 pointer-events-none" />
+                <div className="relative z-10 text-center max-w-md bg-white rounded-3xl shadow-2xl p-10">
                     {ty?.imageUrl && <img src={ty.imageUrl} alt="" className="w-32 h-32 object-contain mx-auto mb-4 rounded-2xl" />}
                     <div className="text-5xl mb-4">{ty?.emoji ?? '🎉'}</div>
                     <h1 className="text-2xl font-black mb-3" style={{ color: theme.textColor }}>{ty?.title ?? 'Cảm ơn!'}</h1>
                     <p className="text-base text-slate-500 leading-relaxed">{ty?.message ?? 'Phản hồi của bạn đã được ghi nhận.'}</p>
-                    {ty?.ctaText && ty?.ctaUrl && (
-                        <a href={ty.ctaUrl} target="_blank" rel="noopener noreferrer"
+
+                    {quizResult && (
+                        <div className="mt-6 mb-2 bg-slate-50 border border-slate-200 rounded-2xl p-6">
+                            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2">Điểm của bạn</h3>
+                            <div className="flex items-end justify-center gap-1.5 text-slate-800">
+                                <span className="text-6xl font-black leading-none" style={{ color: theme.primaryColor }}>{quizResult.score}</span>
+                                <span className="text-2xl font-bold opacity-30 mb-2">/ {quizResult.maxScore}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {(ty?.ctaText && ty?.ctaUrl) || nextUrl ? (
+                        <a href={nextUrl || ty?.ctaUrl} target={nextUrl ? '_self' : '_blank'} rel="noopener noreferrer"
                             className="inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-2xl font-bold text-white shadow-lg transition-all hover:brightness-105"
                             style={{ background: theme.primaryColor }}
                         >
-                            {ty.ctaText} <ExternalLink className="w-4 h-4" />
+                            {nextUrl ? 'Bấm để Tiếp tục' : ty?.ctaText} <ExternalLink className="w-4 h-4" />
                         </a>
-                    )}
+                    ) : null}
                     <div className="mt-8 flex items-center justify-center gap-3">
                         <div className="relative w-8 h-8 shrink-0">
                             <div className="absolute inset-0 bg-amber-400 blur-lg opacity-30 rounded-full"></div>
@@ -181,21 +400,37 @@ const PublicSurvey: React.FC = () => {
     const progress = totalPages > 1 ? ((currentPage + 1) / totalPages) * 100 : 100;
 
     return (
-        <div className="min-h-screen py-8 px-4" style={{ background: theme.backgroundColor, fontFamily: theme.fontFamily }}>
-            <div className="max-w-2xl mx-auto">
+        <div className="min-h-screen py-10 px-4 relative overflow-hidden" style={{ background: pageBgColor, fontFamily: theme.fontFamily }}>
+            {/* Ambient glow orbs */}
+            <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-amber-600/8 blur-[140px] rounded-full -mr-72 -mt-72 pointer-events-none" />
+            <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-amber-900/10 blur-[120px] rounded-full -ml-56 -mb-56 pointer-events-none" />
+            <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(120,60,0,0.12),transparent_70%)] pointer-events-none" />
 
-                {/* Progress bar — always shown if multipage */}
-                {totalPages > 1 && (
-                    <div className="mb-6">
-                        <div className="flex items-center justify-between text-xs text-slate-400 mb-1.5">
-                            <span className="font-semibold">Trang {currentPage + 1} / {totalPages}</span>
-                            <span>{Math.round(progress)}%</span>
-                        </div>
-                        <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, background: theme.primaryColor }} />
-                        </div>
+            {/* Progress bar — floats ABOVE the white card on dark bg */}
+            {survey.settings?.showProgressBar !== false && totalPages > 1 && (
+                <div className="relative z-10 max-w-2xl mx-auto mb-4">
+                    <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+                        <span className="font-semibold tracking-wide">Trang {currentPage + 1} / {totalPages}</span>
+                        <span className="font-bold" style={{ color: theme.primaryColor ?? '#f59e0b' }}>{Math.round(progress)}%</span>
                     </div>
-                )}
+                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" style={{ width: `${progress}%`, background: theme.primaryColor ?? '#f59e0b' }} />
+                    </div>
+                </div>
+            )}
+
+            {/* Quiz Timer */}
+            {timeLeft !== null && (
+                <div className="relative z-20 max-w-2xl mx-auto mb-4 flex justify-end">
+                    <div className="bg-white/10 backdrop-blur border border-white/20 rounded-xl px-4 py-2 flex items-center gap-2 text-white shadow-lg">
+                        <div className={`w-2.5 h-2.5 rounded-full ${timeLeft < 60 ? 'bg-red-500 animate-pulse border border-red-300' : 'bg-green-400'}`}></div>
+                        <span className="text-sm font-black tracking-widest font-mono">{formatTime(timeLeft)}</span>
+                    </div>
+                </div>
+            )}
+
+            {/* White content card */}
+            <div className="relative z-10 max-w-2xl mx-auto bg-white rounded-3xl shadow-[0_32px_80px_rgba(0,0,0,0.45)] overflow-hidden">
 
                 {/* Survey header */}
                 {currentPage === 0 && (
@@ -203,7 +438,7 @@ const PublicSurvey: React.FC = () => {
                 )}
 
                 {/* Blocks */}
-                <div className="flex flex-col gap-4 mt-4">
+                <div className="flex flex-col gap-5 mt-6 px-5 sm:px-8">
                     {currentBlocks.map((block, idx) => (
                         <BlockRenderer
                             key={block.id}
@@ -217,34 +452,34 @@ const PublicSurvey: React.FC = () => {
                 </div>
 
                 {/* Navigation */}
-                <div className="flex flex-col gap-2.5 mt-6">
+                <div className="flex flex-col gap-3 mt-8 px-5 sm:px-8 pb-8 sm:pb-10">
                     {/* Next / Submit */}
                     {currentPage < totalPages - 1 ? (
                         <button
-                            onClick={() => setCurrentPage(p => p + 1)}
-                            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-white transition-all shadow-lg text-base"
+                            onClick={handleNext}
+                            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-white transition-all shadow-lg text-base hover:brightness-105 active:scale-[0.98]"
                             style={{ background: theme.primaryColor }}
                         >
                             Tiếp theo <ChevronRight className="w-4 h-4" />
                         </button>
                     ) : (
                         <button
-                            onClick={handleSubmit}
+                            onClick={() => handleSubmit(undefined)}
                             disabled={isSubmitting}
-                            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-white transition-all shadow-lg text-base"
+                            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-white transition-all shadow-lg text-base hover:brightness-105 active:scale-[0.98] disabled:opacity-70"
                             style={{ background: theme.primaryColor }}
                         >
                             {isSubmitting ? (
                                 <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                             ) : <Send className="w-4 h-4" />}
-                            {isSubmitting ? 'Đang gửi...' : 'Nộp khảo sát'}
+                            {isSubmitting ? 'Đang gửi...' : 'Nộp bài'}
                         </button>
                     )}
                     {/* Back */}
-                    {currentPage > 0 && (
+                    {pageHistory.length > 0 && (
                         <button
-                            onClick={() => setCurrentPage(p => p - 1)}
-                            className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl border-2 border-slate-200 text-slate-600 font-semibold hover:border-slate-300 transition-all text-sm"
+                            onClick={handleBack}
+                            className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl border-2 border-slate-200 text-slate-500 font-semibold hover:border-slate-300 hover:bg-slate-50 transition-all text-sm"
                         >
                             <ChevronLeft className="w-4 h-4" /> Trang trước
                         </button>
@@ -252,7 +487,7 @@ const PublicSurvey: React.FC = () => {
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-center gap-3 mt-8">
+                <div className="flex items-center justify-center gap-3 mt-8 pb-8">
                     <div className="relative w-7 h-7 shrink-0">
                         <div className="absolute inset-0 bg-amber-400 blur-lg opacity-30 rounded-full"></div>
                         <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-full border border-white/80 shadow-md shadow-amber-600/20">
@@ -327,8 +562,8 @@ const SurveyCoverPublic: React.FC<{ survey: Survey }> = ({ survey }) => {
     }, [targetDate]);
 
     return (
-        <div 
-            className="w-full rounded-2xl mb-4 overflow-hidden relative transition-all" 
+        <div
+            className="w-full mb-0 overflow-hidden relative transition-all"
             style={{ ...getBg(), minHeight: heightMap[coverHeight] }}
         >
             {(coverStyle === 'image') && (
@@ -348,7 +583,7 @@ const SurveyCoverPublic: React.FC<{ survey: Survey }> = ({ survey }) => {
                         </div>
                     </div>
                 )}
-                
+
                 <div className="w-full relative z-10">
                     {theme.coverBadge && (
                         <span className="inline-block px-3 py-1 mb-4 rounded-full text-[10px] font-black tracking-widest text-white shadow-lg uppercase border border-white/20 relative" style={{ background: 'linear-gradient(90deg, #f59e0b, #ea580c)' }}>
@@ -428,8 +663,8 @@ const BlockRenderer: React.FC<{
     const bgColor = block.style?.backgroundColor ?? theme.cardBackground;
     const textColor = block.style?.textColor ?? theme.textColor;
     const textAlign = block.style?.textAlign ?? 'left';
-    const boxShadow = block.style?.boxShadow && block.style.boxShadow !== 'none' 
-        ? block.style.boxShadow 
+    const boxShadow = block.style?.boxShadow && block.style.boxShadow !== 'none'
+        ? block.style.boxShadow
         : (theme.cardShadow && theme.cardShadow !== 'none' ? theme.cardShadow : undefined);
 
     const cardStyle: React.CSSProperties = {
@@ -498,14 +733,16 @@ const BlockRenderer: React.FC<{
         );
     }
 
+    const justifyClass = textAlign === 'center' ? 'justify-center' : textAlign === 'right' ? 'justify-end' : 'justify-start';
+
     // ─ Question blocks ─
     return (
         <div className="p-5 shadow-sm border border-slate-100" style={cardStyle}>
-            <label className="block font-semibold mb-3 text-sm" style={{ color: textColor }}>
+            <label className="block font-semibold mb-3 text-sm" style={{ color: textColor, textAlign }}>
                 {block.label}
                 {block.required && <span style={{ color: accent }} className="ml-1">*</span>}
             </label>
-            {block.description && <p className="text-xs text-slate-400 mb-3">{block.description}</p>}
+            {block.description && <p className="text-xs text-slate-400 mb-3" style={{ textAlign }}>{block.description}</p>}
 
             {/* Short/Email/Phone/Number */}
             {(block.type === 'short_text' || block.type === 'email' || block.type === 'phone' || block.type === 'number') && (
@@ -642,19 +879,22 @@ const BlockRenderer: React.FC<{
             {/* Dropdown */}
             {block.type === 'dropdown' && (
                 <div className="relative">
-                    <select value={answer?.answer_text ?? ''} onChange={e => onAnswer({ answer_text: e.target.value })}
-                        className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:outline-none text-sm appearance-none bg-white"
-                    >
-                        <option value="">— Chọn một đáp án —</option>
-                        {(block.options ?? []).map(opt => <option key={opt.id} value={opt.value}>{opt.label}</option>)}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    <Select
+                        value={answer?.answer_text ?? ''}
+                        onChange={val => onAnswer({ answer_text: val })}
+                        options={[
+                            { value: '', label: '— Chọn một đáp án —' },
+                            ...(block.options ?? []).map(opt => ({ value: opt.value, label: opt.label }))
+                        ]}
+                        placeholder="— Chọn một đáp án —"
+                        className="w-full"
+                    />
                 </div>
             )}
 
             {/* Star rating */}
             {block.type === 'star_rating' && (
-                <div className="flex gap-2">
+                <div className={`flex gap-2 ${justifyClass}`}>
                     {Array.from({ length: block.maxValue ?? 5 }).map((_, i) => {
                         const val = i + 1;
                         const filled = (answer?.answer_num ?? 0) >= val;
@@ -667,21 +907,19 @@ const BlockRenderer: React.FC<{
                 </div>
             )}
 
-            {/* NPS — no scale on active, grayscale on inactive */}
+            {/* NPS — neutral on inactive to match builder */}
             {block.type === 'nps' && (
                 <div className="space-y-2">
-                    <div className="flex gap-1 flex-wrap">
+                    <div className={`flex gap-1 flex-wrap ${justifyClass}`}>
                         {Array.from({ length: 11 }).map((_, i) => {
                             const isSelected = answer?.answer_num === i;
-                            const bgColor = i <= 6 ? '#fca5a5' : i <= 8 ? '#fde68a' : '#86efac';
                             return (
                                 <button key={i} onClick={() => onAnswer({ answer_num: i })}
-                                    className="w-9 h-9 rounded-xl font-bold text-sm transition-all"
+                                    className="w-9 h-9 rounded-xl font-bold text-sm transition-all border-2"
                                     style={{
-                                        background: isSelected ? accent : bgColor + '80',
-                                        color: isSelected ? 'white' : '#475569',
-                                        filter: isSelected ? 'none' : 'grayscale(60%)',
-                                        boxShadow: isSelected ? `0 0 0 2px ${accent}` : undefined,
+                                        borderColor: isSelected ? accent : '#e2e8f0',
+                                        background: isSelected ? accent : '#ffffff',
+                                        color: isSelected ? '#ffffff' : '#64748b',
                                     }}
                                 >{i}</button>
                             );
@@ -696,7 +934,7 @@ const BlockRenderer: React.FC<{
 
             {/* Likert */}
             {block.type === 'likert' && (
-                <div className="flex gap-2 flex-wrap">
+                <div className={`flex gap-2 flex-wrap ${justifyClass}`}>
                     {(block.likertLabels ?? ['1', '2', '3', '4', '5']).map((label, i) => {
                         const isSelected = answer?.answer_num === i + 1;
                         return (
@@ -718,7 +956,7 @@ const BlockRenderer: React.FC<{
 
             {/* Emoji rating */}
             {block.type === 'emoji_rating' && (
-                <div className="flex gap-4 flex-wrap">
+                <div className={`flex gap-4 flex-wrap ${justifyClass}`}>
                     {(block.emojis ?? ['😠', '😕', '😐', '🙂', '😁']).map((emoji, i) => {
                         const isSelected = answer?.answer_num === i + 1;
                         return (
@@ -817,14 +1055,14 @@ const BlockRenderer: React.FC<{
                                             [copy[idx - 1], copy[idx]] = [copy[idx], copy[idx - 1]];
                                             onAnswer({ answer_json: copy });
                                         }} className={`p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors ${idx === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}>
-                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7"/></svg>
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" /></svg>
                                         </button>
                                         <button disabled={idx === currentRank.length - 1} onClick={() => {
                                             const copy = [...currentRank];
                                             [copy[idx + 1], copy[idx]] = [copy[idx], copy[idx + 1]];
                                             onAnswer({ answer_json: copy });
                                         }} className={`p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors ${idx === currentRank.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}>
-                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7"/></svg>
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
                                         </button>
                                     </div>
                                 </div>
@@ -837,10 +1075,10 @@ const BlockRenderer: React.FC<{
             {/* File Upload (Mock) */}
             {block.type === 'file_upload' && (
                 <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-slate-50 transition-colors hover:bg-slate-100">
-                    <svg className="w-8 h-8 text-slate-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    <svg className="w-8 h-8 text-slate-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                     <p className="text-sm font-semibold text-slate-600 mb-1">Click tải lên hoặc kéo thả tệp vào đây</p>
                     <p className="text-xs text-slate-400 mb-4">Các định dạng hỗ trợ: {(block.acceptedTypes ?? []).join(', ') || 'Tất cả'}. Tối đa {block.maxFileSizeMB ?? 5}MB</p>
-                    <input type="file" className="hidden" id={`file_${block.id}`} onChange={() => {}} />
+                    <input type="file" className="hidden" id={`file_${block.id}`} onChange={() => { }} />
                     <label htmlFor={`file_${block.id}`} className="px-5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-bold hover:bg-slate-50 cursor-pointer transition-colors shadow-sm text-slate-700">
                         Chọn tệp
                     </label>

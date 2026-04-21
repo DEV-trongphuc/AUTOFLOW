@@ -1,10 +1,12 @@
 <?php
 // api/upload.php
 require_once 'db_connect.php';
-require_once 'ai_org_middleware.php';
+require_once 'auth_middleware.php';
 
-// SECURITY: Enforce Auth
-$currentOrgUser = requireAISpaceAuth();
+// Cần đăng nhập (bất kỳ quyền gì)
+if (empty($GLOBALS['current_admin_id']) && empty($_SESSION['user_id'])) {
+    jsonResponse(false, null, 'Unauthorized');
+}
 
 // jsonResponse is already defined in db_connect.php — only define if missing
 if (!function_exists('jsonResponse')) {

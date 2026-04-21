@@ -52,13 +52,46 @@ try {
             $baseSlug= preg_replace('/[^a-z0-9]+/', '-', strtolower(iconv('UTF-8', 'ASCII//TRANSLIT', $name)));
             $slug    = $baseSlug . '-' . substr($newId, 0, 6);
 
+            $blocks_json = '[]';
+            if ($name === 'Khảo sát NPS') {
+                $blocks_json = json_encode([
+                    ['id' => uniqid(), 'type' => 'rating', 'question' => 'Bạn sẵn sàng giới thiệu sản phẩm của chúng tôi cho bạn bè/đồng nghiệp ở mức nào? (Từ 0-10)', 'required' => true, 'options' => ['scale' => 10, 'style' => 'nps']],
+                    ['id' => uniqid(), 'type' => 'short_text', 'question' => 'Lý do chính cho điểm số của bạn là gì? (Tùy chọn)', 'required' => false]
+                ], JSON_UNESCAPED_UNICODE);
+            } elseif ($name === 'Phản hồi sản phẩm') {
+                $blocks_json = json_encode([
+                    ['id' => uniqid(), 'type' => 'multiple_choice', 'question' => 'Bạn đánh giá chất lượng sản phẩm như thế nào?', 'required' => true, 'options' => ['choices' => ['Rất tốt', 'Tốt', 'Bình thường', 'Kém']]],
+                    ['id' => uniqid(), 'type' => 'long_text', 'question' => 'Bạn muốn chúng tôi cải thiện điều gì?', 'required' => false]
+                ], JSON_UNESCAPED_UNICODE);
+            } elseif ($name === 'Đánh giá dịch vụ') {
+                $blocks_json = json_encode([
+                    ['id' => uniqid(), 'type' => 'rating', 'question' => 'Vui lòng đánh giá chất lượng phục vụ của nhân viên:', 'required' => true, 'options' => ['scale' => 5, 'style' => 'star']],
+                    ['id' => uniqid(), 'type' => 'short_text', 'question' => 'Góp ý thêm (Tùy chọn)', 'required' => false]
+                ], JSON_UNESCAPED_UNICODE);
+            } elseif ($name === 'Khảo sát thị trường') {
+                $blocks_json = json_encode([
+                    ['id' => uniqid(), 'type' => 'multiple_choice', 'question' => 'Sản phẩm nào bạn quan tâm nhất?', 'required' => true, 'options' => ['choices' => ['Phần mềm tự động hóa', 'Truyền thông Email', 'Tạo Khảo sát', 'Khác']]]
+                ], JSON_UNESCAPED_UNICODE);
+            } elseif ($name === 'Mẫu Quiz (Trắc nghiệm)') {
+                $blocks_json = json_encode([
+                    ['id' => uniqid(), 'type' => 'multiple_choice', 'question' => 'Câu 1: Câu hỏi trắc nghiệm của bạn là gì?', 'required' => true, 'options' => ['choices' => ['Đáp án A', 'Đáp án B', 'Đáp án C']]],
+                    ['id' => uniqid(), 'type' => 'multiple_choice', 'question' => 'Câu 2: Chọn đáp án đúng', 'required' => true, 'options' => ['choices' => ['Sự thật', 'Giả định']]]
+                ], JSON_UNESCAPED_UNICODE);
+            } elseif ($name === 'Mẫu Check-in Event') {
+                 $blocks_json = json_encode([
+                    ['id' => uniqid(), 'type' => 'short_text', 'question' => 'Họ và Tên', 'required' => true],
+                    ['id' => uniqid(), 'type' => 'short_text', 'question' => 'Số điện thoại', 'required' => true],
+                    ['id' => uniqid(), 'type' => 'multiple_choice', 'question' => 'Bạn đã nhận quà sự kiện chưa?', 'required' => true, 'options' => ['choices' => ['Đã nhận', 'Chưa nhận']]]
+                ], JSON_UNESCAPED_UNICODE);
+            }
+
             $stmt = $pdo->prepare("
                 INSERT INTO surveys (id, workspace_id, name, slug, status, blocks_json, settings_json, thank_you_page, cover_style)
-                VALUES (?, ?, ?, ?, 'draft', '[]', ?, ?, '{}')
+                VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, '{}')
             ");
             $defaultSettings  = json_encode(['showProgressBar'=>true,'progressBarStyle'=>'bar','allowPartialSubmit'=>false,'trackIp'=>true,'trackLocation'=>false]);
             $defaultThankYou  = json_encode(['title'=>'Cảm ơn bạn! 🎉','message'=>'Phản hồi của bạn đã được ghi nhận.','showSocialShare'=>false]);
-            $stmt->execute([$newId, $workspace_id, $name, $slug, $defaultSettings, $defaultThankYou]);
+            $stmt->execute([$newId, $workspace_id, $name, $slug, $blocks_json, $defaultSettings, $defaultThankYou]);
             echo json_encode(['success' => true, 'data' => ['id' => $newId, 'slug' => $slug]]);
             break;
         }
@@ -80,6 +113,26 @@ try {
             $params[] = $id;
             $params[] = $workspace_id;
             $pdo->prepare("UPDATE surveys SET " . implode(', ', $sets) . " WHERE id = ? AND workspace_id = ?")->execute($params);
+
+            // [FIX] Auto-sync survey_questions for Analytics
+            if (isset($input['blocks_json']) && is_array($input['blocks_json'])) {
+                $blocks = $input['blocks_json'];
+                $pdo->prepare("DELETE FROM survey_questions WHERE survey_id = ?")->execute([$id]);
+                $qStmt = $pdo->prepare("INSERT INTO survey_questions (id, survey_id, block_id, type, label, options_json, required, order_index) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                $order = 0;
+                foreach ($blocks as $b) {
+                    $isLayout = in_array($b['type'] ?? '', ['section_header', 'image_block', 'divider', 'page_break', 'button_block', 'link_block', 'banner_block']);
+                    if (!$isLayout) {
+                        $opts = isset($b['options']) ? json_encode($b['options']) : null;
+                        $req = isset($b['required']) && $b['required'] ? 1 : 0;
+                        $label = $b['content'] ?? ($b['title'] ?? 'Untitled Question');
+                        $blockId = $b['id'] ?? generateUUID();
+                        $qStmt->execute([generateUUID(), $id, $blockId, $b['type'] ?? 'unknown', $label, $opts, $req, $order]);
+                        $order++;
+                    }
+                }
+            }
+
             echo json_encode(['success' => true]);
             break;
         }
@@ -200,6 +253,11 @@ try {
             $overview->execute([$surveyId]);
             $overviewData = $overview->fetch(PDO::FETCH_ASSOC);
 
+            // Add country distribution
+            $countriesStmt = $pdo->prepare("SELECT geo_country as country, COUNT(*) as count FROM survey_responses WHERE survey_id = ? AND geo_country IS NOT NULL GROUP BY geo_country ORDER BY count DESC LIMIT 10");
+            $countriesStmt->execute([$surveyId]);
+            $overviewData['countries'] = $countriesStmt->fetchAll(PDO::FETCH_ASSOC);
+
             // Responses by date (last 30 days)
             $byDate = $pdo->prepare("
                 SELECT DATE(submitted_at) AS date, COUNT(*) AS count
@@ -218,16 +276,16 @@ try {
 
             $questionAnalytics = [];
             foreach ($questionsData as $q) {
-                $qa = ['question_id' => $q['id'], 'block_id' => $q['block_id'], 'type' => $q['type'], 'label' => $q['label']];
+                $qa = ['question_id' => $q['block_id'], 'block_id' => $q['block_id'], 'type' => $q['type'], 'label' => $q['label'], 'content' => $q['content'], 'options' => $q['options']];
 
                 // Count answered
                 $answeredStmt = $pdo->prepare("SELECT COUNT(*) FROM survey_answer_details WHERE question_id = ?");
-                $answeredStmt->execute([$q['id']]);
+                $answeredStmt->execute([$q['block_id']]);
                 $qa['total_answered'] = (int)$answeredStmt->fetchColumn();
 
                 if (in_array($q['type'], ['star_rating', 'nps', 'slider', 'likert'])) {
                     $ratingStmt = $pdo->prepare("SELECT answer_num, COUNT(*) AS cnt FROM survey_answer_details WHERE question_id = ? AND answer_num IS NOT NULL GROUP BY answer_num ORDER BY answer_num");
-                    $ratingStmt->execute([$q['id']]);
+                    $ratingStmt->execute([$q['block_id']]);
                     $dist = $ratingStmt->fetchAll(PDO::FETCH_ASSOC);
                     $qa['rating_distribution'] = array_map(fn($r) => ['value' => (float)$r['answer_num'], 'count' => (int)$r['cnt']], $dist);
                     $qa['avg_rating'] = count($dist) ? round(array_sum(array_column($dist, 'answer_num')) / array_sum(array_column($dist, 'cnt')), 2) : null;
@@ -242,20 +300,46 @@ try {
                         $qa['nps_score']  = round(($promoters / $total - $detractors / $total) * 100);
                     }
                 } elseif (in_array($q['type'], ['single_choice', 'multi_choice', 'dropdown', 'yes_no'])) {
-                    $choiceStmt = $pdo->prepare("SELECT answer_text, COUNT(*) AS cnt FROM survey_answer_details WHERE question_id = ? AND answer_text IS NOT NULL GROUP BY answer_text ORDER BY cnt DESC");
-                    $choiceStmt->execute([$q['id']]);
-                    $choices = $choiceStmt->fetchAll(PDO::FETCH_ASSOC);
+                    // Mọi người có thể submit nhiều options dưới dạng JSON (mảng string)
+                    $choiceJsonStmt = $pdo->prepare("SELECT answer_json, answer_text FROM survey_answer_details WHERE question_id = ?");
+                    $choiceJsonStmt->execute([$q['block_id']]);
+                    $rawChoices = $choiceJsonStmt->fetchAll(PDO::FETCH_ASSOC);
+                    
+                    $counts = [];
+                    foreach ($rawChoices as $rc) {
+                        if (!empty($rc['answer_json'])) {
+                            $arr = json_decode($rc['answer_json'], true);
+                            if (is_array($arr)) {
+                                foreach ($arr as $val) {
+                                    $counts[$val] = ($counts[$val] ?? 0) + 1;
+                                }
+                            }
+                        } elseif (!empty($rc['answer_text'])) {
+                            $val = $rc['answer_text'];
+                            $counts[$val] = ($counts[$val] ?? 0) + 1;
+                        }
+                    }
+                    
+                    $choices = [];
+                    foreach ($counts as $lbl => $cnt) {
+                        $choices[] = ['label' => (string)$lbl, 'cnt' => $cnt];
+                    }
+                    usort($choices, fn($a, $b) => $b['cnt'] <=> $a['cnt']);
+                    
                     $total   = $qa['total_answered'] ?: 1;
                     $qa['choice_distribution'] = array_map(fn($c) => [
-                        'label' => $c['answer_text'], 'count' => (int)$c['cnt'],
+                        'label' => $c['label'], 'count' => (int)$c['cnt'],
                         'percentage' => round($c['cnt'] / $total * 100, 1)
                     ], $choices);
-                } elseif (in_array($q['type'], ['short_text', 'long_text'])) {
+                } elseif (in_array($q['type'], ['short_text', 'long_text', 'email', 'phone', 'number', 'website', 'date'])) {
                     $textStmt = $pdo->prepare("SELECT answer_text FROM survey_answer_details WHERE question_id = ? AND answer_text IS NOT NULL LIMIT 50");
-                    $textStmt->execute([$q['id']]);
+                    $textStmt->execute([$q['block_id']]);
                     $qa['text_responses'] = $textStmt->fetchAll(PDO::FETCH_COLUMN);
+                } elseif (in_array($q['type'], ['matrix_single', 'matrix_multi', 'ranking'])) {
+                    $jsonStmt = $pdo->prepare("SELECT answer_json FROM survey_answer_details WHERE question_id = ? AND answer_json IS NOT NULL LIMIT 50");
+                    $jsonStmt->execute([$q['block_id']]);
+                    $qa['text_responses'] = $jsonStmt->fetchAll(PDO::FETCH_COLUMN);
                 }
-
                 $questionAnalytics[] = $qa;
             }
 

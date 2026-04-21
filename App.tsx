@@ -42,6 +42,8 @@ const ApiTriggers = lazy(() => import('./pages/ApiTriggers'));
 const Vouchers = lazy(() => import('./pages/Vouchers'));
 const ZaloSettings = lazy(() => import('./pages/SocialSettings'));
 const WebTracking = lazy(() => import('./pages/WebTracking'));
+const LinksQR = lazy(() => import('./pages/LinksQR'));
+const PublicClaim = lazy(() => import('./pages/PublicClaim'));
 const AITraining = lazy(() => import('./pages/AITraining'));
 const ChatPage = lazy(() => import('./pages/ChatPage'));
 const CategoryChatPage = lazy(() => import('./pages/CategoryChatPage'));
@@ -273,6 +275,7 @@ const App: React.FC = () => {
                                     <Route path="/public-report/:propertyId/index/:index" element={<P c={PublicReport} />} />
                                     {/* Public survey renderer */}
                                     <Route path="/s/:slug" element={<P c={PublicSurvey} />} />
+                                    <Route path="/claim/:id" element={<P c={PublicClaim} />} />
 
                                     {/* Protected Routes — each has its own Suspense via P */}
                                     <Route path="/" element={
@@ -310,6 +313,9 @@ const App: React.FC = () => {
                                     } />
                                     <Route path="/web-tracking" element={
                                         <ProtectedRoute><Layout><P c={WebTracking} /></Layout></ProtectedRoute>
+                                    } />
+                                    <Route path="/links-qr" element={
+                                        <ProtectedRoute><Layout><P c={LinksQR} /></Layout></ProtectedRoute>
                                     } />
                                     <Route path="/ai-training" element={
                                         <ProtectedRoute>

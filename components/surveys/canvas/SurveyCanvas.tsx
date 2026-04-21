@@ -14,6 +14,7 @@ interface Props {
     onDeleteBlock: (id: string) => void;
     onDuplicateBlock: (id: string) => void;
     onMoveBlock: (dragIdx: number, hoverIdx: number) => void;
+    onUpdateBlock: (id: string, updates: Partial<SurveyBlock>) => void;
 }
 
 const widthMap = { desktop: '680px', tablet: '520px', mobile: '375px' };
@@ -192,7 +193,7 @@ const SurveyCover: React.FC<{
 // ─── Main Canvas ──────────────────────────────────────────────────────────────
 const SurveyCanvas: React.FC<Props> = ({
     survey, selectedBlockId, viewMode,
-    onSelectBlock, onAddBlock, onDeleteBlock, onDuplicateBlock, onMoveBlock
+    onSelectBlock, onAddBlock, onDeleteBlock, onDuplicateBlock, onMoveBlock, onUpdateBlock
 }) => {
     const canvasWidth = widthMap[viewMode];
     const theme = survey.theme;
@@ -209,7 +210,11 @@ const SurveyCanvas: React.FC<Props> = ({
     return (
         <div
             className="min-h-full py-8 px-4 flex flex-col items-center"
-            style={{ background: '#f1f5f9' }}
+            style={{ 
+                backgroundColor: '#f8fafc',
+                backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)',
+                backgroundSize: '24px 24px'
+            }}
             onClick={() => onSelectBlock(null)}
         >
             {/* Cover */}
@@ -245,6 +250,7 @@ const SurveyCanvas: React.FC<Props> = ({
                         {survey.blocks.map((block, idx) => (
                             <React.Fragment key={block.id}>
                                 <SurveyCanvasBlock
+                                    survey={survey}
                                     block={block}
                                     index={idx}
                                     theme={survey.theme}
@@ -254,6 +260,7 @@ const SurveyCanvas: React.FC<Props> = ({
                                     onDuplicate={() => onDuplicateBlock(block.id)}
                                     onMove={onMoveBlock}
                                     onAddAfter={(type) => onAddBlock(type, idx)}
+                                    onUpdate={(changes) => onUpdateBlock(block.id, changes)}
                                     totalBlocks={survey.blocks.length}
                                 />
                                 {/* InserterSlot after each block */}
@@ -291,6 +298,30 @@ const SurveyCanvas: React.FC<Props> = ({
                     <p className="text-[10px] text-slate-400 mt-3 uppercase tracking-widest">Trang cảm ơn · Click để chỉnh</p>
                 </div>
             )}
+
+            {/* Extra Thank You Previews */
+            survey.blocks.length > 0 && (survey.thankYouPages ?? []).map((page, i) => {
+                const blockId = '__thankyou_' + i + '__';
+                const isSelected = selectedBlockId === blockId;
+                return (
+                    <div
+                        key={page.id ?? i}
+                        className={`w-full mt-3 rounded-2xl p-6 text-center bg-white shadow-sm border-2 transition-all cursor-pointer ${isSelected ? 'border-amber-400 shadow-amber-100' : 'border-transparent hover:border-amber-200'}`}
+                        style={{ maxWidth: canvasWidth }}
+                        onClick={(e) => { e.stopPropagation(); onSelectBlock(blockId); }}
+                    >
+                        <div className="text-3xl mb-2">{page.emoji ?? '🎉'}</div>
+                        <h3 className="font-bold text-slate-700">{page.title || `Trang cảm ơn phụ ${i+1}`}</h3>
+                        <p className="text-sm text-slate-500 mt-1">{page.message}</p>
+                        {page.ctaText && (
+                            <div className="mt-4 inline-block px-6 py-2 rounded-xl text-sm font-bold text-white" style={{ background: theme.primaryColor }}>
+                                {page.ctaText}
+                            </div>
+                        )}
+                        <p className="text-[10px] text-slate-400 mt-3 uppercase tracking-widest">Trang cảm ơn phụ · Click để chỉnh</p>
+                    </div>
+                );
+            })}
         </div>
     );
 };

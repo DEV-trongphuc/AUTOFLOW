@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { Gift, Plus, CalendarRange, Infinity as InfinityIcon, Tag, Hash, Box } from 'lucide-react';
+import { Gift, Plus, CalendarRange, Infinity as InfinityIcon, Tag, Hash, Box, CheckSquare, Square, Layout, Eye, X } from 'lucide-react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import Input from '../common/Input';
+import Select from '../common/Select';
 import Tabs from '../common/Tabs';
 import ImageUploader from '../templates/EmailEditor/components/Properties/ImageUploader';
-import { VoucherCampaign } from '../../types';
+import { VoucherCampaign, Template } from '../../types';
+import { api } from '../../services/storageAdapter';
+import TemplateSelector from '../flows/TemplateSelector';
+import EmailPreviewDrawer from '../flows/config/EmailPreviewDrawer';
 import toast from 'react-hot-toast';
 
 interface VoucherCampaignModalProps {
@@ -19,6 +23,20 @@ const VoucherCampaignModal: React.FC<VoucherCampaignModalProps> = ({ isOpen, onC
     const [step, setStep] = useState(1);
     const [syncModeModalOpen, setSyncModeModalOpen] = useState(false);
     const [syncMode, setSyncMode] = useState<'preserve' | 'reset_unused'>('preserve');
+    
+    // New states for Template Visual Selection
+    const [templates, setTemplates] = React.useState<Template[]>([]);
+    const [showPicker, setShowPicker] = React.useState(false);
+    const [previewData, setPreviewData] = React.useState<Template | null>(null);
+
+    React.useEffect(() => {
+        api.get<Template[]>('templates').then(res => {
+            if (res.success) {
+                const personalTemplates = res.data.filter(t => !t.id.startsWith('sys_'));
+                setTemplates(personalTemplates);
+            }
+        });
+    }, []);
 
     const [formData, setFormData] = useState<Partial<VoucherCampaign>>(initialData || {
         name: '',
@@ -251,6 +269,96 @@ const VoucherCampaignModal: React.FC<VoucherCampaignModalProps> = ({ isOpen, onC
                         />
                     </div>
 
+                    <div className="space-y-4 pt-4 border-t border-slate-100">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                    <Gift className="w-4 h-4 text-emerald-600" />
+                                    Tính năng "Nhận Voucher qua Form Public"
+                                </h4>
+                                <p className="text-xs text-slate-500 mt-1">
+                                    Tạo nhanh một form thu thập Data (Lead) trên Landing Page. Tự động gửi mã sau khi khách điền hoặc duyệt tay.
+                                </p>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer ml-4">
+                                <input
+                                    type="checkbox"
+                                    className="sr-only peer"
+                                    checked={!!formData.isClaimable}
+                                    onChange={(e) => setFormData(p => ({ ...p, isClaimable: e.target.checked }))}
+                                />
+                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-[100%] peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 hover:bg-slate-300 peer-checked:hover:bg-emerald-600"></div>
+                            </label>
+                        </div>
+                        {formData.isClaimable && (
+                            <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 animate-in fade-in space-y-4">
+                                <div 
+                                    className="flex items-center justify-between bg-white p-3 rounded-xl border border-emerald-100/50 cursor-pointer select-none mb-3"
+                                    onClick={() => setFormData(p => ({ ...p, claimApprovalRequired: !p.claimApprovalRequired }))}
+                                >
+                                    <div>
+                                        <span className="text-sm font-bold text-slate-700">Duyệt cấp mã bằng tay</span>
+                                        <p className="text-[10px] text-slate-500 mt-0.5">Nếu Bật, bạn cần duyệt qua form trước khi hệ thống tự động gửi Mã đi.</p>
+                                    </div>
+                                    <div className="flex shrink-0">
+                                        {formData.claimApprovalRequired ? (
+                                            <CheckSquare className="w-6 h-6 text-emerald-500" />
+                                        ) : (
+                                            <Square className="w-6 h-6 text-slate-300" />
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block">Mẫu Email gửi mã ưu đãi</label>
+                                    
+                                    {(() => {
+                                        const selectedTemplate = templates.find(t => t.id === formData.claimEmailTemplateId);
+                                        return selectedTemplate ? (
+                                            <div className="group relative rounded-2xl border-2 border-emerald-200 hover:border-emerald-500 transition-all overflow-hidden bg-white shadow-sm hover:shadow-md">
+                                                <div className="aspect-[21/9] bg-slate-50 relative overflow-hidden">
+                                                    {selectedTemplate.htmlContent ? (
+                                                        <iframe
+                                                            srcDoc={selectedTemplate.htmlContent}
+                                                            className="w-full h-full pointer-events-none scale-[0.5] origin-top-left"
+                                                            style={{ width: '200%', height: '200%' }}
+                                                            sandbox="allow-same-origin"
+                                                        />
+                                                    ) : (
+                                                        <img src={selectedTemplate.thumbnail} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" alt={selectedTemplate.name} />
+                                                    )}
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent pointer-events-none" />
+                                                    <div className="absolute bottom-3 left-4 right-4 flex justify-between items-end">
+                                                        <div className="min-w-0 pr-2">
+                                                            <h4 className="font-bold text-white text-sm truncate drop-shadow-md">{selectedTemplate.name}</h4>
+                                                        </div>
+                                                        <div className="flex gap-2 shrink-0">
+                                                            <button onClick={() => setShowPicker(true)} className="px-2 py-1.5 bg-white/20 backdrop-blur-md hover:bg-white/40 text-white rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap">Đổi</button>
+                                                            <button onClick={() => setPreviewData(selectedTemplate)} className="px-2 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-[10px] font-bold uppercase flex items-center gap-1 transition-colors whitespace-nowrap">
+                                                                <Eye className="w-3 h-3" /> Xem
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => setShowPicker(true)}
+                                                className="w-full py-8 border-2 border-dashed border-emerald-200 rounded-2xl bg-white text-emerald-600 flex flex-col items-center justify-center gap-2 hover:bg-emerald-50 hover:border-emerald-500 transition-all group"
+                                            >
+                                                <div className="p-2 bg-emerald-100 rounded-xl group-hover:scale-110 transition-transform"><Layout className="w-5 h-5" /></div>
+                                                <span className="text-[11px] font-bold uppercase tracking-wider">Chọn Mẫu (Visual)</span>
+                                            </button>
+                                        );
+                                    })()}
+                                    <p className="text-[10px] items-center text-slate-500 mt-1.5 flex gap-1 italic">
+                                        <Plus className="w-3 h-3"/> Mẫu cần chứa trường {"{{short_code}}"} để tự động áp dụng mã.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     {formData.codeType === 'static' ? (
                         <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 animate-in fade-in">
                             <Input 
@@ -362,6 +470,32 @@ const VoucherCampaignModal: React.FC<VoucherCampaignModalProps> = ({ isOpen, onC
                     </div>
                 </div>
             </Modal>
+
+            {showPicker && <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90]" onClick={() => setShowPicker(false)}></div>}
+            {showPicker && (
+                <div className="bg-white rounded-[32px] border-2 border-slate-100 shadow-2xl animate-in fade-in zoom-in-95 duration-200 fixed inset-4 md:inset-12 lg:inset-20 z-[100] overflow-hidden flex flex-col max-w-6xl mx-auto my-auto max-h-[90vh]">
+                    <div className="p-5 border-b border-slate-100 flex justify-between items-center shrink-0">
+                        <h3 className="font-bold text-slate-800 text-lg">Chọn mẫu Email</h3>
+                        <button onClick={() => setShowPicker(false)} className="p-2 hover:bg-slate-100 text-slate-500 rounded-full transition-colors"><X className="w-5 h-5" /></button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-2 md:p-6 custom-scrollbar bg-slate-50/50">
+                        <TemplateSelector
+                            templates={templates}
+                            selectedId={formData.claimEmailTemplateId}
+                            onSelect={(t) => { 
+                                setFormData(p => ({ ...p, claimEmailTemplateId: t.id })); 
+                                setShowPicker(false); 
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
+
+            <EmailPreviewDrawer
+                template={previewData}
+                isOpen={!!previewData}
+                onClose={() => setPreviewData(null)}
+            />
         </Modal>
     );
 };

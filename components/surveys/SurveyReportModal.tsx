@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Survey, SurveyAnalyticsOverview, QuestionAnalytics } from '../../types/survey';
 import {
     X, Users, CheckCircle, Clock, Smartphone, Monitor, Globe, BarChart2,
     Mail, QrCode, Zap, Link2, Star, TrendingUp, TrendingDown, Minus,
     ChevronRight, ExternalLink, RefreshCw, User, Copy, Check,
-    ArrowUp, ArrowDown, Search
+    ArrowUp, ArrowDown, Search, MapPin
 } from 'lucide-react';
+import {
+    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+    BarChart, Bar as RechartsBar, Cell, PieChart, Pie, Legend
+} from 'recharts';
 import { api } from '../../services/storageAdapter';
 
 interface Props {
@@ -205,7 +210,40 @@ const QuestionCard: React.FC<{ q: QuestionAnalytics; idx: number }> = ({ q, idx 
                                 <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
                                     <User className="w-3 h-3 text-slate-400" />
                                 </div>
-                                <p className="text-xs text-slate-600 italic leading-snug">{t}</p>
+                                <p className="text-xs text-slate-600 italic leading-snug">
+                                    {(() => {
+                                        if ((q.type === 'matrix_single' || q.type === 'matrix_multi') && q.content) {
+                                            try {
+                                                const content = typeof q.content === 'string' ? JSON.parse(q.content) : q.content;
+                                                const answer = JSON.parse(t);
+                                                const rowMap = new Map(content.rows?.map((r: any) => [r.id, r.text]));
+                                                const colMap = new Map(content.columns?.map((c: any) => [c.id, c.text]));
+                                                
+                                                const results: string[] = [];
+                                                for (const [rowId, colIds] of Object.entries(answer)) {
+                                                    const rowText = rowMap.get(rowId) || rowId;
+                                                    const cols = Array.isArray(colIds) ? colIds.map((id: string) => colMap.get(id) || id) : [colMap.get(colIds as string) || colIds];
+                                                    results.push(`${rowText}: ${cols.join(', ')}`);
+                                                }
+                                                return results.join(' | ');
+                                            } catch (e) {
+                                                return t;
+                                            }
+                                        }
+                                        if (q.type === 'ranking' && q.options) {
+                                            try {
+                                                const options = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+                                                const answer = JSON.parse(t);
+                                                const optMap = new Map(options.map((o: any) => [o.id, o.label]));
+                                                const results = (answer as string[]).map((id, index) => `${index + 1}. ${optMap.get(id) || id}`);
+                                                return results.join(' ➔ ');
+                                            } catch (e) {
+                                                return t;
+                                            }
+                                        }
+                                        return t;
+                                    })()}
+                                </p>
                             </div>
                         ))}
                         {q.text_responses.length > 5 && (
@@ -360,7 +398,9 @@ const SurveyReportModal: React.FC<Props> = ({ survey, isOpen, onClose }) => {
 
     const barMax = byDate.length > 0 ? Math.max(...byDate.map(d => d.count), 1) : 1;
 
-    return (
+    if (!isOpen) return null;
+
+    return createPortal(
         <div className="fixed inset-0 z-[9998] flex overflow-hidden">
             {/* Backdrop */}
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
@@ -368,31 +408,28 @@ const SurveyReportModal: React.FC<Props> = ({ survey, isOpen, onClose }) => {
             {/* Panel — full height, flush to top */}
             <div className="absolute inset-y-0 right-0 w-full max-w-[1100px] bg-white flex flex-col shadow-2xl shadow-slate-900/30 animate-in slide-in-from-right duration-300">
 
-                {/* ── HEADER ──────────────────────────────────────────────── */}
-                <div
-                    className="relative px-6 pt-6 pb-5 overflow-hidden flex-shrink-0"
-                    style={{ background: 'linear-gradient(135deg, #b45309 0%, #d97706 40%, #f59e0b 100%)' }}
-                >
-                    <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 85% 30%, rgba(255,255,255,0.12) 0%, transparent 55%), radial-gradient(circle at 10% 80%, rgba(0,0,0,0.08) 0%, transparent 50%)' }} />
-
-                    <div className="relative flex items-start gap-4">
-                        {/* Icon */}
-                        <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
-                            <BarChart2 className="w-6 h-6 text-white" />
-                        </div>
-
+                {/* ── NEW CLEAN HEADER ────────────────────────────────────────────── */}
+                <div className="px-8 pt-6 pb-0 flex-shrink-0 bg-white">
+                    <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                            <p className="text-white/70 text-[10px] font-black uppercase tracking-widest">Báo cáo khảo sát</p>
-                            <h2 className="text-white font-black text-lg leading-tight mt-0.5 truncate">{survey.name}</h2>
-                            <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                    survey.status === 'active' ? 'bg-emerald-500/30 text-white' :
-                                    survey.status === 'paused' ? 'bg-amber-500/30 text-white' : 'bg-white/20 text-white/70'
-                                }`}>
-                                    {survey.status === 'active' ? '● Đang chạy' : survey.status === 'paused' ? '⏸ Tạm dừng' : '📝 Nháp'}
+                            <div className="flex items-center gap-2 mb-2 flex-wrap text-[11px] font-bold">
+                                {survey.status === 'active' ? (
+                                    <span className="px-2 py-0.5 rounded text-emerald-600 bg-emerald-50 border border-emerald-100 uppercase tracking-widest flex items-center gap-1">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> ACTIVE
+                                    </span>
+                                ) : survey.status === 'paused' ? (
+                                    <span className="px-2 py-0.5 rounded text-amber-600 bg-amber-50 border border-amber-100 uppercase tracking-widest flex items-center gap-1">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500" /> PAUSED
+                                    </span>
+                                ) : (
+                                    <span className="px-2 py-0.5 rounded text-slate-500 bg-slate-100 border border-slate-200 uppercase tracking-widest">DRAFT</span>
+                                )}
+                                {ov && <span className="text-slate-400 font-medium flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-slate-300" /> Tạo lúc: {new Date(survey.created_at || '').toLocaleDateString('vi-VN')}</span>}
+                                <span className="text-slate-400 font-medium flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-50 border border-slate-100">
+                                    ID: <span className="font-mono text-slate-600">{survey.id.split('-')[0]}</span>
                                 </span>
-                                {ov && <span className="text-white/60 text-[10px]">{ov.total_responses ?? 0} phản hồi</span>}
                             </div>
+                            <h2 className="text-slate-800 font-black text-2xl leading-tight truncate mt-1">{survey.name}</h2>
                         </div>
 
                         <div className="flex items-center gap-2 flex-shrink-0">
@@ -403,43 +440,28 @@ const SurveyReportModal: React.FC<Props> = ({ survey, isOpen, onClose }) => {
                                         .then(r => { if (r.success) setAnalytics(r.data); })
                                         .finally(() => setLoading(false));
                                 }}
-                                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-all"
-                                title="Làm mới"
+                                className="px-3 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold flex items-center gap-1.5 transition-all"
                             >
-                                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Làm mới
                             </button>
-                            <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-all">
-                                <X className="w-4 h-4" />
+                            <button onClick={onClose} className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 transition-all">
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
                     </div>
 
-                    {/* KPI strip */}
-                    {ov && (
-                        <div className="relative grid grid-cols-4 gap-3 mt-5">
-                            {[
-                                { label: 'Phản hồi', value: Number(ov.total_responses ?? 0).toLocaleString(), icon: <Users className="w-4 h-4" /> },
-                                { label: 'Hoàn thành', value: ov.avg_completion_rate ? `${Math.round(ov.avg_completion_rate)}%` : '—', icon: <CheckCircle className="w-4 h-4" /> },
-                                { label: 'Thời gian TB', value: formatTime(+ov.avg_time_spent_sec), icon: <Clock className="w-4 h-4" /> },
-                                { label: 'Mobile', value: (ov.mobile_count && ov.total_responses) ? `${pct(+ov.mobile_count, +ov.total_responses)}%` : '—', icon: <Smartphone className="w-4 h-4" /> },
-                            ].map(s => (
-                                <div key={s.label} className="bg-white/15 backdrop-blur-sm rounded-2xl px-4 py-3">
-                                    <div className="text-white/60 mb-1">{s.icon}</div>
-                                    <p className="text-white font-black text-lg leading-none">{s.value}</p>
-                                    <p className="text-white/60 text-[10px] mt-0.5">{s.label}</p>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* ── TABS ─────────────────────────────────────────────────── */}
-                <div className="flex border-b border-slate-100 bg-white flex-shrink-0 px-6">
-                    {TABS.map(t => (
-                        <button key={t.id} onClick={() => setTab(t.id)}
-                            className={`py-3 px-4 text-xs font-bold border-b-2 transition-all -mb-px ${tab === t.id ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
-                        >{t.label}</button>
-                    ))}
+                    {/* ── TABS ─────────────────────────────────────────────────── */}
+                    <div className="flex border-b border-slate-100 mt-5 pt-1">
+                        <button onClick={() => setTab('overview')}
+                            className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all -mb-px ${tab === 'overview' ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                        ><BarChart2 className="w-4 h-4" /> Báo cáo</button>
+                        <button onClick={() => setTab('questions')}
+                            className={`flex items-center gap-1.5 py-3 px-4 text-xs font-bold border-b-2 transition-all -mb-px ${tab === 'questions' ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                        ><BarChart2 className="w-4 h-4" /> Nội dung <span className="ml-0.5 bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md text-[9px]">{questions.length}</span></button>
+                        <button onClick={() => setTab('respondents')}
+                            className={`flex items-center gap-1.5 py-3 px-4 text-xs font-bold border-b-2 transition-all -mb-px ${tab === 'respondents' ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                        ><Users className="w-4 h-4" /> Đối tượng</button>
+                    </div>
                 </div>
 
                 {/* ── BODY ─────────────────────────────────────────────────── */}
@@ -455,27 +477,42 @@ const SurveyReportModal: React.FC<Props> = ({ survey, isOpen, onClose }) => {
                             <p className="text-xs">Khảo sát cần có ít nhất một phản hồi</p>
                         </div>
                     ) : tab === 'overview' && ov ? (
-                        <div className="p-6 space-y-4">
-                            {/* Trend chart */}
+                        <div className="p-8 space-y-6">
+                            {/* KPI strip */}
+                            <div className="grid grid-cols-4 gap-4">
+                                {[
+                                    { label: 'TỔNG LƯỢT PHẢN HỒI', desc: 'LƯỢT THAM GIA', value: Number(ov.total_responses ?? 0).toLocaleString(), icon: <Users className="w-5 h-5 text-white" />, iconBg: 'bg-emerald-500' },
+                                    { label: 'TỶ LỆ HOÀN THÀNH', desc: 'COMPLETION RATE', value: ov.avg_completion_rate ? `${Math.round(ov.avg_completion_rate)}%` : '0%', icon: <CheckCircle className="w-5 h-5 text-white" />, iconBg: 'bg-indigo-500' },
+                                    { label: 'THỜI GIAN TB', desc: 'TRUNG BÌNH', value: formatTime(+ov.avg_time_spent_sec), icon: <Clock className="w-5 h-5 text-white" />, iconBg: 'bg-blue-500' },
+                                    { label: 'TỶ LỆ MOBILE', desc: 'MOBILE USERS', value: (ov.mobile_count && ov.total_responses) ? `${pct(+ov.mobile_count, +ov.total_responses)}%` : '0%', icon: <Smartphone className="w-5 h-5 text-white" />, iconBg: 'bg-amber-500' },
+                                ].map((s, idx) => (
+                                    <div key={idx} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-start justify-between">
+                                        <div>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{s.label}</p>
+                                            <p className="text-3xl font-black text-slate-800 mt-1 leading-none">{s.value}</p>
+                                            <p className="text-[9px] text-slate-400 mt-2 uppercase">{s.desc}</p>
+                                        </div>
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${s.iconBg} shadow-sm`}>
+                                            {s.icon}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Trend chart (Trả lời theo ngày) */}
                             {byDate.length > 0 && (
                                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
                                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-5">Lượt trả lời theo ngày</h4>
-                                    <div className="flex items-end gap-1 h-28">
-                                        {byDate.map(d => {
-                                            const h = pct(d.count, barMax);
-                                            return (
-                                                <div key={d.date} className="flex-1 flex flex-col items-center gap-1 group/bar" title={`${d.date}: ${d.count}`}>
-                                                    <div
-                                                        className="w-full rounded-t-lg transition-all hover:brightness-95"
-                                                        style={{ height: `${Math.max(h, 4)}%`, background: primaryColor }}
-                                                    />
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                    <div className="flex justify-between text-[10px] text-slate-400 mt-2">
-                                        <span>{byDate[0]?.date?.slice(5)}</span>
-                                        <span>{byDate[byDate.length - 1]?.date?.slice(5)}</span>
+                                    <div className="h-[180px] w-full -ml-4">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <LineChart data={byDate}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={v => String(v).slice(5)} />
+                                                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                                                <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                                <Line type="monotone" dataKey="count" name="Phản hồi" stroke={primaryColor} strokeWidth={3} dot={{ r: 4, strokeWidth: 2, fill: '#fff' }} activeDot={{ r: 6 }} />
+                                            </LineChart>
+                                        </ResponsiveContainer>
                                     </div>
                                 </div>
                             )}
@@ -505,33 +542,61 @@ const SurveyReportModal: React.FC<Props> = ({ survey, isOpen, onClose }) => {
                                     </div>
                                 </div>
 
-                                {/* Device */}
+                                {/* Device Donut Chart */}
                                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-                                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Thiết bị</h4>
-                                    <div className="space-y-3">
-                                        {[
-                                            { key: 'desktop_count', label: 'Desktop', icon: <Monitor className="w-3.5 h-3.5" />, color: '#3b82f6' },
-                                            { key: 'mobile_count',  label: 'Mobile',  icon: <Smartphone className="w-3.5 h-3.5" />, color: '#f59e0b' },
-                                            { key: 'tablet_count',  label: 'Tablet',  icon: <Monitor className="w-3.5 h-3.5" />, color: '#8b5cf6' },
-                                        ].map(d => {
-                                            const cnt = Number(ov[d.key] ?? 0);
-                                            const p = pct(cnt, Number(ov.total_responses ?? 1) || 1);
+                                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Thiết bị</h4>
+                                    <div className="h-[200px] w-full flex items-center justify-center">
+                                        {(() => {
+                                            const DEVICE_COLORS: Record<string, string> = { 'Desktop': '#3b82f6', 'Mobile': '#f59e0b', 'Tablet': '#8b5cf6' };
+                                            const deviceData = [
+                                                { name: 'Desktop', value: Number(ov.desktop_count ?? 0) },
+                                                { name: 'Mobile', value: Number(ov.mobile_count ?? 0) },
+                                                { name: 'Tablet', value: Number(ov.tablet_count ?? 0) }
+                                            ].filter(x => x.value > 0);
+                                            
+                                            if (deviceData.length === 0) return <span className="text-xs text-slate-400">Không có dữ liệu</span>;
+
                                             return (
-                                                <div key={d.key}>
-                                                    <div className="flex items-center justify-between text-xs mb-1.5">
-                                                        <span className="flex items-center gap-1.5 font-medium text-slate-600">
-                                                            <span style={{ color: d.color }}>{d.icon}</span>
-                                                            {d.label}
-                                                        </span>
-                                                        <span className="font-black text-slate-700">{cnt} <span className="font-normal text-slate-400">({p}%)</span></span>
-                                                    </div>
-                                                    <Bar value={p} color={d.color} />
-                                                </div>
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <PieChart>
+                                                        <Pie
+                                                            data={deviceData}
+                                                            innerRadius={55}
+                                                            outerRadius={80}
+                                                            paddingAngle={5}
+                                                            dataKey="value"
+                                                        >
+                                                            {deviceData.map(e => <Cell key={e.name} fill={DEVICE_COLORS[e.name]} />)}
+                                                        </Pie>
+                                                        <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                                        <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
+                                                    </PieChart>
+                                                </ResponsiveContainer>
                                             );
-                                        })}
+                                        })()}
                                     </div>
                                 </div>
                             </div>
+                            
+                            {/* Country Bar Chart */}
+                            {ov.countries && ov.countries.length > 0 && (
+                                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-5 flex items-center gap-1">
+                                        <MapPin className="w-3.5 h-3.5" /> Vị trí (Quốc gia)
+                                    </h4>
+                                    <div className="h-[200px] w-full -ml-4">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={ov.countries}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                <XAxis dataKey="country" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                                                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                                                <RechartsTooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                                <RechartsBar dataKey="count" name="Lượt phản hồi" fill="#14b8a6" radius={[4, 4, 0, 0]} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* NPS global if applicable */}
                             {ov.nps_score !== undefined && (
@@ -577,10 +642,11 @@ const SurveyReportModal: React.FC<Props> = ({ survey, isOpen, onClose }) => {
                         <div className="p-6">
                             <RespondentsList surveyId={survey.id} />
                         </div>
-                    ) : null}
+                      ) : null}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

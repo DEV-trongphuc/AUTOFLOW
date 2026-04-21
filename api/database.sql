@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost:3306
--- Thời gian đã tạo: Th4 20, 2026 lúc 09:34 PM
+-- Thời gian đã tạo: Th4 21, 2026 lúc 07:13 PM
 -- Phiên bản máy phục vụ: 10.6.18-MariaDB-cll-lve-log
 -- Phiên bản PHP: 8.4.19
 
@@ -609,7 +609,7 @@ CREATE TABLE `ai_workspace_versions` (
 
 CREATE TABLE `api_rate_limits` (
   `id` int(11) NOT NULL,
-  `ip_address` varchar(45) NOT NULL,
+  `ip_address` varchar(64) NOT NULL,
   `action` varchar(50) NOT NULL,
   `attempts` int(11) DEFAULT 1,
   `last_attempt_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -879,6 +879,24 @@ CREATE TABLE `integrations` (
 -- --------------------------------------------------------
 
 --
+-- Cấu trúc bảng cho bảng `link_clicks`
+--
+
+CREATE TABLE `link_clicks` (
+  `id` varchar(36) NOT NULL,
+  `short_link_id` varchar(36) NOT NULL,
+  `ip_hash` varchar(100) DEFAULT NULL,
+  `user_agent` text DEFAULT NULL,
+  `device_type` varchar(50) DEFAULT NULL,
+  `os` varchar(50) DEFAULT NULL,
+  `country` varchar(50) DEFAULT NULL,
+  `city` varchar(100) DEFAULT NULL,
+  `clicked_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Cấu trúc bảng cho bảng `lists`
 --
 
@@ -1076,6 +1094,40 @@ CREATE TABLE `meta_subscribers` (
 -- --------------------------------------------------------
 
 --
+-- Cấu trúc bảng cho bảng `otp_codes`
+--
+
+CREATE TABLE `otp_codes` (
+  `id` varchar(36) NOT NULL,
+  `profile_id` varchar(36) NOT NULL,
+  `receiver_email` varchar(255) NOT NULL,
+  `code_hash` varchar(255) NOT NULL,
+  `status` enum('pending','verified','expired') DEFAULT 'pending',
+  `expires_at` datetime NOT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `verified_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `otp_profiles`
+--
+
+CREATE TABLE `otp_profiles` (
+  `id` varchar(36) NOT NULL,
+  `workspace_id` varchar(36) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `token_length` int(11) DEFAULT 6,
+  `token_type` enum('numeric','alpha','alphanumeric') DEFAULT 'numeric',
+  `ttl_minutes` int(11) DEFAULT 5,
+  `email_template_id` varchar(36) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Cấu trúc bảng cho bảng `permissions`
 --
 
@@ -1210,6 +1262,24 @@ CREATE TABLE `segment_exclusions` (
 -- --------------------------------------------------------
 
 --
+-- Cấu trúc bảng cho bảng `short_links`
+--
+
+CREATE TABLE `short_links` (
+  `id` varchar(36) NOT NULL,
+  `workspace_id` varchar(36) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `slug` varchar(100) NOT NULL,
+  `target_url` text DEFAULT NULL,
+  `is_survey_checkin` tinyint(1) DEFAULT 0,
+  `survey_id` varchar(36) DEFAULT NULL,
+  `qr_config_json` text DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Cấu trúc bảng cho bảng `spam_cooldown`
 --
 
@@ -1287,7 +1357,7 @@ CREATE TABLE `subscribers` (
   `last_country` varchar(100) DEFAULT NULL,
   `property_id` char(36) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
-  `last_ip` varchar(45) DEFAULT NULL,
+  `last_ip` varchar(64) DEFAULT NULL,
   `workspace_id` int(11) DEFAULT 1,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci KEY_BLOCK_SIZE=8 ROW_FORMAT=COMPRESSED;
@@ -1650,7 +1720,31 @@ CREATE TABLE `voucher_campaigns` (
   `status` enum('draft','active','expired') DEFAULT 'draft',
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
-  `expiration_days` int(11) DEFAULT NULL
+  `expiration_days` int(11) DEFAULT NULL,
+  `is_claimable` tinyint(1) DEFAULT 0,
+  `claim_approval_required` tinyint(1) DEFAULT 0,
+  `claim_approval_type` varchar(20) DEFAULT 'auto',
+  `claim_email_template_id` varchar(36) DEFAULT NULL,
+  `flow_trigger_id` varchar(36) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `voucher_claims`
+--
+
+CREATE TABLE `voucher_claims` (
+  `id` varchar(36) NOT NULL,
+  `voucher_id` varchar(36) NOT NULL,
+  `subscriber_id` varchar(36) DEFAULT NULL,
+  `email` varchar(255) NOT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `phone` varchar(50) DEFAULT NULL,
+  `status` enum('pending','approved','rejected') DEFAULT 'pending',
+  `assigned_code_id` varchar(36) DEFAULT NULL,
+  `claimed_at` datetime DEFAULT current_timestamp(),
+  `resolved_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1680,7 +1774,7 @@ CREATE TABLE `voucher_codes` (
 
 CREATE TABLE `web_blacklist` (
   `id` int(11) NOT NULL,
-  `ip_address` varchar(45) NOT NULL,
+  `ip_address` varchar(64) NOT NULL,
   `reason` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1811,7 +1905,7 @@ CREATE TABLE `web_visitors` (
   `last_visit_at` datetime DEFAULT NULL,
   `visit_count` int(10) UNSIGNED DEFAULT 0,
   `device_fingerprint` varchar(64) DEFAULT NULL,
-  `ip_address` varchar(45) DEFAULT NULL,
+  `ip_address` varchar(64) DEFAULT NULL,
   `country` varchar(100) DEFAULT NULL,
   `city` varchar(100) DEFAULT NULL,
   `address` text DEFAULT NULL,
@@ -2540,6 +2634,13 @@ ALTER TABLE `integrations`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Chỉ mục cho bảng `link_clicks`
+--
+ALTER TABLE `link_clicks`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_link_time` (`short_link_id`,`clicked_at`);
+
+--
 -- Chỉ mục cho bảng `lists`
 --
 ALTER TABLE `lists`
@@ -2647,6 +2748,20 @@ ALTER TABLE `meta_subscribers`
   ADD KEY `idx_ms_page_active` (`page_id`,`last_active_at`);
 
 --
+-- Chỉ mục cho bảng `otp_codes`
+--
+ALTER TABLE `otp_codes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_profile_email` (`profile_id`,`receiver_email`),
+  ADD KEY `idx_expires` (`expires_at`);
+
+--
+-- Chỉ mục cho bảng `otp_profiles`
+--
+ALTER TABLE `otp_profiles`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Chỉ mục cho bảng `permissions`
 --
 ALTER TABLE `permissions`
@@ -2720,6 +2835,14 @@ ALTER TABLE `segment_exclusions`
   ADD UNIQUE KEY `unique_exclusion` (`segment_id`,`subscriber_id`),
   ADD KEY `fk_se_subscriber` (`subscriber_id`),
   ADD KEY `idx_seg_exclusions_seg` (`segment_id`);
+
+--
+-- Chỉ mục cho bảng `short_links`
+--
+ALTER TABLE `short_links`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `slug` (`slug`),
+  ADD KEY `idx_slug` (`slug`);
 
 --
 -- Chỉ mục cho bảng `spam_cooldown`
@@ -2960,6 +3083,14 @@ ALTER TABLE `voucher_campaigns`
   ADD KEY `idx_voucher_campaigns_workspace` (`workspace_id`);
 
 --
+-- Chỉ mục cho bảng `voucher_claims`
+--
+ALTER TABLE `voucher_claims`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_voucher_email` (`voucher_id`,`email`),
+  ADD KEY `idx_voucher_status` (`voucher_id`,`status`);
+
+--
 -- Chỉ mục cho bảng `voucher_codes`
 --
 ALTER TABLE `voucher_codes`
@@ -3010,7 +3141,8 @@ ALTER TABLE `web_page_views`
   ADD KEY `idx_visitor_id` (`visitor_id`),
   ADD KEY `idx_url_hash` (`url_hash`),
   ADD KEY `idx_loaded_at` (`loaded_at`),
-  ADD KEY `idx_wpv_visitor_prop` (`visitor_id`,`property_id`);
+  ADD KEY `idx_wpv_visitor_prop` (`visitor_id`,`property_id`),
+  ADD KEY `idx_web_pv_session_visitor` (`session_id`,`visitor_id`);
 
 --
 -- Chỉ mục cho bảng `web_properties`

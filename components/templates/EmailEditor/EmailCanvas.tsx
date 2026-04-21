@@ -388,9 +388,9 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
                 ref={canvasContainerRef}
                 className="flex-1 h-full overflow-y-auto custom-scrollbar relative flex flex-col"
                 style={{
-                    backgroundColor: bodyStyle.backgroundColor || '#f1f5f9',
-                    backgroundImage: bodyStyle.backgroundImage || 'none',
-                    backgroundSize: bodyStyle.backgroundSize || 'cover',
+                    backgroundColor: bodyStyle.backgroundColor || '#f8fafc',
+                    backgroundImage: bodyStyle.backgroundImage || 'radial-gradient(#cbd5e1 1px, transparent 1px)',
+                    backgroundSize: bodyStyle.backgroundSize || '24px 24px',
                     backgroundPosition: bodyStyle.backgroundPosition || 'center',
                     backgroundRepeat: bodyStyle.backgroundRepeat || 'no-repeat'
                 }}

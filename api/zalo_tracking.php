@@ -46,7 +46,8 @@ if ($subId && $url) {
     try {
         // 1. Log Activity
         $logId = bin2hex(random_bytes(16));
-        $ip = get_client_ip();
+        $rawIp = get_client_ip();
+        $ip = md5($rawIp);
         $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
 
         // Prepare Details String

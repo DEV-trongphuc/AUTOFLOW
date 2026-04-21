@@ -4,6 +4,7 @@ import Modal from '../common/Modal';
 import Button from '../common/Button';
 import Input from '../common/Input';
 import Select from '../common/Select';
+import ConfirmModal from '../common/ConfirmModal';
 import { VoucherCampaign, VoucherCode } from '../../types';
 import { api } from '../../services/storageAdapter';
 import toast from 'react-hot-toast';
@@ -30,6 +31,8 @@ const VoucherCodeManager: React.FC<VoucherCodeManagerProps> = ({ isOpen, onClose
 
     // Mass Action State
     const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [redeemModalOpen, setRedeemModalOpen] = useState(false);
     
     // Generate Codes State
     const [showGenModal, setShowGenModal] = useState(false);
@@ -161,8 +164,7 @@ const VoucherCodeManager: React.FC<VoucherCodeManagerProps> = ({ isOpen, onClose
         document.body.removeChild(link);
     };
 
-    const handleMassDelete = async () => {
-        if (!confirm(`Bạn có chắc muốn xóa ${selectedCodes.length} mã này?`)) return;
+    const executeMassDelete = async () => {
         try {
             const response = await fetch(`${api.baseUrl}/voucher_codes.php`, {
                 method: 'DELETE',
@@ -175,6 +177,7 @@ const VoucherCodeManager: React.FC<VoucherCodeManagerProps> = ({ isOpen, onClose
                 campaign.stats.totalGenerated -= selectedCodes.length;
                 setSelectedCodes([]);
                 loadCodes();
+                setDeleteModalOpen(false);
             } else {
                 toast.error(res.message || 'Lỗi khi xóa');
             }
@@ -183,8 +186,7 @@ const VoucherCodeManager: React.FC<VoucherCodeManagerProps> = ({ isOpen, onClose
         }
     };
 
-    const handleMassRedeem = async () => {
-        if (!confirm(`Bạn xác nhận Gạch ${selectedCodes.length} mã này?`)) return;
+    const executeMassRedeem = async () => {
         try {
             const response = await fetch(`${api.baseUrl}/redeem_voucher.php`, {
                 method: 'POST',
@@ -197,6 +199,7 @@ const VoucherCodeManager: React.FC<VoucherCodeManagerProps> = ({ isOpen, onClose
                 campaign.stats.totalRedeemed += selectedCodes.length;
                 setSelectedCodes([]);
                 loadCodes();
+                setRedeemModalOpen(false);
             } else {
                 toast.error(res.message || 'Lỗi khi gạch mã');
             }
@@ -337,10 +340,10 @@ const VoucherCodeManager: React.FC<VoucherCodeManagerProps> = ({ isOpen, onClose
                             Đã chọn <span className="bg-indigo-600 text-white px-2 py-0.5 rounded-md mx-1">{selectedCodes.length}</span> mã
                         </div>
                         <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={handleMassRedeem} className="bg-white hover:bg-emerald-50 text-emerald-700 border-emerald-200">
+                            <Button size="sm" variant="outline" onClick={() => setRedeemModalOpen(true)} className="bg-white hover:bg-emerald-50 text-emerald-700 border-emerald-200">
                                 Gạch Mã Hàng Loạt
                             </Button>
-                            <Button size="sm" variant="outline" onClick={handleMassDelete} className="bg-white hover:bg-rose-50 text-rose-700 border-rose-200">
+                            <Button size="sm" variant="outline" onClick={() => setDeleteModalOpen(true)} className="bg-white hover:bg-rose-50 text-rose-700 border-rose-200">
                                 Xóa Mục Đã Chọn
                             </Button>
                         </div>
@@ -523,6 +526,26 @@ const VoucherCodeManager: React.FC<VoucherCodeManagerProps> = ({ isOpen, onClose
                     <p className="text-xs text-slate-500">Do giới hạn hệ thống, mỗi lần bạn chỉ được tạo tối đa 1000 mã. Nếu bạn cần nhiều hơn, vui lòng chia làm nhiều lần tạo.</p>
                 </div>
             </Modal>
+
+            <ConfirmModal
+                isOpen={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                title="Xác nhận xóa hàng loạt"
+                message={`Bạn có chắc chắn muốn xóa ${selectedCodes.length} mã voucher đã chọn? Hành động này không thể hoàn tác.`}
+                confirmLabel="Xóa ngay"
+                variant="danger"
+                onConfirm={executeMassDelete}
+            />
+
+            <ConfirmModal
+                isOpen={redeemModalOpen}
+                onClose={() => setRedeemModalOpen(false)}
+                title="Xác nhận Gạch mã hàng loạt"
+                message={`Bạn có chắc chắn muốn Gạch (đánh dấu đã sử dụng) ${selectedCodes.length} mã voucher đã chọn?`}
+                confirmLabel="Xác nhận"
+                variant="warning"
+                onConfirm={executeMassRedeem}
+            />
         </Modal>
     );
 };

@@ -91,7 +91,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <div className="fixed inset-0 z-[100001] flex items-center justify-center p-4">
             {/* Backdrop */}
             <div
-                className={`absolute inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity duration-300 ${animateIn ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute inset-0 bg-[#0f172a]/70 backdrop-blur-md transition-opacity duration-300 ${animateIn ? 'opacity-100' : 'opacity-0'}`}
                 onClick={onClose}
             />
 

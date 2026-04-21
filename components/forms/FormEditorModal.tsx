@@ -10,6 +10,7 @@ import Modal from '../common/Modal';
 import Input from '../common/Input';
 import Select from '../common/Select';
 import toast from 'react-hot-toast';
+import InputModal from '../common/InputModal';
 
 const DB_FIELDS = [
     { value: 'email', label: 'Địa chỉ Email (Bắt buộc)', type: 'email', required: true, icon: Mail },
@@ -40,6 +41,7 @@ const FormEditorModal: React.FC<FormEditorModalProps> = ({
         notificationEnabled: false, notificationEmails: '', notificationCcEmails: '', notificationSubject: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isAddingList, setIsAddingList] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -148,24 +150,7 @@ const FormEditorModal: React.FC<FormEditorModalProps> = ({
                                 value={formData.targetListId || ''}
                                 onChange={v => {
                                     if (v === 'CREATE_NEW_LIST') {
-                                        const newName = prompt('Nhập tên danh sách mới:');
-                                        if (newName) {
-                                            toast.promise(
-                                                api.post('lists', { name: newName, status: 1 }),
-                                                {
-                                                    loading: 'Đang tạo danh sách...',
-                                                    success: (res: any) => {
-                                                        if (res.success) {
-                                                            setFormData(prev => ({ ...prev, targetListId: res.data.id }));
-                                                            onSuccess();
-                                                            return 'Đã tạo danh sách mới!';
-                                                        }
-                                                        throw new Error(res.message);
-                                                    },
-                                                    error: (err) => `Lỗi: ${err.message}`
-                                                }
-                                            );
-                                        }
+                                        setIsAddingList(true);
                                     } else {
                                         setFormData({ ...formData, targetListId: v });
                                     }
@@ -320,6 +305,33 @@ const FormEditorModal: React.FC<FormEditorModalProps> = ({
 
                 </div>
             </Modal>
+
+            <InputModal
+                isOpen={isAddingList}
+                onClose={() => setIsAddingList(false)}
+                title="Tạo danh sách mới"
+                placeholder="Nhập tên danh sách mới..."
+                confirmLabel="Tạo mới"
+                onConfirm={async (newName) => {
+                    if (newName) {
+                        toast.promise(
+                            api.post('lists', { name: newName, status: 1 }),
+                            {
+                                loading: 'Đang tạo danh sách...',
+                                success: (res: any) => {
+                                    if (res.success) {
+                                        setFormData(prev => ({ ...prev, targetListId: res.data.id }));
+                                        onSuccess();
+                                        return 'Đã tạo danh sách mới!';
+                                    }
+                                    throw new Error(res.message);
+                                },
+                                error: (err) => `Lỗi: ${err.message}`
+                            }
+                        );
+                    }
+                }}
+            />
 
         </>
     );

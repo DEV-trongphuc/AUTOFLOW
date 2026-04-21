@@ -2,7 +2,7 @@ import React, { useTransition, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Send, Users, FileEdit, BarChart3,
-  Settings, Mail, GitMerge, Tag, Webhook,
+  Settings, Mail, GitMerge, Tag, Webhook, Link, QrCode,
   ExternalLink, Zap, ChevronRight, LogOut, Globe, Shield,
   LayoutDashboard, Key, Bot, PanelLeftClose, PanelLeft, Facebook, Gift, FileText
 } from 'lucide-react';
@@ -176,6 +176,7 @@ export const CONFIG_NAV: NavItemConfig[] = [
 
 export const ANALYTICS_NAV: NavItemConfig[] = [
   { name: 'Website Tracking', href: '/web-tracking', icon: Globe, prefetch: () => import('../../pages/WebTracking') },
+  { name: 'Link & QR', href: '/links-qr', icon: QrCode, badge: 'Track', prefetch: () => import('../../pages/LinksQR') },
   { name: 'API Triggers', href: '/api-triggers', icon: Webhook, badge: 'Dev', prefetch: () => import('../../pages/ApiTriggers') },
 ];
 

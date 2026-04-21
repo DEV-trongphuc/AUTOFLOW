@@ -25,6 +25,9 @@ if ($method === 'GET') {
                 $camp['startDate'] = $camp['start_date'] ?? null;
                 $camp['endDate'] = $camp['end_date'] ?? null;
                 $camp['expirationDays'] = isset($camp['expiration_days']) ? (int)$camp['expiration_days'] : null;
+                $camp['isClaimable'] = !empty($camp['is_claimable']);
+                $camp['claimApprovalRequired'] = !empty($camp['claim_approval_required']);
+                $camp['claimEmailTemplateId'] = $camp['claim_email_template_id'] ?? '';
                 jsonResponse(true, $camp);
             } else {
                 jsonResponse(false, null, 'Campaign not found');
@@ -67,6 +70,9 @@ if ($method === 'GET') {
                 $c['startDate'] = $c['start_date'] ?? null;
                 $c['endDate'] = $c['end_date'] ?? null;
                 $c['expirationDays'] = isset($c['expiration_days']) ? (int)$c['expiration_days'] : null;
+                $c['isClaimable'] = !empty($c['is_claimable']);
+                $c['claimApprovalRequired'] = !empty($c['claim_approval_required']);
+                $c['claimEmailTemplateId'] = $c['claim_email_template_id'] ?? '';
             }
             jsonResponse(true, $camps);
         }
@@ -89,8 +95,8 @@ if ($method === 'GET') {
         if ($isNew) {
             $stmt = $pdo->prepare("
                 INSERT INTO voucher_campaigns 
-                (id, workspace_id, name, description, thumbnail_url, rewards, code_type, static_code, start_date, end_date, expiration_days, status, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (id, workspace_id, name, description, thumbnail_url, rewards, code_type, static_code, start_date, end_date, expiration_days, is_claimable, claim_approval_required, claim_email_template_id, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([
                 $campaignId,
@@ -104,6 +110,9 @@ if ($method === 'GET') {
                 !empty($data['startDate']) ? $data['startDate'] : null,
                 !empty($data['endDate']) ? $data['endDate'] : null,
                 isset($data['expirationDays']) ? (int)$data['expirationDays'] : null,
+                !empty($data['isClaimable']) ? 1 : 0,
+                !empty($data['claimApprovalRequired']) ? 1 : 0,
+                $data['claimEmailTemplateId'] ?? null,
                 $data['status'] ?? 'draft',
                 $now,
                 $now
@@ -112,7 +121,7 @@ if ($method === 'GET') {
             $stmt = $pdo->prepare("
                 UPDATE voucher_campaigns 
                 SET name = ?, description = ?, thumbnail_url = ?, rewards = ?, code_type = ?, 
-                    static_code = ?, start_date = ?, end_date = ?, expiration_days = ?, status = ?, updated_at = ?
+                    static_code = ?, start_date = ?, end_date = ?, expiration_days = ?, is_claimable = ?, claim_approval_required = ?, claim_email_template_id = ?, status = ?, updated_at = ?
                 WHERE id = ? AND workspace_id = ?
             ");
             $stmt->execute([
@@ -125,6 +134,9 @@ if ($method === 'GET') {
                 !empty($data['startDate']) ? $data['startDate'] : null,
                 !empty($data['endDate']) ? $data['endDate'] : null,
                 isset($data['expirationDays']) ? (int)$data['expirationDays'] : null,
+                !empty($data['isClaimable']) ? 1 : 0,
+                !empty($data['claimApprovalRequired']) ? 1 : 0,
+                $data['claimEmailTemplateId'] ?? null,
                 $data['status'] ?? 'draft',
                 $now,
                 $campaignId,

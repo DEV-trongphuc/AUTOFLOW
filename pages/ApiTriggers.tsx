@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { FileInput, ShoppingCart, Zap, BookOpen, Database, CheckCircle2 } from 'lucide-react';
+import { ShieldAlert, FileInput, ShoppingCart, Zap, BookOpen, Database, CheckCircle2 } from 'lucide-react';
 import PageHero from '../components/common/PageHero';
 import Tabs from '../components/common/Tabs';
 import FormsTab from '../components/triggers/FormsTab';
 import PurchasesTab from '../components/triggers/PurchasesTab';
 import CustomEventsTab from '../components/triggers/CustomEventsTab';
+import OTPTriggersTab from '../components/triggers/OTPTriggersTab';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 
@@ -23,7 +24,7 @@ const DB_FIELDS_REF = [
 ];
 
 const ApiTriggers: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'forms' | 'purchases' | 'custom'>('forms');
+    const [activeTab, setActiveTab] = useState<'forms' | 'purchases' | 'custom' | 'otp'>('forms');
     const [showDocs, setShowDocs] = useState(false);
 
     return (
@@ -48,11 +49,15 @@ const ApiTriggers: React.FC = () => {
                         { id: 'forms', label: 'Biểu mẫu (Forms)', icon: FileInput },
                         { id: 'purchases', label: 'Mua hàng (Purchases)', icon: ShoppingCart },
                         { id: 'custom', label: 'Sự kiện (Custom)', icon: Zap },
+                        { id: 'otp', label: 'OTP & Access', icon: ShieldAlert },
                     ]}
                 />
 
                 <div className="animate-in fade-in duration-300">
-                    {activeTab === 'forms' ? <FormsTab /> : (activeTab === 'purchases' ? <PurchasesTab /> : <CustomEventsTab />)}
+                    {activeTab === 'forms' && <FormsTab />}
+                    {activeTab === 'purchases' && <PurchasesTab />}
+                    {activeTab === 'custom' && <CustomEventsTab />}
+                    {activeTab === 'otp' && <OTPTriggersTab />}
                 </div>
             </div>
 

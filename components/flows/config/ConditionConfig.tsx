@@ -21,6 +21,8 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
     const [availableLinks, setAvailableLinks] = useState<any[]>([]);
     const [parentEmailStep, setParentEmailStep] = useState<any>(null);
     const [scanning, setScanning] = useState(false);
+    const [surveyData, setSurveyData] = useState<any>(null);
+    const [isLoadingSurvey, setIsLoadingSurvey] = useState(false);
     const linkContainerRef = useRef<HTMLDivElement>(null);
 
     // Convert old single linkTarget to array if needed
@@ -37,7 +39,7 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
     useEffect(() => {
         if (!flow || !stepId) return;
 
-        const findParentEmail = (currentId: string, visited: Set<string>): any => {
+        const findParentSource = (currentId: string, visited: Set<string>): any => {
             if (visited.has(currentId)) return null;
             visited.add(currentId);
             // Find steps that point TO currentId
@@ -46,14 +48,14 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
             );
             for (const parent of parentCandidates) {
                 if (parent.type === 'action' || parent.type === 'zalo_zns') return parent;
-                if (parent.type === 'trigger' && parent.config?.type === 'campaign') return parent;
-                const foundInBranch = findParentEmail(parent.id, visited);
+                if (parent.type === 'trigger' && ['campaign', 'survey'].includes(parent.config?.type)) return parent;
+                const foundInBranch = findParentSource(parent.id, visited);
                 if (foundInBranch) return foundInBranch;
             }
             return null;
         };
 
-        const parentEmail = findParentEmail(stepId, new Set<string>());
+        const parentEmail = findParentSource(stepId, new Set<string>());
         setParentEmailStep(parentEmail);
 
         // [NEW] Persist targetStepId for backend tracking
@@ -120,6 +122,22 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
             setAvailableLinks([]);
         }
     }, [flow, stepId]);
+
+    // [NEW] Fetch survey data if the parent step is a survey trigger
+    useEffect(() => {
+        if (parentEmailStep?.config?.type === 'survey' && parentEmailStep?.config?.targetId) {
+            setIsLoadingSurvey(true);
+            api.get<any>(`surveys?action=get&id=${parentEmailStep.config.targetId}`).then(res => {
+                if (res.success) setSurveyData(res.data);
+                setIsLoadingSurvey(false);
+            }).catch(e => {
+                console.error("Failed to load survey data for config", e);
+                setIsLoadingSurvey(false);
+            });
+        } else {
+            setSurveyData(null);
+        }
+    }, [parentEmailStep]);
 
     useEffect(() => {
         if (config.waitUnit === 'minutes') {
@@ -204,8 +222,8 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
             {!parentEmailStep ? (
                 <div className="p-8 bg-rose-50 border-2 border-dashed border-rose-200 rounded-[32px] text-center space-y-4">
                     <Unlink className="w-8 h-8 mx-auto text-rose-500" />
-                    <p className="text-sm font-black text-rose-700 uppercase">Thiếu nguồn Email/ZNS</p>
-                    <p className="text-xs text-rose-500">Vui lòng nối bước này SAU một bước "Gửi Email" hoặc "Zalo ZNS".</p>
+                    <p className="text-sm font-black text-rose-700 uppercase">Thiếu nguồn kết nối</p>
+                    <p className="text-xs text-rose-500">Vui lòng nối bước này SAU Tác vụ/Trigger theo dõi hành vi (VD: Gửi Email, Zalo ZNS, Làm khảo sát).</p>
                 </div>
             ) : (
                 <>
@@ -220,27 +238,165 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
                         </div>
                     </div>
 
-                    <Radio
-                        label="Hành động kiểm tra:"
-                        options={parentEmailStep?.type === 'zalo_zns' ? [
-                            { id: 'zns_delivered', label: 'Đã nhận (Gửi thành công)', icon: CheckSquare, desc: 'Tin nhắn đã gửi thành công' },
-                            { id: 'zns_clicked', label: 'Khách Click Link', icon: MousePointer2, desc: 'Theo dõi chuyển đổi link ZNS' },
-                            { id: 'zns_replied', label: 'Khách Phản hồi', icon: MessageSquare, desc: 'Khách chat lại với OA' },
-                            { id: 'zns_failed', label: 'Gửi thất bại', icon: AlertTriangle, desc: 'Gửi lại (Hết quota, sai số...)' },
-                        ] : [
-                            { id: 'delivered', label: 'Đã nhận (Delivered)', icon: MailCheck, desc: 'Nếu KHÔNG -> Chuyển nhánh ELSE' },
-                            { id: 'opened', label: 'Khách Đã mở Email', icon: MailOpen, desc: 'Theo dõi tỷ lệ đọc' },
-                            { id: 'clicked', label: 'Khách Click Link', icon: MousePointer2, desc: 'Theo dõi chuyển đổi' },
-                            ...((parentEmailStep?.type === 'trigger' && parentEmailStep?.config?.type === 'campaign') ? [
-                                { id: 'received_reminder', label: 'Đã nhận Reminder', icon: Bell, desc: 'Đã nhận Email Nhắc nhở' },
-                                { id: 'opened_reminder', label: 'Đã mở Reminder', icon: MailOpen, desc: 'Đã mở Email Nhắc nhở' }
-                            ] : []),
-                            { id: 'unsubscribed', label: 'Hủy đăng ký', icon: UserMinus, desc: 'Phân loại khách rời đi' },
-                        ]}
-                        value={config.conditionType || (parentEmailStep?.type === 'zalo_zns' ? 'zns_delivered' : 'opened')}
-                        onChange={handleTypeChange}
-                        disabled={disabled}
-                    />
+                    {parentEmailStep?.config?.type === 'survey' ? (
+                        <>
+                            <Radio
+                                label="Kiểm tra điều kiện khảo sát:"
+                                options={[
+                                    { id: 'survey_score', label: 'Điểm số Trắc nghiệm', icon: CheckSquare, desc: 'Lọc theo khoảng điểm' },
+                                    { id: 'survey_answer', label: 'Khớp Câu trả lời', icon: MousePointer2, desc: 'Dựa trên nội dung trả lời' },
+                                    { id: 'survey_screen', label: 'Màn hình Kết thúc', icon: MailCheck, desc: 'Cắn đích ở màn hình nào' },
+                                ]}
+                                value={config.conditionType || 'survey_score'}
+                                onChange={handleTypeChange}
+                                disabled={disabled}
+                            />
+                            
+                            {config.conditionType === 'survey_score' && (
+                                <div className="p-5 bg-emerald-50 border border-emerald-200 rounded-[28px] space-y-3 mt-4">
+                                    <label className="text-[10px] font-black uppercase text-emerald-700 tracking-widest">Logic khoảng điểm</label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <Select
+                                            options={[
+                                                { value: '>=', label: 'Lớn hơn hoặc bằng' },
+                                                { value: '<=', label: 'Nhỏ hơn hoặc bằng' },
+                                                { value: '==', label: 'Bằng chính xác' },
+                                                { value: '<', label: 'Nhỏ hơn' },
+                                                { value: '>', label: 'Lớn hơn' },
+                                            ]}
+                                            value={config.scoreOperator || '>='}
+                                            onChange={(val) => onChange({ ...config, scoreOperator: val })}
+                                            disabled={disabled}
+                                        />
+                                        <Input
+                                            type="number"
+                                            placeholder="VD: 50"
+                                            value={config.scoreValue || 0}
+                                            onChange={(e) => onChange({ ...config, scoreValue: parseInt(e.target.value) || 0 })}
+                                            disabled={disabled}
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-emerald-600 italic">Tổng số điểm của bài khảo sát (được dùng để chấm điểm Test Quiz).</p>
+                                </div>
+                            )}
+
+                            {config.conditionType === 'survey_answer' && (
+                                <div className="p-5 bg-indigo-50 border border-indigo-200 rounded-[28px] space-y-3 mt-4">
+                                    <label className="text-[10px] font-black uppercase text-indigo-700 tracking-widest">Logic câu trả lời</label>
+                                    
+                                    {/* Select Question */}
+                                    {surveyData ? (
+                                        <div className="relative">
+                                            {isLoadingSurvey && <div className="absolute right-3 top-1/2 -translate-y-1/2 p-2"><RefreshCw className="w-4 h-4 animate-spin text-indigo-300" /></div>}
+                                            <select
+                                                className="w-full h-11 px-4 bg-white border border-indigo-100 rounded-xl font-bold text-sm text-indigo-900 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all appearance-none"
+                                                value={config.questionId || ''}
+                                                onChange={(e) => onChange({ ...config, questionId: e.target.value })}
+                                                disabled={disabled || isLoadingSurvey}
+                                            >
+                                                <option value="">-- Chọn câu hỏi cần kiểm tra --</option>
+                                                {surveyData.blocks_json?.filter((b: any) => !['section_header', 'page_break', 'divider', 'image_block', 'button_block', 'link_block', 'banner_block'].includes(b.type)).map((b: any) => (
+                                                    <option key={b.id} value={b.id}>{b.label || 'Câu hỏi không tên'} ({b.type})</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    ) : (
+                                        <Input
+                                            placeholder="Nhập ID câu hỏi (VD: question-1)"
+                                            value={config.questionId || ''}
+                                            onChange={(e) => onChange({ ...config, questionId: e.target.value })}
+                                            disabled={disabled}
+                                        />
+                                    )}
+
+                                    {/* Select Answer */}
+                                    {(() => {
+                                        const selectedBlock = surveyData?.blocks_json?.find((b: any) => b.id === config.questionId);
+                                        const hasOptions = selectedBlock && ['single_choice', 'dropdown', 'multi_choice'].includes(selectedBlock.type) && selectedBlock.options && selectedBlock.options.length > 0;
+                                        
+                                        if (surveyData && hasOptions) {
+                                            return (
+                                                <select
+                                                    className="w-full h-11 px-4 bg-white border border-indigo-100 rounded-xl font-bold text-sm text-indigo-900 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all appearance-none"
+                                                    value={config.answerMatch || ''}
+                                                    onChange={(e) => onChange({ ...config, answerMatch: e.target.value })}
+                                                    disabled={disabled || isLoadingSurvey}
+                                                >
+                                                    <option value="">-- Chọn đáp án để khớp --</option>
+                                                    {selectedBlock.options.map((opt: any, idx: number) => {
+                                                        const label = opt.label || opt.value || opt;
+                                                        return <option key={idx} value={label}>{label}</option>;
+                                                    })}
+                                                </select>
+                                            )
+                                        } else {
+                                            return (
+                                                <Input
+                                                    placeholder="Nội dung khớp (VD: Có)"
+                                                    value={config.answerMatch || ''}
+                                                    onChange={(e) => onChange({ ...config, answerMatch: e.target.value })}
+                                                    disabled={disabled}
+                                                />
+                                            )
+                                        }
+                                    })()}
+                                    <p className="text-[10px] text-indigo-600 italic">Nếu người dùng trả lời khớp nội dung này, rẽ nhánh TRUE (Màu xanh).</p>
+                                </div>
+                            )}
+
+                            {config.conditionType === 'survey_screen' && (
+                                <div className="p-5 bg-violet-50 border border-violet-200 rounded-[28px] space-y-3 mt-4">
+                                    <label className="text-[10px] font-black uppercase text-violet-700 tracking-widest">Màn hình Kết thúc</label>
+                                    {surveyData ? (
+                                        <div className="relative">
+                                            {isLoadingSurvey && <div className="absolute right-3 top-1/2 -translate-y-1/2 p-2"><RefreshCw className="w-4 h-4 animate-spin text-violet-300" /></div>}
+                                            <select
+                                                className="w-full h-11 px-4 bg-white border border-violet-100 rounded-xl font-bold text-sm text-violet-900 focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all appearance-none"
+                                                value={config.endScreenId || 'default'}
+                                                onChange={(e) => onChange({ ...config, endScreenId: e.target.value })}
+                                                disabled={disabled || isLoadingSurvey}
+                                            >
+                                                <option value="default">Màn hình Cảm ơn (Mặc định)</option>
+                                                {surveyData.thank_you_page?.extraScreens?.map((s: any, idx: number) => (
+                                                    <option key={s.id} value={s.id}>{s.name || `Trang đích ${idx + 1}`}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    ) : (
+                                        <Input
+                                            placeholder="Nhập Screen ID (Mặc định = default)"
+                                            value={config.endScreenId || ''}
+                                            onChange={(e) => onChange({ ...config, endScreenId: e.target.value })}
+                                            disabled={disabled}
+                                        />
+                                    )}
+                                    <p className="text-[10px] text-violet-600 italic">Kiểm tra xem người dùng có được đưa tới đúng màn hình này khi kết thúc khảo sát không (Do rẽ nhánh nhảy trang Survey).</p>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <Radio
+                            label="Hành động kiểm tra:"
+                            options={parentEmailStep?.type === 'zalo_zns' ? [
+                                { id: 'zns_delivered', label: 'Đã nhận (Gửi thành công)', icon: CheckSquare, desc: 'Tin nhắn đã gửi thành công' },
+                                { id: 'zns_clicked', label: 'Khách Click Link', icon: MousePointer2, desc: 'Theo dõi chuyển đổi link ZNS' },
+                                { id: 'zns_replied', label: 'Khách Phản hồi', icon: MessageSquare, desc: 'Khách chat lại với OA' },
+                                { id: 'zns_failed', label: 'Gửi thất bại', icon: AlertTriangle, desc: 'Gửi lại (Hết quota, sai số...)' },
+                            ] : [
+                                { id: 'delivered', label: 'Đã nhận (Delivered)', icon: MailCheck, desc: 'Nếu KHÔNG -> Chuyển nhánh ELSE' },
+                                { id: 'opened', label: 'Khách Đã mở Email', icon: MailOpen, desc: 'Theo dõi tỷ lệ đọc' },
+                                { id: 'clicked', label: 'Khách Click Link', icon: MousePointer2, desc: 'Theo dõi chuyển đổi' },
+                                ...((parentEmailStep?.type === 'trigger' && parentEmailStep?.config?.type === 'campaign') ? [
+                                    { id: 'received_reminder', label: 'Đã nhận Reminder', icon: Bell, desc: 'Đã nhận Email Nhắc nhở' },
+                                    { id: 'opened_reminder', label: 'Đã mở Reminder', icon: MailOpen, desc: 'Đã mở Email Nhắc nhở' }
+                                ] : []),
+                                { id: 'unsubscribed', label: 'Hủy đăng ký', icon: UserMinus, desc: 'Phân loại khách rời đi' },
+                            ]}
+                            value={config.conditionType || (parentEmailStep?.type === 'zalo_zns' ? 'zns_delivered' : 'opened')}
+                            onChange={handleTypeChange}
+                            disabled={disabled}
+                        />
+                    )}
 
                     {/* Reminder ID Input */}
                     {['received_reminder', 'opened_reminder'].includes(config.conditionType) && (

@@ -255,6 +255,11 @@ export interface VoucherCampaign {
         totalDistributed: number;
         totalRedeemed: number;
     };
+
+    // Public Form Claim Configurations
+    isClaimable?: boolean;
+    claimApprovalRequired?: boolean;
+    claimEmailTemplateId?: string; // which email template context to use
 }
 
 export interface VoucherCode {

@@ -1,9 +1,16 @@
 <?php
-require_once dirname(__DIR__) . '/db_connect.php';
-
+require_once 'config.php';
 try {
-    $pdo->exec("ALTER TABLE stats_update_buffer MODIFY COLUMN target_table VARCHAR(50) NOT NULL");
-    echo "SUCCESS: Changed target_table to VARCHAR(50)\n";
-} catch (Exception $e) {
-    echo "ERROR: " . $e->getMessage() . "\n";
+    $pdo->exec("ALTER TABLE voucher_campaigns 
+        ADD COLUMN is_claimable TINYINT(1) DEFAULT 0,
+        ADD COLUMN claim_approval_required TINYINT(1) DEFAULT 0,
+        ADD COLUMN claim_email_template_id VARCHAR(100) DEFAULT NULL
+    ");
+    echo "Columns added!";
+} catch (PDOException $e) {
+    if (strpos($e->getMessage(), 'Duplicate column name') !== false) {
+        echo "Columns already exist.";
+    } else {
+        echo "Error: " . $e->getMessage();
+    }
 }

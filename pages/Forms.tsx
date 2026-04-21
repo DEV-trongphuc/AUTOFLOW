@@ -457,13 +457,12 @@ const Forms: React.FC = () => {
                                         </div>
                                         <div>
                                             <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Loại dữ liệu</label>
-                                            <select
+                                            <Select
                                                 value={pendingCustomType}
-                                                onChange={e => setPendingCustomType(e.target.value as any)}
-                                                className="w-full h-9 px-3 rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-700 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-400/10 transition-all"
-                                            >
-                                                {CUSTOM_FIELD_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                                            </select>
+                                                onChange={val => setPendingCustomType(val as any)}
+                                                options={CUSTOM_FIELD_TYPES}
+                                                className="h-9"
+                                            />
                                         </div>
                                         <button
                                             onClick={handleAddCustomField}
@@ -504,16 +503,13 @@ const Forms: React.FC = () => {
                                                 <div>
                                                     <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Trường Database</label>
                                                     <div className="relative">
-                                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><FieldIcon className="w-4 h-4" /></div>
-                                                        <select
+                                                        <Select
                                                             value={field.dbField}
-                                                            onChange={e => updateField(field.id, { dbField: e.target.value })}
+                                                            onChange={val => updateField(field.id, { dbField: val })}
                                                             disabled={isEmail}
-                                                            className={`w-full pl-9 pr-8 py-2.5 rounded-xl text-xs font-bold appearance-none outline-none border-2 transition-all ${isEmail ? 'bg-slate-50 border-slate-100 text-slate-500' : 'bg-white border-slate-200 text-slate-700 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10'}`}
-                                                        >
-                                                            {DB_FIELDS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                                                        </select>
-                                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                                                            options={DB_FIELDS.map(opt => ({ value: opt.value, label: opt.label }))}
+                                                            icon={FieldIcon}
+                                                        />
                                                     </div>
                                                 </div>
                                             )}

@@ -40,6 +40,7 @@ import FlowHeader from '../components/flows/builder/FlowHeader';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import FlowSidebar from '../components/flows/builder/FlowSidebar';
 import ConfirmModal from '../components/common/ConfirmModal';
+import Select from '../components/common/Select';
 import CampaignDetailDrawer from '../components/campaigns/CampaignDetailDrawer';
 import FormEditorModal from '../components/forms/FormEditorModal';
 import EmptyState from '../components/common/EmptyState';
@@ -1665,16 +1666,18 @@ const Flows: React.FC = () => {
 
                                     {/* Date Filter — mirrors Campaign page */}
                                     <div className="flex items-center gap-2 shrink-0">
-                                        <select
-                                            value={datePreset}
-                                            onChange={e => setDatePreset(e.target.value as any)}
-                                            className="text-xs font-bold bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-xl px-3 py-2 text-slate-700 dark:text-slate-200 outline-none cursor-pointer hover:border-slate-200 transition-colors"
-                                        >
-                                            <option value="30">30 ngày qua</option>
-                                            <option value="7">7 ngày qua</option>
-                                            <option value="month">Tháng này</option>
-                                            <option value="custom">Tùy chỉnh...</option>
-                                        </select>
+                                        <div className="w-36">
+                                            <Select
+                                                value={datePreset}
+                                                onChange={val => setDatePreset(val as any)}
+                                                options={[
+                                                    { value: '30', label: '30 ngày qua' },
+                                                    { value: '7', label: '7 ngày qua' },
+                                                    { value: 'month', label: 'Tháng này' },
+                                                    { value: 'custom', label: 'Tùy chỉnh...' },
+                                                ]}
+                                            />
+                                        </div>
                                         {datePreset === 'custom' && (
                                             <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-xl px-2 py-1.5">
                                                 <input

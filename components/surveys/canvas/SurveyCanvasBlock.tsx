@@ -1,15 +1,16 @@
 import React, { useRef, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
-import { SurveyBlock, SurveyTheme, QuestionType } from '../../../types/survey';
+import { Survey, SurveyBlock, SurveyTheme, QuestionType } from '../../../types/survey';
 import * as LucideIcons from 'lucide-react';
 import {
     GripVertical, Trash2, Copy, Star, ChevronDown, ExternalLink,
-    ArrowUp, ArrowDown
+    ArrowUp, ArrowDown, Plus
 } from 'lucide-react';
 
 const BLOCK_DND = 'SURVEY_BLOCK';
 
 interface Props {
+    survey: Survey;
     block: SurveyBlock;
     index: number;
     theme: SurveyTheme;
@@ -19,11 +20,12 @@ interface Props {
     onDuplicate: () => void;
     onMove: (dragIdx: number, hoverIdx: number) => void;
     onAddAfter: (type: QuestionType) => void;
+    onUpdate: (changes: Partial<SurveyBlock>) => void;
     totalBlocks: number;
 }
 
 const SurveyCanvasBlock: React.FC<Props> = ({
-    block, index, theme, isSelected, onSelect, onDelete, onDuplicate, onMove, totalBlocks
+    survey, block, index, theme, isSelected, onSelect, onDelete, onDuplicate, onMove, onUpdate, totalBlocks
 }) => {
     const ref = useRef<HTMLDivElement>(null);
 
@@ -135,6 +137,13 @@ const SurveyCanvasBlock: React.FC<Props> = ({
                 </button>
             </div>
 
+            {/* ── Logic Indicator (when not selected but has config) ── */}
+            {(!isSelected && (block.logic ?? []).length > 0) && (
+                <div className="absolute top-3 right-3 flex items-center gap-1 bg-amber-50 text-amber-500 border border-amber-200/50 shadow-sm px-1.5 py-1 rounded-lg z-10 transition-opacity group-hover:opacity-0 pointer-events-none" title="Câu hỏi này có logic rẽ nhánh">
+                    <LucideIcons.GitMerge className="w-3.5 h-3.5" />
+                </div>
+            )}
+
             <div className="px-6 py-4" style={{ textAlign }}>
                 {/* Question number */}
                 {isQuestion && questionNumber !== null && (
@@ -196,6 +205,158 @@ const SurveyCanvasBlock: React.FC<Props> = ({
                         {block.description && <p className="text-xs text-slate-400 mb-3">{block.description}</p>}
                         <BlockInputPreview block={block} theme={theme} accentColor={accentColor} />
                     </>
+                )}
+
+                {/* ── Logic Branching config inline ──────────────────────────── */}
+                {isSelected && !isLayout && (
+                    <div className="mt-8 pt-4 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Logic rẽ nhánh (Điều kiện & Hành động)</span>
+                            <button
+                                onClick={() => onUpdate({ logic: [...(block.logic ?? []), { condition: { question_id: block.id, operator: 'equals', value: '' }, action: 'skip_to', target: '' }] })}
+                                className="flex items-center gap-1 text-[10px] text-amber-600 hover:bg-amber-50 px-2 py-1 rounded-lg transition-colors font-bold"
+                            >
+                                <Plus className="w-3 h-3" /> Thêm luật logic
+                            </button>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            {(block.logic ?? []).map((rule, idx) => (
+                                <div key={idx} className="bg-white border border-amber-200/60 shadow-sm p-3 rounded-xl flex flex-wrap gap-2 items-center relative group">
+                                    <button
+                                        onClick={() => onUpdate({ logic: block.logic?.filter((_, i) => i !== idx) })}
+                                        className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-100 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                                    >
+                                        <Trash2 className="w-3 h-3" />
+                                    </button>
+                                    
+                                    <span className="text-[10px] font-bold text-slate-400">NẾU</span>
+                                    
+                                    <select
+                                        className="text-[11px] font-medium bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none focus:border-amber-400"
+                                        value={rule.condition.operator}
+                                        onChange={e => {
+                                            const newLogic = [...(block.logic ?? [])];
+                                            newLogic[idx].condition.operator = e.target.value as any;
+                                            onUpdate({ logic: newLogic });
+                                        }}
+                                    >
+                                        {['single_choice', 'dropdown', 'yes_no'].includes(block.type) ? (
+                                            <>
+                                                <option value="equals">Là (Chọn)</option>
+                                                <option value="not_equals">Không phải (Không chọn)</option>
+                                                <option value="is_answered">Đã trả lời</option>
+                                                <option value="is_empty">Bỏ trống</option>
+                                            </>
+                                        ) : block.type === 'multi_choice' ? (
+                                            <>
+                                                <option value="contains">Bao gồm lựa chọn</option>
+                                                <option value="is_answered">Đã trả lời</option>
+                                                <option value="is_empty">Bỏ trống</option>
+                                            </>
+                                        ) : ['number', 'slider', 'star_rating', 'nps', 'likert', 'emoji_rating'].includes(block.type) ? (
+                                            <>
+                                                <option value="equals">Bằng (==)</option>
+                                                <option value="not_equals">Khác (!=)</option>
+                                                <option value="greater_than">Lớn hơn (&gt;)</option>
+                                                <option value="less_than">Nhỏ hơn (&lt;)</option>
+                                                <option value="is_answered">Đã trả lời</option>
+                                                <option value="is_empty">Bỏ trống</option>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <option value="equals">Khớp hoàn toàn (==)</option>
+                                                <option value="not_equals">Khác hoàn toàn (!=)</option>
+                                                <option value="contains">Có chứa chuỗi</option>
+                                                <option value="is_answered">Đã điền</option>
+                                                <option value="is_empty">Bỏ trống</option>
+                                            </>
+                                        )}
+                                    </select>
+                                    
+                                    {!['is_answered', 'is_empty'].includes(rule.condition.operator) && (
+                                        ['single_choice', 'dropdown', 'multi_choice', 'yes_no'].includes(block.type) && block.options && block.options.length > 0 ? (
+                                            <select
+                                                className="text-[11px] font-medium bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none focus:border-amber-400 min-w-[100px]"
+                                                value={rule.condition.value as string ?? ''}
+                                                onChange={e => {
+                                                    const newLogic = [...(block.logic ?? [])];
+                                                    newLogic[idx].condition.value = e.target.value;
+                                                    onUpdate({ logic: newLogic });
+                                                }}
+                                            >
+                                                <option value="">-- Chọn giá trị --</option>
+                                                {block.options.map(o => (
+                                                    <option key={o.id} value={o.value}>{o.label}</option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <input 
+                                                className="text-[11px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none focus:border-amber-400 w-24"
+                                                placeholder="Giá trị..."
+                                                value={rule.condition.value as string ?? ''}
+                                                onChange={e => {
+                                                    const newLogic = [...(block.logic ?? [])];
+                                                    newLogic[idx].condition.value = e.target.value;
+                                                    onUpdate({ logic: newLogic });
+                                                }}
+                                            />
+                                        )
+                                    )}
+                                    
+                                    <span className="text-[10px] font-bold text-amber-600 ml-2">THÌ</span>
+                                    
+                                    <select
+                                        className="text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-amber-300"
+                                        value={rule.action}
+                                        onChange={e => {
+                                            const newLogic = [...(block.logic ?? [])];
+                                            newLogic[idx].action = e.target.value as any;
+                                            onUpdate({ logic: newLogic });
+                                        }}
+                                    >
+                                        <option value="skip_to">Nhảy tới câu...</option>
+                                        <option value="end_survey">Nộp bài (Cảm ơn mặc định)</option>
+                                        <option value="end_survey_screen">Nộp bài (Trang cảm ơn khác)</option>
+                                    </select>
+                                    
+                                    {rule.action === 'skip_to' && (
+                                        <select
+                                            className="text-[11px] font-medium bg-white border border-slate-200 rounded-lg px-2 py-1 outline-none focus:border-amber-400 flex-1 min-w-[150px]"
+                                            value={rule.target ?? ''}
+                                            onChange={e => {
+                                                const newLogic = [...(block.logic ?? [])];
+                                                newLogic[idx].target = e.target.value;
+                                                onUpdate({ logic: newLogic });
+                                            }}
+                                        >
+                                            <option value="">-- Chọn khối đích đến --</option>
+                                            {survey.blocks.map((b, i) => (
+                                                <option key={b.id} value={b.id}>{b.label ? `${i+1}. ${b.label.substring(0,25)}${b.label.length>25?'...':''}` : `Khối ${b.type}`}</option>
+                                            ))}
+                                        </select>
+                                    )}
+                                    
+                                    {rule.action === 'end_survey_screen' && (
+                                        <select
+                                            className="text-[11px] font-medium bg-white border border-slate-200 rounded-lg px-2 py-1 outline-none focus:border-amber-400 flex-1 min-w-[150px]"
+                                            value={rule.target ?? ''}
+                                            onChange={e => {
+                                                const newLogic = [...(block.logic ?? [])];
+                                                newLogic[idx].target = e.target.value;
+                                                onUpdate({ logic: newLogic });
+                                            }}
+                                        >
+                                            <option value="">-- Chọn trang cảm ơn --</option>
+                                            {(survey.thankYouPages ?? []).map((page, i) => (
+                                                <option key={page.id ?? i} value={page.id ?? String(i)}>{page.title || `Trang cảm ơn ${i+1}`}</option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 )}
             </div>
         </div>
@@ -261,9 +422,10 @@ const BlockInputPreview: React.FC<{ block: SurveyBlock; theme: SurveyTheme; acce
             </div>;
 
         case 'date':
+            const isDatetime = (block as any).dateMode === 'datetime';
             return <div className="w-full h-9 rounded-xl bg-slate-50 border border-slate-200 px-3 flex items-center justify-between">
-                <span className="text-xs text-slate-300">DD/MM/YYYY</span>
-                <LucideIcons.Calendar className="w-3.5 h-3.5 text-slate-300" />
+                <span className="text-xs text-slate-300">{isDatetime ? 'DD/MM/YYYY HH:mm' : 'DD/MM/YYYY'}</span>
+                {isDatetime ? <LucideIcons.Clock className="w-3.5 h-3.5 text-slate-300" /> : <LucideIcons.Calendar className="w-3.5 h-3.5 text-slate-300" />}
             </div>;
 
         case 'single_choice': case 'multi_choice':

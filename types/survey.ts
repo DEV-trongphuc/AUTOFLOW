@@ -27,13 +27,20 @@ export interface MatrixCol { id: string; label: string; }
 export interface LogicCondition {
   question_id: string;
   operator: 'equals' | 'not_equals' | 'contains' | 'greater_than' | 'less_than' | 'is_answered' | 'is_empty';
-  value?: string | number;
+  value?: string | number | string[];
 }
 
 export interface LogicRule {
   condition: LogicCondition;
-  action: 'skip_to' | 'show_question' | 'hide_question' | 'end_survey';
-  target?: string; // question block_id or 'thank_you'
+  action: 'skip_to' | 'show_question' | 'hide_question' | 'end_survey' | 'end_survey_screen';
+  target?: string; // target block id or thank_you_screen_id
+}
+
+export interface QuizSettings {
+  enabled: boolean;
+  scoringType: 'immediate' | 'backend';
+  allowRetry: boolean;
+  timeLimitMins?: number;
 }
 
 // ─── Survey Block ─────────────────────────────────────────────────────────────
@@ -58,6 +65,11 @@ export interface SurveyBlock {
   required: boolean;
   style?: SurveyBlockStyle;
   logic?: LogicRule[];
+
+  // Quiz properties
+  quizPoints?: number;
+  correctAnswer?: string | number | string[];
+  correctAnswerMatch?: 'exact' | 'contains';
 
   // Choice/ranking options
   options?: ChoiceOption[];
@@ -148,9 +160,11 @@ export interface SurveySettings {
   trackIp: boolean;
   trackLocation: boolean;
   customCss?: string;
+  quiz?: QuizSettings;
 }
 
 export interface ThankYouPage {
+  id?: string;
   title: string;
   message: string;
   emoji?: string;
@@ -172,7 +186,8 @@ export interface Survey {
   blocks: SurveyBlock[];
   theme: SurveyTheme;
   settings: SurveySettings;
-  thankYouPage: ThankYouPage;
+  thankYouPage: ThankYouPage;       // Default ending screen
+  thankYouPages?: ThankYouPage[];   // Additional ending screens for branching
   target_list_id?: string;
   flow_trigger_id?: string;
   response_limit?: number;
@@ -256,6 +271,9 @@ export interface QuestionAnalytics {
   text_responses?: string[];
   // Ranking
   ranking_avg?: Array<{ label: string; avg_rank: number }>;
+  // Additional block data passed by API for display formatting
+  content?: any;
+  options?: any;
 }
 
 // ─── Toolbox ─────────────────────────────────────────────────────────────────

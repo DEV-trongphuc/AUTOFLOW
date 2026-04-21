@@ -14,6 +14,7 @@ import Input from '../common/Input';
 import Select from '../common/Select';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../common/ConfirmModal';
+import InputModal from '../common/InputModal';
 import IntegrationGuideModal from '../flows/modals/IntegrationGuideModal';
 
 const DB_FIELDS = [
@@ -36,6 +37,7 @@ const FormsTab: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isAddingList, setIsAddingList] = useState(false);
     const [editingFormId, setEditingFormId] = useState<string | null>(null);
     const [formData, setFormData] = useState<Partial<FormDefinition>>({
         name: '', targetListId: '', fields: [{ id: 'f-email', dbField: 'email', label: 'Địa chỉ Email', required: true, type: 'email' }],
@@ -268,21 +270,9 @@ const FormsTab: React.FC = () => {
                             <div className="flex justify-between items-center mb-1">
                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Danh sách lưu trữ đích</label>
                                 <button
-                                    onClick={async () => {
-                                        const listName = prompt('Nhập tên danh sách mới:');
-                                        if (listName) {
-                                            try {
-                                                const res = await api.post<any>('lists', { name: listName, description: 'Created from Form Builder' });
-                                                if (res.success) {
-                                                    toast.success('Đã tạo danh sách mới');
-                                                    const listsRes = await api.get<any[]>('lists');
-                                                    if (listsRes.success) {
-                                                        setLists(listsRes.data);
-                                                        setFormData(prev => ({ ...prev, targetListId: res.data.id }));
-                                                    }
-                                                }
-                                            } catch (e) { toast.error('Lỗi khi tạo danh sách'); }
-                                        }
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setIsAddingList(true);
                                     }}
                                     className="text-[9px] font-black text-amber-600 hover:text-amber-700 uppercase tracking-tight flex items-center gap-1"
                                 >
@@ -472,6 +462,27 @@ const FormsTab: React.FC = () => {
 
             <ConfirmModal isOpen={!!confirmDeleteId} onClose={() => setConfirmDeleteId(null)} onConfirm={executeDelete} title="Xác nhận xóa biểu mẫu" message="Hành động này sẽ xóa vĩnh viễn biểu mẫu này." variant="danger" confirmLabel="Xóa vĩnh viễn" />
 
+            <InputModal
+                isOpen={isAddingList}
+                onClose={() => setIsAddingList(false)}
+                title="Tạo danh sách mới"
+                placeholder="Nhập tên danh sách mới..."
+                confirmLabel="Tạo mới"
+                onConfirm={async (listName) => {
+                    if (!listName) return;
+                    try {
+                        const res = await api.post<any>('lists', { name: listName, description: 'Created from Form Builder' });
+                        if (res.success) {
+                            toast.success('Đã tạo danh sách mới');
+                            const listsRes = await api.get<any[]>('lists');
+                            if (listsRes.success) {
+                                setLists(listsRes.data);
+                                setFormData(prev => ({ ...prev, targetListId: res.data.id }));
+                            }
+                        }
+                    } catch (e) { toast.error('Lỗi khi tạo danh sách'); }
+                }}
+            />
         </div>
     );
 };

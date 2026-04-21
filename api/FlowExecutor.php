@@ -779,10 +779,10 @@ class FlowExecutor
                     $waitDur = (int) ($step['config']['waitDuration'] ?? 1);
                     $waitUnit = $step['config']['waitUnit'] ?? 'hours';
 
-                    // [FIX] Tìm campaignId từ bước Trigger trong danh sách các bước (steps)
+                    // [FIX] Khai báo target/campaign ID từ bước Trigger
                     $linkedCampaignId = null;
                     foreach ($flowSteps as $fs) {
-                        if ($fs['type'] === 'trigger' && ($fs['config']['type'] ?? '') === 'campaign') {
+                        if ($fs['type'] === 'trigger' && in_array($fs['config']['type'] ?? '', ['campaign', 'survey'])) {
                             // Cấu hình lưu trong targetId hoặc campaignId
                             $linkedCampaignId = $fs['config']['targetId'] ?? ($fs['config']['campaignId'] ?? null);
                             break;
@@ -816,24 +816,90 @@ class FlowExecutor
 
                     // Determine Types
                     $types = [];
-                    if ($condType === 'opened')
+
+                    // [NEW] Survey Condition Evaluation
+                    if (strpos($condType, 'survey_') === 0) {
+                        $targetSurveyId = $linkedCampaignId;
+                        $sqlResp = "SELECT * FROM survey_responses WHERE subscriber_id = ?";
+                        $paramsResp = [$subscriberId];
+                        
+                        // [FIX] Allow 1 hour grace period before queue creation to catch the survey response that triggered the flow
+                        $graceStartTime = !empty($queueCreatedAt) ? $queueCreatedAt : $startTime;
+                        $sqlResp .= " AND created_at >= ?";
+                        $paramsResp[] = (new DateTime($graceStartTime))->modify('-1 hour')->format('Y-m-d H:i:s');
+
+                        if ($targetSurveyId) {
+                            $sqlResp .= " AND survey_id = ?";
+                            $paramsResp[] = $targetSurveyId;
+                        }
+                        $sqlResp .= " ORDER BY created_at DESC LIMIT 1";
+                        $stmtR = $this->pdo->prepare($sqlResp);
+                        $stmtR->execute($paramsResp);
+                        $latestResp = $stmtR->fetch();
+
+                        if ($latestResp) {
+                            if ($condType === 'survey_score') {
+                                $targetVal = (float)($step['config']['scoreValue'] ?? 0);
+                                $actualVal = (float)($latestResp['total_score'] ?? 0);
+                                $op = $step['config']['scoreOperator'] ?? '>=';
+                                if ($op === '>=') $isMatched = ($actualVal >= $targetVal);
+                                elseif ($op === '<=') $isMatched = ($actualVal <= $targetVal);
+                                elseif ($op === '==') $isMatched = ($actualVal == $targetVal);
+                                elseif ($op === '<') $isMatched = ($actualVal < $targetVal);
+                                elseif ($op === '>') $isMatched = ($actualVal > $targetVal);
+                            } elseif ($condType === 'survey_answer') {
+                                $qId = trim($step['config']['questionId'] ?? '');
+                                $ansMatch = mb_strtolower(trim($step['config']['answerMatch'] ?? ''));
+                                $answers = json_decode($latestResp['answers_json'] ?? '[]', true) ?: [];
+                                foreach ($answers as $ans) {
+                                    if (($ans['question_id'] ?? '') === $qId) {
+                                        $valStr = trim($ans['answer_text'] ?? '');
+                                        if ($valStr === '') {
+                                            if (isset($ans['answer_num'])) {
+                                                $valStr = (string)$ans['answer_num'];
+                                            } elseif (!empty($ans['answer_json'])) {
+                                                 if (is_array($ans['answer_json'])) {
+                                                    $valStr = implode(', ', $ans['answer_json']);
+                                                 } else {
+                                                    $valStr = (string)$ans['answer_json'];
+                                                 }
+                                            }
+                                        }
+                                        $valStr = mb_strtolower($valStr);
+                                        // Precise or contains match
+                                        if (strpos($valStr, $ansMatch) !== false || $valStr === $ansMatch) {
+                                            $isMatched = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            } elseif ($condType === 'survey_screen') {
+                                $targetScreen = trim($step['config']['endScreenId'] ?? 'default');
+                                if ($targetScreen === '') $targetScreen = 'default';
+                                $isMatched = (($latestResp['end_screen_id'] ?? 'default') === $targetScreen);
+                            }
+                        }
+                    } elseif ($condType === 'opened') {
                         $types = ['open_email', 'open_zns'];
-                    elseif ($condType === 'clicked')
+                    } elseif ($condType === 'clicked') {
                         $types = ['click_link', 'click_zns'];
-                    elseif ($condType === 'unsubscribed')
+                    } elseif ($condType === 'unsubscribed') {
                         $types = ['unsubscribe'];
+                    }
                     // [FIX] ZNS-specific condition types
-                    elseif ($condType === 'zns_delivered')
+                    elseif ($condType === 'zns_delivered') {
                         $types = ['zns_sent'];
-                    elseif ($condType === 'zns_clicked')
+                    } elseif ($condType === 'zns_clicked') {
                         $types = ['click_zns'];
-                    elseif ($condType === 'zns_replied')
+                    } elseif ($condType === 'zns_replied') {
                         $types = ['reply_zns'];
-                    elseif ($condType === 'zns_failed')
+                    } elseif ($condType === 'zns_failed') {
                         $types = ['zns_failed'];
+                    }
                     // [FIX] Email delivered = receive_email
-                    elseif ($condType === 'delivered')
+                    elseif ($condType === 'delivered') {
                         $types = ['receive_email'];
+                    }
                     // [FIX] Reminder conditions — check subscriber_activity for reminder events
                     elseif ($condType === 'received_reminder') {
                         $types = ['receive_email']; // receive_email logged when reminder is sent
