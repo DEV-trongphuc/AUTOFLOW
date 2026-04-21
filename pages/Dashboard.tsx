@@ -1,8 +1,8 @@
-﻿import { EXTERNAL_ASSET_BASE } from '@/utils/config';
+import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Star, Sparkles, LayoutDashboard, Activity, Mail, Zap, FileText, Bot, Globe, Users, BarChart3, Settings, Clock, ArrowRight, MessageSquare, Facebook, Share2, Ticket, Webhook, Code2, Link, Play, Target, ClipboardList
+    Star, Sparkles, LayoutDashboard, Activity, Mail, Zap, FileText, Bot, Globe, Users, BarChart3, Settings, Clock, ArrowRight, MessageSquare, Facebook, Share2, Ticket, Webhook, Code2, Link, Play, Target, ClipboardList, QrCode
 } from 'lucide-react';
 import PageHero from '../components/common/PageHero';
 import { SystemOverviewModal } from '../components/common/SystemOverviewModal';
@@ -79,10 +79,19 @@ const ALL_MODULES: Module[] = [
         id: 'surveys',
         title: 'Survey Builder',
         sub: 'Thiết kế form khảo sát chuyên nghiệp. Thu thập thông tin Khách hàng, báo cáo Real-time.',
-        icon: ClipboardList,
+        icon: ClipboardList, QrCode,
         color: 'from-amber-400 to-orange-500',
         path: '/surveys',
         tags: ['Feedback', 'Form']
+    },
+    {
+        id: 'links-qr',
+        title: 'QR & Link Tracking',
+        sub: 'Tạo link rút gọn và mã QR Code thông minh, phân tích chi tiết biểu đồ hành vi quét mã đa nền tảng.',
+        icon: QrCode,
+        color: 'from-violet-500 to-fuchsia-600',
+        path: '/links-qr',
+        tags: ['Tracking', 'QR', 'O2O']
     },
     {
         id: 'zalo-oa',
