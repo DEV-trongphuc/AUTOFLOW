@@ -122,9 +122,23 @@ try {
             exit;
         }
 
-        // one_per_email check
+        // [SEC] Sanitize payload to prevent XSS
+        $sanitizePayload = function($data) use (&$sanitizePayload) {
+            if (is_array($data)) {
+                $sanitized = [];
+                foreach ($data as $k => $v) {
+                    $sanitized[$k] = $sanitizePayload($v);
+                }
+                return $sanitized;
+            }
+            if (is_scalar($data)) {
+                return htmlspecialchars((string)$data, ENT_QUOTES, 'UTF-8');
+            }
+            return $data;
+        };
+
+        $answers = $sanitizePayload($input['answers'] ?? []);
         $submittedEmail = null;
-        $answers = $input['answers'] ?? [];
         if ($survey['one_per_email']) {
             foreach ($answers as $ans) {
                 if (($ans['type'] ?? '') === 'email' && !empty($ans['answer_text'])) {
@@ -164,9 +178,14 @@ try {
 
         $subscriberId = null;
         $submittedName = null;
+        $submittedPhone = null;
         foreach ($answers as $ans) {
             if (($ans['type'] ?? '') === 'email' && !empty($ans['answer_text'])) {
                 $submittedEmail = strtolower(trim($ans['answer_text']));
+            }
+            if (($ans['type'] ?? '') === 'phone_number' && !empty($ans['answer_text'])) {
+                // Ensure Phone extraction works too
+                $submittedPhone = trim($ans['answer_text']);
             }
             if (in_array($ans['type'] ?? '', ['short_text']) && stripos($ans['label'] ?? '', 'tên') !== false) {
                 $submittedName = trim($ans['answer_text'] ?? '');
@@ -182,16 +201,20 @@ try {
             }
         }
         if ($submittedEmail) {
-            $subStmt = $pdo->prepare("SELECT id FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
+            $subStmt = $pdo->prepare("SELECT id, phone_number FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
             $subStmt->execute([$submittedEmail, $survey['workspace_id']]);
-            $existSub = $subStmt->fetchColumn();
+            $existSub = $subStmt->fetch();
             if ($existSub) {
-                $subscriberId = $existSub;
+                $subscriberId = $existSub['id'];
+                if ($submittedPhone && empty($existSub['phone_number'])) {
+                    $pdo->prepare("UPDATE subscribers SET phone_number = ? WHERE id = ?")
+                        ->execute([$submittedPhone, $subscriberId]);
+                }
             } else {
                 $subscriberId = generateUUID();
-                $pdo->prepare("INSERT INTO subscribers (id, email, first_name, source, workspace_id, created_at)
-                    VALUES (?, ?, ?, 'survey', ?, NOW())")
-                    ->execute([$subscriberId, $submittedEmail, $submittedName ?? '', $survey['workspace_id']]);
+                $pdo->prepare("INSERT INTO subscribers (id, email, phone_number, first_name, source, workspace_id, created_at)
+                    VALUES (?, ?, ?, ?, 'survey', ?, NOW())")
+                    ->execute([$subscriberId, $submittedEmail, $submittedPhone, $submittedName ?? '', $survey['workspace_id']]);
             }
             // Tag subscriber
             $tagName = 'survey_responded_' . $survey['id'];
@@ -199,8 +222,17 @@ try {
             
             // Add to Target List if configured
             if (!empty($survey['target_list_id'])) {
-                $pdo->prepare("INSERT IGNORE INTO list_subscribers (list_id, subscriber_id) VALUES (?, ?)")
-                    ->execute([$survey['target_list_id'], $subscriberId]);
+                // [FIX BUG-SQL-2] Wrong table name 'list_subscribers' doesn't exist.
+                // Correct table is 'subscriber_lists(subscriber_id, list_id)'
+                $stmtListIns = $pdo->prepare("INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id) VALUES (?, ?)");
+                $stmtListIns->execute([$subscriberId, $survey['target_list_id']]);
+                // [FIX BUG-SQL-2b] Only increment subscriber_count if the row was newly inserted.
+                // Original NOT EXISTS check ran AFTER the INSERT, so NOT EXISTS was always FALSE
+                // (the row already existed), and subscriber_count was never incremented.
+                if ($stmtListIns->rowCount() > 0) {
+                    $pdo->prepare("UPDATE lists SET subscriber_count = subscriber_count + 1 WHERE id = ?")
+                        ->execute([$survey['target_list_id']]);
+                }
             }
         }
 
@@ -307,7 +339,11 @@ try {
         if ($subscriberId) {
             try {
                 // 1. survey_submit trigger — maps active flows with trigger_type='survey' targeting this survey
-                $workerUrl = API_BASE_URL . '/worker_priority.php?' . http_build_query([
+                $apiUrl = defined('API_BASE_URL') ? API_BASE_URL : 'https://automation.ideas.edu.vn/mail_api';
+                if (strpos($apiUrl, 'http') === false) {
+                    $apiUrl = 'https://automation.ideas.edu.vn/mail_api';
+                }
+                $workerUrl = $apiUrl . '/worker_priority.php?' . http_build_query([
                     'trigger_type' => 'survey',
                     'target_id'    => $survey['id'],
                     'subscriber_id'=> $subscriberId
@@ -336,6 +372,24 @@ try {
             } catch (Exception $e) {
                 error_log('Survey flow trigger error: ' . $e->getMessage());
             }
+        }
+
+        // EVENT-DRIVEN WAKEUP FOR SURVEY CONDITIONS
+        if (!empty($subscriberId)) {
+            require_once 'trigger_helper.php';
+            wakeupWaitingSubscribers($pdo, $subscriberId);
+        }
+
+        // INCREMENT SHORT LINK SUBMIT COUNT
+        $slid = $input['slid'] ?? '';
+        if (empty($slid) && isset($_SERVER['HTTP_REFERER'])) {
+            parse_str(parse_url($_SERVER['HTTP_REFERER'], PHP_URL_QUERY) ?? '', $refQ);
+            $slid = $refQ['slid'] ?? '';
+        }
+        if (!empty($slid)) {
+            try {
+                $pdo->prepare("UPDATE short_links SET submit_count = submit_count + 1 WHERE id = ?")->execute([$slid]);
+            } catch (Exception $e) {}
         }
 
         $thankYou = json_decode($survey['thank_you_page'] ?? '{}', true);

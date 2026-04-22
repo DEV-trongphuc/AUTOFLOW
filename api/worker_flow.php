@@ -37,9 +37,14 @@ if (!function_exists('traceLog')) {
 if (!function_exists('runWorkerFlow')) {
     function runWorkerFlow($pdo)
     {
-        // [FIX #3] Dùng bi?n c?c b? thay vì $_SERVER['REQUEST_TIME']
-        // $_SERVER['REQUEST_TIME'] không t?n t?i khi ch?y t? CLI/Cron trên m?t s? c?u hình server
+        // [FIX #3] Dï¿½ng bi?n c?c b? thay vï¿½ $_SERVER['REQUEST_TIME']
+        // $_SERVER['REQUEST_TIME'] khï¿½ng t?n t?i khi ch?y t? CLI/Cron trï¿½n m?t s? c?u hï¿½nh server
         $workerStartTime = time();
+
+        // [ZOMBIE REAPER] Rescue stuck processes
+        // [FIX BUG-WORKER-1] flow_subscribers table does not exist â€” correct table is subscriber_flow_states
+        // Status 'queued' also wrong â€” correct rollback status is 'waiting'
+        try { $pdo->exec("UPDATE subscriber_flow_states SET status = 'waiting', updated_at = NOW() WHERE status = 'processing' AND updated_at < DATE_SUB(NOW(), INTERVAL 30 MINUTE)"); } catch (Exception $e) {}
 
         // Detect priority runs
         $isPriorityRun = (isset($_GET['priority_queue_id']) && (isset($_GET['priority_sub_id']) || isset($_GET['subscriber_id'])) && isset($_GET['priority_flow_id']));
@@ -173,7 +178,7 @@ if (!function_exists('runWorkerFlow')) {
         }
 
         if (empty($items)) {
-            // [FIX] return array instead of echo — prevents broken JSON output
+            // [FIX] return array instead of echo ï¿½ prevents broken JSON output
             // when called multiple times from worker_queue.php loop
             return ['status' => 'idle', 'message' => 'No items', 'logs' => $logs];
         }
@@ -198,7 +203,7 @@ if (!function_exists('runWorkerFlow')) {
                 $stmtCapBatch->execute(array_merge($subIds, [$todayStart]));
                 $freqRows = $stmtCapBatch->fetchAll(PDO::FETCH_ASSOC);
                 foreach ($freqRows as $r) {
-                    $sId = $r['subscriber_id']; // [BUG FIX] Keep as raw string UUID — (int) cast converts UUIDs to 0, making all subscribers share cache key 0
+                    $sId = $r['subscriber_id']; // [BUG FIX] Keep as raw string UUID ï¿½ (int) cast converts UUIDs to 0, making all subscribers share cache key 0
                     if (!isset($subscriberFreqCache[$sId])) {
                         $subscriberFreqCache[$sId] = ['email' => 0, 'zalo' => 0, 'meta' => 0];
                     }
@@ -214,7 +219,7 @@ if (!function_exists('runWorkerFlow')) {
         }
 
         foreach ($items as $item) {
-            // [FIX #3] Dùng $workerStartTime thay vì $_SERVER['REQUEST_TIME'] (an toàn hon cho CLI/Cron)
+            // [FIX #3] Dï¿½ng $workerStartTime thay vï¿½ $_SERVER['REQUEST_TIME'] (an toï¿½n hon cho CLI/Cron)
             if (time() - $workerStartTime > 280)
                 break;
 
@@ -229,11 +234,11 @@ if (!function_exists('runWorkerFlow')) {
 
                 // [BUG-FIX] DOUBLE-CHECK LOCK for MySQL 5.7 (no SKIP LOCKED):
                 // On MySQL 5.7, FOR UPDATE blocks Worker B waiting for Worker A to commit.
-                // After Worker A commits, Worker B wakes up and re-reads the SAME row —
+                // After Worker A commits, Worker B wakes up and re-reads the SAME row ï¿½
                 // now with status='waiting' or 'completed' (already advanced by A).
                 // Without this check, Worker B would re-process the same item ? duplicate email in 1-2s.
                 // Fix: re-read status from DB inside the new transaction. If no longer 'processing',
-                // someone else already handled this item — skip it.
+                // someone else already handled this item ï¿½ skip it.
                 $checkStmt = $pdo->prepare("SELECT status, updated_at FROM subscriber_flow_states WHERE id = ? FOR UPDATE");
                 $checkStmt->execute([$queueId]);
                 $freshState = $checkStmt->fetch(PDO::FETCH_ASSOC);
@@ -257,7 +262,7 @@ if (!function_exists('runWorkerFlow')) {
 
                 // [EXIT CHECK] Check if subscriber is still eligible (not unsubscribed globally)
                 if (trim($item['sub_status']) === 'unsubscribed') {
-                    // DB ENUM confirmed: waiting, processing, completed, failed, unsubscribed — use correct status
+                    // DB ENUM confirmed: waiting, processing, completed, failed, unsubscribed ï¿½ use correct status
                     $pdo->prepare("UPDATE subscriber_flow_states SET status = 'unsubscribed', updated_at = NOW() WHERE id = ?")->execute([$queueId]);
                     $logs[] = "[Flow-Exit] Sub {$subscriberId} is unsubscribed. Marking unsubscribed and skipping.";
                     $pdo->commit();
@@ -267,7 +272,7 @@ if (!function_exists('runWorkerFlow')) {
 
                 if (!isset($flowCache[$flowId])) {
                     $flowCache[$flowId] = [
-                        // [FIX #1] Thêm ?? [] d? tránh Fatal TypeError khi flow_steps là null ho?c JSON l?i
+                        // [FIX #1] Thï¿½m ?? [] d? trï¿½nh Fatal TypeError khi flow_steps lï¿½ null ho?c JSON l?i
                         'steps' => json_decode($item['flow_steps'], true) ?? [],
                         'config' => json_decode($item['flow_config'], true) ?? [],
                     ];
@@ -277,11 +282,11 @@ if (!function_exists('runWorkerFlow')) {
                 $fConfig = $flowCache[$flowId]['config'];
                 // [PERF #10] Build a hash map keyed by step id for O(1) step lookups.
                 // Without this, every step iteration in the chain does a O(n) foreach.
-                // With MAX_STEPS=50 and a 20-step flow: 50×20=1000 iterations per subscriber.
+                // With MAX_STEPS=50 and a 20-step flow: 50ï¿½20=1000 iterations per subscriber.
                 // With $stepIndex: 20 iterations (one-time build) + O(1) per lookup = ~20 total.
                 $stepIndex = [];
 
-                // [FIX #1] Guard: n?u flow_steps không h?p l? ? fail item thay vì crash toàn worker
+                // [FIX #1] Guard: n?u flow_steps khï¿½ng h?p l? ? fail item thay vï¿½ crash toï¿½n worker
                 if (!is_array($flowSteps) || empty($flowSteps)) {
                     $pdo->prepare("UPDATE subscriber_flow_states SET status = 'failed', last_error = 'Invalid flow_steps JSON', updated_at = NOW() WHERE id = ?")->execute([$queueId]);
                     $logs[] = "[ERROR] Flow {$flowId} has invalid steps JSON. Item {$queueId} marked failed.";
@@ -315,7 +320,7 @@ if (!function_exists('runWorkerFlow')) {
                     }
                 }
 
-                // Activity Cache — fetched since enrollment (queue_created_at).
+                // Activity Cache ï¿½ fetched since enrollment (queue_created_at).
                 // [FIX #5 v2] If we have exit types, filter the query by those types so we fetch ALL
                 // matching rows without any LIMIT risk. A separate broader LIMIT 500 fetch covers
                 // condition-chain logic that needs recent general activity.
@@ -333,7 +338,7 @@ if (!function_exists('runWorkerFlow')) {
                     $exitActivityCache = [];
                 }
 
-                // General activity cache (for condition steps, not only exits) — LIMIT 500 is safe here
+                // General activity cache (for condition steps, not only exits) ï¿½ LIMIT 500 is safe here
                 // because condition logic uses recent events, not exhaustive history.
                 $stmtAct = $pdo->prepare(
                     "SELECT type, reference_id, campaign_id, details, created_at 
@@ -344,7 +349,7 @@ if (!function_exists('runWorkerFlow')) {
                 $stmtAct->execute([$subscriberId, $item['queue_created_at']]);
                 $activityCache = $stmtAct->fetchAll();
 
-                // [EXIT CHECK] Specific exit conditions — uses the unlimited exitActivityCache
+                // [EXIT CHECK] Specific exit conditions ï¿½ uses the unlimited exitActivityCache
                 if (!empty($exitActivityTypes)) {
                     $shouldExit = false;
                     foreach ($exitActivityCache as $act) {
@@ -391,7 +396,7 @@ if (!function_exists('runWorkerFlow')) {
 
                 $currentStepId = $item['step_id'];
                 $stepsProcessedInRun = 0;
-                $MAX_STEPS = 50; // [FIX] Tang t? 20?50 d? nh?t quán v?i worker_priority.php
+                $MAX_STEPS = 50; // [FIX] Tang t? 20?50 d? nh?t quï¿½n v?i worker_priority.php
                 // Flow ph?c t?p >20 bu?c condition/split s? b? d?ng s?m n?u gi? 20
                 $shouldContinueChain = true;
 
@@ -464,12 +469,12 @@ if (!function_exists('runWorkerFlow')) {
                             $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = ?, step_id = ?, updated_at = NOW() WHERE id = ?")->execute([$nextSendAt, $currentStepId, $queueId]);
                             $logs[] = "  -> Step '{$currentStep['label']}' paused (Time Restriction). Re-scheduled to: $nextSendAt";
                             $shouldContinueChain = false;
-                            break; // Ng?t kh?i dòng while ngay l?p t?c, d?i l?n ch?y sau
+                            break; // Ng?t kh?i dï¿½ng while ngay l?p t?c, d?i l?n ch?y sau
                         }
                     }
 
                     // [OPTIMIZATION] Frequency Cap check - Uses batch-fetched data
-                    $cacheKey = $subscriberId; // [BUG FIX] Keep as raw string UUID — must match the string key used when building $subscriberFreqCache above
+                    $cacheKey = $subscriberId; // [BUG FIX] Keep as raw string UUID ï¿½ must match the string key used when building $subscriberFreqCache above
                     // [FIX] PHP 8: initialize key before ++ to prevent Undefined array key Warning
                     if (!isset($subscriberFreqCache[$cacheKey])) {
                         $subscriberFreqCache[$cacheKey] = ['email' => 0, 'zalo' => 0, 'meta' => 0];
@@ -486,11 +491,11 @@ if (!function_exists('runWorkerFlow')) {
                         'total_sent_today' => $subscriberFreqCache[$cacheKey],
                         'activity_cache' => $activityCache,
                         'now' => $now,
-                        // [FIX #2] Cast (string) tru?c trim() — tránh PHP 8.1 Deprecated khi step_id là null
+                        // [FIX #2] Cast (string) tru?c trim() ï¿½ trï¿½nh PHP 8.1 Deprecated khi step_id lï¿½ null
                         // [CRITICAL FIX] is_resumed_wait guards against the wait being re-calculated
                         // from scratch, but it MUST only be TRUE when:
                         // 1. This is the first step of this worker run (stepsProcessedInRun===1)
-                        // 2. The ORIGINAL DB status was 'waiting' — NOT crash recovery ('processing').
+                        // 2. The ORIGINAL DB status was 'waiting' ï¿½ NOT crash recovery ('processing').
                         //    If we were 'processing' when picked up (5-min stale fallback), it means
                         //    the worker previously committed step_id but crashed before scheduling the
                         //    wait. Treating it as a resumed wait would SKIP the wait entirely.
@@ -526,7 +531,7 @@ if (!function_exists('runWorkerFlow')) {
                             // If worker crashes after this commit, cron picks up item 5min later,
                             // sees step_id=wait_step, treats as fresh entry, recalculates wait ? RESET.
                             // Fix: always write step_id + updated_at so crash recovery resumes correctly.
-                            // [PERF] Also persist step_type — used by tracking_processor to avoid
+                            // [PERF] Also persist step_type ï¿½ used by tracking_processor to avoid
                             // json_decode on every open/click event (eliminates full flow.steps scan).
                             // [PERF #10] $stepIndex is built once per flow item (O(n) total),
                             // making each next-step type lookup O(1) instead of O(n).
@@ -574,7 +579,7 @@ if (!function_exists('runWorkerFlow')) {
 
                 // [FIX] After rollback, explicitly reset status to 'waiting' with +5min retry.
                 // Previously this left status='processing' indefinitely, relying on the implicit
-                // 5-minute stale recovery — which works but: (a) provides no error trace,
+                // 5-minute stale recovery ï¿½ which works but: (a) provides no error trace,
                 // (b) means the item silently retries with no visibility into what went wrong.
                 // Now: write last_error for traceability + schedule explicit clean retry.
                 $retryAt = date('Y-m-d H:i:s', time() + 300); // 5 minutes
@@ -583,7 +588,7 @@ if (!function_exists('runWorkerFlow')) {
                         "UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = ?, last_error = ?, updated_at = NOW() WHERE id = ?"
                     )->execute([$retryAt, substr($e->getMessage(), 0, 500), $queueId]);
                 } catch (Throwable $resetEx) {
-                    // last_error column may not exist on older schema — fall back to status-only reset
+                    // last_error column may not exist on older schema ï¿½ fall back to status-only reset
                     try {
                         $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = ?, updated_at = NOW() WHERE id = ?")->execute([$retryAt, $queueId]);
                     } catch (Throwable $ignored) {}
@@ -605,14 +610,14 @@ if (!function_exists('runWorkerFlow')) {
         $mailer->closeConnection();
         // [FIX] LOCK_EX prevents log corruption when multiple worker processes write concurrently
         file_put_contents(__DIR__ . '/worker_flow.log', implode("\n", $logs) . "\n", FILE_APPEND | LOCK_EX);
-        // [FIX] return array instead of echo — caller (worker_queue.php) is responsible for output
+        // [FIX] return array instead of echo ï¿½ caller (worker_queue.php) is responsible for output
         return ['status' => 'completed', 'logs' => $logs];
     } // end runWorkerFlow()
 } // end if (!function_exists)
 
 // When run as standalone script (cron/direct), execute immediately and output result
 if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
-    // [FIX] Only echo here — when called via require_once from worker_queue.php,
+    // [FIX] Only echo here ï¿½ when called via require_once from worker_queue.php,
     // the caller manages output. This guard prevents broken concatenated JSON.
     $result = runWorkerFlow($pdo);
     echo json_encode($result);

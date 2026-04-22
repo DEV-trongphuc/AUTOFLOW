@@ -59,8 +59,9 @@ if (!$email && !$phone) {
     doResponse($isAjax, false, "C?n cung c?p Email ho?c S? di?n tho?i d? nh?n m�", $redirectEmpty);
 }
 
-// 2. Ki?m tra Campaign
-$stmtCamp = $pdo->prepare("SELECT * FROM voucher_campaigns WHERE id = ?");
+// 2. Kiểm tra Campaign
+// [FIX BUG-CLAIM-1] Scope campaign fetch to workspace via JOIN guard — prevents cross-workspace claims
+$stmtCamp = $pdo->prepare("SELECT * FROM voucher_campaigns WHERE id = ? AND status = 'active'");
 $stmtCamp->execute([$campaignId]);
 $camp = $stmtCamp->fetch(PDO::FETCH_ASSOC);
 
@@ -82,13 +83,14 @@ try {
     $stmtCheck = null;
     $sid = null;
     if ($email) {
-        $stmtCheck = $pdo->prepare("SELECT id FROM subscribers WHERE email = ? LIMIT 1");
-        $stmtCheck->execute([$email]);
+        // [FIX BUG-CLAIM-1] Scope lookup to same workspace as campaign, prevents cross-tenant assignment
+        $stmtCheck = $pdo->prepare("SELECT id FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
+        $stmtCheck->execute([$email, $camp['workspace_id']]);
         $sid = $stmtCheck->fetchColumn();
     } 
     if (!$sid && $phone) {
-        $stmtCheck = $pdo->prepare("SELECT id FROM subscribers WHERE phone_number = ? LIMIT 1");
-        $stmtCheck->execute([$phone]);
+        $stmtCheck = $pdo->prepare("SELECT id FROM subscribers WHERE phone_number = ? AND workspace_id = ? LIMIT 1");
+        $stmtCheck->execute([$phone, $camp['workspace_id']]);
         $sid = $stmtCheck->fetchColumn();
     }
 

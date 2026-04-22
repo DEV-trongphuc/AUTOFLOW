@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost:3306
--- Thời gian đã tạo: Th4 21, 2026 lúc 07:13 PM
+-- Thời gian đã tạo: Th4 22, 2026 lúc 06:49 AM
 -- Phiên bản máy phục vụ: 10.6.18-MariaDB-cll-lve-log
 -- Phiên bản PHP: 8.4.19
 
@@ -1176,6 +1176,17 @@ CREATE TABLE `queue_jobs` (
 -- --------------------------------------------------------
 
 --
+-- Cấu trúc bảng cho bảng `queue_throttle`
+--
+
+CREATE TABLE `queue_throttle` (
+  `throttle_key` varchar(120) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Cấu trúc bảng cho bảng `raw_event_buffer`
 --
 
@@ -1273,6 +1284,9 @@ CREATE TABLE `short_links` (
   `target_url` text DEFAULT NULL,
   `is_survey_checkin` tinyint(1) DEFAULT 0,
   `survey_id` varchar(36) DEFAULT NULL,
+  `status` enum('active','paused') NOT NULL DEFAULT 'active',
+  `access_pin` varchar(10) DEFAULT NULL,
+  `submit_count` int(11) NOT NULL DEFAULT 0,
   `qr_config_json` text DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1547,6 +1561,9 @@ CREATE TABLE `survey_responses` (
   `referrer_url` varchar(1024) DEFAULT NULL,
   `geo_country` varchar(64) DEFAULT NULL,
   `geo_city` varchar(128) DEFAULT NULL,
+  `total_score` float DEFAULT NULL,
+  `max_score` float DEFAULT NULL,
+  `end_screen_id` varchar(100) DEFAULT 'default',
   `submitted_at` timestamp NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -2638,7 +2655,8 @@ ALTER TABLE `integrations`
 --
 ALTER TABLE `link_clicks`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_link_time` (`short_link_id`,`clicked_at`);
+  ADD KEY `idx_link_time` (`short_link_id`,`clicked_at`),
+  ADD KEY `idx_short_link_time` (`short_link_id`,`clicked_at`);
 
 --
 -- Chỉ mục cho bảng `lists`
@@ -2786,6 +2804,12 @@ ALTER TABLE `queue_jobs`
   ADD KEY `idx_qj_status_available` (`status`,`available_at`),
   ADD KEY `idx_qj_queue_status` (`queue`,`status`),
   ADD KEY `idx_qj_status_reserved` (`status`,`reserved_at`);
+
+--
+-- Chỉ mục cho bảng `queue_throttle`
+--
+ALTER TABLE `queue_throttle`
+  ADD PRIMARY KEY (`throttle_key`);
 
 --
 -- Chỉ mục cho bảng `raw_event_buffer`
@@ -3004,7 +3028,8 @@ ALTER TABLE `survey_responses`
   ADD UNIQUE KEY `uq_session_token` (`session_token`),
   ADD KEY `idx_survey_responses_survey` (`survey_id`),
   ADD KEY `idx_survey_responses_subscriber` (`subscriber_id`),
-  ADD KEY `idx_survey_responses_submitted` (`submitted_at`);
+  ADD KEY `idx_survey_responses_submitted` (`submitted_at`),
+  ADD KEY `idx_survey_time` (`survey_id`,`submitted_at`);
 
 --
 -- Chỉ mục cho bảng `system_audit_logs`

@@ -176,8 +176,11 @@ try {
 
                 if (!empty($submittedTags)) {
                     $tagPh = implode(',', array_fill(0, count($submittedTags), '?'));
-                    $stmtExistingTags = $pdo->prepare("SELECT id, name FROM tags WHERE name IN ($tagPh)");
-                    $stmtExistingTags->execute($submittedTags);
+                    // [FIX BUG-FORMS-1] Add workspace_id filter to prevent cross-workspace tag reuse
+                    // [FIX BUG-FORMS-2] FETCH_KEY_PAIR maps col0=>col1, so SELECT name,id (not id,name)
+                    // to get the correct {name=>id} map needed by $existingTagMap[$tagName]
+                    $stmtExistingTags = $pdo->prepare("SELECT name, id FROM tags WHERE name IN ($tagPh) AND workspace_id = ?");
+                    $stmtExistingTags->execute(array_merge($submittedTags, [$form_ws_id]));
                     $existingTagMap = $stmtExistingTags->fetchAll(PDO::FETCH_KEY_PAIR); // ['tagName' => 'tagId']
 
                     foreach ($submittedTags as $tagName) {
@@ -186,7 +189,8 @@ try {
                         $tagId = $existingTagMap[$tagName] ?? null;
                         if (!$tagId) {
                             $tagId = bin2hex(random_bytes(8));
-                            $pdo->prepare("INSERT INTO tags (id, name) VALUES (?, ?)")->execute([$tagId, $tagName]);
+                            // [FIX BUG-FORMS-1] Include workspace_id in new tag creation
+                            $pdo->prepare("INSERT INTO tags (id, name, workspace_id) VALUES (?, ?, ?)")->execute([$tagId, $tagName, $form_ws_id]);
                         }
                         $stmtInsTag = $pdo->prepare("INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES (?, ?)");
                         $stmtInsTag->execute([$sid, $tagId]);
@@ -252,8 +256,10 @@ try {
 
                 if (!empty($submittedTags)) {
                     $tagPh = implode(',', array_fill(0, count($submittedTags), '?'));
-                    $stmtExistingTags = $pdo->prepare("SELECT id, name FROM tags WHERE name IN ($tagPh)");
-                    $stmtExistingTags->execute($submittedTags);
+                    // [FIX BUG-FORMS-1] Add workspace_id filter to prevent cross-workspace tag reuse
+                    // [FIX BUG-FORMS-2] FETCH_KEY_PAIR maps col0=>col1, so SELECT name,id (not id,name)
+                    $stmtExistingTags = $pdo->prepare("SELECT name, id FROM tags WHERE name IN ($tagPh) AND workspace_id = ?");
+                    $stmtExistingTags->execute(array_merge($submittedTags, [$form_ws_id]));
                     $existingTagMap = $stmtExistingTags->fetchAll(PDO::FETCH_KEY_PAIR);
 
                     foreach ($submittedTags as $tagName) {
@@ -262,7 +268,8 @@ try {
                         $tagId = $existingTagMap[$tagName] ?? null;
                         if (!$tagId) {
                             $tagId = bin2hex(random_bytes(8));
-                            $pdo->prepare("INSERT INTO tags (id, name) VALUES (?, ?)")->execute([$tagId, $tagName]);
+                            // [FIX BUG-FORMS-1] Include workspace_id in new tag creation
+                            $pdo->prepare("INSERT INTO tags (id, name, workspace_id) VALUES (?, ?, ?)")->execute([$tagId, $tagName, $form_ws_id]);
                         }
                         $stmtInsTag = $pdo->prepare("INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES (?, ?)");
                         $stmtInsTag->execute([$sid, $tagId]);
