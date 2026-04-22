@@ -1,4 +1,4 @@
-﻿
+
 import React, { useEffect, useState } from 'react';
 import { GitMerge, ArrowRight, Search, AlertOctagon, Activity, CheckCircle2 } from 'lucide-react';
 import { api } from '../../../services/storageAdapter';
@@ -27,10 +27,11 @@ const LinkFlowConfig: React.FC<LinkFlowConfigProps> = ({ config, onChange, curre
         const allFlowsList: Flow[] = Array.isArray(rawF) ? rawF : (rawF?.data || []);
         // Filter: not current, not archived, must be active, not campaign-triggered
         setFlows(allFlowsList.filter(f => {
+            const steps: any[] = Array.isArray(f.steps) ? f.steps : (typeof f.steps === 'string' ? (() => { try { return JSON.parse(f.steps as any); } catch { return []; } })() : []);
             const isSelf = f.id === currentFlowId;
             const isArchived = f.status === 'archived';
             const isActive = f.status === 'active';
-            const isCampaignTriggered = f.steps.some(s => s.type === 'trigger' && s.config.type === 'campaign');
+            const isCampaignTriggered = steps.some(s => s.type === 'trigger' && s.config?.type === 'campaign');
             return !isSelf && !isArchived && isActive && !isCampaignTriggered;
         }));
       }

@@ -33973,398 +33973,1188 @@
   ],
   "campaigns": [
     {
-      "id": "69dc974be65bc",
-      "name": "Webinar AI 18/04/2026 ",
-      "subject": "[IDEAS] Bạn đang “dùng AI” hay “ứng dụng AI” vào quản trị doanh nghiệp?",
-      "preheader_text": null,
-      "sender_email": "tuyensinh@ideas.edu.vn",
-      "sender_name": null,
-      "reply_to": null,
+      "id": "camp_1",
+      "name": "Bản tin Tháng 4 - AI Marketing xu hướng mới",
+      "subject": "🚀 Cập nhật xu hướng AI Marketing mới nhất tháng 4!",
       "status": "sent",
       "type": "email",
-      "config": "[]",
-      "template_id": "69d856acb4a81",
-      "content_body": "",
-      "target_config": "{\\\"listIds\\\":[\\\"69dc96dc7d323\\\",\\\"69dc96a0501d0\\\"],\\\"segmentIds\\\":[],\\\"tagIds\\\":[],\\\"individualIds\\\":[]}",
-      "scheduled_at": "2026-04-13 15:23:05",
-      "timezone": "UTC",
-      "sent_at": "2026-04-13 15:23:05",
-      "tracking_enabled": 1,
-      "count_sent": 1756,
-      "count_opened": 832,
-      "count_unique_opened": 537,
-      "count_clicked": 20,
-      "count_unique_clicked": 16,
-      "count_bounced": 0,
-      "count_spam": 0,
-      "count_unsubscribed": 4,
-      "created_at": "2026-04-13 07:12:11",
-      "updated_at": "2026-04-22 03:32:01",
-      "is_deleted": 0,
-      "attachments": "[]",
-      "total_target_audience": 1758,
-      "stat_opens": 834,
-      "stat_clicks": 20,
-      "stat_device_mobile": 19,
-      "stat_device_desktop": 1243,
-      "stats": "{\\\"sent\\\": 1756}",
-      "workspace_id": 1
+      "sentAt": "2026-04-20T13:46:06.291Z",
+      "createdAt": "2026-04-17T13:46:06.291Z",
+      "senderEmail": "marketing@domation.vn",
+      "target": {
+        "listIds": [
+          "list_vip",
+          "list_fb"
+        ],
+        "segmentIds": [],
+        "tagIds": [],
+        "individualIds": []
+      },
+      "stats": {
+        "sent": 2665,
+        "opened": 1250,
+        "clicked": 430,
+        "bounced": 12,
+        "spam": 2,
+        "unsubscribed": 5,
+        "failed": 0
+      },
+      "trackingEnabled": true,
+      "linkedFlow": {
+        "id": "flow_campaign_care",
+        "name": "Chăm sóc Sau Chiến dịch Tháng 4",
+        "status": "active"
+      }
     },
     {
-      "id": "69e0ab5e9a13f",
-      "name": "[16/04/2026] - Workshop AI - Cựu học viên UBIS",
-      "subject": "[Thư mời] Workshop: Giải đáp mọi thắc mắc về MSc AI cùng IDEAS (Copy)",
-      "preheader_text": null,
-      "sender_email": "tuyensinh@ideas.edu.vn",
-      "sender_name": null,
-      "reply_to": null,
+      "id": "camp_welcome_1",
+      "name": "Welcome Series - Email 1 (Chào Mừng)",
+      "subject": "🎉 Chào mừng bạn đến với DOMATION",
       "status": "sent",
       "type": "email",
-      "config": "[]",
-      "template_id": "69e0a945374d3",
-      "content_body": "",
-      "target_config": "{\\\"listIds\\\":[\\\"69e0ab3a1f863\\\"],\\\"segmentIds\\\":[],\\\"tagIds\\\":[],\\\"individualIds\\\":[]}",
-      "scheduled_at": "2026-04-16 16:29:33",
-      "timezone": "UTC",
-      "sent_at": "2026-04-16 16:29:33",
-      "tracking_enabled": 1,
-      "count_sent": 1237,
-      "count_opened": 156,
-      "count_unique_opened": 119,
-      "count_clicked": 110,
-      "count_unique_clicked": 52,
-      "count_bounced": 0,
-      "count_spam": 0,
-      "count_unsubscribed": 1,
-      "created_at": "2026-04-16 09:26:54",
-      "updated_at": "2026-04-21 06:04:02",
-      "is_deleted": 0,
-      "attachments": "[]",
-      "total_target_audience": 1237,
-      "stat_opens": 159,
-      "stat_clicks": 111,
-      "stat_device_mobile": 7,
-      "stat_device_desktop": 263,
-      "stats": "{\\\"sent\\\": 1237}",
-      "workspace_id": 1
+      "sentAt": "2026-04-12T13:46:06.291Z",
+      "createdAt": "2026-04-07T13:46:06.291Z",
+      "senderEmail": "hello@domation.vn",
+      "target": {
+        "listIds": [],
+        "segmentIds": [],
+        "tagIds": [],
+        "individualIds": []
+      },
+      "stats": {
+        "sent": 1250,
+        "opened": 850,
+        "clicked": 320,
+        "bounced": 5,
+        "spam": 1,
+        "unsubscribed": 12,
+        "failed": 0
+      },
+      "trackingEnabled": true
     },
     {
-      "id": "69e1b5ca64e94",
-      "name": "[17/04/2026] - Workshop AI - Google NIC",
-      "subject": "[Thư mời] Workshop: Giải đáp mọi thắc mắc về MSc AI cùng IDEAS",
-      "preheader_text": null,
-      "sender_email": "tuyensinh@ideas.edu.vn",
-      "sender_name": null,
-      "reply_to": null,
+      "id": "camp_welcome_2",
+      "name": "Welcome Series - Email 2 (Reminder)",
+      "subject": "Bạn đã xem món quà này chưa?",
       "status": "sent",
       "type": "email",
-      "config": "[]",
-      "template_id": "69e0a945374d3",
-      "content_body": "",
-      "target_config": "{\\\"listIds\\\":[\\\"69c1fd11c4dad\\\"],\\\"segmentIds\\\":[],\\\"tagIds\\\":[],\\\"individualIds\\\":[]}",
-      "scheduled_at": null,
-      "timezone": "UTC",
-      "sent_at": "2026-04-17 11:23:38",
-      "tracking_enabled": 1,
-      "count_sent": 7611,
-      "count_opened": 811,
-      "count_unique_opened": 561,
-      "count_clicked": 89,
-      "count_unique_clicked": 83,
-      "count_bounced": 0,
-      "count_spam": 0,
-      "count_unsubscribed": 35,
-      "created_at": "2026-04-17 04:23:38",
-      "updated_at": "2026-04-22 06:53:01",
-      "is_deleted": 0,
-      "attachments": "[]",
-      "total_target_audience": 5995,
-      "stat_opens": 812,
-      "stat_clicks": 89,
-      "stat_device_mobile": 115,
-      "stat_device_desktop": 786,
-      "stats": "{\\\"sent\\\":5995,\\\"opened\\\":229,\\\"clicked\\\":0}",
-      "workspace_id": 1
+      "sentAt": "2026-04-13T13:46:06.291Z",
+      "createdAt": "2026-04-07T13:46:06.291Z",
+      "senderEmail": "hello@domation.vn",
+      "target": {
+        "listIds": [],
+        "segmentIds": [],
+        "tagIds": [],
+        "individualIds": []
+      },
+      "stats": {
+        "sent": 400,
+        "opened": 120,
+        "clicked": 45,
+        "bounced": 2,
+        "spam": 0,
+        "unsubscribed": 8,
+        "failed": 0
+      },
+      "trackingEnabled": true
     },
     {
-      "id": "69e2fb4816366",
-      "name": "[IDEAS] Link Zoom Webinar \\\"Học MSc AI để làm gì?\\\" sẽ bắt đầu lúc 14:00",
-      "subject": "[IDEAS] Link Zoom Webinar \\\"Học MSc AI để làm gì?\\\" sẽ bắt đầu lúc 14:00",
-      "preheader_text": null,
-      "sender_email": "tuyensinh@ideas.edu.vn",
-      "sender_name": null,
-      "reply_to": null,
+      "id": "camp_cart_a",
+      "name": "Abandoned Cart - Variant A",
+      "subject": "Bạn quên đồ trong giỏ kìa!",
       "status": "sent",
       "type": "email",
-      "config": "[]",
-      "template_id": "69e2f9ec5b71c",
-      "content_body": "",
-      "target_config": "{\\\"listIds\\\":[\\\"69d89b13ef6a2\\\"],\\\"segmentIds\\\":[],\\\"tagIds\\\":[],\\\"individualIds\\\":[]}",
-      "scheduled_at": null,
-      "timezone": "UTC",
-      "sent_at": "2026-04-18 03:41:05",
-      "tracking_enabled": 1,
-      "count_sent": 29,
-      "count_opened": 24,
-      "count_unique_opened": 15,
-      "count_clicked": 1,
-      "count_unique_clicked": 1,
-      "count_bounced": 0,
-      "count_spam": 0,
-      "count_unsubscribed": 0,
-      "created_at": "2026-04-18 03:32:24",
-      "updated_at": "2026-04-18 07:07:01",
-      "is_deleted": 0,
-      "attachments": "[{\\\"id\\\":\\\"533f23b3-bced-4a79-989f-815f885476f0\\\",\\\"name\\\":\\\"BACKGROUND ZOOM.png\\\",\\\"url\\\":\\\"https:\\/\\/automation.ideas.edu.vn\\/uploadss\\/69e2fb434cb30_BACKGROUNDZOOM.png\\\",\\\"path\\\":\\\"..\\/uploadss\\/69e2fb434cb30_BACKGROUNDZOOM.png\\\",\\\"size\\\":348938,\\\"type\\\":\\\"png\\\",\\\"logic\\\":\\\"all\\\"}]",
-      "total_target_audience": 20,
-      "stat_opens": 24,
-      "stat_clicks": 1,
-      "stat_device_mobile": 0,
-      "stat_device_desktop": 25,
-      "stats": "{\\\"sent\\\": 20}",
-      "workspace_id": 1
+      "sentAt": "2026-04-19T13:46:06.291Z",
+      "createdAt": "2026-04-17T13:46:06.291Z",
+      "senderEmail": "marketing@domation.vn",
+      "target": {
+        "listIds": [],
+        "segmentIds": [],
+        "tagIds": [],
+        "individualIds": []
+      },
+      "stats": {
+        "sent": 160,
+        "opened": 80,
+        "clicked": 20,
+        "bounced": 1,
+        "spam": 0,
+        "unsubscribed": 1,
+        "failed": 0
+      },
+      "trackingEnabled": true
+    },
+    {
+      "id": "camp_cart_b",
+      "name": "Abandoned Cart - Variant B",
+      "subject": "Đừng bỏ lỡ sản phẩm yêu thích!",
+      "status": "sent",
+      "type": "email",
+      "sentAt": "2026-04-19T13:46:06.291Z",
+      "createdAt": "2026-04-17T13:46:06.291Z",
+      "senderEmail": "marketing@domation.vn",
+      "target": {
+        "listIds": [],
+        "segmentIds": [],
+        "tagIds": [],
+        "individualIds": []
+      },
+      "stats": {
+        "sent": 160,
+        "opened": 120,
+        "clicked": 40,
+        "bounced": 0,
+        "spam": 0,
+        "unsubscribed": 0,
+        "failed": 0
+      },
+      "trackingEnabled": true
+    },
+    {
+      "id": "camp_b2b_1",
+      "name": "B2B Nurture - Giới thiệu giải pháp",
+      "subject": "Giải pháp tối ưu hóa quy trình doanh nghiệp",
+      "status": "sent",
+      "type": "email",
+      "sentAt": "2026-04-12T13:46:06.291Z",
+      "createdAt": "2026-04-07T13:46:06.291Z",
+      "senderEmail": "b2b@domation.vn",
+      "target": {
+        "listIds": [],
+        "segmentIds": [],
+        "tagIds": [],
+        "individualIds": []
+      },
+      "stats": {
+        "sent": 2100,
+        "opened": 1500,
+        "clicked": 400,
+        "bounced": 50,
+        "spam": 12,
+        "unsubscribed": 45,
+        "failed": 0
+      },
+      "trackingEnabled": true
+    },
+    {
+      "id": "camp_b2b_2",
+      "name": "B2B Nurture - Case Study",
+      "subject": "Case Study: Tăng 300% doanh thu với Automation",
+      "status": "sent",
+      "type": "email",
+      "sentAt": "2026-04-14T13:46:06.291Z",
+      "createdAt": "2026-04-07T13:46:06.291Z",
+      "senderEmail": "b2b@domation.vn",
+      "target": {
+        "listIds": [],
+        "segmentIds": [],
+        "tagIds": [],
+        "individualIds": []
+      },
+      "stats": {
+        "sent": 1800,
+        "opened": 1100,
+        "clicked": 350,
+        "bounced": 20,
+        "spam": 5,
+        "unsubscribed": 20,
+        "failed": 0
+      },
+      "trackingEnabled": true
+    },
+    {
+      "id": "camp_2",
+      "name": "Khuyến mãi VIP - Giảm 30%",
+      "subject": "🎁 Món quà đặc biệt dành riêng cho bạn (Giảm 30%)",
+      "status": "sent",
+      "type": "email",
+      "sentAt": "2026-04-21T13:46:06.291Z",
+      "createdAt": "2026-04-19T13:46:06.291Z",
+      "senderEmail": "ceo@domation.vn",
+      "target": {
+        "listIds": [
+          "list_vip"
+        ],
+        "segmentIds": [],
+        "tagIds": [],
+        "individualIds": []
+      },
+      "stats": {
+        "sent": 125,
+        "opened": 98,
+        "clicked": 65,
+        "bounced": 0,
+        "spam": 0,
+        "unsubscribed": 0,
+        "failed": 0
+      },
+      "trackingEnabled": true
+    },
+    {
+      "id": "camp_3",
+      "name": "Giới thiệu Tính năng Automation Workflow",
+      "subject": "Tự động hóa mọi thứ với DOMATION Workflow mới",
+      "status": "sending",
+      "type": "email",
+      "createdAt": "2026-04-22T11:46:06.291Z",
+      "senderEmail": "product@domation.vn",
+      "target": {
+        "listIds": [
+          "list_misa"
+        ],
+        "segmentIds": [],
+        "tagIds": [],
+        "individualIds": []
+      },
+      "stats": {
+        "sent": 1500,
+        "opened": 200,
+        "clicked": 45,
+        "bounced": 5,
+        "spam": 0,
+        "unsubscribed": 1,
+        "failed": 0
+      },
+      "totalTargetAudience": 5200,
+      "trackingEnabled": true
+    },
+    {
+      "id": "camp_4",
+      "name": "Re-engagement: Chúng tôi nhớ bạn!",
+      "subject": "Bạn đã bỏ lỡ những cập nhật quan trọng...",
+      "status": "scheduled",
+      "type": "email",
+      "scheduledAt": "2026-04-24T13:46:06.291Z",
+      "createdAt": "2026-04-21T13:46:06.291Z",
+      "senderEmail": "marketing@domation.vn",
+      "target": {
+        "listIds": [
+          "list_cold"
+        ],
+        "segmentIds": [],
+        "tagIds": [],
+        "individualIds": []
+      },
+      "stats": {
+        "sent": 0,
+        "opened": 0,
+        "clicked": 0,
+        "bounced": 0,
+        "spam": 0,
+        "unsubscribed": 0,
+        "failed": 0
+      },
+      "trackingEnabled": true
+    },
+    {
+      "id": "camp_zalo_1",
+      "name": "Zalo ZNS - Nhắc thanh toán",
+      "subject": "[ZNS] Thông báo cước phí",
+      "status": "sent",
+      "type": "zalo_zns",
+      "sentAt": "2026-04-22T08:46:06.291Z",
+      "createdAt": "2026-04-21T13:46:06.291Z",
+      "senderEmail": "Zalo OA",
+      "target": {
+        "listIds": [
+          "list_vip"
+        ],
+        "segmentIds": [],
+        "tagIds": [],
+        "individualIds": []
+      },
+      "stats": {
+        "sent": 120,
+        "opened": 115,
+        "clicked": 40,
+        "bounced": 2,
+        "spam": 0,
+        "unsubscribed": 0,
+        "failed": 3
+      },
+      "trackingEnabled": true
     }
   ],
   "flows": [
     {
-      "id": "004467d4-c62c-4bb8-af09-45a738109273",
-      "name": "Nurturing All Data",
-      "description": null,
-      "status": "draft",
-      "steps": "[{\\\"id\\\":\\\"37af5426-f905-4650-a179-21d2cbfcce12\\\",\\\"type\\\":\\\"trigger\\\",\\\"label\\\":\\\"Khi g\\u1eedi Campaign\\\",\\\"iconName\\\":\\\"zap\\\",\\\"config\\\":{\\\"type\\\":\\\"campaign\\\",\\\"targetId\\\":\\\"\\\"},\\\"nextStepId\\\":\\\"288d0857-7d2e-47af-a1d3-25ca563ebfb4\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"288d0857-7d2e-47af-a1d3-25ca563ebfb4\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 2 ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":2,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"75e76c5f-7a00-45d6-854b-5753e1357ebe\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"75e76c5f-7a00-45d6-854b-5753e1357ebe\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"Email Follow-up\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"subject\\\":\\\"[IDEAS] X\\u00e1c nh\\u1eadn \\u0111\\u0103ng k\\u00fd t\\u01b0 v\\u1ea5n MBA Online Swiss UMEF\\\",\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"templateId\\\":\\\"69a0126bc0d92\\\"},\\\"nextStepId\\\":\\\"b1d18251-5180-480a-bc93-24704fa693dc\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"b1d18251-5180-480a-bc93-24704fa693dc\\\",\\\"type\\\":\\\"advanced_condition\\\",\\\"label\\\":\\\"R\\u1ebd nh\\u00e1nh N\\u00e2ng cao\\\",\\\"iconName\\\":\\\"git-merge\\\",\\\"config\\\":{\\\"branches\\\":[{\\\"id\\\":\\\"460bc0fd-a7c0-4cc6-b6c4-3e0c2e31e2b1\\\",\\\"label\\\":\\\"Nh\\u00e1nh 1\\\",\\\"conditions\\\":[{\\\"field\\\":\\\"os\\\",\\\"operator\\\":\\\"equals\\\",\\\"value\\\":\\\"\\\"}],\\\"stepId\\\":\\\"1aee7842-fab5-41db-a863-96d2603ce678\\\"}],\\\"defaultStepId\\\":\\\"22ca4f9b-188a-49d9-9d99-bf8849ff4293\\\"},\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"1aee7842-fab5-41db-a863-96d2603ce678\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd (Wait)\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"hours\\\"},\\\"nextStepId\\\":\\\"007330cd-387e-4326-8bc3-abe164872f74\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"007330cd-387e-4326-8bc3-abe164872f74\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"templateId\\\":\\\"69a0f57f9bd26\\\",\\\"subject\\\":\\\"[IDEAS] MBA Online c\\u00f3 th\\u1eadt s\\u1ef1 ph\\u00f9 h\\u1ee3p cho ng\\u01b0\\u1eddi \\u0111i l\\u00e0m?\\\"},\\\"nextStepId\\\":\\\"ebb91fc4-bc69-40d1-bfaf-e3177a325db1\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"ebb91fc4-bc69-40d1-bfaf-e3177a325db1\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 1 ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"40407331-c664-4157-a72e-7c46ebe94317\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"40407331-c664-4157-a72e-7c46ebe94317\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"templateId\\\":\\\"69a5091308ed7\\\",\\\"subject\\\":\\\"[IDEAS] Tr\\u01b0\\u1edbc khi h\\u1ecdc Th\\u1ea1c s\\u0129 Th\\u1ee5y S\\u0129, b\\u1ea1n n\\u00ean bi\\u1ebft \\u0111i\\u1ec1u n\\u00e0y\\\"},\\\"nextStepId\\\":\\\"5b4b6037-65ca-4e6d-a0f4-2d934e4796af\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"5b4b6037-65ca-4e6d-a0f4-2d934e4796af\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 1 ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"17540fbd-3606-4037-a53b-7e104f015798\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"17540fbd-3606-4037-a53b-7e104f015798\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"templateId\\\":\\\"69a5154c52b52\\\",\\\"subject\\\":\\\"[IDEAS] MBA\\/EMBA Swiss UMEF \\u0111\\u01b0\\u1ee3c \\u0111\\u00e1nh gi\\u00e1 5 sao qu\\u1ed1c t\\u1ebf\\\"},\\\"nextStepId\\\":\\\"4de92837-924c-4c00-978b-927f0efe98a9\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"4de92837-924c-4c00-978b-927f0efe98a9\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 1 ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"74dd3248-a51e-4c6d-a3fd-74e4b9c1bfb6\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"74dd3248-a51e-4c6d-a3fd-74e4b9c1bfb6\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"templateId\\\":\\\"69a10dcd88d35\\\",\\\"subject\\\":\\\"[IDEAS] V\\u0103n b\\u1eb1ng MBA Swiss UMEF \\u0111\\u01b0\\u1ee3c s\\u1eed d\\u1ee5ng trong nh\\u1eefng m\\u00f4i tr\\u01b0\\u1eddng n\\u00e0o?\\\"},\\\"nextStepId\\\":\\\"4da0ea74-0145-4ffb-85d6-ee73a5c322a7\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"4da0ea74-0145-4ffb-85d6-ee73a5c322a7\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 1 ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"97803d91-b187-4afc-96b6-e55136e04e3e\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"97803d91-b187-4afc-96b6-e55136e04e3e\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"templateId\\\":\\\"69a52aea4a9d1\\\",\\\"subject\\\":\\\"[IDEAS] V\\u0103n b\\u1eb1ng c\\u1ee7a b\\u1ea1n \\u0111\\u01b0\\u1ee3c c\\u00f4ng nh\\u1eadn t\\u1eeb Th\\u1ee5y S\\u0129 \\u0111\\u1ebfn M\\u1ef9\\\"},\\\"nextStepId\\\":\\\"9a1560e2-6780-4e65-bad9-52a5c4c1edc7\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"9a1560e2-6780-4e65-bad9-52a5c4c1edc7\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 1 ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"c43e5436-cba3-4a1a-953a-e8cf94457b1f\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"c43e5436-cba3-4a1a-953a-e8cf94457b1f\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"templateId\\\":\\\"69a11fe824ad5\\\",\\\"subject\\\":\\\"[IDEAS] H\\u1ecdc MBA\\/EMBA online d\\u1ec5 d\\u00e0ng h\\u01a1n c\\u00f9ng v\\u1edbi IDEAS\\\"},\\\"nextStepId\\\":\\\"41024ee7-8dd4-47b6-a9df-886b87c59b06\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"41024ee7-8dd4-47b6-a9df-886b87c59b06\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 1 ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"fee5398d-251b-466e-9026-55a72204b0fe\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"fee5398d-251b-466e-9026-55a72204b0fe\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"templateId\\\":\\\"69a10fbc778ef\\\",\\\"subject\\\":\\\"[IDEAS] B\\u01b0\\u1edbc ti\\u1ebfp theo cho k\\u1ebf ho\\u1ea1ch Th\\u1ea1c s\\u0129 qu\\u1ed1c t\\u1ebf c\\u1ee7a b\\u1ea1n l\\u00e0 g\\u00ec?\\\"},\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"22ca4f9b-188a-49d9-9d99-bf8849ff4293\\\",\\\"type\\\":\\\"advanced_condition\\\",\\\"label\\\":\\\"R\\u1ebd nh\\u00e1nh N\\u00e2ng cao\\\",\\\"iconName\\\":\\\"git-merge\\\",\\\"config\\\":{\\\"branches\\\":[{\\\"id\\\":\\\"cad00cd4-bac4-4190-a19e-3899f7a5fd2f\\\",\\\"label\\\":\\\"Nh\\u00e1nh 1\\\",\\\"conditions\\\":[{\\\"field\\\":\\\"os\\\",\\\"operator\\\":\\\"equals\\\",\\\"value\\\":\\\"\\\"}],\\\"stepId\\\":\\\"f26fe8c2-ad5c-40b0-8ad4-73c06cd2b97f\\\"},{\\\"id\\\":\\\"3241e47c-1ad5-4acc-a628-b0a634b88c3c\\\",\\\"label\\\":\\\"Nh\\u00e1nh 2\\\",\\\"stepId\\\":\\\"fa689509-5691-49b0-a8f9-98461dee8466\\\",\\\"conditions\\\":[{\\\"field\\\":\\\"email\\\",\\\"operator\\\":\\\"contains\\\",\\\"value\\\":\\\"\\\"}]}],\\\"defaultStepId\\\":\\\"ccb0ccc4-a1b9-45d7-81c8-d08a0ae58bd3\\\"},\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"3f99632f-e706-4ad9-9a7d-b314f3d2ec87\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":[],\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0},\\\"nextStepId\\\":\\\"99afd811-d173-4929-81c2-17ab8472e910\\\"},{\\\"id\\\":\\\"f91f3cb5-411b-4537-b9c1-432d08307b32\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 1 ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"3f99632f-e706-4ad9-9a7d-b314f3d2ec87\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"d1b6c2df-0135-4d8f-9a92-43ea02592b2d\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":[],\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"85eeb4fb-c692-45d7-a65d-c1c0722c138e\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":[],\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"f26fe8c2-ad5c-40b0-8ad4-73c06cd2b97f\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 1 ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"f91f3cb5-411b-4537-b9c1-432d08307b32\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"5359c823-b451-422f-98d0-d39fa04b65a9\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 1 ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"85eeb4fb-c692-45d7-a65d-c1c0722c138e\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"f45a8020-ac8b-42c8-a398-025b60b634ad\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 1 ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"5359c823-b451-422f-98d0-d39fa04b65a9\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"c0eb6b21-68fa-4e53-a883-8e38b8f78b49\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 1 ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"d1b6c2df-0135-4d8f-9a92-43ea02592b2d\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"ccb0ccc4-a1b9-45d7-81c8-d08a0ae58bd3\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 1 ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"c0eb6b21-68fa-4e53-a883-8e38b8f78b49\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"d5f96bf3-9eee-4946-bc3b-915791e12041\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 1 ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"f45a8020-ac8b-42c8-a398-025b60b634ad\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"fa689509-5691-49b0-a8f9-98461dee8466\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 1 ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"d5f96bf3-9eee-4946-bc3b-915791e12041\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"99afd811-d173-4929-81c2-17ab8472e910\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":[]}]",
-      "config": "{\\\"frequencyCap\\\":3,\\\"activeDays\\\":[0,1,2,3,4,5,6],\\\"startTime\\\":\\\"08:00\\\",\\\"endTime\\\":\\\"21:00\\\",\\\"exitConditions\\\":[\\\"unsubscribed\\\"],\\\"type\\\":\\\"realtime\\\",\\\"frequency\\\":\\\"one-time\\\",\\\"allowMultiple\\\":false,\\\"enrollmentCooldownHours\\\":12}",
-      "stat_enrolled": 0,
-      "stat_completed": 0,
-      "stat_open_rate": 0,
-      "stat_click_rate": 0,
-      "stat_total_sent": 0,
-      "stat_total_opened": 0,
-      "stat_unique_opened": 0,
-      "stat_total_clicked": 0,
-      "stat_unique_clicked": 0,
-      "stat_total_zalo_clicked": 0,
-      "stat_unique_zalo_clicked": 0,
-      "stat_total_failed": 0,
-      "stat_total_unsubscribed": 0,
-      "archived_at": null,
-      "created_at": "2026-04-16 09:43:50",
-      "updated_at": "2026-04-19 17:19:52",
-      "stat_zns_sent": 0,
-      "stat_zns_failed": 0,
-      "trigger_type": "campaign",
-      "stat_zalo_sent": 0,
-      "workspace_id": 1,
-      "stat_meta_sent": 0
-    },
-    {
-      "id": "01c7a3e6-38fd-40e3-ab4e-8c6bd63d54a4",
-      "name": "[AUTOMATION] Đặt lịch Tư vấn",
-      "description": "Tự động phản hồi khách hàng ngay sau khi họ điền Form đăng ký.",
+      "id": "flow_welcome_series",
+      "name": "Welcome Series - Chào mừng Lead mới",
+      "description": "Gửi chuỗi email chăm sóc khi khách hàng điền form đăng ký.",
       "status": "active",
-      "steps": "[{\\\"id\\\":\\\"0e101a00-a3f0-4227-ad16-a251d159201e\\\",\\\"type\\\":\\\"trigger\\\",\\\"label\\\":\\\"G\\u1eedi Form: \\u0110\\u1eb7t l\\u1ecbch T\\u01b0 V\\u1ea5n\\\",\\\"iconName\\\":\\\"zap\\\",\\\"config\\\":{\\\"type\\\":\\\"form\\\",\\\"targetId\\\":\\\"4fe1eeb0570742a1fdde61af6fc0680c\\\",\\\"targetSubtype\\\":\\\"list\\\"},\\\"nextStepId\\\":\\\"159a17a1-9b30-4f44-9ecb-51a5591736ca\\\"},{\\\"id\\\":\\\"159a17a1-9b30-4f44-9ecb-51a5591736ca\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"Email Ph\\u1ea3n h\\u1ed3i Form\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"subject\\\":\\\"[IDEAS] X\\u00e1c nh\\u1eadn l\\u1ecbch h\\u1eb9n t\\u01b0 v\\u1ea5n c\\u1ee7a  {{full_name}}\\\",\\\"attachments\\\":[],\\\"sourceMode\\\":\\\"template\\\",\\\"templateId\\\":\\\"69a4fdf9783a3\\\",\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\"}}]",
-      "config": "{\\\"frequencyCap\\\":3,\\\"activeDays\\\":[0,1,2,3,4,5,6],\\\"startTime\\\":\\\"08:00\\\",\\\"endTime\\\":\\\"21:00\\\",\\\"exitConditions\\\":[\\\"unsubscribed\\\"],\\\"type\\\":\\\"realtime\\\",\\\"frequency\\\":\\\"recurring\\\",\\\"allowMultiple\\\":true,\\\"enrollmentCooldownHours\\\":0}",
-      "stat_enrolled": 1020,
-      "stat_completed": 820,
-      "stat_open_rate": 0,
-      "stat_click_rate": 0,
-      "stat_total_sent": 3,
-      "stat_total_opened": 11,
-      "stat_unique_opened": 2,
-      "stat_total_clicked": 1,
-      "stat_unique_clicked": 1,
-      "stat_total_zalo_clicked": 0,
-      "stat_unique_zalo_clicked": 0,
-      "stat_total_failed": 0,
-      "stat_total_unsubscribed": 0,
-      "archived_at": null,
-      "created_at": "2026-03-02 04:55:36",
-      "updated_at": "2026-03-11 10:18:01",
-      "stat_zns_sent": 0,
-      "stat_zns_failed": 0,
-      "trigger_type": "form",
-      "stat_zalo_sent": 0,
-      "workspace_id": 1,
-      "stat_meta_sent": 0
+      "createdAt": "2026-04-12T13:46:06.290Z",
+      "triggerType": "Form Submit",
+      "stats": {
+        "enrolled": 1250,
+        "completed": 850,
+        "totalSent": 2500,
+        "totalOpened": 1800,
+        "uniqueOpened": 1100,
+        "totalClicked": 450,
+        "uniqueClicked": 320
+      },
+      "config": {
+        "type": "realtime",
+        "activeDays": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "startTime": "00:00",
+        "endTime": "23:59",
+        "frequencyCap": 1,
+        "enrollStrategy": "new_only"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "type": "trigger",
+          "label": "Điền Form Đăng Ký",
+          "iconName": "FormInput",
+          "config": {
+            "type": "form",
+            "targetId": "form_1"
+          },
+          "nextStepId": "s2"
+        },
+        {
+          "id": "s2",
+          "type": "wait",
+          "label": "Chờ 1 giờ",
+          "iconName": "Clock",
+          "config": {
+            "duration": 60,
+            "unit": "minutes"
+          },
+          "stats": {
+            "entered": 1250,
+            "waiting": 15,
+            "completed": 1235
+          },
+          "nextStepId": "s3"
+        },
+        {
+          "id": "s3",
+          "type": "action",
+          "label": "Gửi Email #1: Chào mừng",
+          "iconName": "Mail",
+          "config": {
+            "campaignId": "camp_welcome_1"
+          },
+          "stats": {
+            "entered": 1235,
+            "completed": 1235
+          },
+          "nextStepId": "s4"
+        },
+        {
+          "id": "s4",
+          "type": "condition",
+          "label": "Đã mở Email #1?",
+          "iconName": "HelpCircle",
+          "config": {
+            "field": "email_open",
+            "value": "camp_welcome_1"
+          },
+          "yesStepId": "s5_yes",
+          "noStepId": "s5_no",
+          "stats": {
+            "entered": 1235,
+            "completed": 1235
+          }
+        },
+        {
+          "id": "s5_yes",
+          "type": "action",
+          "label": "ZNS Cảm ơn",
+          "iconName": "MessageCircle",
+          "config": {
+            "znsTemplateId": "zns_thanks"
+          },
+          "stats": {
+            "entered": 850,
+            "completed": 848
+          }
+        },
+        {
+          "id": "s5_no",
+          "type": "action",
+          "label": "Email #2: Nhắc nhở",
+          "iconName": "Mail",
+          "config": {
+            "campaignId": "camp_welcome_2"
+          },
+          "stats": {
+            "entered": 385,
+            "completed": 380
+          }
+        }
+      ]
     },
     {
-      "id": "24751147-8926-4c2d-a42e-c9c66417318d",
-      "name": "Đăng ký Landing Page - MBA",
-      "description": "Tự động phản hồi khách hàng ngay sau khi họ điền Form đăng ký.",
+      "id": "flow_abandoned_cart",
+      "name": "Giỏ Hàng Bị Bỏ Quên",
+      "description": "Nhắc khách khi thêm vào giỏ nhưng không thanh toán.",
       "status": "active",
-      "steps": "[{\\\"id\\\":\\\"df7efc93-90c5-47dd-a56a-bcb6df62e4c1\\\",\\\"type\\\":\\\"trigger\\\",\\\"label\\\":\\\"G\\u1eedi Form: Landing Page MBA\\\",\\\"iconName\\\":\\\"zap\\\",\\\"config\\\":{\\\"type\\\":\\\"form\\\",\\\"targetId\\\":\\\"3ebd9ef0f28f4d1bd0a4d56b089e1c25\\\",\\\"targetSubtype\\\":\\\"list\\\"},\\\"nextStepId\\\":\\\"d7b49144-f594-4a8a-9306-9d8e18b83379\\\"},{\\\"id\\\":\\\"d7b49144-f594-4a8a-9306-9d8e18b83379\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"Email Ph\\u1ea3n h\\u1ed3i Form\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"subject\\\":\\\"[IDEAS] C\\u1ea3m \\u01a1n b\\u1ea1n \\u0111\\u00e3 \\u0111\\u0103ng k\\u00fd ch\\u01b0\\u01a1ng tr\\u00ecnh Online MBA\\\",\\\"attachments\\\":[],\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"sourceMode\\\":\\\"template\\\",\\\"templateId\\\":\\\"69a0126bc0d92\\\"},\\\"nextStepId\\\":\\\"458a6178-edbf-4303-bc1e-734615932a92\\\"},{\\\"id\\\":\\\"458a6178-edbf-4303-bc1e-734615932a92\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 10 Ph\\u00fat\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":10,\\\"unit\\\":\\\"minutes\\\"},\\\"nextStepId\\\":\\\"5dea15d8-21c0-43fd-b137-4fced5aa7fc7\\\"},{\\\"id\\\":\\\"5dea15d8-21c0-43fd-b137-4fced5aa7fc7\\\",\\\"type\\\":\\\"zalo_zns\\\",\\\"label\\\":\\\"Zalo ZNS\\\",\\\"iconName\\\":\\\"message-square\\\",\\\"config\\\":{\\\"zalo_oa_id\\\":\\\"a646c4d215fd571d5783fd61af73352a\\\",\\\"template_id\\\":\\\"446723\\\",\\\"template_data\\\":{\\\"ngay_dang_ky\\\":\\\"{{today}}\\\",\\\"ten_chuong_trinh\\\":\\\"Online MBA\\\",\\\"customer_name\\\":\\\"{{first_name}}\\\",\\\"id\\\":\\\"{{phone_number}}\\\",\\\"nguon_dang_ky\\\":\\\"IDEAS.EDU.VN\\\"},\\\"input_mode\\\":\\\"manual\\\",\\\"required_params\\\":[\\\"customer_name\\\",\\\"id\\\",\\\"ngay_dang_ky\\\",\\\"nguon_dang_ky\\\",\\\"ten_chuong_trinh\\\"]}}]",
-      "config": "{\\\"frequencyCap\\\":3,\\\"activeDays\\\":[0,1,2,3,4,5,6],\\\"startTime\\\":\\\"08:00\\\",\\\"endTime\\\":\\\"21:00\\\",\\\"exitConditions\\\":[\\\"unsubscribed\\\"],\\\"type\\\":\\\"realtime\\\",\\\"frequency\\\":\\\"recurring\\\",\\\"allowMultiple\\\":true,\\\"enrollmentCooldownHours\\\":0}",
-      "stat_enrolled": 1200,
-      "stat_completed": 1000,
-      "stat_open_rate": 0,
-      "stat_click_rate": 0,
-      "stat_total_sent": 35,
-      "stat_total_opened": 37,
-      "stat_unique_opened": 10,
-      "stat_total_clicked": 10,
-      "stat_unique_clicked": 4,
-      "stat_total_zalo_clicked": 0,
-      "stat_unique_zalo_clicked": 0,
-      "stat_total_failed": 1,
-      "stat_total_unsubscribed": 0,
-      "archived_at": null,
-      "created_at": "2026-03-02 06:09:10",
-      "updated_at": "2026-04-22 04:31:01",
-      "stat_zns_sent": 24,
-      "stat_zns_failed": 12,
-      "trigger_type": "form",
-      "stat_zalo_sent": 0,
-      "workspace_id": 1,
-      "stat_meta_sent": 0
+      "createdAt": "2026-03-23T13:46:06.291Z",
+      "triggerType": "Custom Event",
+      "stats": {
+        "enrolled": 450,
+        "completed": 320,
+        "totalSent": 450,
+        "totalOpened": 200,
+        "uniqueOpened": 180,
+        "totalClicked": 80,
+        "uniqueClicked": 75
+      },
+      "config": {
+        "type": "realtime",
+        "activeDays": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "startTime": "00:00",
+        "endTime": "23:59",
+        "frequencyCap": 1
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "type": "trigger",
+          "label": "Event: Add to Cart",
+          "iconName": "ShoppingCart",
+          "config": {
+            "type": "custom_event",
+            "targetId": "evt_add_to_cart"
+          },
+          "nextStepId": "s2"
+        },
+        {
+          "id": "s2",
+          "type": "wait",
+          "label": "Chờ 2 giờ",
+          "iconName": "Clock",
+          "config": {
+            "duration": 120,
+            "unit": "minutes"
+          },
+          "stats": {
+            "entered": 450,
+            "waiting": 10,
+            "completed": 440
+          },
+          "nextStepId": "s3"
+        },
+        {
+          "id": "s3",
+          "type": "condition",
+          "label": "Đã Checkout?",
+          "iconName": "HelpCircle",
+          "config": {
+            "type": "custom_event",
+            "targetId": "evt_purchase"
+          },
+          "yesStepId": "s_exit",
+          "noStepId": "s4",
+          "stats": {
+            "entered": 440,
+            "completed": 440
+          }
+        },
+        {
+          "id": "s4",
+          "type": "split_test",
+          "label": "A/B Testing Tiêu Đề",
+          "iconName": "SplitSquareHorizontal",
+          "config": {
+            "ratio": 50
+          },
+          "pathAStepId": "s5a",
+          "pathBStepId": "s5b",
+          "stats": {
+            "entered": 320,
+            "completed": 320
+          }
+        },
+        {
+          "id": "s5a",
+          "type": "action",
+          "label": "Email A: Tiêu đề ngắn gọn",
+          "iconName": "Mail",
+          "config": {
+            "campaignId": "camp_cart_a"
+          },
+          "stats": {
+            "entered": 160,
+            "completed": 160
+          },
+          "nextStepId": "s_exit"
+        },
+        {
+          "id": "s5b",
+          "type": "action",
+          "label": "Email B: Tiêu đề cảm xúc",
+          "iconName": "Mail",
+          "config": {
+            "campaignId": "camp_cart_b"
+          },
+          "stats": {
+            "entered": 160,
+            "completed": 160
+          },
+          "nextStepId": "s_exit"
+        },
+        {
+          "id": "s_exit",
+          "type": "action",
+          "label": "Kết thúc Flow",
+          "iconName": "LogOut",
+          "config": {},
+          "stats": {
+            "entered": 120,
+            "completed": 120
+          }
+        }
+      ]
     },
     {
-      "id": "69dca73f0d951",
-      "name": "(Run) Webinar MSc AI 18/04",
-      "description": "Kích hoạt ngay khi một email trong chiến dịch chính vừa được gửi đi.",
+      "id": "flow_b2b_nurture",
+      "name": "B2B Lead Nurturing (Drip)",
+      "description": "Chuỗi 5 ngày nuôi dưỡng khách hàng doanh nghiệp.",
       "status": "paused",
-      "steps": "[{\\\"id\\\":\\\"1eb6234f-8700-4622-8453-fbf2980e807f\\\",\\\"type\\\":\\\"trigger\\\",\\\"label\\\":\\\"Sau Campaign: Webinar AI 18\\/04\\/2026 \\\",\\\"iconName\\\":\\\"zap\\\",\\\"config\\\":{\\\"type\\\":\\\"campaign\\\",\\\"targetId\\\":\\\"69dc974be65bc\\\",\\\"targetSubtype\\\":\\\"list\\\"},\\\"nextStepId\\\":\\\"101a0edf-ab32-49b8-9735-f49ba3f0f3b8\\\"},{\\\"id\\\":\\\"101a0edf-ab32-49b8-9735-f49ba3f0f3b8\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 1 Ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"2b1259a3-6f5c-45a1-bb41-689b939c29af\\\"},{\\\"id\\\":\\\"2b1259a3-6f5c-45a1-bb41-689b939c29af\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"Email Follow-up\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"subject\\\":\\\"[Th\\u01b0 m\\u1eddi] Workshop: Gi\\u1ea3i \\u0111\\u00e1p m\\u1ecdi th\\u1eafc m\\u1eafc v\\u1ec1 MSc AI c\\u00f9ng IDEAS\\\",\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"sourceMode\\\":\\\"template\\\",\\\"templateId\\\":\\\"69d8968cb413e\\\"},\\\"nextStepId\\\":\\\"668930db-7bb5-4e43-87f2-7ae3e2131a4a\\\"},{\\\"id\\\":\\\"668930db-7bb5-4e43-87f2-7ae3e2131a4a\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd \\u0111\\u1ebfn ng\\u00e0y 2026-04-16 20:00\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":2,\\\"unit\\\":\\\"days\\\",\\\"mode\\\":\\\"until_date\\\",\\\"specificDate\\\":\\\"2026-04-16\\\",\\\"untilTime\\\":\\\"20:00\\\"},\\\"nextStepId\\\":\\\"947fb860-0a2f-4db8-b74a-c075045ea066\\\"},{\\\"id\\\":\\\"947fb860-0a2f-4db8-b74a-c075045ea066\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"subject\\\":\\\"[IDEAS] Ch\\u1ec9 c\\u00f2n 2 ng\\u00e0y \\u0111\\u1ec3 g\\u1eb7p g\\u1ee1 c\\u00e1c chuy\\u00ean gia AI\\\",\\\"sourceMode\\\":\\\"template\\\",\\\"templateId\\\":\\\"69d8a03dda79e\\\"},\\\"nextStepId\\\":\\\"e3f98b6a-e364-45cf-ae6b-00814097ceec\\\"},{\\\"id\\\":\\\"e3f98b6a-e364-45cf-ae6b-00814097ceec\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd \\u0111\\u1ebfn ng\\u00e0y 2026-04-18 11:00\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":10,\\\"unit\\\":\\\"minutes\\\",\\\"mode\\\":\\\"until_date\\\",\\\"specificDate\\\":\\\"2026-04-18\\\",\\\"untilTime\\\":\\\"11:00\\\"},\\\"nextStepId\\\":\\\"5e03c93c-3494-4646-a755-1db989c2a777\\\"},{\\\"id\\\":\\\"5e03c93c-3494-4646-a755-1db989c2a777\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"subject\\\":\\\"[IDEAS] Link tham gia Webinar \\\\\"H\\u1ecdc MSc AI \\u0111\\u1ec3 l\\u00e0m g\\u00ec?\\\\\" s\\u1ebd b\\u1eaft \\u0111\\u1ea7u l\\u00fac 14:00 h\\u00f4m nay!\\\",\\\"templateId\\\":\\\"69d8b119b6118\\\",\\\"attachments\\\":[{\\\"id\\\":\\\"987aeb62-e5a2-4d83-9b93-5d46e214f583\\\",\\\"name\\\":\\\"BACKGROUND ZOOM.png\\\",\\\"url\\\":\\\"https:\\/\\/automation.ideas.edu.vn\\/uploadss\\/69e2f5c66ab90_BACKGROUNDZOOM.png\\\",\\\"size\\\":348938,\\\"type\\\":\\\"png\\\",\\\"logic\\\":\\\"all\\\",\\\"path\\\":\\\"..\\/uploadss\\/69e2f5c66ab90_BACKGROUNDZOOM.png\\\"}]},\\\"nextStepId\\\":\\\"662cebf4-bf9b-4cf9-87ce-550c9b296034\\\"},{\\\"id\\\":\\\"15f0ca03-8160-48b7-b008-223cde125dea\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"subject\\\":\\\"RECAP\\\",\\\"templateId\\\":\\\"69d8bd93ef72d\\\"}},{\\\"id\\\":\\\"662cebf4-bf9b-4cf9-87ce-550c9b296034\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd \\u0111\\u1ebfn ng\\u00e0y 2026-04-23 20:00\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"days\\\",\\\"mode\\\":\\\"until_date\\\",\\\"specificDate\\\":\\\"2026-04-23\\\",\\\"untilTime\\\":\\\"20:00\\\"},\\\"nextStepId\\\":\\\"15f0ca03-8160-48b7-b008-223cde125dea\\\"}]",
-      "config": "{\\\"frequencyCap\\\":3,\\\"activeDays\\\":[0,1,2,3,4,5,6],\\\"startTime\\\":\\\"08:00\\\",\\\"endTime\\\":\\\"21:00\\\",\\\"exitConditions\\\":[\\\"unsubscribed\\\"],\\\"type\\\":\\\"realtime\\\",\\\"frequency\\\":\\\"one-time\\\",\\\"allowMultiple\\\":false,\\\"enrollmentCooldownHours\\\":12}",
-      "stat_enrolled": 18560,
-      "stat_completed": 18330,
-      "stat_open_rate": 0,
-      "stat_click_rate": 0,
-      "stat_total_sent": 3430,
-      "stat_total_opened": 384,
-      "stat_unique_opened": 304,
-      "stat_total_clicked": 53,
-      "stat_unique_clicked": 17,
-      "stat_total_zalo_clicked": 0,
-      "stat_unique_zalo_clicked": 0,
-      "stat_total_failed": 1,
-      "stat_total_unsubscribed": 1,
-      "archived_at": null,
-      "created_at": "2026-04-13 08:20:15",
-      "updated_at": "2026-04-22 04:40:02",
-      "stat_zns_sent": 0,
-      "stat_zns_failed": 0,
-      "trigger_type": "campaign",
-      "stat_zalo_sent": 0,
-      "workspace_id": 1,
-      "stat_meta_sent": 0
+      "createdAt": "2026-03-08T13:46:06.291Z",
+      "triggerType": "Tag Added",
+      "stats": {
+        "enrolled": 2100,
+        "completed": 1800,
+        "totalSent": 8400,
+        "totalOpened": 3200,
+        "uniqueOpened": 1500,
+        "totalClicked": 800,
+        "uniqueClicked": 400
+      },
+      "config": {
+        "type": "batch",
+        "activeDays": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "startTime": "09:00",
+        "endTime": "17:00",
+        "frequencyCap": 1
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "type": "trigger",
+          "label": "Gắn Tag: B2B",
+          "iconName": "Tag",
+          "config": {
+            "type": "tag",
+            "targetId": "B2B"
+          },
+          "nextStepId": "s2"
+        },
+        {
+          "id": "s2",
+          "type": "action",
+          "label": "Email #1: Giới thiệu giải pháp",
+          "iconName": "Mail",
+          "config": {
+            "campaignId": "camp_b2b_1"
+          },
+          "stats": {
+            "entered": 2100,
+            "completed": 2100
+          },
+          "nextStepId": "s3"
+        },
+        {
+          "id": "s3",
+          "type": "wait",
+          "label": "Chờ 2 ngày",
+          "iconName": "Clock",
+          "config": {
+            "duration": 2,
+            "unit": "days"
+          },
+          "stats": {
+            "entered": 2100,
+            "waiting": 0,
+            "completed": 2100
+          },
+          "nextStepId": "s4"
+        },
+        {
+          "id": "s4",
+          "type": "action",
+          "label": "Email #2: Case Study",
+          "iconName": "Mail",
+          "config": {
+            "campaignId": "camp_b2b_2"
+          },
+          "stats": {
+            "entered": 2100,
+            "completed": 2050
+          },
+          "nextStepId": "s5"
+        },
+        {
+          "id": "s5",
+          "type": "wait",
+          "label": "Chờ 3 ngày",
+          "iconName": "Clock",
+          "config": {
+            "duration": 3,
+            "unit": "days"
+          },
+          "stats": {
+            "entered": 2050,
+            "waiting": 250,
+            "completed": 1800
+          },
+          "nextStepId": "s6"
+        },
+        {
+          "id": "s6",
+          "type": "action",
+          "label": "Tạo Task: Sale Call",
+          "iconName": "PhoneCall",
+          "config": {
+            "assignTo": "sale_team"
+          },
+          "stats": {
+            "entered": 1800,
+            "completed": 1800
+          }
+        }
+      ]
     },
     {
-      "id": "69e0a83c77bd8",
-      "name": "Webinar MSc AI 18/04 (Cựu học viên)",
-      "description": null,
-      "status": "paused",
-      "steps": "[{\\\"id\\\":\\\"1eb6234f-8700-4622-8453-fbf2980e807f\\\",\\\"type\\\":\\\"trigger\\\",\\\"label\\\":\\\"Sau Campaign: [16\\/04\\/2026] - Workshop AI - C\\u1ef1u h\\u1ecdc vi\\u00ean UBIS\\\",\\\"iconName\\\":\\\"zap\\\",\\\"config\\\":{\\\"type\\\":\\\"campaign\\\",\\\"targetId\\\":\\\"69e0ab5e9a13f\\\",\\\"targetSubtype\\\":\\\"list\\\"},\\\"nextStepId\\\":\\\"668930db-7bb5-4e43-87f2-7ae3e2131a4a\\\",\\\"stats\\\":{\\\"sent\\\":1237,\\\"opened\\\":0,\\\"unique_opened\\\":118,\\\"clicked\\\":0,\\\"unique_clicked\\\":52,\\\"failed\\\":0,\\\"processed\\\":1237,\\\"matched\\\":0,\\\"timed_out\\\":0,\\\"path_a\\\":0,\\\"path_b\\\":0,\\\"openRate\\\":9.5,\\\"clickRate\\\":4.2,\\\"errorRate\\\":0,\\\"waiting\\\":0,\\\"branchStats\\\":[]}},{\\\"id\\\":\\\"668930db-7bb5-4e43-87f2-7ae3e2131a4a\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd \\u0111\\u1ebfn ng\\u00e0y 2026-04-16 20:00\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":2,\\\"unit\\\":\\\"days\\\",\\\"mode\\\":\\\"until_date\\\",\\\"specificDate\\\":\\\"2026-04-16\\\",\\\"untilTime\\\":\\\"20:00\\\"},\\\"nextStepId\\\":\\\"947fb860-0a2f-4db8-b74a-c075045ea066\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"failed\\\":0,\\\"processed\\\":1236,\\\"matched\\\":0,\\\"timed_out\\\":0,\\\"path_a\\\":0,\\\"path_b\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"errorRate\\\":0,\\\"waiting\\\":0,\\\"branchStats\\\":[]}},{\\\"id\\\":\\\"947fb860-0a2f-4db8-b74a-c075045ea066\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"subject\\\":\\\"[IDEAS] Ch\\u1ec9 c\\u00f2n 2 ng\\u00e0y \\u0111\\u1ec3 g\\u1eb7p g\\u1ee1 c\\u00e1c chuy\\u00ean gia AI\\\",\\\"sourceMode\\\":\\\"template\\\",\\\"templateId\\\":\\\"69d8a03dda79e\\\"},\\\"nextStepId\\\":\\\"d2bdbcb2-c229-458d-a814-3db9f1095b02\\\",\\\"stats\\\":{\\\"sent\\\":1235,\\\"opened\\\":116,\\\"unique_opened\\\":86,\\\"clicked\\\":105,\\\"unique_clicked\\\":51,\\\"failed\\\":0,\\\"processed\\\":1235,\\\"matched\\\":0,\\\"timed_out\\\":0,\\\"path_a\\\":0,\\\"path_b\\\":0,\\\"openRate\\\":7,\\\"clickRate\\\":4.1,\\\"errorRate\\\":0,\\\"waiting\\\":0,\\\"branchStats\\\":[]}},{\\\"id\\\":\\\"d2bdbcb2-c229-458d-a814-3db9f1095b02\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd \\u0111\\u1ebfn ng\\u00e0y 2026-04-18 12:00\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"hours\\\",\\\"mode\\\":\\\"until_date\\\",\\\"specificDate\\\":\\\"2026-04-18\\\",\\\"untilTime\\\":\\\"12:00\\\"},\\\"nextStepId\\\":\\\"092acce4-c1fb-4782-afc8-59f6966a21e5\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"failed\\\":0,\\\"processed\\\":1235,\\\"matched\\\":0,\\\"timed_out\\\":0,\\\"path_a\\\":0,\\\"path_b\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"errorRate\\\":0,\\\"waiting\\\":0,\\\"branchStats\\\":[]}},{\\\"id\\\":\\\"092acce4-c1fb-4782-afc8-59f6966a21e5\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"templateId\\\":\\\"69d8b119b6118\\\",\\\"subject\\\":\\\"[IDEAS] Link tham gia Webinar \\\\\"H\\u1ecdc MSc AI \\u0111\\u1ec3 l\\u00e0m g\\u00ec?\\\\\" s\\u1ebd b\\u1eaft \\u0111\\u1ea7u l\\u00fac 14:00 h\\u00f4m nay!\\\",\\\"attachments\\\":[]},\\\"nextStepId\\\":\\\"9ccffc71-7850-4391-a37b-4c96e9906dfc\\\",\\\"stats\\\":{\\\"sent\\\":1233,\\\"opened\\\":137,\\\"unique_opened\\\":100,\\\"clicked\\\":89,\\\"unique_clicked\\\":51,\\\"failed\\\":2,\\\"processed\\\":1233,\\\"matched\\\":0,\\\"timed_out\\\":0,\\\"path_a\\\":0,\\\"path_b\\\":0,\\\"openRate\\\":8.1,\\\"clickRate\\\":4.1,\\\"errorRate\\\":0.2,\\\"waiting\\\":0,\\\"branchStats\\\":[]}},{\\\"id\\\":\\\"9ccffc71-7850-4391-a37b-4c96e9906dfc\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd \\u0111\\u1ebfn ng\\u00e0y 2026-04-23 20:00\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"hours\\\",\\\"mode\\\":\\\"until_date\\\",\\\"specificDate\\\":\\\"2026-04-23\\\",\\\"untilTime\\\":\\\"20:00\\\"},\\\"nextStepId\\\":\\\"c1ea8373-8ece-4a90-98b8-f110c67af19f\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"failed\\\":0,\\\"processed\\\":0,\\\"matched\\\":0,\\\"timed_out\\\":0,\\\"path_a\\\":0,\\\"path_b\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"errorRate\\\":0,\\\"waiting\\\":1233,\\\"branchStats\\\":[]}},{\\\"id\\\":\\\"c1ea8373-8ece-4a90-98b8-f110c67af19f\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"templateId\\\":\\\"69d8bd93ef72d\\\",\\\"subject\\\":\\\"RECAP\\\"},\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}}]",
-      "config": "{\\\"frequencyCap\\\":3,\\\"activeDays\\\":[0,1,2,3,4,5,6],\\\"startTime\\\":\\\"08:00\\\",\\\"endTime\\\":\\\"21:00\\\",\\\"exitConditions\\\":[\\\"unsubscribed\\\"],\\\"type\\\":\\\"realtime\\\",\\\"frequency\\\":\\\"one-time\\\",\\\"allowMultiple\\\":false,\\\"enrollmentCooldownHours\\\":12}",
-      "stat_enrolled": 13370,
-      "stat_completed": 0,
-      "stat_open_rate": 0,
-      "stat_click_rate": 0,
-      "stat_total_sent": 1237,
-      "stat_total_opened": 159,
-      "stat_unique_opened": 122,
-      "stat_total_clicked": 110,
-      "stat_unique_clicked": 52,
-      "stat_total_zalo_clicked": 0,
-      "stat_unique_zalo_clicked": 0,
-      "stat_total_failed": 0,
-      "stat_total_unsubscribed": 1,
-      "archived_at": null,
-      "created_at": "2026-04-16 09:13:32",
-      "updated_at": "2026-04-22 03:23:02",
-      "stat_zns_sent": 0,
-      "stat_zns_failed": 0,
-      "trigger_type": "campaign",
-      "stat_zalo_sent": 0,
-      "workspace_id": 1,
-      "stat_meta_sent": 0
+      "id": "flow_campaign_care",
+      "name": "Chăm sóc Sau Chiến dịch Tháng 4",
+      "description": "Nuôi dưỡng lead đã mở email, phân nhánh theo hành vi click.",
+      "status": "active",
+      "createdAt": "2026-04-19T13:46:06.291Z",
+      "triggerType": "Campaign Opened",
+      "stats": {
+        "enrolled": 1250,
+        "completed": 680,
+        "totalSent": 2800,
+        "totalOpened": 1100,
+        "uniqueOpened": 890,
+        "totalClicked": 320,
+        "uniqueClicked": 280
+      },
+      "config": {
+        "type": "realtime",
+        "activeDays": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "startTime": "07:00",
+        "endTime": "22:00",
+        "frequencyCap": 1
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "type": "trigger",
+          "label": "Mở Email Tháng 4",
+          "iconName": "Mail",
+          "config": {
+            "type": "campaign",
+            "targetId": "camp_1"
+          },
+          "stats": {
+            "entered": 1250,
+            "waiting": 0,
+            "completed": 1250
+          },
+          "nextStepId": "s2"
+        },
+        {
+          "id": "s2",
+          "type": "wait",
+          "label": "Chờ 30 phút",
+          "iconName": "Clock",
+          "config": {
+            "duration": 30,
+            "unit": "minutes"
+          },
+          "stats": {
+            "entered": 1250,
+            "waiting": 45,
+            "completed": 1205
+          },
+          "nextStepId": "s3"
+        },
+        {
+          "id": "s3",
+          "type": "condition",
+          "label": "Đã click link ưu đãi?",
+          "iconName": "HelpCircle",
+          "config": {
+            "field": "link_click",
+            "value": "domation.vn/uu-dai"
+          },
+          "yesStepId": "s4_hot",
+          "noStepId": "s4_cold",
+          "stats": {
+            "entered": 1205,
+            "completed": 1205
+          }
+        },
+        {
+          "id": "s4_hot",
+          "type": "action",
+          "label": "🔥 Gắn Tag HOT_LEAD",
+          "iconName": "Tag",
+          "config": {
+            "tag": "HOT_LEAD"
+          },
+          "stats": {
+            "entered": 520,
+            "completed": 520
+          },
+          "nextStepId": "s5"
+        },
+        {
+          "id": "s4_cold",
+          "type": "action",
+          "label": "Email: Nhắc nhở ưu đãi",
+          "iconName": "Mail",
+          "config": {
+            "campaignId": "camp_reminder_1"
+          },
+          "stats": {
+            "entered": 685,
+            "completed": 685
+          },
+          "nextStepId": "s5"
+        },
+        {
+          "id": "s5",
+          "type": "wait",
+          "label": "Chờ 1 ngày",
+          "iconName": "Clock",
+          "config": {
+            "duration": 1,
+            "unit": "days"
+          },
+          "stats": {
+            "entered": 520,
+            "waiting": 20,
+            "completed": 500
+          },
+          "nextStepId": "s6"
+        },
+        {
+          "id": "s6",
+          "type": "split_test",
+          "label": "A/B: Giảm 20% vs Voucher",
+          "iconName": "SplitSquareHorizontal",
+          "config": {
+            "ratio": 50
+          },
+          "pathAStepId": "s7a",
+          "pathBStepId": "s7b",
+          "stats": {
+            "entered": 500,
+            "completed": 500
+          }
+        },
+        {
+          "id": "s7a",
+          "type": "action",
+          "label": "Email A: Giảm 20%",
+          "iconName": "Mail",
+          "config": {
+            "campaignId": "camp_offer_20pct"
+          },
+          "stats": {
+            "entered": 250,
+            "completed": 250
+          }
+        },
+        {
+          "id": "s7b",
+          "type": "action",
+          "label": "Email B: Voucher 100K",
+          "iconName": "Mail",
+          "config": {
+            "campaignId": "camp_offer_voucher"
+          },
+          "stats": {
+            "entered": 250,
+            "completed": 250
+          }
+        }
+      ]
     },
     {
-      "id": "ab53175e-3fea-4b46-bd05-c4a24f866952",
-      "name": "Đăng ký tham gia Webinar 18-04",
-      "description": null,
-      "status": "paused",
-      "steps": "[{\\\"id\\\":\\\"68b6278e-1f5b-4f70-91fd-1afa6a383069\\\",\\\"type\\\":\\\"trigger\\\",\\\"label\\\":\\\"G\\u1eedi Form: Workshop EVENT 18\\/4\\\",\\\"iconName\\\":\\\"zap\\\",\\\"config\\\":{\\\"type\\\":\\\"form\\\",\\\"targetId\\\":\\\"9eae5a7728087c14799ee9f048e1e251\\\",\\\"targetSubtype\\\":\\\"list\\\"},\\\"nextStepId\\\":\\\"316bdd9e-4511-456d-80a3-e7cb3e895eff\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"316bdd9e-4511-456d-80a3-e7cb3e895eff\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"Email Ph\\u1ea3n h\\u1ed3i Form\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"subject\\\":\\\"[IDEAS] X\\u00e1c nh\\u1eadn \\u0111\\u0103ng k\\u00fd Webinar - \\u201cH\\u1ecdc MSc AI \\u0111\\u1ec3 l\\u00e0m g\\u00ec?\\u201d\\\",\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"templateId\\\":\\\"69d89a728ac58\\\"},\\\"nextStepId\\\":\\\"fa091d26-bcb1-4fb3-b14e-ebd201d012e2\\\",\\\"stats\\\":{\\\"sent\\\":49,\\\"opened\\\":32,\\\"unique_opened\\\":14,\\\"clicked\\\":1,\\\"unique_clicked\\\":1,\\\"failed\\\":0,\\\"processed\\\":49,\\\"matched\\\":0,\\\"timed_out\\\":0,\\\"path_a\\\":0,\\\"path_b\\\":0,\\\"openRate\\\":28.6,\\\"clickRate\\\":2,\\\"errorRate\\\":0,\\\"waiting\\\":0,\\\"branchStats\\\":[]}},{\\\"id\\\":\\\"03ba2568-6e42-4ecf-9f98-78b3a8ed6684\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd \\u0111\\u1ebfn ng\\u00e0y 2026-04-18 12:00\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"days\\\",\\\"mode\\\":\\\"until_date\\\",\\\"specificDate\\\":\\\"2026-04-18\\\",\\\"untilTime\\\":\\\"12:00\\\"},\\\"nextStepId\\\":\\\"17a93bf7-c651-4e37-8ff7-673f26a283e1\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"failed\\\":0,\\\"processed\\\":27,\\\"matched\\\":0,\\\"timed_out\\\":0,\\\"path_a\\\":0,\\\"path_b\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"errorRate\\\":0,\\\"waiting\\\":0,\\\"branchStats\\\":[]}},{\\\"id\\\":\\\"17a93bf7-c651-4e37-8ff7-673f26a283e1\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"subject\\\":\\\"[IDEAS] Link tham gia Webinar \\\\\"H\\u1ecdc MSc AI \\u0111\\u1ec3 l\\u00e0m g\\u00ec?\\\\\" s\\u1ebd b\\u1eaft \\u0111\\u1ea7u l\\u00fac 14:00 h\\u00f4m nay!\\\",\\\"templateId\\\":\\\"69d8b119b6118\\\",\\\"attachments\\\":[{\\\"id\\\":\\\"454c82ad-adda-4251-98ee-6d9c88735235\\\",\\\"name\\\":\\\"BACKGROUND ZOOM.png\\\",\\\"url\\\":\\\"https:\\/\\/automation.ideas.edu.vn\\/uploadss\\/69e1fa2c4055d_BACKGROUNDZOOM.png\\\",\\\"size\\\":348938,\\\"type\\\":\\\"png\\\",\\\"logic\\\":\\\"all\\\",\\\"path\\\":\\\"..\\/uploadss\\/69e1fa2c4055d_BACKGROUNDZOOM.png\\\"}]},\\\"nextStepId\\\":\\\"f4165567-997d-4ccb-9bd2-aa36abb9b084\\\",\\\"stats\\\":{\\\"sent\\\":27,\\\"opened\\\":35,\\\"unique_opened\\\":22,\\\"clicked\\\":5,\\\"unique_clicked\\\":5,\\\"failed\\\":0,\\\"processed\\\":27,\\\"matched\\\":0,\\\"timed_out\\\":0,\\\"path_a\\\":0,\\\"path_b\\\":0,\\\"openRate\\\":81.5,\\\"clickRate\\\":18.5,\\\"errorRate\\\":0,\\\"waiting\\\":0,\\\"branchStats\\\":[]}},{\\\"id\\\":\\\"fa091d26-bcb1-4fb3-b14e-ebd201d012e2\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 10 Ph\\u00fat\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":10,\\\"unit\\\":\\\"minutes\\\"},\\\"nextStepId\\\":\\\"3a16fe6c-a1a1-4f9e-80bd-fa560efd41ae\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"failed\\\":0,\\\"processed\\\":28,\\\"matched\\\":0,\\\"timed_out\\\":0,\\\"path_a\\\":0,\\\"path_b\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"errorRate\\\":0,\\\"waiting\\\":0,\\\"branchStats\\\":[]}},{\\\"id\\\":\\\"3a16fe6c-a1a1-4f9e-80bd-fa560efd41ae\\\",\\\"type\\\":\\\"zalo_zns\\\",\\\"label\\\":\\\"Zalo ZNS\\\",\\\"iconName\\\":\\\"message-square\\\",\\\"config\\\":{\\\"zalo_oa_id\\\":\\\"a646c4d215fd571d5783fd61af73352a\\\",\\\"template_id\\\":\\\"565864\\\",\\\"template_data\\\":{\\\"ngay_dang_ky\\\":\\\"{{today}}\\\",\\\"dia_diem\\\":\\\"Tr\\u1ef1c tuy\\u1ebfn qua Zoom\\\",\\\"mau_id\\\":\\\"{{phone_number}}\\\",\\\"ten_workshop\\\":\\\"H\\u1ecdc MSc AI \\u0111\\u1ec3 l\\u00e0m g\\u00ec?\\\",\\\"thoi_gian\\\":\\\"14:00 | Th\\u1ee9 B\\u1ea3y - 18.04.2026\\\",\\\"customer_name\\\":\\\"{{first_name}}\\\",\\\"nguon_dang_ky\\\":\\\"IDEAS.EDU.VN\\\"},\\\"input_mode\\\":\\\"manual\\\",\\\"required_params\\\":[\\\"customer_name\\\",\\\"dia_diem\\\",\\\"mau_id\\\",\\\"ngay_dang_ky\\\",\\\"nguon_dang_ky\\\",\\\"ten_workshop\\\",\\\"thoi_gian\\\"]},\\\"nextStepId\\\":\\\"b1cc5e7f-a73d-475a-9764-87cfd7346ca5\\\",\\\"stats\\\":{\\\"sent\\\":28,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"failed\\\":3,\\\"processed\\\":28,\\\"matched\\\":0,\\\"timed_out\\\":0,\\\"path_a\\\":0,\\\"path_b\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"errorRate\\\":9.7,\\\"waiting\\\":0,\\\"branchStats\\\":[],\\\"zns_sent\\\":28}},{\\\"id\\\":\\\"b1cc5e7f-a73d-475a-9764-87cfd7346ca5\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd \\u0111\\u1ebfn ng\\u00e0y 2026-04-16 20:00\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"days\\\",\\\"mode\\\":\\\"until_date\\\",\\\"specificDate\\\":\\\"2026-04-16\\\",\\\"untilTime\\\":\\\"20:00\\\"},\\\"nextStepId\\\":\\\"6184645c-1a0f-4881-a138-ceae24e3c23c\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"failed\\\":0,\\\"processed\\\":27,\\\"matched\\\":0,\\\"timed_out\\\":0,\\\"path_a\\\":0,\\\"path_b\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"errorRate\\\":0,\\\"waiting\\\":0,\\\"branchStats\\\":[]}},{\\\"id\\\":\\\"6184645c-1a0f-4881-a138-ceae24e3c23c\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"subject\\\":\\\"[IDEAS] Ch\\u1ec9 c\\u00f2n 2 ng\\u00e0y \\u0111\\u1ec3 g\\u1eb7p g\\u1ee1 c\\u00e1c chuy\\u00ean gia AI\\\",\\\"templateId\\\":\\\"69d8a03dda79e\\\"},\\\"nextStepId\\\":\\\"1ae8c7dd-497e-4205-b210-b90fb6b349f7\\\",\\\"stats\\\":{\\\"sent\\\":34,\\\"opened\\\":20,\\\"unique_opened\\\":11,\\\"clicked\\\":5,\\\"unique_clicked\\\":4,\\\"failed\\\":0,\\\"processed\\\":34,\\\"matched\\\":0,\\\"timed_out\\\":0,\\\"path_a\\\":0,\\\"path_b\\\":0,\\\"openRate\\\":32.4,\\\"clickRate\\\":11.8,\\\"errorRate\\\":0,\\\"waiting\\\":0,\\\"branchStats\\\":[]}},{\\\"id\\\":\\\"1ae8c7dd-497e-4205-b210-b90fb6b349f7\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd \\u0111\\u1ebfn ng\\u00e0y 2026-04-18 10:30\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"hours\\\",\\\"mode\\\":\\\"until_date\\\",\\\"specificDate\\\":\\\"2026-04-18\\\",\\\"untilTime\\\":\\\"10:30\\\"},\\\"nextStepId\\\":\\\"8a1fe38c-67be-4643-8e6d-0a6900597175\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"8a1fe38c-67be-4643-8e6d-0a6900597175\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"templateId\\\":\\\"69e2f9ec5b71c\\\",\\\"subject\\\":\\\"[IDEAS] Link Zoom Webinar \\\\\"H\\u1ecdc MSc AI \\u0111\\u1ec3 l\\u00e0m g\\u00ec?\\\\\" s\\u1ebd b\\u1eaft \\u0111\\u1ea7u l\\u00fac 14:00\\\",\\\"attachments\\\":[{\\\"id\\\":\\\"e38fbe7e-b940-4bdf-afd1-92452b098436\\\",\\\"name\\\":\\\"BACKGROUND ZOOM.png\\\",\\\"url\\\":\\\"https:\\/\\/automation.ideas.edu.vn\\/uploadss\\/69e2fa724a938_BACKGROUNDZOOM.png\\\",\\\"size\\\":348938,\\\"type\\\":\\\"png\\\",\\\"logic\\\":\\\"all\\\",\\\"path\\\":\\\"..\\/uploadss\\/69e2fa724a938_BACKGROUNDZOOM.png\\\"}]},\\\"nextStepId\\\":\\\"03ba2568-6e42-4ecf-9f98-78b3a8ed6684\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"f4165567-997d-4ccb-9bd2-aa36abb9b084\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd \\u0111\\u1ebfn ng\\u00e0y 2026-04-18 13:46\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"hours\\\",\\\"mode\\\":\\\"until_date\\\",\\\"specificDate\\\":\\\"2026-04-18\\\",\\\"untilTime\\\":\\\"13:46\\\"},\\\"nextStepId\\\":\\\"2e87f789-80ea-49c0-89c0-a2e0b88fbe00\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"failed\\\":0,\\\"processed\\\":27,\\\"matched\\\":0,\\\"timed_out\\\":0,\\\"path_a\\\":0,\\\"path_b\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"errorRate\\\":0,\\\"waiting\\\":0,\\\"branchStats\\\":[]}},{\\\"id\\\":\\\"2e87f789-80ea-49c0-89c0-a2e0b88fbe00\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"templateId\\\":\\\"69e2f9ec5b71c\\\",\\\"subject\\\":\\\"[IDEAS] Webinar s\\u1ebd b\\u1eaft \\u0111\\u1ea7u sau 10 ph\\u00fat n\\u1eefa!!!\\\",\\\"attachments\\\":[{\\\"id\\\":\\\"24ff4e05-f2b2-4e31-8907-789eff58df6e\\\",\\\"name\\\":\\\"BACKGROUNDZOOM.png\\\",\\\"url\\\":\\\"https:\\/\\/automation.ideas.edu.vn\\/uploadss\\/69e2fb434cb30_BACKGROUNDZOOM.png\\\",\\\"path\\\":\\\"..\\/uploadss\\/69e2fb434cb30_BACKGROUNDZOOM.png\\\",\\\"size\\\":348938,\\\"type\\\":\\\"png\\\",\\\"logic\\\":\\\"all\\\"}]},\\\"stats\\\":{\\\"sent\\\":27,\\\"opened\\\":32,\\\"unique_opened\\\":20,\\\"clicked\\\":4,\\\"unique_clicked\\\":2,\\\"failed\\\":0,\\\"processed\\\":27,\\\"matched\\\":0,\\\"timed_out\\\":0,\\\"path_a\\\":0,\\\"path_b\\\":0,\\\"openRate\\\":74.1,\\\"clickRate\\\":7.4,\\\"errorRate\\\":0,\\\"waiting\\\":0,\\\"branchStats\\\":[]},\\\"nextStepId\\\":\\\"b1acce4e-4f72-438c-b857-bcd637b94bbd\\\"},{\\\"id\\\":\\\"b1acce4e-4f72-438c-b857-bcd637b94bbd\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd \\u0111\\u1ebfn ng\\u00e0y 2026-04-20 20:00\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"hours\\\",\\\"mode\\\":\\\"until_date\\\",\\\"specificDate\\\":\\\"2026-04-20\\\",\\\"untilTime\\\":\\\"20:00\\\"},\\\"nextStepId\\\":\\\"daa2fb6d-4968-41f3-a4e3-b51f6c1d393d\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"failed\\\":0,\\\"processed\\\":27,\\\"matched\\\":0,\\\"timed_out\\\":0,\\\"path_a\\\":0,\\\"path_b\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"errorRate\\\":0,\\\"waiting\\\":0,\\\"branchStats\\\":[]}},{\\\"id\\\":\\\"daa2fb6d-4968-41f3-a4e3-b51f6c1d393d\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"subject\\\":\\\"[IDEAS] 4 b\\u01b0\\u1edbc \\u1ee9ng d\\u1ee5ng AI th\\u00e0nh c\\u00f4ng trong doanh nghi\\u1ec7p\\\",\\\"templateId\\\":\\\"69d8bd93ef72d\\\"},\\\"stats\\\":{\\\"sent\\\":27,\\\"opened\\\":19,\\\"unique_opened\\\":11,\\\"clicked\\\":1,\\\"unique_clicked\\\":1,\\\"failed\\\":0,\\\"processed\\\":27,\\\"matched\\\":0,\\\"timed_out\\\":0,\\\"path_a\\\":0,\\\"path_b\\\":0,\\\"openRate\\\":40.7,\\\"clickRate\\\":3.7,\\\"errorRate\\\":0,\\\"waiting\\\":0,\\\"branchStats\\\":[]}}]",
-      "config": "{\\\"frequencyCap\\\":3,\\\"activeDays\\\":[0,1,2,3,4,5,6],\\\"startTime\\\":\\\"08:00\\\",\\\"endTime\\\":\\\"21:00\\\",\\\"exitConditions\\\":[\\\"unsubscribed\\\"],\\\"type\\\":\\\"realtime\\\",\\\"frequency\\\":\\\"recurring\\\",\\\"allowMultiple\\\":true,\\\"enrollmentCooldownHours\\\":0}",
-      "stat_enrolled": 1270,
-      "stat_completed": 1070,
-      "stat_open_rate": 0,
-      "stat_click_rate": 0,
-      "stat_total_sent": 0,
-      "stat_total_opened": 1,
-      "stat_unique_opened": 1,
-      "stat_total_clicked": 0,
-      "stat_unique_clicked": 0,
-      "stat_total_zalo_clicked": 0,
-      "stat_unique_zalo_clicked": 0,
-      "stat_total_failed": 0,
-      "stat_total_unsubscribed": 0,
-      "archived_at": null,
-      "created_at": "2026-04-10 09:20:16",
-      "updated_at": "2026-04-22 06:40:02",
-      "stat_zns_sent": 28,
-      "stat_zns_failed": 3,
-      "trigger_type": "form",
-      "stat_zalo_sent": 0,
-      "workspace_id": 1,
-      "stat_meta_sent": 0
+      "id": "flow_birthday",
+      "name": "Chúc mừng Sinh nhật Tự động",
+      "description": "Email + ZNS chúc mừng sinh nhật khách hàng đúng ngày.",
+      "status": "active",
+      "createdAt": "2026-02-21T13:46:06.291Z",
+      "triggerType": "date",
+      "stats": {
+        "enrolled": 320,
+        "completed": 290,
+        "totalSent": 640,
+        "totalOpened": 510,
+        "uniqueOpened": 310,
+        "totalClicked": 120,
+        "uniqueClicked": 98
+      },
+      "config": {
+        "frequency": "recurring",
+        "enrollmentCooldownHours": 8760
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "type": "trigger",
+          "label": "Sinh nhật Khách hàng",
+          "iconName": "Cake",
+          "config": {
+            "type": "date",
+            "dateField": "dateOfBirth",
+            "offsetType": "on",
+            "triggerHour": 8
+          },
+          "nextStepId": "s2"
+        },
+        {
+          "id": "s2",
+          "type": "action",
+          "label": "Email Chúc Sinh Nhật",
+          "iconName": "Mail",
+          "config": {
+            "campaignId": "camp_bday"
+          },
+          "stats": {
+            "entered": 320,
+            "completed": 318
+          },
+          "nextStepId": "s3"
+        },
+        {
+          "id": "s3",
+          "type": "action",
+          "label": "ZNS Tặng Voucher",
+          "iconName": "MessageCircle",
+          "config": {
+            "znsTemplateId": "zns_bday"
+          },
+          "stats": {
+            "entered": 318,
+            "completed": 315
+          }
+        }
+      ]
     },
     {
-      "id": "b6109291-452f-4c70-a04a-ab3aab9244da",
-      "name": "Phản hồi Khảo sát",
-      "description": null,
-      "status": "archived",
-      "steps": "[{\\\"id\\\":\\\"6ccc99d5-c7b5-407b-b099-a637715e2c42\\\",\\\"type\\\":\\\"trigger\\\",\\\"label\\\":\\\"Kh\\u1ea3o s\\u00e1t: Ph\\u1ea3n h\\u1ed3i s\\u1ea3n ph\\u1ea9m\\\",\\\"iconName\\\":\\\"zap\\\",\\\"config\\\":{\\\"type\\\":\\\"survey\\\",\\\"targetId\\\":\\\"9d075e8b-4370-4cca-8466-d19ae2547f96\\\",\\\"targetSubtype\\\":\\\"list\\\"},\\\"nextStepId\\\":\\\"b997bca6-a97e-43fa-853c-6066835b5771\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}}]",
-      "config": "{\\\"frequencyCap\\\":3,\\\"activeDays\\\":[0,1,2,3,4,5,6],\\\"startTime\\\":\\\"08:00\\\",\\\"endTime\\\":\\\"21:00\\\",\\\"exitConditions\\\":[\\\"unsubscribed\\\"],\\\"type\\\":\\\"realtime\\\",\\\"frequency\\\":\\\"one-time\\\",\\\"allowMultiple\\\":false,\\\"enrollmentCooldownHours\\\":12}",
-      "stat_enrolled": 0,
-      "stat_completed": 0,
-      "stat_open_rate": 0,
-      "stat_click_rate": 0,
-      "stat_total_sent": 0,
-      "stat_total_opened": 0,
-      "stat_unique_opened": 0,
-      "stat_total_clicked": 0,
-      "stat_unique_clicked": 0,
-      "stat_total_zalo_clicked": 0,
-      "stat_unique_zalo_clicked": 0,
-      "stat_total_failed": 0,
-      "stat_total_unsubscribed": 0,
-      "archived_at": "2026-04-22 06:22:56",
-      "created_at": "2026-04-21 03:45:00",
-      "updated_at": "2026-04-22 06:22:54",
-      "stat_zns_sent": 0,
-      "stat_zns_failed": 0,
-      "trigger_type": "survey",
-      "stat_zalo_sent": 0,
-      "workspace_id": 1,
-      "stat_meta_sent": 0
+      "id": "flow_tag_hot",
+      "name": "Follow-up HOT LEAD sau gắn tag",
+      "description": "Sale gắn tag HOT_LEAD → tự động gửi offer mạnh.",
+      "status": "active",
+      "createdAt": "2026-04-14T13:46:06.291Z",
+      "triggerType": "tag",
+      "stats": {
+        "enrolled": 450,
+        "completed": 380,
+        "totalSent": 900,
+        "totalOpened": 620,
+        "uniqueOpened": 410,
+        "totalClicked": 200,
+        "uniqueClicked": 175
+      },
+      "config": {
+        "frequency": "one-time"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "type": "trigger",
+          "label": "Gắn Tag: HOT_LEAD",
+          "iconName": "Tag",
+          "config": {
+            "type": "tag",
+            "targetId": "HOT_LEAD"
+          },
+          "nextStepId": "s2"
+        },
+        {
+          "id": "s2",
+          "type": "wait",
+          "label": "Chờ 15 phút",
+          "iconName": "Clock",
+          "config": {
+            "duration": 15,
+            "unit": "minutes"
+          },
+          "stats": {
+            "entered": 450,
+            "waiting": 5,
+            "completed": 445
+          },
+          "nextStepId": "s3"
+        },
+        {
+          "id": "s3",
+          "type": "action",
+          "label": "Email Offer 25%",
+          "iconName": "Mail",
+          "config": {
+            "campaignId": "camp_cart_a"
+          },
+          "stats": {
+            "entered": 445,
+            "completed": 440
+          },
+          "nextStepId": "s4"
+        },
+        {
+          "id": "s4",
+          "type": "condition",
+          "label": "Đã click offer?",
+          "iconName": "HelpCircle",
+          "config": {
+            "field": "link_click"
+          },
+          "yesStepId": "s5_yes",
+          "noStepId": "s5_no",
+          "stats": {
+            "entered": 440,
+            "completed": 440
+          }
+        },
+        {
+          "id": "s5_yes",
+          "type": "action",
+          "label": "Task: Gọi chốt sale",
+          "iconName": "PhoneCall",
+          "config": {
+            "assignTo": "sale_team"
+          },
+          "stats": {
+            "entered": 200,
+            "completed": 200
+          }
+        },
+        {
+          "id": "s5_no",
+          "type": "action",
+          "label": "Email Nhắc cuối",
+          "iconName": "Mail",
+          "config": {
+            "campaignId": "camp_cart_b"
+          },
+          "stats": {
+            "entered": 240,
+            "completed": 180
+          }
+        }
+      ]
     },
     {
-      "id": "fe64958d-16fa-4476-95e2-164650cb1305",
-      "name": "Nurturing - 8 mail sdsdsdsd",
-      "description": null,
-      "status": "paused",
-      "steps": "[{\\\"id\\\":\\\"502840dd-f61f-4794-8023-ac0f89e73468\\\",\\\"type\\\":\\\"trigger\\\",\\\"label\\\":\\\"T\\u01b0\\u01a1ng t\\u00e1c chi\\u1ebfn d\\u1ecbch\\\",\\\"iconName\\\":\\\"zap\\\",\\\"config\\\":{\\\"type\\\":\\\"campaign\\\",\\\"targetId\\\":\\\"\\\"},\\\"nextStepId\\\":\\\"f0a41125-bf4a-45d5-8bee-0c8f8c89ec85\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"edc6e344-86c8-400e-9b5f-24f62b2b0f8d\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"Email #1  Tr\\u01b0\\u1edbc khi ch\\u1ecdn MBA Th\\u1ee5y S\\u0129, b\\u1ea1n n\\u00ean bi\\u1ebft \\u0111i\\u1ec1u n\\u00e0y\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"subject\\\":\\\"[IDEAS] Tr\\u01b0\\u1edbc khi ch\\u1ecdn MBA Th\\u1ee5y S\\u0129, b\\u1ea1n n\\u00ean bi\\u1ebft \\u0111i\\u1ec1u n\\u00e0y\\\",\\\"attachments\\\":[],\\\"sourceMode\\\":\\\"template\\\",\\\"templateId\\\":\\\"69a5091308ed7\\\",\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\"},\\\"nextStepId\\\":\\\"4e553847-79d8-42fd-b90f-d608eefa5dd7\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"4e553847-79d8-42fd-b90f-d608eefa5dd7\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 3 Ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":3,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"f1ee4428-76a5-4eeb-a6b2-552b7769181a\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"f1ee4428-76a5-4eeb-a6b2-552b7769181a\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email #2\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"sourceMode\\\":\\\"template\\\",\\\"templateId\\\":\\\"69a0f57f9bd26\\\",\\\"subject\\\":\\\"[IDEAS] MBA Online c\\u00f3 th\\u1eadt s\\u1ef1 ph\\u00f9 h\\u1ee3p cho ng\\u01b0\\u1eddi \\u0111i l\\u00e0m?\\\"},\\\"nextStepId\\\":\\\"441387d7-80c4-4b79-bae0-a7827dc0b26d\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"441387d7-80c4-4b79-bae0-a7827dc0b26d\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 3 Ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":3,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"12879b6e-9752-4ac4-9b6e-b14ae9a88c02\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"12879b6e-9752-4ac4-9b6e-b14ae9a88c02\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email #3\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"sourceMode\\\":\\\"template\\\",\\\"templateId\\\":\\\"69a5154c52b52\\\",\\\"subject\\\":\\\"[IDEAS] MBA online \\u0111\\u01b0\\u1ee3c \\u0111\\u00e1nh gi\\u00e1 5 sao qu\\u1ed1c t\\u1ebf\\\"},\\\"nextStepId\\\":\\\"52e298d2-a8d5-4170-8a73-47dd8bf6af38\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"52e298d2-a8d5-4170-8a73-47dd8bf6af38\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 3 Ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":3,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"2fb34e9d-6b7c-4bb6-a844-10387473a88d\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"2fb34e9d-6b7c-4bb6-a844-10387473a88d\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email #4\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"sourceMode\\\":\\\"template\\\",\\\"templateId\\\":\\\"69a10dcd88d35\\\",\\\"subject\\\":\\\"[IDEAS] V\\u0103n b\\u1eb1ng MBA Swiss UMEF \\u0111\\u01b0\\u1ee3c s\\u1eed d\\u1ee5ng trong nh\\u1eefng m\\u00f4i tr\\u01b0\\u1eddng n\\u00e0o?\\\"},\\\"nextStepId\\\":\\\"606b4008-c8a3-4f61-9f71-99653bebf5e2\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"606b4008-c8a3-4f61-9f71-99653bebf5e2\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 3 Ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":3,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"a7a4443e-ca8d-467a-8cae-9df2f1f1ffc2\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"a7a4443e-ca8d-467a-8cae-9df2f1f1ffc2\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email #5\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"sourceMode\\\":\\\"template\\\",\\\"templateId\\\":\\\"69a52aea4a9d1\\\",\\\"subject\\\":\\\"[IDEAS] V\\u0103n b\\u1eb1ng c\\u1ee7a b\\u1ea1n \\u0111\\u01b0\\u1ee3c c\\u00f4ng nh\\u1eadn t\\u1eeb Th\\u1ee5y S\\u0129 \\u0111\\u1ebfn M\\u1ef9\\\"},\\\"nextStepId\\\":\\\"f4f043be-94ff-443e-af01-e9cef51fc3a5\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"f4f043be-94ff-443e-af01-e9cef51fc3a5\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 3 Ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":3,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"0812d394-1dc4-42d9-ac31-71634805d0e9\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"0812d394-1dc4-42d9-ac31-71634805d0e9\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email #6\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"subject\\\":\\\"[IDEAS] H\\u1ecdc MBA online d\\u1ec5 d\\u00e0ng h\\u01a1n c\\u00f9ng v\\u1edbi IDEAS\\\",\\\"sourceMode\\\":\\\"template\\\",\\\"templateId\\\":\\\"69a11fe824ad5\\\"},\\\"nextStepId\\\":\\\"f941067c-9eac-4c6f-b037-1ff6b6b92a55\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"f941067c-9eac-4c6f-b037-1ff6b6b92a55\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 3 Ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":3,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"21595d88-ce75-47b0-8f44-1a2dcf808f97\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"21595d88-ce75-47b0-8f44-1a2dcf808f97\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email #7\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"subject\\\":\\\"[IDEAS] B\\u01b0\\u1edbc ti\\u1ebfp theo cho k\\u1ebf ho\\u1ea1ch MBA c\\u1ee7a b\\u1ea1n l\\u00e0 g\\u00ec?\\\",\\\"sourceMode\\\":\\\"template\\\",\\\"templateId\\\":\\\"69a10fbc778ef\\\"},\\\"nextStepId\\\":\\\"10efa317-c4e6-4253-915a-8d2c3678126b\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"10efa317-c4e6-4253-915a-8d2c3678126b\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 3 Ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":3,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"93266f65-751f-48a7-9606-c35a20a42719\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"93266f65-751f-48a7-9606-c35a20a42719\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email #8\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":{\\\"senderEmail\\\":\\\"tuyensinh@ideas.edu.vn\\\",\\\"sourceMode\\\":\\\"template\\\",\\\"templateId\\\":\\\"69bb704611948\\\",\\\"subject\\\":\\\"[IDEAS] Khai m\\u1edf b\\u1ea3n l\\u0129nh l\\u00e3nh \\u0111\\u1ea1o: Tr\\u1edf th\\u00e0nh IDEAS Ambassador ngay h\\u00f4m nay!\\\"},\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0},\\\"nextStepId\\\":\\\"e720ce61-dfb2-423c-952d-eacfc0dbbc6b\\\"},{\\\"id\\\":\\\"f0a41125-bf4a-45d5-8bee-0c8f8c89ec85\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 1 Gi\\u1edd\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"hours\\\"},\\\"nextStepId\\\":\\\"edc6e344-86c8-400e-9b5f-24f62b2b0f8d\\\",\\\"stats\\\":{\\\"sent\\\":0,\\\"opened\\\":0,\\\"unique_opened\\\":0,\\\"clicked\\\":0,\\\"unique_clicked\\\":0,\\\"processed\\\":0,\\\"openRate\\\":0,\\\"clickRate\\\":0,\\\"waiting\\\":0}},{\\\"id\\\":\\\"e720ce61-dfb2-423c-952d-eacfc0dbbc6b\\\",\\\"type\\\":\\\"condition\\\",\\\"label\\\":\\\"R\\u1ebd nh\\u00e1nh Logic\\\",\\\"iconName\\\":\\\"git-merge\\\",\\\"config\\\":{\\\"conditionType\\\":\\\"clicked\\\",\\\"waitDuration\\\":3,\\\"waitUnit\\\":\\\"days\\\",\\\"linkTargets\\\":[],\\\"targetStepId\\\":\\\"93266f65-751f-48a7-9606-c35a20a42719\\\"},\\\"yesStepId\\\":\\\"a5522a7a-06cb-4534-a4f9-ae39e23a81a2\\\",\\\"noStepId\\\":\\\"fb3efeb0-16d5-4f9c-b776-86552c771d14\\\"},{\\\"id\\\":\\\"a5522a7a-06cb-4534-a4f9-ae39e23a81a2\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd (Wait)\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"hours\\\"},\\\"nextStepId\\\":\\\"0437f4e4-c193-4f3b-a28d-e7f1e52db0ed\\\"},{\\\"id\\\":\\\"0437f4e4-c193-4f3b-a28d-e7f1e52db0ed\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":[]},{\\\"id\\\":\\\"fb3efeb0-16d5-4f9c-b776-86552c771d14\\\",\\\"type\\\":\\\"advanced_condition\\\",\\\"label\\\":\\\"R\\u1ebd nh\\u00e1nh N\\u00e2ng cao\\\",\\\"iconName\\\":\\\"git-merge\\\",\\\"config\\\":{\\\"branches\\\":[{\\\"id\\\":\\\"72134bd5-541c-4d54-9062-07b6f92ea100\\\",\\\"label\\\":\\\"Nh\\u00e1nh 1\\\",\\\"conditions\\\":[{\\\"field\\\":\\\"tags\\\",\\\"operator\\\":\\\"contains\\\",\\\"value\\\":\\\"VIP\\\"},{\\\"field\\\":\\\"web_activity\\\",\\\"operator\\\":\\\"equals\\\",\\\"value\\\":\\\"Xem trang MBA\\\"}],\\\"stepId\\\":\\\"e1cda373-c303-4d0a-b9dc-630f776d2bad\\\"},{\\\"id\\\":\\\"e4240505-66bb-4d00-82e6-37aba46c0fb9\\\",\\\"label\\\":\\\"Nh\\u00e1nh 2\\\",\\\"stepId\\\":\\\"0eecf84c-f986-4479-af16-b30804c797d5\\\",\\\"conditions\\\":[{\\\"field\\\":\\\"lead_score\\\",\\\"operator\\\":\\\"greater_than\\\",\\\"value\\\":\\\"50\\\"}]}],\\\"defaultStepId\\\":\\\"e5779108-4128-4a4f-9e39-658f37923581\\\"}},{\\\"id\\\":\\\"e1cda373-c303-4d0a-b9dc-630f776d2bad\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":[]},{\\\"id\\\":\\\"0eecf84c-f986-4479-af16-b30804c797d5\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":[]},{\\\"id\\\":\\\"f18d6c91-beeb-4974-a7ea-e275927366e4\\\",\\\"type\\\":\\\"action\\\",\\\"label\\\":\\\"G\\u1eedi Email\\\",\\\"iconName\\\":\\\"mail\\\",\\\"config\\\":[]},{\\\"id\\\":\\\"e5779108-4128-4a4f-9e39-658f37923581\\\",\\\"type\\\":\\\"wait\\\",\\\"label\\\":\\\"Ch\\u1edd 1 ng\\u00e0y\\\",\\\"iconName\\\":\\\"clock\\\",\\\"config\\\":{\\\"duration\\\":1,\\\"unit\\\":\\\"days\\\"},\\\"nextStepId\\\":\\\"f18d6c91-beeb-4974-a7ea-e275927366e4\\\"}]",
-      "config": "{\\\"frequencyCap\\\":3,\\\"activeDays\\\":[0,1,2,3,4,5,6],\\\"startTime\\\":\\\"08:00\\\",\\\"endTime\\\":\\\"21:00\\\",\\\"exitConditions\\\":[\\\"unsubscribed\\\"],\\\"type\\\":\\\"realtime\\\",\\\"frequency\\\":\\\"recurring\\\",\\\"allowMultiple\\\":true,\\\"enrollmentCooldownHours\\\":0}",
-      "stat_enrolled": 0,
-      "stat_completed": 0,
-      "stat_open_rate": 0,
-      "stat_click_rate": 0,
-      "stat_total_sent": 0,
-      "stat_total_opened": 0,
-      "stat_unique_opened": 0,
-      "stat_total_clicked": 0,
-      "stat_unique_clicked": 0,
-      "stat_total_zalo_clicked": 0,
-      "stat_unique_zalo_clicked": 0,
-      "stat_total_failed": 0,
-      "stat_total_unsubscribed": 0,
-      "archived_at": null,
-      "created_at": "2026-03-02 07:33:45",
-      "updated_at": "2026-04-19 16:54:20",
-      "stat_zns_sent": 0,
-      "stat_zns_failed": 0,
-      "trigger_type": "campaign",
-      "stat_zalo_sent": 0,
-      "workspace_id": 1,
-      "stat_meta_sent": 0
+      "id": "flow_zalo_follow",
+      "name": "Chào mừng Quan tâm Zalo OA",
+      "description": "Tự động khi khách nhấn Quan tâm Zalo OA.",
+      "status": "active",
+      "createdAt": "2026-04-02T13:46:06.291Z",
+      "triggerType": "zalo_follow",
+      "stats": {
+        "enrolled": 850,
+        "completed": 820,
+        "totalSent": 850,
+        "totalOpened": 790,
+        "uniqueOpened": 790,
+        "totalClicked": 210,
+        "uniqueClicked": 195
+      },
+      "config": {
+        "frequency": "one-time"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "type": "trigger",
+          "label": "Quan tâm Zalo OA",
+          "iconName": "UserPlus",
+          "config": {
+            "type": "zalo_follow"
+          },
+          "nextStepId": "s2"
+        },
+        {
+          "id": "s2",
+          "type": "action",
+          "label": "ZNS Chào mừng",
+          "iconName": "MessageCircle",
+          "config": {
+            "znsTemplateId": "zns_welcome"
+          },
+          "stats": {
+            "entered": 850,
+            "completed": 848
+          },
+          "nextStepId": "s3"
+        },
+        {
+          "id": "s3",
+          "type": "wait",
+          "label": "Chờ 1 ngày",
+          "iconName": "Clock",
+          "config": {
+            "duration": 1,
+            "unit": "days"
+          },
+          "stats": {
+            "entered": 848,
+            "waiting": 12,
+            "completed": 836
+          },
+          "nextStepId": "s4"
+        },
+        {
+          "id": "s4",
+          "type": "action",
+          "label": "Email Giới thiệu",
+          "iconName": "Mail",
+          "config": {
+            "campaignId": "camp_b2b_1"
+          },
+          "stats": {
+            "entered": 836,
+            "completed": 820
+          }
+        }
+      ]
+    },
+    {
+      "id": "flow_reengagement",
+      "name": "Re-engagement Khách Ngủ Đông",
+      "description": "Đánh thức khách không tương tác 90 ngày.",
+      "status": "active",
+      "createdAt": "2026-04-07T13:46:06.291Z",
+      "triggerType": "segment",
+      "stats": {
+        "enrolled": 1400,
+        "completed": 420,
+        "totalSent": 2800,
+        "totalOpened": 560,
+        "uniqueOpened": 420,
+        "totalClicked": 85,
+        "uniqueClicked": 72
+      },
+      "config": {
+        "frequency": "one-time",
+        "enrollStrategy": "new_only"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "type": "trigger",
+          "label": "Vào Segment: Ngủ Đông",
+          "iconName": "Layers",
+          "config": {
+            "type": "segment",
+            "targetId": "seg_cold",
+            "enrollStrategy": "new_only"
+          },
+          "nextStepId": "s2"
+        },
+        {
+          "id": "s2",
+          "type": "action",
+          "label": "Email: Chúng tôi nhớ bạn!",
+          "iconName": "Mail",
+          "config": {
+            "campaignId": "camp_4"
+          },
+          "stats": {
+            "entered": 1400,
+            "completed": 1380
+          },
+          "nextStepId": "s3"
+        },
+        {
+          "id": "s3",
+          "type": "wait",
+          "label": "Chờ 3 ngày",
+          "iconName": "Clock",
+          "config": {
+            "duration": 3,
+            "unit": "days"
+          },
+          "stats": {
+            "entered": 1380,
+            "waiting": 960,
+            "completed": 420
+          },
+          "nextStepId": "s4"
+        },
+        {
+          "id": "s4",
+          "type": "condition",
+          "label": "Đã mở email?",
+          "iconName": "HelpCircle",
+          "config": {
+            "field": "email_open"
+          },
+          "yesStepId": "s5_win",
+          "noStepId": "s5_remove",
+          "stats": {
+            "entered": 420,
+            "completed": 420
+          }
+        },
+        {
+          "id": "s5_win",
+          "type": "action",
+          "label": "Gắn Tag: TRỞ_LẠI",
+          "iconName": "Tag",
+          "config": {
+            "tag": "TRO_LAI"
+          },
+          "stats": {
+            "entered": 420,
+            "completed": 420
+          }
+        },
+        {
+          "id": "s5_remove",
+          "type": "action",
+          "label": "Gỡ khỏi danh sách",
+          "iconName": "UserMinus",
+          "config": {
+            "action": "unsubscribe"
+          },
+          "stats": {
+            "entered": 0,
+            "completed": 0
+          }
+        }
+      ]
     }
   ]
 }

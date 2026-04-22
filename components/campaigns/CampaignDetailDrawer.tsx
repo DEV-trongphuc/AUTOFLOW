@@ -568,9 +568,10 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                             )}
 
                             {(() => {
-                                const associatedFlow = allFlows.find(f =>
-                                    f.steps.some(s => s.type === 'trigger' && s.config.type === 'campaign' && s.config.targetId === localCampaign.id)
-                                );
+                                const associatedFlow = allFlows.find(f => {
+                                    const steps = Array.isArray(f.steps) ? f.steps : (typeof f.steps === 'string' ? (() => { try { return JSON.parse(f.steps); } catch { return []; } })() : []);
+                                    return steps.some((s: any) => s.type === 'trigger' && s.config?.type === 'campaign' && s.config?.targetId === localCampaign.id);
+                                });
 
                                 return (
                                     <div className="flex flex-col gap-4">

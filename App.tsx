@@ -63,6 +63,27 @@ import PremiumLoader from './components/common/PremiumLoader';
 import { API_BASE_URL, DEMO_MODE } from '@/utils/config';
 import axios from 'axios';
 
+// ── [DEV] Synchronous auto-login for localhost ───────────────────────────────
+// Runs at module-init time (before first React render) so ProtectedRoute sees
+// `isAuthenticated = true` immediately — no redirect flash to /login.
+// The X-Admin-Token header in storageAdapter.ts handles backend auth via proxy.
+if (
+    !DEMO_MODE &&
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.port !== '') &&
+    !localStorage.getItem('isAuthenticated')
+) {
+    localStorage.setItem('user', JSON.stringify({
+        id: 1, name: 'Dev Admin', email: 'dev@localhost',
+        role: 'admin', status: 'approved', isGuest: false
+    }));
+    localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('auth_fix_v3_logout_done_prod', 'true');
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 // [SECURITY] Strict Demo Mode Isolation
 // Any rogue `axios` or `fetch` calls in new components that bypass `storageAdapter.ts`
 // will be intercepted here and prevented from hitting the production server.
@@ -174,14 +195,38 @@ const App: React.FC = () => {
         // [ISOLATION] Skip all production auth side-effects in DEMO_MODE
         if (DEMO_MODE) return;
 
+        const isLocalDev =
+            window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1' ||
+            window.location.port !== '';
+
+        // ── [DEV] Auto-login bypass for localhost ────────────────────────────
+        // On local dev, skip Google Login entirely. Inject a dev session so we
+        // can reach the app directly. The X-Admin-Token header in storageAdapter
+        // already authenticates every API call to the production backend proxy.
+        if (isLocalDev && !localStorage.getItem('isAuthenticated')) {
+            localStorage.setItem('user', JSON.stringify({
+                id: 1,
+                name: 'Dev Admin',
+                email: 'dev@localhost',
+                role: 'admin',
+                status: 'approved',
+                isGuest: false
+            }));
+            localStorage.setItem('isAuthenticated', 'true');
+            // Also reset the force-logout flag so it doesn't kick the session out
+            localStorage.setItem('auth_fix_v3_logout_done_prod', 'true');
+            return;
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         // --- FORCE ONE-TIME LOGOUT TO FIX CORRUPTED SESSIONS ---
         if (!localStorage.getItem('auth_fix_v3_logout_done_prod')) {
             localStorage.setItem('auth_fix_v3_logout_done_prod', 'true');
             if (localStorage.getItem('user')) {
                 localStorage.removeItem('user');
                 localStorage.removeItem('isAuthenticated');
-                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port !== '';
-                const apiBase = isLocal ? '/mail_api' : API_BASE_URL;
+                const apiBase = isLocalDev ? '/mail_api' : API_BASE_URL;
                 fetch(`${apiBase}/auth.php?action=logout`, { method: 'POST', credentials: 'include' })
                     .finally(() => {
                         window.location.href = '/#/login'; 

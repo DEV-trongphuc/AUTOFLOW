@@ -114,19 +114,84 @@ const generateFlows = () => {
             config: { type: "realtime", activeDays: [1,2,3,4,5,6,7], startTime: "07:00", endTime: "22:00", frequencyCap: 1 },
             triggerType: "Campaign Opened",
             steps: [
-                { id: "step_1", type: "trigger", label: "Đã mở Email Tháng 4", iconName: "Mail", config: { type: "campaign", targetId: "camp_1" }, stats: { entered: 1250, waiting: 0, completed: 1250 } },
-                { id: "step_2", type: "wait", label: "Chờ 30 phút", iconName: "Clock", config: { delay: 30 }, stats: { entered: 1250, waiting: 45, completed: 1205 } },
+                { id: "step_1", type: "trigger", label: "Đã mở Email Tháng 4", iconName: "Mail", config: { type: "campaign", targetId: "camp_1" }, stats: { entered: 1250, waiting: 0, completed: 1250 }, nextStepId: "step_2" },
+                { id: "step_2", type: "wait", label: "Chờ 30 phút", iconName: "Clock", config: { delay: 30 }, stats: { entered: 1250, waiting: 45, completed: 1205 }, nextStepId: "step_3" },
                 { id: "step_3", type: "condition", label: "Đã click link ưu đãi?", iconName: "HelpCircle", config: { field: "link_click", value: "domation.vn/uu-dai" }, yesStepId: "step_4_hot", noStepId: "step_4_cold", stats: { entered: 1205, completed: 1205 } },
-                { id: "step_4_hot", type: "action", label: "🔥 Gắn Tag: HOT_LEAD", iconName: "Tag", config: { tag: "HOT_LEAD" }, stats: { entered: 520, completed: 520 } },
-                { id: "step_4_cold", type: "action", label: "Gửi Email: Nhắc nhở ưu đãi", iconName: "Mail", config: { campaignId: "camp_reminder_1" }, stats: { entered: 685, completed: 685 } },
-                { id: "step_5", type: "wait", label: "Chờ 1 ngày", iconName: "Clock", config: { delay: 1440 }, stats: { entered: 520, waiting: 20, completed: 500 } },
+                { id: "step_4_hot", type: "action", label: "🔥 Gắn Tag: HOT_LEAD", iconName: "Tag", config: { tag: "HOT_LEAD" }, stats: { entered: 520, completed: 520 }, nextStepId: "step_5" },
+                { id: "step_4_cold", type: "action", label: "Gửi Email: Nhắc nhở ưu đãi", iconName: "Mail", config: { campaignId: "camp_reminder_1" }, stats: { entered: 685, completed: 685 }, nextStepId: "step_5" },
+                { id: "step_5", type: "wait", label: "Chờ 1 ngày", iconName: "Clock", config: { delay: 1440 }, stats: { entered: 520, waiting: 20, completed: 500 }, nextStepId: "step_6" },
                 { id: "step_6", type: "split_test", label: "A/B: Giảm 20% vs Tặng Voucher", iconName: "SplitSquareHorizontal", config: { ratio: 50 }, pathAStepId: "step_7a", pathBStepId: "step_7b", stats: { entered: 500, completed: 500 } },
                 { id: "step_7a", type: "action", label: "Email A: Giảm ngay 20%", iconName: "Mail", config: { campaignId: "camp_offer_20pct" }, stats: { entered: 250, completed: 250 } },
                 { id: "step_7b", type: "action", label: "Email B: Tặng Voucher 100K", iconName: "Mail", config: { campaignId: "camp_offer_voucher" }, stats: { entered: 250, completed: 250 } },
                 { id: "step_8", type: "action", label: "Tạo Task: Gọi điện tư vấn", iconName: "PhoneCall", config: { assignTo: "sale_team" }, stats: { entered: 480, completed: 480 } }
             ]
+        },
+        {
+            id: "flow_birthday", name: "Chúc mừng Sinh nhật Tự động",
+            description: "Gửi email + ZNS chúc mừng sinh nhật vào đúng ngày.", status: "active",
+            createdAt: subDays(new Date(), 60).toISOString(),
+            stats: { enrolled: 320, completed: 290, totalSent: 640, totalOpened: 510, uniqueOpened: 310, totalClicked: 120, uniqueClicked: 98 },
+            config: { frequency: "recurring", enrollmentCooldownHours: 8760 }, triggerType: "date",
+            steps: [
+                { id: "s1", type: "trigger", label: "Sinh nhật Khách hàng", iconName: "Cake", config: { type: "date", dateField: "dateOfBirth", offsetType: "on", offsetValue: 0, triggerHour: 8 }, nextStepId: "s2" },
+                { id: "s2", type: "action", label: "Email Chúc Sinh Nhật", iconName: "Mail", config: { campaignId: "camp_welcome_1" }, stats: { entered: 320, completed: 318 }, nextStepId: "s3" },
+                { id: "s3", type: "action", label: "Gửi ZNS Tặng Voucher SN", iconName: "MessageCircle", config: { znsTemplateId: "zns_bday" }, stats: { entered: 318, completed: 315 } }
+            ]
+        },
+        {
+            id: "flow_zalo_follow", name: "Chào mừng Quan tâm Zalo OA",
+            description: "Tự động khi khách nhấn Quan tâm Zalo OA.", status: "active",
+            createdAt: subDays(new Date(), 20).toISOString(),
+            stats: { enrolled: 850, completed: 820, totalSent: 850, totalOpened: 790, uniqueOpened: 790, totalClicked: 210, uniqueClicked: 195 },
+            config: { frequency: "one-time" }, triggerType: "zalo_follow",
+            steps: [
+                { id: "s1", type: "trigger", label: "Quan tâm Zalo OA", iconName: "UserPlus", config: { type: "zalo_follow" }, nextStepId: "s2" },
+                { id: "s2", type: "action", label: "ZNS Chào mừng", iconName: "MessageCircle", config: { znsTemplateId: "zns_welcome" }, stats: { entered: 850, completed: 848 }, nextStepId: "s3" },
+                { id: "s3", type: "wait", label: "Chờ 1 ngày", iconName: "Clock", config: { duration: 1, unit: "days" }, stats: { entered: 848, waiting: 12, completed: 836 }, nextStepId: "s4" },
+                { id: "s4", type: "action", label: "Email Giới thiệu sản phẩm", iconName: "Mail", config: { campaignId: "camp_b2b_1" }, stats: { entered: 836, completed: 820 } }
+            ]
+        },
+        {
+            id: "flow_segment_vip", name: "Chăm sóc Phân khúc VIP",
+            description: "Kéo toàn bộ khách VIP vào luồng chăm sóc đặc biệt.", status: "active",
+            createdAt: subDays(new Date(), 15).toISOString(),
+            stats: { enrolled: 125, completed: 80, totalSent: 250, totalOpened: 210, uniqueOpened: 120, totalClicked: 55, uniqueClicked: 48 },
+            config: { frequency: "one-time", enrollStrategy: "new_only" }, triggerType: "segment",
+            steps: [
+                { id: "s1", type: "trigger", label: "Vào Phân khúc VIP", iconName: "Layers", config: { type: "segment", targetId: "seg_1", enrollStrategy: "new_only" }, nextStepId: "s2" },
+                { id: "s2", type: "action", label: "Email Chào mừng VIP Club", iconName: "Mail", config: { campaignId: "camp_2" }, stats: { entered: 125, completed: 124 }, nextStepId: "s3" },
+                { id: "s3", type: "wait", label: "Chờ 3 ngày", iconName: "Clock", config: { duration: 3, unit: "days" }, stats: { entered: 124, waiting: 44, completed: 80 }, nextStepId: "s4" },
+                { id: "s4", type: "action", label: "Tặng Voucher VIP 200K", iconName: "Ticket", config: { voucherCampaignId: "vc_1" }, stats: { entered: 80, completed: 80 } }
+            ]
+        },
+        {
+            id: "flow_tag_hot", name: "Follow-up HOT LEAD sau gắn tag",
+            description: "Khi sale gắn tag HOT_LEAD, tự động gửi email offer.", status: "active",
+            createdAt: subDays(new Date(), 8).toISOString(),
+            stats: { enrolled: 450, completed: 380, totalSent: 900, totalOpened: 620, uniqueOpened: 410, totalClicked: 200, uniqueClicked: 175 },
+            config: { frequency: "one-time" }, triggerType: "tag",
+            steps: [
+                { id: "s1", type: "trigger", label: "Được gắn Tag: HOT_LEAD", iconName: "Tag", config: { type: "tag", targetId: "HOT_LEAD" }, nextStepId: "s2" },
+                { id: "s2", type: "wait", label: "Chờ 15 phút", iconName: "Clock", config: { duration: 15, unit: "minutes" }, stats: { entered: 450, waiting: 5, completed: 445 }, nextStepId: "s3" },
+                { id: "s3", type: "action", label: "Email: Offer giảm 25% chỉ 24h", iconName: "Mail", config: { campaignId: "camp_cart_a" }, stats: { entered: 445, completed: 440 }, nextStepId: "s4" },
+                { id: "s4", type: "condition", label: "Đã click offer?", iconName: "HelpCircle", config: { field: "link_click" }, yesStepId: "s5_yes", noStepId: "s5_no", stats: { entered: 440, completed: 440 } },
+                { id: "s5_yes", type: "action", label: "Tạo task Gọi chốt", iconName: "PhoneCall", config: { assignTo: "sale_team" }, stats: { entered: 200, completed: 200 } },
+                { id: "s5_no", type: "action", label: "Email: Nhắc nhở lần cuối", iconName: "Mail", config: { campaignId: "camp_cart_b" }, stats: { entered: 240, completed: 180 } }
+            ]
+        },
+        {
+            id: "flow_inbound_msg", name: "Trả lời Tin nhắn Keyword 'GIÁ'",
+            description: "Khi khách nhắn từ khóa GIÁ trên Zalo/Meta, tự động gửi bảng giá.", status: "active",
+            createdAt: subDays(new Date(), 5).toISOString(),
+            stats: { enrolled: 280, completed: 260, totalSent: 280, totalOpened: 270, uniqueOpened: 270, totalClicked: 95, uniqueClicked: 88 },
+            config: { frequency: "recurring", enrollmentCooldownHours: 24 }, triggerType: "inbound_message",
+            steps: [
+                { id: "s1", type: "trigger", label: "Tin nhắn chứa: GIÁ", iconName: "MessageSquare", config: { type: "inbound_message", targetId: "GIA,BANG GIA,PRICE" }, nextStepId: "s2" },
+                { id: "s2", type: "action", label: "ZNS Bảng giá tự động", iconName: "MessageCircle", config: { znsTemplateId: "zns_price" }, stats: { entered: 280, completed: 278 }, nextStepId: "s3" },
+                { id: "s3", type: "action", label: "Gắn Tag: HỎI_GIÁ", iconName: "Tag", config: { tag: "HOI_GIA" }, stats: { entered: 278, completed: 260 } }
+            ]
         }
-    ];
+    ].map(f => ({ ...f, steps: Array.isArray(f.steps) ? f.steps : [] }));
 };
 
 const generateCampaigns = () => {

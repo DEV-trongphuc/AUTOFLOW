@@ -217,16 +217,7 @@ const Login: React.FC = () => {
                                     </div>
 
                                     <button onClick={() => {
-                                        localStorage.setItem('user', JSON.stringify({ 
-                                            id: 'guest_' + Date.now(), 
-                                            name: 'Guest User', 
-                                            email: 'demo@domation.net', 
-                                            role: 'admin', 
-                                            status: 'approved',
-                                            isGuest: true
-                                        }));
-                                        localStorage.setItem('isAuthenticated', 'true');
-                                        window.location.href = '/';
+                                        window.location.href = 'https://open.domation.net';
                                     }} className="w-full max-w-[320px] h-12 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-white text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-sm">
                                         <User className="w-4 h-4 text-amber-500" />
                                         View as a Guest (Demo)

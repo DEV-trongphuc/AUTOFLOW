@@ -128,24 +128,35 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
 
             // ATOMIC INSERT SELECT: Prevents duplicates based on frequency and status
             $existsCheckSql = "";
+            $checkParams = [];
+            
+            // [NEW_ONLY FIX] If enrollStrategy is new_only, NEVER enroll users who were marked as 'cancelled' during activation.
+            $enrollStrategy = $tConfig['enrollStrategy'] ?? 'all';
+            if ($enrollStrategy === 'new_only') {
+                $existsCheckSql .= " AND NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ? AND sfs.status = 'cancelled')";
+                $checkParams[] = $flow['id'];
+            }
+
             if ($frequency === 'one-time') {
-                $existsCheckSql = "AND NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ?)";
+                $existsCheckSql .= " AND NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ?)";
+                $checkParams[] = $flow['id'];
             } else {
                 // RECURRING / CONTINUOUS LOGIC
                 $checks = [];
+
                 // 1. Max Enrollments
                 if ($maxEnrollments > 0) {
                     $checks[] = "(SELECT COUNT(*) FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ?) < $maxEnrollments";
+                    $checkParams[] = $flow['id'];
                 }
 
                 // 2. State Check
                 if ($allowMultiple) {
                     // Continuous (No Cooldown, No Parallel)
                     $checks[] = "NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ? AND sfs.status IN ('waiting', 'processing'))";
+                    $checkParams[] = $flow['id'];
                 } else {
                     // Recurring (Standard)
-                    // [FIX] $cooldownHours is cast (int) above — safe to interpolate in INTERVAL expr.
-                    // PDO does not support params inside INTERVAL, so explicit (int) cast is the correct pattern.
                     $safeHours = (int)$cooldownHours;
                     $checks[] = "NOT EXISTS (
                         SELECT 1 FROM subscriber_flow_states sfs 
@@ -153,17 +164,12 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
                         AND sfs.flow_id = ? 
                         AND (sfs.status IN ('waiting', 'processing') OR sfs.updated_at > DATE_SUB(NOW(), INTERVAL $safeHours HOUR))
                     )";
-                }
-                $existsCheckSql = "AND " . implode(" AND ", $checks);
-            }
-
-            $checkParams = [];
-            if ($frequency === 'one-time') {
-                $checkParams[] = $flow['id'];
-            } else {
-                if ($maxEnrollments > 0)
                     $checkParams[] = $flow['id'];
-                $checkParams[] = $flow['id'];
+                }
+                
+                if (!empty($checks)) {
+                    $existsCheckSql .= " AND " . implode(" AND ", $checks);
+                }
             }
 
             // [FIX] CHUNKED INSERT to avoid MySQL 65,535 placeholder limit crash.

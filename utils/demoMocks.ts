@@ -92,7 +92,10 @@ export const getDynamicReport = (resource: string, endpoint: string): any | null
             ai: Math.floor(Math.random() * 120) + 40,
         }));
         const storedCampaigns: any[] = JSON.parse(localStorage.getItem('mailflow_campaigns') || '[]');
-        const storedFlows: any[] = JSON.parse(localStorage.getItem('mailflow_flows') || '[]');
+            const storedFlows: any[] = JSON.parse(localStorage.getItem('mailflow_flows') || '[]').map((f: any) => ({
+            ...f,
+            steps: Array.isArray(f.steps) ? f.steps : (typeof f.steps === 'string' ? (() => { try { return JSON.parse(f.steps); } catch { return []; } })() : [])
+        }));
         return {
             summary: {
                 total_ai: 1250,
