@@ -68,7 +68,7 @@ const Campaigns: React.FC = () => {
     // Filtering & Viewing
     const [activeTab, setActiveTab] = useState<'all' | 'sent' | 'scheduled' | 'draft' | 'waiting'>('all');
     const [activeType, setActiveType] = useState<'all' | 'email' | 'zalo_zns'>('all');
-    const [datePreset, setDatePreset] = useState<'7' | '30' | 'month' | 'custom'>('30');
+    const [datePreset, setDatePreset] = useState<'7' | '30' | '90' | 'month' | 'all' | 'custom'>('90');
     const [customDate, setCustomDate] = useState<{ start: string, end: string }>({ start: '', end: '' });
     const [selectedDetailCampaign, setSelectedDetailCampaign] = useState<Campaign | null>(null);
 
@@ -168,10 +168,15 @@ const Campaigns: React.FC = () => {
             case '30':
                 start.setDate(today.getDate() - 30);
                 break;
+            case '90':
+                start.setDate(today.getDate() - 90);
+                break;
             case 'month':
                 start = new Date(today.getFullYear(), today.getMonth(), 1);
                 end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
                 break;
+            case 'all':
+                return { startDate: '', endDate: '' }; // No date filter
             case 'custom':
                 if (!customDate.start || !customDate.end) return { startDate: '', endDate: '' };
                 return { startDate: customDate.start, endDate: customDate.end };
@@ -633,9 +638,11 @@ const Campaigns: React.FC = () => {
                                     value={datePreset}
                                     onChange={(val) => setDatePreset(val as any)}
                                     options={[
+                                        { value: '90', label: '90 ngày qua' },
                                         { value: '30', label: '30 ngày qua' },
                                         { value: '7', label: '7 ngày qua' },
                                         { value: 'month', label: 'Tháng này' },
+                                        { value: 'all', label: 'Tất cả' },
                                         { value: 'custom', label: 'Tùy chỉnh...' }
                                     ]}
                                     className="w-[130px] !text-xs !py-1.5"

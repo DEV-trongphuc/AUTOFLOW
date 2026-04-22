@@ -22,7 +22,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'email_sent_chart') {
                 FROM subscriber_activity a
                 JOIN subscribers s ON a.subscriber_id = s.id
                 WHERE s.workspace_id = ?
-                  AND a.type IN ('email_sent', 'send_email', 'sent', 'zns_sent', 'send_zns')
+                  AND a.type IN ('receive_email', 'zns_sent', 'send_zns', 'email_sent', 'send_email', 'sent')
                   AND YEAR(a.created_at) = ?
                 GROUP BY MONTH(a.created_at)
                 ORDER BY period
@@ -46,7 +46,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'email_sent_chart') {
 
             // Total and peak
             $total = array_sum(array_column($data, 'sent'));
-            $peak  = max(array_column($data, 'sent'));
+            $peak  = !empty($data) ? max(array_column($data, 'sent')) : 0;
 
         } else {
             // mode = monthly → group by day in given month/year
@@ -82,7 +82,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'email_sent_chart') {
             }
 
             $total = array_sum(array_column($data, 'sent'));
-            $peak  = max(array_column($data, 'sent'));
+            $peak  = !empty($data) ? max(array_column($data, 'sent')) : 0;
         }
 
         // Available years (for year picker)
