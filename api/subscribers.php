@@ -45,7 +45,6 @@ function formatSubscriber($row, $tags = [])
 
     $row['status'] = $row['status'] ?? 'active'; // REPAIR: React Internal Error "missing static flag" due to NULL status
 
-
     $row['stats'] = [
         'emailsSent' => (int) ($row['stats_sent'] ?? 0),
         'emailsOpened' => (int) ($row['stats_opened'] ?? 0),
@@ -213,7 +212,6 @@ if ($method === 'POST' && ($route === 'bulk-add-tag' || $route === 'bulk-add-to-
 
         jsonResponse(true, ['count' => $totalAdded], 'Đã thêm vào danh sách thành công');
     }
-
 
     if ($route === 'bulk-change-status') {
         $status = $data['status'] ?? null;

@@ -17,8 +17,6 @@ require_once 'chat_gemini.php';
 require_once 'chat_logic_fast.php';
 require_once 'gemini_image_generator.php';
 
-
-
 // -------------------------------------------------------------------------------------------------
 // DATABASE AUTO-SETUP handled by setup_workspace_table.php
 // -------------------------------------------------------------------------------------------------
@@ -86,8 +84,6 @@ function getSettingsCached($pdo, $propertyId, $globalKey)
     @file_put_contents($cacheFile, json_encode($settings));
     return $settings;
 }
-
-
 
 function getUrlMetadata($url)
 {
@@ -1283,7 +1279,6 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
             exit;
         }
 
-
         // ===== LIST FEEDBACK (Admin only) =====
         if ($action === 'list_feedback') {
             // Only admin/assistant can view feedback list
@@ -2119,7 +2114,6 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
                 $sysInstructionText;
         }
 
-
         // Intelligence Directives — assembled here, injected LAST (anti "Lost in the Middle")
         $intelligenceDirectives = "\n\n### INTELLIGENCE DIRECTIVES:
             1. DYNAMIC ACTIONS: Ở CUỐI CÙNG của câu trả lời, bạn BẮT BUỘC phải đưa ra 2-3 hành động gợi ý dưới dạng MỆNH LỆNH ngắn gọn, trực tiếp.
@@ -2255,7 +2249,6 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
             $sysInstructionText .= "5. Sử dụng cú pháp BẮT BUỘC: [IMAGE_REQUEST: your_detailed_narrative_english_prompt]\n";
             $sysInstructionText .= "6. Đối với Nano Banana Pro: Bạn hỗ trợ tới 14 ảnh tham khảo, khả năng chèn văn bản chính xác và 'Tư duy' để tối ưu bố cục.\n";
             $sysInstructionText .= "7. LƯU Ý TỐI QUAN TRỌNG: TUYỆT ĐỐI KHÔNG BAO GIỜ tự viết mã Markdown hình ảnh (như `![Generated Image](URL)`). Nhiệm vụ DUY NHẤT của bạn là xuất ra thẻ `[IMAGE_REQUEST: ...]`, hệ thống sẽ tự động bắt lấy thẻ này và hiển thị ảnh thật cho người dùng.\n\n";
-
 
             $sysInstructionText .= "QUY TẮC QUAN TRỌNG:\n";
             $sysInstructionText .= "- Nếu người dùng chỉ hỏi đáp bình thường (text-only) và không yêu cầu tạo/sửa ảnh,
@@ -2647,7 +2640,6 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
             if ($userId) {
                 $pdo->prepare("UPDATE ai_org_conversations SET updated_at = NOW() WHERE id = ?")->execute([$convId]);
             }
-
 
             echo json_encode([
                 'success' => true,

@@ -95,7 +95,6 @@ function syncFollowers($pdo, $oa_config_id)
     jsonResponse(true, ['message' => "Synced $total_synced followers successfully.", 'count' => $total_synced]);
 }
 
-
 function ensureDatabaseSchema($pdo)
 {
     try {

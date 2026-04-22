@@ -1252,3 +1252,26 @@
     width: 100%;
     margin-bottom: 0.5rem;
 }
+
+@keyframes slide-infinite {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+@keyframes slide-infinite-reverse {
+    0% { transform: translateX(-50%); }
+    100% { transform: translateX(0); }
+}
+
+.animate-slide-infinite {
+    animation: slide-infinite 60s linear infinite;
+}
+
+.animate-slide-infinite-reverse {
+    animation: slide-infinite-reverse 60s linear infinite;
+}
+
+.pause-on-hover:hover .animate-slide-infinite,
+.pause-on-hover:hover .animate-slide-infinite-reverse {
+    animation-play-state: paused;
+}

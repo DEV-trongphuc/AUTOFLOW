@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../../../../../services/storageAdapter';
+import { DEMO_MODE } from '../../../../../utils/config';
 
 interface ImageLibraryModalProps {
     isOpen: boolean;
@@ -40,6 +41,37 @@ function formatDate(unixSec: number) {
     });
 }
 
+// ── Demo Mode helpers ─────────────────────────────────────────────────────────
+const DEMO_IMAGES_KEY = 'mailflow_demo_images';
+
+const DEMO_STOCK_IMAGES: ImageFile[] = [
+    { name: 'banner-sale.jpg', uniqueName: 'banner-sale.jpg', url: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&auto=format&fit=crop', size: 85000, date: Math.floor(Date.now()/1000) - 86400 },
+    { name: 'product-coffee.jpg', uniqueName: 'product-coffee.jpg', url: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&auto=format&fit=crop', size: 72000, date: Math.floor(Date.now()/1000) - 172800 },
+    { name: 'team-photo.jpg', uniqueName: 'team-photo.jpg', url: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop', size: 110000, date: Math.floor(Date.now()/1000) - 259200 },
+    { name: 'discount-banner.jpg', uniqueName: 'discount-banner.jpg', url: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&q=60&auto=format&fit=crop&crop=entropy', size: 95000, date: Math.floor(Date.now()/1000) - 345600 },
+    { name: 'logo-domation.png', uniqueName: 'logo-domation.png', url: 'https://images.unsplash.com/photo-1634986666676-ec8fd927c23d?w=400&auto=format&fit=crop', size: 34000, date: Math.floor(Date.now()/1000) - 432000 },
+    { name: 'newsletter-hero.jpg', uniqueName: 'newsletter-hero.jpg', url: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&auto=format&fit=crop', size: 125000, date: Math.floor(Date.now()/1000) - 518400 },
+];
+
+function getDemoImages(): ImageFile[] {
+    try {
+        const raw = localStorage.getItem(DEMO_IMAGES_KEY);
+        if (!raw) {
+            // Seed stock images on first open
+            localStorage.setItem(DEMO_IMAGES_KEY, JSON.stringify(DEMO_STOCK_IMAGES));
+            return DEMO_STOCK_IMAGES;
+        }
+        return JSON.parse(raw) as ImageFile[];
+    } catch {
+        return DEMO_STOCK_IMAGES;
+    }
+}
+
+function saveDemoImages(imgs: ImageFile[]) {
+    localStorage.setItem(DEMO_IMAGES_KEY, JSON.stringify(imgs));
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 const ImageLibraryModal: React.FC<ImageLibraryModalProps> = ({ isOpen, onClose, onSelect }) => {
     const [images, setImages]           = useState<ImageFile[]>([]);
     const [loading, setLoading]         = useState(false);
@@ -61,6 +93,15 @@ const ImageLibraryModal: React.FC<ImageLibraryModalProps> = ({ isOpen, onClose, 
         setLoading(true);
         setError('');
         try {
+            // ── DEMO MODE: read from localStorage ─────────────────────────
+            if (DEMO_MODE) {
+                await new Promise(r => setTimeout(r, 300)); // simulate network
+                setImages(getDemoImages());
+                setLoading(false);
+                return;
+            }
+            // ─────────────────────────────────────────────────────────────
+
             // Try the shared library endpoint first (returns uniqueName)
             const res = await api.get<ImageFile[]>('upload?route=library');
             if (res.success) {
@@ -108,6 +149,37 @@ const ImageLibraryModal: React.FC<ImageLibraryModalProps> = ({ isOpen, onClose, 
         const file = e.target.files?.[0];
         if (!file) return;
         setUploading(true);
+
+        // ── DEMO MODE: FileReader → Base64 → localStorage ─────────────────
+        if (DEMO_MODE) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const dataUrl = reader.result as string;
+                const uniqueName = `${Date.now()}_${file.name}`;
+                const newImg: ImageFile = {
+                    name: file.name,
+                    uniqueName,
+                    url: dataUrl,
+                    size: file.size,
+                    date: Math.floor(Date.now() / 1000),
+                };
+                const current = getDemoImages();
+                const updated = [newImg, ...current];
+                saveDemoImages(updated);
+                setImages(updated);
+                toast.success('Upload ảnh thành công');
+                setUploading(false);
+                e.target.value = '';
+            };
+            reader.onerror = () => {
+                toast.error('Lỗi đọc file');
+                setUploading(false);
+            };
+            reader.readAsDataURL(file);
+            return;
+        }
+        // ─────────────────────────────────────────────────────────────────
+
         const formData = new FormData();
         formData.append('file', file);
         try {
@@ -136,6 +208,20 @@ const ImageLibraryModal: React.FC<ImageLibraryModalProps> = ({ isOpen, onClose, 
         e.stopPropagation();
         setDeleting(uniqueName);
         setDeleteError(null);
+
+        // ── DEMO MODE: delete from localStorage ───────────────────────────
+        if (DEMO_MODE) {
+            await new Promise(r => setTimeout(r, 200));
+            const updated = getDemoImages().filter(f => f.uniqueName !== uniqueName);
+            saveDemoImages(updated);
+            setImages(updated);
+            toast.success('Đã xóa ảnh');
+            setDeleting(null);
+            setConfirmDelete(null);
+            return;
+        }
+        // ─────────────────────────────────────────────────────────────────
+
         try {
             const res = await api.get<any>(`upload?route=delete&file=${encodeURIComponent(uniqueName)}`);
             if (res.success) {

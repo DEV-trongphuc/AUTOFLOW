@@ -5,8 +5,6 @@ require_once 'db_connect.php';
 // KHÔNG override ở đây bằng '*' vì tracker.js gửi credentials:include,
 // browser sẽ block bất kỳ response nào có Origin: * khi credentials được gửi kèm.
 // Chỉ cần khai báo methods và headers bổ sung nếu cần.
-header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, X-Requested-With");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -71,7 +69,6 @@ function normalizeUrl($url)
 
     return $baseUrl;
 }
-
 
 // --- BOT & BLACKLIST FILTERING ---
 $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
@@ -240,7 +237,9 @@ try {
 
     // Capture IP — same safe logic as bot-check section above
     $rawCaptureIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-    $ip = md5($rawCaptureIp);
+    $ip = md5($rawCaptureIp); // MD5 for GDPR-compliant storage (never store raw IP)
+    // NOTE: $rawCaptureIp is kept separately for geo lookup — geo job needs the REAL IP,
+    // not the hash. Previously this bug caused geo resolution to always fail.
 
     // --- GEOLOCATION DETECTION (CLOUDFLARE FIRST) ---
     // Cloudflare sends Country in 'HTTP_CF_IPCOUNTRY'
@@ -257,7 +256,9 @@ try {
 
         // If Cloudflare didn't provide location, fallback to background Job (ip-api)
         if (!$country) {
-            dispatchQueueJob($pdo, 'high', ['action' => 'resolve_geo', 'visitor_id' => $visitorUuid, 'ip' => $ip]);
+            // [FIX] Pass $rawCaptureIp (real IP), NOT $ip (which is already MD5-hashed).
+            // ip-api.com cannot resolve a hash — this was causing geo to always fail silently.
+            dispatchQueueJob($pdo, 'high', ['action' => 'resolve_geo', 'visitor_id' => $visitorUuid, 'ip' => $rawCaptureIp]);
         }
     } else {
         // Update visitor: Always update last_visit and IP. 
@@ -669,6 +670,8 @@ try {
                     try {
                         require_once __DIR__ . '/trigger_helper.php';
                         triggerFlows($pdo, $emailSubscriberId, 'ai_capture', $propertyId);
+                        // EVENT-DRIVEN WAKEUP
+                        wakeupWaitingSubscribers($pdo, $emailSubscriberId);
                     } catch (Exception $e) {
                         error_log("Failed to trigger flow for Web Autofill Capture: " . $e->getMessage());
                     }
@@ -844,6 +847,24 @@ try {
         }
     }
 
+    // [FIX BUG-3] Scroll depth sync gap — if user bounced before ping fired,
+    // scroll milestone events are in web_events but scroll_depth in web_page_views = 0.
+    // Reconcile: for any page view still at 0, pull max scroll from web_events.
+    if ($lastPvId && $maxScroll === 0) {
+        try {
+            $stmtSyncScroll = $pdo->prepare("
+                UPDATE web_page_views pv
+                SET pv.scroll_depth = GREATEST(pv.scroll_depth, COALESCE((
+                    SELECT MAX(CAST(NULLIF(target_text, '') AS UNSIGNED))
+                    FROM web_events
+                    WHERE page_view_id = pv.id AND event_type = 'scroll'
+                ), 0))
+                WHERE pv.id = ? AND pv.scroll_depth = 0
+            ");
+            $stmtSyncScroll->execute([$lastPvId]);
+        } catch (Exception $e) { /* silent — best-effort sync */ }
+    }
+
     // 4. Record Journey to Subscriber Activity (Async)
     $finalSubscriberId = $visitorData['subscriber_id'] ?? $emailSubscriberId;
     if ($finalSubscriberId && !empty($events)) {
@@ -856,7 +877,22 @@ try {
     }
 
     // 5. Async Aggregation (Crucial for 1M/day)
-    dispatchQueueJob($pdo, 'low', ['action' => 'aggregate_daily', 'property_id' => $propertyId, 'date' => date('Y-m-d')]);
+    // [FIX BUG-5] Throttle: only dispatch aggregate_daily once per 5 minutes per property.
+    // Previously fired on EVERY request — flooding the queue with 1000s of identical jobs.
+    // Use a lightweight INSERT IGNORE into a throttle table (or check job queue).
+    try {
+        $throttleKey = 'agg_' . $propertyId . '_' . date('Y-m-d-H') . '_' . floor(date('i') / 5);
+        $stmtThrottle = $pdo->prepare("
+            INSERT IGNORE INTO queue_throttle (throttle_key, created_at) VALUES (?, NOW())
+        ");
+        $inserted = $stmtThrottle->execute([$throttleKey]);
+        if ($stmtThrottle->rowCount() > 0) {
+            dispatchQueueJob($pdo, 'low', ['action' => 'aggregate_daily', 'property_id' => $propertyId, 'date' => date('Y-m-d')]);
+        }
+    } catch (Exception $e) {
+        // Fallback: dispatch anyway if throttle table doesn't exist yet
+        dispatchQueueJob($pdo, 'low', ['action' => 'aggregate_daily', 'property_id' => $propertyId, 'date' => date('Y-m-d')]);
+    }
 
     // 6. Final response - Minimal & Stealthy
     $response = ['status' => 'ok'];

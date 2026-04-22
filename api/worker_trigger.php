@@ -97,7 +97,6 @@ try {
                     // Exclude newly enrolled (respect cooldown)
                     $wheres[] = "NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ? AND sfs.created_at > DATE_SUB(NOW(), INTERVAL $cooldownHours HOUR))";
 
-
                     // [OPTIMIZATION] Build Source SQL once per Flow, not per chunk
                     if (!isset($cachedSourceSql)) {
                         $cachedSourceSql = "";

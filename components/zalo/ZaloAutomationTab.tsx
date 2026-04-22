@@ -8,7 +8,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import Input from '../common/Input';
 import TabTransition from '../common/TabTransition';
-import { API_BASE_URL } from '@/utils/config';
+import { API_BASE_URL, DEMO_MODE } from '@/utils/config';
 
 interface Scenario {
     id: string;
@@ -52,6 +52,13 @@ const ZaloAutomationTab: React.FC = () => {
     }, [selectedOAId]);
 
     const fetchOAs = async () => {
+        if (DEMO_MODE) {
+            const stored: any[] = JSON.parse(localStorage.getItem('mailflow_zalo_oa') || '[]');
+            const list = stored.length > 0 ? stored : [{ id: 'oa_demo_001', name: 'DOMATION Official Account', avatar: '' }];
+            setOaConfigs(list);
+            setSelectedOAId(list[0].id);
+            return;
+        }
         try {
             const res = await axios.get(`${API_BASE_URL}/zalo_oa.php`);
             if (res.data.success && res.data.data.length > 0) {
@@ -66,6 +73,13 @@ const ZaloAutomationTab: React.FC = () => {
     const fetchScenarios = async () => {
         if (!selectedOAId) return;
         setLoading(true);
+        if (DEMO_MODE) {
+            await new Promise(r => setTimeout(r, 350));
+            const stored: Scenario[] = JSON.parse(localStorage.getItem('mailflow_zalo_scenarios') || '[]');
+            setScenarios(stored);
+            setLoading(false);
+            return;
+        }
         try {
             const res = await axios.get(`${API_BASE_URL}/zalo_automation.php?route=list&oa_config_id=${selectedOAId}`);
             if (res.data.success) {
@@ -85,6 +99,14 @@ const ZaloAutomationTab: React.FC = () => {
             message: 'Bạn có chắc chắn muốn xóa kịch bản này? Hành động này không thể hoàn tác.',
             onConfirm: async () => {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                if (DEMO_MODE) {
+                    const updated = JSON.parse(localStorage.getItem('mailflow_zalo_scenarios') || '[]')
+                        .filter((s: any) => s.id !== id);
+                    localStorage.setItem('mailflow_zalo_scenarios', JSON.stringify(updated));
+                    setScenarios(updated);
+                    toast.success('Đã xóa kịch bản');
+                    return;
+                }
                 try {
                     await axios.delete(`${API_BASE_URL}/zalo_automation.php?route=delete&id=${id}`);
                     toast.success('Đã xóa kịch bản');
@@ -98,6 +120,14 @@ const ZaloAutomationTab: React.FC = () => {
 
     const toggleStatus = async (scenario: Scenario) => {
         const newStatus = scenario.status === 'active' ? 'inactive' : 'active';
+        if (DEMO_MODE) {
+            const stored = JSON.parse(localStorage.getItem('mailflow_zalo_scenarios') || '[]');
+            const updated = stored.map((s: any) => s.id === scenario.id ? { ...s, status: newStatus } : s);
+            localStorage.setItem('mailflow_zalo_scenarios', JSON.stringify(updated));
+            setScenarios(updated);
+            toast.success(`Đã ${newStatus === 'active' ? 'kích hoạt' : 'tạm dừng'}`);
+            return;
+        }
         try {
             await axios.post(`${API_BASE_URL}/zalo_automation.php?route=save`, {
                 ...scenario,
@@ -111,8 +141,8 @@ const ZaloAutomationTab: React.FC = () => {
     };
 
     const filteredScenarios = scenarios.filter(s =>
-        s.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (s.trigger_text && s.trigger_text.toLowerCase().includes(searchTerm.toLowerCase()))
+        (s.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (s.trigger_text || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const selectedOA = oaConfigs.find(oa => oa.id === selectedOAId);

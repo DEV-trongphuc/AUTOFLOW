@@ -76,7 +76,6 @@ if (!function_exists('runWorkerCampaign')) {
             writeWorkerLog("Direct trigger for Campaign ID: $manualCampaignId (retry #$retryCount)");
         }
 
-
         // =================================================================================
 // HELPERS (Imported from shared module)
 // =================================================================================
@@ -85,7 +84,6 @@ if (!function_exists('runWorkerCampaign')) {
 // - resolveEmailContent
 // - replaceMergeTags
 // - logActivity
-
 
         // =================================================================================
 // CAMPAIGN DISPATCHER
@@ -838,7 +836,6 @@ if (!function_exists('runWorkerCampaign')) {
         )";
                 $execFinal[] = $cid;
 
-
                 $stmtLeft = $pdo->prepare($sqlLeft);
                 $stmtLeft->execute($execFinal);
                 $remaining = (int) $stmtLeft->fetchColumn();
@@ -881,7 +878,6 @@ if (!function_exists('runWorkerCampaign')) {
             $logs[] = "[Campaign] No campaigns ready to process.";
             writeWorkerLog("No campaigns ready to process.");
         }
-
 
         file_put_contents(__DIR__ . '/worker_campaign.log', implode("\n", $logs) . "\n", FILE_APPEND);
 

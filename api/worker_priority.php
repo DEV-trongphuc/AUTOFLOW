@@ -73,7 +73,6 @@ require_once __DIR__ . '/worker_guard.php';
     die("Worker initialization failed");
 }
 
-
 // Hardcoded production URL for tracking
 $apiUrl = API_BASE_URL;
 // [FIX P39-WP1] Only fetch required settings keys — avoids loading ALL secrets (smtp_password, API keys) into memory
@@ -96,7 +95,6 @@ $skipLockedClause = version_compare($mysqlVersionPrio, '8.0.0', '>=') ? 'SKIP LO
 $now = date('Y-m-d H:i:s');
 $currentTime = date('H:i');
 $currentDayIdx = (int) date('w'); // 0 (Sun) to 6 (Sat)
-
 
 // =================================================================================
 // HELPER: Shared Logic (Imported)
@@ -742,7 +740,6 @@ try {
 
     $logs[] = "[Priority-Chain] Starting chain for Sub {$subscriberId} (Queue: {$queueId}) in '{$flowName}'. Current Sent: {$totalSentToday}";
     $item['has_email_error'] = false;
-
 
     // [OMNI-FIX REMOVED] Priority Flows now bypass global flow frequency limits (activeDays, startTime, endTime).
     // They will execute instantly. (Zalo API physical limits are still enforced by FlowExecutor).

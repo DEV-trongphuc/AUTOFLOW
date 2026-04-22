@@ -152,6 +152,16 @@ export interface SurveyTheme {
   coverFeaturesStyle?: 'check' | 'dot';
 }
 
+export interface SurveyVoucherConfig {
+  enabled: boolean;
+  campaign_id?: string;
+  logic_mappings?: Array<{
+    condition: LogicCondition;
+    reward_item_id?: string;
+  }>;
+  fallback_reward_item_id?: string;
+}
+
 export interface SurveySettings {
   showProgressBar: boolean;
   progressBarStyle: 'bar' | 'steps' | 'percentage';
@@ -161,6 +171,7 @@ export interface SurveySettings {
   trackLocation: boolean;
   customCss?: string;
   quiz?: QuizSettings;
+  voucher_config?: SurveyVoucherConfig;
 }
 
 export interface ThankYouPage {

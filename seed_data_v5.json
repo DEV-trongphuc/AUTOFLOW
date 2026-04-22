@@ -1,0 +1,7580 @@
+{
+  "mailflow_lists": [
+    {
+      "id": "list_vip",
+      "name": "Khách Hàng VIP (Đã mua > 5M)",
+      "status": 1,
+      "count": 125,
+      "createdAt": "2026-04-22T04:51:23.113Z"
+    },
+    {
+      "id": "list_fb",
+      "name": "Lead từ Facebook Ads Tháng 4",
+      "status": 1,
+      "count": 2540,
+      "createdAt": "2026-04-22T04:51:23.113Z"
+    },
+    {
+      "id": "list_webinar",
+      "name": "Đăng ký Webinar AI Marketing",
+      "status": 1,
+      "count": 850,
+      "createdAt": "2026-04-22T04:51:23.113Z"
+    },
+    {
+      "id": "list_misa",
+      "name": "Đồng bộ từ MISA CRM",
+      "status": 1,
+      "count": 5200,
+      "createdAt": "2026-04-22T04:51:23.113Z",
+      "source": "MISA CRM"
+    },
+    {
+      "id": "list_cold",
+      "name": "Khách hàng Ngủ Đông",
+      "status": 1,
+      "count": 1400,
+      "createdAt": "2026-04-22T04:51:23.113Z"
+    }
+  ],
+  "mailflow_tags": [
+    {
+      "id": "tag_hot",
+      "name": "Hot Lead",
+      "color": "red",
+      "count": 450
+    },
+    {
+      "id": "tag_ceo",
+      "name": "Chủ Doanh Nghiệp",
+      "color": "purple",
+      "count": 120
+    },
+    {
+      "id": "tag_b2b",
+      "name": "B2B",
+      "color": "orange",
+      "count": 300
+    },
+    {
+      "id": "tag_loyal",
+      "name": "Khách Trung Thành",
+      "color": "indigo",
+      "count": 2500
+    }
+  ],
+  "mailflow_segments": [
+    {
+      "id": "seg_1",
+      "name": "Tất cả Lead Nóng",
+      "count": 450,
+      "filters": [
+        {
+          "field": "tag",
+          "operator": "contains",
+          "value": "Hot Lead"
+        }
+      ]
+    },
+    {
+      "id": "seg_2",
+      "name": "Mở mail trong 30 ngày qua",
+      "count": 1200,
+      "filters": [
+        {
+          "field": "last_open",
+          "operator": "recent",
+          "value": 30
+        }
+      ]
+    }
+  ],
+  "mailflow_subscribers": [
+    {
+      "id": "sub_0",
+      "email": "demo.khachhang.0@company.com",
+      "firstName": "Dung",
+      "lastName": "Phan",
+      "phoneNumber": "0956259843",
+      "status": "subscribed",
+      "createdAt": "2026-01-29T01:57:38.236Z",
+      "joinedAt": "2026-03-17T00:09:41.815Z",
+      "lastActivityAt": "2026-04-11T04:21:30.320Z",
+      "score": 68,
+      "leadScore": 10,
+      "chatCount": 13,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.113Z"
+      }
+    },
+    {
+      "id": "sub_1",
+      "email": "demo.khachhang.1@company.com",
+      "firstName": "Quân",
+      "lastName": "Võ",
+      "phoneNumber": "0909795600",
+      "status": "bounced",
+      "createdAt": "2026-04-03T19:20:17.641Z",
+      "joinedAt": "2026-02-14T00:40:12.380Z",
+      "lastActivityAt": "2026-04-13T18:26:41.426Z",
+      "score": 7,
+      "leadScore": 37,
+      "chatCount": 44,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.113Z"
+      }
+    },
+    {
+      "id": "sub_2",
+      "email": "demo.khachhang.2@company.com",
+      "firstName": "Quân",
+      "lastName": "Vũ",
+      "phoneNumber": "0921361590",
+      "status": "subscribed",
+      "createdAt": "2026-01-11T17:24:08.535Z",
+      "joinedAt": "2026-01-26T02:19:43.807Z",
+      "lastActivityAt": "2026-04-13T09:49:45.480Z",
+      "score": 0,
+      "leadScore": 95,
+      "chatCount": 20,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.113Z"
+      }
+    },
+    {
+      "id": "sub_3",
+      "email": "demo.khachhang.3@company.com",
+      "firstName": "Phong",
+      "lastName": "Hoàng",
+      "phoneNumber": "0965761809",
+      "status": "subscribed",
+      "createdAt": "2026-03-20T22:53:38.356Z",
+      "joinedAt": "2026-01-23T19:41:16.755Z",
+      "lastActivityAt": "2026-04-12T00:56:42.459Z",
+      "score": 45,
+      "leadScore": 97,
+      "chatCount": 49,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.113Z"
+      }
+    },
+    {
+      "id": "sub_4",
+      "email": "demo.khachhang.4@company.com",
+      "firstName": "Vy",
+      "lastName": "Phạm",
+      "phoneNumber": "0973280492",
+      "status": "unsubscribed",
+      "createdAt": "2026-04-03T07:51:37.494Z",
+      "joinedAt": "2026-03-10T21:36:51.151Z",
+      "lastActivityAt": "2026-04-12T14:53:16.811Z",
+      "score": 23,
+      "leadScore": 82,
+      "chatCount": 36,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.113Z"
+      }
+    },
+    {
+      "id": "sub_5",
+      "email": "demo.khachhang.5@company.com",
+      "firstName": "Dung",
+      "lastName": "Trần",
+      "phoneNumber": "0920423817",
+      "status": "subscribed",
+      "createdAt": "2026-02-08T04:13:02.739Z",
+      "joinedAt": "2026-01-02T20:52:18.271Z",
+      "lastActivityAt": "2026-04-21T19:41:21.172Z",
+      "score": 80,
+      "leadScore": 5,
+      "chatCount": 36,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.113Z"
+      }
+    },
+    {
+      "id": "sub_6",
+      "email": "demo.khachhang.6@company.com",
+      "firstName": "Linh",
+      "lastName": "Vũ",
+      "phoneNumber": "0972547878",
+      "status": "subscribed",
+      "createdAt": "2026-01-06T12:18:05.382Z",
+      "joinedAt": "2026-03-21T05:59:57.324Z",
+      "lastActivityAt": "2026-04-13T07:22:36.389Z",
+      "score": 11,
+      "leadScore": 84,
+      "chatCount": 19,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.113Z"
+      }
+    },
+    {
+      "id": "sub_7",
+      "email": "demo.khachhang.7@company.com",
+      "firstName": "Vy",
+      "lastName": "Bùi",
+      "phoneNumber": "0978611386",
+      "status": "subscribed",
+      "createdAt": "2026-03-11T11:38:48.647Z",
+      "joinedAt": "2026-02-13T01:25:05.561Z",
+      "lastActivityAt": "2026-04-19T21:57:12.445Z",
+      "score": 51,
+      "leadScore": 56,
+      "chatCount": 47,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.113Z"
+      }
+    },
+    {
+      "id": "sub_8",
+      "email": "demo.khachhang.8@company.com",
+      "firstName": "Linh",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0990369660",
+      "status": "subscribed",
+      "createdAt": "2026-04-14T10:59:34.991Z",
+      "joinedAt": "2026-02-23T10:39:06.768Z",
+      "lastActivityAt": "2026-04-21T13:27:50.298Z",
+      "score": 42,
+      "leadScore": 63,
+      "chatCount": 47,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.113Z"
+      }
+    },
+    {
+      "id": "sub_9",
+      "email": "demo.khachhang.9@company.com",
+      "firstName": "Minh",
+      "lastName": "Phạm",
+      "phoneNumber": "0968181422",
+      "status": "subscribed",
+      "createdAt": "2026-01-21T20:32:01.943Z",
+      "joinedAt": "2026-01-14T07:24:16.829Z",
+      "lastActivityAt": "2026-04-21T09:58:42.605Z",
+      "score": 26,
+      "leadScore": 40,
+      "chatCount": 3,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.113Z"
+      }
+    },
+    {
+      "id": "sub_10",
+      "email": "demo.khachhang.10@company.com",
+      "firstName": "Dung",
+      "lastName": "Trần",
+      "phoneNumber": "0910576285",
+      "status": "subscribed",
+      "createdAt": "2026-03-10T20:11:44.813Z",
+      "joinedAt": "2026-01-06T15:57:26.911Z",
+      "lastActivityAt": "2026-04-21T07:31:33.417Z",
+      "score": 27,
+      "leadScore": 67,
+      "chatCount": 18,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.113Z"
+      }
+    },
+    {
+      "id": "sub_11",
+      "email": "demo.khachhang.11@company.com",
+      "firstName": "Thảo",
+      "lastName": "Vũ",
+      "phoneNumber": "0941344352",
+      "status": "subscribed",
+      "createdAt": "2026-02-24T06:47:37.154Z",
+      "joinedAt": "2026-04-16T14:06:43.711Z",
+      "lastActivityAt": "2026-04-18T02:58:45.228Z",
+      "score": 86,
+      "leadScore": 49,
+      "chatCount": 49,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_12",
+      "email": "demo.khachhang.12@company.com",
+      "firstName": "Hải",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0902697699",
+      "status": "customer",
+      "createdAt": "2026-02-24T14:36:18.089Z",
+      "joinedAt": "2026-01-10T19:17:35.802Z",
+      "lastActivityAt": "2026-04-13T01:41:38.299Z",
+      "score": 79,
+      "leadScore": 60,
+      "chatCount": 20,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_13",
+      "email": "demo.khachhang.13@company.com",
+      "firstName": "Bình",
+      "lastName": "Võ",
+      "phoneNumber": "0988241182",
+      "status": "subscribed",
+      "createdAt": "2026-02-05T04:45:57.162Z",
+      "joinedAt": "2026-04-03T20:59:08.180Z",
+      "lastActivityAt": "2026-04-18T02:59:11.493Z",
+      "score": 94,
+      "leadScore": 25,
+      "chatCount": 44,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_14",
+      "email": "demo.khachhang.14@company.com",
+      "firstName": "Dung",
+      "lastName": "Vũ",
+      "phoneNumber": "0932017375",
+      "status": "lead",
+      "createdAt": "2026-04-21T02:49:51.901Z",
+      "joinedAt": "2026-03-31T02:26:56.861Z",
+      "lastActivityAt": "2026-04-12T14:59:44.334Z",
+      "score": 21,
+      "leadScore": 25,
+      "chatCount": 23,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_15",
+      "email": "demo.khachhang.15@company.com",
+      "firstName": "Nga",
+      "lastName": "Lê",
+      "phoneNumber": "0967218470",
+      "status": "subscribed",
+      "createdAt": "2026-01-30T05:04:56.093Z",
+      "joinedAt": "2026-04-03T15:35:05.374Z",
+      "lastActivityAt": "2026-04-14T19:13:27.500Z",
+      "score": 28,
+      "leadScore": 37,
+      "chatCount": 19,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_16",
+      "email": "demo.khachhang.16@company.com",
+      "firstName": "Vy",
+      "lastName": "Hoàng",
+      "phoneNumber": "0981090470",
+      "status": "subscribed",
+      "createdAt": "2026-01-29T14:21:35.164Z",
+      "joinedAt": "2026-02-01T10:11:26.613Z",
+      "lastActivityAt": "2026-04-20T13:18:43.006Z",
+      "score": 89,
+      "leadScore": 20,
+      "chatCount": 7,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_17",
+      "email": "demo.khachhang.17@company.com",
+      "firstName": "Minh",
+      "lastName": "Lê",
+      "phoneNumber": "0990667400",
+      "status": "subscribed",
+      "createdAt": "2026-04-08T18:46:11.411Z",
+      "joinedAt": "2026-03-25T13:37:51.505Z",
+      "lastActivityAt": "2026-04-14T09:12:40.482Z",
+      "score": 72,
+      "leadScore": 70,
+      "chatCount": 47,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_18",
+      "email": "demo.khachhang.18@company.com",
+      "firstName": "Minh",
+      "lastName": "Hoàng",
+      "phoneNumber": "0929551680",
+      "status": "subscribed",
+      "createdAt": "2026-03-25T16:13:01.688Z",
+      "joinedAt": "2026-03-26T02:05:48.419Z",
+      "lastActivityAt": "2026-04-16T16:36:05.443Z",
+      "score": 37,
+      "leadScore": 59,
+      "chatCount": 31,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_19",
+      "email": "demo.khachhang.19@company.com",
+      "firstName": "Thảo",
+      "lastName": "Phạm",
+      "phoneNumber": "0913266780",
+      "status": "subscribed",
+      "createdAt": "2026-01-28T06:54:28.466Z",
+      "joinedAt": "2026-04-19T20:50:16.026Z",
+      "lastActivityAt": "2026-04-17T17:02:59.286Z",
+      "score": 63,
+      "leadScore": 98,
+      "chatCount": 49,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_20",
+      "email": "demo.khachhang.20@company.com",
+      "firstName": "Vy",
+      "lastName": "Bùi",
+      "phoneNumber": "0928209656",
+      "status": "subscribed",
+      "createdAt": "2026-02-16T00:39:46.624Z",
+      "joinedAt": "2026-03-17T07:11:28.609Z",
+      "lastActivityAt": "2026-04-17T00:56:11.115Z",
+      "score": 84,
+      "leadScore": 20,
+      "chatCount": 33,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_21",
+      "email": "demo.khachhang.21@company.com",
+      "firstName": "Dung",
+      "lastName": "Đặng",
+      "phoneNumber": "0985573666",
+      "status": "subscribed",
+      "createdAt": "2026-04-14T10:31:08.948Z",
+      "joinedAt": "2026-03-03T09:55:25.729Z",
+      "lastActivityAt": "2026-04-13T12:15:30.065Z",
+      "score": 14,
+      "leadScore": 71,
+      "chatCount": 3,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_22",
+      "email": "demo.khachhang.22@company.com",
+      "firstName": "Vy",
+      "lastName": "Trần",
+      "phoneNumber": "0994678072",
+      "status": "subscribed",
+      "createdAt": "2026-01-09T06:12:20.127Z",
+      "joinedAt": "2026-01-16T05:34:33.827Z",
+      "lastActivityAt": "2026-04-18T14:51:29.261Z",
+      "score": 59,
+      "leadScore": 72,
+      "chatCount": 15,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_23",
+      "email": "demo.khachhang.23@company.com",
+      "firstName": "Minh",
+      "lastName": "Trần",
+      "phoneNumber": "0969024957",
+      "status": "subscribed",
+      "createdAt": "2026-01-16T10:59:53.093Z",
+      "joinedAt": "2026-02-24T06:08:15.975Z",
+      "lastActivityAt": "2026-04-15T17:51:38.627Z",
+      "score": 32,
+      "leadScore": 80,
+      "chatCount": 48,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_24",
+      "email": "demo.khachhang.24@company.com",
+      "firstName": "Hương",
+      "lastName": "Trần",
+      "phoneNumber": "0959177778",
+      "status": "subscribed",
+      "createdAt": "2026-03-25T08:37:22.326Z",
+      "joinedAt": "2026-02-03T18:34:35.929Z",
+      "lastActivityAt": "2026-04-17T19:57:34.195Z",
+      "score": 48,
+      "leadScore": 93,
+      "chatCount": 34,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_25",
+      "email": "demo.khachhang.25@company.com",
+      "firstName": "Nga",
+      "lastName": "Đặng",
+      "phoneNumber": "0993346230",
+      "status": "subscribed",
+      "createdAt": "2026-01-27T02:13:38.472Z",
+      "joinedAt": "2026-04-13T15:09:07.555Z",
+      "lastActivityAt": "2026-04-15T07:35:13.815Z",
+      "score": 49,
+      "leadScore": 31,
+      "chatCount": 31,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_26",
+      "email": "demo.khachhang.26@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Vũ",
+      "phoneNumber": "0984894614",
+      "status": "subscribed",
+      "createdAt": "2026-03-06T11:35:41.266Z",
+      "joinedAt": "2026-03-28T17:49:35.555Z",
+      "lastActivityAt": "2026-04-15T08:46:10.692Z",
+      "score": 25,
+      "leadScore": 31,
+      "chatCount": 49,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_27",
+      "email": "demo.khachhang.27@company.com",
+      "firstName": "Linh",
+      "lastName": "Bùi",
+      "phoneNumber": "0929419801",
+      "status": "bounced",
+      "createdAt": "2026-02-22T04:51:40.073Z",
+      "joinedAt": "2026-03-23T11:31:30.267Z",
+      "lastActivityAt": "2026-04-16T05:46:41.440Z",
+      "score": 76,
+      "leadScore": 2,
+      "chatCount": 21,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_28",
+      "email": "demo.khachhang.28@company.com",
+      "firstName": "Vy",
+      "lastName": "Hoàng",
+      "phoneNumber": "0901794711",
+      "status": "customer",
+      "createdAt": "2026-02-21T16:19:55.507Z",
+      "joinedAt": "2026-01-22T18:26:13.608Z",
+      "lastActivityAt": "2026-04-21T16:38:41.195Z",
+      "score": 93,
+      "leadScore": 67,
+      "chatCount": 19,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_29",
+      "email": "demo.khachhang.29@company.com",
+      "firstName": "Linh",
+      "lastName": "Vũ",
+      "phoneNumber": "0968992037",
+      "status": "subscribed",
+      "createdAt": "2026-04-08T21:35:13.413Z",
+      "joinedAt": "2026-01-08T03:09:45.926Z",
+      "lastActivityAt": "2026-04-12T01:28:12.319Z",
+      "score": 47,
+      "leadScore": 48,
+      "chatCount": 46,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_30",
+      "email": "demo.khachhang.30@company.com",
+      "firstName": "Hương",
+      "lastName": "Trần",
+      "phoneNumber": "0971212699",
+      "status": "subscribed",
+      "createdAt": "2026-01-16T03:03:11.205Z",
+      "joinedAt": "2026-03-25T03:42:11.871Z",
+      "lastActivityAt": "2026-04-16T13:28:03.108Z",
+      "score": 81,
+      "leadScore": 91,
+      "chatCount": 15,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_31",
+      "email": "demo.khachhang.31@company.com",
+      "firstName": "Thảo",
+      "lastName": "Võ",
+      "phoneNumber": "0949429879",
+      "status": "bounced",
+      "createdAt": "2026-03-22T18:40:26.158Z",
+      "joinedAt": "2026-04-18T09:38:26.570Z",
+      "lastActivityAt": "2026-04-12T14:48:23.561Z",
+      "score": 1,
+      "leadScore": 72,
+      "chatCount": 6,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_32",
+      "email": "demo.khachhang.32@company.com",
+      "firstName": "Linh",
+      "lastName": "Trần",
+      "phoneNumber": "0975957034",
+      "status": "subscribed",
+      "createdAt": "2026-01-17T08:04:34.187Z",
+      "joinedAt": "2026-01-09T17:10:01.658Z",
+      "lastActivityAt": "2026-04-15T10:42:01.821Z",
+      "score": 7,
+      "leadScore": 7,
+      "chatCount": 24,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_33",
+      "email": "demo.khachhang.33@company.com",
+      "firstName": "Thảo",
+      "lastName": "Đặng",
+      "phoneNumber": "0924612706",
+      "status": "subscribed",
+      "createdAt": "2026-04-01T10:17:31.900Z",
+      "joinedAt": "2026-01-02T05:13:24.145Z",
+      "lastActivityAt": "2026-04-14T03:28:16.044Z",
+      "score": 60,
+      "leadScore": 92,
+      "chatCount": 42,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_34",
+      "email": "demo.khachhang.34@company.com",
+      "firstName": "Thảo",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0976500636",
+      "status": "subscribed",
+      "createdAt": "2026-04-10T16:12:40.506Z",
+      "joinedAt": "2026-03-15T05:06:16.255Z",
+      "lastActivityAt": "2026-04-20T15:17:33.235Z",
+      "score": 84,
+      "leadScore": 31,
+      "chatCount": 5,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_35",
+      "email": "demo.khachhang.35@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0935805319",
+      "status": "subscribed",
+      "createdAt": "2026-02-21T05:09:17.271Z",
+      "joinedAt": "2026-01-14T20:41:41.076Z",
+      "lastActivityAt": "2026-04-16T01:25:48.833Z",
+      "score": 71,
+      "leadScore": 31,
+      "chatCount": 4,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_36",
+      "email": "demo.khachhang.36@company.com",
+      "firstName": "Phong",
+      "lastName": "Vũ",
+      "phoneNumber": "0985425381",
+      "status": "subscribed",
+      "createdAt": "2026-01-18T06:59:15.111Z",
+      "joinedAt": "2026-02-19T22:46:02.180Z",
+      "lastActivityAt": "2026-04-20T02:10:13.221Z",
+      "score": 29,
+      "leadScore": 17,
+      "chatCount": 1,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_37",
+      "email": "demo.khachhang.37@company.com",
+      "firstName": "Quân",
+      "lastName": "Phan",
+      "phoneNumber": "0918968322",
+      "status": "subscribed",
+      "createdAt": "2025-12-29T22:36:37.151Z",
+      "joinedAt": "2026-03-25T17:55:16.046Z",
+      "lastActivityAt": "2026-04-13T19:47:57.865Z",
+      "score": 36,
+      "leadScore": 91,
+      "chatCount": 19,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_38",
+      "email": "demo.khachhang.38@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Hoàng",
+      "phoneNumber": "0905638168",
+      "status": "subscribed",
+      "createdAt": "2026-02-27T23:00:50.321Z",
+      "joinedAt": "2026-03-27T00:10:38.414Z",
+      "lastActivityAt": "2026-04-14T18:48:04.165Z",
+      "score": 66,
+      "leadScore": 45,
+      "chatCount": 31,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_39",
+      "email": "demo.khachhang.39@company.com",
+      "firstName": "Hương",
+      "lastName": "Đặng",
+      "phoneNumber": "0940485593",
+      "status": "subscribed",
+      "createdAt": "2026-03-23T17:38:29.862Z",
+      "joinedAt": "2026-02-01T08:08:29.767Z",
+      "lastActivityAt": "2026-04-14T13:20:52.965Z",
+      "score": 19,
+      "leadScore": 89,
+      "chatCount": 17,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_40",
+      "email": "demo.khachhang.40@company.com",
+      "firstName": "Phong",
+      "lastName": "Bùi",
+      "phoneNumber": "0904359738",
+      "status": "customer",
+      "createdAt": "2026-04-08T20:19:20.357Z",
+      "joinedAt": "2026-04-14T15:18:57.229Z",
+      "lastActivityAt": "2026-04-12T02:26:42.232Z",
+      "score": 26,
+      "leadScore": 59,
+      "chatCount": 34,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_41",
+      "email": "demo.khachhang.41@company.com",
+      "firstName": "Phong",
+      "lastName": "Hoàng",
+      "phoneNumber": "0981217706",
+      "status": "subscribed",
+      "createdAt": "2026-01-18T14:09:48.236Z",
+      "joinedAt": "2026-02-05T17:09:23.295Z",
+      "lastActivityAt": "2026-04-18T07:40:43.523Z",
+      "score": 62,
+      "leadScore": 5,
+      "chatCount": 1,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_42",
+      "email": "demo.khachhang.42@company.com",
+      "firstName": "Hải",
+      "lastName": "Phan",
+      "phoneNumber": "0912312387",
+      "status": "subscribed",
+      "createdAt": "2026-03-17T12:19:05.184Z",
+      "joinedAt": "2026-04-19T02:21:38.759Z",
+      "lastActivityAt": "2026-04-15T10:57:54.874Z",
+      "score": 78,
+      "leadScore": 29,
+      "chatCount": 30,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_43",
+      "email": "demo.khachhang.43@company.com",
+      "firstName": "Hải",
+      "lastName": "Đặng",
+      "phoneNumber": "0913337026",
+      "status": "subscribed",
+      "createdAt": "2026-02-27T19:06:04.091Z",
+      "joinedAt": "2026-01-09T03:07:07.383Z",
+      "lastActivityAt": "2026-04-11T03:13:28.797Z",
+      "score": 85,
+      "leadScore": 91,
+      "chatCount": 42,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_44",
+      "email": "demo.khachhang.44@company.com",
+      "firstName": "Thảo",
+      "lastName": "Phan",
+      "phoneNumber": "0950272624",
+      "status": "subscribed",
+      "createdAt": "2026-01-14T22:54:21.596Z",
+      "joinedAt": "2026-01-12T22:02:58.680Z",
+      "lastActivityAt": "2026-04-14T21:05:41.581Z",
+      "score": 19,
+      "leadScore": 14,
+      "chatCount": 14,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_45",
+      "email": "demo.khachhang.45@company.com",
+      "firstName": "Vy",
+      "lastName": "Phạm",
+      "phoneNumber": "0916186827",
+      "status": "subscribed",
+      "createdAt": "2026-03-13T08:17:24.525Z",
+      "joinedAt": "2026-03-30T04:09:14.586Z",
+      "lastActivityAt": "2026-04-20T03:14:55.644Z",
+      "score": 28,
+      "leadScore": 45,
+      "chatCount": 35,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_46",
+      "email": "demo.khachhang.46@company.com",
+      "firstName": "Dung",
+      "lastName": "Phạm",
+      "phoneNumber": "0906996591",
+      "status": "bounced",
+      "createdAt": "2026-04-13T16:19:42.862Z",
+      "joinedAt": "2026-04-19T07:04:13.087Z",
+      "lastActivityAt": "2026-04-14T15:46:02.712Z",
+      "score": 57,
+      "leadScore": 76,
+      "chatCount": 7,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_47",
+      "email": "demo.khachhang.47@company.com",
+      "firstName": "Minh",
+      "lastName": "Võ",
+      "phoneNumber": "0919316451",
+      "status": "subscribed",
+      "createdAt": "2026-02-28T20:08:29.548Z",
+      "joinedAt": "2026-02-23T20:43:07.945Z",
+      "lastActivityAt": "2026-04-18T07:18:23.834Z",
+      "score": 16,
+      "leadScore": 31,
+      "chatCount": 7,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_48",
+      "email": "demo.khachhang.48@company.com",
+      "firstName": "Vy",
+      "lastName": "Lê",
+      "phoneNumber": "0928719392",
+      "status": "subscribed",
+      "createdAt": "2026-01-03T07:59:15.493Z",
+      "joinedAt": "2026-01-15T11:44:56.728Z",
+      "lastActivityAt": "2026-04-18T10:04:17.082Z",
+      "score": 92,
+      "leadScore": 3,
+      "chatCount": 40,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_49",
+      "email": "demo.khachhang.49@company.com",
+      "firstName": "Phong",
+      "lastName": "Đặng",
+      "phoneNumber": "0983284099",
+      "status": "subscribed",
+      "createdAt": "2026-02-11T18:41:29.069Z",
+      "joinedAt": "2026-01-11T08:07:06.788Z",
+      "lastActivityAt": "2026-04-15T02:38:16.004Z",
+      "score": 17,
+      "leadScore": 90,
+      "chatCount": 43,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_50",
+      "email": "demo.khachhang.50@company.com",
+      "firstName": "Minh",
+      "lastName": "Võ",
+      "phoneNumber": "0990595534",
+      "status": "subscribed",
+      "createdAt": "2026-02-05T08:26:36.362Z",
+      "joinedAt": "2025-12-28T17:06:10.488Z",
+      "lastActivityAt": "2026-04-21T00:39:21.471Z",
+      "score": 87,
+      "leadScore": 72,
+      "chatCount": 29,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_51",
+      "email": "demo.khachhang.51@company.com",
+      "firstName": "Hương",
+      "lastName": "Lê",
+      "phoneNumber": "0992105591",
+      "status": "subscribed",
+      "createdAt": "2026-02-19T22:46:07.311Z",
+      "joinedAt": "2026-02-09T06:15:59.418Z",
+      "lastActivityAt": "2026-04-19T03:44:45.768Z",
+      "score": 32,
+      "leadScore": 19,
+      "chatCount": 20,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_52",
+      "email": "demo.khachhang.52@company.com",
+      "firstName": "Quân",
+      "lastName": "Võ",
+      "phoneNumber": "0905716402",
+      "status": "subscribed",
+      "createdAt": "2026-02-20T13:03:23.468Z",
+      "joinedAt": "2026-04-11T05:14:13.089Z",
+      "lastActivityAt": "2026-04-11T11:14:36.868Z",
+      "score": 76,
+      "leadScore": 43,
+      "chatCount": 1,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_53",
+      "email": "demo.khachhang.53@company.com",
+      "firstName": "Quân",
+      "lastName": "Trần",
+      "phoneNumber": "0988126956",
+      "status": "subscribed",
+      "createdAt": "2026-02-20T02:42:49.804Z",
+      "joinedAt": "2026-02-26T05:29:16.912Z",
+      "lastActivityAt": "2026-04-10T20:00:12.155Z",
+      "score": 43,
+      "leadScore": 4,
+      "chatCount": 9,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_54",
+      "email": "demo.khachhang.54@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Võ",
+      "phoneNumber": "0914026317",
+      "status": "subscribed",
+      "createdAt": "2026-04-14T03:13:48.127Z",
+      "joinedAt": "2026-03-31T18:59:35.340Z",
+      "lastActivityAt": "2026-04-16T11:49:44.195Z",
+      "score": 14,
+      "leadScore": 71,
+      "chatCount": 11,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_55",
+      "email": "demo.khachhang.55@company.com",
+      "firstName": "Hương",
+      "lastName": "Trần",
+      "phoneNumber": "0995955341",
+      "status": "subscribed",
+      "createdAt": "2026-03-17T07:27:18.058Z",
+      "joinedAt": "2026-01-20T13:29:23.702Z",
+      "lastActivityAt": "2026-04-20T14:12:23.741Z",
+      "score": 14,
+      "leadScore": 24,
+      "chatCount": 17,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_56",
+      "email": "demo.khachhang.56@company.com",
+      "firstName": "Hương",
+      "lastName": "Phạm",
+      "phoneNumber": "0907656715",
+      "status": "subscribed",
+      "createdAt": "2026-04-08T19:27:55.768Z",
+      "joinedAt": "2026-01-29T09:05:33.374Z",
+      "lastActivityAt": "2026-04-13T04:27:10.566Z",
+      "score": 6,
+      "leadScore": 84,
+      "chatCount": 42,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_57",
+      "email": "demo.khachhang.57@company.com",
+      "firstName": "Phong",
+      "lastName": "Lê",
+      "phoneNumber": "0993156662",
+      "status": "unsubscribed",
+      "createdAt": "2026-03-21T15:40:03.461Z",
+      "joinedAt": "2026-04-03T15:35:58.635Z",
+      "lastActivityAt": "2026-04-11T12:16:58.841Z",
+      "score": 90,
+      "leadScore": 65,
+      "chatCount": 32,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_58",
+      "email": "demo.khachhang.58@company.com",
+      "firstName": "Thảo",
+      "lastName": "Phạm",
+      "phoneNumber": "0989134302",
+      "status": "subscribed",
+      "createdAt": "2026-02-01T07:26:46.545Z",
+      "joinedAt": "2026-02-09T03:41:04.855Z",
+      "lastActivityAt": "2026-04-17T10:57:12.092Z",
+      "score": 74,
+      "leadScore": 34,
+      "chatCount": 5,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_59",
+      "email": "demo.khachhang.59@company.com",
+      "firstName": "Thảo",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0940719987",
+      "status": "subscribed",
+      "createdAt": "2026-04-04T01:00:02.228Z",
+      "joinedAt": "2026-03-04T11:19:52.000Z",
+      "lastActivityAt": "2026-04-19T01:23:36.584Z",
+      "score": 24,
+      "leadScore": 32,
+      "chatCount": 10,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_60",
+      "email": "demo.khachhang.60@company.com",
+      "firstName": "Quân",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0990470984",
+      "status": "subscribed",
+      "createdAt": "2026-03-21T22:57:50.657Z",
+      "joinedAt": "2026-01-26T00:27:13.259Z",
+      "lastActivityAt": "2026-04-15T00:26:35.582Z",
+      "score": 15,
+      "leadScore": 19,
+      "chatCount": 38,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_61",
+      "email": "demo.khachhang.61@company.com",
+      "firstName": "Minh",
+      "lastName": "Võ",
+      "phoneNumber": "0951860664",
+      "status": "subscribed",
+      "createdAt": "2026-02-27T06:03:45.392Z",
+      "joinedAt": "2026-04-01T12:13:45.261Z",
+      "lastActivityAt": "2026-04-19T18:44:58.058Z",
+      "score": 25,
+      "leadScore": 13,
+      "chatCount": 22,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_62",
+      "email": "demo.khachhang.62@company.com",
+      "firstName": "Minh",
+      "lastName": "Phạm",
+      "phoneNumber": "0947437336",
+      "status": "subscribed",
+      "createdAt": "2026-01-17T03:10:28.260Z",
+      "joinedAt": "2026-04-16T02:30:46.421Z",
+      "lastActivityAt": "2026-04-14T02:07:26.729Z",
+      "score": 89,
+      "leadScore": 78,
+      "chatCount": 26,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_63",
+      "email": "demo.khachhang.63@company.com",
+      "firstName": "Hải",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0902516049",
+      "status": "subscribed",
+      "createdAt": "2026-04-16T10:10:23.279Z",
+      "joinedAt": "2026-02-24T17:10:56.633Z",
+      "lastActivityAt": "2026-04-13T05:59:50.573Z",
+      "score": 92,
+      "leadScore": 65,
+      "chatCount": 8,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_64",
+      "email": "demo.khachhang.64@company.com",
+      "firstName": "Hương",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0993558194",
+      "status": "unsubscribed",
+      "createdAt": "2026-01-29T08:53:13.446Z",
+      "joinedAt": "2026-03-24T22:07:20.293Z",
+      "lastActivityAt": "2026-04-15T01:55:19.029Z",
+      "score": 35,
+      "leadScore": 56,
+      "chatCount": 26,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_65",
+      "email": "demo.khachhang.65@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Đặng",
+      "phoneNumber": "0909703631",
+      "status": "bounced",
+      "createdAt": "2026-03-22T22:36:50.536Z",
+      "joinedAt": "2026-01-03T13:11:57.086Z",
+      "lastActivityAt": "2026-04-15T01:08:36.884Z",
+      "score": 85,
+      "leadScore": 5,
+      "chatCount": 45,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_66",
+      "email": "demo.khachhang.66@company.com",
+      "firstName": "Vy",
+      "lastName": "Phan",
+      "phoneNumber": "0929572833",
+      "status": "subscribed",
+      "createdAt": "2026-04-13T18:20:44.850Z",
+      "joinedAt": "2026-01-29T12:06:55.735Z",
+      "lastActivityAt": "2026-04-11T18:14:36.185Z",
+      "score": 94,
+      "leadScore": 65,
+      "chatCount": 45,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_67",
+      "email": "demo.khachhang.67@company.com",
+      "firstName": "Vy",
+      "lastName": "Võ",
+      "phoneNumber": "0901402875",
+      "status": "subscribed",
+      "createdAt": "2026-01-20T20:37:31.794Z",
+      "joinedAt": "2026-03-06T11:52:15.520Z",
+      "lastActivityAt": "2026-04-15T19:59:24.857Z",
+      "score": 99,
+      "leadScore": 36,
+      "chatCount": 48,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_68",
+      "email": "demo.khachhang.68@company.com",
+      "firstName": "Linh",
+      "lastName": "Phan",
+      "phoneNumber": "0925936790",
+      "status": "subscribed",
+      "createdAt": "2026-01-09T12:29:53.139Z",
+      "joinedAt": "2026-04-12T12:33:35.996Z",
+      "lastActivityAt": "2026-04-20T12:13:26.660Z",
+      "score": 32,
+      "leadScore": 18,
+      "chatCount": 24,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_69",
+      "email": "demo.khachhang.69@company.com",
+      "firstName": "Hải",
+      "lastName": "Võ",
+      "phoneNumber": "0912854682",
+      "status": "subscribed",
+      "createdAt": "2026-03-15T05:11:23.914Z",
+      "joinedAt": "2026-02-24T02:55:57.800Z",
+      "lastActivityAt": "2026-04-20T02:00:05.180Z",
+      "score": 4,
+      "leadScore": 11,
+      "chatCount": 18,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_70",
+      "email": "demo.khachhang.70@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0910676455",
+      "status": "subscribed",
+      "createdAt": "2026-03-28T04:52:50.356Z",
+      "joinedAt": "2026-01-18T13:43:41.650Z",
+      "lastActivityAt": "2026-04-12T20:41:12.914Z",
+      "score": 6,
+      "leadScore": 29,
+      "chatCount": 27,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_71",
+      "email": "demo.khachhang.71@company.com",
+      "firstName": "Bình",
+      "lastName": "Trần",
+      "phoneNumber": "0946110989",
+      "status": "subscribed",
+      "createdAt": "2026-04-18T06:20:40.493Z",
+      "joinedAt": "2026-04-01T12:26:32.425Z",
+      "lastActivityAt": "2026-04-21T06:45:31.036Z",
+      "score": 66,
+      "leadScore": 40,
+      "chatCount": 28,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_72",
+      "email": "demo.khachhang.72@company.com",
+      "firstName": "Quân",
+      "lastName": "Phạm",
+      "phoneNumber": "0941750053",
+      "status": "subscribed",
+      "createdAt": "2026-04-02T23:25:21.694Z",
+      "joinedAt": "2026-02-17T17:13:00.225Z",
+      "lastActivityAt": "2026-04-18T05:15:25.299Z",
+      "score": 5,
+      "leadScore": 92,
+      "chatCount": 19,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_73",
+      "email": "demo.khachhang.73@company.com",
+      "firstName": "Vy",
+      "lastName": "Phan",
+      "phoneNumber": "0988792252",
+      "status": "subscribed",
+      "createdAt": "2026-02-21T21:03:18.498Z",
+      "joinedAt": "2026-03-30T22:55:47.382Z",
+      "lastActivityAt": "2026-04-12T22:58:33.461Z",
+      "score": 10,
+      "leadScore": 99,
+      "chatCount": 1,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_74",
+      "email": "demo.khachhang.74@company.com",
+      "firstName": "Hải",
+      "lastName": "Đặng",
+      "phoneNumber": "0974167226",
+      "status": "customer",
+      "createdAt": "2026-03-26T04:21:35.493Z",
+      "joinedAt": "2025-12-29T16:12:35.028Z",
+      "lastActivityAt": "2026-04-15T01:36:01.116Z",
+      "score": 91,
+      "leadScore": 92,
+      "chatCount": 3,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_75",
+      "email": "demo.khachhang.75@company.com",
+      "firstName": "Minh",
+      "lastName": "Phan",
+      "phoneNumber": "0996703185",
+      "status": "subscribed",
+      "createdAt": "2026-03-15T05:05:44.761Z",
+      "joinedAt": "2026-04-06T11:11:20.299Z",
+      "lastActivityAt": "2026-04-11T15:00:13.539Z",
+      "score": 25,
+      "leadScore": 11,
+      "chatCount": 13,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_76",
+      "email": "demo.khachhang.76@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Hoàng",
+      "phoneNumber": "0974606527",
+      "status": "subscribed",
+      "createdAt": "2026-02-04T02:18:06.477Z",
+      "joinedAt": "2026-01-21T08:39:06.038Z",
+      "lastActivityAt": "2026-04-11T08:11:57.228Z",
+      "score": 77,
+      "leadScore": 77,
+      "chatCount": 12,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_77",
+      "email": "demo.khachhang.77@company.com",
+      "firstName": "Nga",
+      "lastName": "Vũ",
+      "phoneNumber": "0922681446",
+      "status": "subscribed",
+      "createdAt": "2026-01-18T02:30:40.680Z",
+      "joinedAt": "2026-02-17T18:05:54.050Z",
+      "lastActivityAt": "2026-04-13T16:42:30.110Z",
+      "score": 0,
+      "leadScore": 40,
+      "chatCount": 8,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_78",
+      "email": "demo.khachhang.78@company.com",
+      "firstName": "Vy",
+      "lastName": "Trần",
+      "phoneNumber": "0920366676",
+      "status": "bounced",
+      "createdAt": "2026-03-12T21:42:50.682Z",
+      "joinedAt": "2026-02-22T02:50:36.171Z",
+      "lastActivityAt": "2026-04-14T00:39:35.889Z",
+      "score": 56,
+      "leadScore": 6,
+      "chatCount": 47,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_79",
+      "email": "demo.khachhang.79@company.com",
+      "firstName": "Vy",
+      "lastName": "Phan",
+      "phoneNumber": "0954145189",
+      "status": "subscribed",
+      "createdAt": "2026-03-29T20:57:58.078Z",
+      "joinedAt": "2026-01-23T19:22:09.600Z",
+      "lastActivityAt": "2026-04-19T14:39:47.470Z",
+      "score": 18,
+      "leadScore": 83,
+      "chatCount": 3,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_80",
+      "email": "demo.khachhang.80@company.com",
+      "firstName": "Nga",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0965721738",
+      "status": "bounced",
+      "createdAt": "2026-02-21T22:02:19.502Z",
+      "joinedAt": "2026-03-14T20:13:53.003Z",
+      "lastActivityAt": "2026-04-11T14:49:43.206Z",
+      "score": 48,
+      "leadScore": 37,
+      "chatCount": 18,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_81",
+      "email": "demo.khachhang.81@company.com",
+      "firstName": "Bình",
+      "lastName": "Lê",
+      "phoneNumber": "0936372246",
+      "status": "subscribed",
+      "createdAt": "2026-02-19T23:35:30.498Z",
+      "joinedAt": "2026-04-09T07:50:38.983Z",
+      "lastActivityAt": "2026-04-22T02:02:48.849Z",
+      "score": 62,
+      "leadScore": 16,
+      "chatCount": 43,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_82",
+      "email": "demo.khachhang.82@company.com",
+      "firstName": "Bình",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0939876734",
+      "status": "subscribed",
+      "createdAt": "2026-01-31T16:47:44.107Z",
+      "joinedAt": "2026-04-09T14:40:30.622Z",
+      "lastActivityAt": "2026-04-12T17:14:46.323Z",
+      "score": 4,
+      "leadScore": 62,
+      "chatCount": 30,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_83",
+      "email": "demo.khachhang.83@company.com",
+      "firstName": "Linh",
+      "lastName": "Vũ",
+      "phoneNumber": "0976513287",
+      "status": "active",
+      "createdAt": "2026-03-14T02:42:46.614Z",
+      "joinedAt": "2026-02-12T08:54:52.799Z",
+      "lastActivityAt": "2026-04-18T01:27:03.551Z",
+      "score": 11,
+      "leadScore": 8,
+      "chatCount": 42,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_84",
+      "email": "demo.khachhang.84@company.com",
+      "firstName": "Nga",
+      "lastName": "Phan",
+      "phoneNumber": "0965466339",
+      "status": "subscribed",
+      "createdAt": "2026-03-03T16:48:54.619Z",
+      "joinedAt": "2026-03-19T10:28:26.952Z",
+      "lastActivityAt": "2026-04-18T04:26:12.187Z",
+      "score": 79,
+      "leadScore": 73,
+      "chatCount": 7,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_85",
+      "email": "demo.khachhang.85@company.com",
+      "firstName": "Thảo",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0986951968",
+      "status": "subscribed",
+      "createdAt": "2026-04-01T08:24:32.388Z",
+      "joinedAt": "2026-01-14T09:41:03.835Z",
+      "lastActivityAt": "2026-04-12T01:30:10.816Z",
+      "score": 82,
+      "leadScore": 82,
+      "chatCount": 17,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_86",
+      "email": "demo.khachhang.86@company.com",
+      "firstName": "Hương",
+      "lastName": "Phạm",
+      "phoneNumber": "0915716541",
+      "status": "subscribed",
+      "createdAt": "2026-01-06T17:23:10.836Z",
+      "joinedAt": "2026-01-21T10:20:11.197Z",
+      "lastActivityAt": "2026-04-13T07:38:22.378Z",
+      "score": 86,
+      "leadScore": 1,
+      "chatCount": 4,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_87",
+      "email": "demo.khachhang.87@company.com",
+      "firstName": "Nga",
+      "lastName": "Phạm",
+      "phoneNumber": "0986975098",
+      "status": "subscribed",
+      "createdAt": "2026-04-13T07:11:43.933Z",
+      "joinedAt": "2026-04-04T19:04:48.744Z",
+      "lastActivityAt": "2026-04-12T00:26:17.075Z",
+      "score": 47,
+      "leadScore": 30,
+      "chatCount": 35,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_88",
+      "email": "demo.khachhang.88@company.com",
+      "firstName": "Phong",
+      "lastName": "Đặng",
+      "phoneNumber": "0968349561",
+      "status": "subscribed",
+      "createdAt": "2026-04-12T15:31:46.295Z",
+      "joinedAt": "2026-04-04T00:24:50.876Z",
+      "lastActivityAt": "2026-04-11T19:22:34.026Z",
+      "score": 1,
+      "leadScore": 15,
+      "chatCount": 14,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_89",
+      "email": "demo.khachhang.89@company.com",
+      "firstName": "Dung",
+      "lastName": "Bùi",
+      "phoneNumber": "0959716547",
+      "status": "subscribed",
+      "createdAt": "2026-02-17T01:52:17.898Z",
+      "joinedAt": "2026-04-17T01:49:18.473Z",
+      "lastActivityAt": "2026-04-20T20:13:37.785Z",
+      "score": 99,
+      "leadScore": 39,
+      "chatCount": 15,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_90",
+      "email": "demo.khachhang.90@company.com",
+      "firstName": "Thảo",
+      "lastName": "Trần",
+      "phoneNumber": "0941152742",
+      "status": "subscribed",
+      "createdAt": "2026-03-09T17:03:05.488Z",
+      "joinedAt": "2026-01-08T03:24:58.308Z",
+      "lastActivityAt": "2026-04-19T01:46:08.210Z",
+      "score": 9,
+      "leadScore": 63,
+      "chatCount": 47,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_91",
+      "email": "demo.khachhang.91@company.com",
+      "firstName": "Bình",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0994096804",
+      "status": "subscribed",
+      "createdAt": "2026-03-07T20:07:20.556Z",
+      "joinedAt": "2026-03-18T12:30:30.160Z",
+      "lastActivityAt": "2026-04-19T06:23:52.161Z",
+      "score": 1,
+      "leadScore": 64,
+      "chatCount": 19,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_92",
+      "email": "demo.khachhang.92@company.com",
+      "firstName": "Thảo",
+      "lastName": "Trần",
+      "phoneNumber": "0982827856",
+      "status": "subscribed",
+      "createdAt": "2026-04-01T23:53:20.793Z",
+      "joinedAt": "2026-04-03T17:08:02.432Z",
+      "lastActivityAt": "2026-04-20T03:28:13.525Z",
+      "score": 6,
+      "leadScore": 74,
+      "chatCount": 32,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_93",
+      "email": "demo.khachhang.93@company.com",
+      "firstName": "Thảo",
+      "lastName": "Bùi",
+      "phoneNumber": "0949527012",
+      "status": "subscribed",
+      "createdAt": "2026-02-20T07:34:04.487Z",
+      "joinedAt": "2026-04-07T15:21:26.467Z",
+      "lastActivityAt": "2026-04-20T23:09:17.180Z",
+      "score": 59,
+      "leadScore": 4,
+      "chatCount": 29,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_94",
+      "email": "demo.khachhang.94@company.com",
+      "firstName": "Quân",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0961186049",
+      "status": "lead",
+      "createdAt": "2026-04-02T05:36:53.539Z",
+      "joinedAt": "2026-04-03T07:59:24.235Z",
+      "lastActivityAt": "2026-04-20T12:40:25.010Z",
+      "score": 16,
+      "leadScore": 59,
+      "chatCount": 24,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_95",
+      "email": "demo.khachhang.95@company.com",
+      "firstName": "Hương",
+      "lastName": "Phan",
+      "phoneNumber": "0947684018",
+      "status": "subscribed",
+      "createdAt": "2026-01-30T16:07:42.818Z",
+      "joinedAt": "2026-03-24T00:09:17.853Z",
+      "lastActivityAt": "2026-04-18T08:37:53.843Z",
+      "score": 40,
+      "leadScore": 73,
+      "chatCount": 21,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_96",
+      "email": "demo.khachhang.96@company.com",
+      "firstName": "Hương",
+      "lastName": "Phạm",
+      "phoneNumber": "0900130401",
+      "status": "subscribed",
+      "createdAt": "2026-03-22T07:47:28.355Z",
+      "joinedAt": "2026-01-24T19:35:29.952Z",
+      "lastActivityAt": "2026-04-19T09:33:56.875Z",
+      "score": 36,
+      "leadScore": 3,
+      "chatCount": 26,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_97",
+      "email": "demo.khachhang.97@company.com",
+      "firstName": "Minh",
+      "lastName": "Vũ",
+      "phoneNumber": "0949943394",
+      "status": "unsubscribed",
+      "createdAt": "2026-03-29T18:31:18.712Z",
+      "joinedAt": "2026-04-09T07:54:51.062Z",
+      "lastActivityAt": "2026-04-15T06:55:53.173Z",
+      "score": 42,
+      "leadScore": 80,
+      "chatCount": 25,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_98",
+      "email": "demo.khachhang.98@company.com",
+      "firstName": "Phong",
+      "lastName": "Vũ",
+      "phoneNumber": "0943852883",
+      "status": "subscribed",
+      "createdAt": "2026-01-01T14:17:03.666Z",
+      "joinedAt": "2026-01-07T14:43:06.964Z",
+      "lastActivityAt": "2026-04-17T01:05:22.732Z",
+      "score": 63,
+      "leadScore": 8,
+      "chatCount": 40,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_99",
+      "email": "demo.khachhang.99@company.com",
+      "firstName": "Hải",
+      "lastName": "Phạm",
+      "phoneNumber": "0940841502",
+      "status": "subscribed",
+      "createdAt": "2026-03-29T21:36:23.702Z",
+      "joinedAt": "2026-01-30T08:43:55.448Z",
+      "lastActivityAt": "2026-04-18T05:09:02.175Z",
+      "score": 7,
+      "leadScore": 74,
+      "chatCount": 19,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_100",
+      "email": "demo.khachhang.100@company.com",
+      "firstName": "Linh",
+      "lastName": "Phan",
+      "phoneNumber": "0925776748",
+      "status": "subscribed",
+      "createdAt": "2026-04-12T01:09:43.994Z",
+      "joinedAt": "2026-04-04T08:46:42.113Z",
+      "lastActivityAt": "2026-04-16T21:13:32.094Z",
+      "score": 41,
+      "leadScore": 68,
+      "chatCount": 39,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_101",
+      "email": "demo.khachhang.101@company.com",
+      "firstName": "Minh",
+      "lastName": "Hoàng",
+      "phoneNumber": "0999649625",
+      "status": "unsubscribed",
+      "createdAt": "2025-12-29T14:25:09.560Z",
+      "joinedAt": "2026-01-24T13:18:35.651Z",
+      "lastActivityAt": "2026-04-21T04:06:13.076Z",
+      "score": 26,
+      "leadScore": 47,
+      "chatCount": 45,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_102",
+      "email": "demo.khachhang.102@company.com",
+      "firstName": "Quân",
+      "lastName": "Vũ",
+      "phoneNumber": "0951786635",
+      "status": "customer",
+      "createdAt": "2026-01-26T06:46:17.633Z",
+      "joinedAt": "2026-01-03T21:17:48.902Z",
+      "lastActivityAt": "2026-04-19T23:50:16.240Z",
+      "score": 85,
+      "leadScore": 61,
+      "chatCount": 27,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_103",
+      "email": "demo.khachhang.103@company.com",
+      "firstName": "Phong",
+      "lastName": "Đặng",
+      "phoneNumber": "0976865405",
+      "status": "customer",
+      "createdAt": "2026-03-23T17:27:57.045Z",
+      "joinedAt": "2026-03-10T18:26:17.757Z",
+      "lastActivityAt": "2026-04-20T11:49:34.432Z",
+      "score": 46,
+      "leadScore": 16,
+      "chatCount": 46,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_104",
+      "email": "demo.khachhang.104@company.com",
+      "firstName": "Thảo",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0998247429",
+      "status": "bounced",
+      "createdAt": "2025-12-30T05:39:47.514Z",
+      "joinedAt": "2026-02-03T05:46:39.543Z",
+      "lastActivityAt": "2026-04-20T02:39:45.734Z",
+      "score": 14,
+      "leadScore": 73,
+      "chatCount": 13,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_105",
+      "email": "demo.khachhang.105@company.com",
+      "firstName": "Quân",
+      "lastName": "Lê",
+      "phoneNumber": "0941844260",
+      "status": "subscribed",
+      "createdAt": "2026-01-02T01:01:49.436Z",
+      "joinedAt": "2026-01-24T02:34:20.154Z",
+      "lastActivityAt": "2026-04-20T14:40:30.145Z",
+      "score": 12,
+      "leadScore": 81,
+      "chatCount": 34,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_106",
+      "email": "demo.khachhang.106@company.com",
+      "firstName": "Phong",
+      "lastName": "Võ",
+      "phoneNumber": "0970848935",
+      "status": "subscribed",
+      "createdAt": "2026-01-12T17:28:37.236Z",
+      "joinedAt": "2026-02-09T20:51:38.524Z",
+      "lastActivityAt": "2026-04-14T02:57:32.052Z",
+      "score": 91,
+      "leadScore": 54,
+      "chatCount": 11,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_107",
+      "email": "demo.khachhang.107@company.com",
+      "firstName": "Linh",
+      "lastName": "Trần",
+      "phoneNumber": "0997540087",
+      "status": "subscribed",
+      "createdAt": "2026-02-17T13:33:24.742Z",
+      "joinedAt": "2026-01-26T10:35:21.227Z",
+      "lastActivityAt": "2026-04-15T14:15:04.515Z",
+      "score": 22,
+      "leadScore": 60,
+      "chatCount": 10,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_108",
+      "email": "demo.khachhang.108@company.com",
+      "firstName": "Hải",
+      "lastName": "Vũ",
+      "phoneNumber": "0998101840",
+      "status": "subscribed",
+      "createdAt": "2026-03-23T11:14:20.687Z",
+      "joinedAt": "2026-04-21T17:43:16.923Z",
+      "lastActivityAt": "2026-04-11T18:56:46.355Z",
+      "score": 6,
+      "leadScore": 66,
+      "chatCount": 43,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_109",
+      "email": "demo.khachhang.109@company.com",
+      "firstName": "Linh",
+      "lastName": "Trần",
+      "phoneNumber": "0927110837",
+      "status": "subscribed",
+      "createdAt": "2026-01-01T05:41:00.267Z",
+      "joinedAt": "2026-04-12T21:37:01.001Z",
+      "lastActivityAt": "2026-04-19T11:58:02.276Z",
+      "score": 39,
+      "leadScore": 64,
+      "chatCount": 40,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_110",
+      "email": "demo.khachhang.110@company.com",
+      "firstName": "Phong",
+      "lastName": "Võ",
+      "phoneNumber": "0926728186",
+      "status": "bounced",
+      "createdAt": "2026-04-18T09:57:35.878Z",
+      "joinedAt": "2026-03-08T20:37:40.842Z",
+      "lastActivityAt": "2026-04-14T05:42:48.488Z",
+      "score": 7,
+      "leadScore": 46,
+      "chatCount": 34,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_111",
+      "email": "demo.khachhang.111@company.com",
+      "firstName": "Bình",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0921698384",
+      "status": "subscribed",
+      "createdAt": "2026-02-21T06:19:07.205Z",
+      "joinedAt": "2026-03-16T20:58:09.540Z",
+      "lastActivityAt": "2026-04-12T07:17:47.438Z",
+      "score": 22,
+      "leadScore": 91,
+      "chatCount": 18,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_112",
+      "email": "demo.khachhang.112@company.com",
+      "firstName": "Quân",
+      "lastName": "Bùi",
+      "phoneNumber": "0902473451",
+      "status": "active",
+      "createdAt": "2026-04-04T09:35:19.911Z",
+      "joinedAt": "2026-02-02T19:51:28.174Z",
+      "lastActivityAt": "2026-04-18T16:07:12.887Z",
+      "score": 62,
+      "leadScore": 32,
+      "chatCount": 21,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_113",
+      "email": "demo.khachhang.113@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Phạm",
+      "phoneNumber": "0905885547",
+      "status": "subscribed",
+      "createdAt": "2026-04-11T06:45:00.072Z",
+      "joinedAt": "2025-12-31T18:45:52.576Z",
+      "lastActivityAt": "2026-04-16T07:11:00.184Z",
+      "score": 84,
+      "leadScore": 8,
+      "chatCount": 15,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_114",
+      "email": "demo.khachhang.114@company.com",
+      "firstName": "Dung",
+      "lastName": "Phan",
+      "phoneNumber": "0967964200",
+      "status": "subscribed",
+      "createdAt": "2026-04-04T17:00:26.309Z",
+      "joinedAt": "2026-02-12T02:12:44.811Z",
+      "lastActivityAt": "2026-04-15T15:11:47.756Z",
+      "score": 9,
+      "leadScore": 7,
+      "chatCount": 25,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_115",
+      "email": "demo.khachhang.115@company.com",
+      "firstName": "Hương",
+      "lastName": "Bùi",
+      "phoneNumber": "0952813765",
+      "status": "subscribed",
+      "createdAt": "2026-03-20T03:17:09.549Z",
+      "joinedAt": "2026-02-07T22:31:49.866Z",
+      "lastActivityAt": "2026-04-15T13:10:50.976Z",
+      "score": 38,
+      "leadScore": 19,
+      "chatCount": 0,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_116",
+      "email": "demo.khachhang.116@company.com",
+      "firstName": "Vy",
+      "lastName": "Phan",
+      "phoneNumber": "0918674340",
+      "status": "active",
+      "createdAt": "2026-02-06T00:53:10.499Z",
+      "joinedAt": "2026-03-10T18:34:46.798Z",
+      "lastActivityAt": "2026-04-11T15:14:22.971Z",
+      "score": 15,
+      "leadScore": 27,
+      "chatCount": 28,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_117",
+      "email": "demo.khachhang.117@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Phan",
+      "phoneNumber": "0957824543",
+      "status": "subscribed",
+      "createdAt": "2026-02-04T22:36:33.183Z",
+      "joinedAt": "2026-04-04T18:37:07.942Z",
+      "lastActivityAt": "2026-04-20T20:18:36.883Z",
+      "score": 44,
+      "leadScore": 35,
+      "chatCount": 3,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_118",
+      "email": "demo.khachhang.118@company.com",
+      "firstName": "Hương",
+      "lastName": "Đặng",
+      "phoneNumber": "0972907135",
+      "status": "subscribed",
+      "createdAt": "2026-03-27T17:55:24.137Z",
+      "joinedAt": "2026-03-18T05:37:12.375Z",
+      "lastActivityAt": "2026-04-18T11:19:20.488Z",
+      "score": 91,
+      "leadScore": 71,
+      "chatCount": 23,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_119",
+      "email": "demo.khachhang.119@company.com",
+      "firstName": "Linh",
+      "lastName": "Trần",
+      "phoneNumber": "0981219898",
+      "status": "active",
+      "createdAt": "2026-02-16T21:42:06.711Z",
+      "joinedAt": "2026-04-10T08:25:05.883Z",
+      "lastActivityAt": "2026-04-20T15:36:05.664Z",
+      "score": 87,
+      "leadScore": 16,
+      "chatCount": 18,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_120",
+      "email": "demo.khachhang.120@company.com",
+      "firstName": "Dung",
+      "lastName": "Hoàng",
+      "phoneNumber": "0962626723",
+      "status": "subscribed",
+      "createdAt": "2026-03-01T16:32:16.008Z",
+      "joinedAt": "2026-01-29T11:10:40.367Z",
+      "lastActivityAt": "2026-04-18T10:03:05.900Z",
+      "score": 24,
+      "leadScore": 2,
+      "chatCount": 9,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_121",
+      "email": "demo.khachhang.121@company.com",
+      "firstName": "Bình",
+      "lastName": "Vũ",
+      "phoneNumber": "0924249434",
+      "status": "subscribed",
+      "createdAt": "2026-01-20T13:31:56.334Z",
+      "joinedAt": "2026-04-18T05:33:02.106Z",
+      "lastActivityAt": "2026-04-12T06:38:27.446Z",
+      "score": 42,
+      "leadScore": 87,
+      "chatCount": 44,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_122",
+      "email": "demo.khachhang.122@company.com",
+      "firstName": "Nga",
+      "lastName": "Vũ",
+      "phoneNumber": "0916858471",
+      "status": "active",
+      "createdAt": "2025-12-31T20:13:25.936Z",
+      "joinedAt": "2026-04-11T02:54:33.049Z",
+      "lastActivityAt": "2026-04-12T13:53:33.431Z",
+      "score": 0,
+      "leadScore": 50,
+      "chatCount": 28,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_123",
+      "email": "demo.khachhang.123@company.com",
+      "firstName": "Quân",
+      "lastName": "Lê",
+      "phoneNumber": "0966969253",
+      "status": "bounced",
+      "createdAt": "2026-03-03T22:29:10.177Z",
+      "joinedAt": "2026-03-12T08:38:10.713Z",
+      "lastActivityAt": "2026-04-21T18:40:54.480Z",
+      "score": 14,
+      "leadScore": 81,
+      "chatCount": 15,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_124",
+      "email": "demo.khachhang.124@company.com",
+      "firstName": "Hương",
+      "lastName": "Bùi",
+      "phoneNumber": "0938231964",
+      "status": "subscribed",
+      "createdAt": "2025-12-27T23:00:21.440Z",
+      "joinedAt": "2026-01-26T15:35:07.109Z",
+      "lastActivityAt": "2026-04-19T17:18:36.861Z",
+      "score": 38,
+      "leadScore": 1,
+      "chatCount": 18,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_125",
+      "email": "demo.khachhang.125@company.com",
+      "firstName": "Hương",
+      "lastName": "Trần",
+      "phoneNumber": "0969518452",
+      "status": "subscribed",
+      "createdAt": "2026-01-03T13:25:10.802Z",
+      "joinedAt": "2026-01-21T22:25:53.003Z",
+      "lastActivityAt": "2026-04-12T03:17:04.058Z",
+      "score": 26,
+      "leadScore": 31,
+      "chatCount": 9,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_126",
+      "email": "demo.khachhang.126@company.com",
+      "firstName": "Vy",
+      "lastName": "Bùi",
+      "phoneNumber": "0964828426",
+      "status": "subscribed",
+      "createdAt": "2026-04-17T18:11:47.141Z",
+      "joinedAt": "2026-03-05T13:27:11.918Z",
+      "lastActivityAt": "2026-04-14T02:55:45.256Z",
+      "score": 4,
+      "leadScore": 34,
+      "chatCount": 26,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_127",
+      "email": "demo.khachhang.127@company.com",
+      "firstName": "Bình",
+      "lastName": "Phạm",
+      "phoneNumber": "0975817116",
+      "status": "subscribed",
+      "createdAt": "2026-01-29T04:57:09.159Z",
+      "joinedAt": "2026-01-04T23:56:48.820Z",
+      "lastActivityAt": "2026-04-14T07:16:04.875Z",
+      "score": 28,
+      "leadScore": 50,
+      "chatCount": 28,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_128",
+      "email": "demo.khachhang.128@company.com",
+      "firstName": "Bình",
+      "lastName": "Hoàng",
+      "phoneNumber": "0921448547",
+      "status": "subscribed",
+      "createdAt": "2026-01-12T21:13:06.973Z",
+      "joinedAt": "2026-01-19T22:28:44.116Z",
+      "lastActivityAt": "2026-04-21T13:28:22.638Z",
+      "score": 28,
+      "leadScore": 2,
+      "chatCount": 7,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_129",
+      "email": "demo.khachhang.129@company.com",
+      "firstName": "Hải",
+      "lastName": "Bùi",
+      "phoneNumber": "0944702009",
+      "status": "subscribed",
+      "createdAt": "2026-01-13T03:13:45.561Z",
+      "joinedAt": "2026-03-17T03:59:31.430Z",
+      "lastActivityAt": "2026-04-14T04:36:30.081Z",
+      "score": 46,
+      "leadScore": 19,
+      "chatCount": 8,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_130",
+      "email": "demo.khachhang.130@company.com",
+      "firstName": "Thảo",
+      "lastName": "Vũ",
+      "phoneNumber": "0907243229",
+      "status": "subscribed",
+      "createdAt": "2026-02-28T01:29:24.861Z",
+      "joinedAt": "2026-01-26T03:52:51.732Z",
+      "lastActivityAt": "2026-04-13T12:05:48.885Z",
+      "score": 92,
+      "leadScore": 58,
+      "chatCount": 35,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_131",
+      "email": "demo.khachhang.131@company.com",
+      "firstName": "Linh",
+      "lastName": "Võ",
+      "phoneNumber": "0932805199",
+      "status": "unsubscribed",
+      "createdAt": "2026-03-10T22:51:04.436Z",
+      "joinedAt": "2026-03-23T13:50:59.027Z",
+      "lastActivityAt": "2026-04-20T22:37:41.837Z",
+      "score": 88,
+      "leadScore": 12,
+      "chatCount": 0,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_132",
+      "email": "demo.khachhang.132@company.com",
+      "firstName": "Nga",
+      "lastName": "Bùi",
+      "phoneNumber": "0910327683",
+      "status": "subscribed",
+      "createdAt": "2026-01-14T12:27:51.802Z",
+      "joinedAt": "2026-01-12T20:47:29.260Z",
+      "lastActivityAt": "2026-04-19T05:45:22.261Z",
+      "score": 9,
+      "leadScore": 35,
+      "chatCount": 35,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_133",
+      "email": "demo.khachhang.133@company.com",
+      "firstName": "Linh",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0910634041",
+      "status": "lead",
+      "createdAt": "2026-04-07T10:01:01.426Z",
+      "joinedAt": "2026-01-17T10:47:29.629Z",
+      "lastActivityAt": "2026-04-20T14:37:04.896Z",
+      "score": 91,
+      "leadScore": 67,
+      "chatCount": 36,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_134",
+      "email": "demo.khachhang.134@company.com",
+      "firstName": "Thảo",
+      "lastName": "Phan",
+      "phoneNumber": "0916552816",
+      "status": "subscribed",
+      "createdAt": "2026-02-26T07:55:49.705Z",
+      "joinedAt": "2026-01-15T19:07:06.416Z",
+      "lastActivityAt": "2026-04-18T17:41:20.653Z",
+      "score": 75,
+      "leadScore": 4,
+      "chatCount": 31,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_135",
+      "email": "demo.khachhang.135@company.com",
+      "firstName": "Dung",
+      "lastName": "Lê",
+      "phoneNumber": "0955053656",
+      "status": "unsubscribed",
+      "createdAt": "2026-01-27T15:34:30.696Z",
+      "joinedAt": "2026-01-19T09:24:32.389Z",
+      "lastActivityAt": "2026-04-20T01:22:04.905Z",
+      "score": 54,
+      "leadScore": 26,
+      "chatCount": 49,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_136",
+      "email": "demo.khachhang.136@company.com",
+      "firstName": "Hải",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0951407889",
+      "status": "subscribed",
+      "createdAt": "2026-04-18T07:45:35.389Z",
+      "joinedAt": "2026-04-14T22:38:29.206Z",
+      "lastActivityAt": "2026-04-15T04:37:04.521Z",
+      "score": 72,
+      "leadScore": 6,
+      "chatCount": 28,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_137",
+      "email": "demo.khachhang.137@company.com",
+      "firstName": "Hương",
+      "lastName": "Võ",
+      "phoneNumber": "0943822306",
+      "status": "subscribed",
+      "createdAt": "2026-03-11T18:24:02.295Z",
+      "joinedAt": "2026-01-04T02:45:26.590Z",
+      "lastActivityAt": "2026-04-15T00:47:32.552Z",
+      "score": 16,
+      "leadScore": 22,
+      "chatCount": 15,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_138",
+      "email": "demo.khachhang.138@company.com",
+      "firstName": "Vy",
+      "lastName": "Hoàng",
+      "phoneNumber": "0985371941",
+      "status": "subscribed",
+      "createdAt": "2026-01-03T07:01:06.979Z",
+      "joinedAt": "2025-12-28T05:36:00.650Z",
+      "lastActivityAt": "2026-04-14T04:29:24.432Z",
+      "score": 20,
+      "leadScore": 32,
+      "chatCount": 16,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_139",
+      "email": "demo.khachhang.139@company.com",
+      "firstName": "Bình",
+      "lastName": "Phan",
+      "phoneNumber": "0932826714",
+      "status": "subscribed",
+      "createdAt": "2026-01-14T09:47:05.028Z",
+      "joinedAt": "2026-02-27T01:46:54.488Z",
+      "lastActivityAt": "2026-04-10T17:42:41.048Z",
+      "score": 88,
+      "leadScore": 51,
+      "chatCount": 6,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_140",
+      "email": "demo.khachhang.140@company.com",
+      "firstName": "Nga",
+      "lastName": "Lê",
+      "phoneNumber": "0905731195",
+      "status": "subscribed",
+      "createdAt": "2026-02-24T10:55:34.045Z",
+      "joinedAt": "2026-03-12T16:24:11.787Z",
+      "lastActivityAt": "2026-04-11T15:23:16.822Z",
+      "score": 0,
+      "leadScore": 89,
+      "chatCount": 6,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_141",
+      "email": "demo.khachhang.141@company.com",
+      "firstName": "Linh",
+      "lastName": "Phan",
+      "phoneNumber": "0980729803",
+      "status": "subscribed",
+      "createdAt": "2025-12-29T23:34:09.047Z",
+      "joinedAt": "2026-01-06T11:08:43.207Z",
+      "lastActivityAt": "2026-04-20T05:21:40.369Z",
+      "score": 72,
+      "leadScore": 22,
+      "chatCount": 7,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_142",
+      "email": "demo.khachhang.142@company.com",
+      "firstName": "Thảo",
+      "lastName": "Phạm",
+      "phoneNumber": "0910556815",
+      "status": "subscribed",
+      "createdAt": "2026-04-05T12:49:13.077Z",
+      "joinedAt": "2026-03-28T07:27:53.579Z",
+      "lastActivityAt": "2026-04-17T03:25:22.683Z",
+      "score": 38,
+      "leadScore": 69,
+      "chatCount": 0,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_143",
+      "email": "demo.khachhang.143@company.com",
+      "firstName": "Dung",
+      "lastName": "Phan",
+      "phoneNumber": "0910663799",
+      "status": "subscribed",
+      "createdAt": "2026-03-07T19:47:53.513Z",
+      "joinedAt": "2026-03-12T07:27:44.112Z",
+      "lastActivityAt": "2026-04-22T02:09:33.846Z",
+      "score": 10,
+      "leadScore": 27,
+      "chatCount": 37,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_144",
+      "email": "demo.khachhang.144@company.com",
+      "firstName": "Nga",
+      "lastName": "Trần",
+      "phoneNumber": "0930345364",
+      "status": "unsubscribed",
+      "createdAt": "2026-02-13T12:30:21.706Z",
+      "joinedAt": "2026-04-04T06:05:32.383Z",
+      "lastActivityAt": "2026-04-17T12:30:20.796Z",
+      "score": 79,
+      "leadScore": 17,
+      "chatCount": 11,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_145",
+      "email": "demo.khachhang.145@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Bùi",
+      "phoneNumber": "0942226105",
+      "status": "active",
+      "createdAt": "2026-01-16T05:49:59.485Z",
+      "joinedAt": "2026-04-16T04:42:50.192Z",
+      "lastActivityAt": "2026-04-16T05:20:39.665Z",
+      "score": 20,
+      "leadScore": 13,
+      "chatCount": 30,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_146",
+      "email": "demo.khachhang.146@company.com",
+      "firstName": "Hải",
+      "lastName": "Phan",
+      "phoneNumber": "0909684395",
+      "status": "subscribed",
+      "createdAt": "2026-04-18T23:36:43.199Z",
+      "joinedAt": "2025-12-29T17:04:42.597Z",
+      "lastActivityAt": "2026-04-17T15:07:35.166Z",
+      "score": 18,
+      "leadScore": 23,
+      "chatCount": 13,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_147",
+      "email": "demo.khachhang.147@company.com",
+      "firstName": "Vy",
+      "lastName": "Phan",
+      "phoneNumber": "0958676804",
+      "status": "subscribed",
+      "createdAt": "2026-04-09T00:24:28.780Z",
+      "joinedAt": "2026-03-17T07:34:55.069Z",
+      "lastActivityAt": "2026-04-12T12:30:12.448Z",
+      "score": 88,
+      "leadScore": 4,
+      "chatCount": 23,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_148",
+      "email": "demo.khachhang.148@company.com",
+      "firstName": "Quân",
+      "lastName": "Phan",
+      "phoneNumber": "0980255336",
+      "status": "subscribed",
+      "createdAt": "2026-03-12T23:14:53.363Z",
+      "joinedAt": "2026-04-16T09:25:24.268Z",
+      "lastActivityAt": "2026-04-13T20:56:38.403Z",
+      "score": 23,
+      "leadScore": 55,
+      "chatCount": 12,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_149",
+      "email": "demo.khachhang.149@company.com",
+      "firstName": "Dung",
+      "lastName": "Phan",
+      "phoneNumber": "0967158512",
+      "status": "subscribed",
+      "createdAt": "2026-02-26T22:03:49.021Z",
+      "joinedAt": "2026-02-28T10:05:40.500Z",
+      "lastActivityAt": "2026-04-15T10:32:38.205Z",
+      "score": 1,
+      "leadScore": 83,
+      "chatCount": 12,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_150",
+      "email": "demo.khachhang.150@company.com",
+      "firstName": "Quân",
+      "lastName": "Phạm",
+      "phoneNumber": "0985172194",
+      "status": "subscribed",
+      "createdAt": "2026-02-21T20:11:49.249Z",
+      "joinedAt": "2026-01-15T17:40:56.502Z",
+      "lastActivityAt": "2026-04-15T20:36:43.521Z",
+      "score": 4,
+      "leadScore": 75,
+      "chatCount": 26,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_151",
+      "email": "demo.khachhang.151@company.com",
+      "firstName": "Minh",
+      "lastName": "Võ",
+      "phoneNumber": "0902738124",
+      "status": "bounced",
+      "createdAt": "2026-04-16T20:14:51.544Z",
+      "joinedAt": "2026-01-20T21:27:22.679Z",
+      "lastActivityAt": "2026-04-15T19:49:50.247Z",
+      "score": 27,
+      "leadScore": 72,
+      "chatCount": 16,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_152",
+      "email": "demo.khachhang.152@company.com",
+      "firstName": "Minh",
+      "lastName": "Hoàng",
+      "phoneNumber": "0938948345",
+      "status": "subscribed",
+      "createdAt": "2026-03-09T06:34:00.496Z",
+      "joinedAt": "2026-04-03T06:12:27.710Z",
+      "lastActivityAt": "2026-04-19T20:42:41.441Z",
+      "score": 78,
+      "leadScore": 85,
+      "chatCount": 0,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_153",
+      "email": "demo.khachhang.153@company.com",
+      "firstName": "Vy",
+      "lastName": "Vũ",
+      "phoneNumber": "0911515622",
+      "status": "subscribed",
+      "createdAt": "2026-01-14T21:27:02.598Z",
+      "joinedAt": "2026-01-14T06:52:02.804Z",
+      "lastActivityAt": "2026-04-13T17:13:43.981Z",
+      "score": 33,
+      "leadScore": 87,
+      "chatCount": 28,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_154",
+      "email": "demo.khachhang.154@company.com",
+      "firstName": "Hải",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0940621454",
+      "status": "unsubscribed",
+      "createdAt": "2026-03-28T05:54:44.520Z",
+      "joinedAt": "2026-01-02T06:35:13.471Z",
+      "lastActivityAt": "2026-04-16T15:59:39.116Z",
+      "score": 5,
+      "leadScore": 63,
+      "chatCount": 35,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_155",
+      "email": "demo.khachhang.155@company.com",
+      "firstName": "Hải",
+      "lastName": "Phan",
+      "phoneNumber": "0977437707",
+      "status": "customer",
+      "createdAt": "2026-02-28T21:16:21.336Z",
+      "joinedAt": "2026-02-02T09:08:05.154Z",
+      "lastActivityAt": "2026-04-16T10:49:54.758Z",
+      "score": 55,
+      "leadScore": 48,
+      "chatCount": 40,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_156",
+      "email": "demo.khachhang.156@company.com",
+      "firstName": "Nga",
+      "lastName": "Bùi",
+      "phoneNumber": "0952591817",
+      "status": "subscribed",
+      "createdAt": "2026-01-19T01:00:24.947Z",
+      "joinedAt": "2026-01-30T23:42:59.975Z",
+      "lastActivityAt": "2026-04-17T07:36:08.495Z",
+      "score": 51,
+      "leadScore": 62,
+      "chatCount": 17,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_157",
+      "email": "demo.khachhang.157@company.com",
+      "firstName": "Vy",
+      "lastName": "Hoàng",
+      "phoneNumber": "0990578867",
+      "status": "subscribed",
+      "createdAt": "2026-01-23T03:09:14.895Z",
+      "joinedAt": "2026-01-30T03:09:12.662Z",
+      "lastActivityAt": "2026-04-14T08:12:26.377Z",
+      "score": 43,
+      "leadScore": 58,
+      "chatCount": 3,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_158",
+      "email": "demo.khachhang.158@company.com",
+      "firstName": "Hương",
+      "lastName": "Hoàng",
+      "phoneNumber": "0941449469",
+      "status": "subscribed",
+      "createdAt": "2026-02-08T08:27:07.531Z",
+      "joinedAt": "2025-12-28T10:37:38.544Z",
+      "lastActivityAt": "2026-04-14T22:54:26.465Z",
+      "score": 98,
+      "leadScore": 46,
+      "chatCount": 11,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_159",
+      "email": "demo.khachhang.159@company.com",
+      "firstName": "Hương",
+      "lastName": "Hoàng",
+      "phoneNumber": "0931313639",
+      "status": "subscribed",
+      "createdAt": "2026-04-08T23:22:59.476Z",
+      "joinedAt": "2026-02-06T03:33:15.881Z",
+      "lastActivityAt": "2026-04-17T01:45:30.949Z",
+      "score": 43,
+      "leadScore": 77,
+      "chatCount": 12,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_160",
+      "email": "demo.khachhang.160@company.com",
+      "firstName": "Vy",
+      "lastName": "Lê",
+      "phoneNumber": "0952219888",
+      "status": "subscribed",
+      "createdAt": "2026-01-13T04:07:09.820Z",
+      "joinedAt": "2026-03-09T18:35:53.744Z",
+      "lastActivityAt": "2026-04-10T23:24:13.609Z",
+      "score": 59,
+      "leadScore": 90,
+      "chatCount": 5,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_161",
+      "email": "demo.khachhang.161@company.com",
+      "firstName": "Dung",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0933215299",
+      "status": "active",
+      "createdAt": "2026-02-27T21:24:14.549Z",
+      "joinedAt": "2026-03-06T12:43:13.718Z",
+      "lastActivityAt": "2026-04-18T18:23:25.447Z",
+      "score": 19,
+      "leadScore": 77,
+      "chatCount": 46,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_162",
+      "email": "demo.khachhang.162@company.com",
+      "firstName": "Dung",
+      "lastName": "Bùi",
+      "phoneNumber": "0926184373",
+      "status": "lead",
+      "createdAt": "2026-01-17T16:03:24.583Z",
+      "joinedAt": "2026-02-05T10:02:11.438Z",
+      "lastActivityAt": "2026-04-12T05:30:50.926Z",
+      "score": 85,
+      "leadScore": 69,
+      "chatCount": 11,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_163",
+      "email": "demo.khachhang.163@company.com",
+      "firstName": "Hương",
+      "lastName": "Phạm",
+      "phoneNumber": "0964568465",
+      "status": "subscribed",
+      "createdAt": "2026-03-23T11:17:04.931Z",
+      "joinedAt": "2026-03-12T07:00:49.303Z",
+      "lastActivityAt": "2026-04-12T20:53:16.321Z",
+      "score": 51,
+      "leadScore": 61,
+      "chatCount": 20,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_164",
+      "email": "demo.khachhang.164@company.com",
+      "firstName": "Hải",
+      "lastName": "Trần",
+      "phoneNumber": "0901506704",
+      "status": "subscribed",
+      "createdAt": "2026-03-03T13:46:49.618Z",
+      "joinedAt": "2026-01-20T03:32:38.268Z",
+      "lastActivityAt": "2026-04-16T03:06:33.720Z",
+      "score": 33,
+      "leadScore": 9,
+      "chatCount": 44,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_165",
+      "email": "demo.khachhang.165@company.com",
+      "firstName": "Minh",
+      "lastName": "Vũ",
+      "phoneNumber": "0942403823",
+      "status": "subscribed",
+      "createdAt": "2026-02-18T14:10:31.235Z",
+      "joinedAt": "2026-01-02T01:50:58.862Z",
+      "lastActivityAt": "2026-04-17T11:29:50.964Z",
+      "score": 15,
+      "leadScore": 2,
+      "chatCount": 0,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_166",
+      "email": "demo.khachhang.166@company.com",
+      "firstName": "Vy",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0946301429",
+      "status": "subscribed",
+      "createdAt": "2026-03-18T11:14:50.329Z",
+      "joinedAt": "2026-03-31T11:15:04.297Z",
+      "lastActivityAt": "2026-04-21T05:43:35.137Z",
+      "score": 10,
+      "leadScore": 43,
+      "chatCount": 47,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_167",
+      "email": "demo.khachhang.167@company.com",
+      "firstName": "Linh",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0945357722",
+      "status": "active",
+      "createdAt": "2026-04-09T00:45:23.742Z",
+      "joinedAt": "2026-01-25T14:30:11.191Z",
+      "lastActivityAt": "2026-04-17T13:59:48.321Z",
+      "score": 49,
+      "leadScore": 87,
+      "chatCount": 5,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_168",
+      "email": "demo.khachhang.168@company.com",
+      "firstName": "Phong",
+      "lastName": "Phạm",
+      "phoneNumber": "0924244097",
+      "status": "subscribed",
+      "createdAt": "2026-01-04T22:01:40.259Z",
+      "joinedAt": "2026-04-12T11:36:26.260Z",
+      "lastActivityAt": "2026-04-19T15:01:50.578Z",
+      "score": 10,
+      "leadScore": 14,
+      "chatCount": 41,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_169",
+      "email": "demo.khachhang.169@company.com",
+      "firstName": "Hải",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0937373333",
+      "status": "subscribed",
+      "createdAt": "2026-03-30T01:24:42.809Z",
+      "joinedAt": "2026-01-15T18:48:56.823Z",
+      "lastActivityAt": "2026-04-10T19:53:25.640Z",
+      "score": 5,
+      "leadScore": 56,
+      "chatCount": 11,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_170",
+      "email": "demo.khachhang.170@company.com",
+      "firstName": "Nga",
+      "lastName": "Phan",
+      "phoneNumber": "0902011982",
+      "status": "lead",
+      "createdAt": "2026-01-01T06:14:46.690Z",
+      "joinedAt": "2026-01-16T12:44:51.736Z",
+      "lastActivityAt": "2026-04-13T07:14:59.644Z",
+      "score": 86,
+      "leadScore": 16,
+      "chatCount": 39,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_171",
+      "email": "demo.khachhang.171@company.com",
+      "firstName": "Minh",
+      "lastName": "Trần",
+      "phoneNumber": "0938183453",
+      "status": "subscribed",
+      "createdAt": "2025-12-28T23:39:39.986Z",
+      "joinedAt": "2026-02-06T05:22:47.529Z",
+      "lastActivityAt": "2026-04-14T17:45:08.917Z",
+      "score": 40,
+      "leadScore": 30,
+      "chatCount": 34,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_172",
+      "email": "demo.khachhang.172@company.com",
+      "firstName": "Linh",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0948304487",
+      "status": "subscribed",
+      "createdAt": "2026-01-06T18:09:26.167Z",
+      "joinedAt": "2026-02-13T16:23:29.600Z",
+      "lastActivityAt": "2026-04-20T05:54:09.546Z",
+      "score": 35,
+      "leadScore": 59,
+      "chatCount": 17,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_173",
+      "email": "demo.khachhang.173@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Hoàng",
+      "phoneNumber": "0944621551",
+      "status": "subscribed",
+      "createdAt": "2026-03-29T00:27:44.537Z",
+      "joinedAt": "2025-12-30T06:28:33.662Z",
+      "lastActivityAt": "2026-04-20T17:38:45.858Z",
+      "score": 36,
+      "leadScore": 29,
+      "chatCount": 43,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_174",
+      "email": "demo.khachhang.174@company.com",
+      "firstName": "Nga",
+      "lastName": "Lê",
+      "phoneNumber": "0924000330",
+      "status": "subscribed",
+      "createdAt": "2026-02-10T12:56:16.895Z",
+      "joinedAt": "2026-03-16T07:05:16.944Z",
+      "lastActivityAt": "2026-04-16T19:51:14.390Z",
+      "score": 17,
+      "leadScore": 17,
+      "chatCount": 30,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_175",
+      "email": "demo.khachhang.175@company.com",
+      "firstName": "Quân",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0933492649",
+      "status": "subscribed",
+      "createdAt": "2026-02-22T03:49:49.711Z",
+      "joinedAt": "2026-01-15T12:15:06.817Z",
+      "lastActivityAt": "2026-04-22T04:32:46.797Z",
+      "score": 3,
+      "leadScore": 0,
+      "chatCount": 32,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_176",
+      "email": "demo.khachhang.176@company.com",
+      "firstName": "Phong",
+      "lastName": "Phạm",
+      "phoneNumber": "0940523507",
+      "status": "lead",
+      "createdAt": "2026-02-23T11:46:46.899Z",
+      "joinedAt": "2026-04-11T12:41:42.627Z",
+      "lastActivityAt": "2026-04-21T20:28:20.700Z",
+      "score": 51,
+      "leadScore": 66,
+      "chatCount": 29,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_177",
+      "email": "demo.khachhang.177@company.com",
+      "firstName": "Hải",
+      "lastName": "Đặng",
+      "phoneNumber": "0913632747",
+      "status": "subscribed",
+      "createdAt": "2026-01-26T17:44:41.918Z",
+      "joinedAt": "2026-02-23T22:06:05.155Z",
+      "lastActivityAt": "2026-04-19T03:33:02.416Z",
+      "score": 34,
+      "leadScore": 2,
+      "chatCount": 45,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_178",
+      "email": "demo.khachhang.178@company.com",
+      "firstName": "Minh",
+      "lastName": "Võ",
+      "phoneNumber": "0969281866",
+      "status": "bounced",
+      "createdAt": "2026-04-04T22:45:45.949Z",
+      "joinedAt": "2026-03-07T06:44:15.888Z",
+      "lastActivityAt": "2026-04-14T05:44:59.130Z",
+      "score": 21,
+      "leadScore": 22,
+      "chatCount": 0,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_179",
+      "email": "demo.khachhang.179@company.com",
+      "firstName": "Thảo",
+      "lastName": "Lê",
+      "phoneNumber": "0988318202",
+      "status": "subscribed",
+      "createdAt": "2026-03-02T22:52:33.508Z",
+      "joinedAt": "2026-01-25T13:41:15.830Z",
+      "lastActivityAt": "2026-04-10T17:09:20.614Z",
+      "score": 58,
+      "leadScore": 67,
+      "chatCount": 41,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_180",
+      "email": "demo.khachhang.180@company.com",
+      "firstName": "Quân",
+      "lastName": "Bùi",
+      "phoneNumber": "0943242406",
+      "status": "unsubscribed",
+      "createdAt": "2026-03-23T04:01:05.659Z",
+      "joinedAt": "2026-02-17T15:59:35.645Z",
+      "lastActivityAt": "2026-04-19T00:41:39.657Z",
+      "score": 2,
+      "leadScore": 72,
+      "chatCount": 41,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_181",
+      "email": "demo.khachhang.181@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Hoàng",
+      "phoneNumber": "0909187242",
+      "status": "subscribed",
+      "createdAt": "2026-01-02T05:26:08.895Z",
+      "joinedAt": "2026-02-04T17:58:59.854Z",
+      "lastActivityAt": "2026-04-16T05:08:46.495Z",
+      "score": 59,
+      "leadScore": 42,
+      "chatCount": 30,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_182",
+      "email": "demo.khachhang.182@company.com",
+      "firstName": "Vy",
+      "lastName": "Phan",
+      "phoneNumber": "0953437606",
+      "status": "subscribed",
+      "createdAt": "2026-01-19T00:51:22.746Z",
+      "joinedAt": "2026-03-26T23:31:18.979Z",
+      "lastActivityAt": "2026-04-18T06:11:34.197Z",
+      "score": 82,
+      "leadScore": 8,
+      "chatCount": 9,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_183",
+      "email": "demo.khachhang.183@company.com",
+      "firstName": "Quân",
+      "lastName": "Lê",
+      "phoneNumber": "0937022449",
+      "status": "subscribed",
+      "createdAt": "2026-03-06T11:19:33.701Z",
+      "joinedAt": "2026-04-06T16:41:45.276Z",
+      "lastActivityAt": "2026-04-18T13:14:48.463Z",
+      "score": 60,
+      "leadScore": 46,
+      "chatCount": 3,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_184",
+      "email": "demo.khachhang.184@company.com",
+      "firstName": "Thảo",
+      "lastName": "Lê",
+      "phoneNumber": "0901909865",
+      "status": "subscribed",
+      "createdAt": "2026-02-13T15:18:52.338Z",
+      "joinedAt": "2026-01-06T17:25:20.987Z",
+      "lastActivityAt": "2026-04-16T23:34:03.196Z",
+      "score": 31,
+      "leadScore": 21,
+      "chatCount": 37,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_185",
+      "email": "demo.khachhang.185@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Vũ",
+      "phoneNumber": "0946818208",
+      "status": "customer",
+      "createdAt": "2026-03-23T09:23:55.712Z",
+      "joinedAt": "2026-04-12T17:59:17.459Z",
+      "lastActivityAt": "2026-04-20T18:34:24.152Z",
+      "score": 94,
+      "leadScore": 73,
+      "chatCount": 9,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_186",
+      "email": "demo.khachhang.186@company.com",
+      "firstName": "Linh",
+      "lastName": "Bùi",
+      "phoneNumber": "0910981051",
+      "status": "subscribed",
+      "createdAt": "2026-01-30T17:01:14.540Z",
+      "joinedAt": "2026-03-18T16:15:11.573Z",
+      "lastActivityAt": "2026-04-21T13:55:36.895Z",
+      "score": 51,
+      "leadScore": 65,
+      "chatCount": 0,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_187",
+      "email": "demo.khachhang.187@company.com",
+      "firstName": "Bình",
+      "lastName": "Trần",
+      "phoneNumber": "0927583321",
+      "status": "subscribed",
+      "createdAt": "2026-03-21T17:27:48.791Z",
+      "joinedAt": "2026-01-26T16:18:01.302Z",
+      "lastActivityAt": "2026-04-16T12:36:39.171Z",
+      "score": 6,
+      "leadScore": 82,
+      "chatCount": 31,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_188",
+      "email": "demo.khachhang.188@company.com",
+      "firstName": "Phong",
+      "lastName": "Đặng",
+      "phoneNumber": "0992025793",
+      "status": "subscribed",
+      "createdAt": "2026-02-12T07:00:38.964Z",
+      "joinedAt": "2026-02-19T19:51:58.991Z",
+      "lastActivityAt": "2026-04-19T19:40:52.639Z",
+      "score": 10,
+      "leadScore": 58,
+      "chatCount": 12,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_189",
+      "email": "demo.khachhang.189@company.com",
+      "firstName": "Bình",
+      "lastName": "Trần",
+      "phoneNumber": "0956668478",
+      "status": "active",
+      "createdAt": "2026-02-14T17:21:59.815Z",
+      "joinedAt": "2025-12-28T15:51:04.069Z",
+      "lastActivityAt": "2026-04-11T05:11:54.835Z",
+      "score": 68,
+      "leadScore": 4,
+      "chatCount": 28,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_190",
+      "email": "demo.khachhang.190@company.com",
+      "firstName": "Hương",
+      "lastName": "Phạm",
+      "phoneNumber": "0945141420",
+      "status": "subscribed",
+      "createdAt": "2026-03-06T13:21:54.658Z",
+      "joinedAt": "2026-01-04T02:49:54.555Z",
+      "lastActivityAt": "2026-04-22T03:21:19.054Z",
+      "score": 49,
+      "leadScore": 56,
+      "chatCount": 30,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_191",
+      "email": "demo.khachhang.191@company.com",
+      "firstName": "Nga",
+      "lastName": "Bùi",
+      "phoneNumber": "0969896055",
+      "status": "subscribed",
+      "createdAt": "2026-02-17T13:57:42.381Z",
+      "joinedAt": "2026-03-08T02:37:46.794Z",
+      "lastActivityAt": "2026-04-20T08:17:29.967Z",
+      "score": 90,
+      "leadScore": 52,
+      "chatCount": 4,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_192",
+      "email": "demo.khachhang.192@company.com",
+      "firstName": "Minh",
+      "lastName": "Lê",
+      "phoneNumber": "0959904920",
+      "status": "subscribed",
+      "createdAt": "2026-03-31T22:45:59.958Z",
+      "joinedAt": "2026-03-10T13:58:56.881Z",
+      "lastActivityAt": "2026-04-17T00:36:40.082Z",
+      "score": 64,
+      "leadScore": 3,
+      "chatCount": 3,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_193",
+      "email": "demo.khachhang.193@company.com",
+      "firstName": "Hải",
+      "lastName": "Trần",
+      "phoneNumber": "0991959376",
+      "status": "subscribed",
+      "createdAt": "2026-01-01T01:06:39.729Z",
+      "joinedAt": "2026-03-07T12:14:57.637Z",
+      "lastActivityAt": "2026-04-12T15:47:04.688Z",
+      "score": 23,
+      "leadScore": 55,
+      "chatCount": 32,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_194",
+      "email": "demo.khachhang.194@company.com",
+      "firstName": "Linh",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0911964762",
+      "status": "active",
+      "createdAt": "2026-04-06T19:22:34.333Z",
+      "joinedAt": "2025-12-27T21:39:47.452Z",
+      "lastActivityAt": "2026-04-21T10:29:55.414Z",
+      "score": 81,
+      "leadScore": 2,
+      "chatCount": 20,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_195",
+      "email": "demo.khachhang.195@company.com",
+      "firstName": "Vy",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0927059997",
+      "status": "customer",
+      "createdAt": "2025-12-30T00:58:50.437Z",
+      "joinedAt": "2026-04-01T17:45:35.950Z",
+      "lastActivityAt": "2026-04-12T14:00:55.485Z",
+      "score": 70,
+      "leadScore": 52,
+      "chatCount": 17,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_196",
+      "email": "demo.khachhang.196@company.com",
+      "firstName": "Vy",
+      "lastName": "Vũ",
+      "phoneNumber": "0937674218",
+      "status": "subscribed",
+      "createdAt": "2026-02-03T12:33:36.074Z",
+      "joinedAt": "2026-02-17T09:10:46.368Z",
+      "lastActivityAt": "2026-04-14T10:19:38.073Z",
+      "score": 30,
+      "leadScore": 73,
+      "chatCount": 39,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_197",
+      "email": "demo.khachhang.197@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Hoàng",
+      "phoneNumber": "0920273821",
+      "status": "subscribed",
+      "createdAt": "2026-02-14T21:28:16.178Z",
+      "joinedAt": "2025-12-30T02:47:35.666Z",
+      "lastActivityAt": "2026-04-18T16:26:50.392Z",
+      "score": 92,
+      "leadScore": 47,
+      "chatCount": 4,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_198",
+      "email": "demo.khachhang.198@company.com",
+      "firstName": "Dung",
+      "lastName": "Phan",
+      "phoneNumber": "0985782982",
+      "status": "subscribed",
+      "createdAt": "2026-02-13T06:06:45.672Z",
+      "joinedAt": "2026-02-27T22:54:16.622Z",
+      "lastActivityAt": "2026-04-11T11:50:48.550Z",
+      "score": 50,
+      "leadScore": 44,
+      "chatCount": 36,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_199",
+      "email": "demo.khachhang.199@company.com",
+      "firstName": "Linh",
+      "lastName": "Đặng",
+      "phoneNumber": "0947739363",
+      "status": "subscribed",
+      "createdAt": "2026-01-29T07:21:49.776Z",
+      "joinedAt": "2026-03-18T16:19:34.296Z",
+      "lastActivityAt": "2026-04-10T22:39:25.470Z",
+      "score": 49,
+      "leadScore": 52,
+      "chatCount": 20,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_200",
+      "email": "demo.khachhang.200@company.com",
+      "firstName": "Thảo",
+      "lastName": "Trần",
+      "phoneNumber": "0974332103",
+      "status": "subscribed",
+      "createdAt": "2026-03-29T21:17:11.092Z",
+      "joinedAt": "2026-01-14T10:42:33.153Z",
+      "lastActivityAt": "2026-04-15T04:41:09.981Z",
+      "score": 88,
+      "leadScore": 13,
+      "chatCount": 9,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_201",
+      "email": "demo.khachhang.201@company.com",
+      "firstName": "Nga",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0938195923",
+      "status": "subscribed",
+      "createdAt": "2026-04-07T01:42:59.951Z",
+      "joinedAt": "2026-03-10T05:04:57.933Z",
+      "lastActivityAt": "2026-04-21T12:07:53.310Z",
+      "score": 3,
+      "leadScore": 39,
+      "chatCount": 3,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_202",
+      "email": "demo.khachhang.202@company.com",
+      "firstName": "Minh",
+      "lastName": "Võ",
+      "phoneNumber": "0969943246",
+      "status": "subscribed",
+      "createdAt": "2026-02-23T22:34:14.390Z",
+      "joinedAt": "2026-01-27T22:29:09.242Z",
+      "lastActivityAt": "2026-04-12T08:05:40.255Z",
+      "score": 40,
+      "leadScore": 92,
+      "chatCount": 32,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_203",
+      "email": "demo.khachhang.203@company.com",
+      "firstName": "Vy",
+      "lastName": "Vũ",
+      "phoneNumber": "0900368891",
+      "status": "subscribed",
+      "createdAt": "2026-01-22T21:16:46.656Z",
+      "joinedAt": "2026-02-05T03:15:37.381Z",
+      "lastActivityAt": "2026-04-14T10:07:17.044Z",
+      "score": 62,
+      "leadScore": 31,
+      "chatCount": 33,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_204",
+      "email": "demo.khachhang.204@company.com",
+      "firstName": "Vy",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0933652818",
+      "status": "subscribed",
+      "createdAt": "2026-01-16T06:48:06.987Z",
+      "joinedAt": "2026-01-20T04:59:35.973Z",
+      "lastActivityAt": "2026-04-18T10:22:40.980Z",
+      "score": 71,
+      "leadScore": 41,
+      "chatCount": 47,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_205",
+      "email": "demo.khachhang.205@company.com",
+      "firstName": "Phong",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0914920904",
+      "status": "subscribed",
+      "createdAt": "2026-04-04T16:20:11.612Z",
+      "joinedAt": "2026-03-28T23:08:24.665Z",
+      "lastActivityAt": "2026-04-14T18:42:35.409Z",
+      "score": 25,
+      "leadScore": 54,
+      "chatCount": 20,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_206",
+      "email": "demo.khachhang.206@company.com",
+      "firstName": "Linh",
+      "lastName": "Đặng",
+      "phoneNumber": "0959484861",
+      "status": "subscribed",
+      "createdAt": "2026-03-18T13:06:53.658Z",
+      "joinedAt": "2026-03-11T11:51:10.293Z",
+      "lastActivityAt": "2026-04-17T03:51:17.409Z",
+      "score": 50,
+      "leadScore": 95,
+      "chatCount": 6,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_207",
+      "email": "demo.khachhang.207@company.com",
+      "firstName": "Hương",
+      "lastName": "Phạm",
+      "phoneNumber": "0927749091",
+      "status": "unsubscribed",
+      "createdAt": "2026-03-21T02:54:49.267Z",
+      "joinedAt": "2026-04-08T19:55:50.654Z",
+      "lastActivityAt": "2026-04-21T21:47:38.709Z",
+      "score": 78,
+      "leadScore": 41,
+      "chatCount": 29,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_208",
+      "email": "demo.khachhang.208@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Hoàng",
+      "phoneNumber": "0980752326",
+      "status": "unsubscribed",
+      "createdAt": "2026-04-12T09:43:49.261Z",
+      "joinedAt": "2025-12-28T00:47:26.313Z",
+      "lastActivityAt": "2026-04-10T22:36:36.543Z",
+      "score": 28,
+      "leadScore": 52,
+      "chatCount": 5,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_209",
+      "email": "demo.khachhang.209@company.com",
+      "firstName": "Nga",
+      "lastName": "Trần",
+      "phoneNumber": "0928662031",
+      "status": "subscribed",
+      "createdAt": "2026-01-27T22:10:23.449Z",
+      "joinedAt": "2026-03-02T14:55:36.585Z",
+      "lastActivityAt": "2026-04-15T09:02:08.620Z",
+      "score": 42,
+      "leadScore": 21,
+      "chatCount": 34,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_210",
+      "email": "demo.khachhang.210@company.com",
+      "firstName": "Hương",
+      "lastName": "Phạm",
+      "phoneNumber": "0920448288",
+      "status": "subscribed",
+      "createdAt": "2026-02-25T17:03:15.265Z",
+      "joinedAt": "2026-01-29T23:15:29.609Z",
+      "lastActivityAt": "2026-04-14T18:01:59.521Z",
+      "score": 89,
+      "leadScore": 82,
+      "chatCount": 6,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_211",
+      "email": "demo.khachhang.211@company.com",
+      "firstName": "Minh",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0932391967",
+      "status": "subscribed",
+      "createdAt": "2026-01-09T10:09:47.994Z",
+      "joinedAt": "2026-03-08T23:10:20.128Z",
+      "lastActivityAt": "2026-04-19T00:36:15.738Z",
+      "score": 78,
+      "leadScore": 16,
+      "chatCount": 15,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_212",
+      "email": "demo.khachhang.212@company.com",
+      "firstName": "Quân",
+      "lastName": "Lê",
+      "phoneNumber": "0998608239",
+      "status": "subscribed",
+      "createdAt": "2026-04-06T06:34:06.732Z",
+      "joinedAt": "2026-03-08T23:02:50.792Z",
+      "lastActivityAt": "2026-04-20T02:58:43.593Z",
+      "score": 20,
+      "leadScore": 33,
+      "chatCount": 22,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_213",
+      "email": "demo.khachhang.213@company.com",
+      "firstName": "Bình",
+      "lastName": "Đặng",
+      "phoneNumber": "0936265657",
+      "status": "subscribed",
+      "createdAt": "2026-01-26T16:50:14.909Z",
+      "joinedAt": "2026-01-06T09:56:36.901Z",
+      "lastActivityAt": "2026-04-20T15:11:11.882Z",
+      "score": 9,
+      "leadScore": 40,
+      "chatCount": 37,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_214",
+      "email": "demo.khachhang.214@company.com",
+      "firstName": "Vy",
+      "lastName": "Hoàng",
+      "phoneNumber": "0938832522",
+      "status": "subscribed",
+      "createdAt": "2026-01-19T17:27:56.336Z",
+      "joinedAt": "2026-03-29T22:01:38.070Z",
+      "lastActivityAt": "2026-04-17T06:01:12.615Z",
+      "score": 22,
+      "leadScore": 36,
+      "chatCount": 49,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_215",
+      "email": "demo.khachhang.215@company.com",
+      "firstName": "Linh",
+      "lastName": "Bùi",
+      "phoneNumber": "0910310392",
+      "status": "customer",
+      "createdAt": "2026-03-12T17:50:08.060Z",
+      "joinedAt": "2026-01-31T07:36:51.432Z",
+      "lastActivityAt": "2026-04-12T07:18:18.655Z",
+      "score": 38,
+      "leadScore": 78,
+      "chatCount": 9,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_216",
+      "email": "demo.khachhang.216@company.com",
+      "firstName": "Quân",
+      "lastName": "Trần",
+      "phoneNumber": "0926901753",
+      "status": "subscribed",
+      "createdAt": "2026-01-12T00:26:32.881Z",
+      "joinedAt": "2026-02-10T17:30:23.633Z",
+      "lastActivityAt": "2026-04-15T10:11:57.448Z",
+      "score": 72,
+      "leadScore": 69,
+      "chatCount": 49,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_217",
+      "email": "demo.khachhang.217@company.com",
+      "firstName": "Minh",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0952564417",
+      "status": "subscribed",
+      "createdAt": "2026-01-13T06:43:48.411Z",
+      "joinedAt": "2026-02-16T18:12:45.500Z",
+      "lastActivityAt": "2026-04-13T18:29:51.100Z",
+      "score": 61,
+      "leadScore": 48,
+      "chatCount": 22,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_218",
+      "email": "demo.khachhang.218@company.com",
+      "firstName": "Minh",
+      "lastName": "Vũ",
+      "phoneNumber": "0908270011",
+      "status": "subscribed",
+      "createdAt": "2026-02-06T22:56:46.114Z",
+      "joinedAt": "2026-03-08T12:10:35.475Z",
+      "lastActivityAt": "2026-04-16T15:08:45.212Z",
+      "score": 58,
+      "leadScore": 34,
+      "chatCount": 0,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_219",
+      "email": "demo.khachhang.219@company.com",
+      "firstName": "Minh",
+      "lastName": "Trần",
+      "phoneNumber": "0988785491",
+      "status": "subscribed",
+      "createdAt": "2026-03-23T04:53:46.939Z",
+      "joinedAt": "2026-02-12T08:15:41.788Z",
+      "lastActivityAt": "2026-04-13T11:40:08.097Z",
+      "score": 58,
+      "leadScore": 23,
+      "chatCount": 18,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_220",
+      "email": "demo.khachhang.220@company.com",
+      "firstName": "Vy",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0941435881",
+      "status": "subscribed",
+      "createdAt": "2025-12-29T17:15:00.294Z",
+      "joinedAt": "2026-03-02T11:37:16.796Z",
+      "lastActivityAt": "2026-04-19T07:19:24.015Z",
+      "score": 31,
+      "leadScore": 59,
+      "chatCount": 24,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_221",
+      "email": "demo.khachhang.221@company.com",
+      "firstName": "Hải",
+      "lastName": "Trần",
+      "phoneNumber": "0989415752",
+      "status": "subscribed",
+      "createdAt": "2026-04-13T04:48:50.756Z",
+      "joinedAt": "2026-02-07T13:29:09.144Z",
+      "lastActivityAt": "2026-04-20T19:40:05.521Z",
+      "score": 86,
+      "leadScore": 86,
+      "chatCount": 34,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_222",
+      "email": "demo.khachhang.222@company.com",
+      "firstName": "Minh",
+      "lastName": "Lê",
+      "phoneNumber": "0903822330",
+      "status": "subscribed",
+      "createdAt": "2026-04-01T11:09:19.995Z",
+      "joinedAt": "2026-02-14T16:14:55.500Z",
+      "lastActivityAt": "2026-04-19T13:40:26.720Z",
+      "score": 24,
+      "leadScore": 1,
+      "chatCount": 14,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_223",
+      "email": "demo.khachhang.223@company.com",
+      "firstName": "Quân",
+      "lastName": "Bùi",
+      "phoneNumber": "0953593815",
+      "status": "unsubscribed",
+      "createdAt": "2026-03-09T21:50:06.033Z",
+      "joinedAt": "2026-01-29T22:12:01.580Z",
+      "lastActivityAt": "2026-04-14T03:42:38.890Z",
+      "score": 10,
+      "leadScore": 3,
+      "chatCount": 3,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_224",
+      "email": "demo.khachhang.224@company.com",
+      "firstName": "Minh",
+      "lastName": "Võ",
+      "phoneNumber": "0923664737",
+      "status": "subscribed",
+      "createdAt": "2026-01-03T20:58:22.522Z",
+      "joinedAt": "2026-02-09T04:11:54.385Z",
+      "lastActivityAt": "2026-04-18T14:03:45.046Z",
+      "score": 14,
+      "leadScore": 66,
+      "chatCount": 48,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_225",
+      "email": "demo.khachhang.225@company.com",
+      "firstName": "Phong",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0904666492",
+      "status": "subscribed",
+      "createdAt": "2026-02-03T11:20:04.720Z",
+      "joinedAt": "2026-02-25T02:30:04.037Z",
+      "lastActivityAt": "2026-04-18T19:43:12.147Z",
+      "score": 81,
+      "leadScore": 29,
+      "chatCount": 20,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_226",
+      "email": "demo.khachhang.226@company.com",
+      "firstName": "Thảo",
+      "lastName": "Phan",
+      "phoneNumber": "0996656396",
+      "status": "subscribed",
+      "createdAt": "2026-04-08T20:02:04.241Z",
+      "joinedAt": "2026-01-17T00:42:39.572Z",
+      "lastActivityAt": "2026-04-16T23:45:26.423Z",
+      "score": 64,
+      "leadScore": 7,
+      "chatCount": 3,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_227",
+      "email": "demo.khachhang.227@company.com",
+      "firstName": "Hải",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0930122732",
+      "status": "subscribed",
+      "createdAt": "2026-01-29T03:32:27.256Z",
+      "joinedAt": "2025-12-29T22:36:51.879Z",
+      "lastActivityAt": "2026-04-13T04:49:31.658Z",
+      "score": 75,
+      "leadScore": 43,
+      "chatCount": 0,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_228",
+      "email": "demo.khachhang.228@company.com",
+      "firstName": "Thảo",
+      "lastName": "Đặng",
+      "phoneNumber": "0965088311",
+      "status": "subscribed",
+      "createdAt": "2026-03-25T10:19:34.646Z",
+      "joinedAt": "2026-01-15T05:22:50.543Z",
+      "lastActivityAt": "2026-04-19T20:55:19.330Z",
+      "score": 57,
+      "leadScore": 66,
+      "chatCount": 2,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_229",
+      "email": "demo.khachhang.229@company.com",
+      "firstName": "Nga",
+      "lastName": "Vũ",
+      "phoneNumber": "0961210776",
+      "status": "subscribed",
+      "createdAt": "2026-01-05T08:45:59.346Z",
+      "joinedAt": "2026-01-31T03:35:29.868Z",
+      "lastActivityAt": "2026-04-15T11:22:56.673Z",
+      "score": 42,
+      "leadScore": 37,
+      "chatCount": 1,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_230",
+      "email": "demo.khachhang.230@company.com",
+      "firstName": "Nga",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0954542031",
+      "status": "subscribed",
+      "createdAt": "2026-04-01T04:07:26.125Z",
+      "joinedAt": "2026-01-24T07:42:49.720Z",
+      "lastActivityAt": "2026-04-11T12:17:05.934Z",
+      "score": 57,
+      "leadScore": 50,
+      "chatCount": 8,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_231",
+      "email": "demo.khachhang.231@company.com",
+      "firstName": "Minh",
+      "lastName": "Phan",
+      "phoneNumber": "0961792772",
+      "status": "subscribed",
+      "createdAt": "2026-02-05T16:47:02.662Z",
+      "joinedAt": "2026-02-23T16:59:24.934Z",
+      "lastActivityAt": "2026-04-14T04:38:50.598Z",
+      "score": 23,
+      "leadScore": 87,
+      "chatCount": 26,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_232",
+      "email": "demo.khachhang.232@company.com",
+      "firstName": "Hương",
+      "lastName": "Vũ",
+      "phoneNumber": "0977494900",
+      "status": "subscribed",
+      "createdAt": "2026-04-05T11:23:15.703Z",
+      "joinedAt": "2026-02-10T01:24:45.577Z",
+      "lastActivityAt": "2026-04-18T15:59:22.583Z",
+      "score": 4,
+      "leadScore": 4,
+      "chatCount": 32,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_233",
+      "email": "demo.khachhang.233@company.com",
+      "firstName": "Minh",
+      "lastName": "Hoàng",
+      "phoneNumber": "0998152631",
+      "status": "subscribed",
+      "createdAt": "2026-04-11T14:13:12.547Z",
+      "joinedAt": "2026-01-10T16:17:11.071Z",
+      "lastActivityAt": "2026-04-21T03:59:57.840Z",
+      "score": 62,
+      "leadScore": 4,
+      "chatCount": 3,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_234",
+      "email": "demo.khachhang.234@company.com",
+      "firstName": "Vy",
+      "lastName": "Bùi",
+      "phoneNumber": "0975127426",
+      "status": "subscribed",
+      "createdAt": "2026-02-19T18:46:42.633Z",
+      "joinedAt": "2026-03-01T02:32:22.750Z",
+      "lastActivityAt": "2026-04-15T11:02:39.007Z",
+      "score": 37,
+      "leadScore": 44,
+      "chatCount": 44,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_235",
+      "email": "demo.khachhang.235@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Lê",
+      "phoneNumber": "0935648341",
+      "status": "subscribed",
+      "createdAt": "2026-01-12T05:21:16.356Z",
+      "joinedAt": "2026-03-16T11:28:45.406Z",
+      "lastActivityAt": "2026-04-11T13:53:38.266Z",
+      "score": 56,
+      "leadScore": 69,
+      "chatCount": 30,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_236",
+      "email": "demo.khachhang.236@company.com",
+      "firstName": "Vy",
+      "lastName": "Hoàng",
+      "phoneNumber": "0917173510",
+      "status": "subscribed",
+      "createdAt": "2026-01-12T09:44:28.344Z",
+      "joinedAt": "2026-02-03T08:48:24.003Z",
+      "lastActivityAt": "2026-04-20T07:18:30.098Z",
+      "score": 90,
+      "leadScore": 57,
+      "chatCount": 41,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_237",
+      "email": "demo.khachhang.237@company.com",
+      "firstName": "Nga",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0957087163",
+      "status": "subscribed",
+      "createdAt": "2026-03-02T16:19:33.356Z",
+      "joinedAt": "2026-02-07T12:20:29.227Z",
+      "lastActivityAt": "2026-04-19T16:32:13.501Z",
+      "score": 43,
+      "leadScore": 53,
+      "chatCount": 12,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_238",
+      "email": "demo.khachhang.238@company.com",
+      "firstName": "Quân",
+      "lastName": "Lê",
+      "phoneNumber": "0905268219",
+      "status": "customer",
+      "createdAt": "2026-03-25T02:58:38.510Z",
+      "joinedAt": "2026-01-28T15:26:52.916Z",
+      "lastActivityAt": "2026-04-20T04:18:43.289Z",
+      "score": 11,
+      "leadScore": 10,
+      "chatCount": 21,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_239",
+      "email": "demo.khachhang.239@company.com",
+      "firstName": "Thảo",
+      "lastName": "Đặng",
+      "phoneNumber": "0947724184",
+      "status": "subscribed",
+      "createdAt": "2026-02-23T05:07:41.419Z",
+      "joinedAt": "2026-02-01T20:28:02.562Z",
+      "lastActivityAt": "2026-04-12T01:26:15.768Z",
+      "score": 39,
+      "leadScore": 33,
+      "chatCount": 39,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_240",
+      "email": "demo.khachhang.240@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Hoàng",
+      "phoneNumber": "0937890792",
+      "status": "subscribed",
+      "createdAt": "2025-12-31T15:43:33.091Z",
+      "joinedAt": "2026-02-23T08:07:42.581Z",
+      "lastActivityAt": "2026-04-11T09:41:14.514Z",
+      "score": 22,
+      "leadScore": 34,
+      "chatCount": 49,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_241",
+      "email": "demo.khachhang.241@company.com",
+      "firstName": "Vy",
+      "lastName": "Vũ",
+      "phoneNumber": "0943029147",
+      "status": "subscribed",
+      "createdAt": "2026-01-05T00:49:55.398Z",
+      "joinedAt": "2026-01-22T23:31:57.517Z",
+      "lastActivityAt": "2026-04-17T12:44:24.622Z",
+      "score": 27,
+      "leadScore": 57,
+      "chatCount": 12,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_242",
+      "email": "demo.khachhang.242@company.com",
+      "firstName": "Bình",
+      "lastName": "Võ",
+      "phoneNumber": "0982557324",
+      "status": "subscribed",
+      "createdAt": "2026-01-18T11:06:33.988Z",
+      "joinedAt": "2026-01-12T01:54:20.051Z",
+      "lastActivityAt": "2026-04-16T14:31:41.640Z",
+      "score": 39,
+      "leadScore": 62,
+      "chatCount": 25,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_243",
+      "email": "demo.khachhang.243@company.com",
+      "firstName": "Thảo",
+      "lastName": "Võ",
+      "phoneNumber": "0989758680",
+      "status": "lead",
+      "createdAt": "2026-01-13T04:38:17.228Z",
+      "joinedAt": "2026-03-31T02:39:16.347Z",
+      "lastActivityAt": "2026-04-14T21:22:09.276Z",
+      "score": 84,
+      "leadScore": 34,
+      "chatCount": 17,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_244",
+      "email": "demo.khachhang.244@company.com",
+      "firstName": "Hải",
+      "lastName": "Phạm",
+      "phoneNumber": "0978137770",
+      "status": "subscribed",
+      "createdAt": "2026-04-18T23:39:38.298Z",
+      "joinedAt": "2026-02-26T20:30:31.922Z",
+      "lastActivityAt": "2026-04-10T18:20:39.115Z",
+      "score": 50,
+      "leadScore": 69,
+      "chatCount": 1,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_245",
+      "email": "demo.khachhang.245@company.com",
+      "firstName": "Thảo",
+      "lastName": "Phan",
+      "phoneNumber": "0900103242",
+      "status": "subscribed",
+      "createdAt": "2026-03-01T10:05:40.072Z",
+      "joinedAt": "2026-04-08T23:34:31.632Z",
+      "lastActivityAt": "2026-04-11T15:17:24.711Z",
+      "score": 4,
+      "leadScore": 8,
+      "chatCount": 41,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_246",
+      "email": "demo.khachhang.246@company.com",
+      "firstName": "Linh",
+      "lastName": "Võ",
+      "phoneNumber": "0904215026",
+      "status": "subscribed",
+      "createdAt": "2026-02-27T11:21:49.151Z",
+      "joinedAt": "2026-02-09T22:58:31.318Z",
+      "lastActivityAt": "2026-04-18T11:08:37.763Z",
+      "score": 60,
+      "leadScore": 23,
+      "chatCount": 26,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_247",
+      "email": "demo.khachhang.247@company.com",
+      "firstName": "Hương",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0931185738",
+      "status": "active",
+      "createdAt": "2026-02-01T06:08:50.845Z",
+      "joinedAt": "2026-03-21T06:32:44.712Z",
+      "lastActivityAt": "2026-04-17T17:07:59.132Z",
+      "score": 72,
+      "leadScore": 70,
+      "chatCount": 11,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_248",
+      "email": "demo.khachhang.248@company.com",
+      "firstName": "Hương",
+      "lastName": "Võ",
+      "phoneNumber": "0925359707",
+      "status": "subscribed",
+      "createdAt": "2026-01-19T14:56:20.262Z",
+      "joinedAt": "2026-01-06T17:45:44.165Z",
+      "lastActivityAt": "2026-04-19T13:14:55.524Z",
+      "score": 32,
+      "leadScore": 83,
+      "chatCount": 33,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_249",
+      "email": "demo.khachhang.249@company.com",
+      "firstName": "Vy",
+      "lastName": "Vũ",
+      "phoneNumber": "0922690761",
+      "status": "subscribed",
+      "createdAt": "2026-03-28T22:08:00.226Z",
+      "joinedAt": "2026-01-03T23:30:57.061Z",
+      "lastActivityAt": "2026-04-20T08:01:11.834Z",
+      "score": 29,
+      "leadScore": 27,
+      "chatCount": 48,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_250",
+      "email": "demo.khachhang.250@company.com",
+      "firstName": "Phong",
+      "lastName": "Vũ",
+      "phoneNumber": "0927545061",
+      "status": "subscribed",
+      "createdAt": "2026-03-29T16:59:46.506Z",
+      "joinedAt": "2026-01-14T12:22:59.967Z",
+      "lastActivityAt": "2026-04-18T22:58:07.764Z",
+      "score": 57,
+      "leadScore": 97,
+      "chatCount": 39,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_251",
+      "email": "demo.khachhang.251@company.com",
+      "firstName": "Minh",
+      "lastName": "Lê",
+      "phoneNumber": "0968847420",
+      "status": "subscribed",
+      "createdAt": "2026-01-09T03:11:35.718Z",
+      "joinedAt": "2026-03-11T08:09:37.830Z",
+      "lastActivityAt": "2026-04-11T11:49:34.728Z",
+      "score": 82,
+      "leadScore": 68,
+      "chatCount": 27,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_252",
+      "email": "demo.khachhang.252@company.com",
+      "firstName": "Hương",
+      "lastName": "Đặng",
+      "phoneNumber": "0970390262",
+      "status": "subscribed",
+      "createdAt": "2026-02-15T13:19:43.487Z",
+      "joinedAt": "2025-12-30T00:00:00.940Z",
+      "lastActivityAt": "2026-04-12T02:47:17.255Z",
+      "score": 30,
+      "leadScore": 33,
+      "chatCount": 2,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_253",
+      "email": "demo.khachhang.253@company.com",
+      "firstName": "Linh",
+      "lastName": "Võ",
+      "phoneNumber": "0985933857",
+      "status": "subscribed",
+      "createdAt": "2026-02-15T21:02:15.514Z",
+      "joinedAt": "2026-02-07T21:38:20.168Z",
+      "lastActivityAt": "2026-04-11T13:59:49.431Z",
+      "score": 37,
+      "leadScore": 10,
+      "chatCount": 38,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_254",
+      "email": "demo.khachhang.254@company.com",
+      "firstName": "Hương",
+      "lastName": "Vũ",
+      "phoneNumber": "0987108204",
+      "status": "subscribed",
+      "createdAt": "2026-03-07T01:26:47.262Z",
+      "joinedAt": "2026-03-25T18:36:14.674Z",
+      "lastActivityAt": "2026-04-17T08:13:39.270Z",
+      "score": 2,
+      "leadScore": 88,
+      "chatCount": 19,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_255",
+      "email": "demo.khachhang.255@company.com",
+      "firstName": "Dung",
+      "lastName": "Vũ",
+      "phoneNumber": "0971055743",
+      "status": "subscribed",
+      "createdAt": "2026-03-01T05:06:40.788Z",
+      "joinedAt": "2026-03-27T06:19:45.433Z",
+      "lastActivityAt": "2026-04-10T15:45:45.893Z",
+      "score": 72,
+      "leadScore": 38,
+      "chatCount": 43,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_256",
+      "email": "demo.khachhang.256@company.com",
+      "firstName": "Phong",
+      "lastName": "Hoàng",
+      "phoneNumber": "0950033390",
+      "status": "subscribed",
+      "createdAt": "2026-01-16T07:38:40.214Z",
+      "joinedAt": "2026-03-22T15:32:19.642Z",
+      "lastActivityAt": "2026-04-13T20:38:54.905Z",
+      "score": 91,
+      "leadScore": 0,
+      "chatCount": 6,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_257",
+      "email": "demo.khachhang.257@company.com",
+      "firstName": "Vy",
+      "lastName": "Bùi",
+      "phoneNumber": "0954363159",
+      "status": "subscribed",
+      "createdAt": "2026-04-03T22:54:24.490Z",
+      "joinedAt": "2026-02-25T22:31:15.602Z",
+      "lastActivityAt": "2026-04-14T17:49:33.087Z",
+      "score": 95,
+      "leadScore": 75,
+      "chatCount": 3,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_258",
+      "email": "demo.khachhang.258@company.com",
+      "firstName": "Quân",
+      "lastName": "Phan",
+      "phoneNumber": "0957606170",
+      "status": "customer",
+      "createdAt": "2026-01-12T14:15:10.495Z",
+      "joinedAt": "2026-01-12T13:57:32.240Z",
+      "lastActivityAt": "2026-04-10T21:23:13.082Z",
+      "score": 1,
+      "leadScore": 30,
+      "chatCount": 40,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_259",
+      "email": "demo.khachhang.259@company.com",
+      "firstName": "Vy",
+      "lastName": "Võ",
+      "phoneNumber": "0998403991",
+      "status": "subscribed",
+      "createdAt": "2026-03-28T20:46:32.268Z",
+      "joinedAt": "2026-01-10T22:30:54.315Z",
+      "lastActivityAt": "2026-04-17T10:31:22.224Z",
+      "score": 45,
+      "leadScore": 66,
+      "chatCount": 35,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_260",
+      "email": "demo.khachhang.260@company.com",
+      "firstName": "Nga",
+      "lastName": "Hoàng",
+      "phoneNumber": "0972046288",
+      "status": "subscribed",
+      "createdAt": "2026-01-26T14:24:30.481Z",
+      "joinedAt": "2026-02-02T10:39:37.651Z",
+      "lastActivityAt": "2026-04-21T10:26:25.581Z",
+      "score": 93,
+      "leadScore": 30,
+      "chatCount": 1,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_261",
+      "email": "demo.khachhang.261@company.com",
+      "firstName": "Hải",
+      "lastName": "Trần",
+      "phoneNumber": "0927679696",
+      "status": "subscribed",
+      "createdAt": "2026-04-06T00:11:31.204Z",
+      "joinedAt": "2026-03-14T13:08:24.703Z",
+      "lastActivityAt": "2026-04-16T07:50:09.020Z",
+      "score": 51,
+      "leadScore": 8,
+      "chatCount": 5,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_262",
+      "email": "demo.khachhang.262@company.com",
+      "firstName": "Bình",
+      "lastName": "Đặng",
+      "phoneNumber": "0905294297",
+      "status": "subscribed",
+      "createdAt": "2026-04-15T07:26:36.933Z",
+      "joinedAt": "2026-01-22T09:28:13.515Z",
+      "lastActivityAt": "2026-04-16T04:02:44.761Z",
+      "score": 94,
+      "leadScore": 46,
+      "chatCount": 40,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_263",
+      "email": "demo.khachhang.263@company.com",
+      "firstName": "Phong",
+      "lastName": "Bùi",
+      "phoneNumber": "0977039134",
+      "status": "active",
+      "createdAt": "2025-12-30T05:49:45.358Z",
+      "joinedAt": "2026-03-04T07:10:31.063Z",
+      "lastActivityAt": "2026-04-20T20:27:06.031Z",
+      "score": 50,
+      "leadScore": 92,
+      "chatCount": 44,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_264",
+      "email": "demo.khachhang.264@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Vũ",
+      "phoneNumber": "0916105789",
+      "status": "subscribed",
+      "createdAt": "2026-03-28T12:54:45.800Z",
+      "joinedAt": "2026-02-19T10:49:50.786Z",
+      "lastActivityAt": "2026-04-19T01:05:17.598Z",
+      "score": 84,
+      "leadScore": 17,
+      "chatCount": 34,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_265",
+      "email": "demo.khachhang.265@company.com",
+      "firstName": "Hương",
+      "lastName": "Đặng",
+      "phoneNumber": "0996013190",
+      "status": "subscribed",
+      "createdAt": "2026-04-09T16:48:49.001Z",
+      "joinedAt": "2026-01-07T20:37:29.557Z",
+      "lastActivityAt": "2026-04-15T18:24:06.349Z",
+      "score": 76,
+      "leadScore": 75,
+      "chatCount": 20,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_266",
+      "email": "demo.khachhang.266@company.com",
+      "firstName": "Nga",
+      "lastName": "Võ",
+      "phoneNumber": "0985825773",
+      "status": "subscribed",
+      "createdAt": "2026-04-14T17:49:49.551Z",
+      "joinedAt": "2026-02-12T15:16:07.502Z",
+      "lastActivityAt": "2026-04-15T22:29:41.976Z",
+      "score": 38,
+      "leadScore": 80,
+      "chatCount": 33,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_267",
+      "email": "demo.khachhang.267@company.com",
+      "firstName": "Phong",
+      "lastName": "Hoàng",
+      "phoneNumber": "0969623790",
+      "status": "customer",
+      "createdAt": "2026-01-31T04:28:59.355Z",
+      "joinedAt": "2026-02-24T00:05:39.828Z",
+      "lastActivityAt": "2026-04-11T03:22:21.324Z",
+      "score": 85,
+      "leadScore": 53,
+      "chatCount": 4,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_268",
+      "email": "demo.khachhang.268@company.com",
+      "firstName": "Quân",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0982265217",
+      "status": "subscribed",
+      "createdAt": "2026-03-06T08:32:37.595Z",
+      "joinedAt": "2025-12-30T14:34:42.324Z",
+      "lastActivityAt": "2026-04-19T10:51:47.507Z",
+      "score": 20,
+      "leadScore": 42,
+      "chatCount": 48,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_269",
+      "email": "demo.khachhang.269@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0934500105",
+      "status": "subscribed",
+      "createdAt": "2026-04-20T05:19:15.941Z",
+      "joinedAt": "2026-01-16T23:50:59.729Z",
+      "lastActivityAt": "2026-04-21T17:56:50.941Z",
+      "score": 89,
+      "leadScore": 79,
+      "chatCount": 43,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_270",
+      "email": "demo.khachhang.270@company.com",
+      "firstName": "Minh",
+      "lastName": "Bùi",
+      "phoneNumber": "0901153801",
+      "status": "subscribed",
+      "createdAt": "2026-02-18T07:34:06.980Z",
+      "joinedAt": "2026-04-20T08:01:23.804Z",
+      "lastActivityAt": "2026-04-19T20:52:04.436Z",
+      "score": 77,
+      "leadScore": 12,
+      "chatCount": 0,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_271",
+      "email": "demo.khachhang.271@company.com",
+      "firstName": "Vy",
+      "lastName": "Bùi",
+      "phoneNumber": "0917066764",
+      "status": "subscribed",
+      "createdAt": "2026-03-15T03:03:53.258Z",
+      "joinedAt": "2026-01-19T23:45:11.796Z",
+      "lastActivityAt": "2026-04-14T01:56:33.611Z",
+      "score": 14,
+      "leadScore": 70,
+      "chatCount": 37,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_272",
+      "email": "demo.khachhang.272@company.com",
+      "firstName": "Thảo",
+      "lastName": "Trần",
+      "phoneNumber": "0976317335",
+      "status": "subscribed",
+      "createdAt": "2026-02-05T17:33:01.851Z",
+      "joinedAt": "2026-04-11T09:05:38.157Z",
+      "lastActivityAt": "2026-04-10T20:34:32.535Z",
+      "score": 89,
+      "leadScore": 18,
+      "chatCount": 24,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_273",
+      "email": "demo.khachhang.273@company.com",
+      "firstName": "Linh",
+      "lastName": "Bùi",
+      "phoneNumber": "0964150379",
+      "status": "subscribed",
+      "createdAt": "2026-04-13T12:17:26.902Z",
+      "joinedAt": "2026-02-16T23:46:23.840Z",
+      "lastActivityAt": "2026-04-11T02:37:42.669Z",
+      "score": 47,
+      "leadScore": 51,
+      "chatCount": 15,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_274",
+      "email": "demo.khachhang.274@company.com",
+      "firstName": "Vy",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0959812007",
+      "status": "subscribed",
+      "createdAt": "2026-03-11T07:07:18.893Z",
+      "joinedAt": "2026-03-01T17:27:04.483Z",
+      "lastActivityAt": "2026-04-14T14:10:16.964Z",
+      "score": 49,
+      "leadScore": 63,
+      "chatCount": 23,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_275",
+      "email": "demo.khachhang.275@company.com",
+      "firstName": "Bình",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0975572121",
+      "status": "subscribed",
+      "createdAt": "2025-12-27T23:59:24.033Z",
+      "joinedAt": "2026-04-21T17:06:03.524Z",
+      "lastActivityAt": "2026-04-16T18:46:05.184Z",
+      "score": 48,
+      "leadScore": 25,
+      "chatCount": 14,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_276",
+      "email": "demo.khachhang.276@company.com",
+      "firstName": "Hải",
+      "lastName": "Võ",
+      "phoneNumber": "0931914665",
+      "status": "subscribed",
+      "createdAt": "2026-01-14T19:18:55.838Z",
+      "joinedAt": "2026-01-25T06:08:23.172Z",
+      "lastActivityAt": "2026-04-16T07:08:25.670Z",
+      "score": 70,
+      "leadScore": 51,
+      "chatCount": 12,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_277",
+      "email": "demo.khachhang.277@company.com",
+      "firstName": "Thảo",
+      "lastName": "Lê",
+      "phoneNumber": "0940366402",
+      "status": "subscribed",
+      "createdAt": "2026-02-27T04:09:57.688Z",
+      "joinedAt": "2026-01-28T08:06:41.958Z",
+      "lastActivityAt": "2026-04-19T22:35:15.063Z",
+      "score": 18,
+      "leadScore": 16,
+      "chatCount": 3,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Chủ Doanh Nghiệp"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_278",
+      "email": "demo.khachhang.278@company.com",
+      "firstName": "Bình",
+      "lastName": "Võ",
+      "phoneNumber": "0923850739",
+      "status": "active",
+      "createdAt": "2026-04-22T01:41:38.749Z",
+      "joinedAt": "2026-03-04T15:09:03.787Z",
+      "lastActivityAt": "2026-04-17T12:00:53.373Z",
+      "score": 62,
+      "leadScore": 68,
+      "chatCount": 2,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_279",
+      "email": "demo.khachhang.279@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Vũ",
+      "phoneNumber": "0936064671",
+      "status": "subscribed",
+      "createdAt": "2026-04-07T15:50:51.199Z",
+      "joinedAt": "2026-03-25T23:48:46.612Z",
+      "lastActivityAt": "2026-04-10T15:37:35.444Z",
+      "score": 32,
+      "leadScore": 35,
+      "chatCount": 42,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_280",
+      "email": "demo.khachhang.280@company.com",
+      "firstName": "Nga",
+      "lastName": "Vũ",
+      "phoneNumber": "0988544825",
+      "status": "subscribed",
+      "createdAt": "2026-01-04T14:53:16.141Z",
+      "joinedAt": "2026-04-18T17:19:10.221Z",
+      "lastActivityAt": "2026-04-17T10:52:06.769Z",
+      "score": 26,
+      "leadScore": 45,
+      "chatCount": 49,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_281",
+      "email": "demo.khachhang.281@company.com",
+      "firstName": "Quân",
+      "lastName": "Võ",
+      "phoneNumber": "0957622744",
+      "status": "subscribed",
+      "createdAt": "2026-03-14T20:43:48.015Z",
+      "joinedAt": "2026-03-11T18:12:20.501Z",
+      "lastActivityAt": "2026-04-19T01:59:33.286Z",
+      "score": 28,
+      "leadScore": 28,
+      "chatCount": 20,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_282",
+      "email": "demo.khachhang.282@company.com",
+      "firstName": "Dung",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0915803553",
+      "status": "subscribed",
+      "createdAt": "2026-01-22T01:25:16.217Z",
+      "joinedAt": "2026-02-04T12:44:49.322Z",
+      "lastActivityAt": "2026-04-10T19:56:54.320Z",
+      "score": 62,
+      "leadScore": 13,
+      "chatCount": 33,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_283",
+      "email": "demo.khachhang.283@company.com",
+      "firstName": "Phong",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0904980990",
+      "status": "unsubscribed",
+      "createdAt": "2026-03-12T07:18:16.285Z",
+      "joinedAt": "2026-04-02T22:29:05.344Z",
+      "lastActivityAt": "2026-04-11T13:45:39.616Z",
+      "score": 55,
+      "leadScore": 20,
+      "chatCount": 26,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_284",
+      "email": "demo.khachhang.284@company.com",
+      "firstName": "Quân",
+      "lastName": "Bùi",
+      "phoneNumber": "0915658002",
+      "status": "lead",
+      "createdAt": "2026-01-18T00:32:18.856Z",
+      "joinedAt": "2026-03-25T11:30:00.404Z",
+      "lastActivityAt": "2026-04-15T03:31:05.470Z",
+      "score": 49,
+      "leadScore": 71,
+      "chatCount": 18,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_285",
+      "email": "demo.khachhang.285@company.com",
+      "firstName": "Linh",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0961267548",
+      "status": "lead",
+      "createdAt": "2026-02-03T04:15:45.377Z",
+      "joinedAt": "2026-04-12T12:05:03.623Z",
+      "lastActivityAt": "2026-04-16T22:12:45.540Z",
+      "score": 5,
+      "leadScore": 65,
+      "chatCount": 38,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_286",
+      "email": "demo.khachhang.286@company.com",
+      "firstName": "Quân",
+      "lastName": "Vũ",
+      "phoneNumber": "0906439318",
+      "status": "subscribed",
+      "createdAt": "2026-03-09T03:29:39.217Z",
+      "joinedAt": "2026-04-16T06:11:54.611Z",
+      "lastActivityAt": "2026-04-13T02:00:19.901Z",
+      "score": 95,
+      "leadScore": 75,
+      "chatCount": 43,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_287",
+      "email": "demo.khachhang.287@company.com",
+      "firstName": "Phong",
+      "lastName": "Lê",
+      "phoneNumber": "0928451984",
+      "status": "subscribed",
+      "createdAt": "2026-01-03T15:24:54.901Z",
+      "joinedAt": "2026-02-24T09:28:55.336Z",
+      "lastActivityAt": "2026-04-14T10:36:36.407Z",
+      "score": 32,
+      "leadScore": 68,
+      "chatCount": 29,
+      "verified": 1,
+      "meta_psid": "123456789",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_288",
+      "email": "demo.khachhang.288@company.com",
+      "firstName": "Dung",
+      "lastName": "Võ",
+      "phoneNumber": "0996209850",
+      "status": "subscribed",
+      "createdAt": "2026-02-01T06:31:11.773Z",
+      "joinedAt": "2026-01-09T16:15:51.178Z",
+      "lastActivityAt": "2026-04-20T13:55:55.282Z",
+      "score": 37,
+      "leadScore": 29,
+      "chatCount": 48,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_289",
+      "email": "demo.khachhang.289@company.com",
+      "firstName": "Vy",
+      "lastName": "Võ",
+      "phoneNumber": "0975388364",
+      "status": "subscribed",
+      "createdAt": "2026-01-16T19:40:19.222Z",
+      "joinedAt": "2026-03-03T23:47:21.216Z",
+      "lastActivityAt": "2026-04-18T03:08:00.777Z",
+      "score": 91,
+      "leadScore": 99,
+      "chatCount": 49,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_290",
+      "email": "demo.khachhang.290@company.com",
+      "firstName": "Quân",
+      "lastName": "Bùi",
+      "phoneNumber": "0917205182",
+      "status": "subscribed",
+      "createdAt": "2026-01-02T13:24:30.915Z",
+      "joinedAt": "2026-02-01T00:12:05.930Z",
+      "lastActivityAt": "2026-04-11T19:02:54.520Z",
+      "score": 60,
+      "leadScore": 48,
+      "chatCount": 33,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_291",
+      "email": "demo.khachhang.291@company.com",
+      "firstName": "Vy",
+      "lastName": "Nguyễn",
+      "phoneNumber": "0943277316",
+      "status": "subscribed",
+      "createdAt": "2026-01-03T08:51:41.413Z",
+      "joinedAt": "2026-02-24T13:39:11.992Z",
+      "lastActivityAt": "2026-04-21T05:59:22.114Z",
+      "score": 51,
+      "leadScore": 17,
+      "chatCount": 29,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_292",
+      "email": "demo.khachhang.292@company.com",
+      "firstName": "Nga",
+      "lastName": "Vũ",
+      "phoneNumber": "0948665627",
+      "status": "subscribed",
+      "createdAt": "2026-01-17T13:58:08.014Z",
+      "joinedAt": "2025-12-30T14:07:32.692Z",
+      "lastActivityAt": "2026-04-13T06:33:31.383Z",
+      "score": 53,
+      "leadScore": 18,
+      "chatCount": 44,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_293",
+      "email": "demo.khachhang.293@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Trần",
+      "phoneNumber": "0925425544",
+      "status": "subscribed",
+      "createdAt": "2026-01-15T20:32:01.375Z",
+      "joinedAt": "2026-02-25T02:50:10.379Z",
+      "lastActivityAt": "2026-04-22T03:20:15.859Z",
+      "score": 71,
+      "leadScore": 53,
+      "chatCount": 47,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_294",
+      "email": "demo.khachhang.294@company.com",
+      "firstName": "Dung",
+      "lastName": "Đặng",
+      "phoneNumber": "0929948112",
+      "status": "subscribed",
+      "createdAt": "2026-04-17T07:02:29.062Z",
+      "joinedAt": "2026-01-01T06:08:45.024Z",
+      "lastActivityAt": "2026-04-14T21:13:41.793Z",
+      "score": 73,
+      "leadScore": 9,
+      "chatCount": 24,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_295",
+      "email": "demo.khachhang.295@company.com",
+      "firstName": "Linh",
+      "lastName": "Trần",
+      "phoneNumber": "0965524814",
+      "status": "customer",
+      "createdAt": "2026-04-06T21:32:05.320Z",
+      "joinedAt": "2026-03-07T16:27:09.584Z",
+      "lastActivityAt": "2026-04-11T15:24:20.614Z",
+      "score": 12,
+      "leadScore": 62,
+      "chatCount": 32,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_fb"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_296",
+      "email": "demo.khachhang.296@company.com",
+      "firstName": "Phong",
+      "lastName": "Bùi",
+      "phoneNumber": "0933398300",
+      "status": "unsubscribed",
+      "createdAt": "2025-12-28T01:02:50.870Z",
+      "joinedAt": "2026-02-22T09:56:08.210Z",
+      "lastActivityAt": "2026-04-21T18:18:17.853Z",
+      "score": 90,
+      "leadScore": 61,
+      "chatCount": 13,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [],
+      "lists": [
+        "list_vip"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_297",
+      "email": "demo.khachhang.297@company.com",
+      "firstName": "Tuấn",
+      "lastName": "Phạm",
+      "phoneNumber": "0902474503",
+      "status": "lead",
+      "createdAt": "2026-03-30T05:27:15.629Z",
+      "joinedAt": "2026-03-13T08:42:34.903Z",
+      "lastActivityAt": "2026-04-15T14:11:06.772Z",
+      "score": 60,
+      "leadScore": 92,
+      "chatCount": 32,
+      "verified": 0,
+      "meta_psid": "0",
+      "tags": [
+        "B2B"
+      ],
+      "lists": [
+        "list_misa"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_298",
+      "email": "demo.khachhang.298@company.com",
+      "firstName": "Bình",
+      "lastName": "Huỳnh",
+      "phoneNumber": "0936934143",
+      "status": "subscribed",
+      "createdAt": "2026-02-18T02:30:19.958Z",
+      "joinedAt": "2026-04-02T14:30:00.994Z",
+      "lastActivityAt": "2026-04-19T21:14:11.493Z",
+      "score": 71,
+      "leadScore": 48,
+      "chatCount": 34,
+      "verified": 0,
+      "meta_psid": "123456789",
+      "tags": [
+        "Hot Lead"
+      ],
+      "lists": [
+        "list_webinar"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    },
+    {
+      "id": "sub_299",
+      "email": "demo.khachhang.299@company.com",
+      "firstName": "Dung",
+      "lastName": "Võ",
+      "phoneNumber": "0966688892",
+      "status": "subscribed",
+      "createdAt": "2026-02-05T11:16:04.288Z",
+      "joinedAt": "2026-01-19T18:52:16.711Z",
+      "lastActivityAt": "2026-04-15T19:48:52.956Z",
+      "score": 11,
+      "leadScore": 85,
+      "chatCount": 9,
+      "verified": 1,
+      "meta_psid": "0",
+      "tags": [
+        "Khách Trung Thành"
+      ],
+      "lists": [
+        "list_cold"
+      ],
+      "stats": {
+        "lastOpenAt": "2026-04-22T04:51:23.114Z"
+      }
+    }
+  ],
+  "mailflow_forms": [
+    {
+      "id": "form_lead",
+      "name": "Popup Nhận Ebook AI Marketing",
+      "targetListId": "list_fb",
+      "stats": {
+        "views": 15000,
+        "submissions": 2540,
+        "conversion": 16.9
+      },
+      "status": "published"
+    }
+  ],
+  "mailflow_surveys": [
+    {
+      "id": "survey_nps",
+      "name": "Đánh giá mức độ hài lòng (NPS Q2)",
+      "status": "published",
+      "createdAt": "2026-04-22T04:51:23.114Z",
+      "stats": {
+        "views": 1200,
+        "starts": 950,
+        "completes": 800,
+        "completion_rate": 84.2,
+        "avg_time_sec": 45
+      }
+    }
+  ],
+  "mailflow_campaigns": [
+    {
+      "id": "camp_1",
+      "name": "Chiến dịch Marketing Tháng 1 - Bản tin Tự động",
+      "subject": "🔥 Khám phá cơ hội x3 doanh thu tháng 1",
+      "status": "sent",
+      "totalTargetAudience": 6006,
+      "stats": {
+        "sent": 5405.400000000001,
+        "opened": 2402.4,
+        "clicked": 600.6,
+        "bounced": 10,
+        "unsubscribed": 5
+      },
+      "createdAt": "2026-04-22T04:51:23.114Z",
+      "sentAt": "2026-04-22T04:51:23.114Z",
+      "lists": [
+        "list_fb"
+      ]
+    },
+    {
+      "id": "camp_2",
+      "name": "Chiến dịch Marketing Tháng 2 - Bản tin Tự động",
+      "subject": "🔥 Khám phá cơ hội x3 doanh thu tháng 2",
+      "status": "sent",
+      "totalTargetAudience": 3598,
+      "stats": {
+        "sent": 3238.2000000000003,
+        "opened": 1439.2,
+        "clicked": 359.8,
+        "bounced": 10,
+        "unsubscribed": 5
+      },
+      "createdAt": "2026-04-22T04:51:23.114Z",
+      "sentAt": "2026-04-22T04:51:23.114Z",
+      "lists": [
+        "list_fb"
+      ]
+    },
+    {
+      "id": "camp_3",
+      "name": "Chiến dịch Marketing Tháng 3 - Bản tin Tự động",
+      "subject": "🔥 Khám phá cơ hội x3 doanh thu tháng 3",
+      "status": "sent",
+      "totalTargetAudience": 8230,
+      "stats": {
+        "sent": 7407,
+        "opened": 3292,
+        "clicked": 823,
+        "bounced": 10,
+        "unsubscribed": 5
+      },
+      "createdAt": "2026-04-22T04:51:23.114Z",
+      "sentAt": "2026-04-22T04:51:23.114Z",
+      "lists": [
+        "list_fb"
+      ]
+    },
+    {
+      "id": "camp_4",
+      "name": "Chiến dịch Marketing Tháng 4 - Bản tin Tự động",
+      "subject": "🔥 Khám phá cơ hội x3 doanh thu tháng 4",
+      "status": "scheduled",
+      "totalTargetAudience": 12462,
+      "stats": {
+        "sent": 11215.800000000001,
+        "opened": 4984.8,
+        "clicked": 1246.2,
+        "bounced": 10,
+        "unsubscribed": 5
+      },
+      "createdAt": "2026-04-22T04:51:23.114Z",
+      "sentAt": null,
+      "lists": [
+        "list_fb"
+      ]
+    },
+    {
+      "id": "camp_5",
+      "name": "Chiến dịch Marketing Tháng 5 - Bản tin Tự động",
+      "subject": "🔥 Khám phá cơ hội x3 doanh thu tháng 5",
+      "status": "scheduled",
+      "totalTargetAudience": 14281,
+      "stats": {
+        "sent": 12852.9,
+        "opened": 5712.400000000001,
+        "clicked": 1428.1000000000001,
+        "bounced": 10,
+        "unsubscribed": 5
+      },
+      "createdAt": "2026-04-22T04:51:23.114Z",
+      "sentAt": null,
+      "lists": [
+        "list_fb"
+      ]
+    }
+  ],
+  "mailflow_zalo_oa": [
+    {
+      "id": "oa_demo_001",
+      "name": "DOMATION Official",
+      "status": "active",
+      "followers": 45200,
+      "is_verified": true,
+      "avatar": "https://automation.ideas.edu.vn/imgs/ICON.png"
+    },
+    {
+      "id": "oa_demo_002",
+      "name": "DOMATION Support",
+      "status": "active",
+      "followers": 12400,
+      "is_verified": false,
+      "avatar": "https://automation.ideas.edu.vn/imgs/ICON.png"
+    }
+  ],
+  "mailflow_zalo_scenarios": [
+    {
+      "id": "scenario_welcome",
+      "oa_config_id": "oa_demo_001",
+      "type": "keyword",
+      "trigger_text": "QUAN TAM",
+      "name": "Kịch bản Chào Mừng & Tặng Mã Giảm Giá",
+      "message_type": "text_with_buttons",
+      "text_content": "Chào bạn, cảm ơn bạn đã quan tâm. Đây là mã giảm giá 20%: WELCOME20",
+      "buttons": [
+        {
+          "id": "btn1",
+          "title": "Xem Khóa Học",
+          "type": "url",
+          "url": "https://domation.vn"
+        }
+      ],
+      "status": "active",
+      "created_at": "2026-04-22T04:51:23.114Z"
+    },
+    {
+      "id": "scenario_cart",
+      "oa_config_id": "oa_demo_001",
+      "type": "keyword",
+      "trigger_text": "GIO HANG",
+      "name": "Nhắc nhở Giỏ Hàng Bỏ Quên (Abandon Cart)",
+      "message_type": "image",
+      "text_content": "Bạn ơi, giỏ hàng của bạn đang chờ. Hoàn tất ngay để nhận quà!",
+      "image_url": "https://placehold.co/600x400/f59e0b/white?text=Cart+Reminder",
+      "buttons": [
+        {
+          "id": "btn1",
+          "title": "Thanh toán ngay",
+          "type": "url",
+          "url": "https://domation.vn/checkout"
+        }
+      ],
+      "status": "active",
+      "created_at": "2026-04-22T04:51:23.114Z"
+    }
+  ],
+  "mailflow_admin_users": [
+    {
+      "id": "admin_1",
+      "name": "Duy Phuc",
+      "email": "admin@domation.vn",
+      "role": "superadmin",
+      "last_active": "2026-04-22T04:51:23.114Z",
+      "status": "active"
+    },
+    {
+      "id": "admin_2",
+      "name": "Marketing Team",
+      "email": "marketing@domation.vn",
+      "role": "editor",
+      "last_active": "2026-04-22T03:51:23.114Z",
+      "status": "active"
+    },
+    {
+      "id": "admin_3",
+      "name": "Support Agent",
+      "email": "support@domation.vn",
+      "role": "viewer",
+      "last_active": "2026-04-21T04:51:23.114Z",
+      "status": "active"
+    }
+  ],
+  "mailflow_vouchers": [
+    {
+      "id": "v_welcome",
+      "code": "WELCOME2026",
+      "type": "percentage",
+      "value": 20,
+      "max_claims": 1000,
+      "current_claims": 854,
+      "status": "active",
+      "expires_at": "2026-05-22T04:51:23.114Z",
+      "created_at": "2026-04-22T04:51:23.114Z"
+    },
+    {
+      "id": "v_vip",
+      "code": "VIP500K",
+      "type": "fixed",
+      "value": 500000,
+      "max_claims": 100,
+      "current_claims": 100,
+      "status": "exhausted",
+      "expires_at": "2026-05-02T04:51:23.114Z",
+      "created_at": "2026-04-22T04:51:23.114Z"
+    }
+  ],
+  "mailflow_web_tracking_properties": [
+    {
+      "id": "prop_1",
+      "name": "DOMATION Landing Page",
+      "domain": "domation.vn",
+      "status": "active",
+      "created_at": "2026-04-22T04:51:23.114Z"
+    },
+    {
+      "id": "prop_2",
+      "name": "Khóa Học Academy",
+      "domain": "academy.domation.vn",
+      "status": "active",
+      "created_at": "2026-04-22T04:51:23.114Z"
+    }
+  ],
+  "mailflow_ai_chatbots": [
+    {
+      "id": "bot_1",
+      "property_id": "prop_1",
+      "bot_name": "DOMATION AI Sales",
+      "status": "active",
+      "knowledge_base_count": 15,
+      "theme_color": "#f59e0b"
+    },
+    {
+      "id": "bot_2",
+      "property_id": "prop_2",
+      "bot_name": "DOMATION Support",
+      "status": "active",
+      "knowledge_base_count": 42,
+      "theme_color": "#3b82f6"
+    }
+  ],
+  "mailflow_system_stats": {
+    "totalSubscribers": 32540,
+    "activeFlows": 18,
+    "totalSent": 1450000,
+    "avgOpenRate": "28.5%",
+    "avgClickRate": "12.4%",
+    "monthlyGrowth": "+15.2%"
+  }
+}

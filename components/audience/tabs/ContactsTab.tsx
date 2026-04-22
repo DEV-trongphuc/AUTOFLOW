@@ -93,7 +93,7 @@ const ContactRow = React.memo<ContactRowProps>(({
                             {sub.chatCount && sub.chatCount > 0 ? (
                                 <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-[10px] font-bold shrink-0" title="Conversations">
                                     <MessageCircle className="w-3 h-3" />
-                                    {sub.chatCount.toLocaleString()}
+                                    {(sub.chatCount || 0).toLocaleString()}
                                 </div>
                             ) : null}
                         </div>
@@ -142,7 +142,7 @@ const ContactRow = React.memo<ContactRowProps>(({
                     {sub.leadScore && sub.leadScore > 0 ? (
                         <div className="inline-flex items-center justify-center gap-1 px-2 py-0.5 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-lg text-xs font-bold">
                             <Zap className="w-3 h-3 fill-yellow-500 text-yellow-500" />
-                            {sub.leadScore.toLocaleString()}
+                            {(sub.leadScore || 0).toLocaleString()}
                         </div>
                     ) : (
                         <span className="text-xs font-bold text-slate-300">-</span>
@@ -328,9 +328,9 @@ const ContactsTab = React.memo<ContactsTabProps>(({
                             <tr className="bg-orange-50/50">
                                 <td colSpan={visibleColumns.length + 2} className="px-6 py-2.5 text-center">
                                     {isGlobalSelected ? (
-                                        <p className="text-xs font-medium text-slate-600">{"\u0110\u00E3 Ch\u1ECDn t\u1EA5t c\u1EA3"} <span className="font-bold text-orange-600">{totalCount.toLocaleString()}</span> {"li\u00EAn h\u1EC7."} <button type="button" onClick={() => onToggleGlobalSelection(false)} className="ml-2 text-blue-600 font-bold hover:underline">{"B\u1ECF ch\u1ECDn"}</button></p>
+                                        <p className="text-xs font-medium text-slate-600">{"\u0110\u00E3 Ch\u1ECDn t\u1EA5t c\u1EA3"} <span className="font-bold text-orange-600">{(totalCount || 0).toLocaleString()}</span> {"li\u00EAn h\u1EC7."} <button type="button" onClick={() => onToggleGlobalSelection(false)} className="ml-2 text-blue-600 font-bold hover:underline">{"B\u1ECF ch\u1ECDn"}</button></p>
                                     ) : (
-                                        <p className="text-xs font-medium text-slate-600">{"\u0110\u00E3 ch\u1ECDn"} {subscribers.length} {"li\u00EAn h\u1EC7."} <button type="button" onClick={() => onToggleGlobalSelection(true)} className="ml-1 text-orange-600 font-bold hover:underline italic underline-offset-2">{"Ch\u1ECDn t\u1EA5t c\u1EA3"} {totalCount.toLocaleString()} {"li\u00EAn h\u1EC7?"}</button></p>
+                                        <p className="text-xs font-medium text-slate-600">{"\u0110\u00E3 ch\u1ECDn"} {subscribers.length} {"li\u00EAn h\u1EC7."} <button type="button" onClick={() => onToggleGlobalSelection(true)} className="ml-1 text-orange-600 font-bold hover:underline italic underline-offset-2">{"Ch\u1ECDn t\u1EA5t c\u1EA3"} {(totalCount || 0).toLocaleString()} {"li\u00EAn h\u1EC7?"}</button></p>
                                     )}
                                 </td>
                             </tr>
@@ -366,7 +366,8 @@ const ContactsTab = React.memo<ContactsTabProps>(({
                     />
                     <div className="flex gap-2">
                         <button type="button" onClick={() => onPageChange(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"><ChevronLeft className="w-4 h-4" /></button>
-                        <span className="px-4 py-2 bg-slate-50 rounded-lg text-xs font-bold text-slate-600 border border-slate-100">{currentPage.toLocaleString()} / {totalPages.toLocaleString()}</span>
+                        <span className="px-4 py-2 bg-slate-50 rounded-lg text-xs font-bold text-slate-600 border border-slate-100">{(currentPage || 1).toLocaleString()} / {(totalPages || 1).toLocaleString()}</span>
+
                         <button type="button" onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"><ChevronRight className="w-4 h-4" /></button>
                     </div>
                 </div>

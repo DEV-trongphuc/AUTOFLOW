@@ -4,9 +4,6 @@
 // compatible with MailFlow Pro's email builder canvas.
 
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS')
   exit;
@@ -26,7 +23,6 @@ if (empty($GLOBALS['current_admin_id']) && empty($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'error' => 'Unauthorized']);
     exit;
 }
-
 
 // ── Fetch Gemini API key from system_settings (Cấu hình Trí tuệ Nhân tạo) ──
 function getGeminiKey($pdo)
@@ -154,7 +150,6 @@ Khi redesign từ email gốc:
 - Footer: unsubscribe placeholder, màu tối hoặc xám
 - Minimum 4 sections, maximum 10 sections
 SYSTEM;
-
 
   // ── Extract brand colors from existing blocks ────────────────────────
   function extractBrandColors($blocks, &$colors = [])

@@ -30,7 +30,6 @@ if (!isset($GLOBALS['_flowSnapshotsEnsured'])) {
     }
 }
 
-
 // GET snapshots list for a flow
 if ($method === 'GET' && isset($_GET['route']) && $_GET['route'] === 'flow-snapshots') {
     try {
@@ -373,7 +372,6 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                 $stepIdClause = "reference_id IN ($placeholders)";
                 $stepIdParams = array_values($ids);
             }
-
 
             // ONLY get from activity history, grouped by subscriber
             $historySql = "
@@ -1254,7 +1252,6 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
             }
         }
 
-
         if ($addedCount > 0) {
             logSystemActivity($pdo, 'flows', 'manual_add_participant', $flowId, "Flow $flowId", ['added' => $addedCount]);
             jsonResponse(true, ['added' => $addedCount, 'errors' => $errors], "Đã thêm thành công $addedCount khách hàng.");
@@ -1767,10 +1764,6 @@ if (isset($_GET['route']) && $_GET['route'] === 'resolve-step-error') {
     }
 }
 
-
-
-
-
 /**
  * Auto-migrate subscribers who are stuck on a deleted or modified step.
  * This function finds subscribers at steps that no longer exist in the new flow definition
@@ -2163,7 +2156,6 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-next-step') {
             $stmt->execute($params);
             $count = $stmt->rowCount();
 
-
             // Trigger worker with priority if applicable
             $priorityParam = "";
             if (!$selectAll && count($subscriberIds) === 1) {
@@ -2206,7 +2198,6 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-remove') {
         $subscriberIds = $input['subscriber_ids'] ?? [];
         $currentStepId = $input['step_id'] ?? null;
         $selectAll = $input['select_all'] ?? false;
-
 
         if (empty($subscriberIds) && !$selectAll)
             jsonResponse(false, null, 'No subscribers selected');
@@ -2268,7 +2259,6 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-remove') {
                        AND type IN ('failed_email', 'zns_failed', 'zns_skipped')";
             $pdo->prepare($sqlAct)->execute(array_merge([$flowId], $subscriberIds));
         }
-
 
         // Update flow stats
         $stmtUpdateStats = $pdo->prepare("UPDATE flows SET 
@@ -2367,7 +2357,6 @@ if (isset($_GET['route']) && $_GET['route'] === 'inactive-users') {
         jsonResponse(false, null, $e->getMessage());
     }
 }
-
 
 switch ($method) {
     case 'GET':
@@ -2785,6 +2774,10 @@ switch ($method) {
                 }
 
                 if ($trigger && isset($trigger['config']['type']) && $trigger['config']['type'] === 'segment') {
+                    $enrollStrategy = $trigger['config']['enrollStrategy'] ?? 'all';
+                    // [FIX] 'skipped' is not a valid ENUM value for status. Using 'cancelled' instead.
+                    $targetStatus = ($enrollStrategy === 'new_only') ? 'cancelled' : 'waiting';
+
                     if (isset($trigger['nextStepId'])) {
                         $segmentId = $trigger['config']['targetId'];
                         $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
@@ -2862,6 +2855,9 @@ switch ($method) {
                                             $existsCheckSql = "AND NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ?)";
                                         } else {
                                             $checks = [];
+                                            if ($targetStatus === 'cancelled') {
+                                                $checks[] = "NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ? AND sfs.status = 'cancelled')";
+                                            }
                                             if ($maxEnrollments > 0) {
                                                 $checks[] = "(SELECT COUNT(*) FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ?) < $maxEnrollments";
                                             }
@@ -2874,7 +2870,7 @@ switch ($method) {
                                         }
 
                                         $sqlIns = "INSERT INTO subscriber_flow_states (flow_id, subscriber_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at)
-                                                   SELECT ?, s.id, ?, ?, 'waiting', NOW(), NOW(), NOW()
+                                                   SELECT ?, s.id, ?, ?, ?, NOW(), NOW(), NOW()
                                                    FROM subscribers s
                                                    WHERE s.id IN ($placeholders)
                                                    $existsCheckSql";
@@ -2883,13 +2879,16 @@ switch ($method) {
                                         if ($frequency === 'one-time') {
                                             $checkParams[] = $path;
                                         } else {
+                                            if ($targetStatus === 'cancelled') {
+                                                $checkParams[] = $path;
+                                            }
                                             if ($maxEnrollments > 0)
                                                 $checkParams[] = $path;
                                             $checkParams[] = $path;
                                         }
 
-                                        // Params: [flowId, stepId, time] + [sub IDs] + [checkParams]
-                                        $params = array_merge([$path, $trigger['nextStepId'], $initialSchedule], $chunk, $checkParams);
+                                        // Params: [flowId, stepId, time, targetStatus] + [sub IDs] + [checkParams]
+                                        $params = array_merge([$path, $trigger['nextStepId'], $initialSchedule, $targetStatus], $chunk, $checkParams);
 
                                         $stmtIns = $pdo->prepare($sqlIns);
                                         $stmtIns->execute($params);

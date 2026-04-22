@@ -261,7 +261,8 @@ const AdminUsers: React.FC = () => {
                                                     handleToggleStatus(user.email, user.status, user.id);
                                                 }
                                             }}
-                                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all ${user.status === 'approved'
+                                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all ${
+                                                (user.status?.toLowerCase() === 'approved' || user.status?.toLowerCase() === 'active')
                                                 ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                                                 : 'bg-rose-50 text-rose-600 border-rose-100 animate-pulse'
                                                 }`}

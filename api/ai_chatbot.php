@@ -7,7 +7,7 @@ register_shutdown_function(function () {
     if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
         if (!headers_sent()) {
             header('Content-Type: application/json; charset=utf-8');
-            header('Access-Control-Allow-Origin: *');
+            
         }
         echo json_encode([
             'success' => false,
@@ -17,9 +17,7 @@ register_shutdown_function(function () {
 });
 
 // === HEADERS ===
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, X-Requested-With');
+
 header('Access-Control-Expose-Headers: X-Conversation-Id');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS')
@@ -211,7 +209,6 @@ function buildSystemPrompt($settings, $activityContext, $relevantContext, $isIde
         $kbHeaderRules = "";
     }
 
-
     $kbHeader = <<<EOD
 $kbHeaderRules
 ---------------------
@@ -267,7 +264,6 @@ EOD;
     return $prompt;
 }
 
-
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $action = $_GET['action'] ?? '';
@@ -314,7 +310,6 @@ try {
             echo json_encode(['success' => true, 'data' => $pages]);
             exit;
         }
-
 
         if ($action === 'list_conversations') {
             $page = (int) ($_GET['page'] ?? 1);

@@ -1,9 +1,7 @@
 <?php
 // api/surveys.php — Survey Builder API (Auth Required)
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Workspace-ID');
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 
 require_once 'db_connect.php';
@@ -27,7 +25,11 @@ try {
                 ORDER BY s.updated_at DESC
             ");
             $stmt->execute([$workspace_id]);
-            echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($rows as &$row) {
+                $row['settings_json'] = json_decode($row['settings_json'] ?? '{}', true);
+            }
+            echo json_encode(['success' => true, 'data' => $rows]);
             break;
         }
 

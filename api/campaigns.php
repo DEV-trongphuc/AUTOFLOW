@@ -941,7 +941,6 @@ if ($method === 'POST' && $route === 'send_test') {
     }
 }
 
-
 switch ($method) {
     case 'GET':
         // [PERF] Release session lock immediately to prevent "Pending" state in DevTools

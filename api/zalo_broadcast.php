@@ -8,9 +8,6 @@ require_once 'db_connect.php';
 require_once 'zalo_helpers.php';
 require_once 'auth_middleware.php'; // [FIX] Broadcasts must be workspace-scoped
 
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS, DELETE");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS')
@@ -276,7 +273,6 @@ try {
 
                 $stmtCamp = $pdo->prepare("DELETE FROM zalo_broadcasts WHERE id = ?");
                 $stmtCamp->execute([$id]);
-
 
                 $pdo->commit();
                 echo json_encode(['success' => true, 'message' => 'Deleted successfully']);

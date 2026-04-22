@@ -81,7 +81,7 @@ const ListRow = React.memo(({ list, isSelected, onView, onToggleSelect, onEdit, 
                 </div>
             </td>
             <td className="px-6 py-5 text-right">
-                <span className="text-sm font-black text-slate-800 bg-slate-100 px-3 py-1 rounded-full">{list.count.toLocaleString()}</span>
+                <span className="text-sm font-black text-slate-800 bg-slate-100 px-3 py-1 rounded-full">{(list.count || 0).toLocaleString()}</span>
             </td>
             <td className="px-6 py-5 text-right pr-8">
                 <div className="flex items-center justify-end gap-1">
@@ -293,10 +293,12 @@ const ListsTab: React.FC<ListsTabProps> = ({ loading, lists, currentPage = 1, to
             </div>
             {onPageChange && totalPages > 1 && (
                 <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-                    <p className="text-xs text-slate-500 font-medium">Trang <span className="font-bold text-slate-800">{currentPage.toLocaleString()}</span> / {totalPages.toLocaleString()}</p>
+                    <p className="text-xs text-slate-500 font-medium">Trang <span className="font-bold text-slate-800">{(currentPage || 1).toLocaleString()}</span> / {(totalPages || 1).toLocaleString()}</p>
+
                     <div className="flex gap-2">
                         <button type="button" onClick={() => onPageChange(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"><ChevronLeft className="w-4 h-4" /></button>
-                        <span className="px-4 py-2 bg-slate-50 rounded-lg text-xs font-bold text-slate-600 border border-slate-100">{currentPage.toLocaleString()} / {totalPages.toLocaleString()}</span>
+                        <span className="px-4 py-2 bg-slate-50 rounded-lg text-xs font-bold text-slate-600 border border-slate-100">{(currentPage || 1).toLocaleString()} / {(totalPages || 1).toLocaleString()}</span>
+
                         <button type="button" onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"><ChevronRight className="w-4 h-4" /></button>
                     </div>
                 </div>

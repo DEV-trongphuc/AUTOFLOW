@@ -7,7 +7,6 @@
 require_once 'db_connect.php';
 require_once 'auth_middleware.php';
 
-header("Access-Control-Allow-Origin: *");
 header('Content-Type: application/json');
 
 $scenarioId = $_GET['id'] ?? '';

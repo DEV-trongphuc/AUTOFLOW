@@ -423,7 +423,6 @@ function sendZNSMessage($pdo, $oaConfigId, $templateId, $phoneNumber, $templateD
     ];
 }
 
-
 /**
  * Send ZNS via Zalo User ID (UID)
  * Endpoint: https://openapi.zalo.me/v3.0/oa/message/template

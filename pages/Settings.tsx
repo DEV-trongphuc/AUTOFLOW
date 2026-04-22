@@ -1,5 +1,5 @@
 
-import { API_BASE_URL } from '@/utils/config';
+import { API_BASE_URL, DEMO_MODE } from '@/utils/config';
 import React, { useState, useEffect } from 'react';
 import {
     Save, Database, Mail, ShieldCheck, Globe,
@@ -134,9 +134,16 @@ const Settings: React.FC = () => {
         }
         setIsTesting(true);
         try {
+            // [ISOLATION] Never call production API from DEMO_MODE
+            if (DEMO_MODE) {
+                await new Promise(r => setTimeout(r, 800));
+                const emailToSubmit = testEmail.trim() || `test_${Math.floor(Math.random() * 1000)}@ka-en.com.vn`;
+                toast.success(`[DEMO] Giả lập Form submit thành công cho ${emailToSubmit}!`);
+                setEngineResult('[DEMO] ✅ Form submitted → Flow trigger queued → Worker processed (simulated)');
+                return;
+            }
             const endpoint = `${apiUrl.replace(/\/$/, '')}/forms.php?route=submit`;
             const emailToSubmit = testEmail.trim() || `test_${Math.floor(Math.random() * 1000)}@ka-en.com.vn`;
-
             const testData = {
                 form_id: selectedFormId,
                 email: emailToSubmit,
@@ -144,18 +151,14 @@ const Settings: React.FC = () => {
                 lastName: 'Form Lead',
                 source: 'Settings Sandbox'
             };
-
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(testData)
             });
             const result = await response.json();
-
             if (result.success) {
                 toast.success(`Gửi Form thành công cho ${emailToSubmit}!`);
-                // Since forms.php now directly calls worker_priority.php, no need to manually run engine here.
-                // We can optionally refresh logs after a short delay to see the worker output.
                 setTimeout(() => refreshWorkerLog('worker_priority'), 1000);
             } else {
                 toast.error(result.message || 'Lỗi khi gửi data test');
@@ -174,9 +177,16 @@ const Settings: React.FC = () => {
         }
         setIsTesting(true);
         try {
+            // [ISOLATION] Never call production API from DEMO_MODE
+            if (DEMO_MODE) {
+                await new Promise(r => setTimeout(r, 800));
+                const emailToSubmit = testPurchaseEmail.trim() || `buyer_${Math.floor(Math.random() * 1000)}@ka-en.com.vn`;
+                toast.success(`[DEMO] Giả lập đơn hàng ${Number(testPurchaseAmount).toLocaleString('vi-VN')}đ thành công cho ${emailToSubmit}!`);
+                setEngineResult('[DEMO] ✅ Purchase event tracked → Subscriber updated → Flow trigger queued (simulated)');
+                return;
+            }
             const endpoint = `${apiUrl.replace(/\/$/, '')}/purchase_events.php?route=track`;
             const emailToSubmit = testPurchaseEmail.trim() || `buyer_${Math.floor(Math.random() * 1000)}@ka-en.com.vn`;
-
             const payload = {
                 event_id: selectedEventId,
                 email: emailToSubmit,
@@ -184,21 +194,16 @@ const Settings: React.FC = () => {
                 lastName: "VIP",
                 total_value: parseFloat(testPurchaseAmount) || 0,
                 currency: "VND",
-                items: [
-                    { name: "Sản phẩm Test A", price: parseFloat(testPurchaseAmount) }
-                ]
+                items: [{ name: "Sản phẩm Test A", price: parseFloat(testPurchaseAmount) }]
             };
-
             const response = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             });
             const result = await response.json();
-
             if (result.success) {
                 toast.success(`Ghi nhận đơn hàng thành công cho ${emailToSubmit}!`);
-                // purchase_events.php now directly calls worker_priority.php
                 setTimeout(() => refreshWorkerLog('worker_priority'), 1000);
             } else {
                 toast.error(result.message || 'Lỗi API mua hàng');
@@ -217,30 +222,31 @@ const Settings: React.FC = () => {
         }
         setIsTesting(true);
         try {
+            // [ISOLATION] Never call production API from DEMO_MODE
+            if (DEMO_MODE) {
+                await new Promise(r => setTimeout(r, 800));
+                const emailToSubmit = testCustomEmail.trim() || `user_${Math.floor(Math.random() * 1000)}@ka-en.com.vn`;
+                toast.success(`[DEMO] Custom event triggered thành công cho ${emailToSubmit}!`);
+                setEngineResult('[DEMO] ✅ Custom event received → Subscriber tagged → Automation flow activated (simulated)');
+                return;
+            }
             const endpoint = `${apiUrl.replace(/\/$/, '')}/custom_events.php?route=track`;
             const emailToSubmit = testCustomEmail.trim() || `user_${Math.floor(Math.random() * 1000)}@ka-en.com.vn`;
-
             const payload = {
                 event_id: selectedCustomEventId,
                 email: emailToSubmit,
                 firstName: "Custom",
                 lastName: "User",
-                properties: {
-                    test: true,
-                    source: "sandbox"
-                }
+                properties: { test: true, source: "sandbox" }
             };
-
             const response = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             });
             const result = await response.json();
-
             if (result.success) {
                 toast.success(`Trigger sự kiện thành công cho ${emailToSubmit}!`);
-                // custom_events.php now directly calls worker_priority.php
                 setTimeout(() => refreshWorkerLog('worker_priority'), 1000);
             } else {
                 toast.error(result.message || 'Lỗi API Custom Event');
@@ -256,7 +262,21 @@ const Settings: React.FC = () => {
         setIsRunningEnrollment(true);
         setEngineResult(null);
         try {
-            const url = apiUrl.replace(/\/$/, '') + '/worker_enroll.php'; // Call the enrollment worker
+            // [ISOLATION] Never call production worker from DEMO_MODE
+            if (DEMO_MODE) {
+                await new Promise(r => setTimeout(r, 1200));
+                setEngineResult(`[DEMO] ✅ Enrollment Worker executed (simulated)
+
+[${new Date().toISOString()}] INFO: Checking active flows...
+[${new Date().toISOString()}] INFO: Found 4 active flows
+[${new Date().toISOString()}] INFO: Checking trigger conditions...
+[${new Date().toISOString()}] INFO: 12 subscribers matched enrollment criteria
+[${new Date().toISOString()}] INFO: 12 subscribers enrolled into automation flows
+[${new Date().toISOString()}] SUCCESS: Enrollment batch complete. Processed: 12, Skipped: 0, Errors: 0`);
+                toast.success('[DEMO] Bộ máy enrollment đã chạy thành công!');
+                return;
+            }
+            const url = apiUrl.replace(/\/$/, '') + '/worker_enroll.php';
             const response = await fetch(url);
             const text = await response.text();
             setEngineResult(text);

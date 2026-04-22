@@ -61,8 +61,8 @@ if ($secretKey) {
         exit;
     }
 } else {
-    // No secretKey configured — log warning but continue (OA not fully set up yet)
-    error_log("[Zalo Webhook] WARNING: No secretKey found for OA:$oaId — skipping signature check");
+    // No secretKey configured ï¿½ log warning but continue (OA not fully set up yet)
+    error_log("[Zalo Webhook] WARNING: No secretKey found for OA:$oaId ï¿½ skipping signature check");
 }
 
 // 4. Log the event (Crucial for debugging and audit)

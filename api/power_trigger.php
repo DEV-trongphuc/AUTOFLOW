@@ -15,7 +15,6 @@ set_time_limit(600);
 
 echo "--- POWER TRIGGER (V4 - CHAIN EXECUTION) ---\n";
 
-
 try {
     $now = date('Y-m-d H:i:s');
     $BATCH_SIZE = 500;

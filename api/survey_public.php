@@ -2,9 +2,7 @@
 // api/survey_public.php — Public Survey API (No Auth Required)
 // Rate limited: 10 submissions per IP per hour
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, X-Session-Token, X-Survey-Source');
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 
 require_once 'db_connect.php';
@@ -335,6 +333,78 @@ try {
             $detailStmt->execute([generateUUID(), $responseId, $survey['id'], $ans['question_id'], $answerText, $answerNum, $answerJson]);
         }
 
+        // VOUCHER REWARD EVALUATION
+        $claimedVoucherCode = null;
+        if (!empty($settingsObj['voucher_config']['enabled']) && !empty($settingsObj['voucher_config']['campaign_id']) && $subscriberId) {
+            $vConfig = $settingsObj['voucher_config'];
+            $targetRewardItemId = $vConfig['fallback_reward_item_id'] ?? null;
+            
+            // Evaluate logic conditions if provided
+            if (!empty($vConfig['logic_mappings']) && is_array($vConfig['logic_mappings'])) {
+                foreach ($vConfig['logic_mappings'] as $mapping) {
+                    $cond = $mapping['condition'] ?? null;
+                    if (!$cond || empty($cond['question_id'])) continue;
+                    
+                    $qId = $cond['question_id'];
+                    $op = $cond['operator'] ?? 'equals';
+                    $val = $cond['value'] ?? '';
+                    
+                    // Find answer for this question
+                    $ansMatched = null;
+                    foreach ($answers as $a) {
+                        if (($a['question_id'] ?? '') === $qId) {
+                            $ansMatched = $a;
+                            break;
+                        }
+                    }
+                    
+                    if (!$ansMatched) {
+                        if ($op === 'is_empty') {
+                            $targetRewardItemId = $mapping['reward_item_id'] ?? $targetRewardItemId;
+                            break;
+                        }
+                        continue; // No answer provided
+                    }
+                    
+                    $isMatched = false;
+                    $actualText = strtolower(trim((string)($ansMatched['answer_text'] ?? $ansMatched['answer_num'] ?? '')));
+                    $expectedText = strtolower(trim((string)$val));
+                    
+                    if ($op === 'is_answered') {
+                        $isMatched = true;
+                    } else if ($op === 'is_empty') {
+                        $isMatched = empty($actualText);
+                    } else if ($op === 'equals' && $actualText === $expectedText) {
+                        $isMatched = true;
+                    } else if ($op === 'not_equals' && $actualText !== $expectedText) {
+                        $isMatched = true;
+                    } else if ($op === 'contains' && strpos($actualText, $expectedText) !== false) {
+                        $isMatched = true;
+                    } else if ($op === 'greater_than' && (float)$actualText > (float)$expectedText) {
+                        $isMatched = true;
+                    } else if ($op === 'less_than' && (float)$actualText < (float)$expectedText) {
+                        $isMatched = true;
+                    }
+                    
+                    if ($isMatched) {
+                        $targetRewardItemId = $mapping['reward_item_id'] ?? $targetRewardItemId;
+                        break; // Stop at first match
+                    }
+                }
+            }
+            
+            if ($vConfig['campaign_id']) {
+                require_once 'voucher_helper.php';
+                $claimRes = claimVoucherAtomic($pdo, $vConfig['campaign_id'], $subscriberId, $targetRewardItemId, 'survey', $survey['id'], 'survey_voucher_claimed');
+                if ($claimRes['success'] && !empty($claimRes['code'])) {
+                    $claimedVoucherCode = $claimRes['code'];
+                    // Update survey response with claimed code
+                    $pdo->prepare("UPDATE survey_responses SET claimed_voucher_code = ? WHERE id = ?")
+                        ->execute([$claimedVoucherCode, $responseId]);
+                }
+            }
+        }
+
         // Flow trigger — priority worker (same as forms.php pattern)
         if ($subscriberId) {
             try {
@@ -397,6 +467,7 @@ try {
             'success'      => true,
             'response_id'  => $responseId,
             'thank_you'    => $thankYou,
+            'voucher_code' => $claimedVoucherCode,
             'redirect_url' => $thankYou['redirectUrl'] ?? null,
         ]);
         exit;

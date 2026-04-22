@@ -16,7 +16,6 @@ $id = $_GET['id'] ?? '';              // Internal UUID
 $template_id = $_GET['template_id'] ?? ''; // Zalo's numeric template_id
 $oa_id = $_GET['oa_id'] ?? '';
 
-
 try {
     switch ($method) {
         case 'GET':

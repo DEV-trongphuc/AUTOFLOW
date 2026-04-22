@@ -26,12 +26,12 @@ if (!empty($origin)) {
 header('Vary: Origin');
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
+
 if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'])) {
     header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
 } else {
     header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Admin-Token, x-autoflow-auth');
 }
-
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -72,8 +72,6 @@ if (defined('ENV_API_URL')) {
     // Production default (can be overridden by a config file or env var)
     define('API_BASE_URL', 'https://automation.ideas.edu.vn/mail_api');
 }
-
-
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
 $options = [
@@ -119,7 +117,6 @@ function ensure_pdo_alive(&$pdo)
         exit(1); 
     }
 }
-
 
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
@@ -321,6 +318,17 @@ if ($adminTokenHeader === ADMIN_BYPASS_TOKEN) {
     }
 }
 
+// ── PRIORITY 5: Local Dev Bypass (Fix 401 on localhost without cookies) ──
+$isLocalDev = strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') !== false || strpos($_SERVER['HTTP_HOST'] ?? '', '127.0.0.1') !== false;
+if ($isLocalDev && empty($current_admin_id) && empty($_SESSION['user_id'])) {
+    $localUserId = $normalizedHeaders['x-local-dev-user'] ?? $_SERVER['HTTP_X_LOCAL_DEV_USER'] ?? '';
+    if (!empty($localUserId)) {
+        $current_admin_id = $localUserId;
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $_SESSION['user_id'] = $localUserId;
+        }
+    }
+}
 
 $GLOBALS['current_admin_id'] = $current_admin_id;
 

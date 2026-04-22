@@ -177,8 +177,8 @@ const ZaloTemplateModal: React.FC<ZaloTemplateModalProps> = ({ isOpen, onClose, 
     };
 
     const filteredTemplates = templates.filter(t =>
-        t.template_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.template_id.includes(searchTerm)
+        (t.template_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (t.template_id || '').includes(searchTerm)
     );
 
     if (!isOpen) return null;

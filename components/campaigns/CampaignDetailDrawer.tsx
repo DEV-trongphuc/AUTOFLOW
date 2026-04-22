@@ -391,7 +391,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                             }`}>
                                 {localCampaign.status === 'sending' && <RefreshCw className="w-2.5 h-2.5 animate-spin" />}
                                 {localCampaign.status === 'paused' && <PauseCircle className="w-2.5 h-2.5" />}
-                                {localCampaign.status.toUpperCase()}
+                                {(localCampaign.status || 'DRAFT').toUpperCase()}
                             </Badge>
                             {localCampaign.status === 'sending' && localCampaign.totalTargetAudience > 0 && (
                                 <span className="text-[10px] md:text-xs font-black text-slate-400">

@@ -4,6 +4,8 @@ import { Menu, Search, ChevronRight, ShieldAlert, MessageCircle, ExternalLink, C
 import { useLocation } from 'react-router-dom';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { useIsAdmin } from '../../hooks/useAuthUser';
+import { DEMO_MODE } from '../../utils/config';
+
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -68,15 +70,29 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         <div className="relative group">
           <div className="flex items-center gap-3 cursor-pointer p-1.5 pr-2 rounded-3xl bg-gradient-to-r from-amber-50/30 to-amber-50/20 hover:from-amber-50/60 hover:to-amber-50/40 transition-all group/user border border-amber-100/30 hover:border-amber-200/50 shadow-sm hover:shadow-lg hover:shadow-amber-600/10">
             <div className="hidden sm:flex flex-col items-end mr-1">
-              <p className="text-sm font-black bg-gradient-to-r from-slate-800 to-slate-700 hover:from-amber-600 hover:to-amber-600 bg-clip-text text-transparent leading-none transition-all">IDEAS EDU</p>
+              <p className="text-sm font-black bg-gradient-to-r from-slate-800 to-slate-700 hover:from-amber-600 hover:to-amber-600 bg-clip-text text-transparent leading-none transition-all">DOMATION</p>
               <div className="mt-1.5 relative">
-                {/* Glow effect - always visible */}
-                <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-amber-600 rounded-full blur-md opacity-20 group-hover/user:opacity-50 transition-opacity"></div>
-                {/* Badge - gradient always visible */}
-                <div className="relative flex items-center gap-1.5 bg-gradient-to-br from-amber-400 to-amber-600 px-2.5 py-1 rounded-full transition-all shadow-md shadow-amber-600/20 group-hover/user:shadow-lg group-hover/user:shadow-amber-600/30 group-hover/user:scale-105">
-                  <div className="w-1.5 h-1.5 rounded-full bg-white dark:bg-slate-950/80 animate-pulse"></div>
-                  <span className="text-[9px] font-black text-white uppercase tracking-widest leading-none">PRO MAX</span>
-                </div>
+                {DEMO_MODE ? (
+                  <>
+                    {/* Glow effect - always visible */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-amber-600 rounded-full blur-md opacity-20 group-hover/user:opacity-50 transition-opacity"></div>
+                    {/* Badge - gradient always visible */}
+                    <div className="relative flex items-center gap-1.5 bg-gradient-to-br from-amber-400 to-amber-600 px-2.5 py-1 rounded-full transition-all shadow-md shadow-amber-600/20 group-hover/user:shadow-lg group-hover/user:shadow-amber-600/30 group-hover/user:scale-105">
+                      <div className="w-1.5 h-1.5 rounded-full bg-white dark:bg-slate-950/80 animate-pulse"></div>
+                      <span className="text-[9px] font-black text-white uppercase tracking-widest leading-none">DEMO MODE</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Glow effect - always visible */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-amber-600 rounded-full blur-md opacity-20 group-hover/user:opacity-50 transition-opacity"></div>
+                    {/* Badge - gradient always visible */}
+                    <div className="relative flex items-center gap-1.5 bg-gradient-to-br from-amber-400 to-amber-600 px-2.5 py-1 rounded-full transition-all shadow-md shadow-amber-600/20 group-hover/user:shadow-lg group-hover/user:shadow-amber-600/30 group-hover/user:scale-105">
+                      <div className="w-1.5 h-1.5 rounded-full bg-white dark:bg-slate-950/80 animate-pulse"></div>
+                      <span className="text-[9px] font-black text-white uppercase tracking-widest leading-none">PRO MAX</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
             <div className="relative">
@@ -86,7 +102,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
               <div className="relative w-12 h-12 rounded-full p-[2.5px] bg-gradient-to-br from-amber-400 via-amber-600 to-amber-600 transition-all shadow-lg shadow-amber-600/20 group-hover/user:shadow-xl group-hover/user:shadow-amber-600/40 group-hover/user:scale-105">
                 <div className="w-full h-full rounded-full bg-white dark:bg-slate-950/80 flex items-center justify-center overflow-hidden">
                   <div className="w-full h-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white font-black text-sm group-hover/user:from-amber-600 group-hover/user:to-amber-800 transition-all">
-                    ID
+                    DO
                   </div>
                 </div>
               </div>

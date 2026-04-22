@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '@/utils/config';
+import { API_BASE_URL, DEMO_MODE } from '@/utils/config';
 import * as React from 'react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { UserCheck } from 'lucide-react';
@@ -800,6 +800,26 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
     const fetchTemplatePreview = useCallback(async (templateId: string) => {
         // Skip if already cached
         if (templatePreviews[templateId]) return;
+
+        // [ISOLATION] In DEMO_MODE, never call the production PHP endpoint.
+        // Return a realistic static preview so the wizard UI still demonstrates correctly.
+        if (DEMO_MODE) {
+            const demoHtml = `<div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:32px;background:#fff;border-radius:16px">
+                <div style="background:linear-gradient(135deg,#ffa900,#ff6b00);padding:24px;border-radius:12px;text-align:center;margin-bottom:24px">
+                    <h1 style="color:#fff;margin:0;font-size:22px;font-weight:900">✉️ DOMATION Campaign</h1>
+                    <p style="color:#fff3;margin:8px 0 0;font-size:13px">Template ID: ${templateId}</p>
+                </div>
+                <p style="color:#334155;font-size:15px;line-height:1.7">Xin chào <strong>{{first_name}}</strong>,</p>
+                <p style="color:#64748b;font-size:14px;line-height:1.8">Đây là nội dung mẫu email demo. Trong môi trường thực tế, nội dung template sẽ được render đầy đủ từ Email Builder.</p>
+                <div style="text-align:center;margin:32px 0">
+                    <a href="#" style="background:#ffa900;color:#fff;padding:14px 32px;border-radius:100px;text-decoration:none;font-weight:900;font-size:14px">Xem ngay →</a>
+                </div>
+                <hr style="border:none;border-top:1px solid #f1f5f9;margin:24px 0"/>
+                <p style="color:#94a3b8;font-size:11px;text-align:center">© 2026 DOMATION · <a href="#" style="color:#94a3b8">Hủy đăng ký</a></p>
+            </div>`;
+            setTemplatePreviews(prev => ({ ...prev, [templateId]: demoHtml }));
+            return;
+        }
 
         setLoadingPreview(true);
         try {

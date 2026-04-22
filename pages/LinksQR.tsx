@@ -77,6 +77,9 @@ export interface ShortLink {
     is_survey_checkin: number;
     survey_id: string | null;
     qr_config_json: string;
+    status?: 'active' | 'paused';
+    access_pin?: string | null;
+    submit_count?: number;
     created_at: string;
     stats?: { clicks: number, unique: number };
 }
@@ -107,6 +110,8 @@ const LinksQR: React.FC = () => {
     const [surveySearch, setSurveySearch] = useState('');
     const [isGuideOpen, setIsGuideOpen] = useState(false);
     const [isDesignerOpen, setIsDesignerOpen] = useState(false);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [settingsData, setSettingsData] = useState<Partial<ShortLink>>({});
 
     const [isEditingName, setIsEditingName] = useState(false);
     const [editNameValue, setEditNameValue] = useState('');
@@ -138,6 +143,31 @@ const LinksQR: React.FC = () => {
             }
         } catch (e) {
             toast.error('Lỗi hệ thống');
+        }
+    };
+
+    const handleSaveSettings = async () => {
+        if (!selectedLink) return;
+        setIsSubmitting(true);
+        try {
+            const res = await api.put(`links_qr?action=update&id=${selectedLink.id}`, {
+                target_url: settingsData.target_url,
+                status: settingsData.status,
+                access_pin: settingsData.access_pin || ''
+            });
+            if (res.success) {
+                toast.success('Đã lưu cấu hình bảo mật / chuyển hướng');
+                const updated = { ...selectedLink, ...settingsData };
+                setSelectedLink(updated);
+                setIsSettingsOpen(false);
+                fetchLinks();
+            } else {
+                toast.error('Lỗi cập nhật cấu hình');
+            }
+        } catch (e) {
+            toast.error('Bị lỗi trong lúc lưu thiết lập');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -325,18 +355,38 @@ const LinksQR: React.FC = () => {
                                                         {/* Stats panel */}
                                                         <div className="bg-slate-50 border border-slate-100/80 rounded-xl p-3 flex flex-col gap-1.5 mb-4 relative z-10">
                                                             <div className="flex justify-between items-center">
+                                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Trạng thái</span>
+                                                                <span className={`text-[11px] font-black uppercase flex items-center gap-1 ${link.status === 'paused' ? 'text-rose-500' : 'text-emerald-500'}`}>
+                                                                    <span className={`w-1.5 h-1.5 rounded-full ${link.status === 'paused' ? 'bg-rose-500' : 'bg-emerald-500 animate-pulse'}`}></span>
+                                                                    {link.status === 'paused' ? 'Tạm khóa' : 'Hoạt động'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center">
                                                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Lượt Clicks</span>
                                                                 <div className="flex items-baseline gap-1">
                                                                     <span className="text-xs font-black text-slate-700">{(link.stats?.clicks || 0).toLocaleString()}</span>
                                                                     <span className="text-[10px] font-bold text-slate-400">logs</span>
                                                                 </div>
                                                             </div>
-                                                            <div className="flex justify-between items-center">
-                                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Gateway</span>
-                                                                <span className={`text-[11px] font-black uppercase ${link.is_survey_checkin ? 'text-amber-600' : 'text-slate-500'}`}>
-                                                                    {link.is_survey_checkin ? 'Đã bật Form' : 'Direct Link'}
-                                                                </span>
-                                                            </div>
+                                                            {link.is_survey_checkin ? (
+                                                                <div className="flex justify-between items-center mt-1 pt-1.5 border-t border-slate-100/80">
+                                                                    <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-1"><FileText className="w-3 h-3"/> Khảo sát</span>
+                                                                    <div className="flex items-baseline gap-1">
+                                                                        <span className="text-xs font-black text-indigo-600">{(link.submit_count || 0).toLocaleString()}</span>
+                                                                        <span className="text-[10px] font-bold text-indigo-400">submits</span>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex justify-between items-center">
+                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Gateway</span>
+                                                                    <span className="text-[11px] font-black uppercase text-slate-500">Direct Link</span>
+                                                                </div>
+                                                            )}
+                                                            {link.access_pin && (
+                                                                <div className="text-[9px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded uppercase mt-0.5 self-start flex gap-1 items-center">
+                                                                    <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div> PIN PROTECTED
+                                                                </div>
+                                                            )}
                                                         </div>
 
                                                         {/* CTA buttons */}
@@ -406,10 +456,22 @@ const LinksQR: React.FC = () => {
                                     )}
                                 </div>
 
-                                <div className="flex items-center gap-3 mt-2">
+                                <div className="flex items-center gap-3 mt-2 flex-wrap">
                                     <span className="px-3 py-1 bg-amber-50 text-amber-600 text-[10px] font-black rounded-full border border-amber-200/60 uppercase">/go/{selectedLink.slug}</span>
                                     <div className="w-1 h-1 bg-slate-300 rounded-full" />
                                     <span className="text-[11px] text-slate-400 font-mono italic opacity-70">Domain Link Mapping</span>
+                                    
+                                    {selectedLink.is_survey_checkin && selectedLink.survey_id && (
+                                        <>
+                                            <div className="w-1 h-1 bg-slate-300 rounded-full" />
+                                            <div className="flex items-center gap-1.5 px-2.5 py-0.5 bg-indigo-50 border border-indigo-200/60 text-indigo-700 rounded-lg shadow-sm">
+                                                <FileText className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" />
+                                                <span className="text-[10px] font-bold uppercase tracking-wider">
+                                                    Khảo sát: {surveys.find(s => s.id === selectedLink.survey_id)?.name || 'Đã liên kết'}
+                                                </span>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -430,6 +492,21 @@ const LinksQR: React.FC = () => {
                                     Tạo ngày: {new Date(selectedLink.created_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                 </span>
                             )}
+                            <div className="mt-2 flex justify-end">
+                                <button 
+                                    onClick={() => {
+                                        setSettingsData({
+                                            target_url: selectedLink.target_url,
+                                            status: selectedLink.status || 'active',
+                                            access_pin: selectedLink.access_pin || ''
+                                        });
+                                        setIsSettingsOpen(true);
+                                    }}
+                                    className="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+                                >
+                                    <Target className="w-3.5 h-3.5" /> NÂNG CAO & BẢO MẬT
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -745,6 +822,47 @@ const LinksQR: React.FC = () => {
                     </div>
                 </div>
             </Modal>
+
+            <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title="Nâng cao & Bảo mật" size="md" footer={<div className="flex justify-between w-full"><Button variant="ghost" onClick={() => setIsSettingsOpen(false)}>Hủy</Button><Button onClick={handleSaveSettings} isLoading={isSubmitting} icon={Save}>Cập nhật lưu</Button></div>}>
+                <div className="space-y-6 py-2">
+                    <Input 
+                        label="URL Đích (Redirect target)" 
+                        value={settingsData.target_url || ''} 
+                        onChange={e => setSettingsData({ ...settingsData, target_url: e.target.value })} 
+                        placeholder="https://..." 
+                    />
+                    
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between">
+                        <div>
+                            <h4 className="text-sm font-bold text-slate-800">Trạng thái hoạt động</h4>
+                            <p className="text-[11px] text-slate-500">Tạm dừng truy cập cho chiến dịch này.</p>
+                        </div>
+                        <div 
+                            className={`w-12 h-6 rounded-full flex items-center p-1 cursor-pointer transition-colors ${settingsData.status !== 'paused' ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'}`}
+                            onClick={() => setSettingsData({...settingsData, status: settingsData.status === 'paused' ? 'active' : 'paused'})}
+                        >
+                            <div className="w-4 h-4 bg-white rounded-full shadow-sm"></div>
+                        </div>
+                    </div>
+
+                    <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 space-y-3">
+                        <div className="flex gap-2 items-center">
+                            <div className="p-1.5 bg-amber-100 text-amber-600 rounded-lg"><Target className="w-4 h-4" /></div>
+                            <div>
+                                <h4 className="text-sm font-bold text-amber-900">Mật khẩu PIN Access</h4>
+                                <p className="text-[11px] text-amber-700/80">Người dùng quét QR phải nhập đúng PIN để mở.</p>
+                            </div>
+                        </div>
+                        <Input 
+                            value={settingsData.access_pin || ''} 
+                            onChange={e => setSettingsData({...settingsData, access_pin: e.target.value})} 
+                            placeholder="Tạo mã PIN 4-8 số hoặc để trống..."
+                            maxLength={8}
+                        />
+                    </div>
+                </div>
+            </Modal>
+
             <LinkGuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
             
             {selectedLink && (

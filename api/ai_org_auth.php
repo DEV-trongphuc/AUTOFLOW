@@ -665,7 +665,6 @@ if ($method === 'POST' && $action === 'admin_auto_login') {
     jsonResponse(false, null, 'Unauthorized: Not an admin session');
 }
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // 6. Update Profile
 // ─────────────────────────────────────────────────────────────────────────────

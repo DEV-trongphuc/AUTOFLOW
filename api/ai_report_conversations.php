@@ -4,10 +4,6 @@ require_once 'db_connect.php';
 require_once 'auth_middleware.php';
 require_once 'chat_security.php';
 
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, X-Requested-With, Authorization');
-
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS')
     exit;
 

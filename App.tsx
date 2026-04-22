@@ -60,7 +60,46 @@ const SurveyEditorPage = lazy(() => import('./components/surveys/SurveyEditor' a
 const PublicSurvey = lazy(() => import('./pages/PublicSurvey' as any));
 
 import PremiumLoader from './components/common/PremiumLoader';
-import { API_BASE_URL } from '@/utils/config';
+import { API_BASE_URL, DEMO_MODE } from '@/utils/config';
+import axios from 'axios';
+
+// [SECURITY] Strict Demo Mode Isolation
+// Any rogue `axios` or `fetch` calls in new components that bypass `storageAdapter.ts`
+// will be intercepted here and prevented from hitting the production server.
+if (DEMO_MODE) {
+    const originalAdapter = axios.defaults.adapter;
+    axios.defaults.adapter = (config: any) => {
+        if (config.url?.includes(API_BASE_URL) || config.url?.includes('.php')) {
+            console.warn('[DEMO MODE] Blocked rogue axios request:', config.url);
+            return Promise.resolve({
+                data: { success: true, data: [], message: 'Mocked by Demo Guard' },
+                status: 200,
+                statusText: 'OK',
+                headers: {},
+                config: config,
+                request: {}
+            });
+        }
+        if (originalAdapter) {
+            return (originalAdapter as any)(config);
+        }
+        // Fallback for newer axios versions where adapter is not set by default
+        return Promise.reject(new Error('No original adapter'));
+    };
+
+    const originalFetch = window.fetch;
+    window.fetch = async function () {
+        const url = arguments[0];
+        if (typeof url === 'string' && (url.includes(API_BASE_URL) || url.includes('.php'))) {
+            console.warn('[DEMO MODE] Blocked rogue fetch request:', url);
+            return new Response(JSON.stringify({ success: true, data: [] }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+        return originalFetch.apply(this, arguments as any);
+    };
+}
 
 // Loading fallback component — only for initial cold boot
 const PageLoader = () => <PremiumLoader title="AI-SPACE" subtitle="Đang tải ứng dụng..." />;
@@ -132,9 +171,12 @@ const GlobalDeleteOverlay = () => {
 
 const App: React.FC = () => {
     useEffect(() => {
+        // [ISOLATION] Skip all production auth side-effects in DEMO_MODE
+        if (DEMO_MODE) return;
+
         // --- FORCE ONE-TIME LOGOUT TO FIX CORRUPTED SESSIONS ---
-        if (!localStorage.getItem('auth_fix_v1_logout_done')) {
-            localStorage.setItem('auth_fix_v1_logout_done', 'true');
+        if (!localStorage.getItem('auth_fix_v3_logout_done_prod')) {
+            localStorage.setItem('auth_fix_v3_logout_done_prod', 'true');
             if (localStorage.getItem('user')) {
                 localStorage.removeItem('user');
                 localStorage.removeItem('isAuthenticated');
@@ -176,6 +218,8 @@ const App: React.FC = () => {
         // [NEW] Ping auth.php to refresh last_login every 5 minutes
         // db_connect.php already throttles the UPDATE to max once per 5 min via session
         const pingActivity = () => {
+            // [ISOLATION] Never ping production backend from DEMO_MODE
+            if (DEMO_MODE) return;
             if (document.visibilityState !== 'visible') return;
             fetch(`${apiBase}/auth.php?action=ping`, { method: 'GET', credentials: 'include' }).catch(() => { });
         };

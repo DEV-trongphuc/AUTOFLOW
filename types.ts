@@ -260,6 +260,7 @@ export interface VoucherCampaign {
     isClaimable?: boolean;
     claimApprovalRequired?: boolean;
     claimEmailTemplateId?: string; // which email template context to use
+    claimTargetFormId?: string; // Which form to link to
 }
 
 export interface VoucherCode {
@@ -273,6 +274,8 @@ export interface VoucherCode {
     expirationDays?: number;
     expiresAt?: string;
     status: 'available' | 'distributed' | 'redeemed';
+    claimedSource?: string;
+    claimedSourceId?: string;
 }
 
 export type EmailBlockType = 'section' | 'row' | 'column' | 'text' | 'image' | 'button' | 'spacer' | 'divider' | 'social' | 'video' | 'html' | 'list' | 'header' | 'countdown' | 'quote' | 'timeline' | 'review' | 'order_list' | 'check_list' | 'table' | 'voucher';

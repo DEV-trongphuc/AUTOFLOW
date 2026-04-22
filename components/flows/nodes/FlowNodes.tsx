@@ -275,7 +275,7 @@ export const WaitNode: React.FC<NodeProps> = ({ step, onClick, isViewMode, isDra
 };
 
 export const ConditionNode: React.FC<NodeProps> = ({ step, onClick, isViewMode, hasWarning, isReportMode, reportStats }) => {
-    const incomplete = !step.config.conditionType || !step.config.waitDuration;
+    const incomplete = !step.config.conditionType || step.config.waitDuration === undefined;
     const unitMap: any = { minutes: 'phút', hours: 'giờ', days: 'ngày', weeks: 'tuần' };
 
     const getActionInfo = () => {
@@ -321,10 +321,17 @@ export const ConditionNode: React.FC<NodeProps> = ({ step, onClick, isViewMode, 
                         </div>
                     </div>
                     {!incomplete ? (
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
-                            <Hourglass className="w-3 h-3 text-amber-600" />
-                            <span>Wait: {step.config.waitDuration} {unitMap[step.config.waitUnit] || 'giờ'}</span>
-                        </div>
+                        step.config.waitDuration === 0 ? (
+                            <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-amber-600 bg-amber-50 px-3 py-2 rounded-xl border border-amber-200">
+                                <Zap className="w-3.5 h-3.5" />
+                                <span>Check và Rẽ nhánh tức thì</span>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
+                                <Hourglass className="w-3 h-3 text-amber-600" />
+                                <span>Wait: {step.config.waitDuration} {unitMap[step.config.waitUnit] || 'giờ'}</span>
+                            </div>
+                        )
                     ) : (
                         <div className="text-[10px] text-rose-600 font-bold bg-rose-50 px-3 py-2 rounded-xl text-center border border-rose-100">
                             {isViewMode ? 'Not configured' : 'Chưa cấu hình'}

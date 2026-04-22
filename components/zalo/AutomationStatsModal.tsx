@@ -1,11 +1,11 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { X, Send, MousePointer, Clock, User, MessageCircle } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import Input from '../common/Input';
 import { Search } from 'lucide-react';
-import { API_BASE_URL } from '@/utils/config';
+import { API_BASE_URL, DEMO_MODE } from '@/utils/config';
 
 interface AutomationStatsModalProps {
     scenario: any;
@@ -31,6 +31,19 @@ const AutomationStatsModal: React.FC<AutomationStatsModalProps> = ({ scenario, o
     }, [searchTerm, selectedBtn]);
 
     const fetchSummary = async () => {
+        if (DEMO_MODE) {
+            setSummary({
+                sent: 1284,
+                clicks: 342,
+                ctr: '26.6%',
+                button_stats: [
+                    { details: 'Click Button: Xem ưu đãi', count: 198 },
+                    { details: 'Click Button: Liên hệ tư vấn', count: 89 },
+                    { details: 'Click Link: https://domation.vn', count: 55 },
+                ],
+            });
+            return;
+        }
         try {
             const res = await axios.get(`${API_BASE_URL}/zalo_stats.php?route=summary&id=${scenario.id}`);
             if (res.data.success) {
@@ -43,6 +56,23 @@ const AutomationStatsModal: React.FC<AutomationStatsModalProps> = ({ scenario, o
 
     const fetchLogs = async (pageNum: number, reset = false) => {
         setLoading(true);
+        if (DEMO_MODE) {
+            await new Promise(r => setTimeout(r, 300));
+            const DEMO_NAMES = ['Nguyễn Văn A', 'Trần Thị B', 'Lê Quang C', 'Phạm Thị D', 'Hoàng Văn E'];
+            const types = ['automation_trigger', 'click', 'automation_trigger', 'automation_trigger', 'click'];
+            const mockLogs = Array.from({ length: 20 }).map((_, i) => ({
+                id: `log_${pageNum}_${i}`,
+                display_name: DEMO_NAMES[i % DEMO_NAMES.length],
+                avatar: '',
+                type: types[i % types.length],
+                details: types[i % types.length] === 'click' ? 'Click Button: Xem ưu đãi' : 'Nhận tin nhắn kịch bản',
+                created_at: new Date(Date.now() - i * 3600000 * (pageNum)).toISOString(),
+            }));
+            setHasMore(pageNum < 3);
+            setLogs(prev => reset ? mockLogs : [...prev, ...mockLogs]);
+            setLoading(false);
+            return;
+        }
         try {
             const res = await axios.get(`${API_BASE_URL}/zalo_stats.php?route=logs&id=${scenario.id}&page=${pageNum}&q=${searchTerm}&btn=${selectedBtn}`);
             if (res.data.success) {

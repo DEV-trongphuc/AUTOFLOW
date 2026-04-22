@@ -35,10 +35,10 @@ const FlowCard = React.memo<FlowCardProps>(({
 }) => {
     const isArchived = flow.status === 'archived';
     const isActive = flow.status === 'active';
-    const enrolled = flow.stats.enrolled || 0;
+    const enrolled = (flow.stats?.enrolled) || 0;
 
     const completionRate = enrolled > 0
-        ? Math.round(((flow.stats.completed || 0) / enrolled) * 100)
+        ? Math.round(((flow.stats?.completed || 0) / enrolled) * 100)
         : 0;
 
     // [PERF-F3] Backend list view strips steps to trigger only — use step_count if provided
@@ -81,7 +81,7 @@ const FlowCard = React.memo<FlowCardProps>(({
             if (!linkedForm && triggerConfig.targetId) {
                 accent = 'rose';
                 gradient = 'from-rose-400 to-red-500';
-                formName = `Form đã xóa [${triggerConfig.targetId.substring(0, 6)}]`;
+                formName = `Form đã xóa [${(triggerConfig.targetId || '').substring(0, 6)}]`;
             }
 
             return {
@@ -100,7 +100,7 @@ const FlowCard = React.memo<FlowCardProps>(({
             let gradient = 'from-pink-400 to-rose-500';
 
             if (!linkedPurchaseEvent && triggerConfig.targetId) {
-                label = `Event Mua [${triggerConfig.targetId.substring(0, 6)}] đã xóa`;
+                label = `Event Mua [${(triggerConfig.targetId || '').substring(0, 6)}] đã xóa`;
                 accent = 'rose';
                 gradient = 'from-rose-400 to-red-500';
             }
@@ -121,7 +121,7 @@ const FlowCard = React.memo<FlowCardProps>(({
             let gradient = 'from-violet-500 to-indigo-600';
 
             if (!linkedCustomEvent && triggerConfig.targetId) {
-                label = `Event [${triggerConfig.targetId.substring(0, 6)}] đã xóa`;
+                label = `Event [${(triggerConfig.targetId || '').substring(0, 6)}] đã xóa`;
                 accent = 'rose';
                 gradient = 'from-rose-400 to-red-500';
             }

@@ -92,7 +92,7 @@ const IntegrationsTab: React.FC<IntegrationsTabProps> = ({ integrations, onEdit,
                                             <span className="text-sm font-black text-slate-800 bg-slate-100 px-3 py-1 rounded-full">
                                                 {(() => {
                                                     const targetList = lists.find(l => l.id == config.targetListId);
-                                                    return targetList ? targetList.count.toLocaleString() : '0';
+                                                    return targetList ? (targetList.count || 0).toLocaleString() : '0';
                                                 })()}
                                             </span>
                                         </td>

@@ -56,7 +56,7 @@ type TriggerTypeFilter = 'all' | 'segment' | 'date' | 'campaign' | 'form' | 'tag
 type FlowViewTab = 'builder' | 'analytics' | 'settings';
 
 const getReachableSteps = (steps: FlowStep[]): FlowStep[] => {
-    const trigger = steps.find(s => s.type === 'trigger');
+    const trigger = steps?.find(s => s.type === 'trigger');
     if (!trigger) return [];
 
     const reachableIds = new Set<string>();
@@ -65,7 +65,7 @@ const getReachableSteps = (steps: FlowStep[]): FlowStep[] => {
         const currentId = queue.shift()!;
         if (reachableIds.has(currentId)) continue;
 
-        const s = steps.find(step => step.id === currentId);
+        const s = steps?.find(step => step.id === currentId);
         if (!s) continue;
 
         reachableIds.add(currentId);
@@ -96,7 +96,7 @@ const getReachableSteps = (steps: FlowStep[]): FlowStep[] => {
  * preceding Action (Email/Zalo) or Campaign Trigger.
  */
 const autoFixConditionTargets = (steps: FlowStep[]): FlowStep[] => {
-    const trigger = steps.find(s => s.type === 'trigger');
+    const trigger = steps?.find(s => s.type === 'trigger');
     if (!trigger) return steps;
 
     // Use JSON parse/stringify for deep copy to avoid mutating original state incorrectly during calculation
@@ -367,7 +367,7 @@ const Flows: React.FC = () => {
                         ...prev,
                         stats: flowRes.data.stats,
                         steps: prev.steps.map(s => {
-                            const updatedStep = flowRes.data.steps.find(us => us.id === s.id);
+                            const updatedStep = flowRes.data.steps?.find(us => us.id === s.id);
                             return updatedStep ? { ...s, stats: updatedStep.stats } : s;
                         })
                     };
@@ -456,7 +456,7 @@ const Flows: React.FC = () => {
         if (!isSilent && updated.status === 'active' && !skipApi) {
             const trigger = updated.steps?.find(s => s.type === 'trigger');
             if (trigger?.config?.type === 'campaign' && trigger.config.targetId) {
-                const campaign = campaigns.find(c => c.id === trigger.config.targetId);
+                const campaign = campaigns?.find(c => c.id === trigger.config.targetId);
                 if (campaign && (campaign.status === 'waiting_flow' || campaign.status === 'draft')) {
                     setActivateContext({ flow: updated });
                     setIsActivateModalOpen(true);
@@ -474,7 +474,7 @@ const Flows: React.FC = () => {
         const cleanedSteps = getReachableSteps(fixedSteps);
 
         // Derive trigger_type for backend indexing
-        const trigger = cleanedSteps.find(s => s.type === 'trigger');
+        const trigger = cleanedSteps?.find(s => s.type === 'trigger');
         const triggerType = trigger?.config?.type || null;
 
         const flowToSave = {
@@ -691,7 +691,7 @@ const Flows: React.FC = () => {
             if (!cancelled && asyncErrors.length > 0) {
                 setValidationErrors(prev => {
                     // Tránh trùng lặp: loại bỏ errors cũ có cùng stepId + loại async
-                    const dedupedPrev = prev.filter(e => !asyncErrors.some(ae => ae.stepId === e.stepId && ae.msg === e.msg));
+                    const dedupedPrev = prev.filter(e => !(asyncErrors || []).some(ae => ae.stepId === e.stepId && ae.msg === e.msg));
                     return [...dedupedPrev, ...asyncErrors];
                 });
             }
@@ -797,7 +797,7 @@ const Flows: React.FC = () => {
     useEffect(() => {
         const navState = (location as any).state;
         if (navState?.openFlowId && flows.length > 0) {
-            const targetFlow = flows.find(f => f.id === navState.openFlowId);
+            const targetFlow = flows?.find(f => f.id === navState.openFlowId);
             if (targetFlow) {
                 setSelectedFlow(JSON.parse(JSON.stringify(targetFlow)));
                 const initialTab = navState.tab || 'builder';
@@ -1341,7 +1341,7 @@ const Flows: React.FC = () => {
     const handleDeleteStep = (stepId: string) => {
         if (!selectedFlow) return;
         const steps = selectedFlow.steps || [];
-        const stepToDelete = steps.find(s => s.id === stepId);
+        const stepToDelete = steps?.find(s => s.id === stepId);
         if (!stepToDelete) return;
 
         // Smart Delete Logic: Find the child of the deleted step to bridge the gap
@@ -1637,7 +1637,7 @@ const Flows: React.FC = () => {
                                             className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 border border-slate-100 dark:border-slate-800/60 hover:border-slate-200 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 transition-all"
                                         >
                                             <Filter className="w-3.5 h-3.5 text-slate-400" />
-                                            <span>{triggerTypes.find(t => t.id === filterType)?.label}</span>
+                                            <span>{triggerTypes?.find(t => t.id === filterType)?.label}</span>
                                             <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
                                         </button>
                                         {isTypeDropdownOpen && (
@@ -1785,7 +1785,7 @@ const Flows: React.FC = () => {
                         <FlowHeader
                             flow={selectedFlow}
                             isSaving={isSaving}
-                            hasCriticalErrors={validationErrors.some(e => e.type === 'critical')}
+                            hasCriticalErrors={(validationErrors || []).some(e => e.type === 'critical')}
                             isViewMode={isViewMode}
                             activeTab={flowViewTab}
                             durationInfo={durationInfo}
@@ -1811,7 +1811,7 @@ const Flows: React.FC = () => {
                                 const newStatus = isNowActive ? 'paused' : 'active';
                                 if (newStatus === 'active') {
                                     const errors = validateFlow(selectedFlow, flows, true);
-                                    if (errors.some(e => e.type === 'critical')) {
+                                    if ((errors || []).some(e => e.type === 'critical')) {
                                         setValidationErrors(errors);
                                         setConfirmModal({
                                             isOpen: true,
@@ -2195,7 +2195,7 @@ const Flows: React.FC = () => {
 
                     // 3. Update structure locally
                     const steps = [...(selectedFlow.steps || []), waitStep, newStep];
-                    const parentStep = steps.find(s => s.id === parentId);
+                    const parentStep = steps?.find(s => s.id === parentId);
                     if (parentStep) {
                         const linkKey = branch === 'yes' ? 'yesStepId' : (branch === 'no' ? 'noStepId' : (branch === 'A' ? 'pathAStepId' : (branch === 'B' ? 'pathBStepId' : 'nextStepId')));
                         (parentStep as any)[linkKey] = waitStepId;
@@ -2241,7 +2241,7 @@ const Flows: React.FC = () => {
                     };
 
                     const steps = [...(selectedFlow.steps || []), waitStep, newStep];
-                    const parentStep = steps.find(s => s.id === parentId);
+                    const parentStep = steps?.find(s => s.id === parentId);
                     if (parentStep) {
                         const linkKey = branch === 'yes' ? 'yesStepId' : (branch === 'no' ? 'noStepId' : (branch === 'A' ? 'pathAStepId' : (branch === 'B' ? 'pathBStepId' : 'nextStepId')));
                         (parentStep as any)[linkKey] = waitStepId;
@@ -2265,7 +2265,7 @@ const Flows: React.FC = () => {
                 onClose={() => { setIsActivateModalOpen(false); setActivateContext(null); }}
                 onConfirm={handleConfirmActivation}
                 flowName={activateContext?.flow?.name || ''}
-                linkedCampaignName={campaigns.find(c => c.id === activateContext?.flow?.steps?.find(s => s.type === 'trigger')?.config?.targetId)?.name}
+                linkedCampaignName={campaigns?.find(c => c.id === activateContext?.flow?.steps?.find(s => s.type === 'trigger')?.config?.targetId)?.name}
                 isLoading={isSaving}
             />
             {
@@ -2374,7 +2374,7 @@ const Flows: React.FC = () => {
             <StepParticipantsModal
                 isOpen={isParticipantsModalOpen}
                 onClose={() => setIsParticipantsModalOpen(false)}
-                title={selectedAnalyticsStepId ? (selectedFlow?.steps.find(s => s.id === selectedAnalyticsStepId)?.label || 'Báo cáo bước') : 'Báo cáo'}
+                title={selectedAnalyticsStepId ? (selectedFlow?.steps?.find(s => s.id === selectedAnalyticsStepId)?.label || 'Báo cáo bước') : 'Báo cáo'}
                 participants={modalParticipants}
                 loading={loadingParticipants}
                 pagination={analyticsPagination}
@@ -2384,9 +2384,9 @@ const Flows: React.FC = () => {
                 onSearchChange={setAnalyticsSearchTerm}
                 activeTab={analyticsActiveTab}
                 onTabChange={setAnalyticsActiveTab}
-                getStepName={(id) => selectedFlow?.steps.find(s => s.id === id)?.label || 'Unknown'}
-                stepType={selectedFlow?.steps.find(s => s.id === selectedAnalyticsStepId)?.type}
-                stepConfig={selectedFlow?.steps.find(s => s.id === selectedAnalyticsStepId)?.config}
+                getStepName={(id) => selectedFlow?.steps?.find(s => s.id === id)?.label || 'Unknown'}
+                stepType={selectedFlow?.steps?.find(s => s.id === selectedAnalyticsStepId)?.type}
+                stepConfig={selectedFlow?.steps?.find(s => s.id === selectedAnalyticsStepId)?.config}
                 flowId={selectedFlow?.id}
                 stepId={selectedAnalyticsStepId || undefined}
             />

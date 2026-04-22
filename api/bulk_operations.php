@@ -155,7 +155,6 @@ try {
         }
     }
 
-
     if (empty($subscriberIds) && $type !== 'import') {
         if ($pdo->inTransaction())
             $pdo->commit();
@@ -204,7 +203,6 @@ try {
                 $pdo->beginTransaction();
             }
             break;
-
 
         case 'tag_add':
             $tag = $data['tag'] ?? '';

@@ -802,7 +802,7 @@ class FlowExecutor
                     $isTimedOut = new DateTime('now') > $timeout;
 
                     // Forced Fail on Email Error
-                    if ($hasEmailError && in_array($condType, ['opened', 'clicked'])) {
+                    if (($hasEmailError && in_array($condType, ['opened', 'clicked'])) || (isset($hasZnsError) && $hasZnsError && strpos($condType, 'zns_') === 0)) {
                         $logs[] = "  -> Condition forced NO due to email error.";
                         $nextStepId = $step['noStepId'] ?? null;
                         $isInstantStep = true;
@@ -820,22 +820,38 @@ class FlowExecutor
                     // [NEW] Survey Condition Evaluation
                     if (strpos($condType, 'survey_') === 0) {
                         $targetSurveyId = $linkedCampaignId;
-                        $sqlResp = "SELECT * FROM survey_responses WHERE subscriber_id = ?";
-                        $paramsResp = [$subscriberId];
-                        
-                        // [FIX] Allow 1 hour grace period before queue creation to catch the survey response that triggered the flow
-                        $graceStartTime = !empty($queueCreatedAt) ? $queueCreatedAt : $startTime;
-                        $sqlResp .= " AND created_at >= ?";
-                        $paramsResp[] = (new DateTime($graceStartTime))->modify('-1 hour')->format('Y-m-d H:i:s');
-
-                        if ($targetSurveyId) {
-                            $sqlResp .= " AND survey_id = ?";
-                            $paramsResp[] = $targetSurveyId;
+                        $cacheKey = "{$subscriberId}_{$targetSurveyId}";
+                        if (!isset(self::$profileCache['_survey_responses'])) {
+                            self::$profileCache['_survey_responses'] = [];
                         }
-                        $sqlResp .= " ORDER BY created_at DESC LIMIT 1";
-                        $stmtR = $this->pdo->prepare($sqlResp);
-                        $stmtR->execute($paramsResp);
-                        $latestResp = $stmtR->fetch();
+
+                        if (isset(self::$profileCache['_survey_responses'][$cacheKey])) {
+                            $latestResp = self::$profileCache['_survey_responses'][$cacheKey];
+                        } else {
+                            $sqlResp = "SELECT * FROM survey_responses WHERE subscriber_id = ?";
+                            $paramsResp = [$subscriberId];
+                            
+                            // [FIX] Allow 1 hour grace period before queue creation to catch the survey response that triggered the flow
+                            $graceStartTime = !empty($queueCreatedAt) ? $queueCreatedAt : $startTime;
+                            $sqlResp .= " AND created_at >= ?";
+                            $paramsResp[] = (new DateTime($graceStartTime))->modify('-1 hour')->format('Y-m-d H:i:s');
+
+                            if ($targetSurveyId) {
+                                $sqlResp .= " AND survey_id = ?";
+                                $paramsResp[] = $targetSurveyId;
+                            }
+                            $sqlResp .= " ORDER BY created_at DESC LIMIT 1";
+                            $stmtR = $this->pdo->prepare($sqlResp);
+                            $stmtR->execute($paramsResp);
+                            $latestResp = $stmtR->fetch(PDO::FETCH_ASSOC);
+
+                            // [MEMORY GUARD] Prune cache to maximum 200 elements
+                            if (count(self::$profileCache['_survey_responses']) >= 200) {
+                                reset(self::$profileCache['_survey_responses']);
+                                unset(self::$profileCache['_survey_responses'][key(self::$profileCache['_survey_responses'])]);
+                            }
+                            self::$profileCache['_survey_responses'][$cacheKey] = $latestResp;
+                        }
 
                         if ($latestResp) {
                             if ($condType === 'survey_score') {

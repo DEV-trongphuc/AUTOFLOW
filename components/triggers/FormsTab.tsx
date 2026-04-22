@@ -240,7 +240,7 @@ const FormsTab: React.FC = () => {
                                 <div className="h-8 w-px bg-slate-200"></div>
                                 <div className="flex flex-col items-end">
                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Số trường</span>
-                                    <span className="text-sm font-black text-slate-700">{form.fields.length} <span className="text-[10px] font-medium text-slate-400">fields</span></span>
+                                    <span className="text-sm font-black text-slate-700">{(form.fields || []).length} <span className="text-[10px] font-medium text-slate-400">fields</span></span>
                                 </div>
                             </div>
 

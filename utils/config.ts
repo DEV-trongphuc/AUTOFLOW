@@ -3,8 +3,15 @@
  */
 
 // Determine if running locally (e.g., localhost or 127.0.0.1)
+// Determine if running locally (e.g., localhost or 127.0.0.1)
 export const isLocal = typeof window !== 'undefined' && 
     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+// Enable Demo Mode if running on specific demo domains (No manual toggle needed)
+export const DEMO_MODE = typeof window !== 'undefined' && (
+    window.location.hostname === 'open.domation.net' || 
+    window.location.hostname === 'open.automation.net'
+);
 
 // Resolve API_BASE_URL: (Internal context, resolves to local proxy if in Dev Mode)
 export const API_BASE_URL = typeof window !== 'undefined' && localStorage.getItem('mailflow_api_url') 

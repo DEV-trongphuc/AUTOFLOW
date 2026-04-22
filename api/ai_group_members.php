@@ -5,9 +5,6 @@
  */
 
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -20,7 +17,6 @@ require_once __DIR__ . '/ai_org_middleware.php';
 // [SECURITY] Require authenticated session; group member ops are privileged
 // (Owner-level checks are enforced per-action via hasPermission() below)
 $currentOrgUser = requireAISpaceAuth();
-
 
 // Helper function: Check if user has permission
 function hasPermission($pdo, $groupId, $userEmail, $requiredRole = 'viewer')

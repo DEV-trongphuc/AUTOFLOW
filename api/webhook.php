@@ -59,7 +59,6 @@ if ($method === 'POST') {
     file_put_contents($logFile, date('[Y-m-d H:i:s] ') . "POST | Payload: " . (strlen($input) > 2048 ? substr($input, 0, 2048) . '...[truncated]' : ($input ?: 'EMPTY')) . "\n", FILE_APPEND);
 }
 
-
 if ($method === 'GET' && !isset($_GET['type'])) {
     checkZaloAutomationSchema($pdo);
     echo "<h1>MailFlow Pro - Zalo Webhook Listener</h1>";
@@ -136,7 +135,6 @@ if ($method === 'POST') {
                             exit;
                         }  // end idempotency check
 
-
                         if (in_array($event, array_merge(['follow', 'user_submit_info', 'user_reacted_message', 'user_feedback'], $msgEvents))) {
                             $accessToken = ensureZaloToken($pdo, $oaConfig['id']);
                             if ($accessToken) {
@@ -177,7 +175,6 @@ if ($method === 'POST') {
                             ob_end_flush();
                             flush();
                         }
-
 
                         // --- 1. DATA EXTRACTION LOGIC (Email & Phone) ---
                         if ($subId && ($event === 'user_send_text' || $event === 'user_submit_info')) {
@@ -632,7 +629,6 @@ if ($method === 'POST') {
                                 } // end batch processing
                                 // -----------------------------------------
 
-
                                 // Payload Click Tracking & Debounce (Robust for batches & spaces)
                                 // Regex: Optional spaces around |, alphanumeric/underscore ID, Base64 label
                                 if (preg_match_all('/\s*\|\s*([a-zA-Z0-9_]+):([A-Za-z0-9+\/]+={0,2})/', $msgText, $matches, PREG_SET_ORDER)) {
@@ -737,7 +733,6 @@ if ($method === 'POST') {
                                         }
                                     }
                                 }
-
 
                                 // Search Keyword Scenarios
                                 // --- HOLIDAY SCENARIO CHECK ---
@@ -911,7 +906,6 @@ if ($method === 'POST') {
                                         file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ❌ AI query returned NULL for oa_config_id={$oaConfig['id']}. All ai_reply rows: $dbgInfo\n", FILE_APPEND);
                                     }
                                 }
-
 
                                 // First Message Logic
                                 if (!$scenario) {

@@ -2,12 +2,9 @@
 require_once 'db_connect.php';
 require_once 'auth_middleware.php';
 // api/gemini_tts.php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS')
     exit;
-
 
 // Enable error logging
 ini_set('display_errors', 0);

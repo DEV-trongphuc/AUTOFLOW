@@ -345,7 +345,7 @@ const Templates: React.FC = () => {
 
     const filteredTemplates = allMergedTemplates.filter(t => {
         const matchesGroup = filterGroupId === 'all' || t.groupId === filterGroupId;
-        const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = (t.name || '').toLowerCase().includes(searchTerm.toLowerCase());
         return matchesGroup && matchesSearch;
     });
 

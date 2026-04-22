@@ -47,3 +47,20 @@ ALTER TABLE `tags`
 --   Mở trình duyệt → https://[domain]/mail_api/run_migration.php?secret=autoflow_migrate_2026
 --   Hoặc SSH/CLI → php api/run_migration.php
 -- ============================================================
+
+ALTER TABLE `voucher_codes`
+  ADD COLUMN IF NOT EXISTS `claimed_source` VARCHAR(50) DEFAULT NULL AFTER `expires_at`,
+  ADD COLUMN IF NOT EXISTS `claimed_source_id` VARCHAR(36) DEFAULT NULL AFTER `claimed_source`,
+  ADD INDEX IF NOT EXISTS `idx_claimed_source` (`claimed_source`, `claimed_source_id`),
+  ADD INDEX IF NOT EXISTS `idx_subscriber` (`subscriber_id`);
+
+ALTER TABLE `voucher_claims`
+  ADD COLUMN IF NOT EXISTS `source_channel` VARCHAR(50) DEFAULT NULL AFTER `status`,
+  ADD COLUMN IF NOT EXISTS `source_id` VARCHAR(36) DEFAULT NULL AFTER `source_channel`,
+  ADD INDEX IF NOT EXISTS `idx_source` (`source_channel`, `source_id`);
+
+ALTER TABLE `survey_responses`
+  ADD COLUMN IF NOT EXISTS `claimed_voucher_code` VARCHAR(50) DEFAULT NULL AFTER `time_spent_sec`;
+
+ALTER TABLE `voucher_campaigns`
+  ADD COLUMN IF NOT EXISTS `claim_target_form_id` VARCHAR(36) DEFAULT NULL AFTER `claim_email_template_id`;

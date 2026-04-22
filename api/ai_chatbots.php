@@ -58,7 +58,6 @@ if (!empty($_POST)) {
 // Logic moved to setup_ai_db.php and check_ai_schema.php for better performance.
 // Only keep if strictly necessary for zero-downtime, but here it's redundant.
 
-
 try {
     switch ($action) {
         case 'list_categories':

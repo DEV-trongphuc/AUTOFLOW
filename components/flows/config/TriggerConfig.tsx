@@ -136,7 +136,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
     }, []);
 
     const triggerOptions = [
-        { id: 'segment', label: 'Phân khúc động', icon: Layers, color: 'orange', desc: 'Bộ lọc thông minh' },
+        { id: 'segment', label: 'Danh sách & Phân khúc', icon: Layers, color: 'orange', desc: 'Bộ lọc thông minh' },
         { id: 'form', label: 'Gửi Biểu mẫu', icon: FileInput, color: 'amber', desc: 'Từ Landing Page' },
         { id: 'survey', label: 'Làm Khảo sát', icon: ClipboardList, color: 'emerald', desc: 'Hoàn thành Survey' },
         { id: 'purchase', label: 'Khách hàng Mua', icon: ShoppingCart, color: 'pink', desc: 'Sự kiện API' },
@@ -432,6 +432,52 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                     />
                                 ))
                             }
+
+                            {triggerType === 'segment' && config.targetId && (
+                                <div className="p-5 bg-white border border-slate-200 rounded-[24px] space-y-4 shadow-sm mt-4 animate-in slide-in-from-bottom-2">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h4 className="text-sm font-bold text-slate-800">Cơ chế gửi & Enrollment</h4>
+                                            <p className="text-[11px] text-slate-500 mt-1">Thiết lập đối tượng nhận khi kích hoạt luồng này.</p>
+                                        </div>
+                                        <div className="p-2 bg-emerald-50 rounded-lg text-emerald-500">
+                                            <Users className="w-5 h-5" />
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="space-y-3 pt-2">
+                                        <label className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${config.enrollStrategy !== 'new_only' ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-slate-100 hover:border-slate-200 bg-white'}`}>
+                                            <input 
+                                                type="radio" 
+                                                name="enrollStrategy" 
+                                                className="mt-1 accent-emerald-500" 
+                                                checked={config.enrollStrategy !== 'new_only'}
+                                                onChange={() => onChange({ ...config, enrollStrategy: 'all' }, getLabelForType(triggerType, config.targetId, targetSubtype, config.dateField))}
+                                                disabled={disabled}
+                                            />
+                                            <div>
+                                                <p className="text-xs font-bold text-slate-800">Gửi cho toàn bộ (Cũ & Mới)</p>
+                                                <p className="text-[10px] text-slate-500 leading-relaxed mt-0.5">Hệ thống sẽ kéo <b>toàn bộ dữ liệu hiện có</b> trong danh sách này vào luồng ngay khi bấm Active, đồng thời áp dụng cho cả người mới về sau.</p>
+                                            </div>
+                                        </label>
+                                        
+                                        <label className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${config.enrollStrategy === 'new_only' ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-slate-100 hover:border-slate-200 bg-white'}`}>
+                                            <input 
+                                                type="radio" 
+                                                name="enrollStrategy" 
+                                                className="mt-1 accent-blue-500" 
+                                                checked={config.enrollStrategy === 'new_only'}
+                                                onChange={() => onChange({ ...config, enrollStrategy: 'new_only' }, getLabelForType(triggerType, config.targetId, targetSubtype, config.dateField))}
+                                                disabled={disabled}
+                                            />
+                                            <div>
+                                                <p className="text-xs font-bold text-slate-800">Chỉ gửi cho người mới</p>
+                                                <p className="text-[10px] text-slate-500 leading-relaxed mt-0.5">Bỏ qua dữ liệu cũ. Chỉ những ai <b>mới tham gia (Join)</b> vào danh sách kể từ lúc Flow được Active mới nhận được tin.</p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* CASE: FORM SUBMIT */}
                             {triggerType === 'form' && forms

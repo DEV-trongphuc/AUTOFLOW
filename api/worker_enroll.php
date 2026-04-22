@@ -30,12 +30,12 @@ if ($lockStmt->fetchColumn() !== 1) {
 register_shutdown_function(function () use ($pdo) {
     try {
         $pdo->query("DO RELEASE_LOCK('worker_enroll_lock')");
-    } catch (Throwable $e) { /* ignore — connection may already be closed */ }
+    } catch (Throwable $e) { /* ignore ï¿½ connection may already be closed */ }
 });
 
-// 1. Segment Sync — QUEUE-BASED (replaces full blocking scan)
+// 1. Segment Sync ï¿½ QUEUE-BASED (replaces full blocking scan)
 // [FIX] Old approach: SELECT COUNT(*) for ALL segments before any enrollment.
-// With 200 segments × 1s each = 200s wasted ? timeout before enrollment starts.
+// With 200 segments ï¿½ 1s each = 200s wasted ? timeout before enrollment starts.
 // New approach: Only sync segments that have pending updates in segment_count_update_queue
 // (inserted by cleanup/split/exclude operations), plus any segment not synced in >1 hour.
 // Cap at 20 per run to bound worst-case sync time to ~20s.
@@ -80,7 +80,7 @@ try {
         $syncedSegments++;
     }
 
-    // Priority 2: Stale segments (not synced in 1 hour) — fill up remaining slots
+    // Priority 2: Stale segments (not synced in 1 hour) ï¿½ fill up remaining slots
     $remaining = $syncLimit - $syncedSegments;
     if ($remaining > 0) {
         $stmtStale = $pdo->prepare(
@@ -91,7 +91,7 @@ try {
         $stmtStale->execute([$remaining]);
         foreach ($stmtStale->fetchAll() as $seg) {
             if (empty($seg['criteria'])) {
-                // [FIX P30-D1] Mirror of queue branch — explicit count for consistency
+                // [FIX P30-D1] Mirror of queue branch ï¿½ explicit count for consistency
                 $stmtAll2 = $pdo->query("SELECT COUNT(*) FROM subscribers WHERE status IN ('active','lead','customer')");
                 $allCount2 = (int) $stmtAll2->fetchColumn();
                 $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ?")
@@ -112,8 +112,6 @@ try {
 }
 
 $logs[] = "[Segment] Synced $syncedSegments segment(s) (queue-based, max $syncLimit).";
-
-
 
 // 2. Standard Flow Enrollment
 $logs[] = "[Enrollment] Checking active flows for new enrollments...";
@@ -163,11 +161,19 @@ foreach ($activeFlows as $flow) {
 
     $existsCheckSql = "";
     $checkParams = [];
+    $checks = [];
+    
+    // [NEW_ONLY FIX] If enrollStrategy is new_only, NEVER enroll users who were marked as 'cancelled' during activation.
+    $enrollStrategy = $tConfig['enrollStrategy'] ?? 'all';
+    if ($enrollStrategy === 'new_only') {
+        $checks[] = "NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ? AND sfs.status = 'cancelled')";
+        $checkParams[] = $flow['id'];
+    }
+
     if ($frequency === 'one-time') {
-        $existsCheckSql = "AND NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ?)";
+        $checks[] = "NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ?)";
         $checkParams[] = $flow['id'];
     } else {
-        $checks = [];
         if ($maxEnrollments > 0) {
             $checks[] = "(SELECT COUNT(*) FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ?) < $maxEnrollments";
             $checkParams[] = $flow['id'];
@@ -184,6 +190,9 @@ foreach ($activeFlows as $flow) {
             )";
             $checkParams[] = $flow['id'];
         }
+    }
+    
+    if (!empty($checks)) {
         $existsCheckSql = "AND " . implode(" AND ", $checks);
     }
 

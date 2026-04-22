@@ -21,6 +21,7 @@ const PublicSurvey: React.FC = () => {
     const [submitted, setSubmitted] = useState(false);
     const [thankYouData, setThankYouData] = useState<any>(null);
     const [quizResult, setQuizResult] = useState<{ score: number; maxScore: number } | null>(null);
+    const [voucherCode, setVoucherCode] = useState<string | null>(null);
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
     const startTime = useRef(Date.now());
     const sessionToken = useRef(crypto.randomUUID());
@@ -283,6 +284,8 @@ const PublicSurvey: React.FC = () => {
                 setSubmitted(true);
                 let tyScreen = overrideThanksId ? (survey.thankYouPages?.find(p => p.id === overrideThanksId) || survey.thankYouPage) : survey.thankYouPage;
                 setThankYouData(res.thank_you || tyScreen);
+                if (res.voucher_code) setVoucherCode(res.voucher_code);
+                
                 if (survey.settings?.quiz?.enabled && survey.settings?.quiz?.scoringType === 'immediate') {
                     setQuizResult({ score, maxScore });
                 }
@@ -367,6 +370,21 @@ const PublicSurvey: React.FC = () => {
                                 <span className="text-6xl font-black leading-none" style={{ color: theme.primaryColor }}>{quizResult.score}</span>
                                 <span className="text-2xl font-bold opacity-30 mb-2">/ {quizResult.maxScore}</span>
                             </div>
+                        </div>
+                    )}
+
+                    {voucherCode && (
+                        <div className="mt-6 mb-2 bg-amber-50/50 border border-amber-200 rounded-2xl p-6 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-400/20 blur-2xl rounded-full" />
+                            <h3 className="text-[11px] font-black text-amber-600 uppercase tracking-widest mb-3 flex items-center justify-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                                Phần quà của bạn
+                            </h3>
+                            <div className="bg-white border-2 border-dashed border-amber-300 rounded-xl py-3 px-4 shadow-sm relative group cursor-pointer" onClick={() => { navigator.clipboard.writeText(voucherCode); toast.success('Đã sao chép mã!'); }}>
+                                <p className="text-2xl font-mono font-black text-amber-600 tracking-wider break-all">{voucherCode}</p>
+                                <div className="absolute inset-0 bg-amber-500 text-white font-bold text-xs flex items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 transition-all">Bấm để sao chép</div>
+                            </div>
+                            <p className="text-[10px] text-amber-700/60 mt-2 font-medium">Chụp màn hình hoặc lưu mã này lại để sử dụng nhé!</p>
                         </div>
                     )}
 

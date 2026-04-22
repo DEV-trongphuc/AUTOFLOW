@@ -383,7 +383,6 @@ function updatePropertyTermStats($pdo, $propertyId)
     }
 }
 
-
 // --- API ACTIONS ---
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -652,7 +651,6 @@ try {
                 $totalPages = 50;
             $totalChunks = (int) ceil($totalPages / $pagesPerChunk);
 
-
             // Resolve API key
             $stmtKey = $pdo->prepare("SELECT s.gemini_api_key, c.gemini_api_key as cat_key FROM ai_chatbot_settings s LEFT JOIN ai_chatbots b ON s.property_id = b.id LEFT JOIN ai_chatbot_settings c ON b.category_id = c.property_id WHERE s.property_id = ? LIMIT 1");
             $stmtKey->execute([$propertyId]);
@@ -780,7 +778,6 @@ try {
             exit;
         }
 
-
         // --- NEW ACTION: PROCESS TRAINING (RUN IMMEDIATELY) ---
         if ($action === 'train_docs') {
             $docIds = $input['doc_ids'] ?? [];
@@ -849,7 +846,6 @@ try {
                         ->execute($docIds);
                 }
 
-
                 echo json_encode([
                     'success' => true,
                     'message' => "Hệ thống đã đưa vào hàng đợi huấn luyện $docCount tài liệu. Quá trình này sẽ chạy ngầm, bạn có thể đóng tab này.",
@@ -882,7 +878,6 @@ try {
             // Let's assume the user selects a valid one or we force 'models/gemini-2.5-flash-lite-001' for now if generic.
             if ($modelName == 'models/gemini-2.5-flash-lite')
                 $modelName = 'models/gemini-2.5-flash-lite-001';
-
 
             // 2. Fetch ALL Active Content
             $stmtDocs = $pdo->prepare("SELECT content, name FROM ai_training_docs WHERE property_id = ? AND is_active = 1

@@ -1101,7 +1101,7 @@ const Audience: React.FC = () => {
                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Khách hàng mới</p>
                                 <div className="flex items-center gap-2">
                                     <h5 className="text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight">
-                                        {reportStats ? reportStats.growth.toLocaleString() : (
+                                        {reportStats ? (reportStats.growth?.toLocaleString() || '0') : (
                                             <span style={{ display: 'inline-block', width: 60, height: 28, borderRadius: 6, background: '#e2e8f0', position: 'relative', overflow: 'hidden', verticalAlign: 'bottom' }}><span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)', animation: 'sk-shimmer 1.4s ease-in-out infinite', transform: 'translateX(-100%)' }} /></span>
                                         )}
                                     </h5>
@@ -1124,7 +1124,7 @@ const Audience: React.FC = () => {
                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Khách hoạt động</p>
                                 <div className="flex items-center gap-2">
                                     <h5 className="text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight">
-                                        {reportStats ? reportStats.active.toLocaleString() : (
+                                        {reportStats ? (reportStats.active?.toLocaleString() || '0') : (
                                             <span style={{ display: 'inline-block', width: 60, height: 28, borderRadius: 6, background: '#e2e8f0', position: 'relative', overflow: 'hidden', verticalAlign: 'bottom' }}><span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)', animation: 'sk-shimmer 1.4s ease-in-out infinite', transform: 'translateX(-100%)' }} /></span>
                                         )}
                                     </h5>
@@ -1147,7 +1147,7 @@ const Audience: React.FC = () => {
                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Rời bỏ (Churn)</p>
                                 <div className="flex items-center gap-2">
                                     <h5 className="text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight">
-                                        {reportStats ? reportStats.churn.toLocaleString() : (
+                                        {reportStats ? (reportStats.churn?.toLocaleString() || '0') : (
                                             <span style={{ display: 'inline-block', width: 60, height: 28, borderRadius: 6, background: '#e2e8f0', position: 'relative', overflow: 'hidden', verticalAlign: 'bottom' }}><span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)', animation: 'sk-shimmer 1.4s ease-in-out infinite', transform: 'translateX(-100%)' }} /></span>
                                         )}
                                     </h5>

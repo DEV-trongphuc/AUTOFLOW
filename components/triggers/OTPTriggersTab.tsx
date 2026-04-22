@@ -138,7 +138,7 @@ const OTPTriggersTab: React.FC = () => {
                                 </div>
                                 <div className="min-w-0">
                                     <h4 className="text-base font-bold text-slate-800 leading-tight truncate pr-2">{p.name}</h4>
-                                    <p className="text-[10px] text-slate-400 font-medium mt-1">ID: {p.id.slice(0, 8)}...</p>
+                                    <p className="text-[10px] text-slate-400 font-medium mt-1">ID: {p.id?.slice(0, 8)}...</p>
                                 </div>
                             </div>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

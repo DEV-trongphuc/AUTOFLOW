@@ -252,7 +252,6 @@ try {
             $pdo->prepare("DELETE FROM ai_workspace_files WHERE file_url = ?")->execute([$fileUrl]);
         }
 
-
         // 2. Hard delete from global_assets (permanent removal)
         if (empty($validIdsToDelete)) {
             echo json_encode(['success' => true, 'message' => 'No matching assets found or authorized to delete.']);

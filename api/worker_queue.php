@@ -52,7 +52,6 @@ $now = date('Y-m-d H:i:s');
 $workerId = getmypid();
 $maxJobs = 200; // Process up to 200 jobs per run
 
-
 // 0. RESET HUNG JOBS (Reclaim jobs that crashed/timed out)
 // If a job is stuck in 'processing' for more than 15 minutes, it likely crashed.
 $pdo->prepare("UPDATE queue_jobs SET status = 'pending', attempts = attempts + 1, available_at = NOW() 
@@ -487,7 +486,6 @@ foreach ($jobs as $jobItem) {
 
                 $jobSuccess = true;
                 break;
-
 
             default:
                 $jobError = "Unknown job type: $jobType";

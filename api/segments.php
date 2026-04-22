@@ -16,7 +16,6 @@ $route = $_GET['route'] ?? null;
 // If you're deploying fresh: run api/db_indexes_audit.sql which includes these columns.
 // Existing production installs already have these columns from a previous deploy.
 
-
 if ($method === 'POST' && $route === 'estimate') {
     $data = json_decode(file_get_contents("php://input"), true);
     // Criteria can be passed as 'criteria' key. Array or string.

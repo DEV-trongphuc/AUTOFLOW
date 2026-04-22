@@ -52,7 +52,6 @@ if (isset($_GET['route']) && $_GET['route'] === 'delete_delivery_log') {
     }
 }
 
-
 // --- ROUTE: Fetch logs ---
 if ($type === 'delivery') {
     $sql = "SELECT id, recipient, subject, status, error_message, sent_at FROM mail_delivery_logs WHERE 1=1";

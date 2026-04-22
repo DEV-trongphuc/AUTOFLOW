@@ -279,7 +279,6 @@ $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]); // [FIX P16-B4]
 file_put_contents(__DIR__ . '/worker_reminder.log', implode("\n", $logs) . "\n", FILE_APPEND | LOCK_EX);
 echo implode("\n", $logs);
 
-
 // Helper for Merge Tags (Simplified)
 function resolveMergeTags_Deprecated($text, $sub)
 {

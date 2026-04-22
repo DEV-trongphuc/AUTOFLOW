@@ -43,7 +43,7 @@ export const KeyboardShortcutsProvider: React.FC<{ children: React.ReactNode }> 
                 {keys.map((k, i) => (
                     <React.Fragment key={i}>
                         <kbd className="px-2 py-1 bg-slate-100 border-b-2 border-slate-300 rounded text-[10px] font-black text-slate-600 min-w-[24px] text-center">
-                            {k.toUpperCase()}
+                            {(k ?? '').toUpperCase()}
                         </kbd>
                         {i < keys.length - 1 && <span className="text-slate-300 self-center text-[10px]">+</span>}
                     </React.Fragment>

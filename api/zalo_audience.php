@@ -9,14 +9,8 @@ require_once 'auth_middleware.php';
 require_once 'zalo_helpers.php';
 
 // CORS Headers
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-header('Content-Type: application/json');
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0);
-}
+header('Content-Type: application/json');
 
 // [SECURITY] Require authenticated workspace session — accesses Zalo OA credentials & subscriber data
 // Exception: upload_image route is called during broadcast create (checked below), still needs auth

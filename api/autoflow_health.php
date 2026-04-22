@@ -131,7 +131,6 @@ $items[] = chk('worker_tracking_aggregator: checkStrategicIndexes() won\'t re-ad
 
 $report['sections'][] = sec('Code Fix Verification', $items);
 
-
 // --- 2. CONFLICT DETECTION BETWEEN FILES -------------------------------------
 $items = [];
 
@@ -187,7 +186,6 @@ $items[] = chk('zalo_helpers.php: ensureZaloToken() function exists',
 
 $report['sections'][] = sec('Conflict Detection', $items);
 
-
 // --- 3. MYSQL CONFIG (Workers override per-session, global is secondary) ------
 $items = [];
 $mv = [];
@@ -215,7 +213,6 @@ $items[] = chk('max_allowed_packet', round((int)($mv['max_allowed_packet'] ?? 0)
     round((int)($mv['max_allowed_packet'] ?? 0)/1024/1024) . ' MB');
 
 $report['sections'][] = sec('MySQL Configuration', $items);
-
 
 // --- 4. TABLE HEALTH (Fixed index count query) -------------------------------
 $items = [];
@@ -281,7 +278,6 @@ try {
 
 } catch(Exception $e){ $items[] = chk('Table health', 'FAIL', $e->getMessage()); }
 $report['sections'][] = sec('Table Health', $items);
-
 
 // --- 5. DATA INTEGRITY -------------------------------------------------------
 $items = [];
@@ -354,7 +350,6 @@ try {
 } catch(Exception $e){ $items[] = chk('Data integrity', 'FAIL', $e->getMessage()); }
 $report['sections'][] = sec('Data Integrity', $items);
 
-
 // --- 6. BUSINESS LOGIC -------------------------------------------------------
 $items = [];
 try {
@@ -398,7 +393,6 @@ try {
 } catch(Exception $e){ $items[] = chk('Business logic', 'FAIL', $e->getMessage()); }
 $report['sections'][] = sec('Business Logic Sanity', $items);
 
-
 // --- 7. LOG FILE HEALTH -------------------------------------------------------
 $items = [];
 $logs = [
@@ -421,7 +415,6 @@ foreach ($logs as $file => [$warn, $fail]) {
     $items[] = chk("LOG: $file", $st, "{$mb} MB", $st !== 'PASS' ? "Rotate! thresh={$warn}MB/{$fail}MB" : '');
 }
 $report['sections'][] = sec('Log File Sizes', $items);
-
 
 // --- Summary -----------------------------------------------------------------
 $totals = ['PASS'=>0,'WARN'=>0,'FAIL'=>0,'INFO'=>0];

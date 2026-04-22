@@ -1,8 +1,6 @@
 <?php
 // api/web_analytics.php - Receive and process web tracking data
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -240,10 +238,8 @@ function handleFormSubmit($pdo, $visitorId, $sessionId, $pageUrl, $data, $timest
         $pdo->prepare("UPDATE web_visitors SET subscriber_id = ? WHERE visitor_id = ?")->execute([$subscriberId, $visitorId]);
 
         // Update all page views
-        
 
         // Update all events
-        
 
         // Record form submission
         $stmt = $pdo->prepare("
@@ -292,8 +288,7 @@ function handleIdentify($pdo, $visitorId, $sessionId, $email, $userData)
 
         // Link visitor to subscriber
         $pdo->prepare("UPDATE web_visitors SET subscriber_id = ? WHERE visitor_id = ?")->execute([$subscriberId, $visitorId]);
-        
-        
+
     }
 }
 

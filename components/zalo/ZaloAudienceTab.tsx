@@ -133,7 +133,7 @@ const ZaloAudienceTab: React.FC = () => {
     const getOAForList = (list: any) => {
         if (!oas || oas.length === 0) return null;
         // 1. Try fuzzy match name
-        const match = oas.find(oa => list.name.toLowerCase().includes(oa.name.toLowerCase()));
+        const match = oas.find(oa => list.name.toLowerCase().includes((oa.name || '').toLowerCase()));
         if (match) return match;
         // 2. Fallback to first OA
         return oas[0];

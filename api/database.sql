@@ -1564,6 +1564,7 @@ CREATE TABLE `survey_responses` (
   `total_score` float DEFAULT NULL,
   `max_score` float DEFAULT NULL,
   `end_screen_id` varchar(100) DEFAULT 'default',
+  `claimed_voucher_code` varchar(100) DEFAULT NULL,
   `submitted_at` timestamp NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -1761,7 +1762,9 @@ CREATE TABLE `voucher_claims` (
   `status` enum('pending','approved','rejected') DEFAULT 'pending',
   `assigned_code_id` varchar(36) DEFAULT NULL,
   `claimed_at` datetime DEFAULT current_timestamp(),
-  `resolved_at` datetime DEFAULT NULL
+  `resolved_at` datetime DEFAULT NULL,
+  `source_channel` varchar(50) DEFAULT NULL,
+  `source_id` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1780,7 +1783,9 @@ CREATE TABLE `voucher_codes` (
   `sent_at` datetime DEFAULT NULL,
   `used_at` datetime DEFAULT NULL,
   `created_at` datetime NOT NULL,
-  `expires_at` datetime DEFAULT NULL
+  `expires_at` datetime DEFAULT NULL,
+  `claimed_source` varchar(50) DEFAULT NULL,
+  `claimed_source_id` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------

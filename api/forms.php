@@ -14,7 +14,6 @@ $path = isset($_GET['id']) ? $_GET['id'] : null;
 $route = $_GET['route'] ?? '';
 $admin_workspace_id = get_current_workspace_id();
 
-
 try {
     if ($method === 'POST' && $route === 'submit') {
         try {
@@ -93,8 +92,6 @@ try {
                 $data['firstName'] = $rawLast;
                 unset($data['lastName'], $data['last_name']);
             }
-
-
 
             // Build custom attributes from submitted data (từ form definition)
             $newCustomAttrs = [];

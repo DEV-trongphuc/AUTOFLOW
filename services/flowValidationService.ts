@@ -28,7 +28,7 @@ const checkSpamDownstreamRecursive = (
 
   if (visitedStepsInCurrentFlow.has(currentStepId)) {
     errors.push({
-      msg: `LỖI LOGIC: Vòng lặp vô hạn phát hiện tại bước "${currentFlow.steps.find(s => s.id === currentStepId)?.label || 'Unknown'}".`,
+      msg: `LỖI LOGIC: Vòng lặp vô hạn phát hiện tại bước "${currentFlow.steps?.find(s => s.id === currentStepId)?.label || 'Unknown'}".`,
       type: 'critical',
       stepId: currentStepId
     });
@@ -36,7 +36,7 @@ const checkSpamDownstreamRecursive = (
   }
   visitedStepsInCurrentFlow.add(currentStepId);
 
-  const currentStep = currentFlow.steps.find(s => s.id === currentStepId);
+  const currentStep = currentFlow.steps?.find(s => s.id === currentStepId);
   if (!currentStep) return false;
 
   // "Sending" Actions (Email, Zalo, Meta) are SPAM points
@@ -119,7 +119,7 @@ const checkSpamDownstreamRecursive = (
 
       const targetFlow = allFlows.find(f => f.id === linkedFlowId);
       if (targetFlow && targetFlow.status === 'active') {
-        const targetTrigger = targetFlow.steps.find(s => s.type === 'trigger');
+        const targetTrigger = targetFlow.steps?.find(s => s.type === 'trigger');
         if (targetTrigger && targetTrigger.nextStepId) {
           const updatedFlowPath = [...newFlowPath, targetFlow.name];
           return checkSpamDownstreamRecursive(
@@ -146,7 +146,7 @@ const checkBurstLimit = (
   if (!startStepId || visited.has(startStepId)) return;
   visited.add(startStepId);
 
-  const step = currentFlow.steps.find(s => s.id === startStepId);
+  const step = currentFlow.steps?.find(s => s.id === startStepId);
   if (!step) return;
 
   let newCount = consecutiveCount;
@@ -221,7 +221,7 @@ const checkTimeConsistency = (
 ) => {
   if (!currentStepId || visited.has(currentStepId)) return;
   visited.add(currentStepId);
-  const step = currentFlow.steps.find(s => s.id === currentStepId);
+  const step = currentFlow.steps?.find(s => s.id === currentStepId);
   if (!step) return;
 
   let nextDuration = cumulativeDurationMins;
@@ -285,7 +285,7 @@ const checkTimeConsistency = (
 // Helper: Check Adjacent Splits
 const checkAdjacentSplits = (step: FlowStep, nextStepId: string | undefined, flow: Flow, errors: ValidationError[]) => {
   if (!nextStepId) return;
-  const nextStep = flow.steps.find(s => s.id === nextStepId);
+  const nextStep = flow.steps?.find(s => s.id === nextStepId);
   if (nextStep && nextStep.type === 'split_test' && step.type === 'split_test') {
     errors.push({
       msg: `LOGIC PHỨC TẠP: Không được đặt 2 bước A/B Test ("${step.label}" -> "${nextStep.label}") liền kề nhau.`,
@@ -298,7 +298,7 @@ const checkAdjacentSplits = (step: FlowStep, nextStepId: string | undefined, flo
 // Helper: Check Redundant Steps
 const checkRedundantSteps = (step: FlowStep, nextStepId: string | undefined, flow: Flow, errors: ValidationError[]) => {
   if (!nextStepId) return;
-  const nextStep = flow.steps.find(s => s.id === nextStepId);
+  const nextStep = flow.steps?.find(s => s.id === nextStepId);
   if (!nextStep) return;
 
   // Same Type Check
@@ -319,8 +319,8 @@ const checkRedundantSteps = (step: FlowStep, nextStepId: string | undefined, flo
 // Helper: Check Identical Branches (First Step Only)
 const checkIdenticalBranches = (step: FlowStep, flow: Flow, errors: ValidationError[]) => {
   if (step.type === 'condition') {
-    const yesStep = flow.steps.find(s => s.id === step.yesStepId);
-    const noStep = flow.steps.find(s => s.id === step.noStepId);
+    const yesStep = flow.steps?.find(s => s.id === step.yesStepId);
+    const noStep = flow.steps?.find(s => s.id === step.noStepId);
 
     if (yesStep && noStep) {
       if (yesStep.type === noStep.type && JSON.stringify(yesStep.config) === JSON.stringify(noStep.config)) {
@@ -334,8 +334,8 @@ const checkIdenticalBranches = (step: FlowStep, flow: Flow, errors: ValidationEr
   }
 
   if (step.type === 'split_test') {
-    const aStep = flow.steps.find(s => s.id === step.pathAStepId);
-    const bStep = flow.steps.find(s => s.id === step.pathBStepId);
+    const aStep = flow.steps?.find(s => s.id === step.pathAStepId);
+    const bStep = flow.steps?.find(s => s.id === step.pathBStepId);
     if (aStep && bStep) {
       if (aStep.type === bStep.type && JSON.stringify(aStep.config) === JSON.stringify(bStep.config)) {
         errors.push({
@@ -354,7 +354,7 @@ const checkCrossFlowTriggers = (step: FlowStep, allFlows: Flow[]): ValidationErr
     for (const tag of step.config.tags) {
       const triggeredFlow = allFlows.find(f =>
         f.status === 'active' &&
-        f.steps.some(s => s.type === 'trigger' && s.config.type === 'tag' && (s.config.targetId === tag || (s.config.tags && s.config.tags.includes(tag))))
+        Array.isArray(f.steps) && f.steps.some(s => s.type === 'trigger' && s.config?.type === 'tag' && (s.config.targetId === tag || (s.config.tags && s.config.tags.includes(tag))))
       );
 
       if (triggeredFlow) {
@@ -375,7 +375,7 @@ const checkCrossFlowTriggers = (step: FlowStep, allFlows: Flow[]): ValidationErr
 // Helper: Check for Duplicate Triggers in OTHER Active Flows
 // Returns conflicting flow info or null
 export const findDuplicateTriggerFlow = (currentFlow: Flow, allFlows: Flow[]): { id: string, name: string } | null => {
-  const currentTrigger = currentFlow.steps.find(s => s.type === 'trigger');
+  const currentTrigger = currentFlow.steps?.find(s => s.type === 'trigger');
   if (!currentTrigger || !currentTrigger.config.type || !currentTrigger.config.targetId) return null;
 
   const currentType = currentTrigger.config.type;
@@ -393,7 +393,7 @@ export const findDuplicateTriggerFlow = (currentFlow: Flow, allFlows: Flow[]): {
   for (const otherFlow of allFlows) {
     if (otherFlow.id === currentFlow.id || otherFlow.status !== 'active') continue;
 
-    const otherTrigger = otherFlow.steps.find(s => s.type === 'trigger');
+    const otherTrigger = otherFlow.steps?.find(s => s.type === 'trigger');
     if (!otherTrigger || otherTrigger.config.type !== currentType) continue;
 
     let isDuplicate = false;
@@ -426,7 +426,7 @@ export const findDuplicateTriggerFlow = (currentFlow: Flow, allFlows: Flow[]): {
         // If ANY tag overlaps? Or ALL?
         // Trigger usually fires if ANY of the selected tags is added.
         // So if they share ANY tag, it's a conflict for that specific tag event.
-        const hasOverlap = currentTags.some((t: string) => otherTags.includes(t));
+        const hasOverlap = Array.isArray(currentTags) && currentTags.some((t: string) => Array.isArray(otherTags) && otherTags.includes(t));
         if (hasOverlap) {
           isDuplicate = true;
         }
@@ -455,7 +455,7 @@ const checkFrequencyCapRisk = (
   if (!startStepId || visited.has(startStepId)) return;
   visited.add(startStepId);
 
-  const step = currentFlow.steps.find(s => s.id === startStepId);
+  const step = currentFlow.steps?.find(s => s.id === startStepId);
   if (!step) return;
 
   let newEmailCount = emailCount;

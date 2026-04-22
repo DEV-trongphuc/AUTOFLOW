@@ -10,6 +10,17 @@ require_once __DIR__ . '/auth_middleware.php';
 // Workspace Isolation
 $workspaceId = get_current_workspace_id();
 
+// Auto-migrate schema
+try {
+    $pdo->exec("ALTER TABLE short_links ADD COLUMN status ENUM('active', 'paused') DEFAULT 'active' AFTER is_survey_checkin");
+} catch (Exception $e) {}
+try {
+    $pdo->exec("ALTER TABLE short_links ADD COLUMN access_pin VARCHAR(10) DEFAULT NULL AFTER status");
+} catch (Exception $e) {}
+try {
+    $pdo->exec("ALTER TABLE short_links ADD COLUMN submit_count INT DEFAULT 0 AFTER access_pin");
+} catch (Exception $e) {}
+
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 
@@ -84,11 +95,13 @@ if ($method === 'POST') {
         $slug = !empty($input['slug']) ? $input['slug'] : substr(md5(uniqid()), 0, 8);
         $isSurvey = $input['is_survey_checkin'] ?? 0;
         $surveyId = !empty($input['survey_id']) ? $input['survey_id'] : null;
+        $status = $input['status'] ?? 'active';
+        $accessPin = !empty($input['access_pin']) ? $input['access_pin'] : null;
         $qrConfig = json_encode(['color' => '#000000', 'bg' => '#ffffff', 'logo' => null]);
 
         try {
-            $stmt = $pdo->prepare("INSERT INTO short_links (id, workspace_id, name, slug, target_url, is_survey_checkin, survey_id, qr_config_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$id, $workspaceId, $name, $slug, $targetUrl, $isSurvey, $surveyId, $qrConfig]);
+            $stmt = $pdo->prepare("INSERT INTO short_links (id, workspace_id, name, slug, target_url, is_survey_checkin, survey_id, status, access_pin, qr_config_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$id, $workspaceId, $name, $slug, $targetUrl, $isSurvey, $surveyId, $status, $accessPin, $qrConfig]);
             jsonResponse(true, ['id' => $id, 'slug' => $slug]);
         } catch (\Throwable $e) {
             if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
@@ -112,6 +125,8 @@ if ($method === 'PUT' || ($method === 'POST' && $action === 'update')) {
     if (isset($input['target_url'])) { $updates[] = "target_url = ?"; $params[] = $input['target_url']; }
     if (isset($input['is_survey_checkin'])) { $updates[] = "is_survey_checkin = ?"; $params[] = $input['is_survey_checkin']; }
     if (isset($input['survey_id'])) { $updates[] = "survey_id = ?"; $params[] = $input['survey_id']; }
+    if (isset($input['status'])) { $updates[] = "status = ?"; $params[] = $input['status']; }
+    if (array_key_exists('access_pin', $input)) { $updates[] = "access_pin = ?"; $params[] = !empty($input['access_pin']) ? $input['access_pin'] : null; }
     if (isset($input['qr_config_json'])) { $updates[] = "qr_config_json = ?"; $params[] = $input['qr_config_json']; }
 
     if (count($updates) > 0) {

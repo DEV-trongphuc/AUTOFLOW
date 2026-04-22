@@ -5,7 +5,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import Modal from '../common/Modal';
 import Input from '../common/Input';
-import { API_BASE_URL } from '@/utils/config';
+import { API_BASE_URL, DEMO_MODE } from '@/utils/config';
 
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port !== '';
 
@@ -169,6 +169,13 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
     }, [formData.image_url]);
 
     const fetchOas = async () => {
+        if (DEMO_MODE) {
+            const stored: any[] = JSON.parse(localStorage.getItem('mailflow_zalo_oa') || '[]');
+            const list = stored.length > 0 ? stored : [{ id: 'oa_demo_001', name: 'DOMATION Official Account' }];
+            setOaConfigs(list);
+            if (!formData.oa_config_id) setFormData(prev => ({ ...prev, oa_config_id: list[0].id }));
+            return;
+        }
         try {
             const res = await axios.get(`${API_BASE_URL}/zalo_oa.php?route=list`, { headers: getHeaders() });
             if (res.data.success) {
@@ -184,6 +191,10 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
     };
 
     const fetchAudienceLists = async () => {
+        if (DEMO_MODE) {
+            setAudienceLists([{ id: 'list_demo_001', name: 'Khách hàng VIP', oa_config_id: 'oa_demo_001' }]);
+            return;
+        }
         try {
             const res = await axios.get(`${API_BASE_URL}/zalo_audience.php?route=lists`, { headers: getHeaders() });
             if (res.data.success) {
@@ -195,6 +206,13 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
     };
 
     const fetchActiveChatbots = async () => {
+        if (DEMO_MODE) {
+            setActiveChatbots([
+                { property_id: 'wp_001', bot_name: 'AI DOMATION - Website Chính' },
+                { property_id: 'wp_002', bot_name: 'AI DOMATION - Bảng Giá' },
+            ]);
+            return;
+        }
         try {
             const res = await axios.get(`${API_BASE_URL}/ai_training.php?action=list_all_chatbots`, { headers: getHeaders() });
             if (res.data.success) {
@@ -212,6 +230,19 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
 
         setUploading(true);
         const uploadToast = toast.loading('Đang tải ảnh lên...');
+
+        // DEMO_MODE: use FileReader → base64 dataURL, no server upload
+        if (DEMO_MODE) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const dataUrl = ev.target?.result as string;
+                setFormData(prev => ({ ...prev, message_type: 'image', image_url: dataUrl, attachment_id: 'demo_att_' + Date.now() }));
+                toast.success('Upload thành công (Demo)', { id: uploadToast });
+                setUploading(false);
+            };
+            reader.readAsDataURL(file);
+            return;
+        }
 
         try {
             const formDataUpload = new FormData();
@@ -289,6 +320,19 @@ const ScenarioModal: React.FC<ScenarioModalProps> = ({ scenario, onClose: _onClo
         }
 
         setLoading(true);
+        // DEMO_MODE: save to localStorage, skip conflict check & axios
+        if (DEMO_MODE) {
+            await new Promise(r => setTimeout(r, 500));
+            const payload = { ...formData, id: formData.id || crypto.randomUUID(), status: formData.status || 'active' };
+            const stored: any[] = JSON.parse(localStorage.getItem('mailflow_zalo_scenarios') || '[]');
+            const idx = stored.findIndex((s: any) => s.id === payload.id);
+            if (idx >= 0) stored[idx] = payload; else stored.unshift(payload);
+            localStorage.setItem('mailflow_zalo_scenarios', JSON.stringify(stored));
+            toast.success('Đã lưu kịch bản (Demo)');
+            setLoading(false);
+            onSave();
+            return;
+        }
         try {
             const conflictRes = await axios.get(`${API_BASE_URL}/zalo_automation.php?route=check_conflicts&oa_config_id=${formData.oa_config_id}&type=${formData.type}&trigger_text=${formData.trigger_text}&id=${formData.id}`, { headers: getHeaders() });
             if (conflictRes.data.success && conflictRes.data.conflicts.length > 0) {

@@ -8,6 +8,7 @@ import { API_BASE_URL } from '../../../utils/config';
 import { api } from '../../../services/storageAdapter';
 import FileLibraryModal from '../../common/FileLibraryModal';
 import Select from '../../common/Select';
+import VoucherConfigurator from './VoucherConfigurator';
 
 interface Props {
     survey: Survey;
@@ -99,13 +100,78 @@ const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.12em] mb-1.5">{children}</label>
 );
 
-const FieldInput: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = (props) => (
-    <input {...props} className={`w-full px-3 py-2 text-xs bg-white border border-slate-200 hover:border-slate-300 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-[3px] focus:ring-amber-500/20 transition-all shadow-sm ${props.className ?? ''}`} />
-);
+const FieldInput: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = (props) => {
+    const [localVal, setLocalVal] = useState(props.value ?? '');
+    useEffect(() => { setLocalVal(props.value ?? ''); }, [props.value]);
+    
+    // Auto-sync debounced
+    const isTyping = useRef(false);
+    useEffect(() => {
+        if (!isTyping.current) return;
+        const timer = setTimeout(() => {
+            if (localVal !== props.value && props.onChange) {
+                props.onChange({ target: { value: localVal } } as any);
+            }
+            isTyping.current = false;
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [localVal, props.onChange, props.value]);
 
-const FieldTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>> = (props) => (
-    <textarea {...props} className={`w-full px-3 py-2.5 text-xs bg-white border border-slate-200 hover:border-slate-300 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-[3px] focus:ring-amber-500/20 transition-all shadow-sm resize-none ${props.className ?? ''}`} />
-);
+    return (
+        <input 
+            {...props} 
+            value={localVal}
+            onChange={e => {
+                isTyping.current = true;
+                setLocalVal(e.target.value);
+            }}
+            onBlur={e => {
+                if (isTyping.current) {
+                    isTyping.current = false;
+                    if (props.onChange) props.onChange({ target: { value: localVal } } as any);
+                }
+                if (props.onBlur) props.onBlur(e);
+            }}
+            className={`w-full px-3 py-2 text-xs bg-white border border-slate-200 hover:border-slate-300 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-[3px] focus:ring-amber-500/20 transition-all shadow-sm ${props.className ?? ''}`} 
+        />
+    );
+};
+
+const FieldTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>> = (props) => {
+    const [localVal, setLocalVal] = useState(props.value ?? '');
+    useEffect(() => { setLocalVal(props.value ?? ''); }, [props.value]);
+    
+    const isTyping = useRef(false);
+    useEffect(() => {
+        if (!isTyping.current) return;
+        const timer = setTimeout(() => {
+            if (localVal !== props.value && props.onChange) {
+                props.onChange({ target: { value: localVal } } as any);
+            }
+            isTyping.current = false;
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [localVal, props.onChange, props.value]);
+
+    return (
+        <textarea 
+            {...props} 
+            value={localVal}
+            onChange={e => {
+                isTyping.current = true;
+                setLocalVal(e.target.value);
+            }}
+            onBlur={e => {
+                if (isTyping.current) {
+                    isTyping.current = false;
+                    if (props.onChange) props.onChange({ target: { value: localVal } } as any);
+                }
+                if (props.onBlur) props.onBlur(e);
+            }}
+            className={`w-full px-3 py-2.5 text-xs bg-white border border-slate-200 hover:border-slate-300 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-[3px] focus:ring-amber-500/20 transition-all shadow-sm resize-none ${props.className ?? ''}`} 
+        />
+    );
+};
 
 const FieldSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement>> = (props) => {
     const options = React.Children.toArray(props.children)
@@ -330,10 +396,10 @@ const MatrixEditor: React.FC<{
                     {rows.map(row => (
                         <div key={row.id} className="flex items-center gap-1.5">
                             <GripVertical className="w-3 h-3 text-slate-300 flex-shrink-0" />
-                            <input
+                            <FieldInput
                                 value={row.label}
                                 onChange={e => editRow(row.id, e.target.value)}
-                                className="flex-1 px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="!px-2 !py-1 !text-xs !bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-300"
                             />
                             <button onClick={() => deleteRow(row.id)} className="p-1 text-slate-300 hover:text-red-400 transition-colors">
                                 <Trash2 className="w-3 h-3" />
@@ -354,10 +420,10 @@ const MatrixEditor: React.FC<{
                     {cols.map(col => (
                         <div key={col.id} className="flex items-center gap-1.5">
                             <GripVertical className="w-3 h-3 text-slate-300 flex-shrink-0" />
-                            <input
+                            <FieldInput
                                 value={col.label}
                                 onChange={e => editCol(col.id, e.target.value)}
-                                className="flex-1 px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="!px-2 !py-1 !text-xs !bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-300"
                             />
                             <button onClick={() => deleteCol(col.id)} className="p-1 text-slate-300 hover:text-red-400 transition-colors">
                                 <Trash2 className="w-3 h-3" />
@@ -503,7 +569,7 @@ const ThankYouDesigner: React.FC<{
 
 // ─── Main component ──────────────────────────────────────────────────
 const SurveyProperties: React.FC<Props> = ({ survey, selectedBlock, selectedBlockId, onUpdateBlock, onUpdateSurvey }) => {
-    const [settingsTab, setSettingsTab] = useState<'theme' | 'settings' | 'thankyou'>('theme');
+    const [settingsTab, setSettingsTab] = useState<'theme' | 'settings' | 'thankyou' | 'voucher'>('theme');
 
     // Auto-switch to thankyou tab when __thankyou__ block is clicked
     React.useEffect(() => {
@@ -515,6 +581,7 @@ const SurveyProperties: React.FC<Props> = ({ survey, selectedBlock, selectedBloc
         { key: 'theme',    label: 'Giao diện', icon: Palette },
         { key: 'settings', label: 'Cấu hình',  icon: Settings2 },
         { key: 'thankyou', label: 'Cảm ơn',    icon: Heart },
+        { key: 'voucher',  label: 'Quà tặng',  icon: Zap },
     ] as const;
 
     // Survey-level settings (nothing selected OR special blocks)
@@ -782,6 +849,10 @@ const SurveyProperties: React.FC<Props> = ({ survey, selectedBlock, selectedBloc
                     {settingsTab === 'thankyou' && (
                         <ThankYouDesigner survey={survey} onUpdate={onUpdateSurvey} selectedBlockId={selectedBlockId} />
                     )}
+
+                    {settingsTab === 'voucher' && (
+                        <VoucherConfigurator survey={survey} onUpdateSurvey={onUpdateSurvey} />
+                    )}
                 </div>
             </div>
         );
@@ -895,10 +966,10 @@ const SurveyProperties: React.FC<Props> = ({ survey, selectedBlock, selectedBloc
                             {(block.options ?? []).map(opt => (
                                 <div key={opt.id} className="flex items-center gap-1.5">
                                     <GripVertical className="w-3 h-3 text-slate-300 flex-shrink-0" />
-                                    <input
+                                    <FieldInput
                                         value={opt.label}
                                         onChange={e => update({ options: block.options?.map(o => o.id === opt.id ? { ...o, label: e.target.value, value: e.target.value.toLowerCase().replace(/\s+/g, '_') } : o) })}
-                                        className="flex-1 px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                        className="!px-2 !py-1 !text-xs !bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-300"
                                     />
                                     <button onClick={() => update({ options: block.options?.filter(o => o.id !== opt.id) })} className="p-1 text-slate-300 hover:text-red-400 transition-colors">
                                         <Trash2 className="w-3 h-3" />
@@ -993,23 +1064,23 @@ const SurveyProperties: React.FC<Props> = ({ survey, selectedBlock, selectedBloc
                                     <div key={i} className="flex items-center gap-1.5">
                                         <GripVertical className="w-3 h-3 text-slate-300 flex-shrink-0" />
                                         {/* Number */}
-                                        <input
+                                        <FieldInput
                                             type="number"
                                             value={pt.value}
                                             onChange={e => {
                                                 const updated = pts.map((p: any, j: number) => j === i ? { ...p, value: +e.target.value } : p);
                                                 update({ likertPoints: updated, likertLabels: updated.map((p: any) => p.label) } as any);
                                             }}
-                                            className="w-10 px-1.5 py-1 text-xs bg-slate-50 border border-slate-200 rounded-lg text-center focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                            className="w-14 !px-1.5 !py-1 !text-xs !bg-slate-50 border border-slate-200 rounded-lg text-center"
                                         />
                                         {/* Label */}
-                                        <input
+                                        <FieldInput
                                             value={pt.label}
                                             onChange={e => {
                                                 const updated = pts.map((p: any, j: number) => j === i ? { ...p, label: e.target.value } : p);
                                                 update({ likertPoints: updated, likertLabels: updated.map((p: any) => p.label) } as any);
                                             }}
-                                            className="flex-1 px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                            className="!px-2 !py-1 !text-xs !bg-slate-50 border border-slate-200 rounded-lg focus:outline-none"
                                         />
                                         <button
                                             onClick={() => {

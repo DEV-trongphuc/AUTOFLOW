@@ -20,7 +20,7 @@ interface Module {
     tags?: string[];
 }
 
-const ALL_MODULES: Module[] = [
+export const ALL_MODULES: Module[] = [
     {
         id: 'campaigns',
         title: 'Campaigns',
@@ -79,7 +79,7 @@ const ALL_MODULES: Module[] = [
         id: 'surveys',
         title: 'Survey Builder',
         sub: 'Thiết kế form khảo sát chuyên nghiệp. Thu thập thông tin Khách hàng, báo cáo Real-time.',
-        icon: ClipboardList, QrCode,
+        icon: ClipboardList,
         color: 'from-amber-400 to-orange-500',
         path: '/surveys',
         tags: ['Feedback', 'Form']

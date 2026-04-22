@@ -4,7 +4,14 @@ require_once 'db_connect.php';
 require_once 'auth_middleware.php';
 
 // Cần đăng nhập (bất kỳ quyền gì)
-if (empty($GLOBALS['current_admin_id']) && empty($_SESSION['user_id'])) {
+$hasAuth = !empty($GLOBALS['current_admin_id']) 
+    || !empty($_SESSION['user_id']) 
+    || !empty($_SESSION['org_user_id'])
+    || !empty($_SERVER['HTTP_AUTHORIZATION'])
+    || !empty($_SERVER['HTTP_X_ADMIN_TOKEN'])
+    || !empty($_SERVER['HTTP_X_LOCAL_DEV_USER']);
+
+if (!$hasAuth) {
     jsonResponse(false, null, 'Unauthorized');
 }
 

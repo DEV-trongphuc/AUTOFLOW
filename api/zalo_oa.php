@@ -399,7 +399,6 @@ function generateAuthUrl($pdo, $id = null)
     $challenge = generateCodeChallenge($verifier);
     $session_id = bin2hex(random_bytes(16));
 
-
     // ── Cleanup stale "verifying" rows before inserting a new one ─────────────
     // These are rows where OAuth was started but never completed (oa_id is NULL/empty).
     // The unique_oa_id constraint treats multiple NULL oa_id as duplicates on some
@@ -440,7 +439,6 @@ function generateAuthUrl($pdo, $id = null)
         'message' => 'Open this URL to authorize'
     ]);
 }
-
 
 function syncFollowers($pdo, $oa_config_id)
 {
@@ -511,10 +509,6 @@ function syncFollowers($pdo, $oa_config_id)
 
     jsonResponse(true, ['message' => "Synced $total_synced followers successfully.", 'count' => $total_synced, 'errors' => $errors]);
 }
-
-
-
-
 
 function ensureZaloSubscriberSchema($pdo)
 {

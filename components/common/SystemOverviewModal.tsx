@@ -201,27 +201,27 @@ export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose }) => {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <StatCard
                                     title="AI Chat Phản Hồi"
-                                    value={data.summary.total_ai.toLocaleString()}
-                                    growth={data.summary.growth_ai}
+                                    value={(data.summary?.total_ai || 0).toLocaleString()}
+                                    growth={data.summary?.growth_ai || 0}
                                     icon={<Bot className="w-5 h-5" />}
                                     gradient="from-rose-500 to-pink-600 shadow-rose-500/25"
-                                    trendColor={data.summary.growth_ai >= 0 ? 'text-emerald-500' : 'text-rose-500'}
+                                    trendColor={(data.summary?.growth_ai || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}
                                 />
                                 <StatCard
                                     title="Truy cập Website"
-                                    value={data.summary.total_web.toLocaleString()}
-                                    growth={data.summary.growth_web}
+                                    value={(data.summary?.total_web || 0).toLocaleString()}
+                                    growth={data.summary?.growth_web || 0}
                                     icon={<Globe className="w-5 h-5" />}
                                     gradient="from-blue-500 to-indigo-600 shadow-blue-500/25"
-                                    trendColor={data.summary.growth_web >= 0 ? 'text-emerald-500' : 'text-rose-500'}
+                                    trendColor={(data.summary?.growth_web || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}
                                 />
                                 <StatCard
                                     title="Khách Mới"
-                                    value={data.summary.total_leads.toLocaleString()}
-                                    growth={data.summary.growth_leads}
+                                    value={(data.summary?.total_leads || 0).toLocaleString()}
+                                    growth={data.summary?.growth_leads || 0}
                                     icon={<Users className="w-5 h-5" />}
                                     gradient="from-amber-400 to-orange-500 shadow-orange-500/25"
-                                    trendColor={data.summary.growth_leads >= 0 ? 'text-emerald-500' : 'text-rose-500'}
+                                    trendColor={(data.summary?.growth_leads || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}
                                 />
                             </div>
 

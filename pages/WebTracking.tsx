@@ -134,7 +134,10 @@ const WebTracking: React.FC = () => {
     const fetchWebsites = async () => {
         try {
             const res = await api.get<WebProperty[]>('web_tracking?action=list');
-            if (res.success) setWebsites(res.data);
+            if (res.success) {
+                // Guard: must be array — storageAdapter may return null/object when key missing
+                setWebsites(Array.isArray(res.data) ? res.data : []);
+            }
         } catch (e) {
             console.error(e);
         } finally {

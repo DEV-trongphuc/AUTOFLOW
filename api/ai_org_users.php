@@ -68,7 +68,6 @@ if ($orgScopeAdminId) {
     }
 }
 
-
 // 1. List Users
 if ($method === 'GET' && ($action === 'list' || $action === '')) {
     $categoryId = $_GET['category_id'] ?? null;
@@ -323,7 +322,6 @@ if ($method === 'POST' && $action === 'update') {
             $fields[] = "password_hash = ?";
             $params[] = password_hash($input['password'], PASSWORD_DEFAULT);
         }
-
 
         if (empty($fields)) {
             jsonResponse(false, null, 'No fields to update');

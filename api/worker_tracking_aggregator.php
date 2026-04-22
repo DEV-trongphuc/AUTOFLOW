@@ -205,7 +205,6 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'worker_tracking_aggregator.php') 
     echo json_encode(['status' => 'success', 'processed' => count($processedIds), 'retried' => count($unprocessedIds)]);
 }
 
-
 // [OPTIMIZATION] Periodic Index Check (1% chance)
 if (mt_rand(1, 100) === 1) {
     checkStrategicIndexes($pdo);

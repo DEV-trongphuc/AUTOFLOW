@@ -417,24 +417,59 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
                             <Clock className="w-4 h-4 text-slate-500" />
                             <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Thời hạn kiểm tra (Timeout)</span>
                         </div>
-                        <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-                            Nếu sau Thời gian này khách vẫn chưa {getActionDescription()}, hệ thống sẽ đưa khách vào nhánh "ELSE".
-                        </p>
-                        <div className="grid grid-cols-2 gap-3">
-                            <Input
-                                type="number" min="1"
-                                value={config.waitDuration || 1}
-                                onChange={(e) => onChange({ ...config, waitDuration: parseInt(e.target.value) || 1 })}
+
+                        <div className="flex items-center justify-between gap-4 p-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:border-slate-200 transition-all cursor-pointer"
+                             onClick={() => {
+                                 if (disabled) return;
+                                 if (config.waitDuration === 0) {
+                                     onChange({ ...config, waitDuration: 1, waitUnit: 'hours' });
+                                 } else {
+                                     onChange({ ...config, waitDuration: 0, waitUnit: 'hours' });
+                                 }
+                             }}>
+                            <div className="flex-1">
+                                <p className="text-xs font-bold text-slate-800">Kiểm tra ngay lập tức (Không đợi)</p>
+                                <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">Đánh giá nhanh dựa trên lịch sử quá khứ. Nếu khách chưa {getActionDescription()}, tự động đi nhánh <strong>ELSE</strong> ngay lập tức.</p>
+                            </div>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (disabled) return;
+                                    if (config.waitDuration === 0) {
+                                        onChange({ ...config, waitDuration: 1, waitUnit: 'hours' });
+                                    } else {
+                                        onChange({ ...config, waitDuration: 0, waitUnit: 'hours' });
+                                    }
+                                }}
+                                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-all duration-300 focus:outline-none ${config.waitDuration === 0 ? 'bg-amber-500' : 'bg-slate-300'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 disabled={disabled}
-                            />
-                            <Select
-                                options={unitOptions}
-                                value={config.waitUnit || 'hours'}
-                                onChange={(val) => onChange({ ...config, waitUnit: val })}
-                                disabled={disabled}
-                                direction="bottom"
-                            />
+                            >
+                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 shadow-md ${config.waitDuration === 0 ? 'translate-x-6' : 'translate-x-1'}`} />
+                            </button>
                         </div>
+
+                        {config.waitDuration !== 0 && (
+                            <>
+                                <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+                                    Nếu sau Thời gian này khách vẫn chưa {getActionDescription()}, hệ thống sẽ đưa khách vào nhánh "ELSE".
+                                </p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <Input
+                                        type="number" min="1"
+                                        value={config.waitDuration || 1}
+                                        onChange={(e) => onChange({ ...config, waitDuration: parseInt(e.target.value) || 1 })}
+                                        disabled={disabled}
+                                    />
+                                    <Select
+                                        options={unitOptions}
+                                        value={config.waitUnit || 'hours'}
+                                        onChange={(val) => onChange({ ...config, waitUnit: val })}
+                                        disabled={disabled}
+                                        direction="bottom"
+                                    />
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     {(config.conditionType === 'clicked' || config.conditionType === 'zns_clicked') && (

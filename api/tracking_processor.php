@@ -402,7 +402,6 @@ function processTrackingEvent($pdo, $type, $payload)
             return false;
         }
 
-
         // Only increment counters if they weren't already unsubscribed previously or from another click
         if ($currentStatus !== 'unsubscribed') {
             if ($fid) {

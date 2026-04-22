@@ -76,7 +76,6 @@ if (!function_exists('checkAdvancedExit')) {
     }
 }
 
-
 if (!function_exists('logActivity')) {
     /**
      * Log activity for a subscriber with history limiting (keep last 10)
@@ -228,8 +227,6 @@ if (!function_exists('logActivity')) {
         if (count($GLOBAL_ACTIVITY_BUFFER) >= 150) {
             flushActivityLogBuffer($pdo);
         }
-
-
 
         // NO CLEANUP for essential types. We want lifetime history for stats.
 
@@ -642,7 +639,6 @@ function replaceMergeTags($html, $subscriber, $context = [])
     $customAttrs = $attrCacheKey ? ($customAttrCache[$attrCacheKey] ?? []) : (
         is_array($attrRaw) ? $attrRaw : (json_decode((string) ($attrRaw ?? ''), true) ?: [])
     );
-
 
     foreach ($customAttrs as $k => $v) {
         if (is_string($v) || is_numeric($v)) {
@@ -1185,7 +1181,6 @@ function evaluateAdvancedConditionGroup($pdo, $subscriberId, $subProfile, $condi
                 }
             }
             $condMatch = ($op === 'not_contains') ? !$found : $found;
-
 
         } elseif ($field === 'activity_history') {
             // Flexible activity history check:

@@ -113,6 +113,12 @@ try {
         $ph = implode(', ', array_fill(0, count($upsertFields), '?'));
         
         $pdo->prepare("INSERT INTO subscribers ($cols) VALUES ($ph) ON DUPLICATE KEY UPDATE $upsertSet")->execute(array_values($upsertFields));
+
+        // Add to Target List if configured
+        if (!empty($camp['claim_target_list_id'])) {
+            $pdo->prepare("INSERT IGNORE INTO subscriber_lists_map (list_id, subscriber_id, status) VALUES (?, ?, 'active')")
+                ->execute([$camp['claim_target_list_id'], $sid]);
+        }
     }
 
     $pdo->query("SELECT RELEASE_LOCK('$lockTarget')");
@@ -121,8 +127,6 @@ try {
     $pdo->query("SELECT RELEASE_LOCK('$lockTarget')");
     doResponse($isAjax, false, "L?i khi x? l� d? li?u h? so.", $redirectEmpty);
 }
-
-
 
 // 3. Ti?n h�nh X� M� (Atomic Claim)
 $codeAssigned = null;

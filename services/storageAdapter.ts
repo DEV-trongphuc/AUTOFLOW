@@ -1,4 +1,5 @@
-import { API_BASE_URL } from '@/utils/config';
+import { API_BASE_URL, DEMO_MODE } from '@/utils/config';
+import { seedDemoData } from '@/utils/demoSeed';
 import { ApiResponse } from '../types';
 import { getValidAccessToken, getRawRefreshToken, clearTokens, updateAccessToken } from './tokenManager';
 
@@ -54,12 +55,17 @@ async function executeRequest(url: string, method: string, body?: any, signal?: 
   }
 
   // ── PRIORITY 1: Bearer Token (AI Space JWT-style token auth) ─────────────
-  try {
-    const accessToken = await getValidAccessToken(API_BASE_URL);
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
-    }
-  } catch { /* ignore — fallback to session cookie / X-Admin-Token */ }
+  // [ISOLATION] Skip token refresh network call entirely in DEMO_MODE.
+  // Demo environment has no production backend — attempting a token refresh
+  // would make an outbound request to the production server, leaking session data.
+  if (!DEMO_MODE) {
+    try {
+      const accessToken = await getValidAccessToken(API_BASE_URL);
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+      }
+    } catch { /* ignore — fallback to session cookie / X-Admin-Token */ }
+  }
 
   // ── PRIORITY 2: X-Admin-Token + X-Autoflow-Auth (Autoflow admin bypass) ──
   const isAuthCheckEndpoint = url.includes('ai_org_auth') &&
@@ -71,25 +77,36 @@ async function executeRequest(url: string, method: string, body?: any, signal?: 
         localStorage.getItem('user') || localStorage.getItem('currentUser') || 'null'
       );
       const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-      const isAdminById = savedUser && (
-        savedUser.id === 1 || savedUser.id === '1'
-      );
 
-      // Fix: Secondary admins (role=admin) shouldn't spoof X-Admin-Token to avoid 
-      // backend db_connect.php forcing $_SESSION['user_id'] = 1 permanently.
-      // db_connect.php natively respects $_SESSION['role'] now.
-      if (isAdminById) {
+      // Check admin by id=1 OR by role field (secondary admins have role='admin' but id!=1)
+      const isAdminById = savedUser && (savedUser.id === 1 || savedUser.id === '1');
+      const isAdminByRole = savedUser && (
+        savedUser.role === 'admin' ||
+        savedUser.role === 'super_admin' ||
+        savedUser.is_admin == 1 ||
+        savedUser.isAdmin === true
+      );
+      const isAnyAdmin = isAdminById || isAdminByRole;
+
+      // [FIX] Send X-Admin-Token for ALL admins (not just id=1).
+      // db_connect.php PRIORITY 4 maps any valid X-Admin-Token to admin-001 session,
+      // so secondary admins no longer get 401 on protected endpoints.
+      if (isAnyAdmin) {
         headers['X-Admin-Token'] = 'autoflow-admin-001';
       }
 
-      if (isAuthenticated || isAdminById) {
+      // Send X-Autoflow-Auth for any authenticated user (even non-admin roles)
+      // so db_connect.php PRIORITY 3 can set session from $_SESSION['role']
+      if (isAuthenticated || isAnyAdmin) {
         headers['X-Autoflow-Auth'] = '1';
       }
 
-      if (isAdminById && isLocal) {
-        // [FIX P38-SA] Moved auth debug log inside isLocal guard and scope-reduced
-        // to avoid leaking auth state in staging/test consoles
-        console.log('[Auth] Admin mode active, headers:', Object.keys(headers));
+      if (isLocal && savedUser && savedUser.id) {
+        headers['X-Local-Dev-User'] = String(savedUser.id);
+      }
+
+      if (isLocal && isAnyAdmin) {
+        console.log('[Auth] Admin headers active for user:', savedUser?.id, 'role:', savedUser?.role);
       }
     } catch { /* ignore */ }
   }
@@ -113,6 +130,10 @@ async function request<T>(
   body?: any,
   options?: { signal?: AbortSignal }
 ): Promise<ApiResponse<T>> {
+  if (DEMO_MODE && typeof window !== 'undefined' && localStorage.getItem('demo_version') !== 'v4.0.0') {
+      await seedDemoData(); // demoSeed internally handles version check + cache clear
+  }
+
   if (method === 'GET') {
     const cached = apiCache[endpoint];
     const isStaticEndpoint = typeof endpoint === 'string' && (endpoint.startsWith('tags') || endpoint.startsWith('segments') || endpoint.startsWith('flows') || endpoint.startsWith('integrations') || endpoint.startsWith('lists') || endpoint.startsWith('templates') || endpoint.startsWith('settings'));
@@ -159,7 +180,7 @@ async function request<T>(
   }
 
   // Force production API URL
-  const baseUrl = API_BASE_URL;
+  const baseUrl = DEMO_MODE ? null : API_BASE_URL;
   const isDeleteAction = method === 'DELETE' || (method === 'POST' && endpoint.includes('delete'));
   
   if (isDeleteAction) updateDeleteState(true);
@@ -256,25 +277,53 @@ async function request<T>(
     }
   }
 
-  try {
-    // FALLBACK LOCALSTORAGE (Mock Data)
-  await delay(SIMULATE_DELAY);
-  const [pathString] = endpoint.split('?');
-  const parts = pathString.split('/');
-  const resource = parts[0];
-  const id = parts[1];
+  // [ISOLATION] DEMO_MODE: serve from localStorage + demoMocks only.
+  // NEVER reached in production — if baseUrl is set (production), all
+  // errors are returned as-is; mock data is never substituted for real failures.
+  if (!DEMO_MODE) {
+    // Production had an error (baseUrl was set but something went wrong before reaching here).
+    // Return connection error — do NOT fall through to mock data.
+    if (isDeleteAction) updateDeleteState(false);
+    return { success: false, data: {} as T, message: 'Connection Error.' };
+  }
 
-  let storedData = JSON.parse(localStorage.getItem(`mailflow_${resource}`) || '[]');
+  try {
+    // DEMO MODE: Serve from localStorage + dynamic mocks
+    await delay(SIMULATE_DELAY);
+    const [pathString] = endpoint.split('?');
+    const parts = pathString.split('/');
+    const resource = parts[0];
+    const id = parts[1];
+
+    let storedDataRaw = localStorage.getItem(`mailflow_${resource}`);
+    let storedData = storedDataRaw ? JSON.parse(storedDataRaw) : [];
+
+    // --- INTERCEPT DYNAMIC REPORTS ---
+    const { getDynamicReport } = await import('../utils/demoMocks');
+    const dynamicReport = getDynamicReport(resource, endpoint);
+    if (dynamicReport) {
+        return { success: true, data: dynamicReport as T };
+    }
+  // ---------------------------------
 
   switch (method) {
     case 'GET':
       if (id) {
-        const item = storedData.find((x: any) => x.id === id);
+        const item = Array.isArray(storedData) ? storedData.find((x: any) => x.id === id) : null;
         return { success: !!item, data: item || null };
       }
       return { success: true, data: storedData as T };
     case 'POST':
-      const newItem = { id: body.id || crypto.randomUUID(), createdAt: new Date().toISOString(), ...body };
+      const targetId = id || (body && body.id);
+      if (targetId) {
+          const index = storedData.findIndex((x: any) => x.id === targetId);
+          if (index >= 0) {
+              storedData[index] = { ...storedData[index], ...body };
+              localStorage.setItem(`mailflow_${resource}`, JSON.stringify(storedData));
+              return { success: true, data: storedData[index] as T };
+          }
+      }
+      const newItem = { id: targetId || crypto.randomUUID(), createdAt: new Date().toISOString(), ...body };
       storedData = [newItem, ...storedData];
       localStorage.setItem(`mailflow_${resource}`, JSON.stringify(storedData));
       return { success: true, data: newItem as T };

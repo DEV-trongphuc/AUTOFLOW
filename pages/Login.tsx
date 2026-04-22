@@ -2,16 +2,23 @@ import * as React from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
-import { Mail, Sparkles, Zap, Bot, Globe, Users, ShieldCheck, Clock, CheckCircle2, History, User } from 'lucide-react';
+import { Mail, Sparkles, Zap, Bot, Globe, Users, ShieldCheck, Clock, CheckCircle2, History, User, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../services/storageAdapter';
+import { DEMO_MODE } from '../utils/config';
+import { ALL_MODULES } from './Dashboard';
+
 
 const ADMIN_EMAIL = 'dom.marketing.vn@gmail.com';
+
+// Validation helpers
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const PHONE_VN_RE = /^(0|\+84)(3[2-9]|5[689]|7[06-9]|8[1-9]|9[0-9])[0-9]{7}$/;
+const URL_RE = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
 
 const Login: React.FC = () => {
     const navigate = useNavigate();
     const [isPending, setIsPending] = useState(false);
-
     const handleGoogleSuccess = async (credentialResponse: any) => {
         try {
             const result = await api.post<any>('login_google', { credential: credentialResponse.credential });
@@ -37,32 +44,9 @@ const Login: React.FC = () => {
         }
     };
 
-    const features = [
-        {
-            icon: Mail,
-            title: 'Email Marketing',
-            desc: 'Gửi kịch bản hàng loạt, tỷ lệ vào inbox 99.9%',
-            color: 'from-amber-400 to-orange-500'
-        },
-        {
-            icon: Zap,
-            title: 'Multichannel Flows',
-            desc: 'Kịch bản tự động trên Zalo, Meta, Instagram',
-            color: 'from-blue-500 to-indigo-600'
-        },
-        {
-            icon: Bot,
-            title: 'AI Vision Brain',
-            desc: 'Phản hồi thông minh theo ngữ cảnh dữ liệu',
-            color: 'from-emerald-500 to-teal-600'
-        },
-        {
-            icon: Globe,
-            title: 'Live Tracking',
-            desc: 'Theo dõi hành trình Khách hàng Thời gian thực',
-            color: 'from-purple-500 to-pink-600'
-        }
-    ];
+    // Marquee data split
+    const row1 = ALL_MODULES.slice(0, Math.ceil(ALL_MODULES.length / 2));
+    const row2 = ALL_MODULES.slice(Math.ceil(ALL_MODULES.length / 2));
 
     if (isPending) {
         return (
@@ -128,17 +112,39 @@ const Login: React.FC = () => {
                         </p>
                     </div>
 
-                    {/* Features Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl">
-                        {features.map((f, i) => (
-                            <div key={i} className="group p-6 bg-white/5 backdrop-blur-sm border border-white/5 rounded-[32px] hover:bg-white/[0.08] hover:border-white/10 transition-all duration-300">
-                                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${f.color} flex items-center justify-center mb-5 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 shadow-lg shadow-black/20`}>
-                                    <f.icon className={`w-7 h-7 text-white`} />
-                                </div>
-                                <h3 className="text-white font-bold mb-1">{f.title}</h3>
-                                <p className="text-xs text-slate-400 font-medium leading-relaxed">{f.desc}</p>
+                    {/* Scrolling Features Marquee */}
+                    <div className="relative w-full max-w-5xl overflow-hidden pause-on-hover mask-fade-edges mt-8">
+                        {/* Fade masks for smooth disappearance at edges */}
+                        <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#0f172a] to-transparent z-10 pointer-events-none" />
+                        <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[#0f172a] to-transparent z-10 pointer-events-none" />
+                        
+                        <div className="flex flex-col gap-4 w-full relative">
+                            {/* Row 1 (Forward) */}
+                            <div className="flex w-max animate-slide-infinite gap-4 pl-4 hover:[animation-play-state:paused]">
+                                {[...row1, ...row1, ...row1].map((f, i) => (
+                                    <div key={`r1-${i}`} className="w-[300px] shrink-0 p-5 bg-white/5 backdrop-blur-sm border border-white/5 rounded-3xl hover:bg-white/10 hover:border-white/10 transition-all duration-300">
+                                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center mb-4 shadow-lg shadow-black/20`}>
+                                            <f.icon className="w-6 h-6 text-white" />
+                                        </div>
+                                        <h3 className="text-white font-bold mb-1 truncate">{f.title}</h3>
+                                        <p className="text-xs text-slate-400 font-medium leading-relaxed line-clamp-2">{f.sub}</p>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
+
+                            {/* Row 2 (Reverse) */}
+                            <div className="flex w-max animate-slide-infinite-reverse gap-4 pl-4 hover:[animation-play-state:paused]">
+                                {[...row2, ...row2, ...row2].map((f, i) => (
+                                    <div key={`r2-${i}`} className="w-[300px] shrink-0 p-5 bg-white/5 backdrop-blur-sm border border-white/5 rounded-3xl hover:bg-white/10 hover:border-white/10 transition-all duration-300">
+                                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center mb-4 shadow-lg shadow-black/20`}>
+                                            <f.icon className="w-6 h-6 text-white" />
+                                        </div>
+                                        <h3 className="text-white font-bold mb-1 truncate">{f.title}</h3>
+                                        <p className="text-xs text-slate-400 font-medium leading-relaxed line-clamp-2">{f.sub}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -156,32 +162,81 @@ const Login: React.FC = () => {
                             <img src="/imgs/ICON.png" className="w-full h-full object-contain" alt="Brand Icon" />
                         </div>
                         <div className="pt-4">
-                            <h2 className="text-3xl font-black text-white tracking-tight">Identity Check</h2>
-                            <p className="text-slate-400 font-medium mt-2">Duy nhất Google Login để tiếp tục</p>
+                            <h2 className="text-3xl font-black text-white tracking-tight">
+                                {DEMO_MODE ? 'Trải nghiệm Demo' : 'Identity Check'}
+                            </h2>
+                            <p className="text-slate-400 font-medium mt-2">
+                                {DEMO_MODE
+                                    ? 'Hãy điền thông tin để khởi động trải nghiệm Demo miễn phí'
+                                    : 'Duy nhất Google Login để tiếp tục'}
+                            </p>
                         </div>
                     </div>
 
                     <div className="p-8 bg-white/5 border border-white/5 rounded-[40px] shadow-inner">
-                        <div className="flex justify-center flex-col items-center gap-6">
-                            <GoogleLogin
-                                onSuccess={handleGoogleSuccess}
-                                onError={() => toast.error('Google Sign In failed')}
-                                useOneTap
-                                theme="filled_black"
-                                shape="pill"
-                                size="large"
-                                width="320"
-                            />
+                        <div className="flex justify-center flex-col items-center gap-6 animate-in fade-in zoom-in-95 duration-500">
+                            {DEMO_MODE ? (
+                                <div className="w-full text-center max-w-[320px] mx-auto">
+                                    <button 
+                                        onClick={() => {
+                                            localStorage.setItem('user', JSON.stringify({ 
+                                                id: 'guest_' + Date.now(), 
+                                                name: 'Guest User', 
+                                                email: 'demo@domation.net', 
+                                                role: 'admin', 
+                                                status: 'approved',
+                                                isGuest: true
+                                            }));
+                                            localStorage.setItem('isAuthenticated', 'true');
+                                            window.location.href = '/';
+                                        }}
+                                        className="w-full h-14 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white rounded-2xl font-black uppercase tracking-widest text-[13px] flex items-center justify-center gap-2 transition-all shadow-xl shadow-amber-500/20 active:scale-95 group"
+                                    >
+                                        <Sparkles className="w-5 h-5 group-hover:scale-125 transition-transform" />
+                                        Trải nghiệm Guest
+                                        <ArrowRight className="w-5 h-5 ml-1 group-hover:translate-x-1 transition-transform" />
+                                    </button>
+                                    <p className="text-slate-400 text-xs font-medium mt-4">Nhấn để truy cập ngay bản Demo trải nghiệm hệ thống.</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <GoogleLogin
+                                        onSuccess={handleGoogleSuccess}
+                                        onError={() => toast.error('Google Sign In failed')}
+                                        useOneTap
+                                        theme="filled_black"
+                                        shape="pill"
+                                        size="large"
+                                        width="320"
+                                    />
 
-                            <div className="flex items-center gap-4 w-full">
-                                <div className="h-px flex-1 bg-white/5" />
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Enterprise Only</span>
-                                <div className="h-px flex-1 bg-white/5" />
-                            </div>
+                                    <div className="flex items-center gap-4 w-full max-w-[320px]">
+                                        <div className="h-px flex-1 bg-white/10" />
+                                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Hoặc</span>
+                                        <div className="h-px flex-1 bg-white/10" />
+                                    </div>
 
-                            <p className="text-[11px] text-slate-500 font-bold text-center leading-relaxed">
-                                Bằng cách đăng nhập, bạn đồng ý với các chính sách bảo mật và điều khoản sử dụng của hệ thống.
-                            </p>
+                                    <button onClick={() => {
+                                        localStorage.setItem('user', JSON.stringify({ 
+                                            id: 'guest_' + Date.now(), 
+                                            name: 'Guest User', 
+                                            email: 'demo@domation.net', 
+                                            role: 'admin', 
+                                            status: 'approved',
+                                            isGuest: true
+                                        }));
+                                        localStorage.setItem('isAuthenticated', 'true');
+                                        window.location.href = '/';
+                                    }} className="w-full max-w-[320px] h-12 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-white text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-sm">
+                                        <User className="w-4 h-4 text-amber-500" />
+                                        View as a Guest (Demo)
+                                    </button>
+
+                                    <p className="text-[11px] text-slate-500 font-bold text-center leading-relaxed mt-2 max-w-[320px]">
+                                        Bằng cách đăng nhập, bạn đồng ý với các chính sách bảo mật và điều khoản sử dụng của hệ thống.
+                                    </p>
+                                </>
+                            )}
                         </div>
                     </div>
 

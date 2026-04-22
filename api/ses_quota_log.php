@@ -28,7 +28,6 @@ if (!$isCLI) {
     }
 }
 
-
 // ─── Config ────────────────────────────────────────────────────────────────
 // Load settings AFTER auth check
 $stmt = $pdo->query("SELECT * FROM system_settings");

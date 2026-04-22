@@ -301,7 +301,7 @@ const Tags: React.FC = () => {
     };
 
     const filteredTags = tags.filter(t =>
-        t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (t.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (t.description || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 

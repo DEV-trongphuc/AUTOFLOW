@@ -8,14 +8,7 @@ require_once 'db_connect.php';
 require_once 'auth_middleware.php';
 require_once 'meta_helpers.php';
 
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header('Content-Type: application/json');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0);
-}
 
 try {
     $period = $_GET['period'] ?? 'month';
@@ -85,7 +78,6 @@ try {
     $stmt = $pdo->prepare($sqlInteractions);
     $stmt->execute($params);
     $interactionsData = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
-
 
     // 4. Automation Triggers (e.g. AI Replies, Keywords)
     // We need to log automation triggers to count this accurately. 

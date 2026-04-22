@@ -114,7 +114,7 @@ const VoucherCodeManager: React.FC<VoucherCodeManagerProps> = ({ isOpen, onClose
             if (res.success) {
                 toast.success(res.message || 'Đã gạch mã thành công!');
                 setRedeemCodeInput('');
-                campaign.stats.totalRedeemed += 1;
+                if (campaign.stats) campaign.stats.totalRedeemed += 1;
                 loadCodes();
             } else {
                 toast.error(res.message || 'Gạch mã thất bại.');
@@ -174,7 +174,7 @@ const VoucherCodeManager: React.FC<VoucherCodeManagerProps> = ({ isOpen, onClose
             const res = await response.json();
             if (res.success) {
                 toast.success('Đã xóa các mã thành công!');
-                campaign.stats.totalGenerated -= selectedCodes.length;
+                if (campaign.stats) campaign.stats.totalGenerated -= selectedCodes.length;
                 setSelectedCodes([]);
                 loadCodes();
                 setDeleteModalOpen(false);
@@ -196,7 +196,7 @@ const VoucherCodeManager: React.FC<VoucherCodeManagerProps> = ({ isOpen, onClose
             const res = await response.json();
             if (res.success) {
                 toast.success('Gạch mã hàng loạt thành công!');
-                campaign.stats.totalRedeemed += selectedCodes.length;
+                if (campaign.stats) campaign.stats.totalRedeemed += selectedCodes.length;
                 setSelectedCodes([]);
                 loadCodes();
                 setRedeemModalOpen(false);
@@ -271,19 +271,19 @@ const VoucherCodeManager: React.FC<VoucherCodeManagerProps> = ({ isOpen, onClose
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col gap-1">
                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><Hash className="w-3.5 h-3.5" /> Tổng số mã</span>
-                        <span className="text-xl font-black text-slate-800">{campaign.codeType === 'static' ? 1 : campaign.stats.totalGenerated}</span>
+                        <span className="text-xl font-black text-slate-800">{campaign.codeType === 'static' ? 1 : (campaign.stats?.totalGenerated || 0)}</span>
                     </div>
                     <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex flex-col gap-1">
                         <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest flex items-center gap-1.5"><Zap className="w-3.5 h-3.5" /> Đã tồn tại (Available)</span>
-                        <span className="text-xl font-black text-blue-700">{campaign.codeType === 'static' ? 1 : codes.filter(c => c.status === 'available').length}</span>
+                        <span className="text-xl font-black text-blue-700">{campaign.codeType === 'static' ? 1 : (codes || []).filter(c => c.status === 'available').length}</span>
                     </div>
                     <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex flex-col gap-1">
                         <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest flex items-center gap-1.5"><Users className="w-3.5 h-3.5" /> Đã phân phối (Sent)</span>
-                        <span className="text-xl font-black text-amber-600">{campaign.stats.totalDistributed}</span>
+                        <span className="text-xl font-black text-amber-600">{campaign.stats?.totalDistributed || 0}</span>
                     </div>
                     <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 flex flex-col gap-1">
                         <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5" /> Đã sử dụng (Used)</span>
-                        <span className="text-xl font-black text-emerald-600">{campaign.stats.totalRedeemed}</span>
+                        <span className="text-xl font-black text-emerald-600">{campaign.stats?.totalRedeemed || 0}</span>
                     </div>
                 </div>
 
@@ -407,6 +407,7 @@ const VoucherCodeManager: React.FC<VoucherCodeManagerProps> = ({ isOpen, onClose
                                         <th className="px-4 py-3 font-black text-[10px] uppercase tracking-widest text-slate-500">Mã (Code)</th>
                                         <th className="px-4 py-3 font-black text-[10px] uppercase tracking-widest text-slate-500">Phần Quà</th>
                                         <th className="px-4 py-3 font-black text-[10px] uppercase tracking-widest text-slate-500">Trạng thái</th>
+                                        <th className="px-4 py-3 font-black text-[10px] uppercase tracking-widest text-slate-500">Nguồn nhận</th>
                                         <th className="px-4 py-3 font-black text-[10px] uppercase tracking-widest text-slate-500">Người nhận</th>
                                         <th className="px-4 py-3 font-black text-[10px] uppercase tracking-widest text-slate-500">Ngày gửi</th>
                                         <th className="px-4 py-3 font-black text-[10px] uppercase tracking-widest text-slate-500">Hạn dùng</th>
@@ -449,6 +450,15 @@ const VoucherCodeManager: React.FC<VoucherCodeManagerProps> = ({ isOpen, onClose
                                                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest ${statusColors[code.status as keyof typeof statusColors] || 'bg-slate-100 text-slate-600'}`}>
                                                         {code.status}
                                                     </span>
+                                                </td>
+                                                <td className="px-4 py-3 text-xs">
+                                                    {code.claimedSource === 'survey' ? (
+                                                        <span className="flex items-center gap-1 text-purple-600 font-semibold bg-purple-50 px-1.5 py-0.5 rounded w-fit" title={`Survey ID: ${code.claimedSourceId}`}>
+                                                            Survey
+                                                        </span>
+                                                    ) : code.claimedSource ? (
+                                                        <span className="text-slate-500 capitalize">{code.claimedSource}</span>
+                                                    ) : <span className="text-slate-300">-</span>}
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     {code.distributedToSubscriberId ? (

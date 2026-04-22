@@ -555,7 +555,6 @@ function upsertSubscriber($pdo, $pageId, $psid, $messageText = null)
         }
     }
 
-
     // 3. Fetch Profile from Meta if new or name is empty (and we have page token)
     $firstName = null;
     $lastName = null;

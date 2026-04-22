@@ -32,6 +32,7 @@ function identifyVisitor($pdo, $payload)
 {
     $visitorId = $payload['visitor_id'];
     $email = $payload['email'];
+    $phoneNumber = $payload['phone_number'] ?? null;
 
     if (!$visitorId || !$email)
         return false;
@@ -41,23 +42,24 @@ function identifyVisitor($pdo, $payload)
     $stmt->execute([$email]);
     $subscriberId = $stmt->fetchColumn();
 
-    // 2. If not exists, create a new one (minimal info)
+    // 2. If not found, create a new one — with workspace_id from visitor's property
     if (!$subscriberId) {
-        $subscriberId = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x', mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(
-            0,
-            0xffff
-        ), mt_rand(0, 0x0fff) | 0x4000, mt_rand(0, 0x3fff) | 0x8000, mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(
-            0,
-            0xffff
-        ));
-        $pdo->prepare("INSERT INTO subscribers (id, email, source, status, created_at, updated_at) VALUES (?, ?, 'Web Tracking',
-'customer', NOW(), NOW())")
-            ->execute([$subscriberId, $email]);
+        // [FIX BUG-4] Resolve workspace_id from the visitor's property to avoid
+        // creating subscribers without workspace_id (invisible in CRM).
+        $stmtWs = $pdo->prepare("SELECT wp.workspace_id FROM web_visitors wv JOIN web_properties wp ON wv.property_id = wp.id WHERE wv.id = ? LIMIT 1");
+        $stmtWs->execute([$visitorId]);
+        $wsRow = $stmtWs->fetch(PDO::FETCH_ASSOC);
+        $workspaceId = $wsRow['workspace_id'] ?? 1;
+
+        $subscriberId = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x', mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0x0fff) | 0x4000, mt_rand(0, 0x3fff) | 0x8000, mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff));
+        $emailPrefix = explode('@', $email)[0];
+        $pdo->prepare("INSERT INTO subscribers (id, workspace_id, email, first_name, phone_number, source, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 'website_tracking', 'active', NOW(), NOW())")
+            ->execute([$subscriberId, $workspaceId, $email, $emailPrefix, $phoneNumber]);
     }
 
     // 3. Link visitor to subscriber
-    $res = $pdo->prepare("UPDATE web_visitors SET subscriber_id = ? WHERE id = ?")
-        ->execute([$subscriberId, $visitorId]);
+    $res = $pdo->prepare("UPDATE web_visitors SET subscriber_id = ?, email = COALESCE(email, ?), phone = COALESCE(phone, ?) WHERE id = ?")
+        ->execute([$subscriberId, $email, $phoneNumber, $visitorId]);
 
     // 4. Trigger Dynamic Automation
     checkDynamicTriggers($pdo, $subscriberId);
@@ -288,8 +290,8 @@ s.device_type,
 COUNT(*) as page_views,
 COUNT(DISTINCT pv.visitor_id) as visitors,
 COUNT(DISTINCT pv.session_id) as sessions,
-AVG(pv.time_on_page) as avg_time,
-AVG(pv.scroll_depth) as avg_scroll,
+AVG(NULLIF(pv.time_on_page, 0)) as avg_time,
+AVG(NULLIF(pv.scroll_depth, 0)) as avg_scroll,
 COUNT(DISTINCT CASE WHEN s.is_bounce = 1 AND pv.is_entrance = 1 THEN s.id END) as bounces
 FROM web_page_views pv
 JOIN web_sessions s ON pv.session_id = s.id

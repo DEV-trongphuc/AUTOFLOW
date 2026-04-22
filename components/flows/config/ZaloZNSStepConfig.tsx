@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { MessageSquare, FileText, AlertCircle, ChevronDown, Check, UploadCloud, FileSpreadsheet, Send, HelpCircle, Eye, RefreshCw, X, Download, Clock, Zap, ShieldAlert, BadgeCheck, Braces, Calendar, User, ChevronRight, Search } from 'lucide-react';
+import { MessageSquare, FileText, AlertCircle, ChevronDown, Check, UploadCloud, FileSpreadsheet, Send, HelpCircle, Eye, RefreshCw, X, Download, Clock, Zap, ShieldAlert, BadgeCheck, Braces, Calendar, User, ChevronRight, Search, ArrowRight } from 'lucide-react';
 import { api } from '../../../services/storageAdapter';
 
 interface ZaloOA {
@@ -565,10 +565,13 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
 
     if (oas.length === 0) {
         return (
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center">
-                <AlertCircle className="w-12 h-12 text-amber-600 mx-auto mb-3" />
-                <p className="text-sm font-bold text-amber-800 mb-2">Chưa có Zalo OA</p>
-                <p className="text-xs text-amber-600">Vui lòng thêm Zalo Official Account trong Settings trước.</p>
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center shadow-inner">
+                <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-3" />
+                <p className="text-sm font-bold text-amber-800 mb-2">Chưa kết nối Zalo OA</p>
+                <p className="text-xs text-amber-700 leading-relaxed mb-4 max-w-sm mx-auto">Vui lòng kết nối Zalo Official Account trong phần Cài đặt Hệ thống để bắt đầu thiết lập gửi tin nhắn ZNS.</p>
+                <a href="/settings" target="_blank" className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-amber-700 font-black text-[10px] uppercase tracking-widest rounded-xl shadow-[0_2px_10px_rgba(245,158,11,0.15)] border border-amber-200 hover:bg-amber-100 hover:-translate-y-0.5 hover:shadow-md transition-all active:scale-95">
+                    Đến trang Quản lý Kết nối <ArrowRight className="w-3.5 h-3.5" />
+                </a>
             </div>
         );
     }
@@ -670,10 +673,17 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                     {/* Template Selection */}
                     {config.zalo_oa_id && (
                         <div className="relative z-20">
-                            <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-3">
-                                <FileText className="w-4 h-4 inline mr-2 text-indigo-500" />
-                                Chọn Mẫu (Template)
-                            </label>
+                            <div className="flex justify-between items-center mb-3">
+                                <label className="block text-xs font-black text-slate-600 uppercase tracking-widest">
+                                    <FileText className="w-4 h-4 inline mr-2 text-indigo-500" />
+                                    Chọn Mẫu (Template)
+                                </label>
+                                {previewUrl && (
+                                    <a href={previewUrl} target="_blank" rel="noreferrer" className="text-[10px] bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 text-indigo-600 font-bold px-3 py-1.5 rounded-[10px] flex items-center gap-1.5 transition-all shadow-sm active:scale-95">
+                                        <Eye className="w-3.5 h-3.5" /> Xem trước thiết kế Mẫu
+                                    </a>
+                                )}
+                            </div>
                             <CustomSelect
                                 value={config.template_id || ''}
                                 options={templateOptions}

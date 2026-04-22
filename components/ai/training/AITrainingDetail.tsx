@@ -382,7 +382,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
         }, 100);
     };
 
-    const currentProperty = chatbots.find(p => p.id === selectedProperty) || properties.find(p => p.id === selectedProperty);
+    const currentProperty = (chatbots || []).find(p => p.id === selectedProperty) || (properties || []).find(p => p.id === selectedProperty);
 
     // Color Theme Injection
     const brandColor = settings.cat_brand_color || settings.brand_color || '#ffa900';
@@ -493,7 +493,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                             setActiveTab('logs');
                         }
                     }] : []),
-                    ...(!chatbots.some(c => c.id === selectedProperty) && properties.some(p => p.id === selectedProperty) ? [
+                    ...(!(chatbots || []).some(c => c.id === selectedProperty) && (properties || []).some(p => p.id === selectedProperty) ? [
                         {
                             label: 'WEB TRACKING',
                             icon: Globe,
@@ -583,7 +583,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                     </>
                 )}
 
-                {!chatbots.some(c => c.id === selectedProperty) && (
+                {!(chatbots || []).some(c => c.id === selectedProperty) && (
                     <button
                         onClick={() => setActiveTab('settings')}
                         className={`flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-[10px] lg:text-[11px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${activeTab === 'settings'
@@ -1062,7 +1062,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
 
 
                 {
-                    !chatbots.some(c => c.id === selectedProperty) && (
+                    !(chatbots || []).some(c => c.id === selectedProperty) && (
                         <div className={activeTab === 'settings' ? "block animate-in fade-in duration-300" : "hidden"}>
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                 <div className="lg:col-span-2 space-y-8">
@@ -1433,7 +1433,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                         initialVisitorId={props.initialVisitorId}
                         defaultShowAnalysis={triggerAnalysisModal}
                         isGroup={mainTab === 'chat'}
-                        initialSource={mainTab === 'chat' || chatbots.some(c => c.id === selectedProperty) ? 'org' : 'web'}
+                        initialSource={mainTab === 'chat' || (chatbots || []).some(c => c.id === selectedProperty) ? 'org' : 'web'}
                         isDarkTheme={isDarkTheme}
                     />
                 </div>
@@ -1671,7 +1671,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                 </div>
 
                             </div>
-                            {!chatbots.some(c => c.id === selectedProperty) && (
+                            {!(chatbots || []).some(c => c.id === selectedProperty) && (
                                 <FastRepliesSettings settings={settings} setSettings={setSettings} isDarkTheme={isDarkTheme} />
                             )}
                         </div>

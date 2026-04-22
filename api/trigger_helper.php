@@ -476,4 +476,16 @@ function checkDynamicTriggers($pdo, $subscriberId)
         }
     }
 }
+
+// [EVENT-DRIVEN ARCHITECTURE] Wake up subscriber waiting in flows
+if (!function_exists('wakeupWaitingSubscribers')) {
+    function wakeupWaitingSubscribers($pdo, $subscriberId) {
+        if (!$subscriberId) return;
+        try {
+            $stmt = $pdo->prepare("UPDATE flow_subscribers SET next_scheduled_at = NOW() WHERE subscriber_id = ? AND status = 'waiting' AND next_scheduled_at > NOW()");
+            $stmt->execute([$subscriberId]);
+        } catch (Exception $e) {}
+    }
+}
+
 ?>

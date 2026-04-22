@@ -259,7 +259,6 @@ if (!function_exists('runWorkerFlow')) {
                     continue;
                 }
 
-
                 // [EXIT CHECK] Check if subscriber is still eligible (not unsubscribed globally)
                 if (trim($item['sub_status']) === 'unsubscribed') {
                     // DB ENUM confirmed: waiting, processing, completed, failed, unsubscribed � use correct status
@@ -268,7 +267,6 @@ if (!function_exists('runWorkerFlow')) {
                     $pdo->commit();
                     continue;
                 }
-
 
                 if (!isset($flowCache[$flowId])) {
                     $flowCache[$flowId] = [
@@ -392,7 +390,6 @@ if (!function_exists('runWorkerFlow')) {
                     $pdo->commit();
                     continue;
                 }
-
 
                 $currentStepId = $item['step_id'];
                 $stepsProcessedInRun = 0;

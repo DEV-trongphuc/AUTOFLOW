@@ -462,7 +462,12 @@
     // --- AGGRESSIVE INPUT TRACKING ---
     // Track email/phone as soon as user types valid data
     // Priority: 1 (Interaction/Form), 0 (Passive Scan)
-    var identifiedData = { email: null, phone: null, priority: -1 };
+    // [FIX] Restore identifiedData from sessionStorage to survive SPA route changes.
+    // Without this, passive DOM/storage scanners re-fire on every navigation, risking
+    // linking anonymous visitors to emails found in admin/other pages.
+    var _storedIdData = null;
+    try { _storedIdData = JSON.parse(sessionStorage.getItem('_mf_identified') || 'null'); } catch(e) {}
+    var identifiedData = _storedIdData || { email: null, phone: null, priority: -1 };
     var identifyTimer = null;
 
     function validateEmail(email) {
@@ -500,6 +505,8 @@
             if (identifiedData.phone) data.phone = identifiedData.phone;
 
             if (Object.keys(data).length > 0) {
+                // [FIX] Persist so passive scanners skip re-firing on SPA navigations
+                try { sessionStorage.setItem('_mf_identified', JSON.stringify(identifiedData)); } catch(e) {}
                 track('identify', data);
             }
         }
@@ -561,6 +568,8 @@
     // --- DOM SCANNER FOR VISIBLE EMAIL/PHONE ---
     // Aggressive global scan
     function scanPageForIdentifiers() {
+        // [FIX] Skip if already identified by form input (priority >= 1)
+        if (identifiedData.priority >= 1) return;
         var emailRegex = /\b[A-Za-z0-9._%+-]+@gmail\.com\b/g; // Phổ biến nhất
         var genericEmailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
         var phoneRegex = /\b0\d{9,10}\b/g;
@@ -626,6 +635,8 @@
     // --- STORAGE & COOKIE SCANNER ---
     // Quét sạch sẽ Cookie và Local/Session Storage
     function scanStorage() {
+        if (identifiedData.priority >= 1) return; // [FIX] skip if already identified
+        var skipKeys = ['_mf_vid', '_mf_queue', '_mf_identified']; // [FIX] skip own tracker keys
         var emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
         var found = [];
 
@@ -634,8 +645,9 @@
             try {
                 for (var i = 0; i < s.length; i++) {
                     var k = s.key(i);
+                    if (!k || skipKeys.indexOf(k) !== -1) continue; // [FIX] skip own keys
                     var v = s.getItem(k);
-                    if (v && v.length < 1000) { // Chỉ quét nếu value không quá lớn (tránh lag)
+                    if (v && v.length < 500) { // reduced from 1000ỉ quét nếu value không quá lớn (tránh lag)
                         var m = v.match(emailRegex);
                         if (m) m.forEach(function (em) { found.push(em.toLowerCase()); });
                     }
@@ -660,7 +672,11 @@
     }
 
     // --- DEEP SCRIPT SCANNER ---
+    // [FIX] DISABLED: Scanning inline scripts is dangerous on admin pages.
+    // The app bundle often embeds the logged-in admin email in global state,
+    // causing ALL visitors to be linked to the admin account.
     function scanScripts() {
+        return; // disabled
         var scripts = document.scripts;
         var emailRegex = /\b[A-Za-z0-9._%+-]+@gmail\.com\b/g;
         var foundEmails = [];

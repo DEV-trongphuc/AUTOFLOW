@@ -127,7 +127,6 @@ if ($method === 'GET' && $action === 'list') {
     }
 }
 
-
 if ($method === 'POST' && $action === 'create') {
     try {
         $input = json_decode(file_get_contents('php://input'), true);
@@ -338,7 +337,6 @@ if ($method === 'GET' && $action === 'stats') {
                 unset($row['clean_url']);
                 return $row;
             }, $topPagesRawResult);
-
 
             // Sources from Raw
             $stmtSources = $pdo->prepare("SELECT COALESCE(utm_source, 'direct') as source, COALESCE(utm_medium, 'none') as medium, COUNT(*) as sessions, COUNT(DISTINCT visitor_id) as visitors FROM web_sessions WHERE property_id = ? AND started_at >= ? AND started_at <= ? $deviceMatch GROUP BY utm_source, utm_medium ORDER BY sessions DESC LIMIT 20");

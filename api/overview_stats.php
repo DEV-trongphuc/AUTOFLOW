@@ -120,7 +120,6 @@ if ($days < 1 || $days > 90) {
 $startDate = date('Y-m-d 00:00:00', strtotime("-$days days"));
 $endDate = date('Y-m-d 23:59:59');
 
-
 try {
     // 1. Web Analytics (web_page_views) — not scoped by workspace_id since column doesn't exist
     $stmtWeb = $pdo->prepare("
@@ -152,7 +151,6 @@ try {
     ");
     $stmtLead->execute([$workspace_id, $startDate, $endDate]);
     $rawLeadStats = $stmtLead->fetchAll(PDO::FETCH_KEY_PAIR);
-
 
     // Prepare Date Range Series
     $chartData = [];
@@ -200,8 +198,6 @@ try {
     $stmtFlow->execute([$workspace_id]);
     $topFlows = $stmtFlow->fetchAll(PDO::FETCH_ASSOC);
 
-
-
     // --- ADVANCED: Calculate "Percentage Growth" vs Previous Period ---
     $prevStart = date('Y-m-d 00:00:00', strtotime("-" . ($days * 2) . " days"));
     $prevEnd = date('Y-m-d 23:59:59', strtotime("-" . ($days + 1) . " days"));
@@ -217,7 +213,6 @@ try {
     $stmtLeadPrev = $pdo->prepare("SELECT COUNT(*) FROM subscribers WHERE workspace_id = ? AND joined_at BETWEEN ? AND ?");
     $stmtLeadPrev->execute([$workspace_id, $prevStart, $prevEnd]);
     $prevLead = $stmtLeadPrev->fetchColumn();
-
 
     $calcGrowth = function($current, $prev) {
         if ($prev == 0) return $current > 0 ? 100 : 0;
