@@ -87,17 +87,10 @@ const Settings: React.FC = () => {
             setSmtp(prev => ({
                 ...prev,
                 ...res.data,
-                // Auto-fill Amazon SES if missing
-                smtp_enabled: res.data.smtp_enabled === '1' ? '1' : '1', // Auto-enable for setup
-                smtp_host: res.data.smtp_host || 'email-smtp.us-east-2.amazonaws.com', // Correct Region from User info
-                smtp_user: res.data.smtp_user || 'AKIAXWQT74VN2BACAOTI',
-                smtp_pass: res.data.smtp_pass || 'BNLL1hz/J/4LPVr6JznV29LyPnmSgpMLsg5c92LyM6I9',
-                smtp_port: res.data.smtp_port || '587', // 587 is best for TLS
+                // Respect the DB value — do NOT force-enable
+                smtp_enabled: res.data.smtp_enabled ?? '0',
+                smtp_port: res.data.smtp_port || '587',
                 smtp_encryption: res.data.smtp_encryption || 'tls',
-                smtp_from_email: res.data.smtp_from_email || 'tuyensinh@ideas.edu.vn',
-                smtp_from_name: res.data.smtp_from_name || 'Tuyển Sinh IDEAS',
-                aws_access_key: res.data.aws_access_key || '',
-                aws_secret_key: res.data.aws_secret_key || ''
             }));
         }
 
