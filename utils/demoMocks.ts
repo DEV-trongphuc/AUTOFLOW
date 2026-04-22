@@ -723,20 +723,27 @@ export const getDynamicReport = (resource: string, endpoint: string): any | null
     if (resource === 'templates') {
         const stored = JSON.parse(localStorage.getItem('mailflow_templates') || 'null');
         if (stored && stored.length > 0 && !id) return stored;
-        
+
+        const FALLBACK_HTML = (name: string, color = '#f59e0b') => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{margin:0;padding:0;background:#F3F4F6;font-family:Arial,sans-serif}</style></head><body bgcolor="#F3F4F6"><center><table width="100%" border="0" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 0"><table width="600" border="0" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border-radius:12px;overflow:hidden"><tr><td style="background:${color};padding:40px 32px;text-align:center"><h1 style="color:#fff;margin:0;font-size:28px;font-weight:700">${name}</h1><p style="color:rgba(255,255,255,0.85);margin:12px 0 0;font-size:15px">Thông điệp đặc biệt từ DOMATION</p></td></tr><tr><td style="padding:32px"><p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 20px">Xin chào <strong>{{firstName}}</strong>,</p><p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 24px">Chúng tôi muốn chia sẻ với bạn những thông tin hữu ích nhất. Đây là cơ hội tuyệt vời để bạn khám phá thêm về giải pháp của chúng tôi.</p><table width="100%" border="0" cellpadding="0" cellspacing="0"><tr><td style="background:#f8fafc;border-radius:8px;padding:20px;margin:0 0 24px"><p style="color:#1e293b;font-weight:700;font-size:15px;margin:0 0 8px">✅ Lợi ích chính:</p><p style="color:#475569;font-size:14px;line-height:1.6;margin:0">• Tiết kiệm thời gian với tự động hóa thông minh<br>• Tăng tỷ lệ chuyển đổi lên đến 300%<br>• Phân tích dữ liệu real-time</p></td></tr></table><table border="0" cellpadding="0" cellspacing="0" align="center"><tr><td style="background:${color};border-radius:8px"><a href="#" style="color:#fff;font-weight:700;font-size:15px;padding:14px 32px;display:block;text-decoration:none">Khám phá ngay →</a></td></tr></table></td></tr><tr><td style="background:#f8fafc;padding:20px;text-align:center"><p style="color:#94a3b8;font-size:12px;margin:0">© 2026 DOMATION · <a href="{{unsubscribe_url}}" style="color:#94a3b8;text-decoration:underline">Hủy đăng ký</a></p></td></tr></table></td></tr></table></center></body></html>`;
+
         const templates = demoTemplates.map((t: any, idx: number) => ({
             ...t,
+            html_content: (t.html_content && t.html_content.length > 100)
+                ? t.html_content
+                : FALLBACK_HTML(t.name || 'Email Template', ['#f59e0b','#2563eb','#10b981','#ef4444'][idx % 4]),
             groupId: ['tg_1', 'tg_2', 'tg_3'][idx % 3],
-            previewText: t.subject ? t.subject.substring(0, 30) + '...' : 'Email đặc biệt dành cho bạn',
+            previewText: t.subject ? t.subject.substring(0, 50) + '...' : 'Email đặc biệt dành cho bạn',
             tags: ['email', 'marketing']
         }));
-        localStorage.setItem('mailflow_templates', JSON.stringify(templates));
-        
+
+        const allTemplates = [...templates];
+        localStorage.setItem('mailflow_templates', JSON.stringify(allTemplates));
+
         if (id) {
-            const list = stored && stored.length > 0 ? stored : templates;
+            const list = stored && stored.length > 0 ? stored : allTemplates;
             return list.find((t: any) => t.id === id) || list[0];
         }
-        return templates;
+        return allTemplates;
     }
 
     // ─── 18. Settings ─────────────────────────────────────────────────────────

@@ -130,8 +130,13 @@ async function request<T>(
   body?: any,
   options?: { signal?: AbortSignal }
 ): Promise<ApiResponse<T>> {
-  if (DEMO_MODE && typeof window !== 'undefined' && localStorage.getItem('demo_version') !== 'v4.0.0') {
-      await seedDemoData(); // demoSeed internally handles version check + cache clear
+  if (DEMO_MODE && typeof window !== 'undefined' && !sessionStorage.getItem('demo_seeded')) {
+      // Clear ALL stale demo caches so fresh data always loads on new page/tab
+      ['mailflow_flows','mailflow_campaigns','mailflow_templates','mailflow_subscribers',
+       'mailflow_lists','mailflow_tags','mailflow_segments','mailflow_vouchers',
+       'mailflow_surveys','demo_version'].forEach(k => localStorage.removeItem(k));
+      await seedDemoData();
+      sessionStorage.setItem('demo_seeded', '1');
   }
 
   if (method === 'GET') {

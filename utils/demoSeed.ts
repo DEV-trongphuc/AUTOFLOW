@@ -1,6 +1,6 @@
 import { subDays, subHours } from 'date-fns';
 
-const DEMO_VERSION = 'v4.0.0';
+const DEMO_VERSION = 'v4.1.0';
 
 const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 const randomItem = <T>(arr: T[]): T => arr[randomInt(0, arr.length - 1)];
