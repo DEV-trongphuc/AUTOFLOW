@@ -27,6 +27,7 @@ interface FilterPillsProps {
         tags: string[];
         verify: string;
         hasChat: string;
+        salesperson?: string;
     };
     onRemove: (key: string, value?: string) => void;
     onClearAll: () => void;
@@ -58,6 +59,10 @@ const FilterPills: React.FC<FilterPillsProps> = ({ filters, onRemove, onClearAll
 
     if (filters.hasChat !== 'all') {
         activeFilters.push({ key: 'hasChat', label: 'Chat', value: filters.hasChat === 'yes' ? 'Có hội thoại' : 'Chưa có' });
+    }
+    
+    if (filters.salesperson) {
+        activeFilters.push({ key: 'salesperson', label: 'Sales', value: filters.salesperson });
     }
 
     if (activeFilters.length === 0) return null;

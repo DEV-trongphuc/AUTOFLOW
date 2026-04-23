@@ -38,7 +38,7 @@ try {
 
             $pdo->beginTransaction();
 
-            $stmtF = $pdo->prepare("SELECT name, target_list_id, workspace_id, fields_json, notification_enabled, notification_emails, notification_cc_emails, notification_subject FROM forms WHERE id = ?");
+            $stmtF = $pdo->prepare("SELECT name, status, target_list_id, workspace_id, fields_json, notification_enabled, notification_emails, notification_cc_emails, notification_subject FROM forms WHERE id = ?");
             $stmtF->execute([$formId]);
             $formData = $stmtF->fetch();
 
@@ -46,6 +46,11 @@ try {
                 if ($pdo->inTransaction())
                     $pdo->rollBack();
                 jsonResponse(false, null, 'Biểu mẫu không tồn tại');
+            }
+            // [GUARD] Block submission if form is inactive
+            if (($formData['status'] ?? 'active') === 'inactive') {
+                if ($pdo->inTransaction()) $pdo->rollBack();
+                jsonResponse(false, null, 'Biểu mẫu này hiện đã được vô hiệu hoá');
             }
 
             $targetListId = $formData['target_list_id'] ?? null;
@@ -667,6 +672,7 @@ try {
                     $data = array_map(function ($f) {
                         $f['fields'] = json_decode($f['fields_json'] ?? '[]');
                         $f['targetListId'] = $f['target_list_id'];
+                        $f['status'] = $f['status'] ?? 'active';
                         $f['notificationEnabled'] = (bool)($f['notification_enabled'] ?? false);
                         $f['notificationEmails'] = $f['notification_emails'] ?? '';
                         $f['notificationCcEmails'] = $f['notification_cc_emails'] ?? '';
@@ -691,9 +697,9 @@ try {
                 $notifEmails  = trim($data['notificationEmails'] ?? '');
                 $notifCcEmails = trim($data['notificationCcEmails'] ?? '');
                 $notifSubject = trim($data['notificationSubject'] ?? '');
-                $pdo->prepare("INSERT INTO forms (workspace_id, id, name, target_list_id, fields_json, notification_enabled, notification_emails, notification_cc_emails, notification_subject, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())")
+                $pdo->prepare("INSERT INTO forms (workspace_id, id, name, status, target_list_id, fields_json, notification_enabled, notification_emails, notification_cc_emails, notification_subject, created_at) VALUES (?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, NOW())")
                     ->execute([$admin_workspace_id, $id, $data['name'], $data['targetListId'], $fields, $notifEnabled, $notifEmails ?: null, $notifCcEmails ?: null, $notifSubject ?: null]);
-                jsonResponse(true, ['id' => $id]);
+                jsonResponse(true, ['id' => $id, 'status' => 'active']);
             } catch (Exception $e) {
                 jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
@@ -703,6 +709,18 @@ try {
                 if (!$path)
                     jsonResponse(false, null, 'ID required');
                 $data = json_decode(file_get_contents("php://input"), true);
+
+                // [TOGGLE STATUS] PUT ?route=toggle_status
+                if ($route === 'toggle_status') {
+                    $stmtCur = $pdo->prepare("SELECT status FROM forms WHERE id = ? AND workspace_id = ?");
+                    $stmtCur->execute([$path, $admin_workspace_id]);
+                    $curStatus = $stmtCur->fetchColumn();
+                    if ($curStatus === false) jsonResponse(false, null, 'Không tìm thấy biểu mẫu');
+                    $newStatus = $curStatus === 'active' ? 'inactive' : 'active';
+                    $pdo->prepare("UPDATE forms SET status = ? WHERE id = ? AND workspace_id = ?")->execute([$newStatus, $path, $admin_workspace_id]);
+                    jsonResponse(true, ['id' => $path, 'status' => $newStatus], 'Đã ' . ($newStatus === 'active' ? 'kích hoạt' : 'vô hiệu hoá') . ' biểu mẫu');
+                }
+
                 $fields = json_encode($data['fields'] ?? []);
                 $notifEnabled = !empty($data['notificationEnabled']) ? 1 : 0;
                 $notifEmails  = trim($data['notificationEmails'] ?? '');

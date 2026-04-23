@@ -57,7 +57,6 @@ try {
     }
     echo "List counts reconciled.<br>";
 
-    $pdo->commit();
     echo "<b>ALL FIXES APPLIED SUCCESSFULLY!</b>";
 
 } catch (Exception $e) {

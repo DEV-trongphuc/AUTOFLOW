@@ -147,7 +147,7 @@ foreach ($activeFlows as $flow) {
     $tType = $tConfig['type'] ?? 'segment';
 
     // handled by worker_trigger.php: date, dormant, campaign
-    if ($tType !== 'segment')
+    if (!in_array($tType, ['segment', 'list', 'sync']))
         continue;
 
     // [SECURITY FIX] Added workspace_id filter for segment lookup

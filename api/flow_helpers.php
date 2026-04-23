@@ -1365,10 +1365,12 @@ function evaluateAdvancedConditionGroup($pdo, $subscriberId, $subProfile, $condi
                     $condMatch = (mb_strpos($checkVal, $targetVal, 0, 'UTF-8') === false);
                     break;
                 case 'starts_with':
-                    $condMatch = str_starts_with($checkVal, $targetVal);
+                    // [PHP 7 COMPAT] str_starts_with() is PHP 8.0+ only — fallback for PHP 7.x
+                    $condMatch = ($targetVal === '' || substr($checkVal, 0, strlen($targetVal)) === $targetVal);
                     break;
                 case 'ends_with':
-                    $condMatch = str_ends_with($checkVal, $targetVal);
+                    // [PHP 7 COMPAT] str_ends_with() is PHP 8.0+ only — fallback for PHP 7.x
+                    $condMatch = ($targetVal === '' || substr($checkVal, -strlen($targetVal)) === $targetVal);
                     break;
                 case 'is_set':
                     $condMatch = ($actualVal !== '' && $actualVal !== null);

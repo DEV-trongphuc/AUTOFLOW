@@ -159,6 +159,11 @@ const ContactRow = React.memo<ContactRowProps>(({
                     </div>
                 </td>
             )}
+            {visibleColumns.includes('salesperson') && (
+                <td className="px-6 py-4">
+                    <div className="text-sm font-medium text-slate-600">{sub.salesperson || '-'}</div>
+                </td>
+            )}
             {visibleColumns.includes('joinedAt') && (
                 <td className="px-6 py-4">
                     {renderJoinedDate(sub.joinedAt)}
@@ -190,6 +195,7 @@ const ContactSkeleton: React.FC<{ visibleColumns: string[] }> = ({ visibleColumn
         {visibleColumns.includes('lastActivity') && <td className="px-6 py-4"><Skeleton variant="text" width={100} /></td>}
         {visibleColumns.includes('leadScore') && <td className="px-6 py-4"><div className="flex justify-center"><Skeleton variant="rounded" width={40} height={20} /></div></td>}
         {visibleColumns.includes('tags') && <td className="px-6 py-4"><div className="flex gap-1"><Skeleton variant="rounded" width={40} height={16} /><Skeleton variant="rounded" width={40} height={16} /></div></td>}
+        {visibleColumns.includes('salesperson') && <td className="px-6 py-4"><Skeleton variant="text" width={100} /></td>}
         {visibleColumns.includes('joinedAt') && <td className="px-6 py-4"><Skeleton variant="text" width={80} /></td>}
         <td className="px-6 py-4 text-right pr-8"><Skeleton variant="circular" width={24} height={24} className="ml-auto" /></td>
     </tr>
@@ -318,6 +324,7 @@ const ContactsTab = React.memo<ContactsTabProps>(({
                                 {visibleColumns.includes('lastActivity') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{"Ho\u1EA1t \u0111\u1ED9ng g\u1EA7n nh\u1EA5t"}</th>}
                                 {visibleColumns.includes('leadScore') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">{"\u0110i\u1EC3m Lead"}</th>}
                                 {visibleColumns.includes('tags') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tags</th>}
+                                {visibleColumns.includes('salesperson') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Salesperson</th>}
                                 {visibleColumns.includes('joinedAt') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{"Ng\u00E0y tham gia"}</th>}
                                 <th className="px-6 py-4 text-right pr-8"></th>
                             </tr>

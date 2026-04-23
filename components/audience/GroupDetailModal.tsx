@@ -220,7 +220,7 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
 
     const handleExportCSV = () => {
         const selectedMembers = members.filter(m => selectedIds.has(m.id));
-        const header = ['ID', 'Email', 'SĐT', 'First Name', 'Last Name', 'Giới tính', 'Địa chỉ', 'Công ty', 'Nguồn', 'Status', 'Joined At'];
+        const header = ['ID', 'Email', 'SĐT', 'First Name', 'Last Name', 'Giới tính', 'Địa chỉ', 'Công ty', 'Salesperson', 'Nguồn', 'Status', 'Joined At'];
         const rows = selectedMembers.map(s => [
             s.id,
             s.email,
@@ -230,6 +230,7 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
             s.gender || '',
             s.address || '',
             s.companyName || '',
+            s.salesperson || '',
             s.source || '',
             s.status,
             s.joinedAt
@@ -987,7 +988,15 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-bold text-slate-700">{member.firstName} {member.lastName}</p>
-                                                    <p className="text-xs text-slate-400">{member.email}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-xs text-slate-400">{member.email}</p>
+                                                        {member.salesperson && (
+                                                            <>
+                                                                <span className="w-1 h-1 rounded-full bg-slate-300" />
+                                                                <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-tight">Sales: {member.salesperson}</p>
+                                                            </>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>

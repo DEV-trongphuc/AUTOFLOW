@@ -77,8 +77,8 @@ switch ($period) {
 // [FIX] Use bound params instead of string interpolation to prevent SQL injection
 $currentSubWhere = "joined_at >= ? AND joined_at <= ?";
 $prevSubWhere    = "joined_at >= ? AND joined_at <= ?";
-$currentActWhere = "created_at >= ? AND created_at <= ?";
-$prevActWhere    = "created_at >= ? AND created_at <= ?";
+$currentActWhere = "sa.created_at >= ? AND sa.created_at <= ?";
+$prevActWhere    = "sa.created_at >= ? AND sa.created_at <= ?";
 
 $paramsCurrent      = [$currentStart, $currentEnd];
 $paramsPrev         = [$prevStart, $prevEnd];
@@ -114,31 +114,53 @@ try {
     ];
     $engTypesSql = "'" . implode("','", $engagementTypes) . "'";
 
+    $workspace_id = get_current_workspace_id();
+
     // 1. Khách hàng mới (Growth)
-    $stmtGrowth = $pdo->prepare("SELECT COUNT(*) FROM subscribers WHERE $currentSubWhere");
-    $stmtGrowth->execute($paramsCurrent);
+    $stmtGrowth = $pdo->prepare("SELECT COUNT(*) FROM subscribers WHERE workspace_id = ? AND $currentSubWhere");
+    $stmtGrowth->execute(array_merge([$workspace_id], $paramsCurrent));
     $growth = (int) $stmtGrowth->fetchColumn();
 
-    $stmtPrevGrowth = $pdo->prepare("SELECT COUNT(*) FROM subscribers WHERE $prevSubWhere");
-    $stmtPrevGrowth->execute($paramsPrev);
+    $stmtPrevGrowth = $pdo->prepare("SELECT COUNT(*) FROM subscribers WHERE workspace_id = ? AND $prevSubWhere");
+    $stmtPrevGrowth->execute(array_merge([$workspace_id], $paramsPrev));
     $prevGrowth = (int) $stmtPrevGrowth->fetchColumn();
 
     // 2. Khách hoạt động (Active Users) - Unique users with proactive activity in period
-    $stmtActive = $pdo->prepare("SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_activity WHERE type IN ($engTypesSql) AND $currentActWhere");
-    $stmtActive->execute($paramsActCurrent);
+    $stmtActive = $pdo->prepare("
+        SELECT COUNT(DISTINCT sa.subscriber_id) 
+        FROM subscriber_activity sa
+        JOIN subscribers s ON sa.subscriber_id = s.id
+        WHERE s.workspace_id = ? AND sa.type IN ($engTypesSql) AND $currentActWhere
+    ");
+        $stmtActive->execute(array_merge([$workspace_id], $paramsActCurrent));
     $active = (int) $stmtActive->fetchColumn();
 
-    $stmtPrevActive = $pdo->prepare("SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_activity WHERE type IN ($engTypesSql) AND $prevActWhere");
-    $stmtPrevActive->execute($paramsActPrev);
+    $stmtPrevActive = $pdo->prepare("
+        SELECT COUNT(DISTINCT sa.subscriber_id) 
+        FROM subscriber_activity sa
+        JOIN subscribers s ON sa.subscriber_id = s.id
+        WHERE s.workspace_id = ? AND sa.type IN ($engTypesSql) AND $prevActWhere
+    ");
+    $stmtPrevActive->execute(array_merge([$workspace_id], $paramsActPrev));
     $prevActive = (int) $stmtPrevActive->fetchColumn();
 
     // 3. Rời bỏ (Churn) - Exact unsubscriptions recorded in history
-    $stmtChurn = $pdo->prepare("SELECT COUNT(*) FROM subscriber_activity WHERE type = 'unsubscribe' AND $currentActWhere");
-    $stmtChurn->execute($paramsActCurrent);
+    $stmtChurn = $pdo->prepare("
+        SELECT COUNT(*) 
+        FROM subscriber_activity sa
+        JOIN subscribers s ON sa.subscriber_id = s.id
+        WHERE s.workspace_id = ? AND sa.type = 'unsubscribe' AND $currentActWhere
+    ");
+    $stmtChurn->execute(array_merge([$workspace_id], $paramsActCurrent));
     $churn = (int) $stmtChurn->fetchColumn();
 
-    $stmtPrevChurn = $pdo->prepare("SELECT COUNT(*) FROM subscriber_activity WHERE type = 'unsubscribe' AND $prevActWhere");
-    $stmtPrevChurn->execute($paramsActPrev);
+    $stmtPrevChurn = $pdo->prepare("
+        SELECT COUNT(*) 
+        FROM subscriber_activity sa
+        JOIN subscribers s ON sa.subscriber_id = s.id
+        WHERE s.workspace_id = ? AND sa.type = 'unsubscribe' AND $prevActWhere
+    ");
+    $stmtPrevChurn->execute(array_merge([$workspace_id], $paramsActPrev));
     $prevChurn = (int) $stmtPrevChurn->fetchColumn();
 
     // 5. Trend Calculations

@@ -1320,13 +1320,18 @@ switch ($method) {
                 $stmtCount->execute($params);
                 $total = (int) $stmtCount->fetchColumn();
 
-                $sql = "SELECT id, name, subject, status, sent_at, scheduled_at, sender_email, template_id, target_config,
-    count_sent, count_opened, count_unique_opened, count_clicked, count_unique_clicked, count_bounced, count_spam,
-    count_unsubscribed, tracking_enabled, created_at, updated_at, type, config, total_target_audience,
-    (SELECT COUNT(*) FROM campaign_reminders cr WHERE cr.campaign_id = c.id) as reminder_count
-    FROM campaigns c" .
-                    $whereSql . " ORDER BY c.created_at DESC";
-                
+                // [PERF] Replaced correlated (SELECT COUNT(*) FROM campaign_reminders ...) subquery
+                // with a LEFT JOIN + COUNT — avoids N separate subqueries, one per campaign row.
+                $sql = "SELECT c.id, c.name, c.subject, c.status, c.sent_at, c.scheduled_at, c.sender_email,
+    c.template_id, c.target_config,
+    c.count_sent, c.count_opened, c.count_unique_opened, c.count_clicked, c.count_unique_clicked,
+    c.count_bounced, c.count_spam, c.count_unsubscribed, c.tracking_enabled,
+    c.created_at, c.updated_at, c.type, c.config, c.total_target_audience,
+    COUNT(cr.id) as reminder_count
+    FROM campaigns c
+    LEFT JOIN campaign_reminders cr ON cr.campaign_id = c.id" .
+                    $whereSql . " GROUP BY c.id ORDER BY c.created_at DESC";
+
                 if (!$fetchAll) {
                     $sql .= " LIMIT $limit OFFSET $offset";
                 }
@@ -1342,14 +1347,15 @@ switch ($method) {
                 if (!empty($camps)) {
                     $campIds = array_column($camps, 'id');
                     
-                    // Fetch only flows that are triggered by a campaign.
-                    // Checking `trigger_type = 'campaign'` uses an index if available. 
-                    // `steps LIKE` is a fallback for legacy flows without `trigger_type` correctly set yet.
-                    $flowSql = "SELECT id, name, status, steps FROM flows WHERE status != 'archived' AND (trigger_type = 'campaign' OR (trigger_type IS NULL AND steps LIKE '%\"type\":\"campaign\"%'))";
-                    
+                    // [PERF] Added workspace_id filter + LIMIT — previously scanned ALL flows with a JSON LIKE
+                    // which was a full-table scan. workspace_id reduces rows by tenant; LIMIT is safety cap.
+                    $flowSql = "SELECT id, name, status, steps FROM flows
+                        WHERE workspace_id = ? AND status != 'archived'
+                        AND (trigger_type = 'campaign' OR (trigger_type IS NULL AND steps LIKE '%\"type\":\"campaign\"%'))
+                        LIMIT 500";
                     try {
                         $stmtFlows = $pdo->prepare($flowSql);
-                        $stmtFlows->execute();
+                        $stmtFlows->execute([$workspace_id]);
                         while ($f = $stmtFlows->fetch(PDO::FETCH_ASSOC)) {
                             $steps = json_decode($f['steps'] ?? '[]', true);
                             if (is_array($steps)) {

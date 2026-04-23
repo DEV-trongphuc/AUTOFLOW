@@ -3,7 +3,7 @@ import { API_BASE_URL } from '@/utils/config';
 import React, { useState, useEffect } from 'react';
 import {
     Zap, Plus, Code2, Trash2, Edit3,
-    Terminal, FileCode, Check, Copy, CheckCircle2, Info, Plug, Bell, BellRing
+    Terminal, FileCode, Check, Copy, CheckCircle2, Info, Plug, Bell, BellRing, Power
 } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
 import { CustomEvent } from '../../types';
@@ -107,6 +107,16 @@ const CustomEventsTab: React.FC = () => {
         }
     };
 
+    const handleToggleStatus = async (evt: CustomEvent) => {
+        const res = await api.put(`custom_events/${evt.id}?route=toggle_status`, {});
+        if (res.success) {
+            setEvents(events.map(e => e.id === evt.id ? { ...e, status: (res.data as any)?.status } : e));
+            showToast((res.data as any)?.status === 'active' ? 'Đã kích hoạt sự kiện' : 'Đã vô hiệu hoá sự kiện');
+        } else {
+            showToast('Lỗi khi thay đổi trạng thái', 'error');
+        }
+    };
+
     const handleCopy = (text: string, key: string) => {
         navigator.clipboard.writeText(text);
         setCopied(key);
@@ -173,19 +183,41 @@ const trackCustomEvent = async () => {
 
                         <div className="flex justify-between items-start relative z-10">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-400 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-violet-500/30 group-hover:rotate-6 transition-transform">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg transition-all ${
+                                    evt.status === 'inactive'
+                                        ? 'bg-slate-300 shadow-slate-200/60'
+                                        : 'bg-gradient-to-br from-violet-400 to-indigo-500 shadow-violet-500/30 group-hover:rotate-6'
+                                }`}>
                                     <Zap className="w-6 h-6" />
                                 </div>
                                 <div className="min-w-0">
-                                    <h4 className="text-base font-bold text-slate-800 leading-tight truncate pr-2" title={evt.name}>{evt.name}</h4>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <h4 className={`text-base font-bold leading-tight truncate pr-2 ${
+                                            evt.status === 'inactive' ? 'text-slate-400' : 'text-slate-800'
+                                        }`} title={evt.name}>{evt.name}</h4>
+                                        {evt.status === 'inactive' && (
+                                            <span className="text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-400 px-2 py-0.5 rounded-full border border-slate-200">INACTIVE</span>
+                                        )}
+                                    </div>
                                     <p className="text-[10px] text-slate-400 font-mono mt-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 w-fit">ID: {evt.id}</p>
                                 </div>
                             </div>
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleEditClick(evt)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Sửa tên">
+                            <div className="flex gap-1">
+                                <button
+                                    onClick={() => handleToggleStatus(evt)}
+                                    title={evt.status === 'inactive' ? 'Kích hoạt' : 'Tạm dừng'}
+                                    className={`p-2 rounded-xl transition-all ${
+                                        evt.status === 'inactive'
+                                            ? 'text-slate-300 hover:text-emerald-600 hover:bg-emerald-50'
+                                            : 'text-emerald-500 hover:text-amber-600 hover:bg-amber-50'
+                                    }`}
+                                >
+                                    <Power className="w-4 h-4" />
+                                </button>
+                                <button onClick={() => handleEditClick(evt)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all opacity-0 group-hover:opacity-100" title="Sửa tên">
                                     <Edit3 className="w-4 h-4" />
                                 </button>
-                                <button onClick={() => setConfirmDeleteId(evt.id)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all" title="Xóa">
+                                <button onClick={() => setConfirmDeleteId(evt.id)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all opacity-0 group-hover:opacity-100" title="Xóa">
                                     <Trash2 className="w-4 h-4" />
                                 </button>
                             </div>

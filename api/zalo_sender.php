@@ -13,21 +13,27 @@ require_once 'db_connect.php';
  */
 function validatePhoneNumber($phone)
 {
-    // Remove all spaces and dashes
-    $phone = preg_replace('/[\s\-]/', '', $phone);
+    // Remove all spaces, dashes, and parentheses
+    $phone = preg_replace('/[\s\-\(\)]/', '', $phone);
 
     // Check if starts with +84
     if (preg_match('/^\+84(\d{9,10})$/', $phone, $matches)) {
         return '84' . $matches[1];
     }
 
-    // Check if starts with 0
+    // Check if starts with 0 (standard Vietnamese format: 0xxxxxxxxx)
     if (preg_match('/^0(\d{9})$/', $phone, $matches)) {
         return '84' . $matches[1];
     }
 
     // Check if starts with 84 (without +)
     if (preg_match('/^84(\d{9,10})$/', $phone, $matches)) {
+        return '84' . $matches[1];
+    }
+
+    // [FIX] 9-digit numbers missing leading 0 (e.g. 378859736 from Excel import)
+    // Valid Vietnamese prefixes: 3x, 5x, 7x, 8x, 9x (Viettel/Mobi/Vina/GTel)
+    if (preg_match('/^([35789]\d{8})$/', $phone, $matches)) {
         return '84' . $matches[1];
     }
 

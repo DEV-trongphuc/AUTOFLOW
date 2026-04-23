@@ -1,12 +1,12 @@
-<?php
+ï»¿<?php
 /**
  * CRON JOB: Auto-sync Flow States (ENHANCED VERSION)
- * Ch?y d?nh k? m?i gi? d? t? d?ng fix các v?n d? d?ng b?
+ * Ch?y d?nh k? m?i gi? d? t? d?ng fix cÃ¡c v?n d? d?ng b?
  * 
  * Crontab entry (ch?y m?i gi?):
  * 0 * * * * /usr/local/bin/php /home/vhvxoigh/automation.ideas.edu.vn/mail_api/cron_auto_sync_flows.php > /dev/null 2>&1
  * 
- * Ho?c ch?y m?i 30 phút (thay d?u * d?u tiên b?ng d?u sao-g?ch-30):
+ * Ho?c ch?y m?i 30 phÃºt (thay d?u * d?u tiÃªn b?ng d?u sao-g?ch-30):
  * 0,30 * * * * /usr/local/bin/php /home/vhvxoigh/automation.ideas.edu.vn/mail_api/cron_auto_sync_flows.php > /dev/null 2>&1
  */
 
@@ -15,7 +15,7 @@ ini_set('log_errors', 1);
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
 // [SECURITY] Prevent web browsers from triggering this cron job (it has no auth).
 // It is safe to run via CLI cron (no HTTP_HOST), or direct CLI invocation.
-// Any HTTP request to this file is rejected — cron must be server-side only.
+// Any HTTP request to this file is rejected â€” cron must be server-side only.
 if (isset($_SERVER['HTTP_HOST']) && php_sapi_name() !== 'cli') {
     http_response_code(403);
     header('Content-Type: text/plain');
@@ -55,7 +55,7 @@ echo "$logPrefix ========================================\n\n";
 
 try {
     // ============================================
-    // 1. Fix mismatched completed states (có log nhung chua mark completed)
+    // 1. Fix mismatched completed states (cÃ³ log nhung chua mark completed)
     // ============================================
     echo "$logPrefix [1/6] Checking for mismatched completed states...\n";
 
@@ -102,7 +102,7 @@ try {
     echo "$logPrefix   Result: Fixed $totalFixed mismatches.\n\n";
 
     // ============================================
-    // 2. REVERSE CHECK: Mark completed nhung KHÔNG có complete_flow log
+    // 2. REVERSE CHECK: Mark completed nhung KHÃ”NG cÃ³ complete_flow log
     // ============================================
     echo "$logPrefix [2/6] Checking for false completed states...\n";
 
@@ -210,7 +210,7 @@ try {
         // Global stats
         $stmt = $pdo->prepare("
             SELECT 
-                COUNT(DISTINCT subscriber_id) as enrolled,
+                COUNT(DISTINCT CASE WHEN status != 'cancelled' THEN subscriber_id END) as enrolled,
                 COUNT(DISTINCT CASE WHEN status = 'completed' THEN subscriber_id END) as completed
             FROM subscriber_flow_states 
             WHERE flow_id = ?
@@ -298,4 +298,5 @@ try {
 }
 
 echo "$logPrefix Auto-sync cron job finished.\n\n";
+
 

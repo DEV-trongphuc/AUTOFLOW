@@ -1964,7 +1964,121 @@ const Flows: React.FC = () => {
                             {/* MAIN CONTENT AREA */}
                             <TabTransition key={flowViewTab} className={`flex-1 overflow-hidden relative flex flex-col transition-all duration-300 ${isSidebarOpen && selectedFlow && flowViewTab === 'builder' ? 'ml-0' : ''}`}>
                                 <div className="flex-1 overflow-hidden relative bg-slate-50 dark:bg-slate-950 dark:bg-slate-950/50">
-                                    <React.Suspense fallback={<div className="w-full h-full p-8 flex items-center justify-center"><Skeleton className="w-full h-full rounded-2xl max-w-5xl" /></div>}>
+                                    <React.Suspense fallback={
+                                        <div className="w-full h-full overflow-auto bg-slate-50 dark:bg-slate-950/50 flex flex-col items-center pt-10 pb-20 px-4">
+                                            <style>{`
+                                                @keyframes flow-shimmer {
+                                                    0% { background-position: -400px 0; }
+                                                    100% { background-position: 400px 0; }
+                                                }
+                                                .flow-sk {
+                                                    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+                                                    background-size: 800px 100%;
+                                                    animation: flow-shimmer 1.6s infinite linear;
+                                                    border-radius: 10px;
+                                                }
+                                                .dark .flow-sk {
+                                                    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+                                                    background-size: 800px 100%;
+                                                }
+                                            `}</style>
+
+                                            {/* ── Helper: connector arrow ── */}
+                                            {/* TRIGGER NODE */}
+                                            <div className="w-[300px] bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm p-4 flex items-center gap-3">
+                                                <div className="flow-sk w-10 h-10 rounded-xl flex-shrink-0" style={{ background: 'linear-gradient(135deg,#f97316,#ca6f00)' }} />
+                                                <div className="flex-1 space-y-1.5">
+                                                    <div className="flow-sk h-3 w-20 rounded" />
+                                                    <div className="flow-sk h-4 w-36 rounded" />
+                                                </div>
+                                                <div className="flow-sk h-5 w-14 rounded-full" />
+                                            </div>
+
+                                            {/* connector */}
+                                            <div className="flex flex-col items-center">
+                                                <div className="w-px h-5 bg-slate-200 dark:bg-slate-700" />
+                                                <div className="flow-sk w-6 h-6 rounded-full" />
+                                                <div className="w-px h-5 bg-slate-200 dark:bg-slate-700" />
+                                            </div>
+
+                                            {/* WAIT NODE */}
+                                            <div className="w-[300px] bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm p-4 flex items-center gap-3">
+                                                <div className="flow-sk w-10 h-10 rounded-xl flex-shrink-0" style={{ background: 'linear-gradient(135deg,#fbbf24,#f59e0b)' }} />
+                                                <div className="flex-1 space-y-1.5">
+                                                    <div className="flow-sk h-3 w-16 rounded" />
+                                                    <div className="flow-sk h-4 w-28 rounded" />
+                                                </div>
+                                                <div className="flow-sk h-5 w-12 rounded-full" />
+                                            </div>
+
+                                            {/* connector */}
+                                            <div className="flex flex-col items-center">
+                                                <div className="w-px h-5 bg-slate-200 dark:bg-slate-700" />
+                                                <div className="flow-sk w-6 h-6 rounded-full" />
+                                                <div className="w-px h-5 bg-slate-200 dark:bg-slate-700" />
+                                            </div>
+
+                                            {/* EMAIL NODE */}
+                                            <div className="w-[300px] bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm p-4 flex items-center gap-3">
+                                                <div className="flow-sk w-10 h-10 rounded-xl flex-shrink-0" style={{ background: 'linear-gradient(135deg,#3b82f6,#4f46e5)' }} />
+                                                <div className="flex-1 space-y-1.5">
+                                                    <div className="flow-sk h-3 w-14 rounded" />
+                                                    <div className="flow-sk h-4 w-40 rounded" />
+                                                </div>
+                                                <div className="flow-sk h-5 w-16 rounded-full" />
+                                            </div>
+
+                                            {/* connector */}
+                                            <div className="flex flex-col items-center">
+                                                <div className="w-px h-5 bg-slate-200 dark:bg-slate-700" />
+                                                <div className="flow-sk w-6 h-6 rounded-full" />
+                                                <div className="w-px h-5 bg-slate-200 dark:bg-slate-700" />
+                                            </div>
+
+                                            {/* CONDITION NODE */}
+                                            <div className="w-[300px] bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm p-4 flex items-center gap-3">
+                                                <div className="flow-sk w-10 h-10 rounded-xl flex-shrink-0" style={{ background: 'linear-gradient(135deg,#8b5cf6,#7c3aed)' }} />
+                                                <div className="flex-1 space-y-1.5">
+                                                    <div className="flow-sk h-3 w-24 rounded" />
+                                                    <div className="flow-sk h-4 w-32 rounded" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <div className="flow-sk h-4 w-14 rounded-full" />
+                                                    <div className="flow-sk h-4 w-14 rounded-full" />
+                                                </div>
+                                            </div>
+
+                                            {/* branch connectors */}
+                                            <div className="flex items-start gap-20 mt-0">
+                                                {/* YES branch */}
+                                                <div className="flex flex-col items-center">
+                                                    <div className="w-px h-5 bg-slate-200 dark:bg-slate-700" />
+                                                    <div className="flow-sk h-5 w-10 rounded-full mb-1" />
+                                                    <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
+                                                    <div className="w-[130px] bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-sm p-3 flex items-center gap-2">
+                                                        <div className="flow-sk w-7 h-7 rounded-lg flex-shrink-0" />
+                                                        <div className="flex-1 space-y-1">
+                                                            <div className="flow-sk h-2.5 w-16 rounded" />
+                                                            <div className="flow-sk h-3 w-20 rounded" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {/* NO branch */}
+                                                <div className="flex flex-col items-center">
+                                                    <div className="w-px h-5 bg-slate-200 dark:bg-slate-700" />
+                                                    <div className="flow-sk h-5 w-10 rounded-full mb-1" />
+                                                    <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
+                                                    <div className="w-[130px] bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-sm p-3 flex items-center gap-2">
+                                                        <div className="flow-sk w-7 h-7 rounded-lg flex-shrink-0" />
+                                                        <div className="flex-1 space-y-1">
+                                                            <div className="flow-sk h-2.5 w-10 rounded" />
+                                                            <div className="flow-sk h-3 w-16 rounded" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }>
                                     {flowViewTab === 'builder' && (
                                         <FlowBuilderTab
                                             flow={selectedFlow}

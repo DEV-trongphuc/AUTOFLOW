@@ -1,6 +1,6 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { Filter, X, Check, ChevronDown, Search, Tag, Sliders } from 'lucide-react';
+import { Filter, X, Check, ChevronDown, Search, Tag, Sliders, Users } from 'lucide-react';
 import Select from '../common/Select';
 
 interface AdvancedFiltersProps {
@@ -8,12 +8,14 @@ interface AdvancedFiltersProps {
     filterTags: string[];
     filterVerify: string;
     filterHasChat: string;
+    filterSalesperson: string;
     filterCustomAttrKey?: string;
     filterCustomAttrValue?: string;
     onStatusChange: (value: string) => void;
     onTagsChange: (value: string[]) => void;
     onVerifyChange: (value: string) => void;
     onHasChatChange: (value: string) => void;
+    onSalespersonChange: (value: string) => void;
     onCustomAttrChange?: (key: string, value: string) => void;
     tags: { id: string; name: string }[];
     customAttrKeys?: { key: string; label: string }[]; // Available custom field keys
@@ -24,12 +26,14 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
     filterTags,
     filterVerify,
     filterHasChat,
+    filterSalesperson,
     filterCustomAttrKey = '',
     filterCustomAttrValue = '',
     onStatusChange,
     onTagsChange,
     onVerifyChange,
     onHasChatChange,
+    onSalespersonChange,
     onCustomAttrChange,
     tags,
     customAttrKeys = []
@@ -42,6 +46,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
     const [localTags, setLocalTags] = useState<string[]>(filterTags);
     const [localVerify, setLocalVerify] = useState(filterVerify);
     const [localHasChat, setLocalHasChat] = useState(filterHasChat);
+    const [localSalesperson, setLocalSalesperson] = useState(filterSalesperson);
     const [localCustomKey, setLocalCustomKey] = useState(filterCustomAttrKey);
     const [localCustomValue, setLocalCustomValue] = useState(filterCustomAttrValue);
 
@@ -52,6 +57,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
             setLocalTags(filterTags);
             setLocalVerify(filterVerify);
             setLocalHasChat(filterHasChat);
+            setLocalSalesperson(filterSalesperson);
             setLocalCustomKey(filterCustomAttrKey);
             setLocalCustomValue(filterCustomAttrValue);
         }
@@ -63,6 +69,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
         filterTags.length > 0,
         filterVerify !== 'all',
         filterHasChat !== 'all',
+        filterSalesperson !== '',
         !!filterCustomAttrKey
     ].filter(Boolean).length;
 
@@ -72,6 +79,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
         JSON.stringify(localTags.sort()) !== JSON.stringify([...filterTags].sort()) ||
         localVerify !== filterVerify ||
         localHasChat !== filterHasChat ||
+        localSalesperson !== filterSalesperson ||
         localCustomKey !== filterCustomAttrKey ||
         localCustomValue !== filterCustomAttrValue;
 
@@ -80,6 +88,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
         onTagsChange(localTags);
         onVerifyChange(localVerify);
         onHasChatChange(localHasChat);
+        onSalespersonChange(localSalesperson);
         if (onCustomAttrChange) onCustomAttrChange(localCustomKey, localCustomValue);
         setIsOpen(false);
     };
@@ -89,6 +98,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
         setLocalTags([]);
         setLocalVerify('all');
         setLocalHasChat('all');
+        setLocalSalesperson('');
         setLocalCustomKey('');
         setLocalCustomValue('');
     };
@@ -105,7 +115,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
         t.name.toLowerCase().includes(tagSearch.toLowerCase())
     );
 
-    const hasAnyLocal = localStatus !== 'all' || localTags.length > 0 || localVerify !== 'all' || localHasChat !== 'all' || !!localCustomKey;
+    const hasAnyLocal = localStatus !== 'all' || localTags.length > 0 || localVerify !== 'all' || localHasChat !== 'all' || localSalesperson !== '' || !!localCustomKey;
 
     return (
         <div className="relative">
@@ -202,6 +212,23 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                                         { value: 'no', label: 'Chưa có hội thoại' }
                                     ]}
                                 />
+                            </div>
+                            
+                            {/* Salesperson Filter */}
+                            <div>
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">
+                                    Salesperson
+                                </label>
+                                <div className="relative">
+                                    <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Nhập tên Salesperson..."
+                                        value={localSalesperson}
+                                        onChange={(e) => setLocalSalesperson(e.target.value)}
+                                        className="w-full h-11 pl-9 pr-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:border-[#ffa900] transition-all"
+                                    />
+                                </div>
                             </div>
 
                             {/* Custom Field Filter */}

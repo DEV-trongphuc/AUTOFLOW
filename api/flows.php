@@ -2150,7 +2150,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-next-step') {
 
             // Update stats immediately
             $stmtUpdateStats = $pdo->prepare("UPDATE flows SET 
-                stat_enrolled = (SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_flow_states WHERE flow_id = ?),
+                stat_enrolled = (SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_flow_states WHERE flow_id = ? AND status != 'cancelled'),
                 stat_completed = (SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_flow_states WHERE flow_id = ? AND status = 'completed')
                 WHERE id = ? AND workspace_id = ?");
             $stmtUpdateStats->execute([$flowId, $flowId, $flowId, $workspace_id]);
@@ -2245,7 +2245,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-next-step') {
 
             // Update stats immediately
             $stmtUpdateStats = $pdo->prepare("UPDATE flows SET 
-                stat_enrolled = (SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_flow_states WHERE flow_id = ?),
+                stat_enrolled = (SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_flow_states WHERE flow_id = ? AND status != 'cancelled'),
                 stat_completed = (SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_flow_states WHERE flow_id = ? AND status = 'completed')
                 WHERE id = ? AND workspace_id = ?");
             $stmtUpdateStats->execute([$flowId, $flowId, $flowId, $workspace_id]);
@@ -2339,7 +2339,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-remove') {
 
         // Update flow stats
         $stmtUpdateStats = $pdo->prepare("UPDATE flows SET 
-            stat_enrolled = (SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_flow_states WHERE flow_id = ?),
+            stat_enrolled = (SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_flow_states WHERE flow_id = ? AND status != 'cancelled'),
             stat_completed = (SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_flow_states WHERE flow_id = ? AND status = 'completed')
             WHERE id = ? AND workspace_id = ?");
         $stmtUpdateStats->execute([$flowId, $flowId, $flowId, $workspace_id]);
@@ -2448,7 +2448,10 @@ switch ($method) {
                 $flow = $stmt->fetch();
 
                 if ($flow) {
-                    $stmtRecap = $pdo->prepare("SELECT COUNT(DISTINCT subscriber_id) as enrolled, COUNT(DISTINCT CASE WHEN status = 'completed' THEN subscriber_id END) as completed FROM subscriber_flow_states WHERE flow_id = ?");
+                    // [FIX] Exclude 'cancelled' records from enrolled count.
+                    // Previously counted ALL rows including new_only snapshot records → showed 10k+ instead of actual 2.
+                    // Must match the WHERE clause used in all stat_enrolled UPDATE statements (status != 'cancelled').
+                    $stmtRecap = $pdo->prepare("SELECT COUNT(DISTINCT subscriber_id) as enrolled, COUNT(DISTINCT CASE WHEN status = 'completed' THEN subscriber_id END) as completed FROM subscriber_flow_states WHERE flow_id = ? AND status != 'cancelled'");
                     $stmtRecap->execute([$path]);
                     $recap = $stmtRecap->fetch();
                     if ($recap) {
@@ -2842,6 +2845,80 @@ switch ($method) {
             // autoMigrateStuckUsers to never run for paused/draft saves (PHP undefined variable → false).
             $stepsArr = json_decode($steps, true) ?: [];
 
+            // ── [NEW_ONLY SNAPSHOT] ────────────────────────────────────────────────────
+            // Chạy khi LƯU TRIGGER CONFIG với enrollStrategy = 'new_only', bất kể status.
+            // Mục đích: Snapshot toàn bộ người hiện có trong danh sách → 'cancelled'.
+            // Worker_enroll sau đó chỉ enroll người MỚI (không có record) → 'waiting'.
+            // Không chạy lại cho người đã có record (tránh ghi đè waiting → cancelled).
+            {
+                $_snapTrigger = null;
+                foreach ($stepsArr as $_s) {
+                    if ($_s['type'] === 'trigger') { $_snapTrigger = $_s; break; }
+                }
+                $_snapStrategy = $_snapTrigger['config']['enrollStrategy'] ?? 'all';
+                $_snapType     = $_snapTrigger['config']['type'] ?? '';
+
+                if (
+                    $_snapTrigger &&
+                    $_snapStrategy === 'new_only' &&
+                    in_array($_snapType, ['segment', 'list', 'sync']) &&
+                    isset($_snapTrigger['nextStepId'])
+                ) {
+                    $_snapTargetId = $_snapTrigger['config']['targetId'] ?? '';
+                    $_snapSql    = '';
+                    $_snapParams = [];
+
+                    // Tìm Segment trước
+                    $_stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
+                    $_stmtSeg->execute([$_snapTargetId]);
+                    $_snapCriteria = $_stmtSeg->fetchColumn();
+
+                    if ($_snapCriteria) {
+                        require_once 'segment_helper.php';
+                        $_snapRes = buildSegmentWhereClause($_snapCriteria, $_snapTargetId);
+                        if ($_snapRes['sql'] !== '1=1') {
+                            $_snapSql    = $_snapRes['sql'];
+                            $_snapParams = $_snapRes['params'];
+                        }
+                    } else {
+                        // Fallback: thử List
+                        $_stmtList = $pdo->prepare("SELECT id FROM lists WHERE id = ? AND workspace_id = ?");
+                        $_stmtList->execute([$_snapTargetId, $workspace_id]);
+                        if ($_stmtList->fetchColumn()) {
+                            $_snapSql    = "s.id IN (SELECT subscriber_id FROM subscriber_lists WHERE list_id = ?)";
+                            $_snapParams = [$_snapTargetId];
+                        }
+                    }
+
+                    if (!empty($_snapSql)) {
+                        // INSERT cancelled cho người CHƯA có bất kỳ record nào trong flow này
+                        // (Không ghi đè waiting/processing của người đang chạy)
+                        $_snapInsert = "INSERT INTO subscriber_flow_states
+                                        (flow_id, subscriber_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at)
+                                        SELECT ?, s.id, ?, ?, 'cancelled', NOW(), NOW(), NOW()
+                                        FROM subscribers s
+                                        WHERE s.workspace_id = ?
+                                        AND s.status IN ('active','lead','customer')
+                                        AND ($_snapSql)
+                                        AND NOT EXISTS (
+                                            SELECT 1 FROM subscriber_flow_states sfs
+                                            WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ?
+                                        )";
+                        $_snapStmt = $pdo->prepare($_snapInsert);
+                        $_snapStmt->execute(array_merge(
+                            [$path, $_snapTrigger['nextStepId'], date('Y-m-d H:i:s', strtotime('-1 second')), $workspace_id],
+                            $_snapParams,
+                            [$path]
+                        ));
+                        $_snapCount = $_snapStmt->rowCount();
+                        if ($_snapCount > 0) {
+                            error_log("[New-Only Snapshot] Flow $path: Marked $_snapCount existing members as 'cancelled'.");
+                        }
+                    }
+                }
+            }
+            // ── END NEW_ONLY SNAPSHOT ──────────────────────────────────────────────────
+
             if ($data['status'] === 'active') {
                 $trigger = null;
                 foreach ($stepsArr as $s) {
@@ -2853,8 +2930,14 @@ switch ($method) {
 
                 if ($trigger && isset($trigger['config']['type']) && in_array($trigger['config']['type'], ['segment', 'list', 'sync'])) {
                     $enrollStrategy = $trigger['config']['enrollStrategy'] ?? 'all';
-                    // [FIX] 'skipped' is not a valid ENUM value for status. Using 'cancelled' instead.
+                    // new_only đã được xử lý ở block snapshot phía trên.
+                    // Khi active, chỉ cần enroll 'all' strategy (waiting).
+                    // new_only: worker_enroll sẽ tự pick up người mới.
                     $targetStatus = ($enrollStrategy === 'new_only') ? 'cancelled' : 'waiting';
+                    // Skip enrollment block nếu new_only (snapshot đã chạy rồi)
+                    if ($enrollStrategy === 'new_only') {
+                        goto skip_active_enrollment;
+                    }
 
                     if (isset($trigger['nextStepId'])) {
                         $targetId = $trigger['config']['targetId'];
@@ -2997,10 +3080,10 @@ switch ($method) {
                                     }
                                 }
                             }
-                        }
                     }
                 }
 
+                skip_active_enrollment:
                 // AUTO-MIGRATION: Migrate stuck users at deleted steps (Careful Migration)
                 // [FIX] Run this INSIDE status=active block only — active flows have live subscribers.
                 // For paused/draft flows, autoMigrate runs after the status block below.

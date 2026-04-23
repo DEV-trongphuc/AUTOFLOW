@@ -173,22 +173,32 @@ if (!function_exists('runIntegrationSync')) {
                                     }
 
                                     $email = trim($subData['email'] ?? '');
+                                    $phone = trim($subData['phoneNumber'] ?? '');
 
                                     // ROBUST EMAIL DETECTION
-                                    if (!$email || strpos($email, '@') === false) {
+                                    $hasValidEmail = ($email !== '' && strpos($email, '@') !== false);
+                                    if (!$hasValidEmail) {
                                         // Try common candidate keys from normalized contact
                                         $candidates = ['email', 'office_email', 'email_address', 'mail', 'contact_email', 'official_email'];
                                         foreach ($candidates as $c) {
                                             if (isset($contact[$c]) && strpos($contact[$c], '@') !== false) {
                                                 $email = trim($contact[$c]);
+                                                $hasValidEmail = true;
                                                 break;
                                             }
                                         }
+                                    }
 
-                                        if (!$email || strpos($email, '@') === false) {
-                                            logIntegrationSync("[SKIP] Contact missing valid email. Mapped: '" . ($subData['email'] ?? 'N/A') . "'. Available keys: " . implode(', ', array_keys($contact)));
-                                            continue;
-                                        }
+                                    $hasPhone = ($phone !== '');
+
+                                    if (!$hasValidEmail && !$hasPhone) {
+                                        logIntegrationSync("[SKIP] Contact missing valid email AND phone. Mapped: '" . ($subData['email'] ?? 'N/A') . "'. Available keys: " . implode(', ', array_keys($contact)));
+                                        continue;
+                                    }
+                                    
+                                    // Clear invalid email so it doesn't pollute DB
+                                    if (!$hasValidEmail) {
+                                        $email = '';
                                     }
 
                                     // Extract fields
@@ -213,7 +223,8 @@ if (!function_exists('runIntegrationSync')) {
                                     // Force lastName to empty
                                     $lName = '';
 
-                                    $phone = $subData['phoneNumber'] ?? '';
+                                    // $phone already extracted above
+                                    $company = $subData['companyName'] ?? '';
                                     $company = $subData['companyName'] ?? '';
                                     $address = $subData['address'] ?? ($subData['info.address'] ?? ($subData['city'] ?? ($subData['country'] ?? '')));
                                     $country = $address;
@@ -265,7 +276,7 @@ if (!function_exists('runIntegrationSync')) {
 
                                     // Escape and Build SQL
                                     $escId = "'" . $subId . "'";
-                                    $escEmail = "'" . addslashes($email) . "'";
+                                    $escEmail = $email ? "'" . addslashes($email) . "'" : "NULL";
                                     $escFName = "'" . addslashes($fName) . "'";
                                     $escLName = "'" . addslashes($lName) . "'";
                                     $escPhone = "'" . addslashes($phone) . "'";
@@ -368,7 +379,8 @@ if (!function_exists('runIntegrationSync')) {
                         $sheetName = $config['sheetName'] ?? 'Sheet1';
 
                         // 1. Stream Download to Temp File (Low Memory)
-                        $csvUrl = "https://docs.google.com/spreadsheets/d/{$spreadsheetId}/gviz/tq?tqx=out:csv&sheet=" . urlencode($sheetName);
+                        // [FIX] Changed from gviz/tq to export?format=csv. gviz/tq stops exporting if it hits a completely blank row in the middle.
+                        $csvUrl = "https://docs.google.com/spreadsheets/d/{$spreadsheetId}/export?format=csv&sheet=" . urlencode($sheetName);
                         $tempFile = tempnam(sys_get_temp_dir(), 'sheet_' . $integration['id']);
 
                         $fp = fopen($tempFile, 'w+');
@@ -514,17 +526,25 @@ if (!function_exists('runIntegrationSync')) {
                         $escTargetList = "'" . addslashes($targetListId) . "'";
 
                         while (($row = fgetcsv($handle)) !== FALSE) {
-                            if (!isset($row[$emailIdx]))
-                                continue;
-
                             $email = trim($row[$emailIdx]);
-                            if ($email === '' || strpos($email, '@') === false)
-                                continue;
+                            $phone = ($phoneIdx !== -1 && isset($row[$phoneIdx])) ? trim($row[$phoneIdx]) : '';
+                            
+                            // [FIX] Accept rows that have EITHER a valid email OR a phone number.
+                            $hasValidEmail = ($email !== '' && strpos($email, '@') !== false);
+                            $hasPhone = ($phone !== '');
+                            
+                            if (!$hasValidEmail && !$hasPhone) {
+                                continue; // Skip only if BOTH are missing or invalid
+                            }
+                            
+                            // If email is invalid but phone exists, we clear the invalid email so it doesn't pollute the DB
+                            if (!$hasValidEmail) {
+                                $email = '';
+                            }
 
                             // Fast scalar retrieval
                             $fName = ($fNameIdx !== -1 && isset($row[$fNameIdx])) ? $row[$fNameIdx] : '';
                             $lName = ($lNameIdx !== -1 && isset($row[$lNameIdx])) ? $row[$lNameIdx] : '';
-                            $phone = ($phoneIdx !== -1 && isset($row[$phoneIdx])) ? $row[$phoneIdx] : '';
                             $jobTitle = ($jobTitleIdx !== -1 && isset($row[$jobTitleIdx])) ? $row[$jobTitleIdx] : '';
                             $companyName = ($companyNameIdx !== -1 && isset($row[$companyNameIdx])) ? $row[$companyNameIdx] : '';
                             $country = ($countryIdx !== -1 && isset($row[$countryIdx])) ? $row[$countryIdx] : '';
@@ -580,7 +600,7 @@ if (!function_exists('runIntegrationSync')) {
                             // Use addslashes instead of PDO::quote for speed (approx 3x faster)
                             // We trust CSV input enough here, and allow UTF-8
                             $escId = "'" . $subId . "'";
-                            $escEmail = "'" . addslashes($email) . "'";
+                            $escEmail = $email ? "'" . addslashes($email) . "'" : "NULL";
                             $escFName = "'" . addslashes($fName) . "'";
                             $escLName = "'" . addslashes($lName) . "'";
                             $escPhone = "'" . addslashes($phone) . "'";
@@ -693,6 +713,16 @@ if (!function_exists('runIntegrationSync')) {
             ");
             } catch (Exception $e) {
                 logIntegrationSync("Bulk Zalo Sync Error: " . $e->getMessage());
+            }
+            try {
+                // Trigger flow enrollment and execution workers so new/updated subscribers 
+                // from the sync enter flows immediately without waiting for the next cron cycle.
+                if (function_exists('triggerAsyncWorker')) {
+                    triggerAsyncWorker('/worker_enroll.php');
+                    triggerAsyncWorker('/worker_flow.php');
+                }
+            } catch (Exception $e) {
+                logIntegrationSync("Worker Trigger Error: " . $e->getMessage());
             }
         } catch (Exception $e) {
             logIntegrationSync("Critical Error: " . $e->getMessage());

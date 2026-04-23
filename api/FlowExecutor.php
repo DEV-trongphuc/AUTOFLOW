@@ -912,7 +912,11 @@ class FlowExecutor
                     } elseif ($condType === 'zns_clicked') {
                         $types = ['click_zns'];
                     } elseif ($condType === 'zns_replied') {
-                        $types = ['reply_zns'];
+                        // [VERIFIED 2026-04-23] DB audit: ZNS reply is logged as 'staff_reply'
+                        // by the CRM/support module. 'reply_zns' and 'zns_replied' do NOT exist
+                        // in subscriber_activity. 'zns_clicked' also absent — Zalo click/reply
+                        // webhooks are not configured on this installation.
+                        $types = ['staff_reply'];
                     } elseif ($condType === 'zns_failed') {
                         $types = ['zns_failed'];
                     }

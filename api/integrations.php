@@ -50,6 +50,15 @@ try {
         runIntegrationSync($id);
         ob_end_clean();
 
+        // [WOW] Automatically trigger flow enrollment and execution so new subscribers enter flows instantly.
+        // Otherwise, they'd wait for the next cron run (usually 1-5 mins).
+        triggerAsyncWorker('/worker_enroll.php');
+        triggerAsyncWorker('/worker_flow.php');
+
+        // Reset status to idle
+        $stmt = $pdo->prepare("UPDATE integrations SET sync_status = 'idle' WHERE id = ? AND workspace_id = ?");
+        $stmt->execute([$id, $workspace_id]);
+
         // Calculate timing
         $executionTime = round(microtime(true) - $startTime, 2);
 
@@ -61,7 +70,7 @@ try {
         jsonResponse(true, [
             'status' => 'completed',
             'execution_time' => $executionTime
-        ], "?ng b? hon t?t trong {$executionTime}s!");
+        ], "Đồng bộ hoàn tất trong {$executionTime}s!");
     }
 
     if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'fetch_headers') {

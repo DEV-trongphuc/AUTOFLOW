@@ -44,7 +44,7 @@ switch ($method) {
                 return;
             }
 
-            $sql = "SELECT t.id, t.name, t.description, 
+            $sql = "SELECT t.id, t.name, t.description, t.status,
                     (SELECT COUNT(*) FROM subscriber_tags st 
                      WHERE st.tag_id = t.id) as subscriber_count 
                     FROM tags t 
@@ -72,9 +72,9 @@ switch ($method) {
                 jsonResponse(false, null, 'Nhãn này đã tồn tại');
 
             $id = bin2hex(random_bytes(8)); // [FIX] uniqid() is time-based; race condition in high-concurrency → use CSPRNG instead
-            $stmt = $pdo->prepare("INSERT INTO tags (workspace_id, id, name, description) VALUES (?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO tags (workspace_id, id, name, description, status) VALUES (?, ?, ?, ?, 'active')");
             $stmt->execute([$workspace_id, $id, $name, $description]);
-            jsonResponse(true, ['id' => $id, 'name' => $name, 'description' => $description, 'subscriber_count' => 0]);
+            jsonResponse(true, ['id' => $id, 'name' => $name, 'description' => $description, 'status' => 'active', 'subscriber_count' => 0]);
         } catch (Exception $e) {
             jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
@@ -84,12 +84,23 @@ switch ($method) {
         if (!$path)
             jsonResponse(false, null, 'ID required');
         $data = json_decode(file_get_contents("php://input"), true);
+        $route = $_GET['route'] ?? '';
+
+        // [TOGGLE STATUS] PUT ?route=toggle_status — Must come BEFORE rename logic
+        if ($route === 'toggle_status') {
+            $stmtCur = $pdo->prepare("SELECT status FROM tags WHERE id = ? AND workspace_id = ?");
+            $stmtCur->execute([$path, $workspace_id]);
+            $curStatus = $stmtCur->fetchColumn();
+            if ($curStatus === false) jsonResponse(false, null, 'Không tìm thấy nhãn');
+            $newStatus = $curStatus === 'active' ? 'inactive' : 'active';
+            $pdo->prepare("UPDATE tags SET status = ? WHERE id = ? AND workspace_id = ?")->execute([$newStatus, $path, $workspace_id]);
+            jsonResponse(true, ['id' => $path, 'status' => $newStatus], 'Đã ' . ($newStatus === 'active' ? 'kích hoạt' : 'vô hiệu hoá') . ' nhãn');
+        }
+
         $newName = strtoupper(preg_replace('/\s+/', '_', trim($data['name'] ?? '')));
         $newDesc = trim($data['description'] ?? '');
 
         // [FIX 1] Empty name validation BEFORE starting any DB write.
-        // Without this, $newName = "" would trigger Deep Sync and wipe tag names
-        // from ALL subscribers across the system — unrecoverable data loss.
         if (!$newName) {
             jsonResponse(false, null, 'Tên nhãn không được để trống');
         }

@@ -39,13 +39,18 @@ try {
 
             $pdo->beginTransaction();
 
-            $stmtEvt = $pdo->prepare("SELECT name, notification_enabled, notification_emails, notification_subject FROM custom_events WHERE id = ?");
+            $stmtEvt = $pdo->prepare("SELECT name, workspace_id, status, notification_enabled, notification_emails, notification_subject FROM custom_events WHERE id = ?");
             $stmtEvt->execute([$eventId]);
             $eventRow = $stmtEvt->fetch();
             if (!$eventRow) {
                 if ($pdo->inTransaction())
                     $pdo->rollBack();
                 jsonResponse(false, null, 'Sự kiện không tồn tại');
+            }
+            // [GUARD] Reject tracking if event is inactive
+            if (($eventRow['status'] ?? 'active') === 'inactive') {
+                if ($pdo->inTransaction()) $pdo->rollBack();
+                jsonResponse(false, null, 'Sự kiện này đã bị vô hiệu hoá');
             }
             $eventName = $eventRow['name'];
 
@@ -395,6 +400,7 @@ try {
                     return [
                         'id' => $row['id'],
                         'name' => $row['name'],
+                        'status' => $row['status'] ?? 'active',
                         'createdAt' => $row['created_at'],
                         'stats' => [
                             'count' => (int) $row['count']
@@ -421,9 +427,9 @@ try {
                 $notifEmails = $data['notificationEmails'] ?? null;
                 $notifSubject = $data['notificationSubject'] ?? null;
 
-                // [FIX P43-H2] Include workspace_id in INSERT
-                $pdo->prepare("INSERT INTO custom_events (id, name, notification_enabled, notification_emails, notification_subject, created_at) VALUES (?, ?, ?, ?, ?, NOW())")->execute([$id, $data['name'], $notifEnabled, $notifEmails, $notifSubject]);
-                jsonResponse(true, ['id' => $id], 'Đã tạo sự kiện mới');
+                // [FIX] Include workspace_id in INSERT
+                $pdo->prepare("INSERT INTO custom_events (id, workspace_id, name, status, notification_enabled, notification_emails, notification_subject, created_at) VALUES (?, ?, ?, 'active', ?, ?, ?, NOW())")->execute([$id, $workspace_id, $data['name'], $notifEnabled, $notifEmails, $notifSubject]);
+                jsonResponse(true, ['id' => $id, 'status' => 'active'], 'Đã tạo sự kiện mới');
             } catch (Exception $e) {
                 jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
@@ -434,6 +440,18 @@ try {
                 if (!$path)
                     jsonResponse(false, null, 'Thiếu ID sự kiện');
                 $data = json_decode(file_get_contents("php://input"), true);
+
+                // [TOGGLE STATUS] PUT ?route=toggle_status
+                if ($route === 'toggle_status') {
+                    $stmtCur = $pdo->prepare("SELECT status FROM custom_events WHERE id = ? AND workspace_id = ?");
+                    $stmtCur->execute([$path, $workspace_id]);
+                    $curStatus = $stmtCur->fetchColumn();
+                    if ($curStatus === false) jsonResponse(false, null, 'Không tìm thấy sự kiện');
+                    $newStatus = $curStatus === 'active' ? 'inactive' : 'active';
+                    $pdo->prepare("UPDATE custom_events SET status = ? WHERE id = ? AND workspace_id = ?")->execute([$newStatus, $path, $workspace_id]);
+                    jsonResponse(true, ['id' => $path, 'status' => $newStatus], 'Đã ' . ($newStatus === 'active' ? 'kích hoạt' : 'vô hiệu hoá') . ' sự kiện');
+                }
+
                 if (empty($data['name']))
                     jsonResponse(false, null, 'Tên sự kiện không được để trống');
                 

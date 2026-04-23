@@ -148,6 +148,7 @@ if ($method === 'GET' && $route === 'field_definitions') {
         ['key' => 'city', 'label' => 'Thành phố', 'type' => 'text', 'is_custom' => false],
         ['key' => 'address', 'label' => 'Địa chỉ', 'type' => 'text', 'is_custom' => false],
         ['key' => 'source', 'label' => 'Nguồn', 'type' => 'text', 'is_custom' => false],
+        ['key' => 'salesperson', 'label' => 'Salesperson', 'type' => 'text', 'is_custom' => false],
         ['key' => 'status', 'label' => 'Trạng thái', 'type' => 'text', 'is_custom' => false],
         ['key' => 'dateOfBirth', 'label' => 'Ngày sinh', 'type' => 'date', 'is_custom' => false],
         ['key' => 'anniversaryDate', 'label' => 'Ngày kỷ niệm', 'type' => 'date', 'is_custom' => false],
@@ -511,14 +512,20 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
 
             // Search
             if (!empty($search)) {
-                // [PERF FIX] Prevent Full Table Scan: Use exact match for highly-selective structural fields (email, phone)
-                // and keep wildcard search only for names/companies.
-                $whereClauses[] = "(s.email = ? OR s.phone_number = ? OR s.first_name LIKE ? OR s.last_name LIKE ? OR s.company_name LIKE ?)";
-                $params[] = trim($search); // s.email exact
-                $params[] = trim($search); // s.phone exact
-                $params[] = "%$search%";   // s.first_name wildcard
-                $params[] = "%$search%";   // s.last_name wildcard
-                $params[] = "%$search%";   // s.company_name wildcard
+                $trimmedSearch = trim($search);
+                $searchTerm = "%" . strtolower($trimmedSearch) . "%";
+                $rawSearchTerm = "%" . $trimmedSearch . "%";
+                
+                // [PERF] Search across all identifying fields including both phone columns
+                $whereClauses[] = "(LOWER(s.email) LIKE ? OR s.email LIKE ? OR s.phone_number LIKE ? OR s.phone LIKE ? OR LOWER(s.first_name) LIKE ? OR LOWER(s.last_name) LIKE ? OR LOWER(s.company_name) LIKE ?)";
+                
+                $params[] = $searchTerm;    // LOWER(s.email)
+                $params[] = $rawSearchTerm; // s.email (raw)
+                $params[] = $rawSearchTerm; // s.phone_number
+                $params[] = $rawSearchTerm; // s.phone
+                $params[] = $searchTerm;    // LOWER(s.first_name)
+                $params[] = $searchTerm;    // LOWER(s.last_name)
+                $params[] = $searchTerm;    // LOWER(s.company_name)
             }
 
             // Status Filter
@@ -538,6 +545,13 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
             if ($verified !== 'all') {
                 $whereClauses[] = "s.verified = ?";
                 $params[] = (int) $verified;
+            }
+
+            // Salesperson Filter
+            $salespersonFilter = $_GET['salesperson'] ?? '';
+            if (!empty($salespersonFilter)) {
+                $whereClauses[] = "s.salesperson LIKE ?";
+                $params[] = "%$salespersonFilter%";
             }
 
             // Lead Score Filter

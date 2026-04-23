@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     Code2, Plus, Globe, Edit3, Trash2,
     Type, Mail, Phone, Calendar, Briefcase, Building, MapPin, Sparkles, FileInput,
-    List, Braces, ChevronDown, CheckCircle2, Database, Wand2, Tag, Bell, BellRing, Users, Link
+    List, Braces, ChevronDown, CheckCircle2, Database, Wand2, Tag, Bell, BellRing, Users, Link, Power
 } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
 import { FormDefinition, FormField } from '../../types';
@@ -165,6 +165,16 @@ const FormsTab: React.FC = () => {
         }
     };
 
+    const handleToggleStatus = async (form: FormDefinition) => {
+        const res = await api.put(`forms/${form.id}?route=toggle_status`, {});
+        if (res.success) {
+            setForms(forms.map(f => f.id === form.id ? { ...f, status: (res.data as any)?.status } : f));
+            showToast((res.data as any)?.status === 'active' ? 'Đã kích hoạt biểu mẫu' : 'Đã vô hiệu hoá biểu mẫu');
+        } else {
+            showToast('Lỗi khi thay đổi trạng thái', 'error');
+        }
+    };
+
     const getFieldIcon = (dbField: string) => {
         const field = DB_FIELDS.find(f => f.value === dbField);
         return field?.icon || Type;
@@ -199,11 +209,22 @@ const FormsTab: React.FC = () => {
 
                         <div className="flex justify-between items-start relative z-10">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-amber-600/30 group-hover:rotate-6 transition-transform">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg transition-all ${
+                                    form.status === 'inactive'
+                                        ? 'bg-slate-300 shadow-slate-200/60'
+                                        : 'bg-gradient-to-br from-amber-400 to-orange-500 shadow-amber-600/30 group-hover:rotate-6'
+                                }`}>
                                     <FileInput className="w-6 h-6" />
                                 </div>
                                 <div className="min-w-0">
-                                    <h4 className="text-base font-bold text-slate-800 leading-tight truncate pr-2" title={form.name}>{form.name}</h4>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <h4 className={`text-base font-bold leading-tight truncate pr-2 ${
+                                            form.status === 'inactive' ? 'text-slate-400' : 'text-slate-800'
+                                        }`} title={form.name}>{form.name}</h4>
+                                        {form.status === 'inactive' && (
+                                            <span className="text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-400 px-2 py-0.5 rounded-full border border-slate-200">INACTIVE</span>
+                                        )}
+                                    </div>
                                     <div className="flex items-center gap-2 mt-2">
                                         <div 
                                             onClick={() => {
@@ -221,11 +242,22 @@ const FormsTab: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleEditClick(form)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Chỉnh sửa">
+                            <div className="flex gap-1">
+                                <button
+                                    onClick={() => handleToggleStatus(form)}
+                                    title={form.status === 'inactive' ? 'Kích hoạt' : 'Tạm dừng'}
+                                    className={`p-2 rounded-xl transition-all ${
+                                        form.status === 'inactive'
+                                            ? 'text-slate-300 hover:text-emerald-600 hover:bg-emerald-50'
+                                            : 'text-emerald-500 hover:text-amber-600 hover:bg-amber-50'
+                                    }`}
+                                >
+                                    <Power className="w-4 h-4" />
+                                </button>
+                                <button onClick={() => handleEditClick(form)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all opacity-0 group-hover:opacity-100" title="Chỉnh sửa">
                                     <Edit3 className="w-4 h-4" />
                                 </button>
-                                <button onClick={() => setConfirmDeleteId(form.id)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all" title="Xóa">
+                                <button onClick={() => setConfirmDeleteId(form.id)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all opacity-0 group-hover:opacity-100" title="Xóa">
                                     <Trash2 className="w-4 h-4" />
                                 </button>
                             </div>

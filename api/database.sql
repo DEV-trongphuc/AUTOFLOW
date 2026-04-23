@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost:3306
--- Thời gian đã tạo: Th4 23, 2026 lúc 11:44 AM
+-- Thời gian đã tạo: Th4 23, 2026 lúc 07:16 PM
 -- Phiên bản máy phục vụ: 10.6.18-MariaDB-cll-lve-log
 -- Phiên bản PHP: 8.4.19
 
@@ -1385,6 +1385,7 @@ CREATE TABLE `subscribers` (
 
 CREATE TABLE `subscriber_activity` (
   `id` bigint(20) UNSIGNED NOT NULL,
+  `workspace_id` varchar(36) DEFAULT NULL,
   `subscriber_id` char(36) NOT NULL,
   `type` varchar(50) NOT NULL,
   `reference_id` char(36) DEFAULT NULL,
@@ -1837,6 +1838,7 @@ CREATE TABLE `web_events` (
   `page_view_id` bigint(20) UNSIGNED DEFAULT NULL,
   `visitor_id` char(36) NOT NULL,
   `property_id` char(36) NOT NULL,
+  `workspace_id` varchar(36) DEFAULT NULL,
   `event_type` varchar(50) NOT NULL,
   `target_selector` varchar(255) DEFAULT NULL,
   `target_text` varchar(255) DEFAULT NULL,
@@ -1854,6 +1856,7 @@ CREATE TABLE `web_page_views` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `session_id` bigint(20) UNSIGNED NOT NULL,
   `property_id` char(36) NOT NULL,
+  `workspace_id` varchar(36) DEFAULT NULL,
   `visitor_id` char(36) NOT NULL,
   `url_hash` varchar(32) NOT NULL,
   `url` varchar(768) DEFAULT NULL,
@@ -1893,6 +1896,7 @@ CREATE TABLE `web_sessions` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `visitor_id` char(36) NOT NULL,
   `property_id` char(36) NOT NULL,
+  `workspace_id` varchar(36) DEFAULT NULL,
   `started_at` datetime NOT NULL,
   `last_active_at` datetime NOT NULL,
   `ended_at` datetime DEFAULT NULL,
@@ -2955,7 +2959,8 @@ ALTER TABLE `subscriber_activity`
   ADD KEY `idx_sa_sub_type` (`subscriber_id`,`type`),
   ADD KEY `idx_sa_subscriber` (`subscriber_id`),
   ADD KEY `idx_sa_type_created` (`type`,`created_at`),
-  ADD KEY `idx_sub_type_date` (`subscriber_id`,`type`,`created_at`);
+  ADD KEY `idx_sub_type_date` (`subscriber_id`,`type`,`created_at`),
+  ADD KEY `idx_sa_workspace` (`workspace_id`);
 
 --
 -- Chỉ mục cho bảng `subscriber_flow_states`
@@ -2988,6 +2993,7 @@ ALTER TABLE `subscriber_flow_states`
 --
 ALTER TABLE `subscriber_lists`
   ADD PRIMARY KEY (`subscriber_id`,`list_id`),
+  ADD UNIQUE KEY `unique_subscriber_list` (`subscriber_id`,`list_id`),
   ADD KEY `idx_subscriber_lists_list` (`list_id`,`subscriber_id`),
   ADD KEY `idx_sl_subscriber` (`subscriber_id`);
 
@@ -3166,7 +3172,8 @@ ALTER TABLE `web_events`
   ADD KEY `idx_event_type` (`event_type`),
   ADD KEY `idx_created_at` (`created_at`),
   ADD KEY `idx_visitor_evt` (`visitor_id`),
-  ADD KEY `idx_we_visitor_created` (`visitor_id`,`created_at`);
+  ADD KEY `idx_we_visitor_created` (`visitor_id`,`created_at`),
+  ADD KEY `idx_we_workspace` (`workspace_id`);
 
 --
 -- Chỉ mục cho bảng `web_page_views`
@@ -3183,7 +3190,8 @@ ALTER TABLE `web_page_views`
   ADD KEY `idx_url_hash` (`url_hash`),
   ADD KEY `idx_loaded_at` (`loaded_at`),
   ADD KEY `idx_wpv_visitor_prop` (`visitor_id`,`property_id`),
-  ADD KEY `idx_web_pv_session_visitor` (`session_id`,`visitor_id`);
+  ADD KEY `idx_web_pv_session_visitor` (`session_id`,`visitor_id`),
+  ADD KEY `idx_wpv_workspace` (`workspace_id`);
 
 --
 -- Chỉ mục cho bảng `web_properties`
@@ -3209,7 +3217,8 @@ ALTER TABLE `web_sessions`
   ADD KEY `idx_property_id` (`property_id`),
   ADD KEY `idx_started_at` (`started_at`),
   ADD KEY `idx_sess_prop_active` (`property_id`,`last_active_at`),
-  ADD KEY `idx_ws_prop_created` (`property_id`,`created_at`);
+  ADD KEY `idx_ws_prop_created` (`property_id`,`created_at`),
+  ADD KEY `idx_ws_workspace` (`workspace_id`);
 
 --
 -- Chỉ mục cho bảng `web_visitors`

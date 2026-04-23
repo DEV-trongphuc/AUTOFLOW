@@ -253,20 +253,27 @@ const Campaigns: React.FC = () => {
     const fetchInitialData = async () => {
         setLoading(true);
         try {
-            const [lRes, sRes, tRes, fRes, tagRes] = await Promise.all([
-                api.get<any[]>('lists'),
-                api.get<Segment[]>('segments'),
-                api.get<Template[]>('templates'),
-                api.get<Flow[]>('flows'),
-                api.get<{ id: string, name: string, subscriber_count: number }[]>('tags'),
-            ]);
+            // [PERF FIX] Tải campaigns ngay lập tức — không chờ wizard data
+            // Lists/segments/templates/flows/tags chỉ cần khi mở CampaignWizard
+            // → tách ra load ngầm để danh sách hiện ngay sau campaigns.php xong
+            await loadCampaigns(1, debouncedSearch);
+        } catch (error) {
+            showToast('Không thể tải dữ liệu chiến dịch', 'error');
+            setLoading(false);
+        }
+
+        // Wizard data: load ngầm sau khi campaigns đã hiển thị (non-blocking)
+        Promise.all([
+            api.get<any[]>('lists'),
+            api.get<Segment[]>('segments'),
+            api.get<Template[]>('templates'),
+            api.get<Flow[]>('flows'),
+            api.get<{ id: string, name: string, subscriber_count: number }[]>('tags'),
+        ]).then(([lRes, sRes, tRes, fRes, tagRes]) => {
             if (lRes.success) setAllLists(lRes.data);
             if (sRes.success) setAllSegments(sRes.data);
-            if (tRes.success) {
-                setAllTemplates(tRes.data);
-            }
+            if (tRes.success) setAllTemplates(tRes.data);
             if (fRes.success) { const raw = fRes.data as any; setAllFlows(Array.isArray(raw) ? raw : (raw?.data || [])); }
-
             if (tagRes.success) {
                 setAllTags(tagRes.data.map(tag => ({
                     id: tag.id,
@@ -274,15 +281,7 @@ const Campaigns: React.FC = () => {
                     count: tag.subscriber_count || 0
                 })));
             }
-
-            // Initial Campaigns Fetch
-            await loadCampaigns(1, debouncedSearch);
-            // [FIX] senderEmails đã được load toàn cục bởi SettingsContext — không cần fetch ở đây
-        } catch (error) {
-            showToast('Không thể tải dữ liệu chiến dịch', 'error');
-        } finally {
-            setLoading(false);
-        }
+        }).catch(() => { /* wizard data thất bại không ảnh hưởng list */ });
     };
 
     useEffect(() => {

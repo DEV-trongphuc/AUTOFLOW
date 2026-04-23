@@ -2055,8 +2055,8 @@ const CategoryChatPage: React.FC = () => {
             try {
                 // If attachments are too large, don't save the heavy base64 to localStorage
                 const safeAttachments = attachments.map(a => {
-                    // If base64 is legacy/huge (> 1MB), strip it for the draft storage
-                    if (a.base64 && a.base64.length > 1024 * 1024) {
+                    // Reduce threshold: strip base64 if it's > 200KB to save localStorage space (5MB total limit)
+                    if (a.base64 && a.base64.length > 200 * 1024) {
                         return { ...a, base64: undefined };
                     }
                     return a;
@@ -2077,6 +2077,9 @@ const CategoryChatPage: React.FC = () => {
         }
     }, [attachments, sessionId]);
 
+    // DISABLED: No longer saving full chat history or workspace docs to localStorage.
+    // The server is the single source of truth. This prevents QuotaExceededError and memory leaks.
+    /*
     useEffect(() => {
         if (!sessionId) return;
         // Save messages history
@@ -2093,23 +2096,30 @@ const CategoryChatPage: React.FC = () => {
                 localStorage.setItem(`chat_hist_${sessionId}`, JSON.stringify(cleanMessages));
             } catch (e) {
                 // If QuotaExceededError, clean up older histories
-                if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
-                    console.warn('LocalStorage quota exceeded, cleaning up old histories...');
+                if (e instanceof Error || (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED'))) {
+                    console.warn('LocalStorage quota exceeded, cleaning up old histories and heavy data...');
                     try {
-                        // Remove all other chat histories except current
+                        // Remove all other chat histories, drafts, and workspace caches except current
                         Object.keys(localStorage).forEach(key => {
-                            if ((key.startsWith('chat_hist_') || key.startsWith('draft_att_') || key.startsWith('draft_msg_')) && !key.includes(sessionId)) {
+                            if ((key.startsWith('chat_hist_') || 
+                                 key.startsWith('draft_att_') || 
+                                 key.startsWith('draft_msg_') || 
+                                 key.startsWith('workspace_docs_') ||
+                                 key.startsWith('active_doc_')
+                                ) && !key.includes(sessionId)) {
                                 localStorage.removeItem(key);
                             }
                         });
-                        // Try saving metadata-only version
+                        
+                        // Try saving metadata-only version again
                         const metaOnlyMessages = messages.map(msg => ({
                             ...msg,
-                            attachments: msg.attachments?.map(att => ({ ...att, base64: undefined }))
+                            // Ensure absolutely no base64 goes into history storage
+                            attachments: msg.attachments?.map(att => ({ ...att, base64: undefined, content: undefined }))
                         }));
                         localStorage.setItem(`chat_hist_${sessionId}`, JSON.stringify(metaOnlyMessages));
                     } catch (innerError) {
-                        console.error('Failed to save to localStorage even after cleanup');
+                        console.error('Failed to save to localStorage even after cleanup', innerError);
                     }
                 }
             }
@@ -2125,6 +2135,7 @@ const CategoryChatPage: React.FC = () => {
             localStorage.removeItem(`workspace_docs_${sessionId}`);
         }
     }, [workspaceDocs, sessionId]);
+    */
 
     // DISABLED: This was creating thousands of duplicate records
     // Files are already saved via workspace_upload endpoint when uploaded
@@ -2339,8 +2350,7 @@ const CategoryChatPage: React.FC = () => {
 
                         if (localIds !== loadIds || localMsgs.length !== loadedMessages.length || (localMsgs.length > 0 && localMsgs[localMsgs.length - 1].content !== loadedMessages[loadedMessages.length - 1].content)) {
                             setMessages(loadedMessages);
-                            // Sync formatted messages back to LS
-                            localStorage.setItem(`chat_hist_${targetSessionId}`, JSON.stringify(loadedMessages));
+                            // No longer saving formatted messages back to LS to save memory
                         }
                     }
                 }

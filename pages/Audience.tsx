@@ -45,7 +45,7 @@ import { usePermissionGuard } from '../components/common/PermissionGuard';
 
 const UndoToastContent = ({ t, icon: Icon, iconColorClass, title, subtitle, durationMs, onUndo }: any) => {
     const [timeLeft, setTimeLeft] = useState(Math.floor(durationMs / 1000));
-    
+
     useEffect(() => {
         const timer = setInterval(() => {
             setTimeLeft(prev => {
@@ -93,10 +93,11 @@ const COLUMN_DEFINITIONS = [
     { id: 'lastActivity', label: 'Hoạt động gần nhất', required: false },
     { id: 'leadScore', label: 'Điểm Lead', required: false },
     { id: 'tags', label: 'Tags', required: false },
+    { id: 'salesperson', label: 'Salesperson', required: false },
     { id: 'joinedAt', label: 'Ngày tham gia', required: false },
 ];
 
-const DEFAULT_VISIBLE_COLUMNS = ['name', 'email', 'status', 'lastActivity', 'leadScore', 'tags'];
+const DEFAULT_VISIBLE_COLUMNS = ['name', 'email', 'status', 'lastActivity', 'leadScore', 'tags', 'salesperson'];
 
 const formatRelativeTime = (dateString?: string) => {
     if (!dateString) return 'Chưa có dữ liệu';
@@ -129,7 +130,7 @@ const Audience: React.FC = () => {
     const navigate = useNavigate();
     const isAdmin = useIsAdmin();
     const { guard: adminGuard, PermModal: AdminPermModal } = usePermissionGuard(isAdmin);
-    
+
     const [activeTab, setActiveTab] = useState<'lists' | 'segments' | 'contacts' | 'integrations' | 'meta' | 'zalo'>('contacts');
 
     // Main Subscriber List State (Paginated)
@@ -158,6 +159,7 @@ const Audience: React.FC = () => {
     const [filterHasChat, setFilterHasChat] = useState<string>('all');
     const [filterCustomAttrKey, setFilterCustomAttrKey] = useState<string>('');
     const [filterCustomAttrValue, setFilterCustomAttrValue] = useState<string>('');
+    const [filterSalesperson, setFilterSalesperson] = useState<string>('');
     const [customAttrKeys, setCustomAttrKeys] = useState<{ key: string; label: string }[]>([]);
     const [sortBy, setSortBy] = useState<string>('newest');
     const [dateRange, setDateRange] = useState<{ from: string; to: string }>({ from: '', to: '' });
@@ -270,6 +272,9 @@ const Audience: React.FC = () => {
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(searchTerm);
+            setPagination(prev => ({ ...prev, page: 1 }));
+            setListsPagination(prev => ({ ...prev, page: 1 }));
+            setSegmentsPagination(prev => ({ ...prev, page: 1 }));
         }, 500);
         return () => clearTimeout(timer);
     }, [searchTerm]);
@@ -304,7 +309,7 @@ const Audience: React.FC = () => {
         // Handle ?segment_id=xxx or ?list_id=xxx query params (from FlowCard link chips)
         const params = new URLSearchParams(location.search);
         const qSegmentId = params.get('segment_id');
-        const qListId    = params.get('list_id');
+        const qListId = params.get('list_id');
 
         if (qSegmentId) {
             setActiveTab('segments');
@@ -403,7 +408,9 @@ const Audience: React.FC = () => {
             setIntegrations(res.data);
         }
         setLoading(false);
+        return res.success ? res.data : null;
     };
+
 
     // Effect to fetch tab data (skip first render — fetchInitialData handles mount)
     useEffect(() => {
@@ -412,14 +419,14 @@ const Audience: React.FC = () => {
         else if (activeTab === 'lists') fetchLists(listsPagination.page);
         else if (activeTab === 'segments') fetchSegments(segmentsPagination.page);
         else if (activeTab === 'integrations') fetchIntegrations();
-    }, [activeTab, pagination.page, listsPagination.page, segmentsPagination.page, debouncedSearch, filterStatus, filterTags, filterVerify, filterHasChat, sortBy, dateRange, itemsPerPage, recentDays, filterCustomAttrKey, filterCustomAttrValue]);
+    }, [activeTab, pagination.page, listsPagination.page, segmentsPagination.page, debouncedSearch, filterStatus, filterTags, filterVerify, filterHasChat, filterSalesperson, sortBy, dateRange, itemsPerPage, recentDays, filterCustomAttrKey, filterCustomAttrValue]);
 
     // Reset page to 1 on filter/search change
     useEffect(() => {
         setPagination(prev => ({ ...prev, page: 1 }));
         setListsPagination(prev => ({ ...prev, page: 1 }));
         setSegmentsPagination(prev => ({ ...prev, page: 1 }));
-    }, [debouncedSearch, filterStatus, filterTags, filterVerify, filterHasChat, sortBy, filterCustomAttrKey, filterCustomAttrValue]);
+    }, [debouncedSearch, filterStatus, filterTags, filterVerify, filterHasChat, filterSalesperson, sortBy, filterCustomAttrKey, filterCustomAttrValue]);
 
     // Fetch Group Members when viewingGroup changes or its filters change
     useEffect(() => {
@@ -495,11 +502,18 @@ const Audience: React.FC = () => {
     };
 
     // Polling for Sync Status with timeout protection
+    const prevSyncingRef = useRef(false);
     useEffect(() => {
-        if (activeTab !== 'integrations') return;
+        const isCurrentlySyncing = integrations.some((i: any) => i.sync_status === 'syncing');
+        
+        // If we were syncing and now we are not, refresh everything
+        if (prevSyncingRef.current && !isCurrentlySyncing) {
+            fetchReportStats(reportPeriod);
+            if (activeTab === 'contacts') fetchSubscribers(1);
+        }
+        prevSyncingRef.current = isCurrentlySyncing;
 
-        const isSyncing = integrations.some((i: any) => i.sync_status === 'syncing');
-        if (!isSyncing) return;
+        if (activeTab !== 'integrations' || !isCurrentlySyncing) return;
 
         // Track sync start time
         const syncStartTime = Date.now();
@@ -519,7 +533,7 @@ const Audience: React.FC = () => {
         }, 1000); // Poll every 1 second for faster feedback
 
         return () => clearInterval(interval);
-    }, [activeTab, integrations]);
+    }, [activeTab, integrations, reportPeriod, activeTab]);
 
     const fetchSubscribers = async (page = 1) => {
         setLoading(true);
@@ -532,6 +546,7 @@ const Audience: React.FC = () => {
             verified: filterVerify,
             has_chat: filterHasChat,
             sort: sortBy,
+            salesperson: filterSalesperson,
             ...(sortBy === 'birthday_custom' ? { startDate: dateRange.from, endDate: dateRange.to } : {}),
             ...(sortBy === 'recent_activity' ? { recent_days: recentDays.toString() } : {}),
             ...(filterCustomAttrKey ? { custom_attr_key: filterCustomAttrKey, custom_attr_value: filterCustomAttrValue } : {})
@@ -1228,12 +1243,14 @@ const Audience: React.FC = () => {
                                         filterTags={filterTags}
                                         filterVerify={filterVerify}
                                         filterHasChat={filterHasChat}
+                                        filterSalesperson={filterSalesperson}
                                         filterCustomAttrKey={filterCustomAttrKey}
                                         filterCustomAttrValue={filterCustomAttrValue}
                                         onStatusChange={setFilterStatus}
                                         onTagsChange={setFilterTags}
                                         onVerifyChange={setFilterVerify}
                                         onHasChatChange={setFilterHasChat}
+                                        onSalespersonChange={setFilterSalesperson}
                                         onCustomAttrChange={(key, value) => {
                                             setFilterCustomAttrKey(key);
                                             setFilterCustomAttrValue(value);
@@ -1312,19 +1329,22 @@ const Audience: React.FC = () => {
                                 status: filterStatus,
                                 tags: filterTags,
                                 verify: filterVerify,
-                                hasChat: filterHasChat
+                                hasChat: filterHasChat,
+                                salesperson: filterSalesperson
                             }}
                             onRemove={(key, value) => {
                                 if (key === 'status') setFilterStatus('all');
                                 else if (key === 'tags') setFilterTags(prev => prev.filter(t => t !== value));
                                 else if (key === 'verify') setFilterVerify('all');
                                 else if (key === 'hasChat') setFilterHasChat('all');
+                                else if (key === 'salesperson') setFilterSalesperson('');
                             }}
                             onClearAll={() => {
                                 setFilterStatus('all');
                                 setFilterTags([]);
                                 setFilterVerify('all');
                                 setFilterHasChat('all');
+                                setFilterSalesperson('');
                             }}
                             tags={tags}
                         />
@@ -1552,10 +1572,24 @@ const Audience: React.FC = () => {
                                                 showToast('Đang tiến hành đồng bộ...', 'info');
                                                 try {
                                                     await api.post(`integrations?route=sync_now&id=${id}`, {});
-                                                    showToast('Đã đồng bộ xong!', 'success');
-                                                    fetchIntegrations();
-                                                    const listRes = await api.get<any[]>('lists');
-                                                    if (listRes.success) setAllStaticLists(listRes.data);
+
+                                                    // [FIX] Poll until sync_status is no longer 'syncing'.
+                                                    // api.post returns immediately after dispatching the background
+                                                    // worker — the old code showed "done" toast before sync finished.
+                                                    let attempts = 0;
+                                                    const maxAttempts = 40; // 40 × 3s = 2 min max
+                                                    const pollInterval = setInterval(async () => {
+                                                        attempts++;
+                                                        const latest = await fetchIntegrations();
+                                                        const updated = latest?.find((i: any) => i.id === id);
+                                                        const stillSyncing = updated?.sync_status === 'syncing';
+                                                        if (!stillSyncing || attempts >= maxAttempts) {
+                                                            clearInterval(pollInterval);
+                                                            showToast('Đã đồng bộ xong!', 'success');
+                                                            const listRes = await api.get<any[]>('lists');
+                                                            if (listRes.success) setAllStaticLists(listRes.data);
+                                                        }
+                                                    }, 3000);
                                                 } catch (e) {
                                                     showToast('Lỗi khi đồng bộ.', 'error');
                                                     setIntegrations(prev => prev.map(i =>
@@ -1873,7 +1907,7 @@ const Audience: React.FC = () => {
                         fetchInitialData();
                         if (activeTab === 'lists') setListsPagination(prev => ({ ...prev, page: 1 }));
                         if (activeTab === 'segments') setSegmentsPagination(prev => ({ ...prev, page: 1 }));
-                        
+
                         // Also refresh group members if we are viewing that group
                         if (viewingGroup && viewingGroup.id === splittingTarget.id) {
                             fetchGroupMembers(viewingGroup, groupPagination.page, groupSearch);
@@ -2106,7 +2140,7 @@ const Audience: React.FC = () => {
                     </div>
                 </div>
             )}
-            
+
             {AdminPermModal}
         </>
     );

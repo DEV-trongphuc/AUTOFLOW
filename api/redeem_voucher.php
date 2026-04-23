@@ -90,25 +90,12 @@ if ($staticCamp) {
     // Static code redemption does not tie to a specific subscriber unless provided.
     // We just return success and skip specific row marking.
     
-    // Dispatch Automation optionally if we adapt the API to receive email/phone in future
-    $workerUrl = API_BASE_URL . "/worker_priority.php?" . http_build_query([
-        'trigger_type' => 'voucher_redeem', 
-        'target_id' => $staticCamp['id'], 
-        'subscriber_id' => ''
-    ]);
-    
-    $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $workerUrl);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 1);
-    curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
-    @curl_exec($ch);
-    curl_close($ch);
+    // [FIX BUG-STATIC-REDEEM] Static code has no subscriber — do NOT dispatch worker_priority
+    // with empty subscriber_id. worker_priority Scenario A requires truthy $prioritySid;
+    // an empty string causes silent exit (no enrollment, no error). Skip dispatch entirely.
+    // To support flow triggers for static codes, collect email/phone at redemption time
+    // and resolve subscriber_id before calling this endpoint.
+    error_log("[redeem_voucher] Static code '{$code}' redeemed. No subscriber identified — flow trigger skipped.");
 
     jsonResponse(true, null, 'Áp dụng mã tĩnh thành công (Không định danh)!');
 }
