@@ -8,7 +8,8 @@ import {
     UserPlus, UserMinus, AlertCircle, Ticket, PartyPopper, Bot, ClipboardList
 } from 'lucide-react';
 import { api } from '../../../services/storageAdapter';
-import { Campaign, Flow, Segment, FormDefinition, PurchaseEvent, CustomEvent, VoucherCampaign, Survey } from '../../../types';
+import { Campaign, Flow, Segment, FormDefinition, PurchaseEvent, CustomEvent, VoucherCampaign } from '../../../types';
+import { Survey } from '../../../types/survey';
 import IntegrationGuideModal from '../modals/IntegrationGuideModal';
 import { isManualList, isSyncList } from '../../../utils/listHelpers';
 import Input from '../../common/Input';
@@ -501,7 +502,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                     <ConfigItem
                                         key={s.id}
                                         label={s.name}
-                                        desc={`${s.status === 'published' ? 'Đang kích hoạt' : 'Chưa xuất bản'}`}
+                                        desc={`${s.status === 'active' ? 'Đang kích hoạt' : 'Chưa xuất bản'}`}
                                         icon={ClipboardList}
                                         isSelected={config.targetId === s.id}
                                         onClick={() => handleTargetChange(s.id)}
