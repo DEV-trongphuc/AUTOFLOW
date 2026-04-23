@@ -746,7 +746,7 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                                 {['all', 'active', 'lead', 'customer', 'unsubscribed', 'bounced', 'complained'].map(status => {
                                     // Calculate total from stats excluding has_phone (it's a filter, not a status)
                                     const totalFromStats = Object.entries(stats)
-                                        .filter(([key]) => key !== 'has_phone')
+                                        .filter(([key]) => key !== 'has_phone' && key !== 'total')
                                         .reduce((sum, [, value]) => sum + (Number(value) || 0), 0);
                                     const count = status === 'all' ? (totalFromStats || totalCount) : (stats[status] || 0);
 

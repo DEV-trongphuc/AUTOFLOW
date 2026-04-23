@@ -256,18 +256,9 @@ if (!function_exists('runIntegrationSync')) {
                                     if ($subId) {
                                         $updatedCount++;
                                     } else {
-                                        $subId = uniqid(); // Or md5(uniqid())? Let's use uniqid for speed as before, but ensure it's not colliding. Actually standard php uniqid is 13 chars.
-                                        // Update engine map immediately so next row with same email/phone uses this ID
-                                        // (This assumes SyncEngine has methods to add to map, but it currently does not. 
-                                        //  However, duplicates WITHIN the same batch/sheet are handled if we process sequentially.
-                                        //  Ideally we should add to map. For now, let's trust the engine is for DB lookups.)
-                                        //  Wait, if the CSV has 2 rows with same email/phone, we need to handle that.
-                                        //  Let's simplisticly assume unique rows in source for now or just double upsert.
-                                        //  Actually, Duplicate rows in source -> Same resolved ID? No, if it's new, first row generates ID. Second row resolveId returns null? 
-                                        //  We need to add to engine map on the fly.
-                                        //  Let's keep it simple: If duplicate in CSV, the INSERT ON DUPLICATE will handle it if ID is same.
-                                        //  BUT if we generate NEW ID for both, we get 2 users.
-                                        //  FIX: Map local buffer.
+                                        $subId = uniqid(); 
+                                        if ($email) $engine->mapEmail[strtolower(trim($email))] = $subId;
+                                        if ($phone) $engine->mapPhone[preg_replace('/[^\d\+]/', '', $phone)] = $subId;
                                         $newCount++;
                                     }
 
@@ -578,8 +569,9 @@ if (!function_exists('runIntegrationSync')) {
                                 $updatedCount++;
                             } else {
                                 $subId = uniqid();
-                                // Note: We don't update $engine map on the fly here, so duplicates IN SHEET might create dual IDs 
-                                // if they are not caught. But CSV typically implies unique rows.
+                                // Note: Update $engine map on the fly to prevent duplicates within the same sheet
+                                if ($email) $engine->mapEmail[strtolower(trim($email))] = $subId;
+                                if ($phone) $engine->mapPhone[preg_replace('/[^\d\+]/', '', $phone)] = $subId;
                                 $newCount++;
                             }
 
