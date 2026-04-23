@@ -1,15 +1,32 @@
 // components/templates/EmailEditor/utils/canvasUtils.ts
 import React from 'react';
-import { EmailBlockStyle, EmailBodyStyle } from '../../../../types';
+import { EmailBlockStyle } from '../../../../types';
+import { toPx, sanitizeRadius } from './styleUtils';
 
 // Builds CSSProperties from an EmailBlockStyle object, considering mobile overrides
-export const buildCss = (s: EmailBlockStyle, viewMode: 'desktop' | 'mobile', bodyFontFamily: string): React.CSSProperties => {
+export const buildCss = (s: EmailBlockStyle, viewMode: 'desktop' | 'mobile', bodyFontFamily: string, type?: string): React.CSSProperties => {
     const isMobile = viewMode === 'mobile';
     const mobileStyles = s.mobile || {};
     const rs = isMobile ? { ...s, ...mobileStyles } : s;
 
-    const marginLeft = rs.marginLeft === 'auto' ? 'auto' : rs.marginLeft;
-    const marginRight = rs.marginRight === 'auto' ? 'auto' : rs.marginRight;
+    // Apply mobile-specific defaults if not explicitly set in either desktop or mobile style
+    const getMobileDefault = (prop: keyof EmailBlockStyle, defaultVal: string) => {
+        if (!isMobile) return toPx(rs[prop]);
+        // If the property is explicitly set (even to '0' or '0px') in either desktop or mobile, respect it
+        const isExplicit = (s[prop] !== undefined && s[prop] !== '') || (mobileStyles[prop] !== undefined && mobileStyles[prop] !== '');
+        return isExplicit ? toPx(rs[prop]) : defaultVal;
+    };
+
+    const paddingTop = type === 'section' ? getMobileDefault('paddingTop', '10px') : toPx(rs.paddingTop);
+    const paddingBottom = type === 'section' ? getMobileDefault('paddingBottom', '10px') : toPx(rs.paddingBottom);
+    const paddingLeft = type === 'column' ? getMobileDefault('paddingLeft', '10px') : toPx(rs.paddingLeft);
+    const paddingRight = type === 'column' ? getMobileDefault('paddingRight', '10px') : toPx(rs.paddingRight);
+    
+    // Column bottom margin for stacking
+    const marginBottom = (type === 'column' && isMobile && !(s as any).noStack) ? getMobileDefault('marginBottom', '20px') : toPx(rs.marginBottom);
+
+    const marginLeft = rs.marginLeft === 'auto' ? 'auto' : toPx(rs.marginLeft);
+    const marginRight = rs.marginRight === 'auto' ? 'auto' : toPx(rs.marginRight);
 
     // Prioritize backgroundImage (gradients) in CSS
     const background = rs.backgroundImage && rs.backgroundImage !== 'none'
@@ -17,8 +34,11 @@ export const buildCss = (s: EmailBlockStyle, viewMode: 'desktop' | 'mobile', bod
         : rs.backgroundColor;
 
     return {
-        paddingTop: rs.paddingTop, paddingRight: rs.paddingRight, paddingBottom: rs.paddingBottom, paddingLeft: rs.paddingLeft,
-        marginTop: rs.marginTop, marginRight: marginRight, marginBottom: rs.marginBottom, marginLeft: marginLeft,
+        paddingTop, paddingRight, paddingBottom, paddingLeft,
+        marginTop: toPx(rs.marginTop), 
+        marginRight: marginRight, 
+        marginBottom, 
+        marginLeft: marginLeft,
         background: background,
         backgroundColor: rs.backgroundColor,
         backgroundImage: rs.backgroundImage,
@@ -26,7 +46,7 @@ export const buildCss = (s: EmailBlockStyle, viewMode: 'desktop' | 'mobile', bod
         backgroundPosition: rs.backgroundPosition || 'center',
         backgroundRepeat: rs.backgroundRepeat || 'no-repeat',
         color: rs.color,
-        fontSize: rs.fontSize,
+        fontSize: toPx(rs.fontSize),
         fontWeight: rs.fontWeight,
         // ✅ FIX: Ưu tiên rs.fontFamily (block setting), fallback về body font
         fontFamily: rs.fontFamily || bodyFontFamily || 'Arial, sans-serif',
@@ -34,15 +54,15 @@ export const buildCss = (s: EmailBlockStyle, viewMode: 'desktop' | 'mobile', bod
         lineHeight: rs.lineHeight,
         borderStyle: rs.borderStyle as any,
         borderColor: rs.borderColor,
-        borderTopWidth: rs.borderTopWidth,
-        borderRightWidth: rs.borderRightWidth,
-        borderBottomWidth: rs.borderBottomWidth,
-        borderLeftWidth: rs.borderLeftWidth,
-        borderRadius: rs.borderRadius,
-        borderTopLeftRadius: rs.borderTopLeftRadius,
-        borderTopRightRadius: rs.borderTopRightRadius,
-        borderBottomLeftRadius: rs.borderBottomLeftRadius,
-        borderBottomRightRadius: rs.borderBottomRightRadius,
+        borderTopWidth: toPx(rs.borderTopWidth),
+        borderRightWidth: toPx(rs.borderRightWidth),
+        borderBottomWidth: toPx(rs.borderBottomWidth),
+        borderLeftWidth: toPx(rs.borderLeftWidth),
+        borderRadius: sanitizeRadius(rs.borderRadius),
+        borderTopLeftRadius: sanitizeRadius(rs.borderTopLeftRadius),
+        borderTopRightRadius: sanitizeRadius(rs.borderTopRightRadius),
+        borderBottomLeftRadius: sanitizeRadius(rs.borderBottomLeftRadius),
+        borderBottomRightRadius: sanitizeRadius(rs.borderBottomRightRadius),
         width: rs.width,
         height: rs.height,
         maxWidth: (rs as any).maxWidth,
@@ -94,16 +114,4 @@ export const buildCss = (s: EmailBlockStyle, viewMode: 'desktop' | 'mobile', bod
         targetDate: (rs as any).targetDate,
         labelColor: (rs as any).labelColor,
     } as any;
-};
-
-// Utility: Sanitize border-radius — accepts string | number | undefined
-export const sanitizeRadius = (val: string | number | undefined): string => {
-    if (val === undefined || val === null || val === '') return '0px';
-    const str = String(val);
-    // If it's a plain number (no unit), append px
-    if (/^[\d.]+$/.test(str.trim())) return `${str.trim()}px`;
-    // Handle multi-value like "10px 20px" or "10 20"
-    const cleaned = str.replace(/px/g, '').trim();
-    const values = cleaned.split(/\s+/).filter(v => v);
-    return values.map(v => `${v}px`).join(' ');
 };

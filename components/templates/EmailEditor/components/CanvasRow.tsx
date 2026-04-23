@@ -38,7 +38,7 @@ const CanvasRow: React.FC<CanvasRowProps> = (props) => {
         onResizeColumns, onLeftResizeColumns
     } = props;
 
-    const css = buildCss(row.style, viewMode, bodyStyle.fontFamily);
+    const css = buildCss(row.style, viewMode, bodyStyle.fontFamily, 'row');
     const { 
         backgroundColor, borderRadius, paddingTop, paddingBottom, paddingLeft, paddingRight, 
         marginTop, marginBottom, marginLeft, marginRight, width,
@@ -290,7 +290,7 @@ const CanvasRow: React.FC<CanvasRowProps> = (props) => {
                                                         transition: liveWidths ? 'none' : 'width 0.1s',
                                                         alignSelf: 'stretch', // luôn stretch để column fill full row height
                                                     }}>
-                                                        <CanvasColumn {...props} col={col} onSelectParent={() => onSelectBlock(row.id)} isNoStack={row.style.noStack === true} />
+                                                        <CanvasColumn {...props} col={col} onSelectParent={() => onSelectBlock(row.id)} isNoStack={row.style.noStack === true} columnGap={row.style.gap} />
                                                     </div>
 
                                                     {/* ✅ LEFT handle: chỉ hiện ở single col, cạnh trái */}
@@ -391,7 +391,7 @@ const CanvasRow: React.FC<CanvasRowProps> = (props) => {
                                         <tbody>
                                             <tr>
                                                 {cols.map(col => (
-                                                    <CanvasColumn key={col.id} {...props} col={col} onSelectParent={() => onSelectBlock(row.id)} isNoStack={row.style.noStack === true} />
+                                                    <CanvasColumn key={col.id} {...props} col={col} onSelectParent={() => onSelectBlock(row.id)} isNoStack={row.style.noStack === true} columnGap={row.style.gap} />
                                                 ))}
                                             </tr>
                                         </tbody>

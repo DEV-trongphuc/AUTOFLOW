@@ -2,7 +2,8 @@
 import React, { useCallback } from 'react';
 import { Plus } from 'lucide-react';
 import { EmailBlock, EmailBlockType, EmailBodyStyle } from '../../../../types';
-import { buildCss, sanitizeRadius } from '../utils/canvasUtils';
+import { buildCss } from '../utils/canvasUtils';
+import { fromPx, toPx, sanitizeRadius } from '../utils/styleUtils';
 import { CanvasDropIndicator, CanvasHandleOverlay } from './CanvasUI';
 import CanvasBlock from './CanvasBlock';
 import CanvasRow from './CanvasRow';
@@ -31,6 +32,7 @@ interface CanvasColumnProps {
     onResizeColumns: (rowId: string, colIndex: number, newLeftPct: number) => void;
     onLeftResizeColumns: (rowId: string, newLeftPct: number) => void;
     customMergeTags?: { label: string; key: string }[];
+    columnGap?: string | number;
 }
 
 const CanvasColumn: React.FC<CanvasColumnProps> = (props) => {
@@ -40,7 +42,7 @@ const CanvasColumn: React.FC<CanvasColumnProps> = (props) => {
         isNoStack, onResizeColumns, onLeftResizeColumns, customMergeTags = []
     } = props;
 
-    const css = buildCss(col.style, viewMode, bodyStyle.fontFamily);
+    const css = buildCss(col.style, viewMode, bodyStyle.fontFamily, 'column');
     const {
         width, verticalAlign, paddingTop, paddingBottom, paddingLeft, paddingRight,
         backgroundColor, borderRadius, borderStyle, borderColor,
@@ -90,6 +92,10 @@ const CanvasColumn: React.FC<CanvasColumnProps> = (props) => {
         : verticalAlign === 'bottom' ? 'flex-end'
             : 'flex-start';
 
+    const halfGap = (parseInt(String(columnGap)) || 0) / 2;
+    const finalPaddingLeft = toPx(fromPx(css.paddingLeft as string) + halfGap);
+    const finalPaddingRight = toPx(fromPx(css.paddingRight as string) + halfGap);
+
     return (
         <Tag
             key={col.id} id={`block-${col.id}`}
@@ -101,7 +107,8 @@ const CanvasColumn: React.FC<CanvasColumnProps> = (props) => {
                 flexDirection: isMobile ? undefined : 'column',
                 justifyContent: isMobile ? undefined : justifyContent,
                 width: isMobile ? colWidth : '100%',
-                paddingTop, paddingBottom, paddingLeft, paddingRight,
+                paddingTop: css.paddingTop, paddingBottom: css.paddingBottom, 
+                paddingLeft: finalPaddingLeft, paddingRight: finalPaddingRight,
                 backgroundColor, borderRadius: sanitizeRadius(borderRadius),
                 backgroundImage: finalBackgroundImage, backgroundSize, backgroundPosition, backgroundRepeat,
                 borderTop: borderTopWidth && borderStyle !== 'none' ? `${borderTopWidth} ${borderStyle || 'solid'} ${borderColor || '#000'}` : 'none',

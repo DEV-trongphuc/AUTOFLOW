@@ -2,7 +2,8 @@
 import React from 'react';
 import * as LucideIcons from 'lucide-react';
 import { EmailBlock, EmailBlockType, EmailBodyStyle } from '../../../../types';
-import { buildCss, sanitizeRadius } from '../utils/canvasUtils';
+import { buildCss } from '../utils/canvasUtils';
+import { sanitizeRadius, toPx } from '../utils/styleUtils';
 import { CanvasDropIndicator, CanvasHandleOverlay } from './CanvasUI';
 import RichText from '../RichText';
 import CountdownTimer from './CountdownTimer';
@@ -44,7 +45,7 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
     } = props;
     const { usedColors } = useEditorContext();
     const isSelected = selectedBlockId === block.id;
-    const css = buildCss(block.style, viewMode, bodyStyle.fontFamily);
+    const css = buildCss(block.style, viewMode, bodyStyle.fontFamily, block.type);
     // cssAny: typed escape hatch for custom canvas properties not in CSSProperties
     const cssAny = css as any;
 
@@ -401,55 +402,51 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
             }
 
             case 'image': {
-                const imgHeight = css.height && css.height !== 'auto' ? css.height : undefined;
-                const hasCoverHeight = !!imgHeight;
+                const imgWidth = css.width ?? '100%';
+                const imgHeight = css.height && css.height !== 'auto' ? css.height : 'auto';
+                const objectFit = block.style.objectFit || 'cover';
+                const aspectRatio = (block.style as any).aspectRatio;
+                const borderRadius = sanitizeRadius(css.borderRadius);
+
                 return (
                     <table width="100%" border={0} cellPadding={0} cellSpacing={0} style={{ display: 'inline-table' }}>
                         <tbody>
                             <tr>
-                                <td align={css.textAlign as any ?? 'center'}>
+                                <td align={css.textAlign as any ?? 'center'} style={{
+                                    paddingTop: toPx(block.style.paddingTop),
+                                    paddingRight: toPx(block.style.paddingRight),
+                                    paddingBottom: toPx(block.style.paddingBottom),
+                                    paddingLeft: toPx(block.style.paddingLeft),
+                                    backgroundColor: block.style.backgroundColor ?? 'transparent',
+                                }}>
                                     {block.content ? (
-                                        <div style={{ display: 'flex', justifyContent: css.textAlign === 'left' ? 'flex-start' : css.textAlign === 'right' ? 'flex-end' : 'center', width: '100%' }}>
-                                            {hasCoverHeight ? (
-                                                // Fixed height + object-fit: cover mode
-                                                <div style={{
-                                                    width: css.width ?? '100%',
-                                                    height: imgHeight,
-                                                    borderRadius: sanitizeRadius(css.borderRadius),
-                                                    backgroundColor: css.backgroundColor ?? 'transparent',
-                                                    padding: `${css.paddingTop ?? '0'} ${css.paddingRight ?? '0'} ${css.paddingBottom ?? '0'} ${css.paddingLeft ?? '0'}`,
-                                                    overflow: 'hidden',
-                                                    display: 'inline-block', // changed from block to fix alignment
-                                                    maxWidth: '100%',
-                                                }}>
-                                                    <img
-                                                        src={block.content}
-                                                        style={{
-                                                            width: '100%',
-                                                            height: '100%',
-                                                            objectFit: 'cover',
-                                                            objectPosition: 'center',
-                                                            display: 'block',
-                                                            borderRadius: sanitizeRadius(css.borderRadius)
-                                                        }}
-                                                        alt={block.altText}
-                                                    />
-                                                </div>
-                                            ) : (
-                                                // Default: auto height
-                                                <div style={{
-                                                    backgroundColor: css.backgroundColor ?? 'transparent',
-                                                    padding: `${css.paddingTop ?? '0'} ${css.paddingRight ?? '0'} ${css.paddingBottom ?? '0'} ${css.paddingLeft ?? '0'}`,
-                                                    borderRadius: sanitizeRadius(css.borderRadius),
-                                                    display: 'inline-block'
-                                                }}>
-                                                    <img
-                                                        src={block.content}
-                                                        style={{ maxWidth: '100%', width: css.width ?? '100%', height: 'auto', display: 'block', borderRadius: sanitizeRadius(css.borderRadius) }}
-                                                        alt={block.altText}
-                                                    />
-                                                </div>
-                                            )}
+                                        <div style={{ 
+                                            display: 'flex', 
+                                            justifyContent: css.textAlign === 'left' ? 'flex-start' : css.textAlign === 'right' ? 'flex-end' : 'center', 
+                                            width: '100%' 
+                                        }}>
+                                            <div style={{
+                                                width: imgWidth,
+                                                height: imgHeight,
+                                                aspectRatio: aspectRatio && aspectRatio !== 'auto' ? aspectRatio : undefined,
+                                                borderRadius: borderRadius,
+                                                overflow: 'hidden',
+                                                display: 'inline-block',
+                                                maxWidth: '100%',
+                                            }}>
+                                                <img
+                                                    src={block.content}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        objectFit: objectFit as any,
+                                                        objectPosition: 'center',
+                                                        display: 'block',
+                                                        borderRadius: borderRadius
+                                                    }}
+                                                    alt={block.altText}
+                                                />
+                                            </div>
                                         </div>
                                     ) : (
                                         <div className="w-full aspect-video bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center group/img transition-all hover:bg-slate-100 hover:border-emerald-500/30">

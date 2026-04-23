@@ -36,7 +36,7 @@ const CanvasSection: React.FC<CanvasSectionProps> = (props) => {
         onSelectBlock, onDragStart, onDragOver, onDrop, onMoveOrder, onSwapColumns, onDuplicateBlock, onDeleteBlock, onUpdateBlockContent, onSaveSection, onResizeColumns, onLeftResizeColumns
     } = props;
 
-    const css = buildCss(section.style, viewMode, bodyStyle.fontFamily);
+    const css = buildCss(section.style, viewMode, bodyStyle.fontFamily, 'section');
     const innerBg = section.style.contentBackgroundColor || 'transparent';
     const isSelected = selectedBlockId === section.id;
 

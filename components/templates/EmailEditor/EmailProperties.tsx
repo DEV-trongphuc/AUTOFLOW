@@ -311,6 +311,17 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                         <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:bg-amber-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
                                     </label>
                                 </div>
+                                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
+                                    <VisualMeasure 
+                                        label="Khoảng cách giữa các cột" 
+                                        value={getStyle('gap')} 
+                                        defaultValue={0} 
+                                        onChange={(v) => updateStyle({ gap: v })} 
+                                        max={60} 
+                                        unit="px" 
+                                    />
+                                    <p className="text-[8px] text-slate-400 italic">Khoảng cách này được tự động chia đều vào các cột.</p>
+                                </div>
                             </div>
                         )}
 
@@ -435,42 +446,60 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                 <Input label="Alt Text" value={selectedBlock.altText || ''} onChange={(e) => onUpdateBlock(selectedBlock.id, { altText: e.target.value })} />
                                 <Input label="Link" value={selectedBlock.url || ''} onChange={(e) => onUpdateBlock(selectedBlock.id, { url: e.target.value })} icon={LucideIcons.Link} />
 
-                                {/* Height + object-fit cover */}
-                                <div className="p-3 bg-slate-50 border border-slate-100 rounded-2xl space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Chiều cao cố định</label>
-                                        <label className="relative inline-flex items-center cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                className="sr-only peer"
-                                                checked={!!getStyle('height') && getStyle('height') !== 'auto'}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        updateStyle({ height: '240px', objectFit: 'cover' } as any);
-                                                    } else {
-                                                        updateStyle({ height: 'auto', objectFit: 'auto' } as any);
-                                                    }
-                                                }}
-                                            />
-                                            <div className="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:bg-amber-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-full"></div>
-                                        </label>
+                                {/* Ratio & Fit */}
+                                <div className="p-3 bg-slate-50 border border-slate-100 rounded-2xl space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Tỷ lệ khung hình (Aspect Ratio)</label>
+                                        <div className="flex bg-white border border-slate-200 p-1 rounded-xl gap-1 overflow-x-auto custom-scrollbar no-scrollbar-x">
+                                            {[
+                                                { label: 'Auto', value: 'auto' },
+                                                { label: '1:1', value: '1/1' },
+                                                { label: '4:3', value: '4/3' },
+                                                { label: '16:9', value: '16/9' },
+                                                { label: '3:2', value: '3/2' },
+                                                { label: '2:1', value: '2/1' }
+                                            ].map(ratio => (
+                                                <button
+                                                    key={ratio.value}
+                                                    onClick={() => updateStyle({ aspectRatio: ratio.value } as any)}
+                                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all whitespace-nowrap ${(getStyle('aspectRatio') || 'auto') === ratio.value ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                                                >
+                                                    {ratio.label}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
-                                    {getStyle('height') && getStyle('height') !== 'auto' && (
-                                        <>
-                                            <VisualMeasure
-                                                label="Chiều cao"
-                                                value={getStyle('height')}
-                                                defaultValue={240}
-                                                onChange={(v) => updateStyle({ height: v, objectFit: 'cover' } as any)}
-                                                max={800}
-                                                unit="px"
-                                            />
-                                            <div className="flex items-start gap-2 p-2 bg-blue-50 border border-blue-100 rounded-xl">
-                                                <LucideIcons.Info className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" />
-                                                <p className="text-[10px] text-blue-700 font-medium">Ảnh sử dụng <strong>object-fit: cover</strong> — tự crop và căn giữa, giữ tỷ lệ ảnh.</p>
-                                            </div>
-                                        </>
-                                    )}
+
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Chế độ hiển thị (Object Fit)</label>
+                                        <div className="flex bg-white border border-slate-200 p-1 rounded-xl gap-1">
+                                            {[
+                                                { label: 'Cover', value: 'cover' },
+                                                { label: 'Contain', value: 'contain' },
+                                                { label: 'Fill', value: 'fill' }
+                                            ].map(fit => (
+                                                <button
+                                                    key={fit.value}
+                                                    onClick={() => updateStyle({ objectFit: fit.value as any })}
+                                                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all ${(getStyle('objectFit') || 'cover') === fit.value ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                                                >
+                                                    {fit.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="pt-2 border-t border-slate-100">
+                                        <VisualMeasure
+                                            label="Chiều cao tối đa (Nên để Auto nếu dùng Ratio)"
+                                            value={getStyle('height')}
+                                            defaultValue="auto"
+                                            onChange={(v) => updateStyle({ height: v })}
+                                            max={800}
+                                            unit="px"
+                                            canAuto
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Validation hints */}

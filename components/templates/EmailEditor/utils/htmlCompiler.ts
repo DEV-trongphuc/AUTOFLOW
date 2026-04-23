@@ -1,16 +1,7 @@
 import { API_BASE_URL, EXTERNAL_API_BASE } from '@/utils/config';
 import { EmailBlock, EmailBodyStyle, EmailBlockStyle } from '../../../../types';
 import { SHARED_EMAIL_CSS } from '../constants/editorStyles';
-
-// Utility: Sanitize border-radius to prevent double 'px' suffix
-const sanitizeRadius = (val: string | undefined): string => {
-    if (!val) return ''; // [FIX] return '' instead of '0px' so caller can omit border-radius entirely
-    const cleaned = val.replace(/px/g, '').trim();
-    if (!cleaned) return '';
-    // Handle multi-value radius (e.g., "10 20 30 40" or "10px 20px 30px 40px")
-    const values = cleaned.split(/\s+/).filter(v => v);
-    return values.map(v => `${v}px`).join(' ');
-};
+import { fromPx, sanitizeRadius, toPx } from './styleUtils';
 
 const CHECKLIST_SVGS: Record<string, string> = {
     CheckCircle: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>',
@@ -46,7 +37,6 @@ export const getIconUrl = (iconName: string, color: string) => {
         tiktok: 'tiktok',
         github: 'github',
         address: 'map-pin',
-        // Expanded Icon Set
         CheckCircle: 'checked',
         CircleCheckBig: 'checklist',
         Check: 'ok',
@@ -69,8 +59,6 @@ export const getIconUrl = (iconName: string, color: string) => {
         Calendar: 'calendar',
         Clock: 'clock',
         Lock: 'lock',
-
-        // General UI
         MapPin: 'map-pin',
         Phone: 'phone',
         Mail: 'mail',
@@ -111,23 +99,17 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
         .btn-link { text-decoration: none !important; }
         p, h1, h2, h3, h4, h5, h6 { margin: 0; padding: 0; }
         
-        /* MOBILE RESPONSIVE STYLES */
         @media screen and (max-width: 600px) {
             .full-width { width: 100% !important; }
-            
-            /* Section & Layout Resets */
             .section-wrapper { 
-                padding-left: 0 !important; 
-                padding-right: 0 !important; 
-                padding-top: 15px !important; /* Reduced from 20px */
-                padding-bottom: 15px !important; /* Reduced from 20px */
+                /* Allow inline padding to override if present */
+                padding-top: 10px; 
+                padding-bottom: 10px; 
             }
             .section-content {
                 width: 100% !important;
                 max-width: 100% !important;
             }
-            
-            /* Stacking Columns */
             .row-resp { 
                 display: block !important; 
                 width: 100% !important; 
@@ -137,22 +119,19 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                 width: 100% !important; 
                 min-width: 100% !important;
                 max-width: 100% !important;
-                padding-left: 8px !important; /* Further reduced from 10px */
-                padding-right: 8px !important; /* Further reduced from 10px */
-                margin-bottom: 12px !important; /* Reduced from 15px */
+                /* Default safety padding for stacked columns on mobile */
+                padding-left: 10px; 
+                padding-right: 10px; 
+                margin-bottom: 20px; 
                 box-sizing: border-box !important;
                 clear: both !important;
             }
             .col-resp:last-child { margin-bottom: 0 !important; }
-
-            /* Timeline Mobile Fix */
             .timeline-date {
                 width: 60px !important;
                 padding-right: 10px !important;
                 font-size: 11px !important;
             }
-
-            /* NoStack Button Adjustments */
             .btn-nostack { 
                 font-size: 10px !important; 
             }
@@ -160,40 +139,29 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                 padding: 8px 12px !important;
                 font-size: 10px !important;
             }
-
-            /* Font Adjustments */
             h1 { font-size: 26px !important; }
             h2 { font-size: 22px !important; }
-            p, td, div { font-size: 16px !important; line-height: 1.6 !important; }
             
-            /* Image scaling - chi ap dung .image-block img (content images).
-               KHONG dung global img{} vi se blow icon checklist/social full-width tren mobile */
             .image-block img {
                 width: 100% !important;
                 height: auto !important;
                 max-width: 100% !important;
             }
-            /* Icon images (checklist, social, stars) giu nguyen kich thuoc goc */
             img.icon-img {
                 width: auto !important;
                 max-width: none !important;
                 height: auto !important;
             }
-            
-            /* Text & Content Block Mobile Adjustments */
             .text-block, .quote-block {
                 padding-left: 10px !important;
                 padding-right: 10px !important;
             }
-
             .image-block {
                 padding-left: 0 !important;
                 padding-right: 0 !important;
                 padding-top: 10px !important;
                 padding-bottom: 10px !important;
             }
-            
-            /* Reduce vertical padding for internal blocks if excessive */
             .mobile-padding-y {
                 padding-top: 10px !important;
                 padding-bottom: 10px !important;
@@ -206,7 +174,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             }
             .mobile-hide { display: none !important; }
         }
-    </style>
+        </style>
     `;
 
     const getBackgroundStyle = (styleObj: EmailBlockStyle | EmailBodyStyle): string => {
@@ -215,7 +183,6 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
         const overlayOpacity = (styleObj as any).overlayOpacity ?? 0;
         let bgImage = styleObj.backgroundImage || '';
 
-        // Helper to mix overlay
         if (overlayColor && overlayOpacity > 0) {
             const hexToRgba = (hex: string, alpha: number) => {
                 let r = 0, g = 0, b = 0;
@@ -233,23 +200,15 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const rgba = hexToRgba(overlayColor, overlayOpacity);
             if (bgImage && bgImage !== 'none') {
                 bgImage = `linear-gradient(${rgba}, ${rgba}), ${bgImage}`;
-            } else {
-                // If no image but overlay, treating overlay as bg color over transparent? 
-                // Or just bg color? Let's use linear-gradient trick or just bg-color if solid.
-                // Actually if ONLY overlay color provided without image, it acts like bg color.
-                // But sticking to gradient over 'none' might be invalid in some clients.
-                // If no image, we usually just use backgroundColor.
             }
         }
 
         if (bgImage && bgImage.includes('gradient')) {
             style += `background: ${bgImage}; `;
-            // Fallback for solid color extraction if possible, or just ignore
             const match = bgImage.match(/linear-gradient\((?:to\s+\w+|[\d.]+deg),\s*(#[\da-fA-F]{3,6}|rgba?\([^)]+\))\s*,/i);
-            if (match && match[1]) style += `background-color: ${match[1]}; `; // Fallback
+            if (match && match[1]) style += `background-color: ${match[1]}; `; 
         } else if (bgImage && bgImage !== 'none') {
             style += `background-image: url('${bgImage.replace(/url\(['"]?(.+?)['"]?\)/, '$1')}'); background-repeat: ${styleObj.backgroundRepeat || 'no-repeat'}; background-size: ${styleObj.backgroundSize || 'cover'}; background-position: ${styleObj.backgroundPosition || 'center'};`;
-            // For Outlook VML would be needed here for full support, but skipping for now
         }
 
         if (styleObj.backgroundColor && styleObj.backgroundColor !== 'transparent') {
@@ -269,12 +228,11 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
         const s = b.style || {};
         const getBorderStyle = (styleObj: EmailBlockStyle) => {
             if (!styleObj.borderTopWidth && !styleObj.borderRightWidth && !styleObj.borderBottomWidth && !styleObj.borderLeftWidth) return '';
-            return `border-top: ${styleObj.borderTopWidth || '0'} ${styleObj.borderStyle || 'solid'} ${styleObj.borderColor || '#dddddd'}; border-right: ${styleObj.borderRightWidth || '0'} ${styleObj.borderStyle || 'solid'} ${styleObj.borderColor || '#dddddd'}; border-bottom: ${styleObj.borderBottomWidth || '0'} ${styleObj.borderStyle || 'solid'} ${styleObj.borderColor || '#dddddd'}; border-left: ${styleObj.borderLeftWidth || '0'} ${styleObj.borderStyle || 'solid'} ${styleObj.borderColor || '#dddddd'};`;
+            return `border-top: ${toPx(styleObj.borderTopWidth) || '0'} ${styleObj.borderStyle || 'solid'} ${styleObj.borderColor || '#dddddd'}; border-right: ${toPx(styleObj.borderRightWidth) || '0'} ${styleObj.borderStyle || 'solid'} ${styleObj.borderColor || '#dddddd'}; border-bottom: ${toPx(styleObj.borderBottomWidth) || '0'} ${styleObj.borderStyle || 'solid'} ${styleObj.borderColor || '#dddddd'}; border-left: ${toPx(styleObj.borderLeftWidth) || '0'} ${styleObj.borderStyle || 'solid'} ${styleObj.borderColor || '#dddddd'};`;
         };
 
-        const blockBgCss = getBackgroundStyle(s);
-        const paddingCss = `padding: ${s.paddingTop || '0'} ${s.paddingRight || '0'} ${s.paddingBottom || '0'} ${s.paddingLeft || '0'};`;
-        const marginCss = `margin: ${s.marginTop || '0'} ${s.marginRight || '0'} ${s.marginBottom || '0'} ${s.marginLeft || '0'};`;
+        const paddingCss = `padding: ${toPx(s.paddingTop)} ${toPx(s.paddingRight)} ${toPx(s.paddingBottom)} ${toPx(s.paddingLeft)};`;
+        const marginCss = `margin: ${toPx(s.marginTop)} ${toPx(s.marginRight)} ${toPx(s.marginBottom)} ${toPx(s.marginLeft)};`;
 
         // Alignment logic: use own if specified, else parent
         const align = s.textAlign || parentAlign || 'left';
@@ -306,15 +264,28 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
 
         if (b.type === 'row') {
             const noStack = s.noStack === true;
+            const rowGap = parseInt(String(s.gap || 0)) || 0;
+            const halfGap = rowGap / 2;
+
             const columnsHtml = (b.children || []).map(col => {
-                const width = col.style?.width || '100%';
                 const cs = col.style || {};
+                const width = cs.width || '100%';
                 const colRadius = cs.borderRadius ? `border-radius: ${sanitizeRadius(cs.borderRadius)};` : '';
-                const textAlign = cs.textAlign || align; // Inherit from row if not specified
+                const textAlign = cs.textAlign || align; 
                 const colClass = noStack ? "" : "col-resp";
                 const colBorderStyle = getBorderStyle(cs);
                 const colChildrenHtml = col.children?.map(c => renderBlock(c, textAlign, noStack).trim()).join('') || '';
-                return `<td class="${colClass}" align="${textAlign}" valign="${cs.verticalAlign || 'top'}" width="${width}" ${getBgColorHtmlAttr(cs)} style="width:${width}; padding: ${cs.paddingTop || '0'} ${cs.paddingRight || '0'} ${cs.paddingBottom || '0'} ${cs.paddingLeft || '0'}; text-align: ${textAlign}; ${getBackgroundStyle(cs)} ${colBorderStyle} ${colRadius} overflow: hidden;"><table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" align="${textAlign}"><tbody>${colChildrenHtml}</tbody></table></td>`;
+                
+                // Add gap padding to existing padding
+                const pTop = toPx(cs.paddingTop);
+                const pRight = toPx(fromPx(cs.paddingRight as string) + halfGap);
+                const pBottom = toPx(cs.paddingBottom);
+                const pLeft = toPx(fromPx(cs.paddingLeft as string) + halfGap);
+                
+                const colPadding = `padding: ${pTop} ${pRight} ${pBottom} ${pLeft};`;
+                const widthAttr = width.includes('%') ? width : width.replace('px', '');
+
+                return `<td class="${colClass}" align="${textAlign}" valign="${cs.verticalAlign || 'top'}" width="${widthAttr}" ${getBgColorHtmlAttr(cs)} style="width:${width}; ${colPadding} text-align: ${textAlign}; ${getBackgroundStyle(cs)} ${colBorderStyle} ${colRadius} overflow: hidden;"><table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" align="${textAlign}"><tbody>${colChildrenHtml}</tbody></table></td>`;
             }).join('');
             const rowClass = noStack ? "" : "row-resp";
             const rowWidth = s.width || '100%';
@@ -811,26 +782,18 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const isPercent = imgWidth.includes('%');
             const borderCss = getBorderStyle(s);
 
-            // [FIX] Two cases for image width:
-            //
-            // CASE 1 â€” Percent-based (e.g. '100%', '50%'):
-            //   Do NOT set HTML width attribute â€” we can't know the actual pixel size of the
-            //   parent column (e.g. 33% of 600px = 200px), and setting width="600" for a column
-            //   image would be incorrect. Instead, use CSS-only: width:100%  + max-width:100%.
-            //   This is universally respected by Gmail, Apple Mail, Outlook 365, and mobile.
-            //
-            // CASE 2 â€” Pixel-based (e.g. '300px', '200px'):
-            //   Set both the HTML width attribute (numeric, required by old Outlook desktop)
-            //   AND the CSS width property for other clients.
             const imgHeight = s.height && s.height !== 'auto' ? s.height : 'auto';
             const objectFit = s.objectFit || 'cover';
+            const aspectRatio = (s as any).aspectRatio;
+            const ratioCss = aspectRatio && aspectRatio !== 'auto' ? `aspect-ratio: ${aspectRatio};` : '';
+            
             let imgHtml: string;
             if (isPercent) {
-                imgHtml = `<img src="${b.content}" class="full-width" style="display: block; width: 100%; max-width: 100%; height: ${imgHeight}; object-fit: ${objectFit}; margin: 0 auto; border-radius: ${sanitizeRadius(s.borderRadius || '0')};" alt="${b.altText || ''}" />`;
+                imgHtml = `<img src="${b.content}" class="full-width" style="display: block; width: 100%; max-width: 100%; height: ${imgHeight}; object-fit: ${objectFit}; ${ratioCss} margin: 0 auto; border-radius: ${sanitizeRadius(s.borderRadius || '0')};" alt="${b.altText || ''}" />`;
             } else {
                 const pxVal = imgWidth.replace('px', '') || '600';
                 const pxHeight = imgHeight !== 'auto' ? imgHeight.replace('px', '') : '';
-                imgHtml = `<img src="${b.content}" width="${pxVal}" ${pxHeight ? `height="${pxHeight}"` : ''} class="full-width" style="display: block; width: ${imgWidth}; max-width: 100%; height: ${imgHeight}; object-fit: ${objectFit}; margin: 0 auto; border-radius: ${sanitizeRadius(s.borderRadius || '0')};" alt="${b.altText || ''}" />`;
+                imgHtml = `<img src="${b.content}" width="${pxVal}" ${pxHeight ? `height="${pxHeight}"` : ''} class="full-width" style="display: block; width: ${imgWidth}; max-width: 100%; height: ${imgHeight}; object-fit: ${objectFit}; ${ratioCss} margin: 0 auto; border-radius: ${sanitizeRadius(s.borderRadius || '0')};" alt="${b.altText || ''}" />`;
             }
 
             if (b.url) {
