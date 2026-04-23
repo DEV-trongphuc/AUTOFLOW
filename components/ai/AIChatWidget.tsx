@@ -611,7 +611,7 @@ const AIChatWidget: React.FC<AIChatWidgetProps> = ({
         return (
             <button
                 onClick={() => setIsOpen(true)}
-                className={`fixed ${positionClass} w-16 h-16 bg-gradient-to-br from-[#ffa900] to-[#e08900] text-white rounded-2xl shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-[9999] group mf-ignore-tracking`}
+                className={`fixed ${positionClass} w-16 h-16 bg-gradient-to-br from-[#ffa900] to-[#e08900] text-white rounded-2xl shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-[200] group mf-ignore-tracking`}
                 style={config?.brand_color ? { background: `linear-gradient(135deg, ${config.brand_color}, ${config.brand_color}dd)` } : {}}
             >
                 <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 border-4 border-white rounded-full animate-bounce mf-ignore-tracking"></div>
@@ -622,7 +622,7 @@ const AIChatWidget: React.FC<AIChatWidgetProps> = ({
 
     return (
         <div id="mf-chat-widget" className={`
-            fixed ${positionClass} bg-white/95 !backdrop-blur-xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] rounded-[2.5rem] border border-white/20 flex flex-col overflow-hidden z-[9999] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+            fixed ${positionClass} bg-white/95 !backdrop-blur-xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] rounded-[2.5rem] border border-white/20 flex flex-col overflow-hidden z-[200] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
             chat-widget-animate mf-ignore-tracking
             ${isMaximized ? 'w-[450px] h-[750px] max-h-[calc(100vh-80px)] max-w-[calc(100vw-32px)]' : 'w-[400px] h-[650px] max-h-[calc(100vh-80px)] max-w-[calc(100vw-32px)]'}
         `} style={{ fontFamily: '"Inter", sans-serif', '--brand-primary': config?.brand_color || '#ffa900' } as React.CSSProperties}>

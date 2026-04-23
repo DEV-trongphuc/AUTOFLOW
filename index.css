@@ -616,6 +616,30 @@
     scrollbar-color: #e2e8f0 transparent;
 }
 
+/* Custom Scrollbar Thin */
+.custom-scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+.custom-scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.25);
+    border-radius: 10px;
+}
+
+.custom-scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.5);
+}
+
+.custom-scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
 /* AI Analysis Loading Animations */
 @keyframes gradient-x {
 

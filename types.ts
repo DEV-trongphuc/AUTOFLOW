@@ -77,6 +77,7 @@ export interface EmailBlockStyle {
   width?: string;
   maxWidth?: string;
   height?: string;
+  aspectRatio?: string;
   objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
 
   // Flex / Layout

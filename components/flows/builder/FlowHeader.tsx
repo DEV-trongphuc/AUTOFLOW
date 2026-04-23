@@ -56,7 +56,7 @@ const FlowHeader: React.FC<FlowHeaderProps> = ({
   const isArchived = flow.status === 'archived';
 
   return (
-    <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 z-[110] shadow-[0_4px_20px_-10px_rgba(0,0,0,0.03)] transition-all duration-300 flex flex-col">
+    <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 z-30 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.03)] transition-all duration-300 flex flex-col">
       {/* Top Row: Title & Actions */}
       <div className="h-[72px] lg:h-20 px-4 lg:px-8 flex items-center justify-between relative">
         <div className="flex items-center gap-3 lg:gap-5 z-10 min-w-0 lg:w-1/4">

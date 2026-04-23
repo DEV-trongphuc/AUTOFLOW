@@ -157,7 +157,7 @@ const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSele
                 )}
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-[#fcfcfc]">
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar-thin bg-[#fcfcfc]">
                 {activeTab === 'blocks' && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-left-2 duration-300">
                         <div className="space-y-6 pt-2">
@@ -178,9 +178,12 @@ const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSele
                                 );
                             })}
                             {filteredTools.filter(t => ['layout', 'content', 'basic'].includes(t.cat)).length === 0 && (
-                                <div className="text-center py-10 opacity-40">
-                                    <IconMap.Search className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                                    <p className="text-xs font-bold text-slate-400">Không tìm thấy</p>
+                                <div className="flex flex-col items-center justify-center py-12 px-4 opacity-70">
+                                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-3 border-2 border-white shadow-sm">
+                                        <IconMap.SearchX className="w-8 h-8 text-slate-300" />
+                                    </div>
+                                    <p className="text-xs font-bold text-slate-500 tracking-tight">Không tìm thấy Block</p>
+                                    <p className="text-[10px] text-slate-400 mt-1 text-center font-medium">Vui lòng thử từ khóa khác</p>
                                 </div>
                             )}
                         </div>
@@ -196,9 +199,12 @@ const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSele
                             ))}
                         </div>
                         {TOOLBOX_ITEMS.filter(t => t.cat === 'template_tab').length === 0 && (
-                            <div className="text-center py-10 opacity-40">
-                                <IconMap.LayoutTemplate className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                                <p className="text-xs font-bold text-slate-400">Chưa có mẫu</p>
+                            <div className="flex flex-col items-center justify-center py-12 px-4 opacity-70">
+                                <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mb-3 border-2 border-white shadow-sm">
+                                    <IconMap.LayoutTemplate className="w-8 h-8 text-amber-300" />
+                                </div>
+                                <p className="text-xs font-bold text-slate-500 tracking-tight">Chưa có mẫu nhanh</p>
+                                <p className="text-[10px] text-slate-400 mt-1 text-center font-medium">Các mẫu đang được cập nhật</p>
                             </div>
                         )}
                     </div>
@@ -210,10 +216,12 @@ const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSele
                         {savedSections.length > 0 ? (
                             savedSections.map(item => <ToolboxSavedItem key={item.id} item={item} onDragStart={onDragStart} onDelete={onDeleteSavedSection} />)
                         ) : (
-                            <div className="text-center py-10 opacity-40">
-                                <IconMap.Bookmark className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                                <p className="text-[10px] font-bold uppercase text-slate-400">Chưa có mẫu nào</p>
-                                <p className="text-[9px] text-slate-300 mt-1">Lưu Section trong trình soạn thảo để tái sử dụng.</p>
+                            <div className="flex flex-col items-center justify-center py-12 px-4 opacity-70">
+                                <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-3 border-2 border-white shadow-sm">
+                                    <IconMap.BookmarkPlus className="w-8 h-8 text-blue-300" />
+                                </div>
+                                <p className="text-[11px] font-bold text-slate-500 tracking-tight">Chưa có mẫu lưu</p>
+                                <p className="text-[9px] text-slate-400 mt-1 text-center font-medium leading-relaxed">Chọn một phần trong email và nhấn <b className="text-slate-500">Lưu</b> để tái sử dụng sau này</p>
                             </div>
                         )}
                     </div>
@@ -225,7 +233,13 @@ const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSele
                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Cấu trúc Email</span>
                         </div>
                         {blocks.length === 0 ? (
-                            <div className="text-center py-10 opacity-30 italic text-[10px]">Chưa có nội dung</div>
+                            <div className="flex flex-col items-center justify-center py-12 px-4 opacity-70">
+                                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-3 border-2 border-white shadow-sm">
+                                    <IconMap.Layers className="w-8 h-8 text-slate-300" />
+                                </div>
+                                <p className="text-xs font-bold text-slate-500 tracking-tight">Bản nháp trống</p>
+                                <p className="text-[10px] text-slate-400 mt-1 text-center font-medium leading-relaxed">Hãy kéo thả một Block vào màn hình để bắt đầu thiết kế</p>
+                            </div>
                         ) : (
                             <div className="space-y-1">
                                 {blocks.map(b => renderTreeItem(b))}

@@ -58,14 +58,14 @@ const Modal: React.FC<ModalProps> = ({
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className={`fixed inset-0 z-[100000] flex items-center justify-center overflow-hidden ${size === 'full' ? 'w-full h-full' : 'p-4 sm:p-6'}`}>
+        <div className={`fixed inset-0 z-[150] flex items-center justify-center overflow-hidden ${size === 'full' ? 'w-full h-full' : 'p-4 sm:p-6'}`}>
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="absolute inset-0 bg-[#0f172a]/70 backdrop-blur-md"
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
             onClick={onClose}
           />
 
@@ -99,9 +99,9 @@ const Modal: React.FC<ModalProps> = ({
             {!hideCloseButton && (
               <button
                 onClick={onClose}
-                className={`p-2 rounded-full transition-all duration-200 ${isDarkTheme ? 'text-slate-500 hover:text-slate-300 hover:bg-slate-800' : 'text-slate-400 hover:text-slate-800 hover:bg-slate-100'}`}
+                className={`p-2.5 rounded-full transition-all duration-200 ${isDarkTheme ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'} hover:scale-110 active:scale-95 bg-transparent`}
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 stroke-[2.5px]" />
               </button>
             )}
           </div>

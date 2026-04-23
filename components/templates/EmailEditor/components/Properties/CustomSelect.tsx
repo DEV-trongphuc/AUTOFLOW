@@ -40,7 +40,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, l
                 <button
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 flex items-center justify-between hover:border-slate-300 transition-all outline-none focus:ring-4 focus:ring-slate-500/5 focus:border-slate-400 shadow-sm"
+                    className="w-full bg-white border border-slate-200 rounded-xl h-9 px-3 text-xs font-bold text-slate-700 flex items-center justify-between hover:border-slate-300 transition-all outline-none focus:ring-4 focus:ring-slate-500/5 focus:border-slate-400 shadow-sm"
                 >
                     <span className="truncate" style={{ fontFamily: selectedOption.value }}>
                         {selectedOption.label}
@@ -49,7 +49,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, l
                 </button>
 
                 {isOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-2xl shadow-2xl py-2 z-[100] max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-2 zoom-in-95">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-2xl shadow-2xl py-2 z-50 max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-2 zoom-in-95">
                         {options.map((option) => (
                             <button
                                 key={option.value}
@@ -58,7 +58,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, l
                                     onChange(option.value);
                                     setIsOpen(false);
                                 }}
-                                className={`w-full px-4 py-2.5 text-xs text-left flex items-center justify-between hover:bg-slate-50 transition-colors ${value === option.value ? 'bg-amber-50/50 text-amber-600 font-black' : 'text-slate-600 font-bold'}`}
+                                className={`w-full px-4 h-9 text-xs text-left flex items-center justify-between hover:bg-slate-50 transition-colors ${value === option.value ? 'bg-amber-50/50 text-amber-600 font-black' : 'text-slate-600 font-bold'}`}
                                 style={{ fontFamily: option.value }}
                             >
                                 <span className="truncate">{option.label}</span>

@@ -242,16 +242,27 @@ const FlowCard = React.memo<FlowCardProps>((
         return <span className="px-2 py-1 bg-slate-100 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700/60 leading-none">Paused</span>;
     };
 
+    const hasWarning = !flow.steps || flow.steps.length < 2; // Needs at least trigger + action
+
     return (
         <div
             onClick={onClick}
             className={`
-        group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 transition-all duration-500 cursor-pointer overflow-hidden hover-lift
-        ${isArchived ? 'opacity-60 grayscale' : 'hover:border-transparent hover:shadow-xl'}
+        group relative bg-white dark:bg-slate-900 border transition-all duration-300 cursor-pointer 
+        ${isArchived ? 'border-slate-200 opacity-60 grayscale' : hasWarning ? 'border-amber-300/50 hover:border-amber-400 shadow-sm hover:shadow-lg' : 'border-slate-200 dark:border-slate-700/60 hover:border-emerald-300/50 hover:shadow-lg'}
+        hover:-translate-y-1 hover:z-10
         ${isList ? 'rounded-[16px] flex flex-row items-center p-3 gap-0' : 'rounded-[20px] h-full flex flex-col'}
       `}
         >
-            <div className={`absolute top-0 left-0 ${isList ? 'w-1 h-full' : 'w-full h-1'} bg-gradient-to-r ${theme.gradientMain} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+            <div className={`absolute top-0 left-0 ${isList ? 'w-1 h-full rounded-l-[16px]' : 'w-full h-1 rounded-t-[20px]'} bg-gradient-to-r ${theme.gradientMain} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+            
+            {/* Warning Indicator */}
+            {hasWarning && !isArchived && (
+                <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-amber-50 text-amber-600 px-2 py-1 rounded-lg border border-amber-100 shadow-sm animate-pulse-subtle">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    <span className="text-[9px] font-bold uppercase tracking-wider hidden group-hover:block">Thiếu bước</span>
+                </div>
+            )}
 
             {isList ? (
                 // --- LIST VIEW ---

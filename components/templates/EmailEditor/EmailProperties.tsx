@@ -308,7 +308,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" className="sr-only peer" checked={getStyle('noStack') !== true} onChange={(e) => updateStyle({ noStack: !e.target.checked })} />
-                                        <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:bg-amber-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+                                        <div className="w-10 h-5 bg-slate-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-amber-500/20 peer-checked:bg-amber-600 transition-colors shadow-inner after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:shadow-sm after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5 peer-checked:after:border-white"></div>
                                     </label>
                                 </div>
                                 <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
@@ -359,7 +359,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                 <Accordion title="Typography" icon={LucideIcons.Type} defaultOpen>
                                     <div className="grid grid-cols-2 gap-3 mb-2">
                                         <VisualMeasure label="Cỡ" value={getStyle('fontSize')} defaultValue={14} onChange={(v) => updateStyle({ fontSize: v })} max={100} unit="px" />
-                                        <VisualMeasure label="Dòng" value={getStyle('lineHeight')} defaultValue={1.5} onChange={(v) => updateStyle({ lineHeight: v })} max={3} unit="" hideSlider />
+                                        <VisualMeasure label="Dòng" tooltip="Tỷ lệ chiều cao của mỗi dòng chữ. Giá trị chuẩn thường là 1.5 để dễ đọc." value={getStyle('lineHeight')} defaultValue={1.5} onChange={(v) => updateStyle({ lineHeight: v })} max={3} unit="" hideSlider />
                                     </div>
                                     <CustomSelect
                                         label="Font chữ"
@@ -375,8 +375,8 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                         )}
                         {isButton && (
                             <div className="space-y-4">
-                                <Input label="Nhãn nút" value={(() => { const d = document.createElement('div'); d.innerHTML = selectedBlock.content || ''; return d.textContent || d.innerText || ''; })()} onChange={(e) => onUpdateBlock(selectedBlock.id, { content: e.target.value })} />
-                                <Input label="Đường dẫn" value={selectedBlock.url || ''} onChange={(e) => onUpdateBlock(selectedBlock.id, { url: e.target.value })} icon={LucideIcons.Link} />
+                                <Input label="Nhãn nút" value={(() => { const d = document.createElement('div'); d.innerHTML = selectedBlock.content || ''; return d.textContent || d.innerText || ''; })()} onChange={(e) => onUpdateBlock(selectedBlock.id, { content: e.target.value })} customSize="sm" />
+                                <Input label="Đường dẫn" value={selectedBlock.url || ''} onChange={(e) => onUpdateBlock(selectedBlock.id, { url: e.target.value })} icon={LucideIcons.Link} customSize="sm" />
                                 {/* Validation hint for button */}
                                 {(!selectedBlock.url || selectedBlock.url === '#' || !selectedBlock.url.trim()) && (
                                     <div className="flex items-start gap-2 p-2 bg-rose-50 border border-rose-100 rounded-xl">
@@ -387,7 +387,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                 <Accordion title="Typography" icon={LucideIcons.Type} defaultOpen>
                                     <div className="grid grid-cols-2 gap-3 mb-2">
                                         <VisualMeasure label="Cỡ" value={getStyle('fontSize')} defaultValue={14} onChange={(v) => updateStyle({ fontSize: v })} max={100} unit="px" />
-                                        <VisualMeasure label="Dòng" value={getStyle('lineHeight')} defaultValue={1.5} onChange={(v) => updateStyle({ lineHeight: v })} max={3} unit="" hideSlider />
+                                        <VisualMeasure label="Dòng" tooltip="Tỷ lệ chiều cao của mỗi dòng chữ. Giá trị chuẩn thường là 1.5 để dễ đọc." value={getStyle('lineHeight')} defaultValue={1.5} onChange={(v) => updateStyle({ lineHeight: v })} max={3} unit="" hideSlider />
                                     </div>
                                     <ColorPicker label="Màu chữ" value={getStyle('color') || '#1e293b'} onChange={(v, t) => handleColorUpdate(v, t, 'color')} blocks={blocks} bodyStyle={bodyStyle} />
                                 </Accordion>
@@ -434,7 +434,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                 <Accordion title="Typography" icon={LucideIcons.Type} defaultOpen>
                                     <div className="grid grid-cols-2 gap-3 mb-2">
                                         <VisualMeasure label="Cỡ" value={getStyle('fontSize')} defaultValue={14} onChange={(v) => updateStyle({ fontSize: v })} max={100} unit="px" />
-                                        <VisualMeasure label="Dòng" value={getStyle('lineHeight')} defaultValue={1.5} onChange={(v) => updateStyle({ lineHeight: v })} max={3} unit="" hideSlider />
+                                        <VisualMeasure label="Dòng" tooltip="Tỷ lệ chiều cao của mỗi dòng chữ. Giá trị chuẩn thường là 1.5 để dễ đọc." value={getStyle('lineHeight')} defaultValue={1.5} onChange={(v) => updateStyle({ lineHeight: v })} max={3} unit="" hideSlider />
                                     </div>
                                     <ColorPicker label="Màu chữ" value={getStyle('color') || '#1e293b'} onChange={(v, t) => handleColorUpdate(v, t, 'color')} blocks={blocks} bodyStyle={bodyStyle} />
                                 </Accordion>
@@ -443,8 +443,8 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                         {selectedBlock.type === 'image' && (
                             <div className="space-y-4">
                                 <ImageUploader label="Upload ảnh" value={selectedBlock.content} onChange={(url: string) => onUpdateBlock(selectedBlock.id, { content: url })} />
-                                <Input label="Alt Text" value={selectedBlock.altText || ''} onChange={(e) => onUpdateBlock(selectedBlock.id, { altText: e.target.value })} />
-                                <Input label="Link" value={selectedBlock.url || ''} onChange={(e) => onUpdateBlock(selectedBlock.id, { url: e.target.value })} icon={LucideIcons.Link} />
+                                <Input label="Alt Text" value={selectedBlock.altText || ''} onChange={(e) => onUpdateBlock(selectedBlock.id, { altText: e.target.value })} customSize="sm" />
+                                <Input label="Link" value={selectedBlock.url || ''} onChange={(e) => onUpdateBlock(selectedBlock.id, { url: e.target.value })} icon={LucideIcons.Link} customSize="sm" />
 
                                 {/* Ratio & Fit */}
                                 <div className="p-3 bg-slate-50 border border-slate-100 rounded-2xl space-y-4">
@@ -493,7 +493,6 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                         <VisualMeasure
                                             label="Chiều cao tối đa (Nên để Auto nếu dùng Ratio)"
                                             value={getStyle('height')}
-                                            defaultValue="auto"
                                             onChange={(v) => updateStyle({ height: v })}
                                             max={800}
                                             unit="px"
@@ -520,7 +519,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                         {selectedBlock.type === 'video' && (
                             <div className="space-y-4">
                                 <div className="p-4 bg-slate-50/50 border border-slate-100 rounded-2xl flex gap-3 text-slate-800"><LucideIcons.Youtube className="w-5 h-5 shrink-0" /><p className="text-[10px] font-medium leading-tight">Video hiển thị dạng thumbnail có nút Play.</p></div>
-                                <Input label="Video URL" value={selectedBlock.videoUrl || ''} onChange={(e) => onUpdateBlock(selectedBlock.id, { videoUrl: e.target.value })} icon={LucideIcons.Link} />
+                                <Input label="Video URL" value={selectedBlock.videoUrl || ''} onChange={(e) => onUpdateBlock(selectedBlock.id, { videoUrl: e.target.value })} icon={LucideIcons.Link} customSize="sm" />
                                 <ImageUploader label="Thumbnail (Optional)" value={selectedBlock.thumbnailUrl || ''} onChange={(url: string) => onUpdateBlock(selectedBlock.id, { thumbnailUrl: url })} />
                                 <ColorPicker label="Màu nút Play" value={getStyle('playButtonColor') || '#d97706'} onChange={(v, t) => handleColorUpdate(v, t, 'playButtonColor' as any)} blocks={blocks} bodyStyle={bodyStyle} />
                             </div>
@@ -603,7 +602,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                         {selectedBlock.type === 'check_list' && (
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <div className="flex justify-between items-center"><label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Tiêu đề List</label><label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" className="sr-only peer" checked={getStyle('showCheckListTitle') !== false} onChange={(e) => updateStyle({ showCheckListTitle: e.target.checked })} /><div className="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:bg-amber-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-full"></div></label></div>
+                                    <div className="flex justify-between items-center"><label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Tiêu đề List</label><label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" className="sr-only peer" checked={getStyle('showCheckListTitle') !== false} onChange={(e) => updateStyle({ showCheckListTitle: e.target.checked })} /><div className="w-9 h-4.5 bg-slate-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-amber-500/20 peer-checked:bg-amber-600 transition-colors shadow-inner after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:shadow-sm after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:after:translate-x-[18px] peer-checked:after:border-white"></div></label></div>
                                     {getStyle('showCheckListTitle') !== false && (
                                         <RichText
                                             value={selectedBlock.checkListTitle || ''}
@@ -618,11 +617,11 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                 <div className="grid grid-cols-2 gap-4 py-3 border-y border-slate-100">
                                     <div className="flex flex-col gap-2">
                                         <label className="text-[9px] font-bold text-slate-400 uppercase">Tiêu đề mục</label>
-                                        <label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" className="sr-only peer" checked={getStyle('showItemTitle') !== false} onChange={(e) => { if (!e.target.checked && getStyle('showItemDescription') === false) return; updateStyle({ showItemTitle: e.target.checked }); }} /><div className="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:bg-amber-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-full"></div></label>
+                                        <label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" className="sr-only peer" checked={getStyle('showItemTitle') !== false} onChange={(e) => { if (!e.target.checked && getStyle('showItemDescription') === false) return; updateStyle({ showItemTitle: e.target.checked }); }} /><div className="w-9 h-4.5 bg-slate-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-amber-500/20 peer-checked:bg-amber-600 transition-colors shadow-inner after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:shadow-sm after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:after:translate-x-[18px] peer-checked:after:border-white"></div></label>
                                     </div>
                                     <div className="flex flex-col gap-2">
                                         <label className="text-[9px] font-bold text-slate-400 uppercase">Mô tả mục</label>
-                                        <label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" className="sr-only peer" checked={getStyle('showItemDescription') !== false} onChange={(e) => { if (!e.target.checked && getStyle('showItemTitle') === false) return; updateStyle({ showItemDescription: e.target.checked }); }} /><div className="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:bg-amber-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-full"></div></label>
+                                        <label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" className="sr-only peer" checked={getStyle('showItemDescription') !== false} onChange={(e) => { if (!e.target.checked && getStyle('showItemTitle') === false) return; updateStyle({ showItemDescription: e.target.checked }); }} /><div className="w-9 h-4.5 bg-slate-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-amber-500/20 peer-checked:bg-amber-600 transition-colors shadow-inner after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:shadow-sm after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:after:translate-x-[18px] peer-checked:after:border-white"></div></label>
                                     </div>
                                 </div>
                                 {/* Icon picker moved here from Design tab */}
@@ -695,7 +694,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                                 </div>
                                                 <label className="relative inline-flex items-center cursor-pointer">
                                                     <input type="checkbox" className="sr-only peer" checked={!!getStyle('checkIndividualIcons' as any)} onChange={(e) => updateStyle({ checkIndividualIcons: e.target.checked } as any)} />
-                                                    <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:bg-emerald-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+                                                    <div className="w-10 h-5 bg-slate-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-500/20 peer-checked:bg-emerald-600 transition-colors shadow-inner after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:shadow-sm after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5 peer-checked:after:border-white"></div>
                                                 </label>
                                             </div>
                                         )}
