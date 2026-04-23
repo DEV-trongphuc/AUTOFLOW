@@ -39,7 +39,7 @@ const CanvasColumn: React.FC<CanvasColumnProps> = (props) => {
     const {
         col, bodyStyle, viewMode, selectedBlockId, dragOverId, dropPosition, draggingBlockId,
         onSelectBlock, onDragStart, onDragOver, onDrop, onMoveOrder, onSwapColumns, onDuplicateBlock, onDeleteBlock, onUpdateBlockContent, onUpdateBlockStyle, onSaveSection, onSelectParent,
-        isNoStack, onResizeColumns, onLeftResizeColumns, customMergeTags = []
+        isNoStack, onResizeColumns, onLeftResizeColumns, customMergeTags = [], columnGap
     } = props;
 
     const css = buildCss(col.style, viewMode, bodyStyle.fontFamily, 'column');

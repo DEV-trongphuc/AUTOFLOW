@@ -2,7 +2,8 @@
 import React from 'react';
 import { Layout } from 'lucide-react';
 import { EmailBlock, EmailBlockType, EmailBodyStyle } from '../../../../types';
-import { buildCss, sanitizeRadius } from '../utils/canvasUtils';
+import { buildCss } from '../utils/canvasUtils';
+import { sanitizeRadius } from '../utils/styleUtils';
 import { CanvasDropIndicator, CanvasHandleOverlay } from './CanvasUI';
 import CanvasRow from './CanvasRow'; // Import the row renderer
 

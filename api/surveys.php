@@ -356,21 +356,43 @@ try {
                         'percentage' => round($c['cnt'] / $totalAnswered * 100, 1)
                     ], $choiceRows);
                 } elseif ($q['type'] === 'multi_choice') {
-                    // Multi-choice still needs some PHP because labels are in JSON array
-                    // But we only fetch the answer_json column to save memory
-                    $stmtMulti = $pdo->prepare("SELECT answer_json FROM survey_answer_details WHERE question_id = ? AND answer_json IS NOT NULL");
-                    $stmtMulti->execute([$blockId]);
-                    $counts = [];
-                    while ($rowJson = $stmtMulti->fetchColumn()) {
-                        $arr = json_decode($rowJson, true);
-                        if (is_array($arr)) {
-                            foreach ($arr as $val) $counts[$val] = ($counts[$val] ?? 0) + 1;
+                    // Optimized Multi-choice aggregation using MySQL JSON_TABLE with fallback
+                    try {
+                        $stmtMulti = $pdo->prepare("
+                            SELECT j.choice as label, COUNT(*) as cnt
+                            FROM survey_answer_details d,
+                            JSON_TABLE(d.answer_json, '$[*]' COLUMNS (choice VARCHAR(255) PATH '$')) j
+                            WHERE d.question_id = ? AND d.answer_json IS NOT NULL
+                            GROUP BY j.choice
+                            ORDER BY cnt DESC
+                        ");
+                        $stmtMulti->execute([$blockId]);
+                        $choicesData = $stmtMulti->fetchAll(PDO::FETCH_ASSOC);
+                        $choices = [];
+                        foreach ($choicesData as $row) {
+                            $choices[] = [
+                                'label' => (string)$row['label'],
+                                'count' => (int)$row['cnt'],
+                                'percentage' => round($row['cnt'] / $totalAnswered * 100, 1)
+                            ];
                         }
+                        $qa['choice_distribution'] = $choices;
+                    } catch (Exception $e) {
+                        // Fallback to PHP processing if JSON_TABLE is not supported
+                        $stmtMulti = $pdo->prepare("SELECT answer_json FROM survey_answer_details WHERE question_id = ? AND answer_json IS NOT NULL");
+                        $stmtMulti->execute([$blockId]);
+                        $counts = [];
+                        while ($rowJson = $stmtMulti->fetchColumn()) {
+                            $arr = json_decode($rowJson, true);
+                            if (is_array($arr)) {
+                                foreach ($arr as $val) $counts[$val] = ($counts[$val] ?? 0) + 1;
+                            }
+                        }
+                        $choices = [];
+                        foreach ($counts as $lbl => $cnt) $choices[] = ['label' => (string)$lbl, 'count' => (int)$cnt, 'percentage' => round($cnt / $totalAnswered * 100, 1)];
+                        usort($choices, fn($a, $b) => $b['count'] <=> $a['count']);
+                        $qa['choice_distribution'] = $choices;
                     }
-                    $choices = [];
-                    foreach ($counts as $lbl => $cnt) $choices[] = ['label' => (string)$lbl, 'count' => (int)$cnt, 'percentage' => round($cnt / $totalAnswered * 100, 1)];
-                    usort($choices, fn($a, $b) => $b['count'] <=> $a['count']);
-                    $qa['choice_distribution'] = $choices;
                 } else {
                     // Text responses: Limit to 50 items directly in SQL
                     $stmtText = $pdo->prepare("

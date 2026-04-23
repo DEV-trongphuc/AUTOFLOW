@@ -5,9 +5,9 @@ import { EmailBlockStyle } from '../../../../types';
  * Sanitizes border-radius to ensure consistent pixel formatting.
  * Handles single values "10px" and multiple values "10px 20px 30px 40px".
  */
-export const sanitizeRadius = (val: string | undefined): string => {
-    if (!val) return '';
-    const cleaned = val.replace(/px/g, '').trim();
+export const sanitizeRadius = (val: string | number | undefined): string => {
+    if (val === undefined || val === null || val === '') return '';
+    const cleaned = String(val).replace(/px/g, '').trim();
     if (!cleaned) return '';
     const values = cleaned.split(/\s+/).filter(v => v);
     return values.map(v => `${v}px`).join(' ');

@@ -1,7 +1,8 @@
 // components/templates/EmailEditor/components/CanvasRow.tsx
 import React, { useRef, useState, useCallback } from 'react';
 import { EmailBlock, EmailBlockType, EmailBodyStyle } from '../../../../types';
-import { buildCss, sanitizeRadius } from '../utils/canvasUtils';
+import { buildCss } from '../utils/canvasUtils';
+import { sanitizeRadius } from '../utils/styleUtils';
 import { CanvasDropIndicator, CanvasHandleOverlay } from './CanvasUI';
 import CanvasColumn from './CanvasColumn';
 
