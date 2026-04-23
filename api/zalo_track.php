@@ -30,7 +30,8 @@ if ($zaloUserId) {
         // Find Subscriber ID
         $stmtS = $pdo->prepare("SELECT id FROM zalo_subscribers WHERE zalo_user_id = ? LIMIT 1");
         $stmtS->execute([$zaloUserId]);
-        $subId = $stmtS->fetchColumn();
+        $workspace_id = $pdo->query("SELECT workspace_id FROM subscribers WHERE id = '" . $subId . "' LIMIT 1")->fetchColumn();
+                $subId = $stmtS->fetchColumn();
 
         if ($subId) {
             // [SYNCED] Use processTrackingEvent to handle activity logging, scoring, AND stats updates (Campaigns/Flows)
@@ -73,7 +74,7 @@ if ($zaloUserId) {
                 ]);
 
                 // Also keep legacy Zalo-specific activity for backward compatibility with Zalo logs
-                logZaloSubscriberActivity($pdo, $subId, 'zalo_clicked', $scenarioId, $label ? "Click Button: $label" : "Click Link: " . $targetUrl);
+                logZaloSubscriberActivity($pdo, $subId, 'zalo_clicked', $scenarioId, $label ? "Click Button: $label" : "Click Link: " . $targetUrl, null, $workspace_id);
 
                 updateZaloLeadScore($pdo, $zaloUserId, 'click', $scenarioId);
             }

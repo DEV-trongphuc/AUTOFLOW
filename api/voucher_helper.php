@@ -29,7 +29,7 @@ function claimVoucherAtomic($pdo, $campaignId, $subscriberId, $rewardItemId = nu
 
     // Lock subscriber globally to prevent concurrent claims for the same user
     $lockTarget = "sub_claim_" . md5($subscriberId . $campaignId);
-    $pdo->query("SELECT GET_LOCK('$lockTarget', 5)");
+    $pdo->prepare("SELECT GET_LOCK(?, 5)")->execute([$lockTarget]);
 
     $codeAssigned = null;
 
@@ -72,7 +72,7 @@ function claimVoucherAtomic($pdo, $campaignId, $subscriberId, $rewardItemId = nu
                         $expiresAt = date('Y-m-d H:i:s', strtotime("+{$camp['expiration_days']} days"));
                     }
                     
-                    $pdo->prepare("UPDATE voucher_codes SET subscriber_id = ?, status = 'available', expires_at = ?, claimed_source = ?, claimed_source_id = ? WHERE id = ?")
+                    $pdo->prepare("UPDATE voucher_codes SET subscriber_id = ?, status = 'used', expires_at = ?, claimed_source = ?, claimed_source_id = ? WHERE id = ?")
                         ->execute([$subscriberId, $expiresAt, $sourceChannel, $sourceId, $row['id']]);
                     $codeAssigned = $row['code'];
                 }
@@ -82,11 +82,11 @@ function claimVoucherAtomic($pdo, $campaignId, $subscriberId, $rewardItemId = nu
         if (!$alreadyInTx) $pdo->commit();
     } catch (Exception $e) {
         if (!$alreadyInTx && $pdo->inTransaction()) $pdo->rollBack();
-        $pdo->query("SELECT RELEASE_LOCK('$lockTarget')");
+        $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockTarget]);
         return ['success' => false, 'message' => 'Hệ thống quá tải, vui lòng thử lại.'];
     }
 
-    $pdo->query("SELECT RELEASE_LOCK('$lockTarget')");
+    $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockTarget]);
 
     if (!$codeAssigned) {
         return ['success' => false, 'message' => 'Hết mã! Số lượng Voucher của chương trình đã cạn.'];

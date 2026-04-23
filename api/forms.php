@@ -173,26 +173,38 @@ try {
 
                 if (!empty($submittedTags)) {
                     $tagPh = implode(',', array_fill(0, count($submittedTags), '?'));
-                    // [FIX BUG-FORMS-1] Add workspace_id filter to prevent cross-workspace tag reuse
-                    // [FIX BUG-FORMS-2] FETCH_KEY_PAIR maps col0=>col1, so SELECT name,id (not id,name)
-                    // to get the correct {name=>id} map needed by $existingTagMap[$tagName]
+                    // [FIX BUG-FORMS-1] workspace_id filter prevents cross-workspace tag reuse
+                    // [FIX BUG-FORMS-2] SELECT name,id for FETCH_KEY_PAIR {name=>id} map
                     $stmtExistingTags = $pdo->prepare("SELECT name, id FROM tags WHERE name IN ($tagPh) AND workspace_id = ?");
                     $stmtExistingTags->execute(array_merge($submittedTags, [$form_ws_id]));
-                    $existingTagMap = $stmtExistingTags->fetchAll(PDO::FETCH_KEY_PAIR); // ['tagName' => 'tagId']
+                    $existingTagMap = $stmtExistingTags->fetchAll(PDO::FETCH_KEY_PAIR);
 
+                    // Create missing tags first (rare — only new tag names)
                     foreach ($submittedTags as $tagName) {
-                        if (empty($tagName))
-                            continue;
-                        $tagId = $existingTagMap[$tagName] ?? null;
-                        if (!$tagId) {
-                            $tagId = bin2hex(random_bytes(8));
-                            // [FIX BUG-FORMS-1] Include workspace_id in new tag creation
-                            $pdo->prepare("INSERT INTO tags (id, name, workspace_id) VALUES (?, ?, ?)")->execute([$tagId, $tagName, $form_ws_id]);
-                        }
-                        $stmtInsTag = $pdo->prepare("INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES (?, ?)");
-                        $stmtInsTag->execute([$sid, $tagId]);
-                        if ($stmtInsTag->rowCount() > 0) {
-                            dispatchFlowWorker($pdo, 'flows', ['trigger_type' => 'tag', 'target_id' => $tagName, 'subscriber_id' => $sid]);
+                        if (empty($tagName) || isset($existingTagMap[$tagName])) continue;
+                        $tagId = bin2hex(random_bytes(8));
+                        $pdo->prepare("INSERT INTO tags (id, name, workspace_id) VALUES (?, ?, ?)")->execute([$tagId, $tagName, $form_ws_id]);
+                        $existingTagMap[$tagName] = $tagId;
+                    }
+
+                    // [PERF FIX] Batch INSERT IGNORE all tags in one query instead of N prepare/execute
+                    $batchPairs = [];
+                    $batchParams = [];
+                    foreach ($submittedTags as $tagName) {
+                        if (empty($tagName) || !isset($existingTagMap[$tagName])) continue;
+                        $batchPairs[] = "(?, ?)";
+                        $batchParams[] = $sid;
+                        $batchParams[] = $existingTagMap[$tagName];
+                    }
+                    if (!empty($batchPairs)) {
+                        $stmtBatch = $pdo->prepare("INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES " . implode(',', $batchPairs));
+                        $stmtBatch->execute($batchParams);
+                        if ($stmtBatch->rowCount() > 0) {
+                            foreach ($submittedTags as $tagName) {
+                                if (!empty($tagName) && isset($existingTagMap[$tagName])) {
+                                    dispatchFlowWorker($pdo, 'flows', ['trigger_type' => 'tag', 'target_id' => $tagName, 'subscriber_id' => $sid]);
+                                }
+                            }
                         }
                     }
                 }
@@ -259,19 +271,33 @@ try {
                     $stmtExistingTags->execute(array_merge($submittedTags, [$form_ws_id]));
                     $existingTagMap = $stmtExistingTags->fetchAll(PDO::FETCH_KEY_PAIR);
 
+                    // [PERF FIX] Batch INSERT IGNORE instead of per-tag prepare/execute
                     foreach ($submittedTags as $tagName) {
-                        if (empty($tagName))
-                            continue;
-                        $tagId = $existingTagMap[$tagName] ?? null;
-                        if (!$tagId) {
+                        if (empty($tagName)) continue;
+                        if (!isset($existingTagMap[$tagName])) {
                             $tagId = bin2hex(random_bytes(8));
                             // [FIX BUG-FORMS-1] Include workspace_id in new tag creation
                             $pdo->prepare("INSERT INTO tags (id, name, workspace_id) VALUES (?, ?, ?)")->execute([$tagId, $tagName, $form_ws_id]);
+                            $existingTagMap[$tagName] = $tagId;
                         }
-                        $stmtInsTag = $pdo->prepare("INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES (?, ?)");
-                        $stmtInsTag->execute([$sid, $tagId]);
-                        if ($stmtInsTag->rowCount() > 0) {
-                            dispatchFlowWorker($pdo, 'flows', ['trigger_type' => 'tag', 'target_id' => $tagName, 'subscriber_id' => $sid]);
+                    }
+                    $batchPairs = [];
+                    $batchParams = [];
+                    foreach ($submittedTags as $tagName) {
+                        if (empty($tagName) || !isset($existingTagMap[$tagName])) continue;
+                        $batchPairs[] = "(?, ?)";
+                        $batchParams[] = $sid;
+                        $batchParams[] = $existingTagMap[$tagName];
+                    }
+                    if (!empty($batchPairs)) {
+                        $stmtBatch = $pdo->prepare("INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES " . implode(',', $batchPairs));
+                        $stmtBatch->execute($batchParams);
+                        if ($stmtBatch->rowCount() > 0) {
+                            foreach ($submittedTags as $tagName) {
+                                if (!empty($tagName)) {
+                                    dispatchFlowWorker($pdo, 'flows', ['trigger_type' => 'tag', 'target_id' => $tagName, 'subscriber_id' => $sid]);
+                                }
+                            }
                         }
                     }
                 }
@@ -487,11 +513,11 @@ try {
         <!-- HEADER -->
         <tr><td style='background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);border-radius:16px 16px 0 0;padding:28px 32px;text-align:center'>
           <div style='display:inline-flex;align-items:center;gap:10px'>
-            <div style='width:40px;height:40px;background:#d97706;border-radius:10px;display:inline-flex;align-items:center;justify-content:center'>
+            <div style='width:40px;height:40px;background:#f97316;border-radius:10px;display:inline-flex;align-items:center;justify-content:center'>
               <span style='font-size:20px'>📩</span>
             </div>
             <div style='text-align:left'>
-              <div style='color:#d97706;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase'>AUTOFLOW</div>
+              <div style='color:#f97316;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase'>AUTOFLOW</div>
               <div style='color:#ffffff;font-size:18px;font-weight:800'>Lead mới vừa đến!</div>
             </div>
           </div>
@@ -502,9 +528,9 @@ try {
           <p style='margin:0 0 6px;font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px'>Biểu mẫu</p>
           <p style='margin:0 0 24px;font-size:20px;font-weight:800;color:#0f172a'>" . htmlspecialchars($formName) . "</p>
 
-          <div style='background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 16px;margin-bottom:24px;display:flex;align-items:center;gap:10px'>
+          <div style='background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:12px 16px;margin-bottom:24px;display:flex;align-items:center;gap:10px'>
             <span style='font-size:18px'>⚡</span>
-            <span style='font-size:13px;font-weight:600;color:#92400e'>Lead được gửi vào lúc <strong>$now</strong></span>
+            <span style='font-size:13px;font-weight:600;color:#c2410c'>Lead được gửi vào lúc <strong>$now</strong></span>
           </div>
 
           <!-- DATA TABLE -->

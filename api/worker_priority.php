@@ -57,7 +57,7 @@ require_once __DIR__ . '/worker_guard.php';
         exit;
     }
 
-    // [MONITOR] Warn at depth 6+ without hard-failing — helps detect unexpectedly deep chains
+    // [MONITOR] Warn at depth 6+ without hard-failing â€” helps detect unexpectedly deep chains
     if ($priorityDepth >= 6) {
         traceLog("[Priority] WARNING: Deep chain detected (depth={$priorityDepth}). Review flow triggers for loops.");
     }
@@ -75,7 +75,7 @@ require_once __DIR__ . '/worker_guard.php';
 
 // Hardcoded production URL for tracking
 $apiUrl = API_BASE_URL;
-// [FIX P39-WP1] Only fetch required settings keys — avoids loading ALL secrets (smtp_password, API keys) into memory
+// [FIX P39-WP1] Only fetch required settings keys â€” avoids loading ALL secrets (smtp_password, API keys) into memory
 $stmtSettings = $pdo->prepare("SELECT `key`, `value` FROM system_settings WHERE workspace_id = 0 AND `key` IN ('smtp_user','smtp_host','max_messages_per_day')");
 $stmtSettings->execute();
 $settings = [];
@@ -86,7 +86,7 @@ $defaultSender = !empty($settings['smtp_user']) ? $settings['smtp_user'] : "mark
 $mailer = new Mailer($pdo, $apiUrl, $defaultSender);
 $flowExecutor = new FlowExecutor($pdo, $mailer, $apiUrl);
 
-// [FIX P9-C2] MySQL version guard — SKIP LOCKED requires MySQL = 8.0.
+// [FIX P9-C2] MySQL version guard â€” SKIP LOCKED requires MySQL = 8.0.
 // worker_priority.php uses SKIP LOCKED in 2 places (Scenario B chain lock + Scenario D batch).
 // Without this guard: Fatal Syntax Error on MySQL 5.7 ? ALL priority enrollments fail.
 $mysqlVersionPrio = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
@@ -126,15 +126,24 @@ try {
 
     traceLog("[Priority] Params - Sid: $prioritySid, Type: $priorityTriggerType, TargetId: $priorityTargetId, QueueId: $priorityQueueId");
 
+    // [SECURITY] Fetch workspace_id from GET or fallback to subscriber lookup
+    $priorityWorkspaceId = $_GET['workspace_id'] ?? null;
+    if (!$priorityWorkspaceId && $prioritySid) {
+        $stmtW = $pdo->prepare("SELECT workspace_id FROM subscribers WHERE id = ? LIMIT 1");
+        $stmtW->execute([$prioritySid]);
+        $priorityWorkspaceId = $stmtW->fetchColumn();
+    }
+
     // Scenario A: Triggered for a new enrollment (from forms.php, etc.)
     if ($prioritySid && $priorityTriggerType && $priorityTargetId && !$priorityQueueId) {
-        traceLog("[Priority] SCENARIO A: New Enrollment");
+        traceLog("[Priority] SCENARIO A: New Enrollment (WS: $priorityWorkspaceId)");
         $logs[] = "[Priority-Enroll] Received Trigger: $priorityTriggerType ID: $priorityTargetId for Subscriber $prioritySid";
 
         if ($priorityTriggerType === 'manual') {
             // MANUAL TRIGGER: Directly enroll into the specified flow (target_id)
-            $stmtManualFlow = $pdo->prepare("SELECT id, name, steps, config FROM flows WHERE id = ?");
-            $stmtManualFlow->execute([$priorityTargetId]);
+            // [SECURITY FIX] Added workspace_id filter
+            $stmtManualFlow = $pdo->prepare("SELECT id, name, steps, config FROM flows WHERE id = ? AND workspace_id = ?");
+            $stmtManualFlow->execute([$priorityTargetId, $priorityWorkspaceId]);
             $manualFlow = $stmtManualFlow->fetch();
 
             if ($manualFlow) {
@@ -146,9 +155,11 @@ try {
                         $trigger = $s;
 
                 if ($trigger && isset($trigger['nextStepId'])) {
-                    $pdo->prepare("DELETE FROM subscriber_flow_states WHERE subscriber_id = ? AND flow_id = ? AND status IN ('waiting', 'processing')")->execute([$prioritySid, $manualFlow['id']]);
+                    // [SECURITY FIX] Added workspace_id check to prevent wiping other tenant states if ID collision occurs
+                    $pdo->prepare("DELETE FROM subscriber_flow_states WHERE subscriber_id = ? AND flow_id = ? AND status IN ('waiting', 'processing')")
+                        ->execute([$prioritySid, $manualFlow['id']]);
 
-                    // [OPT] Explicit column select — avoid SELECT * on heavy subscribers table
+                    // [OPT] Explicit column select â€” avoid SELECT * on heavy subscribers table
                     // Columns needed: all fields used by FlowExecutor + flow_helpers for merge tags,
                     // send logic, phone validation, custom_attributes merge tags.
                     $stmtSubDetails = $pdo->prepare(
@@ -157,10 +168,10 @@ try {
                                 date_of_birth, anniversary_date, joined_at,
                                 last_os, last_device, last_browser, last_city,
                                 stats_opened, stats_clicked, last_open_at, last_click_at,
-                                timezone, is_zalo_follower, tags, custom_attributes
-                         FROM subscribers WHERE id = ?"
+                                timezone, is_zalo_follower, tags, custom_attributes, workspace_id
+                         FROM subscribers WHERE id = ? AND workspace_id = ?"
                     );
-                    $stmtSubDetails->execute([$prioritySid]);
+                    $stmtSubDetails->execute([$prioritySid, $priorityWorkspaceId]);
                     $subDetails = $stmtSubDetails->fetch();
 
                     if ($subDetails) {
@@ -233,10 +244,11 @@ try {
             }
         } else {
             // Standard triggers (form, tag, etc.)
-            traceLog("[Priority] Fetching active flows for trigger: $priorityTriggerType");
+            traceLog("[Priority] Fetching active flows for trigger: $priorityTriggerType (WS: $priorityWorkspaceId)");
             // [10M UPGRADE] Query flows specifically by trigger_type for MASSIVE performance gain
-            $stmtFlows = $pdo->prepare("SELECT id, name, steps, config FROM flows WHERE status = 'active' AND (trigger_type = ? OR trigger_type = 'segment')");
-            $stmtFlows->execute([$priorityTriggerType]);
+            // [SECURITY FIX] Added workspace_id filter
+            $stmtFlows = $pdo->prepare("SELECT id, name, steps, config FROM flows WHERE workspace_id = ? AND status = 'active' AND (trigger_type = ? OR trigger_type = 'segment')");
+            $stmtFlows->execute([$priorityWorkspaceId, $priorityTriggerType]);
             $activeFlows = $stmtFlows->fetchAll();
             traceLog("[Priority] Found " . count($activeFlows) . " active flows");
 
@@ -253,7 +265,7 @@ try {
                     continue;
 
                 $tConfig = $trigger['config'];
-                $flowTriggerType = $tConfig['type'] ?? ''; // [FIX] was undefined — caused all standard triggers to never match
+                $flowTriggerType = $tConfig['type'] ?? ''; // [FIX] was undefined â€” caused all standard triggers to never match
                 $flowTargetSubtype = $tConfig['targetSubtype'] ?? '';
                 $flowTargetId = $tConfig['targetId'] ?? '';
 
@@ -337,17 +349,17 @@ try {
                     }
 
                     // Proceed with enrollment
-                    // [OPT] Explicit column select — same column list as manual trigger above
+                    // [OPT] Explicit column select â€” same column list as manual trigger above
                     $stmtSubDetails = $pdo->prepare(
                         "SELECT id, email, status, first_name, last_name, phone_number,
                                 company_name, job_title, city, country, gender,
                                 date_of_birth, anniversary_date, joined_at,
                                 last_os, last_device, last_browser, last_city,
                                 stats_opened, stats_clicked, last_open_at, last_click_at,
-                                timezone, is_zalo_follower, tags, custom_attributes
-                         FROM subscribers WHERE id = ?"
+                                timezone, is_zalo_follower, tags, custom_attributes, workspace_id
+                         FROM subscribers WHERE id = ? AND workspace_id = ?"
                     );
-                    $stmtSubDetails->execute([$prioritySid]);
+                    $stmtSubDetails->execute([$prioritySid, $priorityWorkspaceId]);
                     $subDetails = $stmtSubDetails->fetch();
 
                     if (!$subDetails)
@@ -433,7 +445,7 @@ try {
                             $blockCondition = "1=1"; // Always block if any record exists
                         } else {
                             // For recurring: Block if (in progress) OR (recently completed within cooldown)
-                        // [FIX] $cooldownHours is cast (int) on L285 — safe to use in INTERVAL.
+                        // [FIX] $cooldownHours is cast (int) on L285 â€” safe to use in INTERVAL.
                         // PDO does not accept params inside INTERVAL expressions.
                         $safeChHours = (int)$cooldownHours;
                         $blockCondition = "status IN ('waiting', 'processing') OR updated_at > DATE_SUB(NOW(), INTERVAL $safeChHours HOUR)";
@@ -510,25 +522,25 @@ try {
     // Scenario B: Triggered to continue an existing priority chain (self-triggering from a non-instant step)
     else if ($priorityQueueId && $prioritySid && $priorityFlowId) {
         $logs[] = "[Priority-Chain] Received exclusive request for Queue ID: $priorityQueueId. Sub: $prioritySid, Flow: $priorityFlowId.";
-
+ 
         $stmtItem = $pdo->prepare("SELECT q.id as queue_id, q.subscriber_id, q.flow_id, q.step_id, q.status, q.scheduled_at, q.updated_at, q.created_at as queue_created_at, q.last_step_at, 
                                  f.steps as flow_steps, f.config as flow_config, f.name as flow_name, 
                                  s.email as sub_email, s.first_name, s.last_name, s.company_name, s.phone_number, s.job_title,
                                  s.status as sub_status, s.tags as sub_tags, s.id as sub_id, s.date_of_birth, s.anniversary_date, s.joined_at,
                                  s.city, s.country, s.gender, s.last_os, s.last_device, s.last_browser, s.last_city,
                                  s.stats_opened, s.stats_clicked, s.last_open_at, s.last_click_at, s.timezone, s.is_zalo_follower,
-                                 s.custom_attributes
+                                 s.custom_attributes, s.workspace_id
                                  FROM subscriber_flow_states q 
                                  JOIN flows f ON q.flow_id = f.id 
                                  JOIN subscribers s ON q.subscriber_id = s.id 
-                                 WHERE q.id = ? AND q.subscriber_id = ? AND q.flow_id = ? AND q.status IN ('waiting', 'processing') AND f.status = 'active'
+                                 WHERE q.id = ? AND q.subscriber_id = ? AND q.flow_id = ? AND s.workspace_id = ? AND q.status IN ('waiting', 'processing') AND f.status = 'active'
                                  LIMIT 1 FOR UPDATE $skipLockedClause");
         // [FIX] Added SKIP LOCKED to prevent duplicate chain execution when two concurrent priority
         // workers are fired for the same queue_id (e.g. double-click webhook, network retry).
         // Without SKIP LOCKED: Worker-B blocks ? A commits ? B finds 'waiting' row ? re-executes ? duplicate send.
         // With SKIP LOCKED: Worker-B finds 0 rows while A holds the lock ? exits cleanly.
-
-        $stmtItem->execute([$priorityQueueId, $prioritySid, $priorityFlowId]);
+ 
+        $stmtItem->execute([$priorityQueueId, $prioritySid, $priorityFlowId, $priorityWorkspaceId]);
         $priorityItem = $stmtItem->fetch();
 
         if ($priorityItem) {
@@ -547,7 +559,7 @@ try {
             $pdo->prepare("UPDATE subscriber_flow_states SET status = 'processing', updated_at = NOW() WHERE id = ?")->execute([$priorityQueueId]);
             $item = $priorityItem;
             // [FIX] The JOIN query aliases s.email as 'sub_email'. FlowExecutor and
-            // replaceMergeTags both need the 'email' key — map it here to prevent
+            // replaceMergeTags both need the 'email' key â€” map it here to prevent
             // empty {{email}} merge tags and wrong Mailer send-to address.
             $item['email'] = $item['sub_email'] ?? '';
             $queueIdToUpdate = $priorityQueueId;
@@ -562,17 +574,24 @@ try {
     }
     // Scenario D: Batch Mode (Triggered by enrollSubscribersBulk or Cron)
     else if (($_GET['mode'] ?? '') === 'batch') {
-        $logs[] = "[Priority-Batch] Processing top 50 waiting priority items.";
-        // [FIX] Added FOR UPDATE SKIP LOCKED to prevent double-dispatch when two cron instances
-        // execute simultaneously. Without it, both instances SELECT the same 50 'waiting' rows
-        // and each dispatches a separate priority worker for the same subscriber \u2192 duplicate sends.
-        // SKIP LOCKED allows each concurrent cron to acquire a distinct, non-overlapping subset.
-        $stmtBatch = $pdo->prepare("SELECT q.id as queue_id, q.subscriber_id, q.flow_id 
+        $logs[] = "[Priority-Batch] Processing top 50 waiting priority items (WS: $priorityWorkspaceId).";
+        
+        $sqlBatch = "SELECT q.id as queue_id, q.subscriber_id, q.flow_id 
                                    FROM subscriber_flow_states q
                                    JOIN flows f ON q.flow_id = f.id
-                                   WHERE q.status = 'waiting' AND q.scheduled_at <= NOW() AND f.status = 'active'
-                                   ORDER BY q.created_at ASC LIMIT 50 FOR UPDATE $skipLockedClause");
-        $stmtBatch->execute();
+                                   JOIN subscribers s ON q.subscriber_id = s.id
+                                   WHERE q.status = 'waiting' AND q.scheduled_at <= NOW() AND f.status = 'active'";
+        
+        $paramsBatch = [];
+        if ($priorityWorkspaceId) {
+            $sqlBatch .= " AND s.workspace_id = ?";
+            $paramsBatch[] = $priorityWorkspaceId;
+        }
+ 
+        $sqlBatch .= " ORDER BY q.created_at ASC LIMIT 50 FOR UPDATE $skipLockedClause";
+        
+        $stmtBatch = $pdo->prepare($sqlBatch);
+        $stmtBatch->execute($paramsBatch);
         $batchItems = $stmtBatch->fetchAll();
 
         if (empty($batchItems)) {
@@ -585,7 +604,7 @@ try {
         // Old approach: foreach + curl_exec() fires up to 50 HTTP requests back-to-back,
         // exhausting PHP-FPM workers and acting like a local DDoS if cron runs every minute.
         // New approach: fire at most 5 requests concurrently, wait for them to finish,
-        // then fire the next batch of 5 — controlled parallelism with no server overload.
+        // then fire the next batch of 5 â€” controlled parallelism with no server overload.
         $CONCURRENCY = 5;
         $chunks = array_chunk($batchItems, $CONCURRENCY);
 
@@ -598,6 +617,7 @@ try {
                     'priority_queue_id' => $bi['queue_id'],
                     'subscriber_id' => $bi['subscriber_id'],
                     'priority_flow_id' => $bi['flow_id'],
+                    'workspace_id' => $priorityWorkspaceId
                 ]);
                 $workerUrl = API_BASE_URL . "/worker_priority.php?" . $workerParams;
 
@@ -657,7 +677,7 @@ try {
 
     // [ELIGIBILITY CHECK]
     if (trim($item['sub_status']) === 'unsubscribed') {
-        // Use 'unsubscribed' status — DB ENUM includes: waiting, processing, completed, failed, unsubscribed
+        // Use 'unsubscribed' status â€” DB ENUM includes: waiting, processing, completed, failed, unsubscribed
         $pdo->prepare("UPDATE subscriber_flow_states SET status = 'unsubscribed', updated_at = NOW() WHERE id = ?")->execute([$queueId]);
         $logs[] = "[Priority-Exit] Sub {$subscriberId} is unsubscribed. Marking unsubscribed and skipping chain.";
         $pdo->commit();
@@ -695,7 +715,7 @@ try {
         }
     }
 
-    // Exit-specific activity cache — unlimited, filtered by type (no LIMIT risk)
+    // Exit-specific activity cache â€” unlimited, filtered by type (no LIMIT risk)
     if (!empty($exitActivityTypesEarly)) {
         $exitPlaceholdersEarly = implode(',', array_fill(0, count($exitActivityTypesEarly), '?'));
         $stmtExitActEarly = $pdo->prepare(
@@ -710,7 +730,7 @@ try {
         $exitActivityCacheEarly = [];
     }
 
-    // General activity cache — LIMIT 500 for condition-chain logic
+    // General activity cache â€” LIMIT 500 for condition-chain logic
     $stmtAct = $pdo->prepare("SELECT type, reference_id, campaign_id, details, created_at FROM subscriber_activity WHERE subscriber_id = ? AND created_at >= ? ORDER BY created_at DESC LIMIT 500");
     $stmtAct->execute([$subscriberId, $item['queue_created_at']]);
     $activityCache = $stmtAct->fetchAll();
@@ -724,7 +744,7 @@ try {
 
     // [DECODED ABOVE] flow_steps might already be an array if from scenario A enrollment
     $flowSteps = is_string($item['flow_steps']) ? json_decode($item['flow_steps'], true) : $item['flow_steps'];
-    // $fConfig already decoded above (before exit-condition pre-fetch) — do NOT redeclare here
+    // $fConfig already decoded above (before exit-condition pre-fetch) â€” do NOT redeclare here
 
     $currentStepId = trim($item['step_id'] ?? '');
     $stepsProcessedInRun = 0;

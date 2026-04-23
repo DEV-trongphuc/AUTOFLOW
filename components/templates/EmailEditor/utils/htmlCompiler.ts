@@ -688,10 +688,14 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             let previewImgUrl = '';
             if (linkId) {
                 try {
-                    const stored = JSON.parse(localStorage.getItem('mailflow_voucher_campaigns') || '[]');
-                    const camp = stored.find((c: any) => c.id === linkId);
-                    if (camp && camp.rewards && camp.rewards.length > 0) {
-                        previewImgUrl = camp.rewards[0].imageUrl || '';
+                    // [FIX BUG-COMPILER-1] localStorage is not available in SSR/Node contexts.
+                    // Guard with typeof window to prevent ReferenceError when compileHTML is called server-side.
+                    if (typeof window !== 'undefined' && window.localStorage) {
+                        const stored = JSON.parse(localStorage.getItem('mailflow_voucher_campaigns') || '[]');
+                        const camp = stored.find((c: any) => c.id === linkId);
+                        if (camp && camp.rewards && camp.rewards.length > 0) {
+                            previewImgUrl = camp.rewards[0].imageUrl || '';
+                        }
                     }
                 } catch (e) {}
             }
@@ -917,11 +921,12 @@ ${HEAD_CSS}
 <tr>
 <td align="center">
   <!--[if mso]>
-  <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="600">
+  <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="${parseInt(bodyStyle.contentWidth || '600')}">
   <tr>
-  <td align="center" valign="top" width="600">
+  <td align="center" valign="top" width="${parseInt(bodyStyle.contentWidth || '600')}">
   <![endif]-->
-  <table role="presentation" class="email-container" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 0 auto; width: 100%; max-width: 600px;">
+  <!-- [FIX BUG-COMPILER-2] Use bodyStyle.contentWidth instead of hardcoded 600px so custom-width templates render correctly in all clients including old Outlook -->
+  <table role="presentation" class="email-container" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 0 auto; width: 100%; max-width: ${bodyStyle.contentWidth || '600px'};">
   <tbody>
   ${isPreview ? '<tr><td height="40" style="font-size: 40px; line-height: 40px; mso-line-height-rule: exactly;">&nbsp;</td></tr>' : ''}
   ${allBlocksHtml}

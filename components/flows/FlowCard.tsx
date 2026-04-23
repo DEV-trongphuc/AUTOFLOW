@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { GitMerge, Trash2, RotateCcw, Copy, Send, PlayCircle, PauseCircle, Users, Eye, Snowflake, Cake, Crown, Zap, Layers, AlertCircle, FileInput, Tag, ShoppingCart, Link, CheckCircle, ListPlus, BellRing } from 'lucide-react';
 import { Flow, Campaign, FormDefinition, PurchaseEvent, CustomEvent, Segment } from '../../types';
 
@@ -28,11 +29,12 @@ interface FlowCardProps {
 }
 
 
-const FlowCard = React.memo<FlowCardProps>(({
-    flow, linkedCampaign, linkedForm, linkedPurchaseEvent, linkedCustomEvent, linkedSegment, linkedList, linkedTag, isList,
+const FlowCard = React.memo<FlowCardProps>((
+    { flow, linkedCampaign, linkedForm, linkedPurchaseEvent, linkedCustomEvent, linkedSegment, linkedList, linkedTag, isList,
     onClick, onDelete, onDuplicate, onRestore,
-    onOpenCampaign, onOpenForm, onOpenList, onOpenSegment, onOpenTag, onOpenPurchase, onOpenCustomEvent
-}) => {
+    onOpenCampaign, onOpenForm, onOpenList, onOpenSegment, onOpenTag, onOpenPurchase, onOpenCustomEvent }
+) => {
+    const navigate = useNavigate();
     const isArchived = flow.status === 'archived';
     const isActive = flow.status === 'active';
     const enrolled = (flow.stats?.enrolled) || 0;
@@ -177,28 +179,49 @@ const FlowCard = React.memo<FlowCardProps>(({
         }
 
         if (triggerType === 'segment') {
-            const isListSubtype = triggerConfig.targetSubtype === 'list';
+            // isListSubtype: explicitly set OR resolved via linkedList prop (smart detection from parent)
+            const isListSubtype = triggerConfig.targetSubtype === 'list' || triggerConfig.targetSubtype === 'sync' || !!linkedList;
 
             if (isListSubtype) {
-                const label = linkedList ? `Danh sách: ${linkedList.name}` : (linkedList === undefined && triggerConfig.targetId ? `List ID: ${triggerConfig.targetId}` : 'Chưa chọn danh sách');
+                const resolved  = !!linkedList;
+                const label     = resolved
+                    ? linkedList.name
+                    : (triggerConfig.targetId ? 'Đang tải...' : 'Chưa chọn danh sách');
+                const hasTarget = resolved || !!triggerConfig.targetId;
                 return {
                     icon: ListPlus,
                     accent: 'emerald' as const,
                     gradientMain: 'from-emerald-600 to-teal-700',
-                    label: label,
-                    isLink: !!linkedList,
-                    onLinkClick: () => linkedList && onOpenList?.(linkedList)
+                    label,
+                    isLink: hasTarget,
+                    onLinkClick: () => {
+                        if (linkedList && onOpenList) {
+                            onOpenList(linkedList);
+                        } else if (triggerConfig.targetId) {
+                            navigate(`/audience?list_id=${triggerConfig.targetId}`);
+                        }
+                    }
                 };
             }
 
-            const label = linkedSegment ? `Phân khúc: ${linkedSegment.name}` : (triggerConfig.targetId ? `Segment ID: ${triggerConfig.targetId}` : 'Chưa chọn phân khúc');
+            const resolved  = !!linkedSegment;
+            const label     = resolved
+                ? linkedSegment!.name
+                : (triggerConfig.targetId ? 'Đang tải...' : 'Chưa chọn phân khúc');
+            const hasTarget = resolved || !!triggerConfig.targetId;
             return {
                 icon: Layers,
                 accent: 'amber' as const,
                 gradientMain: 'from-amber-400 to-orange-500',
-                label: label,
-                isLink: !!linkedSegment,
-                onLinkClick: () => linkedSegment && onOpenSegment?.(linkedSegment)
+                label,
+                isLink: hasTarget,
+                onLinkClick: () => {
+                    if (linkedSegment && onOpenSegment) {
+                        onOpenSegment(linkedSegment);
+                    } else if (triggerConfig.targetId) {
+                        navigate(`/audience?segment_id=${triggerConfig.targetId}`);
+                    }
+                }
             };
         }
 

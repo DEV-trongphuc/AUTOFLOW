@@ -327,6 +327,9 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
     const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
     const [history, setHistory] = useState<EmailBlock[][]>([template?.blocks || DEFAULT_BLOCKS]);
     const [historyIndex, setHistoryIndex] = useState(0);
+    // [UX] Track which history index was last saved to compute isDirty
+    const [savedHistoryIndex, setSavedHistoryIndex] = useState(0);
+    const isDirty = historyIndex !== savedHistoryIndex;
 
     const [savedSections, setSavedSections] = useState<{ id: string, name: string, data: EmailBlock }[]>([]);
     const [saveSectionModal, setSaveSectionModal] = useState<{ isOpen: boolean, block: EmailBlock | null, name: string }>({ isOpen: false, block: null, name: '' });
@@ -533,9 +536,11 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
             htmlContent: finalHtml,
             thumbnail: ''
         });
+        // [UX] Mark this historyIndex as "saved" so isDirty becomes false
+        setSavedHistoryIndex(historyIndex);
         // Re-scan after save so badge stays fresh
         setTimeout(() => silentScan(), 0);
-    }, [editorMode, customHtml, blocks, bodyStyle, name, groupId, onSave, silentScan]);
+    }, [editorMode, customHtml, blocks, bodyStyle, name, groupId, historyIndex, onSave, silentScan]);
 
     // Keyboard Shortcuts: Ctrl+Z (Undo), Ctrl+Y/Ctrl+Shift+Z (Redo), Ctrl+S (Save)
     useEffect(() => {
@@ -675,6 +680,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
                 onValidate={runValidation}
                 validationIssueCount={validationIssues?.length}
                 showValidation={showValidation}
+                isDirty={isDirty}
             />
             <div className="flex-1 flex overflow-hidden">
                 {editorMode === 'visual' && (

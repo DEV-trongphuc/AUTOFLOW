@@ -91,6 +91,65 @@ if (isset($_GET['route']) && $_GET['route'] === 'delete') {
     }
 }
 
+// RENAME (via POST với route=rename): Đổi tên hiển thị của file
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['route']) && $_GET['route'] === 'rename') {
+    $body       = json_decode(file_get_contents('php://input'), true);
+    $uniqueName = basename($body['uniqueName'] ?? '');
+    $newLabel   = trim($body['newName'] ?? '');
+
+    // Security: validate uniqueName
+    if (empty($uniqueName) || strpbrk($uniqueName, '/\\') !== false) {
+        jsonResponse(false, null, 'Tên file không hợp lệ');
+    }
+    // Security: validate newLabel — only safe chars, no path separators
+    if (empty($newLabel) || preg_match('/[\/\\\\<>:"|?*\x00-\x1f]/', $newLabel)) {
+        jsonResponse(false, null, 'Tên mới không hợp lệ');
+    }
+    // Keep the original extension
+    $origExt = strtolower(pathinfo($uniqueName, PATHINFO_EXTENSION));
+    // Strip extension from newLabel if user typed it, then re-add correct one
+    $newLabelBase = preg_replace('/\.[a-z0-9]{2,5}$/i', '', $newLabel);
+    $safeLabelBase = preg_replace('/[^a-zA-Z0-9._\- ]/', '', $newLabelBase);
+    if (empty($safeLabelBase)) {
+        jsonResponse(false, null, 'Tên mới không hợp lệ sau khi làm sạch');
+    }
+    // Build new physical filename: keep uniqid prefix, replace display part
+    $prefix = preg_match('/^[a-f0-9]{13}_/', $uniqueName, $m) ? $m[0] : '';
+    $newUniqueName = $prefix . str_replace(' ', '_', $safeLabelBase) . '.' . $origExt;
+    $newUniqueName = basename($newUniqueName); // extra traversal guard
+
+    $uploadDir = '../uploadss/';
+    $oldPath   = $uploadDir . $uniqueName;
+    $newPath   = $uploadDir . $newUniqueName;
+
+    if (!file_exists($oldPath)) {
+        jsonResponse(false, null, 'File nguồn không tồn tại');
+    }
+    if ($oldPath === $newPath) {
+        jsonResponse(true, ['uniqueName' => $newUniqueName, 'name' => $safeLabelBase . '.' . $origExt]);
+    }
+    if (file_exists($newPath)) {
+        // Avoid collision: append timestamp
+        $newUniqueName = $prefix . str_replace(' ', '_', $safeLabelBase) . '_' . time() . '.' . $origExt;
+        $newPath = $uploadDir . $newUniqueName;
+    }
+    if (rename($oldPath, $newPath)) {
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+        $host = $_SERVER['HTTP_HOST'];
+        $baseUrl = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false)
+            ? "https://automation.ideas.edu.vn/uploadss/"
+            : $protocol . $host . "/uploadss/";
+        jsonResponse(true, [
+            'uniqueName' => $newUniqueName,
+            'name'       => $safeLabelBase . '.' . $origExt,
+            'url'        => $baseUrl . $newUniqueName,
+        ]);
+    } else {
+        jsonResponse(false, null, 'Không thể đổi tên file');
+    }
+}
+
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonResponse(false, null, 'Method not allowed');
 }

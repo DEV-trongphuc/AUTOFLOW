@@ -126,10 +126,14 @@ const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSele
     return (
         <div className="w-72 bg-white border-r border-slate-200 flex flex-col z-40 h-full shadow-xl">
             <div className="p-3 border-b border-slate-100 bg-slate-50/50">
-                <div className="grid grid-cols-3 gap-1 bg-slate-200/50 p-1 rounded-xl mb-3">
+                <div className="grid grid-cols-2 gap-1 bg-slate-200/50 p-1 rounded-xl mb-3">
                     <button onClick={() => setActiveTab('blocks')} className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all w-full ${activeTab === 'blocks' ? 'bg-white shadow-sm text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}>
                         <LucideIcons.Blocks className="w-5 h-5" />
                         <span className="text-[8px] font-bold uppercase tracking-wider">Blocks</span>
+                    </button>
+                    <button onClick={() => setActiveTab('templates')} className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all w-full ${activeTab === 'templates' ? 'bg-white shadow-sm text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}>
+                        <LucideIcons.Sparkles className="w-5 h-5" />
+                        <span className="text-[8px] font-bold uppercase tracking-wider">Mẫu</span>
                     </button>
                     <button onClick={() => setActiveTab('saved')} className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all w-full ${activeTab === 'saved' ? 'bg-white shadow-sm text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}>
                         <LucideIcons.Bookmark className="w-5 h-5" />
@@ -158,13 +162,13 @@ const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSele
                 {activeTab === 'blocks' && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-left-2 duration-300">
                         <div className="space-y-6 pt-2">
-                            {['layout', 'content', 'basic', 'template_tab'].map(cat => {
+                            {['layout', 'content', 'basic'].map(cat => {
                                 const catTools = filteredTools.filter(t => t.cat === cat);
                                 if (catTools.length === 0) return null;
                                 return (
                                     <div key={cat}>
                                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1 border-b border-slate-100 pb-1 w-fit">
-                                            {cat === 'layout' ? 'Bố cục' : (cat === 'content' ? 'Nội dung' : (cat === 'template_tab' ? 'Mẫu Item' : 'Cơ bản'))}
+                                            {cat === 'layout' ? 'Bố cục' : (cat === 'content' ? 'Nội dung' : 'Cơ bản')}
                                         </p>
                                         <div className="grid grid-cols-2 gap-2.5">
                                             {catTools.map(tool => (
@@ -181,6 +185,23 @@ const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSele
                                 </div>
                             )}
                         </div>
+                    </div>
+                )}
+
+                {activeTab === 'templates' && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-left-2 duration-300 pt-2">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Mẫu kéo thả nhanh</p>
+                        <div className="grid grid-cols-2 gap-2.5">
+                            {TOOLBOX_ITEMS.filter(t => t.cat === 'template_tab').map(tool => (
+                                <ToolItem key={tool.id} type={tool.type || tool.id} layout={tool.layout} label={tool.label} icon={tool.icon} />
+                            ))}
+                        </div>
+                        {TOOLBOX_ITEMS.filter(t => t.cat === 'template_tab').length === 0 && (
+                            <div className="text-center py-10 opacity-40">
+                                <IconMap.LayoutTemplate className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                                <p className="text-xs font-bold text-slate-400">Chưa có mẫu</p>
+                            </div>
+                        )}
                     </div>
                 )}
 

@@ -47,7 +47,7 @@ $syncLimit = 20;
 try {
     // Priority 1: Segments explicitly queued for update
     $stmtQueue = $pdo->query(
-        "SELECT DISTINCT q.segment_id, seg.criteria
+        "SELECT DISTINCT q.segment_id, seg.criteria, seg.workspace_id
          FROM segment_count_update_queue q
          JOIN segments seg ON q.segment_id = seg.id
          ORDER BY q.queued_at ASC
@@ -57,19 +57,19 @@ try {
 
     foreach ($queuedSegs as $seg) {
         $segId = $seg['segment_id'];
+        $wsId = $seg['workspace_id'];
         if (empty($seg['criteria'])) {
-            // [FIX P30-D1] Use explicit COUNT query instead of inline correlated subquery.
-            // The subquery pattern (SELECT COUNT(*) FROM subscribers) inside UPDATE runs fine
-            // but is harder to extend (e.g. add workspace_id scope later).
-            // Consistent with the criteria branch pattern: count first, then update.
-            $stmtAll = $pdo->query("SELECT COUNT(*) FROM subscribers WHERE status IN ('active','lead','customer')");
+            // [SECURITY FIX] Added workspace_id scope
+            $stmtAll = $pdo->prepare("SELECT COUNT(*) FROM subscribers WHERE workspace_id = ? AND status IN ('active','lead','customer')");
+            $stmtAll->execute([$wsId]);
             $allCount = (int) $stmtAll->fetchColumn();
             $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ?")
                 ->execute([$allCount, $segId]);
         } else {
             $segRes = buildSegmentWhereClause($seg['criteria'], $segId);
-            $stmtC = $pdo->prepare("SELECT COUNT(*) FROM subscribers s WHERE " . $segRes['sql']);
-            $stmtC->execute($segRes['params']);
+            // [SECURITY FIX] Added workspace_id scope
+            $stmtC = $pdo->prepare("SELECT COUNT(*) FROM subscribers s WHERE s.workspace_id = ? AND (" . $segRes['sql'] . ")");
+            $stmtC->execute(array_merge([$wsId], $segRes['params']));
             $count = $stmtC->fetchColumn();
             $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ?")
                 ->execute([$count, $segId]);
@@ -80,26 +80,29 @@ try {
         $syncedSegments++;
     }
 
-    // Priority 2: Stale segments (not synced in 1 hour) � fill up remaining slots
+    // Priority 2: Stale segments (not synced in 1 hour) — fill up remaining slots
     $remaining = $syncLimit - $syncedSegments;
     if ($remaining > 0) {
         $stmtStale = $pdo->prepare(
-            "SELECT id, criteria FROM segments
+            "SELECT id, criteria, workspace_id FROM segments
              WHERE (synced_at IS NULL OR synced_at < DATE_SUB(NOW(), INTERVAL 1 HOUR))
              ORDER BY synced_at ASC LIMIT ?"
         );
         $stmtStale->execute([$remaining]);
         foreach ($stmtStale->fetchAll() as $seg) {
+            $wsId = $seg['workspace_id'];
             if (empty($seg['criteria'])) {
-                // [FIX P30-D1] Mirror of queue branch � explicit count for consistency
-                $stmtAll2 = $pdo->query("SELECT COUNT(*) FROM subscribers WHERE status IN ('active','lead','customer')");
+                // [SECURITY FIX] Added workspace_id scope
+                $stmtAll2 = $pdo->prepare("SELECT COUNT(*) FROM subscribers WHERE workspace_id = ? AND status IN ('active','lead','customer')");
+                $stmtAll2->execute([$wsId]);
                 $allCount2 = (int) $stmtAll2->fetchColumn();
                 $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ?")
                     ->execute([$allCount2, $seg['id']]);
             } else {
                 $segRes = buildSegmentWhereClause($seg['criteria'], $seg['id']);
-                $stmtC = $pdo->prepare("SELECT COUNT(*) FROM subscribers s WHERE " . $segRes['sql']);
-                $stmtC->execute($segRes['params']);
+                // [SECURITY FIX] Added workspace_id scope
+                $stmtC = $pdo->prepare("SELECT COUNT(*) FROM subscribers s WHERE s.workspace_id = ? AND (" . $segRes['sql'] . ")");
+                $stmtC->execute(array_merge([$wsId], $segRes['params']));
                 $count = $stmtC->fetchColumn();
                 $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ?")
                     ->execute([$count, $seg['id']]);
@@ -128,6 +131,7 @@ foreach ($activeFlows as $flow) {
     $allowMultiple = !empty($fConfig['allowMultiple']);
     $maxEnrollments = (int) ($fConfig['maxEnrollments'] ?? 0);
     $cooldownHours = (int) ($fConfig['enrollmentCooldownHours'] ?? 12);
+    $wsId = $flow['workspace_id'];
 
     $trigger = null;
     foreach ($steps as $s) {
@@ -146,12 +150,13 @@ foreach ($activeFlows as $flow) {
     if ($tType !== 'segment')
         continue;
 
-    $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
-    $stmtSeg->execute([$tConfig['targetId']]);
+    // [SECURITY FIX] Added workspace_id filter for segment lookup
+    $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
+    $stmtSeg->execute([$tConfig['targetId'], $wsId]);
     $segDef = $stmtSeg->fetch();
 
     if (!$segDef) {
-        $logs[] = "  - Flow '{$flow['name']}': Trigger segment '{$tConfig['targetId']}' not found.";
+        $logs[] = "  - Flow '{$flow['name']}': Trigger segment '{$tConfig['targetId']}' not found in workspace $wsId.";
         continue;
     }
 
@@ -196,10 +201,12 @@ foreach ($activeFlows as $flow) {
         $existsCheckSql = "AND " . implode(" AND ", $checks);
     }
 
+    // [SECURITY FIX] Added s.workspace_id = ? to ensure subscribers only enter flows from their own workspace.
     $sqlIns = "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at)
                SELECT s.id, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
                FROM subscribers s
-               WHERE s.status IN ('active', 'lead', 'customer') 
+               WHERE s.workspace_id = ? 
+               AND s.status IN ('active', 'lead', 'customer') 
                AND ($segSql)
                $existsCheckSql";
 
@@ -244,7 +251,7 @@ foreach ($activeFlows as $flow) {
         }
     }
 
-    $params = array_merge([$flow['id'], $trigger['nextStepId'], $initialSchedule], $segParams, $checkParams);
+    $params = array_merge([$flow['id'], $trigger['nextStepId'], $initialSchedule, $wsId], $segParams, $checkParams);
 
     try {
         $stmtIns = $pdo->prepare($sqlIns);

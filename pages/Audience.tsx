@@ -288,12 +288,10 @@ const Audience: React.FC = () => {
     useEffect(() => {
         const state = location.state as any;
         if (state?.openSubscriberId) {
-            // Handle opening a specific subscriber on page load/navigation
             const subId = state.openSubscriberId;
             api.get<Subscriber>(`subscribers/${subId}`).then(res => {
                 if (res.success) {
                     setSelectedSubscriber(res.data);
-                    // Clear state to avoid reopening on refresh
                     navigate(location.pathname, { replace: true, state: { ...state, openSubscriberId: undefined } });
                 }
             });
@@ -302,7 +300,46 @@ const Audience: React.FC = () => {
             setViewingGroup({ id: state.openListId, name: state.openListName || 'Danh sách', type: 'list', count: state.openListCount || 0 });
             navigate(location.pathname, { replace: true, state: { ...state, openListId: undefined, openListName: undefined, openListCount: undefined } });
         }
-    }, [location.state]);
+
+        // Handle ?segment_id=xxx or ?list_id=xxx query params (from FlowCard link chips)
+        const params = new URLSearchParams(location.search);
+        const qSegmentId = params.get('segment_id');
+        const qListId    = params.get('list_id');
+
+        if (qSegmentId) {
+            setActiveTab('segments');
+            // Try to find from already-loaded data first, else fetch
+            const found = allSegments.find(s => s.id === qSegmentId) || segments.find(s => s.id === qSegmentId);
+            if (found) {
+                setViewingGroup({ id: found.id, name: found.name, type: 'segment', count: found.count || 0 });
+            } else {
+                api.get<Segment>(`segments?id=${qSegmentId}`).then(res => {
+                    if (res.success && res.data) {
+                        const seg = Array.isArray(res.data) ? res.data[0] : res.data;
+                        if (seg) setViewingGroup({ id: seg.id, name: seg.name, type: 'segment', count: seg.count || 0 });
+                    }
+                });
+            }
+            // Clean URL
+            navigate(location.pathname, { replace: true, state: state });
+        }
+
+        if (qListId) {
+            setActiveTab('lists');
+            const found = allStaticLists.find((l: any) => l.id === qListId) || staticLists.find((l: any) => l.id === qListId);
+            if (found) {
+                setViewingGroup({ id: found.id, name: found.name, type: 'list', count: found.count || 0 });
+            } else {
+                api.get<any>(`lists?id=${qListId}`).then(res => {
+                    if (res.success && res.data) {
+                        const lst = Array.isArray(res.data) ? res.data[0] : res.data;
+                        if (lst) setViewingGroup({ id: lst.id, name: lst.name, type: 'list', count: lst.count || 0 });
+                    }
+                });
+            }
+            navigate(location.pathname, { replace: true, state: state });
+        }
+    }, [location.state, location.search]);
 
     // CRITICAL: These callbacks must be defined BEFORE any conditional rendering to avoid hooks violations
     const handleToggleSelection = React.useCallback((id: string) => {

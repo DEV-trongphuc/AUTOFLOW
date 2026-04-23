@@ -1,12 +1,12 @@
 
 // components/templates/EmailEditor/components/Properties/ImageLibraryModal.tsx
 // Style synced with FileLibraryModal (common/FileLibraryModal.tsx)
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
     X, Search, FolderOpen, Image as ImageIcon, CheckCircle2,
     Loader2, RefreshCw, Download, AlertCircle, Trash2, Upload,
-    ChevronLeft, ChevronRight
+    ChevronLeft, ChevronRight, Pencil, Check
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../../../../../services/storageAdapter';
@@ -88,6 +88,11 @@ const ImageLibraryModal: React.FC<ImageLibraryModalProps> = ({ isOpen, onClose, 
     const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
     const [bulkDeleting, setBulkDeleting]           = useState(false);
     const [bulkDeleteError, setBulkDeleteError]     = useState('');
+    // Rename state
+    const [renamingKey, setRenamingKey]   = useState<string | null>(null);
+    const [renameValue, setRenameValue]   = useState('');
+    const [renameSaving, setRenameSaving] = useState(false);
+    const renameInputRef = useRef<HTMLInputElement>(null);
 
     const fetchImages = useCallback(async () => {
         setLoading(true);
@@ -242,6 +247,56 @@ const ImageLibraryModal: React.FC<ImageLibraryModalProps> = ({ isOpen, onClose, 
         e.stopPropagation();
         setConfirmDelete(null);
         setDeleteError(null);
+    };
+
+    // ── Rename ────────────────────────────────────────────────────────────────
+    const startRename = (e: React.MouseEvent, file: ImageFile) => {
+        e.stopPropagation();
+        setRenamingKey(file.uniqueName);
+        setRenameValue(file.name);
+        setTimeout(() => renameInputRef.current?.select(), 50);
+    };
+
+    const commitRename = async (uniqueName: string) => {
+        const trimmed = renameValue.trim();
+        if (!trimmed || trimmed === images.find(f => f.uniqueName === uniqueName)?.name) {
+            setRenamingKey(null);
+            return;
+        }
+        setRenameSaving(true);
+        if (DEMO_MODE) {
+            await new Promise(r => setTimeout(r, 200));
+            const updated = getDemoImages().map(f =>
+                f.uniqueName === uniqueName ? { ...f, name: trimmed } : f
+            );
+            saveDemoImages(updated);
+            setImages(updated);
+            toast.success('Đã đổi tên');
+            setRenamingKey(null);
+            setRenameSaving(false);
+            return;
+        }
+        try {
+            const res = await api.post<{ uniqueName: string; name: string; url: string }>(
+                'upload?route=rename',
+                JSON.stringify({ uniqueName, newName: trimmed })
+            );
+            if (res.success && res.data) {
+                setImages(prev => prev.map(f =>
+                    f.uniqueName === uniqueName
+                        ? { ...f, name: res.data!.name, uniqueName: res.data!.uniqueName, url: res.data!.url }
+                        : f
+                ));
+                toast.success('Đã đổi tên');
+            } else {
+                toast.error('Đổi tên thất bại');
+            }
+        } catch {
+            toast.error('Lỗi kết nối');
+        } finally {
+            setRenameSaving(false);
+            setRenamingKey(null);
+        }
     };
 
     const toggleSelect = (uniqueKey: string) => {
@@ -456,9 +511,44 @@ const ImageLibraryModal: React.FC<ImageLibraryModalProps> = ({ isOpen, onClose, 
 
                                         {/* Info */}
                                         <div className="p-2.5">
-                                            <p className="text-[10px] font-bold text-slate-700 truncate leading-tight mb-1" title={file.name}>
-                                                {file.name}
-                                            </p>
+                                            {renamingKey === uniqueKey ? (
+                                                <div
+                                                    className="flex items-center gap-1 mb-1"
+                                                    onClick={e => e.stopPropagation()}
+                                                >
+                                                    <input
+                                                        ref={renameInputRef}
+                                                        value={renameValue}
+                                                        onChange={e => setRenameValue(e.target.value)}
+                                                        onKeyDown={e => {
+                                                            if (e.key === 'Enter') commitRename(uniqueKey);
+                                                            if (e.key === 'Escape') setRenamingKey(null);
+                                                        }}
+                                                        className="flex-1 min-w-0 text-[10px] font-bold text-slate-700 border border-violet-400 rounded px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-violet-300 bg-white"
+                                                        autoFocus
+                                                    />
+                                                    <button
+                                                        onClick={() => commitRename(uniqueKey)}
+                                                        disabled={renameSaving}
+                                                        className="p-1 rounded text-emerald-600 hover:bg-emerald-50 transition-colors shrink-0"
+                                                    >
+                                                        {renameSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="group/name flex items-center gap-1 min-w-0 mb-1">
+                                                    <p className="text-[10px] font-bold text-slate-700 truncate leading-tight flex-1" title={file.name}>
+                                                        {file.name}
+                                                    </p>
+                                                    <button
+                                                        onClick={e => startRename(e, file)}
+                                                        title="Đổi tên"
+                                                        className="shrink-0 p-0.5 rounded text-slate-300 hover:text-violet-500 opacity-0 group-hover:opacity-100 transition-all duration-150"
+                                                    >
+                                                        <Pencil className="w-2.5 h-2.5" />
+                                                    </button>
+                                                </div>
+                                            )}
                                             <div className="flex items-center justify-between">
                                                 <span className="text-[9px] text-slate-400 font-mono">{formatSize(file.size)}</span>
                                                 <span className="text-[9px] text-slate-400">{formatDate(file.modified_at ?? file.date)}</span>

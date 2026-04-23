@@ -48,6 +48,7 @@ const FIELDS = [
     { value: 'anniversary_date', label: 'Ngày kỷ niệm', icon: Calendar, type: FIELD_TYPES.DATE },
     { value: 'last_activity_at', label: 'Lần hoạt động cuối', icon: Calendar, type: FIELD_TYPES.DATE },
     { value: 'web_activity', label: 'Hành động Website', icon: Globe, type: FIELD_TYPES.STRING },
+    { value: 'custom_field', label: 'Trường tùy chỉnh', icon: User, type: FIELD_TYPES.STRING },
 ];
 
 const OPERATORS_BY_TYPE: Record<string, any[]> = {
@@ -294,7 +295,7 @@ const AdvancedConditionConfig: React.FC<AdvancedConditionConfigProps> = ({ confi
 
                                         <div className="flex-1 min-w-0 grid grid-cols-12 gap-2">
                                             {/* FIELD SELECT */}
-                                            <div className={cond.field === 'web_activity' ? "col-span-3 min-w-0" : "col-span-4 min-w-0"}>
+                                            <div className={(cond.field === 'web_activity' || cond.field === 'custom_field') ? "col-span-3 min-w-0" : "col-span-4 min-w-0"}>
                                                 <Select
                                                     value={cond.field}
                                                     onChange={(val) => updateCondition(bIdx, cIdx, { field: val })}
@@ -304,8 +305,21 @@ const AdvancedConditionConfig: React.FC<AdvancedConditionConfigProps> = ({ confi
                                                 />
                                             </div>
 
+                                            {/* CUSTOM FIELD KEY */}
+                                            {cond.field === 'custom_field' && (
+                                                <div className="col-span-2 min-w-0">
+                                                    <input
+                                                        type="text"
+                                                        value={cond.key || ''}
+                                                        onChange={(e) => updateCondition(bIdx, cIdx, { key: e.target.value })}
+                                                        placeholder="Tên trường..."
+                                                        className="w-full h-8 text-[11px] border border-slate-200 rounded-xl px-3 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none font-bold text-slate-700 placeholder:text-slate-400 bg-slate-50/50 hover:bg-white transition-all shadow-sm truncate"
+                                                    />
+                                                </div>
+                                            )}
+
                                             {/* OPERATOR SELECT */}
-                                            <div className={cond.field === 'web_activity' ? "col-span-2 min-w-0" : "col-span-3 min-w-0"}>
+                                            <div className={cond.field === 'web_activity' ? "col-span-2 min-w-0" : (cond.field === 'custom_field' ? "col-span-3 min-w-0" : "col-span-3 min-w-0")}>
                                                 <Select
                                                     value={cond.operator}
                                                     onChange={(val) => updateCondition(bIdx, cIdx, { operator: val })}
@@ -316,7 +330,7 @@ const AdvancedConditionConfig: React.FC<AdvancedConditionConfigProps> = ({ confi
                                             </div>
 
                                             {/* VALUE INPUT (Dynamic) */}
-                                            <div className={cond.field === 'web_activity' ? "col-span-3 min-w-0" : "col-span-5 min-w-0"}>
+                                            <div className={cond.field === 'web_activity' ? "col-span-3 min-w-0" : (cond.field === 'custom_field' ? "col-span-4 min-w-0" : "col-span-5 min-w-0")}>
                                                 {renderValueInput(fieldDef, cond.operator, cond.value, (val) => updateCondition(bIdx, cIdx, { value: val }))}
                                             </div>
 

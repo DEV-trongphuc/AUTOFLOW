@@ -244,7 +244,7 @@ try {
             }
 
             // Trigger Automation in Bulk
-            enrollSubscribersBulk($pdo, $subscriberIds, 'tag', $tag);
+            enrollSubscribersBulk($pdo, $subscriberIds, 'tag', $tag, $workspace_id);
             break;
 
         case 'tag_remove':
@@ -296,7 +296,7 @@ try {
             }
 
             // Trigger automation in BULK
-            enrollSubscribersBulk($pdo, $subscriberIds, 'list', $listId);
+            enrollSubscribersBulk($pdo, $subscriberIds, 'list', $listId, $workspace_id);
 
             // Update list count once (recalculate for accuracy)
             $pdo->prepare("UPDATE lists SET subscriber_count = (SELECT COUNT(*) FROM subscriber_lists WHERE list_id = ?) WHERE id = ?")
@@ -577,7 +577,7 @@ try {
             // Post-process Lists (Automations & Counts)
             foreach ($allAffectedListSubscribers as $lid => $subs) {
                 // Trigger 'added_to_list' automation
-                enrollSubscribersBulk($pdo, $subs, 'added_to_list', $lid);
+                enrollSubscribersBulk($pdo, $subs, 'added_to_list', $lid, $workspace_id);
 
                 // Update counts properly
                 $pdo->prepare("UPDATE lists SET subscriber_count = (SELECT COUNT(*) FROM subscriber_lists WHERE list_id = ?) WHERE id = ?")->execute([$lid, $lid]);

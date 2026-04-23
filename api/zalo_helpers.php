@@ -99,7 +99,7 @@ function logZaloMsg($pdo, $zaloUserId, $direction, $text)
  * Log a Zalo subscriber's timeline activity
  * Includes optional msgId for de-duplication
  */
-function logZaloSubscriberActivity($pdo, $subscriberId, $type, $refId = null, $details = null, $refName = null, $msgId = null)
+function logZaloSubscriberActivity($pdo, $subscriberId, $type, $refId = null, $details = null, $refName = null, $msgId = null, $workspaceId = null)
 {
     try {
         // [DE-DUP] Prevent duplicate 'automation_trigger' logs (Check both main and buffer if possible, but keep it simple for now)
@@ -113,28 +113,45 @@ function logZaloSubscriberActivity($pdo, $subscriberId, $type, $refId = null, $d
 
         // [OPTIMIZATION] Zalo Activity Buffering
         // Instead of inserting directly into the heavy activity table, we use a buffer.
-        $stmtBuf = $pdo->prepare("INSERT INTO zalo_activity_buffer (subscriber_id, type, reference_id, reference_name, details, zalo_msg_id) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmtBuf->execute([$subscriberId, $type, $refId, $refName, $details, $msgId]);
+        static $hasZaloWorkspaceCol = null;
+        if ($hasZaloWorkspaceCol === null) {
+            $check = $pdo->query("SHOW COLUMNS FROM zalo_activity_buffer LIKE 'workspace_id'");
+            $hasZaloWorkspaceCol = ($check->rowCount() > 0);
+        }
 
+        if ($hasZaloWorkspaceCol) {
+            $stmtBuf = $pdo->prepare("INSERT INTO zalo_activity_buffer (subscriber_id, workspace_id, type, reference_id, reference_name, details, zalo_msg_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmtBuf->execute([$subscriberId, $workspaceId ?: 1, $type, $refId, $refName, $details, $msgId]);
+        } else {
+            $stmtBuf = $pdo->prepare("INSERT INTO zalo_activity_buffer (subscriber_id, type, reference_id, reference_name, details, zalo_msg_id) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmtBuf->execute([$subscriberId, $type, $refId, $refName, $details, $msgId]);
+        }
     } catch (Exception $e) {
         // Fallback: Create table if missing
         if (strpos($e->getMessage(), "doesn't exist") !== false) {
             try {
                 $pdo->exec("CREATE TABLE IF NOT EXISTS zalo_activity_buffer (
                     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                    subscriber_id char(36) NOT NULL,
+                    subscriber_id VARCHAR(100) NOT NULL,
+                    workspace_id INT DEFAULT 1,
                     type VARCHAR(50) NOT NULL,
                     reference_id VARCHAR(100),
                     reference_name VARCHAR(255),
                     details TEXT,
-                    zalo_msg_id VARCHAR(100),
+                    zalo_msg_id VARCHAR(255),
                     processed TINYINT(1) DEFAULT 0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    INDEX idx_processed (processed)
+                    INDEX idx_processed (processed),
+                    INDEX idx_workspace_id (workspace_id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
-                $stmtBuf = $pdo->prepare("INSERT INTO zalo_activity_buffer (subscriber_id, type, reference_id, reference_name, details, zalo_msg_id) VALUES (?, ?, ?, ?, ?, ?)");
-                $stmtBuf->execute([$subscriberId, $type, $refId, $refName, $details, $msgId]);
+                if ($hasZaloWorkspaceCol) {
+                    $stmtBuf = $pdo->prepare("INSERT INTO zalo_activity_buffer (subscriber_id, workspace_id, type, reference_id, reference_name, details, zalo_msg_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                    $stmtBuf->execute([$subscriberId, $workspaceId ?: 1, $type, $refId, $refName, $details, $msgId]);
+                } else {
+                    $stmtBuf = $pdo->prepare("INSERT INTO zalo_activity_buffer (subscriber_id, type, reference_id, reference_name, details, zalo_msg_id) VALUES (?, ?, ?, ?, ?, ?)");
+                    $stmtBuf->execute([$subscriberId, $type, $refId, $refName, $details, $msgId]);
+                }
             } catch (Exception $ex) {
                 // Last resort: log to error log
                 error_log("Failed to log Zalo activity: " . $ex->getMessage());

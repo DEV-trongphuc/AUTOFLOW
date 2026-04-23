@@ -343,6 +343,61 @@ const Flows: React.FC = () => {
                 const data = tagsRes.data;
                 setAllTags(Array.isArray(data) ? data : (data as any)?.data || []);
             }
+            // ── Second-pass: resolve any segment/list names referenced by flow
+            //    triggers that weren't included in the initial batch (e.g. pagination) ──
+            const flowList2: Flow[] = flowsRes.success
+                ? (Array.isArray(flowsRes.data) ? flowsRes.data : (flowsRes.data as any)?.data || [])
+                : [];
+            const loadedSegments: Segment[] = segRes.success
+                ? (Array.isArray(segRes.data) ? segRes.data : (segRes.data as any)?.data || [])
+                : [];
+            const loadedLists: any[] = listsRes.success
+                ? (Array.isArray(listsRes.data) ? listsRes.data : (listsRes.data as any)?.data || [])
+                : [];
+
+            const knownSegIds  = new Set(loadedSegments.map(s => s.id));
+            const knownListIds = new Set(loadedLists.map(l => l.id));
+
+            const missingSegIds : string[] = [];
+            const missingListIds: string[] = [];
+
+            for (const flow of flowList2) {
+                const trigger = flow.steps?.find(s => s.type === 'trigger');
+                const cfg = trigger?.config || {};
+                if (!cfg.targetId || cfg.type !== 'segment') continue;
+
+                if (cfg.targetSubtype === 'list' || cfg.targetSubtype === 'sync') {
+                    // Explicitly a list/sync list
+                    if (!knownListIds.has(cfg.targetId)) missingListIds.push(cfg.targetId);
+                } else {
+                    // targetSubtype not set — could be segment OR list
+                    // Queue both so the correct table resolves it
+                    if (!knownSegIds.has(cfg.targetId))  missingSegIds.push(cfg.targetId);
+                    if (!knownListIds.has(cfg.targetId)) missingListIds.push(cfg.targetId);
+                }
+            }
+
+            if (missingSegIds.length > 0) {
+                const extras = await Promise.all(
+                    [...new Set(missingSegIds)].map(id => api.get<Segment>(`segments?id=${id}`))
+                );
+                const extra: Segment[] = extras
+                    .filter(r => r.success && r.data)
+                    .map(r => (Array.isArray(r.data) ? r.data[0] : r.data) as Segment)
+                    .filter(Boolean);
+                if (extra.length > 0) setAllSegments(prev => [...prev, ...extra]);
+            }
+            if (missingListIds.length > 0) {
+                const extras = await Promise.all(
+                    [...new Set(missingListIds)].map(id => api.get<any>(`lists?id=${id}`))
+                );
+                const extra: any[] = extras
+                    .filter(r => r.success && r.data)
+                    .map(r => (Array.isArray(r.data) ? r.data[0] : r.data))
+                    .filter(Boolean);
+                if (extra.length > 0) setAllLists(prev => [...prev, ...extra]);
+            }
+
         } catch (error) {
             showToast('Lỗi khi tải dữ liệu hệ thống', 'error');
         } finally {
@@ -932,8 +987,8 @@ const Flows: React.FC = () => {
     const handleOpenCustomEvent = React.useCallback((event: CustomEvent) => {
         setSelectedCustomEvent(event);
     }, []);
-    const handleOpenList = React.useCallback((list: any) => setViewingGroup({ id: list.id, name: list.name, type: 'list', count: list.count || 0 }), []);
-    const handleOpenSegment = React.useCallback((segment: Segment) => setViewingGroup({ id: segment.id, name: segment.name, type: 'segment', count: segment.count || 0 }), []);
+    const handleOpenList = React.useCallback((list: any) => navigate(`/audience?list_id=${list.id}`), [navigate]);
+    const handleOpenSegment = React.useCallback((segment: Segment) => navigate(`/audience?segment_id=${segment.id}`), [navigate]);
     const handleOpenTag = React.useCallback((tag: string) => setViewingGroup({ id: tag, name: tag, type: 'tag', count: 0 }), []);
     const handleDuplicateFlow = React.useCallback(async (flow: Flow) => {
         setConfirmModal({
@@ -1748,6 +1803,9 @@ const Flows: React.FC = () => {
                                             const type = trigger?.config?.type || 'segment';
                                             const subtype = trigger?.config?.targetSubtype;
 
+                                            // isListTarget: explicitly 'list' or 'sync' subtype → stored in lists table
+                                            const isListTarget = subtype === 'list' || subtype === 'sync' || (type === 'segment' && !subtype && !!targetId && listsMap.has(targetId));
+
                                             return (
                                                 <FlowCard
                                                     key={flow.id}
@@ -1757,8 +1815,8 @@ const Flows: React.FC = () => {
                                                     linkedForm={type === 'form' ? formsMap.get(targetId!) : undefined}
                                                     linkedPurchaseEvent={type === 'purchase' ? purchaseEventsMap.get(targetId!) : undefined}
                                                     linkedCustomEvent={type === 'custom_event' ? customEventsMap.get(targetId!) : undefined}
-                                                    linkedSegment={(type === 'segment' && subtype !== 'list') ? segmentsMap.get(targetId!) : undefined}
-                                                    linkedList={(type === 'segment' && subtype === 'list') ? listsMap.get(targetId!) : undefined}
+                                                    linkedSegment={(type === 'segment' && !isListTarget) ? segmentsMap.get(targetId!) : undefined}
+                                                    linkedList={(type === 'segment' && isListTarget) ? listsMap.get(targetId!) : undefined}
                                                     linkedTag={type === 'tag' ? targetId : undefined}
                                                     onClick={() => handleFlowClick(flow)}
                                                     onDelete={(p) => handleDeleteFlow(flow, p)}

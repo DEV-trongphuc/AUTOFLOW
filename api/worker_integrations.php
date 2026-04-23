@@ -20,8 +20,8 @@ if (!function_exists('runIntegrationSync')) {
             return;
 
         // 1. Bulk Upsert Subscribers
-        // Added: notes, anniversary_date
-        $sql = "INSERT INTO subscribers (id, email, first_name, last_name, phone_number, source, job_title, company_name, country, city, gender, date_of_birth, anniversary_date, salesperson, notes, custom_attributes, status, joined_at) VALUES ";
+        // Added: notes, anniversary_date, workspace_id
+        $sql = "INSERT INTO subscribers (id, email, first_name, last_name, phone_number, source, job_title, company_name, country, city, gender, date_of_birth, anniversary_date, salesperson, notes, custom_attributes, status, workspace_id, joined_at) VALUES ";
         $sql .= implode(', ', $subRows);
         $sql .= " ON DUPLICATE KEY UPDATE 
                 first_name = CASE WHEN VALUES(first_name) != '' AND VALUES(first_name) IS NOT NULL THEN VALUES(first_name) ELSE first_name END,
@@ -36,8 +36,13 @@ if (!function_exists('runIntegrationSync')) {
                 anniversary_date = CASE WHEN VALUES(anniversary_date) != '' AND VALUES(anniversary_date) IS NOT NULL THEN VALUES(anniversary_date) ELSE anniversary_date END,
                 salesperson = CASE WHEN VALUES(salesperson) != '' AND VALUES(salesperson) IS NOT NULL THEN VALUES(salesperson) ELSE salesperson END,
                 notes = CASE WHEN VALUES(notes) != '' AND VALUES(notes) != '[]' AND VALUES(notes) IS NOT NULL THEN VALUES(notes) ELSE notes END,
-                custom_attributes = CASE WHEN VALUES(custom_attributes) != '' AND VALUES(custom_attributes) != '[]' AND VALUES(custom_attributes) IS NOT NULL THEN VALUES(custom_attributes) ELSE custom_attributes END,
-                source = CASE WHEN VALUES(source) != '' AND VALUES(source) IS NOT NULL THEN VALUES(source) ELSE source END";
+                custom_attributes = CASE 
+                    WHEN VALUES(custom_attributes) != '' AND VALUES(custom_attributes) != '{}' AND VALUES(custom_attributes) IS NOT NULL 
+                    THEN JSON_MERGE_PATCH(COALESCE(custom_attributes, '{}'), VALUES(custom_attributes)) 
+                    ELSE custom_attributes 
+                END,
+                source = CASE WHEN VALUES(source) != '' AND VALUES(source) IS NOT NULL THEN VALUES(source) ELSE source END,
+                workspace_id = VALUES(workspace_id)";
 
         $pdo->query($sql);
 
@@ -323,8 +328,9 @@ if (!function_exists('runIntegrationSync')) {
                                         $customAttrs['address'] = $address;
 
                                     $escCustomAttrs = "'" . addslashes(json_encode($customAttrs, JSON_UNESCAPED_UNICODE)) . "'";
+                                    $escWorkspaceId = (int)($integration['workspace_id'] ?? 1);
 
-                                    $batchSubscribers[] = "($escId, $escEmail, $escFName, $escLName, $escPhone, $escSource, $escJobTitle, $escCompanyName, $escCountry, $escCity, $escGender, $escDateOfBirth, $escAnniversary, $escSalesperson, $escNotes, $escCustomAttrs, 'customer', NOW())";
+                                    $batchSubscribers[] = "($escId, $escEmail, $escFName, $escLName, $escPhone, $escSource, $escJobTitle, $escCompanyName, $escCountry, $escCity, $escGender, $escDateOfBirth, $escAnniversary, $escSalesperson, $escNotes, $escCustomAttrs, 'customer', $escWorkspaceId, NOW())";
                                     $batchListPairs[] = "($escTargetList, $escId)";
 
                                     $syncedCount++;
@@ -555,7 +561,9 @@ if (!function_exists('runIntegrationSync')) {
                                 $customAttrs = [];
                                 foreach ($customFieldMap as $sysKey => $cIdx) {
                                     if (!empty($row[$cIdx])) {
-                                        $customAttrs[$sysKey] = $row[$cIdx];
+                                        // Strip 'custom_field.' prefix if present
+                                        $cleanKey = str_replace('custom_field.', '', $sysKey);
+                                        $customAttrs[$cleanKey] = $row[$cIdx];
                                     }
                                 }
                                 if (!empty($customAttrs)) {
@@ -593,8 +601,9 @@ if (!function_exists('runIntegrationSync')) {
                             $escSalesperson = "'" . addslashes($salesperson) . "'";
                             $escNotes = "'" . addslashes($notesJson) . "'";
                             $escCustomAttrs = "'" . addslashes($customAttrsJson) . "'";
+                            $escWorkspaceId = (int)($integration['workspace_id'] ?? 1);
 
-                            $batchSubscribers[] = "($escId, $escEmail, $escFName, $escLName, $escPhone, $escSource, $escJobTitle, $escCompanyName, $escCountry, $escCity, $escGender, $escDateOfBirth, $escAnniversary, $escSalesperson, $escNotes, $escCustomAttrs, 'active', NOW())";
+                            $batchSubscribers[] = "($escId, $escEmail, $escFName, $escLName, $escPhone, $escSource, $escJobTitle, $escCompanyName, $escCountry, $escCity, $escGender, $escDateOfBirth, $escAnniversary, $escSalesperson, $escNotes, $escCustomAttrs, 'active', $escWorkspaceId, NOW())";
                             $batchListPairs[] = "($escTargetList, $escId)";
 
                             $countInBatch++;
@@ -632,9 +641,15 @@ if (!function_exists('runIntegrationSync')) {
                         fclose($handle);
                         unlink($tempFile);
 
-                        // Update List Count
-                        $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM subscriber_lists WHERE list_id = ?");
-                        $stmtCount->execute([$targetListId]);
+                        // Update List Count (Workspace Aware)
+                        $stmtCount = $pdo->prepare("
+                            SELECT COUNT(*) 
+                            FROM subscriber_lists sl
+                            JOIN subscribers s ON sl.subscriber_id = s.id
+                            WHERE sl.list_id = ? AND s.workspace_id = ?
+                        ");
+                        $safeWorkspaceId = (int)($integration['workspace_id'] ?? 1);
+                        $stmtCount->execute([$targetListId, $safeWorkspaceId]);
                         $totalCount = $stmtCount->fetchColumn();
                         $pdo->prepare("UPDATE lists SET subscriber_count = ? WHERE id = ?")->execute([$totalCount, $targetListId]);
 
@@ -669,16 +684,18 @@ if (!function_exists('runIntegrationSync')) {
 
             try {
                 // [NEW] Global Zalo Sync: Link any external subscribers with Zalo users by Email/Phone
+                // [FIX P43-E2] Scoped to workspace_id to prevent cross-workspace data leakage.
                 $pdo->exec("
                 UPDATE subscribers s
                 JOIN zalo_subscribers zs ON (s.email = zs.manual_email AND zs.manual_email != '') 
                                          OR (s.phone_number = zs.phone_number AND zs.phone_number != '')
+                JOIN zalo_oa zo ON zs.oa_id = zo.oa_id
                 SET s.zalo_user_id = zs.zalo_user_id,
                     s.verified = 1,
                     s.avatar = CASE WHEN s.avatar IS NULL OR s.avatar = '' THEN zs.avatar ELSE s.avatar END,
                     s.gender = CASE WHEN s.gender IS NULL OR s.gender = '' THEN zs.gender ELSE s.gender END,
                     s.first_name = CASE WHEN (s.first_name IS NULL OR s.first_name = '') AND zs.display_name != 'Zalo User' THEN zs.display_name ELSE s.first_name END
-                WHERE s.zalo_user_id IS NULL OR s.verified = 0
+                WHERE (s.zalo_user_id IS NULL OR s.verified = 0) AND s.workspace_id = zo.workspace_id
             ");
             } catch (Exception $e) {
                 logIntegrationSync("Bulk Zalo Sync Error: " . $e->getMessage());

@@ -58,6 +58,7 @@ const Landing = lazy(() => import('./pages/Landing'));
 const Surveys = lazy(() => import('./pages/Surveys'));
 const SurveyEditorPage = lazy(() => import('./components/surveys/SurveyEditor' as any));
 const PublicSurvey = lazy(() => import('./pages/PublicSurvey' as any));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 import PremiumLoader from './components/common/PremiumLoader';
 import { API_BASE_URL, DEMO_MODE } from '@/utils/config';
@@ -432,9 +433,9 @@ const App: React.FC = () => {
                                         <ProtectedRoute><Layout><P c={Surveys} /></Layout></ProtectedRoute>
                                     } />
 
-                                    {/* Fallback */}
+                                    {/* 404 — unknown routes */}
                                     <Route path="*" element={
-                                        <ProtectedRoute><Layout><Navigate to="/campaigns" replace /></Layout></ProtectedRoute>
+                                        <Suspense fallback={<TabLoader />}><NotFound /></Suspense>
                                     } />
                                 </Routes>
                             </Suspense>

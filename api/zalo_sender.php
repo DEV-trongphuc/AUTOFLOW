@@ -247,7 +247,7 @@ function sendZNSMessage($pdo, $oaConfigId, $templateId, $phoneNumber, $templateD
         }
     }
 
-    // Get access token — use preloaded token from batch caller if available
+    // Get access token  use preloaded token from batch caller if available
     if ($preloadedToken !== null) {
         $accessToken = $preloadedToken;
     } else {
@@ -289,7 +289,7 @@ function sendZNSMessage($pdo, $oaConfigId, $templateId, $phoneNumber, $templateD
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 20);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);           // [FIX] 20s max — prevents worker hang causing infinite 'processing' loop
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);           // [FIX] 20s max  prevents worker hang causing infinite 'processing' loop
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);    // [FIX] 10s connect timeout
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         'Content-Type: application/json',
@@ -578,7 +578,7 @@ function batchSendZNS($pdo, $oaConfigId, $messages)
 
     // [FIX] Pre-fetch token and quota ONCE before loop.
     // Old behavior: sendZNSMessage called checkQuotaAvailable() + getAccessToken() per message.
-    // At 4,000 msg/min that was 12,000–16,000 DB queries just for config lookups.
+    // At 4,000 msg/min that was 12,00016,000 DB queries just for config lookups.
     // New behavior: 2 DB calls total for the whole batch.
     $quotaCheck = checkQuotaAvailable($pdo, $oaConfigId, count($messages));
     if (!$quotaCheck['available']) {
@@ -632,7 +632,7 @@ function batchSendZNS($pdo, $oaConfigId, $messages)
         // [FIX] Circuit breaker: if token is rejected by Zalo API (expired mid-batch),
         // stop immediately instead of burning through all remaining messages.
         if (($result['status'] ?? '') === 'auth_failed') {
-            error_log("[batchSendZNS] auth_failed at index $index — aborting batch. OA: $oaConfigId");
+            error_log("[batchSendZNS] auth_failed at index $index  aborting batch. OA: $oaConfigId");
             break;
         }
 
@@ -719,7 +719,7 @@ function sendConsultationMessage($pdo, $oaConfigId, $zaloUserId, $text, $attachm
             if ($subId) {
                 require_once 'zalo_helpers.php';
                 logZaloMsg($pdo, $zaloUserId, 'outbound', $text);
-                logZaloSubscriberActivity($pdo, $subId, 'staff_reply', null, "Tu v?n viên tr? l?i (Dashboard): $text", "Zalo Dashboard", $msgId);
+                logZaloSubscriberActivity($pdo, $subId, 'staff_reply', null, "Tu v?n vin tr? l?i (Dashboard): $text", "Zalo Dashboard", $msgId);
             }
         } catch (Exception $e) {
             // Log error but don't fail the response

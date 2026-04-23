@@ -1151,6 +1151,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
 
 
 
+                        {/* [UX] Secondary sections start collapsed — expand when needed */}
                         <Accordion title="Màu nền & Viền" icon={LucideIcons.Palette}>
                             <div className="space-y-4">
                                 <ColorPicker label="Màu nền" value={getStyle('backgroundColor')} onChange={(v, t) => handleColorUpdate(v, t, 'backgroundColor')} blocks={blocks} bodyStyle={bodyStyle} />
@@ -1277,7 +1278,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                     </div>
                                 </Accordion>
 
-                                <Accordion title="Kích thước & Khoảng cách" icon={LucideIcons.Maximize} defaultOpen>
+                                <Accordion title="Kích thước & Khoảng cách" icon={LucideIcons.Maximize}>
                                     <ColorPicker label="Background Color" value={getStyle('backgroundColor')} onChange={(v, t) => handleColorUpdate(v, t, 'backgroundColor')} blocks={blocks} bodyStyle={bodyStyle} />
                                     <SpacingControl label="Padding" values={{ top: getStyle('paddingTop'), right: getStyle('paddingRight'), bottom: getStyle('paddingBottom'), left: getStyle('paddingLeft') }} onChange={(v: any) => updateStyle({ paddingTop: v.top, paddingRight: v.right, paddingBottom: v.bottom, paddingLeft: v.left })} />
                                     <RadiusControl label="Border Radius" values={{ borderRadius: getStyle('borderRadius') }} onChange={(v: any) => updateStyle({ borderRadius: v.borderRadius })} />

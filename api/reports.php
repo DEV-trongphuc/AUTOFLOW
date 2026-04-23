@@ -50,7 +50,9 @@ try {
     }
 
     // --- CACHE LAYER (File Based) ---
-    $cacheKey = md5("report_v2_" . $startDateFull . "_" . $endDateFull); // Updated key for v2 structure
+    // [CRITICAL FIX] Added $workspace_id to cache key. 
+    // Previously, users from different workspaces shared the same cache if they picked the same dates!
+    $cacheKey = md5("report_v2_" . $workspace_id . "_" . $startDateFull . "_" . $endDateFull); 
     $cacheFile = __DIR__ . '/../cache/' . $cacheKey . '.json';
     $cacheTTL = 3600; // 1 hour
 

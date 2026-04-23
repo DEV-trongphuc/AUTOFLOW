@@ -234,7 +234,7 @@ if ($method === 'POST') {
                                 $pointLabel = " (+5 điểm)";
                                 updateZaloLeadScore($pdo, $zaloUserId, 'feedback');
                             }
-                            logZaloSubscriberActivity($pdo, $subId, $event, null, "Sự kiện Zalo $event{$pointLabel}", "Zalo Webhook", $eventId);
+                            logZaloSubscriberActivity($pdo, $subId, $event, null, "Sự kiện Zalo $event{$pointLabel}", "Zalo Webhook", $eventId, $oaConfig['workspace_id']);
 
                             // Also log to Main Timeline for high-value events
                             if (in_array($event, ['follow', 'user_reacted_message', 'user_feedback'])) {
@@ -243,7 +243,7 @@ if ($method === 'POST') {
                                 $mainIdEv = $stmtMainEv->fetchColumn();
                                 if ($mainIdEv) {
                                     $evLabel = $event === 'follow' ? 'Follow OA' : ($event === 'user_reacted_message' ? 'Reaction' : 'Feedback');
-                                    logActivity($pdo, $mainIdEv, $event, null, $evLabel, "Sự kiện Zalo $event{$pointLabel}", null, null);
+                                    logActivity($pdo, $mainIdEv, $event, null, $evLabel, "Sự kiện Zalo $event{$pointLabel}", null, null, [], $oaConfig['workspace_id']);
 
                                     if ($event === 'follow') {
                                         require_once 'trigger_helper.php';
@@ -284,7 +284,7 @@ if ($method === 'POST') {
                                         // Log activity for main subscriber
                                         require_once 'flow_helpers.php';
                                         $znsDelScore = max(1, floor($LSC['leadscore_zalo_interact'] / 2));
-                                        logActivity($pdo, $linkedSubId, 'zns_delivered', $enrollment['step_id'], $enrollment['flow_name'], "ZNS Delivered (+$znsDelScore điểm)", $enrollment['flow_id'], $enrollment['flow_id']);
+                                        logActivity($pdo, $linkedSubId, 'zns_delivered', $enrollment['step_id'], $enrollment['flow_name'], "ZNS Delivered (+$znsDelScore điểm)", $enrollment['flow_id'], $enrollment['flow_id'], [], $oaConfig['workspace_id']);
                                         $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + ? WHERE id = ?")->execute([$znsDelScore, $linkedSubId]);
                                     }
                                 }
@@ -324,7 +324,7 @@ if ($method === 'POST') {
                                                 // Log activity
                                                 require_once 'flow_helpers.php';
                                                 $znsSeenScore = $LSC['leadscore_zalo_interact'];
-                                                logActivity($pdo, $linkedSubId, 'zns_seen', $logEntry['step_id'], 'ZNS', "ZNS Seen (+$znsSeenScore điểm)", $logEntry['flow_id'], $logEntry['flow_id']);
+                                                logActivity($pdo, $linkedSubId, 'zns_seen', $logEntry['step_id'], 'ZNS', "ZNS Seen (+$znsSeenScore điểm)", $logEntry['flow_id'], $logEntry['flow_id'], [], $oaConfig['workspace_id']);
                                                 $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + ? WHERE id = ?")->execute([$znsSeenScore, $linkedSubId]);
                                             }
                                         }
@@ -373,7 +373,7 @@ if ($method === 'POST') {
                                         // Log to chat history as system outbound but DONT pause automation
                                         logZaloMsg($pdo, $zaloUserId, 'outbound', "[System Message] " . $staffMsg);
                                         // Log as system_reply instead of staff_reply
-                                        logZaloSubscriberActivity($pdo, $subId, 'system_reply', null, "Zalo System/Greeting: $staffMsg", "Zalo Official Account", $eventId);
+                                        logZaloSubscriberActivity($pdo, $subId, 'system_reply', null, "Zalo System/Greeting: $staffMsg", "Zalo Official Account", $eventId, $oaConfig['workspace_id']);
                                         $isAutomated = true; // Skip human logic below
                                     }
                                 } catch (Exception $e) { /* ignore */
@@ -384,7 +384,7 @@ if ($method === 'POST') {
                                 // Log to chat history as outbound
                                 logZaloMsg($pdo, $zaloUserId, 'outbound', $staffMsg);
                                 // Log to activity timeline as staff_reply (CRITICAL for AI Cooldown)
-                                logZaloSubscriberActivity($pdo, $subId, 'staff_reply', null, "Tư vấn viên trả lời: $staffMsg", "Zalo Official Account", $eventId);
+                                logZaloSubscriberActivity($pdo, $subId, 'staff_reply', null, "Tư vấn viên trả lời: $staffMsg", "Zalo Official Account", $eventId, $oaConfig['workspace_id']);
 
                                 // [NEW] Sync human reply to AI History
                                 try {
@@ -420,7 +420,7 @@ if ($method === 'POST') {
                             // Other events like user_send_image still log immediately.
                             if ($event !== 'user_send_text') {
                                 updateZaloLeadScore($pdo, $zaloUserId, 'message');
-                                logZaloSubscriberActivity($pdo, $subId, $event, null, "KH gửi tin nhắn (+5 điểm): $msgText", "Zalo Webhook", $eventId);
+                                logZaloSubscriberActivity($pdo, $subId, $event, null, "KH gửi tin nhắn (+5 điểm): $msgText", "Zalo Webhook", $eventId, $oaConfig['workspace_id']);
                             }
 
                             // [NEW] Sync Inbound Message to AI Chat History (Fix Empty List)
@@ -465,7 +465,7 @@ if ($method === 'POST') {
                             $stmtMainMsg->execute([$zaloUserId]);
                             $mainIdMsg = $stmtMainMsg->fetchColumn();
                             if ($mainIdMsg) {
-                                logActivity($pdo, $mainIdMsg, 'user_send_text', null, 'Zalo Message', "KH gửi tin nhắn (+5 điểm): $msgText", null, null);
+                                logActivity($pdo, $mainIdMsg, 'user_send_text', null, 'Zalo Message', "KH gửi tin nhắn (+5 điểm): $msgText", null, null, [], $oaConfig['workspace_id']);
                             }
                         }
 
@@ -612,7 +612,7 @@ if ($method === 'POST') {
                                     // [REDUNDANCY FIX] Log combined batched message to timeline once
                                     if ($subId) {
                                         updateZaloLeadScore($pdo, $zaloUserId, 'message');
-                                        logZaloSubscriberActivity($pdo, $subId, 'user_send_text', null, "KH gửi tin nhắn [BATCH]: $msgText", "Zalo Webhook Batch", $eventId . "_batch");
+                                        logZaloSubscriberActivity($pdo, $subId, 'user_send_text', null, "KH gửi tin nhắn [BATCH]: $msgText", "Zalo Webhook Batch", $eventId . "_batch", $oaConfig['workspace_id']);
 
                                         // [NEW] Trigger Inbound Message Flow
                                         $stmtMainMsg = $pdo->prepare("SELECT id FROM subscribers WHERE zalo_user_id = ? LIMIT 1");
@@ -663,7 +663,7 @@ if ($method === 'POST') {
                                                 continue; // Already clicked within 2s — skip but clean marker
                                             }
 
-                                            logZaloSubscriberActivity($pdo, $subId, 'zalo_clicked', $markerSid, "Click Button (+2 điểm): $markerLabel", $markerLabel, $eventId . "_click_" . $markerSid);
+                                            logZaloSubscriberActivity($pdo, $subId, 'zalo_clicked', $markerSid, "Click Button (+2 điểm): $markerLabel", $markerLabel, $eventId . "_click_" . $markerSid, $oaConfig['workspace_id']);
 
                                             // Also log to Main Timeline if possible
                                             $stmtMainClick = $pdo->prepare("SELECT id FROM subscribers WHERE zalo_user_id = ? LIMIT 1");
@@ -727,9 +727,9 @@ if ($method === 'POST') {
                                             // The 'verified' column is already set in the block above.
 
                                             // Log Profile Sync
-                                            logActivity($pdo, $mainId, 'profile_sync', null, 'Sync Profile', "Linked Zalo ID: $zaloUserId", null, null);
+                                            logActivity($pdo, $mainId, 'profile_sync', null, 'Sync Profile', "Linked Zalo ID: $zaloUserId", null, null, [], $oaConfig['workspace_id']);
                                             $znsRepScore = $LSC['leadscore_zalo_interact'] + 2; // Extra points for text reply
-                                            logActivity($pdo, $mainId, 'reply_zns', $lastZns['flow_id'] ?? null, 'Zalo Reply', "Replied to ZNS (+$znsRepScore điểm): $msgText", $lastZns['flow_id'] ?? null, null);
+                                            logActivity($pdo, $mainId, 'reply_zns', $lastZns['flow_id'] ?? null, 'Zalo Reply', "Replied to ZNS (+$znsRepScore điểm): $msgText", $lastZns['flow_id'] ?? null, null, [], $oaConfig['workspace_id']);
                                             // Award points for ZNS reply
                                             $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + ? WHERE id = ?")->execute([$znsRepScore, $mainId]);
                                         }
@@ -804,7 +804,7 @@ if ($method === 'POST') {
                                         $freshHolidayToken = ensureZaloToken($pdo, $oaConfig['id']);
                                         sendZaloScenarioReply($pdo, $zaloUserId, $freshHolidayToken, $h);
                                         if ($subId) {
-                                            logZaloSubscriberActivity($pdo, $subId, 'automation_reply', $h['id'], "Sent Holiday Reply: " . $h['title'], $msgText, $eventId . "_holiday");
+                                            logZaloSubscriberActivity($pdo, $subId, 'automation_reply', $h['id'], "Sent Holiday Reply: " . $h['title'], $msgText, $eventId . "_holiday", $oaConfig['workspace_id']);
                                         }
 
                                         $holidayTriggered = true;
@@ -927,7 +927,7 @@ if ($method === 'POST') {
                             if ($scenario) {
                                 file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ✅ Scenario found: " . ($scenario['title'] ?? $scenario['type']) . " → sending reply\n", FILE_APPEND);
                                 if (!empty($subId) && !empty($scenario['id'])) {
-                                    logZaloSubscriberActivity($pdo, $subId, 'automation_trigger', $scenario['id'], "Kích hoạt kịch bản: " . ($scenario['title'] ?? 'Auto Response'), $scenario['title'] ?? 'Auto Response', $eventId);
+                                    logZaloSubscriberActivity($pdo, $subId, 'automation_trigger', $scenario['id'], "Kích hoạt kịch bản: " . ($scenario['title'] ?? 'Auto Response'), $scenario['title'] ?? 'Auto Response', $eventId, $oaConfig['workspace_id']);
                                 }
                                 $freshScenarioToken = ensureZaloToken($pdo, $oaConfig['id']);
                                 sendZaloScenarioReply($pdo, $zaloUserId, $freshScenarioToken, $scenario, $msgText);
@@ -961,14 +961,15 @@ if ($method === 'POST') {
                                 $pdo->prepare("UPDATE zalo_broadcast_tracking SET status = 'seen', seen_at = NOW() WHERE id = ?")->execute([$track['id']]);
                                 $pdo->prepare("UPDATE zalo_broadcasts SET stats_seen = stats_seen + 1 WHERE id = ?")->execute([$track['broadcast_id']]);
                                 if ($broadcastSubId) {
-                                    logZaloSubscriberActivity($pdo, $broadcastSubId, 'seen_broadcast', $track['broadcast_id'], "Đã xem Broadcast", "Broadcast");
+                                    // Try to resolve workspace_id from OA
+                                    logZaloSubscriberActivity($pdo, $broadcastSubId, 'seen_broadcast', $track['broadcast_id'], "Đã xem Broadcast", "Broadcast", null, $oaConfig['workspace_id']);
                                     updateZaloLeadScore($pdo, $zaloUserId, 'zns_interaction', $track['broadcast_id']);
                                 }
                             } elseif ($event === 'user_reacted_message' && $track['status'] !== 'reacted') {
                                 $pdo->prepare("UPDATE zalo_broadcast_tracking SET status = 'reacted', reacted_at = NOW() WHERE id = ?")->execute([$track['id']]);
                                 $pdo->prepare("UPDATE zalo_broadcasts SET stats_reacted = stats_reacted + 1 WHERE id = ?")->execute([$track['broadcast_id']]);
                                 if ($broadcastSubId) {
-                                    logZaloSubscriberActivity($pdo, $broadcastSubId, 'reacted_broadcast', $track['broadcast_id'], "Đã tương tác Broadcast", "Broadcast");
+                                    logZaloSubscriberActivity($pdo, $broadcastSubId, 'reacted_broadcast', $track['broadcast_id'], "Đã tương tác Broadcast", "Broadcast", null, $oaConfig['workspace_id']);
                                     updateZaloLeadScore($pdo, $zaloUserId, 'zns_interaction', $track['broadcast_id']);
                                 }
                             }
@@ -1068,16 +1069,22 @@ if ($method === 'POST') {
             'location' => $location
         ];
 
-        // [AUTO-UPDATE] Subscriber City from IP (Click Events Only)
-        if ($type === 'click' && $location && $sid) {
+        // [AUTO-UPDATE] Subscriber City & Workspace Context from IP/DB (Click Events Only)
+        $wId = 1; // Default
+        if ($sid) {
             try {
-                $stmtCity = $pdo->prepare("SELECT city FROM subscribers WHERE id = ?");
-                $stmtCity->execute([$sid]);
-                $currentCity = $stmtCity->fetchColumn();
+                $stmtSub = $pdo->prepare("SELECT city, workspace_id FROM subscribers WHERE id = ?");
+                $stmtSub->execute([$sid]);
+                $subRow = $stmtSub->fetch(PDO::FETCH_ASSOC);
 
-                // [USER REQ] Only update if current data is EMPTY
-                if (empty($currentCity)) {
-                    $pdo->prepare("UPDATE subscribers SET city = ?, country = ? WHERE id = ?")->execute([$location, $location, $sid]);
+                if ($subRow) {
+                    $wId = $subRow['workspace_id'] ?? 1;
+                    $currentCity = $subRow['city'];
+
+                    // [USER REQ] Only update city if current data is EMPTY
+                    if ($type === 'click' && $location && empty($currentCity)) {
+                        $pdo->prepare("UPDATE subscribers SET city = ?, country = ? WHERE id = ?")->execute([$location, $location, $sid]);
+                    }
                 }
             } catch (Exception $e) {
                 // Ignore errors during city update to not break tracking
@@ -1196,6 +1203,7 @@ if ($method === 'POST') {
                         'fid' => $fid,
                         'cid' => $cid,
                         'var' => $_GET['var'] ?? null,
+                        'workspace_id' => $wId, // [HARDENING] Pass workspace_id into buffer
                         // user_agent is already inside $extraData['user_agent'] — no need to duplicate at root
                         'extra_data' => array_merge($extraData, ['url' => $url]),
                         'timestamp' => microtime(true)

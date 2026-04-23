@@ -38,8 +38,8 @@ if ($method === 'POST') {
         // 1. Get Destination List ID
         $listId = null;
         if ($destinationId) {
-            $stmtCheck = $pdo->prepare("SELECT id, name FROM lists WHERE id = ?");
-            $stmtCheck->execute([$destinationId]);
+            $stmtCheck = $pdo->prepare("SELECT id, name FROM lists WHERE id = ? AND workspace_id = ?");
+            $stmtCheck->execute([$destinationId, $workspace_id]);
             $l = $stmtCheck->fetch(PDO::FETCH_ASSOC);
             if ($l) {
                 $listId = $l['id'];
@@ -48,21 +48,21 @@ if ($method === 'POST') {
         }
 
         if (!$listId) {
-            $stmtL = $pdo->prepare("SELECT id FROM lists WHERE name = ?");
-            $stmtL->execute([$destListName]);
+            $stmtL = $pdo->prepare("SELECT id FROM lists WHERE name = ? AND workspace_id = ?");
+            $stmtL->execute([$destListName, $workspace_id]);
             $listId = $stmtL->fetchColumn();
             if (!$listId) {
                 $listId = uniqid();
                 // Get source name for label
                 $sourceLabel = "Unknown Source";
                 if ($sourceType === 'segment') {
-                    $stmtSrc = $pdo->prepare("SELECT name FROM segments WHERE id = ?");
-                    $stmtSrc->execute([$sourceId]);
+                    $stmtSrc = $pdo->prepare("SELECT name FROM segments WHERE id = ? AND workspace_id = ?");
+                    $stmtSrc->execute([$sourceId, $workspace_id]);
                     $srcName = $stmtSrc->fetchColumn();
                     $sourceLabel = "Split from Segment: " . ($srcName ?: $sourceId);
                 } else {
-                    $stmtSrc = $pdo->prepare("SELECT name FROM lists WHERE id = ?");
-                    $stmtSrc->execute([$sourceId]);
+                    $stmtSrc = $pdo->prepare("SELECT name FROM lists WHERE id = ? AND workspace_id = ?");
+                    $stmtSrc->execute([$sourceId, $workspace_id]);
                     $srcName = $stmtSrc->fetchColumn();
                     $sourceLabel = "Split from List: " . ($srcName ?: $sourceId);
                 }
@@ -83,8 +83,8 @@ if ($method === 'POST') {
 
         // A. BUILD SOURCE CONSTRAINT
         if ($sourceType === 'segment') {
-            $stmtS = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
-            $stmtS->execute([$sourceId]);
+            $stmtS = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
+            $stmtS->execute([$sourceId, $workspace_id]);
             $criteria = $stmtS->fetchColumn();
 
             if (!$criteria) {
@@ -94,13 +94,13 @@ if ($method === 'POST') {
 
             $resS = buildSegmentWhereClause($criteria, $sourceId);
             // Base select from subscribers table for segments
-            $sql = "SELECT s.id FROM subscribers s WHERE s.status IN ('active', 'lead', 'customer') AND " . $resS['sql'];
-            $params = $resS['params'];
+            $sql = "SELECT s.id FROM subscribers s WHERE s.workspace_id = ? AND s.status IN ('active', 'lead', 'customer') AND " . $resS['sql'];
+            $params = array_merge([$workspace_id], $resS['params']);
         } else {
             // Source is List
-            // Base select from subscriber_lists
-            $sql = "SELECT s.id FROM subscribers s JOIN subscriber_lists sl ON s.id = sl.subscriber_id WHERE sl.list_id = ?";
-            $params = [$sourceId];
+            // Verify list ownership and filter subscribers
+            $sql = "SELECT s.id FROM subscribers s JOIN subscriber_lists sl ON s.id = sl.subscriber_id WHERE sl.list_id = ? AND s.workspace_id = ?";
+            $params = [$sourceId, $workspace_id];
         }
 
         // B. APPLY SPLIT FILTER
@@ -143,12 +143,11 @@ if ($method === 'POST') {
 
             // Re-construct for safer param order
             if ($sourceType === 'segment') {
-                $resS = buildSegmentWhereClause($criteria, $sourceId);
-                $sql = "SELECT s.id FROM subscribers s WHERE ($matchSql) AND s.status IN ('active', 'lead', 'customer') AND " . $resS['sql'];
-                $params = array_merge($inputData, $inputData, $resS['params']);
+                $sql = "SELECT s.id FROM subscribers s WHERE s.workspace_id = ? AND ($matchSql) AND s.status IN ('active', 'lead', 'customer') AND " . $resS['sql'];
+                $params = array_merge([$workspace_id], $inputData, $inputData, $resS['params']);
             } else {
-                $sql = "SELECT s.id FROM subscribers s JOIN subscriber_lists sl ON s.id = sl.subscriber_id WHERE sl.list_id = ? AND ($matchSql)";
-                $params = array_merge([$sourceId], $inputData, $inputData);
+                $sql = "SELECT s.id FROM subscribers s JOIN subscriber_lists sl ON s.id = sl.subscriber_id WHERE sl.list_id = ? AND s.workspace_id = ? AND ($matchSql)";
+                $params = array_merge([$sourceId, $workspace_id], $inputData, $inputData);
             }
 
             $stmt = $pdo->prepare($sql);
@@ -254,8 +253,8 @@ if ($method === 'POST') {
                 $stmtS->execute([$sourceId]);
                 $criteria = $stmtS->fetchColumn();
                 $resCount = buildSegmentWhereClause($criteria, $sourceId);
-                $stmtC = $pdo->prepare("SELECT COUNT(*) FROM subscribers s WHERE s.status IN ('active', 'lead', 'customer') AND " . $resCount['sql']);
-                $stmtC->execute($resCount['params']);
+                $stmtC = $pdo->prepare("SELECT COUNT(*) FROM subscribers s WHERE s.workspace_id = ? AND s.status IN ('active', 'lead', 'customer') AND " . $resCount['sql']);
+                $stmtC->execute(array_merge([$workspace_id], $resCount['params']));
                 $newCount = (int) $stmtC->fetchColumn();
                 $pdo->prepare("UPDATE segments SET subscriber_count = ? WHERE id = ?")->execute([$newCount, $sourceId]);
 
@@ -276,8 +275,8 @@ if ($method === 'POST') {
         // 5. Cleanup Invalid (Clean Destination List)
         if ($cleanupInvalid) {
             $inClause = implode(',', array_fill(0, count($targetIds), '?'));
-            $stmtBad = $pdo->prepare("SELECT id FROM subscribers WHERE id IN ($inClause) AND status IN ('unsubscribed', 'error', 'bounced', 'complained')");
-            $stmtBad->execute($targetIds);
+            $stmtBad = $pdo->prepare("SELECT id FROM subscribers WHERE id IN ($inClause) AND workspace_id = ? AND status IN ('unsubscribed', 'error', 'bounced', 'complained')");
+            $stmtBad->execute(array_merge($targetIds, [$workspace_id]));
             $badIds = $stmtBad->fetchAll(PDO::FETCH_COLUMN);
 
             if (!empty($badIds)) {

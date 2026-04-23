@@ -82,6 +82,18 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
 
     const breadcrumbs = selectedBlockId ? getBreadcrumbs(selectedBlockId, blocks) : null;
 
+    // [UX] One-shot bounce animation the first time the breadcrumb bar appears
+    const breadcrumbShownOnce = useRef(false);
+    const [breadcrumbBounce, setBreadcrumbBounce] = useState(false);
+    useEffect(() => {
+        if (selectedBlockId && !breadcrumbShownOnce.current) {
+            breadcrumbShownOnce.current = true;
+            setBreadcrumbBounce(true);
+            const t = setTimeout(() => setBreadcrumbBounce(false), 1200);
+            return () => clearTimeout(t);
+        }
+    }, [selectedBlockId]);
+
     const handleDragStart = (e: React.DragEvent, id: string) => {
         e.stopPropagation();
         e.dataTransfer.setData('movingId', id);
@@ -487,43 +499,45 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
                 </div>
 
                 {selectedBlockId && (
-                    <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[100] flex items-center bg-slate-900/90 backdrop-blur-md rounded-full px-2 py-1.5 shadow-2xl border border-white/10 animate-in slide-in-from-bottom-10 fade-in duration-300">
-                        <button onClick={(e) => { e.stopPropagation(); handleSelectBlock(null); }} className="p-1.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors"><Home className="w-3.5 h-3.5" /></button>
-                        {breadcrumbs?.map((b, idx, arr) => {
-                            const Icon = b.type === 'section' ? Square : (b.type === 'row' ? GripHorizontal : (b.type === 'column' ? Box : Type));
-                            const isLast = idx === arr.length - 1;
+                    <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-10 fade-in duration-300">
+                        <div className={`flex items-center bg-slate-900/90 backdrop-blur-md rounded-full px-2 py-1.5 shadow-2xl border border-white/10 ${breadcrumbBounce ? 'animate-bounce' : ''}`}>
+                            <button onClick={(e) => { e.stopPropagation(); handleSelectBlock(null); }} className="p-1.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors"><Home className="w-3.5 h-3.5" /></button>
+                            {breadcrumbs?.map((b, idx, arr) => {
+                                const Icon = b.type === 'section' ? Square : (b.type === 'row' ? GripHorizontal : (b.type === 'column' ? Box : Type));
+                                const isLast = idx === arr.length - 1;
 
-                            // Check for children to show "next level" hint if this is the active block
-                            const firstChild = (isLast && b.children && b.children.length > 0) ? b.children[0] : null;
+                                // Check for children to show "next level" hint if this is the active block
+                                const firstChild = (isLast && b.children && b.children.length > 0) ? b.children[0] : null;
 
-                            return (
-                                <React.Fragment key={b.id}>
-                                    <ChevronRight className="w-3 h-3 text-slate-600 mx-0.5" />
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleSelectBlock(b.id); }}
-                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all ${isLast ? 'bg-amber-600 text-white shadow-md' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}
-                                    >
-                                        <Icon className="w-3 h-3" />{b.type.replace('_', ' ')}
-                                    </button>
+                                return (
+                                    <React.Fragment key={b.id}>
+                                        <ChevronRight className="w-3 h-3 text-slate-600 mx-0.5" />
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleSelectBlock(b.id); }}
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all ${isLast ? 'bg-amber-600 text-white shadow-md' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}
+                                        >
+                                            <Icon className="w-3 h-3" />{b.type.replace('_', ' ')}
+                                        </button>
 
-                                    {/* Show Ghost Child if available */}
-                                    {firstChild && (
-                                        <>
-                                            <ChevronRight className="w-3 h-3 text-slate-700/50 mx-0.5" />
-                                            <button
-                                                // Optional: Click ghost to select the first child? 
-                                                // User requested "show", but functionality implies navigation. Let's make it clickable.
-                                                onClick={(e) => { e.stopPropagation(); handleSelectBlock(firstChild.id); }}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide text-slate-500/50 hover:text-slate-300 hover:bg-white/5 border border-dashed border-slate-600/50 transition-all"
-                                                title="Click to select child"
-                                            >
-                                                <span className="opacity-50">{firstChild.type.replace('_', ' ')}</span>
-                                            </button>
-                                        </>
-                                    )}
-                                </React.Fragment>
-                            );
-                        })}
+                                        {/* Show Ghost Child if available */}
+                                        {firstChild && (
+                                            <>
+                                                <ChevronRight className="w-3 h-3 text-slate-700/50 mx-0.5" />
+                                                <button
+                                                    // Optional: Click ghost to select the first child? 
+                                                    // User requested "show", but functionality implies navigation. Let's make it clickable.
+                                                    onClick={(e) => { e.stopPropagation(); handleSelectBlock(firstChild.id); }}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide text-slate-500/50 hover:text-slate-300 hover:bg-white/5 border border-dashed border-slate-600/50 transition-all"
+                                                    title="Click to select child"
+                                                >
+                                                    <span className="opacity-50">{firstChild.type.replace('_', ' ')}</span>
+                                                </button>
+                                            </>
+                                        )}
+                                    </React.Fragment>
+                                );
+                            })}
+                        </div>
                     </div>
                 )}
             </div>

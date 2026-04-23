@@ -80,7 +80,7 @@ if (!function_exists('logActivity')) {
     /**
      * Log activity for a subscriber with history limiting (keep last 10)
      */
-    function logActivity($pdo, $subscriberId, $type, $referenceId, $referenceName, $details, $flowId = null, $campaignId = null, $extra = [])
+    function logActivity($pdo, $subscriberId, $type, $referenceId, $referenceName, $details, $flowId = null, $campaignId = null, $extra = [], $workspaceId = null)
     {
         // ESSENTIAL ENGAGEMENT TYPES: Keep forever for accurate lifetime statistics
         // 10M UPDATE: Added system progression types (enter_flow, condition_true, etc.) to support Flow Analytics Journey View.
@@ -181,7 +181,8 @@ if (!function_exists('logActivity')) {
             'device_type' => $device, // alias
             'os' => $os,
             'browser' => $browser,
-            'location' => $location
+            'location' => $location,
+            'workspace_id' => $workspaceId // [HARDENING] Pass workspace_id through buffer
         ]);
         // [PERFORMANCE] LOG BUFFERING (RAM LEVEL)
         // Convert sequential single writes (which choke MySQL connection pooling) into Mass DB Queries.
@@ -307,12 +308,42 @@ if (!function_exists('flushActivityLogBuffer')) {
         $vals = [];
         $binds = [];
         foreach ($GLOBAL_ACTIVITY_BUFFER as $act) {
-            $binds[] = "(?, ?, ?, ?, ?, ?, ?)";
-            $vals = array_merge($vals, $act);
+            $binds[] = "(?, ?, ?, ?, ?, ?, ?, ?)";
+            // $act has [sub_id, type, details, ref_id, flow_id, camp_id, extra_data]
+            // We need to inject workspace_id from $extra_data if present
+            $extraData = json_decode($act[6], true);
+            $wId = $extraData['workspace_id'] ?? 1; // Fallback to 1
+            
+            $vals[] = $act[0]; // sub_id
+            $vals[] = $act[1]; // type
+            $vals[] = $wId;    // workspace_id (NEW)
+            $vals[] = $act[2]; // details
+            $vals[] = $act[3]; // ref_id
+            $vals[] = $act[4]; // flow_id
+            $vals[] = $act[5]; // camp_id
+            $vals[] = $act[6]; // extra_data
         }
 
         try {
-            $sql = "INSERT INTO activity_buffer (subscriber_id, type, details, reference_id, flow_id, campaign_id, extra_data) VALUES " . implode(',', $binds);
+            // [SELF-HEALING] Check if workspace_id column exists before inserting
+            static $hasWorkspaceCol = null;
+            if ($hasWorkspaceCol === null) {
+                $check = $pdo->query("SHOW COLUMNS FROM activity_buffer LIKE 'workspace_id'");
+                $hasWorkspaceCol = ($check->rowCount() > 0);
+            }
+
+            if ($hasWorkspaceCol) {
+                $sql = "INSERT INTO activity_buffer (subscriber_id, type, workspace_id, details, reference_id, flow_id, campaign_id, extra_data) VALUES " . implode(',', $binds);
+            } else {
+                // Fallback for legacy schema (strip workspace_id from binds/vals)
+                $legacyBinds = array_fill(0, count($GLOBAL_ACTIVITY_BUFFER), "(?, ?, ?, ?, ?, ?, ?)");
+                $legacyVals = [];
+                foreach ($GLOBAL_ACTIVITY_BUFFER as $act) {
+                    $legacyVals = array_merge($legacyVals, $act);
+                }
+                $sql = "INSERT INTO activity_buffer (subscriber_id, type, details, reference_id, flow_id, campaign_id, extra_data) VALUES " . implode(',', $legacyBinds);
+                $vals = $legacyVals;
+            }
             $pdo->prepare($sql)->execute($vals);
         } catch (Exception $e) {
             // Fallback: Create table if missing
@@ -321,6 +352,7 @@ if (!function_exists('flushActivityLogBuffer')) {
                     $pdo->exec("CREATE TABLE IF NOT EXISTS activity_buffer (
                         id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
                         subscriber_id char(36) NOT NULL,
+                        workspace_id INT DEFAULT 1,
                         type VARCHAR(50) NOT NULL,
                         details TEXT,
                         reference_id VARCHAR(100),
@@ -329,7 +361,8 @@ if (!function_exists('flushActivityLogBuffer')) {
                         extra_data JSON,
                         processed TINYINT(1) DEFAULT 0,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        INDEX idx_processed (processed)
+                        INDEX idx_processed (processed),
+                        INDEX idx_workspace_id (workspace_id)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
                     $sql = "INSERT INTO activity_buffer (subscriber_id, type, details, reference_id, flow_id, campaign_id, extra_data) VALUES " . implode(',', $binds);
@@ -387,11 +420,12 @@ function dispatchFlowWorker($pdo, $type, $payload)
 
     // 2. Trigger Based Actions (e.g. Tag added)
     if ($type === 'flows' && isset($payload['trigger_type'])) {
+        $workspaceId = $payload['workspace_id'] ?? null;
         // Direct call if helper is available, otherwise could rely on generic worker
         if (function_exists('enrollSubscribersBulk')) {
             $sIds = isset($payload['subscriber_id']) ? [$payload['subscriber_id']] : [];
             if (!empty($sIds)) {
-                enrollSubscribersBulk($pdo, $sIds, $payload['trigger_type'], $payload['target_id'] ?? null);
+                enrollSubscribersBulk($pdo, $sIds, $payload['trigger_type'], $payload['target_id'] ?? null, $workspaceId);
             }
         } else {
             // Fallback: Try to require trigger_helper if file exists
@@ -400,7 +434,7 @@ function dispatchFlowWorker($pdo, $type, $payload)
                 if (function_exists('enrollSubscribersBulk')) {
                     $sIds = isset($payload['subscriber_id']) ? [$payload['subscriber_id']] : [];
                     if (!empty($sIds)) {
-                        enrollSubscribersBulk($pdo, $sIds, $payload['trigger_type'], $payload['target_id'] ?? null);
+                        enrollSubscribersBulk($pdo, $sIds, $payload['trigger_type'], $payload['target_id'] ?? null, $workspaceId);
                     }
                 }
             }
@@ -1110,6 +1144,18 @@ function evaluateAdvancedConditionGroup($pdo, $subscriberId, $subProfile, $condi
         } elseif (isset($profileFieldMap[$field])) {
             $actualVal = $subProfile[$profileFieldMap[$field]] ?? '';
 
+        } elseif ($field === 'custom_field') {
+            // Handle explicit custom field selection from UI
+            $attrKey = $cond['key'] ?? '';
+            if ($attrKey && !empty($subProfile['custom_attributes'])) {
+                $customAttrs = is_array($subProfile['custom_attributes'])
+                    ? $subProfile['custom_attributes']
+                    : json_decode($subProfile['custom_attributes'], true);
+                $actualVal = $customAttrs[$attrKey] ?? '';
+            } else {
+                $actualVal = '';
+            }
+
         } elseif ($field === 'lastActivityDays' || $field === 'last_activity_days') {
             // Days since last activity — compare as number
             $isSpecialField = true;
@@ -1294,8 +1340,8 @@ function evaluateAdvancedConditionGroup($pdo, $subscriberId, $subProfile, $condi
             if (is_array($actualVal)) {
                 $actualVal = json_encode($actualVal, JSON_UNESCAPED_UNICODE);
             }
-            $checkVal = $isDateOp ? (string) $actualVal : strtolower((string) $actualVal);
-            $targetVal = $isDateOp ? (string) $val : strtolower((string) $val);
+            $checkVal = $isDateOp ? (string) $actualVal : mb_strtolower((string) $actualVal, 'UTF-8');
+            $targetVal = $isDateOp ? (string) $val : mb_strtolower((string) $val, 'UTF-8');
 
             // Smart matching for tech fields
             if (in_array($field, ['os', 'device', 'browser', 'last_os', 'last_device', 'last_browser'])) {
@@ -1313,10 +1359,10 @@ function evaluateAdvancedConditionGroup($pdo, $subscriberId, $subProfile, $condi
                     $condMatch = ($checkVal !== $targetVal);
                     break;
                 case 'contains':
-                    $condMatch = (strpos($checkVal, $targetVal) !== false);
+                    $condMatch = (mb_strpos($checkVal, $targetVal, 0, 'UTF-8') !== false);
                     break;
                 case 'not_contains':
-                    $condMatch = (strpos($checkVal, $targetVal) === false);
+                    $condMatch = (mb_strpos($checkVal, $targetVal, 0, 'UTF-8') === false);
                     break;
                 case 'starts_with':
                     $condMatch = str_starts_with($checkVal, $targetVal);

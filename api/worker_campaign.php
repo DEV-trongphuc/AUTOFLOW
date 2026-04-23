@@ -48,7 +48,7 @@ if (!function_exists('runWorkerCampaign')) {
         $apiUrl = API_BASE_URL;
         // [FIX P38-WC] Only load the 2 settings keys this worker actually needs.
         // Old SELECT * loaded 50+ key/value pairs (SMTP passwords, API keys, etc.)
-        // into memory on every single worker boot — a significant security and memory footprint.
+        // into memory on every single worker boot  a significant security and memory footprint.
         $stmt = $pdo->query("SELECT `key`, `value` FROM system_settings WHERE workspace_id = 0 AND `key` IN ('smtp_user','max_messages_per_day')");
         $settings = [];
         foreach ($stmt->fetchAll() as $row) {
@@ -58,7 +58,7 @@ if (!function_exists('runWorkerCampaign')) {
         $mailer = new Mailer($pdo, $apiUrl, $defaultSender);
 
         // [FIX P9-C1] MySQL version guard for FOR UPDATE SKIP LOCKED.
-        // SKIP LOCKED requires MySQL = 8.0 — identical to fix in worker_queue.php (P7-C3).
+        // SKIP LOCKED requires MySQL = 8.0  identical to fix in worker_queue.php (P7-C3).
         // On MySQL 5.7: hardcoded SKIP LOCKED ? SQLState[42000] Syntax Error ? campaign batch crash.
         $mysqlVersion = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
         $skipLockedClause = version_compare($mysqlVersion, '8.0.0', '>=') ? 'SKIP LOCKED' : '';
@@ -279,7 +279,7 @@ if (!function_exists('runWorkerCampaign')) {
                         }
                     }
                 }
-                // D. INDIVIDUAL IDs — [BUG FIX] Previously missing: campaigns targeting hand-picked
+                // D. INDIVIDUAL IDs  [BUG FIX] Previously missing: campaigns targeting hand-picked
                 // subscribers had empty $wheres ? worker sent to ALL workspace subscribers instead.
                 if (!empty($target['individualIds'])) {
                     $indPlaceholders = implode(',', array_fill(0, count($target['individualIds']), '?'));
@@ -289,14 +289,14 @@ if (!function_exists('runWorkerCampaign')) {
 
                 // 2. Micro-Batch Processing Loop
                 $BATCH_SIZE = 200;   // [PERF] Increased from 50 ? 200 to boost throughput per batch
-                $MAX_BATCHES = 90;  // [PERF] Increased from 60 ? 90 — max 18,000 emails per worker run
+                $MAX_BATCHES = 90;  // [PERF] Increased from 60 ? 90  max 18,000 emails per worker run
                                     // 450s time guard still protects against FPM exhaustion
                 $batchCount = 0;
                 $hasMore = true;
                 $totalProcessed = 0;
                 $startTimeRun = microtime(true);
 
-                // [PERF B2] Pre-decode linked flow JSON once — avoids 200x json_decode per batch.
+                // [PERF B2] Pre-decode linked flow JSON once  avoids 200x json_decode per batch.
                 // linkedFlow config/steps are the same for every subscriber in the batch.
                 $linkedFlowConfig = $linkedFlow ? (json_decode($linkedFlow['config'], true) ?: []) : null;
                 $linkedFlowSteps  = $linkedFlow ? (json_decode($linkedFlow['steps'], true) ?: []) : null;
@@ -340,7 +340,7 @@ if (!function_exists('runWorkerCampaign')) {
                         // be permanently skipped with the old unlimited check.
                         // Fix: processing_campaign only blocks for 10 minutes (the max realistic send time
                         // per batch). After that, the lock is treated as stale and the subscriber
-                        // becomes eligible again — preventing ghost-skips from crashed workers.
+                        // becomes eligible again  preventing ghost-skips from crashed workers.
                         $sql .= " AND NOT EXISTS (
                     SELECT 1 FROM subscriber_activity sa
                     WHERE sa.subscriber_id = s.id
@@ -372,11 +372,11 @@ if (!function_exists('runWorkerCampaign')) {
                         $lockVals = [];
                         $lockBinds = [];
                         foreach ($recipients as $sub) {
-                            $lockBinds[] = "(?, 'processing_campaign', ?, ?, 'Processing...', ?, NOW())";
-                            $lockVals = array_merge($lockVals, [$sub['id'], $cid, $cName, $cid]);
+                            $lockBinds[] = "(?, ?, 'processing_campaign', ?, ?, 'Processing...', ?, NOW())";
+                            $lockVals = array_merge($lockVals, [$sub['id'], $campaignWorkspaceId, $cid, $cName, $cid]);
                         }
                         if (!empty($lockBinds)) {
-                            $sqlLockIns = "INSERT INTO subscriber_activity (subscriber_id, type, reference_id, reference_name, details, campaign_id, created_at) VALUES " . implode(',', $lockBinds);
+                            $sqlLockIns = "INSERT INTO subscriber_activity (subscriber_id, workspace_id, type, reference_id, reference_name, details, campaign_id, created_at) VALUES " . implode(',', $lockBinds);
                             $pdo->prepare($sqlLockIns)->execute($lockVals);
                         }
                         
@@ -407,7 +407,7 @@ if (!function_exists('runWorkerCampaign')) {
                             foreach ($stmtBatchCap->fetchAll(PDO::FETCH_ASSOC) as $row) {
                                 // [FIX] Use string key to match $sub['id'] which is a string UUID.
                                 // PHP array keys cast integers automatically only for numeric strings.
-                                // UUID strings are non-numeric — both sides must use the raw string.
+                                // UUID strings are non-numeric  both sides must use the raw string.
                                 $sId = $row['subscriber_id'];
                                 if (!isset($capCache[$sId])) {
                                     $capCache[$sId] = ['email' => 0, 'zalo' => 0, 'meta' => 0];
@@ -462,7 +462,7 @@ if (!function_exists('runWorkerCampaign')) {
                         $recipientIndexInBatch = 0;
                         $bouncedIds = [];
 
-                        // [RATE LIMITER] Uses sesAcquireRateSlot() — shared file-lock across ALL
+                        // [RATE LIMITER] Uses sesAcquireRateSlot()  shared file-lock across ALL
                         // PHP workers (campaign + flow). Guarantees combined total = 10/s regardless
                         // of how many workers are active. Defined in flow_helpers.php.
 
@@ -518,7 +518,7 @@ if (!function_exists('runWorkerCampaign')) {
 
                                 $templateData = [];
                                 $missingParams = [];
-                                // [FIX] Per-field length limits — same as FlowExecutor zalo_zns
+                                // [FIX] Per-field length limits  same as FlowExecutor zalo_zns
                                 // Zalo ZNS short fields (id, ma_giao_dich...) max 20 chars; others max 100
                                 $znsShortFieldMap = [
                                     'id'           => 20,
@@ -714,10 +714,10 @@ if (!function_exists('runWorkerCampaign')) {
                             $vals = [];
                             $binds = [];
                             foreach ($allActivities as $act) {
-                                $binds[] = "(?, ?, ?, ?, ?, ?, ?, ?, NOW())";
-                                $vals = array_merge($vals, [$act[0], $act[1], $act[2], $act[6] ?? null, $act[5] ?? null, $act[3], $act[4], $act[7] ?? null]);
+                                $binds[] = "(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+                                $vals = array_merge($vals, [$act[0], $campaignWorkspaceId, $act[1], $act[2], $act[6] ?? null, $act[5] ?? null, $act[3], $act[4], $act[7] ?? null]);
                             }
-                            $sqlIns = "INSERT INTO subscriber_activity (subscriber_id, type, reference_id, flow_id, campaign_id, reference_name, details, variation, created_at) VALUES " . implode(',', $binds);
+                            $sqlIns = "INSERT INTO subscriber_activity (subscriber_id, workspace_id, type, reference_id, flow_id, campaign_id, reference_name, details, variation, created_at) VALUES " . implode(',', $binds);
                             $pdo->prepare($sqlIns)->execute($vals);
                         }
 

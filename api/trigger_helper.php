@@ -1,12 +1,18 @@
 <?php
-function triggerFlows($pdo, $subscriberId, $triggerType, $targetValue)
+function triggerFlows($pdo, $subscriberId, $triggerType, $targetValue, $workspaceId = null)
 {
-    // For single subscriber triggers, use the priority worker for instant execution and chaining
-    $workerParams = http_build_query([
+    $params = [
         'subscriber_id' => $subscriberId,
         'trigger_type' => $triggerType,
         'target_id' => $targetValue
-    ]);
+    ];
+    
+    if ($workspaceId) {
+        $params['workspace_id'] = $workspaceId;
+    }
+
+    // For single subscriber triggers, use the priority worker for instant execution and chaining
+    $workerParams = http_build_query($params);
 
     // [OPTIMIZED] Use centralized WorkerTriggerService
     require_once __DIR__ . '/WorkerTriggerService.php';
@@ -19,17 +25,29 @@ function triggerFlows($pdo, $subscriberId, $triggerType, $targetValue)
 /**
  * HIGH PERFORMANCE BULK ENROLLMENT
  * Replaces individual CURL triggers with set-based SQL and single worker trigger.
+ * [SECURITY FIX] Added optional $workspaceId to ensure flows are scoped to the correct tenant.
  */
-function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $targetValue)
+function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $targetValue, $workspaceId = null)
 {
     if (empty($subscriberIds))
         return 0;
 
+    // [AUTO-DETECT WORKSPACE] If not provided, fetch from the first subscriber
+    if ($workspaceId === null) {
+        $stmtW = $pdo->prepare("SELECT workspace_id FROM subscribers WHERE id = ? LIMIT 1");
+        $stmtW->execute([$subscriberIds[0]]);
+        $workspaceId = $stmtW->fetchColumn();
+    }
+
+    if ($workspaceId === null) {
+        return 0; // Could not determine workspace
+    }
+
     // 1. Find matching flows using the optimized trigger_type column
-    // We also include 'segment' as a fallback because some 'list' triggers are stored as segment type with list subtype
-    $sqlFlows = "SELECT id, name, steps, config FROM flows WHERE status = 'active' AND (trigger_type = ? OR trigger_type = 'segment')";
+    // [FIX] Added workspace_id scoping to prevent cross-tenant leakage
+    $sqlFlows = "SELECT id, workspace_id, name, steps, config FROM flows WHERE workspace_id = ? AND status = 'active' AND (trigger_type = ? OR trigger_type = 'segment')";
     $stmtFlows = $pdo->prepare($sqlFlows);
-    $stmtFlows->execute([$triggerType]);
+    $stmtFlows->execute([$workspaceId, $triggerType]);
     $flows = $stmtFlows->fetchAll();
 
     $enrolledTotal = 0;
@@ -51,7 +69,7 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
 
         $tConfig = $trigger['config'] ?? [];
         $flowTriggerType = $tConfig['type'] ?? 'segment';
-        $flowTargetSubtype = $tConfig['targetSubtype'] ?? ''; // Added to check subtype
+        $flowTargetSubtype = $tConfig['targetSubtype'] ?? ''; 
         $flowTargetId = $tConfig['targetId'] ?? '';
 
         // Match "list" or "added_to_list" trigger against flows that are technically "segment" type but "list" subtype
@@ -71,7 +89,6 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
             $msgLower = mb_strtolower($targetValue, 'UTF-8');
             $kwFound = false;
             foreach ($keywords as $kw) {
-                // [FIX] Use mb_stripos for proper Vietnamese Unicode case-insensitive matching
                 if ($kw !== '' && mb_stripos($msgLower, $kw, 0, 'UTF-8') !== false) {
                     $kwFound = true;
                     break;
@@ -84,10 +101,6 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
             $pastTime = date('Y-m-d H:i:s', strtotime('-1 second'));
             $initialSchedule = $pastTime;
 
-            // [SMART SCHEDULE FIX] 
-            // If the first step is a wait, we MUST pre-calculate the future wait time.
-            // If we don't, it gets inserted as "pastTime", the worker picks it up immediately,
-            // thinks the wait has already passed (is_resumed_wait=TRUE), and SKIPS the wait step!
             foreach ($steps as $fs) {
                 if ($fs['id'] === $trigger['nextStepId'] && strtolower($fs['type'] ?? '') === 'wait') {
                     $fsWaitConfig = $fs['config'] ?? [];
@@ -130,7 +143,6 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
             $existsCheckSql = "";
             $checkParams = [];
             
-            // [NEW_ONLY FIX] If enrollStrategy is new_only, NEVER enroll users who were marked as 'cancelled' during activation.
             $enrollStrategy = $tConfig['enrollStrategy'] ?? 'all';
             if ($enrollStrategy === 'new_only') {
                 $existsCheckSql .= " AND NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ? AND sfs.status = 'cancelled')";
@@ -141,22 +153,15 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
                 $existsCheckSql .= " AND NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ?)";
                 $checkParams[] = $flow['id'];
             } else {
-                // RECURRING / CONTINUOUS LOGIC
                 $checks = [];
-
-                // 1. Max Enrollments
                 if ($maxEnrollments > 0) {
                     $checks[] = "(SELECT COUNT(*) FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ?) < $maxEnrollments";
                     $checkParams[] = $flow['id'];
                 }
-
-                // 2. State Check
                 if ($allowMultiple) {
-                    // Continuous (No Cooldown, No Parallel, 3s Debounce)
                     $checks[] = "NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ? AND (sfs.status IN ('waiting', 'processing') OR sfs.created_at >= DATE_SUB(NOW(), INTERVAL 3 SECOND)))";
                     $checkParams[] = $flow['id'];
                 } else {
-                    // Recurring (Standard)
                     $safeHours = (int)$cooldownHours;
                     $checks[] = "NOT EXISTS (
                         SELECT 1 FROM subscriber_flow_states sfs 
@@ -166,16 +171,11 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
                     )";
                     $checkParams[] = $flow['id'];
                 }
-                
                 if (!empty($checks)) {
                     $existsCheckSql .= " AND " . implode(" AND ", $checks);
                 }
             }
 
-            // [FIX SCHEMA-GAP-01] Per-flow enrollment lock: prevents two concurrent workers
-            // from passing the NOT EXISTS check simultaneously and double-enrolling the same
-            // subscriber. GET_LOCK is scoped to (flow_id) which serializes enrollment for
-            // the same flow without blocking other flows running concurrently.
             $enrollLockKey = count($subscriberIds) === 1 ? 'enroll_' . $flow['id'] . '_' . md5($subscriberIds[0]) : 'enroll_flow_' . $flow['id'];
             $lockAcquired = false;
             try {
@@ -190,10 +190,6 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
                 error_log("[trigger_helper] GET_LOCK failed: " . $lockEx->getMessage());
             }
 
-            // [FIX] CHUNKED INSERT to avoid MySQL 65,535 placeholder limit crash.
-            // When bulk_operations.php fetches 100k IDs and passes them here, a single
-            // IN($placeholders) would exceed the PDO placeholder cap and crash.
-            // Chunk at 500 and accumulate enrolled count from each batch.
             $ENROLL_CHUNK = 500;
             foreach (array_chunk($subscriberIds, $ENROLL_CHUNK) as $chunk) {
                 $placeholders = implode(',', array_fill(0, count($chunk), '?'));
@@ -202,30 +198,25 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
                            SELECT s.id, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
                            FROM subscribers s
                            WHERE s.id IN ($placeholders)
+                           AND s.workspace_id = ?
                            AND s.status IN ('active', 'lead', 'customer')
                            $existsCheckSql";
 
-                $params = array_merge([$flow['id'], $trigger['nextStepId'], $initialSchedule], $chunk, $checkParams);
+                $params = array_merge([$flow['id'], $trigger['nextStepId'], $initialSchedule], $chunk, [$flow['workspace_id']], $checkParams);
                 $stmt = $pdo->prepare($sqlIns);
                 $stmt->execute($params);
                 $enrolledTotal += $stmt->rowCount();
             }
 
-            $enrolledCount = $enrolledTotal; // for stat update below
-            if ($enrolledCount > 0) {
-                $pdo->prepare("UPDATE flows SET stat_enrolled = stat_enrolled + ? WHERE id = ?")->execute([$enrolledCount, $flow['id']]);
+            if ($enrolledTotal > 0) {
+                $pdo->prepare("UPDATE flows SET stat_enrolled = stat_enrolled + ? WHERE id = ?")->execute([$enrolledTotal, $flow['id']]);
             }
-            // [FIX SCHEMA-GAP-01] Release lock after enrollment INSERT batch
             if ($lockAcquired) {
                 $pdo->prepare('SELECT RELEASE_LOCK(?)')->execute([$enrollLockKey]);
             }
         }
     }
 
-    // 2. Trigger worker via Job Queue (10M UPGRADE)
-    // [PERF FIX] Only dispatch if at least one subscriber was actually enrolled.
-    // Previously this fired unconditionally — even when all 500 candidates were already
-    // in the flow — creating queue noise and unnecessary worker wake-ups.
     if ($enrolledTotal > 0) {
         dispatchQueueJob($pdo, 'flows', ['mode' => 'batch']);
     }
@@ -237,12 +228,18 @@ function checkDynamicTriggers($pdo, $subscriberId)
 {
     require_once 'segment_helper.php';
 
+    // [SECURITY FIX] Fetch subscriber's workspace_id first
+    $stmtW = $pdo->prepare("SELECT workspace_id FROM subscribers WHERE id = ? LIMIT 1");
+    $stmtW->execute([$subscriberId]);
+    $workspaceId = $stmtW->fetchColumn();
+    
+    if (!$workspaceId) return;
+
     // 1. Get Active Flows with Segment or Date triggers
-    // [BUG-FIX #13] Added trigger_type filter — previously scanned ALL active flows (including
-    // form/tag/list/campaign triggers) that can never match here. This causes O(all_flows) N+1
-    // query overhead on every subscriber event (Zalo follow, form submit, etc.).
-    $stmtFlows = $pdo->prepare("SELECT id, name, steps, config FROM flows WHERE status = 'active' AND trigger_type IN ('segment', 'date')");
-    $stmtFlows->execute();
+    // [BUG-FIX #13] Added trigger_type filter 
+    // [SECURITY FIX] Added workspace_id filter
+    $stmtFlows = $pdo->prepare("SELECT id, name, steps, config FROM flows WHERE workspace_id = ? AND status = 'active' AND trigger_type IN ('segment', 'date')");
+    $stmtFlows->execute([$workspaceId]);
     $flows = $stmtFlows->fetchAll();
 
     foreach ($flows as $flow) {
@@ -510,9 +507,13 @@ if (!function_exists('wakeupWaitingSubscribers')) {
     function wakeupWaitingSubscribers($pdo, $subscriberId) {
         if (!$subscriberId) return;
         try {
-            $stmt = $pdo->prepare("UPDATE flow_subscribers SET next_scheduled_at = NOW() WHERE subscriber_id = ? AND status = 'waiting' AND next_scheduled_at > NOW()");
+            // [BUG FIX] Correct table is subscriber_flow_states (not flow_subscribers which does not exist)
+            // Correct column is scheduled_at (not next_scheduled_at)
+            $stmt = $pdo->prepare("UPDATE subscriber_flow_states SET scheduled_at = NOW() WHERE subscriber_id = ? AND status = 'waiting' AND scheduled_at > NOW()");
             $stmt->execute([$subscriberId]);
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+            error_log('[wakeupWaitingSubscribers] Failed: ' . $e->getMessage());
+        }
     }
 }
 

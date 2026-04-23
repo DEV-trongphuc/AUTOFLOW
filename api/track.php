@@ -377,8 +377,8 @@ try {
         $utmContent = $src['utm_content'] ?? null;
         $utmTerm = $src['utm_term'] ?? null;
 
-        $stmtNewSess = $pdo->prepare("INSERT INTO web_sessions (visitor_id, property_id, started_at, last_active_at, device_type, os, browser, page_count, is_bounce, utm_source, utm_medium, utm_campaign, utm_content, utm_term) VALUES (?, ?, NOW(), NOW(), ?, ?, ?, 0, 1, ?, ?, ?, ?, ?)");
-        $stmtNewSess->execute([$visitorUuid, $propertyId, $deviceType, $os, $browser, $utmSource, $utmMedium, $utmCampaign, $utmContent, $utmTerm]);
+        $stmtNewSess = $pdo->prepare("INSERT INTO web_sessions (visitor_id, property_id, workspace_id, started_at, last_active_at, device_type, os, browser, page_count, is_bounce, utm_source, utm_medium, utm_campaign, utm_content, utm_term) VALUES (?, ?, ?, NOW(), NOW(), ?, ?, ?, 0, 1, ?, ?, ?, ?, ?)");
+        $stmtNewSess->execute([$visitorUuid, $propertyId, $propWorkspaceId, $deviceType, $os, $browser, $utmSource, $utmMedium, $utmCampaign, $utmContent, $utmTerm]);
         $sessionId = $pdo->lastInsertId();
         $sessionPageCount = 0;
 
@@ -510,8 +510,8 @@ try {
 
                 // 1. Check subscribers table (Email/Zalo marketing)
                 if ($email) {
-                    $stmt = $pdo->prepare("SELECT id, first_name, last_name, avatar FROM subscribers WHERE email = ? LIMIT 1");
-                    $stmt->execute([$email]);
+                    $stmt = $pdo->prepare("SELECT id, first_name, last_name, avatar FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
+                    $stmt->execute([$email, $propWorkspaceId]);
                     $subscriber = $stmt->fetch(PDO::FETCH_ASSOC);
                     if ($subscriber) {
                         $emailSubscriberId = $subscriber['id'];
@@ -522,8 +522,8 @@ try {
                 }
 
                 if (!$emailSubscriberId && $phone) {
-                    $stmt = $pdo->prepare("SELECT id, first_name, last_name, avatar FROM subscribers WHERE phone_number = ? LIMIT 1");
-                    $stmt->execute([$phone]);
+                    $stmt = $pdo->prepare("SELECT id, first_name, last_name, avatar FROM subscribers WHERE phone_number = ? AND workspace_id = ? LIMIT 1");
+                    $stmt->execute([$phone, $propWorkspaceId]);
                     $subscriber = $stmt->fetch(PDO::FETCH_ASSOC);
                     if ($subscriber) {
                         $emailSubscriberId = $subscriber['id'];
@@ -717,7 +717,7 @@ try {
     // Batch Insert Page Views
     if (!empty($pageViews)) {
         // No schema checks here (moved to migration)
-        $sql = "INSERT INTO web_page_views (session_id, visitor_id, property_id, url_hash, url, title, load_time_ms, is_entrance, loaded_at) VALUES ";
+        $sql = "INSERT INTO web_page_views (session_id, visitor_id, property_id, workspace_id, url_hash, url, title, load_time_ms, is_entrance, loaded_at) VALUES ";
         $placeholders = [];
         $params = [];
 
@@ -816,11 +816,12 @@ try {
                 $processedClickSignatures[$signature] = true;
             }
 
-            $eventPlaceholders[] = "(?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+            $eventPlaceholders[] = "(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
             $eventValues[] = $sessionId;
             $eventValues[] = $pvId ?: null;
             $eventValues[] = $visitorUuid;
             $eventValues[] = $propertyId;
+            $eventValues[] = $propWorkspaceId;
             $eventValues[] = $type;
             $eventValues[] = $targetSelector;
             $eventValues[] = $targetText;
@@ -843,15 +844,15 @@ try {
                     $pdo->prepare("UPDATE web_events SET target_text = GREATEST(0 + IFNULL(target_text, 0), ?), created_at = NOW() WHERE id = ?")
                         ->execute([$percent, $existingId]);
                 } else {
-                    $eventPlaceholders[] = "(?, ?, ?, ?, 'scroll', NULL, ?, NULL, NOW())";
-                    array_push($eventValues, $sessionId, $pidValue, $visitorUuid, $propertyId, $percent);
+                    $eventPlaceholders[] = "(?, ?, ?, ?, ?, 'scroll', NULL, ?, NULL, NOW())";
+                    array_push($eventValues, $sessionId, $pidValue, $visitorUuid, $propertyId, $propWorkspaceId, $percent);
                 }
             } catch (Exception $e) { /* silent skip */
             }
         }
 
         if (!empty($eventValues)) {
-            $sqlEvents = "INSERT INTO web_events (session_id, page_view_id, visitor_id, property_id, event_type, target_selector, target_text, meta_data, created_at) VALUES " . implode(", ", $eventPlaceholders);
+            $sqlEvents = "INSERT INTO web_events (session_id, page_view_id, visitor_id, property_id, workspace_id, event_type, target_selector, target_text, meta_data, created_at) VALUES " . implode(", ", $eventPlaceholders);
             $pdo->prepare($sqlEvents)->execute($eventValues);
         }
 

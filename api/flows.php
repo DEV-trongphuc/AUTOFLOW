@@ -796,21 +796,21 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'estimate-
         $segmentIds = $inputData['segment_ids'] ?? [];
         if (!empty($segmentIds)) {
             require_once 'segment_helper.php';
-            foreach ($segmentIds as $segId) {
-                $stmt = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
-                $stmt->execute([$segId, $workspace_id]);
-                $criteria = $stmt->fetchColumn();
-                if ($criteria) {
-                    $res = buildSegmentWhereClause($criteria, $segId);
-                    $sql = "SELECT s.email, s.phone_number, s.zalo_user_id FROM subscribers s WHERE s.workspace_id = ? AND s.status != 'unsubscribed' AND " . $res['sql'];
-                    $mergedParams = array_merge([$workspace_id], $res['params']);
-                    $stmtUsers = $pdo->prepare($sql);
-                    $stmtUsers->execute($mergedParams);
-                    while ($row = $stmtUsers->fetch(PDO::FETCH_ASSOC)) {
-                        if (!empty($row['email'])) $mergedIdentifiers[] = $row['email'];
-                        elseif (!empty($row['phone_number'])) $mergedIdentifiers[] = $row['phone_number'];
-                        elseif (!empty($row['zalo_user_id'])) $mergedIdentifiers[] = $row['zalo_user_id'];
-                    }
+            // [PERF FIX] Batch fetch all segment criteria in one query (was N queries)
+            $segPh = implode(',', array_fill(0, count($segmentIds), '?'));
+            $stmtSegs = $pdo->prepare("SELECT id, criteria FROM segments WHERE id IN ($segPh) AND workspace_id = ?");
+            $stmtSegs->execute(array_merge($segmentIds, [$workspace_id]));
+            $segCriteriaMap = $stmtSegs->fetchAll(PDO::FETCH_KEY_PAIR); // [id => criteria]
+            foreach ($segCriteriaMap as $segId => $criteria) {
+                if (!$criteria) continue;
+                $res = buildSegmentWhereClause($criteria, $segId);
+                $sql = "SELECT s.email, s.phone_number, s.zalo_user_id FROM subscribers s WHERE s.workspace_id = ? AND s.status != 'unsubscribed' AND " . $res['sql'];
+                $stmtUsers = $pdo->prepare($sql);
+                $stmtUsers->execute(array_merge([$workspace_id], $res['params']));
+                while ($row = $stmtUsers->fetch(PDO::FETCH_ASSOC)) {
+                    if (!empty($row['email'])) $mergedIdentifiers[] = $row['email'];
+                    elseif (!empty($row['phone_number'])) $mergedIdentifiers[] = $row['phone_number'];
+                    elseif (!empty($row['zalo_user_id'])) $mergedIdentifiers[] = $row['zalo_user_id'];
                 }
             }
         }
@@ -925,21 +925,21 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
         $segmentIds = $inputData['segment_ids'] ?? [];
         if (!empty($segmentIds)) {
             require_once 'segment_helper.php';
-            foreach ($segmentIds as $segId) {
-                $stmt = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
-                $stmt->execute([$segId, $workspace_id]);
-                $criteria = $stmt->fetchColumn();
-                if ($criteria) {
-                    $res = buildSegmentWhereClause($criteria, $segId);
-                    $sql = "SELECT s.email, s.phone_number, s.zalo_user_id FROM subscribers s WHERE s.workspace_id = ? AND s.status != 'unsubscribed' AND " . $res['sql'];
-                    $mergedParams = array_merge([$workspace_id], $res['params']);
-                    $stmtUsers = $pdo->prepare($sql);
-                    $stmtUsers->execute($mergedParams);
-                    while ($row = $stmtUsers->fetch(PDO::FETCH_ASSOC)) {
-                        if (!empty($row['email'])) $items[] = $row['email'];
-                        elseif (!empty($row['phone_number'])) $items[] = $row['phone_number'];
-                        elseif (!empty($row['zalo_user_id'])) $items[] = $row['zalo_user_id'];
-                    }
+            // [PERF FIX] Batch fetch all segment criteria in one query (was N queries)
+            $segPh = implode(',', array_fill(0, count($segmentIds), '?'));
+            $stmtSegs = $pdo->prepare("SELECT id, criteria FROM segments WHERE id IN ($segPh) AND workspace_id = ?");
+            $stmtSegs->execute(array_merge($segmentIds, [$workspace_id]));
+            $segCriteriaMap = $stmtSegs->fetchAll(PDO::FETCH_KEY_PAIR); // [id => criteria]
+            foreach ($segCriteriaMap as $segId => $criteria) {
+                if (!$criteria) continue;
+                $res = buildSegmentWhereClause($criteria, $segId);
+                $sql = "SELECT s.email, s.phone_number, s.zalo_user_id FROM subscribers s WHERE s.workspace_id = ? AND s.status != 'unsubscribed' AND " . $res['sql'];
+                $stmtUsers = $pdo->prepare($sql);
+                $stmtUsers->execute(array_merge([$workspace_id], $res['params']));
+                while ($row = $stmtUsers->fetch(PDO::FETCH_ASSOC)) {
+                    if (!empty($row['email'])) $items[] = $row['email'];
+                    elseif (!empty($row['phone_number'])) $items[] = $row['phone_number'];
+                    elseif (!empty($row['zalo_user_id'])) $items[] = $row['zalo_user_id'];
                 }
             }
         }
@@ -990,24 +990,24 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
 
         if (!empty($emails)) {
             $placeholders = implode(',', array_fill(0, count($emails), '?'));
-            $stmt = $pdo->prepare("SELECT id, email, phone_number, zalo_user_id FROM subscribers WHERE email IN ($placeholders)");
-            $stmt->execute($emails);
+            $stmt = $pdo->prepare("SELECT id, email, phone_number, zalo_user_id FROM subscribers WHERE email IN ($placeholders) AND workspace_id = ?");
+            $stmt->execute(array_merge($emails, [$workspace_id]));
             foreach ($stmt->fetchAll() as $row)
                 $existingSubs['email'][$row['email']] = $row;
         }
 
         if (!empty($phones)) {
             $placeholders = implode(',', array_fill(0, count($phones), '?'));
-            $stmt = $pdo->prepare("SELECT id, email, phone_number, zalo_user_id FROM subscribers WHERE phone_number IN ($placeholders)");
-            $stmt->execute($phones);
+            $stmt = $pdo->prepare("SELECT id, email, phone_number, zalo_user_id FROM subscribers WHERE phone_number IN ($placeholders) AND workspace_id = ?");
+            $stmt->execute(array_merge($phones, [$workspace_id]));
             foreach ($stmt->fetchAll() as $row)
                 $existingSubs['phone'][$row['phone_number']] = $row;
         }
 
         if (!empty($uids)) {
             $placeholders = implode(',', array_fill(0, count($uids), '?'));
-            $stmt = $pdo->prepare("SELECT id, email, phone_number, zalo_user_id FROM subscribers WHERE zalo_user_id IN ($placeholders)");
-            $stmt->execute($uids);
+            $stmt = $pdo->prepare("SELECT id, email, phone_number, zalo_user_id FROM subscribers WHERE zalo_user_id IN ($placeholders) AND workspace_id = ?");
+            $stmt->execute(array_merge($uids, [$workspace_id]));
             foreach ($stmt->fetchAll() as $row)
                 $existingSubs['uid'][$row['zalo_user_id']] = $row;
         }
@@ -1128,8 +1128,8 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
 
                 $newEmails = array_keys($subsToInsert);
                 $placeholders = implode(',', array_fill(0, count($newEmails), '?'));
-                $stmt = $pdo->prepare("SELECT id FROM subscribers WHERE email IN ($placeholders)");
-                $stmt->execute($newEmails);
+                $stmt = $pdo->prepare("SELECT id FROM subscribers WHERE email IN ($placeholders) AND workspace_id = ?");
+                $stmt->execute(array_merge($newEmails, [$workspace_id]));
                 foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $newId) {
                     if (!in_array($newId, $processedSubIds)) {
                         $processedSubIds[] = $newId;

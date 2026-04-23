@@ -121,25 +121,29 @@ $startDate = date('Y-m-d 00:00:00', strtotime("-$days days"));
 $endDate = date('Y-m-d 23:59:59');
 
 try {
-    // 1. Web Analytics (web_page_views) — not scoped by workspace_id since column doesn't exist
+    // 1. Web Analytics (web_page_views) — scoped by JOINing web_properties
     $stmtWeb = $pdo->prepare("
-        SELECT DATE(loaded_at) as date, COUNT(*) as count 
-        FROM web_page_views 
-        WHERE loaded_at BETWEEN ? AND ? 
-        GROUP BY DATE(loaded_at)
+        SELECT DATE(pv.loaded_at) as date, COUNT(*) as count 
+        FROM web_page_views pv
+        JOIN web_properties wp ON pv.property_id = wp.id
+        WHERE wp.workspace_id = ? AND pv.loaded_at BETWEEN ? AND ? 
+        GROUP BY DATE(pv.loaded_at)
     ");
-    $stmtWeb->execute([$startDate, $endDate]);
+    $stmtWeb->execute([$workspace_id, $startDate, $endDate]);
     $rawWebStats = $stmtWeb->fetchAll(PDO::FETCH_KEY_PAIR);
 
-    // 2. AI Messages — not scoped by workspace_id
+    // 2. AI Messages — scoped by JOINing ai_conversations -> web_properties
     $stmtAi = $pdo->prepare("
-        SELECT DATE(created_at) as date, COUNT(*) as count 
-        FROM ai_messages 
-        WHERE sender IN ('ai', 'bot', 'model') 
-        AND created_at BETWEEN ? AND ? 
-        GROUP BY DATE(created_at)
+        SELECT DATE(m.created_at) as date, COUNT(*) as count 
+        FROM ai_messages m
+        JOIN ai_conversations c ON m.conversation_id = c.id
+        JOIN web_properties wp ON c.property_id = wp.id
+        WHERE wp.workspace_id = ? 
+        AND m.sender IN ('ai', 'bot', 'model') 
+        AND m.created_at BETWEEN ? AND ? 
+        GROUP BY DATE(m.created_at)
     ");
-    $stmtAi->execute([$startDate, $endDate]);
+    $stmtAi->execute([$workspace_id, $startDate, $endDate]);
     $rawAiStats = $stmtAi->fetchAll(PDO::FETCH_KEY_PAIR);
 
     // 3. New Leads (subscribers) — scoped by workspace_id
@@ -202,12 +206,25 @@ try {
     $prevStart = date('Y-m-d 00:00:00', strtotime("-" . ($days * 2) . " days"));
     $prevEnd = date('Y-m-d 23:59:59', strtotime("-" . ($days + 1) . " days"));
 
-    $stmtWebPrev = $pdo->prepare("SELECT COUNT(*) FROM web_page_views WHERE loaded_at BETWEEN ? AND ?");
-    $stmtWebPrev->execute([$prevStart, $prevEnd]);
+    $stmtWebPrev = $pdo->prepare("
+        SELECT COUNT(*) 
+        FROM web_page_views pv
+        JOIN web_properties wp ON pv.property_id = wp.id
+        WHERE wp.workspace_id = ? AND pv.loaded_at BETWEEN ? AND ?
+    ");
+    $stmtWebPrev->execute([$workspace_id, $prevStart, $prevEnd]);
     $prevWeb = $stmtWebPrev->fetchColumn();
 
-    $stmtAiPrev = $pdo->prepare("SELECT COUNT(*) FROM ai_messages WHERE sender IN ('ai', 'bot', 'model') AND created_at BETWEEN ? AND ?");
-    $stmtAiPrev->execute([$prevStart, $prevEnd]);
+    $stmtAiPrev = $pdo->prepare("
+        SELECT COUNT(*) 
+        FROM ai_messages m
+        JOIN ai_conversations c ON m.conversation_id = c.id
+        JOIN web_properties wp ON c.property_id = wp.id
+        WHERE wp.workspace_id = ? 
+        AND m.sender IN ('ai', 'bot', 'model') 
+        AND m.created_at BETWEEN ? AND ?
+    ");
+    $stmtAiPrev->execute([$workspace_id, $prevStart, $prevEnd]);
     $prevAi = $stmtAiPrev->fetchColumn();
 
     $stmtLeadPrev = $pdo->prepare("SELECT COUNT(*) FROM subscribers WHERE workspace_id = ? AND joined_at BETWEEN ? AND ?");

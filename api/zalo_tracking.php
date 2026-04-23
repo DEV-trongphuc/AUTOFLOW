@@ -54,10 +54,18 @@ if ($subId && $url) {
         // We log the destination URL as details so we can match it in Condition checks
         $details = "Clicked link (+3 điểm): " . $url;
 
+        // Resolve workspace_id from subscriber
+        $wId = 1;
+        try {
+            $stmtSub = $pdo->prepare("SELECT workspace_id FROM subscribers WHERE id = ?");
+            $stmtSub->execute([$subId]);
+            $wId = $stmtSub->fetchColumn() ?: 1;
+        } catch (Exception $e) {}
+
         $pdo->prepare("
-            INSERT INTO subscriber_activity (id, subscriber_id, type, reference_id, flow_id, campaign_id, details, ip_address, user_agent, created_at)
-            VALUES (?, ?, 'click_zns', ?, ?, NULL, ?, ?, ?, NOW())
-        ")->execute([$logId, $subId, $stepId, $flowId, $details, $ip, $userAgent]);
+            INSERT INTO subscriber_activity (id, subscriber_id, workspace_id, type, reference_id, flow_id, campaign_id, details, ip_address, user_agent, created_at)
+            VALUES (?, ?, ?, 'click_zns', ?, ?, NULL, ?, ?, ?, NOW())
+        ")->execute([$logId, $subId, $wId, $stepId, $flowId, $details, $ip, $userAgent]);
 
         // 2. Update Subscriber Stats
         $pdo->prepare("

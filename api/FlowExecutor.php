@@ -200,7 +200,7 @@ class FlowExecutor
 
                     if ($maxPerDay > 0 && $todaySent >= $maxPerDay) {
                         $logs[] = "  -> Frequency cap reached ($todaySent/$maxPerDay). Rescheduling to tomorrow.";
-                        logActivity($this->pdo, $subscriberId, 'frequency_cap_reached', $currentStepId, $flowName, "Cap: $maxPerDay", $flowId);
+                        logActivity($this->pdo, $subscriberId, 'frequency_cap_reached', $currentStepId, $flowName, "Cap: $maxPerDay", $flowId, null, [], $subscriber['workspace_id']);
 
                         $status = 'waiting';
                         $nextScheduledAt = date('Y-m-d 09:00:00', strtotime('+1 day'));
@@ -262,7 +262,7 @@ class FlowExecutor
                         $this->bufferStatsUpdate('flows', $flowId, 'stat_total_sent');
                         $this->bufferStatsUpdate('subscribers', $subscriberId, 'stats_sent');
 
-                        logActivity($this->pdo, $subscriberId, 'receive_email', $currentStepId, $flowName, "Email sent: " . $step['label'], $flowId, $campaignId);
+                        logActivity($this->pdo, $subscriberId, 'receive_email', $currentStepId, $flowName, "Email sent: " . $step['label'], $flowId, $campaignId, [], $subscriber['workspace_id']);
                         $logs[] = "  -> Email sent for {$subscriber['email']} (Step: {$step['label']}).";
 
                         $nextStepId = $step['nextStepId'] ?? null;
@@ -278,16 +278,16 @@ class FlowExecutor
 
                         if ($bounceBehavior === 'continue') {
                             $logs[] = "  -> Email failed for {$subscriber['email']}, but 'Auto Next' enabled. Continuing.";
-                            logActivity($this->pdo, $subscriberId, 'failed_email', $currentStepId, $flowName, "Email failed (Continued): " . $errMsg, $flowId, $campaignId);
+                            logActivity($this->pdo, $subscriberId, 'failed_email', $currentStepId, $flowName, "Email failed (Continued): " . $errMsg, $flowId, $campaignId, [], $subscriber['workspace_id']);
                             $nextStepId = $step['nextStepId'] ?? null;
                             $isInstantStep = true;
                             $contextData['has_email_error'] = true;
                         } else {
                             $logs[] = "  -> Email failed for {$subscriber['email']}. Flow stopped.";
                             if ($isBounced) {
-                                logActivity($this->pdo, $subscriberId, 'failed_email', $currentStepId, $flowName, "Hard Bounce: " . $errMsg, $flowId, $campaignId);
+                                logActivity($this->pdo, $subscriberId, 'failed_email', $currentStepId, $flowName, "Hard Bounce: " . $errMsg, $flowId, $campaignId, [], $subscriber['workspace_id']);
                             } else {
-                                logActivity($this->pdo, $subscriberId, 'failed_email', $currentStepId, $flowName, "Email failed: " . $errMsg, $flowId, $campaignId);
+                                logActivity($this->pdo, $subscriberId, 'failed_email', $currentStepId, $flowName, "Email failed: " . $errMsg, $flowId, $campaignId, [], $subscriber['workspace_id']);
                             }
                             $shouldContinueChain = false;
                             $status = 'failed';
@@ -333,7 +333,7 @@ class FlowExecutor
                     $todaySent = is_array($todaySentData) ? ($todaySentData['zalo'] ?? 0) : (int)$todaySentData;
                     if ($maxPerDay > 0 && $todaySent >= $maxPerDay) {
                         $logs[] = "  -> Frequency cap reached ($todaySent/$maxPerDay). Rescheduling Zalo to tomorrow.";
-                        logActivity($this->pdo, $subscriberId, 'frequency_cap_reached', $currentStepId, $flowName, "Cap: $maxPerDay (Zalo)", $flowId);
+                        logActivity($this->pdo, $subscriberId, 'frequency_cap_reached', $currentStepId, $flowName, "Cap: $maxPerDay (Zalo)", $flowId, null, [], $subscriber['workspace_id']);
                         $status = 'waiting';
                         $nextScheduledAt = date('Y-m-d 09:00:00', strtotime('+1 day'));
                         $shouldContinueChain = false;
@@ -346,7 +346,7 @@ class FlowExecutor
                     if ($res['success']) {
                         $this->bufferStatsUpdate('flows', $flowId, 'stat_zalo_sent');
                         $this->bufferStatsUpdate('flows', $flowId, 'stat_total_sent');
-                        logActivity($this->pdo, $subscriberId, 'zalo_sent', $currentStepId, $flowName, 'Zalo CS Sent: ' . $step['label'], $flowId, $campaignId);
+                        logActivity($this->pdo, $subscriberId, 'zalo_sent', $currentStepId, $flowName, 'Zalo CS Sent: ' . $step['label'], $flowId, $campaignId, [], $subscriber['workspace_id']);
                         $logs[] = "  -> Zalo CS sent to {$zaloUserId}.";
                         $messageSent = true;
                     } else {
@@ -385,7 +385,7 @@ class FlowExecutor
                                 if ($znsRes['success']) {
                                     $this->bufferStatsUpdate('flows', $flowId, 'stat_zns_sent');
                                     $this->bufferStatsUpdate('flows', $flowId, 'stat_total_sent');
-                                    logActivity($this->pdo, $subscriberId, 'zns_sent', $currentStepId, $flowName, 'ZNS (Fallback) Sent', $flowId, $campaignId);
+                                    logActivity($this->pdo, $subscriberId, 'zns_sent', $currentStepId, $flowName, 'ZNS (Fallback) Sent', $flowId, $campaignId, [], $subscriber['workspace_id']);
                                     $logs[] = "  -> Fallback ZNS sent.";
                                     $messageSent = true;
                                 } else {
@@ -456,7 +456,7 @@ class FlowExecutor
                     if (empty($phone) || !$normalizedPhone) {
                         $reason = empty($phone) ? 'missing_phone' : 'invalid_phone';
                         $logs[] = "  -> ZNS Skipped: $reason ($phone).";
-                        logActivity($this->pdo, $subscriberId, 'zns_skipped', $currentStepId, $flowName, "ZNS Skipped: $reason", $flowId, $campaignId);
+                        logActivity($this->pdo, $subscriberId, 'zns_skipped', $currentStepId, $flowName, "ZNS Skipped: $reason", $flowId, $campaignId, [], $subscriber['workspace_id']);
                         if (($config['fallback_behavior'] ?? 'skip') === 'mark_failed') {
                             $this->bufferStatsUpdate('flows', $flowId, 'stat_zns_failed');
                         }
@@ -471,7 +471,7 @@ class FlowExecutor
                     $todaySent = is_array($todaySentData) ? ($todaySentData['zalo'] ?? 0) : (int)$todaySentData;
                     if ($maxPerDay > 0 && $todaySent >= $maxPerDay) {
                         $logs[] = "  -> Frequency cap reached ($todaySent/$maxPerDay). Rescheduling ZNS to tomorrow.";
-                        logActivity($this->pdo, $subscriberId, 'frequency_cap_reached', $currentStepId, $flowName, "Cap: $maxPerDay (ZNS)", $flowId);
+                        logActivity($this->pdo, $subscriberId, 'frequency_cap_reached', $currentStepId, $flowName, "Cap: $maxPerDay (ZNS)", $flowId, null, [], $subscriber['workspace_id']);
                         $status = 'waiting';
                         $nextScheduledAt = date('Y-m-d 09:00:00', strtotime('+1 day'));
                         $shouldContinueChain = false;
@@ -525,7 +525,7 @@ class FlowExecutor
 
                     if (!empty($missingParams)) {
                         $logs[] = "  -> ZNS Skipped: Missing data for parameters (" . implode(', ', $missingParams) . ").";
-                        logActivity($this->pdo, $subscriberId, 'zns_failed', $currentStepId, $flowName, "ZNS Failed: Missing parameters (" . implode(', ', $missingParams) . ")", $flowId, $campaignId);
+                        logActivity($this->pdo, $subscriberId, 'zns_failed', $currentStepId, $flowName, "ZNS Failed: Missing parameters (" . implode(', ', $missingParams) . ")", $flowId, $campaignId, [], $subscriber['workspace_id']);
                         $result = ['success' => false, 'error_message' => 'Missing parameters: ' . implode(', ', $missingParams)];
                         // Debug log
                         file_put_contents(
@@ -552,7 +552,7 @@ class FlowExecutor
                     if ($result['success']) {
                         $this->bufferStatsUpdate('flows', $flowId, 'stat_zns_sent');
                         $this->bufferStatsUpdate('flows', $flowId, 'stat_total_sent');
-                        logActivity($this->pdo, $subscriberId, 'zns_sent', $currentStepId, $flowName, 'ZNS Sent', $flowId, $campaignId);
+                        logActivity($this->pdo, $subscriberId, 'zns_sent', $currentStepId, $flowName, 'ZNS Sent', $flowId, $campaignId, [], $subscriber['workspace_id']);
                         $logs[] = "  -> ZNS Sent.";
                         $messageSent = true;
                     } else {
@@ -562,7 +562,7 @@ class FlowExecutor
                         $errCode = $result['error_code'] ?? $result['reason'] ?? $result['status'] ?? '?';
                         $errMsg = $result['error_message'] ?? $result['message'] ?? 'Unknown';
                         $errDetail = "Code:{$errCode} - {$errMsg}";
-                        logActivity($this->pdo, $subscriberId, 'zns_failed', $currentStepId, $flowName, "ZNS Failed: " . $errDetail, $flowId, $campaignId);
+                        logActivity($this->pdo, $subscriberId, 'zns_failed', $currentStepId, $flowName, "ZNS Failed: " . $errDetail, $flowId, $campaignId, [], $subscriber['workspace_id']);
                         $logs[] = "  -> ZNS Failed: {$errDetail}";
                         // Write debug log
                         file_put_contents(
@@ -600,7 +600,7 @@ class FlowExecutor
                     $todaySent = is_array($todaySentData) ? ($todaySentData['meta'] ?? 0) : (int)$todaySentData;
                     if ($maxPerDay > 0 && $todaySent >= $maxPerDay) {
                         $logs[] = "  -> Frequency cap reached ($todaySent/$maxPerDay). Rescheduling Meta to tomorrow.";
-                        logActivity($this->pdo, $subscriberId, 'frequency_cap_reached', $currentStepId, $flowName, "Cap: $maxPerDay (Meta)", $flowId);
+                        logActivity($this->pdo, $subscriberId, 'frequency_cap_reached', $currentStepId, $flowName, "Cap: $maxPerDay (Meta)", $flowId, null, [], $subscriber['workspace_id']);
                         $status = 'waiting';
                         $nextScheduledAt = date('Y-m-d 09:00:00', strtotime('+1 day'));
                         $shouldContinueChain = false;
@@ -624,7 +624,7 @@ class FlowExecutor
                         $this->bufferStatsUpdate('flows', $flowId, 'stat_total_sent');
                         // [FIX P6-C1] Track Meta messages per-channel (mirrors stat_zalo_sent / stat_zns_sent pattern)
                         $this->bufferStatsUpdate('flows', $flowId, 'stat_meta_sent');
-                        logActivity($this->pdo, $subscriberId, 'meta_sent', $currentStepId, $flowName, 'Meta Msg Sent: ' . ($step['label'] ?? 'Message'), $flowId, $campaignId);
+                        logActivity($this->pdo, $subscriberId, 'meta_sent', $currentStepId, $flowName, 'Meta Msg Sent: ' . ($step['label'] ?? 'Message'), $flowId, $campaignId, [], $subscriber['workspace_id']);
                         $logs[] = "  -> Meta Msg Sent.";
                         // [FIX P6-H1] Increment per-channel frequency cap counter.
                         // Without this, $contextData['total_sent_today']['meta'] stays 0
@@ -635,7 +635,7 @@ class FlowExecutor
                         $contextData['total_sent_today']['meta'] = ($contextData['total_sent_today']['meta'] ?? 0) + 1;
                         $messageSent = true;
                     } else {
-                        logActivity($this->pdo, $subscriberId, 'meta_failed', $currentStepId, $flowName, "Meta Failed: " . ($res['message'] ?? ''), $flowId, $campaignId);
+                        logActivity($this->pdo, $subscriberId, 'meta_failed', $currentStepId, $flowName, "Meta Failed: " . ($res['message'] ?? ''), $flowId, $campaignId, [], $subscriber['workspace_id']);
                         $logs[] = "  -> Meta Failed: " . ($res['message'] ?? 'Unknown');
                     }
 
@@ -766,7 +766,7 @@ class FlowExecutor
                         $logs[] = "  -> Step '{$step['label']}' Wait complete ($logDetail).";
                         $isInstantStep = true;
                         $status = 'completed'; // Proceed
-                        logActivity($this->pdo, $subscriberId, 'wait_processed', $currentStepId, $flowName, "$logDetail (Completed)", $flowId);
+                        logActivity($this->pdo, $subscriberId, 'wait_processed', $currentStepId, $flowName, "$logDetail (Completed)", $flowId, null, [], $subscriber['workspace_id']);
                     } else {
                         $logs[] = "  -> Step '{$step['label']}' waiting until $nextScheduledAt.";
                         $status = 'waiting';
@@ -810,7 +810,7 @@ class FlowExecutor
                         $logs[] = "  -> Condition forced NO due to email error.";
                         $nextStepId = $step['noStepId'] ?? null;
                         $isInstantStep = true;
-                        logActivity($this->pdo, $subscriberId, 'condition_false', $currentStepId, $flowName, "Forced FALSE (Email Error)", $flowId);
+                        logActivity($this->pdo, $subscriberId, 'condition_false', $currentStepId, $flowName, "Forced FALSE (Email Error)", $flowId, null, [], $subscriber['workspace_id']);
                         break;
                     }
 
@@ -1080,12 +1080,12 @@ class FlowExecutor
 
                     if ($isMatched) {
                         $nextStepId = $step['yesStepId'] ?? null;
-                        logActivity($this->pdo, $subscriberId, 'condition_true', $currentStepId, $flowName, "Matched: $condType", $flowId);
+                        logActivity($this->pdo, $subscriberId, 'condition_true', $currentStepId, $flowName, "Matched: $condType", $flowId, null, [], $subscriber['workspace_id']);
                         $logs[] = "  -> Condition Matched!";
                         $isInstantStep = true;
                     } elseif ($isTimedOut) {
                         $nextStepId = $step['noStepId'] ?? null;
-                        logActivity($this->pdo, $subscriberId, 'condition_false', $currentStepId, $flowName, "Timed Out: $condType", $flowId);
+                        logActivity($this->pdo, $subscriberId, 'condition_false', $currentStepId, $flowName, "Timed Out: $condType", $flowId, null, [], $subscriber['workspace_id']);
                         $logs[] = "  -> Condition Timed Out. Moving to ELSE.";
                         $isInstantStep = true;
                     } else {
@@ -1136,7 +1136,7 @@ class FlowExecutor
                     }
 
                     $nextStepId = $matchedStepId ?: $defaultStepId;
-                    logActivity($this->pdo, $subscriberId, 'advanced_condition', $currentStepId, $flowName, "Matched: $matchLabel", $flowId);
+                    logActivity($this->pdo, $subscriberId, 'advanced_condition', $currentStepId, $flowName, "Matched: $matchLabel", $flowId, null, [], $subscriber['workspace_id']);
                     $logs[] = "  -> Advanced Cond: $matchLabel";
                     $isInstantStep = true;
                     break;
@@ -1151,7 +1151,7 @@ class FlowExecutor
                     $isPathA = (($hash % 100) < $ratioA);
                     $nextStepId = $isPathA ? ($step['pathAStepId'] ?? null) : ($step['pathBStepId'] ?? null);
 
-                    logActivity($this->pdo, $subscriberId, $isPathA ? 'ab_test_a' : 'ab_test_b', $currentStepId, $flowName, "Split Test: " . ($isPathA ? 'A' : 'B'), $flowId, $campaignId, ['variation' => $isPathA ? 'A' : 'B']);
+                    logActivity($this->pdo, $subscriberId, $isPathA ? 'ab_test_a' : 'ab_test_b', $currentStepId, $flowName, "Split Test: " . ($isPathA ? 'A' : 'B'), $flowId, $campaignId, ['variation' => $isPathA ? 'A' : 'B'], $subscriber['workspace_id']);
                     $logs[] = "  -> Split Test: " . ($isPathA ? 'Path A' : 'Path B');
                     $isInstantStep = true;
                     break;
@@ -1159,13 +1159,24 @@ class FlowExecutor
                 case 'update_tag':
                     $tags = $step['config']['tags'] ?? [];
                     $action = $step['config']['action'] ?? 'add';
+                    // [FIX BUG-FLOW-TAG-1] Resolve workspace_id once before tag loop
+                    $tagWorkspaceId = $subscriber['workspace_id'] ?? null;
+                    if (!$tagWorkspaceId) {
+                        $stmtWs = $this->pdo->prepare("SELECT workspace_id FROM subscribers WHERE id = ? LIMIT 1");
+                        $stmtWs->execute([$subscriberId]);
+                        $tagWorkspaceId = $stmtWs->fetchColumn();
+                    }
                     foreach ($tags as $tagName) {
                         $tagId = null;
-                        if (isset(self::$tagCache[$tagName])) {
-                            $tagId = self::$tagCache[$tagName];
+                        $tagCacheKey = ($tagWorkspaceId ?? '_global') . '_' . $tagName;
+                        if (isset(self::$tagCache[$tagCacheKey])) {
+                            $tagId = self::$tagCache[$tagCacheKey];
                         } else {
-                            $stmtT = $this->pdo->prepare("SELECT id FROM tags WHERE name = ? LIMIT 1");
-                            $stmtT->execute([$tagName]);
+                            // [FIX BUG-FLOW-TAG-1] Scoped to workspace to prevent cross-tenant tag matches
+                            $stmtT = $tagWorkspaceId
+                                ? $this->pdo->prepare("SELECT id FROM tags WHERE name = ? AND workspace_id = ? LIMIT 1")
+                                : $this->pdo->prepare("SELECT id FROM tags WHERE name = ? LIMIT 1");
+                            $stmtT->execute($tagWorkspaceId ? [$tagName, $tagWorkspaceId] : [$tagName]);
                             $tagId = $stmtT->fetchColumn();
 
                             // [FIX] tags.id is VARCHAR using uniqid(), NOT auto-increment.
@@ -1174,8 +1185,11 @@ class FlowExecutor
                             // "Field 'id' doesn't have a default value" — crashing the flow.
                             if (!$tagId) {
                                 $newTagId = uniqid();
-                                $stmtCreate = $this->pdo->prepare("INSERT IGNORE INTO tags (id, name, created_at) VALUES (?, ?, NOW())");
-                                $stmtCreate->execute([$newTagId, $tagName]);
+                                // [FIX BUG-FLOW-TAG-2] Added workspace_id so auto-created tags are workspace-scoped
+                                $stmtCreate = $tagWorkspaceId
+                                    ? $this->pdo->prepare("INSERT IGNORE INTO tags (id, name, workspace_id, created_at) VALUES (?, ?, ?, NOW())")
+                                    : $this->pdo->prepare("INSERT IGNORE INTO tags (id, name, created_at) VALUES (?, ?, NOW())");
+                                $stmtCreate->execute($tagWorkspaceId ? [$newTagId, $tagName, $tagWorkspaceId] : [$newTagId, $tagName]);
                                 
                                 if ($stmtCreate->rowCount() == 0) {
                                     // It was ignored due to duplicate name. Fetch the real ID.
@@ -1190,7 +1204,7 @@ class FlowExecutor
                                 reset(self::$tagCache);
                                 unset(self::$tagCache[key(self::$tagCache)]);
                             }
-                            self::$tagCache[$tagName] = $tagId;
+                            self::$tagCache[$tagCacheKey] = $tagId;
                         }
 
                         if (!$tagId)
@@ -1202,11 +1216,16 @@ class FlowExecutor
                             $stmtIn = $this->pdo->prepare("INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES (?, ?)");
                             $stmtIn->execute([$subscriberId, $tagId]);
                             if ($stmtIn->rowCount() > 0) {
-                                dispatchFlowWorker($this->pdo, 'flows', ['trigger_type' => 'tag', 'target_id' => $tagName, 'subscriber_id' => $subscriberId]);
+                                dispatchFlowWorker($this->pdo, 'flows', [
+                                    'trigger_type' => 'tag', 
+                                    'target_id' => $tagName, 
+                                    'subscriber_id' => $subscriberId,
+                                    'workspace_id' => $tagWorkspaceId // Use the already resolved workspaceId
+                                ]);
                             }
                         }
                     }
-                    logActivity($this->pdo, $subscriberId, 'update_tag', $currentStepId, $flowName, "Tags $action: " . implode(',', $tags), $flowId);
+                    logActivity($this->pdo, $subscriberId, 'update_tag', $currentStepId, $flowName, "Tags $action: " . implode(',', $tags), $flowId, null, [], $subscriber['workspace_id']);
                     $logs[] = "  -> Tags updated.";
                     $nextStepId = $step['nextStepId'] ?? null;
                     $isInstantStep = true;
@@ -1215,17 +1234,18 @@ class FlowExecutor
                 case 'list_action':
                     $lid = $step['config']['listId'] ?? '';
                     $action = $step['config']['action'] ?? 'add';
+                    $workspaceId = $subscriber['workspace_id'] ?? null;
                     if ($lid) {
                         if ($action === 'add') {
                             $stmtL = $this->pdo->prepare("INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id) VALUES (?, ?)");
                             $stmtL->execute([$subscriberId, $lid]);
                             if ($stmtL->rowCount() > 0) {
-                                enrollSubscribersBulk($this->pdo, [$subscriberId], 'list', $lid);
+                                enrollSubscribersBulk($this->pdo, [$subscriberId], 'list', $lid, $workspaceId);
                             }
                         } else {
                             $this->pdo->prepare("DELETE FROM subscriber_lists WHERE subscriber_id = ? AND list_id = ?")->execute([$subscriberId, $lid]);
                         }
-                        logActivity($this->pdo, $subscriberId, 'list_action', $currentStepId, "List Action", "$action list $lid", $flowId);
+                        logActivity($this->pdo, $subscriberId, 'list_action', $currentStepId, "List Action", "$action list $lid", $flowId, null, [], $subscriber['workspace_id']);
                         $logs[] = "  -> List action done.";
                     }
                     $nextStepId = $step['nextStepId'] ?? null;
@@ -1236,10 +1256,10 @@ class FlowExecutor
                     $aType = $step['config']['actionType'] ?? '';
                     if ($aType === 'unsubscribe') {
                         $this->pdo->prepare("UPDATE subscribers SET status='unsubscribed' WHERE id=?")->execute([$subscriberId]);
-                        logActivity($this->pdo, $subscriberId, 'unsubscribe', $currentStepId, $flowName, "Unsubscribed via flow", $flowId);
+                        logActivity($this->pdo, $subscriberId, 'unsubscribe', $currentStepId, $flowName, "Unsubscribed via flow", $flowId, null, [], $subscriber['workspace_id']);
                     } elseif ($aType === 'delete_contact') {
                         // [FIX] Log BEFORE delete — logActivity would fail (FK/orphan) if run after DELETE
-                        logActivity($this->pdo, $subscriberId, 'delete_contact', $currentStepId, $flowName, "Deleted via flow", $flowId);
+                        logActivity($this->pdo, $subscriberId, 'delete_contact', $currentStepId, $flowName, "Deleted via flow", $flowId, null, [], $subscriber['workspace_id']);
                         // Delete all related records to prevent orphan data
                         $this->pdo->prepare("DELETE FROM subscriber_lists WHERE subscriber_id=?")->execute([$subscriberId]);
                         $this->pdo->prepare("DELETE FROM subscriber_tags WHERE subscriber_id=?")->execute([$subscriberId]);
@@ -1357,7 +1377,7 @@ class FlowExecutor
                                     $newQ = $this->pdo->lastInsertId();
                                     if ($newQ) {
                                         dispatchFlowWorker($this->pdo, 'flows', ['priority_queue_id' => $newQ, 'subscriber_id' => $subscriberId, 'priority_flow_id' => $linkedId]);
-                                        logActivity($this->pdo, $subscriberId, 'enter_flow', $linkedId, "Linked Flow", "Linked to $linkedId", $linkedId);
+                                        logActivity($this->pdo, $subscriberId, 'enter_flow', $linkedId, "Linked Flow", "Linked to $linkedId", $linkedId, null, [], $subscriber['workspace_id']);
                                         $logs[] = "  -> Linked to flow $linkedId.";
                                     }
 

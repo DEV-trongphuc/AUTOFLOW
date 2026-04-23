@@ -208,11 +208,16 @@ try {
                 foreach ($integrations as &$int) {
                     $config = json_decode($int['config'], true);
                     if (isset($config['targetListId'])) {
-                        // Fetch real count from list
-                        $stmtCount = $pdo->prepare("SELECT subscriber_count FROM lists WHERE id = ?");
-                        $stmtCount->execute([$config['targetListId']]);
+                        // [FIX] Fetch real, live count from subscriber_lists instead of stale cached count
+                        $stmtCount = $pdo->prepare("
+                            SELECT COUNT(*) 
+                            FROM subscriber_lists sl
+                            JOIN subscribers s ON sl.subscriber_id = s.id
+                            WHERE sl.list_id = ? AND s.workspace_id = ?
+                        ");
+                        $stmtCount->execute([$config['targetListId'], $workspace_id]);
                         $count = $stmtCount->fetchColumn();
-                        $int['active_count'] = $count ?: 0;
+                        $int['active_count'] = (int)($count ?: 0);
                     } else {
                         $int['active_count'] = 0;
                     }

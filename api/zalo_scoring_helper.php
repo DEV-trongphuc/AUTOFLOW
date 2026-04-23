@@ -38,6 +38,7 @@ function updateZaloLeadScore($pdo, $zaloUserId, $type, $refId = null, $mainSubId
 
     $zaloSubId = null;
     $mainId = $mainSubId;
+    $workspace_id = null;
 
     // 1. Resolve Zalo User ID if only Main ID provided
     if (!$zaloUserId && $mainId) {
@@ -83,7 +84,10 @@ function updateZaloLeadScore($pdo, $zaloUserId, $type, $refId = null, $mainSubId
 
                 // Log Zalo Activity
                 $details = "Cộng $points điểm lead score cho sự kiện: $type";
-                logZaloSubscriberActivity($pdo, $zaloSubId, 'lead_score_reward', $refId, $details, $type);
+                if (!$workspace_id && $mainId) {
+                    $workspace_id = $pdo->query("SELECT workspace_id FROM subscribers WHERE id = '" . $mainId . "' LIMIT 1")->fetchColumn();
+                }
+                logZaloSubscriberActivity($pdo, $zaloSubId, 'lead_score_reward', $refId, $details, $type, null, $workspace_id);
             } else {
                 // If Zalo score capped, we might still want to update Main score? 
                 // Usually they should be in sync, so if capped for Zalo, cap for Main too.
@@ -129,7 +133,10 @@ function updateZaloLeadScore($pdo, $zaloUserId, $type, $refId = null, $mainSubId
                 break;
         }
 
-        logActivity($pdo, $mainId, 'lead_score_sync', $refId, 'Zalo Scoring', "$typeLabel (+$points điểm)", $refId, null);
+        if (!$workspace_id && $mainId) {
+            $workspace_id = $pdo->query("SELECT workspace_id FROM subscribers WHERE id = '" . $mainId . "' LIMIT 1")->fetchColumn();
+        }
+        logActivity($pdo, $mainId, 'lead_score_sync', $refId, 'Zalo Scoring', "$typeLabel (+$points điểm)", $refId, null, [], $workspace_id);
 
         // [REAL-TIME] Trigger Dynamic Triggers (Segment Entry)
         require_once 'trigger_helper.php';

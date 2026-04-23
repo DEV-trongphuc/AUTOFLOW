@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import {
     Check, FileSpreadsheet, AlertCircle, ChevronRight,
     Target, Plus, Trash2, HelpCircle, Zap, Clock
@@ -15,7 +16,10 @@ interface GoogleSheetsSetupProps {
     initialData?: any;
 }
 
-const SYSTEM_FIELDS = [
+// Thêm trường hệ thống cho custom_field
+const CUSTOM_FIELD_PLACEHOLDER = '__cf_placeholder__'; // filled in dynamically
+
+const BASE_SYSTEM_FIELDS = [
     { key: 'email', label: 'Email', required: true },
     { key: 'firstName', label: 'Họ (First Name)', required: false },
     { key: 'lastName', label: 'Tên (Last Name)', required: false },
@@ -33,31 +37,220 @@ const SYSTEM_FIELDS = [
     { key: 'dateOfBirth', label: 'Ngày sinh', required: false },
     { key: 'tags', label: 'Thẻ (Tags)', required: false },
     { key: 'points', label: 'Điểm số', required: false },
-    { key: 'notes', label: 'Ghi chú (Notes)', required: false }
+    { key: 'notes', label: 'Ghi chú (Notes)', required: false },
 ];
 
-// --- Custom Select Component ---
+// --- SystemFieldSelect: portal-based to fully escape modal transform ---
+const SystemFieldSelect = ({ value, options, onChange }: {
+    value: string;
+    options: { key: string; label: string }[];
+    onChange: (key: string) => void;
+}) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [rect, setRect] = useState<DOMRect | null>(null);
+    const [isAddingCustom, setIsAddingCustom] = useState(false);
+    const [customValue, setCustomValue] = useState('');
+    const triggerRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (!containerRef.current?.contains(e.target as Node) && !dropdownRef.current?.contains(e.target as Node)) {
+                setIsOpen(false);
+                setIsAddingCustom(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const handleOpen = () => {
+        if (!triggerRef.current) return;
+        setRect(triggerRef.current.getBoundingClientRect());
+        setIsOpen(p => !p);
+        setIsAddingCustom(false);
+    };
+
+    const handleCustomAdd = () => {
+        if (!customValue.trim()) return;
+        const key = `custom_field.${customValue.trim().toLowerCase().replace(/\s+/g, '_')}`;
+        onChange(key);
+        setIsOpen(false);
+        setIsAddingCustom(false);
+        setCustomValue('');
+    };
+
+    const selected = options.find(o => o.key === value);
+
+    const dropdown = isOpen && rect ? ReactDOM.createPortal(
+        <div
+            ref={dropdownRef}
+            style={{
+                position: 'fixed',
+                top: rect.bottom + 6,
+                left: rect.left,
+                width: Math.max(rect.width, 240),
+                zIndex: 999999,
+                backgroundColor: 'white',
+                border: '1px solid #e2e8f0',
+                borderRadius: '0.75rem',
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                maxHeight: '18rem',
+                overflowY: 'auto'
+            }}
+        >
+            <div className="p-1 space-y-0.5">
+                {!isAddingCustom ? (
+                    <>
+                        <div className="max-h-52 overflow-y-auto">
+                            {options.map(opt => (
+                                <div key={opt.key} onClick={() => { onChange(opt.key); setIsOpen(false); }}
+                                    className={`px-3 py-2 rounded-lg text-xs font-bold cursor-pointer flex items-center justify-between transition-colors
+                                        ${value === opt.key ? 'bg-amber-50 text-amber-600' : 'text-slate-700 hover:bg-slate-50'}`}>
+                                    <span>{opt.label}</span>
+                                    {opt.key.startsWith('custom_field.') && (
+                                        <span className="ml-2 text-[9px] font-black uppercase text-blue-400 bg-blue-50 px-1.5 py-0.5 rounded">CF</span>
+                                    )}
+                                    {value === opt.key && <Check className="w-3 h-3 shrink-0 ml-1" />}
+                                </div>
+                            ))}
+                        </div>
+                        <div className="pt-1 mt-1 border-t border-slate-100">
+                            <div
+                                onClick={() => setIsAddingCustom(true)}
+                                className="px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider text-blue-600 hover:bg-blue-50 cursor-pointer flex items-center gap-2 transition-all"
+                            >
+                                <Plus className="w-3.5 h-3.5" />
+                                <span>Trường tùy chỉnh</span>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <div className="p-3 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tên trường (vd: Ma_Vach)</label>
+                            <input
+                                autoFocus
+                                value={customValue}
+                                onChange={e => setCustomValue(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleCustomAdd()}
+                                placeholder="Nhập tên không dấu..."
+                                className="w-full h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold focus:bg-white focus:border-blue-400 outline-none"
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setIsAddingCustom(false)}
+                                className="flex-1 h-8 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50"
+                            >
+                                Quay lại
+                            </button>
+                            <button
+                                onClick={handleCustomAdd}
+                                className="flex-1 h-8 rounded-lg bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 shadow-sm"
+                            >
+                                Xác nhận
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>,
+        document.body
+    ) : null;
+
+    return (
+        <div className="relative w-[180px]" ref={containerRef}>
+            <div
+                ref={triggerRef}
+                onClick={handleOpen}
+                className={`h-9 px-3 flex items-center justify-between rounded-xl cursor-pointer transition-all text-xs font-bold border
+                    ${isOpen ? 'border-amber-400 ring-2 ring-amber-100 text-amber-700 bg-amber-50' : 'border-transparent hover:bg-slate-100 text-slate-600 bg-transparent'}`}
+            >
+                <span className="truncate">{selected?.label || (value.startsWith('custom_field.') ? value.replace('custom_field.', '⚙ ') : value)}</span>
+                <ChevronRight className={`w-3.5 h-3.5 ml-1 transition-transform shrink-0 ${isOpen ? 'rotate-[-90deg] text-amber-500' : 'rotate-90 text-slate-400'}`} />
+            </div>
+            {dropdown}
+        </div>
+    );
+};
+// ------------------------------
+
+// --- SheetColumnSelect: portal-based to fully escape modal transform ---
 const SheetColumnSelect = ({ value, options, onChange, placeholder = "Chọn cột..." }: any) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [rect, setRect] = useState<{ bottom: number, left: number, width: number } | null>(null);
+    const triggerRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // Close on click outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
+            const inContainer = containerRef.current?.contains(event.target as Node);
+            const inDropdown = dropdownRef.current?.contains(event.target as Node);
+            if (!inContainer && !inDropdown) setIsOpen(false);
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    const handleOpen = () => {
+        if (!triggerRef.current) return;
+        const r = triggerRef.current.getBoundingClientRect();
+        setRect({ bottom: r.bottom, left: r.left, width: r.width });
+        setIsOpen(prev => !prev);
+    };
+
     const selectedLabel = value || <span className="text-slate-400 font-normal">{placeholder}</span>;
+
+    const dropdown = isOpen && rect ? ReactDOM.createPortal(
+        <div
+            ref={dropdownRef}
+            style={{
+                position: 'fixed',
+                top: rect.bottom + 6,
+                left: rect.left,
+                width: rect.width,
+                zIndex: 999999,
+                backgroundColor: 'white',
+                border: '1px solid #e2e8f0',
+                borderRadius: '0.75rem',
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                maxHeight: '15rem',
+                overflowY: 'auto'
+            }}
+        >
+            <div className="p-1 space-y-0.5">
+                <div
+                    onClick={() => { onChange(''); setIsOpen(false); }}
+                    className="px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-50 hover:text-slate-600 cursor-pointer transition-colors"
+                >
+                    -- Bỏ qua --
+                </div>
+                {options.map((opt: string) => (
+                    <div
+                        key={opt}
+                        onClick={() => { onChange(opt); setIsOpen(false); }}
+                        className={`
+                            px-3 py-2.5 rounded-lg text-sm font-bold cursor-pointer transition-colors flex items-center justify-between
+                            ${value === opt ? 'bg-amber-50 text-[#ffa900]' : 'text-slate-700 hover:bg-slate-50'}
+                        `}
+                    >
+                        {opt}
+                        {value === opt && <Check className="w-3.5 h-3.5" />}
+                    </div>
+                ))}
+            </div>
+        </div>,
+        document.body
+    ) : null;
 
     return (
         <div className="relative" ref={containerRef}>
             <div
-                onClick={() => setIsOpen(!isOpen)}
+                ref={triggerRef}
+                onClick={handleOpen}
                 className={`
                     w-full h-11 bg-white border rounded-xl px-4 flex items-center justify-between cursor-pointer transition-all
                     ${isOpen ? 'border-[#ffa900] ring-4 ring-[#ffa900]/10' : 'border-slate-200 hover:border-slate-300'}
@@ -73,33 +266,7 @@ const SheetColumnSelect = ({ value, options, onChange, placeholder = "Chọn c�
                     `}
                 />
             </div>
-
-            {/* Dropdown Menu */}
-            {isOpen && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
-                    <div className="p-1 space-y-0.5">
-                        <div
-                            onClick={() => { onChange(''); setIsOpen(false); }}
-                            className="px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-50 hover:text-slate-600 cursor-pointer transition-colors"
-                        >
-                            -- Bỏ qua --
-                        </div>
-                        {options.map((opt: string) => (
-                            <div
-                                key={opt}
-                                onClick={() => { onChange(opt); setIsOpen(false); }}
-                                className={`
-                                    px-3 py-2.5 rounded-lg text-sm font-bold cursor-pointer transition-colors flex items-center justify-between
-                                    ${value === opt ? 'bg-amber-50 text-[#ffa900]' : 'text-slate-700 hover:bg-slate-50'}
-                                `}
-                            >
-                                {opt}
-                                {value === opt && <Check className="w-3.5 h-3.5" />}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+            {dropdown}
         </div>
     );
 };
@@ -125,13 +292,30 @@ const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onBack, onComplet
     const [activeMappings, setActiveMappings] = useState<string[]>(['firstName', 'phoneNumber']);
     const [detectedHeaders, setDetectedHeaders] = useState<string[]>([]);
     const [lists, setLists] = useState<any[]>([]);
+    // Dynamic custom fields fetched from API
+    const [customFieldDefs, setCustomFieldDefs] = useState<{ key: string; label: string }[]>([]);
+
+    // All available system fields = base + custom_fields
+    const SYSTEM_FIELDS = React.useMemo(() => [
+        ...BASE_SYSTEM_FIELDS,
+        ...customFieldDefs.map(cf => ({ key: `custom_field.${cf.key}`, label: `⚙ ${cf.label}`, required: false }))
+    ], [customFieldDefs]);
 
     useEffect(() => {
         const fetchLists = async () => {
             const res = await api.get<any[]>('lists');
             if (res.success) setLists(res.data);
         };
+        const fetchCustomFields = async () => {
+            const res = await api.get<any>('subscribers?route=field_definitions');
+            if (res.success && Array.isArray(res.data)) {
+                // The API returns both system and custom fields, we only want custom ones
+                const customFields = res.data.filter((f: any) => f.is_custom);
+                setCustomFieldDefs(customFields);
+            }
+        };
         fetchLists();
+        fetchCustomFields();
 
         // Load Initial Data if Editing
         if (initialData) {
@@ -209,8 +393,9 @@ const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onBack, onComplet
         if (remainingFields.length > 0) {
             setActiveMappings([...activeMappings, remainingFields[0].key]);
         } else {
-            // Allow custom field
-            setActiveMappings([...activeMappings, '__custom_input__']);
+            // Mặc định thêm một row trắng với key duy nhất để user tự nhập
+            const placeholderKey = `temp_custom_${Date.now()}`;
+            setActiveMappings([...activeMappings, placeholderKey]);
         }
     };
 
@@ -234,20 +419,32 @@ const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onBack, onComplet
 
         setLoading(true);
         try {
-            // 1. Create the list first
+            // 1. Create or Identify the list
             let finalListId = config.targetListId;
 
-            // Always create a new list as per user requirement "List tự tạo"
-            const listRes = await api.post('lists', {
-                name: config.targetListName,
-                source: 'Google Sheets',
-                count: 0
-            });
+            // Only create a new list if we don't have one yet
+            if (!finalListId) {
+                const newListId = crypto.randomUUID();
+                const listRes = await api.post('lists', {
+                    id: newListId,
+                    name: config.targetListName,
+                    source: 'Google Sheets',
+                    type: 'sync',
+                    count: 0
+                });
 
-            if (listRes.success) {
-                finalListId = (listRes.data as any).id;
+                if (listRes.success) {
+                    finalListId = (listRes.data as any).id;
+                } else {
+                    throw new Error(listRes.message || 'Không thể tạo danh sách mới');
+                }
             } else {
-                throw new Error('Không thể tạo danh sách mới');
+                // If editing, optionally update the list name to match what's in the input
+                await api.put(`lists?id=${finalListId}`, {
+                    name: config.targetListName,
+                    source: 'Google Sheets',
+                    count: 0 // Count is handled by sync worker
+                });
             }
 
             // 2. Save Integration
@@ -493,30 +690,29 @@ const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onBack, onComplet
                                         return (
                                             <tr key={mapKey} className="group hover:bg-slate-50/50 transition-colors">
                                                 <td className="px-8 py-5">
-                                                    {isSystemField ? (
-                                                        <div className="w-[180px]">
-                                                            <Select
-                                                                options={SYSTEM_FIELDS.filter(f => f.key === mapKey || (!activeMappings.includes(f.key) && f.key !== 'email')).map(f => ({ value: f.key, label: f.label }))}
-                                                                value={mapKey}
-                                                                onChange={(newKey) => {
-                                                                    const newVal = config.mapping[mapKey];
-                                                                    const newActive = activeMappings.map(k => k === mapKey ? newKey : k);
-                                                                    const newMapping = { ...config.mapping };
-                                                                    delete newMapping[mapKey];
-                                                                    newMapping[newKey] = newVal;
-                                                                    setActiveMappings(newActive);
-                                                                    setConfig({ ...config, mapping: newMapping });
-                                                                }}
-                                                                variant="ghost"
-                                                                size="sm"
-                                                            />
-                                                        </div>
+                                                    {isSystemField || mapKey.startsWith('custom_field.') ? (
+                                                        <SystemFieldSelect
+                                                            value={mapKey}
+                                                            options={SYSTEM_FIELDS.filter(f =>
+                                                                f.key === mapKey ||
+                                                                (!activeMappings.includes(f.key) && f.key !== 'email')
+                                                            )}
+                                                            onChange={(newKey) => {
+                                                                const newVal = config.mapping[mapKey];
+                                                                const newActive = activeMappings.map(k => k === mapKey ? newKey : k);
+                                                                const newMapping = { ...config.mapping };
+                                                                delete newMapping[mapKey];
+                                                                newMapping[newKey] = newVal;
+                                                                setActiveMappings(newActive);
+                                                                setConfig({ ...config, mapping: newMapping });
+                                                            }}
+                                                        />
                                                     ) : (
                                                         <div className="flex items-center gap-2">
                                                             <div className="px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg">
-                                                                <span className="text-sm font-bold text-blue-700">{fieldLabel}</span>
+                                                                <span className="text-sm font-bold text-blue-700">{mapKey.startsWith('temp_custom_') ? 'Chọn trường...' : mapKey}</span>
                                                             </div>
-                                                            <span className="text-[9px] font-bold text-blue-500 uppercase tracking-tight">Custom</span>
+                                                            <span className="text-[9px] font-bold text-blue-500 uppercase tracking-tight">Mới</span>
                                                         </div>
                                                     )}
                                                 </td>

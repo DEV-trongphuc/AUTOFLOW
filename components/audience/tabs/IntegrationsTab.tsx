@@ -91,6 +91,10 @@ const IntegrationsTab: React.FC<IntegrationsTabProps> = ({ integrations, onEdit,
                                         <td className="px-6 py-5 text-right font-bold text-slate-700">
                                             <span className="text-sm font-black text-slate-800 bg-slate-100 px-3 py-1 rounded-full">
                                                 {(() => {
+                                                    // Fallback to old behavior if active_count is undefined
+                                                    if (item.active_count !== undefined) {
+                                                        return item.active_count.toLocaleString();
+                                                    }
                                                     const targetList = lists.find(l => l.id == config.targetListId);
                                                     return targetList ? (targetList.count || 0).toLocaleString() : '0';
                                                 })()}

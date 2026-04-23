@@ -83,7 +83,7 @@ if (!function_exists('runWorkerFlow')) {
                                  s.status as sub_status, s.tags as sub_tags, s.id as sub_id, s.date_of_birth, s.anniversary_date, s.joined_at,
                                  s.city, s.country, s.gender, s.last_os, s.last_device, s.last_browser, s.last_city,
                                  s.stats_opened, s.stats_clicked, s.last_open_at, s.last_click_at, s.timezone, s.is_zalo_follower,
-                                 s.custom_attributes
+                                 s.custom_attributes, s.workspace_id
                                  FROM subscriber_flow_states q 
                                  JOIN flows f ON q.flow_id = f.id 
                                  JOIN subscribers s ON q.subscriber_id = s.id 
@@ -104,7 +104,7 @@ if (!function_exists('runWorkerFlow')) {
                          s.status as sub_status, s.tags as sub_tags, s.id as sub_id, s.date_of_birth, s.anniversary_date, s.joined_at,
                          s.city, s.country, s.gender, s.last_os, s.last_device, s.last_browser, s.last_city,
                          s.stats_opened, s.stats_clicked, s.last_open_at, s.last_click_at, s.timezone, s.is_zalo_follower,
-                         s.custom_attributes
+                         s.custom_attributes, s.workspace_id
                          FROM subscriber_flow_states q 
                          JOIN flows f ON q.flow_id = f.id 
                          JOIN subscribers s ON q.subscriber_id = s.id 
@@ -142,7 +142,7 @@ if (!function_exists('runWorkerFlow')) {
                         s.status as sub_status, s.tags as sub_tags, s.id as sub_id, s.date_of_birth, s.anniversary_date, s.joined_at,
                         s.city, s.country, s.gender, s.last_os, s.last_device, s.last_browser, s.last_city,
                         s.stats_opened, s.stats_clicked, s.last_open_at, s.last_click_at, s.timezone, s.is_zalo_follower,
-                        s.custom_attributes
+                        s.custom_attributes, s.workspace_id
                         FROM subscriber_flow_states q 
                         JOIN flows f ON q.flow_id = f.id 
                         JOIN subscribers s ON q.subscriber_id = s.id 

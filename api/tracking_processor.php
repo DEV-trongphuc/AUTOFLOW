@@ -18,6 +18,7 @@ function processTrackingEvent($pdo, $type, $payload)
         $fid = $payload['flow_id'] ?? null;
         $cid = $payload['campaign_id'] ?? null;
         $extra = $payload['extra_data'] ?? [];
+        $wId = $payload['workspace_id'] ?? null; // [HARDENING] Extract workspace_id from payload
 
         // [GUARD] Skip processing if critical fields are missing
         if (!$subType || !$sid) {
@@ -96,7 +97,7 @@ function processTrackingEvent($pdo, $type, $payload)
         $variationSuffix = !empty($extra['variation']) ? " (" . $extra['variation'] . ")" : "";
 
         $appendUrl = ($subType !== 'open_email' && !empty($extra['url'])) ? ": " . $extra['url'] : "";
-        logActivity($pdo, $sid, $subType, $rid, $activityLabel, "{$detailLabel}{$variationSuffix} {$pointLabel}{$appendUrl}", $fid, $cid, $extra);
+        logActivity($pdo, $sid, $subType, $rid, $activityLabel, "{$detailLabel}{$variationSuffix} {$pointLabel}{$appendUrl}", $fid, $cid, $extra, $wId);
 
         // 2. Buffer subscriber stats updates
         $pdo->prepare("INSERT INTO stats_update_buffer (target_table, target_id, column_name, increment) VALUES ('subscribers', ?, ?, 1)")
@@ -365,11 +366,11 @@ function processTrackingEvent($pdo, $type, $payload)
     }
 
     if ($type === 'unsubscribe') {
-        // [FIX] Use null coalescing for subscriber_id to prevent fatal errors on bad payload
         $sid = $payload['subscriber_id'] ?? null;
         $fid = $payload['flow_id'] ?? null;
         $cid = $payload['campaign_id'] ?? null;
         $rid = $payload['reference_id'] ?? null;
+        $wId = $payload['workspace_id'] ?? null;
 
         // [GUARD] Skip if subscriber_id is missing
         if (!$sid) {

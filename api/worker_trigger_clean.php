@@ -34,8 +34,7 @@ register_shutdown_function(function () use ($pdo) {
 
 try {
     // 1. Fetch Active Flows with Polling Triggers
-    // [SECURITY FIX] Added workspace_id to SELECT
-    $stmtFlows = $pdo->prepare("SELECT id, name, steps, config, workspace_id FROM flows WHERE status = 'active' AND (steps LIKE '%\"type\":\"date\"%' OR steps LIKE '%\"type\":\"campaign\"%')");
+    $stmtFlows = $pdo->prepare("SELECT id, name, steps, config FROM flows WHERE status = 'active' AND (steps LIKE '%\"type\":\"date\"%' OR steps LIKE '%\"type\":\"campaign\"%')");
     $stmtFlows->execute();
     $flows = $stmtFlows->fetchAll();
 
@@ -60,8 +59,7 @@ try {
         $cooldownHours = (int) ($fConfig['enrollmentCooldownHours'] ?? 24);
         if ($cooldownHours < 1)
             $cooldownHours = 1; // Minimum safety
-        
-        $wsId = $flow['workspace_id'];
+
         $tType = $trigger['config']['type'] ?? '';
         $tTargetId = $trigger['config']['targetId'] ?? '';
 
@@ -96,8 +94,6 @@ try {
                     $wheres = [];
                     $wheres[] = "DATE_FORMAT($dbField, '%m-%d') = DATE_FORMAT($targetDateExpr, '%m-%d')";
                     $wheres[] = "s.status IN ('active', 'lead', 'customer')";
-                    // [SECURITY FIX] Filter by workspace_id
-                    $wheres[] = "s.workspace_id = ?";
                     // Exclude newly enrolled (respect cooldown)
                     $wheres[] = "NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ? AND sfs.created_at > DATE_SUB(NOW(), INTERVAL $cooldownHours HOUR))";
 
@@ -118,15 +114,15 @@ try {
                             }
                             if (!empty($targetSegmentIds)) {
                                 foreach ($targetSegmentIds as $segId) {
-                                    $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
-                                    $stmtSeg->execute([$segId, $wsId]);
+                                    $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
+                                    $stmtSeg->execute([$segId]);
                                     $segConfig = $stmtSeg->fetchColumn();
                                     if ($segConfig) {
-                                        $segRes = buildSegmentWhereClause($segConfig, $segId);
-                                        if ($segRes && !empty($segRes['sql'])) {
-                                            $sourceConditions[] = "({$segRes['sql']})";
-                                            if (!empty($segRes['params']))
-                                                $cachedSourceParams = array_merge($cachedSourceParams, $segRes['params']);
+                                        $segWhere = buildSegmentWhereClause($segConfig, $segId);
+                                        if ($segWhere && !empty($segWhere['sql'])) {
+                                            $sourceConditions[] = "({$segWhere['sql']})";
+                                            if (!empty($segWhere['params']))
+                                                $cachedSourceParams = array_merge($cachedSourceParams, $segWhere['params']);
                                         }
                                     }
                                 }
@@ -141,7 +137,7 @@ try {
                         }
                     }
 
-                    $idParams = array_merge([$wsId, $flow['id']], $cachedSourceParams);
+                    $idParams = array_merge([$flow['id']], $cachedSourceParams);
                     $whereSql = implode(" AND ", $wheres) . $cachedSourceSql;
                     $sql = "SELECT s.id FROM subscribers s WHERE $whereSql LIMIT $BATCH_SIZE";
 
@@ -150,8 +146,8 @@ try {
                     $subs = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
                     if (!empty($subs)) {
-                        $logs[] = "[Date Trigger] Found " . count($subs) . " subs for flow '{$flow['name']}' ($field) in workspace $wsId.";
-                        enrollSubscribersBulk($pdo, $subs, 'date', $tTargetId, $wsId);
+                        $logs[] = "[Date Trigger] Found " . count($subs) . " subs for flow '{$flow['name']}' ($field).";
+                        enrollSubscribersBulk($pdo, $subs, 'date', $tTargetId);
                     } else {
                         break; // No more found
                     }
@@ -173,8 +169,6 @@ try {
                     $wheres = []; // Reset wheres for this specific case
                     $wheres[] = "DATE(NOW()) = ?";
                     $wheres[] = "s.status IN ('active', 'lead', 'customer')";
-                    // [SECURITY FIX] Filter by workspace_id
-                    $wheres[] = "s.workspace_id = ?";
                     // Important: For specific date, typically run once per person
                     $wheres[] = "NOT EXISTS (SELECT 1 FROM subscriber_flow_states WHERE subscriber_id = s.id AND flow_id = ? AND created_at > DATE_SUB(NOW(), INTERVAL $cooldownHours HOUR))";
 
@@ -183,7 +177,7 @@ try {
                     $targetListIds = $trigger['config']['targetListIds'] ?? [];
                     $targetSegmentIds = $trigger['config']['targetSegmentIds'] ?? [];
 
-                    $idParams = [$specificDate, $wsId, $flow['id']];
+                    $idParams = [$specificDate, $flow['id']];
                     $sourceWheres = [];
                     if ($targetMode === 'specific' && (!empty($targetListIds) || !empty($targetSegmentIds))) {
                         $sourceConditions = [];
@@ -194,8 +188,8 @@ try {
                         }
                         if (!empty($targetSegmentIds)) {
                             foreach ($targetSegmentIds as $segId) {
-                                $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
-                                $stmtSeg->execute([$segId, $wsId]);
+                                $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
+                                $stmtSeg->execute([$segId]);
                                 $segConfig = $stmtSeg->fetchColumn();
                                 if ($segConfig) {
                                     $segWhere = buildSegmentWhereClause($segConfig, $segId);
@@ -225,9 +219,13 @@ try {
                     $subs = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
                     if (!empty($subs)) {
-                        $logs[] = "[Specific Date Trigger] Found " . count($subs) . " subs for flow '{$flow['name']}' ($specificDate) in workspace $wsId.";
+                        $logs[] = "[Specific Date Trigger] Found " . count($subs) . " subs for flow '{$flow['name']}' ($specificDate).";
 
                         // [FIX #7] Direct INSERT instead of enrollSubscribersBulk().
+                        // enrollSubscribersBulk() re-queries ALL 'date' type flows,
+                        // which causes subscribers to be enrolled in OTHER specificDate flows
+                        // that happen on the same date. Using direct INSERT ensures only
+                        // THIS flow (already correctly filtered above) receives enrollments.
                         $pastTime = date('Y-m-d H:i:s', strtotime('-1 second'));
                         $initialSchedule = $pastTime;
 
@@ -271,13 +269,11 @@ try {
                         }
 
                         $subPlaceholders = implode(',', array_fill(0, count($subs), '?'));
-                        // [SECURITY FIX] Enforce workspace_id in direct INSERT
                         $sqlDirect = "INSERT INTO subscriber_flow_states
                             (subscriber_id, flow_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at)
                             SELECT s.id, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
                             FROM subscribers s
                             WHERE s.id IN ($subPlaceholders)
-                            AND s.workspace_id = ?
                             AND NOT EXISTS (
                                 SELECT 1 FROM subscriber_flow_states sfs
                                 WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ?
@@ -286,7 +282,7 @@ try {
                         $directParams = array_merge(
                             [$flow['id'], $trigger['nextStepId'], $initialSchedule],
                             $subs,
-                            [$wsId, $flow['id']]
+                            [$flow['id']]
                         );
                         $stmtDirect = $pdo->prepare($sqlDirect);
                         $stmtDirect->execute($directParams);
@@ -294,6 +290,7 @@ try {
                         if ($enrolledCount > 0) {
                             $pdo->prepare("UPDATE flows SET stat_enrolled = stat_enrolled + ? WHERE id = ?")->execute([$enrolledCount, $flow['id']]);
                             $logs[] = "[Specific Date Trigger] Enrolled $enrolledCount subs into flow '{$flow['name']}'.";
+                            // Trigger batch worker to process the new queue items
                             if (function_exists('dispatchQueueJob')) {
                                 dispatchQueueJob($pdo, 'flows', ['mode' => 'batch']);
                             }
@@ -320,10 +317,9 @@ try {
                     $wheres[] = "s.id > ?";
                     $wheres[] = "s.last_activity_at < ?";
                     $wheres[] = "s.status IN ('active', 'lead', 'customer')";
-                    // [SECURITY FIX] Filter by workspace_id
-                    $wheres[] = "s.workspace_id = ?";
 
-                    // [FIX] Dormant Fire Once Logic
+                    // [FIX] Dormant Fire Once Logic: Check for any existence in flow_states for this flow
+                    // Using NOT EXISTS for better performance than NOT IN
                     if ($frequency === 'one-time') {
                         $wheres[] = "NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ?)";
                     } else {
@@ -335,7 +331,7 @@ try {
                     $targetListIds = $trigger['config']['targetListIds'] ?? [];
                     $targetSegmentIds = $trigger['config']['targetSegmentIds'] ?? [];
 
-                    $idParams = [$lastId, $cutoffDate, $wsId, $flow['id']];
+                    $idParams = [$lastId, $cutoffDate, $flow['id']];
                     $sourceWheres = [];
                     if ($targetMode === 'specific' && (!empty($targetListIds) || !empty($targetSegmentIds))) {
                         $sourceConditions = [];
@@ -346,8 +342,8 @@ try {
                         }
                         if (!empty($targetSegmentIds)) {
                             foreach ($targetSegmentIds as $segId) {
-                                $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
-                                $stmtSeg->execute([$segId, $wsId]);
+                                $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
+                                $stmtSeg->execute([$segId]);
                                 $segConfig = $stmtSeg->fetchColumn();
                                 if ($segConfig) {
                                     $segWhere = buildSegmentWhereClause($segConfig, $segId);
@@ -377,8 +373,8 @@ try {
                     $subs = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
                     if (!empty($subs)) {
-                        $logs[] = "[Dormant Trigger] Found " . count($subs) . " inactive subs for flow '{$flow['name']}' in workspace $wsId.";
-                        enrollSubscribersBulk($pdo, $subs, 'date', 'lastActivity', $wsId);
+                        $logs[] = "[Dormant Trigger] Found " . count($subs) . " inactive subs for flow '{$flow['name']}'.";
+                        enrollSubscribersBulk($pdo, $subs, 'date', 'lastActivity');
                         $lastId = end($subs);
                     } else {
                         break;
@@ -410,12 +406,9 @@ try {
                     $existsCheck = "1=1";
                 }
 
-                // [SECURITY FIX] JOIN with subscribers to enforce workspace_id
                 $sql = "SELECT DISTINCT a.subscriber_id, a.id 
                         FROM subscriber_activity a
-                        JOIN subscribers s ON a.subscriber_id = s.id
                         WHERE a.id > ? AND a.campaign_id = ? AND a.type = ?
-                        AND s.workspace_id = ?
                         AND NOT EXISTS (
                             SELECT 1 FROM subscriber_flow_states sfs
                             WHERE sfs.subscriber_id = a.subscriber_id 
@@ -426,13 +419,13 @@ try {
                         LIMIT $BATCH_SIZE";
 
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute([$lastActId, $campaignId, $actType, $wsId, $flow['id']]);
+                $stmt->execute([$lastActId, $campaignId, $actType, $flow['id']]);
                 $actRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 $subs = array_column($actRows, 'subscriber_id');
 
                 if (!empty($subs)) {
-                    $logs[] = "[Campaign Trigger] Found " . count($subs) . " subs for flow '{$flow['name']}' (Camp: $campaignId, Act: $actType) in workspace $wsId.";
-                    enrollSubscribersBulk($pdo, $subs, 'campaign', $campaignId, $wsId);
+                    $logs[] = "[Campaign Trigger] Found " . count($subs) . " subs for flow '{$flow['name']}' (Camp: $campaignId, Act: $actType).";
+                    enrollSubscribersBulk($pdo, $subs, 'campaign', $campaignId);
                     $lastActId = end($actRows)['id'];
                 } else {
                     break;
@@ -456,6 +449,6 @@ $pdo->query("SELECT RELEASE_LOCK('worker_trigger_lock')");
 echo implode("\n", $logs);
 // [FIX P8-M2] Use __DIR__-anchored path for log file.
 // Relative path 'worker_trigger.log' writes to the PHP process CWD (may be webroot, /,
-// or the cron caller's directory — unpredictable and often wrong).
+// or the cron caller's directory � unpredictable and often wrong).
 file_put_contents(__DIR__ . '/worker_trigger.log', implode("\n", $logs) . "\n", FILE_APPEND | LOCK_EX);
 ?>

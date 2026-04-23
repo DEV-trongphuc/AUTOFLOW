@@ -133,6 +133,68 @@ if ($method === 'GET' && $route === 'count_unique') {
         jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
+// --- ROUTE: FIELD DEFINITIONS ---
+if ($method === 'GET' && $route === 'field_definitions') {
+    // 1. Default System Fields
+    $fields = [
+        ['key' => 'email', 'label' => 'Email', 'type' => 'text', 'is_custom' => false],
+        ['key' => 'firstName', 'label' => 'Họ (First Name)', 'type' => 'text', 'is_custom' => false],
+        ['key' => 'lastName', 'label' => 'Tên (Last Name)', 'type' => 'text', 'is_custom' => false],
+        ['key' => 'phoneNumber', 'label' => 'Số điện thoại', 'type' => 'text', 'is_custom' => false],
+        ['key' => 'gender', 'label' => 'Giới tính', 'type' => 'text', 'is_custom' => false],
+        ['key' => 'jobTitle', 'label' => 'Chức danh', 'type' => 'text', 'is_custom' => false],
+        ['key' => 'companyName', 'label' => 'Công ty', 'type' => 'text', 'is_custom' => false],
+        ['key' => 'country', 'label' => 'Quốc gia', 'type' => 'text', 'is_custom' => false],
+        ['key' => 'city', 'label' => 'Thành phố', 'type' => 'text', 'is_custom' => false],
+        ['key' => 'address', 'label' => 'Địa chỉ', 'type' => 'text', 'is_custom' => false],
+        ['key' => 'source', 'label' => 'Nguồn', 'type' => 'text', 'is_custom' => false],
+        ['key' => 'status', 'label' => 'Trạng thái', 'type' => 'text', 'is_custom' => false],
+        ['key' => 'dateOfBirth', 'label' => 'Ngày sinh', 'type' => 'date', 'is_custom' => false],
+        ['key' => 'anniversaryDate', 'label' => 'Ngày kỷ niệm', 'type' => 'date', 'is_custom' => false],
+        ['key' => 'notes', 'label' => 'Ghi chú', 'type' => 'text', 'is_custom' => false],
+    ];
+
+    // 2. Discover Custom Fields from Database (JSON Keys)
+    try {
+        // [PERF] Only scan a sample of records or use a dedicated field_definitions table if this grows too large.
+        // For now, we scan keys from custom_attributes for the current workspace.
+        $stmt = $pdo->prepare("
+            SELECT DISTINCT JSON_KEYS(custom_attributes) as keys 
+            FROM subscribers 
+            WHERE workspace_id = ? 
+            AND custom_attributes IS NOT NULL 
+            AND custom_attributes != '{}'
+            LIMIT 1000
+        ");
+        $stmt->execute([$workspace_id]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $customKeys = [];
+        foreach ($rows as $row) {
+            $keys = json_decode($row['keys'], true);
+            if (is_array($keys)) {
+                foreach ($keys as $k) {
+                    $customKeys[$k] = true;
+                }
+            }
+        }
+
+        foreach (array_keys($customKeys) as $key) {
+            $fields[] = [
+                'key' => 'custom_field.' . $key,
+                'label' => ucwords(str_replace('_', ' ', $key)),
+                'type' => 'text', // Default to text for discovery
+                'is_custom' => true
+            ];
+        }
+    } catch (Exception $e) {
+        // Fallback if JSON_KEYS is not supported or query fails
+    }
+
+    jsonResponse(true, $fields);
+    exit;
+}
+
 // --- ROUTE: BULK ACTIONS ---
 if ($method === 'POST' && ($route === 'bulk-add-tag' || $route === 'bulk-add-to-list' || $route === 'bulk-change-status')) {
     $data = json_decode(file_get_contents("php://input"), true);
@@ -351,7 +413,7 @@ anniversary_date = VALUES(anniversary_date)";
 
         foreach ($allAffectedListSubscribers as $lid => $subsInList) {
             // Trigger 'added_to_list' automation (Correct type)
-            enrollSubscribersBulk($pdo, $subsInList, 'added_to_list', $lid);
+            enrollSubscribersBulk($pdo, $subsInList, 'added_to_list', $lid, $workspace_id);
 
             // Optimized: Increment count instead of full recalculation
             $addedCount = count($subsInList);
@@ -613,7 +675,11 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
             try {
                 // PERF: Optimization for List Count
                 // If filtering by LIST and STATUS=ALL (or default), we can just use the cached count in `lists` table
+                // [FIX] Temporarily disabled cached count optimization because the 'lists' table count 
+                // is currently out of sync with the actual 'subscriber_lists' join table.
+                // Forcing a live count to ensure UI consistency (10,011 vs 10,011 instead of 28 vs 10,011).
                 $useCachedCount = false;
+                /*
                 if (
                     $listId !== 'all' && empty($search) && $status === 'all' && $tag === 'all' && $segmentId === 'all' && $verified
                     === 'all'
@@ -627,6 +693,7 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
                         $useCachedCount = true;
                     }
                 }
+                */
 
                 if (!$useCachedCount) {
                     // Get Total Count (Standard)
@@ -858,7 +925,7 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
                     if ($tagId) {
                         $pdo->prepare("INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES (?, ?)")->execute([$id, $tagId]);
                         // Trigger Tag Flows
-                        triggerFlows($pdo, $id, 'tag', $tagName);
+                        triggerFlows($pdo, $id, 'tag', $tagName, $workspace_id);
                     }
                 }
             }
@@ -980,7 +1047,7 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
                     $tagId = $stmtTag->fetchColumn();
                     if ($tagId) {
                         $pdo->prepare("INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES (?, ?)")->execute([$path, $tagId]);
-                        triggerFlows($pdo, $path, 'tag', $tagName);
+                        triggerFlows($pdo, $path, 'tag', $tagName, $workspace_id);
                     }
                 }
             }
@@ -1007,7 +1074,7 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
                     foreach ($toAddL as $lid) {
                         $pdo->prepare("INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id) VALUES (?, ?)")->execute([$path, $lid]);
                         $pdo->prepare("UPDATE lists SET subscriber_count = subscriber_count + 1, phone_count = phone_count + ? WHERE id = ?")->execute([$hasPhone, $lid]);
-                        enrollSubscribersBulk($pdo, [$path], 'list', $lid);
+                        enrollSubscribersBulk($pdo, [$path], 'list', $lid, $workspace_id);
                     }
                 }
             }

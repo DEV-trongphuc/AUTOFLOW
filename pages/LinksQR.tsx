@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { QrCode, Link2, Plus, BarChart2, Edit3, Trash2, CheckCircle2, Globe, ArrowRight, Target, Share2, Scan, Filter, RefreshCw, BarChart, FileText, ChevronDown, Check, Search, Lightbulb, Download, Save, Wand2, Code, Copy, PenLine } from 'lucide-react';
+import { QrCode, Link2, Plus, BarChart2, Edit3, Trash2, CheckCircle2, Globe, ArrowRight, Target, Share2, Scan, Filter, RefreshCw, BarChart, FileText, ChevronDown, Check, Search, Lightbulb, Download, Save, Wand2, Code, Copy, PenLine, Loader2 } from 'lucide-react';
 import PageHero from '../components/common/PageHero';
 import Button from '../components/common/Button';
 import Tabs from '../components/common/Tabs';
@@ -10,7 +10,7 @@ import ConfirmModal from '../components/common/ConfirmModal';
 import LinkGuideModal from '../components/links/LinkGuideModal';
 import { api } from '../services/storageAdapter';
 import toast from 'react-hot-toast';
-import { EXTERNAL_API_BASE } from '../utils/config';
+import { EXTERNAL_API_BASE, EXTERNAL_ASSET_BASE } from '../utils/config';
 import { QRCodeCanvas } from 'qrcode.react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar, Cell } from 'recharts';
 import QRCodeStyling from 'qr-code-styling';
@@ -104,14 +104,16 @@ const LinksQR: React.FC = () => {
     });
 
     const [linkToDelete, setLinkToDelete] = useState<ShortLink | null>(null);
-
-    const [surveys, setSurveys] = useState<Survey[]>([]);
+    const [isDeleting, setIsDeleting]         = useState(false);
+    const [settingsData, setSettingsData] = useState<Partial<ShortLink>>({});
+    const [pinEnabled, setPinEnabled]     = useState(false);
+    const [pinLength, setPinLength]       = useState<4|6>(4);
     const [isSurveyPickerOpen, setIsSurveyPickerOpen] = useState(false);
     const [surveySearch, setSurveySearch] = useState('');
+    const [surveys, setSurveys] = useState<Survey[]>([]);
     const [isGuideOpen, setIsGuideOpen] = useState(false);
     const [isDesignerOpen, setIsDesignerOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const [settingsData, setSettingsData] = useState<Partial<ShortLink>>({});
 
     const [isEditingName, setIsEditingName] = useState(false);
     const [editNameValue, setEditNameValue] = useState('');
@@ -173,13 +175,16 @@ const LinksQR: React.FC = () => {
 
     const handleDeleteConfirm = async () => {
         if (!linkToDelete) return;
+        setIsDeleting(true);
         const res = await api.delete(`links_qr?action=delete&id=${linkToDelete.id}`);
         if (res.success) {
             setLinks(prev => prev.filter(l => l.id !== linkToDelete.id));
             toast.success("Xóa link thành công");
+            if (selectedLink?.id === linkToDelete.id) { setSelectedLink(null); setView('list'); }
         } else {
             toast.error("Lỗi xóa link");
         }
+        setIsDeleting(false);
         setLinkToDelete(null);
     };
 
@@ -212,7 +217,7 @@ const LinksQR: React.FC = () => {
     };
 
     const copyLink = (slug: string) => {
-        const link = `${EXTERNAL_API_BASE.replace('/mail_api', '').replace('/api', '')}/go/${slug}`;
+        const link = `${EXTERNAL_ASSET_BASE}/go/${slug}`;
         navigator.clipboard.writeText(link);
         toast.success('Đã Copy Link!');
     };
@@ -500,6 +505,9 @@ const LinksQR: React.FC = () => {
                                             status: selectedLink.status || 'active',
                                             access_pin: selectedLink.access_pin || ''
                                         });
+                                        const existingPin = selectedLink.access_pin || '';
+                                        setPinEnabled(!!existingPin);
+                                        setPinLength(existingPin.length === 6 ? 6 : 4);
                                         setIsSettingsOpen(true);
                                     }}
                                     className="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
@@ -573,7 +581,7 @@ const LinksQR: React.FC = () => {
                                             <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
                                                 <QRPreview 
                                                     configJson={selectedLink.qr_config_json}
-                                                    value={`${EXTERNAL_API_BASE.replace('/api', '')}/go/${selectedLink.slug}`}
+                                                    value={`${EXTERNAL_ASSET_BASE}/go/${selectedLink.slug}`}
                                                     size={240}
                                                 />
                                             </div>
@@ -592,7 +600,7 @@ const LinksQR: React.FC = () => {
                                             try {
                                                 const config = JSON.parse(selectedLink.qr_config_json || '{}');
                                                 const qr = new QRCodeStyling({
-                                                    data: `${EXTERNAL_API_BASE.replace('/api', '')}/go/${selectedLink.slug}`,
+                                                    data: `${EXTERNAL_ASSET_BASE}/go/${selectedLink.slug}`,
                                                     width: 1500,
                                                     height: 1500,
                                                     margin: 20,
@@ -846,22 +854,124 @@ const LinksQR: React.FC = () => {
                     </div>
 
                     <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 space-y-3">
-                        <div className="flex gap-2 items-center">
-                            <div className="p-1.5 bg-amber-100 text-amber-600 rounded-lg"><Target className="w-4 h-4" /></div>
-                            <div>
-                                <h4 className="text-sm font-bold text-amber-900">Mật khẩu PIN Access</h4>
-                                <p className="text-[11px] text-amber-700/80">Người dùng quét QR phải nhập đúng PIN để mở.</p>
+                        {/* Header + toggle */}
+                        <div className="flex items-center justify-between">
+                            <div className="flex gap-2 items-center">
+                                <div className="p-1.5 bg-amber-100 text-amber-600 rounded-lg"><Target className="w-4 h-4" /></div>
+                                <div>
+                                    <h4 className="text-sm font-bold text-amber-900">Mật khẩu PIN Access</h4>
+                                    <p className="text-[11px] text-amber-700/80">Người quét QR phải nhập đúng PIN để mở.</p>
+                                </div>
+                            </div>
+                            {/* Toggle switch */}
+                            <div
+                                className={`w-12 h-6 rounded-full flex items-center p-1 cursor-pointer transition-colors ${pinEnabled ? 'bg-amber-500 justify-end' : 'bg-slate-300 justify-start'}`}
+                                onClick={() => {
+                                    const next = !pinEnabled;
+                                    setPinEnabled(next);
+                                    if (!next) setSettingsData(sd => ({ ...sd, access_pin: '' }));
+                                }}
+                            >
+                                <div className="w-4 h-4 bg-white rounded-full shadow-sm" />
                             </div>
                         </div>
-                        <Input 
-                            value={settingsData.access_pin || ''} 
-                            onChange={e => setSettingsData({...settingsData, access_pin: e.target.value})} 
-                            placeholder="Tạo mã PIN 4-8 số hoặc để trống..."
-                            maxLength={8}
-                        />
+
+                        {/* PIN config — only when enabled */}
+                        {pinEnabled && (
+                            <div className="animate-in fade-in slide-in-from-top-2 duration-200 space-y-3 pt-2">
+                                {/* 4 or 6 digit selector */}
+                                <div className="flex gap-2">
+                                    {([4, 6] as const).map(len => (
+                                        <button
+                                            key={len}
+                                            onClick={() => {
+                                                setPinLength(len);
+                                                // Trim or pad existing pin to match new length
+                                                const cur = (settingsData.access_pin || '').replace(/\D/g, '');
+                                                setSettingsData(sd => ({ ...sd, access_pin: cur.slice(0, len).padEnd(0, '') }));
+                                            }}
+                                            className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${
+                                                pinLength === len
+                                                    ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
+                                                    : 'bg-white text-amber-700 border-amber-200 hover:border-amber-400'
+                                            }`}
+                                        >
+                                            {len} chữ số
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* PIN digit boxes */}
+                                <div className="flex gap-2 justify-center py-1">
+                                    {Array.from({ length: pinLength }).map((_, idx) => (
+                                        <input
+                                            key={idx}
+                                            id={`pin-box-${idx}`}
+                                            type="text"
+                                            inputMode="numeric"
+                                            maxLength={1}
+                                            value={(settingsData.access_pin || '')[idx] || ''}
+                                            onChange={e => {
+                                                const digit = e.target.value.replace(/\D/g, '').slice(-1);
+                                                const cur = (settingsData.access_pin || '').padEnd(pinLength, ' ').split('');
+                                                cur[idx] = digit;
+                                                const newPin = cur.join('').replace(/ /g, '').slice(0, pinLength);
+                                                setSettingsData(sd => ({ ...sd, access_pin: newPin }));
+                                                // Auto-advance
+                                                if (digit && idx < pinLength - 1) {
+                                                    document.getElementById(`pin-box-${idx + 1}`)?.focus();
+                                                }
+                                            }}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Backspace' && !(settingsData.access_pin || '')[idx] && idx > 0) {
+                                                    document.getElementById(`pin-box-${idx - 1}`)?.focus();
+                                                }
+                                            }}
+                                            className="w-12 h-14 text-center text-2xl font-black text-amber-900 bg-white border-2 border-amber-300 rounded-xl outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all shadow-sm"
+                                        />
+                                    ))}
+                                </div>
+                                <p className="text-[10px] text-amber-600/70 text-center font-medium">
+                                    PIN {pinLength} số — sẽ hiện {pinLength} ô nhập cho người quét QR
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </Modal>
+
+            {/* ── Delete confirm modal ──────────────────────────────────────── */}
+            {linkToDelete && (
+                <>
+                    <div className="fixed inset-0 z-[300] bg-black/40 backdrop-blur-sm" onClick={() => setLinkToDelete(null)} />
+                    <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[301] max-w-sm mx-auto bg-white rounded-[28px] shadow-2xl p-8 flex flex-col items-center gap-5 animate-in zoom-in-95 fade-in duration-200">
+                        <div className="w-16 h-16 rounded-full bg-rose-100 flex items-center justify-center">
+                            <Trash2 className="w-8 h-8 text-rose-600" />
+                        </div>
+                        <div className="text-center">
+                            <p className="font-bold text-slate-800">Xóa link này?</p>
+                            <p className="text-xs text-slate-400 mt-1 font-medium">
+                                <span className="font-bold text-slate-600">{linkToDelete.name || linkToDelete.slug}</span> sẽ bị xóa vĩnh viễn.
+                            </p>
+                        </div>
+                        <div className="flex gap-3 w-full">
+                            <button
+                                onClick={() => setLinkToDelete(null)}
+                                className="flex-1 py-2.5 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={handleDeleteConfirm}
+                                disabled={isDeleting}
+                                className="flex-1 py-2.5 text-sm font-bold text-white bg-rose-500 hover:bg-rose-600 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+                            >
+                                {isDeleting ? <><Loader2 className="w-4 h-4 animate-spin" /> Đang xóa...</> : <><Trash2 className="w-4 h-4" /> Xóa</>}
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
 
             <LinkGuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
             
@@ -869,7 +979,7 @@ const LinksQR: React.FC = () => {
                 <QRDesignerModal
                     isOpen={isDesignerOpen}
                     onClose={() => setIsDesignerOpen(false)}
-                    linkUrl={`${EXTERNAL_API_BASE.replace('/mail_api', '').replace('/api', '')}/go/${selectedLink.slug}`}
+                    linkUrl={`${EXTERNAL_ASSET_BASE}/go/${selectedLink.slug}`}
                     linkName={selectedLink.name}
                     initialConfig={selectedLink.qr_config_json}
                     onSave={async (configJson) => {

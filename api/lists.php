@@ -24,34 +24,84 @@ switch ($method) {
                     return;
                 }
 
-                // [PERF FIX P2-4] Merged phone count into the same query via SUM(CASE WHEN).
-                // Previously: 2 separate queries (status GROUP BY + phone COUNT) = 2 round-trips.
-                // Now: single scan computes both status breakdown AND phone count simultaneously.
                 $sql = "SELECT 
                             s.status, 
                             COUNT(*) as count,
                             SUM(CASE WHEN s.phone_number IS NOT NULL AND s.phone_number != '' THEN 1 ELSE 0 END) as phone_total
                         FROM subscriber_lists sl 
                         JOIN subscribers s ON sl.subscriber_id = s.id 
-                        WHERE sl.list_id = ? 
+                        WHERE sl.list_id = ? AND s.workspace_id = ?
                         GROUP BY s.status";
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute([$path]);
+                $stmt->execute([$path, $workspace_id]);
                 $rawStats = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                 $stats = [];
+                $totalCount = 0;
                 $totalPhone = 0;
                 foreach ($rawStats as $row) {
                     $stats[$row['status']] = (int) $row['count'];
+                    $totalCount += (int) $row['count'];
                     $totalPhone += (int) $row['phone_total'];
                 }
                 $stats['has_phone'] = $totalPhone;
+                $stats['total'] = $totalCount;
 
                 jsonResponse(true, $stats);
                 return;
             }
 
+            // NEW: Refresh Count Route
+            if (isset($_GET['route']) && $_GET['route'] === 'refresh') {
+                $targetListId = $path;
+                
+                $reconcileList = function($pdo, $lid, $wsid) {
+                    $stmtCount = $pdo->prepare("
+                        SELECT COUNT(*) as total, 
+                               SUM(CASE WHEN s.phone_number IS NOT NULL AND s.phone_number != '' THEN 1 ELSE 0 END) as phone_total
+                        FROM subscriber_lists sl
+                        JOIN subscribers s ON sl.subscriber_id = s.id
+                        WHERE sl.list_id = ? AND s.workspace_id = ?
+                    ");
+                    $stmtCount->execute([$lid, $wsid]);
+                    $row = $stmtCount->fetch();
+                    $actualCount = (int)($row['total'] ?? 0);
+                    $phoneCount = (int)($row['phone_total'] ?? 0);
+                    
+                    $pdo->prepare("UPDATE lists SET subscriber_count = ?, phone_count = ? WHERE id = ? AND workspace_id = ?")
+                        ->execute([$actualCount, $phoneCount, $lid, $wsid]);
+                    
+                    return ['count' => $actualCount, 'phone' => $phoneCount];
+                };
+
+                if ($targetListId) {
+                    // Refresh single list
+                    $res = $reconcileList($pdo, $targetListId, $workspace_id);
+                    jsonResponse(true, $res, 'Đã cập nhật số lượng cho danh sách.');
+                } else {
+                    // Refresh ALL lists in current workspace
+                    $stmtAll = $pdo->prepare("SELECT id FROM lists WHERE workspace_id = ?");
+                    $stmtAll->execute([$workspace_id]);
+                    $ids = $stmtAll->fetchAll(PDO::FETCH_COLUMN);
+                    $processed = 0;
+                    foreach ($ids as $lid) {
+                        $reconcileList($pdo, $lid, $workspace_id);
+                        $processed++;
+                    }
+                    jsonResponse(true, ['processed' => $processed], 'Đã cập nhật số lượng cho tất cả danh sách trong workspace.');
+                }
+                return;
+            }
+
             if (!isset($_GET['page']) && !isset($_GET['limit']) && !isset($_GET['search'])) {
+                // Single-item lookup: ?id=xxx (no pagination params)
+                if ($path) {
+                    $stmt = $pdo->prepare("SELECT l.id, l.name, l.source, l.type, l.subscriber_count as count, l.phone_count, DATE_FORMAT(l.created_at, '%d/%m/%Y') as created FROM lists l WHERE l.id = ? AND l.workspace_id = ?");
+                    $stmt->execute([$path, $workspace_id]);
+                    $item = $stmt->fetch();
+                    jsonResponse(true, $item ?: null);
+                    return;
+                }
                 $sql = "SELECT l.id, l.name, l.source, l.type, l.subscriber_count as count, l.phone_count, DATE_FORMAT(l.created_at, '%d/%m/%Y') as created
                         FROM lists l WHERE l.workspace_id = ? ORDER BY l.created_at DESC";
                 $stmt = $pdo->prepare($sql);
@@ -373,11 +423,11 @@ switch ($method) {
                     if (count($newSubIds) > 0) {
                         require_once 'trigger_helper.php';
                         // Check for relevant active flows first
-                        $flowStmt = $pdo->prepare("SELECT id FROM flows WHERE status = 'active' AND trigger_type = 'added_to_list' AND (steps LIKE ? OR config LIKE ?)");
-                        $flowStmt->execute(['%"list_id":"' . $targetListId . '"%', '%"list_id":"' . $targetListId . '"%']); // Correct trigger search in steps/config
+                        $flowStmt = $pdo->prepare("SELECT id FROM flows WHERE workspace_id = ? AND status = 'active' AND trigger_type = 'added_to_list' AND (steps LIKE ? OR config LIKE ?)");
+                        $flowStmt->execute([$workspace_id, '%"list_id":"' . $targetListId . '"%', '%"list_id":"' . $targetListId . '"%']); // Correct trigger search in steps/config
                         if ($flowStmt->fetch()) {
                             foreach (array_chunk($newSubIds, 500) as $chunk) {
-                                enrollSubscribersBulk($pdo, $chunk, 'added_to_list', $targetListId);
+                                enrollSubscribersBulk($pdo, $chunk, 'added_to_list', $targetListId, $workspace_id);
                             }
                         }
                     }
@@ -434,11 +484,11 @@ switch ($method) {
                     // Trigger Automation (Unlikely for new list, but good for consistency)
                     if (!empty($subscriberIds)) {
                         require_once 'trigger_helper.php';
-                        $flowStmt = $pdo->prepare("SELECT id FROM flows WHERE status = 'active' AND trigger_type = 'added_to_list' AND (steps LIKE ? OR config LIKE ?)");
-                        $flowStmt->execute(['%"list_id":"' . $newListId . '"%', '%"list_id":"' . $newListId . '"%']);
+                        $flowStmt = $pdo->prepare("SELECT id FROM flows WHERE workspace_id = ? AND status = 'active' AND trigger_type = 'added_to_list' AND (steps LIKE ? OR config LIKE ?)");
+                        $flowStmt->execute([$workspace_id, '%"list_id":"' . $newListId . '"%', '%"list_id":"' . $newListId . '"%']);
                         if ($flowStmt->fetch()) {
                             foreach (array_chunk($subscriberIds, 500) as $chunk) {
-                                enrollSubscribersBulk($pdo, $chunk, 'added_to_list', $newListId);
+                                enrollSubscribersBulk($pdo, $chunk, 'added_to_list', $newListId, $workspace_id);
                             }
                         }
                     }
@@ -472,12 +522,25 @@ switch ($method) {
         try {
             $data = json_decode(file_get_contents("php://input"), true);
             $id = $data['id'] ?? uniqid();
+            
+            // [FIX] Check if list with same name already exists in this workspace
+            $stmtCheck = $pdo->prepare("SELECT id FROM lists WHERE workspace_id = ? AND name = ?");
+            $stmtCheck->execute([$workspace_id, $data['name']]);
+            $existing = $stmtCheck->fetch();
+            
+            if ($existing) {
+                // Return existing list info instead of erroring
+                $data['id'] = $existing['id'];
+                jsonResponse(true, $data, "Sử dụng danh sách hiện có.");
+                return;
+            }
+
             $stmt = $pdo->prepare("INSERT INTO lists (workspace_id, id, name, source, type, subscriber_count, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
             $stmt->execute([$workspace_id, $id, $data['name'], $data['source'], $data['type'] ?? 'static', $data['count'] ?? 0]);
             $data['id'] = $id;
             jsonResponse(true, $data);
         } catch (Exception $e) {
-            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+            jsonResponse(false, null, 'Lỗi chèn dữ liệu: ' . $e->getMessage());
         }
         break;
 

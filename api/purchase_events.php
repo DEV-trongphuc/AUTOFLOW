@@ -306,11 +306,11 @@ try {
         <!-- HEADER -->
         <tr><td style='background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);border-radius:16px 16px 0 0;padding:28px 32px;text-align:center'>
           <div style='display:inline-flex;align-items:center;gap:10px'>
-            <div style='width:40px;height:40px;background:#10b981;border-radius:10px;display:inline-flex;align-items:center;justify-content:center'>
+            <div style='width:40px;height:40px;background:#f97316;border-radius:10px;display:inline-flex;align-items:center;justify-content:center'>
               <span style='font-size:20px'>🛒</span>
             </div>
             <div style='text-align:left'>
-              <div style='color:#10b981;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase'>AUTOFLOW</div>
+              <div style='color:#f97316;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase'>AUTOFLOW</div>
               <div style='color:#ffffff;font-size:18px;font-weight:800'>Đơn hàng mới!</div>
             </div>
           </div>
@@ -321,9 +321,9 @@ try {
           <p style='margin:0 0 6px;font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px'>Sự kiện mua hàng</p>
           <p style='margin:0 0 24px;font-size:20px;font-weight:800;color:#0f172a'>" . htmlspecialchars($eventName) . "</p>
 
-          <div style='background:#d1fae5;border:1px solid #6ee7b7;border-radius:10px;padding:12px 16px;margin-bottom:24px;display:flex;align-items:center;gap:10px'>
+          <div style='background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:12px 16px;margin-bottom:24px;display:flex;align-items:center;gap:10px'>
             <span style='font-size:18px'>⚡</span>
-            <span style='font-size:13px;font-weight:600;color:#065f46'>Giao dịch được ghi nhận lúc <strong>$now</strong></span>
+            <span style='font-size:13px;font-weight:600;color:#c2410c'>Giao dịch được ghi nhận lúc <strong>$now</strong></span>
           </div>
 
           <!-- DATA TABLE -->

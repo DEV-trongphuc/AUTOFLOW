@@ -304,8 +304,9 @@ if ($method === 'GET' && $route === 'audience_stats') {
         if (!$campaignId)
             jsonResponse(false, null, 'Campaign ID is required.');
 
-        $stmtCamp = $pdo->prepare("SELECT target_config, count_sent, total_target_audience FROM campaigns WHERE id = ?");
-        $stmtCamp->execute([$campaignId]);
+        // [FIX] Verify campaign ownership to prevent cross-tenant stats leakage
+        $stmtCamp = $pdo->prepare("SELECT target_config, count_sent, total_target_audience FROM campaigns WHERE id = ? AND workspace_id = ?");
+        $stmtCamp->execute([$campaignId, $workspace_id]);
         $campaign = $stmtCamp->fetch();
         if (!$campaign)
             jsonResponse(false, null, 'Campaign not found.');
@@ -313,7 +314,7 @@ if ($method === 'GET' && $route === 'audience_stats') {
         $targetConf = json_decode($campaign['target_config'], true);
         $campaignType = $campaign['type'] ?? 'email';
 
-        $countSql = "SELECT COUNT(DISTINCT s.id) FROM subscribers s WHERE s.status IN ('active', 'lead', 'customer')";
+        $countSql = "SELECT COUNT(DISTINCT s.id) FROM subscribers s WHERE s.workspace_id = ? AND s.status IN ('active', 'lead', 'customer')";
 
         // ZNS Requirement: Must have phone number
         if ($campaignType === 'zalo_zns') {
@@ -321,7 +322,7 @@ if ($method === 'GET' && $route === 'audience_stats') {
         }
 
         $countWheres = [];
-        $countParams = [];
+        $countParams = [$workspace_id];
 
         if (!empty($targetConf['listIds'])) {
             $placeholders = implode(',', array_fill(0, count($targetConf['listIds']), '?'));
@@ -330,12 +331,11 @@ if ($method === 'GET' && $route === 'audience_stats') {
                 $countParams[] = $lid;
         }
         if (!empty($targetConf['tagIds'])) {
-            foreach ($targetConf['tagIds'] as $tagName) {
-                // PERF: Use relational table instead of JSON_CONTAINS
-                $countWheres[] = "s.id IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE
-t_sub.name = ?)";
+            $tagPh = implode(',', array_fill(0, count($targetConf['tagIds']), '?'));
+            $countWheres[] = "s.id IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE t_sub.name IN ($tagPh) AND t_sub.workspace_id = ?)";
+            foreach ($targetConf['tagIds'] as $tagName)
                 $countParams[] = $tagName;
-            }
+            $countParams[] = $workspace_id; // For tag ownership
         }
         if (!empty($targetConf['segmentIds'])) {
             foreach ($targetConf['segmentIds'] as $segId) {
@@ -386,7 +386,7 @@ t_sub.name = ?)";
             // resulting in dramatically lower I/O on large datasets.
             $audienceFilter = implode(' OR ', $countWheres);
             $gapSql = "SELECT COUNT(DISTINCT s.id) FROM subscribers s
-WHERE s.status IN ('active', 'lead', 'customer')
+WHERE s.workspace_id = ? AND s.status IN ('active', 'lead', 'customer')
 AND ($audienceFilter)
 AND NOT EXISTS (
     SELECT 1 FROM subscriber_activity sa
@@ -395,8 +395,8 @@ AND NOT EXISTS (
     AND sa.type IN ('receive_email', 'failed_email', 'zalo_sent', 'meta_sent', 'zns_sent', 'zns_failed', 'enter_flow')
 )";
 
-            // NOT EXISTS sub-query param ($campaignId) must come AFTER the audience filter params
-            $gapParams = array_merge($countParams, [$campaignId]);
+            // Params: [workspace_id, audience_filters..., campaign_id]
+            $gapParams = array_merge([$workspace_id], $countParams, [$campaignId]);
             $stmtGap = $pdo->prepare($gapSql);
             $stmtGap->execute($gapParams);
             $gap = (int) $stmtGap->fetchColumn();
@@ -540,7 +540,7 @@ if ($method === 'POST' && $route === 'trigger_refresh') {
         $targetConf = json_decode($campaign['target_config'], true);
         $campaignType = $campaign['type'] ?? 'email';
 
-        $countSql = "SELECT COUNT(DISTINCT s.id) FROM subscribers s WHERE s.status IN ('active', 'lead', 'customer')";
+        $countSql = "SELECT COUNT(DISTINCT s.id) FROM subscribers s WHERE s.workspace_id = ? AND s.status IN ('active', 'lead', 'customer')";
 
         // ZNS Requirement: Must have phone number
         if ($campaignType === 'zalo_zns') {
@@ -548,7 +548,7 @@ if ($method === 'POST' && $route === 'trigger_refresh') {
         }
 
         $countWheres = [];
-        $countParams = [];
+        $countParams = [$workspace_id];
 
         if (!empty($targetConf['listIds'])) {
             $placeholders = implode(',', array_fill(0, count($targetConf['listIds']), '?'));
@@ -560,8 +560,9 @@ if ($method === 'POST' && $route === 'trigger_refresh') {
             $tagConditions = [];
             foreach ($targetConf['tagIds'] as $tagName) {
                 $tagConditions[] = "s.id IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id
-WHERE t_sub.name = ?)";
+WHERE t_sub.name = ? AND t_sub.workspace_id = ?)";
                 $countParams[] = $tagName;
+                $countParams[] = $workspace_id;
             }
             if (!empty($tagConditions)) {
                 $countWheres[] = "(" . implode(' OR ', $tagConditions) . ")";
@@ -1404,7 +1405,8 @@ switch ($method) {
                 $segmentIds = $data['segmentIds'] ?? [];
                 $campaignType = $data['campaignType'] ?? 'email';
 
-                $sql = "SELECT COUNT(DISTINCT s.id) FROM subscribers s WHERE s.status IN ('active', 'lead', 'customer')";
+                $sql = "SELECT COUNT(DISTINCT s.id) FROM subscribers s WHERE s.workspace_id = ? AND s.status IN ('active', 'lead', 'customer')";
+
 
                 // ZNS Requirement: Must have phone number
                 if ($campaignType === 'zalo_zns') {
@@ -1412,7 +1414,7 @@ switch ($method) {
                 }
 
                 $wheres = [];
-                $execParams = [];
+                $execParams = [$workspace_id];
 
                 if (!empty($listIds)) {
                     // [BUG-G1 FIX] Use parameterized query instead of string interpolation (SQL injection risk)
@@ -1740,3 +1742,4 @@ switch ($method) {
         break;
 }
 ?>
+

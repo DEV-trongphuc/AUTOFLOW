@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
-import { ChevronLeft, Undo2, Redo2, Layout, Code, Monitor, Smartphone, Eye, Save, Loader2, Send, FolderOpen, ShieldCheck } from 'lucide-react';
+import { ChevronLeft, Undo2, Redo2, Layout, Code, Monitor, Smartphone, Eye, Save, Loader2, Send, FolderOpen, ShieldCheck, Pencil } from 'lucide-react';
 import Button from '../../common/Button';
 import Select from '../../common/Select';
 import { TemplateGroup } from '../../../types';
@@ -26,12 +26,14 @@ interface EmailTopBarProps {
   onValidate: () => void;
   validationIssueCount?: number;
   showValidation?: boolean;
+  /** True when there are unsaved changes (historyIndex !== savedHistoryIndex) */
+  isDirty?: boolean;
 }
 
 const EmailTopBar: React.FC<EmailTopBarProps> = ({
   name, setName, groupId, setGroupId, groups, editorMode, setEditorMode, viewMode, setViewMode,
   canUndo, canRedo, onUndo, onRedo, onSave, onCancel, onPreview, onSendTest,
-  onValidate, validationIssueCount, showValidation
+  onValidate, validationIssueCount, showValidation, isDirty = false
 }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
@@ -40,8 +42,15 @@ const EmailTopBar: React.FC<EmailTopBarProps> = ({
 
   const handleSave = async () => {
     setIsSaving(true);
-    await onSave();
-    setTimeout(() => setIsSaving(false), 800);
+    try {
+      await onSave();
+    } catch (err) {
+      // [FIX BUG-TOPBAR-1] If onSave throws, isSaving was stuck at true forever.
+      // Now always reset after completion whether success or error.
+      console.error('[EmailTopBar] Save failed:', err);
+    } finally {
+      setTimeout(() => setIsSaving(false), 600);
+    }
   };
 
   const handleSendTest = async () => {
@@ -54,16 +63,31 @@ const EmailTopBar: React.FC<EmailTopBarProps> = ({
 
   return (
     <div className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.05)] z-50 relative">
+      {/* LEFT: Back + Name + Group */}
       <div className="flex items-center gap-4">
         <button onClick={onCancel} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div className="flex flex-col">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="h-9 text-base font-bold text-slate-800 outline-none bg-transparent hover:bg-slate-50 focus:bg-slate-100 px-2 rounded transition-all border border-transparent hover:border-slate-200 focus:border-amber-600 truncate max-w-[150px] sm:max-w-xs flex items-center"
-          />
+          {/* Name row with save-state dot + pencil hint */}
+          <div className="group/name relative flex items-center gap-1.5">
+            {/* Save-state indicator dot */}
+            <span
+              title={isDirty ? 'Có thay đổi chưa lưu' : 'Đã lưu'}
+              className={`w-2 h-2 rounded-full shrink-0 transition-all duration-500 ${
+                isDirty
+                  ? 'bg-amber-400 shadow-[0_0_6px_2px_rgba(251,191,36,0.5)] animate-pulse'
+                  : 'bg-emerald-400 shadow-[0_0_4px_1px_rgba(52,211,153,0.3)]'
+              }`}
+            />
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="h-9 text-base font-bold text-slate-800 outline-none bg-transparent hover:bg-slate-50 focus:bg-slate-100 px-2 rounded transition-all border border-transparent hover:border-slate-200 focus:border-amber-600 truncate max-w-[150px] sm:max-w-xs flex items-center"
+            />
+            {/* Pencil hint — appears on hover of the name container */}
+            <Pencil className="w-3 h-3 text-slate-300 opacity-0 group-hover/name:opacity-100 transition-opacity duration-200 pointer-events-none shrink-0" />
+          </div>
           <p className="text-[10px] text-slate-400 font-black px-2 uppercase tracking-wider leading-none mt-0.5">
             {editorMode === 'code' ? 'HTML Editor' : 'Drag & Drop Builder'}
           </p>
@@ -185,7 +209,19 @@ const EmailTopBar: React.FC<EmailTopBarProps> = ({
         >
           <Eye className="w-5 h-5 text-amber-600" strokeWidth={2.2} />
         </Button>
-        <Button icon={isSaving ? Loader2 : Save} onClick={handleSave} isLoading={isSaving} className="bg-gradient-to-r from-amber-400 to-amber-600 text-white border-transparent hover:from-amber-600 hover:to-amber-600 shadow-lg shadow-amber-600/20 h-10 px-6 text-xs font-bold transition-all duration-300">Lưu mẫu</Button>
+        <Button
+          icon={isSaving ? Loader2 : Save}
+          onClick={handleSave}
+          isLoading={isSaving}
+          title={isDirty ? 'Lưu thay đổi (Ctrl+S)' : 'Đã lưu'}
+          className={`h-10 px-6 text-xs font-bold transition-all duration-500 shadow-lg !border-transparent ${
+            isDirty
+              ? 'bg-gradient-to-r from-amber-400 to-amber-600 text-white hover:from-amber-500 hover:to-amber-700 shadow-amber-600/20'
+              : 'bg-gradient-to-r from-emerald-400 to-emerald-500 text-white opacity-70 hover:opacity-100 shadow-emerald-500/20'
+          }`}
+        >
+          {isDirty ? 'Lưu mẫu' : 'Đã lưu'}
+        </Button>
       </div>
     </div>
   );

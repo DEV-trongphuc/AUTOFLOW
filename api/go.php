@@ -1,5 +1,6 @@
 <?php
 require_once 'config.php';
+header("Content-Type: text/html; charset=UTF-8");
 
 $slug = $_GET['s'] ?? '';
 
@@ -23,13 +24,31 @@ $stmt->execute([$slug]);
 $link = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$link) {
-    echo "<h1>404 Not Found</h1><p>The link you clicked does not exist or has been removed.</p>";
+    echo '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>404 Not Found</title><style>
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f8fafc;margin:0;padding:20px;box-sizing:border-box;} 
+    .card{background:#fff;padding:3rem 2rem;border-radius:24px;box-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1);text-align:center;max-width:400px;width:100%;box-sizing:border-box;} 
+    h2{color:#0f172a;margin-top:0;font-size:1.75rem;font-weight:800;letter-spacing:-0.025em;} 
+    p{color:#64748b;font-size:1rem;margin-bottom:2rem;line-height:1.6;} 
+    .btn{display:inline-block;background:#f1f5f9;color:#475569;text-decoration:none;padding:0.875rem 1.5rem;border-radius:12px;font-weight:700;font-size:0.9rem;transition:all 0.2s;}
+    .btn:hover{background:#e2e8f0;color:#1e293b;}
+    .icon-box{width:80px;height:80px;background:#fef2f2;border-radius:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;color:#ef4444;}
+    </style></head><body><div class="card"><div class="icon-box"><svg style="width:40px;height:40px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div><h2>Link không tồn tại</h2><p>Liên kết bạn vừa nhấn vào không tồn tại hoặc đã bị gỡ bỏ khỏi hệ thống.</p><a href="/" class="btn">Quay lại trang chủ</a></div></body></html>';
     exit;
 }
 
 // --- STATUS ENFORCEMENT ---
 if (($link['status'] ?? 'active') === 'paused') {
-    echo '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Link Unavailable</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;background:#f8fafc;margin:0;} .card{background:#fff;padding:2rem;border-radius:12px;box-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);text-align:center;max-width:400px;width:90%;} h2{color:#334155;margin-top:0;} p{color:#64748b;font-size:0.875rem;line-height:1.5;}</style></head><body><div class="card"><h2><svg style="width:48px;height:48px;color:#cbd5e1;margin-bottom:1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><br>Link Unvailable</h2><p>This link is currently paused by the administrator. Please try again later.</p></div></body></html>';
+if (($link['status'] ?? 'active') === 'paused') {
+    $displayName = !empty($link['name']) ? $link['name'] : $link['slug'];
+    echo '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>'.$displayName.'</title><style>
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f8fafc;margin:0;padding:20px;box-sizing:border-box;} 
+    .card{background:#fff;padding:3rem 2rem;border-radius:24px;box-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1);text-align:center;max-width:400px;width:100%;box-sizing:border-box;} 
+    h2{color:#0f172a;margin-top:0;font-size:1.5rem;font-weight:800;letter-spacing:-0.025em;} 
+    p{color:#64748b;font-size:0.95rem;margin-bottom:2rem;line-height:1.6;} 
+    .icon-box{width:80px;height:80px;background:#fff7ed;border-radius:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;color:#f97316;}
+    </style></head><body><div class="card"><div class="icon-box"><svg style="width:40px;height:40px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div><h2>'.$displayName.'</h2><p>Liên kết này hiện đang được quản trị viên tạm khóa. Vui lòng quay lại sau.</p></div></body></html>';
+    exit;
+}
     exit;
 }
 
@@ -52,8 +71,46 @@ if (!empty($accessPin)) {
     
     // Check if session valid
     if (empty($_SESSION[$pinSessionKey])) {
-        $errorHtml = isset($pinError) ? "<p style='color:#ef4444;font-size:0.875rem;margin-bottom:1rem;'>$pinError</p>" : "";
-        echo '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Protected Link</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;background:#f8fafc;margin:0;} .card{background:#fff;padding:2.5rem;border-radius:16px;box-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1);text-align:center;max-width:380px;width:90%;} h2{color:#0f172a;margin-top:0;font-size:1.25rem;} p{color:#64748b;font-size:0.875rem;margin-bottom:1.5rem;} input{width:100%;text-align:center;letter-spacing:0.5rem;font-size:1.5rem;padding:0.75rem;border:2px solid #e2e8f0;border-radius:8px;outline:none;transition:all 0.2s;box-sizing:border-box;} input:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,0.2);} button{width:100%;margin-top:1.5rem;background:#4f46e5;color:white;border:none;padding:0.875rem;border-radius:8px;font-weight:600;font-size:1rem;cursor:pointer;transition:all 0.2s;} button:hover{background:#4338ca;} .icon{width:48px;height:48px;color:#6366f1;margin-bottom:1rem;}</style></head><body><div class="card"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg><h2>Liên kết được bảo vệ</h2><p>Vui lòng nhập mã PIN bảo mật để tiếp tục truy cập.</p>'.$errorHtml.'<form method="POST"><input type="password" name="pin" placeholder="••••" required autofocus autocomplete="off" maxlength="8"><button type="submit">Truy cập</button></form></div></body></html>';
+        $pinLength = strlen($accessPin);
+        $displayName = !empty($link['name']) ? $link['name'] : $link['slug'];
+        $errorHtml = isset($pinError) ? "<p style='color:#ef4444;font-size:0.875rem;margin-bottom:1rem;font-weight:600;'>$pinError</p>" : "";
+        echo '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>'.$displayName.'</title><style>
+        body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f8fafc;margin:0;padding:20px;box-sizing:border-box;} 
+        .card{background:#fff;padding:2.5rem 2rem;border-radius:24px;box-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);text-align:center;max-width:420px;width:100%;box-sizing:border-box;} 
+        h2{color:#0f172a;margin-top:0;font-size:1.5rem;font-weight:800;letter-spacing:-0.025em;} 
+        p{color:#64748b;font-size:0.95rem;margin-bottom:2rem;line-height:1.5;} 
+        .pin-container{display:flex;gap:10px;justify-content:center;margin-bottom:1.5rem;}
+        .pin-box{width:54px;height:64px;text-align:center;font-size:1.75rem;padding:0;border:2.5px solid #e2e8f0;border-radius:16px;outline:none;transition:all 0.2s;box-sizing:border-box;font-weight:900;color:#0f172a;} 
+        .pin-box:focus{border-color:#f97316;box-shadow:0 0 0 4px rgba(249,115,22,0.15);background:#fff7ed;} 
+        button{width:100%;margin-top:0.5rem;background:linear-gradient(135deg, #f97316 0%, #ea580c 100%);color:white;border:none;padding:1.125rem;border-radius:16px;font-weight:800;font-size:1.1rem;cursor:pointer;transition:all 0.2s;box-shadow:0 10px 15px -3px rgba(249,115,22,0.3);} 
+        button:hover{transform:translateY(-1px);box-shadow:0 15px 20px -5px rgba(249,115,22,0.4);}
+        .icon-box{width:64px;height:64px;background:#fff7ed;border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;color:#f97316;}
+        .icon{width:32px;height:32px;}
+        </style></head><body><div class="card"><div class="icon-box"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></div><h2>'.$displayName.'</h2><p>Vui lòng nhập mã PIN '.$pinLength.' số để tiếp tục truy cập.</p>'.$errorHtml.'<form id="pinForm" method="POST"><div class="pin-container">';
+        for($i=0; $i<$pinLength; $i++) {
+            echo '<input type="password" class="pin-box" maxlength="1" inputmode="numeric" autocomplete="off" required '.($i==0?'autofocus':'').'>';
+        }
+        echo '</div><input type="hidden" name="pin" id="masterPin"><button type="submit">Xác nhận truy cập</button></form>
+        <script>
+        const boxes = document.querySelectorAll(".pin-box");
+        const master = document.getElementById("masterPin");
+        const form = document.getElementById("pinForm");
+        boxes.forEach((box, idx) => {
+            box.addEventListener("input", (e) => {
+                if(e.target.value && idx < boxes.length - 1) boxes[idx+1].focus();
+                updateMaster();
+            });
+            box.addEventListener("keydown", (e) => {
+                if(e.key === "Backspace" && !e.target.value && idx > 0) boxes[idx-1].focus();
+            });
+        });
+        function updateMaster() {
+            let p = "";
+            boxes.forEach(b => p += b.value);
+            master.value = p;
+        }
+        form.addEventListener("submit", updateMaster);
+        </script></div></body></html>';
         exit;
     }
 }
