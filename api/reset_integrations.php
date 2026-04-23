@@ -14,12 +14,10 @@ try {
             $sources[] = $intg['name'];
         }
     }
-    // Also add typical default names just in case
-    $sources = array_merge($sources, ['MISA CRM', 'Google Sheets', 'Import CSV']);
     $sources = array_unique($sources);
 
     // Filter out Manual, Form, System to be safe
-    $sources = array_diff($sources, ['Manual', 'Form', 'System', 'API', 'Zalo', 'Website']);
+    $sources = array_diff($sources, ['Manual', 'Form', 'System', 'API', 'Zalo', 'Website', 'Import CSV']);
 
     if (isset($_GET['confirm']) && $_GET['confirm'] === 'yes') {
         
