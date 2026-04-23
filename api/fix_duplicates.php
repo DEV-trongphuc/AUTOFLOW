@@ -7,9 +7,10 @@ require_once 'db_connect.php';
 // }
 
 try {
-    $pdo->beginTransaction();
-
     echo "1. Deduplicating subscriber_lists table...<br>";
+    // Clean up any previous failed runs
+    $pdo->exec("DROP TABLE IF EXISTS tmp_sl");
+    
     // Create temporary table with unique pairs
     $pdo->exec("CREATE TABLE tmp_sl AS SELECT DISTINCT subscriber_id, list_id FROM subscriber_lists");
     
@@ -60,6 +61,5 @@ try {
     echo "<b>ALL FIXES APPLIED SUCCESSFULLY!</b>";
 
 } catch (Exception $e) {
-    $pdo->rollBack();
     echo "<b>ERROR:</b> " . $e->getMessage();
 }
