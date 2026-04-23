@@ -161,11 +161,19 @@ try {
                 echo json_encode(['success' => false, 'error' => 'Not found or forbidden']);
                 break;
             }
-            $pdo->prepare("DELETE FROM survey_answer_details WHERE survey_id = ?")->execute([$id]);
-            $pdo->prepare("DELETE FROM survey_responses WHERE survey_id = ?")->execute([$id]);
-            $pdo->prepare("DELETE FROM survey_questions WHERE survey_id = ?")->execute([$id]);
-            $pdo->prepare("DELETE FROM surveys WHERE id = ?")->execute([$id]);
-            echo json_encode(['success' => true]);
+            $pdo->beginTransaction();
+            try {
+                $pdo->prepare("DELETE FROM survey_answer_details WHERE survey_id = ?")->execute([$id]);
+                $pdo->prepare("DELETE FROM survey_responses WHERE survey_id = ?")->execute([$id]);
+                $pdo->prepare("DELETE FROM survey_questions WHERE survey_id = ?")->execute([$id]);
+                $pdo->prepare("DELETE FROM surveys WHERE id = ?")->execute([$id]);
+                $pdo->commit();
+                echo json_encode(['success' => true]);
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                error_log('[surveys.php] delete error: ' . $e->getMessage());
+                echo json_encode(['success' => false, 'error' => 'Lỗi hệ thống khi xóa khảo sát.']);
+            }
             break;
         }
 
@@ -271,76 +279,72 @@ try {
             $byDate->execute([$surveyId]);
             $byDateData = $byDate->fetchAll(PDO::FETCH_ASSOC);
 
-            // Per-question aggregation
+            // Per-question aggregation: batch fetch ALL answer data first, then aggregate in PHP
             $questions = $pdo->prepare("SELECT * FROM survey_questions WHERE survey_id = ? ORDER BY order_index");
             $questions->execute([$surveyId]);
             $questionsData = $questions->fetchAll(PDO::FETCH_ASSOC);
 
+            $allBlockIds = array_column($questionsData, 'block_id');
+            $batchAnswerData = [];
+            if (!empty($allBlockIds)) {
+                $bPh = implode(',', array_fill(0, count($allBlockIds), '?'));
+                $batchStmt = $pdo->prepare("SELECT question_id, answer_text, answer_num, answer_json FROM survey_answer_details WHERE question_id IN ($bPh)");
+                $batchStmt->execute($allBlockIds);
+                foreach ($batchStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                    $batchAnswerData[$row['question_id']][] = $row;
+                }
+            }
+
             $questionAnalytics = [];
             foreach ($questionsData as $q) {
-                $qa = ['question_id' => $q['block_id'], 'block_id' => $q['block_id'], 'type' => $q['type'], 'label' => $q['label'], 'content' => $q['content'], 'options' => $q['options']];
-
-                // Count answered
-                $answeredStmt = $pdo->prepare("SELECT COUNT(*) FROM survey_answer_details WHERE question_id = ?");
-                $answeredStmt->execute([$q['block_id']]);
-                $qa['total_answered'] = (int)$answeredStmt->fetchColumn();
+                $qa = ['question_id' => $q['block_id'], 'block_id' => $q['block_id'], 'type' => $q['type'], 'label' => $q['label'], 'content' => $q['content'] ?? null, 'options' => $q['options'] ?? null];
+                $rows = $batchAnswerData[$q['block_id']] ?? [];
+                $qa['total_answered'] = count($rows);
 
                 if (in_array($q['type'], ['star_rating', 'nps', 'slider', 'likert'])) {
-                    $ratingStmt = $pdo->prepare("SELECT answer_num, COUNT(*) AS cnt FROM survey_answer_details WHERE question_id = ? AND answer_num IS NOT NULL GROUP BY answer_num ORDER BY answer_num");
-                    $ratingStmt->execute([$q['block_id']]);
-                    $dist = $ratingStmt->fetchAll(PDO::FETCH_ASSOC);
-                    $qa['rating_distribution'] = array_map(fn($r) => ['value' => (float)$r['answer_num'], 'count' => (int)$r['cnt']], $dist);
-                    $qa['avg_rating'] = count($dist) ? round(array_sum(array_column($dist, 'answer_num')) / array_sum(array_column($dist, 'cnt')), 2) : null;
-
-                    if ($q['type'] === 'nps') {
-                        $promoters  = array_sum(array_column(array_filter($dist, fn($r) => $r['answer_num'] >= 9), 'cnt'));
-                        $detractors = array_sum(array_column(array_filter($dist, fn($r) => $r['answer_num'] <= 6), 'cnt'));
-                        $total      = $qa['total_answered'] ?: 1;
-                        $qa['promoters']  = $promoters;
-                        $qa['detractors'] = $detractors;
-                        $qa['passives']   = $total - $promoters - $detractors;
-                        $qa['nps_score']  = round(($promoters / $total - $detractors / $total) * 100);
-                    }
-                } elseif (in_array($q['type'], ['single_choice', 'multi_choice', 'dropdown', 'yes_no'])) {
-                    // Mọi người có thể submit nhiều options dưới dạng JSON (mảng string)
-                    $choiceJsonStmt = $pdo->prepare("SELECT answer_json, answer_text FROM survey_answer_details WHERE question_id = ?");
-                    $choiceJsonStmt->execute([$q['block_id']]);
-                    $rawChoices = $choiceJsonStmt->fetchAll(PDO::FETCH_ASSOC);
-                    
-                    $counts = [];
-                    foreach ($rawChoices as $rc) {
-                        if (!empty($rc['answer_json'])) {
-                            $arr = json_decode($rc['answer_json'], true);
-                            if (is_array($arr)) {
-                                foreach ($arr as $val) {
-                                    $counts[$val] = ($counts[$val] ?? 0) + 1;
-                                }
-                            }
-                        } elseif (!empty($rc['answer_text'])) {
-                            $val = $rc['answer_text'];
-                            $counts[$val] = ($counts[$val] ?? 0) + 1;
+                    $dist = [];
+                    foreach ($rows as $r) {
+                        if ($r['answer_num'] !== null) {
+                            $n = (float)$r['answer_num'];
+                            $dist[$n] = ($dist[$n] ?? 0) + 1;
                         }
                     }
-                    
-                    $choices = [];
-                    foreach ($counts as $lbl => $cnt) {
-                        $choices[] = ['label' => (string)$lbl, 'cnt' => $cnt];
+                    ksort($dist);
+                    $distArr = array_map(fn($val, $cnt) => ['val' => $val, 'cnt' => $cnt], array_keys($dist), array_values($dist));
+                    $qa['rating_distribution'] = array_map(fn($r) => ['value' => (float)$r['val'], 'count' => (int)$r['cnt']], $distArr);
+                    $total = $qa['total_answered'] ?: 1;
+                    $qa['avg_rating'] = $qa['total_answered'] ? round(array_sum(array_map(fn($r) => $r['val'] * $r['cnt'], $distArr)) / $total, 2) : null;
+
+                    if ($q['type'] === 'nps') {
+                        $promoters  = array_sum(array_column(array_filter($distArr, fn($r) => $r['val'] >= 9), 'cnt'));
+                        $detractors = array_sum(array_column(array_filter($distArr, fn($r) => $r['val'] <= 6), 'cnt'));
+                        $qa['promoters'] = $promoters; $qa['detractors'] = $detractors;
+                        $qa['passives']  = $qa['total_answered'] - $promoters - $detractors;
+                        $qa['nps_score'] = round(($promoters / $total - $detractors / $total) * 100);
                     }
+                } elseif (in_array($q['type'], ['single_choice', 'multi_choice', 'dropdown', 'yes_no'])) {
+                    $counts = [];
+                    foreach ($rows as $rc) {
+                        if (!empty($rc['answer_json'])) {
+                            $arr = json_decode($rc['answer_json'], true);
+                            if (is_array($arr)) foreach ($arr as $val) $counts[$val] = ($counts[$val] ?? 0) + 1;
+                        } elseif (!empty($rc['answer_text'])) $counts[$rc['answer_text']] = ($counts[$rc['answer_text']] ?? 0) + 1;
+                    }
+                    $choices = [];
+                    foreach ($counts as $lbl => $cnt) $choices[] = ['label' => (string)$lbl, 'cnt' => $cnt];
                     usort($choices, fn($a, $b) => $b['cnt'] <=> $a['cnt']);
-                    
-                    $total   = $qa['total_answered'] ?: 1;
-                    $qa['choice_distribution'] = array_map(fn($c) => [
-                        'label' => $c['label'], 'count' => (int)$c['cnt'],
-                        'percentage' => round($c['cnt'] / $total * 100, 1)
-                    ], $choices);
+                    $total = $qa['total_answered'] ?: 1;
+                    $qa['choice_distribution'] = array_map(fn($c) => ['label' => $c['label'], 'count' => (int)$c['cnt'], 'percentage' => round($c['cnt'] / $total * 100, 1)], $choices);
                 } elseif (in_array($q['type'], ['short_text', 'long_text', 'email', 'phone', 'number', 'website', 'date'])) {
-                    $textStmt = $pdo->prepare("SELECT answer_text FROM survey_answer_details WHERE question_id = ? AND answer_text IS NOT NULL LIMIT 50");
-                    $textStmt->execute([$q['block_id']]);
-                    $qa['text_responses'] = $textStmt->fetchAll(PDO::FETCH_COLUMN);
+                    $qa['text_responses'] = array_values(array_slice(
+                        array_filter(array_column($rows, 'answer_text'), fn($v) => $v !== null && $v !== ''),
+                        0, 50
+                    ));
                 } elseif (in_array($q['type'], ['matrix_single', 'matrix_multi', 'ranking'])) {
-                    $jsonStmt = $pdo->prepare("SELECT answer_json FROM survey_answer_details WHERE question_id = ? AND answer_json IS NOT NULL LIMIT 50");
-                    $jsonStmt->execute([$q['block_id']]);
-                    $qa['text_responses'] = $jsonStmt->fetchAll(PDO::FETCH_COLUMN);
+                    $qa['text_responses'] = array_values(array_slice(
+                        array_filter(array_column($rows, 'answer_json'), fn($v) => $v !== null && $v !== ''),
+                        0, 50
+                    ));
                 }
                 $questionAnalytics[] = $qa;
             }
