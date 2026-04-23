@@ -36,7 +36,7 @@ const PurchaseEventDetailModal = React.lazy(() => import('../components/triggers
 const CustomEventDetailModal = React.lazy(() => import('../components/triggers/CustomEventDetailModal'));
 const CustomerProfileModal = React.lazy(() => import('../components/audience/CustomerProfileModal'));
 
-import { getStepLabel, getStepIcon } from '../components/flows/flowConstants';
+
 import toast from 'react-hot-toast';
 import FlowEmptyState from '../components/flows/FlowEmptyState';
 import FlowHeader from '../components/flows/builder/FlowHeader';
