@@ -110,7 +110,7 @@ if ($method === 'POST' && $action === 'login') {
         // user object already has no password — safe to return
         jsonResponse(true, $user, 'Đăng nhập thành công');
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -140,7 +140,7 @@ if ($method === 'GET' && $action === 'check') {
                 jsonResponse(false, null, 'User not found');
             }
         } catch (Exception $e) {
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
     } else {
         jsonResponse(false, null, 'Chưa đăng nhập');
@@ -191,7 +191,7 @@ if ($method === 'GET' && $action === 'logs') {
         $logs = $stmt->fetchAll();
         jsonResponse(true, $logs);
     } catch (Exception $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -242,7 +242,7 @@ if ($method === 'POST' && $action === 'change-password') {
 
         jsonResponse(true, null, 'Đổi mật khẩu thành công');
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 

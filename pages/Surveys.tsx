@@ -450,9 +450,17 @@ const Surveys: React.FC = () => {
     const [previewSurvey, setPreviewSurvey] = useState<Survey | null>(null);
 
     useEffect(() => {
-        api.get<Survey[]>('surveys?action=list')
-            .then(res => { if (res.success) setSurveys(res.data as Survey[]); })
-            .finally(() => setIsLoading(false));
+        const load = async () => {
+            try {
+                const res = await api.get<Survey[]>('surveys?action=list');
+                if (res.success) setSurveys(res.data as Survey[]);
+            } catch (err) {
+                toast.error('Không thể tải danh sách khảo sát');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        load();
     }, []);
 
     const handleCreate = async (name: string) => {
@@ -467,18 +475,27 @@ const Surveys: React.FC = () => {
 
     const handleDeleteConfirm = async () => {
         if (!deleteTarget) return;
-        await api.delete(`surveys/${deleteTarget.id}?action=delete`);
-        setSurveys(prev => prev.filter(s => s.id !== deleteTarget.id));
-        toast.success('Đã xoá khảo sát');
-        setDeleteTarget(null);
+        try {
+            await api.delete(`surveys/${deleteTarget.id}?action=delete`);
+            setSurveys(prev => prev.filter(s => s.id !== deleteTarget.id));
+            toast.success('Đã xoá khảo sát');
+        } catch (err) {
+            toast.error('Xoá thất bại, vui lòng thử lại');
+        } finally {
+            setDeleteTarget(null);
+        }
     };
 
     const handleTogglePause = async (survey: Survey) => {
         const action = survey.status === 'active' ? 'pause' : 'publish';
-        const res = await api.post(`surveys/${survey.id}?action=${action}`, {});
-        if (res.success) setSurveys(prev => prev.map(s =>
-            s.id === survey.id ? { ...s, status: survey.status === 'active' ? 'paused' : 'active' } : s
-        ));
+        try {
+            const res = await api.post(`surveys/${survey.id}?action=${action}`, {});
+            if (res.success) setSurveys(prev => prev.map(s =>
+                s.id === survey.id ? { ...s, status: survey.status === 'active' ? 'paused' : 'active' } : s
+            ));
+        } catch (err) {
+            toast.error('Cập nhật trạng thái thất bại');
+        }
     };
 
     const filtered = surveys.filter(s => {

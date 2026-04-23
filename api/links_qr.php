@@ -107,7 +107,7 @@ if ($method === 'POST') {
             if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
                 jsonResponse(false, null, 'Slug (tên miền phụ) đã tồn tại. Vui lòng chọn từ khác.');
             } else {
-                jsonResponse(false, null, $e->getMessage());
+                jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
         }
     }
@@ -138,7 +138,7 @@ if ($method === 'PUT' || ($method === 'POST' && $action === 'update')) {
             $stmt->execute($params);
             jsonResponse(true, null, 'Updated successfully');
         } catch (\Throwable $e) {
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
     }
     jsonResponse(true, null, 'No fields to update');
@@ -153,7 +153,7 @@ if ($method === 'DELETE') {
         $pdo->prepare("DELETE FROM short_links WHERE id = ? AND workspace_id = ?")->execute([$id, $workspaceId]);
         jsonResponse(true, null, 'Deleted successfully');
     } catch (\Throwable $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 

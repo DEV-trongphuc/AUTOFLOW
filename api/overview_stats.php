@@ -105,7 +105,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'email_sent_chart') {
             'years'   => array_values(array_unique($years)),
         ]);
     } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
     }
     exit;
 }
@@ -239,6 +239,6 @@ try {
     ]);
 
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
 }
 

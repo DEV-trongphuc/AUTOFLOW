@@ -44,11 +44,11 @@ if (isset($_GET['route']) && $_GET['route'] === 'delete_delivery_log') {
     } catch (PDOException $e) { // FIX: Catch PDOException
         $pdo->rollBack();
         error_log("Database Error in delete_delivery_log: " . $e->getMessage()); // Log to PHP error log
-        jsonResponse(false, null, 'Failed to delete delivery log due to database error: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     } catch (Exception $e) {
         $pdo->rollBack();
         error_log("General Error in delete_delivery_log: " . $e->getMessage()); // Log to PHP error log
-        jsonResponse(false, null, 'Failed to delete delivery log: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -76,10 +76,10 @@ if ($type === 'delivery') {
         jsonResponse(true, $stmt->fetchAll());
     } catch (PDOException $e) {
         error_log("Database Error fetching delivery logs: " . $e->getMessage()); // Log to PHP error log
-        jsonResponse(false, null, 'Failed to fetch delivery logs due to database error: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     } catch (Exception $e) {
         error_log("General Error fetching delivery logs: " . $e->getMessage()); // Log to PHP error log
-        jsonResponse(false, null, 'Failed to fetch delivery logs: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 
 } else {

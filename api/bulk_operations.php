@@ -616,6 +616,6 @@ try {
 } catch (Exception $e) {
     if ($pdo->inTransaction())
         $pdo->rollBack();
-    jsonResponse(false, null, $e->getMessage());
+    jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
 }
 ?>

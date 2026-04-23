@@ -588,7 +588,8 @@ try {
                 echo json_encode(['success' => true]);
             } catch (Exception $e) {
                 $pdo->rollBack();
-                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                error_log('[EXCEPTION] ' . $e->getMessage() . ' in ' . __FILE__ . ':' . __LINE__);
+                echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
             }
             exit;
         }
@@ -1043,7 +1044,8 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
 
                 echo json_encode(['success' => true, 'summary' => $summary]);
             } catch (Exception $e) {
-                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                error_log('[EXCEPTION] ' . $e->getMessage() . ' in ' . __FILE__ . ':' . __LINE__);
+                echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
             }
             exit;
         }
@@ -1274,7 +1276,7 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
                 echo json_encode(['success' => true, 'message' => 'Feedback đã được ghi nhận. Cảm ơn bạn!']);
             } catch (Exception $e) {
                 error_log('submit_feedback error: ' . $e->getMessage());
-                echo json_encode(['success' => false, 'message' => 'Lỗi lưu feedback: ' . $e->getMessage()]);
+                echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
             }
             exit;
         }
@@ -1628,7 +1630,7 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
                 echo json_encode([
                     'success' => false,
                     'message' => 'Lỗi hệ thống khi xóa ảnh',
-                    'error' => $e->getMessage()
+                    'error' => 'Lỗi hệ thống, vui lòng thử lại.'
                 ]);
             }
 
@@ -2655,13 +2657,15 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
                 ]
             ]);
         } catch (Exception $e) {
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            error_log('[EXCEPTION] ' . $e->getMessage() . ' in ' . __FILE__ . ':' . __LINE__);
+            echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
         }
     }
 } catch (Throwable $e) {
     if (isset($pdo) && $pdo->inTransaction()) {
         $pdo->rollBack();
     }
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    error_log('[EXCEPTION] ' . $e->getMessage() . ' in ' . __FILE__ . ':' . __LINE__);
+    echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
 }
 ?>

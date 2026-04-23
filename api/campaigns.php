@@ -132,7 +132,7 @@ if ($method === 'POST' && $route === 'resend_failed_emails') {
     } catch (Exception $e) {
         if ($pdo->inTransaction())
             $pdo->rollBack();
-        jsonResponse(false, null, 'Failed to re-queue emails: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -294,7 +294,7 @@ if ($method === 'POST' && $route === 'bulk_update_subscribers') {
     } catch (Exception $e) {
         if ($pdo->inTransaction())
             $pdo->rollBack();
-        jsonResponse(false, null, 'Bulk update failed: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 // --- NEW ROUTE: Get Audience Refresh Stats ---
@@ -415,7 +415,7 @@ AND NOT EXISTS (
             'now' => date('Y-m-d H:i:s')
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -469,7 +469,7 @@ if ($method === 'POST' && $route === 'delete_unsubscribed') {
         logSystemActivity($pdo, 'campaigns', 'delete_unsubscribed', $cid, "Campaign $cid", ['deleted_count' => $deleted]);
         jsonResponse(true, ['deleted' => $deleted]);
     } catch (Exception $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
     exit;
 }
@@ -514,7 +514,7 @@ if ($method === 'GET' && $route === 'unsubscribed_list') {
             ]
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
     exit;
 }
@@ -654,7 +654,7 @@ $curlError\n", FILE_APPEND);
         }
 
     } catch (Exception $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -713,7 +713,7 @@ subscriber_activity WHERE campaign_id = ? AND type = 'click_link'";
             ]
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -772,7 +772,7 @@ LIMIT $limit OFFSET $offset";
             'pagination' => ['total' => $total, 'page' => $page, 'limit' => $limit, 'totalPages' => ceil($total / $limit)]
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -799,7 +799,7 @@ AND $col IS NOT NULL AND $col != '' $locFilter GROUP BY $col ORDER BY value DESC
             'location' => $getStats('location')
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -969,7 +969,7 @@ if ($method === 'POST' && $route === 'send_test') {
                 jsonResponse(false, null, 'Failed to send test email: ' . (is_string($res) ? $res : 'Unknown error'));
         }
     } catch (Exception $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -1391,7 +1391,7 @@ switch ($method) {
                 }
             }
         } catch (Throwable $e) {
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 
@@ -1516,7 +1516,7 @@ switch ($method) {
         } catch (Throwable $e) {
             if ($pdo->inTransaction())
                 $pdo->rollBack();
-            jsonResponse(false, null, 'Error: ' . $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 
@@ -1645,7 +1645,7 @@ switch ($method) {
         } catch (Exception $e) {
             if ($pdo->inTransaction())
                 $pdo->rollBack();
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 
@@ -1735,7 +1735,7 @@ switch ($method) {
         } catch (Exception $e) {
             if ($pdo->inTransaction())
                 $pdo->rollBack();
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 }

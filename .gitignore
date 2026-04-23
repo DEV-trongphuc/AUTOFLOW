@@ -30,3 +30,31 @@ api/debug_priority.log
 api/training_debug.log
 api/meta_webhook_prod.log
 api/misa_sync_debug.log
+
+# Environment files — NEVER commit secrets
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+
+# PHP runtime logs & error logs
+api/error_log
+api/webhook_error.log
+api/worker_error.log
+api/wait_debug.log
+api/worker_sync.log
+api/worker_campaign.log
+api/worker_flow.log
+api/worker_priority.log
+api/ai_debug.log
+api/webhook_debug.log
+api/zns_error.log
+api/worker_debug.log
+api/worker_trace.log
+api/worker_reminder.log
+
+# Scratch/dev helpers — not for production
+scratch/
+seed_data_v5.json
+seed_data_v6.json

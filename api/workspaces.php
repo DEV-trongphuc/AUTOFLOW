@@ -27,7 +27,7 @@ if ($method === 'GET' && $action === 'list') {
         }
         jsonResponse(true, $stmt->fetchAll());
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Error: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -46,7 +46,7 @@ if ($method === 'POST' && $action === 'create') {
         $stmt->execute([$name, $desc]);
         jsonResponse(true, ['id' => $pdo->lastInsertId()], 'Workspace created successfully');
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Creation failed: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -95,7 +95,7 @@ if ($method === 'GET' && $action === 'users') {
 
         jsonResponse(true, $finalData);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Failed to fetch users: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -116,7 +116,7 @@ if ($method === 'POST' && $action === 'switch') {
                 exit;
             }
         } catch (Exception $e) {
-            jsonResponse(false, null, 'Workspace verification failed: ' . $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             exit;
         }
     }
@@ -152,7 +152,7 @@ if ($method === 'POST' && $action === 'add_user') {
         if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
             jsonResponse(false, null, 'User is already in this workspace');
         }
-        jsonResponse(false, null, 'Error: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -194,7 +194,7 @@ if ($method === 'POST' && $action === 'update_user') {
         $stmt->execute([$role_id, $mapping_id, $workspace_id]);
         jsonResponse(true, null, 'User role updated');
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Error: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -240,7 +240,7 @@ if ($method === 'POST' && $action === 'remove_user') {
         $stmt->execute([$mapping_id, $workspace_id]);
         jsonResponse(true, null, 'User removed from workspace');
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Error: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 

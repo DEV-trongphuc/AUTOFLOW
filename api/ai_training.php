@@ -1543,7 +1543,8 @@ try {
                 echo json_encode(['success' => true]);
             } catch (Exception $e) {
                 $pdo->rollBack();
-                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                error_log('[EXCEPTION] ' . $e->getMessage() . ' in ' . __FILE__ . ':' . __LINE__);
+                echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
             }
             exit;
         } elseif ($action === 'toggle_workspace') {
@@ -1634,7 +1635,8 @@ try {
             } catch (Exception $e) {
                 if ($pdo->inTransaction())
                     $pdo->rollBack();
-                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                error_log('[EXCEPTION] ' . $e->getMessage() . ' in ' . __FILE__ . ':' . __LINE__);
+                echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
             }
             exit;
         } elseif ($action === 'bulk_copy' || $action === 'bulk_move') {
@@ -1776,7 +1778,8 @@ try {
             } catch (Exception $e) {
                 if ($pdo->inTransaction())
                     $pdo->rollBack();
-                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                error_log('[EXCEPTION] ' . $e->getMessage() . ' in ' . __FILE__ . ':' . __LINE__);
+                echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
             }
             exit;
         }
@@ -1859,7 +1862,7 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'TRAINING ERROR: ' . $e->getMessage(),
+        'message' => 'Lỗi hệ thống, vui lòng thử lại.',
         'file' => $e->getFile(),
         'line' => $e->getLine(),
         'trace' => $e->getTraceAsString()

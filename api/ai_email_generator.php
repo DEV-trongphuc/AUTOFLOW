@@ -278,6 +278,6 @@ SYSTEM;
 } catch (Exception $e) {
   echo json_encode([
     'success' => false,
-    'message' => 'Lỗi AI: ' . $e->getMessage()
+    'message' => 'Lỗi hệ thống, vui lòng thử lại.'
   ]);
 }

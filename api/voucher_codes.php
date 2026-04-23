@@ -42,7 +42,7 @@ if ($method === 'GET') {
 
         jsonResponse(true, $codes);
     } catch (PDOException $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 } elseif ($method === 'POST') {
     try {
@@ -166,7 +166,7 @@ if ($method === 'GET') {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 } elseif ($method === 'DELETE') {
     try {
@@ -198,7 +198,7 @@ if ($method === 'GET') {
             }
         }
     } catch (Exception $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 } else {
     jsonResponse(false, null, 'Invalid request');

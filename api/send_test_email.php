@@ -103,7 +103,7 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => $e->getMessage(),
+        'error' => 'Lỗi hệ thống, vui lòng thử lại.',
         'file' => $e->getFile(),
         'line' => $e->getLine()
     ]);

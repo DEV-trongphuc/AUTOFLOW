@@ -108,6 +108,6 @@ try {
     error_log("TTS Error: " . $e->getMessage()); // Keep error logging for server-side issues
     http_response_code(500);
     header('Content-Type: application/json'); // Set content type for JSON error response
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => 'Lỗi hệ thống, vui lòng thử lại.']);
 }
 ?>

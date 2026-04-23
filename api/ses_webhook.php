@@ -147,6 +147,7 @@ function handleBounce($pdo, $message)
         $email          = $recipient['emailAddress'] ?? '';
         $diagnosticCode = $recipient['diagnosticCode'] ?? '';
         $smtpStatus     = $recipient['status'] ?? '';
+        try {
 
         if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL))
             continue;
@@ -181,6 +182,9 @@ function handleBounce($pdo, $message)
             }
         }
         // Undetermined: no action
+        } catch (Exception $e) {
+            error_log('[ses_webhook] handleBounce error for ' . $email . ': ' . $e->getMessage());
+        }
     }
 }
 
@@ -195,7 +199,7 @@ function handleComplaint($pdo, $message)
 
         if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL))
             continue;
-
+        try {
         // [FIX P12-H3] UPDATE all workspace subscribers with this email (no LIMIT).
         // Same rationale as handleBounce: spam complaint is address-level from SES.
         $pdo->prepare("UPDATE subscribers SET status = 'unsubscribed', updated_at = NOW() WHERE email = ?")
@@ -213,6 +217,9 @@ function handleComplaint($pdo, $message)
 
             $pdo->prepare("INSERT INTO subscriber_activity (subscriber_id, type, details, created_at) VALUES (?, 'complaint', ?, NOW())")
                 ->execute([$subId, "Spam Complaint via SES (feedback: $feedbackType)"]);
+        }
+        } catch (Exception $e) {
+            error_log('[ses_webhook] handleComplaint error for ' . $email . ': ' . $e->getMessage());
         }
     }
 }

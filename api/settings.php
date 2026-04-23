@@ -58,7 +58,7 @@ try {
             } catch (Exception $e) {
                 if ($pdo->inTransaction())
                     $pdo->rollBack();
-                jsonResponse(false, null, 'Lỗi khi lưu cấu hình: ' . $e->getMessage());
+                jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
             break;
 
@@ -66,6 +66,6 @@ try {
             jsonResponse(false, null, 'Method không hỗ trợ');
     }
 } catch (Exception $e) {
-    jsonResponse(false, null, 'Lỗi hệ thống: ' . $e->getMessage());
+    jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
 }
 ?>

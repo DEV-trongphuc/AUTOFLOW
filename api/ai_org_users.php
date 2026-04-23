@@ -172,7 +172,7 @@ if ($method === 'GET' && ($action === 'list' || $action === '')) {
         ]);
         exit;
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Error fetching users: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -250,7 +250,7 @@ if ($method === 'POST' && $action === 'add') {
             jsonResponse(true, ['id' => $userId], 'User created successfully');
         }
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Error adding user: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -343,7 +343,7 @@ if ($method === 'POST' && $action === 'update') {
         jsonResponse(true, null, 'User updated successfully');
 
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Error updating user: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -388,7 +388,7 @@ if ($method === 'POST' && $action === 'delete') {
         jsonResponse(true, null, 'User deleted successfully');
 
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Error deleting user: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 

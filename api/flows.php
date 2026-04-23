@@ -44,7 +44,7 @@ if ($method === 'GET' && isset($_GET['route']) && $_GET['route'] === 'flow-snaps
         $snapshots = $stmt->fetchAll(PDO::FETCH_ASSOC);
         jsonResponse(true, $snapshots);
     } catch (Exception $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -62,7 +62,7 @@ if ($method === 'GET' && isset($_GET['route']) && $_GET['route'] === 'flow-snaps
         $snap['flow_data'] = json_decode($snap['flow_data'], true);
         jsonResponse(true, $snap);
     } catch (Exception $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -96,7 +96,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'flow-snap
         jsonResponse(true, ['id' => $snapshotId, 'message' => 'Đã lưu phiên bản']);
     } catch (Exception $e) {
         error_log("Flow snapshot save error: " . $e->getMessage());
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -535,7 +535,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
 
         jsonResponse(true, ['data' => $participants, 'pagination' => ['total' => $total, 'totalPages' => $totalPages, 'page' => $page, 'limit' => $limit]]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi khi tải danh sách người tham gia: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -562,7 +562,8 @@ if (isset($_GET['route']) && $_GET['route'] === 'distribution') {
         echo json_encode(['success' => true, 'data' => $formattedDist]);
         exit;
     } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        error_log('[EXCEPTION] ' . $e->getMessage() . ' in ' . __FILE__ . ':' . __LINE__);
+        echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
         exit;
     }
 }
@@ -627,7 +628,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'click_summary') {
             ]
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi khi tải tổng quan lượt click: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -692,7 +693,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'click_details') {
             'pagination' => ['total' => $total, 'page' => $page, 'limit' => $limit, 'totalPages' => ceil($total / $limit)]
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi khi tải chi tiết lượt click: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -728,7 +729,7 @@ if ($method === 'GET' && isset($_GET['route']) && $_GET['route'] === 'tech_stats
             'location' => $getStats('location')
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi khi tải thống kê kỹ thuật: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -751,7 +752,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'completed-users') {
 
         jsonResponse(true, ['total' => $total, 'byBranch' => $branches]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi khi kiểm tra người dùng đã hoàn thành: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -875,7 +876,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'estimate-
         ]);
 
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Error: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -1259,7 +1260,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
             jsonResponse(false, ['errors' => $errors], "Không thêm được khách hàng nào. " . implode(', ', array_slice($errors, 0, 3)));
         }
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Error: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -1352,7 +1353,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'test-step
         }
 
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Error: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -1459,7 +1460,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'migrate-users') {
             jsonResponse(true, ['message' => 'Users moved to new step', 'count' => $count]);
         }
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi khi di chuyển người dùng: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -1546,7 +1547,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'history') {
             ]
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi khi tải lịch sử: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -1599,7 +1600,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'zns-delivery') {
 
         jsonResponse(true, ['logs' => $logs, 'stats' => $stats, 'pagination' => ['page' => $page, 'limit' => $limit, 'total' => $total, 'totalPages' => ceil($total / $limit)]]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi khi tải báo cáo ZNS: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -1666,7 +1667,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'step-errors') {
             ]
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi khi tải danh sách lỗi: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -1725,7 +1726,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'step-unsubscribes') {
             ]
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi khi tải danh sách hủy đăng ký: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -1760,7 +1761,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'resolve-step-error') {
             jsonResponse(true, ['message' => 'Đã dọn dẹp ' . count($subscriberIds) . ' người dùng khỏi automation']);
         }
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi khi xử lý lỗi bước: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -1973,7 +1974,7 @@ if ($method === 'GET' && isset($_GET['route']) && $_GET['route'] === 'stats') {
             'uniqueZaloClicked' => (int)   ($row['stat_unique_zalo_clicked'] ?? 0),
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -2218,7 +2219,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-next-step') {
             jsonResponse(true, ['message' => $msg, 'count' => $count]);
         }
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Error moving subscribers: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -2311,7 +2312,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-remove') {
         jsonResponse(true, ['message' => "Removed $count subscribers from flow", 'count' => $count]);
     } catch (Exception $e) {
         error_log("Bulk remove error: " . $e->getMessage());
-        jsonResponse(false, null, 'Error removing subscribers: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -2321,7 +2322,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'export-analytics') {
         // ... (Existing export logic) ...
         jsonResponse(false, null, 'Export logic placeholder');
     } catch (Exception $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -2393,7 +2394,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'inactive-users') {
             ]
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -2644,7 +2645,7 @@ switch ($method) {
                 ]);
             }
         } catch (Throwable $e) {
-            jsonResponse(false, null, 'Lỗi khi tải dữ liệu automation: ' . $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 
@@ -2681,7 +2682,7 @@ switch ($method) {
             logSystemActivity($pdo, 'flows', 'create', $id, $data['name'] ?? 'Flow mới', ['status' => $data['status'] ?? 'draft']);
             jsonResponse(true, ['id' => $id]);
         } catch (Throwable $e) {
-            jsonResponse(false, null, 'Lỗi khi tạo automation: ' . $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 
@@ -3177,7 +3178,7 @@ switch ($method) {
             jsonResponse(true, $data);
 
         } catch (Exception $e) {
-            jsonResponse(false, null, 'Lỗi khi cập nhật automation: ' . $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
     case 'DELETE':
@@ -3251,7 +3252,7 @@ switch ($method) {
         } catch (Exception $e) {
             if ($pdo->inTransaction())
                 $pdo->rollBack();
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 

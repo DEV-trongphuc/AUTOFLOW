@@ -79,7 +79,7 @@ if ($method === 'GET') {
             jsonResponse(true, $camps);
         }
     } catch (PDOException $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 } elseif ($method === 'POST') {
     try {
@@ -154,7 +154,7 @@ if ($method === 'GET') {
 
         jsonResponse(true, ['id' => $campaignId], 'Campaign saved successfully');
     } catch (Exception $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 } elseif ($method === 'DELETE' && $id) {
     try {
@@ -167,7 +167,7 @@ if ($method === 'GET') {
         $pdo->prepare("DELETE FROM voucher_campaigns WHERE id = ? AND workspace_id = ?")->execute([$id, $workspace_id]);
         jsonResponse(true, null, 'Campaign deleted successfully');
     } catch (PDOException $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 } else {
     jsonResponse(false, null, 'Invalid request');

@@ -290,7 +290,7 @@ switch ($method) {
                 if ($pdo->inTransaction())
                     $pdo->rollBack();
                 error_log("Lists Cleanup Error: " . $e->getMessage());
-                jsonResponse(false, null, 'Lỗi khi dọn dẹp: ' . $e->getMessage());
+                jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
             return;
         }
@@ -463,7 +463,7 @@ switch ($method) {
                     $pdo->rollBack();
                 }
                 error_log("Lists Merge Error: " . $e->getMessage());
-                jsonResponse(false, null, 'Lỗi khi gộp danh sách: ' . $e->getMessage());
+                jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
             return;
         }
@@ -477,7 +477,7 @@ switch ($method) {
             $data['id'] = $id;
             jsonResponse(true, $data);
         } catch (Exception $e) {
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 
@@ -491,7 +491,7 @@ switch ($method) {
             jsonResponse(true, $data);
         } catch (Throwable $e) {
             error_log("Lists PUT Error: " . $e->getMessage());
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 
@@ -540,7 +540,7 @@ switch ($method) {
             if ($pdo->inTransaction())
                 $pdo->rollBack();
             error_log("Lists DELETE Error: " . $e->getMessage());
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 }

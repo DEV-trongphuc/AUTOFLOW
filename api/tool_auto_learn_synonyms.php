@@ -35,7 +35,7 @@ try {
     }
 
 } catch (Exception $e) {
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.']);
     exit;
 }
 
@@ -54,8 +54,8 @@ Focus on:
 Return ONLY a valid JSON object where keys are the main keyword and values are arrays of synonyms.
 Example format:
 {
-  \"giá\": [\"chi phí\", \"h?c phí\", \"bao nhiêu\"],
-  \"dang ký\": [\"ghi danh\", \"mua\", \"tham gia\"]
+  \"gi\": [\"chi ph\", \"h?c ph\", \"bao nhiu\"],
+  \"dang k\": [\"ghi danh\", \"mua\", \"tham gia\"]
 }
 
 Text to analyze:

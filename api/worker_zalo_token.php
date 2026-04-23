@@ -118,7 +118,7 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => $e->getMessage(),
+        'error' => 'Lỗi hệ thống, vui lòng thử lại.',
         'timestamp' => date('Y-m-d H:i:s')
     ]);
     error_log("[Zalo Token Worker] Error: " . $e->getMessage());

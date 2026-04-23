@@ -152,5 +152,5 @@ Ngôn ngữ: Tiếng Việt, chuyên nghiệp. Báo cáo trình bày đẹp, rõ
     jsonResponse(true, ['analysis' => $analysis, 'analyzed_at' => date('Y-m-d H:i:s')]);
 
 } catch (Exception $e) {
-    jsonResponse(false, null, $e->getMessage());
+    jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
 }

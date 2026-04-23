@@ -187,6 +187,6 @@ try {
     }
 
 } catch (Exception $e) {
-    jsonResponse(false, null, 'Server Error: ' . $e->getMessage());
+    jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
 }
 ?>

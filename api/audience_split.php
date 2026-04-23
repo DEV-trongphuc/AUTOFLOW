@@ -311,7 +311,7 @@ if ($method === 'POST') {
         jsonResponse(true, ['count' => $addedCount, 'removed' => $removedCount], "Đã tách $addedCount người dùng vào danh sách '$destListName'.");
 
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 ?>

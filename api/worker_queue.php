@@ -15,27 +15,27 @@ ini_set('memory_limit', '512M');
 $isPriority = (isset($_GET['priority']) && $_GET['priority'] === 'high');
 // [FIX] Use __DIR__ instead of sys_get_temp_dir().
 // sys_get_temp_dir() (/tmp) can be purged between requests on Shared Hosting or have
-// per-pool isolation in PHP-FPM chroot / Docker tmpfs configs — causing the lock to
+// per-pool isolation in PHP-FPM chroot / Docker tmpfs configs  causing the lock to
 // vanish mid-run and allowing duplicate workers to spawn simultaneously.
 // __DIR__ is always the same directory as the script, with guaranteed write permissions.
 $workerLock = __DIR__ . '/worker_running.lock';
-$lockMaxAge = 300; // 5 min — if older, assume dead
+$lockMaxAge = 300; // 5 min  if older, assume dead
 
 if (!$isPriority && file_exists($workerLock)) {
     $lockAge = time() - (int) @file_get_contents($workerLock);
     if ($lockAge < $lockMaxAge) {
-        // Another worker is already running — exit silently
+        // Another worker is already running  exit silently
         echo json_encode(['status' => 'skipped', 'message' => "Worker already running (age={$lockAge}s)"]);
         exit;
     }
 }
-// Write our PID + timestamp as the lock — only for standard workers,
+// Write our PID + timestamp as the lock  only for standard workers,
 // Priority workers bypass the lock check but must NOT overwrite it
 // (avoids corrupting lockAge calculation for the standard worker).
 if (!$isPriority) {
     @file_put_contents($workerLock, time());
 }
-// Ensure lock is always removed, even on fatal errors — only for standard workers
+// Ensure lock is always removed, even on fatal errors  only for standard workers
 register_shutdown_function(function () use ($workerLock, $isPriority) {
     if (!$isPriority) {
         @unlink($workerLock);
@@ -104,7 +104,7 @@ try {
     $pdo->commit();
 } catch (Exception $e) {
     $pdo->rollBack();
-    echo json_encode(['status' => 'error', 'message' => 'Failed to reserve jobs: ' . $e->getMessage()]);
+    echo json_encode(['status' => 'error', 'message' => 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.']);
     exit;
 }
 
@@ -225,7 +225,7 @@ foreach ($jobs as $jobItem) {
                 // Campaign processing logic
                 $cid = $payload['campaign_id'] ?? null;
                 if ($cid) {
-                    // [FIX-C] Use require_once + function call — safe for repeated jobs in same run
+                    // [FIX-C] Use require_once + function call  safe for repeated jobs in same run
                     // [FIX-D] Use __DIR__ for consistent path resolution (cron-safe)
                     require_once __DIR__ . '/worker_campaign.php';
                     runWorkerCampaign($pdo, $cid);
@@ -350,7 +350,7 @@ foreach ($jobs as $jobItem) {
                 $docId = $payload['doc_id'];
                 $propertyId = $payload['property_id'];
                 $fileUri = $payload['file_uri'];
-                // total_chunks not stored in payload — query from DB
+                // total_chunks not stored in payload  query from DB
                 $stmtTotalChunks = $pdo->prepare("SELECT COUNT(*) FROM ai_pdf_chunk_results WHERE doc_id = ?");
                 $stmtTotalChunks->execute([$docId]);
                 $totalChunks = (int) $stmtTotalChunks->fetchColumn();
@@ -363,7 +363,7 @@ foreach ($jobs as $jobItem) {
 
                 if (empty($activeKey)) {
                     $jobSuccess = false;
-                    $jobError = 'Không có Gemini API Key cho property ' . $propertyId;
+                    $jobError = 'Khng c Gemini API Key cho property ' . $propertyId;
                     break;
                 }
 
@@ -372,7 +372,7 @@ foreach ($jobs as $jobItem) {
                 try {
                     // [FIX P7-C3] Use $skipLockedClause (computed at startup with MySQL version check)
                     // instead of hardcoded 'FOR UPDATE SKIP LOCKED' which throws a fatal syntax error
-                    // on MySQL 5.7 hosts — causing ai_pdf_chunk jobs to fail permanently.
+                    // on MySQL 5.7 hosts  causing ai_pdf_chunk jobs to fail permanently.
                     $stmtPending = $pdo->prepare("SELECT chunk_index, page_start, page_end FROM ai_pdf_chunk_results WHERE doc_id = ? AND status = 'pending' ORDER BY chunk_index ASC LIMIT 5 $skipLockedClause");
                     $stmtPending->execute([$docId]);
                     $pendingChunks = $stmtPending->fetchAll(PDO::FETCH_ASSOC);
@@ -392,12 +392,12 @@ foreach ($jobs as $jobItem) {
                 }
 
                 if (empty($pendingChunks)) {
-                    // No pending chunks for this doc — check if all chunks are done
+                    // No pending chunks for this doc  check if all chunks are done
                     $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM ai_pdf_chunk_results WHERE doc_id = ? AND status != 'done'");
                     $stmtCount->execute([$docId]);
                     $notDone = (int) $stmtCount->fetchColumn();
                     if ($notDone === 0) {
-                        // All done – trigger merge & embed
+                        // All done  trigger merge & embed
                         mergePdfChunksAndEmbed($pdo, $docId, $propertyId, $activeKey);
                     }
                     $jobSuccess = true;
@@ -415,7 +415,7 @@ foreach ($jobs as $jobItem) {
                 }
 
                 training_log("ai_pdf_chunk worker: Firing " . count($pageRanges) . " parallel requests for doc={$docId} (chunks: " . implode(',', array_column($pageRanges, 'chunk_index')) . ")");
-                $pdo->prepare("UPDATE ai_training_docs SET error_message = 'Ðang trích xu?t " . count($pageRanges) . " do?n song song (trang " . $pageRanges[0]['start'] . "-" . end($pageRanges)['end'] . ")...' WHERE id = ?")
+                $pdo->prepare("UPDATE ai_training_docs SET error_message = 'ang trch xu?t " . count($pageRanges) . " do?n song song (trang " . $pageRanges[0]['start'] . "-" . end($pageRanges)['end'] . ")...' WHERE id = ?")
                     ->execute([$docId]);
 
                 // Fire 5 concurrent Gemini requests
@@ -452,7 +452,7 @@ foreach ($jobs as $jobItem) {
                 if ($remaining === 0) {
                     // All chunks extracted ? merge & embed
                     training_log("ai_pdf_chunk worker: All chunks complete for doc={$docId}. Triggering merge & embed.");
-                    $pdo->prepare("UPDATE ai_training_docs SET error_message = 'T?t c? do?n dã trích xu?t. Ðang merge và t?o Embedding...' WHERE id = ?")
+                    $pdo->prepare("UPDATE ai_training_docs SET error_message = 'T?t c? do?n d trch xu?t. ang merge v t?o Embedding...' WHERE id = ?")
                         ->execute([$docId]);
                     mergePdfChunksAndEmbed($pdo, $docId, $propertyId, $activeKey);
                 } elseif ($remaining > 0) {
@@ -463,7 +463,7 @@ foreach ($jobs as $jobItem) {
                     // and the worker inserts a new job forever ? fills queue_jobs table and pegs the worker.
                     // Solution: carry retry_count in payload, auto-fail doc after MAX_PDF_RETRIES rounds.
                     $pdfRetryCount = (int) ($payload['pdf_retry_count'] ?? 0);
-                    $MAX_PDF_RETRIES = 10; // 10 rounds × 5 pages/round = 50 pages max ch?u d?ng l?i
+                    $MAX_PDF_RETRIES = 10; // 10 rounds  5 pages/round = 50 pages max ch?u d?ng l?i
                     if ($pdfRetryCount >= $MAX_PDF_RETRIES) {
                         $errMsg = "[CIRCUIT BREAKER] Doc $docId auto-failed after $MAX_PDF_RETRIES retry rounds with $remaining chunks still unprocessed. Manual review required.";
                         training_log($errMsg);
@@ -478,7 +478,7 @@ foreach ($jobs as $jobItem) {
                             ->execute([$nextJobId, json_encode($nextPayload)]);
                         // Update progress message showing cooldown
                         $doneCount = $totalChunks - $remaining;
-                        $pdo->prepare("UPDATE ai_training_docs SET error_message = CONCAT('Ðã trích xu?t ', ?, '/', ?, ' do?n – ngh? 15 giây d? tránh rate limit, s? ti?p t?c t? d?ng... (l?n ', ?, '/', ?)') WHERE id = ?")
+                        $pdo->prepare("UPDATE ai_training_docs SET error_message = CONCAT(' trch xu?t ', ?, '/', ?, ' do?n  ngh? 15 giy d? trnh rate limit, s? ti?p t?c t? d?ng... (l?n ', ?, '/', ?)') WHERE id = ?")
                             ->execute([$doneCount, $totalChunks, $nextRetry, $MAX_PDF_RETRIES, $docId]);
                     }
 
@@ -502,7 +502,7 @@ foreach ($jobs as $jobItem) {
 
         // [FIX] KEEP-ALIVE LOCK: Refresh lock timestamp every 10 successful jobs.
         // Without this, a batch of 200 heavy jobs (AI PDF, campaign sends) taking >5 min
-        // would look like a crashed/zombie worker to the next cron invocation — which then
+        // would look like a crashed/zombie worker to the next cron invocation  which then
         // starts a second worker, causing double-processing and CPU/RAM exhaustion.
         if (!$isPriority && $jobsProcessed % 10 === 0) {
             @file_put_contents($workerLock, time());
@@ -560,12 +560,12 @@ try {
     $stmt->execute();
     $hasDueFlowStates = (bool) $stmt->fetchColumn();
 } catch (Exception $e) {
-    // Ignore check errors — still safe to run worker_flow.php
+    // Ignore check errors  still safe to run worker_flow.php
     $hasDueFlowStates = true;
 }
 
 if ($hasDueFlowStates) {
-    // [FIX] Critical: `include` only loads the file's code — it does NOT call runWorkerFlow().
+    // [FIX] Critical: `include` only loads the file's code  it does NOT call runWorkerFlow().
     // worker_flow.php was refactored to wrap its logic in runWorkerFlow($pdo), with this guard:
     //   if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) { runWorkerFlow($pdo); }
     // When included from worker_queue.php, SCRIPT_FILENAME = 'worker_queue.php' ? 'worker_flow.php'

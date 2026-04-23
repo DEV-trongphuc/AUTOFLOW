@@ -234,7 +234,7 @@ try {
                     $subId = $stmtS->fetchColumn();
                     if ($subId) {
                         // Removed logging broadcast receive to activity timeline as requested
-                        // logZaloSubscriberActivity($pdo, $subId, 'receive_broadcast', $campId, "�� nh?n tin nh?n Broadcast: $title", $title);
+                        // logZaloSubscriberActivity($pdo, $subId, 'receive_broadcast', $campId, " nh?n tin nh?n Broadcast: $title", $title);
                     }
                 } else {
                     $failed++;
@@ -285,5 +285,5 @@ try {
 
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
 }

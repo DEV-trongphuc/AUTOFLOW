@@ -44,7 +44,7 @@ switch ($action) {
             echo json_encode(['success' => true]);
         } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
         }
         break;
 
@@ -53,7 +53,7 @@ switch ($action) {
             $stmt = $pdo->query("SELECT * FROM web_blacklist ORDER BY created_at DESC");
             echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
         } catch (Exception $e) {
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
         }
         break;
 
@@ -76,7 +76,7 @@ switch ($action) {
             }
             echo json_encode(['success' => true]);
         } catch (Exception $e) {
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
         }
         break;
 

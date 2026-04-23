@@ -88,7 +88,7 @@ try {
 
 } catch (Exception $e) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'error' => 'Lỗi hệ thống, vui lòng thử lại.']);
 }
 
 // ============= Event Handlers =============

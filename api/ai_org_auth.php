@@ -723,7 +723,7 @@ if ($method === 'POST' && $action === 'update_profile') {
         jsonResponse(true, null, 'Profile updated successfully');
 
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Error updating profile: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 

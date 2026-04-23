@@ -130,7 +130,7 @@ if ($method === 'GET' && $route === 'count_unique') {
         $count = $stmt->fetchColumn();
         jsonResponse(true, ['count' => (int) $count]);
     } catch (Exception $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 // --- ROUTE: BULK ACTIONS ---
@@ -367,7 +367,7 @@ anniversary_date = VALUES(anniversary_date)";
         jsonResponse(true, ['count' => $totalProcessed], 'Import thành công');
     } catch (Exception $e) {
         $pdo->rollBack();
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -887,7 +887,7 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
 
             jsonResponse(true, $data);
         } catch (Exception $e) {
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 
@@ -1020,7 +1020,7 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
 
             jsonResponse(true, $data);
         } catch (Exception $e) {
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 
@@ -1076,7 +1076,7 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
         } catch (Exception $e) {
             if ($pdo->inTransaction())
                 $pdo->rollBack();
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 

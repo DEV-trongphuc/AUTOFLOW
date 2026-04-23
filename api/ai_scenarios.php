@@ -384,5 +384,5 @@ try {
 
 } catch (Exception $e) {
     error_log('[ai_scenarios] Exception: ' . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
 }

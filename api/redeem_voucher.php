@@ -78,6 +78,7 @@ if (!$code) {
 }
 
 // 1. Check if it is a static code from a campaign
+try {
 $stmtStatic = $pdo->prepare("SELECT * FROM voucher_campaigns WHERE static_code = ? AND status = 'active'");
 $stmtStatic->execute([$code]);
 $staticCamp = $stmtStatic->fetch(PDO::FETCH_ASSOC);
@@ -176,3 +177,7 @@ jsonResponse(true, [
     'campaign_name' => $voucher['campaign_name'],
     'code' => $code
 ]);
+} catch (Exception $e) {
+    error_log('[redeem_voucher] DB Error: ' . $e->getMessage() . ' in ' . __FILE__ . ':' . __LINE__);
+    jsonResponse(false, null, 'Lỗi hệ thống khi xử lý voucher, vui lòng thử lại.');
+}

@@ -54,7 +54,7 @@ switch ($method) {
             $stmt->execute([$workspace_id]);
             jsonResponse(true, $stmt->fetchAll());
         } catch (Exception $e) {
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 
@@ -76,7 +76,7 @@ switch ($method) {
             $stmt->execute([$workspace_id, $id, $name, $description]);
             jsonResponse(true, ['id' => $id, 'name' => $name, 'description' => $description, 'subscriber_count' => 0]);
         } catch (Exception $e) {
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 
@@ -171,7 +171,7 @@ switch ($method) {
             jsonResponse(true, ['id' => $path, 'name' => $newName], 'Đã cập nhật nhãn và đồng bộ toàn hệ thống');
         } catch (Exception $e) {
             $pdo->rollBack();
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 
@@ -236,7 +236,7 @@ switch ($method) {
         } catch (Exception $e) {
             $pdo->rollBack();
             // Return failure
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 }

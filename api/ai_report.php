@@ -71,7 +71,7 @@ if ($method === 'GET' && $action === 'summary') {
             ]
         ]);
     } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
     }
 }
 
@@ -98,7 +98,7 @@ if ($method === 'GET' && $action === 'chart') {
 
         echo json_encode(['success' => true, 'data' => $data]);
     } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
     }
 }
 if ($method === 'GET' && $action === 'detailed_ai_insights') {

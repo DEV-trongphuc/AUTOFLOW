@@ -96,7 +96,7 @@ if ($method === 'POST') {
 
         jsonResponse(true, $user, 'Login successful');
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Database error: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 

@@ -28,7 +28,7 @@ if ($method === 'GET' && $action === 'list') {
             'available_permissions' => $permissions
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Error fetching roles: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -60,7 +60,7 @@ if ($method === 'POST' && $action === 'update_role_permissions') {
         jsonResponse(true, null, 'Role permissions updated successfully');
     } catch (Exception $e) {
         $pdo->rollBack();
-        jsonResponse(false, null, 'Update failed: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 

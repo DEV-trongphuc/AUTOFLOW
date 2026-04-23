@@ -1868,7 +1868,7 @@ CHÚ Ý:
                     'page_id' => $pageFilter
                 ]);
             } catch (Exception $e) {
-                echo json_encode(['success' => false, 'message' => 'Lỗi AI: ' . $e->getMessage()]);
+                echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
             }
             exit;
         }
@@ -1901,7 +1901,7 @@ CHÚ Ý:
 
                 echo json_encode(['success' => true]);
             } catch (Exception $e) {
-                echo json_encode(['success' => false, 'message' => 'Delete failed: ' . $e->getMessage()]);
+                echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
             }
             exit;
         }
@@ -2560,7 +2560,7 @@ CHÚ Ý:
                     ]
                 ]);
             } catch (Exception $e) {
-                echo json_encode(['success' => false, 'version' => API_VERSION, 'message' => $e->getMessage()]);
+                echo json_encode(['success' => false, 'version' => API_VERSION, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
             }
             exit;
         }
@@ -3073,5 +3073,6 @@ CHÚ Ý:
     if (ob_get_level() > 0)
         ob_clean();
     logAIChat($visitorUuid ?? 'unknown', $propertyId ?? 'unknown', 'CRASH', 'ERROR', $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    error_log('[EXCEPTION] ' . $e->getMessage() . ' in ' . __FILE__ . ':' . __LINE__);
+    echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
 }

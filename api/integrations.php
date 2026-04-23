@@ -8,7 +8,7 @@ $workspace_id = get_current_workspace_id(); // [FIX P43-D]
 $method = $_SERVER['REQUEST_METHOD'];
 $path = isset($_GET['id']) ? $_GET['id'] : null;
 
-// [PERF] Gi?m thi?u khoá session cho toàn b? file vì không c?n update Session
+// [PERF] Gi?m thi?u kho session cho ton b? file v khng c?n update Session
 if (session_id()) session_write_close();
 
 try {
@@ -18,11 +18,11 @@ try {
         if (!$id)
             jsonResponse(false, null, 'Thi?u ID k?t n?i');
 
-        // [FIX P43-D1] Validate sync_now ownership — ensure integration belongs to this workspace
+        // [FIX P43-D1] Validate sync_now ownership  ensure integration belongs to this workspace
         $stmtOwn = $pdo->prepare("SELECT id FROM integrations WHERE id = ? AND workspace_id = ?");
         $stmtOwn->execute([$id, $workspace_id]);
         if (!$stmtOwn->fetchColumn())
-            jsonResponse(false, null, 'K?t n?i không t?n t?i ho?c không thu?c workspace c?a b?n');
+            jsonResponse(false, null, 'K?t n?i khng t?n t?i ho?c khng thu?c workspace c?a b?n');
 
         // SYNCHRONOUS SYNC - Run directly for reliability
         try {
@@ -61,7 +61,7 @@ try {
         jsonResponse(true, [
             'status' => 'completed',
             'execution_time' => $executionTime
-        ], "Ð?ng b? hoàn t?t trong {$executionTime}s!");
+        ], "?ng b? hon t?t trong {$executionTime}s!");
     }
 
     if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'fetch_headers') {
@@ -95,7 +95,7 @@ try {
 
             // FALLBACK 2: Simulated if fails
             jsonResponse(true, [
-                'headers' => ['Email', 'H? và tên', 'S? di?n tho?i', 'Ð?a ch?', 'Ngày t?o', 'Ngu?n'],
+                'headers' => ['Email', 'H? v tn', 'S? di?n tho?i', '?a ch?', 'Ngy t?o', 'Ngu?n'],
                 'message' => 'Connected to MailFlow Server (Simulated headers - Could not fetch real data from public link)'
             ]);
             return;
@@ -127,7 +127,7 @@ try {
                 }
             }
 
-            jsonResponse(false, null, 'L?i khi d?c t? Google Sheets API. Hãy d?m b?o Sheet CÔNG KHAI ho?c c?u hình API Key.');
+            jsonResponse(false, null, 'L?i khi d?c t? Google Sheets API. Hy d?m b?o Sheet CNG KHAI ho?c c?u hnh API Key.');
         }
     }
 
@@ -157,7 +157,7 @@ try {
                 'data' => $sampleRecord ? [$sampleRecord] : []
             ]);
         } else {
-            jsonResponse(false, null, 'Không th? k?t n?i t?i MISA');
+            jsonResponse(false, null, 'Khng th? k?t n?i t?i MISA');
         }
     }
 
@@ -184,21 +184,21 @@ try {
                 'contact' => $recordsResult['data'][0]
             ]);
         } else {
-            jsonResponse(false, null, 'Không th? l?y d? li?u m?u');
+            jsonResponse(false, null, 'Khng th? l?y d? li?u m?u');
         }
     }
 
     switch ($method) {
         case 'GET':
             if (isset($_GET['route']) && $_GET['route'] === 'cleanup') {
-                // [FIX P43-D3] Cleanup scoped to workspace — old code deleted across all workspaces
+                // [FIX P43-D3] Cleanup scoped to workspace  old code deleted across all workspaces
                 $pdo->prepare("DELETE FROM lists WHERE name = 'T?ng Data' AND subscriber_count = 0 AND workspace_id = ?")->execute([$workspace_id]);
-                jsonResponse(true, ['deleted' => 'done'], "Ðã xóa các danh sách rác.");
+                jsonResponse(true, ['deleted' => 'done'], " xa cc danh sch rc.");
                 break;
             }
 
             try {
-                // [FIX P43-D2] Scoped to workspace_id — old code returned ALL integrations across
+                // [FIX P43-D2] Scoped to workspace_id  old code returned ALL integrations across
                 // all workspaces, leaking MISA API keys, Google Sheets IDs, webhook secrets.
                 $stmt = $pdo->prepare("SELECT * FROM integrations WHERE workspace_id = ? ORDER BY created_at DESC");
                 $stmt->execute([$workspace_id]);
@@ -220,7 +220,7 @@ try {
 
                 jsonResponse(true, $integrations);
             } catch (Exception $e) {
-                jsonResponse(false, null, 'L?i khi t?i danh sách k?t n?i: ' . $e->getMessage());
+                jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
             }
             break;
 
@@ -228,14 +228,14 @@ try {
             try {
                 $data = json_decode(file_get_contents("php://input"), true);
                 if (empty($data['type']))
-                    jsonResponse(false, null, 'Lo?i k?t n?i không du?c d? tr?ng');
+                    jsonResponse(false, null, 'Lo?i k?t n?i khng du?c d? tr?ng');
 
                 $id = uniqid();
                 $name = $data['name'] ?? ($data['type'] . ' integration');
                 $config = $data['config'] ?? '{}';
                 $status = $data['status'] ?? 'active';
 
-                // [FIX P43-D4] Include workspace_id in INSERT — previously missing,
+                // [FIX P43-D4] Include workspace_id in INSERT  previously missing,
                 // making all integrations visible to all workspaces.
                 $stmt = $pdo->prepare("INSERT INTO integrations (id, workspace_id, type, name, config, status, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
                 $stmt->execute([$id, $workspace_id, $data['type'], $name, $config, $status]);
@@ -251,9 +251,9 @@ try {
                     }
                 }
 
-                jsonResponse(true, ['id' => $id], 'Ðã t?o k?t n?i m?i! B?m "Ch?y d?ng b? ngay" d? b?t d?u.');
+                jsonResponse(true, ['id' => $id], ' t?o k?t n?i m?i! B?m "Ch?y d?ng b? ngay" d? b?t d?u.');
             } catch (Exception $e) {
-                jsonResponse(false, null, 'L?i khi t?o k?t n?i: ' . $e->getMessage());
+                jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
             }
             break;
 
@@ -281,16 +281,16 @@ try {
                 }
 
                 if (empty($updates))
-                    jsonResponse(false, null, 'Không có d? li?u c?p nh?t');
+                    jsonResponse(false, null, 'Khng c d? li?u c?p nh?t');
 
                 $sql .= implode(', ', $updates) . " WHERE id = ? AND workspace_id = ?";
                 $params[] = $path;
                 $params[] = $workspace_id;
 
                 $pdo->prepare($sql)->execute($params);
-                jsonResponse(true, $data, 'Ðã c?p nh?t k?t n?i');
+                jsonResponse(true, $data, ' c?p nh?t k?t n?i');
             } catch (Exception $e) {
-                jsonResponse(false, null, 'L?i khi c?p nh?t k?t n?i: ' . $e->getMessage());
+                jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
             }
             break;
 
@@ -302,14 +302,14 @@ try {
                 $stmt = $pdo->prepare("DELETE FROM integrations WHERE id = ? AND workspace_id = ?");
                 $stmt->execute([$path, $workspace_id]);
                 if ($stmt->rowCount() === 0)
-                    throw new Exception('Không tìm th?y k?t n?i ho?c không có quy?n xóa');
-                jsonResponse(true, ['id' => $path], 'Ðã xóa k?t n?i');
+                    throw new Exception('Khng tm th?y k?t n?i ho?c khng c quy?n xa');
+                jsonResponse(true, ['id' => $path], ' xa k?t n?i');
             } catch (Exception $e) {
-                jsonResponse(false, null, 'L?i khi xóa k?t n?i: ' . $e->getMessage());
+                jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
             }
             break;
     }
 } catch (Exception $e) {
-    jsonResponse(false, null, $e->getMessage());
+    jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
 }
 ?>

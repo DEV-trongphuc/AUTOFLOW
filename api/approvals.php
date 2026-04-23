@@ -32,7 +32,7 @@ if ($method === 'POST' && $action === 'request') {
 
         jsonResponse(true, null, 'Approval requested successfully');
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Error requesting approval: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -80,7 +80,7 @@ if ($method === 'POST' && $action === 'review') {
 
     } catch (Exception $e) {
         $pdo->rollBack();
-        jsonResponse(false, null, 'Error processing review: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -99,7 +99,7 @@ if ($method === 'GET' && $action === 'list') {
         $stmt->execute([$workspace_id]);
         jsonResponse(true, $stmt->fetchAll());
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Error listing requests: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 

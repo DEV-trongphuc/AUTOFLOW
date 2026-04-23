@@ -387,7 +387,7 @@ try {
         } catch (Exception $e) {
             if (isset($pdo) && $pdo->inTransaction())
                 $pdo->rollBack();
-            jsonResponse(false, null, 'Lỗi khi ghi nhận đơn hàng: ' . $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
     }
 
@@ -417,7 +417,7 @@ try {
                 }, $stmt->fetchAll());
                 jsonResponse(true, $data);
             } catch (Exception $e) {
-                jsonResponse(false, null, 'Lỗi khi tải danh sách sự kiện mua hàng: ' . $e->getMessage());
+                jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
             break;
 
@@ -436,7 +436,7 @@ try {
                 $pdo->prepare("INSERT INTO purchase_events (id, name, notification_enabled, notification_emails, notification_subject, created_at) VALUES (?, ?, ?, ?, ?, NOW())")->execute([$id, $data['name'], $notifEnabled, $notifEmails, $notifSubject]);
                 jsonResponse(true, ['id' => $id], 'Đã tạo sự kiện mua hàng mới');
             } catch (Exception $e) {
-                jsonResponse(false, null, 'Lỗi khi tạo sự kiện mua hàng: ' . $e->getMessage());
+                jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
             break;
 
@@ -455,7 +455,7 @@ try {
                 $pdo->prepare("UPDATE purchase_events SET name = ?, notification_enabled = ?, notification_emails = ?, notification_subject = ? WHERE id = ? AND workspace_id = ?")->execute([$data['name'], $notifEnabled, $notifEmails, $notifSubject, $path, $workspace_id]);
                 jsonResponse(true, $data, 'Đã cập nhật sự kiện mua hàng');
             } catch (Exception $e) {
-                jsonResponse(false, null, 'Lỗi khi cập nhật sự kiện mua hàng: ' . $e->getMessage());
+                jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
             break;
 
@@ -467,7 +467,7 @@ try {
                 $pdo->prepare("DELETE FROM subscriber_activity WHERE type = 'purchase' AND reference_id = ?")->execute([$path]);
                 jsonResponse(true, ['id' => $path], 'Đã xóa sự kiện mua hàng');
             } catch (Exception $e) {
-                jsonResponse(false, null, 'Lỗi khi xóa sự kiện mua hàng: ' . $e->getMessage());
+                jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
             break;
     }
@@ -475,6 +475,6 @@ try {
 } catch (Throwable $e) {
     if (isset($pdo) && $pdo->inTransaction())
         $pdo->rollBack();
-    jsonResponse(false, null, $e->getMessage());
+    jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
 }
 ?>

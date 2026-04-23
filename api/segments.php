@@ -41,7 +41,7 @@ if ($method === 'POST' && $route === 'estimate') {
         $count = $stmt->fetchColumn();
         jsonResponse(true, ['count' => (int) $count]);
     } catch (Exception $e) {
-        jsonResponse(false, null, $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -64,7 +64,7 @@ if ($method === 'POST' && $route === 'sync') {
         }
         jsonResponse(true, $results, 'Đã đồng bộ lại toàn bộ phân khúc');
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi khi đồng bộ phân khúc: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -127,7 +127,7 @@ if ($method === 'POST' && $route === 'cleanup') {
 
         jsonResponse(true, ['count' => $count], "Đã dọn dẹp $count người dùng khỏi phân khúc.");
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi khi dọn dẹp phân khúc: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -310,7 +310,7 @@ if ($method === 'POST' && $route === 'split') {
 
         jsonResponse(true, ['count' => $addedCount], "Đã tách $addedCount người dùng vào danh sách '$destListName'.");
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi khi tách phân khúc: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -343,7 +343,7 @@ if ($method === 'POST' && $route === 'exclude') {
         $pdo->prepare("INSERT INTO segment_count_update_queue (segment_id) VALUES (?) ON DUPLICATE KEY UPDATE queued_at = NOW()")->execute([$segmentId]);
         jsonResponse(true, ['count' => $excludedCount], "Đã chặn vĩnh viễn $excludedCount người dùng khỏi phân khúc này.");
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi khi gỡ khỏi phân khúc: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -427,7 +427,7 @@ switch ($method) {
                 ]
             ]);
         } catch (Exception $e) {
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 
@@ -446,7 +446,7 @@ switch ($method) {
             $data['id'] = $id;
             jsonResponse(true, $data);
         } catch (Exception $e) {
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 
@@ -465,7 +465,7 @@ switch ($method) {
             $stmt->execute([$data['name'], $data['description'], $criteria, $data['count'], $data['autoCleanupDays'], $notifyOnJoin, $notifySubject, $notifyEmail, $notifyCc, $path, $workspace_id]);
             jsonResponse(true, $data);
         } catch (Exception $e) {
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 
@@ -476,7 +476,7 @@ switch ($method) {
             $pdo->prepare("DELETE FROM segments WHERE id = ? AND workspace_id = ?")->execute([$path, $workspace_id]);
             jsonResponse(true, ['id' => $path]);
         } catch (Exception $e) {
-            jsonResponse(false, null, $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 }

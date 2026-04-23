@@ -579,7 +579,7 @@ try {
             if (isset($lockName)) {
                 $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]);
             }
-            jsonResponse(false, null, 'Lỗi khi gửi form: ' . $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
     }
 
@@ -653,7 +653,7 @@ try {
                 }
 
             } catch (Exception $e) {
-                jsonResponse(false, null, 'Lỗi khi tải danh sách biểu mẫu: ' . $e->getMessage());
+                jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
             break;
         case 'POST':
@@ -669,7 +669,7 @@ try {
                     ->execute([$admin_workspace_id, $id, $data['name'], $data['targetListId'], $fields, $notifEnabled, $notifEmails ?: null, $notifCcEmails ?: null, $notifSubject ?: null]);
                 jsonResponse(true, ['id' => $id]);
             } catch (Exception $e) {
-                jsonResponse(false, null, 'Lỗi khi tạo biểu mẫu: ' . $e->getMessage());
+                jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
             break;
         case 'PUT':
@@ -686,7 +686,7 @@ try {
                     ->execute([$data['name'], $data['targetListId'], $fields, $notifEnabled, $notifEmails ?: null, $notifCcEmails ?: null, $notifSubject ?: null, $path, $admin_workspace_id]);
                 jsonResponse(true, $data);
             } catch (Exception $e) {
-                jsonResponse(false, null, 'Lỗi khi cập nhật biểu mẫu: ' . $e->getMessage());
+                jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
             break;
         case 'DELETE':
@@ -698,13 +698,13 @@ try {
                 $pdo->prepare("DELETE FROM subscriber_activity WHERE type = 'form_submit' AND reference_id = ?")->execute([$path]);
                 jsonResponse(true, ['id' => $path]);
             } catch (Exception $e) {
-                jsonResponse(false, null, 'Lỗi khi xóa biểu mẫu: ' . $e->getMessage());
+                jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
             break;
     }
 } catch (Exception $e) {
     if (isset($pdo) && $pdo->inTransaction())
         $pdo->rollBack();
-    jsonResponse(false, null, $e->getMessage());
+    jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
 }
 ?>

@@ -133,6 +133,7 @@ if ($action === 'list') {
 
     $finalSql = implode(" UNION ALL ", $queries) . " ORDER BY conv_last_at DESC, created_at ASC";
 
+try {
     $stmt = $pdo->prepare($finalSql);
     $stmt->execute($allParams);
     $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -231,4 +232,8 @@ if ($action === 'list') {
         ]
     ]);
     exit;
+}
+} catch (Exception $e) {
+    error_log('[ai_report_conversations] DB Error: ' . $e->getMessage());
+    jsonResponse(false, null, 'Lỗi hệ thống.');
 }

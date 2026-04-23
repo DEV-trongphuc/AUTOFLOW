@@ -378,7 +378,7 @@ try {
         } catch (Exception $e) {
             if (isset($pdo) && $pdo->inTransaction())
                 $pdo->rollBack();
-            jsonResponse(false, null, 'Lỗi khi ghi nhận sự kiện: ' . $e->getMessage());
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
     }
 
@@ -406,7 +406,7 @@ try {
                 }, $stmt->fetchAll());
                 jsonResponse(true, $data);
             } catch (Exception $e) {
-                jsonResponse(false, null, 'Lỗi khi tải danh sách sự kiện: ' . $e->getMessage());
+                jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
             break;
 
@@ -425,7 +425,7 @@ try {
                 $pdo->prepare("INSERT INTO custom_events (id, name, notification_enabled, notification_emails, notification_subject, created_at) VALUES (?, ?, ?, ?, ?, NOW())")->execute([$id, $data['name'], $notifEnabled, $notifEmails, $notifSubject]);
                 jsonResponse(true, ['id' => $id], 'Đã tạo sự kiện mới');
             } catch (Exception $e) {
-                jsonResponse(false, null, 'Lỗi khi tạo sự kiện: ' . $e->getMessage());
+                jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
             break;
 
@@ -444,7 +444,7 @@ try {
                 $pdo->prepare("UPDATE custom_events SET name = ?, notification_enabled = ?, notification_emails = ?, notification_subject = ? WHERE id = ? AND workspace_id = ?")->execute([$data['name'], $notifEnabled, $notifEmails, $notifSubject, $path, $workspace_id]);
                 jsonResponse(true, $data, 'Đã cập nhật sự kiện');
             } catch (Exception $e) {
-                jsonResponse(false, null, 'Lỗi khi cập nhật sự kiện: ' . $e->getMessage());
+                jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
             break;
 
@@ -456,7 +456,7 @@ try {
                 $pdo->prepare("DELETE FROM subscriber_activity WHERE type = 'custom_event' AND reference_id = ?")->execute([$path]);
                 jsonResponse(true, ['id' => $path], 'Đã xóa sự kiện');
             } catch (Exception $e) {
-                jsonResponse(false, null, 'Lỗi khi xóa sự kiện: ' . $e->getMessage());
+                jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
             break;
     }
@@ -464,6 +464,6 @@ try {
 } catch (Throwable $e) {
     if (isset($pdo) && $pdo->inTransaction())
         $pdo->rollBack();
-    jsonResponse(false, null, $e->getMessage());
+    jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
 }
 ?>

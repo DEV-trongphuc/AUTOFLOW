@@ -88,9 +88,14 @@ const Tags: React.FC = () => {
 
     const fetchTags = async () => {
         setLoading(true);
-        const res = await api.get<Tag[]>('tags');
-        if (res.success) setTags(res.data);
-        setLoading(false);
+        try {
+            const res = await api.get<Tag[]>('tags');
+            if (res.success) setTags(res.data);
+        } catch (err) {
+            showToast('Không thể tải danh sách nhãn', 'error');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
@@ -102,19 +107,24 @@ const Tags: React.FC = () => {
     const handleAdd = async () => {
         if (!newTag.name.trim()) return;
         setIsAdding(true);
-        const res = await api.post<Tag>('tags', {
-            name: newTag.name.trim().toUpperCase().replace(/\s+/g, '_'),
-            description: newTag.description.trim()
-        });
-        if (res.success) {
-            setTags([{ ...res.data, subscriber_count: 0 }, ...tags]);
-            setNewTag({ name: '', description: '' });
-            setIsCreateModalOpen(false);
-            showToast('Đã thêm nhãn mới');
-        } else {
-            showToast(res.message || 'Lỗi khi thêm nhãn', 'error');
+        try {
+            const res = await api.post<Tag>('tags', {
+                name: newTag.name.trim().toUpperCase().replace(/\s+/g, '_'),
+                description: newTag.description.trim()
+            });
+            if (res.success) {
+                setTags([{ ...res.data, subscriber_count: 0 }, ...tags]);
+                setNewTag({ name: '', description: '' });
+                setIsCreateModalOpen(false);
+                showToast('Đã thêm nhãn mới');
+            } else {
+                showToast(res.message || 'Lỗi khi thêm nhãn', 'error');
+            }
+        } catch (err) {
+            showToast('Lỗi kết nối, vui lòng thử lại', 'error');
+        } finally {
+            setIsAdding(false);
         }
-        setIsAdding(false);
     };
 
     const startEdit = (tag: Tag) => {
@@ -254,25 +264,27 @@ const Tags: React.FC = () => {
             search: search,
             status: status === 'has_phone' ? 'all' : status
         });
-
-        if (status === 'has_phone') {
-            query.set('has_phone', '1');
-        }
-
-        const res = await api.get<any>(`subscribers?${query.toString()}`);
-        if (res.success) {
-            if (res.data.pagination) {
-                setTagMembers(res.data.data || []);
-                setTagPagination(res.data.pagination);
-            } else if (Array.isArray(res.data)) {
-                setTagMembers(res.data);
-                setTagPagination({ page: 1, limit: 20, total: res.data.length, totalPages: 1 });
+        if (status === 'has_phone') query.set('has_phone', '1');
+        try {
+            const res = await api.get<any>(`subscribers?${query.toString()}`);
+            if (res.success) {
+                if (res.data.pagination) {
+                    setTagMembers(res.data.data || []);
+                    setTagPagination(res.data.pagination);
+                } else if (Array.isArray(res.data)) {
+                    setTagMembers(res.data);
+                    setTagPagination({ page: 1, limit: 20, total: res.data.length, totalPages: 1 });
+                }
+            } else {
+                showToast('Không thể tải danh sách thành viên', 'error');
+                setTagMembers([]);
             }
-        } else {
-            showToast('Không thể tải danh sách thành viên', 'error');
+        } catch (err) {
+            showToast('Lỗi kết nối khi tải thành viên', 'error');
             setTagMembers([]);
+        } finally {
+            setLoadingMembers(false);
         }
-        setLoadingMembers(false);
     };
 
     const handleRemoveTags = async (subscriberIds: string[]) => {

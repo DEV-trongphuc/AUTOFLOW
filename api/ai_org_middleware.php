@@ -281,7 +281,7 @@ function requireAISpaceAuth()
         echo json_encode([
             'success' => false,
             'error' => 'SYSTEM_ERROR',
-            'message' => 'Authentication system error: ' . $e->getMessage(),
+            'message' => 'Lỗi hệ thống, vui lòng thử lại.',
             'app' => 'ai_space'
         ]);
         exit;

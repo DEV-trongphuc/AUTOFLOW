@@ -72,7 +72,7 @@ try {
     }
 } catch (Exception $e) {
     error_log("Zalo OA API Error: " . $e->getMessage());
-    jsonResponse(false, null, 'Server error: ' . $e->getMessage());
+    jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
 }
 
 // ============ HELPER FUNCTIONS ============
@@ -106,7 +106,7 @@ function getAllOAs($pdo)
         $oas = $stmt->fetchAll(PDO::FETCH_ASSOC);
         jsonResponse(true, $oas);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi khi tải danh sách OA: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -121,7 +121,7 @@ function getSingleOA($pdo, $id)
         else
             jsonResponse(false, null, 'Không tìm thấy OA');
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi khi tải thông tin OA: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -148,7 +148,7 @@ function updateOA($pdo, $id)
         $stmt->execute($params);
         jsonResponse(true, ['message' => 'Cập nhật OA thành công']);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi khi cập nhật OA: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -168,7 +168,7 @@ function deleteOA($pdo, $id)
         $stmt->execute([$id]);
         jsonResponse(true, ['message' => 'Đã xóa OA thành công']);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi khi xóa OA: ' . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
