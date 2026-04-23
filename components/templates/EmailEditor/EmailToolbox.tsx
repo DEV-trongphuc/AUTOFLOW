@@ -93,6 +93,7 @@ const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSele
                 case 'order_list': return IconMap.ShoppingBag as LucideIcon;
                 case 'check_list': return IconMap.CheckCircle as LucideIcon;
                 case 'voucher': return IconMap.Ticket as LucideIcon;
+                case 'otp': return IconMap.KeyRound as LucideIcon;
                 default: return IconMap.Layers as LucideIcon;
             }
         };

@@ -8,6 +8,7 @@ import Input from '../common/Input';
 import Select from '../common/Select';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../common/ConfirmModal';
+import EmailEditor from '../templates/EmailEditor/index';
 
 export interface OTPProfile {
     id: string;
@@ -33,6 +34,10 @@ const OTPTriggersTab: React.FC = () => {
     });
 
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+    
+    // Email Editor state
+    const [isEditorOpen, setIsEditorOpen] = useState(false);
+    const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
 
     useEffect(() => { fetchInitialData(); }, []);
 
@@ -104,6 +109,30 @@ const OTPTriggersTab: React.FC = () => {
 }'`;
         navigator.clipboard.writeText(curl);
         toast.success('Đã copy API Code vào Clipboard');
+    };
+
+    const handleQuickEdit = () => {
+        if (!formData.email_template_id) return;
+        const tpl = templates.find(t => t.id === formData.email_template_id);
+        if (tpl) {
+            setEditingTemplate(tpl);
+            setIsEditorOpen(true);
+        }
+    };
+
+    const handleSaveTemplate = async (updated: Template) => {
+        try {
+            const res = await api.put(`templates/${updated.id}`, updated);
+            if (res.success) {
+                toast.success('Đã cập nhật mẫu Email');
+                setTemplates(prev => prev.map(t => t.id === updated.id ? updated : t));
+                setIsEditorOpen(false);
+            } else {
+                toast.error(res.message || 'Lỗi khi lưu mẫu email');
+            }
+        } catch (error) {
+            toast.error('Có lỗi xảy ra khi lưu mẫu email');
+        }
     };
 
     return (
@@ -203,8 +232,13 @@ const OTPTriggersTab: React.FC = () => {
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1 flex justify-between">
-                            Mẫu Email Gửi Mã (Template)
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1 flex justify-between items-center w-full">
+                            <span>Mẫu Email Gửi Mã (Template)</span>
+                            {formData.email_template_id && (
+                                <button type="button" onClick={handleQuickEdit} className="text-amber-600 hover:text-amber-700 flex items-center gap-1 transition-colors">
+                                    <Edit3 className="w-3 h-3" /> Sửa nhanh
+                                </button>
+                            )}
                         </label>
                         <Select
                             options={[
@@ -222,6 +256,18 @@ const OTPTriggersTab: React.FC = () => {
                 </div>
             </Modal>
             <ConfirmModal isOpen={!!confirmDeleteId} onClose={() => setConfirmDeleteId(null)} onConfirm={executeDelete} title="Xác nhận xóa" message="Xóa OTP Profile này sẽ khiến các Form/API đang tích hợp không thể gửi mã xác nhận nữa." variant="danger" confirmLabel="Xóa Profile" />
+
+            {/* Quick Edit Email Template Modal */}
+            {isEditorOpen && editingTemplate && (
+                <div className="fixed inset-0 z-[99999] bg-slate-50 flex flex-col">
+                    <EmailEditor
+                        template={editingTemplate}
+                        groups={[]}
+                        onSave={handleSaveTemplate}
+                        onCancel={() => setIsEditorOpen(false)}
+                    />
+                </div>
+            )}
         </div>
     );
 };

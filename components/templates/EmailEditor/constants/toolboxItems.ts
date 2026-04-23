@@ -14,6 +14,7 @@ export const TOOLBOX_ITEMS = [
     { id: 'voucher', label: 'Voucher', icon: 'Ticket', cat: 'template_tab' },
     { id: 'divider', label: 'Divider', icon: 'Minus', cat: 'basic' },
     { id: 'table', label: 'Bảng', icon: 'Table2', cat: 'basic' },
+    { id: 'otp', label: 'Mã OTP', icon: 'KeyRound', cat: 'template_tab' },
     { id: 'footer', label: 'Footer', icon: 'PanelBottom', cat: 'basic' },
     { id: 'header', label: 'Header', icon: 'Layout', cat: 'basic' },
     { id: 'spacer', label: 'Spacer', icon: 'Layers', cat: 'basic' },

@@ -741,6 +741,34 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                     \n                    </td>\n                `).trim();
         }
 
+        if (b.type === 'otp') {
+            const innerHtml = `
+                <table role="presentation" border="0" cellspacing="0" cellpadding="0" align="${align}" style="margin-top: ${s.marginTop || '20px'}; margin-bottom: ${s.marginBottom || '20px'}; text-align: ${align};">
+                    <tr>
+                        <td align="center" style="
+                            background-color: ${s.backgroundColor || '#f0fdf4'};
+                            border: ${s.borderTopWidth || '2px'} ${s.borderStyle || 'dashed'} ${s.borderColor || '#86efac'};
+                            border-radius: ${sanitizeRadius(s.borderRadius || '12px')};
+                            padding: ${s.paddingTop || '24px'} ${s.paddingRight || '24px'} ${s.paddingBottom || '24px'} ${s.paddingLeft || '24px'};
+                            text-align: center;
+                        ">
+                            <span style="
+                                font-family: ${fontFamily};
+                                font-size: ${s.fontSize || '36px'};
+                                font-weight: ${s.fontWeight || 'bold'};
+                                color: ${s.color || '#166534'};
+                                letter-spacing: ${s.letterSpacing || '12px'};
+                                word-break: break-all;
+                                margin-left: ${s.letterSpacing || '12px'};
+                                display: inline-block;
+                            ">${b.content || '[short_code]'}</span>
+                        </td>
+                    </tr>
+                </table>
+            `;
+            return wrapWithMargin(`<td align="${align}" style="${paddingCss} ${getBackgroundStyle(s)} text-align: ${align};">${innerHtml}</td>`);
+        }
+
         if (b.type === 'social') {
             const size = parseInt(s.iconSize || '32');
             const gap = parseInt(s.gap || '10') / 2;

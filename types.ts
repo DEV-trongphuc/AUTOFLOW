@@ -279,7 +279,7 @@ export interface VoucherCode {
     claimedSourceId?: string;
 }
 
-export type EmailBlockType = 'section' | 'row' | 'column' | 'text' | 'image' | 'button' | 'spacer' | 'divider' | 'social' | 'video' | 'html' | 'list' | 'header' | 'countdown' | 'quote' | 'timeline' | 'review' | 'order_list' | 'check_list' | 'table' | 'voucher';
+export type EmailBlockType = 'section' | 'row' | 'column' | 'text' | 'image' | 'button' | 'spacer' | 'divider' | 'social' | 'video' | 'html' | 'list' | 'header' | 'countdown' | 'quote' | 'timeline' | 'review' | 'order_list' | 'check_list' | 'table' | 'voucher' | 'otp';
 
 export interface EmailBlock {
   id: string;

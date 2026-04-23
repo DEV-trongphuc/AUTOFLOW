@@ -548,6 +548,29 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
         };
     }
 
+    // NEW: OTP Block
+    if (type === 'otp') {
+        content = '[short_code]';
+        styleOverrides.backgroundColor = '#f0fdf4';
+        styleOverrides.contentBackgroundColor = '#f0fdf4';
+        styleOverrides.color = '#166534';
+        styleOverrides.fontSize = '36px';
+        styleOverrides.fontWeight = 'bold';
+        styleOverrides.textAlign = 'center';
+        styleOverrides.letterSpacing = '12px';
+        styleOverrides.paddingTop = '24px';
+        styleOverrides.paddingBottom = '24px';
+        styleOverrides.paddingLeft = '24px';
+        styleOverrides.paddingRight = '24px';
+        styleOverrides.borderRadius = '12px';
+        styleOverrides.borderColor = '#86efac';
+        styleOverrides.borderWidth = '2px';
+        styleOverrides.borderStyle = 'dashed';
+        styleOverrides.marginTop = '20px';
+        styleOverrides.marginBottom = '20px';
+        styleOverrides.display = 'block';
+    }
+
     return {
         id, type: (type === 'footer' ? 'text' : type) as EmailBlockType,
         content,

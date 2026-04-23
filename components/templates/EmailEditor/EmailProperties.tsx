@@ -1,4 +1,3 @@
-
 // components/templates/EmailEditor/EmailProperties.tsx
 import React, { useState, useEffect, useMemo } from 'react';
 import * as LucideIcons from 'lucide-react'; // Import all Lucide icons
@@ -65,7 +64,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
         try {
             const stored = JSON.parse(localStorage.getItem('mailflow_voucher_campaigns') || '[]');
             setVoucherCampaigns(stored);
-        } catch (e) {}
+        } catch (e) { }
     }, []);
 
     // Scan tất cả màu đang dùng trong email để hiển thị trong tooltip màu chữ
@@ -312,13 +311,13 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                     </label>
                                 </div>
                                 <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
-                                    <VisualMeasure 
-                                        label="Khoảng cách giữa các cột" 
-                                        value={getStyle('gap')} 
-                                        defaultValue={0} 
-                                        onChange={(v) => updateStyle({ gap: v })} 
-                                        max={60} 
-                                        unit="px" 
+                                    <VisualMeasure
+                                        label="Khoảng cách giữa các cột"
+                                        value={getStyle('gap')}
+                                        defaultValue={0}
+                                        onChange={(v) => updateStyle({ gap: v })}
+                                        max={60}
+                                        unit="px"
                                     />
                                     <p className="text-[8px] text-slate-400 italic">Khoảng cách này được tự động chia đều vào các cột.</p>
                                 </div>
@@ -333,9 +332,9 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                     <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Căn chỉnh</label>
                                     <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
                                         {['top', 'middle', 'bottom'].map(v => (
-                                            <button 
-                                                key={v} 
-                                                onClick={() => updateStyle({ verticalAlign: v as any })} 
+                                            <button
+                                                key={v}
+                                                onClick={() => updateStyle({ verticalAlign: v as any })}
                                                 className={`flex-1 py-1.5 rounded-lg flex items-center justify-center transition-all ${(getStyle('verticalAlign') || 'top') === v ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}
                                             >
                                                 {v === 'top' && <LucideIcons.AlignVerticalJustifyStart className="w-3.5 h-3.5" />}
@@ -488,7 +487,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                             ))}
                                         </div>
                                     </div>
-                                    
+
                                     <div className="pt-2 border-t border-slate-100">
                                         <VisualMeasure
                                             label="Chiều cao tối đa (Nên để Auto nếu dùng Ratio)"
@@ -700,59 +699,59 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                         )}
 
                                         <VisualMeasure label="Cỡ Icon" value={getStyle('checkIconSize')} defaultValue={20} onChange={(v) => updateStyle({ checkIconSize: v })} max={60} unit="px" />
-                                        
+
                                         <div className="grid grid-cols-2 gap-3">
-                                            <VisualMeasure 
-                                                label="Bo tròn" 
-                                                value={getStyle('checkIconRadius')} 
-                                                onChange={(v) => updateStyle({ checkIconRadius: v })} 
-                                                max={100} 
-                                                unit="px" 
+                                            <VisualMeasure
+                                                label="Bo tròn"
+                                                value={getStyle('checkIconRadius')}
+                                                onChange={(v) => updateStyle({ checkIconRadius: v })}
+                                                max={100}
+                                                unit="px"
                                             />
-                                            <VisualMeasure 
-                                                label="Độ dày viền" 
-                                                value={getStyle('checkIconBorderWidth')} 
-                                                onChange={(v) => updateStyle({ checkIconBorderWidth: v })} 
-                                                max={10} 
-                                                unit="px" 
+                                            <VisualMeasure
+                                                label="Độ dày viền"
+                                                value={getStyle('checkIconBorderWidth')}
+                                                onChange={(v) => updateStyle({ checkIconBorderWidth: v })}
+                                                max={10}
+                                                unit="px"
                                             />
-                                         </div>
+                                        </div>
 
-                                         <div className="grid grid-cols-2 gap-3">
-                                            <ColorPicker 
-                                                solidOnly 
-                                                label="Màu nền" 
-                                                value={getStyle('checkIconBackgroundColor') || 'transparent'} 
-                                                onChange={(v) => updateStyle({ checkIconBackgroundColor: v })} 
-                                                blocks={blocks} 
-                                                bodyStyle={bodyStyle} 
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <ColorPicker
+                                                solidOnly
+                                                label="Màu nền"
+                                                value={getStyle('checkIconBackgroundColor') || 'transparent'}
+                                                onChange={(v) => updateStyle({ checkIconBackgroundColor: v })}
+                                                blocks={blocks}
+                                                bodyStyle={bodyStyle}
                                             />
-                                            <ColorPicker 
-                                                solidOnly 
-                                                label="Màu viền" 
-                                                value={getStyle('checkIconBorderColor') || '#e2e8f0'} 
-                                                onChange={(v) => updateStyle({ checkIconBorderColor: v })} 
-                                                blocks={blocks} 
-                                                bodyStyle={bodyStyle} 
+                                            <ColorPicker
+                                                solidOnly
+                                                label="Màu viền"
+                                                value={getStyle('checkIconBorderColor') || '#e2e8f0'}
+                                                onChange={(v) => updateStyle({ checkIconBorderColor: v })}
+                                                blocks={blocks}
+                                                bodyStyle={bodyStyle}
                                             />
-                                         </div>
+                                        </div>
 
-                                         <VisualMeasure 
-                                            label="Đệm Icon (Padding)" 
-                                            value={getStyle('checkIconPadding')} 
-                                            onChange={(v) => updateStyle({ checkIconPadding: v })} 
-                                            max={20} 
-                                            unit="px" 
-                                         />
+                                        <VisualMeasure
+                                            label="Đệm Icon (Padding)"
+                                            value={getStyle('checkIconPadding')}
+                                            onChange={(v) => updateStyle({ checkIconPadding: v })}
+                                            max={20}
+                                            unit="px"
+                                        />
 
                                         {/* Icon Vertical Alignment */}
                                         <div className="space-y-2">
                                             <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Căn chỉnh</label>
                                             <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
                                                 {['top', 'middle', 'bottom'].map(v => (
-                                                    <button 
-                                                        key={v} 
-                                                        onClick={() => updateStyle({ checkIconVerticalAlign: v as any })} 
+                                                    <button
+                                                        key={v}
+                                                        onClick={() => updateStyle({ checkIconVerticalAlign: v as any })}
                                                         className={`flex-1 py-1.5 rounded-lg flex items-center justify-center transition-all ${(getStyle('checkIconVerticalAlign') || 'top') === v ? 'bg-white shadow-sm text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}
                                                     >
                                                         {v === 'top' && <LucideIcons.AlignVerticalJustifyStart className="w-3.5 h-3.5" />}
@@ -836,10 +835,10 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                                         <div className="flex flex-col gap-1.5 pt-4">
                                                             <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
                                                                 {(['link', 'button'] as const).map(type => (
-                                                                    <button 
-                                                                        key={type} 
+                                                                    <button
+                                                                        key={type}
                                                                         onClick={() => handleTimelineItemChange(i, 'menuType' as any, type)}
-                                                                        className={`p-1.5 rounded-md transition-all ${ (item.menuType || (getStyle('headerMenuType') || 'link')) === type ? 'bg-white shadow-sm text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                                                        className={`p-1.5 rounded-md transition-all ${(item.menuType || (getStyle('headerMenuType') || 'link')) === type ? 'bg-white shadow-sm text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}
                                                                         title={type === 'link' ? 'Simple Link' : 'CTA Button'}
                                                                     >
                                                                         {type === 'link' ? <LucideIcons.Link className="w-3 h-3" /> : <LucideIcons.Square className="w-3 h-3" />}
@@ -878,7 +877,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                             }))
                                         ]}
                                     />
-                                    
+
                                     <CustomSelect
                                         label="Kiểu hiển thị"
                                         value={getStyle('voucherStyle') || 'ticket'}
@@ -908,6 +907,48 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                             <ColorPicker label="Nút - Màu nền" solidOnly value={getStyle('voucherButtonBg') || '#d97706'} onChange={(v) => updateStyle({ voucherButtonBg: v } as any)} blocks={blocks} bodyStyle={bodyStyle} />
                                             <ColorPicker label="Nút - Màu chữ" solidOnly value={getStyle('voucherButtonTextColor') || '#ffffff'} onChange={(v) => updateStyle({ voucherButtonTextColor: v } as any)} blocks={blocks} bodyStyle={bodyStyle} />
                                         </div>
+                                    </div>
+                                </Accordion>
+                            </div>
+                        )}
+                        {selectedBlock.type === 'otp' && (
+                            <div className="space-y-4">
+                                <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex gap-3 text-slate-800">
+                                    <LucideIcons.KeyRound className="w-5 h-5 shrink-0 text-emerald-600" />
+                                    <p className="text-[10px] font-medium leading-tight">
+                                        Mã OTP sẽ được tự động điền thay thế cho <span className="font-mono text-emerald-600 bg-emerald-50 px-1 rounded">[short_code]</span>.
+                                    </p>
+                                </div>
+
+                                <Accordion title="Typography & Màu sắc" icon={LucideIcons.Type} defaultOpen>
+                                    <div className="grid grid-cols-2 gap-3 mb-2">
+                                        <VisualMeasure label="Cỡ chữ" value={getStyle('fontSize')} defaultValue={36} onChange={(v) => updateStyle({ fontSize: v })} max={100} unit="px" />
+                                        <VisualMeasure label="Khoảng cách (Letter Spacing)" value={getStyle('letterSpacing')} defaultValue={12} onChange={(v) => updateStyle({ letterSpacing: v })} max={40} unit="px" />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3 mb-2 pt-2 border-t border-slate-100">
+                                        <ColorPicker label="Màu chữ" value={getStyle('color') || '#166534'} onChange={(v, t) => handleColorUpdate(v, t, 'color')} blocks={blocks} bodyStyle={bodyStyle} />
+                                        <ColorPicker label="Màu nền" value={getStyle('backgroundColor') || '#f0fdf4'} onChange={(v, t) => handleColorUpdate(v, t, 'backgroundColor')} blocks={blocks} bodyStyle={bodyStyle} />
+                                    </div>
+                                </Accordion>
+
+                                <Accordion title="Đường viền (Border)" icon={LucideIcons.Square} defaultOpen>
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <VisualMeasure label="Độ dày viền" value={getStyle('borderTopWidth')} defaultValue={2} onChange={(v) => updateStyle({ borderTopWidth: v, borderRightWidth: v, borderBottomWidth: v, borderLeftWidth: v })} max={10} unit="px" />
+                                            <VisualMeasure label="Bo góc (Radius)" value={getStyle('borderRadius')} defaultValue={12} onChange={(v) => updateStyle({ borderRadius: v })} max={100} unit="px" />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Kiểu viền</label>
+                                            <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
+                                                {['solid', 'dashed', 'dotted'].map(v => (
+                                                    <button key={v} onClick={() => updateStyle({ borderStyle: v as any })} className={`flex-1 py-1.5 rounded-lg flex items-center justify-center text-[10px] uppercase font-bold transition-all ${(getStyle('borderStyle') || 'dashed') === v ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}>
+                                                        {v === 'solid' ? 'Liền' : v === 'dashed' ? 'Đứt' : 'Chấm'}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <ColorPicker solidOnly label="Màu viền" value={getStyle('borderColor') || '#86efac'} onChange={(v, t) => handleColorUpdate(v, t, 'borderColor' as any)} blocks={blocks} bodyStyle={bodyStyle} />
                                     </div>
                                 </Accordion>
                             </div>
@@ -1292,7 +1333,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                 <Accordion title="Header Styles" icon={LucideIcons.Layout} defaultOpen>
                                     <div className="space-y-4">
                                         <VisualMeasure label="Menu Gap" value={getStyle('menuGap')} defaultValue={20} onChange={(v) => updateStyle({ menuGap: v })} max={50} unit="px" />
-                                        
+
                                         <div className="pt-3 border-t border-slate-100 space-y-4">
                                             {(getStyle('headerMenuType') || 'link') === 'button' ? (
                                                 <div className="grid grid-cols-2 gap-3">

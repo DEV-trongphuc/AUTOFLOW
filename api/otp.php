@@ -89,19 +89,63 @@ if ($action === 'generate') {
     $stmt->execute([$codeId, $profileId, $email, $code, $expiresAt]);
 
     // Send Email
+    $subject = 'Mã xác nhận OTP của bạn';
+    $html = '';
+
     if ($profile['email_template_id']) {
         $tsStmt = $pdo->prepare("SELECT subject, html_content FROM templates WHERE id = ?");
         $tsStmt->execute([$profile['email_template_id']]);
         $template = $tsStmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($template) {
-            $html = str_replace('[short_code]', "<strong style='font-size:24px; letter-spacing:4px;'>$code</strong>", $template['html_content']);
-            $subject = str_replace('[short_code]', $code, $template['subject'] ?? 'Mã xác nhận OTP của bạn');
+        if ($template && trim($template['html_content'])) {
+            // Simply replace [short_code] with $code to preserve the exact UI/UX
+            // styles designed in the EmailBuilder OTP block (which already applies 
+            // letter-spacing, font-size, colors, and paddings).
+            $html = str_replace(['[short_code]', '{{short_code}}'], $code, $template['html_content']);
+            $subject = str_replace(['[short_code]', '{{short_code}}'], $code, $template['subject'] ?? 'Mã xác nhận OTP của bạn');
 
-            $mailer = new Mailer($pdo);
-            $err = "";
-            $mailer->dispatchRaw($email, $subject, $html, [], $err);
+            // Failsafe: If user forgot to add the OTP block, the email would be useless. 
+            // We append the code at the bottom as a fallback.
+            if (strpos($html, $code) === false) {
+                $fallbackHtml = "<div style='text-align:center; padding: 20px; background: #f8fafc; margin-top: 20px; border-top: 2px dashed #e2e8f0; font-family: sans-serif;'><p style='color: #64748b; font-size: 14px; margin-bottom: 8px;'>Mã xác thực của bạn là:</p><strong style='font-size:32px; letter-spacing: 8px; color:#166534;'>$code</strong></div>";
+                if (strpos($html, '</body>') !== false) {
+                    $html = str_replace('</body>', $fallbackHtml . '</body>', $html);
+                } else {
+                    $html .= $fallbackHtml;
+                }
+            }
         }
+    }
+
+    if (!$html) {
+        $subject = "Mã xác thực OTP: $code";
+        $html = "
+        <div style='font-family: Inter, Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 50px 20px;'>
+            <div style='max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; padding: 40px 32px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #f1f5f9;'>
+                <h2 style='color: #0f172a; margin-top: 0; font-size: 22px; font-weight: 700;'>Mã xác thực của bạn</h2>
+                <p style='color: #64748b; font-size: 15px; margin-bottom: 32px; line-height: 1.5;'>
+                    Bạn đang yêu cầu một tác vụ cần xác thực. Vui lòng sử dụng mã dưới đây để tiếp tục:
+                </p>
+                <div style='background-color: #f0fdf4; border: 1px dashed #86efac; border-radius: 12px; padding: 24px; margin-bottom: 32px;'>
+                    <span style='font-size: 36px; font-weight: 900; letter-spacing: 12px; color: #166534; display: inline-block; transform: translateX(6px);'>$code</span>
+                </div>
+                <p style='color: #94a3b8; font-size: 13px; margin-bottom: 0; line-height: 1.6;'>
+                    Mã này có hiệu lực trong <b>$ttl phút</b>.<br>Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email.
+                </p>
+            </div>
+        </div>
+        ";
+    }
+
+    $mailer = new Mailer($pdo);
+    $err = '';
+    if (!$mailer->dispatchRaw($email, $subject, $html, [], $err)) {
+        // Even if email fails, we might still want to return success but log it?
+        // Let's return error so frontend knows it failed
+        $stmtDel = $pdo->prepare("DELETE FROM otp_codes WHERE id = ?");
+        $stmtDel->execute([$codeId]);
+        echo json_encode(['success' => false, 'error' => 'Không thể gửi email OTP: ' . $err]);
+        exit;
     }
 
     echo json_encode(['success' => true, 'message' => 'OTP generated and sent', 'expires_at' => $expiresAt]);

@@ -77,7 +77,7 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
         paddingLeft: paddingLeft ?? '0px',
     };
 
-    const isFilteredType = ['button', 'image', 'social', 'video', 'quote', 'divider', 'spacer'].includes(block.type);
+    const isFilteredType = ['button', 'image', 'social', 'video', 'quote', 'divider', 'spacer', 'otp'].includes(block.type);
 
     if (!isFilteredType) {
         decorativeProps.forEach(prop => {
@@ -181,6 +181,36 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                );
+            }
+
+            case 'otp': {
+                return (
+                    <div style={{
+                        backgroundColor: css.backgroundColor ?? '#f0fdf4',
+                        color: css.color ?? '#166534',
+                        fontSize: css.fontSize ?? '36px',
+                        fontWeight: css.fontWeight ?? 'bold',
+                        textAlign: css.textAlign as any ?? 'center',
+                        letterSpacing: css.letterSpacing ?? '12px',
+                        paddingTop: css.paddingTop ?? '24px',
+                        paddingBottom: css.paddingBottom ?? '24px',
+                        paddingLeft: css.paddingLeft ?? '24px',
+                        paddingRight: css.paddingRight ?? '24px',
+                        borderRadius: sanitizeRadius(css.borderRadius ?? '12px'),
+                        borderColor: css.borderColor ?? '#86efac',
+                        borderWidth: css.borderTopWidth ?? '2px',
+                        borderStyle: css.borderStyle ?? 'dashed',
+                        marginTop: css.marginTop ?? '20px',
+                        marginBottom: css.marginBottom ?? '20px',
+                        fontFamily: css.fontFamily ?? bodyStyle.fontFamily,
+                        display: 'block',
+                        wordBreak: 'break-all'
+                    }}>
+                        <span style={{ transform: 'translateX(6px)', display: 'inline-block' }}>
+                            {block.content || '[short_code]'}
+                        </span>
                     </div>
                 );
             }
