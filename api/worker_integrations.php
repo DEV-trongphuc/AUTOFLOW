@@ -257,8 +257,9 @@ if (!function_exists('runIntegrationSync')) {
                                         $updatedCount++;
                                     } else {
                                         $subId = uniqid(); 
-                                        if ($email) $engine->mapEmail[strtolower(trim($email))] = $subId;
-                                        if ($phone) $engine->mapPhone[preg_replace('/[^\d\+]/', '', $phone)] = $subId;
+                                        if ($email || $phone) {
+                                            $engine->addResolvedId($email, $phone, $subId);
+                                        }
                                         $newCount++;
                                     }
 
@@ -570,8 +571,9 @@ if (!function_exists('runIntegrationSync')) {
                             } else {
                                 $subId = uniqid();
                                 // Note: Update $engine map on the fly to prevent duplicates within the same sheet
-                                if ($email) $engine->mapEmail[strtolower(trim($email))] = $subId;
-                                if ($phone) $engine->mapPhone[preg_replace('/[^\d\+]/', '', $phone)] = $subId;
+                                if ($email || $phone) {
+                                    $engine->addResolvedId($email, $phone, $subId);
+                                }
                                 $newCount++;
                             }
 

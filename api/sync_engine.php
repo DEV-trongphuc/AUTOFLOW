@@ -117,6 +117,23 @@ class SyncEngine
     }
 
     /**
+     * Add a newly resolved ID to the memory maps dynamically.
+     * Prevents duplicate insertions within the same batch.
+     */
+    public function addResolvedId($email, $phone, $subId)
+    {
+        if ($email) {
+            $this->mapEmail[strtolower(trim($email))] = $subId;
+        }
+        if ($phone) {
+            $normPhone = self::normalizePhone($phone);
+            if ($normPhone) {
+                $this->mapPhone[$normPhone] = $subId;
+            }
+        }
+    }
+
+    /**
      * Get Identity Maps (Debugging/Stats)
      */
     public function getStats()
