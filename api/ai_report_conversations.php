@@ -133,107 +133,103 @@ if ($action === 'list') {
 
     $finalSql = implode(" UNION ALL ", $queries) . " ORDER BY conv_last_at DESC, created_at ASC";
 
-try {
-    $stmt = $pdo->prepare($finalSql);
-    $stmt->execute($allParams);
-    $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    try {
+        $stmt = $pdo->prepare($finalSql);
+        $stmt->execute($allParams);
+        $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $allRows = [];
-    $tempExchanges = [];
+        $allRows = [];
+        $tempExchanges = [];
 
-    foreach ($messages as $m) {
-        $cid = $m['conv_id'];
-        if (!isset($tempExchanges[$cid])) {
-            $tempExchanges[$cid] = [
-                'user' => '',
-                'ai' => '',
-                'actions' => '',
-                'time' => '',
-                'user_name' => $m['user_name'],
-                'user_avatar' => $m['user_avatar'],
-                'subscriber_id' => $m['subscriber_id'],
-                'id' => $cid
-            ];
-        }
-
-        if ($m['sender'] === 'visitor') {
-            // If there's already a visitor message without AI response, push it as a separate row
-            if (!empty($tempExchanges[$cid]['user'])) {
-                $allRows[] = [
-                    'time' => $tempExchanges[$cid]['time'],
-                    'id' => $cid,
-                    'user' => $tempExchanges[$cid]['user'],
+        foreach ($messages as $m) {
+            $cid = $m['conv_id'];
+            if (!isset($tempExchanges[$cid])) {
+                $tempExchanges[$cid] = [
+                    'user' => '',
                     'ai' => '',
                     'actions' => '',
+                    'time' => '',
+                    'user_name' => $m['user_name'],
+                    'user_avatar' => $m['user_avatar'],
+                    'subscriber_id' => $m['subscriber_id'],
+                    'id' => $cid
+                ];
+            }
+
+            if ($m['sender'] === 'visitor') {
+                if (!empty($tempExchanges[$cid]['user'])) {
+                    $allRows[] = [
+                        'time' => $tempExchanges[$cid]['time'],
+                        'id' => $cid,
+                        'user' => $tempExchanges[$cid]['user'],
+                        'ai' => '',
+                        'actions' => '',
+                        'user_name' => $tempExchanges[$cid]['user_name'],
+                        'user_avatar' => $tempExchanges[$cid]['user_avatar'],
+                        'subscriber_id' => $tempExchanges[$cid]['subscriber_id']
+                    ];
+                }
+                $tempExchanges[$cid]['user'] = $m['message'];
+                $tempExchanges[$cid]['time'] = $m['created_at'];
+                $tempExchanges[$cid]['ai'] = '';
+                $tempExchanges[$cid]['actions'] = '';
+            } elseif ($m['sender'] === 'ai' || $m['sender'] === 'human') {
+                $msg = $m['message'];
+                $actions = '';
+                if (preg_match('/\[(?:ACTIONS|OPTIONS|BUTTONS):?(.*?)\]/i', $msg, $matches)) {
+                    $actions = $matches[1];
+                    $msg = trim(str_replace($matches[0], '', $msg));
+                }
+
+                $allRows[] = [
+                    'time' => $tempExchanges[$cid]['time'] ?: $m['created_at'],
+                    'id' => $cid,
+                    'user' => $tempExchanges[$cid]['user'],
+                    'ai' => $msg,
+                    'actions' => $actions,
                     'user_name' => $tempExchanges[$cid]['user_name'],
                     'user_avatar' => $tempExchanges[$cid]['user_avatar'],
                     'subscriber_id' => $tempExchanges[$cid]['subscriber_id']
                 ];
+                $tempExchanges[$cid]['user'] = '';
+                $tempExchanges[$cid]['ai'] = '';
+                $tempExchanges[$cid]['actions'] = '';
             }
-            $tempExchanges[$cid]['user'] = $m['message'];
-            $tempExchanges[$cid]['time'] = $m['created_at'];
-            $tempExchanges[$cid]['ai'] = '';
-            $tempExchanges[$cid]['actions'] = '';
-        } elseif ($m['sender'] === 'ai' || $m['sender'] === 'human') {
-            $msg = $m['message'];
-            $actions = '';
-            if (preg_match('/\[(?:ACTIONS|OPTIONS|BUTTONS):?(.*?)\]/i', $msg, $matches)) {
-                $actions = $matches[1];
-                $msg = trim(str_replace($matches[0], '', $msg));
+        }
+
+        foreach ($tempExchanges as $cid => $data) {
+            if (!empty($data['user'])) {
+                $allRows[] = [
+                    'time' => $data['time'],
+                    'id' => $cid,
+                    'user' => $data['user'],
+                    'ai' => '',
+                    'actions' => '',
+                    'user_name' => $data['user_name'],
+                    'user_avatar' => $data['user_avatar'],
+                    'subscriber_id' => $data['subscriber_id']
+                ];
             }
-
-            $allRows[] = [
-                'time' => $tempExchanges[$cid]['time'] ?: $m['created_at'],
-                'id' => $cid,
-                'user' => $tempExchanges[$cid]['user'],
-                'ai' => $msg,
-                'actions' => $actions,
-                'user_name' => $tempExchanges[$cid]['user_name'],
-                'user_avatar' => $tempExchanges[$cid]['user_avatar'],
-                'subscriber_id' => $tempExchanges[$cid]['subscriber_id']
-            ];
-            // Clear for next exchange in same conversation
-            $tempExchanges[$cid]['user'] = '';
-            $tempExchanges[$cid]['ai'] = '';
-            $tempExchanges[$cid]['actions'] = '';
         }
+
+        $totalRows = count($allRows);
+        $paginatedRows = array_slice($allRows, $offset, $limit);
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => true,
+            'data' => $paginatedRows,
+            'pagination' => [
+                'current_page' => $page,
+                'limit' => $limit,
+                'total' => $totalRows,
+                'total_pages' => ceil($totalRows / $limit),
+                'has_more' => ($offset + count($paginatedRows)) < $totalRows
+            ]
+        ]);
+        exit;
+    } catch (Exception $e) {
+        error_log('[ai_report_conversations] DB Error: ' . $e->getMessage() . ' in ' . __FILE__ . ':' . __LINE__);
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
-
-    // Flush remaining visitor messages
-    foreach ($tempExchanges as $cid => $data) {
-        if (!empty($data['user'])) {
-            $allRows[] = [
-                'time' => $data['time'],
-                'id' => $cid,
-                'user' => $data['user'],
-                'ai' => '',
-                'actions' => '',
-                'user_name' => $data['user_name'],
-                'user_avatar' => $data['user_avatar'],
-                'subscriber_id' => $data['subscriber_id']
-            ];
-        }
-    }
-
-    // 2. Apply pagination to the grouped rows
-    $totalRows = count($allRows);
-    $paginatedRows = array_slice($allRows, $offset, $limit);
-
-    header('Content-Type: application/json');
-    echo json_encode([
-        'success' => true,
-        'data' => $paginatedRows,
-        'pagination' => [
-            'current_page' => $page,
-            'limit' => $limit,
-            'total' => $totalRows,
-            'total_pages' => ceil($totalRows / $limit),
-            'has_more' => ($offset + count($paginatedRows)) < $totalRows
-        ]
-    ]);
-    exit;
-}
-} catch (Exception $e) {
-    error_log('[ai_report_conversations] DB Error: ' . $e->getMessage());
-    jsonResponse(false, null, 'Lỗi hệ thống.');
 }
