@@ -155,14 +155,24 @@ foreach ($activeFlows as $flow) {
     $stmtSeg->execute([$tConfig['targetId'], $wsId]);
     $segDef = $stmtSeg->fetch();
 
-    if (!$segDef) {
-        $logs[] = "  - Flow '{$flow['name']}': Trigger segment '{$tConfig['targetId']}' not found in workspace $wsId.";
-        continue;
+    if ($segDef) {
+        // It's a Segment
+        $segRes = buildSegmentWhereClause($segDef['criteria'], $tConfig['targetId']);
+        $segSql = $segRes['sql'];
+        $segParams = $segRes['params'];
+    } else {
+        // Fallback: It might be a List (UI targetSubtype: 'sync' or 'list' saves List ID into targetId)
+        $stmtList = $pdo->prepare("SELECT id FROM lists WHERE id = ? AND workspace_id = ?");
+        $stmtList->execute([$tConfig['targetId'], $wsId]);
+        if ($stmtList->fetch()) {
+            // It's a List
+            $segSql = "s.id IN (SELECT subscriber_id FROM subscriber_lists WHERE list_id = ?)";
+            $segParams = [$tConfig['targetId']];
+        } else {
+            $logs[] = "  - Flow '{$flow['name']}': Trigger target '{$tConfig['targetId']}' not found as Segment or List in workspace $wsId.";
+            continue;
+        }
     }
-
-    $segRes = buildSegmentWhereClause($segDef['criteria'], $tConfig['targetId']);
-    $segSql = $segRes['sql'];
-    $segParams = $segRes['params'];
 
     $existsCheckSql = "";
     $checkParams = [];

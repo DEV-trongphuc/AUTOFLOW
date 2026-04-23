@@ -81,18 +81,18 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'flow-snap
         $snapshotId = $body['id'] ?? bin2hex(random_bytes(16));
         $stmt = $pdo->prepare("INSERT INTO flow_snapshots (id, flow_id, label, flow_data, created_by) VALUES (?, ?, ?, ?, ?)");
         $stmt->execute([$snapshotId, $flowId, $label, json_encode($flowData, JSON_UNESCAPED_UNICODE), $createdBy]);
-        
+
         // Prune: keep latest 20 (Compatible with all MySQL/MariaDB versions)
         $stmtKeep = $pdo->prepare("SELECT id FROM flow_snapshots WHERE flow_id = ? ORDER BY created_at DESC LIMIT 20");
         $stmtKeep->execute([$flowId]);
         $keepIds = $stmtKeep->fetchAll(PDO::FETCH_COLUMN);
-        
+
         if (!empty($keepIds)) {
             $placeholders = implode(',', array_fill(0, count($keepIds), '?'));
             $delParams = array_merge([$flowId], $keepIds);
             $pdo->prepare("DELETE FROM flow_snapshots WHERE flow_id = ? AND id NOT IN ($placeholders)")->execute($delParams);
         }
-        
+
         jsonResponse(true, ['id' => $snapshotId, 'message' => 'Đã lưu phiên bản']);
     } catch (Exception $e) {
         error_log("Flow snapshot save error: " . $e->getMessage());
@@ -360,7 +360,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
             $stepIdClause = "reference_id = ?";
             $stepIdParams = [$stepId];
             if (strpos($stepId, ',') !== false) {
-                $ids = array_map(function($id) {
+                $ids = array_map(function ($id) {
                     // [P21-S1] Re-validate each individual ID after split — defense-in-depth
                     return preg_replace('/[^a-zA-Z0-9_\-]/', '', trim($id));
                 }, explode(',', $stepId));
@@ -760,7 +760,8 @@ if (isset($_GET['route']) && $_GET['route'] === 'completed-users') {
 if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'estimate-manual-add') {
     try {
         $flowId = $_GET['id'] ?? null;
-        if (!$flowId) jsonResponse(false, null, 'Flow ID required');
+        if (!$flowId)
+            jsonResponse(false, null, 'Flow ID required');
 
         $inputData = json_decode(file_get_contents('php://input'), true);
         $rawInputs = $inputData['inputs'] ?? [];
@@ -785,11 +786,14 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'estimate-
                                    JOIN subscribers s ON ls.subscriber_id = s.id
                                    WHERE ls.list_id IN ($placeholders) AND s.workspace_id = ?");
             $stmt->execute($params);
-            
+
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                if (!empty($row['email'])) $mergedIdentifiers[] = $row['email'];
-                elseif (!empty($row['phone_number'])) $mergedIdentifiers[] = $row['phone_number'];
-                elseif (!empty($row['zalo_user_id'])) $mergedIdentifiers[] = $row['zalo_user_id'];
+                if (!empty($row['email']))
+                    $mergedIdentifiers[] = $row['email'];
+                elseif (!empty($row['phone_number']))
+                    $mergedIdentifiers[] = $row['phone_number'];
+                elseif (!empty($row['zalo_user_id']))
+                    $mergedIdentifiers[] = $row['zalo_user_id'];
             }
         }
 
@@ -802,15 +806,19 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'estimate-
             $stmtSegs->execute(array_merge($segmentIds, [$workspace_id]));
             $segCriteriaMap = $stmtSegs->fetchAll(PDO::FETCH_KEY_PAIR); // [id => criteria]
             foreach ($segCriteriaMap as $segId => $criteria) {
-                if (!$criteria) continue;
+                if (!$criteria)
+                    continue;
                 $res = buildSegmentWhereClause($criteria, $segId);
                 $sql = "SELECT s.email, s.phone_number, s.zalo_user_id FROM subscribers s WHERE s.workspace_id = ? AND s.status != 'unsubscribed' AND " . $res['sql'];
                 $stmtUsers = $pdo->prepare($sql);
                 $stmtUsers->execute(array_merge([$workspace_id], $res['params']));
                 while ($row = $stmtUsers->fetch(PDO::FETCH_ASSOC)) {
-                    if (!empty($row['email'])) $mergedIdentifiers[] = $row['email'];
-                    elseif (!empty($row['phone_number'])) $mergedIdentifiers[] = $row['phone_number'];
-                    elseif (!empty($row['zalo_user_id'])) $mergedIdentifiers[] = $row['zalo_user_id'];
+                    if (!empty($row['email']))
+                        $mergedIdentifiers[] = $row['email'];
+                    elseif (!empty($row['phone_number']))
+                        $mergedIdentifiers[] = $row['phone_number'];
+                    elseif (!empty($row['zalo_user_id']))
+                        $mergedIdentifiers[] = $row['zalo_user_id'];
                 }
             }
         }
@@ -826,7 +834,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'estimate-
         // We want to exclude anyone who has EVER been in this flow (record exists in subscriber_flow_states)
         // Wait, what if they were completed and user wants to re-enroll? 
         // Following USER REQUEST: "đã từng vào flow là đc" (cấn trừ ra).
-        
+
         // Find existing IDs for these identifiers first
         // Break into chunks if too large to prevent query crash
         $chunkedInputs = array_chunk($mergedIdentifiers, 1000);
@@ -836,7 +844,8 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'estimate-
             $chunkPlaceholders = implode(',', array_fill(0, count($chunk), '?'));
             // Check emails
             $stmt = $pdo->prepare("SELECT id FROM subscribers WHERE email IN ($chunkPlaceholders) AND workspace_id = ?");
-            $params = $chunk; $params[] = $workspace_id;
+            $params = $chunk;
+            $params[] = $workspace_id;
             $stmt->execute($params);
             $allSubIds = array_merge($allSubIds, $stmt->fetchAll(PDO::FETCH_COLUMN));
 
@@ -852,7 +861,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'estimate-
         }
 
         $allSubIds = array_unique($allSubIds);
-        
+
         $duplicatedCount = 0;
         if (!empty($allSubIds)) {
             $chunkedIds = array_chunk($allSubIds, 1000);
@@ -861,7 +870,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'estimate-
                 $stmt = $pdo->prepare("SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_flow_states WHERE flow_id = ? AND subscriber_id IN ($idPlaceholders)");
                 $params = array_merge([$flowId], $chunk);
                 $stmt->execute($params);
-                $duplicatedCount += (int)$stmt->fetchColumn();
+                $duplicatedCount += (int) $stmt->fetchColumn();
             }
         }
 
@@ -901,7 +910,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
         } else {
             $items = preg_split('/[\r\n,;]+/', $rawInputs, -1, PREG_SPLIT_NO_EMPTY);
         }
-        
+
         $items = array_filter($items);
 
         // Fetch List Users
@@ -914,11 +923,14 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
                                    JOIN subscribers s ON ls.subscriber_id = s.id
                                    WHERE ls.list_id IN ($placeholders) AND s.workspace_id = ?");
             $stmt->execute($params);
-            
+
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                if (!empty($row['email'])) $items[] = $row['email'];
-                elseif (!empty($row['phone_number'])) $items[] = $row['phone_number'];
-                elseif (!empty($row['zalo_user_id'])) $items[] = $row['zalo_user_id'];
+                if (!empty($row['email']))
+                    $items[] = $row['email'];
+                elseif (!empty($row['phone_number']))
+                    $items[] = $row['phone_number'];
+                elseif (!empty($row['zalo_user_id']))
+                    $items[] = $row['zalo_user_id'];
             }
         }
 
@@ -931,19 +943,23 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
             $stmtSegs->execute(array_merge($segmentIds, [$workspace_id]));
             $segCriteriaMap = $stmtSegs->fetchAll(PDO::FETCH_KEY_PAIR); // [id => criteria]
             foreach ($segCriteriaMap as $segId => $criteria) {
-                if (!$criteria) continue;
+                if (!$criteria)
+                    continue;
                 $res = buildSegmentWhereClause($criteria, $segId);
                 $sql = "SELECT s.email, s.phone_number, s.zalo_user_id FROM subscribers s WHERE s.workspace_id = ? AND s.status != 'unsubscribed' AND " . $res['sql'];
                 $stmtUsers = $pdo->prepare($sql);
                 $stmtUsers->execute(array_merge([$workspace_id], $res['params']));
                 while ($row = $stmtUsers->fetch(PDO::FETCH_ASSOC)) {
-                    if (!empty($row['email'])) $items[] = $row['email'];
-                    elseif (!empty($row['phone_number'])) $items[] = $row['phone_number'];
-                    elseif (!empty($row['zalo_user_id'])) $items[] = $row['zalo_user_id'];
+                    if (!empty($row['email']))
+                        $items[] = $row['email'];
+                    elseif (!empty($row['phone_number']))
+                        $items[] = $row['phone_number'];
+                    elseif (!empty($row['zalo_user_id']))
+                        $items[] = $row['zalo_user_id'];
                 }
             }
         }
-        
+
         $items = array_unique($items);
 
         if (empty($items) || !$stepId)
@@ -1178,7 +1194,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
 
         $baseNow = date('Y-m-d H:i:s');
         $resolvedScheduledAt = date('Y-m-d H:i:s', strtotime('+5 minutes')); // Default for "immediate"
-        
+
         if ($timingMode === 'native' && $targetStepData && ($targetStepData['type'] ?? '') === 'wait') {
             // Calculate native wait time
             $mode = trim($targetStepData['config']['mode'] ?? 'duration');
@@ -1191,10 +1207,13 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
                 if ($targetDay !== null && $targetDay !== '') {
                     $currentDay = (int) date('w', strtotime($baseNow));
                     $daysToWait = ((int) $targetDay - $currentDay + 7) % 7;
-                    if ($daysToWait === 0 && $dt->getTimestamp() <= time()) $daysToWait = 7;
-                    if ($daysToWait > 0) $dt->modify("+$daysToWait days");
+                    if ($daysToWait === 0 && $dt->getTimestamp() <= time())
+                        $daysToWait = 7;
+                    if ($daysToWait > 0)
+                        $dt->modify("+$daysToWait days");
                 } else {
-                    if ($dt->getTimestamp() <= time()) $dt->modify("+1 day");
+                    if ($dt->getTimestamp() <= time())
+                        $dt->modify("+1 day");
                 }
                 $resolvedScheduledAt = $dt->format('Y-m-d H:i:s');
             } elseif ($mode === 'until_date') {
@@ -1239,7 +1258,8 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
                 foreach ($finalStatesToInsert as $subId) {
                     $stmt->execute([$flowId, $subId, $stepId, $nowStr, $nowStr, $nowStr, $resolvedScheduledAt]);
                     $rc = $stmt->rowCount();
-                    if ($rc > 0) $addedCount++;
+                    if ($rc > 0)
+                        $addedCount++;
                     if (function_exists('logActivity') && $rc > 0) {
                         $logMsg = ($rc === 1) ? "Thêm thủ công qua batch" : "Ghi danh lại thủ công";
                         logActivity($pdo, $subId, 'enter_flow', $stepId, 'Manual Add', $logMsg, $flowId);
@@ -1405,10 +1425,14 @@ if (isset($_GET['route']) && $_GET['route'] === 'migrate-users') {
                     $dur = (int) ($s['config']['duration'] ?? 1);
                     $unit = $s['config']['unit'] ?? 'hours';
                     $seconds = $dur;
-                    if ($unit === 'minutes' || $unit === 'mins') $seconds *= 60;
-                    elseif ($unit === 'hours') $seconds *= 3600;
-                    elseif ($unit === 'days') $seconds *= 86400;
-                    elseif ($unit === 'weeks') $seconds *= 604800;
+                    if ($unit === 'minutes' || $unit === 'mins')
+                        $seconds *= 60;
+                    elseif ($unit === 'hours')
+                        $seconds *= 3600;
+                    elseif ($unit === 'days')
+                        $seconds *= 86400;
+                    elseif ($unit === 'weeks')
+                        $seconds *= 604800;
                     $totalDurationSeconds += $seconds;
                 } elseif ($mode === 'until_date') {
                     $specDate = $s['config']['specificDate'] ?? '';
@@ -1423,8 +1447,9 @@ if (isset($_GET['route']) && $_GET['route'] === 'migrate-users') {
                     $targetTime = $s['config']['untilTime'] ?? '09:00';
                     $dt = new DateTime();
                     $parts2 = explode(':', $targetTime);
-                    $dt->setTime((int)$parts2[0], (int)($parts2[1] ?? 0), 0);
-                    if ($dt->getTimestamp() <= time()) $dt->modify('+1 day');
+                    $dt->setTime((int) $parts2[0], (int) ($parts2[1] ?? 0), 0);
+                    if ($dt->getTimestamp() <= time())
+                        $dt->modify('+1 day');
                     $totalDurationSeconds += ($dt->getTimestamp() - time());
                 }
 
@@ -1796,25 +1821,32 @@ function autoMigrateStuckUsers($pdo, $flowId, $newSteps, $oldSteps = [])
         // Build maps for graph traversal
         $oldStepsMap = [];
         foreach ($oldSteps as $os) {
-            if (!empty($os['id'])) $oldStepsMap[trim($os['id'])] = $os;
+            if (!empty($os['id']))
+                $oldStepsMap[trim($os['id'])] = $os;
         }
         $newStepsMap = [];
         foreach ($newSteps as $ns) {
-            if (!empty($ns['id'])) $newStepsMap[trim($ns['id'])] = $ns;
+            if (!empty($ns['id']))
+                $newStepsMap[trim($ns['id'])] = $ns;
         }
 
         // Helper for recursive graph bridging
-        $findNextAvailableStep = function($nodeId, &$visited = []) use (&$oldStepsMap, &$newStepsMap, &$findNextAvailableStep) {
-            if (in_array($nodeId, $visited)) return null; // Prevent cycles
+        $findNextAvailableStep = function ($nodeId, &$visited = []) use (&$oldStepsMap, &$newStepsMap, &$findNextAvailableStep) {
+            if (in_array($nodeId, $visited))
+                return null; // Prevent cycles
             $visited[] = $nodeId;
 
-            if (!isset($oldStepsMap[$nodeId])) return null;
+            if (!isset($oldStepsMap[$nodeId]))
+                return null;
             $node = $oldStepsMap[$nodeId];
 
             $candidates = [];
-            if (!empty($node['nextStepId'])) $candidates[] = trim($node['nextStepId']);
-            if (!empty($node['trueStepId'])) $candidates[] = trim($node['trueStepId']);
-            if (!empty($node['falseStepId'])) $candidates[] = trim($node['falseStepId']);
+            if (!empty($node['nextStepId']))
+                $candidates[] = trim($node['nextStepId']);
+            if (!empty($node['trueStepId']))
+                $candidates[] = trim($node['trueStepId']);
+            if (!empty($node['falseStepId']))
+                $candidates[] = trim($node['falseStepId']);
 
             // Level 1: Are any immediate children alive?
             foreach ($candidates as $candidateId) {
@@ -1822,11 +1854,12 @@ function autoMigrateStuckUsers($pdo, $flowId, $newSteps, $oldSteps = [])
                     return $candidateId;
                 }
             }
-            
+
             // Level 2: Traverse deeper (if children were also deleted)
             foreach ($candidates as $candidateId) {
                 $found = $findNextAvailableStep($candidateId, $visited);
-                if ($found) return $found;
+                if ($found)
+                    return $found;
             }
 
             return null;
@@ -1837,14 +1870,16 @@ function autoMigrateStuckUsers($pdo, $flowId, $newSteps, $oldSteps = [])
         foreach ($newSteps as $ns) {
             if (($ns['type'] ?? '') === 'trigger') {
                 $globalFallbackStepId = trim($ns['nextStepId'] ?? '');
-                if ($globalFallbackStepId) break;
+                if ($globalFallbackStepId)
+                    break;
             }
         }
         if (!$globalFallbackStepId) {
             foreach ($newSteps as $ns) {
                 if (($ns['type'] ?? '') !== 'trigger') {
                     $globalFallbackStepId = trim($ns['id'] ?? '');
-                    if ($globalFallbackStepId) break;
+                    if ($globalFallbackStepId)
+                        break;
                 }
             }
         }
@@ -1854,7 +1889,7 @@ function autoMigrateStuckUsers($pdo, $flowId, $newSteps, $oldSteps = [])
         foreach ($orphanedSteps as $oldSid) {
             // Attempt smart graph bridging first
             $targetStepId = $findNextAvailableStep($oldSid);
-            
+
             // Fallback to global fallback if no forward path survives
             if (!$targetStepId) {
                 $targetStepId = $globalFallbackStepId;
@@ -1889,24 +1924,24 @@ function formatFlow($row)
 
     $row['config'] = json_decode($row['config'] ?? '{}', true);
     $row['stats'] = [
-        'enrolled'          => (int)   ($row['stat_enrolled']            ?? 0),
-        'completed'         => (int)   ($row['stat_completed']           ?? 0),
-        'totalSent'         => (int)   ($row['stat_total_sent']          ?? 0),
-        'totalOpened'       => (int)   ($row['stat_total_opened']        ?? 0),
-        'uniqueOpened'      => (int)   ($row['stat_unique_opened']       ?? 0),
-        'totalClicked'      => (int)   ($row['stat_total_clicked']       ?? 0),
-        'uniqueClicked'     => (int)   ($row['stat_unique_clicked']      ?? 0),
-        'totalFailed'       => (int)   ($row['stat_total_failed']        ?? 0),
-        'totalUnsubscribed' => (int)   ($row['stat_total_unsubscribed']  ?? 0),
+        'enrolled' => (int) ($row['stat_enrolled'] ?? 0),
+        'completed' => (int) ($row['stat_completed'] ?? 0),
+        'totalSent' => (int) ($row['stat_total_sent'] ?? 0),
+        'totalOpened' => (int) ($row['stat_total_opened'] ?? 0),
+        'uniqueOpened' => (int) ($row['stat_unique_opened'] ?? 0),
+        'totalClicked' => (int) ($row['stat_total_clicked'] ?? 0),
+        'uniqueClicked' => (int) ($row['stat_unique_clicked'] ?? 0),
+        'totalFailed' => (int) ($row['stat_total_failed'] ?? 0),
+        'totalUnsubscribed' => (int) ($row['stat_total_unsubscribed'] ?? 0),
         // [FIX P6-C1] Per-channel stats — mirrors DB columns added in Phase 6
-        'zaloSent'          => (int)   ($row['stat_zalo_sent']           ?? 0),
-        'znsSent'           => (int)   ($row['stat_zns_sent']            ?? 0),
-        'metaSent'          => (int)   ($row['stat_meta_sent']           ?? 0),
+        'zaloSent' => (int) ($row['stat_zalo_sent'] ?? 0),
+        'znsSent' => (int) ($row['stat_zns_sent'] ?? 0),
+        'metaSent' => (int) ($row['stat_meta_sent'] ?? 0),
         // [FIX P11-H3] ZNS click stats — uses columns added by P11-C1
-        'totalZaloClicked'  => (int)   ($row['stat_total_zalo_clicked']  ?? 0),
-        'uniqueZaloClicked' => (int)   ($row['stat_unique_zalo_clicked'] ?? 0),
-        'openRate'          => (float) ($row['stat_open_rate']           ?? 0.0),
-        'clickRate'         => (float) ($row['stat_click_rate']          ?? 0.0),
+        'totalZaloClicked' => (int) ($row['stat_total_zalo_clicked'] ?? 0),
+        'uniqueZaloClicked' => (int) ($row['stat_unique_zalo_clicked'] ?? 0),
+        'openRate' => (float) ($row['stat_open_rate'] ?? 0.0),
+        'clickRate' => (float) ($row['stat_click_rate'] ?? 0.0),
     ];
     $row['createdAt'] = $row['created_at'];
     $row['archivedAt'] = $row['archived_at'];
@@ -1940,7 +1975,8 @@ function formatFlow($row)
 if ($method === 'GET' && isset($_GET['route']) && $_GET['route'] === 'stats') {
     try {
         $flowId = $_GET['id'] ?? null;
-        if (!$flowId) jsonResponse(false, null, 'Flow ID required');
+        if (!$flowId)
+            jsonResponse(false, null, 'Flow ID required');
         $stmt = $pdo->prepare("
             SELECT stat_enrolled, stat_completed, stat_total_sent, stat_total_opened,
                    stat_unique_opened, stat_total_clicked, stat_unique_clicked,
@@ -1952,26 +1988,27 @@ if ($method === 'GET' && isset($_GET['route']) && $_GET['route'] === 'stats') {
         ");
         $stmt->execute([$flowId, $workspace_id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$row) jsonResponse(false, null, 'Flow not found');
+        if (!$row)
+            jsonResponse(false, null, 'Flow not found');
         jsonResponse(true, [
-            'enrolled'          => (int)   ($row['stat_enrolled']           ?? 0),
-            'completed'         => (int)   ($row['stat_completed']          ?? 0),
-            'totalSent'         => (int)   ($row['stat_total_sent']         ?? 0),
-            'totalOpened'       => (int)   ($row['stat_total_opened']       ?? 0),
-            'uniqueOpened'      => (int)   ($row['stat_unique_opened']      ?? 0),
-            'totalClicked'      => (int)   ($row['stat_total_clicked']      ?? 0),
-            'uniqueClicked'     => (int)   ($row['stat_unique_clicked']     ?? 0),
-            'totalFailed'       => (int)   ($row['stat_total_failed']       ?? 0),
-            'totalUnsubscribed' => (int)   ($row['stat_total_unsubscribed'] ?? 0),
+            'enrolled' => (int) ($row['stat_enrolled'] ?? 0),
+            'completed' => (int) ($row['stat_completed'] ?? 0),
+            'totalSent' => (int) ($row['stat_total_sent'] ?? 0),
+            'totalOpened' => (int) ($row['stat_total_opened'] ?? 0),
+            'uniqueOpened' => (int) ($row['stat_unique_opened'] ?? 0),
+            'totalClicked' => (int) ($row['stat_total_clicked'] ?? 0),
+            'uniqueClicked' => (int) ($row['stat_unique_clicked'] ?? 0),
+            'totalFailed' => (int) ($row['stat_total_failed'] ?? 0),
+            'totalUnsubscribed' => (int) ($row['stat_total_unsubscribed'] ?? 0),
             // [FIX P6-C1] Include per-channel and rate stats
-            'zaloSent'          => (int)   ($row['stat_zalo_sent']          ?? 0),
-            'znsSent'           => (int)   ($row['stat_zns_sent']           ?? 0),
-            'metaSent'          => (int)   ($row['stat_meta_sent']          ?? 0),
-            'openRate'          => (float) ($row['stat_open_rate']          ?? 0.0),
-            'clickRate'         => (float) ($row['stat_click_rate']         ?? 0.0),
+            'zaloSent' => (int) ($row['stat_zalo_sent'] ?? 0),
+            'znsSent' => (int) ($row['stat_zns_sent'] ?? 0),
+            'metaSent' => (int) ($row['stat_meta_sent'] ?? 0),
+            'openRate' => (float) ($row['stat_open_rate'] ?? 0.0),
+            'clickRate' => (float) ($row['stat_click_rate'] ?? 0.0),
             // [FIX P12-H2] ZNS click stats — added columns to SELECT above
-            'totalZaloClicked'  => (int)   ($row['stat_total_zalo_clicked'] ?? 0),
-            'uniqueZaloClicked' => (int)   ($row['stat_unique_zalo_clicked'] ?? 0),
+            'totalZaloClicked' => (int) ($row['stat_total_zalo_clicked'] ?? 0),
+            'uniqueZaloClicked' => (int) ($row['stat_unique_zalo_clicked'] ?? 0),
         ]);
     } catch (Exception $e) {
         jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
@@ -2401,7 +2438,8 @@ if (isset($_GET['route']) && $_GET['route'] === 'inactive-users') {
 switch ($method) {
     case 'GET':
         // [PERF] Release session lock immediately to prevent "Pending" state in DevTools
-        if (session_id()) session_write_close();
+        if (session_id())
+            session_write_close();
         try {
             if ($path) {
                 // [FIX P39-F1] Explicit columns — avoids loading all columns unnecessarily when only specific fields are used
@@ -2621,7 +2659,7 @@ switch ($method) {
                 $stmt->execute($paramsFlow);
                 $rawFlows = $stmt->fetchAll();
 
-                $formattedFlows = array_map(function($row) {
+                $formattedFlows = array_map(function ($row) {
                     $formatted = formatFlow($row);
                     // [PERF-F3] Strip steps to only trigger + step_count for list view.
                     // Full steps are fetched lazily when user opens a single flow (GET ?id=xxx).
@@ -2668,7 +2706,7 @@ switch ($method) {
                     }
                 }
             }
-            
+
             $isAdmin = ($GLOBALS['current_admin_id'] === 'admin-001');
             if (!$isAdmin && in_array(strtolower($data['status'] ?? ''), ['active', 'sending', 'scheduled'])) {
                 $data['status'] = 'draft';
@@ -2813,29 +2851,46 @@ switch ($method) {
                     }
                 }
 
-                if ($trigger && isset($trigger['config']['type']) && $trigger['config']['type'] === 'segment') {
+                if ($trigger && isset($trigger['config']['type']) && in_array($trigger['config']['type'], ['segment', 'list', 'sync'])) {
                     $enrollStrategy = $trigger['config']['enrollStrategy'] ?? 'all';
                     // [FIX] 'skipped' is not a valid ENUM value for status. Using 'cancelled' instead.
                     $targetStatus = ($enrollStrategy === 'new_only') ? 'cancelled' : 'waiting';
 
                     if (isset($trigger['nextStepId'])) {
-                        $segmentId = $trigger['config']['targetId'];
+                        $targetId = $trigger['config']['targetId'];
+                        $enrollSql = '';
+                        $enrollParams = [];
+
+                        // Try Segment first
                         $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
-                        $stmtSeg->execute([$segmentId]);
+                        $stmtSeg->execute([$targetId]);
                         $criteria = $stmtSeg->fetchColumn();
 
                         if ($criteria) {
                             require_once 'segment_helper.php';
-                            $res = buildSegmentWhereClause($criteria, $segmentId);
+                            $res = buildSegmentWhereClause($criteria, $targetId);
                             if ($res['sql'] !== '1=1') {
-                                // 1. Get all candidates
-                                $whereSql = $res['sql'];
-                                $sqlSub = "SELECT s.id FROM subscribers s WHERE $whereSql AND s.status IN ('active', 'lead', 'customer') AND s.workspace_id = ?";
-                                $stmtSubs = $pdo->prepare($sqlSub);
-                                $stmtSubs->execute(array_merge($res['params'], [$workspace_id]));
-                                $subIds = $stmtSubs->fetchAll(PDO::FETCH_COLUMN);
+                                $enrollSql = $res['sql'];
+                                $enrollParams = $res['params'];
+                            }
+                        } else {
+                            // Fallback: try as a List ID
+                            $stmtList = $pdo->prepare("SELECT id FROM lists WHERE id = ? AND workspace_id = ?");
+                            $stmtList->execute([$targetId, $workspace_id]);
+                            if ($stmtList->fetchColumn()) {
+                                $enrollSql = "s.id IN (SELECT subscriber_id FROM subscriber_lists WHERE list_id = ?)";
+                                $enrollParams = [$targetId];
+                            }
+                        }
 
-                                if (!empty($subIds)) {
+                        if (!empty($enrollSql)) {
+                            // 1. Get all candidates
+                            $sqlSub = "SELECT s.id FROM subscribers s WHERE $enrollSql AND s.status IN ('active', 'lead', 'customer') AND s.workspace_id = ?";
+                            $stmtSubs = $pdo->prepare($sqlSub);
+                            $stmtSubs->execute(array_merge($enrollParams, [$workspace_id]));
+                            $subIds = $stmtSubs->fetchAll(PDO::FETCH_COLUMN);
+
+                            if (!empty($subIds)) {
                                     // 2. Prepare Config
                                     $fConfig = $data['config'] ?? [];
                                     $frequency = $fConfig['frequency'] ?? 'one-time';
@@ -2879,8 +2934,9 @@ switch ($method) {
                                                 $targetTime = $fsWaitConfig['untilTime'] ?? '09:00';
                                                 $dt = new DateTime();
                                                 $parts2 = explode(':', $targetTime);
-                                                $dt->setTime((int)$parts2[0], (int)($parts2[1] ?? 0), 0);
-                                                if ($dt->getTimestamp() <= time()) $dt->modify('+1 day');
+                                                $dt->setTime((int) $parts2[0], (int) ($parts2[1] ?? 0), 0);
+                                                if ($dt->getTimestamp() <= time())
+                                                    $dt->modify('+1 day');
                                                 $initialSchedule = $dt->format('Y-m-d H:i:s');
                                             }
                                             break;
@@ -2984,7 +3040,7 @@ switch ($method) {
                         if (
                             $oldMode !== $newMode ||
                             ($oldConfig['duration'] ?? '') !== ($newConfig['duration'] ?? '') ||
-                            ($oldConfig['unit']     ?? '') !== ($newConfig['unit']     ?? '') ||
+                            ($oldConfig['unit'] ?? '') !== ($newConfig['unit'] ?? '') ||
                             ($oldConfig['specificDate'] ?? '') !== ($newConfig['specificDate'] ?? '') ||
                             $oldTime !== $newTime
                         ) {
@@ -3040,13 +3096,13 @@ switch ($method) {
                                     // Without this, changing any 'until' step config would leave $newScheduledAt=null
                                     // and subscribers would keep their old (stale) scheduled_at unchanged.
                                     $targetTime = $newConfig['untilTime'] ?? $newConfig['specificTime'] ?? '09:00';
-                                    $targetDay  = $newConfig['untilDay'] ?? null; // 0=Sun..6=Sat
+                                    $targetDay = $newConfig['untilDay'] ?? null; // 0=Sun..6=Sat
                                     $dt = new DateTime();
                                     $timeParts = explode(':', $targetTime);
                                     $dt->setTime((int) $timeParts[0], (int) ($timeParts[1] ?? 0), 0);
                                     if ($targetDay !== null && $targetDay !== '') {
                                         $currentDay = (int) date('w');
-                                        $daysAhead  = ((int) $targetDay - $currentDay + 7) % 7;
+                                        $daysAhead = ((int) $targetDay - $currentDay + 7) % 7;
                                         // If same day but time already passed → next week
                                         if ($daysAhead === 0 && $dt->getTimestamp() <= time()) {
                                             $daysAhead = 7;
@@ -3185,7 +3241,7 @@ switch ($method) {
         try {
             if (!$path)
                 jsonResponse(false, null, 'ID required');
-                
+
             // Add require_permission to prevent unauthorized deletions
             require_permission($pdo, 'edit_campaigns', $workspace_id);
 
@@ -3193,18 +3249,18 @@ switch ($method) {
             $stmtMeta = $pdo->prepare("SELECT name FROM flows WHERE id = ? AND workspace_id = ?");
             $stmtMeta->execute([$path, $workspace_id]);
             $flowMeta = $stmtMeta->fetch();
-            
+
             // [FIX] Verify ownership before proceeding to wipe child tables
             if (!$flowMeta) {
                 jsonResponse(false, null, 'Không tìm thấy Flow hoặc không có quyền xóa');
                 return;
             }
-            
+
             $flowName = $flowMeta['name'];
-            
+
             // Log System Activity inside deletion transaction
             logSystemActivity($pdo, 'flows', 'delete', $path, $flowName);
-            
+
             // [BUG-FIX #15] Wrap all delete operations in transaction for atomicity.
             $pdo->beginTransaction();
 
@@ -3225,10 +3281,12 @@ switch ($method) {
             // 4. Clean up delivery logs
             try {
                 $pdo->prepare("DELETE FROM mail_delivery_logs WHERE flow_id = ?")->execute([$path]);
-            } catch (Exception $ignored) {}
+            } catch (Exception $ignored) {
+            }
             try {
                 $pdo->prepare("DELETE FROM zalo_delivery_logs WHERE flow_id = ?")->execute([$path]);
-            } catch (Exception $ignored) {}
+            } catch (Exception $ignored) {
+            }
 
             // 5. Delete Flow + its snapshots
             // [FIX P29-C1] CRITICAL: Added workspace_id guard to prevent cross-workspace deletion.
