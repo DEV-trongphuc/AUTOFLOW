@@ -454,7 +454,7 @@ export const seedDemoData = async () => {
 
         try {
             console.log('[DemoSeed] Fetching real SQL demo data...');
-            const res = await fetch('/data/real_demo_data.json');
+            const res = await fetch('/data/real_demo_data.json?v=' + Date.now());
             if (res.ok) {
                 const data = await res.json();
                 
@@ -473,6 +473,9 @@ export const seedDemoData = async () => {
                 
                 if (data.flows && data.flows.length > 0) set('mailflow_flows', data.flows);
                 else set('mailflow_flows', generateFlows());
+                
+                if (data.surveys && data.surveys.length > 0) set('mailflow_surveys', data.surveys);
+                if (data.templates && data.templates.length > 0) set('mailflow_templates', data.templates);
             } else {
                 throw new Error('Failed to fetch real_demo_data.json');
             }

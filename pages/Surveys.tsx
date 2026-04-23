@@ -377,7 +377,7 @@ const SurveyCard: React.FC<{
             </div>
 
             {/* Title */}
-            <h3 className="text-lg font-black text-slate-800 tracking-tight leading-tight line-clamp-1 mb-1">{survey.name}</h3>
+            <h3 className="text-[15px] font-bold text-slate-600 tracking-tight leading-tight line-clamp-1 mb-1">{survey.name}</h3>
 
             {/* Slug link — styled like form trigger connect link */}
             {survey.slug ? (

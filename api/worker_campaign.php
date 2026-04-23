@@ -109,6 +109,8 @@ if (!function_exists('runWorkerCampaign')) {
         if ($campaign) {
             $cid = $campaign['id'];
             $cName = $campaign['name'];
+            // [FIX BUG-WC-1] Extract workspace_id to scope all subscriber queries
+            $campaignWorkspaceId = (int)($campaign['workspace_id'] ?? 0);
 
             // [OPTIMIZATION] Clean up stale temporary locks to auto-recover if worker crashed on previous runs
             $pdo->prepare("DELETE FROM subscriber_activity WHERE campaign_id = ? AND type = 'processing_campaign' AND created_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE)")->execute([$cid]);
@@ -119,7 +121,9 @@ if (!function_exists('runWorkerCampaign')) {
                 // Initialize if NOT already sending, or if sent_at is missing (manual trigger case)
                 if ($campaign['status'] !== 'sending' || empty($campaign['sent_at'])) {
                     // Calculate Audience Size (Snapshot)
-                    $countSql = "SELECT COUNT(DISTINCT s.id) FROM subscribers s WHERE s.status IN ('active', 'lead', 'customer')";
+                    // [FIX BUG-WC-1] Scope subscribers to campaign workspace
+                    $countSql = "SELECT COUNT(DISTINCT s.id) FROM subscribers s WHERE s.status IN ('active', 'lead', 'customer') AND s.workspace_id = ?";
+                    $countParams = [$campaignWorkspaceId];
 
                     // ZNS Requirement: Must have phone number
                     if (($campaign['type'] ?? 'email') === 'zalo_zns') {
@@ -127,7 +131,6 @@ if (!function_exists('runWorkerCampaign')) {
                     }
 
                     $countWheres = [];
-                    $countParams = [];
                     $targetConf = json_decode($campaign['target_config'], true);
 
                     // A. LISTS
@@ -319,8 +322,9 @@ if (!function_exists('runWorkerCampaign')) {
                     $pdo->beginTransaction();
                     try {
                         // [OPTIMIZED] Fetch only essential columns for sending speed
-                        $sql = "SELECT s.id, s.email, s.first_name, s.last_name, s.phone_number, s.custom_attributes FROM subscribers s WHERE s.status IN ('active', 'lead', 'customer')";
-                        $execParams = $queryBaseParams;
+                        // [FIX BUG-WC-1] Scope recipients to campaign workspace_id to prevent cross-tenant email send
+                        $sql = "SELECT s.id, s.email, s.first_name, s.last_name, s.phone_number, s.custom_attributes FROM subscribers s WHERE s.status IN ('active', 'lead', 'customer') AND s.workspace_id = ?";
+                        $execParams = array_merge([$campaignWorkspaceId], $queryBaseParams);
 
                         if (($campaign['type'] ?? 'email') === 'zalo_zns') {
                             $sql .= " AND (s.phone_number IS NOT NULL AND s.phone_number != '')";

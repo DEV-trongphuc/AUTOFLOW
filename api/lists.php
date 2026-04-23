@@ -124,12 +124,22 @@ switch ($method) {
                     return;
                 }
 
-                // Verify Ownership
+                // Verify Ownership of target
                 $stmtCheckOwn = $pdo->prepare("SELECT id FROM " . ($targetType === 'list' ? 'lists' : 'segments') . " WHERE id = ? AND workspace_id = ?");
                 $stmtCheckOwn->execute([$targetId, $workspace_id]);
                 if (!$stmtCheckOwn->fetch()) {
                     jsonResponse(false, null, 'Đối tượng không hợp lệ hoặc không thuộc workspace của bạn.');
                     return;
+                }
+                
+                // [FIX] Verify Ownership of destinationListId if moving
+                if ($action === 'move' && $destinationListId) {
+                    $stmtDest = $pdo->prepare("SELECT id FROM lists WHERE id = ? AND workspace_id = ?");
+                    $stmtDest->execute([$destinationListId, $workspace_id]);
+                    if (!$stmtDest->fetch()) {
+                        jsonResponse(false, null, 'Danh sách đích không hợp lệ hoặc không thuộc workspace của bạn.');
+                        return;
+                    }
                 }
 
                 $targetIds = [];

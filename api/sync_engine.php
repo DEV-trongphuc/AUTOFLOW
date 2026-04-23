@@ -4,14 +4,19 @@
 class SyncEngine
 {
     private $pdo;
+    private $workspaceId; // [FIX BUG-SE-1] Scope identity maps to one workspace
     private $mapEmail = [];
     private $mapPhone = [];
     private $mapMeta = [];
     private $mapZalo = [];
 
-    public function __construct($pdo)
+    public function __construct($pdo, $workspaceId = null)
     {
         $this->pdo = $pdo;
+        // [FIX BUG-SE-1] Store workspace_id to filter identity maps at load time.
+        // Without this, two workspaces sharing the same email/phone would cross-resolve
+        // subscriber IDs \u2014 leading to MISA sync writing data to the wrong subscriber.
+        $this->workspaceId = $workspaceId;
     }
 
     /**
@@ -20,14 +25,26 @@ class SyncEngine
      */
     public function loadMaps()
     {
+        // [FIX BUG-SE-1] Build workspace filter clause when workspace_id is provided.
+        // This prevents cross-workspace identity resolution when 2 workspaces share
+        // the same email or phone number (e.g. demo data, test accounts).
+        $wsFilter = '';
+        $wsParam  = [];
+        if ($this->workspaceId !== null) {
+            $wsFilter = ' AND workspace_id = ?';
+            $wsParam  = [$this->workspaceId];
+        }
+
         // Load Email Map
-        $stmt = $this->pdo->query("SELECT email, id FROM subscribers WHERE email IS NOT NULL AND email != ''");
+        $stmt = $this->pdo->prepare("SELECT email, id FROM subscribers WHERE email IS NOT NULL AND email != ''{$wsFilter}");
+        $stmt->execute($wsParam);
         while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
             $this->mapEmail[strtolower(trim($row[0]))] = $row[1];
         }
 
         // Load Phone Map (Normalized)
-        $stmt = $this->pdo->query("SELECT phone_number, id FROM subscribers WHERE phone_number IS NOT NULL AND phone_number != ''");
+        $stmt = $this->pdo->prepare("SELECT phone_number, id FROM subscribers WHERE phone_number IS NOT NULL AND phone_number != ''{$wsFilter}");
+        $stmt->execute($wsParam);
         while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
             $norm = self::normalizePhone($row[0]);
             if ($norm) {
@@ -36,13 +53,15 @@ class SyncEngine
         }
 
         // Load Meta PSID Map
-        $stmt = $this->pdo->query("SELECT meta_psid, id FROM subscribers WHERE meta_psid IS NOT NULL AND meta_psid != ''");
+        $stmt = $this->pdo->prepare("SELECT meta_psid, id FROM subscribers WHERE meta_psid IS NOT NULL AND meta_psid != ''{$wsFilter}");
+        $stmt->execute($wsParam);
         while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
             $this->mapMeta[$row[0]] = $row[1];
         }
 
         // Load Zalo User ID Map
-        $stmt = $this->pdo->query("SELECT zalo_user_id, id FROM subscribers WHERE zalo_user_id IS NOT NULL AND zalo_user_id != ''");
+        $stmt = $this->pdo->prepare("SELECT zalo_user_id, id FROM subscribers WHERE zalo_user_id IS NOT NULL AND zalo_user_id != ''{$wsFilter}");
+        $stmt->execute($wsParam);
         while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
             $this->mapZalo[$row[0]] = $row[1];
         }

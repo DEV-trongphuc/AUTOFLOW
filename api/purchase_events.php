@@ -41,7 +41,7 @@ try {
 
             $pdo->beginTransaction();
 
-            $stmtEvt = $pdo->prepare("SELECT name, notification_enabled, notification_emails, notification_subject FROM purchase_events WHERE id = ?");
+            $stmtEvt = $pdo->prepare("SELECT name, workspace_id, notification_enabled, notification_emails, notification_subject FROM purchase_events WHERE id = ?");
             $stmtEvt->execute([$eventId]);
             $eventRow = $stmtEvt->fetch();
             if (!$eventRow) {
@@ -50,9 +50,11 @@ try {
                 jsonResponse(false, null, 'Sự kiện mua hàng không tồn tại');
             }
             $eventName = $eventRow['name'];
+            // [FIX BUG-PE-1] Resolve workspace_id from event config (public API has no session)
+            $workspace_id = $eventRow['workspace_id'] ?? null;
 
-            $stmtCheck = $pdo->prepare("SELECT id, tags FROM subscribers WHERE email = ? LIMIT 1");
-            $stmtCheck->execute([$email]);
+            $stmtCheck = $pdo->prepare("SELECT id, tags FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
+            $stmtCheck->execute([$email, $workspace_id]);
             $sub = $stmtCheck->fetch();
 
             $subscriberFieldsMap = [
@@ -118,8 +120,9 @@ try {
                 }
             } else {
                 $sid = bin2hex(random_bytes(16));
-                $insertFields = ['id', 'email', 'status', 'source', 'joined_at', 'lead_score'];
-                $insertValues = [$sid, $email, 'active', "Purchase: " . $eventName, $now, $pPurch];
+                // [FIX BUG-PE-1] Include workspace_id so new subscribers from purchase events are correctly scoped
+                $insertFields = ['id', 'email', 'status', 'source', 'joined_at', 'lead_score', 'workspace_id'];
+                $insertValues = [$sid, $email, 'active', "Purchase: " . $eventName, $now, $pPurch, $workspace_id];
 
                 foreach ($subscriberFieldsMap as $dataKey => $dbField) {
                     if (isset($data[$dataKey]) && $data[$dataKey] !== '' && $data[$dataKey] !== null) {

@@ -748,10 +748,20 @@ const Settings: React.FC = () => {
                                         icon={KeyRound}
                                         className="bg-white border-slate-200 focus:border-amber-600 h-14"
                                     />
+                                    <Input
+                                        label="Google Cloud API Key (Voice TTS/STT)"
+                                        type="password"
+                                        placeholder="Nhập Google Cloud API Key (vd: AIzaSy...)"
+                                        value={(smtp as any).google_cloud_api_key || ''}
+                                        onChange={e => setSmtp({ ...smtp, google_cloud_api_key: e.target.value } as any)}
+                                        icon={KeyRound}
+                                        className="bg-white border-slate-200 focus:border-amber-600 h-14"
+                                    />
                                     <div className="p-4 bg-white/50 rounded-2xl border border-slate-100 flex items-start gap-3">
                                         <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                                         <p className="text-[11px] text-slate-500 leading-relaxed">
-                                            API Key này sẽ được sử dụng chung cho các tính năng như: **AI Chatbot**, **Phân tích phân khúc Khách hàng**, **Tự động hóa hành trình** và các module AI chưa có cấu hình riêng.
+                                            <b>Gemini API Key:</b> Sử dụng cho AI Chatbot, Phân tích dữ liệu và Tự động hóa hành trình.<br/>
+                                            <b>Google Cloud API Key:</b> Sử dụng riêng cho tính năng Nhận dạng giọng nói (STT) và Phát âm thanh (TTS).
                                         </p>
                                     </div>
                                 </div>

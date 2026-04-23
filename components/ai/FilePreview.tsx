@@ -230,6 +230,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
                     blob = await res.blob();
                 } else if (file.previewUrl) {
                     const res = await fetch(file.previewUrl);
+                    if (!res.ok) throw new Error("Network response was not ok: " + res.status);
                     blob = await res.blob();
                 } else {
                     throw new Error("No file content");
@@ -377,6 +378,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
                 method: 'POST',
                 body: formData
             });
+            if (!uploadRes.ok) throw new Error("Upload failed with status: " + uploadRes.status);
             const uploadData = await uploadRes.json();
 
             if (uploadData.success && uploadData.url) {

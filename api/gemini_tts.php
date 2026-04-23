@@ -38,9 +38,9 @@ $rate = 1.1;
 try {
     $stmtKey = $pdo->prepare("SELECT value FROM system_settings WHERE `key` = 'google_cloud_api_key' LIMIT 1");
     $stmtKey->execute();
-    $cloudApiKey = $stmtKey->fetchColumn() ?: 'AIzaSyBurjNSjPWihO2VTTIU5QZ2TmiyLO7TTMc';
+    $cloudApiKey = $stmtKey->fetchColumn() ?: getenv('GEMINI_API_KEY');
 } catch (Exception $e) {
-    $cloudApiKey = 'AIzaSyBurjNSjPWihO2VTTIU5QZ2TmiyLO7TTMc'; // fallback
+    $cloudApiKey = getenv('GEMINI_API_KEY'); // fallback
 }
 
 try {

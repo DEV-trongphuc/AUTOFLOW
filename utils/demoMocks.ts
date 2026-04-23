@@ -1,15 +1,25 @@
 import { format, subHours, subMinutes, subDays } from 'date-fns';
 import demoTemplates from './demo_templates.json';
 
-export const getDynamicReport = (resource: string, endpoint: string): any | null => {
+export const getDynamicReport = (resource: string, endpoint: string, pathId?: string): any | null => {
     const url = new URL('http://localhost/' + endpoint);
     const route = url.searchParams.get('route');
     const action = url.searchParams.get('action');
-    const id = url.searchParams.get('id') || url.searchParams.get('campaign_id');
+    const id = pathId || url.searchParams.get('id') || url.searchParams.get('campaign_id');
     const mode = url.searchParams.get('mode') || 'yearly';
     const year = parseInt(url.searchParams.get('year') || String(new Date().getFullYear()));
     const month = parseInt(url.searchParams.get('month') || String(new Date().getMonth() + 1));
     const days = parseInt(url.searchParams.get('days') || '7');
+
+    // ─── HOOK: CUSTOM_MOCKS TỪ FILE BÊN NGOÀI (KHÔNG CẦN BUILD) ─────────────
+    if (typeof window !== 'undefined' && (window as any).MAILFLOW_CUSTOM_MOCKS) {
+        try {
+            const customResponse = (window as any).MAILFLOW_CUSTOM_MOCKS(resource, endpoint, id, action, route);
+            if (customResponse) return customResponse;
+        } catch (err) {
+            console.error("Lỗi trong custom_mocks.js:", err);
+        }
+    }
 
     // ─── 0. System / Auth / Report ───────────────────────────────────────────
     if (resource === 'auth') {
@@ -74,13 +84,16 @@ export const getDynamicReport = (resource: string, endpoint: string): any | null
         const storedSubs: any[] = JSON.parse(localStorage.getItem('mailflow_subscribers') || '[]');
         const sub = storedSubs.find((s: any) => s.id === id);
         if (sub) {
-            sub.activity = Array.from({ length: 5 }).map((_, i) => ({
-                id: `act_${i}`,
-                type: ['email_open', 'email_click', 'page_view', 'form_submit', 'tag_added'][i % 5],
-                title: ['Mở email Bản tin', 'Click link ưu đãi', 'Truy cập Bảng giá', 'Điền form Đăng ký', 'Thêm tag Khách hàng mới'][i % 5],
-                createdAt: subHours(new Date(), i * 12 + Math.random() * 5).toISOString(),
-                metadata: { campaignId: 'camp_1' }
-            }));
+            // Chỉ thêm dữ liệu ảo nếu subscriber chưa có lịch sử hoạt động thật
+            if (!sub.activity || sub.activity.length === 0) {
+                sub.activity = Array.from({ length: 5 }).map((_, i) => ({
+                    id: `act_${i}`,
+                    type: ['email_open', 'email_click', 'page_view', 'form_submit', 'tag_added'][i % 5],
+                    title: ['Mở email Bản tin', 'Click link ưu đãi', 'Truy cập Bảng giá', 'Điền form Đăng ký', 'Thêm tag Khách hàng mới'][i % 5],
+                    createdAt: subHours(new Date(), i * 12 + Math.random() * 5).toISOString(),
+                    metadata: { campaignId: 'camp_1' }
+                }));
+            }
             return sub;
         }
     }

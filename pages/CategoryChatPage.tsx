@@ -18,11 +18,11 @@ import { Skeleton } from '../components/ui/Skeleton';
 import Modal from '../components/common/Modal';
 import ImageSettingsSidebar from '../components/ImageSettingsSidebar';
 
-import GlobalWorkspaceView from '../components/ai/GlobalWorkspaceView';
+const GlobalWorkspaceView = React.lazy(() => import('../components/ai/GlobalWorkspaceView'));
 import Sidebar from '../components/ai/Sidebar';
-import InputModal from '../components/common/InputModal';
+const InputModal = React.lazy(() => import('../components/common/InputModal'));
 import HomeView from '../components/ai/HomeView';
-import AITrainingManager from '../components/ai/AITrainingManager';
+const AITrainingManager = React.lazy(() => import('../components/ai/AITrainingManager'));
 import MessageList from './CategoryChat/components/MessageList';
 import SpaceBackground from '../components/ai/SpaceBackground';
 import FullWidthSoundwave from '../components/ai/FullWidthSoundwave';
@@ -31,17 +31,18 @@ import { formatFileSize, hexToHSL, EXT_MAP } from '../utils/formatters';
 import { FileAttachment, Message, ChatSession, ChatbotInfo } from '../types';
 import ChatInput from '../components/ai/chat/ChatInput';
 import ChatHeader from '../components/ai/chat/ChatHeader';
-import FeedbackModal from '../components/ai/chat/FeedbackModal';
-import DeleteSessionModal from '../components/ai/chat/modals/DeleteSessionModal';
-import RenameSessionModal from '../components/ai/chat/modals/RenameSessionModal';
-import ClearWorkspaceModal from '../components/ai/chat/modals/ClearWorkspaceModal';
-import ShareModal from '../components/ai/chat/modals/ShareModal';
-import ImagePreviewModal from '../components/ai/chat/modals/ImagePreviewModal';
-import FilePreview from '../components/ai/FilePreview';
-import OrgUserManager from '../components/ai/org/OrgUserManager';
-import { BannedUserModal, WarningUserModal } from '../components/ai/org/UserStatusModals';
-import UserProfileModal from '../components/ai/modals/UserProfileModal';
-import ChatSummaryPanel from '../components/ai/ChatSummaryPanel';
+const FeedbackModal = React.lazy(() => import('../components/ai/chat/FeedbackModal'));
+const DeleteSessionModal = React.lazy(() => import('../components/ai/chat/modals/DeleteSessionModal'));
+const RenameSessionModal = React.lazy(() => import('../components/ai/chat/modals/RenameSessionModal'));
+const ClearWorkspaceModal = React.lazy(() => import('../components/ai/chat/modals/ClearWorkspaceModal'));
+const ShareModal = React.lazy(() => import('../components/ai/chat/modals/ShareModal'));
+const ImagePreviewModal = React.lazy(() => import('../components/ai/chat/modals/ImagePreviewModal'));
+const FilePreview = React.lazy(() => import('../components/ai/FilePreview'));
+const OrgUserManager = React.lazy(() => import('../components/ai/org/OrgUserManager'));
+const BannedUserModal = React.lazy(() => import('../components/ai/org/UserStatusModals').then(m => ({ default: m.BannedUserModal })));
+const WarningUserModal = React.lazy(() => import('../components/ai/org/UserStatusModals').then(m => ({ default: m.WarningUserModal })));
+const UserProfileModal = React.lazy(() => import('../components/ai/modals/UserProfileModal'));
+const ChatSummaryPanel = React.lazy(() => import('../components/ai/ChatSummaryPanel'));
 import { PersonaPicker } from './CategoryChat/components/PersonaPicker';
 
 
@@ -1033,6 +1034,7 @@ const CategoryChatPage: React.FC = () => {
 
                 if (!base64data) {
                     const response = await fetch(url);
+                    if (!response.ok) throw new Error("Failed to fetch image");
                     const blob = await response.blob();
                     type = blob.type;
                     size = blob.size;
@@ -3050,7 +3052,7 @@ const CategoryChatPage: React.FC = () => {
     }
 
     if (orgUser?.status === 'banned') {
-        return <BannedUserModal />;
+        return <React.Suspense fallback={null}><BannedUserModal /></React.Suspense>;
     }
 
     if (!categoryId) return null;
@@ -4362,6 +4364,8 @@ const CategoryChatPage: React.FC = () => {
                 />
 
                 {/* Feedback Modal */}
+
+            {/* Feedback Modal */}
                 <FeedbackModal
                     isOpen={isFeedbackOpen}
                     onClose={() => setIsFeedbackOpen(false)}
@@ -4802,7 +4806,7 @@ const CategoryChatPage: React.FC = () => {
                                 </button>
                             </div>
                             <div className={`flex-1 overflow-hidden p-6 ${isDarkTheme ? 'bg-slate-800' : 'bg-slate-50'}`}>
-                                <OrgUserManager initialEditUserId={targetEditUserId} isDarkTheme={isDarkTheme} />
+                                <React.Suspense fallback={null}><OrgUserManager initialEditUserId={targetEditUserId} isDarkTheme={isDarkTheme} /></React.Suspense>
                             </div>
                         </div>
                     </div>
@@ -5010,6 +5014,7 @@ const CategoryChatPage: React.FC = () => {
                     </div>
                 </div>
             </Modal>
+
         </div>
     );
 };

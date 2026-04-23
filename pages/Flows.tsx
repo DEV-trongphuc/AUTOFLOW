@@ -15,24 +15,27 @@ import PageHero from '../components/common/PageHero';
 import Button from '../components/common/Button';
 import Skeleton from '../components/common/Skeleton';
 import FlowCard from '../components/flows/FlowCard';
-import FlowBuilderTab from '../components/flows/tabs/FlowBuilderTab';
-import FlowAnalyticsTab from '../components/flows/tabs/FlowAnalyticsTab';
-import FlowSettingsTab from '../components/flows/tabs/FlowSettingsTab';
-import StepEditor from '../components/flows/modals/StepEditor';
-import ActivateFlowModal from '../components/flows/modals/ActivateFlowModal';
-import FlowSimulateModal from '../components/flows/modals/FlowSimulateModal';
 import { generateFlowStepLabels } from '../utils/flowLabeling';
-import StepParticipantsModal from '../components/flows/modals/StepParticipantsModal';
-import { FlowHistoryModal as HistoryModal } from '../components/flows/modals/HistoryModal'; // Renamed File Import
+import { getStepLabel, getStepIcon } from '../components/flows/flowConstants';
 
-import FlowCreationModal from '../components/flows/modals/FlowCreationModal';
-import AddStepModal from '../components/flows/modals/AddStepModal';
-import FlowContinuationModal from '../components/flows/modals/FlowContinuationModal';
-import FlowSummaryModal from '../components/flows/modals/FlowSummaryModal';
-import GroupDetailModal from '../components/audience/GroupDetailModal'; // New Import
-import PurchaseEventDetailModal from '../components/triggers/PurchaseEventDetailModal';
-import CustomEventDetailModal from '../components/triggers/CustomEventDetailModal';
-import CustomerProfileModal from '../components/audience/CustomerProfileModal'; // New Import
+// Lazy loaded heavy components
+const FlowBuilderTab = React.lazy(() => import('../components/flows/tabs/FlowBuilderTab'));
+const FlowAnalyticsTab = React.lazy(() => import('../components/flows/tabs/FlowAnalyticsTab'));
+const FlowSettingsTab = React.lazy(() => import('../components/flows/tabs/FlowSettingsTab'));
+const StepEditor = React.lazy(() => import('../components/flows/modals/StepEditor'));
+const ActivateFlowModal = React.lazy(() => import('../components/flows/modals/ActivateFlowModal'));
+const FlowSimulateModal = React.lazy(() => import('../components/flows/modals/FlowSimulateModal'));
+const StepParticipantsModal = React.lazy(() => import('../components/flows/modals/StepParticipantsModal'));
+const HistoryModal = React.lazy(() => import('../components/flows/modals/HistoryModal').then(module => ({ default: module.FlowHistoryModal })));
+const FlowCreationModal = React.lazy(() => import('../components/flows/modals/FlowCreationModal'));
+const AddStepModal = React.lazy(() => import('../components/flows/modals/AddStepModal'));
+const FlowContinuationModal = React.lazy(() => import('../components/flows/modals/FlowContinuationModal'));
+const FlowSummaryModal = React.lazy(() => import('../components/flows/modals/FlowSummaryModal'));
+const GroupDetailModal = React.lazy(() => import('../components/audience/GroupDetailModal'));
+const PurchaseEventDetailModal = React.lazy(() => import('../components/triggers/PurchaseEventDetailModal'));
+const CustomEventDetailModal = React.lazy(() => import('../components/triggers/CustomEventDetailModal'));
+const CustomerProfileModal = React.lazy(() => import('../components/audience/CustomerProfileModal'));
+
 import { getStepLabel, getStepIcon } from '../components/flows/flowConstants';
 import toast from 'react-hot-toast';
 import FlowEmptyState from '../components/flows/FlowEmptyState';
@@ -1903,6 +1906,7 @@ const Flows: React.FC = () => {
                             {/* MAIN CONTENT AREA */}
                             <TabTransition key={flowViewTab} className={`flex-1 overflow-hidden relative flex flex-col transition-all duration-300 ${isSidebarOpen && selectedFlow && flowViewTab === 'builder' ? 'ml-0' : ''}`}>
                                 <div className="flex-1 overflow-hidden relative bg-slate-50 dark:bg-slate-950 dark:bg-slate-950/50">
+                                    <React.Suspense fallback={<div className="w-full h-full p-8 flex items-center justify-center"><Skeleton className="w-full h-full rounded-2xl max-w-5xl" /></div>}>
                                     {flowViewTab === 'builder' && (
                                         <FlowBuilderTab
                                             flow={selectedFlow}
@@ -1930,6 +1934,7 @@ const Flows: React.FC = () => {
                                     )}
                                     {flowViewTab === 'analytics' && <div className="h-full overflow-y-auto w-full"><FlowAnalyticsTab flow={selectedFlow} /></div>}
                                     {flowViewTab === 'settings' && <div className="h-full overflow-y-auto w-full"><FlowSettingsTab flow={selectedFlow} onUpdate={(d, silent, skipApi) => handleUpdateFlow({ ...selectedFlow, ...d }, silent ?? true, silent ? undefined : "Cập nhật cài đặt", skipApi)} /></div>}
+                                    </React.Suspense>
                                 </div>
                             </TabTransition>
 
@@ -1961,6 +1966,7 @@ const Flows: React.FC = () => {
             {/* Permission Guard Modal */}
             {AdminPermModal}
 
+            <React.Suspense fallback={null}>
             <FlowCreationModal
                 isOpen={isCreateModalOpen}
                 onClose={() => {
@@ -2449,6 +2455,7 @@ const Flows: React.FC = () => {
                     </div>
                 </div>
             )}
+            </React.Suspense>
         </div>
     );
 };

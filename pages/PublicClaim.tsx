@@ -48,7 +48,7 @@ export const PublicClaim: React.FC = () => {
                     voucher_id: id,
                     ...formData
                 })
-            }).then(r => r.json());
+            }).then(r => { if (!r.ok) throw new Error("Claim failed"); return r.json(); });
 
             if (res.success) {
                 // Determine if code is returned directly or pending (future proof)

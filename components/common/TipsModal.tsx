@@ -121,7 +121,7 @@ const TipsModal: React.FC<TipsModalProps> = ({
                     </div>
 
                     <div className="flex flex-col gap-4">
-                        {tips.map((tip, idx) => (
+                        {(tips || []).map((tip, idx) => (
                             <TipCard key={idx} {...tip} />
                         ))}
                     </div>

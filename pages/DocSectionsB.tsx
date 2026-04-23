@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import {
     Send, Users, FileEdit, BarChart3, GitMerge, Tag, Webhook, Zap, Bot,
     Facebook, Globe, Settings, ChevronRight, MousePointer,
@@ -261,7 +261,8 @@ const response = await fetch("https://api.DOMATION.io/v1/events", {
       cashier: "Ly_Phuong"
     }
   })
-});`} />
+});
+if (!response.ok) throw new Error("Trigger failed");`} />
                 </div>
                 <div className="p-8 bg-amber-50 border border-amber-100 rounded-3xl">
                     <h3 className="font-black text-amber-900 mb-5">Authentication</h3>

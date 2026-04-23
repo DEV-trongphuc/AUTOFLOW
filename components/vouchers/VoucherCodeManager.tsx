@@ -171,6 +171,7 @@ const VoucherCodeManager: React.FC<VoucherCodeManagerProps> = ({ isOpen, onClose
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('_mf_token')}` },
                 body: JSON.stringify({ ids: selectedCodes })
             });
+            if (!response.ok) throw new Error("Delete failed");
             const res = await response.json();
             if (res.success) {
                 toast.success('Đã xóa các mã thành công!');
@@ -193,6 +194,7 @@ const VoucherCodeManager: React.FC<VoucherCodeManagerProps> = ({ isOpen, onClose
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('_mf_token')}` },
                 body: JSON.stringify({ ids: selectedCodes })
             });
+            if (!response.ok) throw new Error("Redeem failed");
             const res = await response.json();
             if (res.success) {
                 toast.success('Gạch mã hàng loạt thành công!');
@@ -228,6 +230,7 @@ const VoucherCodeManager: React.FC<VoucherCodeManagerProps> = ({ isOpen, onClose
                 },
                 body: formData
             });
+            if (!response.ok) throw new Error("Import failed");
             const res = await response.json();
 
             if (res.success) {

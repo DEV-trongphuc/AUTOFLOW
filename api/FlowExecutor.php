@@ -794,10 +794,14 @@ class FlowExecutor
                     // [FIX] Guard against empty string or MySQL zero-date ("0000-00-00 00:00:00")
                     // from DB. Passing either into new DateTime() throws an uncatchable Fatal Error:
                     // "Failed to parse time string" — crashing the entire worker process.
-                    if (empty($startTime) || strpos($startTime, '0000-00-00') !== false) {
+                    if (empty($startTime) || strpos($startTime, '0000-00-00') !== false || trim($startTime) === '') {
                         $startTime = 'now';
                     }
-                    $timeout = new DateTime($startTime);
+                    try {
+                        $timeout = new DateTime($startTime);
+                    } catch (Exception $e) {
+                        $timeout = new DateTime('now');
+                    }
                     $timeout->modify("+$waitDur $waitUnit");
                     $isTimedOut = new DateTime('now') > $timeout;
 
@@ -865,7 +869,7 @@ class FlowExecutor
                                 elseif ($op === '>') $isMatched = ($actualVal > $targetVal);
                             } elseif ($condType === 'survey_answer') {
                                 $qId = trim($step['config']['questionId'] ?? '');
-                                $ansMatch = mb_strtolower(trim($step['config']['answerMatch'] ?? ''));
+                                $ansMatch = mb_strtolower(trim($step['config']['answerMatch'] ?? ''), 'UTF-8');
                                 $answers = json_decode($latestResp['answers_json'] ?? '[]', true) ?: [];
                                 foreach ($answers as $ans) {
                                     if (($ans['question_id'] ?? '') === $qId) {
@@ -881,9 +885,9 @@ class FlowExecutor
                                                  }
                                             }
                                         }
-                                        $valStr = mb_strtolower($valStr);
+                                        $valStr = mb_strtolower($valStr, 'UTF-8');
                                         // Precise or contains match
-                                        if (strpos($valStr, $ansMatch) !== false || $valStr === $ansMatch) {
+                                        if (mb_stripos($valStr, $ansMatch, 0, 'UTF-8') !== false || $valStr === $ansMatch) {
                                             $isMatched = true;
                                             break;
                                         }
@@ -1172,11 +1176,13 @@ class FlowExecutor
                                 $newTagId = uniqid();
                                 $stmtCreate = $this->pdo->prepare("INSERT IGNORE INTO tags (id, name, created_at) VALUES (?, ?, NOW())");
                                 $stmtCreate->execute([$newTagId, $tagName]);
-                                $tagId = $this->pdo->lastInsertId() ?: $newTagId;
-                                // Try fetching once more in case of race condition (INSERT IGNORE with duplicate name)
-                                if (!$tagId) {
+                                
+                                if ($stmtCreate->rowCount() == 0) {
+                                    // It was ignored due to duplicate name. Fetch the real ID.
                                     $stmtT->execute([$tagName]);
                                     $tagId = $stmtT->fetchColumn();
+                                } else {
+                                    $tagId = $newTagId;
                                 }
                             }
                             // [MEMORY GUARD] Prune tagCache at 200 entries (FIFO, same as profileCache)

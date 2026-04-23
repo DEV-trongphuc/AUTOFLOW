@@ -1767,9 +1767,10 @@ if (isset($_GET['route']) && $_GET['route'] === 'resolve-step-error') {
 /**
  * Auto-migrate subscribers who are stuck on a deleted or modified step.
  * This function finds subscribers at steps that no longer exist in the new flow definition
- * and moves them to the next best available step (usually the first step after trigger).
+ * and gracefully moves them to the next surviving logical step in the graph (bridging deleted nodes).
+ * Falls back to the first step after trigger if no forward path exists.
  */
-function autoMigrateStuckUsers($pdo, $flowId, $newSteps)
+function autoMigrateStuckUsers($pdo, $flowId, $newSteps, $oldSteps = [])
 {
     try {
         // 1. Get unique step IDs currently occupied by subscribers in this flow
@@ -1791,47 +1792,85 @@ function autoMigrateStuckUsers($pdo, $flowId, $newSteps)
         if (empty($orphanedSteps))
             return 0;
 
-        // 3. Find Global Fallback Step (First step after ANY trigger)
-        $fallbackStepId = null;
+        // Build maps for graph traversal
+        $oldStepsMap = [];
+        foreach ($oldSteps as $os) {
+            if (!empty($os['id'])) $oldStepsMap[trim($os['id'])] = $os;
+        }
+        $newStepsMap = [];
         foreach ($newSteps as $ns) {
-            if (($ns['type'] ?? '') === 'trigger') {
-                $fallbackStepId = trim($ns['nextStepId'] ?? '');
-                if ($fallbackStepId)
-                    break;
-            }
+            if (!empty($ns['id'])) $newStepsMap[trim($ns['id'])] = $ns;
         }
 
-        // Final fallback: First non-trigger step
-        if (!$fallbackStepId) {
+        // Helper for recursive graph bridging
+        $findNextAvailableStep = function($nodeId, &$visited = []) use (&$oldStepsMap, &$newStepsMap, &$findNextAvailableStep) {
+            if (in_array($nodeId, $visited)) return null; // Prevent cycles
+            $visited[] = $nodeId;
+
+            if (!isset($oldStepsMap[$nodeId])) return null;
+            $node = $oldStepsMap[$nodeId];
+
+            $candidates = [];
+            if (!empty($node['nextStepId'])) $candidates[] = trim($node['nextStepId']);
+            if (!empty($node['trueStepId'])) $candidates[] = trim($node['trueStepId']);
+            if (!empty($node['falseStepId'])) $candidates[] = trim($node['falseStepId']);
+
+            // Level 1: Are any immediate children alive?
+            foreach ($candidates as $candidateId) {
+                if (isset($newStepsMap[$candidateId])) {
+                    return $candidateId;
+                }
+            }
+            
+            // Level 2: Traverse deeper (if children were also deleted)
+            foreach ($candidates as $candidateId) {
+                $found = $findNextAvailableStep($candidateId, $visited);
+                if ($found) return $found;
+            }
+
+            return null;
+        };
+
+        // 3. Find Global Fallback Step (First step after ANY trigger)
+        $globalFallbackStepId = null;
+        foreach ($newSteps as $ns) {
+            if (($ns['type'] ?? '') === 'trigger') {
+                $globalFallbackStepId = trim($ns['nextStepId'] ?? '');
+                if ($globalFallbackStepId) break;
+            }
+        }
+        if (!$globalFallbackStepId) {
             foreach ($newSteps as $ns) {
                 if (($ns['type'] ?? '') !== 'trigger') {
-                    $fallbackStepId = trim($ns['id'] ?? '');
-                    if ($fallbackStepId)
-                        break;
+                    $globalFallbackStepId = trim($ns['id'] ?? '');
+                    if ($globalFallbackStepId) break;
                 }
             }
         }
 
-        if (!$fallbackStepId) {
-            // If no steps left at all, mark as completed
-            $placeholders = implode(',', array_fill(0, count($orphanedSteps), '?'));
-            $stmtFin = $pdo->prepare("UPDATE subscriber_flow_states SET status = 'completed', updated_at = NOW() WHERE flow_id = ? AND step_id IN ($placeholders)");
-            $stmtFin->execute(array_merge([$flowId], array_values($orphanedSteps)));
-            return $stmtFin->rowCount();
-        }
-
-        // 4. Move orphaned subscribers to the fallback step
+        // 4. Move orphaned subscribers
         $totalMigrated = 0;
         foreach ($orphanedSteps as $oldSid) {
-            $stmtMigrate = $pdo->prepare("UPDATE subscriber_flow_states 
-                                         SET step_id = ?, status = 'waiting', scheduled_at = NOW(), updated_at = NOW() 
-                                         WHERE flow_id = ? AND step_id = ? AND status IN ('waiting', 'processing')");
-            $stmtMigrate->execute([$fallbackStepId, $flowId, $oldSid]);
-            $totalMigrated += $stmtMigrate->rowCount();
+            // Attempt smart graph bridging first
+            $targetStepId = $findNextAvailableStep($oldSid);
+            
+            // Fallback to global fallback if no forward path survives
+            if (!$targetStepId) {
+                $targetStepId = $globalFallbackStepId;
+            }
 
-            // Log this migration activity
-            // [Note] We don't have individual subscriber IDs here efficiently, 
-            // but we can log that a step migration happened.
+            if ($targetStepId) {
+                $stmtMigrate = $pdo->prepare("UPDATE subscriber_flow_states 
+                                             SET step_id = ?, status = 'waiting', scheduled_at = NOW(), updated_at = NOW() 
+                                             WHERE flow_id = ? AND step_id = ? AND status IN ('waiting', 'processing')");
+                $stmtMigrate->execute([$targetStepId, $flowId, $oldSid]);
+                $totalMigrated += $stmtMigrate->rowCount();
+            } else {
+                // If NO steps left at all in the flow
+                $stmtFin = $pdo->prepare("UPDATE subscriber_flow_states SET status = 'completed', updated_at = NOW() WHERE flow_id = ? AND step_id = ? AND status IN ('waiting', 'processing')");
+                $stmtFin->execute([$flowId, $oldSid]);
+                $totalMigrated += $stmtFin->rowCount();
+            }
         }
 
         return $totalMigrated;
@@ -2908,7 +2947,7 @@ switch ($method) {
                 // AUTO-MIGRATION: Migrate stuck users at deleted steps (Careful Migration)
                 // [FIX] Run this INSIDE status=active block only — active flows have live subscribers.
                 // For paused/draft flows, autoMigrate runs after the status block below.
-                $migratedCount = autoMigrateStuckUsers($pdo, $path, $stepsArr);
+                $migratedCount = autoMigrateStuckUsers($pdo, $path, $stepsArr, $oldSteps);
                 if ($migratedCount > 0) {
                     error_log("[Flow Save] Auto-migrated $migratedCount orphaned users for flow $path (active)");
                 }
@@ -3129,7 +3168,7 @@ switch ($method) {
             // inside the status=active block — orphan subscribers would remain stuck at deleted
             // step_ids until the flow was re-activated. Run it here for all non-active saves too.
             if ($data['status'] !== 'active' && !empty($stepsArr)) {
-                $migratedCount = autoMigrateStuckUsers($pdo, $path, $stepsArr);
+                $migratedCount = autoMigrateStuckUsers($pdo, $path, $stepsArr, $oldSteps);
                 if ($migratedCount > 0) {
                     error_log("[Flow Save] Auto-migrated $migratedCount orphaned users for flow $path (paused/draft save)");
                 }
@@ -3153,7 +3192,14 @@ switch ($method) {
             $stmtMeta = $pdo->prepare("SELECT name FROM flows WHERE id = ? AND workspace_id = ?");
             $stmtMeta->execute([$path, $workspace_id]);
             $flowMeta = $stmtMeta->fetch();
-            $flowName = $flowMeta ? $flowMeta['name'] : "Flow $path";
+            
+            // [FIX] Verify ownership before proceeding to wipe child tables
+            if (!$flowMeta) {
+                jsonResponse(false, null, 'Không tìm thấy Flow hoặc không có quyền xóa');
+                return;
+            }
+            
+            $flowName = $flowMeta['name'];
             
             // Log System Activity inside deletion transaction
             logSystemActivity($pdo, 'flows', 'delete', $path, $flowName);

@@ -150,8 +150,8 @@ if ($method === 'POST') {
                                         $data['sender']['user_is_follower'] = $profile['user_is_follower'] ? 1 : 0;
                                     }
 
-                                    // [REAL-TIME SYNC] Sync to Main Subscribers immediately (Standard fields)
-                                    $mainId = upsertZaloSubscriber($pdo, $zaloUserId, $profile);
+                                    // [FIX BUG-ZH-1 call-site] Pass oaConfigId so workspace_id is resolved correctly
+                                    $mainId = upsertZaloSubscriber($pdo, $zaloUserId, $profile, $oaConfig['id']);
                                     if ($mainId) {
                                         require_once 'trigger_helper.php';
                                         checkDynamicTriggers($pdo, $mainId);
@@ -629,6 +629,8 @@ if ($method === 'POST') {
                                 } // end batch processing
                                 // -----------------------------------------
 
+                                if (empty($batchProcessedBySibling)) {
+
                                 // Payload Click Tracking & Debounce (Robust for batches & spaces)
                                 // Regex: Optional spaces around |, alphanumeric/underscore ID, Base64 label
                                 if (preg_match_all('/\s*\|\s*([a-zA-Z0-9_]+):([A-Za-z0-9+\/]+={0,2})/', $msgText, $matches, PREG_SET_ORDER)) {
@@ -922,17 +924,20 @@ if ($method === 'POST') {
                                 }
                             }
 
-                            if ($scenario && empty($batchProcessedBySibling)) {
+                            if ($scenario) {
                                 file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ✅ Scenario found: " . ($scenario['title'] ?? $scenario['type']) . " → sending reply\n", FILE_APPEND);
                                 if (!empty($subId) && !empty($scenario['id'])) {
                                     logZaloSubscriberActivity($pdo, $subId, 'automation_trigger', $scenario['id'], "Kích hoạt kịch bản: " . ($scenario['title'] ?? 'Auto Response'), $scenario['title'] ?? 'Auto Response', $eventId);
                                 }
                                 $freshScenarioToken = ensureZaloToken($pdo, $oaConfig['id']);
                                 sendZaloScenarioReply($pdo, $zaloUserId, $freshScenarioToken, $scenario, $msgText);
-                            } elseif (empty($batchProcessedBySibling)) {
-                                file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ❌ No scenario matched. skipAI=$skipAI batchSibling=" . (empty($batchProcessedBySibling)?'0':'1') . "\n", FILE_APPEND);
                             } else {
-                                file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ⛔ batchProcessedBySibling=true — skipped\n", FILE_APPEND);
+                                file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ❌ No scenario matched. skipAI=$skipAI\n", FILE_APPEND);
+                            }
+
+                            } // end if (empty($batchProcessedBySibling))
+                            else {
+                                file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ⛔ batchProcessedBySibling=true — skipped tracking and scenarios\n", FILE_APPEND);
                             }
                         }
                     }

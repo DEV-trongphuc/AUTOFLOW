@@ -139,6 +139,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
         for (const doc of processingPdfDocs) {
             try {
                 const r = await fetch(`${apiBase}/ai_training.php?action=get_pdf_progress&property_id=${props.selectedProperty}&doc_id=${doc.id}`);
+                if (!r.ok) throw new Error("Fetch progress failed");
                 const data = await r.json();
                 if (data.success) updates[doc.id] = {
                     ...data,
@@ -222,6 +223,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
             fd.append('uploaded_by', props.orgUser?.email || props.orgUser?.full_name || 'admin');
             fd.append('file', pendingPdfFile);
             const res = await fetch(`${apiBase}/ai_training.php`, { method: 'POST', body: fd });
+            if (!res.ok) throw new Error("Upload failed with status: " + res.status);
             const data = await res.json();
             const { toast } = await import('react-hot-toast');
             if (data.success) {
@@ -256,6 +258,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                     is_global_workspace: newStatus
                 })
             });
+            if (!res.ok) throw new Error("Toggle workspace failed");
             const data = await res.json();
             if (data.success) {
                 toast.success(newStatus ? 'Đã bật Global Workspace cho tài liệu này' : 'Đã tắt Global Workspace');

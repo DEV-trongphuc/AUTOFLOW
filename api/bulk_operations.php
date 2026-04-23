@@ -186,11 +186,16 @@ try {
                         ->execute([$row['cnt'], $row['list_id']]);
                 }
 
-                // 2. Clear relations
+                // 2. Clear relations & ghost data
                 $pdo->prepare("DELETE FROM subscriber_activity WHERE subscriber_id IN ($ph)")->execute($chunk);
                 $pdo->prepare("DELETE FROM subscriber_flow_states WHERE subscriber_id IN ($ph)")->execute($chunk);
                 $pdo->prepare("DELETE FROM subscriber_lists WHERE subscriber_id IN ($ph)")->execute($chunk);
                 $pdo->prepare("DELETE FROM subscriber_tags WHERE subscriber_id IN ($ph)")->execute($chunk);
+                $pdo->prepare("DELETE FROM mail_delivery_logs WHERE subscriber_id IN ($ph)")->execute($chunk);
+                $pdo->prepare("DELETE FROM activity_buffer WHERE subscriber_id IN ($ph)")->execute($chunk);
+                $pdo->prepare("DELETE FROM zalo_delivery_logs WHERE subscriber_id IN ($ph)")->execute($chunk);
+                $pdo->prepare("UPDATE zalo_subscribers SET subscriber_id = NULL WHERE subscriber_id IN ($ph)")->execute($chunk);
+                $pdo->prepare("UPDATE voucher_codes SET subscriber_id = NULL, status = 'unused', sent_at = NULL WHERE subscriber_id IN ($ph) AND status = 'available'")->execute($chunk);
 
                 // 3. Delete subs
                 $stmtDel = $pdo->prepare("DELETE FROM subscribers WHERE id IN ($ph)");
@@ -427,8 +432,12 @@ try {
             $allAffectedListSubscribers = [];
 
             // Cache tags for speed
-            $stmtT = $pdo->query("SELECT id, name FROM tags");
-            $tagMap = [];
+            // [FIX BUG-BO-1] Scoped to workspace_id — old code fetched ALL workspace tags.
+            // If two workspaces had a tag named "VIP", the first one's tag ID would be used
+            // for the second workspace's subscribers → cross-workspace tag contamination.
+            // Same fix pattern as subscribers.php:253.
+            $stmtT = $pdo->prepare("SELECT id, name FROM tags WHERE workspace_id = ?");
+            $stmtT->execute([$workspace_id]);
             while ($t = $stmtT->fetch())
                 $tagMap[strtolower(trim($t['name']))] = $t['id'];
 

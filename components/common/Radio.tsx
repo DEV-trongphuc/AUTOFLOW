@@ -27,7 +27,7 @@ const Radio: React.FC<RadioProps> = ({ options, value, onChange, label, disabled
         </label>
       )}
       <div className={`grid gap-3 ${variant === 'cards' ? 'grid-cols-1' : 'grid-cols-1'}`}>
-        {options.map((opt) => {
+        {(options || []).map((opt) => {
           const isSelected = value === opt.id;
           const Icon = opt.icon;
           return (

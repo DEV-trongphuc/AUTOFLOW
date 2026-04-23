@@ -894,6 +894,15 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
     case 'PUT':
         if (!$path)
             jsonResponse(false, null, 'ID required');
+            
+        // [FIX] Verify ownership before modifying any child tables (lists, tags)
+        $checkStmt = $pdo->prepare("SELECT id FROM subscribers WHERE id = ? AND workspace_id = ?");
+        $checkStmt->execute([$path, $workspace_id]);
+        if (!$checkStmt->fetchColumn()) {
+            jsonResponse(false, null, 'Subscriber not found or access denied');
+            exit;
+        }
+
         $data = json_decode(file_get_contents("php://input"), true);
         $tags = json_encode($data['tags'] ?? []);
         $attrs = json_encode($data['customAttributes'] ?? (object) []);
@@ -1029,7 +1038,17 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
             // Giảm count của các list trước khi xóa
             $stmtSub = $pdo->prepare("SELECT phone_number FROM subscribers WHERE id = ? AND workspace_id = ?");
             $stmtSub->execute([$path, $workspace_id]);
-            $phone = (string) $stmtSub->fetchColumn();
+            $subData = $stmtSub->fetch();
+            
+            // [FIX] Stop execution if subscriber does not exist or does not belong to the workspace.
+            // Previously, it would continue and wipe out child records (tags, lists, flows) for an ID from another workspace!
+            if (!$subData) {
+                if ($pdo->inTransaction()) $pdo->rollBack();
+                jsonResponse(false, null, 'Subscriber not found or access denied');
+                exit;
+            }
+            
+            $phone = (string) $subData['phone_number'];
             $hasPhone = (!empty($phone) && trim($phone) !== '') ? 1 : 0;
 
             $stmtLists = $pdo->prepare("SELECT list_id FROM subscriber_lists WHERE subscriber_id = ?");
@@ -1044,6 +1063,11 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
             $pdo->prepare("DELETE FROM subscriber_activity WHERE subscriber_id = ?")->execute([$path]);
             $pdo->prepare("DELETE FROM subscriber_flow_states WHERE subscriber_id = ?")->execute([$path]);
             $pdo->prepare("DELETE FROM subscriber_lists WHERE subscriber_id = ?")->execute([$path]);
+            $pdo->prepare("DELETE FROM mail_delivery_logs WHERE subscriber_id = ?")->execute([$path]);
+            $pdo->prepare("DELETE FROM activity_buffer WHERE subscriber_id = ?")->execute([$path]);
+            $pdo->prepare("DELETE FROM zalo_delivery_logs WHERE subscriber_id = ?")->execute([$path]);
+            $pdo->prepare("UPDATE zalo_subscribers SET subscriber_id = NULL WHERE subscriber_id = ?")->execute([$path]);
+            $pdo->prepare("UPDATE voucher_codes SET subscriber_id = NULL, status = 'unused', sent_at = NULL WHERE subscriber_id = ? AND status = 'available'")->execute([$path]);
 
             $pdo->prepare("DELETE FROM subscribers WHERE id = ? AND workspace_id = ?")->execute([$path, $workspace_id]);
 

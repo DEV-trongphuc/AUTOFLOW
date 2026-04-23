@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost:3306
--- Thời gian đã tạo: Th4 22, 2026 lúc 06:49 AM
+-- Thời gian đã tạo: Th4 23, 2026 lúc 08:34 AM
 -- Phiên bản máy phục vụ: 10.6.18-MariaDB-cll-lve-log
 -- Phiên bản PHP: 8.4.19
 
@@ -1146,6 +1146,7 @@ CREATE TABLE `permissions` (
 
 CREATE TABLE `purchase_events` (
   `id` char(36) NOT NULL,
+  `workspace_id` int(11) NOT NULL DEFAULT 1,
   `name` varchar(255) NOT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `notification_enabled` tinyint(1) DEFAULT 0,
@@ -1551,6 +1552,7 @@ CREATE TABLE `survey_responses` (
   `answers_json` longtext NOT NULL CHECK (json_valid(`answers_json`)),
   `completion_rate` tinyint(3) DEFAULT 100,
   `time_spent_sec` int(11) DEFAULT NULL,
+  `claimed_voucher_code` varchar(50) DEFAULT NULL,
   `source_channel` enum('direct_link','qr_code','email_embed','widget','api') DEFAULT 'direct_link',
   `utm_source` varchar(255) DEFAULT NULL,
   `utm_medium` varchar(255) DEFAULT NULL,
@@ -1564,7 +1566,6 @@ CREATE TABLE `survey_responses` (
   `total_score` float DEFAULT NULL,
   `max_score` float DEFAULT NULL,
   `end_screen_id` varchar(100) DEFAULT 'default',
-  `claimed_voucher_code` varchar(100) DEFAULT NULL,
   `submitted_at` timestamp NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -1627,7 +1628,7 @@ CREATE TABLE `tags` (
   `name` varchar(100) NOT NULL,
   `description` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
-  `workspace_id` int(11) DEFAULT 1
+  `workspace_id` int(11) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1743,6 +1744,7 @@ CREATE TABLE `voucher_campaigns` (
   `claim_approval_required` tinyint(1) DEFAULT 0,
   `claim_approval_type` varchar(20) DEFAULT 'auto',
   `claim_email_template_id` varchar(36) DEFAULT NULL,
+  `claim_target_form_id` varchar(36) DEFAULT NULL,
   `flow_trigger_id` varchar(36) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -1760,11 +1762,11 @@ CREATE TABLE `voucher_claims` (
   `name` varchar(255) DEFAULT NULL,
   `phone` varchar(50) DEFAULT NULL,
   `status` enum('pending','approved','rejected') DEFAULT 'pending',
+  `source_channel` varchar(50) DEFAULT NULL,
+  `source_id` varchar(36) DEFAULT NULL,
   `assigned_code_id` varchar(36) DEFAULT NULL,
   `claimed_at` datetime DEFAULT current_timestamp(),
-  `resolved_at` datetime DEFAULT NULL,
-  `source_channel` varchar(50) DEFAULT NULL,
-  `source_id` varchar(100) DEFAULT NULL
+  `resolved_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1782,10 +1784,11 @@ CREATE TABLE `voucher_codes` (
   `status` enum('unused','used') DEFAULT 'unused',
   `sent_at` datetime DEFAULT NULL,
   `used_at` datetime DEFAULT NULL,
+  `claimed_at` datetime DEFAULT NULL COMMENT 'Timestamp when subscriber claimed/was assigned this code',
   `created_at` datetime NOT NULL,
   `expires_at` datetime DEFAULT NULL,
   `claimed_source` varchar(50) DEFAULT NULL,
-  `claimed_source_id` varchar(100) DEFAULT NULL
+  `claimed_source_id` varchar(36) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -2795,7 +2798,8 @@ ALTER TABLE `permissions`
 -- Chỉ mục cho bảng `purchase_events`
 --
 ALTER TABLE `purchase_events`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_pe_workspace` (`workspace_id`);
 
 --
 -- Chỉ mục cho bảng `queue_jobs`
@@ -2919,7 +2923,10 @@ ALTER TABLE `subscribers`
   ADD KEY `idx_sub_workspace_score` (`workspace_id`,`lead_score`),
   ADD KEY `idx_sub_ws_status_created` (`workspace_id`,`status`,`created_at`),
   ADD KEY `idx_sub_zalo_uid` (`zalo_user_id`),
-  ADD KEY `idx_sub_meta_psid` (`meta_psid`);
+  ADD KEY `idx_sub_meta_psid` (`meta_psid`),
+  ADD KEY `idx_sub_workspace_status` (`workspace_id`,`status`),
+  ADD KEY `idx_sub_workspace_email` (`workspace_id`,`email`(32)),
+  ADD KEY `idx_sub_workspace_phone` (`workspace_id`,`phone_number`);
 ALTER TABLE `subscribers` ADD FULLTEXT KEY `ft_subscriber_search` (`email`,`first_name`,`last_name`,`phone_number`,`company_name`);
 
 --
@@ -3118,7 +3125,8 @@ ALTER TABLE `voucher_campaigns`
 ALTER TABLE `voucher_claims`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_voucher_email` (`voucher_id`,`email`),
-  ADD KEY `idx_voucher_status` (`voucher_id`,`status`);
+  ADD KEY `idx_voucher_status` (`voucher_id`,`status`),
+  ADD KEY `idx_source` (`source_channel`,`source_id`);
 
 --
 -- Chỉ mục cho bảng `voucher_codes`
@@ -3126,7 +3134,9 @@ ALTER TABLE `voucher_claims`
 ALTER TABLE `voucher_codes`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `idx_campaign_code` (`campaign_id`,`code`),
-  ADD KEY `idx_voucher_camp_stat` (`campaign_id`,`status`);
+  ADD KEY `idx_voucher_camp_stat` (`campaign_id`,`status`),
+  ADD KEY `idx_claimed_source` (`claimed_source`,`claimed_source_id`),
+  ADD KEY `idx_subscriber` (`subscriber_id`);
 
 --
 -- Chỉ mục cho bảng `web_blacklist`
@@ -3155,7 +3165,8 @@ ALTER TABLE `web_events`
   ADD KEY `idx_evt_vis_time` (`visitor_id`,`created_at`),
   ADD KEY `idx_event_type` (`event_type`),
   ADD KEY `idx_created_at` (`created_at`),
-  ADD KEY `idx_visitor_evt` (`visitor_id`);
+  ADD KEY `idx_visitor_evt` (`visitor_id`),
+  ADD KEY `idx_we_visitor_created` (`visitor_id`,`created_at`);
 
 --
 -- Chỉ mục cho bảng `web_page_views`

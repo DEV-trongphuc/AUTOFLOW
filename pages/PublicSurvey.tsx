@@ -35,7 +35,7 @@ const PublicSurvey: React.FC = () => {
 
     useEffect(() => {
         fetch(`${PUBLIC_API}?slug=${slug}${searchParams.get('preview') ? '&preview=1' : ''}`)
-            .then(r => r.json())
+            .then(r => { if (!r.ok) throw new Error("Fetch survey failed"); return r.json(); })
             .then(res => {
                 if (res.success) {
                     const d = res.data;
@@ -278,7 +278,7 @@ const PublicSurvey: React.FC = () => {
                     max_score: survey.settings?.quiz?.enabled ? maxScore : null,
                     end_screen_id: overrideThanksId || 'default'
                 }),
-            }).then(r => r.json());
+            }).then(r => { if (!r.ok) throw new Error("Submit failed"); return r.json(); });
 
             if (res.success) {
                 setSubmitted(true);

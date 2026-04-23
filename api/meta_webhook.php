@@ -72,11 +72,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // [DEBUG] Log secret count and partial info to diagnose MISMATCH
             writeLog("[DEBUG SIG] Found " . count($secrets) . " secret(s) in DB. Header=" . substr($sigHeader, 0, 20) . "...");
 
-            // [SAFETY] If no secrets configured (cleared from DB), log CRITICAL but allow through.
-            // Better than total webhook death while admin restores the secret.
+            // [FIX BUG-MW-1] CRITICAL: When no secrets are configured, REJECT instead of allowing through.
+            // Old behavior: if DB has no app_secret, any attacker knowing the webhook URL could inject
+            // fake events (fake leads, fake purchases, spam AI chatbot) during initial setup or after
+            // an accidental secret wipe. This is a critical window of vulnerability.
+            // New behavior: 503 Service Unavailable — safer to lose some events than to process unsigned ones.
             if (empty($secrets)) {
-                writeLog("[CRITICAL] No app_secret in DB! Signature cannot be verified. Please update app_secret in Meta Config. Allowing through temporarily.");
-                // Fall through to process the request
+                writeLog("[CRITICAL] No app_secret in DB! Cannot verify X-Hub-Signature-256. Rejecting request. Please configure app_secret in Meta Config.");
+                http_response_code(503);
+                echo json_encode(['error' => 'Webhook signature verification not configured. Contact administrator.']);
+                exit;
             } else {
                 $signatureValid = false;
                 foreach ($secrets as $idx => $appSecret) {

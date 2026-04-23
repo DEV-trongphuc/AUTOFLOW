@@ -2900,7 +2900,14 @@ CHÚ Ý:
                             // Echo error info so bubble isn't empty
                             if (empty($fullBotRes)) {
                                 $errMsg = is_array($chunk['error']) ? ($chunk['error']['message'] ?? json_encode($chunk['error'])) : $chunk['error'];
-                                $fallback = "Dạ em xin lỗi, hệ thống đang bận. Vui lòng thử lại sau ít phút ạ. (Lỗi: $errMsg)";
+                                
+                                // Translate raw HTTP errors into customer-friendly polite messages
+                                if (strpos($errMsg, '403') !== false || strpos($errMsg, '429') !== false) {
+                                    $fallback = "Dạ em xin lỗi, hiện tại hệ thống tư vấn đang quá tải. Anh/chị vui lòng thử lại sau ít phút hoặc để lại lời nhắn để tư vấn viên hỗ trợ trực tiếp ạ.";
+                                } else {
+                                    $fallback = "Dạ em xin lỗi, kết nối đang bị gián đoạn. Anh/chị vui lòng thử lại sau ít phút ạ.";
+                                }
+                                
                                 $fullBotRes = $fallback;
                                 echo $fallback;
                                 flush();
@@ -2994,8 +3001,14 @@ CHÚ Ý:
                 }
             } catch (Exception $e) {
                 logAIChat($visitorUuid, $propertyId, 'GEN_CRASH', 'ERROR', $e->getMessage());
-                // error handling
-                echo json_encode(['success' => false, 'message' => 'AI System Busy']);
+                $errMsg = $e->getMessage();
+                $fallback = 'AI System Busy';
+                if (strpos($errMsg, '403') !== false || strpos($errMsg, '429') !== false) {
+                    $fallback = "Dạ em xin lỗi, hiện tại hệ thống tư vấn đang quá tải. Anh/chị vui lòng thử lại sau ít phút hoặc để lại lời nhắn để tư vấn viên hỗ trợ trực tiếp ạ.";
+                } else {
+                    $fallback = "Dạ em xin lỗi, kết nối đang bị gián đoạn. Anh/chị vui lòng thử lại sau ít phút ạ.";
+                }
+                echo json_encode(['success' => false, 'message' => $fallback]);
                 exit;
             }
         } else {

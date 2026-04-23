@@ -11,9 +11,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 try {
     $stmtKey = $pdo->prepare("SELECT value FROM system_settings WHERE `key` = 'google_cloud_api_key' LIMIT 1");
     $stmtKey->execute();
-    $apiKey = $stmtKey->fetchColumn() ?: 'AIzaSyBurjNSjPWihO2VTTIU5QZ2TmiyLO7TTMc';
+    $apiKey = $stmtKey->fetchColumn() ?: getenv('GEMINI_API_KEY');
 } catch (Exception $e) {
-    $apiKey = 'AIzaSyBurjNSjPWihO2VTTIU5QZ2TmiyLO7TTMc'; // fallback
+    $apiKey = getenv('GEMINI_API_KEY'); // fallback
 }
 $audioData = file_get_contents('php://input');
 

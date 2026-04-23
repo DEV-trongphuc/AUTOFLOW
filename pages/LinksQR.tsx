@@ -328,7 +328,7 @@ const LinksQR: React.FC = () => {
                                                                 <QrCode className="w-7 h-7 text-white drop-shadow-sm" />
                                                             </div>
                                                             <div className="flex-1 min-w-0 pr-2 pt-0.5">
-                                                                <h3 className="text-lg font-black text-slate-800 tracking-tight leading-tight line-clamp-1 mb-2">
+                                                                <h3 className="text-[15px] font-bold text-slate-600 tracking-tight leading-tight line-clamp-1 mb-2">
                                                                     {link.name || link.slug || 'Unnamed'}
                                                                 </h3>
                                                                 <a 

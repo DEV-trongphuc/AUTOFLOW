@@ -179,7 +179,7 @@ foreach ($activeFlows as $flow) {
             $checkParams[] = $flow['id'];
         }
         if ($allowMultiple) {
-            $checks[] = "NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ? AND sfs.status IN ('waiting', 'processing'))";
+            $checks[] = "NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ? AND (sfs.status IN ('waiting', 'processing') OR sfs.created_at >= DATE_SUB(NOW(), INTERVAL 3 SECOND)))";
             $checkParams[] = $flow['id'];
         } else {
             $checks[] = "NOT EXISTS (

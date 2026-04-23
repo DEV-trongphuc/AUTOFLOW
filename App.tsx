@@ -228,6 +228,7 @@ const App: React.FC = () => {
                 localStorage.removeItem('isAuthenticated');
                 const apiBase = isLocalDev ? '/mail_api' : API_BASE_URL;
                 fetch(`${apiBase}/auth.php?action=logout`, { method: 'POST', credentials: 'include' })
+                    .catch(() => {})
                     .finally(() => {
                         window.location.href = '/#/login'; 
                     });

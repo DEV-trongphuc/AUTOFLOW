@@ -76,8 +76,12 @@ if (!empty($camp['end_date']) && strtotime($camp['end_date']) < time()) {
 
 // 1. Identiy / Upsert Subscriber
 // [FIX] �p d?ng Named Lock d? ch?ng race condition
+// [FIX BUG-VC-1] Use prepared statement for GET_LOCK — old code used string interpolation
+// which breaks if email contains a single-quote (e.g. o'brien@...) and is inconsistent
+// with the pattern already used in forms.php and track.php.
 $lockTarget = $email ? "sub_email_" . md5($email) : "sub_phone_" . md5($phone);
-$pdo->query("SELECT GET_LOCK('$lockTarget', 5)");
+$pdo->prepare("SELECT GET_LOCK(?, 5)")->execute([$lockTarget]);
+
 
 try {
     $stmtCheck = null;
@@ -121,10 +125,11 @@ try {
         }
     }
 
-    $pdo->query("SELECT RELEASE_LOCK('$lockTarget')");
+    $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockTarget]);
     
+
 } catch (Exception $e) {
-    $pdo->query("SELECT RELEASE_LOCK('$lockTarget')");
+    $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockTarget]); // [FIX BUG-VC-1]
     doResponse($isAjax, false, "L?i khi x? l� d? li?u h? so.", $redirectEmpty);
 }
 
@@ -164,7 +169,11 @@ try {
                     $expiresAt = date('Y-m-d H:i:s', strtotime("+{$camp['expiration_days']} days"));
                 }
                 
-                $pdo->prepare("UPDATE voucher_codes SET subscriber_id = ?, status = 'available', expires_at = ? WHERE id = ?")->execute([$sid, $expiresAt, $row['id']]);
+                // [FIX BUG-VC-SCHEMA-1] status='available' was not a valid ENUM('unused','used') value.
+                // In strict mode: error; in non-strict: silently stored as ''. Now correctly uses 'used'.
+                // Note: codes are "assigned" but not necessarily "redeemed" yet — campaign admin can
+                // differentiate via subscriber_id IS NOT NULL (assigned) vs used_at IS NOT NULL (redeemed).
+                $pdo->prepare("UPDATE voucher_codes SET subscriber_id = ?, status = 'used', claimed_at = NOW(), expires_at = ? WHERE id = ?")->execute([$sid, $expiresAt, $row['id']]);
                 $codeAssigned = $row['code'];
             }
         }

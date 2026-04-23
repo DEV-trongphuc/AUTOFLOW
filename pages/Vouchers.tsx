@@ -204,7 +204,7 @@ const Vouchers: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <h3 className="text-lg font-black text-slate-800 tracking-tight leading-tight line-clamp-1 mb-1">{campaign.name}</h3>
+                                <h3 className="text-[15px] font-bold text-slate-600 tracking-tight leading-tight line-clamp-1 mb-1">{campaign.name}</h3>
                                 <p className="text-xs font-medium text-slate-500 line-clamp-2 mb-4 h-8">{campaign.description}</p>
 
                                 <div className="mt-auto">

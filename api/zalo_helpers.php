@@ -509,9 +509,32 @@ function parseAIResponseForZalo($text)
  */
 function uploadZaloImageFromUrl($accessToken, $imageUrl)
 {
-    $imgData = @file_get_contents($imageUrl);
-    if (!$imgData)
+    // [FIX BUG-ZH-2] Validate URL scheme to prevent SSRF.
+    // If AI hallucinates a non-http URL (e.g. file:///etc/passwd, ftp://...), 
+    // @file_get_contents would follow it and expose server internals.
+    $parsedUrl = parse_url($imageUrl);
+    if (!$parsedUrl || !in_array(strtolower($parsedUrl['scheme'] ?? ''), ['http', 'https'])) {
+        error_log('[zalo_helpers] Rejected image URL (invalid scheme): ' . $imageUrl);
         return null;
+    }
+
+    // Use cURL instead of file_get_contents for safer, timeout-controlled download
+    $chDl = curl_init($imageUrl);
+    curl_setopt($chDl, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($chDl, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($chDl, CURLOPT_SSL_VERIFYHOST, 2);
+    curl_setopt($chDl, CURLOPT_TIMEOUT, 10);
+    curl_setopt($chDl, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($chDl, CURLOPT_MAXREDIRS, 3);
+    $imgData = curl_exec($chDl);
+    $contentType = curl_getinfo($chDl, CURLINFO_CONTENT_TYPE);
+    curl_close($chDl);
+
+    // [FIX BUG-ZH-2] Validate Content-Type is an image before uploading
+    if (!$imgData || !preg_match('#^image/(jpeg|png|gif|webp)#i', $contentType)) {
+        error_log('[zalo_helpers] Rejected image URL (non-image content-type: ' . $contentType . '): ' . $imageUrl);
+        return null;
+    }
 
     $tmpFile = tempnam(sys_get_temp_dir(), 'zalo_img');
     file_put_contents($tmpFile, $imgData);
@@ -686,6 +709,30 @@ function upsertZaloSubscriber($pdo, $zaloUserId, $profile, $oaConfigId = null)
     $genderRaw = $profile['user_gender'] ?? 0;
     $gender = ($genderRaw == 1) ? 'male' : (($genderRaw == 2) ? 'female' : 'unknown');
 
+    // [FIX BUG-ZH-1] Resolve workspace_id from oaConfigId.
+    // Previously missing → subscribers created from Zalo webhook had NULL workspace_id
+    // → they were invisible in the CRM and could not trigger automations.
+    $workspace_id = null;
+    if ($oaConfigId) {
+        try {
+            $stmtWs = $pdo->prepare("SELECT workspace_id FROM zalo_oa_configs WHERE id = ? LIMIT 1");
+            $stmtWs->execute([$oaConfigId]);
+            $workspace_id = $stmtWs->fetchColumn() ?: null;
+        } catch (Exception $e) {}
+    }
+    // Fallback: try to find existing subscriber's workspace_id by zalo_user_id
+    if (!$workspace_id) {
+        try {
+            $stmtFb = $pdo->prepare("SELECT workspace_id FROM subscribers WHERE zalo_user_id = ? AND workspace_id IS NOT NULL LIMIT 1");
+            $stmtFb->execute([$zaloUserId]);
+            $workspace_id = $stmtFb->fetchColumn() ?: null;
+        } catch (Exception $e) {}
+    }
+    // Last resort: default workspace
+    if (!$workspace_id) {
+        $workspace_id = '1';
+    }
+
     $mainSubId = null;
 
     try {
@@ -695,10 +742,10 @@ function upsertZaloSubscriber($pdo, $zaloUserId, $profile, $oaConfigId = null)
 
         $stmtInsert = $pdo->prepare("
             INSERT IGNORE INTO subscribers 
-            (id, email, first_name, source, status, zalo_user_id, tags, joined_at, avatar, gender, is_zalo_follower)
-            VALUES (?, ?, ?, 'Zalo OA', 'active', ?, ?, NOW(), ?, ?, 1)
+            (workspace_id, id, email, first_name, source, status, zalo_user_id, tags, joined_at, avatar, gender, is_zalo_follower)
+            VALUES (?, ?, ?, ?, 'Zalo OA', 'active', ?, ?, NOW(), ?, ?, 1)
         ");
-        $stmtInsert->execute([$newId, $email, $name, $zaloUserId, $tags, $avatar, $gender]);
+        $stmtInsert->execute([$workspace_id, $newId, $email, $name, $zaloUserId, $tags, $avatar, $gender]);
 
         if ($stmtInsert->rowCount() > 0) {
             $mainSubId = $newId;

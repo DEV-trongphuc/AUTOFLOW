@@ -152,8 +152,8 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
 
                 // 2. State Check
                 if ($allowMultiple) {
-                    // Continuous (No Cooldown, No Parallel)
-                    $checks[] = "NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ? AND sfs.status IN ('waiting', 'processing'))";
+                    // Continuous (No Cooldown, No Parallel, 3s Debounce)
+                    $checks[] = "NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ? AND (sfs.status IN ('waiting', 'processing') OR sfs.created_at >= DATE_SUB(NOW(), INTERVAL 3 SECOND)))";
                     $checkParams[] = $flow['id'];
                 } else {
                     // Recurring (Standard)
@@ -170,6 +170,24 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
                 if (!empty($checks)) {
                     $existsCheckSql .= " AND " . implode(" AND ", $checks);
                 }
+            }
+
+            // [FIX SCHEMA-GAP-01] Per-flow enrollment lock: prevents two concurrent workers
+            // from passing the NOT EXISTS check simultaneously and double-enrolling the same
+            // subscriber. GET_LOCK is scoped to (flow_id) which serializes enrollment for
+            // the same flow without blocking other flows running concurrently.
+            $enrollLockKey = count($subscriberIds) === 1 ? 'enroll_' . $flow['id'] . '_' . md5($subscriberIds[0]) : 'enroll_flow_' . $flow['id'];
+            $lockAcquired = false;
+            try {
+                $stmtLock = $pdo->prepare('SELECT GET_LOCK(?, 3)');
+                $stmtLock->execute([$enrollLockKey]);
+                $lockAcquired = (bool) $stmtLock->fetchColumn();
+                if (!$lockAcquired) {
+                    error_log("[trigger_helper] Could not acquire enroll lock for flow {$flow['id']} \u2014 skipping to avoid duplicate");
+                    continue;
+                }
+            } catch (Exception $lockEx) {
+                error_log("[trigger_helper] GET_LOCK failed: " . $lockEx->getMessage());
             }
 
             // [FIX] CHUNKED INSERT to avoid MySQL 65,535 placeholder limit crash.
@@ -196,6 +214,10 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
             $enrolledCount = $enrolledTotal; // for stat update below
             if ($enrolledCount > 0) {
                 $pdo->prepare("UPDATE flows SET stat_enrolled = stat_enrolled + ? WHERE id = ?")->execute([$enrolledCount, $flow['id']]);
+            }
+            // [FIX SCHEMA-GAP-01] Release lock after enrollment INSERT batch
+            if ($lockAcquired) {
+                $pdo->prepare('SELECT RELEASE_LOCK(?)')->execute([$enrollLockKey]);
             }
         }
     }

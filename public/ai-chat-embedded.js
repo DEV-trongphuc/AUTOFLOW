@@ -1456,6 +1456,7 @@
                     body: audioBlob,
                 },
             );
+            if (!response.ok) throw new Error("STT fetch failed");
 
             const result = await response.json();
             logVoice("📝 Google STT Result:", result);

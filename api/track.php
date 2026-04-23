@@ -181,25 +181,50 @@ if ($isBot) {
     $input['device_info']['bot_name'] = $detectedBotName;
 }
 
-// --- SMART ANTI-DDOS PROTECTION ---
-// (Skip redundant IP detection since we did it above)
+// --- SMART ANTI-DDOS PROTECTION (IP-BASED) ---
 try {
-    // [OPTIMIZED] Check for "flood" using EXISTS (faster than COUNT on large tables)
-    // Limits check to the most recent interaction.
-    $stmtFlood = $pdo->prepare("
-        SELECT 1 
-        FROM web_events 
-        WHERE visitor_id = ? 
-        AND created_at > DATE_SUB(NOW(), INTERVAL 3 SECOND) 
-        LIMIT 10
-    ");
-    $stmtFlood->execute([$input['visitor_id']]);
-    $floodEvents = $stmtFlood->fetchAll();
-
-    if (count($floodEvents) >= 10) {
-        http_response_code(429); // Too Many Requests
-        echo json_encode(['status' => 'error', 'message' => 'Anti-DDoS: Request rate limited']);
-        exit;
+    $rateLimitKey = 'track_rl_' . $ip;
+    if (function_exists('apcu_inc')) {
+        $hits = apcu_inc($rateLimitKey, 1, $success, 60);
+        if ($hits === 1 || !$success) {
+            apcu_store($rateLimitKey, 1, 60);
+            $hits = 1;
+        }
+        if ($hits > 100) {
+            http_response_code(429);
+            echo json_encode(['status' => 'error', 'message' => 'Anti-DDoS: Rate limit exceeded (100 req/min)']);
+            exit;
+        }
+    } else {
+        // Fallback: fast file-based rate limiter
+        $rlDir = sys_get_temp_dir() . '/track_rl';
+        if (!is_dir($rlDir)) @mkdir($rlDir, 0777, true);
+        $rlFile = $rlDir . '/' . $ip . '.bin';
+        
+        $hits = 1;
+        if (file_exists($rlFile)) {
+            if (time() - filemtime($rlFile) < 60) {
+                $fp = @fopen($rlFile, 'r+');
+                if ($fp && flock($fp, LOCK_EX)) {
+                    $hits = (int)fread($fp, 16) + 1;
+                    fseek($fp, 0);
+                    fwrite($fp, (string)$hits);
+                    ftruncate($fp, ftell($fp));
+                    flock($fp, LOCK_UN);
+                    fclose($fp);
+                }
+            } else {
+                @file_put_contents($rlFile, "1");
+            }
+        } else {
+            @file_put_contents($rlFile, "1");
+        }
+        
+        if ($hits > 100) {
+            http_response_code(429);
+            echo json_encode(['status' => 'error', 'message' => 'Anti-DDoS: Rate limit exceeded (100 req/min)']);
+            exit;
+        }
     }
 } catch (Exception $e) {
     // Silently continue if flood check fails to avoid blocking legitimate traffic

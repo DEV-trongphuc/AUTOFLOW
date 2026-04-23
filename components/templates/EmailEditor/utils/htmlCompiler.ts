@@ -1,4 +1,4 @@
-﻿import { API_BASE_URL, EXTERNAL_API_BASE } from '@/utils/config';
+import { API_BASE_URL, EXTERNAL_API_BASE } from '@/utils/config';
 import { EmailBlock, EmailBodyStyle, EmailBlockStyle } from '../../../../types';
 import { SHARED_EMAIL_CSS } from '../constants/editorStyles';
 
@@ -166,11 +166,18 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             h2 { font-size: 22px !important; }
             p, td, div { font-size: 16px !important; line-height: 1.6 !important; }
             
-            /* Image scaling */
-            img {
+            /* Image scaling - chi ap dung .image-block img (content images).
+               KHONG dung global img{} vi se blow icon checklist/social full-width tren mobile */
+            .image-block img {
                 width: 100% !important;
                 height: auto !important;
                 max-width: 100% !important;
+            }
+            /* Icon images (checklist, social, stars) giu nguyen kich thuoc goc */
+            img.icon-img {
+                width: auto !important;
+                max-width: none !important;
+                height: auto !important;
             }
             
             /* Text & Content Block Mobile Adjustments */
@@ -569,7 +576,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                                             <table role="presentation" border="0" cellspacing="0" cellpadding="0" align="${iconAlign}" style="background-color: ${iconBg}; border-radius: ${iconRadius}; border: ${iconBorder}; border-collapse: separate;">
                                                 <tr>
                                                     <td style="padding: ${iconPadding}; font-size: 0; line-height: 0;">
-                                                        <img src="${iconUrl}" width="${checkIconSize}" height="${checkIconSize}" style="display: block; width: ${checkIconSize}px; height: ${checkIconSize}px; object-fit: ${s.checkIconMode === 'image' ? 'cover' : 'contain'}; border: 0; border-radius: ${iconRadius};" />
+                                                        <img src="${iconUrl}" width="${checkIconSize}" height="${checkIconSize}" class="icon-img" style="display: block; width: ${checkIconSize}px !important; max-width: ${checkIconSize}px !important; height: ${checkIconSize}px; object-fit: ${s.checkIconMode === 'image' ? 'cover' : 'contain'}; border: 0; border-radius: ${iconRadius};" />
                                                     </td>
                                                 </tr>
                                             </table>
@@ -780,7 +787,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                 const iconUrl = l.network === 'zalo' ? ZALO_ICON_URL : getIconUrl(l.network, fill);
                 const imgSize = l.network === 'zalo' ? size : size * 0.6;
                 return `<td style="padding: 0 ${gap}px;"><a href="${l.url}" style="display: block; width: ${size}px; height: ${size}px; background-color: ${bg}; border-radius: ${sanitizeRadius(s.borderRadius || '4px')}; text-align: center; line-height: ${size}px;">
-                    <img src="${iconUrl}" width="${imgSize}" height="${imgSize}" style="vertical-align: middle; display: inline-block; width: ${imgSize}px; height: ${imgSize}px; object-fit: contain;" />
+                    <img src="${iconUrl}" width="${imgSize}" height="${imgSize}" class="icon-img" style="vertical-align: middle; display: inline-block; width: ${imgSize}px !important; max-width: ${imgSize}px !important; height: ${imgSize}px; object-fit: contain;" />
                 </a></td>`;
             }).join('');
             // [FIX] Add getBackgroundStyle so social block background color works in email clients
@@ -907,9 +914,27 @@ ${HEAD_CSS}
 <center>
 <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 0 auto;">
 <tbody>
-${isPreview ? '<tr><td height="40" style="font-size: 40px; line-height: 40px; mso-line-height-rule: exactly;">&nbsp;</td></tr>' : ''}
-${allBlocksHtml}
-${unsubFallbackRow}
+<tr>
+<td align="center">
+  <!--[if mso]>
+  <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="600">
+  <tr>
+  <td align="center" valign="top" width="600">
+  <![endif]-->
+  <table role="presentation" class="email-container" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 0 auto; width: 100%; max-width: 600px;">
+  <tbody>
+  ${isPreview ? '<tr><td height="40" style="font-size: 40px; line-height: 40px; mso-line-height-rule: exactly;">&nbsp;</td></tr>' : ''}
+  ${allBlocksHtml}
+  ${unsubFallbackRow}
+  </tbody>
+  </table>
+  <!--[if mso]>
+  </td>
+  </tr>
+  </table>
+  <![endif]-->
+</td>
+</tr>
 </tbody>
 </table>
 </center>

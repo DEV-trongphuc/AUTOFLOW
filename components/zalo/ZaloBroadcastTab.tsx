@@ -107,7 +107,7 @@ const ZaloBroadcastTab: React.FC<ZaloBroadcastTabProps> = ({ initialSelectedIds,
                     method: 'POST',
                     headers: _upToken ? { 'Authorization': `Bearer ${_upToken}` } : {},
                     body: formData
-                }).then(r => r.json());
+                }).then(r => { if (!r.ok) throw new Error("Upload failed"); return r.json(); });
 
                 if (upRes.success) {
                     attachmentId = upRes.attachment_id;

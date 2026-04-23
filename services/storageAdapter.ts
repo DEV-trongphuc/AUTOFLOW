@@ -130,13 +130,13 @@ async function request<T>(
   body?: any,
   options?: { signal?: AbortSignal }
 ): Promise<ApiResponse<T>> {
-  if (DEMO_MODE && typeof window !== 'undefined' && !sessionStorage.getItem('demo_seeded')) {
-      // Clear ALL stale demo caches so fresh data always loads on new page/tab
+  if (DEMO_MODE && typeof window !== 'undefined' && !(window as any).__demo_seeded) {
+      // Clear ALL stale demo caches so fresh data always loads on F5 / Page Refresh
       ['mailflow_flows','mailflow_campaigns','mailflow_templates','mailflow_subscribers',
        'mailflow_lists','mailflow_tags','mailflow_segments','mailflow_vouchers',
        'mailflow_surveys','demo_version'].forEach(k => localStorage.removeItem(k));
       await seedDemoData();
-      sessionStorage.setItem('demo_seeded', '1');
+      (window as any).__demo_seeded = true;
   }
 
   if (method === 'GET') {
@@ -305,7 +305,7 @@ async function request<T>(
 
     // --- INTERCEPT DYNAMIC REPORTS ---
     const { getDynamicReport } = await import('../utils/demoMocks');
-    const dynamicReport = getDynamicReport(resource, endpoint);
+    const dynamicReport = getDynamicReport(resource, endpoint, id);
     if (dynamicReport) {
         return { success: true, data: dynamicReport as T };
     }

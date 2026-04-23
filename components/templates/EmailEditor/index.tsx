@@ -646,6 +646,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
                     content: finalHtml
                 })
             });
+            if (!response.ok) throw new Error("Failed to send test email");
 
             const result = await response.json();
 

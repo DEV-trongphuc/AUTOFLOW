@@ -186,11 +186,15 @@ switch ($method) {
             $stmtN->execute([$path, $workspace_id]);
             $tagName = $stmtN->fetchColumn();
 
-            if ($tagName) {
-                // 1b. KIỂM TRA FLOW ĐANG ACTIVE
-                $checkFlows = $pdo->prepare("SELECT name FROM flows WHERE status IN ('active', 'paused') AND steps LIKE ? LIMIT 1");
-                $checkFlows->execute(['%"' . $tagName . '"%']);
-                $blockingFlow = $checkFlows->fetchColumn();
+            // [FIX] Verify ownership before proceeding to wipe child tables
+            if (!$tagName) {
+                throw new Exception("Không tìm thấy nhãn hoặc không có quyền");
+            }
+
+            // 1b. KIỂM TRA FLOW ĐANG ACTIVE
+            $checkFlows = $pdo->prepare("SELECT name FROM flows WHERE status IN ('active', 'paused') AND steps LIKE ? LIMIT 1");
+            $checkFlows->execute(['%"' . $tagName . '"%']);
+            $blockingFlow = $checkFlows->fetchColumn();
 
                 if ($blockingFlow) {
                     throw new Exception("Không thể xóa: Nhãn đang được sử dụng trong Flow đang chạy '{$blockingFlow}'. Vui lòng dừng hoặc chỉnh sửa Flow trước.");
@@ -214,7 +218,6 @@ switch ($method) {
                          WHERE id IN ($ph) AND JSON_CONTAINS(tags, JSON_QUOTE(?))"
                     )->execute(array_merge([$tagName], $chunk, [$tagName]));
                 }
-            }
 
             // 2b. Xóa quan hệ trong bảng trung gian subscriber_tags
             $pdo->prepare("DELETE FROM subscriber_tags WHERE tag_id = ?")->execute([$path]);

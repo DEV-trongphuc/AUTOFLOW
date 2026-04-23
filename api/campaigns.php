@@ -78,6 +78,14 @@ if ($method === 'POST' && $route === 'resend_failed_emails') {
         if (!$campaignId || empty($logIds))
             jsonResponse(false, null, 'Campaign ID and log IDs are required.');
 
+        // [FIX] Verify campaign ownership to prevent cross-tenant log deletion
+        $checkCamp = $pdo->prepare("SELECT id FROM campaigns WHERE id = ? AND workspace_id = ?");
+        $checkCamp->execute([$campaignId, $workspace_id]);
+        if (!$checkCamp->fetchColumn()) {
+            jsonResponse(false, null, 'Campaign not found or access denied.');
+            exit;
+        }
+
         // [AUDIT-C2 + H1 FIX] Correct order: fetch sub IDs first → clean activity → delete logs → update → commit → fire worker
         // Step 1: Collect subscriber IDs BEFORE deleting logs (subquery must read logs while they exist)
         $placeholders = implode(',', array_fill(0, count($logIds), '?'));
@@ -148,7 +156,17 @@ if ($method === 'POST' && $route === 'bulk_update_subscribers') {
         // This reduces the query count to ~56 and shrinks the transaction lock window by 99%.
         if ($action === 'delete') {
             $deleteIds = array_values(array_filter($subscriberIds, fn($id) => !empty($id)));
-            $chunks = array_chunk($deleteIds, 500);
+            
+            // [FIX] Ensure we only delete IDs belonging to the current workspace
+            $validDeleteIds = [];
+            if (!empty($deleteIds)) {
+                $ph = implode(',', array_fill(0, count($deleteIds), '?'));
+                $stmtVal = $pdo->prepare("SELECT id FROM subscribers WHERE id IN ($ph) AND workspace_id = ?");
+                $stmtVal->execute(array_merge($deleteIds, [$workspace_id]));
+                $validDeleteIds = $stmtVal->fetchAll(PDO::FETCH_COLUMN);
+            }
+            
+            $chunks = array_chunk($validDeleteIds, 500);
             foreach ($chunks as $chunk) {
                 $ph = implode(',', array_fill(0, count($chunk), '?'));
                 $pdo->prepare("DELETE FROM subscriber_activity WHERE subscriber_id IN ($ph)")->execute($chunk);
@@ -170,8 +188,9 @@ if ($method === 'POST' && $route === 'bulk_update_subscribers') {
         $subMap = [];
         if (!empty($cleanIds)) {
             $ph = implode(',', array_fill(0, count($cleanIds), '?'));
-            $stmtPre = $pdo->prepare("SELECT id, status FROM subscribers WHERE id IN ($ph)");
-            $stmtPre->execute($cleanIds);
+            // [FIX] Added workspace_id filter to prevent cross-tenant updates (e.g. unsubscribe, add_list)
+            $stmtPre = $pdo->prepare("SELECT id, status FROM subscribers WHERE id IN ($ph) AND workspace_id = ?");
+            $stmtPre->execute(array_merge($cleanIds, [$workspace_id]));
             foreach ($stmtPre->fetchAll() as $row) {
                 $subMap[$row['id']] = $row;
             }
@@ -407,6 +426,14 @@ if ($method === 'POST' && $route === 'delete_unsubscribed') {
         $cid = $data['id'] ?? null;
         if (!$cid) jsonResponse(false, null, 'Campaign ID is required.');
         
+        // [FIX] Verify campaign ownership
+        $checkCamp = $pdo->prepare("SELECT id FROM campaigns WHERE id = ? AND workspace_id = ?");
+        $checkCamp->execute([$cid, $workspace_id]);
+        if (!$checkCamp->fetchColumn()) {
+            jsonResponse(false, null, 'Campaign not found or access denied.');
+            exit;
+        }
+        
         $stmt = $pdo->prepare("SELECT subscriber_id FROM subscriber_activity WHERE campaign_id = ? AND type = 'unsubscribe'");
         $stmt->execute([$cid]);
         $subIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -500,9 +527,14 @@ if ($method === 'POST' && $route === 'trigger_refresh') {
         if (!$campaignId)
             jsonResponse(false, null, 'Campaign ID is required.');
 
-        $stmtCheck = $pdo->prepare("SELECT status, target_config FROM campaigns WHERE id = ?");
-        $stmtCheck->execute([$campaignId]);
+        // [FIX] Verify campaign ownership
+        $stmtCheck = $pdo->prepare("SELECT status, target_config FROM campaigns WHERE id = ? AND workspace_id = ?");
+        $stmtCheck->execute([$campaignId, $workspace_id]);
         $campaign = $stmtCheck->fetch();
+        if (!$campaign) {
+            jsonResponse(false, null, 'Campaign not found or access denied.');
+            exit;
+        }
         $currentStatus = strtolower($campaign['status'] ?: '');
 
         $targetConf = json_decode($campaign['target_config'], true);

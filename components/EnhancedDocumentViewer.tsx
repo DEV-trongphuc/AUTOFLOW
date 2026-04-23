@@ -137,6 +137,7 @@ export const EnhancedDocumentViewer: React.FC<DocumentViewerProps> = ({ file, on
                     arrayBuffer = bytes.buffer;
                 } else if (file.previewUrl) {
                     const response = await fetch(file.previewUrl);
+                    if (!response.ok) throw new Error("Failed to fetch document: " + response.status);
                     arrayBuffer = await response.arrayBuffer();
                 } else if (file.content) {
                     setContent(file.content);

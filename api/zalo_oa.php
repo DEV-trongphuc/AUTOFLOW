@@ -494,8 +494,8 @@ function syncFollowers($pdo, $oa_config_id)
         foreach ($followers as $follower) {
             $uid = $follower['user_id'];
             $profile = getZaloUserProfile($accessToken, $uid);
-            // Use Centralized Helper
-            upsertZaloSubscriber($pdo, $uid, $profile);
+            // [FIX BUG-ZH-1 call-site] Pass oa_config_id so workspace_id is correctly resolved
+            upsertZaloSubscriber($pdo, $uid, $profile, $oa_config_id);
             $total_synced++;
         }
 

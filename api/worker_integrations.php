@@ -110,8 +110,10 @@ if (!function_exists('runIntegrationSync')) {
                         $startTime = microtime(true);
 
                         // INITIALIZE SYNC ENGINE
+                        // [FIX BUG-SE-1] Pass workspace_id so SyncEngine only loads identity maps
+                        // for this integration's workspace, preventing cross-workspace email/phone match.
                         require_once 'sync_engine.php';
-                        $engine = new SyncEngine($pdo);
+                        $engine = new SyncEngine($pdo, $integration['workspace_id'] ?? null);
                         logIntegrationSync("Loading identity maps...");
                         $engine->loadMaps();
                         logIntegrationSync("Maps loaded. Emails: " . $engine->getStats()['emails'] . ", Phones: " . $engine->getStats()['phones']);

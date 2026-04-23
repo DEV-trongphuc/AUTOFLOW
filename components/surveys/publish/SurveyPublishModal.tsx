@@ -30,8 +30,9 @@ const SurveyPublishModal: React.FC<Props> = ({ survey, onClose, onPublish }) => 
         if (activeTab === 'qr' && survey.id && !qrData) {
             setIsLoadingQr(true);
             fetch(`${API}?action=qr&id=${survey.id}`)
-                .then(r => r.json())
+                .then(r => { if (!r.ok) throw new Error("Network error"); return r.json(); })
                 .then(res => { if (res.success) setQrData(res.data); })
+                .catch(err => console.error(err))
                 .finally(() => setIsLoadingQr(false));
         }
     }, [activeTab, survey.id]);
