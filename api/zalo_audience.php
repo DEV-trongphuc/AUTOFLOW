@@ -278,6 +278,38 @@ try {
             jsonResponse(true, $results, "Hoàn tất gửi ZBS. Thành công: {$results['success']}, Thất bại: {$results['failed']}");
         }
     }
+    // --- DELETE METHODS ---
+    elseif ($method === 'DELETE') {
+        $id = $_GET['id'] ?? '';
+        if (!$id) jsonResponse(false, null, "Thiếu ID người dùng");
+
+        // [SECURITY] Fetch user to get zalo_user_id for cascading cleanup
+        $stmtF = $pdo->prepare("SELECT zalo_user_id FROM zalo_subscribers WHERE id = ?");
+        $stmtF->execute([$id]);
+        $user = $stmtF->fetch(PDO::FETCH_ASSOC);
+
+        if ($user) {
+            $pdo->beginTransaction();
+            try {
+                // 1. Cleanup message history (uses zalo_user_id)
+                $pdo->prepare("DELETE FROM zalo_user_messages WHERE zalo_user_id = ?")->execute([$user['zalo_user_id']]);
+                
+                // 2. Cleanup activity logs (uses internal id)
+                $pdo->prepare("DELETE FROM zalo_subscriber_activity WHERE subscriber_id = ?")->execute([$id]);
+                
+                // 3. Delete the subscriber record
+                $pdo->prepare("DELETE FROM zalo_subscribers WHERE id = ?")->execute([$id]);
+
+                $pdo->commit();
+                jsonResponse(true, null, 'Đã xóa người dùng thành công');
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                jsonResponse(false, null, 'Lỗi khi xóa: ' . $e->getMessage());
+            }
+        } else {
+            jsonResponse(false, null, "Không tìm thấy người dùng");
+        }
+    }
 } catch (Exception $e) {
     jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
 }

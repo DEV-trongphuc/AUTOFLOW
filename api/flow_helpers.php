@@ -128,7 +128,8 @@ if (!function_exists('logActivity')) {
             'unsubscribed_from_flow',
             'zns_skipped',
             'delete_contact',
-            'web_activity'
+            'web_activity',
+            'survey_submit'
         ];
 
         // If it's a system progress event (wait, enter, exit, tag update, etc.), skip logging to keep Flow history clean

@@ -139,6 +139,15 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
                 }
             }
 
+            $nextStepId = $trigger['nextStepId'];
+            $nextStepType = 'unknown';
+            foreach ($steps as $fs) {
+                if ($fs['id'] === $nextStepId) {
+                    $nextStepType = $fs['type'] ?? 'unknown';
+                    break;
+                }
+            }
+
             // ATOMIC INSERT SELECT: Prevents duplicates based on frequency and status
             $existsCheckSql = "";
             $checkParams = [];
@@ -194,15 +203,15 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
             foreach (array_chunk($subscriberIds, $ENROLL_CHUNK) as $chunk) {
                 $placeholders = implode(',', array_fill(0, count($chunk), '?'));
 
-                $sqlIns = "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at)
-                           SELECT s.id, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
+                $sqlIns = "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, step_type, scheduled_at, status, created_at, updated_at, last_step_at)
+                           SELECT s.id, ?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
                            FROM subscribers s
                            WHERE s.id IN ($placeholders)
                            AND s.workspace_id = ?
                            AND s.status IN ('active', 'lead', 'customer')
                            $existsCheckSql";
 
-                $params = array_merge([$flow['id'], $trigger['nextStepId'], $initialSchedule], $chunk, [$flow['workspace_id']], $checkParams);
+                $params = array_merge([$flow['id'], $nextStepId, $nextStepType, $initialSchedule], $chunk, [$flow['workspace_id']], $checkParams);
                 $stmt = $pdo->prepare($sqlIns);
                 $stmt->execute($params);
                 $enrolledTotal += $stmt->rowCount();
@@ -507,10 +516,14 @@ if (!function_exists('wakeupWaitingSubscribers')) {
     function wakeupWaitingSubscribers($pdo, $subscriberId) {
         if (!$subscriberId) return;
         try {
-            // [BUG FIX] Correct table is subscriber_flow_states (not flow_subscribers which does not exist)
-            // Correct column is scheduled_at (not next_scheduled_at)
-            $stmt = $pdo->prepare("UPDATE subscriber_flow_states SET scheduled_at = NOW() WHERE subscriber_id = ? AND status = 'waiting' AND scheduled_at > NOW()");
+            // [FIX] Only wakeup 'condition' steps. 'wait' steps are time-based and should NOT be shortened by activity.
+            // This prevents duration-based waits (e.g. Wait 3 Days) from being skipped when a user performs 
+            // any action (click/open) from a previous step or different flow.
+            $stmt = $pdo->prepare("UPDATE subscriber_flow_states SET scheduled_at = NOW() WHERE subscriber_id = ? AND status = 'waiting' AND step_type = 'condition' AND scheduled_at > NOW()");
             $stmt->execute([$subscriberId]);
+            if ($stmt->rowCount() > 0) {
+                error_log("[wakeupWaitingSubscribers] Woke up Subscriber:{$subscriberId} (Step:Condition)");
+            }
         } catch (Exception $e) {
             error_log('[wakeupWaitingSubscribers] Failed: ' . $e->getMessage());
         }

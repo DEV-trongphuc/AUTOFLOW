@@ -4,12 +4,13 @@ import {
     X, User, History, Edit2, Check,
     Copy, Calendar, Clock, ArrowRight, ExternalLink,
     Send, MailOpen, MessageCircle, Info, Trash2, ChevronDown,
-    Activity, FileText, Mail, Phone, Globe, Briefcase, Building, MapPin, PenLine, Star, Plus
+    Activity, FileText, Mail, Phone, Globe, Briefcase, Building, MapPin, PenLine, Star, Plus, RefreshCw
 } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
 import Input from '../common/Input';
 import Select from '../common/Select';
 import Modal from '../common/Modal';
+import ConfirmModal from '../common/ConfirmModal';
 
 interface ZaloUserProfileModalProps {
     subscriberId: string;
@@ -78,6 +79,20 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
             });
         }
         setLoading(false);
+    };
+
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const handleDelete = async () => {
+        setUpdating(true);
+        const res = await api.delete(`zalo_audience?id=${subscriberId}`);
+        if (res.success) {
+            onUpdate?.();
+            handleClose();
+        } else {
+            alert('Lỗi khi xóa: ' + (res.message || 'Không xác định'));
+        }
+        setUpdating(false);
+        setShowDeleteConfirm(false);
     };
 
     const formatDateForInput = (dateStr: string) => {
@@ -358,7 +373,9 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                                                     </div>
                                                     <div className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm group hover:border-blue-200 transition-all">
                                                         <div className="flex justify-between items-start mb-1">
-                                                            <h5 className="text-sm font-black text-slate-800">{getEventLabel(act.type)}: {act.reference_name || 'Hệ thống'}</h5>
+                                                            <h5 className={`text-sm font-black transition-colors ${act.type === 'lead_score_sync' ? 'text-emerald-600' : 'text-slate-800'}`}>
+                                                                {getEventLabel(act.type)}: {act.reference_name || 'Hệ thống'}
+                                                            </h5>
                                                             <span className="text-[10px] font-bold text-slate-300 uppercase">{formatTimeAgoShort(act.created_at)}</span>
                                                         </div>
                                                         <div className="text-xs text-slate-500 font-medium leading-relaxed">
@@ -497,7 +514,10 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                 {/* Footer Actions */}
                 <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 shrink-0 flex items-center">
                     <div className="flex justify-between w-full items-center">
-                        <button className="inline-flex items-center justify-center font-bold rounded-xl transition-all duration-300 active:scale-95 trackiĐóng-tight bg-rose-50 text-rose-600 hover:bg-rose-100 px-4 py-2.5 text-sm gap-2 border-none shadow-none">
+                        <button
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="inline-flex items-center justify-center font-bold rounded-xl transition-all duration-300 active:scale-95 tracking-tight bg-rose-50 text-rose-600 hover:bg-rose-100 px-4 py-2.5 text-sm gap-2 border-none shadow-none"
+                        >
                             <Trash2 className="w-4 h-4" />
                             Xóa
                         </button>
@@ -523,6 +543,17 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                 </div>
 
             </div>
+
+            <ConfirmModal
+                isOpen={showDeleteConfirm}
+                onClose={() => setShowDeleteConfirm(false)}
+                onConfirm={handleDelete}
+                title="Xóa kết nối Zalo"
+                message="Bạn có chắc chắn muốn xóa kết nối Zalo này? Hành động này sẽ xóa lịch sử tin nhắn và hoạt động Zalo của người dùng này nhưng không ảnh hưởng đến hồ sơ chính."
+                confirmText="Xác nhận xóa"
+                cancelText="Hủy"
+                variant="danger"
+            />
         </Modal>
     );
 };
@@ -555,7 +586,7 @@ const TimelineIcon = ({ type }: { type: string }) => {
         case 'reacted_broadcast': return <div className="w-full h-full flex items-center justify-center rounded-full text-blue-500 bg-blue-50"><Activity className="w-4 h-4" /></div>;
         case 'user_submit_info': return <div className="w-full h-full flex items-center justify-center rounded-full text-purple-500 bg-purple-50"><FileText className="w-4 h-4" /></div>;
         case 'lead_score_reward': return <div className="w-full h-full flex items-center justify-center rounded-full text-amber-600 bg-amber-50"><Star className="w-4 h-4 fill-current" /></div>;
-        case 'lead_score_sync': return 'Đồng bộ điểm';
+        case 'lead_score_sync': return <div className="w-full h-full flex items-center justify-center rounded-full text-emerald-600 bg-emerald-50"><RefreshCw className="w-4 h-4" /></div>;
         default: return <div className="w-full h-full flex items-center justify-center rounded-full text-slate-400 bg-slate-50"><Clock className="w-4 h-4" /></div>;
     }
 };

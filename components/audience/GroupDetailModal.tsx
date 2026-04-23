@@ -990,12 +990,6 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                                                     <p className="text-sm font-bold text-slate-700">{member.firstName} {member.lastName}</p>
                                                     <div className="flex items-center gap-2">
                                                         <p className="text-xs text-slate-400">{member.email}</p>
-                                                        {member.salesperson && (
-                                                            <>
-                                                                <span className="w-1 h-1 rounded-full bg-slate-300" />
-                                                                <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-tight">Sales: {member.salesperson}</p>
-                                                            </>
-                                                        )}
                                                     </div>
                                                 </div>
                                             </div>

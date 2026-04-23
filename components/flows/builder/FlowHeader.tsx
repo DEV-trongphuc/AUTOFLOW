@@ -27,6 +27,7 @@ interface FlowHeaderProps {
   onSync?: () => void;
   isSyncing?: boolean;
   onRename?: (name: string) => void;
+  canSave?: boolean;
 }
 
 const FlowHeader: React.FC<FlowHeaderProps> = ({
@@ -49,7 +50,8 @@ const FlowHeader: React.FC<FlowHeaderProps> = ({
   isReportMode,
   onSync,
   isSyncing,
-  onRename
+  onRename,
+  canSave = true
 }) => {
   const isArchived = flow.status === 'archived';
 
@@ -183,7 +185,17 @@ const FlowHeader: React.FC<FlowHeaderProps> = ({
           {isArchived ? (
             <Button icon={RefreshCw} onClick={onRestore} variant="primary" className="h-9 lg:h-10 rounded-full px-2 sm:px-4 lg:px-6 text-[9px] lg:text-[10px] uppercase font-black tracking-widest min-w-0"><span className="hidden sm:inline">Khôi phục</span></Button>
           ) : (
-            <Button icon={Save} onClick={onSave} disabled={isViewMode} className="h-9 lg:h-10 rounded-full px-2 sm:px-4 lg:px-6 text-[9px] lg:text-[10px] uppercase font-black tracking-widest bg-[#ffa900] hover:bg-[#e69800] text-white shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 border-none min-w-0"><span className="hidden sm:inline">Lưu</span></Button>
+            <Button
+              icon={Save}
+              onClick={onSave}
+              disabled={isViewMode || !canSave}
+              className={`h-9 lg:h-10 rounded-full px-2 sm:px-4 lg:px-6 text-[9px] lg:text-[10px] uppercase font-black tracking-widest transition-all min-w-0 ${isViewMode || !canSave
+                ? 'bg-emerald-600 text-white border-none cursor-not-allowed shadow-none'
+                : 'bg-[#ffa900] hover:bg-[#e69800] text-white shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 border-none'
+                }`}
+            >
+              <span className="hidden sm:inline">Lưu</span>
+            </Button>
           )}
         </div>
       </div >

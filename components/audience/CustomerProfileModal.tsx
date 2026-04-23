@@ -2022,7 +2022,7 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
                                             <p className="text-[9px] text-blue-100/70 font-bold font-mono mt-0.5 opacity-80">UID: {subscriber.zalo_user_id}</p>
                                         </div>
                                     </div>
-                                    <button className="px-4 py-2 bg-white dark:bg-slate-900/10 hover:bg-white dark:bg-slate-900/20 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-default">
+                                    <button className="px-4 py-2 bg-white dark:bg-slate-900/10 hover:bg-white dark:bg-slate-900/20 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-default">
                                         Đã đồng bộ
                                     </button>
                                 </div>

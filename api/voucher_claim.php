@@ -2,6 +2,7 @@
 // api/voucher_claim.php
 require_once 'db_connect.php';
 require_once 'flow_helpers.php';
+require_once 'voucher_helper.php';
 
 /** @var \PDO $pdo */
 
@@ -34,6 +35,11 @@ function doResponse($isAjax, $success, $message, $httpRedirect, $extraData = [])
         $extraData['success'] = $success;
         $extraData['message'] = $message;
         $extraData['redirect'] = $httpRedirect;
+        if (!function_exists('apiHeaders')) {
+            function apiHeaders() {
+                header('Content-Type: application/json; charset=utf-8');
+            }
+        }
         apiHeaders();
         echo json_encode($extraData, JSON_UNESCAPED_UNICODE);
         exit;
@@ -64,42 +70,49 @@ function doResponse($isAjax, $success, $message, $httpRedirect, $extraData = [])
 }
 
 if (!$campaignId) {
-    doResponse($isAjax, false, "Thi?u tham s? chi?n d?ch (campaign_id)", $redirectEmpty);
+    doResponse($isAjax, false, "Thiếu tham số chiến dịch (campaign_id)", $redirectEmpty);
 }
 
 if (!$email && !$phone) {
-    doResponse($isAjax, false, "C?n cung c?p Email ho?c S? di?n tho?i d? nh?n m�", $redirectEmpty);
+    doResponse($isAjax, false, "Cần cung cấp Email hoặc Số điện thoại để nhận mã", $redirectEmpty);
 }
 
-// 2. Kiểm tra Campaign
-// [FIX BUG-CLAIM-1] Scope campaign fetch to workspace via JOIN guard — prevents cross-workspace claims
+// [SEC] Rate Limiting by IP
+$clientIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+if (strpos($clientIp, ',') !== false) $clientIp = trim(explode(',', $clientIp)[0]);
+
+$ipHash = hash('sha256', $clientIp);
+$rateLimitStmt = $pdo->prepare("SELECT COUNT(*) FROM subscriber_activity WHERE details LIKE ? AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)");
+$rateLimitStmt->execute(['%IP: ' . $clientIp . '%']);
+if ((int)$rateLimitStmt->fetchColumn() >= 10) {
+    doResponse($isAjax, false, "Bạn đã thực hiện quá nhiều yêu cầu, vui lòng thử lại sau.", $redirectEmpty);
+}
+
+// 2. Check Campaign
 $stmtCamp = $pdo->prepare("SELECT * FROM voucher_campaigns WHERE id = ? AND status = 'active'");
 $stmtCamp->execute([$campaignId]);
 $camp = $stmtCamp->fetch(PDO::FETCH_ASSOC);
 
-if (!$camp || $camp['status'] !== 'active') {
-    doResponse($isAjax, false, "Chi?n d?ch kh�ng t?n t?i ho?c d� b? t?t.", $redirectEmpty);
+if (!$camp) {
+    doResponse($isAjax, false, "Chiến dịch không tồn tại hoặc đã bị tắt.", $redirectEmpty);
 }
 
-// Ki?m tra H?n
+// Check Date
 if (!empty($camp['end_date']) && strtotime($camp['end_date']) < time()) {
-    doResponse($isAjax, false, "Chi?n d?ch d� k?t th�c.", $redirectEmpty);
+    doResponse($isAjax, false, "Chiến dịch đã kết thúc.", $redirectEmpty);
 }
 
-// 1. Identiy / Upsert Subscriber
-// [FIX] �p d?ng Named Lock d? ch?ng race condition
-// [FIX BUG-VC-1] Use prepared statement for GET_LOCK — old code used string interpolation
-// which breaks if email contains a single-quote (e.g. o'brien@...) and is inconsistent
-// with the pattern already used in forms.php and track.php.
+// 1. Identity / Upsert Subscriber
 $lockTarget = $email ? "sub_email_" . md5($email) : "sub_phone_" . md5($phone);
-$pdo->prepare("SELECT GET_LOCK(?, 5)")->execute([$lockTarget]);
-
+$lockStmt = $pdo->prepare("SELECT GET_LOCK(?, 5)");
+$lockStmt->execute([$lockTarget]);
+if ($lockStmt->fetchColumn() != 1) {
+    doResponse($isAjax, false, "Hệ thống đang bận, vui lòng thử lại.", $redirectEmpty);
+}
 
 try {
-    $stmtCheck = null;
     $sid = null;
     if ($email) {
-        // [FIX BUG-CLAIM-1] Scope lookup to same workspace as campaign, prevents cross-tenant assignment
         $stmtCheck = $pdo->prepare("SELECT id FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
         $stmtCheck->execute([$email, $camp['workspace_id']]);
         $sid = $stmtCheck->fetchColumn();
@@ -113,138 +126,60 @@ try {
     if (!$sid) {
         // Create new
         $sid = bin2hex(random_bytes(16));
-        $upsertFields = ['id' => $sid, 'status' => 'active', 'source' => 'Voucher Claim: ' . $campaignId, 'workspace_id' => $camp['workspace_id']];
-        $upsertSet = "status = 'active'";
+        $upsertFields = [
+            'id' => $sid, 
+            'status' => 'active', 
+            'source' => 'Voucher Claim: ' . $campaignId, 
+            'workspace_id' => $camp['workspace_id']
+        ];
+        
         if ($email) { $upsertFields['email'] = $email; }
         if ($phone) { $upsertFields['phone_number'] = $phone; }
         
         $first = trim($data['first_name'] ?? '');
         $last = trim($data['last_name'] ?? '');
         if ($first || $last) {
-            $name = trim($first . ' ' . $last);
-            $upsertFields['first_name'] = $name;
+            $upsertFields['first_name'] = trim($first . ' ' . $last);
         }
         
         $cols = implode(', ', array_keys($upsertFields));
         $ph = implode(', ', array_fill(0, count($upsertFields), '?'));
         
-        $pdo->prepare("INSERT INTO subscribers ($cols) VALUES ($ph) ON DUPLICATE KEY UPDATE $upsertSet")->execute(array_values($upsertFields));
+        $pdo->prepare("INSERT INTO subscribers ($cols) VALUES ($ph) ON DUPLICATE KEY UPDATE status = 'active'")
+            ->execute(array_values($upsertFields));
 
         // Add to Target List if configured
         if (!empty($camp['claim_target_list_id'])) {
-            $pdo->prepare("INSERT IGNORE INTO subscriber_lists_map (list_id, subscriber_id, status) VALUES (?, ?, 'active')")
-                ->execute([$camp['claim_target_list_id'], $sid]);
+            $pdo->prepare("INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id) VALUES (?, ?)")
+                ->execute([$sid, $camp['claim_target_list_id']]);
         }
     }
 
     $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockTarget]);
+
+    // 3. Atomic Claim via Helper
+    $claimRes = claimVoucherAtomic($pdo, $campaignId, $sid, null, 'api', $campaignId, $eventName);
     
-
-} catch (Exception $e) {
-    $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockTarget]); // [FIX BUG-VC-1]
-    doResponse($isAjax, false, "L?i khi x? l� d? li?u h? so.", $redirectEmpty);
-}
-
-// 3. Ti?n h�nh X� M� (Atomic Claim)
-$codeAssigned = null;
-
-try {
-    $alreadyInTx = $pdo->inTransaction();
-    if (!$alreadyInTx) $pdo->beginTransaction();
-
-    // Check n?u d� x� r?i
-    $stmtExist = $pdo->prepare("SELECT code FROM voucher_codes WHERE campaign_id = ? AND subscriber_id = ? LIMIT 1");
-    $stmtExist->execute([$campaignId, $sid]);
-    $existing = $stmtExist->fetchColumn();
-
-    if ($existing) {
-        $codeAssigned = $existing;
-    } else {
-        if ($camp['code_type'] === 'static') {
-            $codeAssigned = $camp['static_code'];
-        } else {
-            // Dynamic: Pick one with version-aware locking
-            // [FIX P10-C2] SKIP LOCKED requires MySQL >= 8.0; fallback to FOR UPDATE on 5.7.
-            static $vcSkipLocked = null;
-            if ($vcSkipLocked === null) {
-                $v = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
-                $vcSkipLocked = version_compare($v, '8.0.0', '>=') ? 'SKIP LOCKED' : '';
-            }
-            $stmtClaim = $pdo->prepare("SELECT id, code FROM voucher_codes WHERE campaign_id = ? AND status = 'unused' AND subscriber_id IS NULL ORDER BY id ASC LIMIT 1 FOR UPDATE $vcSkipLocked");
-            $stmtClaim->execute([$campaignId]);
-            $row = $stmtClaim->fetch(PDO::FETCH_ASSOC);
-
-            if ($row) {
-                // Update Owner ngay l?p t?c (Check Expiration)
-                $expiresAt = null;
-                if (!empty($camp['expiration_days'])) {
-                    $expiresAt = date('Y-m-d H:i:s', strtotime("+{$camp['expiration_days']} days"));
-                }
-                
-                // [FIX BUG-VC-SCHEMA-1] status='available' was not a valid ENUM('unused','used') value.
-                // In strict mode: error; in non-strict: silently stored as ''. Now correctly uses 'used'.
-                // Note: codes are "assigned" but not necessarily "redeemed" yet — campaign admin can
-                // differentiate via subscriber_id IS NOT NULL (assigned) vs used_at IS NOT NULL (redeemed).
-                $pdo->prepare("UPDATE voucher_codes SET subscriber_id = ?, status = 'used', claimed_at = NOW(), expires_at = ? WHERE id = ?")->execute([$sid, $expiresAt, $row['id']]);
-                $codeAssigned = $row['code'];
-            }
-        }
+    if (!$claimRes['success']) {
+        doResponse($isAjax, false, $claimRes['message'], $redirectEmpty);
     }
 
-    if (!$alreadyInTx) $pdo->commit();
+    $codeAssigned = $claimRes['code'];
+
+    // Custom success redirect processing
+    $finalRedirect = $redirectSuccess;
+    if ($finalRedirect) {
+        $sep = (strpos($finalRedirect, '?') === false) ? '?' : '&';
+        $finalRedirect .= $sep . 'voucher=' . urlencode($codeAssigned);
+    }
+
+    doResponse($isAjax, true, "Lấy mã thành công! Mã của bạn là: " . $codeAssigned, $finalRedirect, [
+        'code' => $codeAssigned,
+        'event_triggered' => $eventName
+    ]);
+
 } catch (Exception $e) {
-    if (!$alreadyInTx && $pdo->inTransaction()) $pdo->rollBack();
-    doResponse($isAjax, false, "H? th?ng qu� t?i, vui l�ng th? l?i.", $redirectEmpty);
+    $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockTarget]);
+    error_log("Voucher Claim API Error: " . $e->getMessage());
+    doResponse($isAjax, false, "Lỗi hệ thống khi xử lý hồ sơ.", $redirectEmpty);
 }
-
-if (!$codeAssigned) {
-    // H?t m�
-    doResponse($isAjax, false, "H?t m�! S? lu?ng Voucher c?a chuong tr�nh d� c?n.", $redirectEmpty);
-}
-
-// 4. K�ch ho?t Automation (Custom Event)
-// Ghi nh?n Activity
-require_once 'tracking_helper.php';
-logActivity($pdo, $sid, 'custom_event', $eventName, null, "X� m� Voucher: $codeAssigned (Campaign: {$camp['name']})", null, null, ['campaign_id' => $campaignId, 'code' => $codeAssigned]);
-
-// Dispatch Queue (Worker s? b?t Trigger c� Loai = voucher & Target ID = campaign_id)
-// �?ng th?i v?n b?n custom_event n?u c� k?ch b?n cu dang x�i.
-$workerUrl1 = API_BASE_URL . "/worker_priority.php?" . http_build_query([
-    'trigger_type' => 'custom_event', 
-    'target_id' => $eventName, 
-    'subscriber_id' => $sid
-]);
-$workerUrl2 = API_BASE_URL . "/worker_priority.php?" . http_build_query([
-    'trigger_type' => 'voucher', 
-    'target_id' => $campaignId, 
-    'subscriber_id' => $sid
-]);
-
-$cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
-foreach ([$workerUrl1, $workerUrl2] as $url) {
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 1);
-    curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
-    @curl_exec($ch);
-    curl_close($ch);
-}
-
-// N?u c� custom success redirect, c� th? n?i th�m m� code v�o param n?u mu?n
-$finalRedirect = $redirectSuccess;
-if ($finalRedirect && strpos($finalRedirect, '?') === false) {
-    $finalRedirect .= '?voucher=' . urlencode($codeAssigned);
-} else if ($finalRedirect) {
-    $finalRedirect .= '&voucher=' . urlencode($codeAssigned);
-}
-
-doResponse($isAjax, true, "L?y m� th�nh c�ng! M� c?a b?n l�: " . $codeAssigned, $finalRedirect, [
-    'code' => $codeAssigned,
-    'event_triggered' => $eventName
-]);
-

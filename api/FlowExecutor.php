@@ -678,6 +678,17 @@ class FlowExecutor
                     // Worker sets this TRUE only for step 1 in the run AND step_id matches AND scheduled_at passed.
                     // Chain steps (stepsProcessedInRun > 1) always get is_resumed_wait=FALSE → always calculate.
                     if (!empty($contextData['is_resumed_wait'])) {
+                        // [HARDENING - LAYER 2] Double-check if the wait is REALLY over.
+                        // Even if the worker signaled resume (e.g. forced by wakeupWaitingSubscribers),
+                        // if the scheduled_at is still in the future, we MUST go back to sleep.
+                        $dbScheduledAt = $contextData['scheduled_at'] ?? null;
+                        if ($dbScheduledAt && strtotime($dbScheduledAt) > time()) {
+                            $logs[] = "  -> [HARDENING] Resumed early but scheduled time ({$dbScheduledAt}) not reached yet. Going back to sleep.";
+                            $status = 'waiting';
+                            $nextScheduledAt = $dbScheduledAt;
+                            $shouldContinueChain = false;
+                            break;
+                        }
                         $isWaitOver = true;
                         $logDetail = "Wait Finished (Resumed)";
                     } else {
@@ -1374,10 +1385,20 @@ class FlowExecutor
                                     // [FIX P0] Status was 'processing' — workers only poll WHERE status='waiting',
                                     // so linked-flow subscribers were invisible until a timeout reclaim cycle.
                                     // Changed to 'waiting' so the dispatched priority worker picks up instantly.
+                                    // [HARDENING] Extract step type for the linked flow's first step
+                                    $lSteps = json_decode($linkedFlow['steps'], true) ?: [];
+                                    $lStartType = 'unknown';
+                                    foreach ($lSteps as $ls) {
+                                        if ($ls['id'] === $lStart) {
+                                            $lStartType = $ls['type'] ?? 'unknown';
+                                            break;
+                                        }
+                                    }
+
                                     $this->pdo->prepare(
-                                        "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at)
-                                         VALUES (?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW())"
-                                    )->execute([$subscriberId, $linkedId, $lStart, $linkedInitialSchedule]);
+                                        "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, step_type, scheduled_at, status, created_at, updated_at, last_step_at)
+                                         VALUES (?, ?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW())"
+                                    )->execute([$subscriberId, $linkedId, $lStart, $lStartType, $linkedInitialSchedule]);
                                     $newQ = $this->pdo->lastInsertId();
                                     if ($newQ) {
                                         dispatchFlowWorker($this->pdo, 'flows', ['priority_queue_id' => $newQ, 'subscriber_id' => $subscriberId, 'priority_flow_id' => $linkedId]);

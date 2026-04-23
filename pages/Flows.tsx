@@ -1959,6 +1959,7 @@ const Flows: React.FC = () => {
                             isReportMode={isReportMode}
                             onToggleReportMode={() => setIsReportMode(!isReportMode)}
                             onRename={(newName) => { if (selectedFlow) { setSelectedFlow({ ...selectedFlow, name: newName }); setHasUnsavedChanges(true); } }}
+                            canSave={hasUnsavedChanges}
                         />
                         <div className="flex-1 flex overflow-hidden relative">
                             {/* MAIN CONTENT AREA */}

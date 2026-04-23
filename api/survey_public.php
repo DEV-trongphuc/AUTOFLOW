@@ -93,8 +93,9 @@ try {
             exit;
         }
 
-        // Rate limiting by IP hash
-        $ipHash = hash('sha256', $_SERVER['REMOTE_ADDR'] ?? '');
+        // Rate limiting by IP hash (Support Cloudflare/Proxy)
+        $clientIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $ipHash = hash('sha256', $clientIp);
         $rateLimitStmt = $pdo->prepare("
             SELECT COUNT(*) FROM survey_responses
             WHERE survey_id = ? AND ip_hash = ? AND submitted_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)
@@ -120,7 +121,7 @@ try {
             exit;
         }
 
-        // [SEC] Sanitize payload to prevent XSS
+        // [SEC] Sanitize payload to prevent XSS (Harden: Strip dangerous tags and encode)
         $sanitizePayload = function($data) use (&$sanitizePayload) {
             if (is_array($data)) {
                 $sanitized = [];
@@ -130,7 +131,10 @@ try {
                 return $sanitized;
             }
             if (is_scalar($data)) {
-                return htmlspecialchars((string)$data, ENT_QUOTES, 'UTF-8');
+                $str = (string)$data;
+                // Strip tags for safety, but keep & for legitimate entities if needed (standard encoding)
+                $str = strip_tags($str);
+                return htmlspecialchars($str, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
             }
             return $data;
         };
@@ -199,14 +203,29 @@ try {
             }
         }
         if ($submittedEmail) {
-            $subStmt = $pdo->prepare("SELECT id, phone_number FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
+            $subStmt = $pdo->prepare("SELECT id, phone_number, first_name FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
             $subStmt->execute([$submittedEmail, $survey['workspace_id']]);
             $existSub = $subStmt->fetch();
             if ($existSub) {
                 $subscriberId = $existSub['id'];
+                $updateFields = [];
+                $updateParams = [];
+                
+                // Update missing phone
                 if ($submittedPhone && empty($existSub['phone_number'])) {
-                    $pdo->prepare("UPDATE subscribers SET phone_number = ? WHERE id = ?")
-                        ->execute([$submittedPhone, $subscriberId]);
+                    $updateFields[] = "phone_number = ?";
+                    $updateParams[] = $submittedPhone;
+                }
+                // Update missing name
+                if ($submittedName && (empty($existSub['first_name']) || $existSub['first_name'] === 'Guest')) {
+                    $updateFields[] = "first_name = ?";
+                    $updateParams[] = $submittedName;
+                }
+                
+                if (!empty($updateFields)) {
+                    $updateParams[] = $subscriberId;
+                    $pdo->prepare("UPDATE subscribers SET " . implode(', ', $updateFields) . " WHERE id = ?")
+                        ->execute($updateParams);
                 }
             } else {
                 $subscriberId = generateUUID();
@@ -234,17 +253,7 @@ try {
             }
         }
 
-        // Auto-migrate schema for quiz scores
-        try {
-            $checkCol = $pdo->query("SHOW COLUMNS FROM survey_responses LIKE 'total_score'")->fetch();
-            if (!$checkCol) {
-                $pdo->exec("ALTER TABLE survey_responses ADD COLUMN total_score FLOAT DEFAULT NULL, ADD COLUMN max_score FLOAT DEFAULT NULL");
-            }
-            $checkColScreen = $pdo->query("SHOW COLUMNS FROM survey_responses LIKE 'end_screen_id'")->fetch();
-            if (!$checkColScreen) {
-                $pdo->exec("ALTER TABLE survey_responses ADD COLUMN end_screen_id VARCHAR(100) DEFAULT 'default'");
-            }
-        } catch (Exception $e) {}
+        // Schema migration moved to formal migration script 003_survey_hardening.sql
 
         // INSERT response
         $responseId = generateUUID();
@@ -333,6 +342,33 @@ try {
             $detailStmt->execute([generateUUID(), $responseId, $survey['id'], $ans['question_id'], $answerText, $answerNum, $answerJson]);
         }
 
+        // [NEW] CUSTOM ATTRIBUTE MAPPING
+        if ($subscriberId) {
+            $stmtMappings = $pdo->prepare("SELECT block_id, target_attribute FROM survey_questions WHERE survey_id = ? AND target_attribute IS NOT NULL AND target_attribute != ''");
+            $stmtMappings->execute([$survey['id']]);
+            $mappings = $stmtMappings->fetchAll(PDO::FETCH_KEY_PAIR);
+
+            if (!empty($mappings)) {
+                $mappedAttrs = [];
+                foreach ($answers as $ans) {
+                    $bId = $ans['question_id'] ?? ($ans['block_id'] ?? '');
+                    if (isset($mappings[$bId])) {
+                        $attrName = $mappings[$bId];
+                        // Get the most appropriate value for the attribute
+                        $val = $ans['answer_text'] ?? ($ans['answer_num'] ?? ($ans['answer_json'] ?? null));
+                        if ($val !== null) {
+                            $mappedAttrs[$attrName] = $val;
+                        }
+                    }
+                }
+
+                if (!empty($mappedAttrs)) {
+                    $pdo->prepare("UPDATE subscribers SET custom_attributes = JSON_MERGE_PATCH(COALESCE(custom_attributes, '{}'), ?) WHERE id = ?")
+                        ->execute([json_encode($mappedAttrs, JSON_UNESCAPED_UNICODE), $subscriberId]);
+                }
+            }
+        }
+
         // VOUCHER REWARD EVALUATION
         $claimedVoucherCode = null;
         if (!empty($settingsObj['voucher_config']['enabled']) && !empty($settingsObj['voucher_config']['campaign_id']) && $subscriberId) {
@@ -367,17 +403,31 @@ try {
                     }
                     
                     $isMatched = false;
-                    $actualText = strtolower(trim((string)($ansMatched['answer_text'] ?? $ansMatched['answer_num'] ?? '')));
+                    $actualValue = $ansMatched['answer_text'] ?? $ansMatched['answer_num'] ?? '';
+                    
+                    // Support multi_choice (array in answer_json)
+                    if (isset($ansMatched['answer_json']) && is_array($ansMatched['answer_json'])) {
+                        $actualValue = implode(', ', $ansMatched['answer_json']);
+                    }
+                    
+                    $actualText = strtolower(trim((string)$actualValue));
                     $expectedText = strtolower(trim((string)$val));
                     
                     if ($op === 'is_answered') {
-                        $isMatched = true;
+                        $isMatched = !empty($actualText);
                     } else if ($op === 'is_empty') {
                         $isMatched = empty($actualText);
-                    } else if ($op === 'equals' && $actualText === $expectedText) {
-                        $isMatched = true;
-                    } else if ($op === 'not_equals' && $actualText !== $expectedText) {
-                        $isMatched = true;
+                    } else if ($op === 'equals') {
+                        // For multi_choice, check if the expected value is among the selected values
+                        if (isset($ansMatched['answer_json']) && is_array($ansMatched['answer_json'])) {
+                            foreach($ansMatched['answer_json'] as $item) {
+                                if (strtolower(trim((string)$item)) === $expectedText) { $isMatched = true; break; }
+                            }
+                        } else {
+                            $isMatched = ($actualText === $expectedText);
+                        }
+                    } else if ($op === 'not_equals') {
+                        $isMatched = ($actualText !== $expectedText);
                     } else if ($op === 'contains' && strpos($actualText, $expectedText) !== false) {
                         $isMatched = true;
                     } else if ($op === 'greater_than' && (float)$actualText > (float)$expectedText) {
@@ -406,38 +456,36 @@ try {
         }
 
         // Flow trigger — priority worker (same as forms.php pattern)
+        // LOG ACTIVITY
+        if ($subscriberId) {
+            logActivity($pdo, $subscriberId, 'survey_submit', $survey['id'], $survey['name'], "Submitted Survey: {$survey['name']}", null, null, [
+                'source' => $sourceChannel,
+                'device' => $device,
+                'score' => $totalScore
+            ], $survey['workspace_id']);
+        }
+
+        // Flow trigger — priority worker (using centralized WorkerTriggerService)
         if ($subscriberId) {
             try {
-                // 1. survey_submit trigger — maps active flows with trigger_type='survey' targeting this survey
+                require_once 'WorkerTriggerService.php';
                 $apiUrl = defined('API_BASE_URL') ? API_BASE_URL : 'https://automation.ideas.edu.vn/mail_api';
-                if (strpos($apiUrl, 'http') === false) {
-                    $apiUrl = 'https://automation.ideas.edu.vn/mail_api';
-                }
-                $workerUrl = $apiUrl . '/worker_priority.php?' . http_build_query([
+                $workerService = new WorkerTriggerService($pdo, $apiUrl);
+                
+                // 1. survey_submit trigger
+                $workerService->trigger('/worker_priority.php?' . http_build_query([
                     'trigger_type' => 'survey',
                     'target_id'    => $survey['id'],
                     'subscriber_id'=> $subscriberId
-                ]);
-                $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
-                $ch = curl_init();
-                curl_setopt($ch, CURLOPT_URL, $workerUrl);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
-                curl_setopt($ch, CURLOPT_TIMEOUT, 2);
-                curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
-                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-                curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
-                @curl_exec($ch);
-                curl_close($ch);
+                ]));
 
                 // 2. Legacy: specific flow_trigger_id on survey row
                 if (!empty($survey['flow_trigger_id'])) {
-                    dispatchFlowWorker($pdo, 'flows', [
+                    $workerService->trigger('/worker_priority.php?' . http_build_query([
                         'trigger_type'  => 'flow_trigger',
                         'target_id'     => $survey['flow_trigger_id'],
                         'subscriber_id' => $subscriberId
-                    ]);
+                    ]));
                 }
             } catch (Exception $e) {
                 error_log('Survey flow trigger error: ' . $e->getMessage());

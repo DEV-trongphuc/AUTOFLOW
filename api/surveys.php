@@ -120,7 +120,7 @@ try {
             if (isset($input['blocks_json']) && is_array($input['blocks_json'])) {
                 $blocks = $input['blocks_json'];
                 $pdo->prepare("DELETE FROM survey_questions WHERE survey_id = ?")->execute([$id]);
-                $qStmt = $pdo->prepare("INSERT INTO survey_questions (id, survey_id, block_id, type, label, options_json, required, order_index) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                $qStmt = $pdo->prepare("INSERT INTO survey_questions (id, survey_id, block_id, type, label, options_json, required, order_index, target_attribute) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 $order = 0;
                 foreach ($blocks as $b) {
                     $isLayout = in_array($b['type'] ?? '', ['section_header', 'image_block', 'divider', 'page_break', 'button_block', 'link_block', 'banner_block']);
@@ -129,7 +129,8 @@ try {
                         $req = isset($b['required']) && $b['required'] ? 1 : 0;
                         $label = $b['content'] ?? ($b['title'] ?? 'Untitled Question');
                         $blockId = $b['id'] ?? generateUUID();
-                        $qStmt->execute([generateUUID(), $id, $blockId, $b['type'] ?? 'unknown', $label, $opts, $req, $order]);
+                        $targetAttr = $b['targetAttribute'] ?? ($b['target_attribute'] ?? null);
+                        $qStmt->execute([generateUUID(), $id, $blockId, $b['type'] ?? 'unknown', $label, $opts, $req, $order, $targetAttr]);
                         $order++;
                     }
                 }
@@ -279,73 +280,109 @@ try {
             $byDate->execute([$surveyId]);
             $byDateData = $byDate->fetchAll(PDO::FETCH_ASSOC);
 
-            // Per-question aggregation: batch fetch ALL answer data first, then aggregate in PHP
+            // Per-question aggregation: Optimized with SQL grouping
             $questions = $pdo->prepare("SELECT * FROM survey_questions WHERE survey_id = ? ORDER BY order_index");
             $questions->execute([$surveyId]);
             $questionsData = $questions->fetchAll(PDO::FETCH_ASSOC);
 
-            $allBlockIds = array_column($questionsData, 'block_id');
-            $batchAnswerData = [];
-            if (!empty($allBlockIds)) {
-                $bPh = implode(',', array_fill(0, count($allBlockIds), '?'));
-                $batchStmt = $pdo->prepare("SELECT question_id, answer_text, answer_num, answer_json FROM survey_answer_details WHERE question_id IN ($bPh)");
-                $batchStmt->execute($allBlockIds);
-                foreach ($batchStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-                    $batchAnswerData[$row['question_id']][] = $row;
-                }
-            }
-
             $questionAnalytics = [];
             foreach ($questionsData as $q) {
-                $qa = ['question_id' => $q['block_id'], 'block_id' => $q['block_id'], 'type' => $q['type'], 'label' => $q['label'], 'content' => $q['content'] ?? null, 'options' => $q['options'] ?? null];
-                $rows = $batchAnswerData[$q['block_id']] ?? [];
-                $qa['total_answered'] = count($rows);
+                $blockId = $q['block_id'];
+                $qa = [
+                    'question_id' => $blockId, 
+                    'block_id' => $blockId, 
+                    'type' => $q['type'], 
+                    'label' => $q['label'], 
+                    'content' => $q['content'] ?? null, 
+                    'options' => $q['options'] ?? null
+                ];
 
+                // 1. Total answered for this specific question
+                $stmtTotal = $pdo->prepare("SELECT COUNT(*) FROM survey_answer_details WHERE question_id = ?");
+                $stmtTotal->execute([$blockId]);
+                $totalAnswered = (int)$stmtTotal->fetchColumn();
+                $qa['total_answered'] = $totalAnswered;
+
+                if ($totalAnswered === 0) {
+                    $questionAnalytics[] = $qa;
+                    continue;
+                }
+
+                // 2. Aggregate based on type
                 if (in_array($q['type'], ['star_rating', 'nps', 'slider', 'likert'])) {
-                    $dist = [];
-                    foreach ($rows as $r) {
-                        if ($r['answer_num'] !== null) {
-                            $n = (float)$r['answer_num'];
-                            $dist[$n] = ($dist[$n] ?? 0) + 1;
-                        }
-                    }
-                    ksort($dist);
-                    $distArr = array_map(fn($val, $cnt) => ['val' => $val, 'cnt' => $cnt], array_keys($dist), array_values($dist));
-                    $qa['rating_distribution'] = array_map(fn($r) => ['value' => (float)$r['val'], 'count' => (int)$r['cnt']], $distArr);
-                    $total = $qa['total_answered'] ?: 1;
-                    $qa['avg_rating'] = $qa['total_answered'] ? round(array_sum(array_map(fn($r) => $r['val'] * $r['cnt'], $distArr)) / $total, 2) : null;
+                    // SQL Aggregation for Ratings
+                    $stmtDist = $pdo->prepare("
+                        SELECT answer_num as val, COUNT(*) as cnt 
+                        FROM survey_answer_details 
+                        WHERE question_id = ? AND answer_num IS NOT NULL 
+                        GROUP BY answer_num 
+                        ORDER BY val ASC
+                    ");
+                    $stmtDist->execute([$blockId]);
+                    $distRows = $stmtDist->fetchAll(PDO::FETCH_ASSOC);
+                    
+                    $distArr = array_map(fn($r) => ['value' => (float)$r['val'], 'count' => (int)$r['cnt']], $distRows);
+                    $qa['rating_distribution'] = $distArr;
+                    
+                    $sum = array_reduce($distRows, fn($acc, $r) => $acc + ($r['val'] * $r['cnt']), 0);
+                    $qa['avg_rating'] = round($sum / $totalAnswered, 2);
 
                     if ($q['type'] === 'nps') {
-                        $promoters  = array_sum(array_column(array_filter($distArr, fn($r) => $r['val'] >= 9), 'cnt'));
-                        $detractors = array_sum(array_column(array_filter($distArr, fn($r) => $r['val'] <= 6), 'cnt'));
-                        $qa['promoters'] = $promoters; $qa['detractors'] = $detractors;
-                        $qa['passives']  = $qa['total_answered'] - $promoters - $detractors;
-                        $qa['nps_score'] = round(($promoters / $total - $detractors / $total) * 100);
+                        $promoters = 0; $detractors = 0;
+                        foreach ($distRows as $r) {
+                            if ($r['val'] >= 9) $promoters += $r['cnt'];
+                            elseif ($r['val'] <= 6) $detractors += $r['cnt'];
+                        }
+                        $qa['promoters'] = $promoters;
+                        $qa['detractors'] = $detractors;
+                        $qa['passives'] = $totalAnswered - $promoters - $detractors;
+                        $qa['nps_score'] = round(($promoters / $totalAnswered - $detractors / $totalAnswered) * 100);
                     }
-                } elseif (in_array($q['type'], ['single_choice', 'multi_choice', 'dropdown', 'yes_no'])) {
+                } elseif (in_array($q['type'], ['single_choice', 'dropdown', 'yes_no'])) {
+                    // SQL Aggregation for Choice
+                    $stmtChoice = $pdo->prepare("
+                        SELECT answer_text as label, COUNT(*) as cnt 
+                        FROM survey_answer_details 
+                        WHERE question_id = ? AND answer_text IS NOT NULL AND answer_text != ''
+                        GROUP BY answer_text 
+                        ORDER BY cnt DESC
+                    ");
+                    $stmtChoice->execute([$blockId]);
+                    $choiceRows = $stmtChoice->fetchAll(PDO::FETCH_ASSOC);
+                    
+                    $qa['choice_distribution'] = array_map(fn($c) => [
+                        'label' => $c['label'], 
+                        'count' => (int)$c['cnt'], 
+                        'percentage' => round($c['cnt'] / $totalAnswered * 100, 1)
+                    ], $choiceRows);
+                } elseif ($q['type'] === 'multi_choice') {
+                    // Multi-choice still needs some PHP because labels are in JSON array
+                    // But we only fetch the answer_json column to save memory
+                    $stmtMulti = $pdo->prepare("SELECT answer_json FROM survey_answer_details WHERE question_id = ? AND answer_json IS NOT NULL");
+                    $stmtMulti->execute([$blockId]);
                     $counts = [];
-                    foreach ($rows as $rc) {
-                        if (!empty($rc['answer_json'])) {
-                            $arr = json_decode($rc['answer_json'], true);
-                            if (is_array($arr)) foreach ($arr as $val) $counts[$val] = ($counts[$val] ?? 0) + 1;
-                        } elseif (!empty($rc['answer_text'])) $counts[$rc['answer_text']] = ($counts[$rc['answer_text']] ?? 0) + 1;
+                    while ($rowJson = $stmtMulti->fetchColumn()) {
+                        $arr = json_decode($rowJson, true);
+                        if (is_array($arr)) {
+                            foreach ($arr as $val) $counts[$val] = ($counts[$val] ?? 0) + 1;
+                        }
                     }
                     $choices = [];
-                    foreach ($counts as $lbl => $cnt) $choices[] = ['label' => (string)$lbl, 'cnt' => $cnt];
-                    usort($choices, fn($a, $b) => $b['cnt'] <=> $a['cnt']);
-                    $total = $qa['total_answered'] ?: 1;
-                    $qa['choice_distribution'] = array_map(fn($c) => ['label' => $c['label'], 'count' => (int)$c['cnt'], 'percentage' => round($c['cnt'] / $total * 100, 1)], $choices);
-                } elseif (in_array($q['type'], ['short_text', 'long_text', 'email', 'phone', 'number', 'website', 'date'])) {
-                    $qa['text_responses'] = array_values(array_slice(
-                        array_filter(array_column($rows, 'answer_text'), fn($v) => $v !== null && $v !== ''),
-                        0, 50
-                    ));
-                } elseif (in_array($q['type'], ['matrix_single', 'matrix_multi', 'ranking'])) {
-                    $qa['text_responses'] = array_values(array_slice(
-                        array_filter(array_column($rows, 'answer_json'), fn($v) => $v !== null && $v !== ''),
-                        0, 50
-                    ));
+                    foreach ($counts as $lbl => $cnt) $choices[] = ['label' => (string)$lbl, 'count' => (int)$cnt, 'percentage' => round($cnt / $totalAnswered * 100, 1)];
+                    usort($choices, fn($a, $b) => $b['count'] <=> $a['count']);
+                    $qa['choice_distribution'] = $choices;
+                } else {
+                    // Text responses: Limit to 50 items directly in SQL
+                    $stmtText = $pdo->prepare("
+                        SELECT " . ($q['type'] === 'matrix_single' || $q['type'] === 'matrix_multi' || $q['type'] === 'ranking' ? 'answer_json' : 'answer_text') . " as val 
+                        FROM survey_answer_details 
+                        WHERE question_id = ? AND (answer_text IS NOT NULL OR answer_json IS NOT NULL)
+                        LIMIT 50
+                    ");
+                    $stmtText->execute([$blockId]);
+                    $qa['text_responses'] = array_filter($stmtText->fetchAll(PDO::FETCH_COLUMN), fn($v) => $v !== null && $v !== '');
                 }
+                
                 $questionAnalytics[] = $qa;
             }
 

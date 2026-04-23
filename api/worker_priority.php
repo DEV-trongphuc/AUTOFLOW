@@ -216,8 +216,18 @@ try {
                             }
                         }
 
-                        $stmtE = $pdo->prepare("INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at) VALUES (?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW())");
-                        $stmtE->execute([$prioritySid, $manualFlow['id'], $trigger['nextStepId'], $initialSchedule]);
+                        // [HARDENING] Extract step type
+                        $nextStepId = $trigger['nextStepId'];
+                        $nextStepType = 'unknown';
+                        foreach ($steps as $fs) {
+                            if ($fs['id'] === $nextStepId) {
+                                $nextStepType = $fs['type'] ?? 'unknown';
+                                break;
+                            }
+                        }
+
+                        $stmtE = $pdo->prepare("INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, step_type, scheduled_at, status, created_at, updated_at, last_step_at) VALUES (?, ?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW())");
+                        $stmtE->execute([$prioritySid, $manualFlow['id'], $nextStepId, $nextStepType, $initialSchedule]);
                         $newQueueId = $pdo->lastInsertId();
 
                         logActivity($pdo, $prioritySid, 'enter_flow', $manualFlow['id'], $manualFlow['name'], "Manual Trigger by Admin", $manualFlow['id']);
@@ -421,47 +431,57 @@ try {
                     ];
                     traceLog("[Priority-Enroll-Debug] " . json_encode($debugInfo));
 
-                    // [FIX] Respect allowMultiple flag in SQL INSERT
-                    if ($allowMultiple) {
-                        // allowMultiple = true: Allow enrollment, but add a short debounce window
-                        // to prevent double-enrollment when a form is submitted twice in < 3 seconds
-                        // (e.g. double-click, retry on slow network).
-                        // [FIX] Plain INSERT here caused duplicate emails when two requests arrived
-                        // within the same PHP-FPM request window for the same subscriber+flow.
-                        traceLog("[Priority] allowMultiple=true, using debounce INSERT");
-                        $sqlIns = "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at)
-                                   SELECT ?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
-                                   FROM DUAL
-                                   WHERE NOT EXISTS (
-                                       SELECT 1 FROM subscriber_flow_states
-                                       WHERE subscriber_id = ? AND flow_id = ?
-                                       AND created_at >= DATE_SUB(NOW(), INTERVAL 3 SECOND)
-                                   )";
-                        $stmtE = $pdo->prepare($sqlIns);
-                        $stmtE->execute([$prioritySid, $flow['id'], $trigger['nextStepId'], $initialSchedule, $prioritySid, $flow['id']]);
-                    } else {
-                        // allowMultiple = false: Apply frequency and cooldown rules
-                        if ($frequency === 'one-time') {
-                            $blockCondition = "1=1"; // Always block if any record exists
-                        } else {
-                            // For recurring: Block if (in progress) OR (recently completed within cooldown)
-                        // [FIX] $cooldownHours is cast (int) on L285 — safe to use in INTERVAL.
-                        // PDO does not accept params inside INTERVAL expressions.
-                        $safeChHours = (int)$cooldownHours;
-                        $blockCondition = "status IN ('waiting', 'processing') OR updated_at > DATE_SUB(NOW(), INTERVAL $safeChHours HOUR)";
+                        // [HARDENING] Extract step type
+                        $nextStepId = $trigger['nextStepId'];
+                        $nextStepType = 'unknown';
+                        foreach ($steps as $fs) {
+                            if ($fs['id'] === $nextStepId) {
+                                $nextStepType = $fs['type'] ?? 'unknown';
+                                break;
+                            }
                         }
 
-                        $sqlIns = "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at)
-                                   SELECT ?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
-                                   FROM DUAL
-                                   WHERE NOT EXISTS (
-                                       SELECT 1 FROM subscriber_flow_states 
-                                       WHERE subscriber_id = ? AND flow_id = ? 
-                                       AND ($blockCondition)
-                                   )";
-                        $stmtE = $pdo->prepare($sqlIns);
-                        $stmtE->execute([$prioritySid, $flow['id'], $trigger['nextStepId'], $initialSchedule, $prioritySid, $flow['id']]);
-                    }
+                        // [FIX] Respect allowMultiple flag in SQL INSERT
+                        if ($allowMultiple) {
+                            // allowMultiple = true: Allow enrollment, but add a short debounce window
+                            // to prevent double-enrollment when a form is submitted twice in < 3 seconds
+                            // (e.g. double-click, retry on slow network).
+                            // [FIX] Plain INSERT here caused duplicate emails when two requests arrived
+                            // within the same PHP-FPM request window for the same subscriber+flow.
+                            traceLog("[Priority] allowMultiple=true, using debounce INSERT");
+                            $sqlIns = "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, step_type, scheduled_at, status, created_at, updated_at, last_step_at)
+                                       SELECT ?, ?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
+                                       FROM DUAL
+                                       WHERE NOT EXISTS (
+                                           SELECT 1 FROM subscriber_flow_states
+                                           WHERE subscriber_id = ? AND flow_id = ?
+                                           AND created_at >= DATE_SUB(NOW(), INTERVAL 3 SECOND)
+                                       )";
+                            $stmtE = $pdo->prepare($sqlIns);
+                            $stmtE->execute([$prioritySid, $flow['id'], $nextStepId, $nextStepType, $initialSchedule, $prioritySid, $flow['id']]);
+                        } else {
+                            // allowMultiple = false: Apply frequency and cooldown rules
+                            if ($frequency === 'one-time') {
+                                $blockCondition = "1=1"; // Always block if any record exists
+                            } else {
+                                // For recurring: Block if (in progress) OR (recently completed within cooldown)
+                            // [FIX] $cooldownHours is cast (int) on L285 — safe to use in INTERVAL.
+                            // PDO does not accept params inside INTERVAL expressions.
+                            $safeChHours = (int)$cooldownHours;
+                            $blockCondition = "status IN ('waiting', 'processing') OR updated_at > DATE_SUB(NOW(), INTERVAL $safeChHours HOUR)";
+                            }
+    
+                            $sqlIns = "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, step_type, scheduled_at, status, created_at, updated_at, last_step_at)
+                                       SELECT ?, ?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
+                                       FROM DUAL
+                                       WHERE NOT EXISTS (
+                                           SELECT 1 FROM subscriber_flow_states 
+                                           WHERE subscriber_id = ? AND flow_id = ? 
+                                           AND ($blockCondition)
+                                       )";
+                            $stmtE = $pdo->prepare($sqlIns);
+                            $stmtE->execute([$prioritySid, $flow['id'], $nextStepId, $nextStepType, $initialSchedule, $prioritySid, $flow['id']]);
+                        }
 
                     if ($stmtE->rowCount() === 0) {
                         $logs[] = "[Priority-Enroll] Race condition detected or criteria no longer met for Sub $prioritySid, Flow {$flow['id']}. Skipping duplicate INSERT.";

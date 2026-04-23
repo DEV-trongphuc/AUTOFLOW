@@ -3,9 +3,11 @@
 require_once 'bootstrap.php';
 initializeSystem($pdo);
 require_once 'auth_middleware.php';
+require_once 'WorkerTriggerService.php';
 
 // [SECURITY] Require authenticated workspace session
-if (empty($GLOBALS['current_admin_id']) && empty($_SESSION['user_id'])) {
+$admin_workspace_id = get_current_workspace_id();
+if (empty($admin_workspace_id)) {
     http_response_code(401);
     jsonResponse(false, null, 'Unauthorized');
 }
@@ -14,157 +16,147 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonResponse(false, null, 'Method not allowed');
 }
 
-$data = json_decode(file_get_contents("php://input"), true) ?: [];
-$codes = json_decode(file_get_contents("php://input"), true) ?: [];
-if (isset($codes['ids']) && is_array($codes['ids'])) {
-    $ids = $codes['ids'];
-    if (empty($ids)) {
-        jsonResponse(false, null, 'Không có mã nào được chọn');
-    }
-    
-    // Get subscriber_ids before we update, to ensure we trigger for the right people
-    $placeholders = implode(',', array_fill(0, count($ids), '?'));
-    $stmtFindSubs = $pdo->prepare("SELECT subscriber_id, campaign_id FROM voucher_codes WHERE id IN ($placeholders) AND status != 'used' AND subscriber_id IS NOT NULL");
-    $stmtFindSubs->execute($ids);
-    $subsToTrigger = $stmtFindSubs->fetchAll(PDO::FETCH_ASSOC);
+$input = json_decode(file_get_contents("php://input"), true) ?: [];
+$ids = $input['ids'] ?? [];
 
-    $pdo->prepare("UPDATE voucher_codes SET status = 'used', used_at = NOW() WHERE id IN ($placeholders) AND status != 'used'")->execute($ids);
-    
-    // Attempt batch automation via curl_multi instead of sequential or skipping
-    if (!empty($subsToTrigger)) {
-        $mh = curl_multi_init();
-        $handles = [];
-        foreach ($subsToTrigger as $subData) {
-            $workerUrl = API_BASE_URL . "/worker_priority.php?" . http_build_query([
+$apiUrl = (defined('API_BASE_URL') ? API_BASE_URL : 'https://automation.ideas.edu.vn/mail_api');
+$workerService = new WorkerTriggerService($pdo, $apiUrl);
+
+// --- BATCH REDEMPTION ---
+if (!empty($ids) && is_array($ids)) {
+    try {
+        $pdo->beginTransaction();
+        
+        // 1. Get subscriber_ids and campaign_ids for valid codes in THIS workspace
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmtFind = $pdo->prepare("
+            SELECT vc.id, vc.subscriber_id, vc.campaign_id 
+            FROM voucher_codes vc 
+            JOIN voucher_campaigns c ON vc.campaign_id = c.id
+            WHERE vc.id IN ($placeholders) 
+              AND c.workspace_id = ?
+              AND vc.status != 'used' 
+              AND vc.subscriber_id IS NOT NULL
+            FOR UPDATE
+        ");
+        $stmtFind->execute(array_merge($ids, [$admin_workspace_id]));
+        $toRedeem = $stmtFind->fetchAll(PDO::FETCH_ASSOC);
+
+        if (empty($toRedeem)) {
+            $pdo->rollBack();
+            jsonResponse(false, null, 'Không có mã hợp lệ nào được chọn để gạch.');
+        }
+
+        $validIds = array_column($toRedeem, 'id');
+        $validPlaceholders = implode(',', array_fill(0, count($validIds), '?'));
+        
+        // 2. Batch update
+        $stmtUpd = $pdo->prepare("UPDATE voucher_codes SET status = 'used', used_at = NOW() WHERE id IN ($validPlaceholders)");
+        $stmtUpd->execute($validIds);
+        
+        $pdo->commit();
+
+        // 3. Trigger Automations
+        foreach ($toRedeem as $row) {
+            $workerService->trigger('/worker_priority.php?' . http_build_query([
                 'trigger_type' => 'voucher_redeem', 
-                'target_id' => $subData['campaign_id'],
-                'subscriber_id' => $subData['subscriber_id']
-            ]);
-            $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $workerUrl);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 1);
-            curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
-            curl_multi_add_handle($mh, $ch);
-            $handles[] = $ch;
+                'target_id' => $row['campaign_id'],
+                'subscriber_id' => $row['subscriber_id']
+            ]));
         }
 
-        // Fire and forget instantly (only wait 0.1s max)
-        $running = null;
-        do {
-            curl_multi_exec($mh, $running);
-            if ($running) curl_multi_select($mh, 0.1);
-        } while ($running > 0);
-
-        foreach ($handles as $ch) {
-            curl_multi_remove_handle($mh, $ch);
-            curl_close($ch);
-        }
-        curl_multi_close($mh);
+        jsonResponse(true, null, 'Gạch mã hàng loạt thành công (' . count($validIds) . ' mã)!');
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        error_log("[redeem_voucher] Batch Error: " . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống khi gạch mã hàng loạt.');
     }
-
-    jsonResponse(true, null, 'Gạch mã hàng loạt thành công!');
 }
 
-$code = trim($data['code'] ?? '');
-$campaignId = $data['campaign_id'] ?? null;
+// --- SINGLE CODE REDEMPTION ---
+$code = trim($input['code'] ?? '');
+$campaignId = $input['campaign_id'] ?? null;
 
 if (!$code) {
     jsonResponse(false, null, 'Vui lòng nhập mã Voucher');
 }
 
-// 1. Check if it is a static code from a campaign
 try {
-$stmtStatic = $pdo->prepare("SELECT * FROM voucher_campaigns WHERE static_code = ? AND status = 'active'");
-$stmtStatic->execute([$code]);
-$staticCamp = $stmtStatic->fetch(PDO::FETCH_ASSOC);
+    // 1. Check if it is a static code from an active campaign in THIS workspace
+    $stmtStatic = $pdo->prepare("SELECT * FROM voucher_campaigns WHERE static_code = ? AND status = 'active' AND workspace_id = ?");
+    $stmtStatic->execute([$code, $admin_workspace_id]);
+    $staticCamp = $stmtStatic->fetch(PDO::FETCH_ASSOC);
 
-if ($staticCamp) {
-    if (!empty($staticCamp['end_date']) && strtotime($staticCamp['end_date']) < time()) {
-        jsonResponse(false, null, 'Chương trình ưu đãi này đã kết thúc vào ' . date('d/m/Y H:i', strtotime($staticCamp['end_date'])));
+    if ($staticCamp) {
+        if (!empty($staticCamp['end_date']) && strtotime($staticCamp['end_date']) < time()) {
+            jsonResponse(false, null, 'Chương trình ưu đãi này đã kết thúc.');
+        }
+        // Static codes don't have individual tracking in voucher_codes table
+        jsonResponse(true, null, 'Áp dụng mã tĩnh thành công!');
     }
-    // Static code redemption does not tie to a specific subscriber unless provided.
-    // We just return success and skip specific row marking.
+
+    // 2. Find and Lock the dynamic code
+    $pdo->beginTransaction();
     
-    // [FIX BUG-STATIC-REDEEM] Static code has no subscriber — do NOT dispatch worker_priority
-    // with empty subscriber_id. worker_priority Scenario A requires truthy $prioritySid;
-    // an empty string causes silent exit (no enrollment, no error). Skip dispatch entirely.
-    // To support flow triggers for static codes, collect email/phone at redemption time
-    // and resolve subscriber_id before calling this endpoint.
-    error_log("[redeem_voucher] Static code '{$code}' redeemed. No subscriber identified — flow trigger skipped.");
+    $sql = "SELECT vc.*, c.name as campaign_name, c.end_date as campaign_end_date 
+            FROM voucher_codes vc 
+            JOIN voucher_campaigns c ON vc.campaign_id = c.id 
+            WHERE vc.code = ? AND c.workspace_id = ? FOR UPDATE";
+    $params = [$code, $admin_workspace_id];
 
-    jsonResponse(true, null, 'Áp dụng mã tĩnh thành công (Không định danh)!');
-}
+    if ($campaignId) {
+        $sql .= " AND vc.campaign_id = ?";
+        $params[] = $campaignId;
+    }
 
-// 2. Find the dynamic code
-$sql = "SELECT vc.*, c.name as campaign_name, c.end_date as campaign_end_date FROM voucher_codes vc JOIN voucher_campaigns c ON vc.campaign_id = c.id WHERE vc.code = ?";
-$params = [$code];
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $voucher = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if ($campaignId) {
-    $sql .= " AND vc.campaign_id = ?";
-    $params[] = $campaignId;
-}
+    if (!$voucher) {
+        $pdo->rollBack();
+        jsonResponse(false, null, 'Mã Voucher không tồn tại hoặc không hợp lệ.');
+    }
 
-$stmt = $pdo->prepare($sql);
-$stmt->execute($params);
-$voucher = $stmt->fetch(PDO::FETCH_ASSOC);
+    // 3. Validate state
+    if ($voucher['status'] === 'used') {
+        $pdo->rollBack();
+        jsonResponse(false, null, 'Mã Voucher này đã được sử dụng vào ' . date('d/m/Y H:i:s', strtotime($voucher['used_at'])));
+    }
 
-if (!$voucher) {
-    jsonResponse(false, null, 'Mã Voucher không tồn tại hoặc không hợp lệ.');
-}
+    if (!empty($voucher['expires_at']) && strtotime($voucher['expires_at']) < time()) {
+        $pdo->rollBack();
+        jsonResponse(false, null, 'Mã Voucher này đã hết hạn sử dụng.');
+    }
 
-// 3. Validate state
-if ($voucher['status'] === 'used') {
-    jsonResponse(false, null, 'Mã Voucher này đã được sử dụng vào ' . date('d/m/Y H:i:s', strtotime($voucher['used_at'])));
-}
+    if (!empty($voucher['campaign_end_date']) && strtotime($voucher['campaign_end_date']) < time()) {
+        $pdo->rollBack();
+        jsonResponse(false, null, 'Chương trình ưu đãi này đã kết thúc!');
+    }
 
-if (!empty($voucher['expires_at']) && strtotime($voucher['expires_at']) < time()) {
-    jsonResponse(false, null, 'Mã Voucher này đã hết hạn sử dụng vào ' . date('d/m/Y H:i', strtotime($voucher['expires_at'])));
-}
+    // 4. Mark as used
+    $stmtUpdate = $pdo->prepare("UPDATE voucher_codes SET status = 'used', used_at = NOW() WHERE id = ?");
+    $stmtUpdate->execute([$voucher['id']]);
+    
+    $pdo->commit();
 
-if (!empty($voucher['campaign_end_date']) && strtotime($voucher['campaign_end_date']) < time()) {
-    jsonResponse(false, null, 'Chương trình ưu đãi này đã kết thúc!');
-}
+    // 5. Dispatch Automation Trigger (voucher_redeem)
+    if (!empty($voucher['subscriber_id'])) {
+        $workerService->trigger('/worker_priority.php?' . http_build_query([
+            'trigger_type' => 'voucher_redeem', 
+            'target_id' => $voucher['campaign_id'], 
+            'subscriber_id' => $voucher['subscriber_id']
+        ]));
+    }
 
-// Ensure code was distributed (subscriber_id or sent_at is present)
-if (empty($voucher['subscriber_id']) && empty($voucher['sent_at'])) {
-    // Code exists but was never distributed to a subscriber. Strictly speaking it shouldn't be redeemable if not sent.
-    jsonResponse(false, null, 'Mã Voucher này chưa được phân phát cho ai, không hợp lệ.');
-}
+    jsonResponse(true, [
+        'message' => 'Sử dụng Voucher thành công!',
+        'campaign_name' => $voucher['campaign_name'],
+        'code' => $code
+    ]);
 
-// 3. Mark as used
-$stmtUpdate = $pdo->prepare("UPDATE voucher_codes SET status = 'used', used_at = NOW() WHERE id = ?");
-$stmtUpdate->execute([$voucher['id']]);
-
-// 4. Dispatch Automation Trigger (voucher_redeem)
-$workerUrl = API_BASE_URL . "/worker_priority.php?" . http_build_query([
-    'trigger_type' => 'voucher_redeem', 
-    'target_id' => $voucher['campaign_id'], 
-    'subscriber_id' => $voucher['subscriber_id'] ?? ''
-]);
-$cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $workerUrl);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
-curl_setopt($ch, CURLOPT_TIMEOUT, 1);
-curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
-curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
-curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
-@curl_exec($ch);
-curl_close($ch);
-
-jsonResponse(true, [
-    'message' => 'Sử dụng Voucher thành công!',
-    'campaign_name' => $voucher['campaign_name'],
-    'code' => $code
-]);
 } catch (Exception $e) {
-    error_log('[redeem_voucher] DB Error: ' . $e->getMessage() . ' in ' . __FILE__ . ':' . __LINE__);
-    jsonResponse(false, null, 'Lỗi hệ thống khi xử lý voucher, vui lòng thử lại.');
+    if ($pdo->inTransaction()) $pdo->rollBack();
+    error_log('[redeem_voucher] Error: ' . $e->getMessage());
+    jsonResponse(false, null, 'Lỗi hệ thống khi xử lý voucher.');
 }

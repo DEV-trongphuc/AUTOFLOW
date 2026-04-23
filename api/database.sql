@@ -3036,7 +3036,8 @@ ALTER TABLE `survey_answer_details`
 --
 ALTER TABLE `survey_questions`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_survey_questions_survey` (`survey_id`);
+  ADD KEY `idx_survey_questions_survey` (`survey_id`),
+  ADD KEY `idx_survey_questions_survey_order` (`survey_id`,`order_index`);
 
 --
 -- Chỉ mục cho bảng `survey_responses`
@@ -3047,7 +3048,8 @@ ALTER TABLE `survey_responses`
   ADD KEY `idx_survey_responses_survey` (`survey_id`),
   ADD KEY `idx_survey_responses_subscriber` (`subscriber_id`),
   ADD KEY `idx_survey_responses_submitted` (`submitted_at`),
-  ADD KEY `idx_survey_time` (`survey_id`,`submitted_at`);
+  ADD KEY `idx_survey_time` (`survey_id`,`submitted_at`),
+  ADD KEY `idx_survey_responses_ip_time` (`ip_hash`,`submitted_at`);
 
 --
 -- Chỉ mục cho bảng `system_audit_logs`

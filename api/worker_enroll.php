@@ -211,9 +211,19 @@ foreach ($activeFlows as $flow) {
         $existsCheckSql = "AND " . implode(" AND ", $checks);
     }
 
+    // [HARDENING] Extract step type for the first step
+    $nextStepId = $trigger['nextStepId'];
+    $nextStepType = 'unknown';
+    foreach ($steps as $fs) {
+        if ($fs['id'] === $nextStepId) {
+            $nextStepType = $fs['type'] ?? 'unknown';
+            break;
+        }
+    }
+
     // [SECURITY FIX] Added s.workspace_id = ? to ensure subscribers only enter flows from their own workspace.
-    $sqlIns = "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at)
-               SELECT s.id, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
+    $sqlIns = "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, step_type, scheduled_at, status, created_at, updated_at, last_step_at)
+               SELECT s.id, ?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
                FROM subscribers s
                WHERE s.workspace_id = ? 
                AND s.status IN ('active', 'lead', 'customer') 
@@ -224,7 +234,7 @@ foreach ($activeFlows as $flow) {
 
     // [SMART SCHEDULE] Check if first step is WAIT
     foreach ($steps as $fs) {
-        if ($fs['id'] === $trigger['nextStepId'] && $fs['type'] === 'wait') {
+        if ($fs['id'] === $nextStepId && $fs['type'] === 'wait') {
             $fsWaitConfig = $fs['config'] ?? [];
             $fsWaitMode = $fsWaitConfig['mode'] ?? 'duration';
             if ($fsWaitMode === 'duration') {
@@ -261,7 +271,7 @@ foreach ($activeFlows as $flow) {
         }
     }
 
-    $params = array_merge([$flow['id'], $trigger['nextStepId'], $initialSchedule, $wsId], $segParams, $checkParams);
+    $params = array_merge([$flow['id'], $nextStepId, $nextStepType, $initialSchedule, $wsId], $segParams, $checkParams);
 
     try {
         $stmtIns = $pdo->prepare($sqlIns);

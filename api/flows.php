@@ -1245,18 +1245,20 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
         if (!empty($finalStatesToInsert)) {
             $pdo->beginTransaction();
             try {
+                $targetStepType = $targetStepData['type'] ?? 'unknown';
                 $sqlState = "INSERT INTO subscriber_flow_states 
-                    (flow_id, subscriber_id, step_id, status, created_at, updated_at, last_step_at, scheduled_at)
-                    VALUES (?, ?, ?, 'waiting', ?, ?, ?, ?)
+                    (flow_id, subscriber_id, step_id, step_type, status, created_at, updated_at, last_step_at, scheduled_at)
+                    VALUES (?, ?, ?, ?, 'waiting', ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE
                         step_id = VALUES(step_id),
+                        step_type = VALUES(step_type),
                         status = 'waiting',
                         updated_at = VALUES(updated_at),
                         last_step_at = VALUES(last_step_at),
                         scheduled_at = VALUES(scheduled_at)";
                 $stmt = $pdo->prepare($sqlState);
                 foreach ($finalStatesToInsert as $subId) {
-                    $stmt->execute([$flowId, $subId, $stepId, $nowStr, $nowStr, $nowStr, $resolvedScheduledAt]);
+                    $stmt->execute([$flowId, $subId, $stepId, $targetStepType, $nowStr, $nowStr, $nowStr, $resolvedScheduledAt]);
                     $rc = $stmt->rowCount();
                     if ($rc > 0)
                         $addedCount++;

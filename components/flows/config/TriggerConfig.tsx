@@ -56,6 +56,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
     const [customEvents, setCustomEvents] = useState<CustomEvent[]>([]);
     const [voucherCampaigns, setVoucherCampaigns] = useState<VoucherCampaign[]>([]);
     const [surveys, setSurveys] = useState<Survey[]>([]);
+    const [chatbots, setChatbots] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [showGuide, setShowGuide] = useState(false);
@@ -101,7 +102,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
     useEffect(() => {
         const loadInitialData = async () => {
             setLoading(true);
-            const [listRes, segRes, campRes, tagRes, formRes, purchRes, customRes, surveyRes] = await Promise.all([
+            const [listRes, segRes, campRes, tagRes, formRes, purchRes, customRes, surveyRes, chatbotsRes] = await Promise.all([
                 api.get<any[]>('lists'),
                 api.get<Segment[]>('segments'),
                 api.get<Campaign[]>('campaigns'),
@@ -109,7 +110,8 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                 api.get<FormDefinition[]>('forms'),
                 api.get<PurchaseEvent[]>('purchase_events'),
                 api.get<CustomEvent[]>('custom_events'),
-                api.get<Survey[]>('surveys')
+                api.get<Survey[]>('surveys'),
+                api.get<any>('ai_chatbots?action=list')
             ]);
             if (listRes.success) setLists(listRes.data);
             if (segRes.success) setSegments(segRes.data);
@@ -117,6 +119,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
             if (tagRes.success) setTags(tagRes.data);
             if (formRes.success) setForms(formRes.data);
             if (purchRes.success) setPurchases(purchRes.data);
+            if (chatbotsRes.success) setChatbots(chatbotsRes.data.filter((b: any) => b.ai_enabled || b.is_enabled || b.status === 'active' || !b.status));
             if (customRes.success) setCustomEvents(customRes.data);
             if (surveyRes.success) setSurveys(surveyRes.data);
 
@@ -663,17 +666,41 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
 
                             {/* CASE: AI CAPTURE */}
                             {triggerType === 'ai_capture' && (
-                                <div className="p-8 text-center space-y-4 animate-in zoom-in-95 duration-300">
-                                    <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-rose-100/50">
-                                        <Bot className="w-10 h-10 text-rose-500" />
+                                <div className="space-y-4 animate-in slide-in-from-bottom-2 duration-300 p-1">
+                                    <div className="p-8 text-center space-y-4 bg-white border border-slate-200 rounded-[24px] shadow-sm">
+                                        <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto mb-2 border-2 border-rose-100/50">
+                                            <Bot className="w-8 h-8 text-rose-500" />
+                                        </div>
+                                        <h3 className="text-sm font-bold text-slate-800">Kích hoạt khi AI lấy được Lead</h3>
+                                        <p className="text-[11px] text-slate-500 max-w-[280px] mx-auto leading-relaxed">
+                                            Luồng này sẽ được kích hoạt ngay lập tức khi Chatbot AI nhận diện thành công Email/SĐT của khách hàng.
+                                        </p>
                                     </div>
-                                    <h3 className="text-sm font-bold text-slate-800">Kích hoạt khi AI lấy được Lead</h3>
-                                    <p className="text-[11px] text-slate-500 max-w-[280px] mx-auto leading-relaxed">
-                                        Luồng này sẽ được kích hoạt ngay lập tức khi Chatbot AI (trên Website/Fanpage) hoặc tính năng Auto-fill của Form nhận diện thành công Email/SĐT của khách hàng.
-                                        Ưu tiên xử lý ngang bằng hệ thống Landing Page thông thường.
-                                    </p>
-                                    <div className="p-3 bg-rose-50/50 rounded-xl inline-block border border-rose-100">
-                                        <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Hoạt động cho mọi AI Bot hiện có</span>
+                                    
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2 px-1">
+                                            <div className="p-1.5 bg-rose-50 rounded-lg text-rose-500"><Target className="w-3.5 h-3.5" /></div>
+                                            <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">Chọn Nguồn Bot</span>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <ConfigItem
+                                                label="Mọi AI Bot hiện có"
+                                                desc="Nhận lead từ bất kỳ bot nào trong hệ thống"
+                                                icon={Bot}
+                                                isSelected={!config.targetId || config.targetId === 'all'}
+                                                onClick={() => onChange({ ...config, targetId: 'all' }, 'Mọi AI Bot')}
+                                            />
+                                            {chatbots.filter(b => b.name.toLowerCase().includes(searchTerm.toLowerCase())).map(b => (
+                                                <ConfigItem
+                                                    key={b.id}
+                                                    label={b.name}
+                                                    desc={`Danh mục: ${b.category_name || 'Mặc định'}`}
+                                                    icon={MessageSquare}
+                                                    isSelected={config.targetId === b.id}
+                                                    onClick={() => onChange({ ...config, targetId: b.id }, `Bot: ${b.name}`)}
+                                                />
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             )}

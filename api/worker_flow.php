@@ -558,7 +558,8 @@ if (!function_exists('runWorkerFlow')) {
                                 $pdo->prepare("UPDATE flows SET stat_completed = stat_completed + 1 WHERE id = ?")->execute([$flowId]);
                             }
                         } else {
-                            $pdo->prepare("UPDATE subscriber_flow_states SET status = ?, scheduled_at = ?, updated_at = NOW(), step_id = ? WHERE id = ?")->execute([$execResult['status'], $execResult['scheduled_at'] ?? $now, $currentStepId, $queueId]);
+                            $nextStepType = $stepIndex[$currentStepId]['type'] ?? null;
+                            $pdo->prepare("UPDATE subscriber_flow_states SET status = ?, scheduled_at = ?, updated_at = NOW(), step_id = ?, step_type = ? WHERE id = ?")->execute([$execResult['status'], $execResult['scheduled_at'] ?? $now, $currentStepId, $nextStepType, $queueId]);
                         }
                         $shouldContinueChain = false;
                     }
