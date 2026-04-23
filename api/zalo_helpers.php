@@ -226,7 +226,7 @@ function sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $scenario, $user
                             'media_type' => 'image',
                             'attachment_id' => $scenario['attachment_id'],
                             'title' => $scenario['title'] ?? '',
-                            'subtitle' => $scenario['content']
+                            'subtitle' => ''
                         ]
                     ]
                 ]

@@ -72,7 +72,7 @@ function handleZaloInboundJob($pdo, $payload)
 
     // 3. STAFF REPLY TRACKING & AI PAUSE (oa_send_*)
     if (strpos($event, 'oa_send_') === 0) {
-        processStaffReply($pdo, $event, $payload, $subId, $zaloUserId);
+        processStaffReply($pdo, $event, $payload, $subId, $zaloUserId, $oaConfig);
         return true;
     }
 
@@ -104,7 +104,7 @@ function handleZaloInboundJob($pdo, $payload)
 
         // Marker Extraction (Button Clicks captured in text)
         if ($event === 'user_send_text') {
-            processMarkers($pdo, $msgText, $subId, $zaloUserId, $eventId);
+            processMarkers($pdo, $msgText, $subId, $zaloUserId, $eventId, $oaConfig);
         }
 
         if ($event !== 'user_send_text') {
@@ -158,7 +158,7 @@ function handleZaloInboundJob($pdo, $payload)
 /**
  * Process Staff Replies, pause AI, and sync to chat history.
  */
-function processStaffReply($pdo, $event, $payload, $subId, $zaloUserId)
+function processStaffReply($pdo, $event, $payload, $subId, $zaloUserId, $oaConfig)
 {
     if (!$subId)
         return;
@@ -297,7 +297,7 @@ function processZaloTrackingEvent($pdo, $event, $payload, $subId, $zaloUserId)
     }
 }
 
-function processMarkers($pdo, &$msgText, $subId, $zaloUserId, $eventId)
+function processMarkers($pdo, &$msgText, $subId, $zaloUserId, $eventId, $oaConfig)
 {
     if (preg_match_all('/\s*\|\s*([a-zA-Z0-9_]+):([A-Za-z0-9+\/]+={0,2})/', $msgText, $matches, PREG_SET_ORDER)) {
         foreach ($matches as $match) {
