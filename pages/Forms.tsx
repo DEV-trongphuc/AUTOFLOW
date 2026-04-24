@@ -7,6 +7,7 @@ import {
     Type, Mail, Phone, Calendar, Briefcase, Building, MapPin, Sparkles, FileInput, Tag, Bell, BellRing
 } from 'lucide-react';
 import { api } from '../services/storageAdapter';
+import { isManualList } from '../utils/listHelpers';
 import { FormDefinition, FormField } from '../types';
 import PageHeader from '../components/common/PageHeader';
 import Button from '../components/common/Button';
@@ -18,6 +19,7 @@ import toast from 'react-hot-toast';
 import Badge from '../components/common/Badge';
 import ConfirmModal from '../components/common/ConfirmModal';
 import IntegrationGuideModal from '../components/flows/modals/IntegrationGuideModal';
+
 
 const DB_FIELDS = [
     { value: 'email', label: 'Địa chỉ Email (Bắt buộc)', type: 'email', required: true, icon: Mail },
@@ -207,6 +209,21 @@ const Forms: React.FC = () => {
         }
     };
 
+    const handleToggleStatus = async (e: React.MouseEvent, form: FormDefinition) => {
+        e.stopPropagation();
+        try {
+            const res = await api.put<{ id: string; status: string }>(`forms/${form.id}?route=toggle_status`, {});
+            if (res.success) {
+                setForms(prev => prev.map(f => f.id === form.id ? { ...f, status: res.data.status as 'active' | 'inactive' } : f));
+                showToast(res.data.status === 'active' ? 'Đã kích hoạt biểu mẫu' : 'Đã vô hiệu hoá biểu mẫu');
+            } else {
+                showToast(res.message || 'Lỗi khi thay đổi trạng thái', 'error');
+            }
+        } catch {
+            showToast('Lỗi kết nối', 'error');
+        }
+    };
+
     const getFieldIcon = (dbField: string) => {
         const field = DB_FIELDS.find(f => f.value === dbField);
         return field?.icon || Type;
@@ -244,17 +261,29 @@ const Forms: React.FC = () => {
                         <Button variant="outline" className="mt-8 lg:mt-10 px-8 lg:px-10 h-10 lg:h-12 rounded-xl lg:rounded-2xl" onClick={handleCreateNew}>Bắt đầu ngay</Button>
                     </div>
                 ) : forms.map(form => (
-                    <div key={form.id} className="group bg-white p-4 lg:p-6 rounded-2xl lg:rounded-[32px] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-amber-600/10 hover:border-amber-200 transition-all flex flex-col justify-between gap-4 lg:gap-6 relative overflow-hidden">
+                    <div key={form.id} className={`group bg-white p-4 lg:p-6 rounded-2xl lg:rounded-[32px] border shadow-sm hover:shadow-2xl transition-all flex flex-col justify-between gap-4 lg:gap-6 relative overflow-hidden ${
+                        form.status === 'inactive'
+                            ? 'border-slate-200 opacity-70 hover:opacity-100 hover:border-slate-300 hover:shadow-slate-200/40'
+                            : 'border-slate-100 hover:shadow-amber-600/10 hover:border-amber-200'
+                    }`}>
                         <div className="absolute top-0 right-0 p-4 lg:p-8 opacity-[0.03] text-amber-600 group-hover:scale-125 transition-transform"><Globe className="w-24 h-24 lg:w-32 lg:h-32" /></div>
 
                         <div className="flex justify-between items-start relative z-10">
                             <div className="flex items-center gap-3 lg:gap-4">
-                                {/* Changed to Amber Gradient & FileInput Icon to match Flow Creation Modal */}
-                                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-amber-600/30 group-hover:rotate-6 transition-transform">
+                                <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:rotate-6 transition-transform ${
+                                    form.status === 'inactive'
+                                        ? 'bg-gradient-to-br from-slate-300 to-slate-400 shadow-slate-200/30'
+                                        : 'bg-gradient-to-br from-amber-400 to-orange-500 shadow-amber-600/30'
+                                }`}>
                                     <FileInput className="w-5 h-5 lg:w-6 lg:h-6" />
                                 </div>
                                 <div className="min-w-0">
-                                    <h4 className="text-base font-bold text-slate-800 leading-tight truncate pr-2" title={form.name}>{form.name}</h4>
+                                    <div className="flex items-center gap-2">
+                                        <h4 className="text-base font-bold text-slate-800 leading-tight truncate pr-2" title={form.name}>{form.name}</h4>
+                                        {form.status === 'inactive' && (
+                                            <span className="shrink-0 px-2 py-0.5 rounded-md bg-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-wider">Tắt</span>
+                                        )}
+                                    </div>
                                     <div className="flex items-center gap-2 mt-1">
                                         <span className="px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-[10px] font-bold text-slate-500 flex items-center gap-1 truncate max-w-[120px]">
                                             <List className="w-3 h-3" /> {lists.find(l => l.id === form.targetListId)?.name || 'Unknown List'}
@@ -263,6 +292,22 @@ const Forms: React.FC = () => {
                                 </div>
                             </div>
                             <div className="flex gap-1 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                                {/* Status Toggle */}
+                                <button
+                                    onClick={(e) => handleToggleStatus(e, form)}
+                                    title={form.status === 'inactive' ? 'Kích hoạt form' : 'Vô hiệu hoá form'}
+                                    className={`p-2 rounded-xl transition-all ${
+                                        form.status === 'inactive'
+                                            ? 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'
+                                            : 'text-emerald-500 hover:text-slate-400 hover:bg-slate-100'
+                                    }`}
+                                >
+                                    <div className={`w-8 h-5 rounded-full p-0.5 flex items-center transition-all ${
+                                        form.status !== 'inactive' ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'
+                                    }`}>
+                                        <div className="w-3.5 h-3.5 bg-white rounded-full shadow-sm" />
+                                    </div>
+                                </button>
                                 <button onClick={() => handleEditClick(form)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Chỉnh sửa">
                                     <Edit3 className="w-4 h-4" />
                                 </button>
@@ -319,7 +364,7 @@ const Forms: React.FC = () => {
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Danh sách lưu trữ đích</label>
                             <Select
-                                options={lists.map(l => ({ value: l.id, label: l.name }))}
+                                options={lists.filter(isManualList).map(l => ({ value: l.id, label: l.name }))}
                                 value={formData.targetListId || ''}
                                 onChange={v => setFormData({ ...formData, targetListId: v })}
                                 placeholder="Chọn danh sách đích..."

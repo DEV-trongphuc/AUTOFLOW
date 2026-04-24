@@ -51,14 +51,14 @@ const Modal: React.FC<ModalProps> = ({
     xl: 'max-w-4xl rounded-[32px] max-h-[95vh]',
     '2xl': 'max-w-6xl rounded-[32px] max-h-[95vh]',
     '3xl': 'max-w-7xl rounded-[32px] max-h-[95vh]',
-    '4xl': 'max-w-[90%] rounded-[32px] max-h-[95vh]',
+    '4xl': 'max-w-[1300px] rounded-[40px] max-h-[95vh]',
     full: 'w-full h-full rounded-none max-w-full',
   };
 
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className={`fixed inset-0 z-[150] flex items-center justify-center overflow-hidden ${size === 'full' ? 'w-full h-full' : 'p-4 sm:p-6'}`}>
+        <div className={`fixed inset-0 z-[150] flex items-center justify-center overflow-y-auto overflow-x-hidden ${size === 'full' ? 'w-full h-full' : 'p-4 py-8 sm:p-6 sm:py-12'}`}>
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertTriangle, X, Loader2 } from 'lucide-react';
+import Modal from './Modal';
 
 interface ConfirmModalProps {
     isOpen: boolean;
@@ -87,57 +88,25 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
     const styles = variantStyles[variant];
 
-    return createPortal(
-        <div className="fixed inset-0 z-[100001] flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <div
-                className={`absolute inset-0 bg-[#0f172a]/70 backdrop-blur-md transition-opacity duration-300 ${animateIn ? 'opacity-100' : 'opacity-0'}`}
-                onClick={onClose}
-            />
-
-            {/* Modal */}
-            <div className={`rounded-3xl shadow-2xl border w-full max-w-md transform transition-all duration-300 relative ${isDarkTheme ? 'bg-[#0B0F17] border-slate-800' : 'bg-white border-slate-100'} ${animateIn ? 'scale-100 opacity-100 translate-y-0' : 'scale-[0.95] opacity-0 translate-y-8'}`}>
-                {/* Header */}
-                <div className="px-6 py-5 border-b border-slate-100">
-                    <div className="flex items-center gap-3">
-                        <div className={`w-12 h-12 rounded-xl ${styles.iconBg} flex items-center justify-center`}>
-                            <AlertTriangle className={`w-6 h-6 ${styles.icon}`} />
-                        </div>
-                        <div className="flex-1">
-                            <h3 className={`text-lg font-bold ${isDarkTheme ? 'text-slate-100' : 'text-slate-800'}`}>{title}</h3>
-                        </div>
-                        <button
-                            onClick={onClose}
-                            className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
+    return (
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={
+                <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-xl ${styles.iconBg} flex items-center justify-center`}>
+                        <AlertTriangle className={`w-6 h-6 ${styles.icon}`} />
+                    </div>
+                    <div className="flex-1">
+                        <h3 className={`text-lg font-bold ${isDarkTheme ? 'text-slate-100' : 'text-slate-800'}`}>{title}</h3>
                     </div>
                 </div>
-
-                {/* Content */}
-                <div className="px-6 py-5">
-                    <div className={`text-sm leading-relaxed font-medium ${isDarkTheme ? 'text-slate-400' : 'text-slate-600'}`}>{message}</div>
-
-                    {requireConfirmText && (
-                        <div className="mt-6 space-y-2">
-                            <label className="text-xs font-bold text-slate-500 tracking-wider">
-                                <span className="uppercase">Xác nhận bằng cách nhập:</span> <span className="text-slate-800 select-all cursor-copy normal-case">"{requireConfirmText}"</span>
-                            </label>
-                            <input
-                                type="text"
-                                value={confirmInput}
-                                onChange={(e) => setConfirmInput(e.target.value)}
-                                placeholder={confirmPlaceholder || `Nhập "${requireConfirmText}" để xác nhận`}
-                                className={`w-full px-4 py-3 border rounded-xl text-sm font-bold focus:outline-none transition-all placeholder:font-medium ${isDarkTheme ? 'bg-slate-900 border-slate-700 text-slate-100 focus:border-brand' : 'bg-slate-50 border-slate-200 text-slate-800 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500'}`}
-                                autoFocus
-                            />
-                        </div>
-                    )}
-                </div>
-
-                {/* Footer */}
-                <div className={`px-6 py-4 rounded-b-3xl flex items-center justify-end gap-3 ${isDarkTheme ? 'bg-[#1E2532]/20' : 'bg-slate-50/50'}`}>
+            }
+            size="sm"
+            isLoading={isLoading}
+            isDarkTheme={isDarkTheme}
+            footer={
+                <div className="flex items-center justify-end gap-3 w-full">
                     {dangerText && dangerAction && (
                         <button
                             onClick={dangerAction}
@@ -169,9 +138,26 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                         )}
                     </button>
                 </div>
-            </div>
-        </div>,
-        document.body
+            }
+        >
+            <div className={`text-sm leading-relaxed font-medium ${isDarkTheme ? 'text-slate-400' : 'text-slate-600'}`}>{message}</div>
+
+            {requireConfirmText && (
+                <div className="mt-6 space-y-2">
+                    <label className="text-xs font-bold text-slate-500 tracking-wider">
+                        <span className="uppercase">Xác nhận bằng cách nhập:</span> <span className="text-slate-800 select-all cursor-copy normal-case">"{requireConfirmText}"</span>
+                    </label>
+                    <input
+                        type="text"
+                        value={confirmInput}
+                        onChange={(e) => setConfirmInput(e.target.value)}
+                        placeholder={confirmPlaceholder || `Nhập "${requireConfirmText}" để xác nhận`}
+                        className={`w-full px-4 py-3 border rounded-xl text-sm font-bold focus:outline-none transition-all placeholder:font-medium ${isDarkTheme ? 'bg-slate-900 border-slate-700 text-slate-100 focus:border-brand' : 'bg-slate-50 border-slate-200 text-slate-800 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500'}`}
+                        autoFocus
+                    />
+                </div>
+            )}
+        </Modal>
     );
 };
 

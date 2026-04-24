@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { Tag as TagIcon, Search, Trash2, Users, RefreshCw, Filter, ArrowRight, FileText, Info, Edit3, Check, X, AlertTriangle, Save, Plus, Codesandbox, Plug, Layers, Target, Lightbulb } from 'lucide-react';
+import { Tag as TagIcon, Search, Trash2, Users, RefreshCw, Filter, ArrowRight, FileText, Info, Edit3, Check, X, AlertTriangle, Save, Plus, Codesandbox, Plug, Layers, Target, Lightbulb, LayoutGrid, List } from 'lucide-react';
 import { api } from '../services/storageAdapter';
 import { Subscriber } from '../types';
 import PageHero from '../components/common/PageHero';
@@ -18,6 +18,7 @@ interface Tag {
     name: string;
     description?: string;
     subscriber_count?: number;
+    status?: 'active' | 'inactive';
 }
 
 const Tags: React.FC = () => {
@@ -28,6 +29,7 @@ const Tags: React.FC = () => {
     const [newTag, setNewTag] = useState({ name: '', description: '' });
     const [isAdding, setIsAdding] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
     // View Members State
     // View Members State
@@ -124,6 +126,21 @@ const Tags: React.FC = () => {
             showToast('Lỗi kết nối, vui lòng thử lại', 'error');
         } finally {
             setIsAdding(false);
+        }
+    };
+
+    const handleToggleStatus = async (e: React.MouseEvent, tag: Tag) => {
+        e.stopPropagation();
+        try {
+            const res = await api.put<{ id: string; status: string }>(`tags/${tag.id}?route=toggle_status`, {});
+            if (res.success) {
+                setTags(prev => prev.map(t => t.id === tag.id ? { ...t, status: res.data.status as 'active' | 'inactive' } : t));
+                showToast(res.data.status === 'active' ? 'Đã kích hoạt nhãn' : 'Đã vô hiệu hoá nhãn');
+            } else {
+                showToast(res.message || 'Lỗi khi thay đổi trạng thái', 'error');
+            }
+        } catch {
+            showToast('Lỗi kết nối', 'error');
         }
     };
 
@@ -362,63 +379,172 @@ const Tags: React.FC = () => {
                             <h3 className="text-base lg:text-lg font-bold text-slate-800 uppercase tracking-tight">Danh sách Nhãn</h3>
                             <p className="text-[10px] lg:text-xs text-slate-500 font-medium">Quản lý các nhãn phân loại Khách hàng.</p>
                         </div>
-                        <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-white px-3 py-1.5 rounded-lg border border-slate-200/60 shadow-sm">
-                            Tags: {filteredTags.length}
+                        <div className="flex items-center gap-3">
+                            <div className="flex bg-slate-100/50 p-1 rounded-xl border border-slate-200/50">
+                                <button
+                                    onClick={() => setViewMode('grid')}
+                                    className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    <LayoutGrid className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('list')}
+                                    className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    <List className="w-4 h-4" />
+                                </button>
+                            </div>
+                            <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-white px-3 py-1.5 rounded-lg border border-slate-200/60 shadow-sm">
+                                Tags: {filteredTags.length}
+                            </div>
                         </div>
                     </div>
 
                     {loading ? (
                         <CardGridSkeleton cols={4} rows={2} height={8} />
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {filteredTags.map(tag => (
-                                <div
-                                    key={tag.id}
-                                    onClick={() => {
-                                        setViewingTag(tag);
-                                        setTagPagination(prev => ({ ...prev, page: 1 }));
-                                        setTagSearch('');
-                                    }}
-                                    className="group bg-white p-5 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-emerald-500/10 hover:border-emerald-200 transition-all flex flex-col justify-between gap-4 relative overflow-hidden cursor-pointer"
-                                >
-                                    {/* Background Decorative Icon */}
-                                    <div className="absolute top-0 right-0 p-4 opacity-[0.03] text-emerald-600 group-hover:scale-110 transition-transform">
-                                        <TagIcon className="w-16 h-16" />
-                                    </div>
+                        viewMode === 'grid' ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {filteredTags.map(tag => (
+                                    <div
+                                        key={tag.id}
+                                        onClick={() => {
+                                            setViewingTag(tag);
+                                            setTagPagination(prev => ({ ...prev, page: 1 }));
+                                            setTagSearch('');
+                                        }}
+                                        className="group bg-white p-5 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-emerald-500/10 hover:border-emerald-200 transition-all flex flex-col justify-between gap-4 relative overflow-hidden cursor-pointer"
+                                    >
+                                        {/* Background Decorative Icon */}
+                                        <div className="absolute top-0 right-0 p-4 opacity-[0.03] text-emerald-600 group-hover:scale-110 transition-transform">
+                                            <TagIcon className="w-16 h-16" />
+                                        </div>
 
-                                    <div className="flex justify-between items-start relative z-10">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 group-hover:rotate-6 transition-transform">
-                                                <TagIcon className="w-5 h-5" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <h4 className="text-sm font-bold text-slate-800 leading-tight truncate pr-2 uppercase" title={tag.name}>{tag.name}</h4>
-                                                <div className="flex items-center gap-1.5 mt-0.5">
-                                                    <Users className="w-3 h-3 text-slate-400" />
-                                                    <span className="text-[10px] font-black text-slate-500">{(tag.subscriber_count || 0).toLocaleString()}</span>
+                                        <div className="flex justify-between items-start relative z-10">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center text-white shadow-lg transition-transform group-hover:rotate-6 ${
+                                                    tag.status === 'inactive'
+                                                        ? 'from-slate-300 to-slate-400 shadow-slate-200/30'
+                                                        : 'from-emerald-400 to-teal-600 shadow-emerald-500/20'
+                                                }`}>
+                                                    <TagIcon className="w-5 h-5" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <h4 className="text-sm font-bold text-slate-800 leading-tight truncate pr-2 uppercase" title={tag.name}>{tag.name}</h4>
+                                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                                        <Users className="w-3 h-3 text-slate-400" />
+                                                        <span className="text-[10px] font-black text-slate-500">{(tag.subscriber_count || 0).toLocaleString()}</span>
+                                                        {tag.status === 'inactive' && (
+                                                            <span className="px-1.5 py-0.5 rounded-md bg-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-wider">Tắt</span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
+                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                {/* Status Toggle */}
+                                                <button
+                                                    onClick={(e) => handleToggleStatus(e, tag)}
+                                                    title={tag.status === 'inactive' ? 'Kích hoạt nhãn' : 'Vô hiệu hoá nhãn'}
+                                                    className={`p-1.5 rounded-lg transition-all ${
+                                                        tag.status === 'inactive'
+                                                            ? 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'
+                                                            : 'text-emerald-500 hover:text-slate-400 hover:bg-slate-100'
+                                                    }`}
+                                                >
+                                                    <div className={`w-7 h-4 rounded-full p-0.5 flex items-center transition-all ${
+                                                        tag.status !== 'inactive' ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'
+                                                    }`}>
+                                                        <div className="w-3 h-3 bg-white rounded-full shadow-sm" />
+                                                    </div>
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); startEdit(tag); }} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Sửa tên">
+                                                    <Edit3 className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(e, tag); }} className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all" title="Xóa">
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={(e) => { e.stopPropagation(); startEdit(tag); }} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Sửa tên">
-                                                <Edit3 className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(e, tag); }} className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all" title="Xóa">
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                        </div>
-                                    </div>
 
-                                    <div className="relative z-10">
-                                        {tag.description ? (
-                                            <p className="text-[11px] text-slate-400 font-medium line-clamp-1 leading-relaxed italic">{tag.description}</p>
-                                        ) : (
-                                            <p className="text-[10px] text-slate-300 font-medium italic">Không có mô tả...</p>
-                                        )}
+                                        <div className="relative z-10">
+                                            {tag.description ? (
+                                                <p className="text-[11px] text-slate-400 font-medium line-clamp-1 leading-relaxed italic">{tag.description}</p>
+                                            ) : (
+                                                <p className="text-[10px] text-slate-300 font-medium italic">Không có mô tả...</p>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex flex-col gap-3">
+                                {filteredTags.map(tag => (
+                                    <div
+                                        key={tag.id}
+                                        onClick={() => {
+                                            setViewingTag(tag);
+                                            setTagPagination(prev => ({ ...prev, page: 1 }));
+                                            setTagSearch('');
+                                        }}
+                                        className="group bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer"
+                                    >
+                                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                                            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center text-white shadow-sm shrink-0 transition-transform group-hover:scale-105 ${
+                                                tag.status === 'inactive'
+                                                    ? 'from-slate-300 to-slate-400'
+                                                    : 'from-emerald-400 to-teal-600'
+                                            }`}>
+                                                <TagIcon className="w-5 h-5" />
+                                            </div>
+                                            <div className="flex flex-col min-w-0 flex-1">
+                                                <div className="flex items-center gap-3">
+                                                    <h4 className="text-sm font-bold text-slate-800 truncate uppercase" title={tag.name}>{tag.name}</h4>
+                                                    {tag.status === 'inactive' && (
+                                                        <span className="px-1.5 py-0.5 rounded-md bg-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-wider shrink-0">Tắt</span>
+                                                    )}
+                                                </div>
+                                                {tag.description ? (
+                                                    <p className="text-[11px] text-slate-400 font-medium truncate mt-0.5 italic">{tag.description}</p>
+                                                ) : (
+                                                    <p className="text-[10px] text-slate-300 font-medium mt-0.5 italic">Không có mô tả...</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto mt-2 sm:mt-0">
+                                            <div className="flex flex-col sm:items-end">
+                                                <span className="text-xs font-bold text-slate-700">{(tag.subscriber_count || 0).toLocaleString()}</span>
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Khách hàng</span>
+                                            </div>
+                                            
+                                            <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={(e) => handleToggleStatus(e, tag)}
+                                                    title={tag.status === 'inactive' ? 'Kích hoạt nhãn' : 'Vô hiệu hoá nhãn'}
+                                                    className={`p-1.5 rounded-lg transition-all ${
+                                                        tag.status === 'inactive'
+                                                            ? 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'
+                                                            : 'text-emerald-500 hover:text-slate-400 hover:bg-slate-100'
+                                                    }`}
+                                                >
+                                                    <div className={`w-7 h-4 rounded-full p-0.5 flex items-center transition-all ${
+                                                        tag.status !== 'inactive' ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'
+                                                    }`}>
+                                                        <div className="w-3 h-3 bg-white rounded-full shadow-sm" />
+                                                    </div>
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); startEdit(tag); }} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Sửa tên">
+                                                    <Edit3 className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(e, tag); }} className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all" title="Xóa">
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )
                     )}
                 </div>
             </div>

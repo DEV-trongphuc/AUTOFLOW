@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import {
     Users, Target, Link2, Layout, Database, CheckCircle2, AlertCircle, X, ArrowRight,
@@ -171,7 +171,8 @@ const MisaSetup: React.FC<MisaSetupProps> = ({ onBack, onComplete, initialData }
         targetListId: '',
         targetListName: 'MISA CRM Contacts',
         entity: 'Contacts',
-        isCustomInterval: false
+        isCustomInterval: false,
+        createVirtualEmail: false
     });
 
     const [activeMappings, setActiveMappings] = useState<string[]>(['firstName', 'lastName', 'phoneNumber', 'companyName']);
@@ -776,6 +777,27 @@ const MisaSetup: React.FC<MisaSetupProps> = ({ onBack, onComplete, initialData }
                                     </div>
                                     {config.syncInterval === '1440' && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#ffa900] animate-pulse" />}
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Virtual Email Toggle */}
+                        <div className="space-y-4">
+                            <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-1">Nhận diện nâng cao</h4>
+                            <div className="bg-orange-50/30 border border-orange-100 p-6 rounded-[28px] space-y-4">
+                                <label className="flex items-center justify-between cursor-pointer group">
+                                    <div className="flex-1 pr-8">
+                                        <h5 className="text-sm font-bold text-slate-800 group-hover:text-orange-700 transition-colors">Tạo Email ảo cho người chỉ có SĐT</h5>
+                                        <p className="text-[11px] text-slate-500 font-medium leading-relaxed mt-1">
+                                            Nếu một liên hệ từ MISA không có Email nhưng có Số điện thoại, hệ thống sẽ tự động tạo Email ảo dạng <code>phone@no-email.domation</code> để định danh và cho phép tham gia Flow (ZNS/Zalo).
+                                        </p>
+                                    </div>
+                                    <div 
+                                        onClick={() => setConfig({ ...config, createVirtualEmail: !config.createVirtualEmail })}
+                                        className={`relative w-14 h-8 rounded-full transition-all duration-300 ${config.createVirtualEmail ? 'bg-orange-500' : 'bg-slate-200'}`}
+                                    >
+                                        <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-sm transition-all duration-300 ${config.createVirtualEmail ? 'translate-x-6' : ''}`} />
+                                    </div>
+                                </label>
                             </div>
                         </div>
                     </div>

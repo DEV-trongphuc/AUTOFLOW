@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
-import { Upload, FileText, CheckCircle2, AlertTriangle, ArrowRight, List, Plus, X, Database, FileSpreadsheet, DownloadCloud, Loader2 } from 'lucide-react';
+import { Upload, FileText, CheckCircle2, AlertTriangle, ArrowRight, List, Plus, X, Database, FileSpreadsheet, DownloadCloud, Loader2, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
@@ -13,17 +13,19 @@ interface ImportSubscribersModalProps {
     onClose: () => void;
     existingLists: any[];
     existingEmails: Set<string>;
+    existingPhones?: Set<string>;
     defaultTab?: 'paste' | 'file';
     onImport: (data: {
         subscribers: any[],
         targetListId: string | null,
         newListName: string | null,
-        duplicates: number
+        duplicates: number,
+        createVirtualEmail: boolean
     }) => void;
 }
 
 const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
-    isOpen, onClose, existingLists, existingEmails, onImport, defaultTab = 'paste'
+    isOpen, onClose, existingLists, existingEmails, existingPhones = new Set(), onImport, defaultTab = 'paste'
 }) => {
     const [step, setStep] = useState(1);
     const [inputMethod, setInputMethod] = useState<'paste' | 'file'>('paste');
@@ -37,7 +39,8 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
     const [targetListId, setTargetListId] = useState<string>('');
     const [newListName, setNewListName] = useState('');
 
-    const [stats, setStats] = useState({ valid: 0, duplicates: 0, total: 0, missingPhone: 0 });
+    const [stats, setStats] = useState({ valid: 0, duplicates: 0, total: 0, missingPhone: 0, virtualCandidates: 0 });
+    const [createVirtualEmail, setCreateVirtualEmail] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
@@ -46,7 +49,8 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
             setRawData('');
             setParsedRows([]);
             setFileName('');
-            setStats({ valid: 0, duplicates: 0, total: 0, missingPhone: 0 });
+            setStats({ valid: 0, duplicates: 0, total: 0, missingPhone: 0, virtualCandidates: 0 });
+            setCreateVirtualEmail(false);
             setNewListName('');
             setImportMode('new');
             setInputMethod(defaultTab);
@@ -141,19 +145,28 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
             }
 
             return rowObj;
-        }).filter(r => r && r.email && r.email.includes('@'));
+        }).filter(r => r && ((r.email && r.email.includes('@')) || r.phoneNumber));
 
         let dupCount = 0;
         const validRows: any[] = [];
         const seenEmailsInCsv = new Set<string>();
+        const seenPhonesInCsv = new Set<string>();
 
         dataRows.forEach((row: any) => {
             const email = row.email?.toLowerCase()?.trim() || '';
+            const phone = row.phoneNumber ? row.phoneNumber.toString().replace(/[^0-9]/g, '') : '';
+            // Simple normalization for frontend check
+            let normPhone = phone;
+            if (phone.startsWith('84') && phone.length > 9) normPhone = '0' + phone.substring(2);
+
+            const isEmailDup = email && (existingEmails.has(row.email) || existingEmails.has(email) || seenEmailsInCsv.has(email));
+            const isPhoneDup = normPhone && (existingPhones.has(phone) || existingPhones.has(normPhone) || seenPhonesInCsv.has(normPhone));
             
-            if (existingEmails.has(row.email) || existingEmails.has(email) || seenEmailsInCsv.has(email)) {
+            if (isEmailDup || isPhoneDup) {
                 dupCount++;
             } else {
-                seenEmailsInCsv.add(email);
+                if (email) seenEmailsInCsv.add(email);
+                if (normPhone) seenPhonesInCsv.add(normPhone);
                 validRows.push(row);
             }
         });
@@ -171,7 +184,8 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
             total: dataRows.length,
             valid: validRows.length,
             duplicates: dupCount,
-            missingPhone: validRows.filter(r => !r.phoneNumber).length
+            missingPhone: validRows.filter(r => !r.phoneNumber).length,
+            virtualCandidates: validRows.filter(r => !r.email || !r.email.includes('@')).length
         });
         setStep(2);
     };
@@ -184,7 +198,8 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
                 subscribers: parsedRows,
                 targetListId: importMode === 'existing' ? targetListId : null,
                 newListName: importMode === 'new' ? newListName : null,
-                duplicates: stats.duplicates
+                duplicates: stats.duplicates,
+                createVirtualEmail: createVirtualEmail
             }));
 
             onClose();
@@ -367,6 +382,28 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
                                 placeholder="Chọn danh sách đích..."
                                 icon={List}
                             />
+                        )}
+
+                        {stats.virtualCandidates > 0 && (
+                            <div className="pt-2 border-t border-slate-50">
+                                <label className="flex items-start gap-3 p-4 bg-orange-50/50 rounded-2xl border border-orange-100 cursor-pointer group hover:bg-orange-50 transition-all">
+                                    <div className="pt-0.5">
+                                        <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${createVirtualEmail ? 'bg-orange-500 border-orange-500 text-white' : 'border-orange-200 bg-white group-hover:border-orange-300'}`}>
+                                            {createVirtualEmail && <Check className="w-3.5 h-3.5" />}
+                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            className="hidden"
+                                            checked={createVirtualEmail}
+                                            onChange={(e) => setCreateVirtualEmail(e.target.checked)}
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-xs font-bold text-orange-800">Tạo email ảo cho {stats.virtualCandidates} người chỉ có SĐT</p>
+                                        <p className="text-[10px] text-orange-600 font-medium mt-0.5">Hệ thống sẽ tự động tạo email dạng <code>{"{phone}@no-email.domation"}</code> để định danh.</p>
+                                    </div>
+                                </label>
+                            </div>
                         )}
                     </div>
 

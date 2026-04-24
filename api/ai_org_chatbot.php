@@ -947,9 +947,9 @@ try {
                 $convId = ensureConversationId($pdo, $convId, $propertyId);
             }
 
-            // Update conversation title
-            $stmt = $pdo->prepare("UPDATE ai_org_conversations SET title = ?, updated_at = NOW() WHERE id = ?");
-            $stmt->execute([$newTitle, $convId]);
+            // Update conversation title (Enforce property_id to prevent IDOR)
+            $stmt = $pdo->prepare("UPDATE ai_org_conversations SET title = ?, updated_at = NOW() WHERE id = ? AND property_id = ?");
+            $stmt->execute([$newTitle, $convId, $propertyId]);
 
             if ($stmt->rowCount() > 0) {
                 echo json_encode(['success' => true, 'message' => 'Đã đổi tên cuộc hội thoại', 'title' => $newTitle]);
@@ -1059,6 +1059,17 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
             }
             $convId = $propertyId ? ensureConversationId($pdo, $convIdRaw, $propertyId) : $convIdRaw;
 
+            // [P18-A4 SECURITY FIX] Enforce property_id ownership to prevent IDOR
+            if ($propertyId) {
+                $stmtCheck = $pdo->prepare("SELECT id FROM ai_org_conversations WHERE (id = ? OR visitor_id = ?) AND property_id = ?");
+                $stmtCheck->execute([$convId, $convIdRaw, $propertyId]);
+                if (!$stmtCheck->fetchColumn()) {
+                    http_response_code(403);
+                    echo json_encode(['success' => false, 'message' => 'Access denied: Invalid conversation']);
+                    exit;
+                }
+            }
+
             // 1. Find all workspace files to delete from disk and cleanup metadata
             $stmtFiles = $pdo->prepare("SELECT file_url FROM ai_workspace_files WHERE conversation_id = ? OR conversation_id = ?");
             $stmtFiles->execute([$convId, $convIdRaw]);
@@ -1127,6 +1138,17 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
             }
             $convId = $propertyId ? ensureConversationId($pdo, $convIdRaw, $propertyId) : $convIdRaw;
 
+            // [P18-A4 SECURITY FIX] Enforce property_id ownership to prevent IDOR
+            if ($propertyId) {
+                $stmtCheck = $pdo->prepare("SELECT id FROM ai_org_conversations WHERE (id = ? OR visitor_id = ?) AND property_id = ?");
+                $stmtCheck->execute([$convId, $convIdRaw, $propertyId]);
+                if (!$stmtCheck->fetchColumn()) {
+                    http_response_code(403);
+                    echo json_encode(['success' => false, 'message' => 'Access denied: Invalid conversation']);
+                    exit;
+                }
+            }
+
             $pdo->prepare("UPDATE global_assets SET is_deleted = 1 WHERE (conversation_id = ? OR conversation_id = ?) AND type LIKE 'image/%'")->execute([$convId, $convIdRaw]);
             echo json_encode(['success' => true, 'message' => 'Session images cleared']);
             exit;
@@ -1167,8 +1189,8 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
             // source='workspace' means user explicitly "Made Global" — keep those
             $pdo->prepare("DELETE FROM global_assets WHERE (conversation_id = ? OR conversation_id = ?) AND (source IS NULL OR source != 'workspace')")->execute([$convId, $convIdRaw]);
 
-            // 4. Hard delete Conversation Header
-            $pdo->prepare("DELETE FROM ai_org_conversations WHERE id = ? OR visitor_id = ?")->execute([$convId, $convIdRaw]);
+            // 4. Hard delete Conversation Header (Enforce property_id to prevent IDOR)
+            $pdo->prepare("DELETE FROM ai_org_conversations WHERE (id = ? OR visitor_id = ?) AND property_id = ?")->execute([$convId, $convIdRaw, $propertyId]);
 
             echo json_encode(['success' => true, 'message' => 'Conversation permanently deleted']);
             exit;

@@ -1,7 +1,7 @@
 <?php
-// api/Mailer.php - VERSION V30.0 (SMTP KEEPALIVE & CACHING OPTIMIZED)
-class Mailer
-{
+// api/Mailer.php - VERSION V30.1 (SAFETY GUARD & KEEPALIVE OPTIMIZED)
+require_once __DIR__ . '/flow_helpers.php';
+class Mailer {
     private $pdo;
     private $baseUrl;
     private $defaultSender;
@@ -116,8 +116,13 @@ class Mailer
         return $success;
     }
 
-    public function send($toEmail, $subject, $htmlContent, $subscriberId, $campaignId = null, $flowId = null, $flowName = null, $attachments = [], $reminderId = null, $stepId = null, $stepLabel = null, $isQACopy = false, $skipQA = false, $variant = null, $templateHash = null)
+    public function send($toEmail, $subject, $htmlContent, $subscriberId = null, $campaignId = null, $flowId = null, $flowName = null, $attachments = [], $templateHash = null, $stepId = null, $stepLabel = null, $isQACopy = false, $skipQA = false, $variant = null, $reminderId = null)
     {
+        // [SAFETY GUARD] Final check for virtual emails to prevent quota waste
+        if (isVirtualEmail($toEmail)) {
+            return "Skipped: Virtual email";
+        }
+
         // 0. HANDLE INTERNAL QA EMAILS (Copy to team)
         if (!$isQACopy && !$skipQA && !empty($this->smtpSettings['internal_qa_emails'])) {
             $qaEmails = array_filter(array_map('trim', explode("\n", $this->smtpSettings['internal_qa_emails'])));

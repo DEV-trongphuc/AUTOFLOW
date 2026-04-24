@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost:3306
--- Thời gian đã tạo: Th4 23, 2026 lúc 07:16 PM
+-- Thời gian đã tạo: Th4 24, 2026 lúc 07:15 AM
 -- Phiên bản máy phục vụ: 10.6.18-MariaDB-cll-lve-log
--- Phiên bản PHP: 8.4.19
+-- Phiên bản PHP: 8.4.20
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -690,7 +690,9 @@ CREATE TABLE `campaign_reminders` (
 
 CREATE TABLE `custom_events` (
   `id` char(36) NOT NULL,
+  `workspace_id` int(11) NOT NULL DEFAULT 1,
   `name` varchar(255) NOT NULL,
+  `status` enum('active','inactive') NOT NULL DEFAULT 'active',
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `notification_enabled` tinyint(1) DEFAULT 0,
   `notification_emails` text DEFAULT NULL,
@@ -807,6 +809,7 @@ CREATE TABLE `flow_snapshots` (
 CREATE TABLE `forms` (
   `id` char(36) NOT NULL,
   `name` varchar(255) NOT NULL,
+  `status` enum('active','inactive') NOT NULL DEFAULT 'active',
   `target_list_id` char(36) DEFAULT NULL,
   `fields_json` longtext DEFAULT NULL CHECK (json_valid(`fields_json`)),
   `created_at` timestamp NULL DEFAULT current_timestamp(),
@@ -1148,6 +1151,7 @@ CREATE TABLE `purchase_events` (
   `id` char(36) NOT NULL,
   `workspace_id` int(11) NOT NULL DEFAULT 1,
   `name` varchar(255) NOT NULL,
+  `status` enum('active','inactive') NOT NULL DEFAULT 'active',
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `notification_enabled` tinyint(1) DEFAULT 0,
   `notification_emails` text DEFAULT NULL,
@@ -1536,7 +1540,8 @@ CREATE TABLE `survey_questions` (
   `label` text NOT NULL,
   `options_json` longtext DEFAULT NULL CHECK (json_valid(`options_json`)),
   `required` tinyint(1) DEFAULT 0,
-  `order_index` int(11) DEFAULT 0
+  `order_index` int(11) DEFAULT 0,
+  `target_attribute` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1627,6 +1632,7 @@ CREATE TABLE `system_settings` (
 CREATE TABLE `tags` (
   `id` char(36) NOT NULL,
   `name` varchar(100) NOT NULL,
+  `status` enum('active','inactive') NOT NULL DEFAULT 'active',
   `description` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `workspace_id` int(11) NOT NULL DEFAULT 1
@@ -2244,7 +2250,6 @@ ALTER TABLE `activity_buffer`
   ADD KEY `idx_created_at` (`created_at`),
   ADD KEY `idx_subscriber_id` (`subscriber_id`),
   ADD KEY `idx_flow_id` (`flow_id`),
-  ADD KEY `idx_processed_created` (`processed`,`created_at`),
   ADD KEY `idx_ab_processed_created` (`processed`,`created_at`);
 
 --
@@ -2576,7 +2581,9 @@ ALTER TABLE `campaign_reminders`
 -- Chỉ mục cho bảng `custom_events`
 --
 ALTER TABLE `custom_events`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_ce_workspace` (`workspace_id`),
+  ADD KEY `idx_ce_status` (`status`);
 
 --
 -- Chỉ mục cho bảng `email_sections`
@@ -2631,7 +2638,8 @@ ALTER TABLE `flow_snapshots`
 -- Chỉ mục cho bảng `forms`
 --
 ALTER TABLE `forms`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_forms_status` (`status`);
 
 --
 -- Chỉ mục cho bảng `geoip_blocks`
@@ -2667,7 +2675,6 @@ ALTER TABLE `integrations`
 --
 ALTER TABLE `link_clicks`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_link_time` (`short_link_id`,`clicked_at`),
   ADD KEY `idx_short_link_time` (`short_link_id`,`clicked_at`);
 
 --
@@ -2714,9 +2721,7 @@ ALTER TABLE `mail_delivery_logs`
 ALTER TABLE `meta_app_configs`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `idx_page_id` (`page_id`),
-  ADD KEY `idx_status` (`status`),
-  ADD KEY `idx_mac_status` (`status`),
-  ADD KEY `idx_mac_page_id` (`page_id`);
+  ADD KEY `idx_status` (`status`);
 
 --
 -- Chỉ mục cho bảng `meta_automation_scenarios`
@@ -2751,7 +2756,6 @@ ALTER TABLE `meta_customer_journey`
 --
 ALTER TABLE `meta_message_logs`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `idx_mid` (`mid`),
   ADD UNIQUE KEY `uq_mid` (`mid`),
   ADD KEY `idx_conversation` (`page_id`,`psid`),
   ADD KEY `idx_created_at` (`created_at`),
@@ -2803,7 +2807,8 @@ ALTER TABLE `permissions`
 --
 ALTER TABLE `purchase_events`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_pe_workspace` (`workspace_id`);
+  ADD KEY `idx_pe_workspace` (`workspace_id`),
+  ADD KEY `idx_pe_status` (`status`);
 
 --
 -- Chỉ mục cho bảng `queue_jobs`
@@ -2922,7 +2927,6 @@ ALTER TABLE `subscribers`
   ADD KEY `idx_meta_psid` (`meta_psid`),
   ADD KEY `idx_is_zalo_follower` (`is_zalo_follower`),
   ADD KEY `idx_phone` (`phone_number`),
-  ADD KEY `idx_workspace_status` (`workspace_id`,`status`),
   ADD KEY `idx_sub_email` (`email`),
   ADD KEY `idx_sub_workspace_score` (`workspace_id`,`lead_score`),
   ADD KEY `idx_sub_ws_status_created` (`workspace_id`,`status`,`created_at`),
@@ -2960,7 +2964,9 @@ ALTER TABLE `subscriber_activity`
   ADD KEY `idx_sa_subscriber` (`subscriber_id`),
   ADD KEY `idx_sa_type_created` (`type`,`created_at`),
   ADD KEY `idx_sub_type_date` (`subscriber_id`,`type`,`created_at`),
-  ADD KEY `idx_sa_workspace` (`workspace_id`);
+  ADD KEY `idx_sa_workspace` (`workspace_id`),
+  ADD KEY `idx_activity_dedup` (`subscriber_id`,`type`(20),`reference_id`,`created_at`),
+  ADD KEY `idx_processing_campaign` (`campaign_id`,`type`(30),`created_at`);
 
 --
 -- Chỉ mục cho bảng `subscriber_flow_states`
@@ -3027,9 +3033,9 @@ ALTER TABLE `surveys`
 --
 ALTER TABLE `survey_answer_details`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_answer_response` (`response_id`),
-  ADD KEY `idx_answer_question` (`question_id`),
-  ADD KEY `idx_answer_survey` (`survey_id`);
+  ADD KEY `idx_answer_details_question` (`question_id`),
+  ADD KEY `idx_answer_details_response` (`response_id`),
+  ADD KEY `idx_answer_details_survey` (`survey_id`);
 
 --
 -- Chỉ mục cho bảng `survey_questions`
@@ -3048,7 +3054,7 @@ ALTER TABLE `survey_responses`
   ADD KEY `idx_survey_responses_survey` (`survey_id`),
   ADD KEY `idx_survey_responses_subscriber` (`subscriber_id`),
   ADD KEY `idx_survey_responses_submitted` (`submitted_at`),
-  ADD KEY `idx_survey_time` (`survey_id`,`submitted_at`),
+  ADD KEY `idx_survey_responses_survey_submitted` (`survey_id`,`submitted_at`),
   ADD KEY `idx_survey_responses_ip_time` (`ip_hash`,`submitted_at`);
 
 --
@@ -3079,9 +3085,9 @@ ALTER TABLE `system_settings`
 --
 ALTER TABLE `tags`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `idx_tag_name` (`name`),
   ADD UNIQUE KEY `ws_name_unique` (`workspace_id`,`name`),
-  ADD KEY `idx_tag_name_workspace` (`name`,`workspace_id`);
+  ADD KEY `idx_tag_name_workspace` (`name`,`workspace_id`),
+  ADD KEY `idx_tags_status` (`status`);
 
 --
 -- Chỉ mục cho bảng `templates`
@@ -3157,8 +3163,7 @@ ALTER TABLE `web_blacklist`
 -- Chỉ mục cho bảng `web_daily_stats`
 --
 ALTER TABLE `web_daily_stats`
-  ADD PRIMARY KEY (`date`,`property_id`,`url_hash`,`device_type`),
-  ADD UNIQUE KEY `idx_prop_date` (`property_id`,`date`);
+  ADD PRIMARY KEY (`date`,`property_id`,`url_hash`,`device_type`);
 
 --
 -- Chỉ mục cho bảng `web_events`
@@ -3384,7 +3389,8 @@ ALTER TABLE `zalo_user_messages`
   ADD KEY `idx_user` (`zalo_user_id`),
   ADD KEY `idx_created` (`created_at`),
   ADD KEY `idx_direction` (`direction`),
-  ADD KEY `idx_zum_user_dir_created` (`zalo_user_id`,`direction`,`created_at`);
+  ADD KEY `idx_zum_user_dir_created` (`zalo_user_id`,`direction`,`created_at`),
+  ADD KEY `idx_zum_user_created` (`zalo_user_id`,`created_at`);
 
 --
 -- AUTO_INCREMENT cho các bảng đã đổ

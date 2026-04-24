@@ -1,7 +1,7 @@
 
 
 import React from 'react';
-import { MoreHorizontal, Clock, MailOpen, MousePointer2, UserPlus, ChevronLeft, ChevronRight, Check, Zap, BadgeCheck, MessageCircle } from 'lucide-react';
+import { MoreHorizontal, Clock, MailOpen, MousePointer2, UserPlus, ChevronLeft, ChevronRight, Check, Zap, BadgeCheck, MessageCircle, Facebook } from 'lucide-react';
 import Badge from '../../common/Badge';
 import { Subscriber } from '../../../types';
 import toast from 'react-hot-toast';
@@ -51,6 +51,10 @@ const ContactRow = React.memo<ContactRowProps>(({
     const cleanFirstName = getCleanName(sub.firstName);
     const cleanLastName = getCleanName(sub.lastName);
     const fullName = `${cleanFirstName} ${cleanLastName}`.trim() || 'Unknown';
+    const email = sub.email || '';
+    const isVirtualEmail = email.includes('@no-email.domation') || email.includes('@zalo-oa.vn') || email.includes('@facebook.com');
+    const isZalo = email.includes('@zalo-oa.vn');
+    const isMeta = email.includes('@facebook.com') || (sub.meta_psid && sub.meta_psid !== '0');
 
     return (
         <tr
@@ -89,7 +93,8 @@ const ContactRow = React.memo<ContactRowProps>(({
                             {fullName}
                             {(Number(sub.verified) === 1) && <span title="Verified"><BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-50" /></span>}
                             {sub.status === "customer" ? <span title="Customer"><BadgeCheck className="w-3.5 h-3.5 text-amber-600 fill-amber-50" /></span> : null}
-                            {sub.meta_psid && sub.meta_psid !== '0' ? <span title="Facebook Messenger Verified"><BadgeCheck className="w-3.5 h-3.5 text-blue-600 fill-blue-100" /></span> : null}
+                            {isMeta ? <span title="Facebook Messenger User"><Facebook className="w-3 h-3 text-blue-600" /></span> : null}
+                            {isZalo ? <span title="Zalo Official Account User"><MessageCircle className="w-3 h-3 text-blue-500" /></span> : null}
                             {sub.chatCount && sub.chatCount > 0 ? (
                                 <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-[10px] font-bold shrink-0" title="Conversations">
                                     <MessageCircle className="w-3 h-3" />
@@ -98,14 +103,32 @@ const ContactRow = React.memo<ContactRowProps>(({
                             ) : null}
                         </div>
                         {!visibleColumns.includes('email') && (
-                            <div className="text-[11px] font-medium text-slate-400">{sub.email}</div>
+                            <div className="flex items-center justify-start">
+                                {isVirtualEmail ? (
+                                    <span className="inline-flex items-center gap-1.5 text-[8px] font-black uppercase tracking-tighter text-slate-400 px-1.5 py-0.5 rounded-full bg-slate-50 border border-slate-100">
+                                        <div className="w-1 h-1 rounded-full bg-purple-400 shadow-[0_0_4px_rgba(168,85,247,0.4)]" />
+                                        {isZalo ? 'Zalo' : (isMeta ? 'Meta' : 'Virtual')}
+                                    </span>
+                                ) : (
+                                    <span className="text-[11px] font-medium text-slate-400">{sub.email}</span>
+                                )}
+                            </div>
                         )}
                     </div>
                 </div>
             </td>
             {visibleColumns.includes('email') && (
                 <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-slate-600">{sub.email}</div>
+                    <div className="flex items-center justify-start">
+                        {isVirtualEmail ? (
+                            <span className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tight text-slate-400 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200/50">
+                                <div className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_6px_rgba(168,85,247,0.4)]" />
+                                {isZalo ? 'Zalo Identity' : (isMeta ? 'Meta Identity' : 'Virtual Identity')}
+                            </span>
+                        ) : (
+                            <span className="text-sm font-medium text-slate-600">{sub.email}</span>
+                        )}
+                    </div>
                 </td>
             )}
             {visibleColumns.includes('phone') && (

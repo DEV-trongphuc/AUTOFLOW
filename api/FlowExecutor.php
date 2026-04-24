@@ -251,23 +251,32 @@ class FlowExecutor
                     sesAcquireRateSlot(); // 100ms interval = 10/s shared across all workers
 
                     // Send
-                    // [PERF] skipQA=true: Flow emails are per-subscriber automation, not broadcast campaigns.
-                    // QA copies for each individual flow email would: (a) double SMTP traffic,
-                    // (b) force SMTP reconnect after each QA batch (closeConnection() in Mailer),
-                    // (c) spam internal QA recipients with subscriber-specific triggered emails.
-                    $res = $this->mailer->send($subscriber['email'], $finalSubject, $finalHtml, $subscriberId, $campaignId, $flowId, $flowName, $attachments, null, $currentStepId, $step['label'], false, true);
+                    // [SAFETY GUARD] Skip virtual emails in flow
+                    $isVirtualEmail = isVirtualEmail($subscriber['email']);
+                    
+                    if ($isVirtualEmail) {
+                        $res = "Skipped: Virtual email";
+                    } else {
+                        // [PERF] skipQA=true: Flow emails are per-subscriber automation, not broadcast campaigns.
+                        $res = $this->mailer->send($subscriber['email'], $finalSubject, $finalHtml, $subscriberId, $campaignId, $flowId, $flowName, $attachments, null, $currentStepId, $step['label'], false, true);
+                    }
 
 
-                    if ($res === true) {
-                        $this->bufferStatsUpdate('flows', $flowId, 'stat_total_sent');
-                        $this->bufferStatsUpdate('subscribers', $subscriberId, 'stats_sent');
-
-                        logActivity($this->pdo, $subscriberId, 'receive_email', $currentStepId, $flowName, "Email sent: " . $step['label'], $flowId, $campaignId, [], $subscriber['workspace_id']);
-                        $logs[] = "  -> Email sent for {$subscriber['email']} (Step: {$step['label']}).";
+                    if ($res === true || ($isVirtualEmail && $res === "Skipped: Virtual email")) {
+                        if (!$isVirtualEmail) {
+                            $this->bufferStatsUpdate('flows', $flowId, 'stat_total_sent');
+                            $this->bufferStatsUpdate('subscribers', $subscriberId, 'stats_sent');
+                            logActivity($this->pdo, $subscriberId, 'receive_email', $currentStepId, $flowName, "Email sent: " . $step['label'], $flowId, $campaignId, [], $subscriber['workspace_id']);
+                            $logs[] = "  -> Email sent for {$subscriber['email']} (Step: {$step['label']}).";
+                        } else {
+                            // [VẬN HÀNH] Log as skipped but ADVANCE the flow so Zalo/ZNS steps can still trigger
+                            logActivity($this->pdo, $subscriberId, 'skipped_email', $currentStepId, $flowName, "Skipped: Virtual email ({$subscriber['email']})", $flowId, $campaignId, [], $subscriber['workspace_id']);
+                            $logs[] = "  -> Step '{$step['label']}' skipped (Virtual Email). Advancing flow.";
+                        }
 
                         $nextStepId = $step['nextStepId'] ?? null;
                         $isInstantStep = true;
-                        $messageSent = true;
+                        $messageSent = !$isVirtualEmail;
                     } else {
                         $this->bufferStatsUpdate('flows', $flowId, 'stat_total_failed');
                         $errMsg = is_string($res) ? $res : 'Unknown Error';

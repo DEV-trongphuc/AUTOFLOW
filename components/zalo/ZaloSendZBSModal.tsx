@@ -4,6 +4,7 @@ import { X, Send, Search, Layout, AlertTriangle, CheckCircle, RefreshCw, FileTex
 import { api } from '../../services/storageAdapter';
 import Button from '../common/Button';
 import Input from '../common/Input';
+import Modal from '../common/Modal';
 
 interface ZNSParam {
     name: string;
@@ -362,19 +363,14 @@ const ZaloSendZBSModal: React.FC<ZaloSendZBSModalProps> = ({ isOpen, onClose: _o
     const znsPrice = priceUid > 0 ? priceUid : (pricePhone > 0 ? pricePhone : 300);
 
     return (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 overflow-hidden">
-            <div
-                className={`absolute inset-0 bg-slate-900/60 backdrop-blur-md transition-all duration-500 ease-in-out ${animateIn ? 'opacity-100' : 'opacity-0'}`}
-                onClick={onClose}
-            />
-
-            <div
-                style={{
-                    transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-                    perspective: '1000px'
-                }}
-                className={`relative bg-[#fcfdfe] rounded-[48px] w-full max-w-[1300px] h-[92vh] shadow-2xl flex flex-col overflow-hidden border border-white/20 transform transition-all duration-500 shadow-[0_32px_120px_-10px_rgba(0,0,0,0.3)] ${animateIn ? 'scale-100 opacity-100 translate-y-0 rotate-0' : 'scale-[0.92] opacity-0 translate-y-12 rotate-x-12'} font-sans`}>
-
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            size="4xl"
+            noHeader
+            noPadding
+        >
+            <div className="h-[92vh] flex flex-col overflow-hidden bg-[#fcfdfe] font-sans">
                 <div className="pt-8 pb-4 text-center shrink-0">
                     <h3 className="text-[24px] font-bold text-slate-800 tracking-tight">Cấu hình Nội dung ZBS</h3>
                 </div>
@@ -450,7 +446,7 @@ const ZaloSendZBSModal: React.FC<ZaloSendZBSModalProps> = ({ isOpen, onClose: _o
                                     </div>
                                 )}
 
-                                {/* TIME POLICY WARNING (Added as requested) */}
+                                {/* TIME POLICY WARNING */}
                                 <div className="bg-amber-50/50 border border-amber-200 p-5 rounded-[24px] space-y-3 animate-in slide-in-from-left-4 duration-500 delay-75">
                                     <div className="flex items-center gap-2 text-amber-600">
                                         <Clock className="w-4 h-4" />
@@ -469,7 +465,6 @@ const ZaloSendZBSModal: React.FC<ZaloSendZBSModalProps> = ({ isOpen, onClose: _o
                                     </div>
                                 </div>
 
-                                {/* UID SAVING TIP */}
                                 <UIDTip />
 
                                 {/* CSV ACTIONS */}
@@ -536,19 +531,13 @@ const ZaloSendZBSModal: React.FC<ZaloSendZBSModalProps> = ({ isOpen, onClose: _o
 
                         {selectedTemplate ? (
                             <div className="relative z-10 w-full h-full flex items-center justify-center animate-in zoom-in-95 duration-700">
-                                {/* Fitted Phone Frame - More Stable approach */}
+                                {/* Fitted Phone Frame */}
                                 <div className="w-[320px] h-[640px] relative transition-all duration-500 scale-[0.65] md:scale-[0.7] xl:scale-[0.85] 2xl:scale-[0.95] origin-center">
-                                    {/* Physical Frame Shadow & Border */}
                                     <div className="absolute inset-x-[-8px] inset-y-[-8px] bg-slate-900 rounded-[50px] shadow-2xl ring-1 ring-white/10"></div>
-
-                                    {/* Main Device Body */}
                                     <div className="w-full h-full bg-white rounded-[44px] relative overflow-hidden flex flex-col border-[2px] border-slate-800 shadow-inner">
-                                        {/* Notch */}
                                         <div className="absolute top-0 left-1/2 -translate-x-1/2 h-6 w-32 bg-slate-900 rounded-b-[18px] z-50 flex items-center justify-center">
                                             <div className="w-8 h-1 bg-slate-800 rounded-full"></div>
                                         </div>
-
-                                        {/* Status Bar Mock */}
                                         <div className="h-10 w-full flex justify-between items-center px-8 text-[11px] font-bold text-slate-800 shrink-0 z-40 bg-white">
                                             <span>9:41</span>
                                             <div className="flex gap-1.5 items-center">
@@ -559,7 +548,6 @@ const ZaloSendZBSModal: React.FC<ZaloSendZBSModalProps> = ({ isOpen, onClose: _o
                                                 </div>
                                             </div>
                                         </div>
-
                                         <div className="flex-1 bg-[#f8f9fa] relative flex flex-col">
                                             {isLoadingDetail ? (
                                                 <div className="flex-1 flex flex-col items-center justify-center space-y-4">
@@ -572,9 +560,9 @@ const ZaloSendZBSModal: React.FC<ZaloSendZBSModalProps> = ({ isOpen, onClose: _o
                                                         src={selectedTemplate.template_data.detail.previewUrl}
                                                         className="absolute inset-0 border-0 origin-top pointer-events-none"
                                                         style={{
-                                                            width: '125%', // 320px * 1.25 = 400px simulated width
+                                                            width: '125%',
                                                             height: '125%',
-                                                            transform: 'scale(0.8)', // Scale down to fit 320px container
+                                                            transform: 'scale(0.8)',
                                                             transformOrigin: 'top left',
                                                             border: 'none'
                                                         }}
@@ -598,8 +586,6 @@ const ZaloSendZBSModal: React.FC<ZaloSendZBSModalProps> = ({ isOpen, onClose: _o
                                                 </div>
                                             )}
                                         </div>
-
-                                        {/* Home Indicator */}
                                         <div className="h-7 w-full bg-white flex justify-center items-center shrink-0">
                                             <div className="w-32 h-1 bg-slate-200 rounded-full"></div>
                                         </div>
@@ -651,7 +637,7 @@ const ZaloSendZBSModal: React.FC<ZaloSendZBSModalProps> = ({ isOpen, onClose: _o
                     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
                 `}</style>
             </div>
-        </div>
+        </Modal>
     );
 };
 

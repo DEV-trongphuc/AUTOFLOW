@@ -118,7 +118,7 @@ const MemoizedContent = React.memo(({
 
         container.addEventListener('click', handleClick);
         return () => container.removeEventListener('click', handleClick);
-    }); // re-run on every render to pick up new images
+    }, []); // Run only once on mount, event delegation handles dynamic children
 
     return (
         <div

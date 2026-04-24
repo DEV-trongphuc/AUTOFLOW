@@ -33,6 +33,10 @@ try {
                 throw new Exception('Missing group_id');
             }
 
+            // [SECURITY FIX] Enforce authorization for the requested group/category
+            $propertyId = resolvePropertyId($pdo, $groupId);
+            requireCategoryAccess($propertyId, $currentOrgUser);
+
             // Total messages
             $stmtTotal = $pdo->prepare("
                 SELECT 
@@ -116,6 +120,10 @@ try {
             if (!$groupId || !$userEmail) {
                 throw new Exception('Missing required fields');
             }
+
+            // [SECURITY FIX] Enforce authorization for the requested group/category
+            $propertyId = resolvePropertyId($pdo, $groupId);
+            requireCategoryAccess($propertyId, $currentOrgUser);
 
             $stmt = $pdo->prepare("
                 SELECT 

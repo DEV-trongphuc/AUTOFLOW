@@ -329,7 +329,7 @@ if ($method === 'POST' && $route === 'subscribers_bulk') {
 
             foreach ($chunk as $data) {
                 $id = $data['id'] ?? bin2hex(random_bytes(16));
-                $email = $data['email'];
+                $email = $data['email'] ?? '';
                 $firstName = $data['firstName'] ?? '';
                 $lastName = $data['lastName'] ?? '';
                 $status = $data['status'] ?? 'active';
@@ -343,6 +343,11 @@ if ($method === 'POST' && $route === 'subscribers_bulk') {
                 $gender = $data['gender'] ?? '';
                 $dob = !empty($data['dateOfBirth']) ? $data['dateOfBirth'] : null;
                 $anniv = !empty($data['anniversaryDate']) ? $data['anniversaryDate'] : null;
+                $createVirtualEmail = $data['createVirtualEmail'] ?? false;
+
+                if (empty($email) && !empty($phone) && $createVirtualEmail) {
+                    $email = $phone . '@no-email.domation';
+                }
 
                 // 10M UPGRADE: Removed 'tags' from main insert (moved to subscriber_tags)
                 $subValues[] = "(?, ?, ?, ?, ?, ?, ?, ?, NOW(), '[]', ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -894,23 +899,63 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
             jsonResponse(false, null, 'Email đã tồn tại trong hệ thống (Email already exists). Vui lòng sử dụng email khác hoặc
     cập nhật subscriber hiện tại.');
         }
-        $id = (!empty($data['id'])) ? $data['id'] : bin2hex(random_bytes(16));
-        $attrs = json_encode($data['customAttributes'] ?? (object) []);
-        $notes = json_encode($data['notes'] ?? []); // Save notes on POST
+        $email = strtolower(trim($data['email'] ?? ''));
+        $phone = $data['phoneNumber'] ?? '';
+        $normPhone = preg_replace('/[^0-9]/', '', $phone);
+        if (substr($normPhone, 0, 2) === '84' && strlen($normPhone) > 9) $normPhone = '0' . substr($normPhone, 2);
 
-        // [FIX P11-C3] Added workspace_id to INSERT — previously missing, causing manually-created
-        // subscribers to have workspace_id=NULL and be invisible to all workspace-filtered queries.
-        // Bug existed in single-create POST only; bulk import was already fixed (see [FIX P0] comment).
-        $sql = "INSERT INTO subscribers (id, workspace_id, email, first_name, last_name, gender, custom_attributes, phone_number,
-    job_title, company_name, country, city, address, source, salesperson, joined_at, notes, status, date_of_birth,
-    anniversary_date)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?)";
-        $stmt = $pdo->prepare($sql);
-        try {
+        require_once 'sync_engine.php';
+        $engine = new SyncEngine($pdo, $workspace_id);
+        $engine->loadMaps();
+        $existingId = $engine->resolveId($email, $phone);
+
+        if ($existingId) {
+            $id = $existingId;
+            // Proceed to UPDATE logic by switching to PUT-like behavior or just return success with existing ID
+            // For better UX, we'll update the record with new data.
+            $attrs = json_encode($data['customAttributes'] ?? (object) []);
+            $notes = json_encode($data['notes'] ?? []);
+            $sql = "UPDATE subscribers SET 
+                    email = ?, first_name = ?, last_name = ?, gender = ?, custom_attributes = ?, 
+                    phone_number = ?, job_title = ?, company_name = ?, country = ?, city = ?, 
+                    address = ?, source = ?, salesperson = ?, notes = ?, status = ?, 
+                    date_of_birth = ?, anniversary_date = ?, updated_at = NOW()
+                    WHERE id = ? AND workspace_id = ?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                $data['email'] ?? null,
+                $data['firstName'] ?? '',
+                $data['lastName'] ?? '',
+                $data['gender'] ?? '',
+                $attrs,
+                $data['phoneNumber'] ?? '',
+                $data['jobTitle'] ?? '',
+                $data['companyName'] ?? '',
+                $data['country'] ?? '',
+                $data['city'] ?? '',
+                $data['address'] ?? '',
+                $data['source'] ?? 'Manual',
+                $data['salesperson'] ?? '',
+                $notes,
+                $data['status'] ?? 'active',
+                $data['dateOfBirth'] ?? null,
+                $data['anniversaryDate'] ?? null,
+                $id,
+                $workspace_id
+            ]);
+        } else {
+            $id = (!empty($data['id'])) ? $data['id'] : bin2hex(random_bytes(16));
+            $attrs = json_encode($data['customAttributes'] ?? (object) []);
+            $notes = json_encode($data['notes'] ?? []);
+            $sql = "INSERT INTO subscribers (id, workspace_id, email, first_name, last_name, gender, custom_attributes, phone_number,
+                job_title, company_name, country, city, address, source, salesperson, joined_at, notes, status, date_of_birth,
+                anniversary_date)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?)";
+            $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 $id,
-                $workspace_id, // [FIX P11-C3] workspace_id was missing — subscribers now correctly isolated
-                $data['email'],
+                $workspace_id,
+                $data['email'] ?? null,
                 $data['firstName'] ?? '',
                 $data['lastName'] ?? '',
                 $data['gender'] ?? '',
@@ -928,7 +973,8 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
                 $data['dateOfBirth'] ?? null,
                 $data['anniversaryDate'] ?? null
             ]);
-
+        }
+        try {
             // 10M UPGRADE: Tag Handling (Relational)
             $newTags = $data['tags'] ?? [];
             if (is_array($newTags)) {
@@ -951,7 +997,7 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
                     $stmtListCheck->execute([$id, $lid]);
                     if (!$stmtListCheck->fetch()) {
                         $pdo->prepare("INSERT INTO subscriber_lists (subscriber_id, list_id) VALUES (?, ?)")->execute([$id, $lid]);
-                        triggerFlows($pdo, $id, 'list', $lid);
+                        triggerFlows($pdo, $id, 'list', $lid, $workspace_id);
                         // [PERF] Use incremental update instead of full count
                         $hasPhone = !empty($data['phoneNumber']) ? 1 : 0;
                         $pdo->prepare("UPDATE lists SET subscriber_count = subscriber_count + 1, phone_count = phone_count + ? WHERE id = ?")->execute([$hasPhone, $lid]);

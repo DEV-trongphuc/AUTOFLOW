@@ -22,6 +22,16 @@ if (!$propertyId) {
     exit;
 }
 
+// [SECURITY FIX] Ensure property belongs to the current workspace
+$workspace_id = get_current_workspace_id();
+$stmtProp = $pdo->prepare("SELECT id FROM web_properties WHERE id = ? AND workspace_id = ?");
+$stmtProp->execute([$propertyId, $workspace_id]);
+if (!$stmtProp->fetchColumn()) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Forbidden: Property does not belong to your workspace']);
+    exit;
+}
+
 if ($action === 'list') {
     $source = $_GET['source'] ?? 'all';
     $search = $_GET['search'] ?? '';

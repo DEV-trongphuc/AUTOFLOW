@@ -5,6 +5,8 @@ require_once 'auth_middleware.php'; // [FIX] Dashboard stats must be workspace-s
 header('Content-Type: application/json');
 
 $workspace_id = get_current_workspace_id();
+// [SECURITY FIX] Enforce that the user actually has access to this workspace
+require_permission($pdo, 'view_dashboard', $workspace_id);
 
 // ─── NEW: Email Sent Chart Route ──────────────────────────────────────────────
 if (isset($_GET['route']) && $_GET['route'] === 'email_sent_chart') {

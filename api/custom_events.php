@@ -53,9 +53,17 @@ try {
                 jsonResponse(false, null, 'Sự kiện này đã bị vô hiệu hoá');
             }
             $eventName = $eventRow['name'];
+            // [FIX BACKEND-BUG-02] Resolve workspace_id from the event record.
+            // The public /track route has no auth session ($workspace_id was null),
+            // so tags created here were getting workspace_id='' (empty string) — becoming
+            // orphaned and invisible in the admin Tags list + breaking flow triggers.
+            $workspace_id = $eventRow['workspace_id'] ?? null;
 
-            $stmtCheck = $pdo->prepare("SELECT id, tags FROM subscribers WHERE email = ? LIMIT 1");
-            $stmtCheck->execute([$email]);
+            // [FIX BUG-CE-1] CRITICAL: Must filter by workspace_id to prevent cross-tenant data access.
+            // Previously this query had NO workspace_id filter — if two workspaces had a subscriber
+            // with the same email, the wrong subscriber could be matched and their data corrupted.
+            $stmtCheck = $pdo->prepare("SELECT id, status, tags FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
+            $stmtCheck->execute([$email, $workspace_id]);
             $sub = $stmtCheck->fetch();
 
             $subscriberFieldsMap = [
@@ -124,8 +132,11 @@ try {
                 }
             } else {
                 $sid = bin2hex(random_bytes(16));
-                $insertFields = ['id', 'email', 'status', 'source', 'joined_at', 'lead_score'];
-                $insertValues = [$sid, $email, 'active', "Custom Event: " . $eventName, $now, $pCustom];
+                // [FIX BUG-CE-2] CRITICAL: workspace_id was missing from INSERT — new subscribers
+                // created via custom event tracking were stored without a workspace_id, making them
+                // invisible to all workspace-scoped admin queries (subscriber list, segments, flows).
+                $insertFields = ['id', 'email', 'status', 'source', 'joined_at', 'lead_score', 'workspace_id'];
+                $insertValues = [$sid, $email, 'active', "Custom Event: " . $eventName, $now, $pCustom, $workspace_id];
 
                 foreach ($subscriberFieldsMap as $dataKey => $dbField) {
                     if (isset($data[$dataKey]) && $data[$dataKey] !== '' && $data[$dataKey] !== null) {
@@ -168,11 +179,13 @@ try {
             }
 
             require_once 'tracking_helper.php';
-            // Capture Environment Data
-            $ip = $_SERVER['HTTP_CLIENT_IP'] ?? ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ($_SERVER['HTTP_X_FORWARDED'] ?? ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ($_SERVER['HTTP_FORWARDED'] ?? ($_SERVER['REMOTE_ADDR'] ?? 'Unknown')))));
+            // [FIX BACKEND-BUG-04] Safe IP detection — HTTP_CLIENT_IP is trivially spoofable.
+            // Priority: Cloudflare real IP → standard reverse-proxy header → direct connection.
+            $ip = $_SERVER['HTTP_CF_CONNECTING_IP']
+                ?? ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ($_SERVER['REMOTE_ADDR'] ?? 'Unknown'));
             if (strpos($ip, ',') !== false) {
-                $ips = explode(',', $ip);
-                $ip = trim($ips[0]);
+                // X-Forwarded-For may contain chain: "client, proxy1, proxy2" — take first
+                $ip = trim(explode(',', $ip)[0]);
             }
             $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
             $deviceInfo = getDeviceDetails($ua);

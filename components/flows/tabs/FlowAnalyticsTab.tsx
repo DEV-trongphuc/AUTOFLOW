@@ -1269,7 +1269,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                     </div>
 
                                                     {/* Error and Unsubscribe Badges */}
-                                                    {item.type === 'action' && item.id !== 'virtual_completed' && (
+                                                    {(item.type === 'action' || item.type === 'zalo_zns') && item.id !== 'virtual_completed' && (
                                                         (() => {
                                                             const failed = (currentFlow.steps.find(s => s.id === item.id) as any)?.stats?.failed || 0;
                                                             const unsubscribed = (currentFlow.steps.find(s => s.id === item.id) as any)?.stats?.unsubscribed || 0;

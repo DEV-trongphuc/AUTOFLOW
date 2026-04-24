@@ -1647,10 +1647,10 @@ if (isset($_GET['route']) && $_GET['route'] === 'step-errors') {
         if ($stepId && strpos($stepId, ',') !== false) {
             $ids = explode(',', $stepId);
             $placeholders = implode(',', array_fill(0, count($ids), '?'));
-            $where = "sa.flow_id = ? AND sa.reference_id IN ($placeholders) AND sa.type = 'failed_email'";
+            $where = "sa.flow_id = ? AND sa.reference_id IN ($placeholders) AND sa.type IN ('failed_email', 'zns_failed')";
             $params = array_merge([$flowId], $ids);
         } else {
-            $where = "sa.flow_id = ? AND sa.reference_id = ? AND sa.type = 'failed_email'";
+            $where = "sa.flow_id = ? AND sa.reference_id = ? AND sa.type IN ('failed_email', 'zns_failed')";
             $params = [$flowId, $stepId];
         }
 

@@ -401,13 +401,13 @@ const Audience: React.FC = () => {
         setLoading(false);
     };
 
-    const fetchIntegrations = async () => {
-        setLoading(true);
+    const fetchIntegrations = async (silent = false) => {
+        if (!silent) setLoading(true);
         const res = await api.get<any[]>('integrations');
         if (res.success) {
             setIntegrations(res.data);
         }
-        setLoading(false);
+        if (!silent) setLoading(false);
         return res.success ? res.data : null;
     };
 
@@ -513,27 +513,28 @@ const Audience: React.FC = () => {
         }
         prevSyncingRef.current = isCurrentlySyncing;
 
+        // If not on integrations tab or nothing is syncing, don't poll
         if (activeTab !== 'integrations' || !isCurrentlySyncing) return;
 
-        // Track sync start time
+        // Track sync start time for timeout
         const syncStartTime = Date.now();
 
         const interval = setInterval(() => {
             const elapsed = Date.now() - syncStartTime;
 
-            // If syncing for more than 2 minutes, force refresh (likely stuck)
-            if (elapsed > 120000) {
+            // If syncing for more than 5 minutes, force refresh (likely stuck)
+            if (elapsed > 300000) {
                 console.warn('Sync timeout detected, forcing refresh');
-                fetchIntegrations();
+                fetchIntegrations(true);
                 clearInterval(interval);
                 return;
             }
 
-            fetchIntegrations();
-        }, 1000); // Poll every 1 second for faster feedback
+            fetchIntegrations(true); // Silent poll
+        }, 2000); // Poll every 2 seconds
 
         return () => clearInterval(interval);
-    }, [activeTab, integrations, reportPeriod, activeTab]);
+    }, [activeTab, integrations.some(i => i.sync_status === 'syncing'), reportPeriod]);
 
     const fetchSubscribers = async (page = 1) => {
         setLoading(true);
@@ -1571,29 +1572,26 @@ const Audience: React.FC = () => {
 
                                                 showToast('Đang tiến hành đồng bộ...', 'info');
                                                 try {
-                                                    await api.post(`integrations?route=sync_now&id=${id}`, {});
-
-                                                    // [FIX] Poll until sync_status is no longer 'syncing'.
-                                                    // api.post returns immediately after dispatching the background
-                                                    // worker — the old code showed "done" toast before sync finished.
-                                                    let attempts = 0;
-                                                    const maxAttempts = 40; // 40 × 3s = 2 min max
-                                                    const pollInterval = setInterval(async () => {
-                                                        attempts++;
-                                                        const latest = await fetchIntegrations();
-                                                        const updated = latest?.find((i: any) => i.id === id);
-                                                        const stillSyncing = updated?.sync_status === 'syncing';
-                                                        if (!stillSyncing || attempts >= maxAttempts) {
-                                                            clearInterval(pollInterval);
-                                                            showToast('Đã đồng bộ xong!', 'success');
-                                                            const listRes = await api.get<any[]>('lists');
-                                                            if (listRes.success) setAllStaticLists(listRes.data);
-                                                        }
-                                                    }, 3000);
+                                                    // This call is SYNCHRONOUS in integrations.php
+                                                    const res = await api.post(`integrations?route=sync_now&id=${id}`, {});
+                                                    
+                                                    if (res.success) {
+                                                        showToast('Đồng bộ thành công!', 'success');
+                                                        // Refresh integrations and lists immediately
+                                                        fetchIntegrations(true);
+                                                        const [listRes] = await Promise.all([
+                                                            api.get<any[]>('lists'),
+                                                            fetchReportStats(reportPeriod)
+                                                        ]);
+                                                        if (listRes.success) setAllStaticLists(listRes.data);
+                                                    } else {
+                                                        showToast(res.message || 'Lỗi khi đồng bộ.', 'error');
+                                                        fetchIntegrations(true);
+                                                    }
                                                 } catch (e) {
-                                                    showToast('Lỗi khi đồng bộ.', 'error');
+                                                    showToast('Lỗi khi kết nối máy chủ đồng bộ.', 'error');
                                                     setIntegrations(prev => prev.map(i =>
-                                                        i.id === id ? { ...i, sync_status: null } : i
+                                                        i.id === id ? { ...i, sync_status: 'idle' } : i
                                                     ));
                                                 }
                                             }
@@ -1637,11 +1635,10 @@ const Audience: React.FC = () => {
                     if (res?.success) {
                         const lRes = await api.get<any[]>('lists');
                         if (lRes.success) setAllStaticLists(lRes.data);
-                        if (isNew) {
-                            setListsPagination(prev => ({ ...prev, page: 1 }));
-                        } else {
-                            fetchLists(listsPagination.page);
-                        }
+                        // Always call fetchLists directly — do NOT rely on pagination state change
+                        // because setListsPagination({ page: 1 }) is a no-op when already on page 1
+                        // and the useEffect would never fire
+                        fetchLists(isNew ? 1 : listsPagination.page);
                         setIsCreateListModalOpen(false);
                         setEditingList(null);
                     } else {
@@ -1658,7 +1655,8 @@ const Audience: React.FC = () => {
                 isOpen={isImportModalOpen}
                 onClose={() => setImportModalOpen(false)}
                 existingLists={allStaticLists}
-                existingEmails={new Set()}
+                existingEmails={new Set(subscribers.map(s => s.email).filter(Boolean))}
+                existingPhones={new Set(subscribers.map(s => s.phoneNumber).filter(Boolean) as string[])}
                 onImport={async (d) => {
                     const { subscribers: newSubs, targetListId, newListName } = d;
                     let finalListId = targetListId;
@@ -1702,7 +1700,11 @@ const Audience: React.FC = () => {
                                 };
                             });
 
-                            await api.post('bulk_operations', { type: 'import', subscribers: subsPayload });
+                            await api.post('bulk_operations', { 
+                                type: 'import', 
+                                subscribers: subsPayload,
+                                createVirtualEmail: d.createVirtualEmail
+                            });
                             showToast(`Đã import thành công ${newSubs.length} liên hệ!`, 'success');
 
                             fetchSubscribers(1);

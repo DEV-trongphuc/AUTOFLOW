@@ -20,9 +20,11 @@ $chatbotId = $_GET['chatbot_id'] ?? null;
 // Resolve slug if categoryId is provided
 if ($categoryId) {
     $categoryId = resolvePropertyId($pdo, $categoryId);
+    requireCategoryAccess($categoryId, $currentOrgUser);
 }
 if ($chatbotId) {
     $chatbotId = resolvePropertyId($pdo, $chatbotId);
+    requireCategoryAccess($chatbotId, $currentOrgUser);
 }
 
 // Get the admin_id (org owner) for the category — used to filter members

@@ -7,6 +7,29 @@
  * Looks at activityCache first, falls back to DB query if needed.
  * Returns true if subscriber should exit the flow, false otherwise.
  */
+if (!function_exists('isVirtualEmail')) {
+    /**
+     * Check if an email belongs to a virtual/non-email domain
+     * Used to skip delivery and prevent quota waste.
+     */
+    function isVirtualEmail($email)
+    {
+        if (empty($email)) return true;
+        $email = strtolower(trim($email));
+        $virtualDomains = [
+            '@no-email.domation',
+            '@zalo-oa.vn',
+            '@facebook.com'
+        ];
+        foreach ($virtualDomains as $domain) {
+            if (strpos($email, $domain) !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
 if (!function_exists('checkAdvancedExit')) {
     function checkAdvancedExit($pdo, $subscriberId, $enrolledAt, $advancedExitConfig, $activityCache = [])
     {

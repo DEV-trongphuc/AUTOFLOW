@@ -182,9 +182,11 @@ switch ($method) {
             jsonResponse(true, ['id' => $path, 'name' => $newName], 'Đã cập nhật nhãn và đồng bộ toàn hệ thống');
         } catch (Exception $e) {
             $pdo->rollBack();
-            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+            // [FIX BUG-TAGS-3] Pass actual error message through (e.g. "Tag not found").
+            jsonResponse(false, null, $e->getMessage());
         }
         break;
+
 
     case 'DELETE':
         if (!$path)
@@ -207,30 +209,18 @@ switch ($method) {
             $checkFlows->execute(['%"' . $tagName . '"%']);
             $blockingFlow = $checkFlows->fetchColumn();
 
-                if ($blockingFlow) {
-                    throw new Exception("Không thể xóa: Nhãn đang được sử dụng trong Flow đang chạy '{$blockingFlow}'. Vui lòng dừng hoặc chỉnh sửa Flow trước.");
-                }
+            if ($blockingFlow) {
+                throw new Exception("Không thể xóa: Nhãn đang được sử dụng trong Flow đang chạy '{$blockingFlow}'. Vui lòng dừng hoặc chỉnh sửa Flow trước.");
+            }
 
-                // 2. Gỡ nhãn khỏi subscribers.tags JSON (legacy sync)
-                // [FIX] Use subscriber_tags (indexed) to get affected IDs first, then chunk.
-                // Old: WHERE JSON_CONTAINS on 10M rows = full table scan + long lock.
-                // New: index lookup via subscriber_tags → chunk UPDATE to release locks between batches.
-                $stmtAffected = $pdo->prepare(
-                    "SELECT st.subscriber_id FROM subscriber_tags st WHERE st.tag_id = ?"
-                );
-                $stmtAffected->execute([$path]);
-                $affectedSubIds = $stmtAffected->fetchAll(PDO::FETCH_COLUMN);
+            // 2a. Fetch affected subscriber IDs via subscriber_tags (indexed lookup)
+            $stmtAffected = $pdo->prepare(
+                "SELECT st.subscriber_id FROM subscriber_tags st WHERE st.tag_id = ?"
+            );
+            $stmtAffected->execute([$path]);
+            $affectedSubIds = $stmtAffected->fetchAll(PDO::FETCH_COLUMN);
 
-                foreach (array_chunk($affectedSubIds, 1000) as $chunk) {
-                    $ph = implode(',', array_fill(0, count($chunk), '?'));
-                    $pdo->prepare(
-                        "UPDATE subscribers
-                         SET tags = JSON_REMOVE(tags, JSON_UNQUOTE(JSON_SEARCH(tags, 'one', ?)))
-                         WHERE id IN ($ph) AND JSON_CONTAINS(tags, JSON_QUOTE(?))"
-                    )->execute(array_merge([$tagName], $chunk, [$tagName]));
-                }
-
-            // 2b. Xóa quan hệ trong bảng trung gian subscriber_tags
+            // 2b. Delete relational join table rows (fast, indexed)
             $pdo->prepare("DELETE FROM subscriber_tags WHERE tag_id = ?")->execute([$path]);
 
             // [CLEANUP] Clean Queue Jobs & Buffers
@@ -242,12 +232,35 @@ switch ($method) {
             // 3. Xóa bản ghi tag
             $pdo->prepare("DELETE FROM tags WHERE id = ? AND workspace_id = ?")->execute([$path, $workspace_id]);
 
+            // [FIX BUG-TAGS-1] Commit BEFORE chunk legacy-JSON cleanup.
+            // Previously ALL chunk UPDATEs ran inside this transaction, holding row-level locks
+            // for every affected subscriber row for the entire duration (potentially 100+ chunks
+            // for large tag sets). This blocks concurrent reads/writes for minutes.
+            // The subscriber_tags DELETE above already atomically breaks the relational link.
+            // Legacy JSON sync is best-effort for backward compat — run outside transaction
+            // so locks are released between chunks.
             $pdo->commit();
+
+            // 2. Legacy subscribers.tags JSON sync (outside transaction, best-effort)
+            // [FIX] Use subscriber_tags (indexed) to get affected IDs first, then chunk.
+            // Old: WHERE JSON_CONTAINS on 10M rows = full table scan + long lock.
+            // New: index lookup via subscriber_tags → chunk UPDATE to release locks between batches.
+            foreach (array_chunk($affectedSubIds, 1000) as $chunk) {
+                $ph = implode(',', array_fill(0, count($chunk), '?'));
+                $pdo->prepare(
+                    "UPDATE subscribers
+                     SET tags = JSON_REMOVE(tags, JSON_UNQUOTE(JSON_SEARCH(tags, 'one', ?)))
+                     WHERE id IN ($ph) AND JSON_CONTAINS(tags, JSON_QUOTE(?))"
+                )->execute(array_merge([$tagName], $chunk, [$tagName]));
+            }
+
             jsonResponse(true, ['id' => $path], 'Đã xóa nhãn hoàn toàn');
         } catch (Exception $e) {
-            $pdo->rollBack();
-            // Return failure
-            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            // [FIX BUG-TAGS-2] Pass through the actual error message so admins can see
+            // WHY the deletion failed (e.g. "used in active flow 'X'").
+            // Previously a generic 'Lỗi hệ thống' was returned, hiding critical context.
+            jsonResponse(false, null, $e->getMessage());
         }
         break;
 }

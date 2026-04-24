@@ -174,6 +174,14 @@ async function request<T>(
       templates:   ['templates'],
       vouchers:    ['vouchers'],
       surveys:     ['surveys'],
+      // [FIX CACHE-GAP] purchase_events and custom_events were missing — Flows page
+      // loads both via api.get() and caches them for 60s. After creating/updating an event,
+      // the old cached list was shown until TTL expired. Also invalidate 'flows' since
+      // flow triggers reference these event IDs.
+      purchase_events: ['purchase_events', 'flows'],
+      custom_events:   ['custom_events', 'flows'],
+      // forms are loaded by both Flows and Templates — invalidate all 3 on change
+      forms:           ['forms', 'flows', 'templates'],
     };
     const toInvalidate = relatedPrefixes[mutatedResource] ?? [mutatedResource];
     Object.keys(apiCache).forEach(key => {

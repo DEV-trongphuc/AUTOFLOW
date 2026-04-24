@@ -428,6 +428,7 @@ try {
 
             $chunkSize = 500;
             $chunks = array_chunk($subscribers, $chunkSize);
+            $createVirtualEmail = $data['createVirtualEmail'] ?? false;
             $totalProcessed = 0;
             $allAffectedListSubscribers = [];
 
@@ -455,20 +456,27 @@ try {
 
                 $existingMap = [];
                 $existingPhoneMap = [];
-                if (!empty($emailsInChunk)) {
-                    $placeholders = implode(',', array_fill(0, count($emailsInChunk), '?'));
-                    $stmtEx = $pdo->prepare("SELECT email, id FROM subscribers WHERE email IN ($placeholders)");
-                    $stmtEx->execute($emailsInChunk);
+                
+                if (!empty($emailsInChunk) || !empty($phonesInChunk)) {
+                    $emailPlaceholders = !empty($emailsInChunk) ? implode(',', array_fill(0, count($emailsInChunk), '?')) : "''";
+                    $phonePlaceholders = !empty($phonesInChunk) ? implode(',', array_fill(0, count($phonesInChunk), '?')) : "''";
+                    
+                    $sqlEx = "SELECT id, email, phone_number FROM subscribers 
+                              WHERE (email IN ($emailPlaceholders) OR phone_number IN ($phonePlaceholders)) 
+                              AND workspace_id = ?";
+                    
+                    $paramsEx = array_merge($emailsInChunk, $phonesInChunk, [$workspaceId]);
+                    $stmtEx = $pdo->prepare($sqlEx);
+                    $stmtEx->execute($paramsEx);
+                    
                     while ($row = $stmtEx->fetch(PDO::FETCH_ASSOC)) {
-                        $existingMap[$row['email']] = $row['id'];
-                    }
-                }
-                if (!empty($phonesInChunk)) {
-                    $placeholders = implode(',', array_fill(0, count($phonesInChunk), '?'));
-                    $stmtExP = $pdo->prepare("SELECT phone_number, id FROM subscribers WHERE phone_number IN ($placeholders)");
-                    $stmtExP->execute($phonesInChunk);
-                    while ($row = $stmtExP->fetch(PDO::FETCH_ASSOC)) {
-                        $existingPhoneMap[$row['phone_number']] = $row['id'];
+                        if ($row['email']) $existingMap[strtolower(trim($row['email']))] = $row['id'];
+                        if ($row['phone_number']) {
+                            // Normalize stored phone for lookup
+                            $norm = preg_replace('/[^0-9]/', '', $row['phone_number']);
+                            if (substr($norm, 0, 2) === '84' && strlen($norm) > 9) $norm = '0' . substr($norm, 2);
+                            $existingPhoneMap[$norm] = $row['id'];
+                        }
                     }
                 }
 
@@ -480,13 +488,21 @@ try {
                 $tagSubParams = [];
 
                 foreach ($chunk as $d) {
-                    $email = $d['email'];
+                    $email = $d['email'] ?? '';
+                    $phone = $d['phoneNumber'] ?? $d['phone'] ?? '';
+
+                    if (empty($email) && !empty($phone) && $createVirtualEmail) {
+                        $email = $phone . '@no-email.domation';
+                    }
+
                     if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL))
                         continue;
-
-                    $phone = $d['phoneNumber'] ?? $d['phone'] ?? '';
                     // Use existing ID if available, otherwise generate new
-                    $id = $existingMap[$email] ?? $existingPhoneMap[$phone] ?? ($d['id'] ?? bin2hex(random_bytes(16)));
+                    $cleanEmail = strtolower(trim($email));
+                    $normPhone = preg_replace('/[^0-9]/', '', $phone);
+                    if (substr($normPhone, 0, 2) === '84' && strlen($normPhone) > 9) $normPhone = '0' . substr($normPhone, 2);
+
+                    $id = $existingMap[$cleanEmail] ?? $existingPhoneMap[$normPhone] ?? ($d['id'] ?? bin2hex(random_bytes(16)));
 
                     $firstName = $d['firstName'] ?? '';
                     $lastName = $d['lastName'] ?? '';

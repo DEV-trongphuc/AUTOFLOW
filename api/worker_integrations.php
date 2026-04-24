@@ -199,6 +199,10 @@ if (!function_exists('runIntegrationSync')) {
                                     // Clear invalid email so it doesn't pollute DB
                                     if (!$hasValidEmail) {
                                         $email = '';
+                                        // VIRTUAL EMAIL LOGIC: If enabled and phone exists, generate virtual
+                                        if (!empty($phone) && ($config['createVirtualEmail'] ?? false)) {
+                                            $email = $phone . '@no-email.domation';
+                                        }
                                     }
 
                                     // Extract fields
@@ -540,6 +544,10 @@ if (!function_exists('runIntegrationSync')) {
                             // If email is invalid but phone exists, we clear the invalid email so it doesn't pollute the DB
                             if (!$hasValidEmail) {
                                 $email = '';
+                                // VIRTUAL EMAIL LOGIC: If enabled and phone exists, generate virtual
+                                if (!empty($phone) && ($config['createVirtualEmail'] ?? false)) {
+                                    $email = $phone . '@no-email.domation';
+                                }
                             }
 
                             // Fast scalar retrieval

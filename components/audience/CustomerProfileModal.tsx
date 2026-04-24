@@ -102,6 +102,10 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
     const [activityFilter, setActivityFilter] = useState('');
     const [activitySubTab, setActivitySubTab] = useState<'all' | 'mail' | 'system' | 'website'>('all');
     const [isSummarizing, setIsSummarizing] = useState(false);
+    
+    const isZalo = formData.email?.endsWith('@zalo-oa.vn');
+    const isMeta = formData.email?.endsWith('@facebook.com');
+    const isVirtualEmail = formData.email?.endsWith('@no-email.domation') || isZalo || isMeta;
 
     const handleAISummarize = async () => {
         setIsSummarizing(true);
@@ -205,6 +209,9 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                 switch (act.type) {
                     case 'open_email':
                         icon = MailOpen; color = 'text-orange-500 bg-orange-50'; label = 'Mở Email';
+                        break;
+                    case 'skipped_email':
+                        icon = Mail; color = 'text-slate-400 bg-slate-50'; label = 'Bỏ qua Email';
                         break;
                     case 'click_link':
                         icon = MousePointer2; color = 'text-emerald-500 bg-emerald-50'; label = 'Click Link';
@@ -415,7 +422,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
 
         // Sub-tab filter
         if (activitySubTab === 'mail') {
-            const mailTypes = ['open_email', 'click_link', 'reply_email', 'unsubscribe', 'receive_email', 'failed_email', 'send_email', 'receive', 'failed', 'sent'];
+            const mailTypes = ['open_email', 'skipped_email', 'click_link', 'reply_email', 'unsubscribe', 'receive_email', 'failed_email', 'send_email', 'receive', 'failed', 'sent'];
             list = list.filter(act => mailTypes.includes(act.type));
         } else if (activitySubTab === 'website') {
             const websiteTypes = ['web_pageview', 'web_click', 'web_canvas_click', 'web_scroll', 'web_identify', 'web_form', 'web_lead_capture'];
@@ -657,7 +664,16 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                 </Badge>
                             </div>
                             <div className="flex items-center gap-3 mt-1.5 text-slate-500 dark:text-slate-400 font-bold text-xs tracking-tight">
-                                <span className="flex items-center gap-1.5 text-blue-600 lowercase"><Mail className="w-3.5 h-3.5" />{formData.email}</span>
+                                <span className="flex items-center gap-1.5 lowercase">
+                                    {isVirtualEmail ? (
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-100 text-[9px] font-black uppercase tracking-tight text-slate-400">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_6px_rgba(168,85,247,0.4)]" />
+                                            {isZalo ? 'Zalo Identity' : (isMeta ? 'Meta Identity' : 'Virtual Identity')}
+                                        </span>
+                                    ) : (
+                                        <span className="flex items-center gap-1.5 text-blue-600"><Mail className="w-3.5 h-3.5" />{formData.email}</span>
+                                    )}
+                                </span>
                                 <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                                 <span className="text-slate-400">Tham gia: {formatRelativeTime(formData.joinedAt)}</span>
                             </div>

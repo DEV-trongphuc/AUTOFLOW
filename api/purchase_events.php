@@ -58,7 +58,11 @@ try {
             // [FIX BUG-PE-1] Resolve workspace_id from event config (public API has no session)
             $workspace_id = $eventRow['workspace_id'] ?? null;
 
-            $stmtCheck = $pdo->prepare("SELECT id, tags FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
+            // [FIX BUG-PE-2] Add 'status' to SELECT so the status upgrade logic below actually
+            // has data to evaluate. Previously only (id, tags) were fetched, so $sub['status']
+            // was always NULL — the else branch would always fire and set status='active', even
+            // for subscribers already marked 'lead' or 'customer' (incorrect downgrade behavior).
+            $stmtCheck = $pdo->prepare("SELECT id, status, tags FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
             $stmtCheck->execute([$email, $workspace_id]);
             $sub = $stmtCheck->fetch();
 
@@ -79,6 +83,7 @@ try {
             if ($sub) {
                 $sid = $sub['id'];
                 $updateSqlParts = [];
+                $updateValues = []; // [FIX BACKEND-BUG-01] Initialize before first append to prevent stale PDO param mismatch
                 if (($sub['status'] ?? '') === 'active') {
                     $updateSqlParts[] = "status = 'lead'";
                 } else if (!in_array($sub['status'] ?? '', ['active', 'lead', 'customer'])) {
@@ -169,11 +174,13 @@ try {
             }
 
             require_once 'tracking_helper.php';
-            // Capture Environment Data
-            $ip = $_SERVER['HTTP_CLIENT_IP'] ?? ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ($_SERVER['HTTP_X_FORWARDED'] ?? ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ($_SERVER['HTTP_FORWARDED'] ?? ($_SERVER['REMOTE_ADDR'] ?? 'Unknown')))));
+            // [FIX BACKEND-BUG-04] Safe IP detection — HTTP_CLIENT_IP is spoofable by any client.
+            // Priority: Cloudflare real IP → standard reverse-proxy header → direct connection.
+            $ip = $_SERVER['HTTP_CF_CONNECTING_IP']
+                ?? ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ($_SERVER['REMOTE_ADDR'] ?? 'Unknown'));
             if (strpos($ip, ',') !== false) {
-                $ips = explode(',', $ip);
-                $ip = trim($ips[0]);
+                // X-Forwarded-For may contain chain: "client, proxy1, proxy2" — take first
+                $ip = trim(explode(',', $ip)[0]);
             }
             $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
             $deviceInfo = getDeviceDetails($ua);

@@ -242,7 +242,7 @@ const FlowCard = React.memo<FlowCardProps>((
         return <span className="px-2 py-1 bg-slate-100 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700/60 leading-none">Paused</span>;
     };
 
-    const hasWarning = !flow.steps || flow.steps.length < 2; // Needs at least trigger + action
+    const hasWarning = stepCount < 2; // Needs at least trigger + 1 action
 
     return (
         <div

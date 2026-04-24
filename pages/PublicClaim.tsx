@@ -5,6 +5,8 @@ import { EXTERNAL_API_BASE } from '../utils/config';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
+import CanvasConfetti from '../components/common/CanvasConfetti';
 
 const PUBLIC_API = `${EXTERNAL_API_BASE}/voucher_claim.php`;
 
@@ -88,93 +90,128 @@ export const PublicClaim: React.FC = () => {
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-rose-200/40 blur-[120px] rounded-full -mr-64 -mt-64 pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-amber-200/40 blur-[100px] rounded-full -ml-48 -mb-48 pointer-events-none" />
 
-            <div className="max-w-md w-full bg-white/60 backdrop-blur-3xl border border-white rounded-[40px] shadow-2xl p-10 relative z-10 transition-all overflow-hidden duration-700">
-                
-                {result ? (
-                    <div className="text-center animate-in zoom-in-95 duration-500 py-8">
-                        {result.status === 'pending' ? (
-                            <>
-                                <div className="w-24 h-24 bg-amber-100/50 rounded-full flex items-center justify-center mx-auto mb-6 relative">
-                                    <ShieldCheck className="w-12 h-12 text-amber-600" />
-                                    <span className="absolute top-0 right-0 w-6 h-6 bg-amber-400 rounded-full animate-ping opacity-20"></span>
-                                </div>
-                                <h2 className="text-2xl font-black text-slate-800 mb-3">Đã gửi yêu cầu nhận Mã!</h2>
-                                <p className="text-sm text-slate-600 mb-6 font-medium">Yêu cầu của bạn đang được duyệt. Mã ưu đãi sẽ được gửi qua Email <strong className="text-slate-800">{formData.email}</strong> nếu đủ điều kiện.</p>
-                            </>
-                        ) : (
-                            <>
-                                <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <CheckCircle2 className="w-12 h-12 text-emerald-600" />
-                                </div>
-                                <h2 className="text-2xl font-black text-slate-800 mb-2">Chúc mừng bạn!</h2>
-                                <p className="text-sm text-slate-500 mb-6 font-medium">Bạn đã nhận ưu đãi thành công. Đây là mã của bạn:</p>
+            <div className="max-w-md w-full bg-white/60 backdrop-blur-3xl border border-white rounded-[40px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] p-10 relative z-10 overflow-hidden">
+                <AnimatePresence mode="wait">
+                    {result ? (
+                        <motion.div 
+                            key="result"
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                            transition={{ duration: 0.5, type: 'spring', bounce: 0.4 }}
+                            className="text-center py-8 relative"
+                        >
+                            {result.status === 'approved' && <CanvasConfetti particleCount={150} />}
+                            {result.status === 'pending' ? (
+                                <>
+                                    <motion.div 
+                                        initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: 'spring' }}
+                                        className="w-24 h-24 bg-amber-100/50 rounded-full flex items-center justify-center mx-auto mb-6 relative"
+                                    >
+                                        <ShieldCheck className="w-12 h-12 text-amber-600" />
+                                        <span className="absolute top-0 right-0 w-6 h-6 bg-amber-400 rounded-full animate-ping opacity-20"></span>
+                                    </motion.div>
+                                    <h2 className="text-2xl font-black text-slate-800 mb-3">Đã gửi yêu cầu nhận Mã!</h2>
+                                    <p className="text-sm text-slate-600 mb-6 font-medium">Yêu cầu của bạn đang được duyệt. Mã ưu đãi sẽ được gửi qua Email <strong className="text-slate-800">{formData.email}</strong> nếu đủ điều kiện.</p>
+                                </>
+                            ) : (
+                                <>
+                                    <motion.div 
+                                        initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
+                                        className="w-24 h-24 bg-gradient-to-tr from-emerald-100 to-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner shadow-emerald-200/50"
+                                    >
+                                        <CheckCircle2 className="w-12 h-12 text-emerald-500 drop-shadow-md" />
+                                    </motion.div>
+                                    <h2 className="text-2xl font-black text-slate-800 mb-2">Chúc mừng bạn!</h2>
+                                    <p className="text-sm text-slate-500 mb-6 font-medium">Bạn đã nhận ưu đãi thành công. Đây là mã của bạn:</p>
 
-                                <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl p-6 mb-8 relative">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 absolute top-2 left-1/2 transform -translate-x-1/2 bg-slate-50 px-3">Mã giảm giá</span>
-                                    <p className="text-3xl font-black text-amber-600 tracking-wider mt-2 font-mono select-all">
-                                        {result.code}
-                                    </p>
-                                </div>
+                                    <motion.div 
+                                        initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}
+                                        className="relative bg-gradient-to-r from-amber-50 via-white to-amber-50 border border-amber-200 rounded-3xl p-6 mb-8 overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all"
+                                        onClick={() => { navigator.clipboard.writeText(result.code); toast.success('Đã sao chép mã!'); }}
+                                    >
+                                        {/* Shimmer effect */}
+                                        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/80 to-transparent group-hover:animate-shimmer" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-amber-600/60 absolute top-2 left-1/2 transform -translate-x-1/2 bg-amber-50/50 backdrop-blur-sm px-3 rounded-full">Mã giảm giá</span>
+                                        <p className="text-3xl font-black text-amber-600 tracking-wider mt-2 font-mono select-all drop-shadow-sm">
+                                            {result.code}
+                                        </p>
+                                        <div className="absolute inset-0 bg-amber-500 text-white font-bold text-xs flex items-center justify-center rounded-3xl opacity-0 group-hover:opacity-100 transition-all duration-300">Bấm để sao chép</div>
+                                    </motion.div>
 
-                                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Đã gửi 1 bản sao vào Email của bạn.</p>
-                            </>
-                        )}
-                    </div>
-                ) : (
-                    <div className="animate-in fade-in duration-700">
-                        <div className="text-center mb-8">
-                            <div className="w-16 h-16 bg-white shadow-xl rounded-full flex items-center justify-center mx-auto mb-6 transform -rotate-12 border border-slate-100">
-                                {campaign.thumbnail_url ? (
-                                    <img src={campaign.thumbnail_url} className="w-full h-full object-cover rounded-full" alt="Gift" />
-                                ) : (
-                                    <Gift className="w-8 h-8 text-rose-500" />
-                                )}
+                                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Đã gửi 1 bản sao vào Email của bạn.</p>
+                                </>
+                            )}
+                        </motion.div>
+                    ) : (
+                        <motion.div 
+                            key="form"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.4 }}
+                        >
+                            <div className="text-center mb-8">
+                                <motion.div 
+                                    whileHover={{ rotate: 0, scale: 1.05 }}
+                                    transition={{ type: 'spring' }}
+                                    className="w-16 h-16 bg-white shadow-xl rounded-full flex items-center justify-center mx-auto mb-6 transform -rotate-12 border border-slate-100"
+                                >
+                                    {campaign.thumbnail_url ? (
+                                        <img src={campaign.thumbnail_url} className="w-full h-full object-cover rounded-full" alt="Gift" />
+                                    ) : (
+                                        <Gift className="w-8 h-8 text-rose-500" />
+                                    )}
+                                </motion.div>
+                                <h1 className="text-3xl font-black text-slate-800 tracking-tight leading-tight mb-3">
+                                    {campaign.name}
+                                </h1>
+                                <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                                    {campaign.description || 'Vui lòng cung cấp thông tin để xác nhận danh tính và nhận ngay ưu đãi từ chương trình.'}
+                                </p>
                             </div>
-                            <h1 className="text-3xl font-black text-slate-800 tracking-tight leading-tight mb-3">
-                                {campaign.name}
-                            </h1>
-                            <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                {campaign.description || 'Vui lòng cung cấp thông tin để xác nhận danh tính và nhận ngay ưu đãi từ chương trình.'}
-                            </p>
-                        </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <Input 
-                                label="Họ và Tên" 
-                                placeholder="Nhập tên của bạn" 
-                                value={formData.name} 
-                                onChange={e => setFormData({...formData, name: e.target.value})} 
-                                className="bg-white/80" 
-                            />
-                            <Input 
-                                label="Địa chỉ Email *" 
-                                type="email"
-                                placeholder="Cần chính xác để nhận mã" 
-                                value={formData.email} 
-                                onChange={e => setFormData({...formData, email: e.target.value})} 
-                                className="bg-white/80" 
-                                required
-                            />
-                            <Input 
-                                label="Số điện thoại" 
-                                type="tel"
-                                placeholder="0901234567" 
-                                value={formData.phone} 
-                                onChange={e => setFormData({...formData, phone: e.target.value})} 
-                                className="bg-white/80" 
-                            />
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <Input 
+                                    label="Họ và Tên" 
+                                    placeholder="Nhập tên của bạn" 
+                                    value={formData.name} 
+                                    onChange={e => setFormData({...formData, name: e.target.value})} 
+                                    className="bg-white/80 transition-shadow focus-within:shadow-md" 
+                                />
+                                <Input 
+                                    label="Địa chỉ Email *" 
+                                    type="email"
+                                    placeholder="Cần chính xác để nhận mã" 
+                                    value={formData.email} 
+                                    onChange={e => setFormData({...formData, email: e.target.value})} 
+                                    className="bg-white/80 transition-shadow focus-within:shadow-md" 
+                                    required
+                                />
+                                <Input 
+                                    label="Số điện thoại" 
+                                    type="tel"
+                                    placeholder="0901234567" 
+                                    value={formData.phone} 
+                                    onChange={e => setFormData({...formData, phone: e.target.value})} 
+                                    className="bg-white/80 transition-shadow focus-within:shadow-md" 
+                                />
 
-                            <button 
-                                type="submit" 
-                                disabled={submitting}
-                                className="w-full mt-6 bg-rose-600 hover:bg-rose-700 text-white font-black uppercase tracking-widest text-sm py-4 rounded-2xl shadow-lg shadow-rose-600/30 transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                                {submitting ? <Scan className="w-5 h-5 animate-spin" /> : 'Nhận Mã Ngay'} 
-                                {!submitting && <ArrowRight className="w-5 h-5" />}
-                            </button>
-                        </form>
-                    </div>
-                )}
+                                <motion.button 
+                                    whileHover={{ y: -2 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    type="submit" 
+                                    disabled={submitting}
+                                    className="w-full mt-6 bg-rose-600 hover:bg-rose-700 text-white font-black uppercase tracking-widest text-sm py-4 rounded-2xl shadow-lg shadow-rose-600/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2 relative overflow-hidden group"
+                                >
+                                    <div className="absolute inset-0 bg-white/20 -translate-x-full skew-x-12 group-hover:animate-shimmer" />
+                                    {submitting ? <Scan className="w-5 h-5 animate-spin" /> : 'Nhận Mã Ngay'} 
+                                    {!submitting && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
+                                </motion.button>
+                            </form>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
             
             <p className="absolute bottom-6 left-1/2 transform -translate-x-1/2 text-[10px] font-black tracking-widest text-slate-400 uppercase">

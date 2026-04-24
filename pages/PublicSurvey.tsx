@@ -5,6 +5,8 @@ import { ChevronRight, ChevronLeft, Send, Star, ChevronDown, ExternalLink, Check
 import { API_BASE_URL } from '../utils/config';
 import Select from '../components/common/Select';
 import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
+import CanvasConfetti from '../components/common/CanvasConfetti';
 
 const PUBLIC_API = `${API_BASE_URL}/survey_public.php`;
 
@@ -357,46 +359,86 @@ const PublicSurvey: React.FC = () => {
             <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden" style={{ background: pageBgColor, fontFamily: theme.fontFamily }}>
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-600/10 blur-[120px] rounded-full -mr-64 -mt-64 pointer-events-none" />
                 <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-amber-800/8 blur-[100px] rounded-full -ml-48 -mb-48 pointer-events-none" />
-                <div className="relative z-10 text-center max-w-md bg-white rounded-3xl shadow-2xl p-10">
-                    {ty?.imageUrl && <img src={ty.imageUrl} alt="" className="w-32 h-32 object-contain mx-auto mb-4 rounded-2xl" />}
-                    <div className="text-5xl mb-4">{ty?.emoji ?? '🎉'}</div>
+                <CanvasConfetti particleCount={150} />
+                
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ duration: 0.5, type: 'spring', bounce: 0.4 }}
+                    className="relative z-10 text-center max-w-md bg-white rounded-3xl shadow-2xl p-10"
+                >
+                    {ty?.imageUrl && (
+                        <motion.img 
+                            initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: 'spring' }}
+                            src={ty.imageUrl} alt="" className="w-32 h-32 object-contain mx-auto mb-4 rounded-2xl" 
+                        />
+                    )}
+                    <motion.div 
+                        initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: ty?.imageUrl ? 0.3 : 0.1, type: 'spring' }}
+                        className="text-5xl mb-4"
+                    >
+                        {ty?.emoji ?? '🎉'}
+                    </motion.div>
                     <h1 className="text-2xl font-black mb-3" style={{ color: theme.textColor }}>{ty?.title ?? 'Cảm ơn!'}</h1>
                     <p className="text-base text-slate-500 leading-relaxed">{ty?.message ?? 'Phản hồi của bạn đã được ghi nhận.'}</p>
 
                     {quizResult && (
-                        <div className="mt-6 mb-2 bg-slate-50 border border-slate-200 rounded-2xl p-6">
+                        <motion.div 
+                            initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }}
+                            className="mt-6 mb-2 bg-slate-50 border border-slate-200 rounded-2xl p-6 relative overflow-hidden"
+                        >
                             <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2">Điểm của bạn</h3>
-                            <div className="flex items-end justify-center gap-1.5 text-slate-800">
-                                <span className="text-6xl font-black leading-none" style={{ color: theme.primaryColor }}>{quizResult.score}</span>
+                            <div className="flex items-end justify-center gap-1.5 text-slate-800 relative z-10">
+                                <motion.span 
+                                    initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.6, type: 'spring', bounce: 0.6 }}
+                                    className="text-6xl font-black leading-none drop-shadow-sm" 
+                                    style={{ color: theme.primaryColor }}
+                                >
+                                    {quizResult.score}
+                                </motion.span>
                                 <span className="text-2xl font-bold opacity-30 mb-2">/ {quizResult.maxScore}</span>
                             </div>
-                        </div>
+                        </motion.div>
                     )}
 
                     {voucherCode && (
-                        <div className="mt-6 mb-2 bg-amber-50/50 border border-amber-200 rounded-2xl p-6 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-400/20 blur-2xl rounded-full" />
-                            <h3 className="text-[11px] font-black text-amber-600 uppercase tracking-widest mb-3 flex items-center justify-center gap-1.5">
+                        <motion.div 
+                            initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }}
+                            className="mt-6 mb-2 bg-gradient-to-tr from-amber-50 to-white border border-amber-200 rounded-2xl p-6 relative overflow-hidden"
+                        >
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-400/20 blur-3xl rounded-full" />
+                            <h3 className="text-[11px] font-black text-amber-600 uppercase tracking-widest mb-3 flex items-center justify-center gap-1.5 relative z-10">
                                 <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                                 Phần quà của bạn
                             </h3>
-                            <div className="bg-white border-2 border-dashed border-amber-300 rounded-xl py-3 px-4 shadow-sm relative group cursor-pointer" onClick={() => { navigator.clipboard.writeText(voucherCode); toast.success('Đã sao chép mã!'); }}>
-                                <p className="text-2xl font-mono font-black text-amber-600 tracking-wider break-all">{voucherCode}</p>
-                                <div className="absolute inset-0 bg-amber-500 text-white font-bold text-xs flex items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 transition-all">Bấm để sao chép</div>
+                            <div 
+                                className="bg-white border-2 border-dashed border-amber-300 rounded-xl py-3 px-4 shadow-sm relative group cursor-pointer overflow-hidden transition-all hover:shadow-md" 
+                                onClick={() => { navigator.clipboard.writeText(voucherCode); toast.success('Đã sao chép mã!'); }}
+                            >
+                                <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-amber-100/50 to-transparent group-hover:animate-shimmer" />
+                                <p className="text-2xl font-mono font-black text-amber-600 tracking-wider break-all drop-shadow-sm relative z-10">{voucherCode}</p>
+                                <div className="absolute inset-0 bg-amber-500 text-white font-bold text-xs flex items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 z-20">Bấm để sao chép</div>
                             </div>
-                            <p className="text-[10px] text-amber-700/60 mt-2 font-medium">Chụp màn hình hoặc lưu mã này lại để sử dụng nhé!</p>
-                        </div>
+                            <p className="text-[10px] text-amber-700/60 mt-2 font-medium relative z-10">Chụp màn hình hoặc lưu mã này lại để sử dụng nhé!</p>
+                        </motion.div>
                     )}
 
                     {(ty?.ctaText && ty?.ctaUrl) || nextUrl ? (
-                        <a href={nextUrl || ty?.ctaUrl} target={nextUrl ? '_self' : '_blank'} rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-2xl font-bold text-white shadow-lg transition-all hover:brightness-105"
+                        <motion.a 
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            href={nextUrl || ty?.ctaUrl} target={nextUrl ? '_self' : '_blank'} rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-2xl font-bold text-white shadow-lg transition-all"
                             style={{ background: theme.primaryColor }}
                         >
                             {nextUrl ? 'Bấm để Tiếp tục' : ty?.ctaText} <ExternalLink className="w-4 h-4" />
-                        </a>
+                        </motion.a>
                     ) : null}
-                    <div className="mt-8 flex items-center justify-center gap-3">
+                    
+                    <motion.div 
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}
+                        className="mt-8 flex items-center justify-center gap-3"
+                    >
                         <div className="relative w-8 h-8 shrink-0">
                             <div className="absolute inset-0 bg-amber-400 blur-lg opacity-30 rounded-full"></div>
                             <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-full border border-white/80 shadow-md shadow-amber-600/20">
@@ -407,8 +449,8 @@ const PublicSurvey: React.FC = () => {
                             <span className="text-[13px] font-black text-slate-700 tracking-tighter leading-none">DOMATION</span>
                             <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Digital AI Vision</span>
                         </div>
-                    </div>
-                </div>
+                    </motion.div>
+                </motion.div>
             </div>
         );
     }

@@ -559,16 +559,21 @@ if (!function_exists('runWorkerCampaign')) {
                                 }
                             } else {
                                 // EMAIL SENDING LOGIC
-                                // [MULTI-EMAIL] Dynamically override the sender for this campaign specifically
-                                if (!empty($campaign['sender_email'])) {
-                                    $mailer->setDynamicSender($campaign['sender_email']);
+                                // [SAFETY GUARD] Skip virtual emails
+                                if (isVirtualEmail($sub['email'])) {
+                                    $res = "Skipped: Virtual email";
+                                } else {
+                                    // [MULTI-EMAIL] Dynamically override the sender for this campaign specifically
+                                    if (!empty($campaign['sender_email'])) {
+                                        $mailer->setDynamicSender($campaign['sender_email']);
+                                    }
+
+                                    // [SES SHARED RATE LIMITER] Acquire slot from cross-process file-lock.
+                                    // Shared with FlowExecutor ? campaign + flow combined = 10/s total.
+                                    sesAcquireRateSlot(); // 100ms interval = 10/s shared total
+
+                                    $res = $mailer->send($sub['email'], $personalSubject, $personalHtml, $sub['id'], $cid, null, null, $attachments, null, null, $cName, false, $skipQA, $variationLabel);
                                 }
-
-                                // [SES SHARED RATE LIMITER] Acquire slot from cross-process file-lock.
-                                // Shared with FlowExecutor ? campaign + flow combined = 10/s total.
-                                sesAcquireRateSlot(); // 100ms interval = 10/s shared total
-
-                                $res = $mailer->send($sub['email'], $personalSubject, $personalHtml, $sub['id'], $cid, null, null, $attachments, null, null, $cName, false, $skipQA, $variationLabel);
                             }
 
                             if ($res === true) {
@@ -666,26 +671,32 @@ if (!function_exists('runWorkerCampaign')) {
                             } else {
                                 $errMsg = is_string($res) ? $res : 'Unknown Error';
                                 
-                                // Local string check to avoid sequential DB Updates
-                                $isHardBounce = false;
-                                $errMsgLower = strtolower($errMsg);
-                                $hkb = ['hard bounce', 'invalid recipient', 'unreachable', 'address rejected', 'does not exist', '550 5.1.1', '550 5.2.1', 'user unknown', 'recipient unknown', 'mailbox not found', 'account disabled', '5.1.1', 'permanent failure'];
-                                foreach ($hkb as $kb) {
-                                    if (strpos($errMsgLower, $kb) !== false) {
-                                        $isHardBounce = true;
-                                        break;
+                                if ($res === "Skipped: Virtual email") {
+                                    // [VẬN HÀNH] Log as skipped_email instead of failed_email
+                                    // This prevents it being retried but also avoids incrementing stat_total_failed
+                                    $failActivities[] = [$subId, 'skipped_email', $cid, $cName, "Skipped: Virtual email", $cid, null, $isABTest ? $variationLabel : null];
+                                } else {
+                                    // Local string check to avoid sequential DB Updates
+                                    $isHardBounce = false;
+                                    $errMsgLower = strtolower($errMsg);
+                                    $hkb = ['hard bounce', 'invalid recipient', 'unreachable', 'address rejected', 'does not exist', '550 5.1.1', '550 5.2.1', 'user unknown', 'recipient unknown', 'mailbox not found', 'account disabled', '5.1.1', 'permanent failure'];
+                                    foreach ($hkb as $kb) {
+                                        if (strpos($errMsgLower, $kb) !== false) {
+                                            $isHardBounce = true;
+                                            break;
+                                        }
                                     }
-                                }
 
-                                if ($isHardBounce) {
-                                    $bouncedIds[] = $sub['id'];
-                                }
+                                    if ($isHardBounce) {
+                                        $bouncedIds[] = $sub['id'];
+                                    }
 
-                                $failType = ($campaign['type'] ?? 'email') === 'zalo_zns' ? 'zns_failed' : 'failed_email';
-                                if ($isHardBounce) {
-                                    $failType = 'failed_email'; // hardbounce implies email
+                                    $failType = ($campaign['type'] ?? 'email') === 'zalo_zns' ? 'zns_failed' : 'failed_email';
+                                    if ($isHardBounce) {
+                                        $failType = 'failed_email'; // hardbounce implies email
+                                    }
+                                    $failActivities[] = [$subId, $failType, $cid, $cName, "Email failed: " . $errMsg, $cid, null, $isABTest ? $variationLabel : null];
                                 }
-                                $failActivities[] = [$subId, $failType, $cid, $cName, "Email failed: " . $errMsg, $cid, null, $isABTest ? $variationLabel : null];
                             }
 
                             // [REAL-TIME PROGRESS] Progress is now updated every batch of 50 (Batch Size)

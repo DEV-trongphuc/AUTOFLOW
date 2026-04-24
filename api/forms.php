@@ -310,7 +310,13 @@ try {
 
             if ($targetListId) {
                 $pdo->prepare("INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id) VALUES (?, ?)")->execute([$sid, $targetListId]);
-                $pdo->prepare("UPDATE lists SET subscriber_count = (SELECT COUNT(*) FROM subscriber_lists WHERE list_id = ?) WHERE id = ?")->execute([$targetListId, $targetListId]);
+                // [FIX BACKEND-BUG-03] Removed manual subscriber_count UPDATE here.
+                // The subscriber_lists table has after_subscriber_list_insert/delete triggers
+                // that atomically maintain lists.subscriber_count. Running a manual
+                // UPDATE lists SET subscriber_count = (SELECT COUNT(*) ...) after the INSERT
+                // was causing a double-count race condition under concurrent form submissions
+                // (trigger fires first, then this SELECT COUNT re-reads the already-incremented value
+                // and writes it again → count is correct but wastes a query and is racy under high load).
             }
 
             // [FIX] IP detection: removed spoofable HTTP_CLIENT_IP and duplicate X_FORWARDED_FOR.

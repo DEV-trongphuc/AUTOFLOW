@@ -3,7 +3,7 @@ import { API_BASE_URL } from '@/utils/config';
 import React, { useState, useEffect } from 'react';
 import {
     ShoppingCart, Plus, Code2, Trash2, Edit3, ShoppingBag,
-    Terminal, FileCode, Check, Copy, CheckCircle2, Info
+    Terminal, FileCode, Check, Copy, CheckCircle2, Info, Bell, ToggleLeft, ToggleRight
 } from 'lucide-react';
 import { api } from '../services/storageAdapter';
 import { PurchaseEvent } from '../types';
@@ -14,13 +14,27 @@ import Input from '../components/common/Input';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../components/common/ConfirmModal';
 
+interface EventFormState {
+    name: string;
+    notificationEnabled: boolean;
+    notificationEmails: string;
+    notificationSubject: string;
+}
+
+const DEFAULT_FORM: EventFormState = {
+    name: '',
+    notificationEnabled: false,
+    notificationEmails: '',
+    notificationSubject: '',
+};
+
 const Purchases: React.FC = () => {
     const [events, setEvents] = useState<PurchaseEvent[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingEventId, setEditingEventId] = useState<string | null>(null);
-    const [eventName, setEventName] = useState('');
+    const [formState, setFormState] = useState<EventFormState>(DEFAULT_FORM);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -38,44 +52,63 @@ const Purchases: React.FC = () => {
         setLoading(false);
     };
 
-    const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
-        if (type === 'success') toast.success(message);
-        else if (type === 'error') toast.error(message);
-        else toast(message);
-    };
-
     const handleCreateNew = () => {
         setEditingEventId(null);
-        setEventName('');
+        setFormState(DEFAULT_FORM);
         setIsModalOpen(true);
     };
 
     const handleEditClick = (evt: PurchaseEvent) => {
         setEditingEventId(evt.id);
-        setEventName(evt.name);
+        setFormState({
+            name: evt.name,
+            notificationEnabled: (evt as any).notificationEnabled || false,
+            notificationEmails: (evt as any).notificationEmails || '',
+            notificationSubject: (evt as any).notificationSubject || '',
+        });
         setIsModalOpen(true);
     };
 
+    // [FIX UI-BUG-02] Toggle active/inactive status
+    const handleToggleStatus = async (evt: PurchaseEvent) => {
+        const res = await api.put<{ id: string; status: string }>(`purchase_events/${evt.id}?route=toggle_status`, {});
+        if (res.success) {
+            const newStatus = res.data?.status ?? (evt.status === 'active' ? 'inactive' : 'active');
+            setEvents(prev => prev.map(e => e.id === evt.id ? { ...e, status: newStatus } : e));
+            toast.success(`Đã ${newStatus === 'active' ? 'kích hoạt' : 'vô hiệu hoá'} sự kiện`);
+        } else {
+            toast.error('Lỗi khi thay đổi trạng thái');
+        }
+    };
+
+    // [FIX UI-BUG-04] Send full notification settings to backend
     const handleSave = async () => {
-        if (!eventName.trim()) {
-            showToast('Vui lòng nhập tên sự kiện', 'error');
+        if (!formState.name.trim()) {
+            toast.error('Vui lòng nhập tên sự kiện');
             return;
         }
         setIsSubmitting(true);
 
+        const payload = {
+            name: formState.name,
+            notificationEnabled: formState.notificationEnabled,
+            notificationEmails: formState.notificationEmails,
+            notificationSubject: formState.notificationSubject,
+        };
+
         let res;
         if (editingEventId) {
-            res = await api.put<PurchaseEvent>(`purchase_events/${editingEventId}`, { name: eventName });
+            res = await api.put<PurchaseEvent>(`purchase_events/${editingEventId}`, payload);
         } else {
-            res = await api.post<PurchaseEvent>('purchase_events', { name: eventName });
+            res = await api.post<PurchaseEvent>('purchase_events', payload);
         }
 
         if (res.success) {
             setIsModalOpen(false);
-            showToast(editingEventId ? 'Đã cập nhật' : 'Đã tạo sự kiện mới');
+            toast.success(editingEventId ? 'Đã cập nhật' : 'Đã tạo sự kiện mới');
             fetchEvents();
         } else {
-            showToast(res.message || 'Lỗi khi lưu', 'error');
+            toast.error(res.message || 'Lỗi khi lưu');
         }
         setIsSubmitting(false);
     };
@@ -85,10 +118,10 @@ const Purchases: React.FC = () => {
         const res = await api.delete(`purchase_events/${confirmDeleteId}`);
         if (res.success) {
             setEvents(events.filter(e => e.id !== confirmDeleteId));
-            showToast('Đã xóa sự kiện mua hàng');
+            toast.success('Đã xóa sự kiện mua hàng');
             setConfirmDeleteId(null);
         } else {
-            showToast('Lỗi khi xóa', 'error');
+            toast.error('Lỗi khi xóa');
         }
     };
 
@@ -150,7 +183,7 @@ const trackPurchase = async () => {
                         <Button variant="outline" className="mt-10 px-10 h-12 rounded-2xl" onClick={handleCreateNew}>Bắt đầu ngay</Button>
                     </div>
                 ) : events.map(evt => (
-                    <div key={evt.id} className="group bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-pink-500/10 hover:border-pink-200 transition-all flex flex-col justify-between gap-6 relative overflow-hidden">
+                    <div key={evt.id} className={`group bg-white p-6 rounded-[32px] border shadow-sm hover:shadow-2xl hover:shadow-pink-500/10 transition-all flex flex-col justify-between gap-6 relative overflow-hidden ${evt.status === 'inactive' ? 'border-slate-200 opacity-60' : 'border-slate-100 hover:border-pink-200'}`}>
                         <div className="absolute top-0 right-0 p-8 opacity-[0.03] text-pink-600 group-hover:scale-125 transition-transform"><ShoppingBag className="w-32 h-32" /></div>
 
                         <div className="flex justify-between items-start relative z-10">
@@ -159,12 +192,26 @@ const trackPurchase = async () => {
                                     <ShoppingCart className="w-6 h-6" />
                                 </div>
                                 <div className="min-w-0">
-                                    <h4 className="text-base font-bold text-slate-800 leading-tight truncate pr-2" title={evt.name}>{evt.name}</h4>
+                                    <div className="flex items-center gap-2">
+                                        <h4 className="text-base font-bold text-slate-800 leading-tight truncate pr-2" title={evt.name}>{evt.name}</h4>
+                                        {/* [FIX UI-BUG-02] Status badge */}
+                                        <span className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${evt.status === 'inactive' ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-600'}`}>
+                                            {evt.status === 'inactive' ? 'Tắt' : 'Bật'}
+                                        </span>
+                                    </div>
                                     <p className="text-[10px] text-slate-400 font-mono mt-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 w-fit">ID: {evt.id}</p>
                                 </div>
                             </div>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleEditClick(evt)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Sửa tên">
+                                {/* [FIX UI-BUG-02] Toggle status button */}
+                                <button
+                                    onClick={() => handleToggleStatus(evt)}
+                                    className={`p-2 rounded-xl transition-all ${evt.status === 'inactive' ? 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50' : 'text-emerald-500 hover:text-slate-400 hover:bg-slate-50'}`}
+                                    title={evt.status === 'inactive' ? 'Kích hoạt' : 'Vô hiệu hoá'}
+                                >
+                                    {evt.status === 'inactive' ? <ToggleLeft className="w-4 h-4" /> : <ToggleRight className="w-4 h-4" />}
+                                </button>
+                                <button onClick={() => handleEditClick(evt)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Sửa">
                                     <Edit3 className="w-4 h-4" />
                                 </button>
                                 <button onClick={() => setConfirmDeleteId(evt.id)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all" title="Xóa">
@@ -180,9 +227,14 @@ const trackPurchase = async () => {
                                     <span className="text-sm font-black text-slate-700">{(evt.stats?.count || 0).toLocaleString()}</span>
                                 </div>
                                 <div className="h-8 w-px bg-slate-200"></div>
+                                {/* [FIX UI-BUG-01] Revenue was hardcoded N/A — now uses actual value */}
                                 <div className="flex flex-col items-end">
                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Doanh thu</span>
-                                    <span className="text-sm font-black text-slate-700">N/A</span>
+                                    <span className="text-sm font-black text-slate-700">
+                                        {(evt.stats?.revenue ?? 0) > 0
+                                            ? (evt.stats!.revenue).toLocaleString('vi-VN') + '₫'
+                                            : '—'}
+                                    </span>
                                 </div>
                             </div>
 
@@ -198,11 +250,11 @@ const trackPurchase = async () => {
                 ))}
             </div>
 
-            {/* CREATE / EDIT MODAL */}
+            {/* CREATE / EDIT MODAL — [FIX UI-BUG-04] Now includes notification settings */}
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title={editingEventId ? "Đổi tên sự kiện" : "Tạo sự kiện mới"}
+                title={editingEventId ? "Chỉnh sửa sự kiện" : "Tạo sự kiện mới"}
                 size="sm"
                 footer={<div className="flex justify-between w-full"><Button variant="ghost" onClick={() => setIsModalOpen(false)}>Hủy</Button><Button icon={CheckCircle2} onClick={handleSave} isLoading={isSubmitting}>{editingEventId ? 'Cập nhật' : 'Tạo sự kiện'}</Button></div>}
             >
@@ -210,13 +262,51 @@ const trackPurchase = async () => {
                     <Input
                         label="Tên sự kiện mua hàng"
                         placeholder="VD: Mua gói Premium, Đặt hàng Website..."
-                        value={eventName}
-                        onChange={e => setEventName(e.target.value)}
+                        value={formState.name}
+                        onChange={e => setFormState(s => ({ ...s, name: e.target.value }))}
                         autoFocus
                     />
                     <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl flex gap-3 text-blue-700 text-xs">
                         <Info className="w-5 h-5 shrink-0" />
                         <p>ID sẽ được sinh tự động. Tên hàng, giá tiền và thông tin chi tiết sẽ được truyền động qua API khi gọi.</p>
+                    </div>
+
+                    {/* Notification Settings */}
+                    <div className="border border-slate-200 rounded-2xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Bell className="w-4 h-4 text-amber-500" />
+                                <span className="text-sm font-bold text-slate-700">Thông báo Email</span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setFormState(s => ({ ...s, notificationEnabled: !s.notificationEnabled }))}
+                                className="flex items-center gap-2"
+                            >
+                                <div className={`w-11 h-6 rounded-full p-0.5 transition-all duration-300 flex items-center ${formState.notificationEnabled ? 'bg-amber-500 justify-end' : 'bg-slate-300 justify-start'}`}>
+                                    <div className="w-5 h-5 rounded-full bg-white shadow-sm" />
+                                </div>
+                                <span className={`text-[10px] font-bold uppercase tracking-wider ${formState.notificationEnabled ? 'text-amber-600' : 'text-slate-400'}`}>
+                                    {formState.notificationEnabled ? 'Bật' : 'Tắt'}
+                                </span>
+                            </button>
+                        </div>
+                        {formState.notificationEnabled && (
+                            <div className="space-y-3 pt-1">
+                                <Input
+                                    label="Email nhận thông báo (phân cách bằng dấu phẩy)"
+                                    placeholder="admin@company.com, sales@company.com"
+                                    value={formState.notificationEmails}
+                                    onChange={e => setFormState(s => ({ ...s, notificationEmails: e.target.value }))}
+                                />
+                                <Input
+                                    label="Tiêu đề email (tùy chọn)"
+                                    placeholder="[Purchase] Đơn hàng mới từ khách hàng"
+                                    value={formState.notificationSubject}
+                                    onChange={e => setFormState(s => ({ ...s, notificationSubject: e.target.value }))}
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
             </Modal>

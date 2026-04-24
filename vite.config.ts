@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
         clientFiles: ['./App.tsx', './components/Layout.tsx', './pages/Campaigns.tsx'],
       },
       proxy: {
-        '/api': {
+        '/api/': {
           target: 'https://automation.ideas.edu.vn',
           changeOrigin: true,
           secure: false,
@@ -30,6 +30,7 @@ export default defineConfig(({ mode }) => {
         }
       }
     },
+    appType: 'spa', // Serve index.html for ALL routes (fix direct deep URL access like /api-triggers)
     plugins: [react()],
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
