@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost:3306
--- Thời gian đã tạo: Th4 25, 2026 lúc 06:39 PM
+-- Thời gian đã tạo: Th4 25, 2026 lúc 10:19 PM
 -- Phiên bản máy phục vụ: 10.6.18-MariaDB-cll-lve-log
 -- Phiên bản PHP: 8.4.20
 
@@ -1892,7 +1892,8 @@ CREATE TABLE `web_page_views` (
   `load_time_ms` int(10) UNSIGNED DEFAULT 0,
   `is_entrance` tinyint(1) DEFAULT 0,
   `time_on_page` int(10) UNSIGNED DEFAULT 0,
-  `scroll_depth` tinyint(3) UNSIGNED DEFAULT 0
+  `scroll_depth` tinyint(3) UNSIGNED DEFAULT 0,
+  `clean_url` varchar(2048) GENERATED ALWAYS AS (substring_index(`url`,'?',1)) STORED
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci KEY_BLOCK_SIZE=8 ROW_FORMAT=COMPRESSED;
 
 -- --------------------------------------------------------
@@ -3204,7 +3205,8 @@ ALTER TABLE `web_page_views`
   ADD KEY `idx_loaded_at` (`loaded_at`),
   ADD KEY `idx_wpv_visitor_prop` (`visitor_id`,`property_id`),
   ADD KEY `idx_web_pv_session_visitor` (`session_id`,`visitor_id`),
-  ADD KEY `idx_wpv_workspace` (`workspace_id`);
+  ADD KEY `idx_wpv_workspace` (`workspace_id`),
+  ADD KEY `idx_clean_url` (`property_id`,`clean_url`(512));
 
 --
 -- Chỉ mục cho bảng `web_properties`

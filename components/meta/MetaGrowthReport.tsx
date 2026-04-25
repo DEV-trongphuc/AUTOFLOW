@@ -120,9 +120,13 @@ const MetaGrowthReport: React.FC<MetaReportProps> = ({ dateRange }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((stat, idx) => (
                     <div key={idx} className="bg-white rounded-[32px] p-6 border border-slate-100 shadow-sm flex items-center justify-between group hover:shadow-md transition-all">
-                        <div className="space-y-1">
+                        <div className="space-y-1 w-full">
                             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</h4>
-                            <div className="text-3xl font-black text-slate-800 tracking-tight">{stat.value.toLocaleString()}</div>
+                            {loading ? (
+                                <div className="h-8 w-24 bg-slate-200 rounded animate-pulse mt-1"></div>
+                            ) : (
+                                <div className="text-3xl font-black text-slate-800 tracking-tight">{stat.value.toLocaleString()}</div>
+                            )}
                         </div>
                         <div className={`w-14 h-14 ${stat.iconBg} rounded-2xl flex items-center justify-center shadow-lg shadow-black/5 shrink-0`}>
                             <stat.icon className="w-6 h-6 text-white" />
@@ -142,21 +146,29 @@ const MetaGrowthReport: React.FC<MetaReportProps> = ({ dateRange }) => {
                         <TrendingUp className="w-6 h-6 text-blue-500 opacity-20" />
                     </div>
                     <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                <defs>
-                                    <linearGradient id="colorNew" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
-                                <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} />
-                                <Area type="monotone" dataKey="new_followers" name="Mới" stroke="#3b82f6" strokeWidth={4} fill="url(#colorNew)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                        {loading ? (
+                            <div className="w-full h-full flex items-end gap-3 p-4 animate-pulse">
+                                {[...Array(14)].map((_, i) => (
+                                    <div key={i} className="flex-1 bg-slate-100 rounded-t-lg" style={{ height: `${Math.random() * 60 + 20}%` }}></div>
+                                ))}
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="colorNew" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
+                                    <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} />
+                                    <Area type="monotone" dataKey="new_followers" name="Mới" stroke="#3b82f6" strokeWidth={4} fill="url(#colorNew)" />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
                 </div>
 
@@ -169,15 +181,23 @@ const MetaGrowthReport: React.FC<MetaReportProps> = ({ dateRange }) => {
                         <MessageSquare className="w-6 h-6 text-emerald-500 opacity-20" />
                     </div>
                     <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
-                                <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} cursor={{ fill: '#f8fafc' }} />
-                                <Bar dataKey="non_follower_interactions" name="Tương tác" fill="#10b981" radius={[8, 8, 0, 0]} barSize={20} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        {loading ? (
+                            <div className="w-full h-full flex items-end gap-3 p-4 animate-pulse">
+                                {[...Array(14)].map((_, i) => (
+                                    <div key={i} className="flex-1 bg-slate-100 rounded-t-lg" style={{ height: `${Math.random() * 60 + 20}%` }}></div>
+                                ))}
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
+                                    <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} cursor={{ fill: '#f8fafc' }} />
+                                    <Bar dataKey="non_follower_interactions" name="Tương tác" fill="#10b981" radius={[8, 8, 0, 0]} barSize={20} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
                 </div>
 
@@ -190,14 +210,22 @@ const MetaGrowthReport: React.FC<MetaReportProps> = ({ dateRange }) => {
                         <Zap className="w-6 h-6 text-orange-500 opacity-20" />
                     </div>
                     <div className="h-[350px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
-                                <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} />
-                                <Area type="monotone" dataKey="automation" name="Kích hoạt" stroke="#f97316" strokeWidth={4} fill="none" />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                        {loading ? (
+                            <div className="w-full h-full flex items-end gap-3 p-4 animate-pulse">
+                                {[...Array(14)].map((_, i) => (
+                                    <div key={i} className="flex-1 bg-slate-100 rounded-t-lg" style={{ height: `${Math.random() * 60 + 20}%` }}></div>
+                                ))}
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
+                                    <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} />
+                                    <Area type="monotone" dataKey="automation" name="Kích hoạt" stroke="#f97316" strokeWidth={4} fill="none" />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
                 </div>
             </div>

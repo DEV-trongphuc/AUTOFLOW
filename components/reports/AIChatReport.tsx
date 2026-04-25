@@ -1,12 +1,10 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Bot, MessageSquare, User, Zap } from 'lucide-react';
 import axios from 'axios';
 import Select from '../common/Select';
 import { API_BASE_URL } from '@/utils/config';
-
-
 
 interface AIReportProps {
     dateRange: { start: string; end: string };
@@ -63,6 +61,27 @@ const AIChatReport: React.FC<AIReportProps> = ({ dateRange }) => {
         { label: 'TỰ ĐỘNG HÓA', value: summary ? ((summary.ai_replies / (summary.ai_replies + summary.human_handovers + 1)) * 100).toFixed(1) + '%' : '0%', icon: Zap, color: 'text-rose-600', bg: 'bg-rose-50' },
     ];
 
+    const generateDateRange = (start: string, end: string) => {
+        const dates = [];
+        let current = new Date(start);
+        const last = new Date(end);
+        while (current <= last) {
+            dates.push(current.toISOString().split('T')[0]);
+            current.setDate(current.getDate() + 1);
+        }
+        return dates;
+    };
+
+    const allDates = generateDateRange(dateRange.start, dateRange.end);
+    const dataWithTotal = allDates.map(date => {
+        const existing = chartData.find(d => d.date === date);
+        return {
+            date,
+            total: existing ? Number(existing.ai_count || 0) + Number(existing.visitor_count || 0) : 0
+        };
+    });
+    const maxTotal = dataWithTotal.length > 0 ? Math.max(...dataWithTotal.map(d => d.total)) : 0;
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             {/* Filters Row */}
@@ -92,9 +111,13 @@ const AIChatReport: React.FC<AIReportProps> = ({ dateRange }) => {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                 {stats.map((stat, idx) => (
                     <div key={idx} className="bg-white rounded-2xl lg:rounded-[32px] p-4 lg:p-6 border border-slate-100 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 group hover:shadow-md transition-all">
-                        <div className="space-y-1">
+                        <div className="space-y-1 w-full">
                             <h4 className="text-[9px] lg:text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</h4>
-                            <div className="text-xl lg:text-3xl font-black text-slate-800 tracking-tight">{loading ? '...' : stat.value.toLocaleString()}</div>
+                            {loading ? (
+                                <div className="h-8 w-24 bg-slate-200 rounded animate-pulse mt-1"></div>
+                            ) : (
+                                <div className="text-xl lg:text-3xl font-black text-slate-800 tracking-tight">{stat.value.toLocaleString()}</div>
+                            )}
                         </div>
                         <div className={`w-10 h-10 lg:w-14 lg:h-14 ${stat.bg} rounded-xl lg:rounded-2xl flex items-center justify-center shrink-0`}>
                             <stat.icon className={`w-5 h-5 lg:w-6 lg:h-6 ${stat.color}`} />
@@ -113,26 +136,40 @@ const AIChatReport: React.FC<AIReportProps> = ({ dateRange }) => {
                     <Bot className="w-5 h-5 lg:w-6 lg:h-6 text-emerald-500 opacity-20" />
                 </div>
                 <div className="h-[250px] lg:h-[350px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                            <defs>
-                                <linearGradient id="colorAi" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                                </linearGradient>
-                                <linearGradient id="colorUser" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} dy={10} tickFormatter={(val) => val.split('-').slice(1).reverse().join('/')} />
-                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
-                            <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} />
-                            <Area type="monotone" dataKey="ai_count" name="AI Trả lời" stroke="#10b981" strokeWidth={3} fill="url(#colorAi)" />
-                            <Area type="monotone" dataKey="visitor_count" name="Khách nhắn" stroke="#6366f1" strokeWidth={3} fill="url(#colorUser)" />
-                        </AreaChart>
-                    </ResponsiveContainer>
+                    {loading ? (
+                        <div className="w-full h-full flex items-end gap-3 p-4 animate-pulse">
+                            {[...Array(14)].map((_, i) => (
+                                <div key={i} className="flex-1 bg-slate-100 rounded-t-lg" style={{ height: `${Math.random() * 60 + 20}%` }}></div>
+                            ))}
+                        </div>
+                    ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={dataWithTotal} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="colorYellowAi" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.9} />
+                                        <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.3} />
+                                    </linearGradient>
+                                    <linearGradient id="colorRedAi" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="#ef4444" stopOpacity={0.9} />
+                                        <stop offset="100%" stopColor="#ef4444" stopOpacity={0.3} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} dy={10} tickFormatter={(val) => val ? val.split('-').slice(1).reverse().join('/') : ''} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
+                                <Tooltip 
+                                    contentStyle={{ border: 'none', borderRadius: '24px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }}
+                                    formatter={(val: number) => [`${val} tin nhắn`, 'Tổng tương tác']}
+                                />
+                                <Bar dataKey="total" radius={[6, 6, 0, 0]} maxBarSize={40}>
+                                    {dataWithTotal.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.total === maxTotal && maxTotal > 0 ? 'url(#colorRedAi)' : 'url(#colorYellowAi)'} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    )}
                 </div>
             </div>
         </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Sparkles, AlertCircle, Users, MessageSquareText, MessagesSquare, ArrowRight } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import toast from 'react-hot-toast';
@@ -51,8 +51,10 @@ const AIStatsModal: React.FC<AIStatsModalProps> = ({ propertyId, onClose, brandC
     }, [propertyId]);
 
     const formatHour = (hour: number) => {
-        return `${hour.toString().padStart(2, '0')}:00`;
+        return `${hour}h`;
     };
+
+    const maxCount = chartData.length > 0 ? Math.max(...chartData.map(d => d.count || 0)) : 0;
 
     return (
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -132,9 +134,13 @@ const AIStatsModal: React.FC<AIStatsModalProps> = ({ propertyId, onClose, brandC
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                             <defs>
-                                                <linearGradient id="colorCountBar" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="0%" stopColor={brandColor} stopOpacity={0.9} />
-                                                    <stop offset="100%" stopColor={brandColor} stopOpacity={0.3} />
+                                                <linearGradient id="colorYellow" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.9} />
+                                                    <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.3} />
+                                                </linearGradient>
+                                                <linearGradient id="colorRed" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="#ef4444" stopOpacity={0.9} />
+                                                    <stop offset="100%" stopColor="#ef4444" stopOpacity={0.3} />
                                                 </linearGradient>
                                             </defs>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.6} />
@@ -160,10 +166,13 @@ const AIStatsModal: React.FC<AIStatsModalProps> = ({ propertyId, onClose, brandC
                                             />
                                             <Bar 
                                                 dataKey="count" 
-                                                fill="url(#colorCountBar)" 
                                                 radius={[6, 6, 0, 0]} 
                                                 barSize={20}
-                                            />
+                                            >
+                                                {chartData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.count === maxCount && maxCount > 0 ? 'url(#colorRed)' : 'url(#colorYellow)'} />
+                                                ))}
+                                            </Bar>
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
