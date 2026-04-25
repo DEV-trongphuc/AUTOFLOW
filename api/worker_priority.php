@@ -89,8 +89,7 @@ $flowExecutor = new FlowExecutor($pdo, $mailer, $apiUrl);
 // [FIX P9-C2] MySQL version guard — SKIP LOCKED requires MySQL = 8.0.
 // worker_priority.php uses SKIP LOCKED in 2 places (Scenario B chain lock + Scenario D batch).
 // Without this guard: Fatal Syntax Error on MySQL 5.7 ? ALL priority enrollments fail.
-$mysqlVersionPrio = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
-$skipLockedClause = version_compare($mysqlVersionPrio, '8.0.0', '>=') ? 'SKIP LOCKED' : '';
+$skipLockedClause = isDatabaseSkipLockedSupported($pdo) ? 'SKIP LOCKED' : '';
 
 $now = date('Y-m-d H:i:s');
 $currentTime = date('H:i');

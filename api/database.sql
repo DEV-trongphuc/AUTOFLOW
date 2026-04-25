@@ -1,9 +1,9 @@
--- phpMyAdmin SQL Dump
+﻿-- phpMyAdmin SQL Dump
 -- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost:3306
--- Thời gian đã tạo: Th4 25, 2026 lúc 08:18 AM
+-- Thời gian đã tạo: Th4 25, 2026 lúc 06:39 PM
 -- Phiên bản máy phục vụ: 10.6.18-MariaDB-cll-lve-log
 -- Phiên bản PHP: 8.4.20
 
@@ -507,6 +507,7 @@ CREATE TABLE `ai_training_docs` (
   `content` longtext DEFAULT NULL,
   `tags` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`tags`)),
   `metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `batch_id_virtual` varchar(100) GENERATED ALWAYS AS (json_unquote(json_extract(`metadata`,'$.batch_id'))) VIRTUAL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `chatbot_id` varchar(100) DEFAULT NULL,
@@ -1200,8 +1201,14 @@ CREATE TABLE `raw_event_buffer` (
   `type` varchar(20) NOT NULL,
   `payload` longtext NOT NULL CHECK (json_valid(`payload`)),
   `processed` tinyint(1) DEFAULT 0,
-  `created_at` timestamp NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+PARTITION BY RANGE (unix_timestamp(`created_at`))
+(
+PARTITION p_old VALUES LESS THAN (1774976400) ENGINE=InnoDB,
+PARTITION p2026_04_01 VALUES LESS THAN (1775062800) ENGINE=InnoDB,
+PARTITION p_future VALUES LESS THAN MAXVALUE ENGINE=InnoDB
+);
 
 -- --------------------------------------------------------
 
@@ -1592,7 +1599,13 @@ CREATE TABLE `system_audit_logs` (
   `details` text DEFAULT NULL,
   `ip_address` varchar(45) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+PARTITION BY RANGE (unix_timestamp(`created_at`))
+(
+PARTITION p_old VALUES LESS THAN (1774976400) ENGINE=InnoDB,
+PARTITION p2026_04_01 VALUES LESS THAN (1775062800) ENGINE=InnoDB,
+PARTITION p_future VALUES LESS THAN MAXVALUE ENGINE=InnoDB
+);
 
 -- --------------------------------------------------------
 
@@ -1849,8 +1862,15 @@ CREATE TABLE `web_events` (
   `target_selector` varchar(255) DEFAULT NULL,
   `target_text` varchar(255) DEFAULT NULL,
   `meta_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`meta_data`)),
-  `created_at` datetime DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci KEY_BLOCK_SIZE=8 ROW_FORMAT=COMPRESSED;
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci KEY_BLOCK_SIZE=8 ROW_FORMAT=COMPRESSED
+PARTITION BY RANGE (to_days(`created_at`))
+(
+PARTITION p2026_04_25 VALUES LESS THAN (740097) ENGINE=InnoDB,
+PARTITION p2026_04_26 VALUES LESS THAN (740098) ENGINE=InnoDB,
+PARTITION p2026_04_27 VALUES LESS THAN (740099) ENGINE=InnoDB,
+PARTITION p_future VALUES LESS THAN MAXVALUE ENGINE=InnoDB
+);
 
 -- --------------------------------------------------------
 
@@ -2322,9 +2342,6 @@ ALTER TABLE `ai_chat_queries`
 --
 ALTER TABLE `ai_conversations`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `visitor_id` (`visitor_id`),
-  ADD KEY `property_id` (`property_id`),
-  ADD KEY `idx_conv_last_msg` (`property_id`,`last_message_at`),
   ADD KEY `idx_conv_visitor` (`visitor_id`,`property_id`),
   ADD KEY `idx_prop_updated` (`property_id`,`updated_at`),
   ADD KEY `idx_status` (`status`),
@@ -2500,7 +2517,8 @@ ALTER TABLE `ai_training_docs`
   ADD KEY `idx_global_workspace` (`property_id`,`is_global_workspace`,`is_active`),
   ADD KEY `idx_atd_property_source` (`property_id`,`source_type`),
   ADD KEY `idx_prop_status_updated` (`property_id`,`status`,`updated_at`),
-  ADD KEY `idx_atd_prop_status_active` (`property_id`,`status`,`is_active`);
+  ADD KEY `idx_atd_prop_status_active` (`property_id`,`status`,`is_active`),
+  ADD KEY `idx_batch_id_virtual` (`batch_id_virtual`);
 ALTER TABLE `ai_training_docs` ADD FULLTEXT KEY `ft_content` (`name`,`content`);
 
 --
@@ -2706,11 +2724,7 @@ ALTER TABLE `mail_delivery_logs`
   ADD KEY `idx_perf_campaign_sub` (`campaign_id`,`recipient`,`status`),
   ADD KEY `idx_lookup_speed` (`campaign_id`,`sent_at`),
   ADD KEY `idx_delivery_logs_flow` (`flow_id`),
-  ADD KEY `idx_subscriber_id` (`subscriber_id`),
-  ADD KEY `idx_status` (`status`),
   ADD KEY `idx_sent_at` (`sent_at`),
-  ADD KEY `idx_recipient` (`recipient`),
-  ADD KEY `idx_campaign_status` (`campaign_id`,`status`),
   ADD KEY `idx_mdl_status_sent` (`status`,`sent_at`),
   ADD KEY `idx_mdl_sub_camp` (`subscriber_id`,`campaign_id`),
   ADD KEY `idx_mdl_camp_status_created` (`campaign_id`,`status`,`created_at`);
@@ -2833,9 +2847,7 @@ ALTER TABLE `queue_throttle`
 -- Chỉ mục cho bảng `raw_event_buffer`
 --
 ALTER TABLE `raw_event_buffer`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_processing` (`processed`,`created_at`),
-  ADD KEY `idx_processed` (`processed`),
+  ADD PRIMARY KEY (`id`,`created_at`),
   ADD KEY `idx_created_at` (`created_at`),
   ADD KEY `idx_reb_type_created` (`type`,`created_at`),
   ADD KEY `idx_reb_processed_created` (`processed`,`created_at`);
@@ -2921,10 +2933,7 @@ ALTER TABLE `subscribers`
   ADD KEY `idx_salesperson` (`salesperson`),
   ADD KEY `idx_date_triggers` (`status`,`date_of_birth`,`anniversary_date`,`joined_at`),
   ADD KEY `idx_sub_status_source` (`status`,`source`),
-  ADD KEY `idx_sub_zalo` (`zalo_user_id`),
   ADD KEY `idx_prop_email` (`property_id`,`email`),
-  ADD KEY `idx_status` (`status`),
-  ADD KEY `idx_meta_psid` (`meta_psid`),
   ADD KEY `idx_is_zalo_follower` (`is_zalo_follower`),
   ADD KEY `idx_phone` (`phone_number`),
   ADD KEY `idx_sub_email` (`email`),
@@ -2932,7 +2941,6 @@ ALTER TABLE `subscribers`
   ADD KEY `idx_sub_ws_status_created` (`workspace_id`,`status`,`created_at`),
   ADD KEY `idx_sub_zalo_uid` (`zalo_user_id`),
   ADD KEY `idx_sub_meta_psid` (`meta_psid`),
-  ADD KEY `idx_sub_workspace_status` (`workspace_id`,`status`),
   ADD KEY `idx_sub_workspace_email` (`workspace_id`,`email`(32)),
   ADD KEY `idx_sub_workspace_phone` (`workspace_id`,`phone_number`);
 ALTER TABLE `subscribers` ADD FULLTEXT KEY `ft_subscriber_search` (`email`,`first_name`,`last_name`,`phone_number`,`company_name`);
@@ -2990,9 +2998,7 @@ ALTER TABLE `subscriber_flow_states`
   ADD KEY `idx_status_sched_flow` (`status`,`scheduled_at`,`flow_id`,`created_at`),
   ADD KEY `idx_priority_lookup` (`id`,`subscriber_id`,`flow_id`,`status`),
   ADD KEY `idx_sub_waiting` (`subscriber_id`,`status`),
-  ADD KEY `idx_flow_status` (`flow_id`,`status`),
-  ADD KEY `idx_sfs_sub_flow` (`subscriber_id`,`flow_id`),
-  ADD KEY `idx_sfs_status_sched` (`status`,`scheduled_at`);
+  ADD KEY `idx_flow_status` (`flow_id`,`status`);
 
 --
 -- Chỉ mục cho bảng `subscriber_lists`
@@ -3061,7 +3067,7 @@ ALTER TABLE `survey_responses`
 -- Chỉ mục cho bảng `system_audit_logs`
 --
 ALTER TABLE `system_audit_logs`
-  ADD PRIMARY KEY (`id`),
+  ADD PRIMARY KEY (`id`,`created_at`),
   ADD KEY `idx_user_id` (`user_id`),
   ADD KEY `idx_created_at` (`created_at`),
   ADD KEY `idx_user_created` (`user_id`,`created_at`);
@@ -3169,7 +3175,7 @@ ALTER TABLE `web_daily_stats`
 -- Chỉ mục cho bảng `web_events`
 --
 ALTER TABLE `web_events`
-  ADD PRIMARY KEY (`id`),
+  ADD PRIMARY KEY (`id`,`created_at`),
   ADD KEY `session_idx` (`session_id`),
   ADD KEY `idx_ev_prop_time` (`property_id`,`created_at`),
   ADD KEY `idx_ev_heatmap` (`property_id`,`event_type`),
@@ -3218,14 +3224,12 @@ ALTER TABLE `web_sessions`
   ADD KEY `bounce_idx` (`is_bounce`),
   ADD KEY `idx_utm_source` (`utm_source`,`utm_medium`),
   ADD KEY `idx_last_active_at` (`last_active_at`),
-  ADD KEY `idx_live_traffic` (`property_id`,`last_active_at`,`visitor_id`),
-  ADD KEY `idx_prop_visitor` (`property_id`,`visitor_id`),
   ADD KEY `idx_visitor_id` (`visitor_id`),
-  ADD KEY `idx_property_id` (`property_id`),
   ADD KEY `idx_started_at` (`started_at`),
   ADD KEY `idx_sess_prop_active` (`property_id`,`last_active_at`),
   ADD KEY `idx_ws_prop_created` (`property_id`,`created_at`),
-  ADD KEY `idx_ws_workspace` (`workspace_id`);
+  ADD KEY `idx_ws_workspace` (`workspace_id`),
+  ADD KEY `idx_live_traffic` (`property_id`,`visitor_id`,`last_active_at`);
 
 --
 -- Chỉ mục cho bảng `web_visitors`
@@ -3326,7 +3330,6 @@ ALTER TABLE `zalo_lists`
 --
 ALTER TABLE `zalo_message_queue`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_zalo_user_processed` (`zalo_user_id`,`processed`),
   ADD KEY `idx_zmq_processed_created` (`processed`,`created_at`),
   ADD KEY `idx_zmq_user_processed` (`zalo_user_id`,`processed`);
 

@@ -1,4 +1,4 @@
-import * as React from 'react';
+﻿import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Tag as TagIcon, Search, Trash2, Users, RefreshCw, Filter, ArrowRight, FileText, Info, Edit3, Check, X, AlertTriangle, Save, Plus, Codesandbox, Plug, Layers, Target, Lightbulb, LayoutGrid, List } from 'lucide-react';
 import { api } from '../services/storageAdapter';
@@ -61,6 +61,8 @@ const Tags: React.FC = () => {
     const [editingTag, setEditingTag] = useState<Tag | null>(null);
     const [editFormData, setEditFormData] = useState({ name: '', description: '' });
     const [isUpdating, setIsUpdating] = useState(false);
+    const [isToggling, setIsToggling] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Delete Confirmation State
     const [confirmModal, setConfirmModal] = useState<{
@@ -131,6 +133,8 @@ const Tags: React.FC = () => {
 
     const handleToggleStatus = async (e: React.MouseEvent, tag: Tag) => {
         e.stopPropagation();
+        if (isToggling) return;
+        setIsToggling(true);
         try {
             const res = await api.put<{ id: string; status: string }>(`tags/${tag.id}?route=toggle_status`, {});
             if (res.success) {
@@ -141,6 +145,8 @@ const Tags: React.FC = () => {
             }
         } catch {
             showToast('Lỗi kết nối', 'error');
+        } finally {
+            setIsToggling(false); // [GUARD] Always unlock
         }
     };
 
@@ -156,20 +162,28 @@ const Tags: React.FC = () => {
 
         const performUpdate = async () => {
             setIsUpdating(true);
-            const res = await api.put<Tag>(`tags/${editingTag.id}`, {
-                name: editFormData.name.trim().toUpperCase().replace(/\s+/g, '_'),
-                description: editFormData.description.trim()
-            });
+            try {
+                const res = await api.put<Tag>(`tags/${editingTag.id}`, {
+                    name: editFormData.name.trim().toUpperCase().replace(/\s+/g, '_'),
+                    description: editFormData.description.trim()
+                });
 
-            if (res.success) {
-                showToast('Đã cập nhật dữ liệu nhãn trên toàn hệ thống');
-                fetchTags();
-                setEditingTag(null);
-                setConfirmModal(prev => ({ ...prev, isOpen: false }));
-            } else {
-                showToast(res.message || 'Lỗi cập nhật', 'error');
+                if (res.success) {
+                    showToast('Da cap nhat nhan thanh cong!');
+                    // [OPTIMISTIC UI] Update tag locally without re-fetch
+                    setTags(prev => prev.map(t => t.id === editingTag.id
+                        ? { ...t, name: editFormData.name.trim().toUpperCase().replace(/\s+/g, '_'), description: editFormData.description.trim() }
+                        : t));
+                    setEditingTag(null);
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                } else {
+                    showToast(res.message || 'Loi cap nhat', 'error');
+                }
+            } catch {
+                showToast('Loi ket noi', 'error');
+            } finally {
+                setIsUpdating(false); // [GUARD] Always unlock
             }
-            setIsUpdating(false);
         };
 
         if (isRename) {

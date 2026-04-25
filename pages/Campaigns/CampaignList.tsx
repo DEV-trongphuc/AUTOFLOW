@@ -9,6 +9,7 @@ import Badge from '../../components/common/Badge';
 import { useNavigate } from 'react-router-dom';
 import EmptyState from '../../components/common/EmptyState';
 import Skeleton from '../../components/common/Skeleton';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 interface CampaignListProps {
     campaigns: Campaign[];
@@ -26,9 +27,10 @@ interface CampaignRowProps {
     onDelete: (id: string) => void;
     onPlayFlow: (campaign: Campaign) => void;
     navigate: any;
+    'data-index'?: number;
 }
 
-const CampaignTableRow = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, onDelete, onPlayFlow, navigate }) => {
+const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, CampaignRowProps>(({ c, onSelect, onEdit, onDelete, onPlayFlow, navigate, 'data-index': dataIndex }, ref) => {
     const isSent = c.status === CampaignStatus.SENT;
     const isWaiting = c.status === CampaignStatus.WAITING_FLOW;
     const isSending = c.status === CampaignStatus.SENDING;
@@ -45,6 +47,8 @@ const CampaignTableRow = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, on
 
     return (
         <tr
+            ref={ref}
+            data-index={dataIndex}
             className="hidden md:table-row group hover:bg-slate-50/80 transition-all duration-500 cursor-pointer hover-lift"
             onClick={() => {
                 if (c.status === CampaignStatus.DRAFT || c.status === CampaignStatus.SCHEDULED) {
@@ -222,7 +226,7 @@ const CampaignTableRow = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, on
             </td>
         </tr>
     );
-});
+}));
 
 const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, onDelete, onPlayFlow, navigate }) => {
     const isSent = c.status === CampaignStatus.SENT;
@@ -380,12 +384,21 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
     const handleDelete = React.useCallback((id: string) => onDelete(id), [onDelete]);
     const handlePlayFlow = React.useCallback((c: Campaign) => onPlayFlow(c), [onPlayFlow]);
 
+    const parentRef = React.useRef<HTMLDivElement>(null);
+    const rowVirtualizer = useVirtualizer({
+        count: campaigns.length,
+        getScrollElement: () => parentRef.current,
+        estimateSize: () => 84, // Approximate row height
+        overscan: 5,
+    });
+    const virtualItems = rowVirtualizer.getVirtualItems();
+
     return (
         <div className="min-h-[400px]">
             {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
-                <table className="w-full">
-                    <thead className="bg-slate-50/50 border-b border-slate-100 text-left">
+            <div ref={parentRef} className="hidden md:block overflow-x-auto overflow-y-auto max-h-[600px]">
+                <table className="w-full relative">
+                    <thead className="bg-slate-50/50 border-b border-slate-100 text-left sticky top-0 z-20 backdrop-blur-sm">
                         <tr>
                             <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest pl-8 w-[35%]">Chiến dịch</th>
                             <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center w-[15%]">Trạng thái</th>
@@ -398,17 +411,26 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
                         {loading ? (
                             Array.from({ length: 5 }).map((_, i) => <CampaignSkeleton key={i} />)
                         ) : (
-                            campaigns.map(c => (
-                                <CampaignTableRow
-                                    key={c.id}
-                                    c={c}
-                                    onSelect={handleSelect}
-                                    onEdit={handleEdit}
-                                    onDelete={handleDelete}
-                                    onPlayFlow={handlePlayFlow}
-                                    navigate={navigate}
-                                />
-                            ))
+                            <>
+                                {virtualItems.length > 0 && <tr style={{ height: virtualItems[0].start }} />}
+                                {virtualItems.map((virtualRow) => {
+                                    const c = campaigns[virtualRow.index];
+                                    return (
+                                        <CampaignTableRow
+                                            key={c.id}
+                                            c={c}
+                                            onSelect={handleSelect}
+                                            onEdit={handleEdit}
+                                            onDelete={handleDelete}
+                                            onPlayFlow={handlePlayFlow}
+                                            navigate={navigate}
+                                            ref={rowVirtualizer.measureElement}
+                                            data-index={virtualRow.index}
+                                        />
+                                    );
+                                })}
+                                {virtualItems.length > 0 && <tr style={{ height: rowVirtualizer.getTotalSize() - virtualItems[virtualItems.length - 1].end }} />}
+                            </>
                         )}
                     </tbody>
                 </table>

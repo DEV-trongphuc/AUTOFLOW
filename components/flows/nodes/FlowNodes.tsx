@@ -1,7 +1,7 @@
 
 import { EXTERNAL_ASSET_BASE } from '@/utils/config';
-import React from 'react';
-import { Zap, Mail, Clock, GitMerge, Tag, Link as LinkIcon, Edit3, AlertOctagon, AlertTriangle, Beaker, Hourglass, MousePointer2, MailOpen, MoreHorizontal, MessageSquare, UserMinus, Filter, Calendar, FileInput, Users, CheckCircle2, Send, Plus, Minus, Trash2, List, ShoppingCart, Layers, Cake, Snowflake, ArrowRight, Paperclip } from 'lucide-react';
+import React, { memo } from 'react';
+import { Zap, Mail, Clock, GitMerge, Tag, Link as LinkIcon, Edit3, AlertOctagon, AlertTriangle, Beaker, Hourglass, MousePointer2, MailOpen, MoreHorizontal, MessageSquare, UserMinus, Filter, Calendar, FileInput, Users, CheckCircle2, Send, Plus, Minus, Trash2, List, ListPlus, ShoppingCart, Layers, Cake, Snowflake, ArrowRight, Paperclip } from 'lucide-react';
 import { FlowStep, Flow, FormDefinition } from '../../../types';
 
 interface NodeProps {
@@ -42,11 +42,11 @@ const ValidationBadge = ({ type, title }: { type: 'error' | 'warning', title?: s
     </div>
 );
 
-export const GhostNode = ({ label }: { label: string }) => (
+export const GhostNode = memo(({ label }: { label: string }) => (
     <div className="px-5 py-2.5 rounded-2xl bg-slate-50 border-2 border-slate-200 border-dashed text-slate-400 text-[10px] font-bold uppercase tracking-widest animate-in fade-in zoom-in duration-500">
         {label}
     </div>
-);
+));
 
 const ReportOverlay = ({ stats }: { stats: { total: number, waiting: number, processed: number, failed?: number } }) => (
     <div className="absolute -bottom-[2px] left-[15%] right-[15%] translate-y-full flex items-center justify-center bg-white px-4 py-2 rounded-b-xl border-x border-b border-slate-100 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.12)] z-[100] animate-in slide-in-from-top-1 duration-300">
@@ -70,18 +70,18 @@ const ReportOverlay = ({ stats }: { stats: { total: number, waiting: number, pro
 );
 
 
-export const TriggerNode: React.FC<NodeProps> = ({ step, onClick, isViewMode, allForms = [], isReportMode, reportStats }) => {
+export const TriggerNode: React.FC<NodeProps> = memo(({ step, onClick, isViewMode, allForms = [], isReportMode, reportStats }) => {
     const hasFilter = !!step.config.filterSegmentId;
     const triggerType = step.config.type || 'segment';
 
-    // Kiểm tra xem Form có bị xóa không
+    // Kiá»ƒm tra xem Form cÃ³ bá»‹ xÃ³a khÃ´ng
     const isFormDeleted = triggerType === 'form' && step.config.targetId && !allForms.find(f => f.id === step.config.targetId);
 
     const getTriggerStyle = () => {
-        if (isFormDeleted) return { icon: AlertOctagon, color: 'from-rose-500 to-red-700', label: 'LỖI LIÊN KẾT' };
+        if (isFormDeleted) return { icon: AlertOctagon, color: 'from-rose-500 to-red-700', label: 'Lá»–I LIÃŠN Káº¾T' };
 
         switch (triggerType) {
-            case 'segment': return { icon: Layers, color: 'from-amber-400 to-amber-600', label: 'Segment Entry' };
+            case 'segment': return (step.config.targetSubtype === 'list' || step.config.targetSubtype === 'sync') ? { icon: ListPlus, color: 'from-emerald-500 to-teal-600', label: 'List Entry' } : { icon: Layers, color: 'from-amber-400 to-amber-600', label: 'Segment Entry' };
             case 'form': return { icon: FileInput, color: 'from-amber-400 to-amber-600', label: 'Form Submit' };
             case 'purchase': return { icon: ShoppingCart, color: 'from-pink-500 to-rose-600', label: 'Purchase Event' };
             case 'custom_event': return { icon: Zap, color: 'from-violet-500 to-purple-600', label: 'Custom Event' };
@@ -109,16 +109,16 @@ export const TriggerNode: React.FC<NodeProps> = ({ step, onClick, isViewMode, al
                     <p className="text-[9px] font-bold uppercase tracking-widest opacity-80 leading-none mb-1">{label}</p>
                     <p className="text-sm font-black leading-tight">{step.label}</p>
                     {hasFilter && <p className="text-[9px] opacity-75 flex items-center gap-1 mt-0.5"><Filter className="w-2.5 h-2.5" /> Filtered</p>}
-                    {isFormDeleted && <p className="text-[9px] opacity-90 font-bold mt-0.5">Form đã bị xóa</p>}
+                    {isFormDeleted && <p className="text-[9px] opacity-90 font-bold mt-0.5">Form Ä‘Ã£ bá»‹ xÃ³a</p>}
                 </div>
             </div>
             {!isViewMode && <QuickEdit onClick={onClick || (() => { })} />}
             {isReportMode && reportStats && <ReportOverlay stats={reportStats} />}
         </div>
     );
-};
+});
 
-export const ActionNode: React.FC<NodeProps> = ({ step, hasError, hasWarning, onClick, isDraggable, isDragTarget, onDragStart, onDragEnter, onDragOver, onDragLeave, onDrop, isViewMode, isReportMode, reportStats }) => {
+export const ActionNode: React.FC<NodeProps> = memo(({ step, hasError, hasWarning, onClick, isDraggable, isDragTarget, onDragStart, onDragEnter, onDragOver, onDragLeave, onDrop, isViewMode, isReportMode, reportStats }) => {
     const isTag = step.type === 'update_tag';
     const tagAction = step.config.action || 'add';
     const tags = step.config.tags || [];
@@ -157,7 +157,7 @@ export const ActionNode: React.FC<NodeProps> = ({ step, hasError, hasWarning, on
                             {isTag ? (tagAction === 'remove' ? 'Remove Tag' : 'Add Tag') : 'Send Email'}
                         </p>
                         {!isTag && step.config.attachments?.length > 0 && (
-                            <div className="flex items-center gap-1 text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100" title={`${step.config.attachments.length} tệp đính kèm`}>
+                            <div className="flex items-center gap-1 text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100" title={`${step.config.attachments.length} tá»‡p Ä‘Ã­nh kÃ¨m`}>
                                 <Paperclip className="w-3 h-3" />
                                 <span className="text-[10px] font-bold">{step.config.attachments.length}</span>
                             </div>
@@ -179,11 +179,11 @@ export const ActionNode: React.FC<NodeProps> = ({ step, hasError, hasWarning, on
                     {!isTag && (
                         <div className="space-y-1 mt-2">
                             <div className={`text-[10px] truncate px-2 py-1 rounded-lg border ${incomplete ? 'bg-rose-50 border-rose-100 text-rose-600 font-bold' : 'bg-slate-50 border-slate-100 text-slate-500 font-medium'}`}>
-                                {step.config.subject || (isViewMode ? 'No Subject' : 'Chưa cấu hình')}
+                                {step.config.subject || (isViewMode ? 'No Subject' : 'ChÆ°a cáº¥u hÃ¬nh')}
                             </div>
                             {!step.config.senderEmail && !isViewMode && (
                                 <div className="text-[9px] text-slate-400 font-bold bg-slate-50/50 px-2 py-0.5 rounded border border-transparent w-fit">
-                                    Email Mặc định
+                                    Email Máº·c Ä‘á»‹nh
                                 </div>
                             )}
                         </div>
@@ -196,9 +196,9 @@ export const ActionNode: React.FC<NodeProps> = ({ step, hasError, hasWarning, on
             {!isViewMode && <QuickEdit onClick={onClick || (() => { })} />}
         </div>
     );
-};
+});
 
-export const RemoveNode: React.FC<NodeProps> = ({ step, onClick, isViewMode, isDraggable, isDragTarget, onDragStart, onDragEnter, onDragOver, onDragLeave, onDrop, isReportMode, reportStats }) => {
+export const RemoveNode: React.FC<NodeProps> = memo(({ step, onClick, isViewMode, isDraggable, isDragTarget, onDragStart, onDragEnter, onDragOver, onDragLeave, onDrop, isReportMode, reportStats }) => {
     const actionType = step.config.actionType || 'unsubscribe';
     const isDelete = actionType === 'delete_contact';
 
@@ -231,9 +231,9 @@ export const RemoveNode: React.FC<NodeProps> = ({ step, onClick, isViewMode, isD
             {!isViewMode && <QuickEdit onClick={onClick || (() => { })} />}
         </div>
     );
-};
+});
 
-export const WaitNode: React.FC<NodeProps> = ({ step, onClick, isViewMode, isDraggable, isDragTarget, onDragStart, onDragEnter, onDragOver, onDragLeave, onDrop }) => {
+export const WaitNode: React.FC<NodeProps> = memo(({ step, onClick, isViewMode, isDraggable, isDragTarget, onDragStart, onDragEnter, onDragOver, onDragLeave, onDrop }) => {
     const mode = step.config.mode || 'duration';
     let incomplete = false;
 
@@ -264,7 +264,7 @@ export const WaitNode: React.FC<NodeProps> = ({ step, onClick, isViewMode, isDra
                         {mode === 'until_attribute' ? 'Relative Wait' : 'Wait Delay'}
                     </span>
                     <span className={`text-sm font-bold truncate leading-none ${incomplete ? 'text-rose-600' : 'text-slate-900'}`}>
-                        {incomplete ? (isViewMode ? 'Not configured' : 'Chưa cấu hình') : step.label}
+                        {incomplete ? (isViewMode ? 'Not configured' : 'ChÆ°a cáº¥u hÃ¬nh') : step.label}
                     </span>
                 </div>
             </div>
@@ -272,19 +272,19 @@ export const WaitNode: React.FC<NodeProps> = ({ step, onClick, isViewMode, isDra
             {!isViewMode && <QuickEdit onClick={onClick || (() => { })} />}
         </div>
     );
-};
+});
 
-export const ConditionNode: React.FC<NodeProps> = ({ step, onClick, isViewMode, hasWarning, isReportMode, reportStats }) => {
+export const ConditionNode: React.FC<NodeProps> = memo(({ step, onClick, isViewMode, hasWarning, isReportMode, reportStats }) => {
     const incomplete = !step.config.conditionType || step.config.waitDuration === undefined;
-    const unitMap: any = { minutes: 'phút', hours: 'giờ', days: 'ngày', weeks: 'tuần' };
+    const unitMap: any = { minutes: 'phÃºt', hours: 'giá»', days: 'ngÃ y', weeks: 'tuáº§n' };
 
     const getActionInfo = () => {
         switch (step.config.conditionType) {
-            case 'opened': return { label: 'Đã mở Email?', icon: MailOpen };
-            case 'clicked': return { label: 'Đã click Link?', icon: MousePointer2 };
-            case 'replied': return { label: 'Đã phản hồi?', icon: MessageSquare };
-            case 'unsubscribed': return { label: 'Hủy đăng ký', icon: UserMinus };
-            default: return { label: 'Đang theo dõi...', icon: Hourglass };
+            case 'opened': return { label: 'ÄÃ£ má»Ÿ Email?', icon: MailOpen };
+            case 'clicked': return { label: 'ÄÃ£ click Link?', icon: MousePointer2 };
+            case 'replied': return { label: 'ÄÃ£ pháº£n há»“i?', icon: MessageSquare };
+            case 'unsubscribed': return { label: 'Há»§y Ä‘Äƒng kÃ½', icon: UserMinus };
+            default: return { label: 'Äang theo dÃµi...', icon: Hourglass };
         }
     };
 
@@ -324,30 +324,30 @@ export const ConditionNode: React.FC<NodeProps> = ({ step, onClick, isViewMode, 
                         step.config.waitDuration === 0 ? (
                             <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-amber-600 bg-amber-50 px-3 py-2 rounded-xl border border-amber-200">
                                 <Zap className="w-3.5 h-3.5" />
-                                <span>Check và Rẽ nhánh tức thì</span>
+                                <span>Check vÃ  Ráº½ nhÃ¡nh tá»©c thÃ¬</span>
                             </div>
                         ) : (
                             <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
                                 <Hourglass className="w-3 h-3 text-amber-600" />
-                                <span>Wait: {step.config.waitDuration} {unitMap[step.config.waitUnit] || 'giờ'}</span>
+                                <span>Wait: {step.config.waitDuration} {unitMap[step.config.waitUnit] || 'giá»'}</span>
                             </div>
                         )
                     ) : (
                         <div className="text-[10px] text-rose-600 font-bold bg-rose-50 px-3 py-2 rounded-xl text-center border border-rose-100">
-                            {isViewMode ? 'Not configured' : 'Chưa cấu hình'}
+                            {isViewMode ? 'Not configured' : 'ChÆ°a cáº¥u hÃ¬nh'}
                         </div>
                     )}
                 </div>
             </div>
-            {!isViewMode && incomplete && <ValidationBadge type="error" title="Cấu hình chưa hoàn tất" />}
-            {!isViewMode && hasWarning && !incomplete && <ValidationBadge type="warning" title="CẢNH BÁO: Cả hai nhánh đều dẫn đến hành động giống hệt nhau." />}
+            {!isViewMode && incomplete && <ValidationBadge type="error" title="Cáº¥u hÃ¬nh chÆ°a hoÃ n táº¥t" />}
+            {!isViewMode && hasWarning && !incomplete && <ValidationBadge type="warning" title="Cáº¢NH BÃO: Cáº£ hai nhÃ¡nh Ä‘á»u dáº«n Ä‘áº¿n hÃ nh Ä‘á»™ng giá»‘ng há»‡t nhau." />}
             {isReportMode && reportStats && <ReportOverlay stats={reportStats} />}
             {!isViewMode && <QuickEdit onClick={onClick || (() => { })} />}
         </div>
     );
-};
+});
 
-export const SplitTestNode: React.FC<NodeProps> = ({ step, onClick, isViewMode, hasWarning, isReportMode, reportStats }) => {
+export const SplitTestNode: React.FC<NodeProps> = memo(({ step, onClick, isViewMode, hasWarning, isReportMode, reportStats }) => {
     const ratioA = step.config.ratioA || 50;
     const ratioB = step.config.ratioB || 50;
 
@@ -368,7 +368,7 @@ export const SplitTestNode: React.FC<NodeProps> = ({ step, onClick, isViewMode, 
                         </div>
                         <div>
                             <p className="text-[9px] font-bold text-violet-500 uppercase tracking-widest">A/B Test</p>
-                            <p className="text-xs font-bold text-slate-800">Chia nhóm</p>
+                            <p className="text-xs font-bold text-slate-800">Chia nhÃ³m</p>
                         </div>
                     </div>
                     <div className="relative w-full h-3 bg-slate-100 rounded-full overflow-hidden mb-3 ring-1 ring-slate-200">
@@ -387,14 +387,14 @@ export const SplitTestNode: React.FC<NodeProps> = ({ step, onClick, isViewMode, 
                     </div>
                 </div>
             </div>
-            {!isViewMode && hasWarning && <ValidationBadge type="warning" title="CẢNH BÁO: Cả hai nhánh A/B đều dẫn đến hành động giống hệt nhau." />}
+            {!isViewMode && hasWarning && <ValidationBadge type="warning" title="Cáº¢NH BÃO: Cáº£ hai nhÃ¡nh A/B Ä‘á»u dáº«n Ä‘áº¿n hÃ nh Ä‘á»™ng giá»‘ng há»‡t nhau." />}
             {isReportMode && reportStats && <ReportOverlay stats={reportStats} />}
             {!isViewMode && <QuickEdit onClick={onClick || (() => { })} />}
         </div>
     );
-};
+});
 
-export const LinkNode: React.FC<NodeProps> = ({ step, onClick, hasError, isViewMode, isReportMode, reportStats }) => (
+export const LinkNode: React.FC<NodeProps> = memo(({ step, onClick, hasError, isViewMode, isReportMode, reportStats }) => (
     <div
         onClick={(e) => { e.stopPropagation(); if (!isViewMode) onClick?.(); }}
         className={`flow-interactive relative z-20 group ${isViewMode ? 'cursor-default' : 'cursor-pointer'}`}
@@ -411,15 +411,15 @@ export const LinkNode: React.FC<NodeProps> = ({ step, onClick, hasError, isViewM
             </div>
             <div>
                 <span className="text-[8px] font-bold uppercase tracking-widest opacity-60 block">Jump to</span>
-                <span className="text-xs font-bold">{hasError ? 'Lỗi liên kết' : 'Flow khác'}</span>
+                <span className="text-xs font-bold">{hasError ? 'Lá»—i liÃªn káº¿t' : 'Flow khÃ¡c'}</span>
             </div>
         </div>
         {isReportMode && reportStats && <ReportOverlay stats={reportStats} />}
         {!isViewMode && <QuickEdit onClick={onClick || (() => { })} />}
     </div>
-);
+));
 
-export const ListActionNode: React.FC<NodeProps> = ({ step, onClick, isViewMode, isDraggable, isDragTarget, onDragStart, onDragEnter, onDragOver, onDragLeave, onDrop, isReportMode, reportStats }) => {
+export const ListActionNode: React.FC<NodeProps> = memo(({ step, onClick, isViewMode, isDraggable, isDragTarget, onDragStart, onDragEnter, onDragOver, onDragLeave, onDrop, isReportMode, reportStats }) => {
     const action = step.config.action || 'add';
 
     return (
@@ -453,9 +453,9 @@ export const ListActionNode: React.FC<NodeProps> = ({ step, onClick, isViewMode,
             {!isViewMode && <QuickEdit onClick={onClick || (() => { })} />}
         </div>
     );
-};
+});
 
-export const ZaloZNSNode: React.FC<NodeProps> = ({ step, hasError, hasWarning, onClick, isDraggable, isDragTarget, onDragStart, onDragEnter, onDragOver, onDragLeave, onDrop, isViewMode, isReportMode, reportStats }) => {
+export const ZaloZNSNode: React.FC<NodeProps> = memo(({ step, hasError, hasWarning, onClick, isDraggable, isDragTarget, onDragStart, onDragEnter, onDragOver, onDragLeave, onDrop, isViewMode, isReportMode, reportStats }) => {
     const incomplete = !step.config.zalo_oa_id || !step.config.template_id;
 
     return (
@@ -490,11 +490,11 @@ export const ZaloZNSNode: React.FC<NodeProps> = ({ step, hasError, hasWarning, o
                     <p className="text-[9px] font-bold uppercase tracking-widest leading-none mb-2 text-blue-600">
                         Zalo Template
                     </p>
-                    <p className="text-sm font-bold text-slate-800 truncate leading-tight">{step.label === 'Bước mới' ? 'Gửi tin ZNS' : step.label}</p>
+                    <p className="text-sm font-bold text-slate-800 truncate leading-tight">{step.label === 'BÆ°á»›c má»›i' ? 'Gá»­i tin ZNS' : step.label}</p>
 
                     <div className="space-y-1 mt-2">
                         <div className={`text-[10px] truncate px-2 py-1 rounded-lg border ${incomplete ? 'bg-rose-50 border-rose-100 text-rose-600 font-bold' : 'bg-slate-50 border-slate-100 text-slate-500 font-medium'}`}>
-                            {step.config.template_id ? `Template: ${step.config.template_id}` : (isViewMode ? 'No Template' : 'Chưa cấu hình')}
+                            {step.config.template_id ? `Template: ${step.config.template_id}` : (isViewMode ? 'No Template' : 'ChÆ°a cáº¥u hÃ¬nh')}
                         </div>
                         {!incomplete && step.config.template_data?.title && (
                             <div className="text-[9px] text-slate-400 font-medium bg-slate-50/50 px-2 py-0.5 rounded border border-transparent truncate">
@@ -506,14 +506,14 @@ export const ZaloZNSNode: React.FC<NodeProps> = ({ step, hasError, hasWarning, o
             </div>
 
             {!isViewMode && (incomplete || hasError) && <ValidationBadge type="error" />}
-            {!isViewMode && hasWarning && !(incomplete || hasError) && <ValidationBadge type="warning" title="Template ZNS cần kiểm tra lại" />}
+            {!isViewMode && hasWarning && !(incomplete || hasError) && <ValidationBadge type="warning" title="Template ZNS cáº§n kiá»ƒm tra láº¡i" />}
             {isReportMode && reportStats && <ReportOverlay stats={reportStats} />}
             {!isViewMode && <QuickEdit onClick={onClick || (() => { })} />}
         </div>
     );
-};
+});
 
-export const AdvancedConditionNode: React.FC<NodeProps> = ({ step, onClick, isViewMode, hasWarning, isReportMode, reportStats }) => {
+export const AdvancedConditionNode: React.FC<NodeProps> = memo(({ step, onClick, isViewMode, hasWarning, isReportMode, reportStats }) => {
     const branches = step.config.branches || [];
 
     return (
@@ -537,12 +537,12 @@ export const AdvancedConditionNode: React.FC<NodeProps> = ({ step, onClick, isVi
                         {branches.map((b: any, i: number) => (
                             <div key={i} className="flex justify-between text-[9px] text-slate-300">
                                 <span>{b.label}</span>
-                                <span className="text-violet-400">→</span>
+                                <span className="text-violet-400">â†’</span>
                             </div>
                         ))}
                         <div className="flex justify-between text-[9px] text-slate-400">
                             <span>Default</span>
-                            <span className="text-slate-500">→</span>
+                            <span className="text-slate-500">â†’</span>
                         </div>
                     </div>
                 </div>
@@ -556,4 +556,5 @@ export const AdvancedConditionNode: React.FC<NodeProps> = ({ step, onClick, isVi
             {isReportMode && reportStats && <ReportOverlay stats={reportStats} />}
         </div>
     );
-};
+});
+

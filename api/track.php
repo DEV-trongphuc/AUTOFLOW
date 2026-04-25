@@ -203,7 +203,7 @@ try {
         }
     } else {
         // Fallback: fast file-based rate limiter
-        $rlDir = sys_get_temp_dir() . '/track_rl';
+        $rlDir = __DIR__ . '/_locks/track_rl';
         if (!is_dir($rlDir)) @mkdir($rlDir, 0777, true);
         $rlFile = $rlDir . '/' . $ip . '.bin';
         
@@ -408,25 +408,8 @@ try {
         $sessionId = $pdo->lastInsertId();
         $sessionPageCount = 0;
 
-        // Auto-Cleanup: Keep only last 100 bot sessions for this property to save space
-        if ($deviceType === 'bot') {
-            // Delete bots older than the 100th newest bot session
-            // Subquery finds the ID of the 100th newest bot. We delete anything showing up before that ID.
-            $sqlCleanup = "DELETE FROM web_sessions 
-                           WHERE property_id = ? 
-                           AND device_type = 'bot' 
-                           AND id < (
-                               SELECT id FROM (
-                                   SELECT id 
-                                   FROM web_sessions 
-                                   WHERE property_id = ? 
-                                   AND device_type = 'bot' 
-                                   ORDER BY id DESC 
-                                   LIMIT 1 OFFSET 100
-                               ) AS subquery
-                           )";
-            $pdo->prepare($sqlCleanup)->execute([$propertyId, $propertyId]);
-        }
+        // [OPTIMIZATION] Bot cleanup logic has been moved to asynchronous cron_cleanup.php
+        // to prevent synchronous table locks and slow response times under high bot traffic.
 
         // Increment visit_count in web_visitors
         $pdo->prepare("UPDATE web_visitors SET visit_count = visit_count + 1 WHERE id = ?")->execute([$visitorUuid]);

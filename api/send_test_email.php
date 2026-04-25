@@ -34,7 +34,7 @@ if (function_exists('apcu_fetch') && function_exists('apcu_store')) {
     }
 } else {
     // Fallback: file-based counter
-    $lockFile = sys_get_temp_dir() . '/test_email_rate_' . md5($clientIp) . '.json';
+    $lockFile = __DIR__ . '/_locks/test_email_rate_' . md5($clientIp) . '.json';
     $state = file_exists($lockFile) ? json_decode(@file_get_contents($lockFile), true) : null;
     $now = time();
     if ($state && ($now - $state['since']) < $rateWindow) {

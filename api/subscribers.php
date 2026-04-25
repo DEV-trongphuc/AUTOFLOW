@@ -157,26 +157,41 @@ if ($method === 'GET' && $route === 'field_definitions') {
 
     // 2. Discover Custom Fields from Database (JSON Keys)
     try {
-        // [PERF] Only scan a sample of records or use a dedicated field_definitions table if this grows too large.
-        // For now, we scan keys from custom_attributes for the current workspace.
-        $stmt = $pdo->prepare("
-            SELECT DISTINCT JSON_KEYS(custom_attributes) as keys 
-            FROM subscribers 
-            WHERE workspace_id = ? 
-            AND custom_attributes IS NOT NULL 
-            AND custom_attributes != '{}'
-            LIMIT 1000
-        ");
-        $stmt->execute([$workspace_id]);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // [PERF] Cache custom field discovery per workspace — JSON_KEYS on 1000 rows is expensive.
+        // Result changes only when a new custom field is added, which is rare.
+        // Invalidated after 30 minutes; the UI will pick up new fields on next cache miss.
+        $customFieldCacheKey = "custom_attr_keys_{$workspace_id}";
+        $cachedCustomKeys = function_exists('apcu_fetch') ? apcu_fetch($customFieldCacheKey) : false;
 
-        $customKeys = [];
-        foreach ($rows as $row) {
-            $keys = json_decode($row['keys'], true);
-            if (is_array($keys)) {
-                foreach ($keys as $k) {
-                    $customKeys[$k] = true;
+        if ($cachedCustomKeys !== false) {
+            // Serve from APCu cache
+            $customKeys = $cachedCustomKeys;
+        } else {
+            // Run the discovery query and cache the result
+            $stmt = $pdo->prepare("
+                SELECT DISTINCT JSON_KEYS(custom_attributes) as keys 
+                FROM subscribers 
+                WHERE workspace_id = ? 
+                AND custom_attributes IS NOT NULL 
+                AND custom_attributes != '{}'
+                LIMIT 1000
+            ");
+            $stmt->execute([$workspace_id]);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $customKeys = [];
+            foreach ($rows as $row) {
+                $keys = json_decode($row['keys'], true);
+                if (is_array($keys)) {
+                    foreach ($keys as $k) {
+                        $customKeys[$k] = true;
+                    }
                 }
+            }
+
+            // Store in APCu for 30 minutes
+            if (function_exists('apcu_store')) {
+                apcu_store($customFieldCacheKey, $customKeys, 1800);
             }
         }
 

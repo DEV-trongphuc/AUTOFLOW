@@ -271,6 +271,29 @@ if ($method === 'GET' && $action === 'stats') {
             }
         }
 
+        // [PERF BE-4] Self-healing: Add `clean_url` as a STORED Generated Column so MySQL
+        // can index it, eliminating SUBSTRING_INDEX(url, '?', 1) full-table-scan in analytics.
+        // Runs ONCE then cached in APCu for 24h. Safe to skip if MySQL < 5.7.6.
+        $cleanUrlCacheKey = 'schema_web_page_views_has_clean_url';
+        $hasCleanUrl = function_exists('apcu_fetch') ? apcu_fetch($cleanUrlCacheKey) : false;
+        if ($hasCleanUrl === false) {
+            try {
+                $checkClean = $pdo->query("SHOW COLUMNS FROM web_page_views LIKE 'clean_url'");
+                $hasCleanUrl = ($checkClean->rowCount() > 0);
+                if (!$hasCleanUrl) {
+                    $pdo->exec("ALTER TABLE web_page_views ADD COLUMN clean_url VARCHAR(2048) GENERATED ALWAYS AS (SUBSTRING_INDEX(url, '?', 1)) STORED");
+                    @$pdo->exec("CREATE INDEX idx_clean_url ON web_page_views (property_id, clean_url(512))");
+                    $hasCleanUrl = true;
+                }
+                if (function_exists('apcu_store')) {
+                    apcu_store($cleanUrlCacheKey, $hasCleanUrl, 86400); // 24h TTL
+                }
+            } catch (Exception $e) {
+                // MySQL < 5.7.6 or already exists — safe to ignore
+                if (function_exists('apcu_store')) apcu_store($cleanUrlCacheKey, false, 86400);
+            }
+        }
+
         // SMART HYBRID REPORTING
         $isFallbackNeeded = true; // Use Raw logs for precision
         // [FIX] Pre-initialize $overview to null so the check below doesn't

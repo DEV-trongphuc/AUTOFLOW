@@ -201,19 +201,26 @@ const LinksQR: React.FC = () => {
 
     const handleSave = async () => {
         if (!formData.name || !formData.target_url) {
-            toast.error('Nhập đầy đủ Tên và URL đích');
+            toast.error('Nhap day du Ten va URL dich');
             return;
         }
+        if (isSubmitting) return; // [GUARD]
         setIsSubmitting(true);
-        const res = await api.post<ShortLink>('links_qr?action=create', formData);
-        if (res.success) {
-            toast.success('Đã tạo Short Link');
-            setIsAddOpen(false);
-            fetchLinks();
-        } else {
-            toast.error(res.message || 'Lỗi khi tạo');
+        try {
+            const res = await api.post<ShortLink>('links_qr?action=create', formData);
+            if (res.success) {
+                toast.success('Da tao Short Link');
+                setIsAddOpen(false);
+                // [OPTIMISTIC UI] Add to list immediately
+                setLinks(prev => [...prev, res.data]);
+            } else {
+                toast.error(res.message || 'Loi khi tao');
+            }
+        } catch {
+            toast.error('Loi ket noi');
+        } finally {
+            setIsSubmitting(false); // [GUARD] Always unlock
         }
-        setIsSubmitting(false);
     };
 
     const copyLink = (slug: string) => {
@@ -234,16 +241,21 @@ const LinksQR: React.FC = () => {
     };
 
     const saveQRConfig = async () => {
-        if (!selectedLink) return;
+        if (!selectedLink || isSubmitting) return; // [GUARD]
         setIsSubmitting(true);
-        const res = await api.put(`links_qr?action=update&id=${selectedLink.id}`, { qr_config_json: selectedLink.qr_config_json });
-        if (res.success) {
-            toast.success('Đã lưu thiết kế QR Code');
-            fetchLinks(); // refresh list
-        } else {
-            toast.error('Lỗi khi lưu');
+        try {
+            const res = await api.put(`links_qr?action=update&id=${selectedLink.id}`, { qr_config_json: selectedLink.qr_config_json });
+            if (res.success) {
+                toast.success('Da luu thiet ke QR Code');
+                setLinks(prev => prev.map(l => l.id === selectedLink.id ? { ...l, qr_config_json: selectedLink.qr_config_json } : l));
+            } else {
+                toast.error('Loi khi luu');
+            }
+        } catch {
+            toast.error('Loi ket noi');
+        } finally {
+            setIsSubmitting(false); // [GUARD] Always unlock
         }
-        setIsSubmitting(false);
     };
 
     const downloadQR = () => {

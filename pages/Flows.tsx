@@ -659,6 +659,12 @@ const Flows: React.FC = () => {
 
 
     const onEditStepMemo = useCallback((step: FlowStep) => setEditingStep(step), []);
+    const onReportClickMemo = useCallback((stepId: string, type: string) => {
+        setSelectedAnalyticsStepId(stepId);
+        if (type === 'action') setAnalyticsActiveTab('opened');
+        else if (type === 'zalo_zns') setAnalyticsActiveTab('zns_sent');
+        else setAnalyticsActiveTab('all_touched');
+    }, []);
     const onAddStepViaBuilder = useCallback((parentId: string, branch?: string, isInsert?: boolean) => {
         setAddStepContext({ parentId, branch: branch as any, isInsert });
         setIsAddStepModalOpen(true);
@@ -1573,6 +1579,53 @@ const Flows: React.FC = () => {
         };
     }, [selectedFlow?.steps]);
 
+    const mailZnsInfo = useMemo(() => {
+        if (!selectedFlow) return null;
+        
+        const totalCount = (selectedFlow.steps || []).filter(s => s.type === 'action' || s.type === 'zalo_zns').length;
+        
+        const maxPathCount = (currentStepId, currentCount, visited) => {
+            if (!currentStepId || visited.has(currentStepId)) return currentCount;
+            const step = selectedFlow.steps?.find(s => s.id === currentStepId);
+            if (!step) return currentCount;
+            
+            let newCount = currentCount;
+            if (step.type === 'action' || step.type === 'zalo_zns') {
+                newCount += 1;
+            }
+            
+            const newVisited = new Set(visited);
+            newVisited.add(currentStepId);
+            
+            const children = [];
+            if (step.nextStepId) children.push(step.nextStepId);
+            if (step.yesStepId) children.push(step.yesStepId);
+            if (step.noStepId) children.push(step.noStepId);
+            if (step.pathAStepId) children.push(step.pathAStepId);
+            if (step.pathBStepId) children.push(step.pathBStepId);
+            if (step.type === 'advanced_condition') {
+                if (step.config?.defaultStepId) children.push(step.config.defaultStepId);
+                if (step.config?.branches) {
+                    step.config.branches.forEach(b => {
+                        if (b.stepId) children.push(b.stepId);
+                    });
+                }
+            }
+            
+            if (children.length === 0) return newCount;
+            return Math.max(...children.map(childId => maxPathCount(childId, newCount, newVisited)));
+        };
+        
+        const trigger = selectedFlow.steps?.find(s => s.type === 'trigger');
+        let maxCount = 0;
+        if (trigger) {
+            maxCount = maxPathCount(trigger.id, 0, new Set());
+        }
+        
+        return { total: totalCount, maxBranch: maxCount };
+    }, [selectedFlow?.steps]);
+
+
 
 
     // Filtered logs for the selected flow - Move to top level to avoid Hook violation
@@ -2099,22 +2152,12 @@ const Flows: React.FC = () => {
                                             allForms={forms}
                                             isViewMode={isViewMode}
                                             onEditStep={setEditingStep}
-                                            onAddStep={(parentId, branch, isInsert) => { setAddStepContext({ parentId, branch: branch as any, isInsert }); setIsAddStepModalOpen(true); }}
+                                            onAddStep={onAddStepViaBuilder}
                                             onQuickAddWait={handleQuickAddWait}
                                             onSwapSteps={handleSwapSteps}
                                             isReportMode={isReportMode}
                                             realtimeDistribution={realtimeDistribution}
-                                            onReportClick={(stepId, type) => {
-                                                setSelectedAnalyticsStepId(stepId);
-                                                // Smart tab selection
-                                                if (type === 'action') setAnalyticsActiveTab('opened');
-                                                else if (type === 'zalo_zns') setAnalyticsActiveTab('zns_sent');
-                                                else setAnalyticsActiveTab('all_touched');
-
-                                                setAnalyticsPagination(p => ({ ...p, page: 1 }));
-                                                setAnalyticsSearchTerm('');
-                                                setIsParticipantsModalOpen(true);
-                                            }}
+                                            onReportClick={onReportClickMemo}
                                         />
                                     )}
                                     {flowViewTab === 'analytics' && <div className="h-full overflow-y-auto w-full"><FlowAnalyticsTab flow={selectedFlow} /></div>}
@@ -2132,6 +2175,7 @@ const Flows: React.FC = () => {
                                         validationErrors={validationErrors}
                                         logs={currentFlowLogs}
                                         durationInfo={durationInfo}
+                                        mailZnsInfo={mailZnsInfo}
                                         snapshotCount={flowSnapshots.length}
                                         onOpenHistory={() => setIsHistoryModalOpen(true)}
                                         onSelectStep={(sid) => {

@@ -47,6 +47,7 @@ export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose }) => {
     }, [days]);
 
     useEffect(() => {
+        let isMounted = true;
         if (!isOpen) {
             setLoading(true);
             setScanProgress(0);
@@ -54,11 +55,12 @@ export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose }) => {
             return;
         }
 
-        fetchData();
+        fetchData(isMounted);
 
+        return () => { isMounted = false; };
     }, [isOpen, days]);
 
-    const fetchData = async () => {
+    const fetchData = async (isMounted: boolean) => {
         setLoading(true);
         setScanProgress(0);
         setScanText('Đang quét dữ liệu truy cập Web...');
@@ -84,10 +86,12 @@ export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose }) => {
         try {
             const result = await api.get(`overview_stats?days=${days}`);
             clearInterval(interval);
+            if (!isMounted) return;
             setScanProgress(100);
 
             // Artificial delay to ensure user sees the "hacking/scanning" aesthetic
             setTimeout(() => {
+                if (!isMounted) return;
                 if (result?.success) {
                     setData(result);
                 }
@@ -96,7 +100,7 @@ export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
         } catch (error) {
             clearInterval(interval);
-            setLoading(false);
+            if (isMounted) setLoading(false);
             console.error(error);
         }
     };

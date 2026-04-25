@@ -25,7 +25,9 @@ function requireAISpaceAuth()
         if (session_status() === PHP_SESSION_ACTIVE) {
             $_SESSION['org_user_id'] = 'admin-001';
             $_SESSION['org_user_role'] = 'admin';
-            $_SESSION['user_id'] = '1'; // Phục hồi user_id
+            if (empty($_SESSION['user_id'])) {
+                $_SESSION['user_id'] = '1'; // Phục hồi user_id
+            }
         }
         $GLOBALS['current_admin_id'] = 'admin-001';
         return [

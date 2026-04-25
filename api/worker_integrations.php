@@ -659,6 +659,7 @@ if (!function_exists('runIntegrationSync')) {
                         // Re-enable MySQL checks
                         $pdo->exec("SET unique_checks=1");
                         $pdo->exec("SET foreign_key_checks=1");
+                        $pdo->exec("SET autocommit=1"); // [CRITICAL FIX] Ensure autocommit is restored on success too!
 
                         fclose($handle);
                         unlink($tempFile);
@@ -687,6 +688,20 @@ if (!function_exists('runIntegrationSync')) {
                         if ($pdo->inTransaction()) {
                             $pdo->rollBack();
                         }
+                        
+                        // [CRITICAL FIX] Restore MySQL connection state!
+                        // If an error happens while in Extreme Speed Mode, the worker MUST restore 
+                        // the connection's original state. Otherwise, subsequent integrations or 
+                        // the Global Zalo Sync at the end of this script will execute with autocommit=0 
+                        // and silently fail to persist data to the database.
+                        try {
+                            $pdo->exec("SET unique_checks=1");
+                            $pdo->exec("SET foreign_key_checks=1");
+                            $pdo->exec("SET autocommit=1");
+                        } catch (Exception $connEx) {
+                            // Ignored if connection is dead
+                        }
+
                         // [FIX] Guard against TypeError if exception occurred before $handle was initialized
                         // (e.g. during the SET sql_mode statement). Calling fclose() on an unset/non-resource
                         // variable would throw a new exception, interrupting error logging and status reset.

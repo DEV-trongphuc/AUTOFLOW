@@ -69,7 +69,7 @@ class WorkerTriggerService
     {
         // Check if a worker is already running (avoid stacking workers that each sleep())
         // PRIORITY JOBS (with query params) bypass this lock to prevent system-wide hangs
-        $workerLock = sys_get_temp_dir() . '/worker_running.lock';
+        $workerLock = __DIR__ . '/worker_running.lock';
         if (!$hasPriority && file_exists($workerLock)) {
             $lockAge = time() - (int) @file_get_contents($workerLock);
             if ($lockAge < 300) { // Worker considered alive for up to 5 minutes

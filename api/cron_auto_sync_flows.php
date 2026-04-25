@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * CRON JOB: Auto-sync Flow States (ENHANCED VERSION)
  * Ch?y d?nh k? m?i gi? d? t? d?ng fix các v?n d? d?ng b?
@@ -27,7 +27,7 @@ header('Content-Type: text/plain; charset=utf-8');
 // [FIX P13-H1] Non-blocking exclusive file lock to prevent concurrent cron overlaps.
 // If a previous run is still executing (heavy DB), flock() returns false ? exit immediately.
 // Lock is automatically released when the process ends (file handle closed on exit).
-$_cronLockFile = sys_get_temp_dir() . '/autoflow_cron_sync.lock';
+$_cronLockFile = __DIR__ . '/autoflow_cron_sync.lock';
 $_cronLockFp   = @fopen($_cronLockFile, 'c');
 if (!$_cronLockFp || !flock($_cronLockFp, LOCK_EX | LOCK_NB)) {
     echo "[" . date('Y-m-d H:i:s') . "] Another cron_auto_sync_flows instance is still running. Skipping this invocation.\n";

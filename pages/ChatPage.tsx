@@ -1,4 +1,4 @@
-﻿
+
 import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
@@ -36,9 +36,11 @@ const ChatPage: React.FC = () => {
     const [sessionId] = useState(() => 'session_' + Date.now());
 
     useEffect(() => {
+        let isMounted = true;
         if (chatbotId) {
-            loadChatbot();
+            loadChatbot(isMounted);
         }
+        return () => { isMounted = false; };
     }, [chatbotId]);
 
     useEffect(() => {
@@ -49,11 +51,12 @@ const ChatPage: React.FC = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    const loadChatbot = async () => {
+    const loadChatbot = async (isMounted: boolean) => {
         try {
             const res = await api.get<any>(`ai_chatbots?action=get&id=${chatbotId}`);
-            if (res.success && res.data) {
+            if (isMounted && res.success && res.data) {
                 const settingsRes = await api.get<any>(`ai_training?action=get_settings&property_id=${chatbotId}`);
+                if (!isMounted) return;
                 setChatbot({
                     id: res.data.id,
                     name: res.data.name,
@@ -77,7 +80,7 @@ const ChatPage: React.FC = () => {
                 }
             }
         } catch (e) {
-            toast.error('Không thể tải thông tin chatbot');
+            if (isMounted) toast.error('Không thể tải thông tin chatbot');
         }
     };
 

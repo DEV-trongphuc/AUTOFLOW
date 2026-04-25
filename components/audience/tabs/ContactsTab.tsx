@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import ItemsPerPageSelector from '../ItemsPerPageSelector';
 import BulkActionsToolbar from '../BulkActionsToolbar';
 import Skeleton from '../../common/Skeleton';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 interface ContactsTabProps {
     loading?: boolean;
@@ -39,11 +40,12 @@ interface ContactRowProps {
     renderLastActive: (sub: Subscriber) => React.ReactNode;
     renderJoinedDate: (dateStr: string) => React.ReactNode;
     visibleColumns: string[];
+    'data-index'?: number;
 }
 
-const ContactRow = React.memo<ContactRowProps>(({
-    sub, isSelected, onToggle, onSelect, renderLastActive, renderJoinedDate, visibleColumns
-}) => {
+const ContactRow = React.memo(React.forwardRef<HTMLTableRowElement, ContactRowProps>(({
+    sub, isSelected, onToggle, onSelect, renderLastActive, renderJoinedDate, visibleColumns, 'data-index': dataIndex
+}, ref) => {
     const getCleanName = (name: any) => {
         if (!name || name === 0 || name === '0') return '';
         return String(name).trim();
@@ -58,6 +60,8 @@ const ContactRow = React.memo<ContactRowProps>(({
 
     return (
         <tr
+            ref={ref}
+            data-index={dataIndex}
             className={`hover:bg-slate-50 transition-colors group cursor-pointer ${isSelected ? 'bg-orange-50/20' : ''}`}
             onClick={() => onSelect(sub)}
         >
@@ -197,7 +201,7 @@ const ContactRow = React.memo<ContactRowProps>(({
             </td>
         </tr>
     );
-});
+}));
 
 const ContactSkeleton: React.FC<{ visibleColumns: string[] }> = ({ visibleColumns }) => (
     <tr>
@@ -230,13 +234,20 @@ const ContactsTab = React.memo<ContactsTabProps>(({
     onBulkTag, onBulkAddToList, isGlobalSelected, onToggleGlobalSelection, visibleColumns, itemsPerPage, onItemsPerPageChange
 }) => {
 
-    // Calculate how many on current page are selected
     const currentPageIds = subscribers.map(s => s.id);
     const selectedOnPageCount = currentPageIds.filter(id => selectedIds.has(id)).length;
     const isAllPageSelected = currentPageIds.length > 0 && selectedOnPageCount === currentPageIds.length;
 
-
     const isValidDate = (d: Date) => d instanceof Date && !Number.isNaN(d.getTime());
+
+    const parentRef = React.useRef<HTMLDivElement>(null);
+    const rowVirtualizer = useVirtualizer({
+        count: subscribers.length,
+        getScrollElement: () => parentRef.current,
+        estimateSize: () => 76,
+        overscan: 5,
+    });
+    const virtualItems = rowVirtualizer.getVirtualItems();
 
     // Stable rendering helpers
     const renderLastActive = React.useCallback((sub: Subscriber) => {
@@ -314,8 +325,8 @@ const ContactsTab = React.memo<ContactsTabProps>(({
 
     return (
         <>
-            <div className="overflow-x-auto overflow-y-auto max-h-[450px] min-h-[400px]">
-                <table className="w-full">
+            <div ref={parentRef} className="overflow-x-auto overflow-y-auto max-h-[600px] min-h-[400px]">
+                <table className="w-full relative">
                     <thead className="bg-slate-50/80 border-b border-slate-200 text-left sticky top-0 z-20 backdrop-blur-sm">
                         {selectedIds.size > 0 ? (
                             <BulkActionsToolbar
@@ -369,18 +380,29 @@ const ContactsTab = React.memo<ContactsTabProps>(({
                             Array.from({ length: 12 }).map((_, i) => (
                                 <ContactSkeleton key={i} visibleColumns={visibleColumns} />
                             ))
-                        ) : subscribers.map((sub) => (
-                            <ContactRow
-                                key={sub.id}
-                                sub={sub}
-                                isSelected={selectedIds.has(sub.id)}
-                                onToggle={handleToggleOne}
-                                onSelect={onSelectSubscriber}
-                                renderLastActive={renderLastActive}
-                                renderJoinedDate={renderJoinedDate}
-                                visibleColumns={visibleColumns}
-                            />
-                        ))}
+                        ) : (
+                            <>
+                                {virtualItems.length > 0 && <tr style={{ height: virtualItems[0].start }} />}
+                                {virtualItems.map((virtualRow) => {
+                                    const sub = subscribers[virtualRow.index];
+                                    return (
+                                        <ContactRow
+                                            key={sub.id}
+                                            sub={sub}
+                                            isSelected={selectedIds.has(sub.id)}
+                                            onToggle={handleToggleOne}
+                                            onSelect={onSelectSubscriber}
+                                            renderLastActive={renderLastActive}
+                                            renderJoinedDate={renderJoinedDate}
+                                            visibleColumns={visibleColumns}
+                                            ref={rowVirtualizer.measureElement}
+                                            data-index={virtualRow.index}
+                                        />
+                                    );
+                                })}
+                                {virtualItems.length > 0 && <tr style={{ height: rowVirtualizer.getTotalSize() - virtualItems[virtualItems.length - 1].end }} />}
+                            </>
+                        )}
                         {!loading && subscribers.length === 0 && (
                             <tr><td colSpan={visibleColumns.length + 2} className="py-12 text-center text-slate-400 text-sm">{"Kh\u00F4ng t\u00ECm th\u1EA5y li\u00EAn h\u1EC7 n\u00E0o."}</td></tr>
                         )}

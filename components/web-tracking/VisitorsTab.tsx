@@ -1,4 +1,4 @@
-import * as React from 'react';
+﻿import * as React from 'react';
 import { useState, useMemo, useEffect } from 'react';
 import { User, Users, X, Smartphone, Tablet, Monitor, Terminal, MapPin, Search, Globe, ChevronDown, RefreshCw, ChevronLeft, ChevronRight, Repeat, Clock, ShieldAlert, Check, List, BarChart3, ShieldCheck, Trash2, Bot, MessageSquare } from 'lucide-react';
 import { Visitor, VisitorStats, WebProperty } from './types';
@@ -170,9 +170,9 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
     const renderSourceLogo = (sourceName: string) => {
         const s = sourceName.toLowerCase();
         if (s === 'direct' || s.includes('direct')) return <Globe className="w-4 h-4 text-slate-400" />;
-        if (s.includes('google')) return <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Google_Favicon_2025.svg/250px-Google_Favicon_2025.svg.png" className="w-4 h-4 object-contain" alt="Google" />;
-        if (s.includes('facebook') || s === 'fb') return <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/2021_Facebook_icon.svg/960px-2021_Facebook_icon.svg.png" className="w-4 h-4 object-contain" alt="Facebook" />;
-        if (s.includes('zalo')) return <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Icon_of_Zalo.svg/960px-Icon_of_Zalo.svg.png" className="w-4 h-4 object-contain" alt="Zalo" />;
+        if (s.includes('google')) return <img loading="lazy" decoding="async" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Google_Favicon_2025.svg/250px-Google_Favicon_2025.svg.png" className="w-4 h-4 object-contain" alt="Google" />;
+        if (s.includes('facebook') || s === 'fb') return <img loading="lazy" decoding="async" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/2021_Facebook_icon.svg/960px-2021_Facebook_icon.svg.png" className="w-4 h-4 object-contain" alt="Facebook" />;
+        if (s.includes('zalo')) return <img loading="lazy" decoding="async" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Icon_of_Zalo.svg/960px-Icon_of_Zalo.svg.png" className="w-4 h-4 object-contain" alt="Zalo" />;
         return <Globe className="w-4 h-4 text-slate-400" />;
     };
 
@@ -342,19 +342,19 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
                                                                     {visitor.device_type === 'bot' ? (
                                                                         (() => {
                                                                             const b = (visitor.browser || '').toLowerCase();
-                                                                            if (b.includes('google') || b.includes('lighthouse')) return <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Google_Favicon_2025.svg/250px-Google_Favicon_2025.svg.png" className="w-5 h-5 object-contain" alt="" />;
-                                                                            if (b.includes('facebook') || b.includes('facebot')) return <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/2021_Facebook_icon.svg/960px-2021_Facebook_icon.svg.png" className="w-5 h-5 object-contain" alt="" />;
-                                                                            if (b.includes('zalo')) return <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Icon_of_Zalo.svg/960px-Icon_of_Zalo.svg.png" className="w-5 h-5 object-contain" alt="" />;
-                                                                            if (b.includes('twitter') || b.includes(' x ')) return <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/X_logo_2023.svg/100px-X_logo_2023.svg.png" className="w-5 h-5 object-contain" alt="" />;
-                                                                            if (b.includes('bing')) return <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Bing_Fluent_Logo.svg/100px-Bing_Fluent_Logo.svg.png" className="w-5 h-5 object-contain" alt="" />;
-                                                                            if (b.includes('amazon') || b.includes('aws')) return <img src="https://upload.wikimedia.org/wikipedia/commons/d/de/Amazon_icon.png" className="w-5 h-5 object-contain" alt="" />;
-                                                                            if (b.includes('bytespider') || b.includes('tiktok')) return <img src="https://img.freepik.com/premium-photo/tiktok-logo_1080029-103.jpg?semt=ais_hybrid&w=740&q=80" className="w-5 h-5 object-contain" alt="" />;
-                                                                            if (b.includes('baidu')) return <img src="https://cdn-icons-png.flaticon.com/512/2504/2504887.png" className="w-5 h-5 object-contain" alt="" />;
+                                                                            if (b.includes('google') || b.includes('lighthouse')) return <img loading="lazy" decoding="async" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Google_Favicon_2025.svg/250px-Google_Favicon_2025.svg.png" className="w-5 h-5 object-contain" alt="" />;
+                                                                            if (b.includes('facebook') || b.includes('facebot')) return <img loading="lazy" decoding="async" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/2021_Facebook_icon.svg/960px-2021_Facebook_icon.svg.png" className="w-5 h-5 object-contain" alt="" />;
+                                                                            if (b.includes('zalo')) return <img loading="lazy" decoding="async" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Icon_of_Zalo.svg/960px-Icon_of_Zalo.svg.png" className="w-5 h-5 object-contain" alt="" />;
+                                                                            if (b.includes('twitter') || b.includes(' x ')) return <img loading="lazy" decoding="async" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/X_logo_2023.svg/100px-X_logo_2023.svg.png" className="w-5 h-5 object-contain" alt="" />;
+                                                                            if (b.includes('bing')) return <img loading="lazy" decoding="async" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Bing_Fluent_Logo.svg/100px-Bing_Fluent_Logo.svg.png" className="w-5 h-5 object-contain" alt="" />;
+                                                                            if (b.includes('amazon') || b.includes('aws')) return <img loading="lazy" decoding="async" src="https://upload.wikimedia.org/wikipedia/commons/d/de/Amazon_icon.png" className="w-5 h-5 object-contain" alt="" />;
+                                                                            if (b.includes('bytespider') || b.includes('tiktok')) return <img loading="lazy" decoding="async" src="https://img.freepik.com/premium-photo/tiktok-logo_1080029-103.jpg?semt=ais_hybrid&w=740&q=80" className="w-5 h-5 object-contain" alt="" />;
+                                                                            if (b.includes('baidu')) return <img loading="lazy" decoding="async" src="https://cdn-icons-png.flaticon.com/512/2504/2504887.png" className="w-5 h-5 object-contain" alt="" />;
                                                                             if (b.includes('mailflow')) return <div className="w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center text-white"><Globe className="w-4 h-4" /></div>;
                                                                             return <Bot className="w-5 h-5 text-slate-400" />;
                                                                         })()
                                                                     ) : visitor.avatar_url ? (
-                                                                        <img src={visitor.avatar_url} alt="" className="w-full h-full object-cover" />
+                                                                        <img loading="lazy" decoding="async" src={visitor.avatar_url} alt="" className="w-full h-full object-cover" />
                                                                     ) : (
                                                                         (visitor.email || visitor.first_name) ? (
                                                                             <span className="text-[10px] font-bold uppercase">
@@ -505,19 +505,19 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
                                                 {selectedVisitor.device_type === 'bot' ? (
                                                     (() => {
                                                         const b = (selectedVisitor.browser || '').toLowerCase();
-                                                        if (b.includes('google') || b.includes('lighthouse')) return <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Google_Favicon_2025.svg/250px-Google_Favicon_2025.svg.png" className="w-8 h-8 object-contain" alt="" />;
-                                                        if (b.includes('facebook') || b.includes('facebot')) return <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/2021_Facebook_icon.svg/960px-2021_Facebook_icon.svg.png" className="w-8 h-8 object-contain" alt="" />;
-                                                        if (b.includes('zalo')) return <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Icon_of_Zalo.svg/960px-Icon_of_Zalo.svg.png" className="w-8 h-8 object-contain" alt="" />;
-                                                        if (b.includes('twitter') || b.includes(' x ')) return <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/X_logo_2023.svg/100px-X_logo_2023.svg.png" className="w-8 h-8 object-contain" alt="" />;
-                                                        if (b.includes('bing')) return <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Bing_Fluent_Logo.svg/100px-Bing_Fluent_Logo.svg.png" className="w-8 h-8 object-contain" alt="" />;
-                                                        if (b.includes('amazon') || b.includes('aws')) return <img src="https://upload.wikimedia.org/wikipedia/commons/d/de/Amazon_icon.png" className="w-8 h-8 object-contain" alt="" />;
-                                                        if (b.includes('bytespider') || b.includes('tiktok')) return <img src="https://img.freepik.com/premium-photo/tiktok-logo_1080029-103.jpg?semt=ais_hybrid&w=740&q=80" className="w-8 h-8 object-contain" alt="" />;
-                                                        if (b.includes('baidu')) return <img src="https://cdn-icons-png-flaticon.com/512/2504/2504887.png" className="w-8 h-8 object-contain" alt="" />;
+                                                        if (b.includes('google') || b.includes('lighthouse')) return <img loading="lazy" decoding="async" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Google_Favicon_2025.svg/250px-Google_Favicon_2025.svg.png" className="w-8 h-8 object-contain" alt="" />;
+                                                        if (b.includes('facebook') || b.includes('facebot')) return <img loading="lazy" decoding="async" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/2021_Facebook_icon.svg/960px-2021_Facebook_icon.svg.png" className="w-8 h-8 object-contain" alt="" />;
+                                                        if (b.includes('zalo')) return <img loading="lazy" decoding="async" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Icon_of_Zalo.svg/960px-Icon_of_Zalo.svg.png" className="w-8 h-8 object-contain" alt="" />;
+                                                        if (b.includes('twitter') || b.includes(' x ')) return <img loading="lazy" decoding="async" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/X_logo_2023.svg/100px-X_logo_2023.svg.png" className="w-8 h-8 object-contain" alt="" />;
+                                                        if (b.includes('bing')) return <img loading="lazy" decoding="async" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Bing_Fluent_Logo.svg/100px-Bing_Fluent_Logo.svg.png" className="w-8 h-8 object-contain" alt="" />;
+                                                        if (b.includes('amazon') || b.includes('aws')) return <img loading="lazy" decoding="async" src="https://upload.wikimedia.org/wikipedia/commons/d/de/Amazon_icon.png" className="w-8 h-8 object-contain" alt="" />;
+                                                        if (b.includes('bytespider') || b.includes('tiktok')) return <img loading="lazy" decoding="async" src="https://img.freepik.com/premium-photo/tiktok-logo_1080029-103.jpg?semt=ais_hybrid&w=740&q=80" className="w-8 h-8 object-contain" alt="" />;
+                                                        if (b.includes('baidu')) return <img loading="lazy" decoding="async" src="https://cdn-icons-png-flaticon.com/512/2504/2504887.png" className="w-8 h-8 object-contain" alt="" />;
                                                         if (b.includes('mailflow')) return <div className="w-12 h-12 bg-slate-700 rounded-2xl flex items-center justify-center text-white shadow-lg"><Globe className="w-7 h-7" /></div>;
                                                         return <Bot className="w-8 h-8 text-slate-400" />;
                                                     })()
                                                 ) : selectedVisitor.avatar_url ? (
-                                                    <img src={selectedVisitor.avatar_url} alt="" className="w-full h-full object-cover rounded-2xl" />
+                                                    <img loading="lazy" decoding="async" src={selectedVisitor.avatar_url} alt="" className="w-full h-full object-cover rounded-2xl" />
                                                 ) : (
                                                     (selectedVisitor.email || selectedVisitor.first_name) ? (
                                                         <span className="text-xl font-bold uppercase">

@@ -36,8 +36,8 @@ const Purchases: React.FC = () => {
     const [editingEventId, setEditingEventId] = useState<string | null>(null);
     const [formState, setFormState] = useState<EventFormState>(DEFAULT_FORM);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isToggling, setIsToggling] = useState(false);
 
     // Integration Modal
     const [integrationModal, setIntegrationModal] = useState<PurchaseEvent | null>(null);
@@ -70,25 +70,33 @@ const Purchases: React.FC = () => {
     };
 
     // [FIX UI-BUG-02] Toggle active/inactive status
+    // [FIX UI-BUG-02] Toggle active/inactive status
     const handleToggleStatus = async (evt: PurchaseEvent) => {
-        const res = await api.put<{ id: string; status: string }>(`purchase_events/${evt.id}?route=toggle_status`, {});
-        if (res.success) {
-            const newStatus = res.data?.status ?? (evt.status === 'active' ? 'inactive' : 'active');
-            setEvents(prev => prev.map(e => e.id === evt.id ? { ...e, status: newStatus } : e));
-            toast.success(`Đã ${newStatus === 'active' ? 'kích hoạt' : 'vô hiệu hoá'} sự kiện`);
-        } else {
-            toast.error('Lỗi khi thay đổi trạng thái');
+        if (isToggling) return; // [GUARD]
+        setIsToggling(true);
+        try {
+            const res = await api.put<{ id: string; status: 'active' | 'inactive' }>(`purchase_events/${evt.id}?route=toggle_status`, {});
+            if (res.success) {
+                const newStatus = res.data?.status ?? (evt.status === 'active' ? 'inactive' : 'active');
+                setEvents(prev => prev.map(e => e.id === evt.id ? { ...e, status: newStatus } : e));
+                toast.success(`Da ${newStatus === 'active' ? 'kich hoat' : 'vo hieu hoa'} su kien`);
+            } else {
+                toast.error('Loi khi thay doi trang thai');
+            }
+        } catch {
+            toast.error('Loi ket noi');
+        } finally {
+            setIsToggling(false); // [GUARD] Always unlock
         }
     };
 
-    // [FIX UI-BUG-04] Send full notification settings to backend
     const handleSave = async () => {
-        if (!formState.name.trim()) {
-            toast.error('Vui lòng nhập tên sự kiện');
+        if (!formState.name) {
+            toast.error('Vui long nhap ten su kien');
             return;
         }
+        if (isSubmitting) return; // [GUARD]
         setIsSubmitting(true);
-
         const payload = {
             name: formState.name,
             notificationEnabled: formState.notificationEnabled,
@@ -113,18 +121,30 @@ const Purchases: React.FC = () => {
         setIsSubmitting(false);
     };
 
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
     const executeDelete = async () => {
-        if (!confirmDeleteId) return;
-        const res = await api.delete(`purchase_events/${confirmDeleteId}`);
-        if (res.success) {
-            setEvents(events.filter(e => e.id !== confirmDeleteId));
-            toast.success('Đã xóa sự kiện mua hàng');
-            setConfirmDeleteId(null);
-        } else {
-            toast.error('Lỗi khi xóa');
+        if (!confirmDeleteId || isDeleting) return; // [GUARD]
+        setIsDeleting(true);
+        // [OPTIMISTIC UI] Remove immediately
+        const snapshot = [...events];
+        setEvents(prev => prev.filter(e => e.id !== confirmDeleteId));
+        setConfirmDeleteId(null);
+        try {
+            const res = await api.delete(`purchase_events/${confirmDeleteId}`);
+            if (res.success) {
+                toast.success('Da xoa su kien mua hang');
+            } else {
+                setEvents(snapshot); // [ROLLBACK]
+                toast.error('Loi khi xoa');
+            }
+        } catch {
+            setEvents(snapshot); // [ROLLBACK]
+            toast.error('Loi ket noi');
+        } finally {
+            setIsDeleting(false); // [GUARD] Always unlock
         }
     };
-
     const handleCopy = (text: string, key: string) => {
         navigator.clipboard.writeText(text);
         setCopied(key);

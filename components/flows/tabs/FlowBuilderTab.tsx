@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { createPortal } from 'react-dom';
-import { ZoomIn, ZoomOut, Move, Undo2, Redo2, Plus, Keyboard, Maximize, Minimize } from 'lucide-react';
+import { ZoomIn, ZoomOut, Move, Undo2, Redo2, Plus, Keyboard, Maximize, Minimize, Sparkles, Loader2, Beaker } from 'lucide-react';
 import { Flow, FlowStep, FormDefinition } from '../../../types';
 import FlowTree from '../builder/FlowTree';
 import Modal from '../../common/Modal';
 import ActiveFlowWarning from '../builder/ActiveFlowWarning';
-
+import FlowMinimap from '../builder/FlowMinimap';
+import ReactMarkdown from 'react-markdown';
 
 interface FlowBuilderTabProps {
     flow: Flow;
@@ -23,6 +24,7 @@ interface FlowBuilderTabProps {
     isReportMode?: boolean;
     realtimeDistribution?: Record<string, { count: number, avg_wait: number }>;
     onReportClick?: (stepId: string, type: string) => void;
+    onSimulate?: () => void;
 }
 
 const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
@@ -30,7 +32,7 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
     onEditStep, onAddStep,
     canUndo, canRedo, onUndo, onRedo,
     onQuickAddWait, onSwapSteps,
-    isReportMode, realtimeDistribution, onReportClick
+    isReportMode, realtimeDistribution, onReportClick, onSimulate
 }) => {
     const [scale, setScale] = useState(1.0);
     const [isDragging, setIsDragging] = useState(false);
@@ -52,6 +54,7 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
         if (bgRef.current) {
             bgRef.current.style.transform = `translate(${x % 24}px, ${y % 24}px)`;
         }
+        window.dispatchEvent(new CustomEvent('flow-transform', { detail: { x, y, scale: s } }));
     };
 
     const performZoom = (delta: number, focusX: number, focusY: number) => {
@@ -77,6 +80,10 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
         updateDOMTransform(newX, newY, nextScale);
     };
 
+    const handlePan = useCallback((x: number, y: number) => {
+        updateDOMTransform(x, y, transformRef.current.scale);
+    }, []);
+
     const containerRef = useRef<HTMLDivElement>(null);
     const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -92,7 +99,7 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
             const triggerEl = document.getElementById(`step-node-${trigger.id}`);
 
             if (!container || !triggerEl) {
-                // DOM not ready yet — retry up to 5 times
+                // DOM not ready yet â€” retry up to 5 times
                 if (attempt < delays.length - 1) {
                     centerView(targetScale, attempt + 1);
                 }
@@ -235,6 +242,13 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
                 }}
             />
 
+            {/* Minimap */}
+            <FlowMinimap 
+                wrapperRef={wrapperRef} 
+                containerRef={containerRef} 
+                onPan={handlePan} 
+            />
+
             {/* Toolbar */}
             <div className="absolute bottom-6 left-6 z-50 flex gap-3">
                 <div className="bg-white p-1.5 rounded-xl border border-slate-200 shadow-xl flex items-center gap-1 flow-interactive">
@@ -248,14 +262,14 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
                 <button
                     onClick={() => centerView(1.0)}
                     className="bg-white p-3 rounded-xl border border-slate-200 shadow-xl text-slate-500 hover:text-slate-800 flow-interactive transition-all active:scale-95"
-                    title="Còn giữa kịch bản (Space)"
+                    title="CÃ²n giá»¯a ká»‹ch báº£n (Space)"
                 >
                     <Move className="w-4 h-4" />
                 </button>
                 <button
                     onClick={() => setIsFullscreen(!isFullscreen)}
                     className={`bg-white p-3 rounded-xl border border-slate-200 shadow-xl flow-interactive transition-all active:scale-95 ${isFullscreen ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-slate-500 hover:text-emerald-600'}`}
-                    title={isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình"}
+                    title={isFullscreen ? "ThoÃ¡t toÃ n mÃ n hÃ¬nh" : "ToÃ n mÃ n hÃ¬nh"}
                 >
                     {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
                 </button>
@@ -266,6 +280,13 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
                 >
                     <Keyboard className="w-4 h-4" />
                 </button>
+                <button
+                    onClick={onSimulate}
+                    className="bg-white p-3 rounded-xl border border-slate-200 shadow-xl text-slate-500 hover:text-indigo-600 flow-interactive transition-all active:scale-95"
+                    title="Chạy thử nghiệm (Simulate)"
+                >
+                    <Beaker className="w-4 h-4" />
+                </button>
             </div>
             {/* Warning Banner for Active Flow */}
             <ActiveFlowWarning isActive={flow.status === 'active'} isViewMode={isViewMode} />
@@ -274,46 +295,46 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
             <Modal
                 isOpen={showShortcuts}
                 onClose={() => setShowShortcuts(false)}
-                title="Hướng dẫn điều khiển"
+                title="HÆ°á»›ng dáº«n Ä‘iá»u khiá»ƒn"
                 size="sm"
             >
                 <div className="space-y-4">
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                        <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3">Chuột (Mouse)</h4>
+                        <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3">Chuá»™t (Mouse)</h4>
                         <div className="space-y-2 text-xs font-bold text-slate-700">
                             <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
-                                <span>Lăn chuột</span>
-                                <span className="text-slate-400">Di chuyển lên / xuống</span>
+                                <span>LÄƒn chuá»™t</span>
+                                <span className="text-slate-400">Di chuyá»ƒn lÃªn / xuá»‘ng</span>
                             </div>
                             <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
-                                <span>Giữ <kbd className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300">Shift</kbd> + Lăn</span>
-                                <span className="text-slate-400">Di chuyển trái / phải</span>
+                                <span>Giá»¯ <kbd className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300">Shift</kbd> + LÄƒn</span>
+                                <span className="text-slate-400">Di chuyá»ƒn trÃ¡i / pháº£i</span>
                             </div>
                             <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
-                                <span>Giữ <kbd className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300">Ctrl</kbd> + Lăn</span>
-                                <span className="text-slate-400">Phóng to / Thu nhỏ</span>
+                                <span>Giá»¯ <kbd className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300">Ctrl</kbd> + LÄƒn</span>
+                                <span className="text-slate-400">PhÃ³ng to / Thu nhá»</span>
                             </div>
                         </div>
                     </div>
 
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                        <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3">Bàn phím (Keyboard)</h4>
+                        <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3">BÃ n phÃ­m (Keyboard)</h4>
                         <div className="space-y-2 text-xs font-bold text-slate-700">
                             <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
                                 <span><kbd className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300">Space</kbd></span>
-                                <span className="text-slate-400">Còn giữa (Center View)</span>
+                                <span className="text-slate-400">CÃ²n giá»¯a (Center View)</span>
                             </div>
                             <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
                                 <span><kbd className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300">Ctrl</kbd> + <kbd className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300">Z</kbd></span>
-                                <span className="text-slate-400">Hoàn tác (Undo)</span>
+                                <span className="text-slate-400">HoÃ n tÃ¡c (Undo)</span>
                             </div>
                             <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
                                 <span><kbd className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300">Ctrl</kbd> + <kbd className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300">Y</kbd></span>
-                                <span className="text-slate-400">Làm lại (Redo)</span>
+                                <span className="text-slate-400">LÃ m láº¡i (Redo)</span>
                             </div>
                             <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
                                 <span><kbd className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300">Esc</kbd></span>
-                                <span className="text-slate-400">Thoát toàn màn hình</span>
+                                <span className="text-slate-400">ThoÃ¡t toÃ n mÃ n hÃ¬nh</span>
                             </div>
                         </div>
                     </div>
@@ -338,7 +359,7 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
                     {trigger ? (
                         <FlowTree
                             stepId={trigger.id} flow={flow} allFlows={allFlows} allForms={allForms} isViewMode={isViewMode} onEditStep={onEditStep} onAddStep={onAddStep}
-                            onQuickAddWait={onQuickAddWait || (() => { })} onSwapSteps={onSwapSteps || (() => { })}
+                            onQuickAddWait={onQuickAddWait} onSwapSteps={onSwapSteps}
                             draggedStepId={draggedStepId} setDraggedStepId={setDraggedStepId}
                             isReportMode={isReportMode} realtimeDistribution={realtimeDistribution} onReportClick={onReportClick}
                         />
@@ -362,3 +383,4 @@ const FlowBuilderTab: React.FC<FlowBuilderTabProps> = memo(({
 });
 
 export default FlowBuilderTab;
+

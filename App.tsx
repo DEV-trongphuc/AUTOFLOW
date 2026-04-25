@@ -61,6 +61,7 @@ const PublicSurvey = lazy(() => import('./pages/PublicSurvey' as any));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 import PremiumLoader from './components/common/PremiumLoader';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import { API_BASE_URL, DEMO_MODE } from '@/utils/config';
 import axios from 'axios';
 
@@ -155,7 +156,9 @@ function mountComponent() {
 // NOT the whole app. Combined with startTransition in Sidebar: old page visible
 // while new chunk loads, TabLoader shows subtle progress at top.
 const P = ({ c: C }: { c: React.LazyExoticComponent<React.ComponentType<any>> }) => (
-    <Suspense fallback={<TabLoader />}><C /></Suspense>
+    <ErrorBoundary>
+        <Suspense fallback={<TabLoader />}><C /></Suspense>
+    </ErrorBoundary>
 );
 
 const HashRedirect = () => {

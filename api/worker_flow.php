@@ -93,8 +93,7 @@ if (!function_exists('runWorkerFlow')) {
             // [FIX P10-H3] Priority path: use SKIP LOCKED on MySQL >= 8.0 so a racing second
             // priority worker exits cleanly instead of blocking then re-reading the same item.
             // The double-check lock at L210 remains as defense-in-depth for MySQL 5.7 (FOR UPDATE).
-            $mysqlVersionFlow = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
-            if (version_compare($mysqlVersionFlow, '8.0.0', '>=')) {
+            if (isDatabaseSkipLockedSupported($pdo)) {
                 // Re-prepare with SKIP LOCKED for MySQL 8+
                 $stmtPriority = $pdo->prepare(
                     str_replace('LIMIT 1 FOR UPDATE', 'LIMIT 1 FOR UPDATE SKIP LOCKED',
@@ -151,8 +150,7 @@ if (!function_exists('runWorkerFlow')) {
                         AND f.status = 'active'
                         ORDER BY q.scheduled_at ASC, q.updated_at ASC, q.id ASC LIMIT {$BATCH_SIZE}";
 
-                $mysqlVersion = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
-                if (version_compare($mysqlVersion, '8.0.0', '>=')) {
+                if (isDatabaseSkipLockedSupported($pdo)) {
                     $sqlRegular .= " FOR UPDATE SKIP LOCKED";
                 } else {
                     $sqlRegular .= " FOR UPDATE";
@@ -218,6 +216,19 @@ if (!function_exists('runWorkerFlow')) {
             }
         }
 
+        // [OPTIMIZATION] Pre-compile all UPDATE queries outside the loop to eliminate N+1 AST Parsing overhead
+        $stmtWaitState = $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', updated_at = NOW() WHERE id = ?");
+        $stmtUnsubscribeState = $pdo->prepare("UPDATE subscriber_flow_states SET status = 'unsubscribed', updated_at = NOW() WHERE id = ?");
+        $stmtFailState = $pdo->prepare("UPDATE subscriber_flow_states SET status = 'failed', last_error = ?, updated_at = NOW() WHERE id = ?");
+        $stmtCompleteExit = $pdo->prepare("UPDATE subscriber_flow_states SET status = 'completed', step_id = COALESCE(?, step_id), updated_at = NOW() WHERE id = ?");
+        $stmtStatCompleteBuff = $pdo->prepare("INSERT INTO stats_update_buffer (target_table, target_id, column_name, increment, created_at) VALUES ('flows', ?, 'stat_completed', 1, NOW())");
+        $stmtStatCompleteFB = $pdo->prepare("UPDATE flows SET stat_completed = stat_completed + 1 WHERE id = ?");
+        $stmtWaitSchedule = $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = ?, step_id = ?, updated_at = NOW() WHERE id = ?");
+        $stmtUpdateStep = $pdo->prepare("UPDATE subscriber_flow_states SET step_id = ?, step_type = ?, last_step_at = NOW(), updated_at = NOW() WHERE id = ?");
+        $stmtUpdateWaitStepType = $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = ?, step_id = ?, step_type = ?, updated_at = NOW(), last_step_at = NOW() WHERE id = ?");
+        $stmtCompleteStepType = $pdo->prepare("UPDATE subscriber_flow_states SET status = 'completed', step_id = ?, step_type = NULL, updated_at = NOW() WHERE id = ?");
+        $stmtDynamicState = $pdo->prepare("UPDATE subscriber_flow_states SET status = ?, scheduled_at = ?, updated_at = NOW(), step_id = ?, step_type = ? WHERE id = ?");
+
         foreach ($items as $item) {
             // [FIX #3] D�ng $workerStartTime thay v� $_SERVER['REQUEST_TIME'] (an to�n hon cho CLI/Cron)
             if (time() - $workerStartTime > 280)
@@ -253,7 +264,7 @@ if (!function_exists('runWorkerFlow')) {
                 // cause wait step to recalculate from scratch, resetting the timer.
                 // If scheduled_at is still in the future, restore to 'waiting' and skip.
                 if (!empty($item['scheduled_at']) && strtotime($item['scheduled_at']) > time()) {
-                    $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', updated_at = NOW() WHERE id = ?")->execute([$queueId]);
+                    $stmtWaitState->execute([$queueId]);
                     $logs[] = "  -> [STALE-GUARD] Sub {$subscriberId} restored to waiting (scheduled: {$item['scheduled_at']})";
                     $pdo->commit();
                     continue;
@@ -262,7 +273,7 @@ if (!function_exists('runWorkerFlow')) {
                 // [EXIT CHECK] Check if subscriber is still eligible (not unsubscribed globally)
                 if (trim($item['sub_status']) === 'unsubscribed') {
                     // DB ENUM confirmed: waiting, processing, completed, failed, unsubscribed � use correct status
-                    $pdo->prepare("UPDATE subscriber_flow_states SET status = 'unsubscribed', updated_at = NOW() WHERE id = ?")->execute([$queueId]);
+                    $stmtUnsubscribeState->execute([$queueId]);
                     $logs[] = "[Flow-Exit] Sub {$subscriberId} is unsubscribed. Marking unsubscribed and skipping.";
                     $pdo->commit();
                     continue;
@@ -286,7 +297,7 @@ if (!function_exists('runWorkerFlow')) {
 
                 // [FIX #1] Guard: n?u flow_steps kh�ng h?p l? ? fail item thay v� crash to�n worker
                 if (!is_array($flowSteps) || empty($flowSteps)) {
-                    $pdo->prepare("UPDATE subscriber_flow_states SET status = 'failed', last_error = 'Invalid flow_steps JSON', updated_at = NOW() WHERE id = ?")->execute([$queueId]);
+                    $stmtFailState->execute(['Invalid flow_steps JSON', $queueId]);
                     $logs[] = "[ERROR] Flow {$flowId} has invalid steps JSON. Item {$queueId} marked failed.";
                     $pdo->commit();
                     continue;
@@ -359,13 +370,13 @@ if (!function_exists('runWorkerFlow')) {
                     if ($shouldExit) {
                         // [FIX] Include step_id so byBranch query in completed-users API counts correctly
                         $currentStepIdExit = $item['step_id'] ?? null;
-                        $pdo->prepare("UPDATE subscriber_flow_states SET status = 'completed', step_id = COALESCE(?, step_id), updated_at = NOW() WHERE id = ?")->execute([$currentStepIdExit, $queueId]);
+                        $stmtCompleteExit->execute([$currentStepIdExit, $queueId]);
                         logActivity($pdo, $subscriberId, 'exit_flow', $flowId, $flowName, "Exited: Condition met", $flowId);
                         // Buffer Completion Stat
                         try {
-                            $pdo->prepare("INSERT INTO stats_update_buffer (target_table, target_id, column_name, increment, created_at) VALUES ('flows', ?, 'stat_completed', 1, NOW())")->execute([$flowId]);
+                            $stmtStatCompleteBuff->execute([$flowId]);
                         } catch (Exception $ignored) {
-                            $pdo->prepare("UPDATE flows SET stat_completed = stat_completed + 1 WHERE id = ?")->execute([$flowId]);
+                            $stmtStatCompleteFB->execute([$flowId]);
                         }
                         $logs[] = "  -> Subscriber exited flow (Exit Condition Match).";
                         $pdo->commit();
@@ -378,13 +389,13 @@ if (!function_exists('runWorkerFlow')) {
                 if (!empty($advancedExit) && checkAdvancedExit($pdo, $subscriberId, $item['queue_created_at'], $advancedExit, $activityCache)) {
                     // [FIX] Include step_id so byBranch query in completed-users API counts correctly
                     $currentStepIdExit = $item['step_id'] ?? null;
-                    $pdo->prepare("UPDATE subscriber_flow_states SET status = 'completed', step_id = COALESCE(?, step_id), updated_at = NOW() WHERE id = ?")->execute([$currentStepIdExit, $queueId]);
+                    $stmtCompleteExit->execute([$currentStepIdExit, $queueId]);
                     logActivity($pdo, $subscriberId, 'exit_flow', $flowId, $flowName, "Exited: Advanced condition met", $flowId);
                     // Buffer Completion Stat
                     try {
-                        $pdo->prepare("INSERT INTO stats_update_buffer (target_table, target_id, column_name, increment, created_at) VALUES ('flows', ?, 'stat_completed', 1, NOW())")->execute([$flowId]);
+                        $stmtStatCompleteBuff->execute([$flowId]);
                     } catch (Exception $ignored) {
-                        $pdo->prepare("UPDATE flows SET stat_completed = stat_completed + 1 WHERE id = ?")->execute([$flowId]);
+                        $stmtStatCompleteFB->execute([$flowId]);
                     }
                     $logs[] = "  -> Subscriber exited flow (Advanced Exit Condition Match).";
                     $pdo->commit();
@@ -403,7 +414,7 @@ if (!function_exists('runWorkerFlow')) {
                     $currentStep = $stepIndex[trim((string) $currentStepId)] ?? null;
 
                     if (!$currentStep) {
-                        $pdo->prepare("UPDATE subscriber_flow_states SET status = 'failed', last_error = 'Step not found', updated_at = NOW() WHERE id = ?")->execute([$queueId]);
+                        $stmtFailState->execute(['Step not found', $queueId]);
                         break;
                     }
 
@@ -463,7 +474,7 @@ if (!function_exists('runWorkerFlow')) {
                                 }
                             }
                             // Save step_id so it wakes up at this exact step, not the previous one
-                            $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = ?, step_id = ?, updated_at = NOW() WHERE id = ?")->execute([$nextSendAt, $currentStepId, $queueId]);
+                            $stmtWaitSchedule->execute([$nextSendAt, $currentStepId, $queueId]);
                             $logs[] = "  -> Step '{$currentStep['label']}' paused (Time Restriction). Re-scheduled to: $nextSendAt";
                             $shouldContinueChain = false;
                             break; // Ng?t kh?i d�ng while ngay l?p t?c, d?i l?n ch?y sau
@@ -535,31 +546,31 @@ if (!function_exists('runWorkerFlow')) {
                             // When a flow has 20 steps and MAX_STEPS=30, old code did up to 600 iterations;
                             // now it's always exactly 1 array access.
                             $nextStepType = $stepIndex[$currentStepId]['type'] ?? null;
-                            $pdo->prepare("UPDATE subscriber_flow_states SET step_id = ?, step_type = ?, last_step_at = NOW(), updated_at = NOW() WHERE id = ?")->execute([$currentStepId, $nextStepType, $queueId]);
+                            $stmtUpdateStep->execute([$currentStepId, $nextStepType, $queueId]);
                             $pdo->commit();
                             $pdo->beginTransaction();
                             continue;
                         } else {
                             $waitStepType = $stepIndex[$currentStepId]['type'] ?? null;
-                            $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = ?, step_id = ?, step_type = ?, updated_at = NOW(), last_step_at = NOW() WHERE id = ?")->execute([$execResult['scheduled_at'], $currentStepId, $waitStepType, $queueId]);
+                            $stmtUpdateWaitStepType->execute([$execResult['scheduled_at'], $currentStepId, $waitStepType, $queueId]);
                             $shouldContinueChain = false;
                         }
                     } else {
                         if ($execResult['status'] === 'completed') {
-                            $pdo->prepare("UPDATE subscriber_flow_states SET status = 'completed', step_id = ?, step_type = NULL, updated_at = NOW() WHERE id = ?")->execute([$currentStepId, $queueId]);
+                            $stmtCompleteStepType->execute([$currentStepId, $queueId]);
 
                             // NEW: Log completion activity for Dashboard accuracy
                             logActivity($pdo, $subscriberId, 'complete_flow', $currentStepId, $flowName, "Flow finished automatically", $flowId);
 
                             // Buffer Completion Stat
                             try {
-                                $pdo->prepare("INSERT INTO stats_update_buffer (target_table, target_id, column_name, increment, created_at) VALUES ('flows', ?, 'stat_completed', 1, NOW())")->execute([$flowId]);
+                                $stmtStatCompleteBuff->execute([$flowId]);
                             } catch (Exception $e) {
-                                $pdo->prepare("UPDATE flows SET stat_completed = stat_completed + 1 WHERE id = ?")->execute([$flowId]);
+                                $stmtStatCompleteFB->execute([$flowId]);
                             }
                         } else {
                             $nextStepType = $stepIndex[$currentStepId]['type'] ?? null;
-                            $pdo->prepare("UPDATE subscriber_flow_states SET status = ?, scheduled_at = ?, updated_at = NOW(), step_id = ?, step_type = ? WHERE id = ?")->execute([$execResult['status'], $execResult['scheduled_at'] ?? $now, $currentStepId, $nextStepType, $queueId]);
+                            $stmtDynamicState->execute([$execResult['status'], $execResult['scheduled_at'] ?? $now, $currentStepId, $nextStepType, $queueId]);
                         }
                         $shouldContinueChain = false;
                     }
@@ -567,7 +578,7 @@ if (!function_exists('runWorkerFlow')) {
 
                 // NEW: Prevent infinite loop if steps exceed MAX_STEPS without terminating explicitly
                 if ($shouldContinueChain && $stepsProcessedInRun >= $MAX_STEPS) {
-                    $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = NOW(), step_id = ?, updated_at = NOW() WHERE id = ?")->execute([$currentStepId, $queueId]);
+                    $stmtWaitSchedule->execute([$now, $currentStepId, $queueId]);
                     $logs[] = "  -> Reached limit ($MAX_STEPS). Pausing chain to prevent infinite loop.";
                 }
 
@@ -596,6 +607,9 @@ if (!function_exists('runWorkerFlow')) {
                 error_log("[worker_flow] Queue {$queueId} sub {$subscriberId} failed: " . $e->getMessage());
             }
 
+        
+            // [OPTIMIZATION] Explicit Garbage Collection (Zero-Leak Memory Profile)
+            unset($item, $currentStep, $activityCache, $exitActivityCache, $contextData, $execResult, $freshState);
         }
 
         if (function_exists('flushActivityLogBuffer')) {

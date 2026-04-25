@@ -16,9 +16,7 @@ require_once 'tracking_helper.php';
 // SKIP LOCKED is only valid on MySQL >= 8.0. On 5.7 it throws a fatal syntax error
 // that crashes the entire aggregator, causing activity/stats buffers to stall indefinitely.
 // Pattern matches worker_campaign.php (P9-C1) and worker_priority.php (P9-C2).
-$_trackerMysqlVersion = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
-$skipLockedClause = version_compare($_trackerMysqlVersion, '8.0.0', '>=') ? 'SKIP LOCKED' : '';
-unset($_trackerMysqlVersion); // avoid polluting global scope
+$skipLockedClause = isDatabaseSkipLockedSupported($pdo) ? 'SKIP LOCKED' : '';
 
 $batchSize = 1000;
 $now = date('Y-m-d H:i:s');
@@ -220,6 +218,7 @@ if (mt_rand(1, 100) === 1) {
  */
 function syncActivityBuffer($pdo)
 {
+    global $skipLockedClause;
     $logs = [];
     try {
         $pdo->beginTransaction();
@@ -317,6 +316,7 @@ function syncActivityBuffer($pdo)
  */
 function syncZaloActivityBuffer($pdo)
 {
+    global $skipLockedClause;
     $logs = [];
     try {
         $pdo->beginTransaction();
@@ -394,6 +394,7 @@ function syncZaloActivityBuffer($pdo)
  */
 function syncTimestampBuffer($pdo)
 {
+    global $skipLockedClause;
     $rows = [];
     try {
         $pdo->beginTransaction();
@@ -443,6 +444,9 @@ function syncTimestampBuffer($pdo)
     // Guarantees all workers acquire row locks in the same consistent order.
     ksort($updates);
 
+    // [OPTIMIZATION] Pre-compile SQL statements to prevent N+1 AST parsing
+    static $stmtTsCache = [];
+
     foreach ($updates as $sid => $cols) {
         $setParts = [];
         $params = [];
@@ -454,8 +458,11 @@ function syncTimestampBuffer($pdo)
         }
         if (!empty($setParts)) {
             $params[] = $sid;
-            $pdo->prepare("UPDATE subscribers SET " . implode(', ', $setParts) . " WHERE id = ?")
-                ->execute($params);
+            $cacheKey = implode('_', array_keys($cols));
+            if (!isset($stmtTsCache[$cacheKey])) {
+                $stmtTsCache[$cacheKey] = $pdo->prepare("UPDATE subscribers SET " . implode(', ', $setParts) . " WHERE id = ?");
+            }
+            $stmtTsCache[$cacheKey]->execute($params);
         }
     }
 
@@ -513,6 +520,7 @@ function checkStrategicIndexes($pdo)
  */
 function syncStatsBuffer($pdo)
 {
+    global $skipLockedClause;
     // -----------------------------------------------------------------------
     // Phase A: Claim a disjoint batch via FOR UPDATE SKIP LOCKED (short TX)
     // -----------------------------------------------------------------------
@@ -581,6 +589,9 @@ function syncStatsBuffer($pdo)
     // -----------------------------------------------------------------------
     // Phase C: Apply aggregated increments to target tables
     // -----------------------------------------------------------------------
+    // [OPTIMIZATION] Statement cache to prevent N+1 parsing
+    static $stmtStatsCache = [];
+
     foreach ($grouped as $agg) {
         $table = $agg['table'];
         $id = $agg['id'];
@@ -597,7 +608,11 @@ function syncStatsBuffer($pdo)
             continue;
 
         try {
-            $pdo->prepare("UPDATE $table SET $col = $col + ? WHERE id = ?")->execute([$val, $id]);
+            $cacheKey = "{$table}_{$col}";
+            if (!isset($stmtStatsCache[$cacheKey])) {
+                $stmtStatsCache[$cacheKey] = $pdo->prepare("UPDATE $table SET $col = $col + ? WHERE id = ?");
+            }
+            $stmtStatsCache[$cacheKey]->execute([$val, $id]);
         } catch (Exception $e) {
             error_log("Stats sync failed for $table.$col on $id: " . $e->getMessage());
         }

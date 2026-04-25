@@ -4,7 +4,7 @@ import { useState } from 'react';
 import {
     Play, X, User, Tag, Mail, MousePointerClick, Activity,
     GitMerge, CheckCircle2, Zap, Clock, ArrowRight, Beaker,
-    Layers, FileInput, ShoppingCart, Calendar, Send, UserMinus, List, Link as LinkIcon,
+    Layers, FileInput, ShoppingCart, Calendar, Send, UserMinus, List, ListPlus, Link as LinkIcon,
     Code
 } from 'lucide-react';
 import Input from '../../common/Input';
@@ -23,7 +23,7 @@ const getNodeStyle = (step: any) => {
     if (type === 'trigger') {
         const tType = config.type || 'segment';
         switch (tType) {
-            case 'segment': return { icon: Layers, gradient: 'from-orange-500 to-[#ca7900]', text: 'text-orange-600', bg: 'bg-orange-50', label: 'Kích hoạt: Phân khúc' };
+            case 'segment': return config.targetSubtype === 'list' ? { icon: List, gradient: 'from-orange-500 to-[#ca7900]', text: 'text-orange-600', bg: 'bg-orange-50', label: 'Kích hoạt: Danh sách' } : { icon: Layers, gradient: 'from-orange-500 to-[#ca7900]', text: 'text-orange-600', bg: 'bg-orange-50', label: 'Kích hoạt: Phân khúc' };
             case 'form': return { icon: FileInput, gradient: 'from-amber-400 to-orange-500', text: 'text-amber-600', bg: 'bg-amber-50', label: 'Kích hoạt: Biểu mẫu' };
             case 'purchase': return { icon: ShoppingCart, gradient: 'from-pink-500 to-rose-600', text: 'text-pink-600', bg: 'bg-pink-50', label: 'Kích hoạt: Đơn hàng' };
             case 'custom_event': return { icon: Zap, gradient: 'from-violet-500 to-indigo-600', text: 'text-violet-600', bg: 'bg-violet-50', label: 'Sự kiện tùy chỉnh' };

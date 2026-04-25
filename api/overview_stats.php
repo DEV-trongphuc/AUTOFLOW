@@ -122,6 +122,18 @@ if ($days < 1 || $days > 90) {
 $startDate = date('Y-m-d 00:00:00', strtotime("-$days days"));
 $endDate = date('Y-m-d 23:59:59');
 
+// [PERF] APCu cache — Dashboard stats are expensive (6 JOIN queries).
+// Cache per workspace+days for 5 minutes. Invalidated on page refresh (F5) by passing ?bust=1.
+$cacheKey = "dashboard_stats_{$workspace_id}_{$days}";
+$forceRefresh = isset($_GET['bust']) && $_GET['bust'] === '1';
+if (!$forceRefresh && function_exists('apcu_fetch')) {
+    $cached = apcu_fetch($cacheKey);
+    if ($cached !== false) {
+        echo $cached;
+        exit;
+    }
+}
+
 try {
     // 1. Web Analytics (web_page_views) — scoped by JOINing web_properties
     $stmtWeb = $pdo->prepare("
@@ -242,7 +254,7 @@ try {
     $growthAi = $calcGrowth($totalAi, $prevAi);
     $growthLeads = $calcGrowth($totalLeads, $prevLead);
 
-    echo json_encode([
+    $responseJson = json_encode([
         'success' => true,
         'summary' => [
             'total_web' => $totalWeb,
@@ -256,6 +268,13 @@ try {
         'top_campaigns' => $topCampaigns,
         'top_flows' => $topFlows
     ]);
+
+    // [PERF] Store in APCu for 5 minutes
+    if (function_exists('apcu_store')) {
+        apcu_store($cacheKey, $responseJson, 300);
+    }
+
+    echo $responseJson;
 
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);

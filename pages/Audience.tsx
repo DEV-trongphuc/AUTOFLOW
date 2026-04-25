@@ -1,4 +1,4 @@
-import * as React from 'react';
+﻿import * as React from 'react';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../services/storageAdapter';
@@ -148,6 +148,8 @@ const Audience: React.FC = () => {
     const [integrations, setIntegrations] = useState<any[]>([]); // New state for integrations
     const [tags, setTags] = useState<{ id: string; name: string }[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isSavingSubscriber, setIsSavingSubscriber] = useState(false);
+    const [isProcessingBulk, setIsProcessingBulk] = useState(false);
     const [stats, setStats] = useState({ total: 0, unsubscribed: 0, customer: 0, lead: 0 });
 
     // Filters
@@ -504,6 +506,7 @@ const Audience: React.FC = () => {
     // Polling for Sync Status with timeout protection
     const prevSyncingRef = useRef(false);
     useEffect(() => {
+        let isMounted = true;
         const isCurrentlySyncing = integrations.some((i: any) => i.sync_status === 'syncing');
         
         // If we were syncing and now we are not, refresh everything
@@ -525,15 +528,18 @@ const Audience: React.FC = () => {
             // If syncing for more than 5 minutes, force refresh (likely stuck)
             if (elapsed > 300000) {
                 console.warn('Sync timeout detected, forcing refresh');
-                fetchIntegrations(true);
+                if (isMounted) fetchIntegrations(true);
                 clearInterval(interval);
                 return;
             }
 
-            fetchIntegrations(true); // Silent poll
+            if (isMounted) fetchIntegrations(true); // Silent poll
         }, 2000); // Poll every 2 seconds
 
-        return () => clearInterval(interval);
+        return () => {
+            isMounted = false;
+            clearInterval(interval);
+        };
     }, [activeTab, integrations.some(i => i.sync_status === 'syncing'), reportPeriod]);
 
     const fetchSubscribers = async (page = 1) => {
@@ -729,12 +735,26 @@ const Audience: React.FC = () => {
     };
 
     const handleUpdateSubscriber = async (updated: Subscriber) => {
-        const res = await api.put<Subscriber>(`subscribers/${updated.id}`, updated);
-        if (res.success) {
-            fetchSubscribers(pagination.page);
-            if (viewingGroup) fetchGroupMembers(viewingGroup, groupPagination.page, groupSearch);
-            if (selectedSubscriber?.id === updated.id) setSelectedSubscriber(res.data);
-            showToast('Cập nhật hồ sơ thành công', 'success');
+        if (isSavingSubscriber) return; // [GUARD] Prevent double-submit
+        setIsSavingSubscriber(true);
+        // [OPTIMISTIC UI] Update local state immediately
+        setSubscribers(prev => prev.map(s => s.id === updated.id ? { ...s, ...updated } : s));
+        try {
+            const res = await api.put<Subscriber>(`subscribers/${updated.id}`, updated);
+            if (res.success) {
+                setSubscribers(prev => prev.map(s => s.id === updated.id ? res.data : s));
+                if (viewingGroup) fetchGroupMembers(viewingGroup, groupPagination.page, groupSearch);
+                if (selectedSubscriber?.id === updated.id) setSelectedSubscriber(res.data);
+                showToast('Cap nhat ho so thanh cong', 'success');
+            } else {
+                fetchSubscribers(pagination.page); // [ROLLBACK]
+                showToast(res.message || 'Loi cap nhat ho so', 'error');
+            }
+        } catch (e) {
+            fetchSubscribers(pagination.page); // [ROLLBACK]
+            showToast('Loi ket noi khi cap nhat ho so', 'error');
+        } finally {
+            setIsSavingSubscriber(false); // [GUARD] Always unlock
         }
     };
 

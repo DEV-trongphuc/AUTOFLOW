@@ -45,6 +45,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
     const [loadingLogs, setLoadingLogs] = useState(false);
     const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
     const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+    const [selectedBranchFilter, setSelectedBranchFilter] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [showOpens, setShowOpens] = useState(false);
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
@@ -124,7 +125,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         if (type === 'trigger') {
             const tType = config.type || 'segment';
             switch (tType) {
-                case 'segment': return { icon: Layers, gradient: 'from-orange-500 to-[#ca7900]', text: 'text-orange-600', bg: 'bg-orange-50', label: 'Segment Trigger' };
+                case 'segment': return (config.targetSubtype === 'list' || config.targetSubtype === 'sync') ? { icon: ListPlus, gradient: 'from-emerald-500 to-teal-600', text: 'text-emerald-600', bg: 'bg-emerald-50', label: 'List Trigger' } : { icon: Layers, gradient: 'from-orange-500 to-[#ca7900]', text: 'text-orange-600', bg: 'bg-orange-50', label: 'Segment Trigger' };
                 case 'form': return { icon: FileInput, gradient: 'from-amber-400 to-orange-500', text: 'text-amber-600', bg: 'bg-amber-50', label: 'Form Trigger' };
                 case 'purchase': return { icon: ShoppingCart, gradient: 'from-pink-500 to-rose-600', text: 'text-pink-600', bg: 'bg-pink-50', label: 'Purchase Trigger' };
                 case 'custom_event': return { icon: Zap, gradient: 'from-violet-500 to-indigo-600', text: 'text-violet-600', bg: 'bg-violet-50', label: 'Custom Event' };
@@ -394,10 +395,9 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                 const lastStepProcessed = lastStepStats.processed || lastStepStats.sent || 0;
                 const totalCompleted = stats.completed || 0;
                 const byBranchCount = completedBranchStats[step.id] || 0;
-                // Priority: min(total, last_step_processed) when we have real data; fallback to byBranch
-                const completedCount = lastStepProcessed > 0
-                    ? Math.min(totalCompleted, lastStepProcessed)
-                    : (byBranchCount > 0 ? byBranchCount : totalCompleted);
+                // Priority: Use byBranchCount if available. Otherwise use lastStepProcessed. Cap at totalCompleted.
+                // This prevents empty branches (0 Qua) from incorrectly displaying the entire flow's total completions.
+                const completedCount = Math.min(byBranchCount > 0 ? byBranchCount : lastStepProcessed, totalCompleted);
                 finalFunnel.push({
                     id: `end_${step.id}`,
                     type: 'completed',
@@ -557,8 +557,8 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
             else if (modalTab === 'zns_failed') typeParam = 'zns_failed';
         }
 
-        fetchParticipants(1, selectedStepId, statusParam, debouncedSearchTerm, typeParam);
-    }, [flow.id, selectedStepId, selectedStatus, debouncedSearchTerm, modalTab]);
+        fetchParticipants(1, selectedStepId, statusParam, debouncedSearchTerm, typeParam, selectedBranchFilter);
+    }, [flow.id, selectedStepId, selectedStatus, debouncedSearchTerm, modalTab, selectedBranchFilter]);
 
     // Sync local flow changes (steps/config) from parent to ensure report shows unsaved steps
     useEffect(() => {
@@ -590,7 +590,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         fetchLogs(1, false, debouncedLogSearch);
     };
 
-    const fetchParticipants = async (page = 1, stepId?: string | null, status?: string | null, search?: string, type?: string | null) => {
+    const fetchParticipants = async (page = 1, stepId?: string | null, status?: string | null, search?: string, type?: string | null, branchFilter?: string | null) => {
         setLoadingList(true);
         let url = '';
 
@@ -625,6 +625,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
             if (status) url += `&status=${status}`;
             if (search) url += `&search=${encodeURIComponent(search)}`;
             if (type) url += `&type=${type}`;
+            if (branchFilter) url += `&branch=${encodeURIComponent(branchFilter)}`;
         }
 
         const res = await api.get<any>(url);
@@ -1177,13 +1178,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                                 tooltip="Cảnh báo: Khách hàng đang bị nghẽn tại bước này quá 24h so với thời gian xử lý dự kiến. Bỏ qua cảnh báo này nếu logic của bạn là đúng."
                                                             />
                                                         )}
-                                                        {item.dropOffRate > 0.7 && (
-                                                            <BottleneckBadge
-                                                                type="drop"
-                                                                value={`Drop-off ${Math.round(item.dropOffRate * 100)}%`}
-                                                                tooltip="Cảnh báo: Tỷ lệ thoát/dừng tại bước này cao (>70%). Bạn nên tối ưu nội dung hoặc điều kiện lọc."
-                                                            />
-                                                        )}
+
 
                                                         {/* Right: Stats */}
                                                         <div className="flex items-center shrink-0 justify-between sm:justify-end gap-4 md:gap-8 text-right">
@@ -1527,11 +1522,14 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                 isOpen={isParticipantsModalOpen}
                 onClose={() => {
                     setIsParticipantsModalOpen(false);
+                    setSelectedBranchFilter(null);
                 }}
                 title={selectedStatus === 'completed' ? 'Danh sách Hoàn thành' : `Danh sách tại: ${selectedStepId ? getStepName(selectedStepId) : '...'}`}
                 participants={modalParticipants}
                 loading={loadingList}
                 pagination={pagination}
+                activeBranchFilter={selectedBranchFilter}
+                onBranchClick={setSelectedBranchFilter}
                 onPageChange={(page) => {
                     let typeParam: string | null = null;
                     let statusParam: string | null = selectedStatus;
@@ -1548,7 +1546,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                         else if (modalTab === 'zns_replied') typeParam = 'reply_zns'; // Backend logs 'reply_zns'
                         else if (modalTab === 'zns_failed') typeParam = 'zns_failed';
                     }
-                    fetchParticipants(page, selectedStepId, statusParam, searchTerm, typeParam);
+                    fetchParticipants(page, selectedStepId, statusParam, searchTerm, typeParam, selectedBranchFilter);
                 }}
                 onRefresh={() => {
                     let typeParam: string | null = null;
@@ -1566,7 +1564,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                         else if (modalTab === 'zns_replied') typeParam = 'reply_zns';
                         else if (modalTab === 'zns_failed') typeParam = 'zns_failed';
                     }
-                    fetchParticipants(pagination.page, selectedStepId, statusParam, searchTerm, typeParam);
+                    fetchParticipants(pagination.page, selectedStepId, statusParam, searchTerm, typeParam, selectedBranchFilter);
                     refreshFlow(); // Update global stats (Total Users, Enrolled, etc.)
                 }}
                 searchTerm={searchTerm}

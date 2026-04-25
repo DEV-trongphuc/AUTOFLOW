@@ -1724,9 +1724,18 @@ switch ($method) {
             } catch (Exception $ignored) {
             }
 
-            // [FIX] Safely handle Zalo logs (Check if campaign_id exists)
-            $stmtCheck = $pdo->query("SHOW COLUMNS FROM zalo_delivery_logs LIKE 'campaign_id'");
-            if ($stmtCheck->fetch()) {
+            // [PERF] Cache SHOW COLUMNS result in APCu — DDL queries inside transactions cause
+            // unnecessary metadata lock overhead. Schema changes are rare (max 1x per deploy).
+            $schemaCacheKey = 'schema_zalo_logs_has_campaign_id';
+            $hasCampaignIdCol = function_exists('apcu_fetch') ? apcu_fetch($schemaCacheKey) : false;
+            if ($hasCampaignIdCol === false) {
+                $stmtCheck = $pdo->query("SHOW COLUMNS FROM zalo_delivery_logs LIKE 'campaign_id'");
+                $hasCampaignIdCol = (bool)$stmtCheck->fetch();
+                if (function_exists('apcu_store')) {
+                    apcu_store($schemaCacheKey, $hasCampaignIdCol, 3600); // 1 hour TTL
+                }
+            }
+            if ($hasCampaignIdCol) {
                 $pdo->prepare("DELETE FROM zalo_delivery_logs WHERE campaign_id = ?")->execute([$path]);
             } else {
                 $pdo->prepare("DELETE FROM zalo_delivery_logs WHERE flow_id = ?")->execute([$path]);

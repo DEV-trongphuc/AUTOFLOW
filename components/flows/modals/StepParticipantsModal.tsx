@@ -1,7 +1,7 @@
 import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { X, Search, RefreshCcw, Check, MailOpen, Clock, Download, MousePointer2, MessageSquare, AlertOctagon, Reply, MousePointerClick, Monitor, Smartphone, Tablet, Globe, FastForward, Trash2, Play, SkipForward, UserPlus, UserMinus, Send, Loader2, ChevronDown, Tag, List, Circle, CheckCircle2, Layers } from 'lucide-react';
+import { X, Search, RefreshCcw, Check, MailOpen, Clock, Download, MousePointer2, MessageSquare, AlertOctagon, Reply, MousePointerClick, Monitor, Smartphone, Tablet, Globe, FastForward, Trash2, Play, SkipForward, UserPlus, UserMinus, Send, Loader2, ChevronDown, Tag, List, Circle, CheckCircle2, Layers, GitMerge, Beaker } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { api } from '../../../services/storageAdapter';
 import { toast } from 'react-hot-toast';
@@ -48,6 +48,8 @@ interface StepParticipantsModalProps {
     stepId?: string;
     stepData?: any;
     onActionComplete?: () => void;
+    activeBranchFilter?: string | null;
+    onBranchClick?: (branch: string | null) => void;
 }
 
 const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
@@ -69,7 +71,9 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
     flowId,
     stepId,
     stepData,
-    onActionComplete
+    onActionComplete,
+    activeBranchFilter,
+    onBranchClick
 }) => {
     const [animateIn, setAnimateIn] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -649,6 +653,86 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                 Tổng số: {pagination.total} {['clicks', 'zns_clicked'].includes(activeTab) ? 'lượt click' : 'Khách hàng'}
                                 {selectedIds.size > 0 && ` • ${selectedIds.size} đã chọn`}
                             </p>
+                            {/* BRANCH STATS SUMMARY */}
+                            {stepData && stepData.stats && (() => {
+                                const type = stepData.type?.toLowerCase();
+                                const s = stepData.stats;
+                                
+                                if (type === 'condition') {
+                                    return (
+                                        <div className="w-full mt-4 p-4 bg-slate-50/80 rounded-2xl border border-slate-100">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <GitMerge className="w-4 h-4 text-slate-400" />
+                                                <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">Thống kê điều kiện</h4>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
+                                                    <div className="absolute inset-0 bg-emerald-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                    <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider mb-1 relative z-10 flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" /> Đúng điều kiện</span>
+                                                    <span className="text-2xl font-black text-emerald-700 relative z-10">{s.matched || 0}</span>
+                                                </div>
+                                                <div className="bg-white p-3 rounded-xl border border-rose-100 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
+                                                    <div className="absolute inset-0 bg-rose-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                    <span className="text-[11px] font-bold text-rose-600 uppercase tracking-wider mb-1 relative z-10 flex items-center gap-1.5"><X className="w-3.5 h-3.5" /> Sai điều kiện</span>
+                                                    <span className="text-2xl font-black text-rose-700 relative z-10">{s.timed_out || 0}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                }
+                                
+                                if (type === 'split_test') {
+                                    return (
+                                        <div className="w-full mt-4 p-4 bg-slate-50/80 rounded-2xl border border-slate-100">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <Beaker className="w-4 h-4 text-slate-400" />
+                                                <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">Thống kê A/B Test</h4>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="bg-white p-3 rounded-xl border border-blue-100 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
+                                                    <div className="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                    <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-1 relative z-10 flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-blue-100 text-blue-700 flex items-center justify-center font-black">A</span> Nhánh A</span>
+                                                    <span className="text-2xl font-black text-blue-700 relative z-10">{s.path_a || 0}</span>
+                                                </div>
+                                                <div className="bg-white p-3 rounded-xl border border-fuchsia-100 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
+                                                    <div className="absolute inset-0 bg-fuchsia-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                    <span className="text-[11px] font-bold text-fuchsia-600 uppercase tracking-wider mb-1 relative z-10 flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-fuchsia-100 text-fuchsia-700 flex items-center justify-center font-black">B</span> Nhánh B</span>
+                                                    <span className="text-2xl font-black text-fuchsia-700 relative z-10">{s.path_b || 0}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                }
+                                
+                                if (type === 'advanced_condition') {
+                                    const branches = stepConfig?.branches || [];
+                                    const bStats = s.branchStats || {};
+                                    return (
+                                        <div className="w-full mt-4 p-4 bg-slate-50/80 rounded-2xl border border-slate-100">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <GitMerge className="w-4 h-4 text-slate-400" />
+                                                <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">Thống kê rẽ nhánh</h4>
+                                            </div>
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                                {branches.map((b: any, idx: number) => (
+                                                    <div key={b.id} className="bg-white p-3 rounded-xl border border-indigo-100 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
+                                                        <div className="absolute inset-0 bg-indigo-50/50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1 relative z-10 text-center truncate w-full px-2" title={b.label || "Nhánh "}>{b.label || "Nhánh "}</span>
+                                                        <span className="text-xl font-black text-indigo-600 relative z-10">{bStats[b.label] || 0}</span>
+                                                    </div>
+                                                ))}
+                                                <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
+                                                    <div className="absolute inset-0 bg-slate-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1 relative z-10">Mặc định</span>
+                                                    <span className="text-xl font-black text-slate-700 relative z-10">{bStats['Fallback'] || bStats['fallback'] || 0}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                }
+                                
+                                return null;
+                            })()}
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -978,6 +1062,11 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                             <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
                                                 Khách hàng
                                             </th>
+                                            {['all_touched', 'report'].includes(activeTab) && (
+                                                <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                                                    Tên nhánh
+                                                </th>
+                                            )}
                                             {(stepType === 'action' || stepType === 'zalo_zns') && activeTab !== 'waiting' && activeTab !== 'unsubscribed' && !['failed', 'zns_failed'].includes(activeTab as string) && (
                                                 <th className="px-4 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap w-[80px]">
                                                     Gửi lại
@@ -1026,7 +1115,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                         <tr className="bg-orange-50/50">
                                             <td colSpan={['waiting', 'failed', 'unsubscribed', 'zns_failed', 'inactive', 'zns_skipped'].includes(activeTab) ? 5 : 4} className="px-6 py-2.5 text-center">
                                                 {isGlobalSelected ? (
-                                                    <p className="text-xs font-medium text-slate-600">đã chọn tất cả <span className="font-bold text-orange-600">{pagination.total.toLocaleString()}</span> Khách hàng. <button onClick={() => setIsGlobalSelected(false)} className="ml-2 text-blue-600 font-bold hover:underline">B? chọn</button></p>
+                                                    <p className="text-xs font-medium text-slate-600">đã chọn tất cả <span className="font-bold text-orange-600">{pagination.total.toLocaleString()}</span> Khách hàng. <button onClick={() => setIsGlobalSelected(false)} className="ml-2 text-blue-600 font-bold hover:underline">Bỏ chọn</button></p>
                                                 ) : (
                                                     <p className="text-xs font-medium text-slate-600">Đã chọn {participants.length} Khách hàng. <button onClick={() => setIsGlobalSelected(true)} className="ml-1 text-orange-600 font-bold hover:underline italic underline-offset-2">Chọn tất cả {pagination.total.toLocaleString()} Khách hàng?</button></p>
                                                 )}
@@ -1087,6 +1176,19 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                         </div>
                                                     </div>
                                                 </td>
+
+                                                {['all_touched', 'report'].includes(activeTab) && (
+                                                    <td className="px-4 py-3">
+                                                        {p.branchName ? (
+                                                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold border border-slate-200 bg-white text-slate-700">
+                                                                <GitMerge className="w-3 h-3 text-slate-400" />
+                                                                {p.branchName}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[10px] text-slate-400 italic">Chưa rẽ nhánh</span>
+                                                        )}
+                                                    </td>
+                                                )}
 
                                                 {/* Dedicated Action Column - hidden for failed tabs (error detail needs space) */}
                                                 {(stepType === 'action' || stepType === 'zalo_zns') && activeTab !== 'waiting' && activeTab !== 'unsubscribed' && !['failed', 'zns_failed'].includes(activeTab as string) && (
@@ -1940,3 +2042,5 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
 };
 
 export default StepParticipantsModal;
+
+

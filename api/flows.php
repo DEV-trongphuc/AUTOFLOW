@@ -112,6 +112,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
         $search = $_GET['search'] ?? null;
         $type = $_GET['type'] ?? null;
         $linkFilter = $_GET['link'] ?? null;
+        $branchFilter = $_GET['branch'] ?? null;
 
         if (!$flowId)
             jsonResponse(false, null, 'Flow ID required');
@@ -400,17 +401,28 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                 $countSql = "SELECT COUNT(DISTINCT sa.subscriber_id) 
                              FROM subscriber_activity sa
                              JOIN subscribers s_search ON sa.subscriber_id = s_search.id
-                             WHERE sa.flow_id = ? AND sa.$stepIdClause AND sa.type IN ('$typePlaceholders')
+                             WHERE sa.flow_id = ? AND " . str_replace('reference_id', 'sa.reference_id', $stepIdClause) . " AND sa.type IN ('$typePlaceholders')
                              AND (s_search.email LIKE ? OR s_search.first_name LIKE ? OR s_search.last_name LIKE ?)";
+                if ($branchFilter) {
+                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.type IN ('advanced_condition', 'condition_true', 'condition_false', 'ab_test_a', 'ab_test_b', 'split_test') AND (b.details LIKE ? OR b.details LIKE ?))";
+                    $countParams[] = "%Matched: $branchFilter%";
+                    $countParams[] = "%Condition matched: $branchFilter%";
+                }
                 $stmtCount = $pdo->prepare($countSql);
                 $stmtCount->execute($countParams);
             } else {
                 // Direct unique count on Activity table (fast with index)
-                $countSql = "SELECT COUNT(DISTINCT subscriber_id) 
-                             FROM subscriber_activity 
-                             WHERE flow_id = ? AND $stepIdClause AND type IN ('$typePlaceholders')";
+                $countSql = "SELECT COUNT(DISTINCT sa.subscriber_id) 
+                             FROM subscriber_activity sa
+                             WHERE sa.flow_id = ? AND " . str_replace('reference_id', 'sa.reference_id', $stepIdClause) . " AND sa.type IN ('$typePlaceholders')";
+                $countParamsExec = array_merge([$flowId], $stepIdParams);
+                if ($branchFilter) {
+                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.type IN ('advanced_condition', 'condition_true', 'condition_false', 'ab_test_a', 'ab_test_b', 'split_test') AND (b.details LIKE ? OR b.details LIKE ?))";
+                    $countParamsExec[] = "%Matched: $branchFilter%";
+                    $countParamsExec[] = "%Condition matched: $branchFilter%";
+                }
                 $stmtCount = $pdo->prepare($countSql);
-                $stmtCount->execute(array_merge([$flowId], $stepIdParams));
+                $stmtCount->execute($countParamsExec);
             }
 
             $total = (int) $stmtCount->fetchColumn();
@@ -421,7 +433,8 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
             $sql = "SELECT s.id, s.email, s.phone_number, s.first_name, s.last_name, 
                            u.entered_at,
                            'processed' as status,
-                           ? as step_id
+                           ? as step_id,
+                           (SELECT details FROM subscriber_activity WHERE flow_id = ? AND subscriber_id = s.id AND " . str_replace('reference_id', 'reference_id', $stepIdClause) . " AND type IN ('advanced_condition', 'condition_true', 'condition_false', 'ab_test_a', 'ab_test_b', 'split_test') ORDER BY id DESC LIMIT 1) as branch_details
                     FROM ($historySql) as u
                     JOIN subscribers s ON u.subscriber_id = s.id
                     LEFT JOIN subscriber_flow_states sfs_exclude 
@@ -433,11 +446,16 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                     " . ($search ? "AND (s.email LIKE ? OR s.first_name LIKE ? OR s.last_name LIKE ?)" : "") . "
                     ORDER BY u.entered_at DESC LIMIT $limit OFFSET $offset";
 
-            $fetchParams = array_merge([$stepId, $flowId], $stepIdParams, [$flowId], $stepIdParams);
+            $fetchParams = array_merge([$stepId, $flowId], $stepIdParams, [$flowId], $stepIdParams, [$flowId], $stepIdParams);
             if ($search) {
                 $fetchParams[] = "%$search%";
                 $fetchParams[] = "%$search%";
                 $fetchParams[] = "%$search%";
+            }
+            if ($branchFilter) {
+                $sql .= " HAVING branch_details LIKE ? OR branch_details LIKE ?";
+                $fetchParams[] = "%Matched: $branchFilter%";
+                $fetchParams[] = "%Condition matched: $branchFilter%";
             }
 
             $stmt = $pdo->prepare($sql);
@@ -453,7 +471,8 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                     'enteredAt' => $p['entered_at'],
                     'completedAt' => $p['entered_at'],
                     'scheduledAt' => null,
-                    'phone' => $p['phone_number']
+                    'phone' => $p['phone_number'],
+                    'branchName' => isset($p['branch_details']) ? str_replace(['Matched: ', 'Advanced Condition matched: ', 'Condition matched: '], '', $p['branch_details']) : null
                 ];
             }, $stmt->fetchAll());
 
@@ -490,12 +509,19 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
 
             $whereSql = implode(" AND ", $whereClauses);
 
+            if ($branchFilter) {
+                $whereSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sfs.flow_id AND b.subscriber_id = s.id AND b.reference_id = sfs.step_id AND b.type IN ('advanced_condition', 'condition_true', 'condition_false', 'ab_test_a', 'ab_test_b', 'split_test') AND (b.details LIKE ? OR b.details LIKE ?))";
+                $allParams[] = "%Matched: $branchFilter%";
+                $allParams[] = "%Condition matched: $branchFilter%";
+            }
+
             $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM subscriber_flow_states sfs JOIN subscribers s ON sfs.subscriber_id = s.id WHERE $whereSql");
             $stmtCount->execute($allParams);
             $total = (int) $stmtCount->fetchColumn();
             $totalPages = ceil($total / $limit);
 
-            $sql = "SELECT s.id, s.email, s.phone_number, s.first_name, s.last_name, sfs.step_id, sfs.status, sfs.scheduled_at, sfs.created_at as entered_at, sfs.updated_at, sfs.last_error
+            $sql = "SELECT s.id, s.email, s.phone_number, s.first_name, s.last_name, sfs.step_id, sfs.status, sfs.scheduled_at, sfs.created_at as entered_at, sfs.updated_at, sfs.last_error,
+                           (SELECT details FROM subscriber_activity b WHERE b.flow_id = sfs.flow_id AND b.subscriber_id = s.id AND b.reference_id = sfs.step_id AND b.type IN ('advanced_condition', 'condition_true', 'condition_false', 'ab_test_a', 'ab_test_b', 'split_test') ORDER BY id DESC LIMIT 1) as branch_details
                     FROM subscriber_flow_states sfs
                     JOIN subscribers s ON sfs.subscriber_id = s.id
                     WHERE $whereSql
@@ -528,6 +554,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                     'scheduledAt' => $p['scheduled_at'],
                     'enteredAt' => $p['entered_at'],
                     'lastError' => $p['last_error'] ?? null,
+                    'branchName' => isset($p['branch_details']) ? str_replace(['Matched: ', 'Advanced Condition matched: ', 'Condition matched: '], '', $p['branch_details']) : null,
                     'completion_count' => (int) ($counts[$p['id']] ?? 1)
                 ];
             }, $rows);

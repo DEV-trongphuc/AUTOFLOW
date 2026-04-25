@@ -488,7 +488,7 @@ if (!function_exists('sesAcquireRateSlot')) {
         static $rlFile = null;
         if ($rlFile === null) {
             // Shared file accessible by all PHP processes on the same server
-            $rlFile = sys_get_temp_dir() . '/autoflow_ses_rl.bin';
+            $rlFile = __DIR__ . '/_locks/autoflow_ses_rl.bin';
         }
 
         $fp = @fopen($rlFile, 'c+');

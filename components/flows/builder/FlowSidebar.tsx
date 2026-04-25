@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ShieldCheck, History, AlertOctagon, CheckCircle2, ChevronRight, Clock, RotateCcw } from 'lucide-react';
+import { ShieldCheck, History, AlertOctagon, CheckCircle2, ChevronRight, Clock, RotateCcw, Send } from 'lucide-react';
 import { HistoryLog } from '../../../services/historyService';
 import { ValidationError } from '../../../services/flowValidationService';
 
@@ -9,6 +9,7 @@ interface FlowSidebarProps {
     logs: HistoryLog[];
     onSelectStep: (stepId: string) => void;
     durationInfo?: { min: string, max: string, breakdown?: any[] };
+    mailZnsInfo?: { total: number, maxBranch: number };
     snapshotCount?: number;
     onOpenHistory?: () => void;
 }
@@ -18,6 +19,7 @@ const FlowSidebar: React.FC<FlowSidebarProps> = ({
     logs,
     onSelectStep,
     durationInfo,
+    mailZnsInfo,
     snapshotCount = 0,
     onOpenHistory
 }) => {
@@ -100,6 +102,28 @@ const FlowSidebar: React.FC<FlowSidebarProps> = ({
                                     ))}
                                 </div>
                             )}
+                        </div>
+                    </div>
+                )}
+
+                {mailZnsInfo && (
+                    <div className="px-1 space-y-3 pt-6 border-t border-slate-100 dark:border-slate-800/80">
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                            <Send className="w-3.5 h-3.5 text-sky-500" /> Thống kê Gửi tin
+                        </h4>
+                        <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl p-3">
+                            <div className="flex items-baseline justify-between mb-2">
+                                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Tổng quan:</span>
+                                <span className="text-[11px] font-black text-sky-600 dark:text-sky-400">
+                                    {mailZnsInfo.total} tin
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-start text-[9px] pt-2 border-t border-slate-200 dark:border-slate-700/60/50 mt-2">
+                                <span className="text-slate-500 dark:text-slate-400 font-bold max-w-[60%]">Nhánh nhận nhiều nhất:</span>
+                                <span className="text-slate-700 dark:text-slate-200 font-bold">
+                                    {mailZnsInfo.maxBranch} tin
+                                </span>
+                            </div>
                         </div>
                     </div>
                 )}

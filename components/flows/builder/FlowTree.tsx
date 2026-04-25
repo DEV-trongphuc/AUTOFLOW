@@ -1,5 +1,5 @@
 
-import React, { memo, useState, useRef } from 'react';
+import React, { memo, useState, useRef, useCallback, useMemo } from 'react';
 import { FlowStep, Flow, FormDefinition } from '../../../types';
 import { AddBtn, ErrorConnector } from './FlowTools';
 import { ActionNode, WaitNode, ConditionNode, TriggerNode, LinkNode, GhostNode, SplitTestNode, RemoveNode, ListActionNode, ZaloZNSNode, AdvancedConditionNode } from '../nodes/FlowNodes';
@@ -22,47 +22,27 @@ interface FlowTreeProps {
     onSwapSteps: (sourceId: string, targetId: string) => void;
     setDraggedStepId: (id: string | null) => void;
     depth?: number;
-    pathIds?: Set<string>;
+    pathIds?: string;
     hasPendingEmail?: boolean;
     isReportMode?: boolean;
     realtimeDistribution?: Record<string, { count: number, avg_wait: number }>;
     onReportClick?: (stepId: string, type: string) => void;
 }
 
-const FlowTree: React.FC<FlowTreeProps> = memo(({
+const FlowTreeInner = memo(({
+    step, nextPathIds,
     stepId, parentId, parentType, branch,
     flow, allFlows, allForms = [], isViewMode = false, draggedStepId,
     onEditStep, onAddStep, onQuickAddWait, onSwapSteps, setDraggedStepId,
-    depth = 0, pathIds = new Set<string>(), hasPendingEmail = false,
+    depth = 0, pathIds = '', hasPendingEmail = false,
     isReportMode, realtimeDistribution, onReportClick
-}) => {
+}: any) => {
     // Track drag hover state (chỉ node đang hover mới sáng, không phải tất cả)
     const [isDragHovering, setIsDragHovering] = useState(false);
     const dragEnterCount = useRef(0); // Counter để tránh flicker khi hover vào child elements
 
-    if (!stepId) return null;
-    const steps = flow.steps || [];
-    const step = steps.find(s => s.id === stepId);
-    if (!step) return null;
-
-    if (depth >= 50 || pathIds.has(stepId)) {
-        const isActuallyLoop = pathIds.has(stepId);
-        return (
-            <div className="flex flex-col items-center">
-                <StraightConnector height={40} isError={true} />
-                <GhostNode label={isActuallyLoop ? "CẢNH BÁO: Vòng lặp phát hiện" : "CẢNH BÁO: Quá tải độ sâu"} />
-                <div className="text-[9px] text-rose-500 font-bold mt-1">
-                    {isActuallyLoop ? `Bước này kết nối ngược lại bước [${step.label}]` : "Kịch bản quá nóng hoặc quá sâu"}
-                </div>
-            </div>
-        );
-    }
-
-    // Add current ID to path for children
-    const nextPathIds = new Set(pathIds);
-    nextPathIds.add(stepId);
-
     const isCondition = step.type === 'condition';
+    const steps = flow?.steps || [];
     const isSplitTest = step.type === 'split_test';
     const isLink = step.type === 'link_flow';
     const isRemove = step.type === 'remove_action';
@@ -134,7 +114,7 @@ const FlowTree: React.FC<FlowTreeProps> = memo(({
 
     const hasWarning = isRedundant();
 
-    const commonProps = {
+    const commonProps = React.useMemo(() => ({
         step,
         isDraggable: step.type !== 'trigger' && !isViewMode,
         isDragTarget: isDragHovering,
@@ -186,9 +166,9 @@ const FlowTree: React.FC<FlowTreeProps> = memo(({
                 setDraggedStepId(null);
             }
         }
-    };
+    }), [step, isDragHovering, hasSpamError, hasWarning, isViewMode, allForms, isReportMode, reportStats, draggedStepId, onReportClick, onEditStep, setDraggedStepId, onSwapSteps]);
 
-    const nextProps = { flow, allFlows, allForms, isViewMode, draggedStepId, onEditStep, onAddStep, onQuickAddWait, onSwapSteps, setDraggedStepId, depth: depth + 1, pathIds: nextPathIds, hasPendingEmail: nextPendingEmail, isReportMode, realtimeDistribution, onReportClick };
+    const nextProps = React.useMemo(() => ({ flow, allFlows, allForms, isViewMode, draggedStepId, onEditStep, onAddStep, onQuickAddWait, onSwapSteps, setDraggedStepId, depth: depth + 1, pathIds: nextPathIds, hasPendingEmail: nextPendingEmail, isReportMode, realtimeDistribution, onReportClick }), [flow, allFlows, allForms, isViewMode, draggedStepId, onEditStep, onAddStep, onQuickAddWait, onSwapSteps, setDraggedStepId, depth, nextPathIds, nextPendingEmail, isReportMode, realtimeDistribution, onReportClick]);
     const CONNECTOR_HEIGHT = 100;
 
     const handleDropOnAdd = (e: React.DragEvent, pId: string, br?: any) => {
@@ -419,4 +399,30 @@ const FlowTree: React.FC<FlowTreeProps> = memo(({
     );
 });
 
+
+const FlowTree: React.FC<FlowTreeProps> = memo((props) => {
+    const { stepId, flow, depth = 0, pathIds = '' } = props;
+    if (!stepId) return null;
+    const steps = flow.steps || [];
+    const step = steps.find((s: any) => s.id === stepId);
+    if (!step) return null;
+
+    if (depth >= 50 || pathIds.includes(stepId)) {
+        const isActuallyLoop = pathIds.includes(stepId);
+        return (
+            <div className="flex flex-col items-center">
+                <StraightConnector height={40} isError={true} />
+                <GhostNode label={isActuallyLoop ? "Cáº¢NH BÃO: VÃ²ng láº·p phÃ¡t hiá»‡n" : "Cáº¢NH BÃO: QuÃ¡ táº£i Ä‘á»™ sÃ¢u"} />
+                <div className="text-[9px] text-rose-500 font-bold mt-1">
+                    {isActuallyLoop ? `BÆ°á»›c nÃ y káº¿t ná»‘i ngÆ°á»£c láº¡i bÆ°á»›c [${step.label}]` : "Ká»‹ch báº£n quÃ¡ nÃ³ng hoáº·c quÃ¡ sÃ¢u"}
+                </div>
+            </div>
+        );
+    }
+
+    const nextPathIds = pathIds ? `${pathIds},${stepId}` : stepId;
+    return <FlowTreeInner {...props} step={step} nextPathIds={nextPathIds} />;
+});
+
 export default FlowTree;
+

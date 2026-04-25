@@ -364,6 +364,30 @@ export const clearApiCache = (prefix?: string) => {
   }
 };
 
+// [PERF UX-3] Tab Visibility Cache Invalidation
+// When user returns to this tab after being away >30s, purge stale cache entries
+// so they see fresh data instead of up-to-60s stale data.
+if (typeof document !== 'undefined') {
+  let hiddenAt = 0;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      hiddenAt = Date.now();
+    } else if (hiddenAt > 0) {
+      const awayMs = Date.now() - hiddenAt;
+      if (awayMs > 30000) {
+        // Purge cache entries older than the time we were away
+        const staleThreshold = Date.now() - awayMs;
+        Object.keys(apiCache).forEach(key => {
+          if (apiCache[key].timestamp < staleThreshold) {
+            delete apiCache[key];
+          }
+        });
+      }
+      hiddenAt = 0;
+    }
+  });
+}
+
 export const api = {
   get: <T>(endpoint: string, options?: { signal?: AbortSignal }) => request<T>(endpoint, 'GET', undefined, options),
   post: <T>(endpoint: string, data: any, options?: { signal?: AbortSignal }) => request<T>(endpoint, 'POST', data, options),

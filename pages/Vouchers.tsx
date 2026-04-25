@@ -27,6 +27,9 @@ const Vouchers: React.FC = () => {
     const [deleteTarget, setDeleteTarget] = useState<VoucherCampaign | null>(null);
     const [isGuideModalOpen, setGuideModalOpen] = useState(false);
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isToggling, setIsToggling] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const loadData = async () => {
         setLoading(true);
         try {
@@ -52,30 +55,51 @@ const Vouchers: React.FC = () => {
     });
 
     const handleCreateOrUpdateCampaign = async (campaignData: Partial<VoucherCampaign>) => {
-        const url = 'voucher_campaigns';
-        const finalData = { ...campaignData };
-
-        const res = await api.post<VoucherCampaign>(url, finalData);
-        if (res.success) {
-            toast.success(campaignData.id ? 'Đã cập nhật chiến dịch!' : 'Tạo Voucher thành công!');
-            setOriginModalOpen(false);
-            loadData();
-        } else {
-            toast.error((res as any).message || 'Lỗi khi lưu chiến dịch!');
+        if (isSubmitting) return; // [GUARD]
+        setIsSubmitting(true);
+        try {
+            const url = 'voucher_campaigns';
+            const finalData = { ...campaignData };
+            const res = await api.post<VoucherCampaign>(url, finalData);
+            if (res.success) {
+                toast.success(campaignData.id ? 'Da cap nhat chien dich!' : 'Tao Voucher thanh cong!');
+                setOriginModalOpen(false);
+                // [OPTIMISTIC UI] Update local state immediately
+                if (campaignData.id) {
+                    setCampaigns(prev => prev.map(c => c.id === campaignData.id ? { ...c, ...res.data } : c));
+                } else {
+                    setCampaigns(prev => [...prev, res.data]);
+                }
+            } else {
+                toast.error((res as any).message || 'Loi khi luu chien dich!');
+            }
+        } catch {
+            toast.error('Loi ket noi');
+        } finally {
+            setIsSubmitting(false); // [GUARD] Always unlock
         }
     };
 
     const handleToggleStatus = async (campaign: VoucherCampaign) => {
+        if (isToggling) return; // [GUARD]
+        setIsToggling(true);
         const newStatus = campaign.status === 'active' ? 'draft' : 'active';
-        const res = await api.post('voucher_campaigns', {
-            ...campaign,
-            status: newStatus
-        });
-        if (res.success) {
-            toast.success(`Đã chuyển chiến dịch sang: ${newStatus === 'active' ? 'Đang chạy' : 'Bản nháp'}`);
-            loadData();
-        } else {
-            toast.error('Lỗi khi đổi trạng thái');
+        // [OPTIMISTIC UI]
+        setCampaigns(prev => prev.map(c => c.id === campaign.id ? { ...c, status: newStatus } : c));
+        try {
+            const res = await api.post('voucher_campaigns', { ...campaign, status: newStatus });
+            if (res.success) {
+                toast.success(`Đã chuyển trạng thái thành công`);
+            } else {
+                // [ROLLBACK]
+                setCampaigns(prev => prev.map(c => c.id === campaign.id ? { ...c, status: campaign.status } : c));
+                toast.error('Loi khi doi trang thai');
+            }
+        } catch {
+            setCampaigns(prev => prev.map(c => c.id === campaign.id ? { ...c, status: campaign.status } : c));
+            toast.error('Loi ket noi');
+        } finally {
+            setIsToggling(false); // [GUARD] Always unlock
         }
     };
 
@@ -84,14 +108,25 @@ const Vouchers: React.FC = () => {
     };
 
     const executeDelete = async () => {
-        if (!deleteTarget) return;
-        const res = await api.delete(`voucher_campaigns/${deleteTarget.id}`);
-        if (res.success) {
-            toast.success('Đã xóa chiến dịch!');
-            setDeleteTarget(null);
-            loadData();
-        } else {
-            toast.error('Lỗi khi xóa!');
+        if (!deleteTarget || isDeleting) return; // [GUARD]
+        setIsDeleting(true);
+        // [OPTIMISTIC UI] Remove immediately
+        const snapshot = [...campaigns];
+        setCampaigns(prev => prev.filter(c => c.id !== deleteTarget.id));
+        setDeleteTarget(null);
+        try {
+            const res = await api.delete(`voucher_campaigns/${deleteTarget.id}`);
+            if (res.success) {
+                toast.success('Da xoa chien dich!');
+            } else {
+                setCampaigns(snapshot); // [ROLLBACK]
+                toast.error('Loi khi xoa!');
+            }
+        } catch {
+            setCampaigns(snapshot); // [ROLLBACK]
+            toast.error('Loi ket noi');
+        } finally {
+            setIsDeleting(false); // [GUARD] Always unlock
         }
     };
 

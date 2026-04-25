@@ -74,13 +74,39 @@ if (defined('ENV_API_URL')) {
 }
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+// [SCALE OPTIMIZATION] Enable persistent connections ONLY for extremely high-throughput endpoints
+// to avoid TCP port exhaustion and connection overhead. Regular API calls remain non-persistent
+// to prevent tying up database connections on long-running PHP-FPM processes.
+$isHighTrafficEndpoint = isset($_SERVER['SCRIPT_NAME']) && (
+    strpos($_SERVER['SCRIPT_NAME'], 'webhook.php') !== false ||
+    strpos($_SERVER['SCRIPT_NAME'], 'track.php') !== false
+);
+
 $options = [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     PDO::ATTR_EMULATE_PREPARES => false,
-    PDO::ATTR_PERSISTENT => false, // Tạm tắt persistent để tránh chiếm dụng connection ở hosting
+    PDO::ATTR_PERSISTENT => $isHighTrafficEndpoint,
     PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci; SET time_zone = '+07:00';"
 ];
+
+/**
+ * Helper: Check if Database supports SKIP LOCKED (MySQL 8.0+ or MariaDB 10.6+)
+ */
+function isDatabaseSkipLockedSupported($pdo) {
+    if (!$pdo) return false;
+    try {
+        $version = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
+        if (version_compare($version, '8.0.0', '>=')) return true;
+        if (stripos($version, 'MariaDB') !== false) {
+            $mariaVersion = preg_replace('/^5\.5\.5-/', '', $version);
+            return version_compare($mariaVersion, '10.6.0', '>=');
+        }
+        return false;
+    } catch (Exception $e) {
+        return false;
+    }
+}
 
 /**
  * Safety check for long-running processes (like AI generating responses)
@@ -314,7 +340,9 @@ if ($adminTokenHeader === ADMIN_BYPASS_TOKEN) {
     $current_admin_id = 'admin-001';
     if (session_status() === PHP_SESSION_ACTIVE) {
         $_SESSION['org_user_id'] = 'admin-001';
-        $_SESSION['user_id'] = '1'; // Phục hồi user_id để lọt qua middleware
+        if (empty($_SESSION['user_id'])) {
+            $_SESSION['user_id'] = '1'; // Phục hồi user_id để lọt qua middleware nếu gọi API chay
+        }
     }
 }
 

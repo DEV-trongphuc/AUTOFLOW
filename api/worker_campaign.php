@@ -60,8 +60,7 @@ if (!function_exists('runWorkerCampaign')) {
         // [FIX P9-C1] MySQL version guard for FOR UPDATE SKIP LOCKED.
         // SKIP LOCKED requires MySQL = 8.0  identical to fix in worker_queue.php (P7-C3).
         // On MySQL 5.7: hardcoded SKIP LOCKED ? SQLState[42000] Syntax Error ? campaign batch crash.
-        $mysqlVersion = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
-        $skipLockedClause = version_compare($mysqlVersion, '8.0.0', '>=') ? 'SKIP LOCKED' : '';
+        $skipLockedClause = isDatabaseSkipLockedSupported($pdo) ? 'SKIP LOCKED' : '';
 
         // Check for valid request (from Cron or Direct Trigger)
         $manualCampaignId = $campaignId ?? $_GET['campaign_id'] ?? null;
@@ -310,6 +309,33 @@ if (!function_exists('runWorkerCampaign')) {
                 // Commit the initialization transaction
                 $pdo->commit();
 
+                // [OPTIMIZATION] Pre-build the Recipient Fetch SQL to compile ONCE before the loop
+                $sqlFetch = "SELECT s.id, s.email, s.first_name, s.last_name, s.phone_number, s.custom_attributes FROM subscribers s WHERE s.status IN ('active', 'lead', 'customer') AND s.workspace_id = ?";
+                $execParams = array_merge([$campaignWorkspaceId], $queryBaseParams);
+                if (($campaign['type'] ?? 'email') === 'zalo_zns') {
+                    $sqlFetch .= " AND (s.phone_number IS NOT NULL AND s.phone_number != '')";
+                }
+                if (!empty($wheres)) {
+                    $sqlFetch .= " AND (" . implode(' OR ', $wheres) . ")";
+                }
+                $sqlFetch .= " AND NOT EXISTS (
+                    SELECT 1 FROM subscriber_activity sa
+                    WHERE sa.subscriber_id = s.id
+                    AND sa.campaign_id = ?
+                    AND (
+                        sa.type IN ('receive_email', 'failed_email', 'zalo_sent', 'meta_sent', 'zns_sent', 'zns_failed', 'enter_flow')
+                        OR (sa.type = 'processing_campaign' AND sa.created_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE))
+                    )
+                )";
+                $execParams[] = $cid;
+                $sqlFetch .= " ORDER BY s.id ASC LIMIT " . (int)$BATCH_SIZE . " FOR UPDATE " . $skipLockedClause;
+                $stmtSubs = $pdo->prepare($sqlFetch);
+
+                // [OPTIMIZATION] Pre-compile UPDATE queries
+                $stmtUpdateFlowEnrolled = $pdo->prepare("UPDATE flows SET stat_enrolled = stat_enrolled + ? WHERE id = ?");
+                $stmtUpdateCampSentJSON = $pdo->prepare("UPDATE campaigns SET count_sent = count_sent + ?, stats = JSON_SET(COALESCE(NULLIF(stats, ''), '{}'), '$.sent', COALESCE(JSON_EXTRACT(stats, '$.sent'), 0) + ?) WHERE id = ?");
+                $stmtUpdateCampSentFB = $pdo->prepare("UPDATE campaigns SET count_sent = count_sent + ? WHERE id = ?");
+
                 while ($hasMore && $batchCount < $MAX_BATCHES) {
                     $batchCount++;
 
@@ -321,44 +347,6 @@ if (!function_exists('runWorkerCampaign')) {
                     }
                     $pdo->beginTransaction();
                     try {
-                        // [OPTIMIZED] Fetch only essential columns for sending speed
-                        // [FIX BUG-WC-1] Scope recipients to campaign workspace_id to prevent cross-tenant email send
-                        $sql = "SELECT s.id, s.email, s.first_name, s.last_name, s.phone_number, s.custom_attributes FROM subscribers s WHERE s.status IN ('active', 'lead', 'customer') AND s.workspace_id = ?";
-                        $execParams = array_merge([$campaignWorkspaceId], $queryBaseParams);
-
-                        if (($campaign['type'] ?? 'email') === 'zalo_zns') {
-                            $sql .= " AND (s.phone_number IS NOT NULL AND s.phone_number != '')";
-                        }
-
-                        if (!empty($wheres))
-                            $sql .= " AND (" . implode(' OR ', $wheres) . ")";
-
-                        // Exclude already sent or failed (permanent) OR currently in-progress (temporary).
-                        // [STALE-LOCK FIX] processing_campaign is a temporary lock written BEFORE the send.
-                        // If the campaign worker crashes after this lock is committed (TX1) but before
-                        // the email is sent and receive_email is recorded (TX2), the subscriber would
-                        // be permanently skipped with the old unlimited check.
-                        // Fix: processing_campaign only blocks for 10 minutes (the max realistic send time
-                        // per batch). After that, the lock is treated as stale and the subscriber
-                        // becomes eligible again  preventing ghost-skips from crashed workers.
-                        $sql .= " AND NOT EXISTS (
-                    SELECT 1 FROM subscriber_activity sa
-                    WHERE sa.subscriber_id = s.id
-                    AND sa.campaign_id = ?
-                    AND (
-                        -- Permanent exclusions: subscriber already received or hard-failed this campaign
-                        sa.type IN ('receive_email', 'failed_email', 'zalo_sent', 'meta_sent', 'zns_sent', 'zns_failed', 'enter_flow')
-                        OR
-                        -- Temporary lock: in-progress (only block if lock is < 10 minutes old)
-                        (sa.type = 'processing_campaign' AND sa.created_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE))
-                    )
-                )";
-                        $execParams[] = $cid;
-
-                        // [FIX P9-C1] Use version-aware $skipLockedClause; cast BATCH_SIZE to int [P9-H4]
-                        $sql .= " ORDER BY s.id ASC LIMIT " . (int)$BATCH_SIZE . " FOR UPDATE " . $skipLockedClause;
-
-                        $stmtSubs = $pdo->prepare($sql);
                         $stmtSubs->execute($execParams);
                         $recipients = $stmtSubs->fetchAll();
 
@@ -772,7 +760,7 @@ if (!function_exists('runWorkerCampaign')) {
                             $pdo->prepare($sqlFlow)->execute($vals);
 
                             foreach ($fidStats as $fid => $count) {
-                                $pdo->prepare("UPDATE flows SET stat_enrolled = stat_enrolled + ? WHERE id = ?")->execute([$count, $fid]);
+                                $stmtUpdateFlowEnrolled->execute([$count, $fid]);
                             }
                         }
 
@@ -781,11 +769,11 @@ if (!function_exists('runWorkerCampaign')) {
                         // Update count_sent AND stats JSON structure so UI polls see progress
                         try {
                             // Optimized SQL to handle NULL or Empty String for stats
-                            $pdo->prepare("UPDATE campaigns SET count_sent = count_sent + ?, stats = JSON_SET(COALESCE(NULLIF(stats, ''), '{}'), '$.sent', COALESCE(JSON_EXTRACT(stats, '$.sent'), 0) + ?) WHERE id = ?")->execute([$sentCount, $sentCount, $cid]);
+                            $stmtUpdateCampSentJSON->execute([$sentCount, $sentCount, $cid]);
                         } catch (Exception $e) {
                             // Fallback to simple update if JSON fails
                             $logs[] = "[WARN] Stats JSON update failed (fallback used): " . $e->getMessage();
-                            $pdo->prepare("UPDATE campaigns SET count_sent = count_sent + ? WHERE id = ?")->execute([$sentCount, $cid]);
+                            $stmtUpdateCampSentFB->execute([$sentCount, $cid]);
                         }
 
                         $pdo->commit();
@@ -817,7 +805,11 @@ if (!function_exists('runWorkerCampaign')) {
                             writeWorkerLog("Campaign $cid: Processed $totalProcessed. Current Speed: $speed m/s");
                             flush();
                         }
-                    } catch (Exception $e) {
+
+                        // [OPTIMIZATION] Explicit Garbage Collection (Zero-Leak Memory Profile)
+                        unset($recipients, $successIds, $failActivities, $successActivities, $flowEnrollments, $jobDispatches, $capCache, $enrollmentCache, $lockBinds, $lockVals, $allActivities, $binds, $vals, $subIdList, $placeholdersSub);
+                        
+                    } catch (Throwable $e) {
                         if ($pdo->inTransaction()) {
                             $pdo->rollBack();
                         }

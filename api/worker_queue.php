@@ -67,8 +67,8 @@ $pdo->prepare("UPDATE ai_pdf_chunk_results SET status = 'pending', error_message
 // [FIX] Match the MySQL version guard already used in worker_flow.php.
 // FOR UPDATE SKIP LOCKED is only available in MySQL 8.0+.
 // On MySQL 5.7 it throws a syntax error, bringing down the entire worker.
-$mysqlVersion = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
-$skipLockedClause = version_compare($mysqlVersion, '8.0.0', '>=') ? 'FOR UPDATE SKIP LOCKED' : 'FOR UPDATE';
+$isSkipLockedSupported = isDatabaseSkipLockedSupported($pdo);
+$skipLockedClause = $isSkipLockedSupported ? 'FOR UPDATE SKIP LOCKED' : 'FOR UPDATE';
 
 $pdo->beginTransaction();
 try {
@@ -110,6 +110,11 @@ try {
 
 // 3. Process jobs one by one (outside reservation transaction to avoid long locks)
 $jobsProcessed = 0; // [FIX-A] Must be initialized before the loop
+
+// [OPTIMIZATION] Pre-compile SQL statements to prevent N+1 CPU waste during job updates
+$stmtJobSuccess = $pdo->prepare("UPDATE queue_jobs SET status = 'completed', finished_at = NOW() WHERE id = ?");
+$stmtJobRetry = $pdo->prepare("UPDATE queue_jobs SET status = 'pending', attempts = ?, available_at = ?, error_message = ? WHERE id = ?");
+$stmtJobFail = $pdo->prepare("UPDATE queue_jobs SET status = 'failed', error_message = ?, finished_at = NOW() WHERE id = ?");
 foreach ($jobs as $jobItem) {
     // [HEAL] REFRESH LOCK: Update the lock timestamp every job so other workers don't start prematurely
     // during a long-running batch (e.g. 1000 emails campaign).
@@ -497,7 +502,7 @@ foreach ($jobs as $jobItem) {
 
     // 4. Update job status
     if ($jobSuccess) {
-        $pdo->prepare("UPDATE queue_jobs SET status = 'completed', finished_at = NOW() WHERE id = ?")->execute([$jobItem['id']]);
+        $stmtJobSuccess->execute([$jobItem['id']]);
         $jobsProcessed++;
 
         // [FIX] KEEP-ALIVE LOCK: Refresh lock timestamp every 10 successful jobs.
@@ -517,11 +522,9 @@ foreach ($jobs as $jobItem) {
             $delay = pow(5, $attempts) * 60;
             $retryAt = date('Y-m-d H:i:s', time() + $delay);
 
-            $pdo->prepare("UPDATE queue_jobs SET status = 'pending', attempts = ?, available_at = ?, error_message = ? WHERE id = ?")
-                ->execute([$attempts, $retryAt, mb_substr($jobError, 0, 500), $jobItem['id']]);
+            $stmtJobRetry->execute([$attempts, $retryAt, mb_substr($jobError, 0, 500), $jobItem['id']]);
         } else {
-            $pdo->prepare("UPDATE queue_jobs SET status = 'failed', error_message = ?, finished_at = NOW() WHERE id = ?")
-                ->execute([mb_substr($jobError, 0, 500), $jobItem['id']]);
+            $stmtJobFail->execute([mb_substr($jobError, 0, 500), $jobItem['id']]);
             // [FIX] Write to dedicated error log for ops alerting.
             // DB row alone is easy to miss; this file gives ops team an out-of-band signal.
             // grep worker_error.log for [FAILED] to detect systemic job failures quickly.
@@ -529,6 +532,9 @@ foreach ($jobs as $jobItem) {
             @file_put_contents(__DIR__ . '/worker_error.log', $errLine, FILE_APPEND | LOCK_EX);
         }
     }
+    
+    // [OPTIMIZATION] Explicit Garbage Collection (Zero-Leak Memory Profile)
+    unset($payload, $jobItem, $jobType, $jobSuccess, $jobError, $res, $trainRes, $multiResults, $pageRanges, $pendingChunks, $buttons, $attachment, $nextPayload);
 }
 
 // 5. Automatic Cleanup (Self-Maintenance, 1% chance) to prevent table bloat

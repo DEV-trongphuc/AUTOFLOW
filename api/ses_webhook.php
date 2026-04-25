@@ -62,7 +62,7 @@ if (!function_exists('verifySnsSignature')) {
         }
 
         // Download + cache PEM certificate (1-hour TTL, keyed by cert URL hash).
-        $cacheFile = sys_get_temp_dir() . '/sns_cert_' . md5($certUrl) . '.pem';
+        $cacheFile = __DIR__ . '/_locks/sns_cert_' . md5($certUrl) . '.pem';
         if (!file_exists($cacheFile) || (time() - filemtime($cacheFile)) > 3600) {
             $ctx = stream_context_create(['http' => ['timeout' => 5, 'user_agent' => 'AutoFlow/1.0']]);
             $cert = @file_get_contents($certUrl, false, $ctx);

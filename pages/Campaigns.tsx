@@ -1,4 +1,4 @@
-
+﻿
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/storageAdapter';
@@ -75,6 +75,9 @@ const Campaigns: React.FC = () => {
     // Flow Review State
     const [flowReviewData, setFlowReviewData] = useState<{ campaign: Campaign, flow: Flow | null } | null>(null);
     const [isStartingFlow, setIsStartingFlow] = useState(false);
+    const [isSavingDraft, setIsSavingDraft] = useState(false);
+    const [isPublishing, setIsPublishing] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Modals
     const [confirmModal, setConfirmModal] = useState<{
@@ -193,11 +196,12 @@ const Campaigns: React.FC = () => {
     useEffect(() => { pollingData.current = { page: pagination.page, limit: pagination.limit, search: debouncedSearch, dates: getActiveDates() }; }, [pagination.page, pagination.limit, debouncedSearch, getActiveDates]);
 
     useEffect(() => {
+        let isMounted = true;
         const interval = setInterval(() => {
             // [FIX P7-H4] Include PAUSED in hasPending so auto-refresh continues after Circuit Breaker trips.
             // Without this, the UI stops polling when paused — manual campaign resume from another tab never reflects.
             const hasPending = campaignsRef.current.some(c => c.status === CampaignStatus.SCHEDULED || c.status === CampaignStatus.SENDING || c.status === CampaignStatus.PAUSED);
-            if (hasPending) {
+            if (hasPending && isMounted) {
                 const { startDate, endDate } = pollingData.current.dates;
                 const queryParams: Record<string, string> = {
                     page: pollingData.current.page.toString(),
@@ -208,7 +212,7 @@ const Campaigns: React.FC = () => {
                 if (endDate) queryParams.endDate = endDate;
                 const query = new URLSearchParams(queryParams);
                 api.get<any>(`campaigns?${query.toString()}`).then(res => {
-                    if (res.success && res.data.data) {
+                    if (isMounted && res.success && res.data.data) {
                         setCampaigns(prev => {
                             // Cực đại hoá Render: Chỉ update Memory Reference nếu Dữ liệu thực sự thay đổi string
                             const newString = JSON.stringify(res.data.data);
@@ -220,7 +224,10 @@ const Campaigns: React.FC = () => {
                 });
             }
         }, 5000);
-        return () => clearInterval(interval);
+        return () => {
+            isMounted = false;
+            clearInterval(interval);
+        };
     }, []);
 
     const loadCampaigns = async (page = 1, search = '') => {
@@ -326,6 +333,8 @@ const Campaigns: React.FC = () => {
     }, [campaigns]);
 
     const handleSaveDraft = React.useCallback(async (data: Partial<Campaign>) => {
+        if (isSavingDraft) return null; // [GUARD] Prevent double-submit
+        setIsSavingDraft(true);
         const payload = { ...data, status: CampaignStatus.DRAFT, stats: data.id ? undefined : { sent: 0, opened: 0, clicked: 0, bounced: 0, spam: 0, unsubscribed: 0, failed: 0 } };
         try {
             let res;
@@ -348,11 +357,15 @@ const Campaigns: React.FC = () => {
             }
         } catch (error) {
             showToast('Đã xảy ra lỗi hệ thống khi lưu bản nháp', 'error');
+        } finally {
+            setIsSavingDraft(false); // [GUARD] Always unlock
         }
         return null;
-    }, [pagination.page, debouncedSearch]);
+    }, [isSavingDraft, pagination.page, debouncedSearch]);
 
     const handlePublish = React.useCallback(async (data: Partial<Campaign>, options: { connectFlow: boolean, activateFlowId: string | null }) => {
+        if (isPublishing) return null; // [GUARD] Prevent double-submit
+        setIsPublishing(true);
         let finalStatus = CampaignStatus.SCHEDULED;
         const scheduleTime = data.scheduledAt;
 
@@ -434,11 +447,16 @@ const Campaigns: React.FC = () => {
             }
         } catch (error) {
             showToast('Đã xảy ra lỗi hệ thống khi đăng chiến dịch', 'error');
+        } finally {
+            setIsPublishing(false); // [GUARD] Always unlock
         }
         return null;
-    }, [allFlows, navigate]);
+    }, [isPublishing, allFlows, navigate]);
 
     const executeDelete = async (id: string, deleteFlowMode: number) => {
+        if (isDeleting) return; // [GUARD] Prevent double-submit
+        setIsDeleting(true);
+        const snapshot = campaigns.slice(); // Save snapshot for rollback
         // [OPTIMISTIC UI] Remove from list immediately before API call
         setCampaigns(prev => prev.filter(c => c.id !== id));
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
@@ -452,13 +470,15 @@ const Campaigns: React.FC = () => {
                     api.get<any>('flows').then(r => { if (r.success) { const raw = r.data as any; setAllFlows(Array.isArray(raw) ? raw : (raw?.data || [])); } });
                 }
             } else {
-                // Rollback: re-fetch if API failed
+                // [ROLLBACK] Restore snapshot on failure
                 showToast(res.message || 'Lỗi khi xóa chiến dịch', 'error');
-                loadCampaigns(pagination.page, debouncedSearch);
+                setCampaigns(snapshot);
             }
         } catch (error) {
             showToast('Đã xảy ra lỗi hệ thống khi xóa chiến dịch', 'error');
-            loadCampaigns(pagination.page, debouncedSearch);
+            setCampaigns(snapshot); // [ROLLBACK]
+        } finally {
+            setIsDeleting(false); // [GUARD] Always unlock
         }
     };
 

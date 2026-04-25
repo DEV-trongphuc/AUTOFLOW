@@ -1493,10 +1493,11 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                         <div className="flex items-center gap-3">
                             <Button
                                 variant="ghost"
-                                onClick={() => onSaveDraft(formData)}
-                                className="text-slate-500 hover:text-slate-700 bg-slate-100/80 hover:bg-slate-200 px-6 font-bold hidden sm:flex items-center gap-2 transition-colors border border-slate-200"
+                                onClick={() => !isSubmitting && onSaveDraft(formData)}
+                                disabled={isSubmitting}
+                                className="text-slate-500 hover:text-slate-700 bg-slate-100/80 hover:bg-slate-200 px-6 font-bold hidden sm:flex items-center gap-2 transition-colors border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Save className="w-4 h-4" /> LƯU NHÁP
+                                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} LƯU NHÁP
                             </Button>
 
                             {step < 5 ? (
@@ -1846,4 +1847,4 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
     );
 };
 
-export default CampaignWizard;
+export default React.memo(CampaignWizard);

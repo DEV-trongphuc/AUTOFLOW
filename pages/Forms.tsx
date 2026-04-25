@@ -45,6 +45,8 @@ const Forms: React.FC = () => {
     const [lists, setLists] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isToggling, setIsToggling] = useState(false);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingFormId, setEditingFormId] = useState<string | null>(null);
@@ -192,35 +194,52 @@ const Forms: React.FC = () => {
     };
 
     const executeDelete = async () => {
-        if (!confirmDeleteId) return;
-
+        if (!confirmDeleteId || isDeleting) return; // [GUARD]
+        setIsDeleting(true);
+        // [OPTIMISTIC UI] Remove from list immediately
+        const snapshot = [...forms];
+        setForms(prev => prev.filter(f => f.id !== confirmDeleteId));
+        setConfirmDeleteId(null);
         try {
             const res = await api.delete(`forms/${confirmDeleteId}`);
             if (res.success) {
-                setForms(prev => prev.filter(f => f.id !== confirmDeleteId));
-                showToast('Đã xóa biểu mẫu và tạm dừng các Flow liên quan');
-                setConfirmDeleteId(null);
+                showToast('Da xoa bieu mau va tam dung cac Flow lien quan');
             } else {
-                showToast(res.message || 'Lỗi khi xóa Form', 'error');
+                setForms(snapshot); // [ROLLBACK]
+                showToast(res.message || 'Loi khi xoa Form', 'error');
             }
         } catch (error) {
-            console.error('Delete form error:', error);
-            showToast('Không thể xóa biểu mẫu', 'error');
+            setForms(snapshot); // [ROLLBACK]
+            showToast('Khong the xoa bieu mau', 'error');
+        } finally {
+            setIsDeleting(false); // [GUARD] Always unlock
         }
     };
 
     const handleToggleStatus = async (e: React.MouseEvent, form: FormDefinition) => {
         e.stopPropagation();
+        if (isToggling) return; // [GUARD]
+        setIsToggling(true);
+        const newStatus = form.status === 'active' ? 'inactive' : 'active';
+        
+        // [OPTIMISTIC UI]
+        setForms(prev => prev.map(f => f.id === form.id ? { ...f, status: newStatus } : f));
+        
         try {
-            const res = await api.put<{ id: string; status: string }>(`forms/${form.id}?route=toggle_status`, {});
+            const res = await api.put<{status: string}>(`forms/${form.id}/status`, { status: newStatus });
             if (res.success) {
-                setForms(prev => prev.map(f => f.id === form.id ? { ...f, status: res.data.status as 'active' | 'inactive' } : f));
-                showToast(res.data.status === 'active' ? 'Đã kích hoạt biểu mẫu' : 'Đã vô hiệu hoá biểu mẫu');
+                showToast(newStatus === 'active' ? 'Đã kích hoạt biểu mẫu' : 'Đã vô hiệu hoá biểu mẫu');
             } else {
+                // [ROLLBACK]
+                setForms(prev => prev.map(f => f.id === form.id ? { ...f, status: form.status } : f));
                 showToast(res.message || 'Lỗi khi thay đổi trạng thái', 'error');
             }
         } catch {
+            // [ROLLBACK]
+            setForms(prev => prev.map(f => f.id === form.id ? { ...f, status: form.status } : f));
             showToast('Lỗi kết nối', 'error');
+        } finally {
+            setIsToggling(false); // [GUARD] Always unlock
         }
     };
 

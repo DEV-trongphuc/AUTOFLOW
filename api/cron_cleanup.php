@@ -48,19 +48,45 @@ function runCleanup(PDO $pdo, string $label, string $sql): array
     }
 }
 
+function runPartitionCleanup(PDO $pdo, string $table, string $fallbackSql, int $retentionDays): array
+{
+    try {
+        // Check if table is partitioned
+        $stmt = $pdo->prepare("SELECT PARTITION_NAME FROM information_schema.partitions WHERE table_schema = DATABASE() AND table_name = ? AND partition_name IS NOT NULL AND partition_name != 'p_future' AND partition_description < TO_DAYS(DATE_SUB(NOW(), INTERVAL ? DAY))");
+        $stmt->execute([$table, $retentionDays]);
+        $partitions = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        if (!empty($partitions)) {
+            $partitionList = implode(',', $partitions);
+            $pdo->exec("ALTER TABLE `$table` DROP PARTITION $partitionList");
+            return ['label' => $table . ' (Partitions)', 'rows' => count($partitions), 'status' => 'DROPPED'];
+        }
+        
+        // Fallback to traditional DELETE if not partitioned or no matching partitions found
+        $stmt = $pdo->prepare($fallbackSql);
+        $stmt->execute();
+        $rows = $stmt->rowCount();
+        return ['label' => $table, 'rows' => $rows, 'status' => 'OK'];
+    } catch (PDOException $e) {
+        return ['label' => $table, 'rows' => 0, 'status' => 'ERROR: ' . $e->getMessage()];
+    }
+}
+
 // ── [EVT-1] raw_event_buffer: purge processed rows older than 24h ─────────
-$results[] = runCleanup($pdo, 'raw_event_buffer',
+$results[] = runPartitionCleanup($pdo, 'raw_event_buffer',
     "DELETE FROM `raw_event_buffer`
      WHERE `processed` = 1
        AND `created_at` < DATE_SUB(NOW(), INTERVAL 24 HOUR)
-     LIMIT 5000"
+     LIMIT 5000",
+    1 // 1 day retention
 );
 
 // ── [EVT-2] login_attempts: purge entries older than 1h ───────────────────
-$results[] = runCleanup($pdo, 'login_attempts',
+$results[] = runPartitionCleanup($pdo, 'login_attempts',
     "DELETE FROM `login_attempts`
      WHERE `attempted_at` < DATE_SUB(NOW(), INTERVAL 1 HOUR)
-     LIMIT 10000"
+     LIMIT 10000",
+    1 // Fallback to 1 day if partitioned
 );
 
 // ── [EVT-3] ai_vector_cache: purge vectors older than 30 days ────────────
@@ -70,7 +96,22 @@ $results[] = runCleanup($pdo, 'ai_vector_cache',
      LIMIT 1000"
 );
 
-// ── [EVT-4] ai_rag_search_cache: purge cache older than 7 days ───────────
+// ── [EVT-4] web_sessions: purge old bot sessions to save space ────────────
+$results[] = runCleanup($pdo, 'web_sessions_bot',
+    "DELETE FROM `web_sessions`
+     WHERE `device_type` = 'bot'
+       AND `id` < (
+           SELECT `id` FROM (
+               SELECT `id`
+               FROM `web_sessions`
+               WHERE `device_type` = 'bot'
+               ORDER BY `id` DESC
+               LIMIT 1 OFFSET 1000
+           ) AS subquery
+       )"
+);
+
+// ── [EVT-5] ai_rag_search_cache: purge cache older than 7 days ───────────
 $results[] = runCleanup($pdo, 'ai_rag_search_cache',
     "DELETE FROM `ai_rag_search_cache`
      WHERE `created_at` < DATE_SUB(NOW(), INTERVAL 7 DAY)

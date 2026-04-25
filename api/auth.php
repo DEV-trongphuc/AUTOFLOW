@@ -3,7 +3,7 @@
 require_once 'db_connect.php';
 
 session_start();
-
+apiHeaders();
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 
