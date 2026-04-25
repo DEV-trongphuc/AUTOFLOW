@@ -8,6 +8,15 @@ header('Content-Type: application/json; charset=utf-8');
 
 $logFile = __DIR__ . '/webhook_debug.log';
 require_once 'db_connect.php';
+
+// [PRODUCTION SCALING FIX] db_connect.php unconditionally calls session_start().
+// Since webhooks do not use sessions, this creates 1 empty session file per webhook hit,
+// causing massive disk I/O and inode exhaustion under high load (millions of events).
+// Destroying the session immediately cleans up the file.
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_destroy();
+}
+
 require_once 'zalo_helpers.php';
 require_once 'zalo_scoring_helper.php';
 require_once 'flow_helpers.php'; // [FIX] Moved to top — logActivity() used in Zalo webhook section before any branch-specific require
@@ -164,16 +173,22 @@ if ($method === 'POST') {
 
                         // [OPTIMIZATION] Send Response Immediately to avoid Timeout
                         if (function_exists('fastcgi_finish_request')) {
+                            while (ob_get_level() > 0) ob_end_clean();
                             echo json_encode(['status' => 'success']);
                             fastcgi_finish_request();
                         } else {
                             // PHP-FPM not available, output buffer flush
+                            ignore_user_abort(true);
+                            while (ob_get_level() > 0) ob_end_clean();
                             ob_start();
                             echo json_encode(['status' => 'success']);
+                            $size = ob_get_length();
                             header('Connection: close');
-                            header('Content-Length: ' . ob_get_length());
+                            header('Content-Encoding: none');
+                            header("Content-Length: $size");
                             ob_end_flush();
                             flush();
+                            if (session_id()) session_write_close();
                         }
 
                         // --- 1. DATA EXTRACTION LOGIC (Email & Phone) ---
@@ -821,6 +836,9 @@ if ($method === 'POST') {
                                 if ($holidayTriggered) {
                                     // [FIX-3] Use exit only — return in global scope is misleading,
                                     // and the exit below it was unreachable dead code.
+                                    if (isset($lockName)) {
+                                        $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]);
+                                    }
                                     exit;
                                 }
 
@@ -947,6 +965,9 @@ if ($method === 'POST') {
                         }
                     }
                 } catch (Exception $e) {
+                    if ($pdo->inTransaction()) {
+                        $pdo->rollBack();
+                    }
                     file_put_contents(__DIR__ . '/zalo_debug.log', date('[Y-m-d H:i:s] ') . "ERROR: " . $e->getMessage() . "\n", FILE_APPEND);
                 }
 

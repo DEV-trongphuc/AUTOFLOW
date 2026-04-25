@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useDeferredValue, memo } from 'react';
 import { api } from '../services/storageAdapter';
 import { Template, TemplateGroup } from '../types';
 import { Edit3, Copy, Trash2, Plus, Layout, Eye, Sparkles, FolderOpen, Globe, Search, FolderPlus, Check, X, AlertCircle, ChevronRight, ChevronLeft, Image as ImageIcon } from 'lucide-react';
@@ -23,9 +23,16 @@ import { CardGridSkeleton } from '../components/common/PageSkeleton';
 import { useIsAdmin } from '../hooks/useAuthUser';
 import { usePermissionGuard } from '../components/common/PermissionGuard';
 
-const VisualTemplate: React.FC<{ template: Template, html: string }> = ({ template, html }) => {
+const VisualTemplate: React.FC<{ template: Template }> = memo(({ template }) => {
     const containerRef = React.useRef<HTMLDivElement>(null);
     const [scale, setScale] = useState(0.4);
+
+    const html = useMemo(() => {
+        if (!template) return '';
+        if (template.blocks && template.blocks.length > 0) return compileHTML(template.blocks, template.bodyStyle, template.name);
+        if (template.htmlContent) return template.htmlContent;
+        return '';
+    }, [template]);
 
     useEffect(() => {
         const updateScale = () => {
@@ -67,7 +74,7 @@ const VisualTemplate: React.FC<{ template: Template, html: string }> = ({ templa
             <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-white/20 to-transparent pointer-events-none"></div>
         </div>
     );
-};
+});
 
 const Templates: React.FC = () => {
     const isAdmin = useIsAdmin();
@@ -341,16 +348,22 @@ const Templates: React.FC = () => {
 
     // --- Filtering Logic ---
     // Merge all templates: personal first, system appended
-    const allMergedTemplates = [...userTemplates, ...SYSTEM_TEMPLATES];
+    const allMergedTemplates = useMemo(() => [...userTemplates, ...SYSTEM_TEMPLATES], [userTemplates]);
 
-    const filteredTemplates = allMergedTemplates.filter(t => {
-        const matchesGroup = filterGroupId === 'all' || t.groupId === filterGroupId;
-        const matchesSearch = (t.name || '').toLowerCase().includes(searchTerm.toLowerCase());
-        return matchesGroup && matchesSearch;
-    });
+    const deferredSearchTerm = useDeferredValue(searchTerm);
+
+    const filteredTemplates = useMemo(() => {
+        return allMergedTemplates.filter(t => {
+            const matchesGroup = filterGroupId === 'all' || t.groupId === filterGroupId;
+            const matchesSearch = (t.name || '').toLowerCase().includes(deferredSearchTerm.toLowerCase());
+            return matchesGroup && matchesSearch;
+        });
+    }, [allMergedTemplates, filterGroupId, deferredSearchTerm]);
 
     const totalPages = Math.max(1, Math.ceil(filteredTemplates.length / PAGE_SIZE));
-    const paginatedTemplates = filteredTemplates.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+    const paginatedTemplates = useMemo(() => {
+        return filteredTemplates.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+    }, [filteredTemplates, currentPage]);
 
     // Reset to page 1 whenever filters change
     const handleFilterGroupChange = (id: string) => { setFilterGroupId(id); setCurrentPage(1); };
@@ -374,6 +387,8 @@ const Templates: React.FC = () => {
         const group = groups.find(g => g.id === groupId);
         return group ? group.name : 'Chưa phân loại';
     };
+
+    const previewHtml = useMemo(() => getPreviewHTML(previewTemplate), [previewTemplate]);
 
     return (
         <div className="animate-fade-in space-y-6 pb-20">
@@ -523,7 +538,7 @@ const Templates: React.FC = () => {
                                                     {template.thumbnail && !template.thumbnail.includes('placehold.co') ? (
                                                         <img src={template.thumbnail} alt={template.name} className="w-full h-full object-cover object-top" loading="lazy" />
                                                     ) : (
-                                                        <VisualTemplate template={template} html={getPreviewHTML(template)} />
+                                                        <VisualTemplate template={template} />
                                                     )}
                                                 </div>
 
@@ -788,7 +803,7 @@ const Templates: React.FC = () => {
             {previewTemplate && (
                 <EmailPreviewDrawer
                     template={previewTemplate}
-                    htmlContent={getPreviewHTML(previewTemplate)}
+                    htmlContent={previewHtml}
                     isOpen={!!previewTemplate}
                     onClose={() => setPreviewTemplate(null)}
                     onEdit={() => {

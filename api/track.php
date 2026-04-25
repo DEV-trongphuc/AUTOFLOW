@@ -6,10 +6,16 @@ require_once 'db_connect.php';
 // browser sẽ block bất kỳ response nào có Origin: * khi credentials được gửi kèm.
 // Chỉ cần khai báo methods và headers bổ sung nếu cần.
 
+// [PRODUCTION SCALING FIX] Dọn Session rác sinh ra từ db_connect.php
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_destroy();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
+
 
 // Helper function to normalize URLs by removing tracking parameters
 function normalizeUrl($url)
@@ -184,7 +190,7 @@ if ($isBot) {
 // --- SMART ANTI-DDOS PROTECTION (IP-BASED) ---
 try {
     $rateLimitKey = 'track_rl_' . $ip;
-    if (function_exists('apcu_inc')) {
+    if (function_exists('apcu_inc') && function_exists('apcu_store')) {
         $hits = apcu_inc($rateLimitKey, 1, $success, 60);
         if ($hits === 1 || !$success) {
             apcu_store($rateLimitKey, 1, 60);
@@ -259,6 +265,27 @@ try {
         ];
     }
     $propWorkspaceId = $propCache[$propertyId]['workspace_id'];
+
+    // [OPTIMIZATION] Ngắt kết nối sớm (Early Termination)
+    // Thực hiện ở đây vì đã vượt qua mọi vòng kiểm tra (Bot, Blacklist, Rate Limit, Auth)
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (function_exists('fastcgi_finish_request')) {
+            while (ob_get_level() > 0) ob_end_clean();
+            echo json_encode(['status' => 'success']);
+            fastcgi_finish_request();
+        } else {
+            ignore_user_abort(true);
+            while (ob_get_level() > 0) ob_end_clean();
+            ob_start();
+            echo json_encode(['status' => 'success']);
+            $size = ob_get_length();
+            header('Connection: close');
+            header('Content-Encoding: none');
+            header("Content-Length: $size");
+            ob_end_flush();
+            flush();
+        }
+    }
 
     // Capture IP — same safe logic as bot-check section above
     $rawCaptureIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
