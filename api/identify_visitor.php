@@ -69,10 +69,23 @@ try {
         $browser = $vDataObj['browser'] ?? 'Unknown';
     }
 
+    // [SECURITY FIX] Fetch the Workspace ID for this property to prevent cross-tenant leakage
+    $workspaceId = null;
+    if ($propertyId) {
+        $stmtW = $pdo->prepare("SELECT workspace_id FROM web_properties WHERE id = ?");
+        $stmtW->execute([$propertyId]);
+        $workspaceId = (int) $stmtW->fetchColumn();
+    }
+
+    if (!$workspaceId) {
+        // Fallback or error if property not found
+        $workspaceId = 1; // Default
+    }
+
     // 1. Check subscribers table (Email/Zalo marketing)
     if ($email) {
-        $stmt = $pdo->prepare("SELECT id, first_name, last_name, avatar FROM subscribers WHERE email = ? LIMIT 1");
-        $stmt->execute([$email]);
+        $stmt = $pdo->prepare("SELECT id, first_name, last_name, avatar FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
+        $stmt->execute([$email, $workspaceId]);
         $subscriber = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($subscriber) {
             $emailSubscriberId = $subscriber['id'];
@@ -83,8 +96,8 @@ try {
     }
 
     if (!$emailSubscriberId && $phone) {
-        $stmt = $pdo->prepare("SELECT id, first_name, last_name, avatar FROM subscribers WHERE phone_number = ? LIMIT 1");
-        $stmt->execute([$phone]);
+        $stmt = $pdo->prepare("SELECT id, first_name, last_name, avatar FROM subscribers WHERE phone_number = ? AND workspace_id = ? LIMIT 1");
+        $stmt->execute([$phone, $workspaceId]);
         $subscriber = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($subscriber) {
             $emailSubscriberId = $subscriber['id'];
@@ -112,8 +125,15 @@ try {
 
     // 3. Check zalo_subscribers table
     if ($phone) {
-        $stmt = $pdo->prepare("SELECT zalo_user_id, display_name FROM zalo_subscribers WHERE phone_number = ? LIMIT 1");
-        $stmt->execute([$phone]);
+        $stmt = $pdo->prepare("
+            SELECT zs.zalo_user_id, zs.display_name 
+            FROM zalo_subscribers zs
+            JOIN zalo_lists zl ON zs.zalo_list_id = zl.id
+            JOIN zalo_oa_configs zoc ON zl.oa_config_id = zoc.id
+            WHERE zs.phone_number = ? AND zoc.workspace_id = ? 
+            LIMIT 1
+        ");
+        $stmt->execute([$phone, $workspaceId]);
         $zaloSub = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($zaloSub) {
             $zaloSubscriberId = $zaloSub['zalo_user_id'];
@@ -122,8 +142,15 @@ try {
     }
 
     if (!$zaloSubscriberId && $email) {
-        $stmt = $pdo->prepare("SELECT zalo_user_id, display_name FROM zalo_subscribers WHERE manual_email = ? LIMIT 1");
-        $stmt->execute([$email]);
+        $stmt = $pdo->prepare("
+            SELECT zs.zalo_user_id, zs.display_name 
+            FROM zalo_subscribers zs
+            JOIN zalo_lists zl ON zs.zalo_list_id = zl.id
+            JOIN zalo_oa_configs zoc ON zl.oa_config_id = zoc.id
+            WHERE zs.manual_email = ? AND zoc.workspace_id = ? 
+            LIMIT 1
+        ");
+        $stmt->execute([$email, $workspaceId]);
         $zaloSub = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($zaloSub) {
             $zaloSubscriberId = $zaloSub['zalo_user_id'];
@@ -142,8 +169,8 @@ try {
         ];
 
         // Fetch current subscriber data to check what's already filled
-        $stmtCurrent = $pdo->prepare("SELECT email, first_name, last_name, phone_number, company_name, job_title FROM subscribers WHERE id = ?");
-        $stmtCurrent->execute([$emailSubscriberId]);
+        $stmtCurrent = $pdo->prepare("SELECT email, first_name, last_name, phone_number, company_name, job_title FROM subscribers WHERE id = ? AND workspace_id = ?");
+        $stmtCurrent->execute([$emailSubscriberId, $workspaceId]);
         $currentData = $stmtCurrent->fetch(PDO::FETCH_ASSOC);
 
         $sets = [];
@@ -190,7 +217,8 @@ try {
             $params[] = $propertyId;
 
             $params[] = $emailSubscriberId;
-            $pdo->prepare("UPDATE subscribers SET " . implode(', ', $sets) . " WHERE id = ?")
+            $params[] = $workspaceId;
+            $pdo->prepare("UPDATE subscribers SET " . implode(', ', $sets) . " WHERE id = ? AND workspace_id = ?")
                 ->execute($params);
 
             // Refresh names for response

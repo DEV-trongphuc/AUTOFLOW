@@ -10,6 +10,19 @@ $method = $_SERVER['REQUEST_METHOD'];
 $path = isset($_GET['id']) ? $_GET['id'] : null;
 $route = $_GET['route'] ?? ''; // New route parameter
 
+/**
+ * [SECURITY HARDENING] Centralized Campaign Ownership Verification
+ */
+function verifyCampaignOwnership($pdo, $campaignId, $workspaceId) {
+    if (!$campaignId) return;
+    $stmt = $pdo->prepare("SELECT 1 FROM campaigns WHERE id = ? AND workspace_id = ?");
+    $stmt->execute([$campaignId, $workspaceId]);
+    if (!$stmt->fetch()) {
+        jsonResponse(false, null, 'Campaign not found or access denied (Multi-tenant guard)');
+        exit;
+    }
+}
+
 function formatCampaign($row)
 {
     $row['target'] = json_decode($row['target_config'] ?? '{"listIds":[], "segmentIds":[], "individualIds":[]}', true);
@@ -304,6 +317,8 @@ if ($method === 'GET' && $route === 'audience_stats') {
         if (!$campaignId)
             jsonResponse(false, null, 'Campaign ID is required.');
 
+        verifyCampaignOwnership($pdo, $campaignId, $workspace_id);
+
         // [FIX] Verify campaign ownership to prevent cross-tenant stats leakage
         $stmtCamp = $pdo->prepare("SELECT target_config, count_sent, total_target_audience FROM campaigns WHERE id = ? AND workspace_id = ?");
         $stmtCamp->execute([$campaignId, $workspace_id]);
@@ -426,6 +441,8 @@ if ($method === 'POST' && $route === 'delete_unsubscribed') {
         $cid = $data['id'] ?? null;
         if (!$cid) jsonResponse(false, null, 'Campaign ID is required.');
         
+        verifyCampaignOwnership($pdo, $cid, $workspace_id);
+        
         // [FIX] Verify campaign ownership
         $checkCamp = $pdo->prepare("SELECT id FROM campaigns WHERE id = ? AND workspace_id = ?");
         $checkCamp->execute([$cid, $workspace_id]);
@@ -480,6 +497,8 @@ if ($method === 'GET' && $route === 'unsubscribed_list') {
         $cid = $_GET['id'] ?? null;
         if (!$cid) jsonResponse(false, null, 'Campaign ID is required.');
         
+        verifyCampaignOwnership($pdo, $cid, $workspace_id);
+        
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
         $offset = ($page - 1) * $limit;
@@ -526,6 +545,8 @@ if ($method === 'POST' && $route === 'trigger_refresh') {
         $campaignId = $data['id'] ?? $data['campaign_id'] ?? null;
         if (!$campaignId)
             jsonResponse(false, null, 'Campaign ID is required.');
+
+        verifyCampaignOwnership($pdo, $campaignId, $workspace_id);
 
         // [FIX] Verify campaign ownership
         $stmtCheck = $pdo->prepare("SELECT status, target_config FROM campaigns WHERE id = ? AND workspace_id = ?");
@@ -666,6 +687,8 @@ if ($method === 'GET' && $route === 'click_summary') {
         if (!$campaignId)
             jsonResponse(false, null, 'Campaign ID is required.');
 
+        verifyCampaignOwnership($pdo, $campaignId, $workspace_id);
+
         $device = $_GET['device'] ?? null;
         $os = $_GET['os'] ?? null;
         $params = [$campaignId];
@@ -724,6 +747,8 @@ if ($method === 'GET' && $route === 'click_details') {
         $campaignId = $_GET['id'] ?? null;
         if (!$campaignId)
             jsonResponse(false, null, 'Campaign ID is required.');
+
+        verifyCampaignOwnership($pdo, $campaignId, $workspace_id);
 
         $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
         $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 50;
@@ -784,6 +809,8 @@ if ($method === 'GET' && $route === 'tech_stats') {
         if (!$campaignId)
             jsonResponse(false, null, 'Campaign ID is required.');
 
+        verifyCampaignOwnership($pdo, $campaignId, $workspace_id);
+
         $getStats = function ($col) use ($pdo, $campaignId) {
             $locFilter = $col === 'location' ? " AND $col != 'Google Proxy' " : "";
             $sql = "SELECT $col as name, COUNT(*) as value FROM subscriber_activity WHERE campaign_id = ? AND type IN ('open_email', 'click_link')
@@ -819,6 +846,8 @@ if ($method === 'POST' && $route === 'send_test') {
         $data = $inputData;
         $campaignId = $data['campaign_id'];
         $reminderId = $data['reminder_id'] ?? null;
+
+        verifyCampaignOwnership($pdo, $campaignId, $workspace_id);
 
         // Fetch Campaign First to Determine Type
         // [FIX P39-CAM] Explicit columns — avoids loading subscriber_data/large blobs into memory
@@ -982,6 +1011,7 @@ switch ($method) {
 
         try {
             if ($path) {
+                verifyCampaignOwnership($pdo, $path, $workspace_id);
                 if ($route === 'recipients') {
                     $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
                     $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 20;
@@ -992,8 +1022,8 @@ switch ($method) {
                     $search = $_GET['search'] ?? '';
 
                     // Fetch Campaign Type first to decide table
-                    $stmtC = $pdo->prepare("SELECT type FROM campaigns WHERE id = ?");
-                    $stmtC->execute([$path]);
+                    $stmtC = $pdo->prepare("SELECT type FROM campaigns WHERE id = ? AND workspace_id = ?");
+                    $stmtC->execute([$path, $workspace_id]);
                     $cType = $stmtC->fetchColumn() ?: 'email';
                     $isZns = $cType === 'zalo_zns';
 
@@ -1194,8 +1224,8 @@ switch ($method) {
                     template_id, content_body, custom_html, target_config, count_sent, count_opened, count_unique_opened,
                     count_clicked, count_unique_clicked, count_bounced, count_spam, count_unsubscribed, tracking_enabled,
                     created_at, updated_at, type, config, total_target_audience, attachments,
-                    is_deleted FROM campaigns WHERE id = ?");
-                $stmt->execute([$path]);
+                    is_deleted FROM campaigns WHERE id = ? AND workspace_id = ?");
+                $stmt->execute([$path, $workspace_id]);
                 $camp = $stmt->fetch();
                 if ($camp) {
                     // [PERF FIX] Self-healing throttle: only sync once per 60s per campaign.
@@ -1266,7 +1296,7 @@ switch ($method) {
                     $data = formatCampaign($camp);
                     // [FIX P42-C2] SELECT * on campaign_reminders — explicit columns only
                     $stmtRem = $pdo->prepare("SELECT id, campaign_id, type, trigger_mode, delay_days, delay_hours,
-                        scheduled_at, subject, template_id FROM campaign_reminders WHERE campaign_id = ?");
+                        scheduled_at, subject, template_id, config FROM campaign_reminders WHERE campaign_id = ?");
                     $stmtRem->execute([$path]);
                     $reminders = $stmtRem->fetchAll();
                     $data['reminders'] = array_map(function ($r) {
@@ -1274,13 +1304,12 @@ switch ($method) {
                             'id' => $r['id'],
                             'type' => $r['type'],
                             'triggerMode' => $r['trigger_mode'],
-                            'delayDays' =>
-                                $r['delay_days'],
+                            'delayDays' => $r['delay_days'],
                             'delayHours' => $r['delay_hours'],
                             'scheduledAt' => $r['scheduled_at'],
-                            'subject' =>
-                                $r['subject'],
-                            'templateId' => $r['template_id']
+                            'subject' => $r['subject'],
+                            'templateId' => $r['template_id'],
+                            'config' => $r['config']
                         ];
                     }, $reminders);
                     jsonResponse(true, $data);
@@ -1440,8 +1469,8 @@ switch ($method) {
                 if (!empty($segmentIds)) {
                     // [BUG-G1 FIX] Use parameterized query instead of string interpolation
                     $placeholders = implode(',', array_fill(0, count($segmentIds), '?'));
-                    $stmtSegs = $pdo->prepare("SELECT criteria FROM segments WHERE id IN ($placeholders)");
-                    $stmtSegs->execute($segmentIds);
+                    $stmtSegs = $pdo->prepare("SELECT criteria FROM segments WHERE id IN ($placeholders) AND workspace_id = ?");
+                    $stmtSegs->execute(array_merge($segmentIds, [$workspace_id]));
                     $segments = $stmtSegs->fetchAll();
                     foreach ($segments as $seg) {
                         $res = buildSegmentWhereClause($seg['criteria']);
@@ -1532,6 +1561,7 @@ switch ($method) {
         try {
             if (!$path)
                 jsonResponse(false, null, 'ID required');
+            verifyCampaignOwnership($pdo, $path, $workspace_id);
             $data = json_decode(file_get_contents("php://input"), true);
 
             $pdo->beginTransaction();
@@ -1661,6 +1691,8 @@ switch ($method) {
         try {
             if (!$path)
                 jsonResponse(false, null, 'ID required');
+            
+            verifyCampaignOwnership($pdo, $path, $workspace_id);
                 
             require_permission($pdo, 'edit_campaigns', $workspace_id);
 
@@ -1673,8 +1705,8 @@ switch ($method) {
             $deleteFlows = isset($_GET['delete_flow']) ? (int)$_GET['delete_flow'] : 1;
             
             $likePattern = '%"targetId":"' . $path . '"%';
-            $stmtFlow = $pdo->prepare("SELECT id FROM flows WHERE steps LIKE ?");
-            $stmtFlow->execute([$likePattern]);
+            $stmtFlow = $pdo->prepare("SELECT id FROM flows WHERE steps LIKE ? AND workspace_id = ?");
+            $stmtFlow->execute([$likePattern, $workspace_id]);
             $flowsToDelete = $stmtFlow->fetchAll(PDO::FETCH_COLUMN);
 
             if (!empty($flowsToDelete)) {
@@ -1683,7 +1715,7 @@ switch ($method) {
                         // Xóa hoàn toàn Flow theo yêu cầu
                         $pdo->prepare("DELETE FROM subscriber_flow_states WHERE flow_id = ?")->execute([$flowId]);
                         $pdo->prepare("DELETE FROM flow_enrollments WHERE flow_id = ?")->execute([$flowId]);
-                        $pdo->prepare("DELETE FROM flows WHERE id = ?")->execute([$flowId]);
+                        $pdo->prepare("DELETE FROM flows WHERE id = ? AND workspace_id = ?")->execute([$flowId, $workspace_id]);
                         $pdo->prepare("DELETE FROM mail_delivery_logs WHERE flow_id = ?")->execute([$flowId]);
                         try {
                             $pdo->prepare("DELETE FROM zalo_delivery_logs WHERE flow_id = ?")->execute([$flowId]);
@@ -1694,8 +1726,8 @@ switch ($method) {
                             ->execute(['%"flow_id":"' . $flowId . '"%', '%"priority_flow_id":"' . $flowId . '"%']);
                     } else {
                         // Chỉ ngắt kết nối (Disconnect): Tháo targetId ra khỏi Trigger
-                        $stmtFlowRead = $pdo->prepare("SELECT steps FROM flows WHERE id = ?");
-                        $stmtFlowRead->execute([$flowId]);
+                        $stmtFlowRead = $pdo->prepare("SELECT steps FROM flows WHERE id = ? AND workspace_id = ?");
+                        $stmtFlowRead->execute([$flowId, $workspace_id]);
                         $flowJson = $stmtFlowRead->fetchColumn();
                         if ($flowJson) {
                             $steps = json_decode($flowJson, true);
@@ -1705,7 +1737,7 @@ switch ($method) {
                                         $s['config']['targetId'] = '';
                                     }
                                 }
-                                $pdo->prepare("UPDATE flows SET steps = ? WHERE id = ?")->execute([json_encode($steps), $flowId]);
+                                $pdo->prepare("UPDATE flows SET steps = ? WHERE id = ? AND workspace_id = ?")->execute([json_encode($steps), $flowId, $workspace_id]);
                             }
                         }
                     }

@@ -63,16 +63,16 @@ try {
             $stmtAll = $pdo->prepare("SELECT COUNT(*) FROM subscribers WHERE workspace_id = ? AND status IN ('active','lead','customer')");
             $stmtAll->execute([$wsId]);
             $allCount = (int) $stmtAll->fetchColumn();
-            $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ?")
-                ->execute([$allCount, $segId]);
+            $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ? AND workspace_id = ?")
+                ->execute([$allCount, $segId, $wsId]);
         } else {
             $segRes = buildSegmentWhereClause($seg['criteria'], $segId);
             // [SECURITY FIX] Added workspace_id scope
             $stmtC = $pdo->prepare("SELECT COUNT(*) FROM subscribers s WHERE s.workspace_id = ? AND (" . $segRes['sql'] . ")");
             $stmtC->execute(array_merge([$wsId], $segRes['params']));
             $count = $stmtC->fetchColumn();
-            $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ?")
-                ->execute([$count, $segId]);
+            $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ? AND workspace_id = ?")
+                ->execute([$count, $segId, $wsId]);
         }
         // Remove from queue after successful sync
         $pdo->prepare("DELETE FROM segment_count_update_queue WHERE segment_id = ?")
@@ -96,16 +96,16 @@ try {
                 $stmtAll2 = $pdo->prepare("SELECT COUNT(*) FROM subscribers WHERE workspace_id = ? AND status IN ('active','lead','customer')");
                 $stmtAll2->execute([$wsId]);
                 $allCount2 = (int) $stmtAll2->fetchColumn();
-                $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ?")
-                    ->execute([$allCount2, $seg['id']]);
+                $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ? AND workspace_id = ?")
+                    ->execute([$allCount2, $seg['id'], $wsId]);
             } else {
                 $segRes = buildSegmentWhereClause($seg['criteria'], $seg['id']);
                 // [SECURITY FIX] Added workspace_id scope
                 $stmtC = $pdo->prepare("SELECT COUNT(*) FROM subscribers s WHERE s.workspace_id = ? AND (" . $segRes['sql'] . ")");
                 $stmtC->execute(array_merge([$wsId], $segRes['params']));
                 $count = $stmtC->fetchColumn();
-                $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ?")
-                    ->execute([$count, $seg['id']]);
+                $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ? AND workspace_id = ?")
+                    ->execute([$count, $seg['id'], $wsId]);
             }
             $syncedSegments++;
         }

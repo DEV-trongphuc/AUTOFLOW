@@ -3,8 +3,15 @@ require_once 'db_connect.php';
 require_once 'auth_middleware.php';
 header('Content-Type: application/json');
 
-$propertyId = $_GET['property_id'] ?? '7ac8420d-b248-4ab5-a97d-0fd177e0ae64';
-$apiKey = $pdo->query("SELECT gemini_api_key FROM ai_chatbot_settings WHERE property_id = '$propertyId' LIMIT 1")->fetchColumn();
+$propertyId = $_GET['property_id'] ?? null;
+$apiKey = null;
+
+if ($propertyId) {
+    $stmt = $pdo->prepare("SELECT gemini_api_key FROM ai_chatbot_settings WHERE property_id = ? LIMIT 1");
+    $stmt->execute([$propertyId]);
+    $apiKey = $stmt->fetchColumn();
+}
+
 if (empty($apiKey)) {
     $apiKey = getenv('GEMINI_API_KEY');
 }

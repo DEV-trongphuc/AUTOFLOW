@@ -10,10 +10,18 @@ require_once 'meta_helpers.php';
 /**
  * Get Page Access Token from DB
  */
-function getMetaPageToken($pdo, $pageId)
+function getMetaPageToken($pdo, $pageId, $workspaceId = null)
 {
-    $stmt = $pdo->prepare("SELECT page_access_token FROM meta_app_configs WHERE page_id = ? AND status = 'active' LIMIT 1");
-    $stmt->execute([$pageId]);
+    $sql = "SELECT page_access_token FROM meta_app_configs WHERE page_id = ? AND status = 'active'";
+    $params = [$pageId];
+    
+    if ($workspaceId) {
+        $sql .= " AND workspace_id = ?";
+        $params[] = $workspaceId;
+    }
+    
+    $stmt = $pdo->prepare($sql . " LIMIT 1");
+    $stmt->execute($params);
     $token = $stmt->fetchColumn();
     return $token ?: false;
 }
@@ -21,15 +29,17 @@ function getMetaPageToken($pdo, $pageId)
 /**
  * Resolve Page ID and PSID for a Subscriber
  */
-function resolveMetaConnection($pdo, $subscriberId)
+function resolveMetaConnection($pdo, $subscriberId, $workspaceId = null)
 {
-    // Try to get from meta_subscribers first (most reliable for page association)
-    // We assume subscriber_id in meta_subscribers might NOT be present if not fully synced, 
-    // but we can try reverse lookup if valid.
-
     // 1. Get meta_psid from subscribers table
-    $stmtSub = $pdo->prepare("SELECT meta_psid FROM subscribers WHERE id = ?");
-    $stmtSub->execute([$subscriberId]);
+    $sqlSub = "SELECT meta_psid FROM subscribers WHERE id = ?";
+    $paramsSub = [$subscriberId];
+    if ($workspaceId) {
+        $sqlSub .= " AND workspace_id = ?";
+        $paramsSub[] = $workspaceId;
+    }
+    $stmtSub = $pdo->prepare($sqlSub);
+    $stmtSub->execute($paramsSub);
     $psid = $stmtSub->fetchColumn();
 
     if (!$psid) {
@@ -37,17 +47,20 @@ function resolveMetaConnection($pdo, $subscriberId)
     }
 
     // 2. Find Page ID for this PSID
-    // Since PSID is page-scoped, we theoretically need to know the page context.
-    // If the system supports multi-page, psid '123' on Page A is distinct from Page B.
-    // However, knowing the PSID usually implies we know the entry point or we check where it exists.
     $stmtMeta = $pdo->prepare("SELECT page_id FROM meta_subscribers WHERE psid = ? LIMIT 1");
     $stmtMeta->execute([$psid]);
     $pageId = $stmtMeta->fetchColumn();
 
     if (!$pageId) {
-        // Fallback: If only one active Page Config exists, assume it belongs to that (Risky but helpful for single-page apps)
-        $stmtConfig = $pdo->prepare("SELECT page_id FROM meta_app_configs WHERE status = 'active'");
-        $stmtConfig->execute();
+        // Fallback: If only one active Page Config exists for this workspace
+        $sqlCfg = "SELECT page_id FROM meta_app_configs WHERE status = 'active'";
+        $paramsCfg = [];
+        if ($workspaceId) {
+            $sqlCfg .= " AND workspace_id = ?";
+            $paramsCfg[] = $workspaceId;
+        }
+        $stmtConfig = $pdo->prepare($sqlCfg);
+        $stmtConfig->execute($paramsCfg);
         $pages = $stmtConfig->fetchAll(PDO::FETCH_COLUMN);
 
         if (count($pages) === 1) {
@@ -67,9 +80,9 @@ function resolveMetaConnection($pdo, $subscriberId)
  * Send Meta Message
  * $messageConfig can contain: 'text', 'attachment_url', 'attachment_type'
  */
-function sendMetaMessage($pdo, $pageId, $psid, $messageConfig, $flowId = null, $stepId = null, $subscriberId = null)
+function sendMetaMessage($pdo, $pageId, $psid, $messageConfig, $flowId = null, $stepId = null, $subscriberId = null, $workspaceId = null)
 {
-    $token = getMetaPageToken($pdo, $pageId);
+    $token = getMetaPageToken($pdo, $pageId, $workspaceId);
     if (!$token) {
         return ['success' => false, 'message' => 'Page Access Token not found or inactive'];
     }
@@ -126,7 +139,8 @@ function sendMetaMessage($pdo, $pageId, $psid, $messageConfig, $flowId = null, $
         
         // [Vòng 33 FIX] Automatically suspend dead Meta tokens (Error 190 = OAuthException)
         if ($code == 190 || $code == 10 || $code == 102) {
-            $pdo->prepare("UPDATE meta_app_configs SET status = 'inactive', updated_at = NOW() WHERE page_id = ?")->execute([$pageId]);
+            $stmtSusp = $pdo->prepare("UPDATE meta_app_configs SET status = 'inactive', updated_at = NOW() WHERE page_id = ?");
+            $stmtSusp->execute([$pageId]);
             error_log("Meta Token Suspended for Page: $pageId due to API Error: $code - $error");
         }
 
@@ -137,9 +151,9 @@ function sendMetaMessage($pdo, $pageId, $psid, $messageConfig, $flowId = null, $
 /**
  * Send Sender Action (typing_on, typing_off, mark_seen)
  */
-function sendMetaSenderAction($pdo, $pageId, $psid, $action = 'typing_on')
+function sendMetaSenderAction($pdo, $pageId, $psid, $action = 'typing_on', $workspaceId = null)
 {
-    $token = getMetaPageToken($pdo, $pageId);
+    $token = getMetaPageToken($pdo, $pageId, $workspaceId);
     if (!$token)
         return false;
 

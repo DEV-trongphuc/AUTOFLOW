@@ -99,10 +99,10 @@ function logZaloMsg($pdo, $zaloUserId, $direction, $text)
  * Log a Zalo subscriber's timeline activity
  * Includes optional msgId for de-duplication
  */
-function logZaloSubscriberActivity($pdo, $subscriberId, $type, $refId = null, $details = null, $refName = null, $msgId = null, $workspaceId = null)
+function logZaloSubscriberActivity($pdo, $subscriberId, $type, $refId = null, $details = null, $refName = null, $msgId = null, $workspaceId = null, $eventId = null)
 {
     try {
-        // [DE-DUP] Prevent duplicate 'automation_trigger' logs (Check both main and buffer if possible, but keep it simple for now)
+        // [DE-DUP] Prevent duplicate 'automation_trigger' logs
         if ($type === 'automation_trigger') {
             $stmtCheck = $pdo->prepare("SELECT id FROM zalo_subscriber_activity WHERE subscriber_id = ? AND type = ? AND reference_id = ? AND created_at > DATE_SUB(NOW(), INTERVAL 10 MINUTE) LIMIT 1");
             $stmtCheck->execute([$subscriberId, $type, $refId]);
@@ -111,21 +111,9 @@ function logZaloSubscriberActivity($pdo, $subscriberId, $type, $refId = null, $d
             }
         }
 
-        // [OPTIMIZATION] Zalo Activity Buffering
-        // Instead of inserting directly into the heavy activity table, we use a buffer.
-        static $hasZaloWorkspaceCol = null;
-        if ($hasZaloWorkspaceCol === null) {
-            $check = $pdo->query("SHOW COLUMNS FROM zalo_activity_buffer LIKE 'workspace_id'");
-            $hasZaloWorkspaceCol = ($check->rowCount() > 0);
-        }
-
-        if ($hasZaloWorkspaceCol) {
-            $stmtBuf = $pdo->prepare("INSERT INTO zalo_activity_buffer (subscriber_id, workspace_id, type, reference_id, reference_name, details, zalo_msg_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmtBuf->execute([$subscriberId, $workspaceId ?: 1, $type, $refId, $refName, $details, $msgId]);
-        } else {
-            $stmtBuf = $pdo->prepare("INSERT INTO zalo_activity_buffer (subscriber_id, type, reference_id, reference_name, details, zalo_msg_id) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmtBuf->execute([$subscriberId, $type, $refId, $refName, $details, $msgId]);
-        }
+        // [FIX AUDIT-16/17] Zalo Activity Buffering with event_id and workspace_id
+        $stmtBuf = $pdo->prepare("INSERT INTO zalo_activity_buffer (subscriber_id, workspace_id, type, reference_id, reference_name, details, zalo_msg_id, event_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmtBuf->execute([$subscriberId, $workspaceId ?: 1, $type, $refId, $refName, $details, $msgId, $eventId]);
     } catch (Exception $e) {
         // Fallback: Create table if missing
         if (strpos($e->getMessage(), "doesn't exist") !== false) {
@@ -767,9 +755,9 @@ function upsertZaloSubscriber($pdo, $zaloUserId, $profile, $oaConfigId = null)
         if ($stmtInsert->rowCount() > 0) {
             $mainSubId = $newId;
         } else {
-            // Already exists, update details
-            $stmt = $pdo->prepare("SELECT id, tags, avatar, gender, is_zalo_follower FROM subscribers WHERE zalo_user_id = ? OR email = ?");
-            $stmt->execute([$zaloUserId, $email]);
+            // Already exists, update details (Scoped by workspace_id to prevent cross-tenant merging)
+            $stmt = $pdo->prepare("SELECT id, tags, avatar, gender, is_zalo_follower FROM subscribers WHERE (zalo_user_id = ? OR email = ?) AND workspace_id = ?");
+            $stmt->execute([$zaloUserId, $email, $workspace_id]);
             $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($existing) {

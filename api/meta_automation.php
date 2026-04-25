@@ -10,9 +10,7 @@ require_once 'auth_middleware.php';
 require_once 'meta_helpers.php';
 require_once 'zalo_helpers.php';
 
-metaApiHeaders();
-checkZaloAutomationSchema($pdo);
-
+$workspace_id = get_current_workspace_id();
 $method = $_SERVER['REQUEST_METHOD'];
 $route = $_GET['route'] ?? '';
 
@@ -26,13 +24,16 @@ try {
 
             $sql = "SELECT s.*, b.bot_name as ai_bot_name 
                     FROM meta_automation_scenarios s
-                    LEFT JOIN ai_chatbot_settings b ON s.ai_chatbot_id = b.property_id";
+                    JOIN meta_app_configs c ON s.meta_config_id = c.id
+                    LEFT JOIN ai_chatbot_settings b ON s.ai_chatbot_id = b.property_id
+                    WHERE c.workspace_id = ?";
 
             if ($configId) {
-                $stmt = $pdo->prepare("$sql WHERE s.meta_config_id = ? ORDER BY s.created_at DESC");
-                $stmt->execute([$configId]);
+                $stmt = $pdo->prepare("$sql AND s.meta_config_id = ? ORDER BY s.created_at DESC");
+                $stmt->execute([$workspace_id, $configId]);
             } else {
-                $stmt = $pdo->query("$sql ORDER BY s.created_at DESC");
+                $stmt = $pdo->prepare("$sql ORDER BY s.created_at DESC");
+                $stmt->execute([$workspace_id]);
             }
 
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -65,15 +66,18 @@ try {
 
                 // Check if this keyword is part of any OTHER active scenario
                 // (Using simple LIKE for containment or exact match)
-                $sql = "SELECT title FROM meta_automation_scenarios 
-                        WHERE meta_config_id = ? 
-                        AND status = 'active' 
-                        AND type = 'keyword' 
-                        AND id != ?
-                        AND (FIND_IN_SET(?, trigger_text) OR ? LIKE CONCAT('%', trigger_text, '%'))";
+                $sql = "SELECT s.title 
+                        FROM meta_automation_scenarios s
+                        JOIN meta_app_configs c ON s.meta_config_id = c.id
+                        WHERE s.meta_config_id = ? 
+                        AND c.workspace_id = ?
+                        AND s.status = 'active' 
+                        AND s.type = 'keyword' 
+                        AND s.id != ?
+                        AND (FIND_IN_SET(?, s.trigger_text) OR ? LIKE CONCAT('%', s.trigger_text, '%'))";
 
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute([$configId, $excludeId, $kw, $kw]);
+                $stmt->execute([$configId, $workspace_id, $excludeId, $kw, $kw]);
                 $found = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
                 if ($found) {
@@ -98,6 +102,13 @@ try {
 
             if (!$configId) {
                 jsonResponse(false, null, 'Meta Config ID is required');
+            }
+
+            // [SECURITY] Validate Config ID ownership
+            $stmtOwn = $pdo->prepare("SELECT id FROM meta_app_configs WHERE id = ? AND workspace_id = ?");
+            $stmtOwn->execute([$configId, $workspace_id]);
+            if (!$stmtOwn->fetchColumn()) {
+                jsonResponse(false, null, 'Config not found or unauthorized');
             }
 
             $type = $input['type'] ?? 'keyword';
@@ -144,6 +155,16 @@ try {
                     priority_override=VALUES(priority_override), 
                     holiday_start_at=VALUES(holiday_start_at), holiday_end_at=VALUES(holiday_end_at), updated_at=NOW()";
 
+            // If ID already exists, ensure it belongs to the same config (indirectly workspace)
+            if (!empty($input['id'])) {
+                $stmtOwn = $pdo->prepare("SELECT meta_config_id FROM meta_automation_scenarios WHERE id = ?");
+                $stmtOwn->execute([$input['id']]);
+                $oldConfigId = $stmtOwn->fetchColumn();
+                if ($oldConfigId && $oldConfigId !== $configId) {
+                    jsonResponse(false, null, 'Cannot update scenario belonging to another config');
+                }
+            }
+
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 $id,
@@ -178,6 +199,17 @@ try {
         $id = $_GET['id'] ?? '';
         if (!$id) {
             jsonResponse(false, null, 'ID required');
+        }
+
+        // [SECURITY] Validate Ownership
+        $stmtDel = $pdo->prepare("
+            SELECT s.id FROM meta_automation_scenarios s
+            JOIN meta_app_configs c ON s.meta_config_id = c.id
+            WHERE s.id = ? AND c.workspace_id = ?
+        ");
+        $stmtDel->execute([$id, $workspace_id]);
+        if (!$stmtDel->fetchColumn()) {
+            jsonResponse(false, null, 'Scenario not found or unauthorized');
         }
 
         $stmt = $pdo->prepare("DELETE FROM meta_automation_scenarios WHERE id = ?");

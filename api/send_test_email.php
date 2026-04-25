@@ -81,7 +81,8 @@ try {
         throw new Exception("API_BASE_URL constant is not defined. Check db_connect.php.");
     }
 
-    $mailer = new Mailer($pdo);
+    $workspaceId = (int)get_current_workspace_id();
+    $mailer = new Mailer($pdo, API_BASE_URL, 'marketing@ka-en.com.vn', $workspaceId);
 
     $allAttachments = $data['attachments'] ?? [];
     $filteredAttachments = Mailer::filterAttachments($allAttachments, $toEmail);
@@ -91,7 +92,7 @@ try {
     // making it impossible to preview the original HTML as the designer intended.
     // dispatchRaw() sends the HTML exactly as provided — no tracking overhead.
     $error = '';
-    $success = $mailer->dispatchRaw($toEmail, $subject, $htmlContent, $filteredAttachments, $error);
+    $success = $mailer->dispatchRaw($toEmail, $subject, $htmlContent, $filteredAttachments, $error, [], $workspaceId);
 
     if ($success) {
         echo json_encode(['success' => true, 'message' => 'Test email sent successfully']);

@@ -33,8 +33,8 @@ register_shutdown_function(function () use ($pdo) {
 });
 
 try {
-    // 1. Fetch Active Flows with Polling Triggers
-    $stmtFlows = $pdo->prepare("SELECT id, name, steps, config FROM flows WHERE status = 'active' AND (steps LIKE '%\"type\":\"date\"%' OR steps LIKE '%\"type\":\"campaign\"%')");
+    // 1. Fetch Active Flows with Polling Triggers - Include workspace_id
+    $stmtFlows = $pdo->prepare("SELECT id, workspace_id, name, steps, config FROM flows WHERE status = 'active' AND (steps LIKE '%\"type\":\"date\"%' OR steps LIKE '%\"type\":\"campaign\"%')");
     $stmtFlows->execute();
     $flows = $stmtFlows->fetchAll();
 
@@ -50,6 +50,8 @@ try {
                 break;
             }
         }
+
+        $wsId = $flow['workspace_id']; // [FIX] Extract workspace_id for scoping
 
         if (!$trigger)
             continue;
@@ -92,6 +94,7 @@ try {
                     }
 
                     $wheres = [];
+                    $wheres[] = "s.workspace_id = ?"; // [FIX] Scope to flow's workspace
                     $wheres[] = "DATE_FORMAT($dbField, '%m-%d') = DATE_FORMAT($targetDateExpr, '%m-%d')";
                     $wheres[] = "s.status IN ('active', 'lead', 'customer')";
                     // Exclude newly enrolled (respect cooldown)
@@ -114,8 +117,8 @@ try {
                             }
                             if (!empty($targetSegmentIds)) {
                                 foreach ($targetSegmentIds as $segId) {
-                                    $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
-                                    $stmtSeg->execute([$segId]);
+                                    $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
+                                    $stmtSeg->execute([$segId, $wsId]);
                                     $segConfig = $stmtSeg->fetchColumn();
                                     if ($segConfig) {
                                         $segWhere = buildSegmentWhereClause($segConfig, $segId);
@@ -137,8 +140,8 @@ try {
                         }
                     }
 
-                    $idParams = array_merge([$flow['id']], $cachedSourceParams);
-                    $whereSql = implode(" AND ", $wheres) . $cachedSourceSql;
+                    $idParams = array_merge([$wsId, $flow['id']], $cachedSourceParams);
+                    $whereSql = implode(" AND ", $whereClauses ?? $wheres) . $cachedSourceSql;
                     $sql = "SELECT s.id FROM subscribers s WHERE $whereSql LIMIT $BATCH_SIZE";
 
                     $stmt = $pdo->prepare($sql);
@@ -167,6 +170,7 @@ try {
 
                     // Match the specific date (YYYY-MM-DD)
                     $wheres = []; // Reset wheres for this specific case
+                    $wheres[] = "s.workspace_id = ?"; // [FIX] Scope to flow's workspace
                     $wheres[] = "DATE(NOW()) = ?";
                     $wheres[] = "s.status IN ('active', 'lead', 'customer')";
                     // Important: For specific date, typically run once per person
@@ -177,7 +181,7 @@ try {
                     $targetListIds = $trigger['config']['targetListIds'] ?? [];
                     $targetSegmentIds = $trigger['config']['targetSegmentIds'] ?? [];
 
-                    $idParams = [$specificDate, $flow['id']];
+                    $idParams = [$wsId, $specificDate, $flow['id']];
                     $sourceWheres = [];
                     if ($targetMode === 'specific' && (!empty($targetListIds) || !empty($targetSegmentIds))) {
                         $sourceConditions = [];
@@ -188,8 +192,8 @@ try {
                         }
                         if (!empty($targetSegmentIds)) {
                             foreach ($targetSegmentIds as $segId) {
-                                $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
-                                $stmtSeg->execute([$segId]);
+                                $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
+                                $stmtSeg->execute([$segId, $wsId]);
                                 $segConfig = $stmtSeg->fetchColumn();
                                 if ($segConfig) {
                                     $segWhere = buildSegmentWhereClause($segConfig, $segId);
@@ -220,14 +224,6 @@ try {
 
                     if (!empty($subs)) {
                         $logs[] = "[Specific Date Trigger] Found " . count($subs) . " subs for flow '{$flow['name']}' ($specificDate).";
-
-                        // [FIX #7] Direct INSERT instead of enrollSubscribersBulk().
-                        // enrollSubscribersBulk() re-queries ALL 'date' type flows,
-                        // which causes subscribers to be enrolled in OTHER specificDate flows
-                        // that happen on the same date. Using direct INSERT ensures only
-                        // THIS flow (already correctly filtered above) receives enrollments.
-                        $pastTime = date('Y-m-d H:i:s', strtotime('-1 second'));
-                        $initialSchedule = $pastTime;
 
                         // [SMART SCHEDULE FIX] Calculate future wait date if first step is wait
                         foreach ($steps as $fs) {
@@ -274,6 +270,7 @@ try {
                             SELECT s.id, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
                             FROM subscribers s
                             WHERE s.id IN ($subPlaceholders)
+                            AND s.workspace_id = ?
                             AND NOT EXISTS (
                                 SELECT 1 FROM subscriber_flow_states sfs
                                 WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ?
@@ -282,7 +279,7 @@ try {
                         $directParams = array_merge(
                             [$flow['id'], $trigger['nextStepId'], $initialSchedule],
                             $subs,
-                            [$flow['id']]
+                            [$wsId, $flow['id']]
                         );
                         $stmtDirect = $pdo->prepare($sqlDirect);
                         $stmtDirect->execute($directParams);
@@ -314,6 +311,7 @@ try {
                         break;
 
                     $wheres = [];
+                    $wheres[] = "s.workspace_id = ?"; // [FIX] Scope to flow's workspace
                     $wheres[] = "s.id > ?";
                     $wheres[] = "s.last_activity_at < ?";
                     $wheres[] = "s.status IN ('active', 'lead', 'customer')";
@@ -331,7 +329,7 @@ try {
                     $targetListIds = $trigger['config']['targetListIds'] ?? [];
                     $targetSegmentIds = $trigger['config']['targetSegmentIds'] ?? [];
 
-                    $idParams = [$lastId, $cutoffDate, $flow['id']];
+                    $idParams = [$wsId, $lastId, $cutoffDate, $flow['id']];
                     $sourceWheres = [];
                     if ($targetMode === 'specific' && (!empty($targetListIds) || !empty($targetSegmentIds))) {
                         $sourceConditions = [];
@@ -342,8 +340,8 @@ try {
                         }
                         if (!empty($targetSegmentIds)) {
                             foreach ($targetSegmentIds as $segId) {
-                                $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
-                                $stmtSeg->execute([$segId]);
+                                $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
+                                $stmtSeg->execute([$segId, $wsId]);
                                 $segConfig = $stmtSeg->fetchColumn();
                                 if ($segConfig) {
                                     $segWhere = buildSegmentWhereClause($segConfig, $segId);

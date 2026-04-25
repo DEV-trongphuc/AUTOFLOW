@@ -15,7 +15,7 @@ class FlowExecutor
     // [MEMORY] Static caches are class-level singletons shared across all instances within
     // one PHP process. Cap size to prevent unbounded growth during long worker runs
     // (e.g. flow worker processing 10k+ subscribers without restart).
-    private static $tagCache = [];     // Max 200 entries — see pruneStaticCache() calls below
+    private static $tagCache = [];     // Max 200 entries Ã¢â‚¬â€ see pruneStaticCache() calls below
     private static $profileCache = []; // Max 200 entries
 
     public function __construct($pdo, $mailer, $apiUrl)
@@ -28,9 +28,21 @@ class FlowExecutor
     private $statsBuffer = []; // [PHASE 8] RAM Buffer for heavy stats
 
     /**
+     * [FIX AUDIT-07] Centralized static cache pruning to prevent memory leaks
+     * in long-running worker processes.
+     */
+    private static function pruneCache(&$cache, $max = 200)
+    {
+        if (count($cache) >= $max) {
+            reset($cache);
+            unset($cache[key($cache)]);
+        }
+    }
+
+    /**
      * Buffer stats update internally into RAM (Phase 8 - Extreme Scale)
      */
-    private function bufferStatsUpdate($table, $id, $column, $value = 1)
+    private function bufferStatsUpdate($table, $id, $column, $value = 1, $workspaceId = null)
     {
         // [SECURITY] Whitelist valid table/column combinations to prevent SQL injection
         static $ALLOWED = [
@@ -48,10 +60,12 @@ class FlowExecutor
                 'table' => $table,
                 'id' => $id,
                 'column' => $column,
-                'increment' => 0
+                'increment' => 0,
+                'workspace_id' => $workspaceId
             ];
         }
         $this->statsBuffer[$key]['increment'] += $value;
+        if ($workspaceId) $this->statsBuffer[$key]['workspace_id'] = $workspaceId;
         
         // Auto-flush to prevent unbounded memory growth during huge loops
         if (count($this->statsBuffer) >= 100) {
@@ -86,7 +100,7 @@ class FlowExecutor
             // Fallback for strict modes or max_allowed_packet
             // [FIX P9-H3] Defense-in-depth: re-validate whitelist INSIDE fallback path.
             // bufferStatsUpdate() already filters, but the fallback UPDATE interpolates
-            // table/column directly into SQL — if $statsBuffer is ever externally mutated
+            // table/column directly into SQL Ã¢â‚¬â€ if $statsBuffer is ever externally mutated
             // (future regression), SQL injection is possible without this guard.
             static $FALLBACK_ALLOWED = [
                 'flows'       => ['stat_total_sent', 'stat_total_failed', 'stat_completed', 'stat_enrolled', 'stat_zalo_sent', 'stat_zns_sent', 'stat_zns_failed', 'stat_meta_sent'],
@@ -99,8 +113,14 @@ class FlowExecutor
                     continue;
                 }
                 try {
-                    $this->pdo->prepare("UPDATE {$stat['table']} SET {$stat['column']} = {$stat['column']} + ? WHERE id = ?")
-                        ->execute([$stat['increment'], $stat['id']]);
+                    $where = "WHERE id = ?";
+                    $params = [$stat['increment'], $stat['id']];
+                    if (!empty($stat['workspace_id'])) {
+                        $where .= " AND workspace_id = ?";
+                        $params[] = $stat['workspace_id'];
+                    }
+                    $this->pdo->prepare("UPDATE {$stat['table']} SET {$stat['column']} = {$stat['column']} + ? $where")
+                        ->execute($params);
                 } catch (\Throwable $th) {}
             }
         }
@@ -146,8 +166,8 @@ class FlowExecutor
             switch ($step['type']) {
                 case 'action': // Send Email
                     // [IDEMPOTENCY GUARD] Check if this step's email was already sent.
-                    // Scenario: worker sends email → crashes before committing step_id advance
-                    // → 5-min stale recovery picks up same item → would re-send duplicate.
+                    // Scenario: worker sends email Ã¢â€ â€™ crashes before committing step_id advance
+                    // Ã¢â€ â€™ 5-min stale recovery picks up same item Ã¢â€ â€™ would re-send duplicate.
                     // Fix: Check BOTH activity_buffer (recently written, not yet synced) AND
                     // subscriber_activity (synced rows) for an existing send record.
                     // reference_id = $currentStepId uniquely identifies "this step for this flow".
@@ -155,7 +175,7 @@ class FlowExecutor
                     // [SCOPE FIX] Must also scope to queue_created_at to prevent false positives on
                     // recurring/allowMultiple flows. Without scoping, a subscriber's 2nd enrollment
                     // would find 'receive_email' from their 1st enrollment (same step_id) and
-                    // SILENTLY SKIP every email step — never sending on re-enrollment.
+                    // SILENTLY SKIP every email step Ã¢â‚¬â€ never sending on re-enrollment.
                     try {
                         $dedupParams = [$subscriberId, $currentStepId];
                         $dedupCreatedAtClause = '';
@@ -246,7 +266,7 @@ class FlowExecutor
                     }
 
                     // [SES SHARED RATE LIMITER] Acquire slot from cross-process file-lock.
-                    // Shared with worker_campaign.php → campaign + flow combined ≤ 10/s total.
+                    // Shared with worker_campaign.php â†’ campaign + flow combined â‰¤ 10/s total.
                     // Full implementation in sesAcquireRateSlot() (flow_helpers.php).
                     sesAcquireRateSlot(); // 100ms interval = 10/s shared across all workers
 
@@ -258,18 +278,18 @@ class FlowExecutor
                         $res = "Skipped: Virtual email";
                     } else {
                         // [PERF] skipQA=true: Flow emails are per-subscriber automation, not broadcast campaigns.
-                        $res = $this->mailer->send($subscriber['email'], $finalSubject, $finalHtml, $subscriberId, $campaignId, $flowId, $flowName, $attachments, null, $currentStepId, $step['label'], false, true);
+                        $res = $this->mailer->send($subscriber['email'], $finalSubject, $finalHtml, $subscriberId, $campaignId, $flowId, $flowName, $attachments, null, $currentStepId, $step['label'], false, true, null, null, $subscriber['workspace_id']);
                     }
 
 
                     if ($res === true || ($isVirtualEmail && $res === "Skipped: Virtual email")) {
                         if (!$isVirtualEmail) {
-                            $this->bufferStatsUpdate('flows', $flowId, 'stat_total_sent');
-                            $this->bufferStatsUpdate('subscribers', $subscriberId, 'stats_sent');
+                            $this->bufferStatsUpdate('flows', $flowId, 'stat_total_sent', 1, $subscriber['workspace_id']);
+                            $this->bufferStatsUpdate('subscribers', $subscriberId, 'stats_sent', 1, $subscriber['workspace_id']);
                             logActivity($this->pdo, $subscriberId, 'receive_email', $currentStepId, $flowName, "Email sent: " . $step['label'], $flowId, $campaignId, [], $subscriber['workspace_id']);
                             $logs[] = "  -> Email sent for {$subscriber['email']} (Step: {$step['label']}).";
                         } else {
-                            // [VẬN HÀNH] Log as skipped but ADVANCE the flow so Zalo/ZNS steps can still trigger
+                            // [Váº¬N HÃ€NH] Log as skipped but ADVANCE the flow so Zalo/ZNS steps can still trigger
                             logActivity($this->pdo, $subscriberId, 'skipped_email', $currentStepId, $flowName, "Skipped: Virtual email ({$subscriber['email']})", $flowId, $campaignId, [], $subscriber['workspace_id']);
                             $logs[] = "  -> Step '{$step['label']}' skipped (Virtual Email). Advancing flow.";
                         }
@@ -278,7 +298,7 @@ class FlowExecutor
                         $isInstantStep = true;
                         $messageSent = !$isVirtualEmail;
                     } else {
-                        $this->bufferStatsUpdate('flows', $flowId, 'stat_total_failed');
+                        $this->bufferStatsUpdate('flows', $flowId, 'stat_total_failed', 1, $subscriber['workspace_id']);
                         $errMsg = is_string($res) ? $res : 'Unknown Error';
 
                         // Hard Bounce Check
@@ -324,11 +344,11 @@ class FlowExecutor
                         break;
                     }
 
-                    // 48h window check — Zalo CS requires subscriber to have interacted within 48h
+                    // 48h window check Ã¢â‚¬â€ Zalo CS requires subscriber to have interacted within 48h
                     // [BUG-FIX] Bug #6: Previously using `$lastInteract && (time() - strtotime() > 48h)`
                     // When lastInteract=NULL (never interacted), the condition evaluated to FALSE
-                    // so the code allowed sending — but Zalo API requires recent interaction.
-                    // Fix: treat NULL as "no interaction" → block sending.
+                    // so the code allowed sending Ã¢â‚¬â€ but Zalo API requires recent interaction.
+                    // Fix: treat NULL as "no interaction" Ã¢â€ â€™ block sending.
                     if (!$lastInteract || (time() - strtotime($lastInteract) > 48 * 3600)) {
                         $logs[] = "  -> Zalo CS step skipped: Out of 48h interaction window (last: " . ($lastInteract ?? 'never') . ").";
                         $nextStepId = $step['nextStepId'] ?? null;
@@ -350,11 +370,11 @@ class FlowExecutor
                     }
 
                     $finalText = replaceMergeTags($config['content'] ?? '', $subscriber, []);
-                    $res = sendConsultationMessage($this->pdo, $oaConfigId, $zaloUserId, $finalText);
+                    $res = sendConsultationMessage($this->pdo, $oaConfigId, $zaloUserId, $finalText, null, $subscriber['workspace_id']);
 
                     if ($res['success']) {
-                        $this->bufferStatsUpdate('flows', $flowId, 'stat_zalo_sent');
-                        $this->bufferStatsUpdate('flows', $flowId, 'stat_total_sent');
+                        $this->bufferStatsUpdate('flows', $flowId, 'stat_zalo_sent', 1, $subscriber['workspace_id']);
+                        $this->bufferStatsUpdate('flows', $flowId, 'stat_total_sent', 1, $subscriber['workspace_id']);
                         logActivity($this->pdo, $subscriberId, 'zalo_sent', $currentStepId, $flowName, 'Zalo CS Sent: ' . $step['label'], $flowId, $campaignId, [], $subscriber['workspace_id']);
                         $logs[] = "  -> Zalo CS sent to {$zaloUserId}.";
                         $messageSent = true;
@@ -362,7 +382,7 @@ class FlowExecutor
                         $logs[] = "  -> Zalo CS failed: " . ($res['message'] ?? 'Unknown');
                         // Fallback ZNS
                         $fallbackTemplateId = $config['fallback_zns_template_id'] ?? null;
-                        // [FIX] Track if we paused for time restriction — if true, skip
+                        // [FIX] Track if we paused for time restriction Ã¢â‚¬â€ if true, skip
                         // $nextStepId/$isInstantStep below to preserve the 'waiting' status.
                         // (Can't use break here since we're inside an if-block, not a loop/switch)
                         $zaloFallbackPaused = false;
@@ -390,10 +410,10 @@ class FlowExecutor
                                     }
                                     $templateData[$key] = $fbVal;
                                 }
-                                $znsRes = sendZNSMessage($this->pdo, $oaConfigId, $fallbackTemplateId, $subscriber['phone_number'], $templateData, $flowId, $currentStepId, $subscriberId);
+                                $znsRes = sendZNSMessage($this->pdo, $oaConfigId, $fallbackTemplateId, $subscriber['phone_number'], $templateData, $flowId, $currentStepId, $subscriberId, null, null, $subscriber['workspace_id']);
                                 if ($znsRes['success']) {
-                                    $this->bufferStatsUpdate('flows', $flowId, 'stat_zns_sent');
-                                    $this->bufferStatsUpdate('flows', $flowId, 'stat_total_sent');
+                                    $this->bufferStatsUpdate('flows', $flowId, 'stat_zns_sent', 1, $subscriber['workspace_id']);
+                                    $this->bufferStatsUpdate('flows', $flowId, 'stat_total_sent', 1, $subscriber['workspace_id']);
                                     logActivity($this->pdo, $subscriberId, 'zns_sent', $currentStepId, $flowName, 'ZNS (Fallback) Sent', $flowId, $campaignId, [], $subscriber['workspace_id']);
                                     $logs[] = "  -> Fallback ZNS sent.";
                                     $messageSent = true;
@@ -404,7 +424,7 @@ class FlowExecutor
                         }
                     }
                     // [FIX] Only advance chain if we did NOT pause for time restriction.
-                    // $zaloFallbackPaused=true means status='waiting' was already set above —
+                    // $zaloFallbackPaused=true means status='waiting' was already set above Ã¢â‚¬â€ 
                     // overwriting with isInstantStep=true would cause the worker to skip the delay.
                     if (!($zaloFallbackPaused ?? false)) {
                         $nextStepId = $step['nextStepId'] ?? null;
@@ -467,7 +487,7 @@ class FlowExecutor
                         $logs[] = "  -> ZNS Skipped: $reason ($phone).";
                         logActivity($this->pdo, $subscriberId, 'zns_skipped', $currentStepId, $flowName, "ZNS Skipped: $reason", $flowId, $campaignId, [], $subscriber['workspace_id']);
                         if (($config['fallback_behavior'] ?? 'skip') === 'mark_failed') {
-                            $this->bufferStatsUpdate('flows', $flowId, 'stat_zns_failed');
+                            $this->bufferStatsUpdate('flows', $flowId, 'stat_zns_failed', 1, $subscriber['workspace_id']);
                         }
                         $nextStepId = $step['nextStepId'] ?? null;
                         $isInstantStep = true;
@@ -508,10 +528,10 @@ class FlowExecutor
 
                         // [FIX v2] Per-field length limits for Zalo ZNS known short fields.
                         // Zalo enforces different max lengths per template param type:
-                        //   - 'id', 'ma_giao_dich', 'ma_don_hang', 'tracking_id' → max 20 chars
-                        //   - All others → max 100 chars (safe default)
+                        //   - 'id', 'ma_giao_dich', 'ma_don_hang', 'tracking_id' Ã¢â€ â€™ max 20 chars
+                        //   - All others Ã¢â€ â€™ max 100 chars (safe default)
                         // Previously all fields were truncated at 100 chars, but UUID (36 chars)
-                        // still exceeded the 20-char limit for 'id' → Zalo API error -1121.
+                        // still exceeded the 20-char limit for 'id' Ã¢â€ â€™ Zalo API error -1121.
                         $znsShortFieldMap = [
                             'id'            => 20,
                             'ma_giao_dich'  => 20,
@@ -545,7 +565,8 @@ class FlowExecutor
                         );
                     } else {
                         try {
-                            $result = sendZNSMessage($this->pdo, $oaConfigId, $templateId, $normalizedPhone, $templateData, $flowId, $currentStepId, $subscriberId);
+                            $result = sendZNSMessage($this->pdo, $oaConfigId, $templateId, 
+                                $normalizedPhone, $templateData, $flowId, $currentStepId, $subscriberId, null, null, $subscriber['workspace_id']);
                         } catch (Throwable $znsEx) {
                             // [FIX] Catch any exception from sendZNSMessage (PDO, network, etc.)
                             // to prevent it propagating to worker and causing a reschedule loop
@@ -559,13 +580,13 @@ class FlowExecutor
                     }
 
                     if ($result['success']) {
-                        $this->bufferStatsUpdate('flows', $flowId, 'stat_zns_sent');
-                        $this->bufferStatsUpdate('flows', $flowId, 'stat_total_sent');
+                        $this->bufferStatsUpdate('flows', $flowId, 'stat_zns_sent', 1, $subscriber['workspace_id']);
+                        $this->bufferStatsUpdate('flows', $flowId, 'stat_total_sent', 1, $subscriber['workspace_id']);
                         logActivity($this->pdo, $subscriberId, 'zns_sent', $currentStepId, $flowName, 'ZNS Sent', $flowId, $campaignId, [], $subscriber['workspace_id']);
                         $logs[] = "  -> ZNS Sent.";
                         $messageSent = true;
                     } else {
-                        $this->bufferStatsUpdate('flows', $flowId, 'stat_zns_failed');
+                        $this->bufferStatsUpdate('flows', $flowId, 'stat_zns_failed', 1, $subscriber['workspace_id']);
                         // [FIX] Normalize error keys: sendZNSMessage pre-checks return 'reason'/'message',
                         // while API errors return 'error_code'/'error_message'
                         $errCode = $result['error_code'] ?? $result['reason'] ?? $result['status'] ?? '?';
@@ -592,7 +613,7 @@ class FlowExecutor
                     $config = $step['config'];
 
                     // Resolve Connection
-                    $metaConn = resolveMetaConnection($this->pdo, $subscriberId);
+                    $metaConn = resolveMetaConnection($this->pdo, $subscriberId, $subscriber['workspace_id']);
                     if (isset($metaConn['error'])) {
                         $logs[] = "  -> Meta Skip: " . $metaConn['error'];
                         $nextStepId = $step['nextStepId'] ?? null;
@@ -627,17 +648,17 @@ class FlowExecutor
                     }
 
                     // Send
-                    $res = sendMetaMessage($this->pdo, $pageId, $psid, $msgConfig, $flowId, $currentStepId, $subscriberId);
+                    $res = sendMetaMessage($this->pdo, $pageId, $psid, $msgConfig, $flowId, $currentStepId, $subscriberId, $subscriber['workspace_id']);
 
                     if ($res['success']) {
-                        $this->bufferStatsUpdate('flows', $flowId, 'stat_total_sent');
+                        $this->bufferStatsUpdate('flows', $flowId, 'stat_total_sent', 1, $subscriber['workspace_id']);
                         // [FIX P6-C1] Track Meta messages per-channel (mirrors stat_zalo_sent / stat_zns_sent pattern)
-                        $this->bufferStatsUpdate('flows', $flowId, 'stat_meta_sent');
+                        $this->bufferStatsUpdate('flows', $flowId, 'stat_meta_sent', 1, $subscriber['workspace_id']);
                         logActivity($this->pdo, $subscriberId, 'meta_sent', $currentStepId, $flowName, 'Meta Msg Sent: ' . ($step['label'] ?? 'Message'), $flowId, $campaignId, [], $subscriber['workspace_id']);
                         $logs[] = "  -> Meta Msg Sent.";
                         // [FIX P6-H1] Increment per-channel frequency cap counter.
                         // Without this, $contextData['total_sent_today']['meta'] stays 0
-                        // across the entire worker run → frequency cap NEVER triggers for Meta.
+                        // across the entire worker run Ã¢â€ â€™ frequency cap NEVER triggers for Meta.
                         if (!isset($contextData['total_sent_today']) || !is_array($contextData['total_sent_today'])) {
                             $contextData['total_sent_today'] = [];
                         }
@@ -678,14 +699,14 @@ class FlowExecutor
                     // Check Resume (If scheduled time passed)
                     // $contextData['scheduled_at'] is the DB value for the CURRENT wake-up step only.
                     // It must NOT be used for chain steps (fresh waits should always calculate, not resume).
-                    // Only is_resumed_wait — set by the worker based on original DB scheduled_at —
+                    // Only is_resumed_wait Ã¢â‚¬â€ set by the worker based on original DB scheduled_at Ã¢â‚¬â€
                     // correctly distinguishes "woken up from wait" vs "fresh wait in chain".
                     $dbScheduledAt = $contextData['scheduled_at'] ?? $scheduleNow; // used for debug log only
-                    $isResuming = ($dbScheduledAt <= $scheduleNow); // diagnostic only — NOT used in logic
+                    $isResuming = ($dbScheduledAt <= $scheduleNow); // diagnostic only Ã¢â‚¬â€ NOT used in logic
 
                     // CORRECT LOGIC: only is_resumed_wait controls wait resumption.
                     // Worker sets this TRUE only for step 1 in the run AND step_id matches AND scheduled_at passed.
-                    // Chain steps (stepsProcessedInRun > 1) always get is_resumed_wait=FALSE → always calculate.
+                    // Chain steps (stepsProcessedInRun > 1) always get is_resumed_wait=FALSE Ã¢â€ â€™ always calculate.
                     if (!empty($contextData['is_resumed_wait'])) {
                         // [HARDENING - LAYER 2] Double-check if the wait is REALLY over.
                         // Even if the worker signaled resume (e.g. forced by wakeupWaitingSubscribers),
@@ -799,11 +820,11 @@ class FlowExecutor
                     $waitDur = (int) ($step['config']['waitDuration'] ?? 1);
                     $waitUnit = $step['config']['waitUnit'] ?? 'hours';
 
-                    // [FIX] Khai báo target/campaign ID từ bước Trigger
+                    // [FIX] Khai bÃƒÂ¡o target/campaign ID tÃ¡Â»Â« bÃ†Â°Ã¡Â»â€ºc Trigger
                     $linkedCampaignId = null;
                     foreach ($flowSteps as $fs) {
                         if ($fs['type'] === 'trigger' && in_array($fs['config']['type'] ?? '', ['campaign', 'survey'])) {
-                            // Cấu hình lưu trong targetId hoặc campaignId
+                            // CÃ¡ÂºÂ¥u hÃƒÂ¬nh lÃ†Â°u trong targetId hoÃ¡ÂºÂ·c campaignId
                             $linkedCampaignId = $fs['config']['targetId'] ?? ($fs['config']['campaignId'] ?? null);
                             break;
                         }
@@ -813,7 +834,7 @@ class FlowExecutor
                     $startTime = !empty($lastStepAt) ? $lastStepAt : (!empty($itemUpdatedAt) ? $itemUpdatedAt : $queueCreatedAt);
                     // [FIX] Guard against empty string or MySQL zero-date ("0000-00-00 00:00:00")
                     // from DB. Passing either into new DateTime() throws an uncatchable Fatal Error:
-                    // "Failed to parse time string" — crashing the entire worker process.
+                    // "Failed to parse time string" Ã¢â‚¬â€ crashing the entire worker process.
                     if (empty($startTime) || strpos($startTime, '0000-00-00') !== false || trim($startTime) === '') {
                         $startTime = 'now';
                     }
@@ -869,11 +890,8 @@ class FlowExecutor
                             $stmtR->execute($paramsResp);
                             $latestResp = $stmtR->fetch(PDO::FETCH_ASSOC);
 
-                            // [MEMORY GUARD] Prune cache to maximum 200 elements
-                            if (count(self::$profileCache['_survey_responses']) >= 200) {
-                                reset(self::$profileCache['_survey_responses']);
-                                unset(self::$profileCache['_survey_responses'][key(self::$profileCache['_survey_responses'])]);
-                            }
+                            // [MEMORY GUARD] [FIX AUDIT-07] Use centralized pruning
+                            self::pruneCache(self::$profileCache['_survey_responses'], 200);
                             self::$profileCache['_survey_responses'][$cacheKey] = $latestResp;
                         }
 
@@ -934,7 +952,7 @@ class FlowExecutor
                     } elseif ($condType === 'zns_replied') {
                         // [VERIFIED 2026-04-23] DB audit: ZNS reply is logged as 'staff_reply'
                         // by the CRM/support module. 'reply_zns' and 'zns_replied' do NOT exist
-                        // in subscriber_activity. 'zns_clicked' also absent — Zalo click/reply
+                        // in subscriber_activity. 'zns_clicked' also absent Ã¢â‚¬â€ Zalo click/reply
                         // webhooks are not configured on this installation.
                         $types = ['staff_reply'];
                     } elseif ($condType === 'zns_failed') {
@@ -944,17 +962,17 @@ class FlowExecutor
                     elseif ($condType === 'delivered') {
                         $types = ['receive_email'];
                     }
-                    // [FIX] Reminder conditions — check subscriber_activity for reminder events
+                    // [FIX] Reminder conditions Ã¢â‚¬â€ check subscriber_activity for reminder events
                     elseif ($condType === 'received_reminder') {
                         $types = ['receive_email']; // receive_email logged when reminder is sent
                     } elseif ($condType === 'opened_reminder') {
                         $types = ['open_email']; // open_email logged when reminder is opened
                     }
 
-                    // reminderId from frontend config — if set, filter activities to this specific reminder campaign
+                    // reminderId from frontend config Ã¢â‚¬â€ if set, filter activities to this specific reminder campaign
                     $reminderId = $step['config']['reminderId'] ?? null;
 
-                    // [FIX] 'unsubscribe' is a global event — NOT scoped to flow_id.
+                    // [FIX] 'unsubscribe' is a global event Ã¢â‚¬â€ NOT scoped to flow_id.
                     // Reminder conditions are also global but can be scoped by reminderId (campaign_id).
                     $isGlobalEvent = in_array($condType, ['unsubscribed', 'received_reminder', 'opened_reminder']);
 
@@ -965,7 +983,7 @@ class FlowExecutor
                         $activities = [];
                         foreach ($cachedActivities as $act) {
                             if (in_array($act['type'], $types)) {
-                                // [FIX] Global events (unsubscribe) have no flow_id — always include them
+                                // [FIX] Global events (unsubscribe) have no flow_id Ã¢â‚¬â€ always include them
                                 if ($isGlobalEvent) {
                                     // For reminder conditions: filter by reminderId (campaign_id) if provided
                                     if (($condType === 'received_reminder' || $condType === 'opened_reminder') && !empty($reminderId)) {
@@ -1000,7 +1018,7 @@ class FlowExecutor
                         foreach ($types as $t)
                             $params[] = $t;
 
-                        // [FIX] 'unsubscribe' is global — do NOT filter by flow_id
+                        // [FIX] 'unsubscribe' is global Ã¢â‚¬â€ do NOT filter by flow_id
                         // For reminder conditions: optionally filter by reminderId (campaign_id)
                         if (!$isGlobalEvent) {
                             if ($linkedCampaignId) {
@@ -1029,10 +1047,10 @@ class FlowExecutor
                             if (!in_array($act['type'], $types))
                                 continue;
 
-                            // [SMART MATCH] Phân loại đối soát: Trigger vs Step cụ thể
+                            // [SMART MATCH] PhÃƒÂ¢n loÃ¡ÂºÂ¡i Ã„â€˜Ã¡Â»â€˜i soÃƒÂ¡t: Trigger vs Step cÃ¡Â»Â¥ thÃ¡Â»Æ’
                             $isFromTarget = false;
 
-                            // 0. Kiểm tra xem bước đích có phải là Trigger không
+                            // 0. KiÃ¡Â»Æ’m tra xem bÃ†Â°Ã¡Â»â€ºc Ã„â€˜ÃƒÂ­ch cÃƒÂ³ phÃ¡ÂºÂ£i lÃƒÂ  Trigger khÃƒÂ´ng
                             $isTargetingTrigger = false;
                             if ($targetStepId) {
                                 foreach ($flowSteps as $fs) {
@@ -1043,16 +1061,16 @@ class FlowExecutor
                                 }
                             }
 
-                            // 1. Trường hợp chờ đợi kết quả từ Trigger Campaign (Trường hợp của anh hiện tại)
+                            // 1. TrÃ†Â°Ã¡Â»Âng hÃ¡Â»Â£p chÃ¡Â»Â Ã„â€˜Ã¡Â»Â£i kÃ¡ÂºÂ¿t quÃ¡ÂºÂ£ tÃ¡Â»Â« Trigger Campaign (TrÃ†Â°Ã¡Â»Âng hÃ¡Â»Â£p cÃ¡Â»Â§a anh hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i)
                             if ($isTargetingTrigger && $linkedCampaignId && !empty($act['campaign_id']) && (string) $act['campaign_id'] === (string) $linkedCampaignId) {
                                 $isFromTarget = true;
                             }
-                            // 2. Trường hợp chờ đợi một bước Gửi Mail cụ thể TRONG Flow
-                            // (Ví dụ: Bước 2 Gửi Mail -> Bước 3 Kiểm tra Mail bước 2)
+                            // 2. TrÃ†Â°Ã¡Â»Âng hÃ¡Â»Â£p chÃ¡Â»Â Ã„â€˜Ã¡Â»Â£i mÃ¡Â»â„¢t bÃ†Â°Ã¡Â»â€ºc GÃ¡Â»Â­i Mail cÃ¡Â»Â¥ thÃ¡Â»Æ’ TRONG Flow
+                            // (VÃƒÂ­ dÃ¡Â»Â¥: BÃ†Â°Ã¡Â»â€ºc 2 GÃ¡Â»Â­i Mail -> BÃ†Â°Ã¡Â»â€ºc 3 KiÃ¡Â»Æ’m tra Mail bÃ†Â°Ã¡Â»â€ºc 2)
                             elseif ($targetStepId && trim($act['reference_id'] ?? '') === trim($targetStepId)) {
                                 $isFromTarget = true;
                             }
-                            // 3. Nếu không chỉ định đích đến, chấp nhận mọi hoạt động thuộc Flow này 
+                            // 3. NÃ¡ÂºÂ¿u khÃƒÂ´ng chÃ¡Â»â€° Ã„â€˜Ã¡Â»â€¹nh Ã„â€˜ÃƒÂ­ch Ã„â€˜Ã¡ÂºÂ¿n, chÃ¡ÂºÂ¥p nhÃ¡ÂºÂ­n mÃ¡Â»Âi hoÃ¡ÂºÂ¡t Ã„â€˜Ã¡Â»â„¢ng thuÃ¡Â»â„¢c Flow nÃƒÂ y 
                             elseif (!$targetStepId) {
                                 $isFromTarget = true;
                             }
@@ -1070,7 +1088,7 @@ class FlowExecutor
                                     break;
                                 } else {
                                     $rawDetail = $act['details'] ?? '';
-                                    $clickedUrl = str_replace(["Click link: ", "Clicked link: ", "Clicked link (+5 điểm): "], "", $rawDetail);
+                                    $clickedUrl = str_replace(["Click link: ", "Clicked link: ", "Clicked link (+5 Ã„â€˜iÃ¡Â»Æ’m): "], "", $rawDetail);
 
                                     // [FIX #4] Old logic used strtok($u, '?') to strip ALL query strings,
                                     // causing links like ?ref=email to NEVER match the configured target.
@@ -1113,7 +1131,7 @@ class FlowExecutor
                         $logs[] = "  -> Condition Timed Out. Moving to ELSE.";
                         $isInstantStep = true;
                     } else {
-                        // CHƯA KHỚP VÀ CHƯA HẾT GIỜ -> TIẾP TỤC ĐỢI
+                        // CHÃ†Â¯A KHÃ¡Â»Å¡P VÃƒâ‚¬ CHÃ†Â¯A HÃ¡ÂºÂ¾T GIÃ¡Â»Å“ -> TIÃ¡ÂºÂ¾P TÃ¡Â»Â¤C Ã„ÂÃ¡Â»Â¢I
                         $logs[] = "  -> Condition not met yet. Still waiting...";
                         $status = 'waiting';
                         $shouldContinueChain = false;
@@ -1136,13 +1154,8 @@ class FlowExecutor
                         $subProfile = self::$profileCache[$subscriberId];
                     } else {
                         $subProfile = getSubscriberProfileForFlow($this->pdo, $subscriberId);
-                        // [MEMORY GUARD] Prune cache before writing to prevent unbounded growth.
-                        // Comment at class header said "Max 200 entries — see pruneStaticCache() calls"
-                        // but the function was never implemented. Added here: remove oldest entry (FIFO).
-                        if (count(self::$profileCache) >= 200) {
-                            reset(self::$profileCache);
-                            unset(self::$profileCache[key(self::$profileCache)]);
-                        }
+                        // [MEMORY GUARD] [FIX AUDIT-07] Use centralized pruning
+                        self::pruneCache(self::$profileCache, 200);
                         self::$profileCache[$subscriberId] = $subProfile;
                     }
 
@@ -1168,8 +1181,8 @@ class FlowExecutor
                 case 'split_test':
                     $ratioA = (int) ($step['config']['ratioA'] ?? 50);
                     // [FIX BUG-C2] hexdec() on 8-char hex can overflow on 32-bit PHP, returning
-                    // a negative integer. ($negativeInt % 100) is also negative → always < $ratioA
-                    // → always Path A or always Path B depending on value. abs(crc32()) is safe
+                    // a negative integer. ($negativeInt % 100) is also negative Ã¢â€ â€™ always < $ratioA
+                    // Ã¢â€ â€™ always Path A or always Path B depending on value. abs(crc32()) is safe
                     // on both 32-bit and 64-bit PHP and produces a uniform distribution.
                     $hash = abs(crc32($subscriberId . $currentStepId));
                     $isPathA = (($hash % 100) < $ratioA);
@@ -1206,7 +1219,7 @@ class FlowExecutor
                             // [FIX] tags.id is VARCHAR using uniqid(), NOT auto-increment.
                             // The original INSERT omitted the `id` column entirely.
                             // MySQL strict mode ('NO_DEFAULT_VALUE') throws:
-                            // "Field 'id' doesn't have a default value" — crashing the flow.
+                            // "Field 'id' doesn't have a default value" Ã¢â‚¬â€ crashing the flow.
                             if (!$tagId) {
                                 $newTagId = uniqid();
                                 // [FIX BUG-FLOW-TAG-2] Added workspace_id so auto-created tags are workspace-scoped
@@ -1223,11 +1236,8 @@ class FlowExecutor
                                     $tagId = $newTagId;
                                 }
                             }
-                            // [MEMORY GUARD] Prune tagCache at 200 entries (FIFO, same as profileCache)
-                            if (count(self::$tagCache) >= 200) {
-                                reset(self::$tagCache);
-                                unset(self::$tagCache[key(self::$tagCache)]);
-                            }
+                            // [MEMORY GUARD] [FIX AUDIT-07] Use centralized pruning
+                            self::pruneCache(self::$tagCache, 200);
                             self::$tagCache[$tagCacheKey] = $tagId;
                         }
 
@@ -1282,7 +1292,7 @@ class FlowExecutor
                         $this->pdo->prepare("UPDATE subscribers SET status='unsubscribed' WHERE id=?")->execute([$subscriberId]);
                         logActivity($this->pdo, $subscriberId, 'unsubscribe', $currentStepId, $flowName, "Unsubscribed via flow", $flowId, null, [], $subscriber['workspace_id']);
                     } elseif ($aType === 'delete_contact') {
-                        // [FIX] Log BEFORE delete — logActivity would fail (FK/orphan) if run after DELETE
+                        // [FIX] Log BEFORE delete Ã¢â‚¬â€ logActivity would fail (FK/orphan) if run after DELETE
                         logActivity($this->pdo, $subscriberId, 'delete_contact', $currentStepId, $flowName, "Deleted via flow", $flowId, null, [], $subscriber['workspace_id']);
                         // Delete all related records to prevent orphan data
                         $this->pdo->prepare("DELETE FROM subscriber_lists WHERE subscriber_id=?")->execute([$subscriberId]);
@@ -1293,11 +1303,11 @@ class FlowExecutor
                         // to prevent ghost data accumulation after contact deletion.
                         $this->pdo->prepare("DELETE FROM mail_delivery_logs WHERE subscriber_id=?")->execute([$subscriberId]);
                         $this->pdo->prepare("DELETE FROM activity_buffer WHERE subscriber_id=?")->execute([$subscriberId]);
-                        // [FIX F-1] Remove orphan ZNS delivery logs — without this, deleting subscriber
+                        // [FIX F-1] Remove orphan ZNS delivery logs Ã¢â‚¬â€ without this, deleting subscriber
                         // can fail silently if FK constraint exists on zalo_delivery_logs.subscriber_id.
                         $this->pdo->prepare("DELETE FROM zalo_delivery_logs WHERE subscriber_id=?")->execute([$subscriberId]);
                         // [FIX V3-M2] Unlink subscriber from zalo_subscribers to prevent ghost data.
-                        // zalo_subscribers has no FK CASCADE on subscriber_id — rows would orphan silently,
+                        // zalo_subscribers has no FK CASCADE on subscriber_id Ã¢â‚¬â€ rows would orphan silently,
                         // causing this Zalo contact to appear "linked" to a deleted account.
                         $this->pdo->prepare("UPDATE zalo_subscribers SET subscriber_id = NULL WHERE subscriber_id = ?")->execute([$subscriberId]);
                         // [FIX F-4] Reclaim voucher codes so they can be reassigned to future subscribers.
@@ -1305,7 +1315,7 @@ class FlowExecutor
                         $this->pdo->prepare("UPDATE voucher_codes SET subscriber_id = NULL, status = 'unused', sent_at = NULL WHERE subscriber_id = ? AND status = 'available'")->execute([$subscriberId]);
                         $this->pdo->prepare("DELETE FROM subscribers WHERE id=?")->execute([$subscriberId]);
                     }
-                    $this->bufferStatsUpdate('flows', $flowId, 'stat_completed');
+                    $this->bufferStatsUpdate('flows', $flowId, 'stat_completed', 1, $subscriber['workspace_id']);
                     $shouldContinueChain = false;
                     $status = 'completed';
                     $logs[] = "  -> Remove action executed ($aType). Flow complete.";
@@ -1391,11 +1401,11 @@ class FlowExecutor
                                         }
                                     }
 
-                                    // [FIX P0] Status was 'processing' — workers only poll WHERE status='waiting',
+                                    // [FIX P0] Status was 'processing' Ã¢â‚¬â€ workers only poll WHERE status='waiting',
                                     // so linked-flow subscribers were invisible until a timeout reclaim cycle.
                                     // Changed to 'waiting' so the dispatched priority worker picks up instantly.
                                     // [HARDENING] Extract step type for the linked flow's first step
-                                    $lSteps = json_decode($linkedFlow['steps'], true) ?: [];
+                                    // [FIX AUDIT-01] $linkedFlow was undefined. Use $lSteps (already decoded at L1322).
                                     $lStartType = 'unknown';
                                     foreach ($lSteps as $ls) {
                                         if ($ls['id'] === $lStart) {
@@ -1422,9 +1432,9 @@ class FlowExecutor
                         }
                     }
                     // [FIX] Single stat_completed increment here (terminal step for current flow).
-                    // DO NOT also increment inside the canEnroll block — that causes double-counting
+                    // DO NOT also increment inside the canEnroll block Ã¢â‚¬â€ that causes double-counting
                     // when a linked enrollment succeeds.
-                    $this->bufferStatsUpdate('flows', $flowId, 'stat_completed');
+                    $this->bufferStatsUpdate('flows', $flowId, 'stat_completed', 1, $subscriber['workspace_id']);
                     $shouldContinueChain = false;
                     $status = 'completed';
                     break;

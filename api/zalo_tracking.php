@@ -9,22 +9,8 @@ require_once 'zalo_scoring_helper.php';
 // Helper to get IP
 function get_client_ip()
 {
-    $ipaddress = '';
-    if (isset($_SERVER['HTTP_CLIENT_IP']))
-        $ipaddress = $_SERVER['HTTP_CLIENT_IP'];
-    else if (isset($_SERVER['HTTP_X_FORWARDED_FOR']))
-        $ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
-    else if (isset($_SERVER['HTTP_X_FORWARDED']))
-        $ipaddress = $_SERVER['HTTP_X_FORWARDED'];
-    else if (isset($_SERVER['HTTP_FORWARDED_FOR']))
-        $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
-    else if (isset($_SERVER['HTTP_FORWARDED']))
-        $ipaddress = $_SERVER['HTTP_FORWARDED'];
-    else if (isset($_SERVER['REMOTE_ADDR']))
-        $ipaddress = $_SERVER['REMOTE_ADDR'];
-    else
-        $ipaddress = 'UNKNOWN';
-    return $ipaddress;
+    // [FIX AUDIT-12] Use Cloudflare header for secure IP detection
+    return $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN';
 }
 
 $subId = $_GET['sub_id'] ?? null;
@@ -46,8 +32,7 @@ if ($subId && $url) {
     try {
         // 1. Log Activity
         $logId = bin2hex(random_bytes(16));
-        $rawIp = get_client_ip();
-        $ip = md5($rawIp);
+        $ip = get_client_ip(); // [FIX AUDIT-12] Store raw IP for admin visibility (don't MD5)
         $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
 
         // Prepare Details String
@@ -62,29 +47,43 @@ if ($subId && $url) {
             $wId = $stmtSub->fetchColumn() ?: 1;
         } catch (Exception $e) {}
 
+        // [FIX AUDIT-13] Deduplication: Check if this subscriber already clicked this specific link in this flow
+        $isUnique = true;
+        if ($subId && ($flowId || $stepId)) {
+            $refKey = $url; // Unique per URL
+            $stmtCheck = $pdo->prepare("SELECT id FROM tracking_unique_cache WHERE subscriber_id = ? AND target_type = 'zalo' AND target_id = ? AND reference_key = ?");
+            $stmtCheck->execute([$subId, $flowId ?: $stepId, $refKey]);
+            if ($stmtCheck->fetch()) {
+                $isUnique = false;
+            } else {
+                $pdo->prepare("INSERT INTO tracking_unique_cache (subscriber_id, target_type, target_id, event_type, reference_key) VALUES (?, 'zalo', ?, 'click', ?)")
+                    ->execute([$subId, $flowId ?: $stepId, $refKey]);
+            }
+        }
+
         $pdo->prepare("
             INSERT INTO subscriber_activity (id, subscriber_id, workspace_id, type, reference_id, flow_id, campaign_id, details, ip_address, user_agent, created_at)
             VALUES (?, ?, ?, 'click_zns', ?, ?, NULL, ?, ?, ?, NOW())
         ")->execute([$logId, $subId, $wId, $stepId, $flowId, $details, $ip, $userAgent]);
 
-        // 2. Update Subscriber Stats
-        $pdo->prepare("
-            UPDATE subscribers 
-            SET stats_clicked = stats_clicked + 1, 
-                last_click_at = NOW(), 
-                last_activity_at = NOW() 
-            WHERE id = ?
-        ")->execute([$subId]);
+        // Only update stats if it's a unique click
+        if ($isUnique) {
+            // 2. Update Subscriber Stats
+            $pdo->prepare("
+                UPDATE subscribers 
+                SET stats_clicked = stats_clicked + 1, 
+                    last_click_at = NOW(), 
+                    last_activity_at = NOW() 
+                WHERE id = ?
+            ")->execute([$subId]);
 
-        // 2.5. Update Lead Score
-        updateZaloLeadScore($pdo, null, 'click_zns', $stepId, $subId);
+            // 2.5. Update Lead Score
+            updateZaloLeadScore($pdo, null, 'click_zns', $stepId, $subId);
 
-        // 3. Mark Flow Interaction — ZNS clicks
-        // [FIX P14-C1] Route to stat_total_zalo_clicked (not stat_total_clicked which is email-only).
-        // Previously the wrong column was incremented, inflating email CTR and leaving
-        // stat_total_zalo_clicked permanently at 0 for any ZNS step in a flow.
-        if ($flowId) {
-            $pdo->prepare("UPDATE flows SET stat_total_zalo_clicked = stat_total_zalo_clicked + 1 WHERE id = ?")->execute([$flowId]);
+            // 3. Mark Flow Interaction — ZNS clicks
+            if ($flowId) {
+                $pdo->prepare("UPDATE flows SET stat_total_zalo_clicked = stat_total_zalo_clicked + 1 WHERE id = ?")->execute([$flowId]);
+            }
         }
 
         // [FIX P14-C1] Dispatch a priority queue job so Condition steps waiting for a

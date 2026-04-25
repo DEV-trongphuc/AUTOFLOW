@@ -52,6 +52,7 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
 
     $enrolledTotal = 0;
     foreach ($flows as $flow) {
+        $enrolledInThisFlow = 0;
         $steps = json_decode($flow['steps'], true) ?: [];
         $fConfig = json_decode($flow['config'], true) ?: [];
         $frequency = $fConfig['frequency'] ?? 'one-time';
@@ -98,6 +99,22 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
         }
 
         if ($isMatch && $targetMatched) {
+            // [P2 FIX] Block triggers if the target tag is inactive
+            if (($triggerType === 'tag' || $flowTriggerType === 'tag') && !empty($flowTargetId) && $flowTargetId !== 'all') {
+                // [PERF] Local cache for tag status to avoid N+1 in high-volume triggers
+                static $tagStatusCache = [];
+                $tagCacheKey = $workspaceId . ':' . $flowTargetId;
+                if (!isset($tagStatusCache[$tagCacheKey])) {
+                    $stmtTagCheck = $pdo->prepare("SELECT status FROM tags WHERE name = ? AND workspace_id = ?");
+                    $stmtTagCheck->execute([$flowTargetId, $workspaceId]);
+                    $tagStatusCache[$tagCacheKey] = $stmtTagCheck->fetchColumn() ?: 'unknown';
+                }
+                
+                if ($tagStatusCache[$tagCacheKey] === 'inactive') {
+                    continue; 
+                }
+            }
+
             $pastTime = date('Y-m-d H:i:s', strtotime('-1 second'));
             $initialSchedule = $pastTime;
 
@@ -214,11 +231,12 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
                 $params = array_merge([$flow['id'], $nextStepId, $nextStepType, $initialSchedule], $chunk, [$flow['workspace_id']], $checkParams);
                 $stmt = $pdo->prepare($sqlIns);
                 $stmt->execute($params);
-                $enrolledTotal += $stmt->rowCount();
+                $enrolledInThisFlow += $stmt->rowCount();
             }
 
-            if ($enrolledTotal > 0) {
-                $pdo->prepare("UPDATE flows SET stat_enrolled = stat_enrolled + ? WHERE id = ?")->execute([$enrolledTotal, $flow['id']]);
+            if ($enrolledInThisFlow > 0) {
+                $pdo->prepare("UPDATE flows SET stat_enrolled = stat_enrolled + ? WHERE id = ?")->execute([$enrolledInThisFlow, $flow['id']]);
+                $enrolledTotal += $enrolledInThisFlow;
             }
             if ($lockAcquired) {
                 $pdo->prepare('SELECT RELEASE_LOCK(?)')->execute([$enrollLockKey]);
@@ -265,8 +283,8 @@ function checkDynamicTriggers($pdo, $subscriberId)
 
         // A. Segment Trigger
         if ($tType === 'segment') {
-            $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
-            $stmtSeg->execute([$tTargetId]);
+            $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
+            $stmtSeg->execute([$tTargetId, $workspaceId]);
             $criteriaJson = $stmtSeg->fetchColumn();
 
             if ($criteriaJson) {
@@ -324,8 +342,8 @@ function checkDynamicTriggers($pdo, $subscriberId)
                     }
                     if (!empty($targetSegmentIds)) {
                         foreach ($targetSegmentIds as $segId) {
-                            $stmtSeg2 = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
-                            $stmtSeg2->execute([$segId]);
+                            $stmtSeg2 = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
+                            $stmtSeg2->execute([$segId, $workspaceId]);
                             $segConfig = $stmtSeg2->fetchColumn();
                             if ($segConfig) {
                                 $segRes = buildSegmentWhereClause($segConfig, $segId);

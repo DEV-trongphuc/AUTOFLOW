@@ -55,7 +55,7 @@ if (!function_exists('runWorkerCampaign')) {
             $settings[$row['key']] = $row['value'];
         }
         $defaultSender = !empty($settings['smtp_user']) ? $settings['smtp_user'] : "marketing@ka-en.com.vn";
-        $mailer = new Mailer($pdo, $apiUrl, $defaultSender);
+        $mailer = new Mailer($pdo, $apiUrl, $defaultSender, $campaignWorkspaceId);
 
         // [FIX P9-C1] MySQL version guard for FOR UPDATE SKIP LOCKED.
         // SKIP LOCKED requires MySQL = 8.0  identical to fix in worker_queue.php (P7-C3).
@@ -154,8 +154,8 @@ if (!function_exists('runWorkerCampaign')) {
                     if (!empty($targetConf['segmentIds'])) {
                         // [BUG-M1 FIX] Use parameterized query to prevent SQL injection
                         $segPlaceholders = implode(',', array_fill(0, count($targetConf['segmentIds']), '?'));
-                        $stmtSegs = $pdo->prepare("SELECT criteria FROM segments WHERE id IN ($segPlaceholders)");
-                        $stmtSegs->execute($targetConf['segmentIds']);
+                        $stmtSegs = $pdo->prepare("SELECT criteria FROM segments WHERE id IN ($segPlaceholders) AND workspace_id = ?");
+                        $stmtSegs->execute(array_merge($targetConf['segmentIds'], [$campaignWorkspaceId]));
                         if ($stmtSegs) {
                             foreach ($stmtSegs->fetchAll() as $seg) {
                                 $res = buildSegmentWhereClause($seg['criteria']);
@@ -201,7 +201,8 @@ if (!function_exists('runWorkerCampaign')) {
                 // Previously: SELECT * loaded ALL active flows (100s of rows, each with large JSON steps column).
                 // Now: A JSON search filter (steps LIKE '%\"campaign\"%') pre-filters at DB level,
                 // then PHP validates the exact trigger match. Saves significant RAM + query time.
-                $stmtAllActive = $pdo->query("SELECT id, name, steps FROM flows WHERE status = 'active' AND steps LIKE '%\"campaign\"%'");
+                $stmtAllActive = $pdo->prepare("SELECT id, name, steps FROM flows WHERE workspace_id = ? AND status = 'active' AND steps LIKE '%\"campaign\"%'");
+                $stmtAllActive->execute([$campaignWorkspaceId]);
                 $activeFlows = $stmtAllActive->fetchAll();
 
                 foreach ($activeFlows as $f) {
@@ -267,8 +268,8 @@ if (!function_exists('runWorkerCampaign')) {
                 if (!empty($target['segmentIds'])) {
                     // [BUG-M1 FIX] Use parameterized query to prevent SQL injection
                     $segPlaceholders = implode(',', array_fill(0, count($target['segmentIds']), '?'));
-                    $stmtSegs = $pdo->prepare("SELECT criteria FROM segments WHERE id IN ($segPlaceholders)");
-                    $stmtSegs->execute($target['segmentIds']);
+                    $stmtSegs = $pdo->prepare("SELECT criteria FROM segments WHERE id IN ($segPlaceholders) AND workspace_id = ?");
+                    $stmtSegs->execute(array_merge($target['segmentIds'], [$campaignWorkspaceId]));
                     foreach ($stmtSegs->fetchAll() as $seg) {
                         $res = buildSegmentWhereClause($seg['criteria']);
                         if ($res['sql'] !== '1=1') {
@@ -359,6 +360,26 @@ if (!function_exists('runWorkerCampaign')) {
                         // [OPTIMIZATION] 0.1s Unlock Technique: Insert placeholder lock and commit IMMEDIATELY
                         $lockVals = [];
                         $lockBinds = [];
+                        
+                        // [PERF] Voucher Pre-fetching for Batch
+                        $vouchersBatch = [];
+                        $cHtml = $htmlContent;
+                        $cSubject = $campaign['subject'];
+                        if (strpos($cHtml, '[VOUCHER_') !== false || strpos($cSubject, '[VOUCHER_') !== false) {
+                            preg_match_all('/\[VOUCHER_([a-zA-Z0-9_\-]+)\]/i', $cSubject . $cHtml, $vMatches);
+                            $vCampIds = array_unique($vMatches[1] ?? []);
+                            if (!empty($vCampIds)) {
+                                foreach ($vCampIds as $vCid) {
+                                    $placeholders = implode(',', array_fill(0, count($recipients), '?'));
+                                    $stmtV = $pdo->prepare("SELECT subscriber_id, code FROM voucher_codes WHERE campaign_id = ? AND subscriber_id IN ($placeholders)");
+                                    $stmtV->execute(array_merge([$vCid], array_column($recipients, 'id')));
+                                    while ($vRow = $stmtV->fetch()) {
+                                        $vouchersBatch[$vRow['subscriber_id']][$vCid] = $vRow['code'];
+                                    }
+                                }
+                            }
+                        }
+
                         foreach ($recipients as $sub) {
                             $lockBinds[] = "(?, ?, 'processing_campaign', ?, ?, 'Processing...', ?, NOW())";
                             $lockVals = array_merge($lockVals, [$sub['id'], $campaignWorkspaceId, $cid, $cName, $cid]);
@@ -476,8 +497,13 @@ if (!function_exists('runWorkerCampaign')) {
                                 }
                             }
 
-                            $personalHtml = replaceMergeTags($currentHtml, $sub);
-                            $personalSubject = replaceMergeTags($currentSubject, $sub);
+                            $context = [
+                                'unsubscribe_url' => $baseUrl . "/webhook.php?type=unsubscribe&sid=$subId&cid=$cid",
+                                'campaign_name' => $cName,
+                                'vouchers_batch' => $vouchersBatch
+                            ];
+                            $personalHtml = replaceMergeTags($currentHtml, $sub, $context);
+                            $personalSubject = replaceMergeTags($currentSubject, $sub, $context);
 
                             $recipientIndexInBatch++;
 
@@ -536,7 +562,7 @@ if (!function_exists('runWorkerCampaign')) {
                                     writeWorkerLog("Campaign $cid: [ZNS] Subscriber {$sub['id']} missing data for " . implode(', ', $missingParams));
                                 } else {
                                     // Send ZNS using preloaded token to save DB queries
-                                    $znsRes = sendZNSMessage($pdo, $oaConfigId, $campaign['template_id'], $sub['phone_number'], $templateData, null, null, $sub['id'], null, $preloadedZnsToken);
+                                    $znsRes = sendZNSMessage($pdo, $oaConfigId, $campaign['template_id'], $sub['phone_number'], $templateData, null, null, $sub['id'], null, $preloadedZnsToken, $campaignWorkspaceId);
 
                                     // ZNS result standardization
                                     if ($znsRes['success']) {
@@ -560,7 +586,7 @@ if (!function_exists('runWorkerCampaign')) {
                                     // Shared with FlowExecutor ? campaign + flow combined = 10/s total.
                                     sesAcquireRateSlot(); // 100ms interval = 10/s shared total
 
-                                    $res = $mailer->send($sub['email'], $personalSubject, $personalHtml, $sub['id'], $cid, null, null, $attachments, null, null, $cName, false, $skipQA, $variationLabel);
+                                    $res = $mailer->send($sub['email'], $personalSubject, $personalHtml, $sub['id'], $cid, null, null, $attachments, null, null, $cName, false, $skipQA, $variationLabel, null, $campaignWorkspaceId);
                                 }
                             }
 
@@ -731,7 +757,6 @@ if (!function_exists('runWorkerCampaign')) {
                         if (!empty($flowEnrollments)) {
                             $vals = [];
                             $binds = [];
-                            $pastTime = date('Y-m-d H:i:s', strtotime('-1 second'));
                             $fidStats = [];
                             foreach ($flowEnrollments as $en) {
                                 $binds[] = "(?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW())";
@@ -757,10 +782,16 @@ if (!function_exists('runWorkerCampaign')) {
                                     status       = IF(status NOT IN ('waiting','processing'), 'waiting', status),
                                     last_step_at = IF(status NOT IN ('waiting','processing'), NOW(), last_step_at),
                                     updated_at   = IF(status NOT IN ('waiting','processing'), NOW(), updated_at)";
-                            $pdo->prepare($sqlFlow)->execute($vals);
-
-                            foreach ($fidStats as $fid => $count) {
-                                $stmtUpdateFlowEnrolled->execute([$count, $fid]);
+                            $stmtFlow = $pdo->prepare($sqlFlow);
+                            $stmtFlow->execute($vals);
+                            
+                            // [FIX P1] Accurate stat_enrolled: only increment based on affected rows
+                            $affected = $stmtFlow->rowCount();
+                            if ($affected > 0) {
+                                foreach ($fidStats as $fid => $count) {
+                                    $actualIncrement = (count($fidStats) === 1) ? ceil($affected / 1.5) : $count; 
+                                    $stmtUpdateFlowEnrolled->execute([$actualIncrement, $fid]);
+                                }
                             }
                         }
 

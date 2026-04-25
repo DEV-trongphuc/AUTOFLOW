@@ -284,8 +284,38 @@ try {
         }
 
         if ($action === 'get_messages' && !empty($_GET['conversation_id'])) {
-            $stmt = $pdo->prepare("SELECT id, conversation_id, sender, message, created_at, tokens, metadata FROM ai_org_messages WHERE conversation_id = ? ORDER BY created_at ASC"); // [FIX P37-AOC] Explicit columns, no SELECT *
-            $stmt->execute([$_GET['conversation_id']]);
+            $convId = $_GET['conversation_id'];
+            $visitorId = $_GET['visitor_id'] ?? null;
+            $requestingOrgUserId = $_GET['org_user_id'] ?? null;
+
+            // [SEC-06] OWNERSHIP CHECK: Ensure user has access to this conversation
+            $stmtVerify = $pdo->prepare("SELECT user_id, visitor_id, property_id FROM ai_org_conversations WHERE id = ?");
+            $stmtVerify->execute([$convId]);
+            $conv = $stmtVerify->fetch(PDO::FETCH_ASSOC);
+
+            if (!$conv) {
+                echo json_encode(['success' => false, 'message' => 'Conversation not found']);
+                exit;
+            }
+
+            $isAdmin = ($GLOBALS['current_admin_id'] === 'admin-001' && !$requestingOrgUserId);
+            $hasAccess = $isAdmin;
+            if (!$hasAccess) {
+                if ($requestingOrgUserId) {
+                    $hasAccess = ($conv['user_id'] == $requestingOrgUserId || $conv['visitor_id'] == $visitorId);
+                } else {
+                    $hasAccess = ($conv['visitor_id'] == $visitorId);
+                }
+            }
+
+            if (!$hasAccess) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Access denied']);
+                exit;
+            }
+
+            $stmt = $pdo->prepare("SELECT id, conversation_id, sender, message, created_at, tokens, metadata FROM ai_org_messages WHERE conversation_id = ? ORDER BY created_at ASC");
+            $stmt->execute([$convId]);
             echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
             exit;
         }
@@ -1305,14 +1335,13 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
 
         // ===== LIST FEEDBACK (Admin only) =====
         if ($action === 'list_feedback') {
-            // Only admin/assistant can view feedback list
             $role = $currentOrgUser['role'] ?? '';
             if (!in_array($role, ['admin', 'assistant'])) {
-                echo json_encode(['success' => false, 'message' => 'Không có quyền truy cập']);
+                echo json_encode(['success' => false, 'message' => 'Không có quyền xem feedback']);
                 exit;
             }
 
-            // Auto-create ai_feedback table if not exists
+            // Auto-create ai_feedback table if not exists (Lazy migration)
             try {
                 $pdo->exec("CREATE TABLE IF NOT EXISTS ai_feedback (
                     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -1694,6 +1723,14 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
         $isKbOnly = $modelConfig['kb_only'] ?? false;
         $isImageGen = $modelConfig['is_image_gen'] ?? false;
         $isCiteMode = $modelConfig['cite_mode'] ?? false;
+        
+        // [FIX] Initialize variables to prevent "Undefined variable" errors if is_image_gen is false
+        $isPro = false;
+        $aspectRatio = '1:1';
+        $apiImageSize = '1K';
+        $imageProvider = 'gemini-2.5-flash-lite-image';
+        $width = 1024;
+        $height = 1024;
 
         // [P18-A5 SECURITY] Enforce mode permissions server-side.
         // The frontend already restricts UI, but a user could craft a raw API request
@@ -2553,6 +2590,11 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
                     $pdo->prepare("UPDATE ai_org_conversations SET updated_at = NOW() WHERE id = ?")->execute([$convId]);
                 }
 
+                // [CRITICAL FIX] Commit transaction before exiting stream
+                if ($pdo->inTransaction()) {
+                    $pdo->commit();
+                }
+
                 echo "data: [DONE]\n\n";
                 exit;
             }
@@ -2665,6 +2707,11 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
                 $pdo->prepare("UPDATE ai_org_conversations SET updated_at = NOW() WHERE id = ?")->execute([$convId]);
             }
 
+            // [CRITICAL FIX] Commit transaction for non-stream path
+            if ($pdo->inTransaction()) {
+                $pdo->commit();
+            }
+
             echo json_encode([
                 'success' => true,
                 'data' => [
@@ -2679,6 +2726,9 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
                 ]
             ]);
         } catch (Exception $e) {
+            if (isset($pdo) && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             error_log('[EXCEPTION] ' . $e->getMessage() . ' in ' . __FILE__ . ':' . __LINE__);
             echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
         }

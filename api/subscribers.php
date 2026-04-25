@@ -101,8 +101,8 @@ if ($method === 'GET' && $route === 'count_unique') {
     if (!empty($segmentIds)) {
         foreach ($segmentIds as $segId) {
             try {
-                $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
-                $stmtSeg->execute([$segId]);
+                $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
+                $stmtSeg->execute([$segId, $workspace_id]);
                 $criteriaJson = $stmtSeg->fetchColumn();
 
                 if ($criteriaJson) {
@@ -243,18 +243,36 @@ if ($method === 'POST' && ($route === 'bulk-add-tag' || $route === 'bulk-add-to-
         if (!$tagId)
             jsonResponse(false, null, 'Tag ID required');
 
-        $CHUNK = 500;
-        foreach (array_chunk($subscriberIds, $CHUNK) as $chunk) {
-            $placeholders = implode(',', array_fill(0, count($chunk), '(?, ?)'));
-            $sql = "INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES $placeholders";
-            $params = [];
-            foreach ($chunk as $sid) {
-                array_push($params, $sid, $tagId);
-            }
-            $pdo->prepare($sql)->execute($params);
+        // [SEC-FIX] Verify tag belongs to workspace
+        $stmtT = $pdo->prepare("SELECT id FROM tags WHERE id = ? AND workspace_id = ?");
+        $stmtT->execute([$tagId, $workspace_id]);
+        if (!$stmtT->fetch()) {
+            jsonResponse(false, null, 'Invalid Tag for this workspace');
         }
 
-        jsonResponse(true, ['count' => count($subscriberIds)], 'Đã gắn tag thành công');
+        $CHUNK = 500;
+        $totalProcessed = 0;
+        foreach (array_chunk($subscriberIds, $CHUNK) as $chunk) {
+            // [SEC-FIX] Filter subscriber IDs to only those belonging to current workspace
+            $placeholders = implode(',', array_fill(0, count($chunk), '?'));
+            $sqlVerify = "SELECT id FROM subscribers WHERE id IN ($placeholders) AND workspace_id = ?";
+            $stmtVerify = $pdo->prepare($sqlVerify);
+            $stmtVerify->execute(array_merge($chunk, [$workspace_id]));
+            $validIds = $stmtVerify->fetchAll(PDO::FETCH_COLUMN);
+
+            if (!empty($validIds)) {
+                $insertPh = implode(',', array_fill(0, count($validIds), '(?, ?)'));
+                $sql = "INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES $insertPh";
+                $params = [];
+                foreach ($validIds as $sid) {
+                    array_push($params, $sid, $tagId);
+                }
+                $pdo->prepare($sql)->execute($params);
+                $totalProcessed += count($validIds);
+            }
+        }
+
+        jsonResponse(true, ['count' => $totalProcessed], 'Đã gắn tag thành công');
     }
 
     if ($route === 'bulk-add-to-list') {
@@ -262,28 +280,41 @@ if ($method === 'POST' && ($route === 'bulk-add-tag' || $route === 'bulk-add-to-
         if (!$listId)
             jsonResponse(false, null, 'List ID required');
 
-        // [FIX] Chunk INSERT and COUNT to prevent MySQL 65,535 placeholder limit crash.
-        // 50k subscribers × 2 placeholders (subscriber_id, list_id) = 100k params → PDO crash.
-        // Same pattern as bulk_operations.php fix: process in batches of 500.
+        // [SEC-FIX] Verify list belongs to workspace
+        $stmtL = $pdo->prepare("SELECT id FROM lists WHERE id = ? AND workspace_id = ?");
+        $stmtL->execute([$listId, $workspace_id]);
+        if (!$stmtL->fetch()) {
+            jsonResponse(false, null, 'Invalid List for this workspace');
+        }
+
         $CHUNK = 500;
         $totalAdded = 0;
         $totalPhone = 0;
 
         foreach (array_chunk($subscriberIds, $CHUNK) as $chunk) {
-            // Batch INSERT IGNORE
-            $ph = implode(',', array_fill(0, count($chunk), '(?, ?)'));
-            $params = [];
-            foreach ($chunk as $sid) {
-                array_push($params, $sid, $listId);
-            }
-            $pdo->prepare("INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id) VALUES $ph")->execute($params);
-            $totalAdded += count($chunk);
+            // [SEC-FIX] Filter subscriber IDs to only those belonging to current workspace
+            $placeholders = implode(',', array_fill(0, count($chunk), '?'));
+            $sqlVerify = "SELECT id FROM subscribers WHERE id IN ($placeholders) AND workspace_id = ?";
+            $stmtVerify = $pdo->prepare($sqlVerify);
+            $stmtVerify->execute(array_merge($chunk, [$workspace_id]));
+            $validIds = $stmtVerify->fetchAll(PDO::FETCH_COLUMN);
 
-            // Count phone numbers in this chunk
-            $phIds = implode(',', array_fill(0, count($chunk), '?'));
-            $stmtPhone = $pdo->prepare("SELECT COUNT(*) FROM subscribers WHERE id IN ($phIds) AND (phone_number IS NOT NULL AND phone_number != '')");
-            $stmtPhone->execute($chunk);
-            $totalPhone += (int) $stmtPhone->fetchColumn();
+            if (!empty($validIds)) {
+                // Batch INSERT IGNORE
+                $ph = implode(',', array_fill(0, count($validIds), '(?, ?)'));
+                $params = [];
+                foreach ($validIds as $sid) {
+                    array_push($params, $sid, $listId);
+                }
+                $pdo->prepare("INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id) VALUES $ph")->execute($params);
+                $totalAdded += count($validIds);
+
+                // Count phone numbers in this verified chunk
+                $vPhIds = implode(',', array_fill(0, count($validIds), '?'));
+                $stmtPhone = $pdo->prepare("SELECT COUNT(*) FROM subscribers WHERE id IN ($vPhIds) AND (phone_number IS NOT NULL AND phone_number != '')");
+                $stmtPhone->execute($validIds);
+                $totalPhone += (int) $stmtPhone->fetchColumn();
+            }
         }
 
         $pdo->prepare("UPDATE lists SET subscriber_count = subscriber_count + ?, phone_count = phone_count + ? WHERE id = ?")->execute([$totalAdded, $totalPhone, $listId]);
@@ -296,17 +327,17 @@ if ($method === 'POST' && ($route === 'bulk-add-tag' || $route === 'bulk-add-to-
         if (!$status)
             jsonResponse(false, null, 'Status required');
 
-        // [FIX P33-S1] Added workspace_id guard to bulk status change.
-        // Without this, any authenticated user could change the status of subscribers
-        // from any workspace by supplying foreign subscriber IDs in the request body.
         $CHUNK = 500;
+        $totalUpdated = 0;
         foreach (array_chunk($subscriberIds, $CHUNK) as $chunk) {
             $placeholders = implode(',', array_fill(0, count($chunk), '?'));
             $sql = "UPDATE subscribers SET status = ? WHERE id IN ($placeholders) AND workspace_id = ?";
-            $pdo->prepare($sql)->execute(array_merge([$status], $chunk, [$workspace_id]));
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute(array_merge([$status], $chunk, [$workspace_id]));
+            $totalUpdated += $stmt->rowCount();
         }
 
-        jsonResponse(true, ['count' => count($subscriberIds)], 'Đã cập nhật trạng thái thành công');
+        jsonResponse(true, ['count' => $totalUpdated], 'Đã cập nhật trạng thái thành công');
     }
 }
 
@@ -342,8 +373,25 @@ if ($method === 'POST' && $route === 'subscribers_bulk') {
             $tagSubValues = [];
             $tagSubParams = [];
 
+            // [SEC-FIX] PRE-VERIFY IDs: Check if provided IDs belong to other workspaces
+            $providedIds = array_filter(array_column($chunk, 'id'));
+            $idBlacklist = [];
+            if (!empty($providedIds)) {
+                $placeholders = implode(',', array_fill(0, count($providedIds), '?'));
+                $stmtCheck = $pdo->prepare("SELECT id FROM subscribers WHERE id IN ($placeholders) AND workspace_id != ?");
+                $stmtCheck->execute(array_merge($providedIds, [$workspace_id]));
+                $idBlacklist = $stmtCheck->fetchAll(PDO::FETCH_COLUMN);
+            }
+
             foreach ($chunk as $data) {
-                $id = $data['id'] ?? bin2hex(random_bytes(16));
+                $id = $data['id'] ?? null;
+                
+                // If ID is provided but belongs to another workspace, it's a spoofing attempt.
+                // Force a new ID to protect the foreign data.
+                if (!$id || in_array($id, $idBlacklist)) {
+                    $id = bin2hex(random_bytes(16));
+                }
+
                 $email = $data['email'] ?? '';
                 $firstName = $data['firstName'] ?? '';
                 $lastName = $data['lastName'] ?? '';
@@ -686,8 +734,8 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
             // Segment Filter
             if ($segmentId !== 'all') {
                 try {
-                    $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
-                    $stmtSeg->execute([$segmentId]);
+                    $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
+                    $stmtSeg->execute([$segmentId, $workspace_id]);
                     $criteriaJson = $stmtSeg->fetchColumn();
 
                     if ($criteriaJson) {

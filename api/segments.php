@@ -59,7 +59,7 @@ if ($method === 'POST' && $route === 'sync') {
             array_unshift($res['params'], $workspace_id);
             $stmtC->execute($res['params']);
             $count = (int) $stmtC->fetchColumn();
-            $pdo->prepare("UPDATE segments SET subscriber_count = ? WHERE id = ?")->execute([$count, $seg['id']]);
+            $pdo->prepare("UPDATE segments SET subscriber_count = ? WHERE id = ? AND workspace_id = ?")->execute([$count, $seg['id'], $workspace_id]);
             $results[] = ['id' => $seg['id'], 'count' => $count];
         }
         jsonResponse(true, $results, 'Đã đồng bộ lại toàn bộ phân khúc');
@@ -201,8 +201,8 @@ if ($method === 'POST' && $route === 'split') {
             $segmentScope = "";
             $scopeParams = [];
 
-            $stmtS = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
-            $stmtS->execute([$segmentId]);
+            $stmtS = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
+            $stmtS->execute([$segmentId, $workspace_id]);
             $criteria = $stmtS->fetchColumn();
 
             if ($criteria) {
@@ -220,9 +220,9 @@ if ($method === 'POST' && $route === 'split') {
             $collectedIds = [];
             foreach (array_chunk($inputData, 500) as $chunk) {
                 $ph = implode(',', array_fill(0, count($chunk), '?'));
-                $sql = "SELECT id FROM subscribers s WHERE (email IN ($ph) OR phone_number IN ($ph)) $segmentScope";
+                $sql = "SELECT id FROM subscribers s WHERE (email IN ($ph) OR phone_number IN ($ph)) AND workspace_id = ? $segmentScope";
                 $stmtMatch = $pdo->prepare($sql);
-                $stmtMatch->execute(array_merge($chunk, $chunk, $scopeParams));
+                $stmtMatch->execute(array_merge($chunk, $chunk, [$workspace_id], $scopeParams));
                 foreach ($stmtMatch->fetchAll(PDO::FETCH_COLUMN) as $id) {
                     $collectedIds[$id] = true; // Use key dedup instead of array_unique (faster)
                 }
@@ -265,7 +265,7 @@ if ($method === 'POST' && $route === 'split') {
                 $stmtIns->execute($values);
                 $addedCount += $stmtIns->rowCount();
             }
-            $pdo->prepare("UPDATE lists SET subscriber_count = (SELECT COUNT(*) FROM subscriber_lists WHERE list_id = ?) WHERE id = ?")->execute([$listId, $listId]);
+            $pdo->prepare("UPDATE lists SET subscriber_count = (SELECT COUNT(*) FROM subscriber_lists WHERE list_id = ?) WHERE id = ? AND workspace_id = ?")->execute([$listId, $listId, $workspace_id]);
         }
 
         // 4. Handle Exclusion (Bulk Optimized)
@@ -288,8 +288,8 @@ if ($method === 'POST' && $route === 'split') {
             $badIds = [];
             foreach (array_chunk($targetIds, 500) as $chunk) {
                 $inClauseChunk = implode(',', array_fill(0, count($chunk), '?'));
-                $stmtBad = $pdo->prepare("SELECT id FROM subscribers WHERE id IN ($inClauseChunk) AND status IN ('unsubscribed', 'error', 'bounced', 'complained')");
-                $stmtBad->execute($chunk);
+                $stmtBad = $pdo->prepare("SELECT id FROM subscribers WHERE id IN ($inClauseChunk) AND workspace_id = ? AND status IN ('unsubscribed', 'error', 'bounced', 'complained')");
+                $stmtBad->execute(array_merge($chunk, [$workspace_id]));
                 foreach ($stmtBad->fetchAll(PDO::FETCH_COLUMN) as $badId) {
                     $badIds[] = $badId;
                 }

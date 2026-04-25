@@ -22,14 +22,38 @@ if (!$propertyId) {
     exit;
 }
 
-// [SECURITY FIX] Ensure property belongs to the current workspace
-$workspace_id = get_current_workspace_id();
-$stmtProp = $pdo->prepare("SELECT id FROM web_properties WHERE id = ? AND workspace_id = ?");
-$stmtProp->execute([$propertyId, $workspace_id]);
-if (!$stmtProp->fetchColumn()) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Forbidden: Property does not belong to your workspace']);
-    exit;
+// [SECURITY FIX] Ensure property belongs to the current workspace or org
+if (strpos($propertyId, 'chatbot_') === 0) {
+    // AI Chatbot Logic
+    $orgScopeAdminId = $GLOBALS['current_admin_id'] ?? ($_SESSION['org_user_id'] ?? null);
+    if (!$orgScopeAdminId && !empty($_SESSION['user_id'])) {
+        $orgScopeAdminId = ($_SESSION['user_id'] == 1) ? 'admin-001' : $_SESSION['user_id'];
+    }
+
+    if ($orgScopeAdminId !== 'admin-001') {
+        $stmtProp = $pdo->prepare("
+            SELECT ac.id 
+            FROM ai_chatbots ac 
+            JOIN ai_chatbot_categories acc ON ac.category_id = acc.id 
+            WHERE ac.id = ? AND acc.admin_id = ?
+        ");
+        $stmtProp->execute([$propertyId, $orgScopeAdminId]);
+        if (!$stmtProp->fetchColumn()) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Forbidden: Chatbot does not belong to your organization']);
+            exit;
+        }
+    }
+} else {
+    // Web Property Logic
+    $workspace_id = get_current_workspace_id();
+    $stmtProp = $pdo->prepare("SELECT id FROM web_properties WHERE id = ? AND workspace_id = ?");
+    $stmtProp->execute([$propertyId, $workspace_id]);
+    if (!$stmtProp->fetchColumn()) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'Forbidden: Property does not belong to your workspace']);
+        exit;
+    }
 }
 
 if ($action === 'list') {

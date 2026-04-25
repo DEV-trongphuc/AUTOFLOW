@@ -26,18 +26,18 @@ switch ($method) {
                 $sql = "SELECT s.status, COUNT(*) as count 
                         FROM subscriber_tags st 
                         JOIN subscribers s ON st.subscriber_id = s.id 
-                        WHERE st.tag_id = ? 
+                        WHERE st.tag_id = ? AND s.workspace_id = ?
                         GROUP BY s.status";
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute([$path]);
+                $stmt->execute([$path, $workspace_id]);
                 $stats = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
                 // Add phone count
                 $sqlPhone = "SELECT COUNT(*) FROM subscriber_tags st 
                              JOIN subscribers s ON st.subscriber_id = s.id 
-                             WHERE st.tag_id = ? AND (s.phone_number IS NOT NULL AND s.phone_number != '')";
+                             WHERE st.tag_id = ? AND s.workspace_id = ? AND (s.phone_number IS NOT NULL AND s.phone_number != '')";
                 $stmtPhone = $pdo->prepare($sqlPhone);
-                $stmtPhone->execute([$path]);
+                $stmtPhone->execute([$path, $workspace_id]);
                 $stats['has_phone'] = (int) $stmtPhone->fetchColumn();
 
                 jsonResponse(true, $stats);
@@ -46,12 +46,13 @@ switch ($method) {
 
             $sql = "SELECT t.id, t.name, t.description, t.status,
                     (SELECT COUNT(*) FROM subscriber_tags st 
-                     WHERE st.tag_id = t.id) as subscriber_count 
+                     JOIN subscribers s ON st.subscriber_id = s.id
+                     WHERE st.tag_id = t.id AND s.workspace_id = ?) as subscriber_count 
                     FROM tags t 
                     WHERE t.workspace_id = ?
                     ORDER BY name ASC";
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([$workspace_id]);
+            $stmt->execute([$workspace_id, $workspace_id]);
             jsonResponse(true, $stmt->fetchAll());
         } catch (Exception $e) {
             jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');

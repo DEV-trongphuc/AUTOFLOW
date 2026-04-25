@@ -20,9 +20,12 @@ echo "Starting Bulk Refresh of Meta Subscribers...\n";
 echo "Time: " . date('Y-m-d H:i:s') . "\n";
 echo "--------------------------------------------------\n\n";
 
+$workspace_id = get_current_workspace_id();
+
 try {
     // 1. Get all unique page IDs we have subscribers for to cache tokens
-    $stmtPages = $pdo->query("SELECT page_id, page_access_token, page_name FROM meta_app_configs WHERE status = 'active'");
+    $stmtPages = $pdo->prepare("SELECT page_id, page_access_token, page_name FROM meta_app_configs WHERE status = 'active' AND workspace_id = ?");
+    $stmtPages->execute([$workspace_id]);
     $pageMap = [];
     while ($p = $stmtPages->fetch(PDO::FETCH_ASSOC)) {
         $pageMap[$p['page_id']] = $p;
@@ -33,7 +36,12 @@ try {
     }
 
     // 2. Fetch all subscribers
-    $stmtSubs = $pdo->query("SELECT id, psid, page_id, name FROM meta_subscribers ORDER BY last_active_at DESC");
+    $stmtSubs = $pdo->prepare("SELECT s.id, s.psid, s.page_id, s.name 
+                                FROM meta_subscribers s
+                                JOIN meta_app_configs c ON s.page_id = c.page_id
+                                WHERE c.workspace_id = ?
+                                ORDER BY s.last_active_at DESC");
+    $stmtSubs->execute([$workspace_id]);
     $subscribers = $stmtSubs->fetchAll(PDO::FETCH_ASSOC);
     $total = count($subscribers);
 
@@ -89,7 +97,7 @@ try {
             ]);
 
             // 5. Sync to Audience (Subscribers) table
-            syncMetaToMain($pdo, $subId);
+            syncMetaToMain($pdo, $subId, $workspace_id);
 
             echo "✅ UPDATED & SYNCED ($fullName)\n";
             $successCount++;

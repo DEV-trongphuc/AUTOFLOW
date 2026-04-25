@@ -133,7 +133,8 @@ function syncMainToZalo($pdo, $mainSubId)
 
                 require_once __DIR__ . '/flow_helpers.php';
                 if (function_exists('logActivity')) {
-                    logActivity($pdo, $mainSubId, 'profile_sync', null, 'Sync Profile', "Linked Zalo ID: $zaloUserId (Main to Zalo sync)", null, null);
+                    // [FIX AUDIT-17] Include workspace_id
+                    logActivity($pdo, $mainSubId, 'profile_sync', null, 'Sync Profile', "Linked Zalo ID: $zaloUserId (Main to Zalo sync)", null, null, [], $workspace_id);
                 }
             }
         }
@@ -225,7 +226,9 @@ function syncZaloToMain($pdo, $zaloSubId)
 
                 require_once __DIR__ . '/flow_helpers.php';
                 if (function_exists('logActivity')) {
-                    logActivity($pdo, $mainSub['id'], 'profile_sync', null, 'Sync Profile', "Linked Zalo ID: {$zs['zalo_user_id']} (Zalo to Main sync)", null, null);
+                    // [FIX AUDIT-17] Include workspace_id
+                    $wsId = $mainSub['workspace_id'] ?? 1;
+                    logActivity($pdo, $mainSub['id'], 'profile_sync', null, 'Sync Profile', "Linked Zalo ID: {$zs['zalo_user_id']} (Zalo to Main sync)", null, null, [], $wsId);
                 }
             }
         }

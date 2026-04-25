@@ -63,8 +63,8 @@ try {
         $executionTime = round(microtime(true) - $startTime, 2);
 
         // Get sync stats from database
-        $stmt = $pdo->prepare("SELECT last_sync_at FROM integrations WHERE id = ?");
-        $stmt->execute([$id]);
+        $stmt = $pdo->prepare("SELECT last_sync_at FROM integrations WHERE id = ? AND workspace_id = ?");
+        $stmt->execute([$id, $workspace_id]);
         $integration = $stmt->fetch();
 
         jsonResponse(true, [

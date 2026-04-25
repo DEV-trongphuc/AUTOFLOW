@@ -114,8 +114,8 @@ try {
             $whereParams = [];
 
             if ($segId) {
-                $stmtCriteria = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
-                $stmtCriteria->execute([$segId]);
+                $stmtCriteria = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
+                $stmtCriteria->execute([$segId, $workspace_id]);
                 $criteria = $stmtCriteria->fetchColumn();
                 if ($criteria) {
                     $res = buildSegmentWhereClause($criteria, $segId);
@@ -215,12 +215,14 @@ try {
                 jsonResponse(false, null, 'Tag required');
 
             // 1. Get or Create Tag ID in relational table
-            $stmtT = $pdo->prepare("SELECT id FROM tags WHERE name = ?");
-            $stmtT->execute([$tag]);
+            // [FIX AUDIT-02] Scope Tag lookup to workspace to prevent cross-tenant contamination
+            $stmtT = $pdo->prepare("SELECT id FROM tags WHERE name = ? AND workspace_id = ?");
+            $stmtT->execute([$tag, $workspace_id]);
             $tagId = $stmtT->fetchColumn();
             if (!$tagId) {
-                $pdo->prepare("INSERT INTO tags (name) VALUES (?)")->execute([$tag]);
-                $tagId = $pdo->lastInsertId();
+                $newTagId = uniqid();
+                $pdo->prepare("INSERT INTO tags (id, name, workspace_id, created_at) VALUES (?, ?, ?, NOW())")->execute([$newTagId, $tag, $workspace_id]);
+                $tagId = $newTagId;
             }
 
             // [BUG FIX P0] Removed JSON_ARRAY_APPEND on subscribers.tags:
@@ -253,8 +255,9 @@ try {
                 jsonResponse(false, null, 'Tag required');
 
             // 1. Get Tag ID
-            $stmtT = $pdo->prepare("SELECT id FROM tags WHERE name = ?");
-            $stmtT->execute([$tag]);
+            // [FIX AUDIT-02] Scope Tag lookup to workspace
+            $stmtT = $pdo->prepare("SELECT id FROM tags WHERE name = ? AND workspace_id = ?");
+            $stmtT->execute([$tag, $workspace_id]);
             $tagId = $stmtT->fetchColumn();
 
             // [BUG FIX P0] Removed row-by-row JSON update loop:
@@ -465,7 +468,7 @@ try {
                               WHERE (email IN ($emailPlaceholders) OR phone_number IN ($phonePlaceholders)) 
                               AND workspace_id = ?";
                     
-                    $paramsEx = array_merge($emailsInChunk, $phonesInChunk, [$workspaceId]);
+                    $paramsEx = array_merge($emailsInChunk, $phonesInChunk, [$workspace_id]);
                     $stmtEx = $pdo->prepare($sqlEx);
                     $stmtEx->execute($paramsEx);
                     

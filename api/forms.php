@@ -180,9 +180,15 @@ try {
                     $tagPh = implode(',', array_fill(0, count($submittedTags), '?'));
                     // [FIX BUG-FORMS-1] workspace_id filter prevents cross-workspace tag reuse
                     // [FIX BUG-FORMS-2] SELECT name,id for FETCH_KEY_PAIR {name=>id} map
-                    $stmtExistingTags = $pdo->prepare("SELECT name, id FROM tags WHERE name IN ($tagPh) AND workspace_id = ?");
+                    $stmtExistingTags = $pdo->prepare("SELECT name, id, status FROM tags WHERE name IN ($tagPh) AND workspace_id = ?");
                     $stmtExistingTags->execute(array_merge($submittedTags, [$form_ws_id]));
-                    $existingTagMap = $stmtExistingTags->fetchAll(PDO::FETCH_KEY_PAIR);
+                    $existingTagsData = $stmtExistingTags->fetchAll(PDO::FETCH_ASSOC);
+                    $existingTagMap = [];
+                    $inactiveTags = [];
+                    foreach ($existingTagsData as $et) {
+                        $existingTagMap[$et['name']] = $et['id'];
+                        if ($et['status'] === 'inactive') $inactiveTags[] = $et['name'];
+                    }
 
                     // Create missing tags first (rare — only new tag names)
                     foreach ($submittedTags as $tagName) {
@@ -206,7 +212,7 @@ try {
                         $stmtBatch->execute($batchParams);
                         if ($stmtBatch->rowCount() > 0) {
                             foreach ($submittedTags as $tagName) {
-                                if (!empty($tagName) && isset($existingTagMap[$tagName])) {
+                                if (!empty($tagName) && isset($existingTagMap[$tagName]) && !in_array($tagName, $inactiveTags)) {
                                     dispatchFlowWorker($pdo, 'flows', ['trigger_type' => 'tag', 'target_id' => $tagName, 'subscriber_id' => $sid]);
                                 }
                             }
@@ -272,9 +278,15 @@ try {
                     $tagPh = implode(',', array_fill(0, count($submittedTags), '?'));
                     // [FIX BUG-FORMS-1] Add workspace_id filter to prevent cross-workspace tag reuse
                     // [FIX BUG-FORMS-2] FETCH_KEY_PAIR maps col0=>col1, so SELECT name,id (not id,name)
-                    $stmtExistingTags = $pdo->prepare("SELECT name, id FROM tags WHERE name IN ($tagPh) AND workspace_id = ?");
+                    $stmtExistingTags = $pdo->prepare("SELECT name, id, status FROM tags WHERE name IN ($tagPh) AND workspace_id = ?");
                     $stmtExistingTags->execute(array_merge($submittedTags, [$form_ws_id]));
-                    $existingTagMap = $stmtExistingTags->fetchAll(PDO::FETCH_KEY_PAIR);
+                    $existingTagsData = $stmtExistingTags->fetchAll(PDO::FETCH_ASSOC);
+                    $existingTagMap = [];
+                    $inactiveTags = [];
+                    foreach ($existingTagsData as $et) {
+                        $existingTagMap[$et['name']] = $et['id'];
+                        if ($et['status'] === 'inactive') $inactiveTags[] = $et['name'];
+                    }
 
                     // [PERF FIX] Batch INSERT IGNORE instead of per-tag prepare/execute
                     foreach ($submittedTags as $tagName) {
@@ -299,7 +311,7 @@ try {
                         $stmtBatch->execute($batchParams);
                         if ($stmtBatch->rowCount() > 0) {
                             foreach ($submittedTags as $tagName) {
-                                if (!empty($tagName)) {
+                                if (!empty($tagName) && !in_array($tagName, $inactiveTags)) {
                                     dispatchFlowWorker($pdo, 'flows', ['trigger_type' => 'tag', 'target_id' => $tagName, 'subscriber_id' => $sid]);
                                 }
                             }
@@ -386,7 +398,7 @@ try {
             if ($attrSource)     $extra['utm_source']             = $attrSource;
             if ($attrMedium)     $extra['utm_medium']             = $attrMedium;
 
-            logActivity($pdo, $sid, 'form_submit', $formId, $formName, "Điền Form (+$pForm điểm)", null, null, $extra);
+            logActivity($pdo, $sid, 'form_submit', $formId, $formName, "Điền Form (+$pForm điểm)", null, null, $extra, $form_ws_id);
 
             // [POKE] Immediate Flow Interruption check
             // [FIX] Don't force NOW() here, just let the worker_priority call below re-evaluate.

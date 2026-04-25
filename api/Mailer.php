@@ -7,6 +7,7 @@ class Mailer {
     private $defaultSender;
     private $smtpSettings = null;
     private $phpMailerInstance = null; // Cache PHPMailer instance
+    private $workspaceId = 0;
     private $sentInSession = 0; // Counter for SMTP session pooling
     private $dynamicSender = null; // Dynamic sender for specific campaigns/flows
     private static $pathCache = []; // Optimization: Disk I/O cache for attachments
@@ -14,12 +15,13 @@ class Mailer {
     private static $breovCh = null; // [PERF] Persistent Brevo API cURL handle (connection reuse)
     private $logBuffer = []; // Optimization: Batch logging
 
-    public function __construct($pdo, $baseUrl = API_BASE_URL, $defaultSender = 'marketing@ka-en.com.vn')
+    public function __construct($pdo, $baseUrl = API_BASE_URL, $defaultSender = 'marketing@ka-en.com.vn', $workspaceId = 0)
     {
         $this->pdo = $pdo;
         // Đảm bảo baseUrl không có dấu / ở cuối để nối chuỗi cho chuẩn
         $this->baseUrl = rtrim($baseUrl, '/');
         $this->defaultSender = $defaultSender;
+        $this->workspaceId = (int) $workspaceId;
         $this->loadSettings();
     }
 
@@ -35,13 +37,17 @@ class Mailer {
         // [FIX P38-ML] SELECT * loaded ALL settings (tokens, API keys, large text blobs).
         // Only 9 SMTP-related keys are actually accessed anywhere in this class.
         // [FIX SCHEMA-30] system_settings now has composite PK (workspace_id, key).
-        // SMTP keys are stored under workspace_id=0 (global/shared), so we filter explicitly.
+        // SMTP keys are stored under workspace_id=0 (global/shared) OR specific workspace_id.
+        // [SEC-TENANT] Load global (0) settings first, then overlay with workspace-specific rows.
+        // This follows the logic in api/settings.php.
         $stmt = $this->pdo->prepare(
-            "SELECT `key`, `value` FROM system_settings WHERE workspace_id = 0 AND `key` IN
-             ('smtp_host','smtp_port','smtp_user','smtp_pass','smtp_from_email',
-              'smtp_from_name','smtp_encryption','smtp_enabled','internal_qa_emails')"
+            "SELECT `key`, `value` FROM system_settings 
+             WHERE workspace_id IN (0, ?) 
+             AND `key` IN ('smtp_host','smtp_port','smtp_user','smtp_pass','smtp_from_email',
+                           'smtp_from_name','smtp_encryption','smtp_enabled','internal_qa_emails')
+             ORDER BY workspace_id ASC"
         );
-        $stmt->execute();
+        $stmt->execute([$this->workspaceId]);
         $this->smtpSettings = [];
         foreach ($stmt->fetchAll() as $row) {
             $this->smtpSettings[$row['key']] = $row['value'];
@@ -61,8 +67,15 @@ class Mailer {
      * Dispatch an email without any tracking/footer overhead.
      * Used for QA copies and avoid recursion overhead.
      */
-    public function dispatchRaw($toEmail, $subject, $htmlContent, $attachments = [], &$error = "", $ccEmails = [])
+    public function dispatchRaw($toEmail, $subject, $htmlContent, $attachments = [], &$error = "", $ccEmails = [], $workspaceId = null)
     {
+        // [MULTI-TENANT] Dynamic workspace switching
+        if ($workspaceId !== null && (int)$workspaceId !== $this->workspaceId) {
+            $this->closeConnection();
+            $this->workspaceId = (int)$workspaceId;
+            $this->loadSettings();
+        }
+
         $fromEmail = $this->dynamicSender;
 
         if (!$fromEmail) {
@@ -79,7 +92,7 @@ class Mailer {
         // [GUARD] Prevent PHPMailer "From address not set" fatal exception on empty sender.
         // This can happen when all SMTP settings are misconfigured or defaultSender is blank.
         if (empty($fromEmail) || !filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
-            $error = "[Mailer] dispatchRaw aborted: no valid from-address resolved. Check smtp_from_email / smtp_user in system_settings.";
+            $error = "[Mailer] dispatchRaw aborted: no valid from-address resolved. Check smtp_from_email / smtp_user in system_settings for workspace {$this->workspaceId}.";
             error_log($error);
             return false;
         }
@@ -116,11 +129,18 @@ class Mailer {
         return $success;
     }
 
-    public function send($toEmail, $subject, $htmlContent, $subscriberId = null, $campaignId = null, $flowId = null, $flowName = null, $attachments = [], $templateHash = null, $stepId = null, $stepLabel = null, $isQACopy = false, $skipQA = false, $variant = null, $reminderId = null)
+    public function send($toEmail, $subject, $htmlContent, $subscriberId = null, $campaignId = null, $flowId = null, $flowName = null, $attachments = [], $templateHash = null, $stepId = null, $stepLabel = null, $isQACopy = false, $skipQA = false, $variant = null, $reminderId = null, $workspaceId = null)
     {
         // [SAFETY GUARD] Final check for virtual emails to prevent quota waste
         if (isVirtualEmail($toEmail)) {
             return "Skipped: Virtual email";
+        }
+
+        // [MULTI-TENANT] Dynamic workspace switching
+        if ($workspaceId !== null && (int)$workspaceId !== $this->workspaceId) {
+            $this->closeConnection();
+            $this->workspaceId = (int)$workspaceId;
+            $this->loadSettings();
         }
 
         // 0. HANDLE INTERNAL QA EMAILS (Copy to team)
@@ -145,7 +165,7 @@ class Mailer {
                     if (filter_var($qaEmail, FILTER_VALIDATE_EMAIL)) {
                         // FIX: Call dispatchRaw instead of send() to avoid overhead and infinite loops
                         $dummyError = "";
-                        $this->dispatchRaw($qaEmail, $qaSubject, $qaHtml, $attachments, $dummyError);
+                        $this->dispatchRaw($qaEmail, $qaSubject, $qaHtml, $attachments, $dummyError, [], $this->workspaceId);
                     }
                 }
 
@@ -235,11 +255,11 @@ class Mailer {
         }
 
         $error = "";
-        $success = $this->dispatchRaw($toEmail, $subject, $htmlContent, $attachments, $error);
+        $success = $this->dispatchRaw($toEmail, $subject, $htmlContent, $attachments, $error, [], $this->workspaceId);
 
         // Batch logging instead of synchronous DB hit
         if (!$isQACopy) {
-            $this->logBuffer[] = [$toEmail, $subject, $success ? 'success' : 'failed', $error, $campaignId, $flowId, $reminderId, $subscriberId];
+            $this->logBuffer[] = [$toEmail, $subject, $success ? 'success' : 'failed', $error, $campaignId, $flowId, $reminderId, $subscriberId, $this->workspaceId];
             // [PERF B5] Flush every 50 emails (up from 10) to reduce DB roundtrips 5x.
             // __destruct() guarantees a final flush of any remaining buffer at worker exit.
             if (count($this->logBuffer) >= 50) {
@@ -276,11 +296,11 @@ class Mailer {
         if (empty($this->logBuffer))
             return;
         try {
-            $sql = "INSERT INTO mail_delivery_logs (recipient, subject, status, error_message, sent_at, campaign_id, flow_id, reminder_id, subscriber_id) VALUES ";
+            $sql = "INSERT INTO mail_delivery_logs (recipient, subject, status, error_message, sent_at, campaign_id, flow_id, reminder_id, subscriber_id, workspace_id) VALUES ";
             $vals = [];
             $binds = [];
             foreach ($this->logBuffer as $log) {
-                $binds[] = "(?, ?, ?, ?, NOW(), ?, ?, ?, ?)";
+                $binds[] = "(?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)";
                 $vals = array_merge($vals, $log);
             }
             $sql .= implode(',', $binds);

@@ -103,12 +103,13 @@ if (!function_exists('runWorkerFlow')) {
                          s.status as sub_status, s.tags as sub_tags, s.id as sub_id, s.date_of_birth, s.anniversary_date, s.joined_at,
                          s.city, s.country, s.gender, s.last_os, s.last_device, s.last_browser, s.last_city,
                          s.stats_opened, s.stats_clicked, s.last_open_at, s.last_click_at, s.timezone, s.is_zalo_follower,
-                         s.custom_attributes, s.workspace_id
+                         s.custom_attributes, s.workspace_id as subscriber_workspace_id, f.workspace_id as flow_workspace_id
                          FROM subscriber_flow_states q 
                          JOIN flows f ON q.flow_id = f.id 
                          JOIN subscribers s ON q.subscriber_id = s.id 
                          WHERE (q.id = ? OR (q.id > 0 AND ? = '0' AND q.subscriber_id = ? AND q.flow_id = ?))
                          AND q.status IN ('waiting', 'processing') AND f.status = 'active'
+                         AND f.workspace_id = s.workspace_id
                          LIMIT 1 FOR UPDATE")
                 );
             }
@@ -141,13 +142,14 @@ if (!function_exists('runWorkerFlow')) {
                         s.status as sub_status, s.tags as sub_tags, s.id as sub_id, s.date_of_birth, s.anniversary_date, s.joined_at,
                         s.city, s.country, s.gender, s.last_os, s.last_device, s.last_browser, s.last_city,
                         s.stats_opened, s.stats_clicked, s.last_open_at, s.last_click_at, s.timezone, s.is_zalo_follower,
-                        s.custom_attributes, s.workspace_id
+                        s.custom_attributes, s.workspace_id as subscriber_workspace_id, f.workspace_id as flow_workspace_id
                         FROM subscriber_flow_states q 
                         JOIN flows f ON q.flow_id = f.id 
                         JOIN subscribers s ON q.subscriber_id = s.id 
                         WHERE ((q.status = 'waiting' AND q.scheduled_at <= ?) OR 
                               (q.status = 'processing' AND q.updated_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE) AND q.scheduled_at <= NOW()))
                         AND f.status = 'active'
+                        AND f.workspace_id = s.workspace_id
                         ORDER BY q.scheduled_at ASC, q.updated_at ASC, q.id ASC LIMIT {$BATCH_SIZE}";
 
                 if (isDatabaseSkipLockedSupported($pdo)) {
@@ -272,16 +274,25 @@ if (!function_exists('runWorkerFlow')) {
 
                 // [EXIT CHECK] Check if subscriber is still eligible (not unsubscribed globally)
                 if (trim($item['sub_status']) === 'unsubscribed') {
-                    // DB ENUM confirmed: waiting, processing, completed, failed, unsubscribed � use correct status
+                    // DB ENUM confirmed: waiting, processing, completed, failed, unsubscribed — use correct status
                     $stmtUnsubscribeState->execute([$queueId]);
                     $logs[] = "[Flow-Exit] Sub {$subscriberId} is unsubscribed. Marking unsubscribed and skipping.";
                     $pdo->commit();
                     continue;
                 }
 
+                // [SECURITY HARDENING] Workspace Isolation Guard
+                // Prevents cross-tenant execution in case of enrollment bugs or malicious injections.
+                if ($item['subscriber_workspace_id'] !== $item['flow_workspace_id']) {
+                    $stmtFailState->execute(['SECURITY_ERR: Workspace mismatch', $queueId]);
+                    $logs[] = "[CRITICAL] Workspace mismatch for Sub {$subscriberId} in Flow {$flowId}. Execution blocked.";
+                    $pdo->commit();
+                    continue;
+                }
+
                 if (!isset($flowCache[$flowId])) {
                     $flowCache[$flowId] = [
-                        // [FIX #1] Th�m ?? [] d? tr�nh Fatal TypeError khi flow_steps l� null ho?c JSON l?i
+                        // [FIX #1] Thêm ?? [] để tránh Fatal TypeError khi flow_steps là null hoặc JSON lỗi
                         'steps' => json_decode($item['flow_steps'], true) ?? [],
                         'config' => json_decode($item['flow_config'], true) ?? [],
                     ];
@@ -371,7 +382,7 @@ if (!function_exists('runWorkerFlow')) {
                         // [FIX] Include step_id so byBranch query in completed-users API counts correctly
                         $currentStepIdExit = $item['step_id'] ?? null;
                         $stmtCompleteExit->execute([$currentStepIdExit, $queueId]);
-                        logActivity($pdo, $subscriberId, 'exit_flow', $flowId, $flowName, "Exited: Condition met", $flowId);
+                        logActivity($pdo, $subscriberId, 'exit_flow', $flowId, $flowName, "Exited: Condition met", $flowId, null, [], $item['workspace_id']);
                         // Buffer Completion Stat
                         try {
                             $stmtStatCompleteBuff->execute([$flowId]);
@@ -390,7 +401,7 @@ if (!function_exists('runWorkerFlow')) {
                     // [FIX] Include step_id so byBranch query in completed-users API counts correctly
                     $currentStepIdExit = $item['step_id'] ?? null;
                     $stmtCompleteExit->execute([$currentStepIdExit, $queueId]);
-                    logActivity($pdo, $subscriberId, 'exit_flow', $flowId, $flowName, "Exited: Advanced condition met", $flowId);
+                    logActivity($pdo, $subscriberId, 'exit_flow', $flowId, $flowName, "Exited: Advanced condition met", $flowId, null, [], $item['workspace_id']);
                     // Buffer Completion Stat
                     try {
                         $stmtStatCompleteBuff->execute([$flowId]);
@@ -560,7 +571,7 @@ if (!function_exists('runWorkerFlow')) {
                             $stmtCompleteStepType->execute([$currentStepId, $queueId]);
 
                             // NEW: Log completion activity for Dashboard accuracy
-                            logActivity($pdo, $subscriberId, 'complete_flow', $currentStepId, $flowName, "Flow finished automatically", $flowId);
+                            logActivity($pdo, $subscriberId, 'complete_flow', $currentStepId, $flowName, "Flow finished automatically", $flowId, null, [], $item['workspace_id']);
 
                             // Buffer Completion Stat
                             try {

@@ -82,8 +82,18 @@ $settings = [];
 while ($row = $stmtSettings->fetch()) {
     $settings[$row['key']] = $row['value'];
 }
+// [SECURITY] Fetch workspace_id early for Mailer initialization
+$prioritySid = $_GET['subscriber_id'] ?? $_GET['priority_sub_id'] ?? null;
+$priorityWorkspaceId = $_GET['workspace_id'] ?? null;
+if (!$priorityWorkspaceId && $prioritySid) {
+    $stmtW = $pdo->prepare("SELECT workspace_id FROM subscribers WHERE id = ? LIMIT 1");
+    $stmtW->execute([$prioritySid]);
+    $priorityWorkspaceId = $stmtW->fetchColumn();
+}
+$priorityWorkspaceId = $priorityWorkspaceId ? (int)$priorityWorkspaceId : 0;
+
 $defaultSender = !empty($settings['smtp_user']) ? $settings['smtp_user'] : "marketing@ka-en.com.vn";
-$mailer = new Mailer($pdo, $apiUrl, $defaultSender);
+$mailer = new Mailer($pdo, $apiUrl, $defaultSender, $priorityWorkspaceId);
 $flowExecutor = new FlowExecutor($pdo, $mailer, $apiUrl);
 
 // [FIX P9-C2] MySQL version guard — SKIP LOCKED requires MySQL = 8.0.
@@ -124,14 +134,6 @@ try {
     $item = null;
 
     traceLog("[Priority] Params - Sid: $prioritySid, Type: $priorityTriggerType, TargetId: $priorityTargetId, QueueId: $priorityQueueId");
-
-    // [SECURITY] Fetch workspace_id from GET or fallback to subscriber lookup
-    $priorityWorkspaceId = $_GET['workspace_id'] ?? null;
-    if (!$priorityWorkspaceId && $prioritySid) {
-        $stmtW = $pdo->prepare("SELECT workspace_id FROM subscribers WHERE id = ? LIMIT 1");
-        $stmtW->execute([$prioritySid]);
-        $priorityWorkspaceId = $stmtW->fetchColumn();
-    }
 
     // Scenario A: Triggered for a new enrollment (from forms.php, etc.)
     if ($prioritySid && $priorityTriggerType && $priorityTargetId && !$priorityQueueId) {

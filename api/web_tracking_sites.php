@@ -3,6 +3,7 @@
 require_once 'db_connect.php';
 require_once 'auth_middleware.php';
 apiHeaders();
+$workspace_id = get_current_workspace_id();
 
 $method = $_SERVER['REQUEST_METHOD'];
 $id = $_GET['id'] ?? null;
@@ -17,8 +18,8 @@ try {
         case 'GET':
             if ($id) {
                 // Get single site
-                $stmt = $pdo->prepare("SELECT * FROM web_tracking_sites WHERE id = ?");
-                $stmt->execute([$id]);
+                $stmt = $pdo->prepare("SELECT * FROM web_tracking_sites WHERE id = ? AND workspace_id = ?");
+                $stmt->execute([$id, $workspace_id]);
                 $site = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 if ($site) {
@@ -28,7 +29,8 @@ try {
                 }
             } else {
                 // Get all sites
-                $stmt = $pdo->query("SELECT * FROM web_tracking_sites ORDER BY created_at DESC");
+                $stmt = $pdo->prepare("SELECT * FROM web_tracking_sites WHERE workspace_id = ? ORDER BY created_at DESC");
+                $stmt->execute([$workspace_id]);
                 $sites = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 jsonResponse(true, $sites);
             }
@@ -50,11 +52,10 @@ try {
             $trackingCode = generateTrackingCode();
 
             $stmt = $pdo->prepare("
-                INSERT INTO web_tracking_sites (id, name, domain, tracking_code, description, status)
-                VALUES (?, ?, ?, ?, ?, 'active')
+                INSERT INTO web_tracking_sites (id, workspace_id, name, domain, tracking_code, description, status)
+                VALUES (?, ?, ?, ?, ?, ?, 'active')
             ");
-
-            $stmt->execute([$id, $name, $domain, $trackingCode, $description]);
+            $stmt->execute([$id, $workspace_id, $name, $domain, $trackingCode, $description]);
 
             jsonResponse(true, [
                 'id' => $id,
@@ -98,7 +99,8 @@ try {
             }
 
             $params[] = $id;
-            $sql = "UPDATE web_tracking_sites SET " . implode(', ', $updates) . " WHERE id = ?";
+            $params[] = $workspace_id;
+            $sql = "UPDATE web_tracking_sites SET " . implode(', ', $updates) . " WHERE id = ? AND workspace_id = ?";
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
@@ -112,8 +114,8 @@ try {
                 jsonResponse(false, null, 'Site ID is required');
             }
 
-            $stmt = $pdo->prepare("DELETE FROM web_tracking_sites WHERE id = ?");
-            $stmt->execute([$id]);
+            $stmt = $pdo->prepare("DELETE FROM web_tracking_sites WHERE id = ? AND workspace_id = ?");
+            $stmt->execute([$id, $workspace_id]);
 
             jsonResponse(true, null, 'Site deleted successfully');
             break;

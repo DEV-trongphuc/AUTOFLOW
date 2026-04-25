@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // api/worker_segment_notify.php - OMNI-ENGINE V30.0 (REAL-TIME NOTIFICATION WORKER)
 // This worker evaluates subscribers against notification-enabled segments and emails admins.
 
@@ -34,8 +34,8 @@ if (!function_exists('runWorkerSegmentNotify')) {
         $mailer = new Mailer($pdo, $apiUrl, $defaultSender);
 
         try {
-            // Fetch segments configured for notify_on_join
-            $stmtSegs = $pdo->prepare("SELECT id, name, criteria, notify_email, notify_subject, notify_cc FROM segments WHERE notify_on_join = 1");
+            // Fetch segments configured for notify_on_join - Include workspace_id
+            $stmtSegs = $pdo->prepare("SELECT id, workspace_id, name, criteria, notify_email, notify_subject, notify_cc FROM segments WHERE notify_on_join = 1");
             $stmtSegs->execute();
             $notificationSegments = $stmtSegs->fetchAll(PDO::FETCH_ASSOC);
 
@@ -49,6 +49,7 @@ if (!function_exists('runWorkerSegmentNotify')) {
                 }
 
                 $segId = $seg['id'];
+                $wsId = $seg['workspace_id']; // [FIX] Extract workspace_id for scoping
                 $segName = $seg['name'];
                 $criteria = $seg['criteria'];
 
@@ -60,15 +61,15 @@ if (!function_exists('runWorkerSegmentNotify')) {
                 $pdo->beginTransaction();
 
                 // Find up to 20 subscribers who match the segment BUT haven't been notified yet.
-                // We use LIMIT 20 to prevent mass-email spam bombs (Micro-batching)
-                // For performance and concurrency protection, we acquire row locks.
+                // [FIX] Added workspace_id = ? to ensure we only notify about subscribers in the segment's own workspace.
                 
                 $skipLockedClause = isDatabaseSkipLockedSupported($pdo) ? 'FOR UPDATE SKIP LOCKED' : 'FOR UPDATE';
 
                 $sqlCheck = "
                     SELECT s.id, s.email, s.first_name, s.last_name, s.phone_number, s.joined_at, s.custom_attributes
                     FROM subscribers s 
-                    WHERE s.status IN ('active', 'lead', 'customer') 
+                    WHERE s.workspace_id = ? 
+                    AND s.status IN ('active', 'lead', 'customer') 
                     AND (" . $res['sql'] . ") 
                     AND NOT EXISTS (
                         SELECT 1 FROM subscriber_activity sa 
@@ -79,7 +80,7 @@ if (!function_exists('runWorkerSegmentNotify')) {
                     $skipLockedClause
                 ";
 
-                $params = array_merge($res['params'], [$segId]);
+                $params = array_merge([$wsId], $res['params'], [$segId]);
                 $stmtCheck = $pdo->prepare($sqlCheck);
                 
                 try {

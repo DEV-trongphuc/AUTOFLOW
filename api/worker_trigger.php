@@ -117,10 +117,14 @@ try {
                                 $cachedSourceParams = array_merge($cachedSourceParams, $targetListIds);
                             }
                             if (!empty($targetSegmentIds)) {
+                                // [PERF] Pre-fetch all segments for this flow to avoid N+1
+                                $placeholdersSeg = implode(',', array_fill(0, count($targetSegmentIds), '?'));
+                                $stmtSegs = $pdo->prepare("SELECT id, criteria FROM segments WHERE id IN ($placeholdersSeg) AND workspace_id = ?");
+                                $stmtSegs->execute(array_merge($targetSegmentIds, [$wsId]));
+                                $segmentsMap = $stmtSegs->fetchAll(PDO::FETCH_KEY_PAIR);
+
                                 foreach ($targetSegmentIds as $segId) {
-                                    $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
-                                    $stmtSeg->execute([$segId, $wsId]);
-                                    $segConfig = $stmtSeg->fetchColumn();
+                                    $segConfig = $segmentsMap[$segId] ?? null;
                                     if ($segConfig) {
                                         $segRes = buildSegmentWhereClause($segConfig, $segId);
                                         if ($segRes && !empty($segRes['sql'])) {

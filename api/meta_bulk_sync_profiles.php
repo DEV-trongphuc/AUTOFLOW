@@ -10,12 +10,14 @@ header('Content-Type: text/plain; charset=utf-8');
 $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 20;
 $force = isset($_GET['force']);
 
+$workspace_id = get_current_workspace_id();
+
 echo "========== STARTING META BULK SYNC (Limit: $limit) ==========\n\n";
 
 try {
     // 1. Get all active Page Configs
-    $stmtConfigs = $pdo->prepare("SELECT id, page_id, page_name, page_access_token FROM meta_app_configs WHERE page_access_token IS NOT NULL AND status = 'active'");
-    $stmtConfigs->execute();
+    $stmtConfigs = $pdo->prepare("SELECT id, page_id, page_name, page_access_token FROM meta_app_configs WHERE page_access_token IS NOT NULL AND status = 'active' AND workspace_id = ?");
+    $stmtConfigs->execute([$workspace_id]);
     $configs = $stmtConfigs->fetchAll(PDO::FETCH_ASSOC);
 
     if (empty($configs)) {
@@ -81,7 +83,7 @@ try {
                 ]);
 
                 // 5. Sync to Main Audience
-                syncMetaToMain($pdo, $sub['id']);
+                syncMetaToMain($pdo, $sub['id'], $workspace_id);
 
                 echo "DONE (New Name: {$profile['name']})\n";
                 $totalUpdated++;

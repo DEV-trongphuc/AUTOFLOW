@@ -14,6 +14,8 @@ if (empty($GLOBALS['current_admin_id']) && empty($_SESSION['user_id'])) {
     exit;
 }
 
+$workspace_id = get_current_workspace_id();
+
 $method = $_SERVER['REQUEST_METHOD'];
 if ($method !== 'POST') {
     jsonResponse(false, null, 'Method not allowed');
@@ -37,8 +39,8 @@ try {
     }
 
     // 1. Get Segment Info
-    $stmt = $pdo->prepare("SELECT name, criteria, ai_analysis, ai_analysis_at FROM segments WHERE id = ?");
-    $stmt->execute([$segmentId]);
+    $stmt = $pdo->prepare("SELECT name, criteria, ai_analysis, ai_analysis_at FROM segments WHERE id = ? AND workspace_id = ?");
+    $stmt->execute([$segmentId, $workspace_id]);
     $segment = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$segment) {
@@ -58,11 +60,11 @@ try {
     $res = buildSegmentWhereClause($segment['criteria'], $segmentId);
     $sql = "SELECT s.id, s.email, s.first_name, s.last_name, s.status, s.lead_score, s.last_activity_at 
             FROM subscribers s 
-            WHERE s.status IN ('active', 'lead', 'customer') AND " . $res['sql'] . " 
+            WHERE s.workspace_id = ? AND s.status IN ('active', 'lead', 'customer') AND " . $res['sql'] . " 
             ORDER BY RAND() LIMIT 100";
 
     $stmtSubs = $pdo->prepare($sql);
-    $stmtSubs->execute($res['params']);
+    $stmtSubs->execute(array_merge([$workspace_id], $res['params']));
     $subscribers = $stmtSubs->fetchAll(PDO::FETCH_ASSOC);
 
     if (empty($subscribers)) {
@@ -146,8 +148,8 @@ Ngôn ngữ: Tiếng Việt, chuyên nghiệp. Báo cáo trình bày đẹp, rõ
     $analysis = generateResponse($contents, $systemInst, $apiKey);
 
     // Save analysis to DB
-    $stmtSave = $pdo->prepare("UPDATE segments SET ai_analysis = ?, ai_analysis_at = NOW() WHERE id = ?");
-    $stmtSave->execute([$analysis, $segmentId]);
+    $stmtSave = $pdo->prepare("UPDATE segments SET ai_analysis = ?, ai_analysis_at = NOW() WHERE id = ? AND workspace_id = ?");
+    $stmtSave->execute([$analysis, $segmentId, $workspace_id]);
 
     jsonResponse(true, ['analysis' => $analysis, 'analyzed_at' => date('Y-m-d H:i:s')]);
 

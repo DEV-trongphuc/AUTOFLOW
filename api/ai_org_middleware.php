@@ -328,6 +328,26 @@ function requireCategoryAccess($categoryId, $user)
             }
         }
 
+        // --- [NEW] STEP 1.5: Enforce Organization Isolation ---
+        // Ensure the category belongs to the user's organization (admin_id)
+        $userOrgAdminId = !empty($user['admin_id']) ? $user['admin_id'] : $user['id'];
+        
+        $stmtOrgCheck = $pdo->prepare("SELECT admin_id FROM ai_chatbot_categories WHERE id = ? LIMIT 1");
+        $stmtOrgCheck->execute([$resolvedCategoryId]);
+        $categoryAdminId = $stmtOrgCheck->fetchColumn();
+        
+        if ($categoryAdminId && $categoryAdminId !== $userOrgAdminId && $userOrgAdminId !== 'admin-001') {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'error' => 'ORG_ACCESS_DENIED',
+                'message' => 'Danh mục này không thuộc tổ chức của bạn.',
+                'app' => 'ai_space'
+            ]);
+            exit;
+        }
+
         // --- STEP 2: Check if ANY restrictions exist for this category ---
         // If NO restrictions are configured → default-allow (opt-in restriction model)
         // This means: a fresh system with no assignments allows everyone to chat.

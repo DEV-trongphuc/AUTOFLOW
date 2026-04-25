@@ -73,7 +73,9 @@ try {
             break;
 
         case 'delete_category':
-            deleteCategory($pdo, $_GET['id'] ?? $data['id'] ?? null);
+            $catId = $_GET['id'] ?? $data['id'] ?? null;
+            $orgScopeAdminId = $currentOrgUser['admin_id'] ?? $currentAdminId;
+            deleteCategory($pdo, $catId, $orgScopeAdminId);
             break;
 
         case 'list':
@@ -85,7 +87,9 @@ try {
             break;
 
         case 'get':
-            getChatbot($pdo, $_GET['id'] ?? $data['id'] ?? null);
+            $botId = $_GET['id'] ?? $data['id'] ?? null;
+            $orgScopeAdminId = $currentOrgUser['admin_id'] ?? $currentAdminId;
+            getChatbot($pdo, $botId, $orgScopeAdminId);
             break;
 
         case 'update':
@@ -93,7 +97,9 @@ try {
             break;
 
         case 'delete':
-            deleteChatbot($pdo, $_GET['id'] ?? $data['id'] ?? null);
+            $botId = $_GET['id'] ?? $data['id'] ?? null;
+            $orgScopeAdminId = $currentOrgUser['admin_id'] ?? $currentAdminId;
+            deleteChatbot($pdo, $botId, $orgScopeAdminId);
             break;
 
         default:
@@ -214,9 +220,17 @@ function updateCategory($pdo, $data)
     $brand_color = $data['brand_color'] ?? '#111729';
     $gemini_api_key = $data['gemini_api_key'] ?? '';
     $bot_avatar = $data['bot_avatar'] ?? '';
+    $orgScopeAdminId = $currentOrgUser['admin_id'] ?? $currentAdminId;
 
     if (empty($id)) {
         throw new Exception('ID không hợp lệ');
+    }
+
+    // [FIX] Verify ownership
+    $stmtCheckOwn = $pdo->prepare("SELECT id FROM ai_chatbot_categories WHERE id = ? AND admin_id = ?");
+    $stmtCheckOwn->execute([$id, $orgScopeAdminId]);
+    if (!$stmtCheckOwn->fetch()) {
+        throw new Exception('Bạn không có quyền cập nhật category này');
     }
 
     // 1. Update Metadata
@@ -263,10 +277,17 @@ bot_avatar = VALUES(bot_avatar)");
     echo json_encode(['success' => true]);
 }
 
-function deleteCategory($pdo, $id)
+function deleteCategory($pdo, $id, $adminId)
 {
     if (empty($id))
         throw new Exception('ID không hợp lệ');
+
+    // [FIX] Verify ownership
+    $stmtCheckOwn = $pdo->prepare("SELECT id FROM ai_chatbot_categories WHERE id = ? AND admin_id = ?");
+    $stmtCheckOwn->execute([$id, $adminId]);
+    if (!$stmtCheckOwn->fetch()) {
+        throw new Exception('Bạn không có quyền xóa category này');
+    }
 
     // Unlink chatbots first
     $stmt = $pdo->prepare("UPDATE ai_chatbots SET category_id = NULL WHERE category_id = ?");
@@ -301,13 +322,25 @@ COALESCE(ads.is_enabled, ac.is_enabled) as ai_enabled,
 COUNT(DISTINCT atd.id) as docs_count,
 COUNT(DISTINCT aoc.id) as queries_count
 FROM ai_chatbots ac
-LEFT JOIN ai_chatbot_categories acc ON ac.category_id = acc.id
+INNER JOIN ai_chatbot_categories acc ON ac.category_id = acc.id
 LEFT JOIN ai_chatbot_settings ads ON ads.property_id = ac.id
 LEFT JOIN ai_training_docs atd ON atd.property_id = ac.id AND atd.source_type != 'folder'
 LEFT JOIN ai_org_conversations aoc ON aoc.property_id = ac.id AND aoc.status != 'deleted'
 WHERE 1=1";
 
     $params = [];
+    
+    // [FIX] Multi-tenant isolation for chatbots
+    global $currentOrgUser, $currentAdminId, $currentUserRole;
+    $isAdmin = ($currentUserRole === 'admin') || ($currentAdminId === 'admin-001');
+    
+    if (!$isAdmin) {
+        $orgScopeAdminId = $currentOrgUser['admin_id'] ?? $currentAdminId;
+        if (!empty($orgScopeAdminId) && $orgScopeAdminId !== 'admin-001') {
+            $sql .= " AND acc.admin_id = ?";
+            $params[] = $orgScopeAdminId;
+        }
+    }
     if ($categoryId) {
         $sql .= " AND ac.category_id = ?";
         $params[] = $categoryId;
@@ -352,9 +385,19 @@ function createChatbot($pdo, $data)
     // Generate unique ID
     $id = 'chatbot_' . uniqid();
 
-    // Insert into ai_chatbots table
-    $stmt = $pdo->prepare("INSERT INTO ai_chatbots (id, name, description, category_id, is_enabled, created_at, updated_at)
-VALUES (?, ?, ?, ?, 0, NOW(), NOW())");
+    // [FIX] Verify Category ownership
+    global $currentOrgUser, $currentAdminId;
+    $orgScopeAdminId = $currentOrgUser['admin_id'] ?? $currentAdminId;
+    
+    if ($categoryId) {
+        $stmtCat = $pdo->prepare("SELECT id FROM ai_chatbot_categories WHERE id = ? AND admin_id = ?");
+        $stmtCat->execute([$categoryId, $orgScopeAdminId]);
+        if (!$stmtCat->fetch()) {
+            throw new Exception('Category không hợp lệ hoặc không thuộc quyền sở hữu của bạn');
+        }
+    } else {
+        throw new Exception('Chatbot mới phải thuộc về một Category');
+    }
 
     if (!$stmt->execute([$id, $name, $description, $categoryId])) {
         throw new Exception('Lỗi tạo AI Chatbot');
@@ -422,15 +465,26 @@ similarity_threshold, top_k, history_limit, chunk_size, chunk_overlap) VALUES (?
     echo json_encode(['success' => true, 'data' => ['id' => $id, 'name' => $name]]);
 }
 
-function getChatbot($pdo, $id)
+function getChatbot($pdo, $id, $adminId)
 {
     if (empty($id)) {
         throw new Exception('ID không hợp lệ');
     }
 
-    $stmt = $pdo->prepare("SELECT ac.*, acc.name as category_name FROM ai_chatbots ac LEFT JOIN ai_chatbot_categories acc ON
-ac.category_id = acc.id WHERE ac.id = ?");
-    $stmt->execute([$id]);
+    $sql = "SELECT ac.*, acc.name as category_name 
+            FROM ai_chatbots ac 
+            JOIN ai_chatbot_categories acc ON ac.category_id = acc.id 
+            WHERE ac.id = ?";
+    
+    $params = [$id];
+    
+    if ($adminId && $adminId !== 'admin-001') {
+        $sql .= " AND acc.admin_id = ?";
+        $params[] = $adminId;
+    }
+    
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
 
     if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         echo json_encode(['success' => true, 'data' => $row]);
@@ -450,8 +504,16 @@ function updateChatbot($pdo, $data)
         throw new Exception('ID không hợp lệ');
     }
 
-    $stmt = $pdo->prepare("UPDATE ai_chatbots SET name = ?, description = ?, category_id = ?, updated_at = NOW() WHERE id =
-?");
+    // [FIX] Verify ownership
+    global $currentOrgUser, $currentAdminId;
+    $orgScopeAdminId = $currentOrgUser['admin_id'] ?? $currentAdminId;
+    $stmtCheck = $pdo->prepare("SELECT ac.id FROM ai_chatbots ac JOIN ai_chatbot_categories acc ON ac.category_id = acc.id WHERE ac.id = ? AND acc.admin_id = ?");
+    $stmtCheck->execute([$id, $orgScopeAdminId]);
+    if (!$stmtCheck->fetch()) {
+        throw new Exception('Bạn không có quyền cập nhật chatbot này');
+    }
+
+    $stmt = $pdo->prepare("UPDATE ai_chatbots SET name = ?, description = ?, category_id = ?, updated_at = NOW() WHERE id = ?");
 
     if (!$stmt->execute([$name, $description, $categoryId, $id])) {
         throw new Exception('Lỗi cập nhật');
@@ -488,10 +550,17 @@ function updateChatbot($pdo, $data)
     echo json_encode(['success' => true]);
 }
 
-function deleteChatbot($pdo, $id)
+function deleteChatbot($pdo, $id, $adminId)
 {
     if (empty($id)) {
         throw new Exception('ID không hợp lệ');
+    }
+
+    // [FIX] Verify ownership
+    $stmtCheck = $pdo->prepare("SELECT ac.id FROM ai_chatbots ac JOIN ai_chatbot_categories acc ON ac.category_id = acc.id WHERE ac.id = ? AND acc.admin_id = ?");
+    $stmtCheck->execute([$id, $adminId]);
+    if (!$stmtCheck->fetch()) {
+        throw new Exception('Bạn không có quyền xóa chatbot này');
     }
 
     // Delete related data

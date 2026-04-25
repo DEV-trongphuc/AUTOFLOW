@@ -6,6 +6,35 @@ initializeSystem($pdo);
 require_once 'auth_middleware.php';
 $workspace_id = get_current_workspace_id();
 
+/**
+ * [SECURITY HARDENING] Centralized Flow Ownership Verification
+ * Prevents cross-tenant data leaks by ensuring the requested flow belongs to the current workspace.
+ */
+function verifyFlowOwnership($pdo, $flowId, $workspaceId) {
+    if (!$flowId) return;
+    $stmt = $pdo->prepare("SELECT 1 FROM flows WHERE id = ? AND workspace_id = ?");
+    $stmt->execute([$flowId, $workspaceId]);
+    if (!$stmt->fetch()) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Flow not found or access denied (Multi-tenant guard)']);
+        exit;
+    }
+}
+
+/**
+ * [SECURITY HARDENING] Centralized Snapshot Ownership Verification
+ */
+function verifySnapshotOwnership($pdo, $snapshotId, $workspaceId) {
+    if (!$snapshotId) return;
+    $stmt = $pdo->prepare("SELECT 1 FROM flow_snapshots s JOIN flows f ON s.flow_id = f.id WHERE s.id = ? AND f.workspace_id = ?");
+    $stmt->execute([$snapshotId, $workspaceId]);
+    if (!$stmt->fetch()) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Snapshot not found or access denied (Multi-tenant guard)']);
+        exit;
+    }
+}
+
 $method = $_SERVER['REQUEST_METHOD'];
 $path = isset($_GET['id']) ? $_GET['id'] : null;
 
@@ -36,6 +65,7 @@ if ($method === 'GET' && isset($_GET['route']) && $_GET['route'] === 'flow-snaps
         $flowId = $_GET['id'] ?? null;
         if (!$flowId)
             jsonResponse(false, null, 'Flow ID required');
+        verifyFlowOwnership($pdo, $flowId, $workspace_id);
         $limit = (int) ($_GET['limit'] ?? 20);
         $stmt = $pdo->prepare("SELECT id, flow_id, label, created_by, created_at FROM flow_snapshots WHERE flow_id = ? ORDER BY created_at DESC LIMIT ?");
         $stmt->bindValue(1, $flowId, PDO::PARAM_STR);
@@ -44,7 +74,7 @@ if ($method === 'GET' && isset($_GET['route']) && $_GET['route'] === 'flow-snaps
         $snapshots = $stmt->fetchAll(PDO::FETCH_ASSOC);
         jsonResponse(true, $snapshots);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -54,6 +84,7 @@ if ($method === 'GET' && isset($_GET['route']) && $_GET['route'] === 'flow-snaps
         $snapshotId = $_GET['snapshot_id'] ?? null;
         if (!$snapshotId)
             jsonResponse(false, null, 'Snapshot ID required');
+        verifySnapshotOwnership($pdo, $snapshotId, $workspace_id);
         $stmt = $pdo->prepare("SELECT id, flow_id, label, flow_data, created_by, created_at FROM flow_snapshots WHERE id = ?"); // [FIX P39-F1] Explicit columns
         $stmt->execute([$snapshotId]);
         $snap = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -62,7 +93,7 @@ if ($method === 'GET' && isset($_GET['route']) && $_GET['route'] === 'flow-snaps
         $snap['flow_data'] = json_decode($snap['flow_data'], true);
         jsonResponse(true, $snap);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -72,8 +103,9 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'flow-snap
         $flowId = $_GET['id'] ?? null;
         if (!$flowId)
             jsonResponse(false, null, 'Flow ID required');
+        verifyFlowOwnership($pdo, $flowId, $workspace_id);
         $body = json_decode(file_get_contents('php://input'), true);
-        $label = trim($body['label'] ?? 'Chỉnh sửa');
+        $label = trim($body['label'] ?? 'Chá»‰nh sá»­a');
         $flowData = $body['flow_data'] ?? null;
         $createdBy = $body['created_by'] ?? null;
         if (!$flowData)
@@ -93,10 +125,10 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'flow-snap
             $pdo->prepare("DELETE FROM flow_snapshots WHERE flow_id = ? AND id NOT IN ($placeholders)")->execute($delParams);
         }
 
-        jsonResponse(true, ['id' => $snapshotId, 'message' => 'Đã lưu phiên bản']);
+        jsonResponse(true, ['id' => $snapshotId, 'message' => 'ÄÃ£ lÆ°u phiÃªn báº£n']);
     } catch (Exception $e) {
         error_log("Flow snapshot save error: " . $e->getMessage());
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -116,6 +148,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
 
         if (!$flowId)
             jsonResponse(false, null, 'Flow ID required');
+        verifyFlowOwnership($pdo, $flowId, $workspace_id);
         $params = [$flowId];
 
         if ($type === 'opens') {
@@ -163,7 +196,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                     WHERE $whereSql ";
             // [FIX] ONLY_FULL_GROUP_BY: All non-aggregated columns must be in GROUP BY or wrapped
             // in aggregate functions. sa.ip_address, sa.device_type, sa.os, sa.browser, sa.location
-            // were previously bare SELECT columns not in GROUP BY — crash on MySQL 5.7/8.0 strict mode.
+            // were previously bare SELECT columns not in GROUP BY â€” crash on MySQL 5.7/8.0 strict mode.
             // MAX() selects the most recent value which is semantically correct for device/IP info.
             $sql .= "GROUP BY s.id, sa.reference_id
                     ORDER BY entered_at DESC, first_open_at DESC LIMIT $limit OFFSET $offset";
@@ -344,14 +377,14 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                 'sent_zns', // Include ZNS
                 'zns_skipped'
             ];
-            // [P21-S1 SECURITY] $typePlaceholders is built from a hardcoded PHP array above —
+            // [P21-S1 SECURITY] $typePlaceholders is built from a hardcoded PHP array above â€”
             // it is NEVER user-controlled. The IN ('...') interpolation is intentional and safe here.
             // All step IDs and flow IDs are bound via PDO prepared statement parameters below.
             $typePlaceholders = implode("','", $progressionTypes);
 
             // [P21-S1 SECURITY] Sanitize $stepId before using in dynamic SQL clause builder.
             // While bind params protect against injection in the WHERE clause, the $stepIdClause string
-            // is also used in str_replace() at L412 to build a LEFT JOIN fragment — input must be clean.
+            // is also used in str_replace() at L412 to build a LEFT JOIN fragment â€” input must be clean.
             // UUIDs + step IDs are alphanumeric with hyphens/underscores only. Strip anything else.
             $stepId = preg_replace('/[^a-zA-Z0-9_\-,]/', '', $stepId);
             if (empty($stepId)) {
@@ -362,7 +395,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
             $stepIdParams = [$stepId];
             if (strpos($stepId, ',') !== false) {
                 $ids = array_map(function ($id) {
-                    // [P21-S1] Re-validate each individual ID after split — defense-in-depth
+                    // [P21-S1] Re-validate each individual ID after split â€” defense-in-depth
                     return preg_replace('/[^a-zA-Z0-9_\-]/', '', trim($id));
                 }, explode(',', $stepId));
                 $ids = array_filter($ids); // Remove any empty strings
@@ -562,7 +595,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
 
         jsonResponse(true, ['data' => $participants, 'pagination' => ['total' => $total, 'totalPages' => $totalPages, 'page' => $page, 'limit' => $limit]]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -574,6 +607,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'distribution') {
             echo json_encode(['success' => false, 'message' => 'Flow ID is required']);
             exit;
         }
+        verifyFlowOwnership($pdo, $flowId, $workspace_id);
 
         $stmt = $pdo->prepare("SELECT step_id, COUNT(*) as count, AVG(TIMESTAMPDIFF(SECOND, created_at, NOW())) as avg_wait_seconds FROM subscriber_flow_states WHERE flow_id = ? AND status IN ('waiting', 'processing') GROUP BY step_id");
         $stmt->execute([$flowId]);
@@ -590,7 +624,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'distribution') {
         exit;
     } catch (Exception $e) {
         error_log('[EXCEPTION] ' . $e->getMessage() . ' in ' . __FILE__ . ':' . __LINE__);
-        echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
+        echo json_encode(['success' => false, 'message' => 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.']);
         exit;
     }
 }
@@ -605,6 +639,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'click_summary') {
 
         if (!$flowId)
             jsonResponse(false, null, 'Flow ID is required.');
+        verifyFlowOwnership($pdo, $flowId, $workspace_id);
 
         $params = [$flowId];
         $whereSql = "sa.flow_id = ? AND sa.type = 'click_link'";
@@ -655,7 +690,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'click_summary') {
             ]
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -666,6 +701,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'click_details') {
         $stepId = $_GET['step_id'] ?? null;
         if (!$flowId)
             jsonResponse(false, null, 'Flow ID is required.');
+        verifyFlowOwnership($pdo, $flowId, $workspace_id);
 
         $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
         $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 50;
@@ -720,7 +756,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'click_details') {
             'pagination' => ['total' => $total, 'page' => $page, 'limit' => $limit, 'totalPages' => ceil($total / $limit)]
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -731,6 +767,7 @@ if ($method === 'GET' && isset($_GET['route']) && $_GET['route'] === 'tech_stats
         $stepId = trim($_GET['step_id'] ?? '');
         if (!$flowId)
             jsonResponse(false, null, 'Flow ID is required.');
+        verifyFlowOwnership($pdo, $flowId, $workspace_id);
 
         $getStats = function ($col) use ($pdo, $flowId, $stepId) {
             $locFilter = $col === 'location' ? " AND sa.$col != 'Google Proxy' " : "";
@@ -756,7 +793,7 @@ if ($method === 'GET' && isset($_GET['route']) && $_GET['route'] === 'tech_stats
             'location' => $getStats('location')
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -768,6 +805,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'completed-users') {
         $flowId = $_GET['id'] ?? null;
         if (!$flowId)
             jsonResponse(false, null, 'Flow ID required');
+        verifyFlowOwnership($pdo, $flowId, $workspace_id);
 
         $stmt = $pdo->prepare("SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_flow_states WHERE flow_id = ? AND status = 'completed'");
         $stmt->execute([$flowId]);
@@ -779,7 +817,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'completed-users') {
 
         jsonResponse(true, ['total' => $total, 'byBranch' => $branches]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -789,6 +827,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'estimate-
         $flowId = $_GET['id'] ?? null;
         if (!$flowId)
             jsonResponse(false, null, 'Flow ID required');
+        verifyFlowOwnership($pdo, $flowId, $workspace_id);
 
         $inputData = json_decode(file_get_contents('php://input'), true);
         $rawInputs = $inputData['inputs'] ?? [];
@@ -860,7 +899,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'estimate-
 
         // We want to exclude anyone who has EVER been in this flow (record exists in subscriber_flow_states)
         // Wait, what if they were completed and user wants to re-enroll? 
-        // Following USER REQUEST: "đã từng vào flow là đc" (cấn trừ ra).
+        // Following USER REQUEST: "Ä‘Ã£ tá»«ng vÃ o flow lÃ  Ä‘c" (cáº¥n trá»« ra).
 
         // Find existing IDs for these identifiers first
         // Break into chunks if too large to prevent query crash
@@ -912,7 +951,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'estimate-
         ]);
 
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -922,6 +961,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
         $flowId = $_GET['id'] ?? null;
         if (!$flowId)
             jsonResponse(false, null, 'Flow ID required');
+        verifyFlowOwnership($pdo, $flowId, $workspace_id);
 
         $inputData = json_decode(file_get_contents('php://input'), true);
         $stepId = trim($inputData['step_id'] ?? '');
@@ -990,7 +1030,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
         $items = array_unique($items);
 
         if (empty($items) || !$stepId)
-            jsonResponse(false, null, 'Danh sách liên hệ và Step ID không được để trống');
+            jsonResponse(false, null, 'Danh sÃ¡ch liÃªn há»‡ vÃ  Step ID khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng');
 
         $addedCount = 0;
         $errors = [];
@@ -1020,12 +1060,12 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
                 $uids[] = $item;
                 $inputMap[$item] = ['type' => 'uid', 'val' => $item];
             } else {
-                $errors[] = "$item: Định dạng không hợp lệ";
+                $errors[] = "$item: Äá»‹nh dáº¡ng khÃ´ng há»£p lá»‡";
             }
         }
 
         if (empty($inputMap)) {
-            jsonResponse(false, ['errors' => $errors], "Không có liên hệ hợp lệ để xử lý.");
+            jsonResponse(false, ['errors' => $errors], "KhÃ´ng cÃ³ liÃªn há»‡ há»£p lá»‡ Ä‘á»ƒ xá»­ lÃ½.");
         }
 
         // 2. Batch find existing subscribers
@@ -1125,7 +1165,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
                     elseif ($uidToUse)
                         $emailToUse = "uid_" . $uidToUse . "@no-email.zalo";
                     else {
-                        $errors[] = "$raw: Không tìm thấy thông tin";
+                        $errors[] = "$raw: KhÃ´ng tÃ¬m tháº¥y thÃ´ng tin";
                         continue;
                     }
                 }
@@ -1149,7 +1189,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
                 // Without passing 'id', MySQL throws "Field 'id' doesn't have a default value"
                 // because there's no AUTO_INCREMENT on a UUID column.
                 // We generate a UUID v4 for each new subscriber inside the loop.
-                // [FIX P0] Also added workspace_id — previously NULL which caused subscribers
+                // [FIX P0] Also added workspace_id â€” previously NULL which caused subscribers
                 // to not appear in workspace-filtered queries (same bug as bulk_operations.php).
                 $sqlIns = "INSERT IGNORE INTO subscribers (id, workspace_id, email, phone_number, zalo_user_id, first_name, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
                 $stmt = $pdo->prepare($sqlIns);
@@ -1182,7 +1222,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
             } catch (Exception $e) {
                 if ($pdo->inTransaction())
                     $pdo->rollBack();
-                $errors[] = "Lỗi chèn subscriber: " . $e->getMessage();
+                $errors[] = "Lá»—i chÃ¨n subscriber: " . $e->getMessage();
             }
         }
 
@@ -1204,7 +1244,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
         }
 
         if (empty($finalStatesToInsert)) {
-            jsonResponse(true, ['added' => 0, 'errors' => $errors], "Các liên hệ đã bị loại bỏ vì trùng lặp đã từng chạy trong Flow này.");
+            jsonResponse(true, ['added' => 0, 'errors' => $errors], "CÃ¡c liÃªn há»‡ Ä‘Ã£ bá»‹ loáº¡i bá» vÃ¬ trÃ¹ng láº·p Ä‘Ã£ tá»«ng cháº¡y trong Flow nÃ y.");
         }
 
         // Analyze Timing based on Target Step
@@ -1290,7 +1330,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
                     if ($rc > 0)
                         $addedCount++;
                     if (function_exists('logActivity') && $rc > 0) {
-                        $logMsg = ($rc === 1) ? "Thêm thủ công qua batch" : "Ghi danh lại thủ công";
+                        $logMsg = ($rc === 1) ? "ThÃªm thá»§ cÃ´ng qua batch" : "Ghi danh láº¡i thá»§ cÃ´ng";
                         logActivity($pdo, $subId, 'enter_flow', $stepId, 'Manual Add', $logMsg, $flowId);
                     }
                 }
@@ -1300,13 +1340,12 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
                     $pdo->rollBack();
                 $errors[] = "Lỗi ghi danh flow: " . $e->getMessage();
             }
-        }
-
-        if ($addedCount > 0) {
-            logSystemActivity($pdo, 'flows', 'manual_add_participant', $flowId, "Flow $flowId", ['added' => $addedCount]);
-            jsonResponse(true, ['added' => $addedCount, 'errors' => $errors], "Đã thêm thành công $addedCount khách hàng.");
-        } else {
-            jsonResponse(false, ['errors' => $errors], "Không thêm được khách hàng nào. " . implode(', ', array_slice($errors, 0, 3)));
+            if ($addedCount > 0) {
+                logSystemActivity($pdo, 'flows', 'manual_add_participant', $flowId, "Flow $flowId", ['added' => $addedCount]);
+                jsonResponse(true, ['added' => $addedCount, 'errors' => $errors], "Đã thêm thành công $addedCount khách hàng.");
+            } else {
+                jsonResponse(false, ['errors' => $errors], "Không thêm được khách hàng nào. " . implode(', ', array_slice($errors, 0, 3)));
+            }
         }
     } catch (Exception $e) {
         jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
@@ -1319,6 +1358,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'test-step
         $flowId = $_GET['id'] ?? null;
         if (!$flowId)
             jsonResponse(false, null, 'Flow ID required');
+        verifyFlowOwnership($pdo, $flowId, $workspace_id);
 
         $input = json_decode(file_get_contents('php://input'), true);
         $targetEmail = trim($input['target_email'] ?? '');
@@ -1394,15 +1434,15 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'test-step
         $mailer->closeConnection();
 
         if ($res['status'] === 'completed' || $res['status'] === 'waiting') {
-            jsonResponse(true, ['message' => "Đã gửi lại thành công đến " . ($sub['email'] ?: $sub['phone_number'])]);
+            jsonResponse(true, ['message' => "ÄÃ£ gá»­i láº¡i thÃ nh cÃ´ng Ä‘áº¿n " . ($sub['email'] ?: $sub['phone_number'])]);
         } else {
             $lastLog = end($res['logs']);
-            $msg = $lastLog ? str_replace('  -> ', '', $lastLog) : 'Gửi lại thất bại';
+            $msg = $lastLog ? str_replace('  -> ', '', $lastLog) : 'Gá»­i láº¡i tháº¥t báº¡i';
             jsonResponse(false, null, $msg);
         }
 
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -1414,6 +1454,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'migrate-users') {
         $flowId = $_GET['id'] ?? null;
         if (!$flowId)
             jsonResponse(false, null, 'Flow ID required');
+        verifyFlowOwnership($pdo, $flowId, $workspace_id);
 
         $input = json_decode(file_get_contents("php://input"), true);
         $action = $input['action'] ?? 'stop';
@@ -1514,7 +1555,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'migrate-users') {
             jsonResponse(true, ['message' => 'Users moved to new step', 'count' => $count]);
         }
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -1525,6 +1566,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'history') {
         $campaignId = $_GET['campaign_id'] ?? null;
         if (!$flowId && !$campaignId)
             jsonResponse(false, null, 'Flow ID or Campaign ID required');
+        if ($flowId) verifyFlowOwnership($pdo, $flowId, $workspace_id);
 
         $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
         $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 20;
@@ -1601,7 +1643,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'history') {
             ]
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -1618,6 +1660,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'zns-delivery') {
 
         if (!$flowId)
             jsonResponse(false, null, 'Flow ID required');
+        verifyFlowOwnership($pdo, $flowId, $workspace_id);
         $whereClauses = ["zdl.flow_id = ?"];
         $params = [$flowId];
 
@@ -1654,7 +1697,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'zns-delivery') {
 
         jsonResponse(true, ['logs' => $logs, 'stats' => $stats, 'pagination' => ['page' => $page, 'limit' => $limit, 'total' => $total, 'totalPages' => ceil($total / $limit)]]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -1688,7 +1731,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'step-errors') {
             $params[] = "%$search%";
         }
 
-        // [PERF] Avoid JOIN when no search — COUNT on activity table alone is faster
+        // [PERF] Avoid JOIN when no search â€” COUNT on activity table alone is faster
         // [FIX] Use DISTINCT to count unique subscribers, not total error events per subscriber
         if ($search) {
             $stmtCount = $pdo->prepare("SELECT COUNT(DISTINCT sa.subscriber_id) FROM subscriber_activity sa JOIN subscribers s ON sa.subscriber_id = s.id WHERE $where");
@@ -1721,7 +1764,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'step-errors') {
             ]
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -1780,7 +1823,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'step-unsubscribes') {
             ]
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -1796,26 +1839,27 @@ if (isset($_GET['route']) && $_GET['route'] === 'resolve-step-error') {
 
         if (!$action || !$flowId || !$stepId || empty($subscriberIds))
             jsonResponse(false, null, 'Invalid parameters');
+        verifyFlowOwnership($pdo, $flowId, $workspace_id);
         $placeholders = implode(',', array_fill(0, count($subscriberIds), '?'));
 
         if ($action === 'retry') {
             $stmt = $pdo->prepare("UPDATE subscriber_flow_states SET status = 'waiting', scheduled_at = NOW(), updated_at = NOW(), last_error = NULL WHERE flow_id = ? AND step_id = ? AND subscriber_id IN ($placeholders) AND status = 'failed'");
             $stmt->execute(array_merge([$flowId, $stepId], $subscriberIds));
-            jsonResponse(true, ['message' => 'Đã đặt lại trạng thái chờ cho ' . count($subscriberIds) . ' người dùng']);
+            jsonResponse(true, ['message' => 'ÄÃ£ Ä‘áº·t láº¡i tráº¡ng thÃ¡i chá» cho ' . count($subscriberIds) . ' ngÆ°á»i dÃ¹ng']);
         } else if ($action === 'move') {
             if (!$targetStepId)
                 jsonResponse(false, null, 'Target step ID required');
             $stmt = $pdo->prepare("UPDATE subscriber_flow_states SET step_id = ?, status = 'waiting', scheduled_at = NOW(), updated_at = NOW(), last_error = NULL WHERE flow_id = ? AND step_id = ? AND subscriber_id IN ($placeholders) AND status = 'failed'");
             $stmt->execute(array_merge([$targetStepId, $flowId, $stepId], $subscriberIds));
-            jsonResponse(true, ['message' => 'Đã chuyển ' . count($subscriberIds) . ' người dùng sang bước mới']);
+            jsonResponse(true, ['message' => 'ÄÃ£ chuyá»ƒn ' . count($subscriberIds) . ' ngÆ°á»i dÃ¹ng sang bÆ°á»›c má»›i']);
         } else if ($action === 'cleanup') {
             $stmt = $pdo->prepare("UPDATE subscriber_flow_states SET status = 'completed', updated_at = NOW() WHERE flow_id = ? AND step_id = ? AND subscriber_id IN ($placeholders)");
             $stmt->execute(array_merge([$flowId, $stepId], $subscriberIds));
             $pdo->prepare("UPDATE flows SET stat_completed = stat_completed + ? WHERE id = ? AND workspace_id = ?")->execute([count($subscriberIds), $flowId, $workspace_id]);
-            jsonResponse(true, ['message' => 'Đã dọn dẹp ' . count($subscriberIds) . ' người dùng khỏi automation']);
+            jsonResponse(true, ['message' => 'ÄÃ£ dá»n dáº¹p ' . count($subscriberIds) . ' ngÆ°á»i dÃ¹ng khá»i automation']);
         }
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -1962,11 +2006,11 @@ function formatFlow($row)
         'uniqueClicked' => (int) ($row['stat_unique_clicked'] ?? 0),
         'totalFailed' => (int) ($row['stat_total_failed'] ?? 0),
         'totalUnsubscribed' => (int) ($row['stat_total_unsubscribed'] ?? 0),
-        // [FIX P6-C1] Per-channel stats — mirrors DB columns added in Phase 6
+        // [FIX P6-C1] Per-channel stats â€” mirrors DB columns added in Phase 6
         'zaloSent' => (int) ($row['stat_zalo_sent'] ?? 0),
         'znsSent' => (int) ($row['stat_zns_sent'] ?? 0),
         'metaSent' => (int) ($row['stat_meta_sent'] ?? 0),
-        // [FIX P11-H3] ZNS click stats — uses columns added by P11-C1
+        // [FIX P11-H3] ZNS click stats â€” uses columns added by P11-C1
         'totalZaloClicked' => (int) ($row['stat_total_zalo_clicked'] ?? 0),
         'uniqueZaloClicked' => (int) ($row['stat_unique_zalo_clicked'] ?? 0),
         'openRate' => (float) ($row['stat_open_rate'] ?? 0.0),
@@ -2006,6 +2050,7 @@ if ($method === 'GET' && isset($_GET['route']) && $_GET['route'] === 'stats') {
         $flowId = $_GET['id'] ?? null;
         if (!$flowId)
             jsonResponse(false, null, 'Flow ID required');
+        verifyFlowOwnership($pdo, $flowId, $workspace_id);
         $stmt = $pdo->prepare("
             SELECT stat_enrolled, stat_completed, stat_total_sent, stat_total_opened,
                    stat_unique_opened, stat_total_clicked, stat_unique_clicked,
@@ -2035,12 +2080,12 @@ if ($method === 'GET' && isset($_GET['route']) && $_GET['route'] === 'stats') {
             'metaSent' => (int) ($row['stat_meta_sent'] ?? 0),
             'openRate' => (float) ($row['stat_open_rate'] ?? 0.0),
             'clickRate' => (float) ($row['stat_click_rate'] ?? 0.0),
-            // [FIX P12-H2] ZNS click stats — added columns to SELECT above
+            // [FIX P12-H2] ZNS click stats â€” added columns to SELECT above
             'totalZaloClicked' => (int) ($row['stat_total_zalo_clicked'] ?? 0),
             'uniqueZaloClicked' => (int) ($row['stat_unique_zalo_clicked'] ?? 0),
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -2054,6 +2099,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-next-step') {
         $flowId = $_GET['id'] ?? null;
         if (!$flowId)
             jsonResponse(false, null, 'Flow ID required');
+        verifyFlowOwnership($pdo, $flowId, $workspace_id);
 
         $input = json_decode(file_get_contents("php://input"), true);
         $subscriberIds = $input['subscriber_ids'] ?? [];
@@ -2091,7 +2137,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-next-step') {
         // [OPTIMIZATION] Expand Step IDs to include wait steps pointing to the current action/template
         // [BUG-FIX] Only expand during executeAction mode (sending emails from waiting waiters).
         // In SKIP mode, expanding upstream wait steps would move subscribers who haven't finished
-        // their wait yet (e.g. people still at step#0 "Chờ 1 Ngày" get dragged to step#2 when
+        // their wait yet (e.g. people still at step#0 "Chá» 1 NgÃ y" get dragged to step#2 when
         // admin clicks "Next Step" on step#1 "Email Follow-up"). NEVER expand in skip mode.
         $expandedStepIds = [$currentStepId];
         if ($currentStepData && $executeAction) {
@@ -2184,7 +2230,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-next-step') {
                 WHERE id = ? AND workspace_id = ?");
             $stmtUpdateStats->execute([$flowId, $flowId, $flowId, $workspace_id]);
 
-            jsonResponse(true, ['message' => "Đang thực hiện action cho $count khách hàng...", 'count' => $count]);
+            jsonResponse(true, ['message' => "Äang thá»±c hiá»‡n action cho $count khÃ¡ch hÃ ng...", 'count' => $count]);
         } else {
             // MODE: Skip current step, move directly to next (Manual Override)
             $isLastStep = !$nextStepId;
@@ -2281,11 +2327,11 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-next-step') {
 
             logSystemActivity($pdo, 'flows', 'bulk_next_step', $flowId, "Flow $flowId", ['count' => $count, 'to_step' => $finalNextStepId]);
 
-            $msg = $isLastStep ? "Đã hoàn thành luồng cho $count khách hàng" : "Đã bỏ qua sang bước tiếp theo cho $count khách hàng";
+            $msg = $isLastStep ? "ÄÃ£ hoÃ n thÃ nh luá»“ng cho $count khÃ¡ch hÃ ng" : "ÄÃ£ bá» qua sang bÆ°á»›c tiáº¿p theo cho $count khÃ¡ch hÃ ng";
             jsonResponse(true, ['message' => $msg, 'count' => $count]);
         }
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -2299,6 +2345,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-remove') {
         $flowId = $_GET['id'] ?? null;
         if (!$flowId)
             jsonResponse(false, null, 'Flow ID required');
+        verifyFlowOwnership($pdo, $flowId, $workspace_id);
 
         $input = json_decode(file_get_contents("php://input"), true);
         $subscriberIds = $input['subscriber_ids'] ?? [];
@@ -2347,7 +2394,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-remove') {
         $stmt->execute($params);
         $count = $stmt->rowCount();
 
-        // [FIX] Also remove failed activity logs so subscriber disappears from "Gửi lỗi" tab
+        // [FIX] Also remove failed activity logs so subscriber disappears from "Gá»­i lá»—i" tab
         // The failed tab reads from subscriber_activity (type=failed_email/zns_failed/zns_skipped)
         if ($selectAll) {
             // For select_all: delete all failed activities in this step
@@ -2378,7 +2425,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-remove') {
         jsonResponse(true, ['message' => "Removed $count subscribers from flow", 'count' => $count]);
     } catch (Exception $e) {
         error_log("Bulk remove error: " . $e->getMessage());
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -2388,7 +2435,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'export-analytics') {
         // ... (Existing export logic) ...
         jsonResponse(false, null, 'Export logic placeholder');
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -2404,6 +2451,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'inactive-users') {
         if (!$flowId) {
             throw new Exception("Missing Flow ID");
         }
+        verifyFlowOwnership($pdo, $flowId, $workspace_id);
 
         $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
         $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 20;
@@ -2460,7 +2508,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'inactive-users') {
             ]
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
     }
 }
 
@@ -2471,14 +2519,14 @@ switch ($method) {
             session_write_close();
         try {
             if ($path) {
-                // [FIX P39-F1] Explicit columns — avoids loading all columns unnecessarily when only specific fields are used
+                // [FIX P39-F1] Explicit columns â€” avoids loading all columns unnecessarily when only specific fields are used
                 $stmt = $pdo->prepare("SELECT id, workspace_id, name, status, trigger_type, steps, config, stat_enrolled, stat_completed, created_at, updated_at FROM flows WHERE id = ? AND workspace_id = ?");
                 $stmt->execute([$path, $workspace_id]);
                 $flow = $stmt->fetch();
 
                 if ($flow) {
                     // [FIX] Exclude 'cancelled' records from enrolled count.
-                    // Previously counted ALL rows including new_only snapshot records → showed 10k+ instead of actual 2.
+                    // Previously counted ALL rows including new_only snapshot records â†’ showed 10k+ instead of actual 2.
                     // Must match the WHERE clause used in all stat_enrolled UPDATE statements (status != 'cancelled').
                     $stmtRecap = $pdo->prepare("SELECT COUNT(DISTINCT subscriber_id) as enrolled, COUNT(DISTINCT CASE WHEN status = 'completed' THEN subscriber_id END) as completed FROM subscriber_flow_states WHERE flow_id = ? AND status != 'cancelled'");
                     $stmtRecap->execute([$path]);
@@ -2522,12 +2570,12 @@ switch ($method) {
                                 'unsubscribed' => (int) ($cStats['count_unsubscribed'] ?? 0)
                             ];
 
-                            // Merge into Global Flow Stats (User Request: "Tổng lượt gửi")
+                            // Merge into Global Flow Stats (User Request: "Tá»•ng lÆ°á»£t gá»­i")
                             // We explicitly USE the campaign stats if it's a campaign flow, as the flow itself usually has 0 sent (it just enrolls)
                             $formatted['stats']['totalSent'] = max($formatted['stats']['totalSent'], $campaignStats['sent']);
 
                             // [FIX] Map Campaign Stats to "Total" stats for Header consistency (Header uses totalOpened, Cards use uniqueOpened)
-                            // "Khách hàng mở" card uses uniqueOpened. "Tổng lượt mở" header uses totalOpened.
+                            // "KhÃ¡ch hÃ ng má»Ÿ" card uses uniqueOpened. "Tá»•ng lÆ°á»£t má»Ÿ" header uses totalOpened.
                             $formatted['stats']['totalOpened'] = max($formatted['stats']['totalOpened'], $campaignStats['total_opened'] ?? $campaignStats['opened']);
                             $formatted['stats']['uniqueOpened'] = max($formatted['stats']['uniqueOpened'], $campaignStats['opened']);
 
@@ -2678,9 +2726,9 @@ switch ($method) {
                 $stmtCount->execute($paramsFlow);
                 $totalFlows = (int) $stmtCount->fetchColumn();
 
-                // [PERF-F2] Explicit columns — steps IS included for FlowCard (needs trigger step + count)
+                // [PERF-F2] Explicit columns â€” steps IS included for FlowCard (needs trigger step + count)
                 // The 'steps' column can be large (50-200KB per flow). We parse it PHP-side and
-                // strip all non-trigger steps before sending to the client — saves 70-95% bandwidth.
+                // strip all non-trigger steps before sending to the client â€” saves 70-95% bandwidth.
                 $stmt = $pdo->prepare("SELECT id, workspace_id, name, status, trigger_type, steps, config,
                     stat_enrolled, stat_completed, stat_total_sent, stat_total_opened, stat_unique_opened,
                     stat_total_clicked, stat_unique_clicked, stat_total_failed, stat_total_unsubscribed,
@@ -2715,7 +2763,7 @@ switch ($method) {
                 ]);
             }
         } catch (Throwable $e) {
-            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+            jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
         }
         break;
 
@@ -2724,10 +2772,10 @@ switch ($method) {
             $data = json_decode(file_get_contents("php://input"), true);
             $id = $data['id'] ?? uniqid();
 
-            // [FIX] Bổ sung trigger_type nếu null (frontend đã clean orphaned steps)
+            // [FIX] Bá»• sung trigger_type náº¿u null (frontend Ä‘Ã£ clean orphaned steps)
             $triggerType = $data['trigger_type'] ?? null;
 
-            // Nếu trigger_type null, tìm và bổ sung từ trigger step
+            // Náº¿u trigger_type null, tÃ¬m vÃ  bá»• sung tá»« trigger step
             if ($triggerType === null) {
                 $stepsArr = $data['steps'] ?? [];
                 foreach ($stepsArr as $s) {
@@ -2748,11 +2796,11 @@ switch ($method) {
             $config = json_encode($data['config'] ?? (object) []);
             $sql = "INSERT INTO flows (workspace_id, id, name, description, status, steps, config, trigger_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([$workspace_id, $id, $data['name'] ?? 'Flow mới', $data['description'] ?? '', $data['status'] ?? 'draft', $steps, $config, $triggerType]);
-            logSystemActivity($pdo, 'flows', 'create', $id, $data['name'] ?? 'Flow mới', ['status' => $data['status'] ?? 'draft']);
+            $stmt->execute([$workspace_id, $id, $data['name'] ?? 'Flow má»›i', $data['description'] ?? '', $data['status'] ?? 'draft', $steps, $config, $triggerType]);
+            logSystemActivity($pdo, 'flows', 'create', $id, $data['name'] ?? 'Flow má»›i', ['status' => $data['status'] ?? 'draft']);
             jsonResponse(true, ['id' => $id]);
         } catch (Throwable $e) {
-            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+            jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
         }
         break;
 
@@ -2770,19 +2818,19 @@ switch ($method) {
             if (!$isAdmin) {
                 if (in_array($currentFlowStatus, ['active', 'sending', 'scheduled', 'processing'])) {
                     if (strtolower($data['status'] ?? '') !== 'paused') {
-                        jsonResponse(false, null, 'User chỉ được phép Tạm dừng (Pause) flow đang chạy, không được sửa nội dung.');
+                        jsonResponse(false, null, 'User chá»‰ Ä‘Æ°á»£c phÃ©p Táº¡m dá»«ng (Pause) flow Ä‘ang cháº¡y, khÃ´ng Ä‘Æ°á»£c sá»­a ná»™i dung.');
                     }
                 } else {
                     if (in_array(strtolower($data['status'] ?? ''), ['active', 'sending', 'scheduled'])) {
-                        jsonResponse(false, null, 'User không có quyền chạy hoặc active flow.');
+                        jsonResponse(false, null, 'User khÃ´ng cÃ³ quyá»n cháº¡y hoáº·c active flow.');
                     }
                 }
             }
 
-            // [FIX] Bổ sung trigger_type nếu null (frontend đã clean orphaned steps)
+            // [FIX] Bá»• sung trigger_type náº¿u null (frontend Ä‘Ã£ clean orphaned steps)
             $triggerType = $data['trigger_type'] ?? null;
 
-            // Nếu trigger_type null, tìm và bổ sung từ trigger step
+            // Náº¿u trigger_type null, tÃ¬m vÃ  bá»• sung tá»« trigger step
             if ($triggerType === null) {
                 $stepsArr = $data['steps'] ?? [];
                 foreach ($stepsArr as $s) {
@@ -2798,7 +2846,7 @@ switch ($method) {
             $config = json_encode($data['config'] ?? (object) []);
             $stats = $data['stats'] ?? [];
 
-            // [DEBUG] Log trigger_type để debug
+            // [DEBUG] Log trigger_type Ä‘á»ƒ debug
             error_log("[Flow Save] Flow $path - Received trigger_type from frontend: " . ($data['trigger_type'] ?? 'NULL') . ", Final trigger_type: " . ($triggerType ?? 'NULL'));
 
             // [SYNC WAIT TIMES] Fetch old steps to check for changes in wait times
@@ -2821,7 +2869,7 @@ switch ($method) {
                     $newConf = $ns['config'] ?? [];
                     $oldConf = $oldWaitConfigs[$nsId];
 
-                    // [FIX] Also trigger on mode/waitType change (e.g. duration → until_date),
+                    // [FIX] Also trigger on mode/waitType change (e.g. duration â†’ until_date),
                     // not just duration/unit. Previously missed mode changes on paused-flow saves
                     // (second pass only runs for active saves; first pass must cover all saves).
                     $waitConfigChanged =
@@ -2832,7 +2880,7 @@ switch ($method) {
 
                     if ($waitConfigChanged && ($newConf['mode'] ?? $newConf['waitType'] ?? 'duration') === 'duration') {
                         // Only reschedule via SQL-bulk when it's still a duration-mode wait.
-                        // until/until_date waits have subscriber-specific dates — handled per-item in second pass.
+                        // until/until_date waits have subscriber-specific dates â€” handled per-item in second pass.
                         $dur = (int) ($newConf['duration'] ?? 1);
                         $unit = $newConf['unit'] ?? 'hours';
                         $seconds = $dur;
@@ -2871,14 +2919,14 @@ switch ($method) {
             // [FIX] Decode stepsArr UNCONDITIONALLY here so it is available for both the active
             // block (enrollment/wait-sync) AND the non-active block (autoMigrateStuckUsers below).
             // Previously $stepsArr was only assigned inside 'if status===active', causing
-            // autoMigrateStuckUsers to never run for paused/draft saves (PHP undefined variable → false).
+            // autoMigrateStuckUsers to never run for paused/draft saves (PHP undefined variable â†’ false).
             $stepsArr = json_decode($steps, true) ?: [];
 
-            // ── [NEW_ONLY SNAPSHOT] ────────────────────────────────────────────────────
-            // Chạy khi LƯU TRIGGER CONFIG với enrollStrategy = 'new_only', bất kể status.
-            // Mục đích: Snapshot toàn bộ người hiện có trong danh sách → 'cancelled'.
-            // Worker_enroll sau đó chỉ enroll người MỚI (không có record) → 'waiting'.
-            // Không chạy lại cho người đã có record (tránh ghi đè waiting → cancelled).
+            // â”€â”€ [NEW_ONLY SNAPSHOT] â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            // Cháº¡y khi LÆ¯U TRIGGER CONFIG vá»›i enrollStrategy = 'new_only', báº¥t ká»ƒ status.
+            // Má»¥c Ä‘Ã­ch: Snapshot toÃ n bá»™ ngÆ°á»i hiá»‡n cÃ³ trong danh sÃ¡ch â†’ 'cancelled'.
+            // Worker_enroll sau Ä‘Ã³ chá»‰ enroll ngÆ°á»i Má»šI (khÃ´ng cÃ³ record) â†’ 'waiting'.
+            // KhÃ´ng cháº¡y láº¡i cho ngÆ°á»i Ä‘Ã£ cÃ³ record (trÃ¡nh ghi Ä‘Ã¨ waiting â†’ cancelled).
             {
                 $_snapTrigger = null;
                 foreach ($stepsArr as $_s) {
@@ -2897,7 +2945,7 @@ switch ($method) {
                     $_snapSql    = '';
                     $_snapParams = [];
 
-                    // Tìm Segment trước
+                    // TÃ¬m Segment trÆ°á»›c
                     $_stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
                     $_stmtSeg->execute([$_snapTargetId]);
                     $_snapCriteria = $_stmtSeg->fetchColumn();
@@ -2910,7 +2958,7 @@ switch ($method) {
                             $_snapParams = $_snapRes['params'];
                         }
                     } else {
-                        // Fallback: thử List
+                        // Fallback: thá»­ List
                         $_stmtList = $pdo->prepare("SELECT id FROM lists WHERE id = ? AND workspace_id = ?");
                         $_stmtList->execute([$_snapTargetId, $workspace_id]);
                         if ($_stmtList->fetchColumn()) {
@@ -2920,8 +2968,8 @@ switch ($method) {
                     }
 
                     if (!empty($_snapSql)) {
-                        // INSERT cancelled cho người CHƯA có bất kỳ record nào trong flow này
-                        // (Không ghi đè waiting/processing của người đang chạy)
+                        // INSERT cancelled cho ngÆ°á»i CHÆ¯A cÃ³ báº¥t ká»³ record nÃ o trong flow nÃ y
+                        // (KhÃ´ng ghi Ä‘Ã¨ waiting/processing cá»§a ngÆ°á»i Ä‘ang cháº¡y)
                         $_snapInsert = "INSERT INTO subscriber_flow_states
                                         (flow_id, subscriber_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at)
                                         SELECT ?, s.id, ?, ?, 'cancelled', NOW(), NOW(), NOW()
@@ -2946,7 +2994,7 @@ switch ($method) {
                     }
                 }
             }
-            // ── END NEW_ONLY SNAPSHOT ──────────────────────────────────────────────────
+            // â”€â”€ END NEW_ONLY SNAPSHOT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
             if ($data['status'] === 'active') {
                 $trigger = null;
@@ -2959,11 +3007,11 @@ switch ($method) {
 
                 if ($trigger && isset($trigger['config']['type']) && in_array($trigger['config']['type'], ['segment', 'list', 'sync'])) {
                     $enrollStrategy = $trigger['config']['enrollStrategy'] ?? 'all';
-                    // new_only đã được xử lý ở block snapshot phía trên.
-                    // Khi active, chỉ cần enroll 'all' strategy (waiting).
-                    // new_only: worker_enroll sẽ tự pick up người mới.
+                    // new_only Ä‘Ã£ Ä‘Æ°á»£c xá»­ lÃ½ á»Ÿ block snapshot phÃ­a trÃªn.
+                    // Khi active, chá»‰ cáº§n enroll 'all' strategy (waiting).
+                    // new_only: worker_enroll sáº½ tá»± pick up ngÆ°á»i má»›i.
                     $targetStatus = ($enrollStrategy === 'new_only') ? 'cancelled' : 'waiting';
-                    // Skip enrollment block nếu new_only (snapshot đã chạy rồi)
+                    // Skip enrollment block náº¿u new_only (snapshot Ä‘Ã£ cháº¡y rá»“i)
                     if ($enrollStrategy === 'new_only') {
                         goto skip_active_enrollment;
                     }
@@ -3114,7 +3162,7 @@ switch ($method) {
 
                 skip_active_enrollment:
                 // AUTO-MIGRATION: Migrate stuck users at deleted steps (Careful Migration)
-                // [FIX] Run this INSIDE status=active block only — active flows have live subscribers.
+                // [FIX] Run this INSIDE status=active block only â€” active flows have live subscribers.
                 // For paused/draft flows, autoMigrate runs after the status block below.
                 $migratedCount = autoMigrateStuckUsers($pdo, $path, $stepsArr, $oldSteps);
                 if ($migratedCount > 0) {
@@ -3123,7 +3171,7 @@ switch ($method) {
 
                 // [ISSUE #4 FIX] Update wait times for subscribers when wait step config changes
                 // [BUG-FIX] Bug #4: The original code fetched old steps AGAIN after the UPDATE,
-                // meaning it read back the NEW steps — not the old ones. The wait-time comparison
+                // meaning it read back the NEW steps â€” not the old ones. The wait-time comparison
                 // old vs new was therefore always new vs new, so reschedule never triggered.
                 // Fix: Reuse $oldWaitConfigs built BEFORE the UPDATE above (line ~2218).
                 // Build old steps map from the already-fetched $oldSteps (pre-UPDATE)
@@ -3168,7 +3216,7 @@ switch ($method) {
                             // rather than when the subscriber originally arrived at this step.
                             // [FIX] Fetch created_at as a reliable anchor fallback when last_step_at is NULL.
                             // updated_at becomes unreliable because ON UPDATE CURRENT_TIMESTAMP rewrites it
-                            // on every DB change — using it as base time for wait duration anchors all
+                            // on every DB change â€” using it as base time for wait duration anchors all
                             // subscribers to the moment the admin saved the flow, not their entry time.
                             // created_at is immutable after INSERT and maps correctly to enrollment time.
                             $stmtWaiting = $pdo->prepare("SELECT id, last_step_at, created_at FROM subscriber_flow_states WHERE flow_id = ? AND step_id = ? AND status = 'waiting'");
@@ -3215,7 +3263,7 @@ switch ($method) {
                                     if ($targetDay !== null && $targetDay !== '') {
                                         $currentDay = (int) date('w');
                                         $daysAhead = ((int) $targetDay - $currentDay + 7) % 7;
-                                        // If same day but time already passed → next week
+                                        // If same day but time already passed â†’ next week
                                         if ($daysAhead === 0 && $dt->getTimestamp() <= time()) {
                                             $daysAhead = 7;
                                         }
@@ -3223,7 +3271,7 @@ switch ($method) {
                                             $dt->modify("+$daysAhead days");
                                         }
                                     } else {
-                                        // No specific day — just a daily time
+                                        // No specific day â€” just a daily time
                                         if ($dt->getTimestamp() <= time()) {
                                             $dt->modify('+1 day');
                                         }
@@ -3232,9 +3280,9 @@ switch ($method) {
                                 } elseif ($waitType === 'until_attribute') {
                                     // Attribute-based waits are subscriber-specific (birthday, anniversary, etc.)
                                     // We cannot recalculate correctly here without querying each subscriber's
-                                    // attribute value. Skip reschedule — the executor will handle correctly
+                                    // attribute value. Skip reschedule â€” the executor will handle correctly
                                     // on next wake-up cycle.
-                                    error_log("[Flow Save] 'until_attribute' wait config changed at step {$newStep['id']} — subscribers will be re-evaluated on next execution cycle.");
+                                    error_log("[Flow Save] 'until_attribute' wait config changed at step {$newStep['id']} â€” subscribers will be re-evaluated on next execution cycle.");
                                 }
 
                                 if ($newScheduledAt) {
@@ -3334,7 +3382,7 @@ switch ($method) {
             }
 
             // [FIX] For paused/draft flows that had steps deleted: autoMigrate was only called
-            // inside the status=active block — orphan subscribers would remain stuck at deleted
+            // inside the status=active block â€” orphan subscribers would remain stuck at deleted
             // step_ids until the flow was re-activated. Run it here for all non-active saves too.
             if ($data['status'] !== 'active' && !empty($stepsArr)) {
                 $migratedCount = autoMigrateStuckUsers($pdo, $path, $stepsArr, $oldSteps);
@@ -3346,7 +3394,7 @@ switch ($method) {
             jsonResponse(true, $data);
 
         } catch (Exception $e) {
-            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+            jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
         }
         break;
     case 'DELETE':
@@ -3364,7 +3412,7 @@ switch ($method) {
 
             // [FIX] Verify ownership before proceeding to wipe child tables
             if (!$flowMeta) {
-                jsonResponse(false, null, 'Không tìm thấy Flow hoặc không có quyền xóa');
+                jsonResponse(false, null, 'KhÃ´ng tÃ¬m tháº¥y Flow hoáº·c khÃ´ng cÃ³ quyá»n xÃ³a');
                 return;
             }
 
@@ -3422,7 +3470,7 @@ switch ($method) {
         } catch (Exception $e) {
             if ($pdo->inTransaction())
                 $pdo->rollBack();
-            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+            jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
         }
         break;
 

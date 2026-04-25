@@ -487,7 +487,7 @@ try {
             $url = normalizeUrl($data['url'] ?? '');
             $hash = md5($url);
             $loadTime = (int) ($data['load_time'] ?? 0);
-            $pageViews[] = [$sessionId, $visitorUuid, $propertyId, $hash, $url, $data['title'] ?? '', $loadTime];
+            $pageViews[] = [$sessionId, $visitorUuid, $propertyId, $propWorkspaceId, $hash, $url, $data['title'] ?? '', $loadTime];
             $sessionPageCount++;
         } elseif ($type === 'ping') {
             // Processing handled by redundant extraction at top of loop

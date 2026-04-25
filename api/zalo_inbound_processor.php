@@ -26,6 +26,16 @@ function handleZaloInboundJob($pdo, $payload)
     if (!$zaloUserId || !$oaConfigId)
         return false;
 
+    // [FIX AUDIT-16] IDEMPOTENCY CHECK
+    // Check if this specific Zalo event_id has already been processed to prevent duplicates
+    if ($eventId) {
+        $stmtCheck = $pdo->prepare("SELECT id FROM zalo_subscriber_activity WHERE event_id = ? LIMIT 1");
+        $stmtCheck->execute([$eventId]);
+        if ($stmtCheck->fetch()) {
+            return true; // Already processed
+        }
+    }
+
     // 0. FETCH OA CONFIG
     $stmtOa = $pdo->prepare("SELECT id, access_token, name, workspace_id FROM zalo_oa_configs WHERE id = ? LIMIT 1");
     $stmtOa->execute([$oaConfigId]);
@@ -132,14 +142,16 @@ function handleZaloInboundJob($pdo, $payload)
 
         if ($event !== 'user_send_text') {
             updateZaloLeadScore($pdo, $zaloUserId, 'message');
-            logZaloSubscriberActivity($pdo, $subId, $event, null, "KH gửi tin nhắn (+5 điểm): $msgText", "Zalo Webhook", $eventId, $oaConfig['workspace_id']);
+            // [FIX AUDIT-16/17] Pass event_id correctly as 9th parameter
+            logZaloSubscriberActivity($pdo, $subId, $event, null, "KH gửi tin nhắn (+5 điểm): $msgText", "Zalo Webhook", null, $oaConfig['workspace_id'], $eventId);
         }
     } elseif (in_array($event, $interactionEvents)) {
         $points = ($event === 'follow') ? 2 : (($event === 'user_reacted_message') ? 3 : 5);
         $scoreType = ($event === 'follow') ? 'follow' : (($event === 'user_reacted_message') ? 'reaction' : 'feedback');
 
         updateZaloLeadScore($pdo, $zaloUserId, $scoreType);
-        logZaloSubscriberActivity($pdo, $subId, $event, null, "Sự kiện Zalo $event (+$points điểm)", "Zalo Webhook", $eventId, $oaConfig['workspace_id']);
+        // [FIX AUDIT-16/17] Pass event_id correctly
+        logZaloSubscriberActivity($pdo, $subId, $event, null, "Sự kiện Zalo $event (+$points điểm)", "Zalo Webhook", null, $oaConfig['workspace_id'], $eventId);
 
         // Log to Main Timeline
         $stmtMain = $pdo->prepare("SELECT id FROM subscribers WHERE zalo_user_id = ? LIMIT 1");
@@ -147,7 +159,8 @@ function handleZaloInboundJob($pdo, $payload)
         $mainId = $stmtMain->fetchColumn();
         if ($mainId) {
             $evLabel = $event === 'follow' ? 'Follow OA' : ($event === 'user_reacted_message' ? 'Reaction' : 'Feedback');
-            logActivity($pdo, $mainId, $event, null, $evLabel, "Sự kiện Zalo $event (+$points điểm)", null, null);
+            // [FIX AUDIT-17] Include workspace_id in logActivity call
+            logActivity($pdo, $mainId, $event, null, $evLabel, "Sự kiện Zalo $event (+$points điểm)", null, null, [], $oaConfig['workspace_id']);
             if ($event === 'follow')
                 triggerFlows($pdo, $mainId, 'zalo_follow', null);
         }
@@ -168,7 +181,8 @@ function handleZaloInboundJob($pdo, $payload)
 
     // 6. SCENARIO AUTO-REPLY (Keyword, Holiday, AI)
     if ($scenario) {
-        logZaloSubscriberActivity($pdo, $subId, 'automation_trigger', $scenario['id'], "Kích hoạt kịch bản: " . ($scenario['title'] ?? 'Auto'), $msgText, $eventId, $oaConfig['workspace_id']);
+        // [FIX AUDIT-16/17] Pass event_id correctly
+        logZaloSubscriberActivity($pdo, $subId, 'automation_trigger', $scenario['id'], "Kích hoạt kịch bản: " . ($scenario['title'] ?? 'Auto'), $msgText, null, $oaConfig['workspace_id'], $eventId);
         sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $scenario, $msgText);
     }
 
@@ -224,10 +238,12 @@ function processStaffReply($pdo, $event, $payload, $subId, $zaloUserId, $oaConfi
 
     if ($isAutomated) {
         logZaloMsg($pdo, $zaloUserId, 'outbound', "[System Message] " . $msgText);
-        logZaloSubscriberActivity($pdo, $subId, 'system_reply', null, "System/Greeting: $msgText", "Zalo OA", $eventId, $oaConfig['workspace_id']);
+        // [FIX AUDIT-16/17] Pass event_id correctly
+        logZaloSubscriberActivity($pdo, $subId, 'system_reply', null, "System/Greeting: $msgText", "Zalo OA", null, $oaConfig['workspace_id'], $eventId);
     } else {
         logZaloMsg($pdo, $zaloUserId, 'outbound', $msgText);
-        logZaloSubscriberActivity($pdo, $subId, 'staff_reply', null, "Tư vấn viên trả lời: $msgText", "Zalo OA", $eventId, $oaConfig['workspace_id']);
+        // [FIX AUDIT-16/17] Pass event_id correctly
+        logZaloSubscriberActivity($pdo, $subId, 'staff_reply', null, "Tư vấn viên trả lời: $msgText", "Zalo OA", null, $oaConfig['workspace_id'], $eventId);
 
         // Pause AI
         $pdo->prepare("UPDATE zalo_subscribers SET ai_paused_until = DATE_ADD(NOW(), INTERVAL 30 MINUTE) WHERE id = ?")->execute([$subId]);
@@ -287,7 +303,8 @@ function processZaloTrackingEvent($pdo, $event, $payload, $subId, $zaloUserId)
                     $points = ($event === 'user_received_message') ? max(1, floor($basePoints / 2)) : $basePoints;
                     $label = ($event === 'user_received_message') ? 'ZNS Delivered' : 'ZNS Seen';
 
-                    logActivity($pdo, $mainId, "zns_" . $newStatus, $logEntry['step_id'], 'ZNS Automation', "$label (+$points điểm)", $logEntry['flow_id'], $logEntry['flow_id']);
+                    // [FIX AUDIT-17] Include workspace_id in logActivity call
+                    logActivity($pdo, $mainId, "zns_" . $newStatus, $logEntry['step_id'], 'ZNS Automation', "$label (+$points điểm)", $logEntry['flow_id'], $logEntry['flow_id'], [], $oaConfig['workspace_id']);
                     $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + ? WHERE id = ?")->execute([$points, $mainId]);
 
                     if ($event === 'user_seen_message' && $logEntry['flow_id']) {
@@ -307,12 +324,14 @@ function processZaloTrackingEvent($pdo, $event, $payload, $subId, $zaloUserId)
             $pdo->prepare("UPDATE zalo_broadcast_tracking SET status = 'seen', seen_at = NOW() WHERE id = ?")->execute([$track['id']]);
             $pdo->prepare("UPDATE zalo_broadcasts SET stats_seen = stats_seen + 1 WHERE id = ?")->execute([$track['broadcast_id']]);
             if ($subId)
-                logZaloSubscriberActivity($pdo, $subId, 'seen_broadcast', $track['broadcast_id'], "Đã xem Broadcast", "Broadcast", $oaConfig['workspace_id']);
+                // [FIX AUDIT-17] Include workspace_id in logZaloSubscriberActivity call
+                logZaloSubscriberActivity($pdo, $subId, 'seen_broadcast', $track['broadcast_id'], "Đã xem Broadcast", "Broadcast", null, $oaConfig['workspace_id']);
         } elseif ($event === 'user_reacted_message' && $track['status'] !== 'reacted') {
             $pdo->prepare("UPDATE zalo_broadcast_tracking SET status = 'reacted', reacted_at = NOW() WHERE id = ?")->execute([$track['id']]);
             $pdo->prepare("UPDATE zalo_broadcasts SET stats_reacted = stats_reacted + 1 WHERE id = ?")->execute([$track['broadcast_id']]);
             if ($subId)
-                logZaloSubscriberActivity($pdo, $subId, 'reacted_broadcast', $track['broadcast_id'], "Đã tương tác Broadcast", "Broadcast", $oaConfig['workspace_id']);
+                // [FIX AUDIT-17] Include workspace_id in logZaloSubscriberActivity call
+                logZaloSubscriberActivity($pdo, $subId, 'reacted_broadcast', $track['broadcast_id'], "Đã tương tác Broadcast", "Broadcast", null, $oaConfig['workspace_id']);
         }
     }
 }
@@ -334,13 +353,15 @@ function processMarkers($pdo, &$msgText, $subId, $zaloUserId, $eventId, $oaConfi
                 if ($stmtDebounce->fetch())
                     continue;
 
-                logZaloSubscriberActivity($pdo, $subId, 'click_link', $markerSid, "Click Button (+2 điểm): $markerLabel", $markerLabel, $eventId . "_click_" . $markerSid, $oaConfig['workspace_id']);
+                // [FIX AUDIT-16/17] Pass event_id and workspace_id correctly
+                logZaloSubscriberActivity($pdo, $subId, 'click_link', $markerSid, "Click Button (+2 điểm): $markerLabel", $markerLabel, null, $oaConfig['workspace_id'], $eventId . "_click_" . $markerSid);
 
                 $stmtMain = $pdo->prepare("SELECT id FROM subscribers WHERE zalo_user_id = ? LIMIT 1");
                 $stmtMain->execute([$zaloUserId]);
                 $mainId = $stmtMain->fetchColumn();
                 if ($mainId) {
-                    logActivity($pdo, $mainId, 'click_link', $markerSid, 'Zalo Button', "Click Button (+2 điểm): $markerLabel", null, null);
+                    // [FIX AUDIT-17] Include workspace_id in logActivity call
+                    logActivity($pdo, $mainId, 'click_link', $markerSid, 'Zalo Button', "Click Button (+2 điểm): $markerLabel", null, null, [], $oaConfig['workspace_id']);
                     updateZaloLeadScore($pdo, $zaloUserId, 'click', $markerSid);
                 }
             }
@@ -359,7 +380,8 @@ function checkZnsReplyContext($pdo, $mainId, $zaloUserId, $msgText)
         $LSC = function_exists('getGlobalLeadScoreConfig') ? getGlobalLeadScoreConfig($pdo) : [];
         $znsRepScore = ($LSC['leadscore_zalo_interact'] ?? 3) + 2; 
 
-        logActivity($pdo, $mainId, 'reply_zns', $lastZns['flow_id'], 'Zalo Reply', "Replied to ZNS (+$znsRepScore điểm): $msgText", $lastZns['flow_id'], null);
+        // [FIX AUDIT-17] Include workspace_id in logActivity call
+        logActivity($pdo, $mainId, 'reply_zns', $lastZns['flow_id'], 'Zalo Reply', "Replied to ZNS (+$znsRepScore điểm): $msgText", $lastZns['flow_id'], null, [], $oaConfig['workspace_id']);
         $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + ? WHERE id = ?")->execute([$znsRepScore, $mainId]);
     }
 }

@@ -720,18 +720,22 @@ function replaceMergeTags($html, $subscriber, $context = [])
 
     // [VOUCHER CLAIMING LOGIC] (End-to-End Dynamic Code Assignment)
     if (strpos($html, '[VOUCHER_') !== false) {
-        // [FIX F-2] Use $pdo global explicitly passed via reference rather than relying on bare `global $pdo`.
-        // `global $pdo` captures the global at closure definition time — if ensure_pdo_alive() reconnects
-        // the instance in FlowExecutor, the global stays in sync because db_connect.php writes back
-        // to the same $pdo reference. This is safe, but documenting explicitly for clarity.
         $html = preg_replace_callback('/\[VOUCHER_([a-zA-Z0-9_\-]+)\]/i', function ($m) use ($subscriber, $context) {
             global $pdo;
-            if (!$pdo) return $m[0]; // safety
+            if (!$pdo) return $m[0]; 
 
             $campaignId = trim($m[1]);
             $subscriberId = $subscriber['id'] ?? ($subscriber['subscriber_id'] ?? null);
 
-            // 1. Check if this subscriber ALREADY has a code from this campaign
+            // [PERF] 1. Check Pre-fetched Cache first (passed from worker_campaign/flow)
+            if (isset($context['voucher_cache'][$campaignId])) {
+                return $context['voucher_cache'][$campaignId];
+            }
+            if (isset($context['vouchers_batch'][$subscriberId][$campaignId])) {
+                return $context['vouchers_batch'][$subscriberId][$campaignId];
+            }
+
+            // 2. Check if this subscriber ALREADY has a code from this campaign
             if ($subscriberId) {
                 $stmtCheck = $pdo->prepare("SELECT id, code FROM voucher_codes WHERE campaign_id = ? AND subscriber_id = ? LIMIT 1");
                 $stmtCheck->execute([$campaignId, $subscriberId]);
@@ -743,7 +747,7 @@ function replaceMergeTags($html, $subscriber, $context = [])
                 }
             }
 
-            // 2. Fetch Campaign Info
+            // 3. Fetch Campaign Info
             $stmtCamp = $pdo->prepare("SELECT code_type, static_code, expiration_days FROM voucher_campaigns WHERE id = ? AND status = 'active'");
             $stmtCamp->execute([$campaignId]);
             $camp = $stmtCamp->fetch(PDO::FETCH_ASSOC);
@@ -1051,7 +1055,15 @@ function checkAndHandleHardBounce($pdo, $subscriberId, $errorMessage)
     }
 
     if ($isHardBounce) {
+        $stmtWs = $pdo->prepare("SELECT workspace_id FROM subscribers WHERE id = ?");
+        $stmtWs->execute([$subscriberId]);
+        $wsId = $stmtWs->fetchColumn();
+
         $pdo->prepare("UPDATE subscribers SET status = 'bounced' WHERE id = ?")->execute([$subscriberId]);
+        
+        // [FIX AUDIT-05] Log specifically why it was bounced for better UX/Debugging
+        logActivity($pdo, $subscriberId, 'bounced_status', null, 'Mailer', "Hard Bounce detected: " . $errorMessage, null, null, [], $wsId);
+        
         return true;
     }
 

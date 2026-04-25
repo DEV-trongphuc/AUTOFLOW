@@ -216,7 +216,7 @@ function refreshAccessTokenInternal($pdo, $oaConfigId, $oa)
  * @param string|null $preloadedToken If provided, skips the getAccessToken() DB call.
  *        Used by batchSendZNS to avoid N DB queries for token per message.
  */
-function sendZNSMessage($pdo, $oaConfigId, $templateId, $phoneNumber, $templateData, $flowId = null, $stepId = null, $subscriberId = null, $mode = null, $preloadedToken = null)
+function sendZNSMessage($pdo, $oaConfigId, $templateId, $phoneNumber, $templateData, $flowId = null, $stepId = null, $subscriberId = null, $mode = null, $preloadedToken = null, $workspaceId = null)
 {
     // Validate phone number
     $normalizedPhone = validatePhoneNumber($phoneNumber);
@@ -228,16 +228,33 @@ function sendZNSMessage($pdo, $oaConfigId, $templateId, $phoneNumber, $templateD
         ];
     }
 
-    // [FIX] Normalize oaConfigId to DB PK (id) so all quota/token updates use correct key
-    // Flow steps may store the Zalo oa_id (numeric external ID) instead of the DB PK (hash)
+    // [SEC-FIX] Normalize and VERIFY oaConfigId ownership
+    // This prevents attackers from using another tenant's OA by spoofing the ID in flow JSON.
+    $sqlOa = "SELECT id FROM zalo_oa_configs WHERE ";
+    $paramsOa = [];
     if (ctype_digit((string) $oaConfigId)) {
-        $stmtOa = $pdo->prepare("SELECT id FROM zalo_oa_configs WHERE oa_id = ? LIMIT 1");
-        $stmtOa->execute([$oaConfigId]);
-        $resolvedId = $stmtOa->fetchColumn();
-        if ($resolvedId) {
-            $oaConfigId = $resolvedId; // Use the actual DB PK
-        }
+        $sqlOa .= "oa_id = ?";
+    } else {
+        $sqlOa .= "id = ?";
     }
+    $paramsOa[] = $oaConfigId;
+
+    if ($workspaceId) {
+        $sqlOa .= " AND workspace_id = ?";
+        $paramsOa[] = $workspaceId;
+    }
+
+    $stmtOa = $pdo->prepare($sqlOa . " LIMIT 1");
+    $stmtOa->execute($paramsOa);
+    $resolvedId = $stmtOa->fetchColumn();
+    if (!$resolvedId) {
+        return [
+            'success' => false,
+            'status' => 'access_denied',
+            'message' => 'Zalo OA not found or access denied (Multi-tenant guard)'
+        ];
+    }
+    $oaConfigId = $resolvedId; // Use the verified DB PK
 
     // Check quota (Skip if Development Mode or pre-checked by batchSendZNS)
     if ($mode !== 'development' && $preloadedToken === null) {
@@ -294,6 +311,7 @@ function sendZNSMessage($pdo, $oaConfigId, $templateId, $phoneNumber, $templateD
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+    curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);           // [FIX] 20s max  prevents worker hang causing infinite 'processing' loop
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);    // [FIX] 10s connect timeout
@@ -465,9 +483,9 @@ function sendZNSMessageByUID($pdo, $oaId, $templateId, $uid, $templateData, $flo
         // Enrich message with conversion info & price
         if ($res['success']) {
             $price = $res['data']['price'] ?? $res['data']['quota']['price'] ?? 'Standard';
-            $res['message'] = "? Auto-switched to Phone ($phone). Cost: $price quota.";
+            $res['message'] = "ℹ Auto-switched to Phone ($phone). Cost: $price quota.";
         } else {
-            $res['message'] = "? Failed via Phone ($phone): " . ($res['error_message'] ?? 'Unknown');
+            $res['message'] = "⚠ Failed via Phone ($phone): " . ($res['error_message'] ?? 'Unknown');
         }
         return $res;
     }
@@ -584,7 +602,7 @@ function batchSendZNS($pdo, $oaConfigId, $messages)
 
     // [FIX] Pre-fetch token and quota ONCE before loop.
     // Old behavior: sendZNSMessage called checkQuotaAvailable() + getAccessToken() per message.
-    // At 4,000 msg/min that was 12,00016,000 DB queries just for config lookups.
+    // At 4,000 msg/min that was 12,000—16,000 DB queries just for config lookups.
     // New behavior: 2 DB calls total for the whole batch.
     $quotaCheck = checkQuotaAvailable($pdo, $oaConfigId, count($messages));
     if (!$quotaCheck['available']) {
@@ -638,7 +656,7 @@ function batchSendZNS($pdo, $oaConfigId, $messages)
         // [FIX] Circuit breaker: if token is rejected by Zalo API (expired mid-batch),
         // stop immediately instead of burning through all remaining messages.
         if (($result['status'] ?? '') === 'auth_failed') {
-            error_log("[batchSendZNS] auth_failed at index $index  aborting batch. OA: $oaConfigId");
+            error_log("[batchSendZNS] auth_failed at index $index — aborting batch. OA: $oaConfigId");
             break;
         }
 
@@ -654,18 +672,38 @@ function batchSendZNS($pdo, $oaConfigId, $messages)
         'results' => $results
     ];
 }
-// ... (Existing batchSendZNS)
 
 /**
  * Send Consultation Message (Free form text to Follower)
  * Requires Zalo User ID (Not Phone Number)
  */
-function sendConsultationMessage($pdo, $oaConfigId, $zaloUserId, $text, $attachment = null)
+function sendConsultationMessage($pdo, $oaConfigId, $zaloUserId, $text, $attachment = null, $workspaceId = null)
 {
-    // Check quota (Consultation also uses quota - 8 messages/month/user for free or paid package quota)
-    // Zalo API will return error if quota exceeded.
-    // We optionally check DB quota, but consultation quota is per-user, not per-day total?
-    // Actually OA has a daily quota for Total Messages too.
+    // [SEC-FIX] VERIFY oaConfigId ownership
+    $sqlOa = "SELECT id FROM zalo_oa_configs WHERE ";
+    $paramsOa = [];
+    if (ctype_digit((string) $oaConfigId)) {
+        $sqlOa .= "oa_id = ?";
+    } else {
+        $sqlOa .= "id = ?";
+    }
+    $paramsOa[] = $oaConfigId;
+
+    if ($workspaceId) {
+        $sqlOa .= " AND workspace_id = ?";
+        $paramsOa[] = $workspaceId;
+    }
+
+    $stmtOa = $pdo->prepare($sqlOa . " LIMIT 1");
+    $stmtOa->execute($paramsOa);
+    $resolvedId = $stmtOa->fetchColumn();
+    if (!$resolvedId) {
+        return [
+            'success' => false,
+            'message' => 'Zalo OA not found or access denied (Multi-tenant guard)'
+        ];
+    }
+    $oaConfigId = $resolvedId;
 
     // Get Token
     $tokenResult = getAccessToken($pdo, $oaConfigId);
@@ -710,8 +748,6 @@ function sendConsultationMessage($pdo, $oaConfigId, $zaloUserId, $text, $attachm
 
     $result = json_decode($response, true);
 
-    // Log logic could be added here (similar to ZNS)
-
     if ($http_code === 200 && isset($result['error']) && $result['error'] == 0) {
         $msgId = $result['data']['message_id'] ?? null;
 
@@ -725,7 +761,7 @@ function sendConsultationMessage($pdo, $oaConfigId, $zaloUserId, $text, $attachm
             if ($subId) {
                 require_once 'zalo_helpers.php';
                 logZaloMsg($pdo, $zaloUserId, 'outbound', $text);
-                logZaloSubscriberActivity($pdo, $subId, 'staff_reply', null, "Tu v?n vin tr? l?i (Dashboard): $text", "Zalo Dashboard", $msgId);
+                logZaloSubscriberActivity($pdo, $subId, 'staff_reply', null, "Tư vấn viên trả lời (Dashboard): $text", "Zalo Dashboard", $msgId);
             }
         } catch (Exception $e) {
             // Log error but don't fail the response

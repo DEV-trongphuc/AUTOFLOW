@@ -39,12 +39,14 @@ try {
         foreach ($queue as $segmentId) {
             try {
                 // Get segment criteria
-                $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
+                $stmtSeg = $pdo->prepare("SELECT criteria, workspace_id FROM segments WHERE id = ?");
                 $stmtSeg->execute([$segmentId]);
-                $criteria = $stmtSeg->fetchColumn();
+                $segRow = $stmtSeg->fetch(PDO::FETCH_ASSOC);
+                $criteria = $segRow['criteria'] ?? null;
+                $workspace_id = $segRow['workspace_id'] ?? null;
 
-                if (!$criteria) {
-                    $logs[] = "[SKIP] Segment $segmentId not found, removing from queue";
+                if (!$criteria || !$workspace_id) {
+                    $logs[] = "[SKIP] Segment $segmentId not found or missing workspace_id, removing from queue";
                     $pdo->prepare("DELETE FROM segment_count_update_queue WHERE segment_id = ?")->execute([$segmentId]);
                     continue;
                 }
@@ -54,13 +56,13 @@ try {
                 $stmtCount = $pdo->prepare("
                     SELECT COUNT(*) 
                     FROM subscribers s 
-                    WHERE s.status IN ('active', 'lead', 'customer') AND " . $res['sql']
+                    WHERE s.workspace_id = ? AND s.status IN ('active', 'lead', 'customer') AND " . $res['sql']
                 );
-                $stmtCount->execute($res['params']);
+                $stmtCount->execute(array_merge([$workspace_id], $res['params']));
                 $count = (int) $stmtCount->fetchColumn();
 
                 // Update segment
-                $pdo->prepare("UPDATE segments SET subscriber_count = ? WHERE id = ?")->execute([$count, $segmentId]);
+                $pdo->prepare("UPDATE segments SET subscriber_count = ? WHERE id = ? AND workspace_id = ?")->execute([$count, $segmentId, $workspace_id]);
 
                 // Remove from queue
                 $pdo->prepare("DELETE FROM segment_count_update_queue WHERE segment_id = ?")->execute([$segmentId]);

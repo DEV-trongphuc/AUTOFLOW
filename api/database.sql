@@ -1,4 +1,4 @@
-﻿-- phpMyAdmin SQL Dump
+-- phpMyAdmin SQL Dump
 -- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
@@ -680,7 +680,8 @@ CREATE TABLE `campaign_reminders` (
   `template_id` char(36) DEFAULT NULL,
   `sender_email` varchar(191) DEFAULT NULL COMMENT 'Email người gửi cho reminder (fallback từ campaign nếu NULL)',
   `sender_name` varchar(255) DEFAULT NULL COMMENT 'Tên người gửi cho reminder (fallback từ campaign nếu NULL)',
-  `html_content` mediumtext DEFAULT NULL COMMENT 'P11-M1 Cached HTML build for reminder'
+  `html_content` mediumtext DEFAULT NULL COMMENT 'P11-M1 Cached HTML build for reminder',
+  `config` longtext DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -946,6 +947,7 @@ CREATE TABLE `mail_delivery_logs` (
   `error_message` text DEFAULT NULL,
   `sent_at` timestamp NULL DEFAULT current_timestamp(),
   `subscriber_id` char(36) DEFAULT NULL,
+  `workspace_id` int(11) DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -1396,7 +1398,7 @@ CREATE TABLE `subscribers` (
 
 CREATE TABLE `subscriber_activity` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `workspace_id` varchar(36) DEFAULT NULL,
+  `workspace_id` int(11) DEFAULT NULL,
   `subscriber_id` char(36) NOT NULL,
   `type` varchar(50) NOT NULL,
   `reference_id` char(36) DEFAULT NULL,
@@ -1711,7 +1713,7 @@ CREATE TABLE `timestamp_buffer` (
 CREATE TABLE `tracking_unique_cache` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `subscriber_id` char(36) NOT NULL,
-  `target_type` enum('campaign','flow','reminder') NOT NULL,
+  `target_type` enum('campaign','flow','reminder','zalo') NOT NULL,
   `target_id` char(36) NOT NULL,
   `event_type` enum('open','click') NOT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
@@ -1951,6 +1953,7 @@ CREATE TABLE `web_sessions` (
 
 CREATE TABLE `web_visitors` (
   `id` char(36) NOT NULL,
+  `workspace_id` int(11) DEFAULT 1,
   `visitor_id` varchar(100) DEFAULT NULL,
   `property_id` char(36) NOT NULL,
   `subscriber_id` char(36) DEFAULT NULL,
@@ -2006,11 +2009,13 @@ CREATE TABLE `workspace_users` (
 CREATE TABLE `zalo_activity_buffer` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `subscriber_id` char(36) NOT NULL,
+  `workspace_id` int(11) DEFAULT 1,
   `type` varchar(50) NOT NULL,
   `reference_id` varchar(100) DEFAULT NULL,
   `reference_name` varchar(255) DEFAULT NULL,
   `details` text DEFAULT NULL,
   `zalo_msg_id` varchar(100) DEFAULT NULL,
+  `event_id` varchar(100) DEFAULT NULL,
   `processed` tinyint(1) DEFAULT 0,
   `created_at` timestamp NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2221,6 +2226,7 @@ CREATE TABLE `zalo_subscriber_activity` (
   `reference_id` varchar(100) DEFAULT NULL,
   `reference_name` varchar(255) DEFAULT NULL,
   `zalo_msg_id` varchar(100) DEFAULT NULL,
+  `event_id` varchar(100) DEFAULT NULL,
   `details` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2728,7 +2734,8 @@ ALTER TABLE `mail_delivery_logs`
   ADD KEY `idx_sent_at` (`sent_at`),
   ADD KEY `idx_mdl_status_sent` (`status`,`sent_at`),
   ADD KEY `idx_mdl_sub_camp` (`subscriber_id`,`campaign_id`),
-  ADD KEY `idx_mdl_camp_status_created` (`campaign_id`,`status`,`created_at`);
+  ADD KEY `idx_mdl_camp_status_created` (`campaign_id`,`status`,`created_at`),
+  ADD KEY `idx_workspace_id` (`workspace_id`);
 
 --
 -- Chỉ mục cho bảng `meta_app_configs`
@@ -2982,6 +2989,7 @@ ALTER TABLE `subscriber_activity`
 --
 ALTER TABLE `subscriber_flow_states`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_sub_flow` (`subscriber_id`,`flow_id`),
   ADD KEY `idx_scheduled` (`scheduled_at`),
   ADD KEY `idx_flow_states_flow_status_created` (`flow_id`,`status`,`created_at`),
   ADD KEY `idx_flow_states_processing_opt` (`status`,`scheduled_at`,`updated_at`),

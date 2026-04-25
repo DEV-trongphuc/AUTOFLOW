@@ -35,11 +35,12 @@ if (!$campaignId && !$templateId) {
 }
 
 try {
+    $workspace_id = get_current_workspace_id();
     // 1. Fetch Subscriber (Optional for general preview)
     $subscriber = ['first_name' => 'Khách hàng', 'last_name' => '', 'email' => 'customer@example.com'];
     if ($email) {
-        $stmtSub = $pdo->prepare("SELECT * FROM subscribers WHERE email = ? LIMIT 1");
-        $stmtSub->execute([$email]);
+        $stmtSub = $pdo->prepare("SELECT * FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
+        $stmtSub->execute([$email, $workspace_id]);
         $fetchedSub = $stmtSub->fetch(PDO::FETCH_ASSOC);
         if ($fetchedSub)
             $subscriber = $fetchedSub;
@@ -50,9 +51,9 @@ try {
     $subject = '';
 
     if ($reminderId) {
-        // Fetch Reminder Content
-        $stmtRem = $pdo->prepare("SELECT * FROM campaign_reminders WHERE id = ? LIMIT 1");
-        $stmtRem->execute([$reminderId]);
+        // Fetch Reminder Content - Join with campaigns to verify ownership
+        $stmtRem = $pdo->prepare("SELECT cr.* FROM campaign_reminders cr JOIN campaigns c ON cr.campaign_id = c.id WHERE cr.id = ? AND c.workspace_id = ? LIMIT 1");
+        $stmtRem->execute([$reminderId, $workspace_id]);
         $reminder = $stmtRem->fetch(PDO::FETCH_ASSOC);
 
         if ($reminder) {
@@ -65,8 +66,8 @@ try {
         $htmlContent = resolveEmailContent($pdo, $templateId, '', '');
     } else {
         // Fetch Main Campaign Content
-        $stmtCamp = $pdo->prepare("SELECT * FROM campaigns WHERE id = ? LIMIT 1");
-        $stmtCamp->execute([$campaignId]);
+        $stmtCamp = $pdo->prepare("SELECT * FROM campaigns WHERE id = ? AND workspace_id = ? LIMIT 1");
+        $stmtCamp->execute([$campaignId, $workspace_id]);
         $campaign = $stmtCamp->fetch(PDO::FETCH_ASSOC);
 
         if ($campaign) {

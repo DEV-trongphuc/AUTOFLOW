@@ -7,29 +7,47 @@ require_once 'db_connect.php';
 require_once 'auth_middleware.php';
 require_once 'meta_helpers.php';
 
+$workspace_id = get_current_workspace_id();
 $method = $_SERVER['REQUEST_METHOD'];
 $route = $_GET['route'] ?? null;
 $id = $_GET['id'] ?? null;
 
+function ensureMetaConfigSchema($pdo) {
+    global $workspace_id;
+    try {
+        $pdo->query("SELECT workspace_id FROM meta_app_configs LIMIT 1");
+    } catch (Exception $e) {
+        $pdo->exec("ALTER TABLE meta_app_configs ADD COLUMN workspace_id int(11) DEFAULT 1");
+        $pdo->exec("CREATE INDEX idx_meta_workspace ON meta_app_configs(workspace_id)");
+    }
+    
+    // Auto-assign orphans to current workspace
+    $stmt = $pdo->prepare("UPDATE meta_app_configs SET workspace_id = ? WHERE workspace_id IS NULL");
+    $stmt->execute([$workspace_id]);
+}
+
 try {
+    ensureMetaConfigSchema($pdo);
     // =========================================================================
     // GET: List or Single Config
     // =========================================================================
     if ($method === 'GET') {
         if ($id) {
             // Get Single
-            $stmt = $pdo->prepare("SELECT * FROM meta_app_configs WHERE id = ?");
-            $stmt->execute([$id]);
+            $stmt = $pdo->prepare("SELECT * FROM meta_app_configs WHERE id = ? AND workspace_id = ?");
+            $stmt->execute([$id, $workspace_id]);
             $item = $stmt->fetch(PDO::FETCH_ASSOC);
             jsonResponse(true, $item);
         } else {
             // Get List with Subscriber Counts
-            $stmt = $pdo->query("
+            $stmt = $pdo->prepare("
                 SELECT c.*, 
                    (SELECT COUNT(*) FROM meta_subscribers s WHERE s.page_id = c.page_id) as subscriber_count
                 FROM meta_app_configs c 
+                WHERE c.workspace_id = ?
                 ORDER BY c.created_at DESC
             ");
+            $stmt->execute([$workspace_id]);
             $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
             jsonResponse(true, $items);
         }
@@ -259,8 +277,8 @@ try {
             }
 
             // Check if exists (by ID or Page ID)
-            $stmt = $pdo->prepare("SELECT id, verify_token FROM meta_app_configs WHERE id = ? OR page_id = ?");
-            $stmt->execute([$configId, $pageId]);
+            $stmt = $pdo->prepare("SELECT id, verify_token FROM meta_app_configs WHERE (id = ? OR page_id = ?) AND workspace_id = ?");
+            $stmt->execute([$configId, $pageId, $workspace_id]);
             $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($existing) {
@@ -282,9 +300,9 @@ try {
                 $sql = "UPDATE meta_app_configs SET 
                         page_name = ?, page_access_token = ?, app_id = ?, app_secret = ?,
                         avatar_url = ?, status = ?, verify_token = ?, mode = ?, token_expires_at = ?, updated_at = NOW()
-                        WHERE id = ?";
+                        WHERE id = ? AND workspace_id = ?";
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute([$pageName, $accessToken, $appId, $appSecret, $avatarUrl, $status, $verifyToken, $mode, $tokenExpiresAt, $currentId]);
+                $stmt->execute([$pageName, $accessToken, $appId, $appSecret, $avatarUrl, $status, $verifyToken, $mode, $tokenExpiresAt, $currentId, $workspace_id]);
 
                 // Auto-Subscribe App to Page Events
                 subscribeAppToPage($pageId, $accessToken);
@@ -293,10 +311,10 @@ try {
             } else {
                 // Insert
                 $sql = "INSERT INTO meta_app_configs 
-                        (id, page_id, app_id, page_name, page_access_token, app_secret, avatar_url, status, verify_token, mode, token_expires_at, created_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+                        (id, workspace_id, page_id, app_id, page_name, page_access_token, app_secret, avatar_url, status, verify_token, mode, token_expires_at, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute([$configId, $pageId, $appId, $pageName, $accessToken, $appSecret, $avatarUrl, $status, $verifyToken, $mode, $tokenExpiresAt]);
+                $stmt->execute([$configId, $workspace_id, $pageId, $appId, $pageName, $accessToken, $appSecret, $avatarUrl, $status, $verifyToken, $mode, $tokenExpiresAt]);
 
                 // Auto-Subscribe App to Page Events
                 subscribeAppToPage($pageId, $accessToken);
@@ -314,8 +332,8 @@ try {
             jsonResponse(false, null, 'ID is required');
         }
 
-        $stmt = $pdo->prepare("DELETE FROM meta_app_configs WHERE id = ?");
-        $stmt->execute([$id]);
+        $stmt = $pdo->prepare("DELETE FROM meta_app_configs WHERE id = ? AND workspace_id = ?");
+        $stmt->execute([$id, $workspace_id]);
         jsonResponse(true, null, 'Deleted successfully');
     }
 

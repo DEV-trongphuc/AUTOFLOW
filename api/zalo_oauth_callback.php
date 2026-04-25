@@ -54,8 +54,8 @@ $state = $_GET['state'] ?? null; // This corresponds to the Config ID we created
 if (!$code) renderZaloStatus(false, 'Mã xác thực (code) bị thiếu.');
 if (!$state) renderZaloStatus(false, 'Tham số state bị thiếu.');
 
-// 2. Retrieve Verifier from DB using State (Session ID)
-$stmt = $pdo->prepare("SELECT id, pkce_verifier, app_id, app_secret FROM zalo_oa_configs WHERE id = ?");
+// 2. Retrieve Verifier and Workspace ID from DB using State (Session ID)
+$stmt = $pdo->prepare("SELECT id, workspace_id, pkce_verifier, app_id, app_secret FROM zalo_oa_configs WHERE id = ?");
 $stmt->execute([$state]);
 $session_config = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -140,9 +140,10 @@ if (isset($info_data['data'])) {
 $final_oa_config_id = $state;
 
 if ($oa_real_id) {
-    // Check if this OA ID already exists in another record (Clean up duplicates)
-    $stmt = $pdo->prepare("SELECT id FROM zalo_oa_configs WHERE oa_id = ? AND id != ?");
-    $stmt->execute([$oa_real_id, $state]);
+    // Check if this OA ID already exists in another record within the SAME workspace
+    $workspace_id = $session_config['workspace_id'];
+    $stmt = $pdo->prepare("SELECT id FROM zalo_oa_configs WHERE oa_id = ? AND id != ? AND workspace_id = ?");
+    $stmt->execute([$oa_real_id, $state, $workspace_id]);
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($existing) {

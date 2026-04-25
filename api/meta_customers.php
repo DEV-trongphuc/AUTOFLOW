@@ -18,18 +18,21 @@ if (empty($GLOBALS['current_admin_id']) && empty($_SESSION['user_id'])) {
     exit;
 }
 
+$workspace_id = get_current_workspace_id();
 $method = $_SERVER['REQUEST_METHOD'];
 $route = $_GET['route'] ?? '';
 
 try {
     if ($method === 'GET') {
         if ($route === 'lists') {
-            $stmt = $pdo->query("
+            $stmt = $pdo->prepare("
                 SELECT *, 
                 (SELECT COUNT(*) FROM meta_subscribers WHERE page_id = meta_app_configs.page_id) as subscriber_count 
                 FROM meta_app_configs 
+                WHERE workspace_id = ?
                 ORDER BY created_at DESC
             ");
+            $stmt->execute([$workspace_id]);
             jsonResponse(true, $stmt->fetchAll(PDO::FETCH_ASSOC));
         } elseif ($route === 'user_details') {
             // -------------------------------------------------------------
@@ -60,8 +63,8 @@ try {
             $stmt = $pdo->prepare("SELECT s.*, c.page_name, c.avatar_url as page_avatar 
                                   FROM meta_subscribers s
                                   LEFT JOIN meta_app_configs c ON s.page_id = c.page_id 
-                                  WHERE $whereClause");
-            $stmt->execute([$param]);
+                                  WHERE $whereClause AND c.workspace_id = ?");
+            $stmt->execute([$param, $workspace_id]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$user)
@@ -77,8 +80,8 @@ try {
             $journey = $stmtJ->fetchAll(PDO::FETCH_ASSOC);
 
             // Fetch Linked Audience ID
-            $stmtA = $pdo->prepare("SELECT id FROM subscribers WHERE meta_psid = ? LIMIT 1");
-            $stmtA->execute([$user['psid']]);
+            $stmtA = $pdo->prepare("SELECT id FROM subscribers WHERE meta_psid = ? AND workspace_id = ? LIMIT 1");
+            $stmtA->execute([$user['psid'], $workspace_id]);
             $audienceId = $stmtA->fetchColumn();
 
             // Fetch Meta Messages (Standard Logs)
@@ -157,8 +160,19 @@ try {
             $where = "WHERE 1=1";
 
             if ($pageId) {
+                // [SECURITY] Validate Page Ownership
+                $stmtOwn = $pdo->prepare("SELECT id FROM meta_app_configs WHERE page_id = ? AND workspace_id = ?");
+                $stmtOwn->execute([$pageId, $workspace_id]);
+                if (!$stmtOwn->fetchColumn()) {
+                    jsonResponse(false, null, 'Page not found or unauthorized');
+                }
+
                 $where .= " AND s.page_id = ?";
                 $params[] = $pageId;
+            } else {
+                // If no pageId, filter all by current workspace pages
+                $where .= " AND s.page_id IN (SELECT page_id FROM meta_app_configs WHERE workspace_id = ?)";
+                $params[] = $workspace_id;
             }
 
             if ($search) {
@@ -258,6 +272,17 @@ try {
             $email = $input['email'] ?? '';
             $notes = $input['notes'] ?? '';
 
+            // [SECURITY] Validate Ownership via Page ID
+            $stmtOwn = $pdo->prepare("
+                SELECT s.id FROM meta_subscribers s
+                JOIN meta_app_configs c ON s.page_id = c.page_id
+                WHERE s.id = ? AND c.workspace_id = ?
+            ");
+            $stmtOwn->execute([$id, $workspace_id]);
+            if (!$stmtOwn->fetchColumn()) {
+                jsonResponse(false, null, 'User not found or unauthorized');
+            }
+
             $stmt = $pdo->prepare("UPDATE meta_subscribers SET name = ?, gender = ?, phone = ?, email = ?, notes = ? WHERE id = ?");
             $stmt->execute([$name, $gender, $phone, $email, $notes, $id]);
 
@@ -270,6 +295,17 @@ try {
             if (!$id)
                 jsonResponse(false, null, 'ID required');
 
+            // [SECURITY] Validate Ownership
+            $stmtOwn = $pdo->prepare("
+                SELECT s.id FROM meta_subscribers s
+                JOIN meta_app_configs c ON s.page_id = c.page_id
+                WHERE s.id = ? AND c.workspace_id = ?
+            ");
+            $stmtOwn->execute([$id, $workspace_id]);
+            if (!$stmtOwn->fetchColumn()) {
+                jsonResponse(false, null, 'User not found or unauthorized');
+            }
+
             $stmt = $pdo->prepare("UPDATE meta_subscribers SET notes = ? WHERE id = ?");
             $stmt->execute([$notes, $id]);
 
@@ -279,6 +315,17 @@ try {
             $id = $input['id'] ?? '';
             if (!$id)
                 jsonResponse(false, null, 'ID required');
+
+            // [SECURITY] Validate Ownership
+            $stmtOwn = $pdo->prepare("
+                SELECT s.id FROM meta_subscribers s
+                JOIN meta_app_configs c ON s.page_id = c.page_id
+                WHERE s.id = ? AND c.workspace_id = ?
+            ");
+            $stmtOwn->execute([$id, $workspace_id]);
+            if (!$stmtOwn->fetchColumn()) {
+                jsonResponse(false, null, 'User not found or unauthorized');
+            }
 
             require_once 'meta_sync_helpers.php';
             syncMetaToMain($pdo, $id);
@@ -291,8 +338,13 @@ try {
                 jsonResponse(false, null, 'ID required');
 
             // Find Subscriber & Page Token
-            $stmt = $pdo->prepare("SELECT s.psid, s.page_id, c.page_access_token FROM meta_subscribers s JOIN meta_app_configs c ON s.page_id = c.page_id WHERE s.id = ?");
-            $stmt->execute([$id]);
+            $stmt = $pdo->prepare("
+                SELECT s.psid, s.page_id, c.page_access_token 
+                FROM meta_subscribers s 
+                JOIN meta_app_configs c ON s.page_id = c.page_id 
+                WHERE s.id = ? AND c.workspace_id = ?
+            ");
+            $stmt->execute([$id, $workspace_id]);
             $info = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($info && !empty($info['page_access_token'])) {

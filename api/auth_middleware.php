@@ -13,8 +13,8 @@ function require_permission($pdo, $permission_slug, $workspace_id = null) {
         jsonResponse(false, null, 'Database connection error', [], 500);
     }
     
-    // Super admins always bypass
-    if (isset($GLOBALS['current_admin_id']) && $GLOBALS['current_admin_id'] === 'admin-001') {
+    // Super admins always bypass (Check role in session first for performance, then DB)
+    if (isset($_SESSION['role']) && $_SESSION['role'] === 'super_admin') {
         return true;
     }
 

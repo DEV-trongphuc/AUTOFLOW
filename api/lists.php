@@ -210,8 +210,8 @@ switch ($method) {
                         $targetIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
                     } elseif ($targetType === 'segment') {
                         require_once 'segment_helper.php';
-                        $stmtS = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
-                        $stmtS->execute([$targetId]);
+                        $stmtS = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
+                        $stmtS->execute([$targetId, $workspace_id]);
                         $criteria = $stmtS->fetchColumn();
 
                         if ($criteria) {
@@ -237,8 +237,8 @@ switch ($method) {
                         $targetIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
                     } elseif ($targetType === 'segment') {
                         require_once 'segment_helper.php';
-                        $stmtS = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
-                        $stmtS->execute([$targetId]);
+                        $stmtS = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
+                        $stmtS->execute([$targetId, $workspace_id]);
                         $criteria = $stmtS->fetchColumn();
                         if ($criteria) {
                             $res = buildSegmentWhereClause($criteria, $targetId);
@@ -310,8 +310,8 @@ switch ($method) {
                         // Recalculate segment count
                         require_once 'segment_helper.php';
                         $resC = buildSegmentWhereClause($criteria, $targetId);
-                        $stmtC = $pdo->prepare("SELECT COUNT(*) FROM subscribers s WHERE s.status IN ('active', 'lead', 'customer') AND " . $resC['sql']);
-                        $stmtC->execute($resC['params']);
+                        $stmtC = $pdo->prepare("SELECT COUNT(*) FROM subscribers s WHERE s.workspace_id = ? AND s.status IN ('active', 'lead', 'customer') AND " . $resC['sql']);
+                        $stmtC->execute(array_merge([$workspace_id], $resC['params']));
                         $newCount = (int) $stmtC->fetchColumn();
                         $pdo->prepare("UPDATE segments SET subscriber_count = ? WHERE id = ?")->execute([$newCount, $targetId]);
                     }
@@ -446,8 +446,8 @@ switch ($method) {
                     }
 
                     // Get target list info
-                    $listStmt = $pdo->prepare("SELECT id, name, source, subscriber_count as count FROM lists WHERE id = ?");
-                    $listStmt->execute([$targetListId]);
+                    $listStmt = $pdo->prepare("SELECT id, name, source, subscriber_count as count FROM lists WHERE id = ? AND workspace_id = ?");
+                    $listStmt->execute([$targetListId, $workspace_id]);
                     $listInfo = $listStmt->fetch();
 
                     $pdo->commit();
@@ -494,8 +494,8 @@ switch ($method) {
                     }
 
                     // Get new list info
-                    $listStmt = $pdo->prepare("SELECT id, name, source, subscriber_count as count FROM lists WHERE id = ?");
-                    $listStmt->execute([$newListId]);
+                    $listStmt = $pdo->prepare("SELECT id, name, source, subscriber_count as count FROM lists WHERE id = ? AND workspace_id = ?");
+                    $listStmt->execute([$newListId, $workspace_id]);
                     $listInfo = $listStmt->fetch();
 
                     $pdo->commit();

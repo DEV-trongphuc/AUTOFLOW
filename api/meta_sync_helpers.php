@@ -5,7 +5,7 @@
  * Sync from Meta Subscriber to Main Subscriber (Audience)
  * Called when a Meta subscriber's info (Email/Phone) is captured.
  */
-function syncMetaToMain($pdo, $metaSubId)
+function syncMetaToMain($pdo, $metaSubId, $workspaceId = null)
 {
     if (!$metaSubId)
         return;
@@ -17,6 +17,18 @@ function syncMetaToMain($pdo, $metaSubId)
         $ms = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$ms)
             return;
+
+        // If workspaceId not provided, try to resolve from Page ID
+        if (!$workspaceId) {
+            $stmtWs = $pdo->prepare("SELECT workspace_id FROM meta_app_configs WHERE page_id = ? LIMIT 1");
+            $stmtWs->execute([$ms['page_id']]);
+            $workspaceId = $stmtWs->fetchColumn();
+        }
+        
+        if (!$workspaceId) {
+             error_log("syncMetaToMain failed: Could not resolve workspace_id for metaSubId: $metaSubId");
+             return;
+        }
 
         $email = trim($ms['email'] ?? '');
         $phone = trim($ms['phone'] ?? '');
@@ -37,7 +49,9 @@ function syncMetaToMain($pdo, $metaSubId)
             $params[] = $phone;
         }
 
-        $sql = "SELECT id, email, phone_number, first_name, avatar, meta_psid, lead_score, notes, custom_attributes FROM subscribers WHERE " . implode(" OR ", $where) . " LIMIT 1";
+        $sql = "SELECT id, email, phone_number, first_name, avatar, meta_psid, lead_score, notes, custom_attributes FROM subscribers 
+                WHERE (" . implode(" OR ", $where) . ") AND workspace_id = ? LIMIT 1";
+        $params[] = $workspaceId;
         $stmtM = $pdo->prepare($sql);
         $stmtM->execute($params);
         $mainSub = $stmtM->fetch(PDO::FETCH_ASSOC);
@@ -142,13 +156,14 @@ function syncMetaToMain($pdo, $metaSubId)
             }
 
             $upParams[] = $mainSub['id'];
-            $pdo->prepare("UPDATE subscribers SET " . implode(', ', $updateCols) . " WHERE id = ?")->execute($upParams);
+            $upParams[] = $workspaceId;
+            $pdo->prepare("UPDATE subscribers SET " . implode(', ', $updateCols) . " WHERE id = ? AND workspace_id = ?")->execute($upParams);
 
             // Sync Lead Score if first time linking
             if (empty($mainSub['meta_psid'])) {
                 if ($ms['lead_score'] > 0) {
-                    $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + ? WHERE id = ?")
-                        ->execute([$ms['lead_score'], $mainSub['id']]);
+                    $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + ? WHERE id = ? AND workspace_id = ?")
+                        ->execute([$ms['lead_score'], $mainSub['id'], $workspaceId]);
                 }
 
                 require_once 'meta_helpers.php';
@@ -168,12 +183,13 @@ function syncMetaToMain($pdo, $metaSubId)
             // Not found - Create NEW subscriber in Audience
             $newId = md5(uniqid('meta_', true));
 
-            $sqlInsert = "INSERT INTO subscribers (id, email, first_name, phone_number, avatar, meta_psid, source, lead_score, joined_at, last_activity_at, notes, custom_attributes, timezone)
-                          VALUES (?, ?, ?, ?, ?, ?, 'Facebook Messenger', ?, NOW(), NOW(), ?, ?, ?)";
+            $sqlInsert = "INSERT INTO subscribers (id, workspace_id, email, first_name, phone_number, avatar, meta_psid, source, lead_score, joined_at, last_activity_at, notes, custom_attributes, timezone)
+                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), ?, ?, ?)";
 
             $stmtInsert = $pdo->prepare($sqlInsert);
             $stmtInsert->execute([
                 $newId,
+                $workspaceId,
                 $email ?: ($ms['psid'] . '@facebook.com'), // Fallback email
                 $ms['name'] ?: 'Facebook User',
                 $phone ?: NULL,
@@ -189,7 +205,7 @@ function syncMetaToMain($pdo, $metaSubId)
             ]);
 
             // Set gender in the initial insert if we had a column but it's not in the simple INSERT above (Wait, I should add it to SQL)
-            $pdo->prepare("UPDATE subscribers SET gender = ? WHERE id = ?")->execute([$ms['gender'] ?? null, $newId]);
+            $pdo->prepare("UPDATE subscribers SET gender = ? WHERE id = ? AND workspace_id = ?")->execute([$ms['gender'] ?? null, $newId, $workspaceId]);
 
             require_once 'meta_helpers.php';
             logMetaJourney($pdo, $ms['page_id'], $ms['psid'], 'audience_synced', 'Đồng bộ Audience (Tạo mới)', ['subscriber_id' => $newId]);

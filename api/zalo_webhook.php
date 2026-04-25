@@ -61,8 +61,11 @@ if ($secretKey) {
         exit;
     }
 } else {
-    // No secretKey configured � log warning but continue (OA not fully set up yet)
-    error_log("[Zalo Webhook] WARNING: No secretKey found for OA:$oaId � skipping signature check");
+    // [FIX AUDIT-15] Strictly block if no secretKey configured
+    error_log("[Zalo Webhook] ERROR: No secretKey found for OA:$oaId. Access Denied.");
+    http_response_code(403);
+    echo json_encode(['error' => 'OA not configured']);
+    exit;
 }
 
 // 4. Log the event (Crucial for debugging and audit)
@@ -118,13 +121,15 @@ function handleTemplateStatusChange($pdo, $data)
         $finalStatus = 'DISABLED';
 
     // Update DB
-    // We match by `template_id` (Zalo's ID)
+    // [FIX] Scope by both template_id AND oa_id (from webhook) to prevent accidental 
+    // cross-OA status updates if template IDs are reused across different apps.
     $stmt = $pdo->prepare("
-        UPDATE zalo_templates 
-        SET status = ?, updated_at = NOW() 
-        WHERE template_id = ?
+        UPDATE zalo_templates t
+        JOIN zalo_oa_configs c ON t.oa_config_id = c.id
+        SET t.status = ?, t.updated_at = NOW() 
+        WHERE t.template_id = ? AND c.oa_id = ?
     ");
-    $stmt->execute([$finalStatus, $templateId]);
+    $stmt->execute([$finalStatus, $templateId, $data['oa_id'] ?? '']);
 }
 
 function logWebhook($pdo, $event, $payload, $oaId)

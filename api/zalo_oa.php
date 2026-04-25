@@ -113,8 +113,9 @@ function getAllOAs($pdo)
 function getSingleOA($pdo, $id)
 {
     try {
-        $stmt = $pdo->prepare("SELECT * FROM zalo_oa_configs WHERE id = ?");
-        $stmt->execute([$id]);
+        global $workspace_id;
+        $stmt = $pdo->prepare("SELECT * FROM zalo_oa_configs WHERE id = ? AND workspace_id = ?");
+        $stmt->execute([$id, $workspace_id]);
         $oa = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($oa)
             jsonResponse(true, $oa);
@@ -142,8 +143,10 @@ function updateOA($pdo, $id)
             jsonResponse(false, null, 'Không có thông tin cần cập nhật');
             return;
         }
+        global $workspace_id;
         $params[] = $id;
-        $sql = "UPDATE zalo_oa_configs SET " . implode(', ', $updates) . " WHERE id = ?";
+        $params[] = $workspace_id;
+        $sql = "UPDATE zalo_oa_configs SET " . implode(', ', $updates) . " WHERE id = ? AND workspace_id = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         jsonResponse(true, ['message' => 'Cập nhật OA thành công']);
@@ -155,17 +158,18 @@ function updateOA($pdo, $id)
 function deleteOA($pdo, $id)
 {
     try {
+        global $workspace_id;
         // First verify it exists
-        $stmt = $pdo->prepare("SELECT id, name FROM zalo_oa_configs WHERE id = ?");
-        $stmt->execute([$id]);
+        $stmt = $pdo->prepare("SELECT id, name FROM zalo_oa_configs WHERE id = ? AND workspace_id = ?");
+        $stmt->execute([$id, $workspace_id]);
         $oa = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$oa) {
             jsonResponse(false, null, 'Không tìm thấy OA cần xóa');
             return;
         }
 
-        $stmt = $pdo->prepare("DELETE FROM zalo_oa_configs WHERE id = ?");
-        $stmt->execute([$id]);
+        $stmt = $pdo->prepare("DELETE FROM zalo_oa_configs WHERE id = ? AND workspace_id = ?");
+        $stmt->execute([$id, $workspace_id]);
         jsonResponse(true, ['message' => 'Đã xóa OA thành công']);
     } catch (Exception $e) {
         jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
@@ -225,6 +229,8 @@ function syncZaloQuota($pdo, $id, $accessToken)
             SET daily_quota = ?, remaining_quota = ?, monthly_promo_quota = ?, remaining_promo_quota = ?, quality_48h = ?, quality_7d = ?, updated_at_quota = NOW() 
             WHERE id = ?
         ");
+        // No workspace_id here because syncZaloQuota is internal, 
+        // but we can add it if we pass it. Let's trust the caller who already verified it.
         $stmt->execute([$dailyQuota, $remainingQuota, $monthlyPromo, $remainingPromo, $q48h, $q7d, $id]);
     } catch (Exception $e) {
     }
@@ -241,8 +247,9 @@ function syncZaloQuota($pdo, $id, $accessToken)
 
 function getQuotaStatus($pdo, $id)
 {
-    $stmt = $pdo->prepare("SELECT access_token FROM zalo_oa_configs WHERE id = ?");
-    $stmt->execute([$id]);
+    global $workspace_id;
+    $stmt = $pdo->prepare("SELECT access_token FROM zalo_oa_configs WHERE id = ? AND workspace_id = ?");
+    $stmt->execute([$id, $workspace_id]);
     $oa = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($oa && !empty($oa['access_token'])) {
@@ -276,9 +283,10 @@ function isWithinSendingHours()
 
 function refreshAccessToken($pdo, $id)
 {
+    global $workspace_id;
     // ... Existing logic ...
-    $stmt = $pdo->prepare("SELECT app_id, app_secret, refresh_token FROM zalo_oa_configs WHERE id = ?");
-    $stmt->execute([$id]);
+    $stmt = $pdo->prepare("SELECT app_id, app_secret, refresh_token FROM zalo_oa_configs WHERE id = ? AND workspace_id = ?");
+    $stmt->execute([$id, $workspace_id]);
     $oa = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$oa || empty($oa['refresh_token'])) {
@@ -328,9 +336,9 @@ function refreshAccessToken($pdo, $id)
         $stmt = $pdo->prepare("
             UPDATE zalo_oa_configs
             SET access_token = ?, refresh_token = ?, token_expires_at = ?
-            WHERE id = ?
+            WHERE id = ? AND workspace_id = ?
         ");
-        $stmt->execute([$result['access_token'], $new_refresh_token, $expires_at, $id]);
+        $stmt->execute([$result['access_token'], $new_refresh_token, $expires_at, $id, $workspace_id]);
 
         // [NEW] Also Sync Quota while we have a fresh token
         syncZaloQuota($pdo, $id, $result['access_token']);
@@ -343,8 +351,9 @@ function refreshAccessToken($pdo, $id)
 
 function testConnection($pdo, $id)
 {
-    $stmt = $pdo->prepare("SELECT oa_id, access_token FROM zalo_oa_configs WHERE id = ?");
-    $stmt->execute([$id]);
+    global $workspace_id;
+    $stmt = $pdo->prepare("SELECT oa_id, access_token FROM zalo_oa_configs WHERE id = ? AND workspace_id = ?");
+    $stmt->execute([$id, $workspace_id]);
     $oa = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$oa || empty($oa['access_token'])) {
@@ -372,8 +381,8 @@ function testConnection($pdo, $id)
             // Sync current OA info to DB
             if (!empty($oa_data['name'])) {
                 $avatar = $oa_data['avatar'] ?? '';
-                $stmtU = $pdo->prepare("UPDATE zalo_oa_configs SET name = ?, avatar = ?, status = 'active', updated_at = NOW() WHERE id = ?");
-                $stmtU->execute([$oa_data['name'], $avatar, $id]);
+                $stmtU = $pdo->prepare("UPDATE zalo_oa_configs SET name = ?, avatar = ?, status = 'active', updated_at = NOW() WHERE id = ? AND workspace_id = ?");
+                $stmtU->execute([$oa_data['name'], $avatar, $id, $workspace_id]);
             }
 
             // [NEW] Sync Quota during test connection
@@ -442,11 +451,12 @@ function generateAuthUrl($pdo, $id = null)
 
 function syncFollowers($pdo, $oa_config_id)
 {
+    global $workspace_id;
     ensureZaloSubscriberSchema($pdo);
-
+ 
     // Get Access Token
-    $stmt = $pdo->prepare("SELECT access_token FROM zalo_oa_configs WHERE id = ?");
-    $stmt->execute([$oa_config_id]);
+    $stmt = $pdo->prepare("SELECT access_token FROM zalo_oa_configs WHERE id = ? AND workspace_id = ?");
+    $stmt->execute([$oa_config_id, $workspace_id]);
     $oa = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$oa || empty($oa['access_token'])) {

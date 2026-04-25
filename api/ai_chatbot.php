@@ -271,6 +271,16 @@ try {
         if ($propertyId) {
             $propertyId = resolvePropertyId($pdo, $propertyId);
         }
+
+        // [SECURITY FIX] Enforce Authentication for sensitive actions
+        $sensitiveActions = ['list_conversations', 'get_available_pages', 'export_to_word', 'export_conversations', 'get_analysis'];
+        if (in_array($action, $sensitiveActions)) {
+            $currentOrgUser = requireAISpaceAuth();
+            if ($propertyId) {
+                requireCategoryAccess($propertyId, $currentOrgUser);
+            }
+        }
+
         $visitorId = $_GET['visitor_id'] ?? null;
 
         if ($action === 'get_settings' && $propertyId) {
@@ -294,15 +304,35 @@ try {
 
         if ($action === 'get_available_pages') {
             $pages = [];
+            $orgScopeAdminId = $currentOrgUser['admin_id'] ?? ($currentOrgUser['id'] ?? null);
+            $workspaceId = get_current_workspace_id();
 
-            // Get Meta pages
-            $stmtMeta = $pdo->query("SELECT page_id as id, page_name as name, avatar_url as avatar, 'meta' as type FROM meta_app_configs WHERE status = 'active' ORDER BY page_name");
+            // Part 1: Get Meta pages
+            $sqlMeta = "SELECT page_id as id, page_name as name, avatar_url as avatar, 'meta' as type FROM meta_app_configs WHERE status = 'active'";
+            $paramsMeta = [];
+            if ($orgScopeAdminId !== 'admin-001') {
+                $sqlMeta .= " AND (admin_id = ? OR workspace_id = ?)";
+                $paramsMeta[] = $orgScopeAdminId;
+                $paramsMeta[] = $workspaceId;
+            }
+            $sqlMeta .= " ORDER BY page_name";
+            $stmtMeta = $pdo->prepare($sqlMeta);
+            $stmtMeta->execute($paramsMeta);
             while ($row = $stmtMeta->fetch(PDO::FETCH_ASSOC)) {
                 $pages[] = $row;
             }
 
-            // Get Zalo OAs
-            $stmtZalo = $pdo->query("SELECT oa_id as id, name, avatar, 'zalo' as type FROM zalo_oa_configs WHERE status = 'active' ORDER BY name");
+            // Part 2: Get Zalo OAs
+            $sqlZalo = "SELECT oa_id as id, name, avatar, 'zalo' as type FROM zalo_oa_configs WHERE status = 'active'";
+            $paramsZalo = [];
+            if ($orgScopeAdminId !== 'admin-001') {
+                $sqlZalo .= " AND (admin_id = ? OR workspace_id = ?)";
+                $paramsZalo[] = $orgScopeAdminId;
+                $paramsZalo[] = $workspaceId;
+            }
+            $sqlZalo .= " ORDER BY name";
+            $stmtZalo = $pdo->prepare($sqlZalo);
+            $stmtZalo->execute($paramsZalo);
             while ($row = $stmtZalo->fetch(PDO::FETCH_ASSOC)) {
                 $pages[] = $row;
             }
