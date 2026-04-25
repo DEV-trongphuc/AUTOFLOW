@@ -102,7 +102,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
     const [activityFilter, setActivityFilter] = useState('');
     const [activitySubTab, setActivitySubTab] = useState<'all' | 'mail' | 'system' | 'website'>('all');
     const [isSummarizing, setIsSummarizing] = useState(false);
-    
+
     const isZalo = formData.email?.endsWith('@zalo-oa.vn');
     const isMeta = formData.email?.endsWith('@facebook.com');
     const isVirtualEmail = formData.email?.endsWith('@no-email.domation') || isZalo || isMeta;
@@ -128,7 +128,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                 const updatedNotes = [newNoteObj, ...(Array.isArray(formData.notes) ? formData.notes : [])];
                 const updatedSubscriber = { ...formData, notes: updatedNotes } as Subscriber;
                 onUpdate(updatedSubscriber);
-                
+
                 setActiveTab('notes');
             } else {
                 toast.error(res.message || 'Lỗi khi tóm tắt AI!', { id: tid });

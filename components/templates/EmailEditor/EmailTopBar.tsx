@@ -213,11 +213,12 @@ const EmailTopBar: React.FC<EmailTopBarProps> = ({
           icon={isSaving ? Loader2 : Save}
           onClick={handleSave}
           isLoading={isSaving}
+          disabled={!isDirty}
           title={isDirty ? 'Lưu thay đổi (Ctrl+S)' : 'Đã lưu'}
           className={`h-10 px-6 text-xs font-bold transition-all duration-500 shadow-lg !border-transparent ${
             isDirty
               ? 'bg-gradient-to-r from-amber-400 to-amber-600 text-white hover:from-amber-500 hover:to-amber-700 shadow-amber-600/20'
-              : 'bg-gradient-to-r from-emerald-400 to-emerald-500 text-white opacity-70 hover:opacity-100 shadow-emerald-500/20'
+              : 'bg-slate-300 text-white cursor-not-allowed shadow-none'
           }`}
         >
           {isDirty ? 'Lưu mẫu' : 'Đã lưu'}

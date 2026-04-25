@@ -517,7 +517,7 @@ const Tags: React.FC = () => {
                                                 <span className="text-[9px] font-bold text-slate-400 uppercase">Khách hàng</span>
                                             </div>
                                             
-                                            <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                            <div className="flex gap-1 transition-opacity">
                                                 <button
                                                     onClick={(e) => handleToggleStatus(e, tag)}
                                                     title={tag.status === 'inactive' ? 'Kích hoạt nhãn' : 'Vô hiệu hoá nhãn'}

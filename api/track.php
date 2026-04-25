@@ -81,7 +81,7 @@ $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
 $rawIp = $_SERVER['HTTP_CF_CONNECTING_IP']   // Cloudflare: real client IP (cannot be spoofed)
     ?? $_SERVER['REMOTE_ADDR']             // Direct connection (no proxy)
     ?? '0.0.0.0';
-$ip = md5($rawIp); // MD5 Hash for Privacy/GDPR Compliance
+$ip = $rawIp; // [FIX] Removed MD5 hash to store raw IP for admin visibility
 // Note: HTTP_X_FORWARDED_FOR is intentionally NOT used here at the bot-check stage
 // to prevent spoofing. It can be re-added later only for trusted Load Balancer IPs.
 
@@ -262,8 +262,7 @@ try {
 
     // Capture IP — same safe logic as bot-check section above
     $rawCaptureIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-    $ip = md5($rawCaptureIp); // MD5 for GDPR-compliant storage (never store raw IP)
-    // NOTE: $rawCaptureIp is kept separately for geo lookup — geo job needs the REAL IP,
+    $ip = $rawCaptureIp; // [FIX] Removed MD5 hash for GDPR-compliant storage
     // not the hash. Previously this bug caused geo resolution to always fail.
 
     // --- GEOLOCATION DETECTION (CLOUDFLARE FIRST) ---

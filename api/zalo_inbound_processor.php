@@ -76,24 +76,47 @@ function handleZaloInboundJob($pdo, $payload)
         return true;
     }
 
+    // --- PRE-CALCULATE SCENARIO ---
+    // We must find the scenario BEFORE creating the AI conversation so we can use the EXACT same ai_chatbot_id.
+    // This prevents visitor messages and AI replies from splitting into different conversations.
+    $scenario = null;
+    if ($event === 'follow' || in_array($event, $msgEvents)) {
+        $scenario = findZaloScenario($pdo, $oaConfig, $zaloUserId, $subId, $event, $msgText);
+    }
+
     // 4. INBOUND ACTIVITY & SCORING
     if (in_array($event, $msgEvents)) {
         logZaloMsg($pdo, $zaloUserId, 'inbound', $msgText);
 
         // [NEW FIX] Ensure AI Conversation exists and log visitor message to Unified Chat
         try {
-            $stmtProp = $pdo->prepare("SELECT ai_chatbot_id FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' AND ai_chatbot_id IS NOT NULL LIMIT 1");
-            $stmtProp->execute([$oaConfigId]);
-            $aiPropId = $stmtProp->fetchColumn();
+            $aiPropId = null;
+            if ($scenario && !empty($scenario['ai_chatbot_id'])) {
+                $aiPropId = $scenario['ai_chatbot_id'];
+            } else {
+                $stmtProp = $pdo->prepare("SELECT ai_chatbot_id FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' AND ai_chatbot_id IS NOT NULL AND status = 'active' ORDER BY priority DESC, created_at DESC LIMIT 1");
+                $stmtProp->execute([$oaConfigId]);
+                $aiPropId = $stmtProp->fetchColumn();
+            }
+
+            // [CRITICAL FIX] If no AI reply scenario is found, fallback to any chatbot in the workspace
+            // so that Unified Chat can still load and display the customer's message to human staff.
+            $hasActiveAiScenario = (bool)$aiPropId;
+            if (!$aiPropId) {
+                $stmtFallback = $pdo->prepare("SELECT id FROM ai_chatbots WHERE workspace_id = ? LIMIT 1");
+                $stmtFallback->execute([$oaConfig['workspace_id']]);
+                $aiPropId = $stmtFallback->fetchColumn() ?: 'fallback_zalo_' . $oaConfigId;
+            }
 
             if ($aiPropId) {
                 $zaloVid = "zalo_" . $zaloUserId;
-                $stmtConv = $pdo->prepare("SELECT id FROM ai_conversations WHERE visitor_id = ? AND property_id = ? LIMIT 1");
+                $stmtConv = $pdo->prepare("SELECT id FROM ai_conversations WHERE visitor_id = ? AND property_id = ? AND status != 'closed' ORDER BY created_at DESC LIMIT 1");
                 $stmtConv->execute([$zaloVid, $aiPropId]);
                 $convId = $stmtConv->fetchColumn();
 
                 if (!$convId) {
                     $convId = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x', mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0x0fff) | 0x4000, mt_rand(0, 0x3fff) | 0x8000, mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff));
+                    // Always set to 'ai' to allow AI to reply normally. processStaffReply will handle 'human' takeover.
                     $pdo->prepare("INSERT INTO ai_conversations (id, property_id, visitor_id, status, created_at, updated_at, last_message_at) VALUES (?, ?, ?, 'ai', NOW(), NOW(), NOW())")->execute([$convId, $aiPropId, $zaloVid]);
                 }
 
@@ -144,12 +167,9 @@ function handleZaloInboundJob($pdo, $payload)
     }
 
     // 6. SCENARIO AUTO-REPLY (Keyword, Holiday, AI)
-    if ($event === 'follow' || in_array($event, $msgEvents)) {
-        $scenario = findZaloScenario($pdo, $oaConfig, $zaloUserId, $subId, $event, $msgText);
-        if ($scenario) {
-            logZaloSubscriberActivity($pdo, $subId, 'automation_trigger', $scenario['id'], "Kích hoạt kịch bản: " . ($scenario['title'] ?? 'Auto'), $msgText, $eventId, $oaConfig['workspace_id']);
-            sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $scenario, $msgText);
-        }
+    if ($scenario) {
+        logZaloSubscriberActivity($pdo, $subId, 'automation_trigger', $scenario['id'], "Kích hoạt kịch bản: " . ($scenario['title'] ?? 'Auto'), $msgText, $eventId, $oaConfig['workspace_id']);
+        sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $scenario, $msgText);
     }
 
     return true;

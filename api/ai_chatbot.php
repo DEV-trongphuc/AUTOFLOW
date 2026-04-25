@@ -476,7 +476,7 @@ try {
                     s.first_name, s.last_name, s.avatar, s.phone, s.email, s.lead_score,
                     v.ip_address, v.subscriber_id, 'web' as source";
                 $joins = "LEFT JOIN web_visitors v ON c.visitor_id = v.id
-                         LEFT JOIN subscribers s ON v.subscriber_id = s.id";
+                         LEFT JOIN subscribers s ON v.subscriber_id = s.id AND v.subscriber_id != ''";
 
             } elseif ($source === 'zalo') {
                 // Zalo: Only join zalo tables
@@ -525,7 +525,7 @@ try {
 
                 // OPTIMIZATION: Simplified JOINs - let MySQL use indexes better
                 $joins = "LEFT JOIN web_visitors v ON c.visitor_id = v.id
-                         LEFT JOIN subscribers s ON v.subscriber_id = s.id
+                         LEFT JOIN subscribers s ON v.subscriber_id = s.id AND v.subscriber_id != ''
                          LEFT JOIN meta_subscribers ms ON ms.psid = SUBSTRING(c.visitor_id, 6)
                          LEFT JOIN meta_app_configs mc ON ms.page_id = mc.page_id
                          LEFT JOIN zalo_subscribers zs ON zs.zalo_user_id = SUBSTRING(c.visitor_id, 6)

@@ -86,10 +86,9 @@ const traversePath = (
         }
     }
 
-    // If Root (or near root) is a Branching Step, capture breakdown
-    if (isRoot && (step.type === 'condition' || step.type === 'split_test')) {
-        const breakdown = [];
-        let min = 0, max = 0;
+    // Branching steps (Condition, Split Test, Advanced Condition)
+    if (step.type === 'condition' || step.type === 'split_test' || step.type === 'advanced_condition') {
+        const branchPaths: { label: string, min: number, max: number }[] = [];
 
         if (step.type === 'condition') {
             const waitDur = parseInt(step.config?.waitDuration || '0');
@@ -102,53 +101,39 @@ const traversePath = (
             const pathYes = traversePath(step.yesStepId, steps, newVisited, elapsedMin + stepMin, elapsedMax + stepMax, false);
             const pathNo = traversePath(step.noStepId, steps, newVisited, elapsedMin + stepMin + waitMinutes, elapsedMax + stepMax + waitMinutes, false);
 
-            breakdown.push({ label: 'NHÁNH IF (Đúng)', min: pathYes.minMinutes, max: pathYes.maxMinutes });
-            breakdown.push({ label: 'NHÁNH ELSE (Sai)', min: pathNo.minMinutes + waitMinutes, max: pathNo.maxMinutes + waitMinutes });
-
-            min = Math.min(pathYes.minMinutes, pathNo.minMinutes + waitMinutes);
-            max = waitMinutes + Math.max(pathYes.maxMinutes, pathNo.maxMinutes);
-        }
-
-        if (step.type === 'split_test') {
+            branchPaths.push({ label: 'NHÁNH IF (Đúng)', min: pathYes.minMinutes, max: pathYes.maxMinutes });
+            branchPaths.push({ label: 'NHÁNH ELSE (Sai)', min: pathNo.minMinutes + waitMinutes, max: pathNo.maxMinutes + waitMinutes });
+        } else if (step.type === 'split_test') {
             const pathA = traversePath(step.pathAStepId, steps, newVisited, elapsedMin + stepMin, elapsedMax + stepMax, false);
             const pathB = traversePath(step.pathBStepId, steps, newVisited, elapsedMin + stepMin, elapsedMax + stepMax, false);
 
-            breakdown.push({ label: `NHÁNH A (${step.config?.ratioA || 50}%)`, min: pathA.minMinutes, max: pathA.maxMinutes });
-            breakdown.push({ label: `NHÁNH B (${100 - (step.config?.ratioA || 50)}%)`, min: pathB.minMinutes, max: pathB.maxMinutes });
-
-            min = Math.min(pathA.minMinutes, pathB.minMinutes);
-            max = Math.max(pathA.maxMinutes, pathB.maxMinutes);
+            branchPaths.push({ label: `NHÁNH A (${step.config?.ratioA || 50}%)`, min: pathA.minMinutes, max: pathA.maxMinutes });
+            branchPaths.push({ label: `NHÁNH B (${100 - (step.config?.ratioA || 50)}%)`, min: pathB.minMinutes, max: pathB.maxMinutes });
+        } else if (step.type === 'advanced_condition') {
+            const branches = step.config?.branches || [];
+            branches.forEach((b: any) => {
+                const bPath = traversePath(b.stepId, steps, newVisited, elapsedMin + stepMin, elapsedMax + stepMax, false);
+                branchPaths.push({ label: `NHÁNH: ${b.label || 'Không tên'}`, min: bPath.minMinutes, max: bPath.maxMinutes });
+            });
+            
+            const defPath = traversePath(step.config?.defaultStepId, steps, newVisited, elapsedMin + stepMin, elapsedMax + stepMax, false);
+            branchPaths.push({ label: 'MẶC ĐỊNH', min: defPath.minMinutes, max: defPath.maxMinutes });
         }
 
-        return { minMinutes: stepMin + min, maxMinutes: stepMax + max, pathDescription: '', breakdown };
-    }
+        const nextMin = branchPaths.length > 0 ? Math.min(...branchPaths.map(b => b.min)) : 0;
+        const nextMax = branchPaths.length > 0 ? Math.max(...branchPaths.map(b => b.max)) : 0;
 
-    // Condition/Split inside the path (non-root) - Aggregate simply
-    if (step.type === 'condition') {
-        const waitDur = parseInt(step.config?.waitDuration || '0');
-        const waitUnit = step.config?.waitUnit || 'hours';
-        let waitMinutes = 0;
-        if (waitUnit === 'minutes') waitMinutes = waitDur;
-        if (waitUnit === 'hours') waitMinutes = waitDur * 60;
-        if (waitUnit === 'days') waitMinutes = waitDur * 1440;
+        const result: DurationResult = {
+            minMinutes: stepMin + nextMin,
+            maxMinutes: stepMax + nextMax,
+            pathDescription: ''
+        };
 
-        const pathYes = traversePath(step.yesStepId, steps, newVisited, elapsedMin + stepMin, elapsedMax + stepMax, false);
-        const pathNo = traversePath(step.noStepId, steps, newVisited, elapsedMin + stepMin + waitMinutes, elapsedMax + stepMax + waitMinutes, false);
+        if (isRoot) {
+            result.breakdown = branchPaths;
+        }
 
-        const nextMin = Math.min(pathYes.minMinutes, pathNo.minMinutes + waitMinutes);
-        const nextMax = waitMinutes + Math.max(pathYes.maxMinutes, pathNo.maxMinutes);
-
-        return { minMinutes: stepMin + nextMin, maxMinutes: stepMax + nextMax, pathDescription: '' };
-    }
-
-    if (step.type === 'split_test') {
-        const pathA = traversePath(step.pathAStepId, steps, newVisited, elapsedMin + stepMin, elapsedMax + stepMax, false);
-        const pathB = traversePath(step.pathBStepId, steps, newVisited, elapsedMin + stepMin, elapsedMax + stepMax, false);
-
-        const nextMin = Math.min(pathA.minMinutes, pathB.minMinutes);
-        const nextMax = Math.max(pathA.maxMinutes, pathB.maxMinutes);
-
-        return { minMinutes: stepMin + nextMin, maxMinutes: stepMax + nextMax, pathDescription: '' };
+        return result;
     }
 
     const next = traversePath(step.nextStepId, steps, newVisited, elapsedMin + stepMin, elapsedMax + stepMax, false);

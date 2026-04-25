@@ -335,16 +335,62 @@ const CreateSurveyModal: React.FC<{
 // ─── Survey Card ─────────────────────────────────────────────────────────────
 const SurveyCard: React.FC<{
     survey: Survey;
+    viewMode?: 'grid' | 'list';
     onEdit: () => void;
     onAnalytics: () => void;
     onDelete: () => void;
     onTogglePause: () => void;
     onSlugClick: () => void;
-}> = ({ survey, onEdit, onAnalytics, onDelete, onTogglePause, onSlugClick }) => {
+}> = ({ survey, viewMode = 'grid', onEdit, onAnalytics, onDelete, onTogglePause, onSlugClick }) => {
     const sc = STATUS[survey.status as keyof typeof STATUS] ?? STATUS.draft;
     const responses = survey.response_count ?? 0;
     const completion = survey.completion_rate ?? 0;
     const nps = survey.avg_nps;
+
+    if (viewMode === 'list') {
+        return (
+            <div className="group bg-white rounded-[20px] border border-slate-100 p-3 sm:p-4 px-4 sm:px-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 hover:shadow-md hover:border-slate-200 transition-all relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-500/5 to-orange-500/5 rounded-bl-full -z-10 group-hover:scale-110 transition-transform duration-500" />
+                
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-[16px] flex items-center justify-center flex-shrink-0 shadow-sm" style={{background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 60%, #fbbf24 100%)'}}>
+                        <FileText className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <h3 className="text-[14px] font-bold text-slate-700 truncate mb-1">{survey.name}</h3>
+                        {survey.slug ? (
+                            <button onClick={onSlugClick} className="flex items-center gap-1.5 w-fit px-2 py-1 rounded-lg bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors group/slug" title="Xem / chia sẻ khảo sát">
+                                <Link2 className="w-3 h-3 text-amber-600 flex-shrink-0" />
+                                <span className="text-[10px] font-bold text-amber-800 truncate line-clamp-1">/s/{survey.slug}</span>
+                            </button>
+                        ) : (
+                            <p className="text-[10px] font-semibold text-slate-400 italic">Chưa xuất bản</p>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex flex-col items-end shrink-0 hidden lg:flex border-l border-slate-100 pl-6 w-32">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Lượt trả lời</span>
+                    <span className="text-[12px] font-black text-slate-700">{responses.toLocaleString()}</span>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 shrink-0 ml-auto md:ml-0">
+                    <Button className="h-8 px-3 text-[11px] bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 hidden md:flex" variant="custom" icon={PenLine} onClick={onEdit}>Thiết kế</Button>
+                    <Button className="h-8 px-3 text-[11px]" variant="outline" icon={BarChart2} iconClassName="text-amber-500" onClick={onAnalytics}>Báo cáo</Button>
+                    
+                    <div className="w-px h-8 bg-slate-100 mx-1 hidden sm:block"></div>
+                    
+                    <div className="flex gap-1.5 items-center transition-opacity">
+                        <label className="relative inline-flex items-center cursor-pointer mr-1" title={survey.status === 'active' ? 'Tạm dừng' : 'Kích hoạt'}>
+                            <input type="checkbox" className="sr-only peer" checked={survey.status === 'active'} onChange={onTogglePause} />
+                            <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 hover:bg-slate-300 peer-checked:hover:bg-emerald-600"></div>
+                        </label>
+                        <button onClick={onDelete} className="text-slate-400 hover:text-rose-600 transition-colors p-1" title="Xóa"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="group bg-white rounded-[24px] border border-slate-100 p-6 flex flex-col hover:shadow-xl hover:shadow-slate-200/40 transition-all duration-300 relative overflow-hidden">
@@ -443,6 +489,7 @@ const Surveys: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [activeTab, setActiveTab] = useState('all');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [showCreate, setShowCreate] = useState(false);
     const [isGuideOpen, setIsGuideOpen] = useState(false);
     const [reportSurvey, setReportSurvey] = useState<Survey | null>(null);
@@ -534,13 +581,23 @@ const Surveys: React.FC = () => {
                         onChange={setActiveTab}
                         items={TABS}
                     />
-                    <Input
-                        placeholder="Tìm kiếm khảo sát..."
-                        icon={Search}
-                        className="w-56"
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                    />
+                    <div className="flex items-center gap-2">
+                        <Input
+                            placeholder="Tìm kiếm khảo sát..."
+                            icon={Search}
+                            className="w-56"
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                        />
+                        <div className="flex items-center bg-slate-50 p-1 rounded-xl border border-slate-200/50">
+                            <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`} title="Giao diện dạng thẻ"><LayoutGrid className="w-4 h-4" /></button>
+                            <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`} title="Giao diện danh sách">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 {isLoading ? (
@@ -570,11 +627,12 @@ const Surveys: React.FC = () => {
                         )}
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                    <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5" : "flex flex-col gap-3"}>
                         {filtered.map(survey => (
                             <SurveyCard
                                 key={survey.id}
                                 survey={survey}
+                                viewMode={viewMode}
                                 onEdit={() => navigate(`/surveys/${survey.id}/edit`)}
                                 onAnalytics={() => setReportSurvey(survey)}
                                 onDelete={() => setDeleteTarget(survey)}

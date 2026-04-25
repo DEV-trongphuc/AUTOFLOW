@@ -18,6 +18,7 @@ const Vouchers: React.FC = () => {
     const [campaigns, setCampaigns] = useState<VoucherCampaign[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('all');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
     const [isOriginModalOpen, setOriginModalOpen] = useState(false);
     const [editingCampaign, setEditingCampaign] = useState<Partial<VoucherCampaign> | undefined>();
@@ -52,7 +53,6 @@ const Vouchers: React.FC = () => {
 
     const handleCreateOrUpdateCampaign = async (campaignData: Partial<VoucherCampaign>) => {
         const url = 'voucher_campaigns';
-        // API handles both create and edit via POST using ID check
         const finalData = { ...campaignData };
 
         const res = await api.post<VoucherCampaign>(url, finalData);
@@ -140,6 +140,24 @@ const Vouchers: React.FC = () => {
                             icon={Search}
                             className="w-64"
                         />
+                        <div className="flex items-center bg-slate-50 p-1 rounded-xl border border-slate-200/50">
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                title="Giao diện dạng thẻ"
+                            >
+                                <LayoutGrid className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                title="Giao diện danh sách"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -148,7 +166,6 @@ const Vouchers: React.FC = () => {
                 ) : filteredCampaigns.length === 0 ? (
                     <div className="py-20 flex justify-center animate-in fade-in zoom-in-95 duration-700">
                         <div className="relative bg-[#fffbe1] border-[2px] border-dashed border-[#b45309] rounded-[16px] p-10 max-w-lg w-full text-center overflow-hidden">
-                            {/* Cutouts */}
                             <div className="absolute top-1/2 -left-4 w-8 h-8 bg-white rounded-full transform -translate-y-1/2 border-r-[2px] border-dashed border-[#b45309]"></div>
                             <div className="absolute top-1/2 -right-4 w-8 h-8 bg-white rounded-full transform -translate-y-1/2 border-l-[2px] border-dashed border-[#b45309]"></div>
 
@@ -168,56 +185,90 @@ const Vouchers: React.FC = () => {
                         </div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                    <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5" : "flex flex-col gap-3"}>
                         {filteredCampaigns.map(campaign => (
-                            <div key={campaign.id} className="group bg-white rounded-[24px] border border-slate-100 p-6 flex flex-col hover:shadow-xl hover:shadow-slate-200/40 transition-all duration-300 relative overflow-hidden">
+                            <div key={campaign.id} className={viewMode === 'grid' 
+                                ? "group bg-white rounded-[24px] border border-slate-100 p-6 flex flex-col hover:shadow-xl hover:shadow-slate-200/40 transition-all duration-300 relative overflow-hidden" 
+                                : "group bg-white rounded-[20px] border border-slate-100 p-3 sm:p-4 px-4 sm:px-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 hover:shadow-md hover:border-slate-200 transition-all relative overflow-hidden"}>
+                                
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-rose-500/5 to-orange-500/5 rounded-bl-full -z-10 group-hover:scale-110 transition-transform"></div>
-                                <div className="flex justify-between items-center mb-4">
-                                    <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shrink-0 relative overflow-hidden shadow-md shadow-orange-200/30 border-[1.5px] border-orange-500/30">
-                                        {campaign.thumbnailUrl ? (
-                                            <img 
-                                                src={campaign.thumbnailUrl} 
-                                                alt={campaign.name} 
-                                                className="absolute inset-0 w-full h-full object-cover rounded-full transition-transform duration-500 group-hover:scale-110" 
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full bg-orange-50 flex items-center justify-center text-orange-600">
-                                                <Gift className="w-6 h-6" />
+                                
+                                {viewMode === 'grid' ? (
+                                    <>
+                                        <div className="flex justify-between items-center mb-4">
+                                            <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shrink-0 relative overflow-hidden shadow-md shadow-orange-200/30 border-[1.5px] border-orange-500/30">
+                                                {campaign.thumbnailUrl ? (
+                                                    <img src={campaign.thumbnailUrl} alt={campaign.name} className="absolute inset-0 w-full h-full object-cover rounded-full transition-transform duration-500 group-hover:scale-110" />
+                                                ) : (
+                                                    <div className="w-full h-full bg-orange-50 flex items-center justify-center text-orange-600">
+                                                        <Gift className="w-6 h-6" />
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <label className="relative inline-flex items-center cursor-pointer mr-2" title={campaign.status === 'active' ? 'Tạm dừng chiến dịch' : 'Kích hoạt chiến dịch'}>
-                                            <input
-                                                type="checkbox"
-                                                className="sr-only peer"
-                                                checked={campaign.status === 'active'}
-                                                onChange={() => handleToggleStatus(campaign)}
-                                            />
-                                            <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 hover:bg-slate-300 peer-checked:hover:bg-emerald-600"></div>
-                                            <span className={`ml-2 text-[10px] uppercase font-black tracking-widest ${campaign.status === 'active' ? 'text-emerald-600' : 'text-slate-400'}`}>
-                                                {campaign.status === 'active' ? 'Hoạt động' : 'Đang Tắt'}
-                                            </span>
-                                        </label>
-                                        <button onClick={() => { setEditingCampaign(campaign); setOriginModalOpen(true); }} className="text-slate-300 hover:text-slate-600 transition-colors p-1" title="Chỉnh sửa"><Settings2 className="w-4 h-4" /></button>
-                                        <button onClick={() => confirmDelete(campaign)} className="text-slate-300 hover:text-rose-600 transition-colors p-1" title="Xóa bỏ"><Trash2 className="w-4 h-4" /></button>
-                                    </div>
-                                </div>
-
-                                <h3 className="text-[15px] font-bold text-slate-600 tracking-tight leading-tight line-clamp-1 mb-1">{campaign.name}</h3>
-                                <p className="text-xs font-medium text-slate-500 line-clamp-2 mb-4 h-8">{campaign.description}</p>
-
-                                <div className="mt-auto">
-                                    <div className="bg-slate-50 border border-slate-100/80 rounded-xl p-3 flex flex-col gap-1 mb-4">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Loại mã</span>
-                                            <span className="text-xs font-bold text-slate-700 uppercase">{campaign.codeType}</span>
+                                            <div className="flex items-center gap-2">
+                                                <label className="relative inline-flex items-center cursor-pointer mr-2" title={campaign.status === 'active' ? 'Tạm dừng chiến dịch' : 'Kích hoạt chiến dịch'}>
+                                                    <input type="checkbox" className="sr-only peer" checked={campaign.status === 'active'} onChange={() => handleToggleStatus(campaign)} />
+                                                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 hover:bg-slate-300 peer-checked:hover:bg-emerald-600"></div>
+                                                    <span className={`ml-2 text-[10px] uppercase font-black tracking-widest ${campaign.status === 'active' ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                                        {campaign.status === 'active' ? 'Hoạt động' : 'Đang Tắt'}
+                                                    </span>
+                                                </label>
+                                                <button onClick={() => { setEditingCampaign(campaign); setOriginModalOpen(true); }} className="text-slate-300 hover:text-slate-600 transition-colors p-1" title="Chỉnh sửa"><Settings2 className="w-4 h-4" /></button>
+                                                <button onClick={() => confirmDelete(campaign)} className="text-slate-300 hover:text-rose-600 transition-colors p-1" title="Xóa bỏ"><Trash2 className="w-4 h-4" /></button>
+                                            </div>
                                         </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ưu đãi</span>
-                                            <span className="text-xs font-bold text-amber-700">
+
+                                        <h3 className="text-[15px] font-bold text-slate-600 tracking-tight leading-tight line-clamp-1 mb-1">{campaign.name}</h3>
+                                        <p className="text-xs font-medium text-slate-500 line-clamp-2 mb-4 h-8">{campaign.description}</p>
+
+                                        <div className="mt-auto">
+                                            <div className="bg-slate-50 border border-slate-100/80 rounded-xl p-3 flex flex-col gap-1 mb-4">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Loại mã</span>
+                                                    <span className="text-xs font-bold text-slate-700 uppercase">{campaign.codeType}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ưu đãi</span>
+                                                    <span className="text-xs font-bold text-amber-700">
+                                                        {campaign.rewards && campaign.rewards.length > 1
+                                                            ? `Gói đa quà tặng (${campaign.rewards.length} món)`
+                                                            : campaign.rewards && campaign.rewards.length === 1
+                                                                ? (campaign.rewards[0].discountType === 'percentage' ? `${campaign.rewards[0].discountValue}%` :
+                                                                    campaign.rewards[0].discountType === 'fixed_amount' ? `${campaign.rewards[0].discountValue?.toLocaleString()}đ` :
+                                                                        campaign.rewards[0].giftTitle)
+                                                                : 'Chưa có ưu đãi'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <Button className="flex-[3] bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200" variant="custom" icon={Code} onClick={() => setSelectedCampaignForApi(campaign)}>API</Button>
+                                                <Button className="flex-[7]" variant="outline" icon={LayoutGrid} iconClassName="text-orange-500 stroke-[1.5px]" onClick={() => setSelectedCampaignForCodes(campaign)}>Quản lý mã</Button>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                                            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shrink-0 relative overflow-hidden shadow-sm border border-orange-500/20">
+                                                {campaign.thumbnailUrl ? (
+                                                    <img src={campaign.thumbnailUrl} alt={campaign.name} className="absolute inset-0 w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full bg-orange-50 flex items-center justify-center text-orange-600">
+                                                        <Gift className="w-5 h-5" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="text-[14px] font-bold text-slate-700 truncate mb-0.5">{campaign.name}</h3>
+                                                <p className="text-[11px] font-medium text-slate-400 truncate">{campaign.description || 'Không có mô tả...'}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-col items-end shrink-0 hidden lg:flex border-l border-slate-100 pl-6 w-48">
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{campaign.codeType}</span>
+                                            <span className="text-[11px] font-bold text-amber-600 truncate max-w-full">
                                                 {campaign.rewards && campaign.rewards.length > 1
-                                                    ? `Gói đa quà tặng (${campaign.rewards.length} món)`
+                                                    ? `Gói đa quà tặng (${campaign.rewards.length})`
                                                     : campaign.rewards && campaign.rewards.length === 1
                                                         ? (campaign.rewards[0].discountType === 'percentage' ? `${campaign.rewards[0].discountValue}%` :
                                                             campaign.rewards[0].discountType === 'fixed_amount' ? `${campaign.rewards[0].discountValue?.toLocaleString()}đ` :
@@ -225,12 +276,24 @@ const Vouchers: React.FC = () => {
                                                         : 'Chưa có ưu đãi'}
                                             </span>
                                         </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Button className="flex-[3] bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200" variant="custom" icon={Code} onClick={() => setSelectedCampaignForApi(campaign)}>API</Button>
-                                        <Button className="flex-[7]" variant="outline" icon={LayoutGrid} iconClassName="text-orange-500 stroke-[1.5px]" onClick={() => setSelectedCampaignForCodes(campaign)}>Quản lý mã</Button>
-                                    </div>
-                                </div>
+
+                                        <div className="flex items-center justify-end gap-3 shrink-0 ml-auto md:ml-0">
+                                            <Button className="h-8 w-8 !p-0 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 hidden md:flex" variant="custom" icon={Code} onClick={() => setSelectedCampaignForApi(campaign)} title="Lấy mã nhúng API" />
+                                            <Button className="h-8 px-3 text-[11px]" variant="outline" icon={LayoutGrid} iconClassName="text-orange-500" onClick={() => setSelectedCampaignForCodes(campaign)}>Quản lý</Button>
+                                            
+                                            <div className="w-px h-8 bg-slate-100 mx-1 hidden sm:block"></div>
+                                            
+                                            <div className="flex gap-1.5 items-center transition-opacity">
+                                                <label className="relative inline-flex items-center cursor-pointer mr-1" title={campaign.status === 'active' ? 'Tạm dừng' : 'Kích hoạt'}>
+                                                    <input type="checkbox" className="sr-only peer" checked={campaign.status === 'active'} onChange={() => handleToggleStatus(campaign)} />
+                                                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 hover:bg-slate-300 peer-checked:hover:bg-emerald-600"></div>
+                                                </label>
+                                                <button onClick={() => { setEditingCampaign(campaign); setOriginModalOpen(true); }} className="text-slate-400 hover:text-slate-600 transition-colors p-1" title="Sửa"><Settings2 className="w-4 h-4" /></button>
+                                                <button onClick={() => confirmDelete(campaign)} className="text-slate-400 hover:text-rose-600 transition-colors p-1" title="Xóa"><Trash2 className="w-4 h-4" /></button>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         ))}
                     </div>

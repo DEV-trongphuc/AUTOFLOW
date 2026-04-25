@@ -420,15 +420,22 @@ if ($method === 'POST') {
                             // Other events like user_send_image still log immediately.
                             if ($event !== 'user_send_text') {
                                 updateZaloLeadScore($pdo, $zaloUserId, 'message');
-                                logZaloSubscriberActivity($pdo, $subId, $event, null, "KH gửi tin nhắn (+5 điểm): $msgText", "Zalo Webhook", $eventId, $oaConfig['workspace_id']);
+                                logZaloSubscriberActivity($pdo, $subId, $event, null, "KH gửi tin nhắn: $msgText", "Zalo Webhook", $eventId, $oaConfig['workspace_id']);
                             }
 
                             // [NEW] Sync Inbound Message to AI Chat History (Fix Empty List)
                             try {
                                 // Find associated Property ID (Chatbot ID) from Default AI Scenario
-                                $stmtProp = $pdo->prepare("SELECT ai_chatbot_id FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' AND ai_chatbot_id IS NOT NULL LIMIT 1");
+                                $stmtProp = $pdo->prepare("SELECT ai_chatbot_id FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' AND ai_chatbot_id IS NOT NULL AND status = 'active' ORDER BY priority_override DESC, created_at DESC LIMIT 1");
                                 $stmtProp->execute([$oaConfig['id']]);
                                 $aiPropId = $stmtProp->fetchColumn();
+
+                                // Fallback to any chatbot in workspace if no AI scenario found
+                                if (!$aiPropId) {
+                                    $stmtFallback = $pdo->prepare("SELECT id FROM ai_chatbots WHERE workspace_id = ? LIMIT 1");
+                                    $stmtFallback->execute([$oaConfig['workspace_id']]);
+                                    $aiPropId = $stmtFallback->fetchColumn();
+                                }
 
                                 if ($aiPropId) {
                                     $zaloVid = "zalo_" . $zaloUserId;
@@ -442,17 +449,15 @@ if ($method === 'POST') {
                                         // Generate UUID v4
                                         $convId = sprintf(
                                             '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-                                            mt_rand(0, 0xffff),
-                                            mt_rand(0, 0xffff),
-                                            mt_rand(0, 0xffff),
-                                            mt_rand(0, 0x0fff) | 0x4000,
-                                            mt_rand(0, 0x3fff) | 0x8000,
-                                            mt_rand(0, 0xffff),
-                                            mt_rand(0, 0xffff),
-                                            mt_rand(0, 0xffff)
+                                            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+                                            mt_rand(0, 0x0fff) | 0x4000, mt_rand(0, 0x3fff) | 0x8000,
+                                            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
                                         );
                                         $pdo->prepare("INSERT INTO ai_conversations (id, property_id, visitor_id, status, created_at, updated_at, last_message_at) VALUES (?, ?, ?, 'ai', NOW(), NOW(), NOW())")->execute([$convId, $aiPropId, $zaloVid]);
                                     }
+
+                                    // [CRITICAL FIX] Insert visitor message into ai_messages (This was completely missing!)
+                                    $pdo->prepare("INSERT INTO ai_messages (conversation_id, sender, message, created_at) VALUES (?, 'visitor', ?, NOW())")->execute([$convId, $msgText]);
 
                                     // Update Conversation Last Message (So it appears in list immediately)
                                     $pdo->prepare("UPDATE ai_conversations SET last_message = ?, last_message_at = NOW() WHERE id = ?")->execute([$msgText, $convId]);
@@ -465,7 +470,7 @@ if ($method === 'POST') {
                             $stmtMainMsg->execute([$zaloUserId]);
                             $mainIdMsg = $stmtMainMsg->fetchColumn();
                             if ($mainIdMsg) {
-                                logActivity($pdo, $mainIdMsg, 'user_send_text', null, 'Zalo Message', "KH gửi tin nhắn (+5 điểm): $msgText", null, null, [], $oaConfig['workspace_id']);
+                                logActivity($pdo, $mainIdMsg, 'user_send_text', null, 'Zalo Message', "KH gửi tin nhắn: $msgText", null, null, [], $oaConfig['workspace_id']);
                             }
                         }
 
@@ -888,7 +893,7 @@ if ($method === 'POST') {
                                 }
 
                                 if (!$scenario && !$skipAI) {
-                                    $stmtAI = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, trigger_text, schedule_type, active_days, start_time, end_time FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' AND (trigger_text IS NULL OR trigger_text = '' OR trigger_text = '*' OR trigger_text = 'default') AND status = 'active' LIMIT 1");
+                                    $stmtAI = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, trigger_text, schedule_type, active_days, start_time, end_time FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' AND (trigger_text IS NULL OR trigger_text = '' OR trigger_text = '*' OR trigger_text = 'default') AND status = 'active' ORDER BY priority_override DESC, created_at DESC LIMIT 1");
                                     $stmtAI->execute([$oaConfig['id']]);
                                     $rowAI = $stmtAI->fetch(PDO::FETCH_ASSOC);
 

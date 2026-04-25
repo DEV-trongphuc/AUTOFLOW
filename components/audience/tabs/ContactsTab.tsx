@@ -122,7 +122,7 @@ const ContactRow = React.memo<ContactRowProps>(({
                     <div className="flex items-center justify-start">
                         {isVirtualEmail ? (
                             <span className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tight text-slate-400 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200/50">
-                                <div className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_6px_rgba(168,85,247,0.4)]" />
+                                <div className={`w-1.5 h-1.5 rounded-full ${isZalo ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.4)]' : 'bg-purple-500 shadow-[0_0_6px_rgba(168,85,247,0.4)]'}`} />
                                 {isZalo ? 'Zalo Identity' : (isMeta ? 'Meta Identity' : 'Virtual Identity')}
                             </span>
                         ) : (

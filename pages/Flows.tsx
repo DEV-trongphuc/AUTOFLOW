@@ -227,6 +227,18 @@ const Flows: React.FC = () => {
         return (localStorage.getItem('automation_view_mode') as 'grid' | 'list') || 'grid';
     });
 
+    const [hasAutoSetTab, setHasAutoSetTab] = useState(false);
+
+    useEffect(() => {
+        if (!loading && !hasAutoSetTab) {
+            if (flows.length > 0) {
+                const hasActive = flows.some(f => f.status === 'active');
+                setActiveTab(hasActive ? 'active' : 'all');
+            }
+            setHasAutoSetTab(true);
+        }
+    }, [flows, loading, hasAutoSetTab]);
+
     useEffect(() => {
         localStorage.setItem('automation_view_mode', viewMode);
     }, [viewMode]);
