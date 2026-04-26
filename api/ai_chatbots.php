@@ -2,6 +2,7 @@
 // api/ai_chatbots.php
 require_once __DIR__ . '/db_connect.php';
 require_once __DIR__ . '/ai_org_middleware.php'; // For logAdminAction
+require_once __DIR__ . '/auth_middleware.php';
 
 // 1. SECURITY: Enforce AI Space Authentication
 $currentOrgUser = requireAISpaceAuth();
@@ -141,7 +142,7 @@ function listCategories($pdo)
     // Non-admin (assistant, user, staff) ➜ only sees categories that belong
     // to their organisation's top admin (admin_id).
     $isAdmin = ($currentUserRole === 'admin') ||
-               ($currentAdminId === 'admin-001') ||
+               is_super_admin() ||
                in_array('*', is_array($currentOrgUser['permissions'] ?? []) ? ($currentOrgUser['permissions'] ?? []) : []);
 
     if (!$isAdmin) {
@@ -332,7 +333,7 @@ WHERE 1=1";
     
     // [FIX] Multi-tenant isolation for chatbots
     global $currentOrgUser, $currentAdminId, $currentUserRole;
-    $isAdmin = ($currentUserRole === 'admin') || ($currentAdminId === 'admin-001');
+    $isAdmin = ($currentUserRole === 'admin') || is_super_admin();
     
     if (!$isAdmin) {
         $orgScopeAdminId = $currentOrgUser['admin_id'] ?? $currentAdminId;

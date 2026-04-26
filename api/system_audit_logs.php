@@ -1,6 +1,7 @@
 <?php
 // api/system_audit_logs.php
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -27,7 +28,7 @@ if ($method === 'GET') {
         jsonResponse(true, ['logs' => [], 'total' => 100, 'page' => $page, 'hasMore' => false]);
     }
 
-    $isAdmin = (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') || $userId === 'admin-001' || !empty($GLOBALS['current_admin_id']);
+    $isAdmin = (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') || is_super_admin();
 
     try {
         if ($isAdmin) {

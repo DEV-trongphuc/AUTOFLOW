@@ -1298,4 +1298,74 @@
 .pause-on-hover:hover .animate-slide-infinite,
 .pause-on-hover:hover .animate-slide-infinite-reverse {
     animation-play-state: paused;
-}
+}
+/* =========================================
+   DOMATION FULLSTACK: UI/UX TINH T? (REFINEMENTS)
+   ========================================= */
+
+/* 1. Mu?t mà khi cu?n trang (Smooth Scrolling) */
+html {
+    scroll-behavior: smooth;
+}
+
+/* 2. Màu bôi den van b?n hi?n d?i (Selection Color) */
+::selection {
+    background-color: #3b82f6; /* Tailwind blue-500 */
+    color: #ffffff;
+}
+
+/* 3. Focus g?n gàng khi dùng phím Tab (Accessibility) */
+*:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* 4. Hi?u ?ng Card N?i T? Tính (Magnetic Dashboard Cards) */
+/* Thêm class 'card-magnetic' vào các div b?c bi?u d? ho?c Widget */
+.card-magnetic {
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform, box-shadow;
+}
+.card-magnetic:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08);
+    border-color: #e2e8f0;
+}
+
+/* 5. Gradient Text bóng b?y cho Tiêu d? Dashboard */
+.text-gradient-premium {
+    background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.dark .text-gradient-premium {
+    background: linear-gradient(135deg, #f8fafc 0%, #60a5fa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* =========================================
+   NPROGRESS GLOBAL ROUTER STYLES (PREMIUM)
+   ========================================= */
+#nprogress .bar {
+    background: linear-gradient(to right, #f59e0b, #f97316, #ef4444) !important;
+    height: 3px !important;
+}
+
+#nprogress .peg {
+    box-shadow: 0 0 10px #f97316, 0 0 5px #ef4444 !important;
+}
+
+#nprogress .spinner-icon {
+    border-top-color: #f97316 !important;
+    border-left-color: #f97316 !important;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}

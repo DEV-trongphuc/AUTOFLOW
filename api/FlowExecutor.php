@@ -1416,9 +1416,9 @@ class FlowExecutor
                                     }
 
                                     $this->pdo->prepare(
-                                        "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, step_type, scheduled_at, status, created_at, updated_at, last_step_at)
-                                         VALUES (?, ?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW())"
-                                    )->execute([$subscriberId, $linkedId, $lStart, $lStartType, $linkedInitialSchedule]);
+                                        "INSERT INTO subscriber_flow_states (subscriber_id, workspace_id, flow_id, step_id, step_type, scheduled_at, status, created_at, updated_at, last_step_at)
+                                         VALUES (?, ?, ?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW())"
+                                    )->execute([$subscriberId, $subscriber['workspace_id'] ?? 1, $linkedId, $lStart, $lStartType, $linkedInitialSchedule]);
                                     $newQ = $this->pdo->lastInsertId();
                                     if ($newQ) {
                                         dispatchFlowWorker($this->pdo, 'flows', ['priority_queue_id' => $newQ, 'subscriber_id' => $subscriberId, 'priority_flow_id' => $linkedId]);

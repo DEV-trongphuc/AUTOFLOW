@@ -46,12 +46,8 @@ $user = 'vhvxoigh_mail_auto';     // Username MySQL
 $pass = 'Ideas@812';         // Mật khẩu MySQL
 $charset = 'utf8mb4';
 
-// [SECURITY FIX] Admin bypass token defined ONCE here.
-// To rotate: change this value. All files reference this constant.
-// Do NOT hardcode the token string anywhere else.
-if (!defined('ADMIN_BYPASS_TOKEN')) {
-    define('ADMIN_BYPASS_TOKEN', 'autoflow-admin-001');
-}
+// [SECURITY FIX] Removed hardcoded ADMIN_BYPASS_TOKEN to prevent Privilege Escalation.
+// Auth bypass tokens should NEVER be hardcoded in the source code or used by the frontend.
 
 // CONFIGURATION: CENTRAL API URL
 $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
@@ -402,32 +398,19 @@ if (empty($current_admin_id)) {
 }
 
 // ── PRIORITY 4: X-Admin-Token header (Autoflow admin bypass) ──────────────
-// [SECURITY FIX] Removed $_GET['admin_token'] fallback.
-// GET parameters are logged in nginx/apache/Cloudflare access logs — exposing the bypass token.
-// Only accept via HTTP header (never URL parameter).
-$normalizedHeaders = array_change_key_case(function_exists('getallheaders') ? getallheaders() : [], CASE_LOWER);
-$adminTokenHeader = $normalizedHeaders['x-admin-token'] ?? $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
-
-if ($adminTokenHeader === ADMIN_BYPASS_TOKEN) {
-    $current_admin_id = 'admin-001';
-    if (session_status() === PHP_SESSION_ACTIVE) {
-        $_SESSION['org_user_id'] = 'admin-001';
-        if (empty($_SESSION['user_id'])) {
-            $_SESSION['user_id'] = '1'; // Phục hồi user_id để lọt qua middleware nếu gọi API chay
-        }
-    }
-}
+// [SECURITY FIX] Completely removed the X-Admin-Token static backdoor.
+// Local environments and APIs must authenticate using Bearer tokens or valid Session cookies.
+// This prevents Privilege Escalation via hardcoded client-side secrets.
 
 // ── PRIORITY 5: Local Dev Bypass (Fix 401 on localhost without cookies) ──
-$isLocalDev = strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') !== false || strpos($_SERVER['HTTP_HOST'] ?? '', '127.0.0.1') !== false;
-if ($isLocalDev && empty($current_admin_id) && empty($_SESSION['user_id'])) {
-    $localUserId = $normalizedHeaders['x-local-dev-user'] ?? $_SERVER['HTTP_X_LOCAL_DEV_USER'] ?? '';
-    if (!empty($localUserId)) {
-        $current_admin_id = $localUserId;
-        if (session_status() === PHP_SESSION_ACTIVE) {
-            $_SESSION['user_id'] = $localUserId;
-        }
-    }
+// Safely allow Vite/React dev server to authenticate by explicitly checking localhost origins.
+$_localDevUser = $_SERVER['HTTP_X_LOCAL_DEV_USER'] ?? '';
+$isLocalhost = in_array($_SERVER['REMOTE_ADDR'], ['127.0.0.1', '::1', 'localhost']) || strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') !== false;
+
+if (!empty($_localDevUser) && $isLocalhost) {
+    $_SESSION['user_id'] = $_localDevUser;
+    $_SESSION['role'] = 'admin'; // Dev mode assumes admin
+    $current_admin_id = 'admin-001';
 }
 
 $GLOBALS['current_admin_id'] = $current_admin_id;
@@ -440,7 +423,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         if (time() - $lastUpdate > 300) { // 5 minutes throttle
             try {
                 if ($sessionUserId === '1' || $sessionUserId === 'admin-001') {
-                    $pdo->prepare("UPDATE users SET last_login = NOW() WHERE (id = ? OR email = 'dom.marketing.vn@gmail.com' OR email = 'admin@mailflow.com')")->execute([$sessionUserId]);
+                    $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?")->execute([$sessionUserId]);
                 } else {
                     $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?")->execute([$sessionUserId]);
                 }

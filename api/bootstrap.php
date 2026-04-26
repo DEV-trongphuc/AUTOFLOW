@@ -8,6 +8,7 @@
  */
 
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 require_once 'flow_helpers.php';
 require_once 'segment_helper.php';
 

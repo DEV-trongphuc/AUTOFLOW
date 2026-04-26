@@ -500,10 +500,10 @@ const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onBack, onComplet
                                 {/* Sources */}
                                 <div className="flex -space-x-2">
                                     <div className="w-8 h-8 rounded-full border-2 border-white bg-slate-50 flex items-center justify-center overflow-hidden shadow-sm z-[2] relative" title="Facebook Lead Ads">
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Logo_de_Facebook.png/1200px-Logo_de_Facebook.png" className="w-5 h-5 object-contain" alt="Facebook" />
+                                        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" className="w-5 h-5 object-contain" alt="Facebook" />
                                     </div>
                                     <div className="w-8 h-8 rounded-full border-2 border-white bg-slate-50 flex items-center justify-center overflow-hidden shadow-sm z-[1] relative" title="Google Forms">
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Google_Forms_logo_%282014-2020%29.svg/1489px-Google_Forms_logo_%282014-2020%29.svg.png" className="w-5 h-5 object-contain" alt="Google Forms" />
+                                        <img src="https://www.torontomu.ca/content/dam/google/teach-with-google-apps/quizzes-surveys/create-google-form/google-form.png" className="w-5 h-5 object-contain" alt="Google Forms" />
                                     </div>
                                 </div>
 
@@ -619,6 +619,31 @@ const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onBack, onComplet
                                             </button>
                                         ))}
                                     </div>
+
+                                    {config.syncInterval === '1440' && !config.isCustomInterval && (
+                                        <div className="flex items-center gap-3 p-3 bg-amber-50/50 rounded-2xl border border-amber-100 animate-in slide-in-from-top-2 mt-2">
+                                            <div className="flex-1 space-y-1">
+                                                <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest">Giờ chạy cố định (Tùy chọn)</p>
+                                                <div className="relative">
+                                                    <select
+                                                        className="w-full h-9 bg-white border border-amber-200 rounded-lg px-3 text-xs font-bold text-amber-900 focus:border-[#ffa900] outline-none"
+                                                        value={config.syncTimeOfDay || ''}
+                                                        onChange={(e) => setConfig({ ...config, syncTimeOfDay: e.target.value })}
+                                                    >
+                                                        <option value="">Tự động (Sau 24h kể từ lần cuối)</option>
+                                                        {Array.from({ length: 24 }).map((_, i) => (
+                                                            <option key={i} value={`${i.toString().padStart(2, '0')}:00`}>
+                                                                {i.toString().padStart(2, '0')}:00
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div className="w-1/2 text-[9px] text-amber-600/80 leading-tight font-medium">
+                                                Mặc định hệ thống sẽ đếm lùi 24h. Nếu chọn giờ cố định, hệ thống sẽ ghim đồng bộ 1 lần duy nhất vào đúng khung giờ này mỗi ngày.
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {config.isCustomInterval && (
                                         <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 animate-in slide-in-from-top-2">
@@ -840,7 +865,7 @@ const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onBack, onComplet
                                             Nếu một liên hệ từ Google Sheets không có Email nhưng có Số điện thoại, hệ thống sẽ tự động tạo Email ảo dạng <code>phone@no-email.domation</code> để định danh.
                                         </p>
                                     </div>
-                                    <div 
+                                    <div
                                         onClick={() => setConfig({ ...config, createVirtualEmail: !config.createVirtualEmail })}
                                         className={`relative w-14 h-8 rounded-full transition-all duration-300 ${config.createVirtualEmail ? 'bg-orange-500' : 'bg-slate-200'}`}
                                     >

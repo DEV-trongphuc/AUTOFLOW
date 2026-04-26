@@ -40,9 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['route']) && $_GET['rout
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443)
         ? "https://" : "http://";
     $host = $_SERVER['HTTP_HOST'];
-    $baseUrl = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false)
-        ? "https://automation.ideas.edu.vn/uploadss/"
-        : $protocol . $host . "/uploadss/";
+    $baseUrl = $protocol . $host . "/uploadss/";
 
     $allowed = ['jpg','jpeg','png','gif','webp','pdf','doc','docx','xls','xlsx','zip','txt','csv'];
     $files = [];
@@ -136,9 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['route']) && $_GET['rou
     if (rename($oldPath, $newPath)) {
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
         $host = $_SERVER['HTTP_HOST'];
-        $baseUrl = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false)
-            ? "https://automation.ideas.edu.vn/uploadss/"
-            : $protocol . $host . "/uploadss/";
+        $baseUrl = $protocol . $host . "/uploadss/";
         jsonResponse(true, [
             'uniqueName' => $newUniqueName,
             'name'       => $safeLabelBase . '.' . $origExt,
@@ -217,11 +213,7 @@ $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVE
 $host = $_SERVER['HTTP_HOST'];
 // If on localhost but wanting external compatibility, one might hardcode but usually $host is fine if tunneled.
 // However, the system seems to prefer automation.ideas.edu.vn as the primary domain.
-if (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false) {
-    $baseUrl = "https://automation.ideas.edu.vn/uploadss/";
-} else {
     $baseUrl = $protocol . $host . "/uploadss/";
-}
 
 $publicUrl = $baseUrl . $uniqueName;
 

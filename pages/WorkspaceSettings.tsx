@@ -246,7 +246,7 @@ const WorkspaceSettings: React.FC = () => {
         });
     };
 
-    if (!can('manage_users') && !can('manage_workspaces') && user?.id !== 'admin-001' && user?.email !== 'dom.marketing.vn@gmail.com') {
+    if (!can('manage_users') && !can('manage_workspaces')) {
         return (
             <div className="flex flex-col items-center justify-center py-32 text-slate-400 bg-slate-50/50 rounded-[32px] border-2 border-dashed border-slate-100 italic mx-8 mt-12">
                 <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4">
@@ -332,13 +332,13 @@ const WorkspaceSettings: React.FC = () => {
                                                     value={m.role_id}
                                                     options={roles}
                                                     onChange={(newVal: number) => confirmUpdateRole(m.mapping_id, newVal)}
-                                                    disabled={!can('manage_users') || user?.id === m.user_id.toString() || m.email === 'dom.marketing.vn@gmail.com'}
+                                                    disabled={!can('manage_users') || user?.id === m.user_id.toString()}
                                                 />
                                             </td>
                                             <td className="px-6 py-5 text-right">
                                                 <button
                                                     onClick={() => confirmRemoveUser(m.mapping_id, m.full_name)}
-                                                    disabled={!can('manage_users') || user?.id === m.user_id.toString() || m.email === 'dom.marketing.vn@gmail.com'}
+                                                    disabled={!can('manage_users') || user?.id === m.user_id.toString()}
                                                     className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all disabled:opacity-30 disabled:cursor-not-allowed group/btn hover:scale-105 active:scale-95"
                                                     title="Xóa nhân sự khỏi Workspace"
                                                 >

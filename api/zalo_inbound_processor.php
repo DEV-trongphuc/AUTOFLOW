@@ -113,7 +113,14 @@ function handleZaloInboundJob($pdo, $payload)
             // so that Unified Chat can still load and display the customer's message to human staff.
             $hasActiveAiScenario = (bool)$aiPropId;
             if (!$aiPropId) {
-                $stmtFallback = $pdo->prepare("SELECT id FROM ai_chatbots WHERE workspace_id = ? LIMIT 1");
+                $stmtFallback = $pdo->prepare("
+                    SELECT c.id 
+                    FROM ai_chatbots c
+                    JOIN ai_chatbot_categories cat ON c.category_id = cat.id
+                    JOIN workspace_users wu ON wu.user_id = cat.admin_id
+                    WHERE wu.workspace_id = ? 
+                    LIMIT 1
+                ");
                 $stmtFallback->execute([$oaConfig['workspace_id']]);
                 $aiPropId = $stmtFallback->fetchColumn() ?: 'fallback_zalo_' . $oaConfigId;
             }

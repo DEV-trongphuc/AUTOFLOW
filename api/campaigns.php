@@ -1500,7 +1500,7 @@ switch ($method) {
     ?, NOW())";
             $stmt = $pdo->prepare($sql);
             
-            $isAdmin = ($GLOBALS['current_admin_id'] === 'admin-001');
+            $isAdmin = is_super_admin();
             if (!$isAdmin && in_array(strtolower($data['status'] ?? ''), ['sending', 'scheduled', 'sent'])) {
                 $data['status'] = 'draft';
             }
@@ -1571,7 +1571,7 @@ switch ($method) {
             $currentCampaign = $stmtCurrent->fetch();
             $currentStatus = strtolower($currentCampaign['status'] ?? 'draft');
 
-            $isAdmin = ($GLOBALS['current_admin_id'] === 'admin-001');
+            $isAdmin = is_super_admin();
             if (!$isAdmin) {
                 if (in_array($currentStatus, ['sending', 'scheduled', 'sent'])) {
                     if (strtolower($data['status'] ?? '') !== 'paused') {

@@ -7,6 +7,7 @@ set_time_limit(0);
 ignore_user_abort(true);
 ini_set('memory_limit', '1024M');
 require_once 'ai_org_middleware.php';
+require_once 'auth_middleware.php';
 
 // 1. SECURITY: Handle Authentication
 $action = $_POST['action'] ?? ($_GET['action'] ?? '');
@@ -30,7 +31,7 @@ if (!$isPublicAction) {
     $userId = $currentOrgUser['id'] ?? '';
     $userRole = $currentOrgUser['role'] ?? '';
 
-    $isSuperAdmin = ($userId === 'admin-001');
+    $isSuperAdmin = is_super_admin();
     $hasAdminRole = in_array($userRole, ['admin', 'assistant', 'super_admin']);
 
     if (!$isSuperAdmin && !$hasAdminRole) {
@@ -95,7 +96,7 @@ if (!$isPublicAction) {
         }
 
         if ($orgUserId) {
-            if ($orgUserId === 'admin-001') {
+            if ($orgUserId === 'admin-001' || is_super_admin()) {
                 $currentOrgUser = [
                     'id' => 'admin-001',
                     'role' => 'admin',

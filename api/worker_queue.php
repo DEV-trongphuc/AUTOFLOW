@@ -73,6 +73,9 @@ $pdo->prepare("UPDATE ai_pdf_chunk_results SET status = 'pending', error_message
 $isSkipLockedSupported = isDatabaseSkipLockedSupported($pdo);
 $skipLockedClause = $isSkipLockedSupported ? 'FOR UPDATE SKIP LOCKED' : 'FOR UPDATE';
 
+// [BUG FIX] Initialize $maxJobs which was previously undefined, causing LIMIT syntax errors
+$maxJobs = (int)($_GET['max_jobs'] ?? 100);
+
 $pdo->beginTransaction();
 try {
     $stmt = $pdo->prepare("
@@ -544,7 +547,13 @@ foreach ($jobs as $jobItem) {
     
     // [OPTIMIZATION] Explicit Garbage Collection (Zero-Leak Memory Profile)
     unset($payload, $jobItem, $jobType, $jobSuccess, $jobError, $res, $trainRes, $multiResults, $pageRanges, $pendingChunks, $buttons, $attachment, $nextPayload);
+    
+    // Ép giải phóng bộ nhớ để tránh tràn RAM (Memory Leak)
+    if ($jobsProcessed % 10 === 0) {
+        gc_collect_cycles();
+    }
 }
+gc_collect_cycles();
 
 // 5. Automatic Cleanup (Self-Maintenance, 1% chance) to prevent table bloat
 if (rand(1, 100) === 1) {

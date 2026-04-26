@@ -1,11 +1,8 @@
 <?php
 require_once 'db_connect.php';
-// Auth check bypass for local/admin
-$headers = function_exists('getallheaders') ? array_change_key_case(getallheaders(), CASE_LOWER) : [];
-$token = $headers['x-admin-token'] ?? $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
-
-if ($token !== 'autoflow-admin-001' && php_sapi_name() !== 'cli') {
-    die("Unauthorized");
+if (php_sapi_name() !== 'cli') {
+    http_response_code(403);
+    die("Unauthorized: This script can only be run from the command line (CLI).");
 }
 
 try {

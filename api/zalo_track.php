@@ -30,8 +30,7 @@ if ($zaloUserId) {
         // Find Subscriber ID
         $stmtS = $pdo->prepare("SELECT id FROM zalo_subscribers WHERE zalo_user_id = ? LIMIT 1");
         $stmtS->execute([$zaloUserId]);
-        $workspace_id = $pdo->query("SELECT workspace_id FROM subscribers WHERE id = '" . $subId . "' LIMIT 1")->fetchColumn();
-                $subId = $stmtS->fetchColumn();
+        $subId = $stmtS->fetchColumn();
 
         if ($subId) {
             // [SYNCED] Use processTrackingEvent to handle activity logging, scoring, AND stats updates (Campaigns/Flows)
@@ -44,6 +43,11 @@ if ($zaloUserId) {
             $mainSubId = $subRow['subscriber_id'] ?? null;
 
             if ($mainSubId) {
+                // Fetch workspace_id securely using prepared statement
+                $stmtWs = $pdo->prepare("SELECT workspace_id FROM subscribers WHERE id = ? LIMIT 1");
+                $stmtWs->execute([$mainSubId]);
+                $workspace_id = $stmtWs->fetchColumn();
+
                 // Determine Campaign/Flow context from scenarioId if possible
                 $flowId = null;
                 $campaignId = null;

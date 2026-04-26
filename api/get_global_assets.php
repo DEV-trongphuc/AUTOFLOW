@@ -21,7 +21,7 @@ $current_admin_id = $GLOBALS['current_admin_id'] ?? $currentOrgUser['id'];
 // ORG ISOLATION: Determine if this is the true super-admin (admin-001) or an org-level admin.
 // Only admin-001 (Autoflow platform owner) sees ALL assets across all orgs.
 // All other admins, even role='admin', are scoped to their own org via admin_id.
-$isSuperAdmin = ($current_admin_id === 'admin-001');
+$isSuperAdmin = is_super_admin();
 
 try {
     if ($action === 'list') {
@@ -45,12 +45,20 @@ try {
 
         if (!empty($_GET['group_id'])) {
             // Group Level: Broad filter for everything in this category (All bots/conversations) + Truly Global (property_id IS NULL)
-            $groupId = $_GET['group_id'];
+            $groupId = (int)$_GET['group_id'];
             $where[] = "(ga.property_id IN (SELECT id FROM ai_chatbots WHERE category_id = ?) OR ga.property_id IS NULL)";
             $params[] = $groupId;
         } elseif ($property_id) {
             // Specific Bot Level: Show assets for this bot OR its category OR truly global
-            $where[] = "(ga.property_id = ? OR ga.property_id IN (SELECT id FROM ai_chatbots WHERE category_id = (SELECT category_id FROM ai_chatbots WHERE id = ?)) OR ga.property_id IS NULL)";
+            // [OPTIMIZATION] Flattened subquery for category-level assets
+            $where[] = "(ga.property_id = ? 
+                        OR ga.property_id IN (
+                            SELECT b2.id 
+                            FROM ai_chatbots b1 
+                            JOIN ai_chatbots b2 ON b1.category_id = b2.category_id 
+                            WHERE b1.id = ?
+                        ) 
+                        OR ga.property_id IS NULL)";
             $params[] = $property_id;
             $params[] = $property_id;
         } else {

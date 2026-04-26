@@ -9,6 +9,9 @@ import ItemsPerPageSelector from '../ItemsPerPageSelector';
 import BulkActionsToolbar from '../BulkActionsToolbar';
 import Skeleton from '../../common/Skeleton';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { ContextMenu } from '../../common/ContextMenu';
+import { PremiumEmptyState } from '../../common/PremiumEmptyState';
+import { Edit, Tag, PlusSquare, Trash2, Search as SearchIcon } from 'lucide-react';
 
 interface ContactsTabProps {
     loading?: boolean;
@@ -41,10 +44,11 @@ interface ContactRowProps {
     renderJoinedDate: (dateStr: string) => React.ReactNode;
     visibleColumns: string[];
     'data-index'?: number;
+    onContextMenu?: (e: React.MouseEvent, sub: Subscriber) => void;
 }
 
 const ContactRow = React.memo(React.forwardRef<HTMLTableRowElement, ContactRowProps>(({
-    sub, isSelected, onToggle, onSelect, renderLastActive, renderJoinedDate, visibleColumns, 'data-index': dataIndex
+    sub, isSelected, onToggle, onSelect, renderLastActive, renderJoinedDate, visibleColumns, 'data-index': dataIndex, onContextMenu
 }, ref) => {
     const getCleanName = (name: any) => {
         if (!name || name === 0 || name === '0') return '';
@@ -64,6 +68,7 @@ const ContactRow = React.memo(React.forwardRef<HTMLTableRowElement, ContactRowPr
             data-index={dataIndex}
             className={`hover:bg-slate-50 transition-colors group cursor-pointer ${isSelected ? 'bg-orange-50/20' : ''}`}
             onClick={() => onSelect(sub)}
+            onContextMenu={onContextMenu ? (e) => onContextMenu(e, sub) : undefined}
         >
             <td className="px-6 py-4 pl-8" onClick={(e) => onToggle(sub.id, e)}>
                 <div className="relative flex items-center justify-center">
@@ -323,8 +328,71 @@ const ContactsTab = React.memo<ContactsTabProps>(({
         if (isGlobalSelected) onToggleGlobalSelection(false);
     }, [onToggleSelection, isGlobalSelected, onToggleGlobalSelection]);
 
+    // --- CONTEXT MENU STATE ---
+    const [contextMenu, setContextMenu] = React.useState<{ x: number, y: number, sub: Subscriber } | null>(null);
+
+    const handleContextMenu = React.useCallback((e: React.MouseEvent, sub: Subscriber) => {
+        e.preventDefault();
+        setContextMenu({ x: e.clientX, y: e.clientY, sub });
+    }, []);
+
+    const closeContextMenu = React.useCallback(() => {
+        setContextMenu(null);
+    }, []);
+
     return (
         <>
+            {contextMenu && (
+                <ContextMenu
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    onClose={closeContextMenu}
+                    items={[
+                        {
+                            id: 'edit',
+                            label: 'Chỉnh sửa',
+                            icon: Edit,
+                            onClick: () => onSelectSubscriber(contextMenu.sub)
+                        },
+                        {
+                            id: 'add-tag',
+                            label: 'Thêm Tag',
+                            icon: Tag,
+                            onClick: () => {
+                                // Select this single item and trigger bulk tag
+                                if (!selectedIds.has(contextMenu.sub.id)) {
+                                    onToggleSelection(contextMenu.sub.id);
+                                }
+                                setTimeout(() => onBulkTag(), 100);
+                            }
+                        },
+                        {
+                            id: 'add-list',
+                            label: 'Thêm vào Danh sách',
+                            icon: PlusSquare,
+                            onClick: () => {
+                                if (!selectedIds.has(contextMenu.sub.id)) {
+                                    onToggleSelection(contextMenu.sub.id);
+                                }
+                                setTimeout(() => onBulkAddToList(), 100);
+                            }
+                        },
+                        {
+                            id: 'delete',
+                            label: 'Xóa liên hệ',
+                            icon: Trash2,
+                            danger: true,
+                            divider: true,
+                            onClick: () => {
+                                if (!selectedIds.has(contextMenu.sub.id)) {
+                                    onToggleSelection(contextMenu.sub.id);
+                                }
+                                setTimeout(() => onBulkDelete(), 100);
+                            }
+                        }
+                    ]}
+                />
+            )}
             <div ref={parentRef} className="overflow-x-auto overflow-y-auto max-h-[600px] min-h-[400px]">
                 <table className="w-full relative">
                     <thead className="bg-slate-50/80 border-b border-slate-200 text-left sticky top-0 z-20 backdrop-blur-sm">
@@ -397,6 +465,7 @@ const ContactsTab = React.memo<ContactsTabProps>(({
                                             visibleColumns={visibleColumns}
                                             ref={rowVirtualizer.measureElement}
                                             data-index={virtualRow.index}
+                                            onContextMenu={handleContextMenu}
                                         />
                                     );
                                 })}
@@ -404,7 +473,20 @@ const ContactsTab = React.memo<ContactsTabProps>(({
                             </>
                         )}
                         {!loading && subscribers.length === 0 && (
-                            <tr><td colSpan={visibleColumns.length + 2} className="py-12 text-center text-slate-400 text-sm">{"Kh\u00F4ng t\u00ECm th\u1EA5y li\u00EAn h\u1EC7 n\u00E0o."}</td></tr>
+                            <tr>
+                                <td colSpan={visibleColumns.length + 2} className="py-12">
+                                    <PremiumEmptyState 
+                                        icon={SearchIcon}
+                                        title="Chưa có dữ liệu Khách hàng"
+                                        description="Bạn chưa có liên hệ nào trong hệ thống, hoặc không có liên hệ nào phù hợp với bộ lọc hiện tại. Hãy đồng bộ từ Google Sheets hoặc Zalo."
+                                        primaryAction={{
+                                            label: 'Đồng bộ Khách hàng',
+                                            icon: PlusSquare,
+                                            onClick: () => { /* Typically handled by parent, or just close filters */ }
+                                        }}
+                                    />
+                                </td>
+                            </tr>
                         )}
                     </tbody>
                 </table>

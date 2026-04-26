@@ -154,7 +154,11 @@ try {
                     } else {
                         break; // No more found
                     }
-                    if (count($subs) < $BATCH_SIZE)
+                    $isDone = (count($subs) < $BATCH_SIZE);
+                    // [OPTIMIZATION] Dọn rác bộ nhớ sau mỗi vòng lặp 500 records
+                    unset($subs, $stmt, $idParams, $wheres, $whereSql, $sql);
+                    gc_collect_cycles();
+                    if ($isDone)
                         break;
                 } while (true);
             }
@@ -295,7 +299,11 @@ try {
                     } else {
                         break;
                     }
-                    if (count($subs) < $BATCH_SIZE)
+                    $isDone = (count($subs) < $BATCH_SIZE);
+                    // [OPTIMIZATION] Dọn rác bộ nhớ
+                    unset($subs, $stmt, $idParams, $wheres, $sourceWheres, $totalWheres, $whereSql, $sql);
+                    gc_collect_cycles();
+                    if ($isDone)
                         break;
                 } while (true);
             }
@@ -377,7 +385,11 @@ try {
                     } else {
                         break;
                     }
-                    if (count($subs) < $BATCH_SIZE)
+                    $isDone = (count($subs) < $BATCH_SIZE);
+                    // [OPTIMIZATION] Dọn rác bộ nhớ
+                    unset($subs, $stmt, $idParams, $wheres, $sourceWheres, $totalWheres, $whereSql, $sql);
+                    gc_collect_cycles();
+                    if ($isDone)
                         break;
                 } while (true);
             }
@@ -428,7 +440,11 @@ try {
                 } else {
                     break;
                 }
-                if (count($subs) < $BATCH_SIZE)
+                $isDone = (count($subs) < $BATCH_SIZE);
+                // [OPTIMIZATION] Dọn rác bộ nhớ
+                unset($subs, $actRows, $stmt, $sql);
+                gc_collect_cycles();
+                if ($isDone)
                     break;
             } while (true);
         }

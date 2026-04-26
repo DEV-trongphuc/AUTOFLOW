@@ -1,10 +1,10 @@
 <?php
 require_once __DIR__ . '/db_connect.php';
 
-// Temporarily bypass all auth checks for this one-time fix script
-// if ($token !== 'autoflow-admin-001' && php_sapi_name() !== 'cli' && !isset($_GET['run'])) {
-//     die("Unauthorized");
-// }
+if (php_sapi_name() !== 'cli') {
+    http_response_code(403);
+    die("Unauthorized: This script can only be run from the command line (CLI).");
+}
 
 try {
     echo "Analyzing orphaned subscribers...<br>";

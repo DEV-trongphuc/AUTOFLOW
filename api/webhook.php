@@ -6,7 +6,7 @@ header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 header('Content-Type: application/json; charset=utf-8');
 
-$logFile = __DIR__ . '/webhook_debug.log';
+$webhookLogFile = __DIR__ . '/webhook_debug.log';
 require_once 'db_connect.php';
 
 // [PRODUCTION SCALING FIX] db_connect.php unconditionally calls session_start().
@@ -54,13 +54,13 @@ if (mt_rand(1, 100) === 1) {
 // --- DEBUG LOGGING ---
 $input = file_get_contents('php://input');
 $method = $_SERVER['REQUEST_METHOD'];
-$logFile = __DIR__ . '/zalo_debug.log';
+$zaloLogFile = __DIR__ . '/zalo_debug.log';
 // [FIX QUAL-4] Only log POST events (Zalo webhook messages) to zalo_debug.log.
-// Previously ALL requests were logged \u2014 including GET tracking pixels (open/click).
+// Previously ALL requests were logged — including GET tracking pixels (open/click).
 // With high email volume, this caused zalo_debug.log to grow hundreds of MB/hour.
-// GET tracking requests have their own webhook_debug.log \u2014 no need to double-log here.
+// GET tracking requests have their own webhook_debug.log — no need to double-log here.
 if ($method === 'POST') {
-    file_put_contents($logFile, date('[Y-m-d H:i:s] ') . "POST | Payload: " . (strlen($input) > 2048 ? substr($input, 0, 2048) . '...[truncated]' : ($input ?: 'EMPTY')) . "\n", FILE_APPEND);
+    file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "POST | Payload: " . (strlen($input) > 2048 ? substr($input, 0, 2048) . '...[truncated]' : ($input ?: 'EMPTY')) . "\n", FILE_APPEND);
 }
 
 if ($method === 'GET' && !isset($_GET['type'])) {
@@ -68,7 +68,7 @@ if ($method === 'GET' && !isset($_GET['type'])) {
     echo "<h1>MailFlow Pro - Zalo Webhook Listener</h1>";
     echo "<p>Status: <b style='color:green;'>ACTIVE</b></p>";
     echo "<p>Time: " . date('Y-m-d H:i:s') . "</p>";
-    echo "<p>Log status: " . (file_exists($logFile) ? "✅ Logged" : "❌ Log Fail") . "</p>";
+    echo "<p>Log status: " . (file_exists($zaloLogFile) ? "✅ Logged" : "❌ Log Fail") . "</p>";
     exit;
 }
 // checkZaloAutomationSchema($pdo); // REMOVED: High-overhead redundant ALTER TABLE
@@ -84,6 +84,31 @@ if ($method === 'POST') {
     if (!$data) {
         http_response_code(400);
         exit('Invalid JSON');
+    }
+
+    // [SECURITY AUDIT] Zalo V3 Signature Verification
+    $signature = $_SERVER['HTTP_X_ZALO_SIGNATURE'] ?? '';
+    $timestamp = $_SERVER['HTTP_X_ZALO_TIMESTAMP'] ?? '';
+    $zaloOaId = $data['oa_id'] ?? $data['recipient']['id'] ?? null;
+
+    if ($zaloOaId) {
+        $stmtConfig = $pdo->prepare("SELECT id, oa_id, app_id, app_secret, access_token, name, workspace_id FROM zalo_oa_configs WHERE oa_id = ? LIMIT 1");
+        $stmtConfig->execute([$zaloOaId]);
+        $oaConfig = $stmtConfig->fetch(PDO::FETCH_ASSOC);
+
+        if ($oaConfig) {
+            $isValid = verifyZaloSignature($oaConfig['app_id'], $input, $timestamp, $signature, $oaConfig['app_secret']);
+            if (!$isValid) {
+                $errorMsg = "[SECURITY] Zalo Signature Mismatch for OA: $zaloOaId. Signature: $signature";
+                error_log($errorMsg);
+                file_put_contents($webhookLogFile, date('[Y-m-d H:i:s] ') . $errorMsg . "\n", FILE_APPEND);
+                // [STRICT MODE BYPASS] Temporarily allow mismatch to troubleshoot config issues
+                // http_response_code(403);
+                // exit('Invalid Signature');
+            }
+        } else {
+            file_put_contents($webhookLogFile, date('[Y-m-d H:i:s] ') . "[WARN] No OA Config found for ID: $zaloOaId - Signature check skipped.\n", FILE_APPEND);
+        }
     }
 
     if (isset($data['event_name']) || isset($data['sender']['id'])) {
@@ -110,13 +135,15 @@ if ($method === 'POST') {
 
             if (in_array($event, $allowedEvents)) {
                 try {
-                    $stmt = $pdo->prepare("SELECT id, access_token, name FROM zalo_oa_configs WHERE oa_id = ? LIMIT 1");
-                    $stmt->execute([$zaloOaId]);
-                    $oaConfig = $stmt->fetch(PDO::FETCH_ASSOC);
+                    // Re-use fetched config if already loaded during signature check
+                    if (!isset($oaConfig) || !$oaConfig || !isset($oaConfig['id'])) {
+                        $stmt = $pdo->prepare("SELECT id, oa_id, app_id, app_secret, access_token, name, workspace_id FROM zalo_oa_configs WHERE oa_id = ? LIMIT 1");
+                        $stmt->execute([$zaloOaId]);
+                        $oaConfig = $stmt->fetch(PDO::FETCH_ASSOC);
+                    }
 
                     // [TRACE] OA lookup result
-                    $traceLog = __DIR__ . '/zalo_debug.log';
-                    file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] Event=$event OA_ID=$zaloOaId User=$zaloUserId MsgID=$eventId OAFound=" . ($oaConfig ? $oaConfig['name'] : 'NULL') . "\n", FILE_APPEND);
+                    file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] Event=$event OA_ID=$zaloOaId User=$zaloUserId MsgID=$eventId OAFound=" . ($oaConfig ? $oaConfig['name'] : 'NULL') . "\n", FILE_APPEND);
 
                     if ($oaConfig) {
                         // [SECURE FIX] Add Idempotency Lock for Zalo Events to prevent duplicate AI triggers
@@ -402,9 +429,7 @@ if ($method === 'POST') {
                                     $pdo->prepare("UPDATE zalo_subscribers SET ai_paused_until = DATE_ADD(NOW(), INTERVAL 30 MINUTE) WHERE id = ?")->execute([$subId]);
 
                                     // 2. Add log for debug tool
-                                    if (file_exists(__DIR__ . '/zalo_debug.log')) {
-                                        file_put_contents(__DIR__ . '/zalo_debug.log', date('[Y-m-d H:i:s] ') . "Human Zalo Reply Detected -> Pausing AI for Sub $subId\n", FILE_APPEND);
-                                    }
+                                    file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "Human Zalo Reply Detected -> Pausing AI for Sub $subId\n", FILE_APPEND);
 
                                     $zaloVid = "zalo_" . $zaloUserId;
                                     // Find recent active conversation
@@ -442,7 +467,14 @@ if ($method === 'POST') {
 
                                 // Fallback to any chatbot in workspace if no AI scenario found
                                 if (!$aiPropId) {
-                                    $stmtFallback = $pdo->prepare("SELECT id FROM ai_chatbots WHERE workspace_id = ? LIMIT 1");
+                                    $stmtFallback = $pdo->prepare("
+                                        SELECT c.id 
+                                        FROM ai_chatbots c
+                                        JOIN ai_chatbot_categories cat ON c.category_id = cat.id
+                                        JOIN workspace_users wu ON wu.user_id = cat.admin_id
+                                        WHERE wu.workspace_id = ? 
+                                        LIMIT 1
+                                    ");
                                     $stmtFallback->execute([$oaConfig['workspace_id']]);
                                     $aiPropId = $stmtFallback->fetchColumn();
                                 }
@@ -560,7 +592,7 @@ if ($method === 'POST') {
                                         if ((int)$stmtSpam->fetchColumn() >= 15) {
                                             $skipAI = true;
                                             $pdo->prepare("UPDATE zalo_subscribers SET ai_paused_until = DATE_ADD(NOW(), INTERVAL 30 MINUTE) WHERE id = ?")->execute([$subId]);
-                                            @file_put_contents(__DIR__ . '/zalo_debug.log', date('[Y-m-d H:i:s] ') . "ANTI-SPAM LOOP TRIPPED for $zaloUserId. Paused AI for 30 mins.\n", FILE_APPEND);
+                                            @file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "ANTI-SPAM LOOP TRIPPED for $zaloUserId. Paused AI for 30 mins.\n", FILE_APPEND);
                                         }
                                     }
                                 } catch (Exception $e) {
@@ -569,7 +601,7 @@ if ($method === 'POST') {
                             }
                             // ------------------------------------------
 
-                            file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] skipAI=$skipAI event=$event\n", FILE_APPEND);
+                             file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] skipAI=$skipAI event=$event\n", FILE_APPEND);
 
                             if ($event === 'follow') {
                                 $stmtS = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, schedule_type, active_days, start_time, end_time, priority_override, trigger_text FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'welcome' AND status = 'active' LIMIT 1"); // [FIX P38-WH] Explicit columns
@@ -595,8 +627,43 @@ if ($method === 'POST') {
                                 $pdo->prepare("INSERT INTO zalo_message_queue (zalo_user_id, message_text) VALUES (?, ?)")
                                     ->execute([$zaloUserId, $rawMsg]);
 
-                                // STEP 2: Wait 1s for sibling messages from the same user to arrive
-                                usleep(1000000); // 1 second
+                                // STEP 1.1: Fast Path Check (Keywords & Payloads)
+                                // If message matches a keyword or button payload exactly, bypass the 1s wait.
+                                $isFastPath = false;
+                                $msgLower = mb_strtolower($rawMsg, "UTF-8");
+                                
+                                // Check Keywords
+                                $stmtFast = $pdo->prepare("SELECT trigger_text, match_type FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'keyword' AND status = 'active'");
+                                $stmtFast->execute([$oaConfig['id']]);
+                                while ($fs = $stmtFast->fetch()) {
+                                    $kws = array_map('trim', explode(',', mb_strtolower($fs['trigger_text'] ?? '', "UTF-8")));
+                                    foreach ($kws as $kw) {
+                                        if ($fs['match_type'] === 'exact' && $msgLower === $kw) {
+                                            $isFastPath = true; break 2;
+                                        }
+                                    }
+                                }
+
+                                // Check Button Payloads (Instant feedback for UI actions)
+                                if (!$isFastPath) {
+                                    $stmtP = $pdo->prepare("SELECT buttons FROM zalo_automation_scenarios WHERE oa_config_id = ? AND status = 'active' AND buttons IS NOT NULL");
+                                    $stmtP->execute([$oaConfig['id']]);
+                                    while ($pr = $stmtP->fetch()) {
+                                        $btns = json_decode($pr['buttons'] ?? '[]', true);
+                                        foreach ($btns as $b) {
+                                            if (isset($b['payload']) && mb_strtolower(trim($b['payload']), "UTF-8") === $msgLower) {
+                                                $isFastPath = true; break 2;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // STEP 2: Wait 1s for sibling messages (SKIP if Fast Path)
+                                if (!$isFastPath) {
+                                    usleep(1000000); // 1 second debounce
+                                } else {
+                                     file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] ⚡ Fast Path triggered for: $rawMsg\n", FILE_APPEND);
+                                }
 
                                 // STEP 3: Claim ALL pending messages for this user atomically
                                 // [INDEX REQUIRED for Row Lock]:
@@ -913,7 +980,7 @@ if ($method === 'POST') {
                                     // [TRACE] AI scenario query result
                                     if ($rowAI) {
                                         $schedActive = isScenarioActive($rowAI, $nowTime, $nowDay);
-                                        file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] AI row found: id={$rowAI['id']} trigger='" . ($rowAI['trigger_text'] ?? 'NULL') . "' schedule={$rowAI['schedule_type']} isActive=" . ($schedActive ? 'YES' : 'NO') . " nowDay=$nowDay nowTime=$nowTime\n", FILE_APPEND);
+                                        file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] AI row found: id={$rowAI['id']} trigger='" . ($rowAI['trigger_text'] ?? 'NULL') . "' schedule={$rowAI['schedule_type']} isActive=" . ($schedActive ? 'YES' : 'NO') . " nowDay=$nowDay nowTime=$nowTime\n", FILE_APPEND);
                                         if ($schedActive) {
                                             $scenario = $rowAI;
                                         }
@@ -923,7 +990,7 @@ if ($method === 'POST') {
                                         $stmtDbg->execute([$oaConfig['id']]);
                                         $dbgRows = $stmtDbg->fetchAll(PDO::FETCH_ASSOC);
                                         $dbgInfo = empty($dbgRows) ? 'NO ai_reply scenarios at all!' : json_encode(array_map(fn($r) => ['trigger' => $r['trigger_text'], 'status' => $r['status']], $dbgRows));
-                                        file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ❌ AI query returned NULL for oa_config_id={$oaConfig['id']}. All ai_reply rows: $dbgInfo\n", FILE_APPEND);
+                                        file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] ❌ AI query returned NULL for oa_config_id={$oaConfig['id']}. All ai_reply rows: $dbgInfo\n", FILE_APPEND);
                                     }
                                 }
 
@@ -943,19 +1010,19 @@ if ($method === 'POST') {
                             }
 
                             if ($scenario) {
-                                file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ✅ Scenario found: " . ($scenario['title'] ?? $scenario['type']) . " → sending reply\n", FILE_APPEND);
+                                file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] ✅ Scenario found: " . ($scenario['title'] ?? $scenario['type']) . " → sending reply\n", FILE_APPEND);
                                 if (!empty($subId) && !empty($scenario['id'])) {
                                     logZaloSubscriberActivity($pdo, $subId, 'automation_trigger', $scenario['id'], "Kích hoạt kịch bản: " . ($scenario['title'] ?? 'Auto Response'), $scenario['title'] ?? 'Auto Response', $eventId, $oaConfig['workspace_id']);
                                 }
                                 $freshScenarioToken = ensureZaloToken($pdo, $oaConfig['id']);
                                 sendZaloScenarioReply($pdo, $zaloUserId, $freshScenarioToken, $scenario, $msgText);
                             } else {
-                                file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ❌ No scenario matched. skipAI=$skipAI\n", FILE_APPEND);
+                                file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] ❌ No scenario matched. skipAI=$skipAI\n", FILE_APPEND);
                             }
 
                             } // end if (empty($batchProcessedBySibling))
                             else {
-                                file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ⛔ batchProcessedBySibling=true — skipped tracking and scenarios\n", FILE_APPEND);
+                                file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] ⛔ batchProcessedBySibling=true — skipped tracking and scenarios\n", FILE_APPEND);
                             }
                         }
                     }

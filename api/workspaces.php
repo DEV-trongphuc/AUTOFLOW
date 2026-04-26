@@ -11,7 +11,7 @@ if ($method === 'GET' && $action === 'list') {
     // Basic auth check already done by auth_middleware if we use an actual user_id, 
     // but we can enforce it here by making sure session exists.
     $user_id = $_SESSION['user_id'] ?? null;
-    $isSuper = isset($GLOBALS['current_admin_id']) && $GLOBALS['current_admin_id'] === 'admin-001';
+    $isSuper = is_super_admin();
 
     try {
         if ($isSuper) {
@@ -106,7 +106,7 @@ if ($method === 'POST' && $action === 'switch') {
 
     // [P20-C1 SECURITY FIX] Verify the user actually belongs to the requested workspace.
     // Without this check, any authenticated user could switch to any workspace_id.
-    $isSuperSession = isset($GLOBALS['current_admin_id']) && $GLOBALS['current_admin_id'] === 'admin-001';
+    $isSuperSession = is_super_admin();
     if (!$isSuperSession && $user_id) {
         try {
             $stmtCheck = $pdo->prepare("SELECT id FROM workspace_users WHERE workspace_id = ? AND user_id = ? LIMIT 1");
@@ -170,7 +170,7 @@ if ($method === 'POST' && $action === 'update_user') {
     // higher privilege than their own. Roles with lower id= value typically have MORE privilege
     // (e.g. role_id=1 = owner/super_admin). We compare by checking if the target role_id
     // is less than the caller's own minimum role_id in this workspace.
-    $isSuperAdmin = isset($GLOBALS['current_admin_id']) && $GLOBALS['current_admin_id'] === 'admin-001';
+    $isSuperAdmin = is_super_admin();
     if (!$isSuperAdmin) {
         $caller_user_id = $_SESSION['user_id'] ?? null;
         if ($caller_user_id) {

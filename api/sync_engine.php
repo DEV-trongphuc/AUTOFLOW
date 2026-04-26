@@ -113,6 +113,12 @@ class SyncEngine
             $digits = '0' . substr($digits, 2);
         }
 
+        // Fix dropped leading zero from Excel (Vietnamese phones are 10 digits starting with 0)
+        // If it is 9 digits and starts with a valid carrier prefix (3, 5, 7, 8, 9)
+        if (strlen($digits) === 9 && in_array($digits[0], ['3', '5', '7', '8', '9'])) {
+            $digits = '0' . $digits;
+        }
+
         return $digits;
     }
 

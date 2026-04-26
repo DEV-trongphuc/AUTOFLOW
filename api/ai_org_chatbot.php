@@ -218,7 +218,7 @@ try {
 
             // 1. User/Visitor Filter
             // admin-001 and org_user_id '1' are the SAME admin user — always search both
-            $isAdminUser = ($userId === 'admin-001' || $userId === '1');
+            $isAdminUser = ($userId === 'admin-001' || $userId === '1' || is_super_admin());
             if ($userId && $visitorId) {
                 if ($isAdminUser) {
                     $where[] = "(user_id = 'admin-001' OR user_id = '1' OR visitor_id = ?)";
@@ -298,7 +298,7 @@ try {
                 exit;
             }
 
-            $isAdmin = ($GLOBALS['current_admin_id'] === 'admin-001' && !$requestingOrgUserId);
+            $isAdmin = (($GLOBALS['current_admin_id'] === 'admin-001' || is_super_admin()) && !$requestingOrgUserId);
             $hasAccess = $isAdmin;
             if (!$hasAccess) {
                 if ($requestingOrgUserId) {
@@ -358,7 +358,7 @@ try {
                 // Other users can only see their own conversations (matched by user_id or visitor_id)
                 $convOwnerId = $conv['user_id'] ?? null;
                 $convVisitorId = $conv['visitor_id'] ?? null;
-                $isAdmin = ($GLOBALS['current_admin_id'] === 'admin-001' && !$requestingOrgUserId);
+                $isAdmin = (($GLOBALS['current_admin_id'] === 'admin-001' || is_super_admin()) && !$requestingOrgUserId);
 
                 $hasAccess = false;
                 if ($isAdmin) {
@@ -440,7 +440,7 @@ try {
                     WHERE " . implode(" AND ", $where);
 
             // Ownership check (similar to get_conversation_history)
-            $isAdmin = ($GLOBALS['current_admin_id'] === 'admin-001' && !$requestingOrgUserId);
+            $isAdmin = (($GLOBALS['current_admin_id'] === 'admin-001' || is_super_admin()) && !$requestingOrgUserId);
             if (!$isAdmin) {
                 if ($requestingOrgUserId) {
                     $sql .= " AND (c.user_id = ? OR c.visitor_id = ?)";
@@ -500,7 +500,7 @@ try {
             if ($stringId)
                 $possibleIds[] = $stringId;
             // Admin identity mapping
-            if ($stringId === 'admin-001' || $dbId == 1 || $dbId === '1') {
+            if ($stringId === 'admin-001' || $dbId == 1 || $dbId === '1' || is_super_admin()) {
                 $possibleIds[] = 'admin-001';
                 $possibleIds[] = '1';
             }
@@ -847,7 +847,7 @@ try {
             }
 
             // Access check: admin-001 sees all; otherwise verify ownership
-            $callerIsAdmin = ($GLOBALS['current_admin_id'] ?? '') === 'admin-001';
+            $callerIsAdmin = (($GLOBALS['current_admin_id'] ?? '') === 'admin-001' || is_super_admin());
             $callerOrgId = (string)($currentOrgUser['id'] ?? '');
             $fileOwnerId = (string)($verifyRow['user_id'] ?? '');
             $fileVisitorId = $verifyRow['visitor_id'] ?? '';
@@ -1248,7 +1248,7 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
                 exit;
             }
 
-            $isAdmin = ($GLOBALS['current_admin_id'] === 'admin-001' && !$orgUserId);
+            $isAdmin = (($GLOBALS['current_admin_id'] === 'admin-001' || is_super_admin()) && !$orgUserId);
             $isOwner = ($conv['user_id'] == $orgUserId);
             if (!$isAdmin && !$isOwner) {
                 http_response_code(403);
@@ -1468,7 +1468,7 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
             }
 
             // Check if public or owner/admin
-            $isAdmin = ($GLOBALS['current_admin_id'] === 'admin-001' && !$orgUserId);
+            $isAdmin = (($GLOBALS['current_admin_id'] === 'admin-001' || is_super_admin()) && !$orgUserId);
             $isOwner = ($srcConv['user_id'] == $orgUserId);
             $isPublic = !empty($srcConv['is_public']);
 
@@ -1535,7 +1535,7 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
                 || ($convOwnerId === null && $convVisitorId === $convId); // legacy
 
             // Check admin: either main admin-001 or org user with admin role
-            $isAdmin = ($GLOBALS['current_admin_id'] === 'admin-001' && !$orgUserId);
+            $isAdmin = (($GLOBALS['current_admin_id'] === 'admin-001' || is_super_admin()) && !$orgUserId);
             if (!$isAdmin && $orgUserId) {
                 $roleStmt = $pdo->prepare("SELECT role FROM ai_org_users WHERE id = ? LIMIT 1");
                 $roleStmt->execute([$orgUserId]);
@@ -1741,8 +1741,8 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
             $callerPermissions = json_decode($callerPermissions, true) ?? [];
         }
         $callerModes = $callerPermissions['modes'] ?? ['chat'];
-        $isAdminCaller = ($GLOBALS['current_admin_id'] ?? '') === 'admin-001'
-            || ($currentOrgUser['id'] ?? '') === 'admin-001'
+        $isAdminCaller = (($GLOBALS['current_admin_id'] ?? '') === 'admin-001' || is_super_admin())
+            || (($currentOrgUser['id'] ?? '') === 'admin-001' || is_super_admin())
             || in_array('*', $callerModes, true)
             || in_array($currentOrgUser['role'] ?? '', ['admin'], true);
 

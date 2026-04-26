@@ -9,6 +9,27 @@ require_once __DIR__ . '/zalo_formatter.php';
 // checkZaloAutomationSchema REMOVED - Logic moved to central migration scripts.
 
 /**
+ * Verify Zalo Webhook Signature (V3)
+ * @param string $appId
+ * @param string $rawData Raw JSON body
+ * @param string $timestamp X-Zalo-Timestamp header
+ * @param string $signature X-Zalo-Signature header
+ * @param string $secretKey OA Secret Key (from zalo_oa_configs)
+ * @return bool
+ */
+function verifyZaloSignature($appId, $rawData, $timestamp, $signature, $secretKey) {
+    if (!$secretKey || !$signature) return false;
+    
+    // Zalo V3 logic: sha256(appId + rawData + timestamp + secretKey)
+    $calculated = hash('sha256', $appId . $rawData . $timestamp . $secretKey);
+    
+    // Support both raw hex and mac= prefix
+    $incoming = str_replace('mac=', '', $signature);
+    
+    return hash_equals($calculated, $incoming);
+}
+
+/**
  * Generate secure random code verifier
  */
 function generateCodeVerifier()

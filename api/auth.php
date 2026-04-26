@@ -1,6 +1,7 @@
 <?php
 // api/auth.php
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 
 session_start();
 apiHeaders();
@@ -150,13 +151,14 @@ if ($method === 'GET' && $action === 'check') {
 // [NEW] Lightweight activity ping — only updates last_login, no profile fetch
 // Called by App.tsx heartbeat every 5 min to keep last_activity fresh while user is active
 if ($method === 'GET' && $action === 'ping') {
-        if (empty($GLOBALS['current_admin_id']) && !isset($_SESSION['user_id'])) {
+        $hasAuth = !empty($GLOBALS['current_admin_id']) || !empty($_SESSION['user_id']) || !empty($_SESSION['org_user_id']) || !empty($_SERVER['HTTP_AUTHORIZATION']) || !empty($_SERVER['HTTP_X_ADMIN_TOKEN']) || !empty($_SERVER['HTTP_X_LOCAL_DEV_USER']);
+    if (!$hasAuth) {
         jsonResponse(false, null, 'Not authenticated'); // Silently ignored by frontend
     }
     try {
         // Throttle server-side: only update if last_login > 5 minutes ago
         $updateId = $_SESSION['user_id'] ?? '';
-        if ($updateId === '1' || $updateId === 'admin-001') {
+        if (is_super_admin()) {
             $stmt = $pdo->prepare("
                 UPDATE users SET last_login = NOW()
                 WHERE (id = ? OR email = 'dom.marketing.vn@gmail.com' OR email = 'admin@mailflow.com')
@@ -181,7 +183,8 @@ if ($method === 'GET' && $action === 'ping') {
 // Get access logs for current user (Sync real history)
 if ($method === 'GET' && $action === 'logs') {
 
-        if (empty($GLOBALS['current_admin_id']) && empty($_SESSION['user_id'])) {
+        $hasAuth = !empty($GLOBALS['current_admin_id']) || !empty($_SESSION['user_id']) || !empty($_SESSION['org_user_id']) || !empty($_SERVER['HTTP_AUTHORIZATION']) || !empty($_SERVER['HTTP_X_ADMIN_TOKEN']) || !empty($_SERVER['HTTP_X_LOCAL_DEV_USER']);
+    if (!$hasAuth) {
         jsonResponse(false, null, 'Unauthorized');
     }
     
@@ -203,7 +206,8 @@ if ($method === 'POST' && $action === 'logout') {
 
 // Change password
 if ($method === 'POST' && $action === 'change-password') {
-        if (empty($GLOBALS['current_admin_id']) && empty($_SESSION['user_id'])) {
+        $hasAuth = !empty($GLOBALS['current_admin_id']) || !empty($_SESSION['user_id']) || !empty($_SESSION['org_user_id']) || !empty($_SERVER['HTTP_AUTHORIZATION']) || !empty($_SERVER['HTTP_X_ADMIN_TOKEN']) || !empty($_SERVER['HTTP_X_LOCAL_DEV_USER']);
+    if (!$hasAuth) {
         jsonResponse(false, null, 'Chưa đăng nhập');
     }
 

@@ -30,6 +30,8 @@ import { AuthProvider } from './components/contexts/AuthContext';
 import { SettingsProvider } from './components/contexts/SettingsContext';
 import { apiEvents } from './services/storageAdapter';
 
+import { NProgressHandler } from './components/common/NProgressHandler';
+
 // Lazy load heavy pages for code splitting
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Campaigns = lazy(() => import('./pages/Campaigns'));
@@ -341,6 +343,7 @@ const App: React.FC = () => {
             <AuthProvider>
                 <SettingsProvider>
                 <BrowserRouter>
+                    <NProgressHandler />
                     <HashRedirect />
                     <KeyboardShortcutsProvider>
                         <NavigationProvider>

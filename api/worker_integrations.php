@@ -101,10 +101,33 @@ if (!function_exists('runIntegrationSync')) {
                 $lastSync = isset($integration['last_sync_at']) ? strtotime($integration['last_sync_at']) : 0;
                 $nextSync = $lastSync + ($intervalMinutes * 60);
 
+                // Handle Specific Time of Day (e.g. 23:00) if interval is >= 1 day
+                if (isset($config['syncTimeOfDay']) && $config['syncTimeOfDay'] !== '' && $intervalMinutes >= 1440) {
+                    $timeOfDay = $config['syncTimeOfDay']; // format "H:i"
+                    $todayTimeStr = date('Y-m-d') . ' ' . $timeOfDay . ':00';
+                    $todayTime = strtotime($todayTimeStr);
+                    
+                    if ($lastSync < $todayTime) {
+                        $nextSync = $todayTime;
+                    } else {
+                        $nextSync = $todayTime + 86400; // Next day
+                    }
+                }
+
                 // Check if allow to run (Force trigger OR Time passed)
                 $isForced = ($forceId && $forceId == $integration['id']);
 
                 if (time() >= $nextSync || $isForced) {
+                    // [FIX] CONCURRENCY GUARD: Prevent multiple threads from syncing the SAME integration
+                    // This eliminates the 3k -> 10k data duplication issue (Race Condition)
+                    $lockName = "sync_lock_" . $integration['id'];
+                    $stmtLock = $pdo->prepare("SELECT GET_LOCK(?, 0)");
+                    $stmtLock->execute([$lockName]);
+                    if (!$stmtLock->fetchColumn()) {
+                        logIntegrationSync("Sync for ID {$integration['id']} is already running in another thread. Skipping to prevent duplicates.");
+                        continue;
+                    }
+
                     logIntegrationSync("Syncing Integration ID {$integration['id']} (" . ($isForced ? "Forced" : "Scheduled") . ")...");
 
                     // Set Status to Syncing
@@ -381,6 +404,9 @@ if (!function_exists('runIntegrationSync')) {
                             $executionTime = round(microtime(true) - $startTime, 2);
                             logIntegrationSync("ID {$integration['id']} (MISA): Finished. Total Synced $syncedCount rows in {$executionTime}s");
 
+                            // Release Lock
+                            $pdo->exec("DO RELEASE_LOCK('sync_lock_{$integration['id']}')");
+
                             continue; // Skip Google Sheets Logic
                         }
 
@@ -389,8 +415,11 @@ if (!function_exists('runIntegrationSync')) {
                         $sheetName = $config['sheetName'] ?? 'Sheet1';
 
                         // 1. Stream Download to Temp File (Low Memory)
-                        // [FIX] Changed from gviz/tq to export?format=csv. gviz/tq stops exporting if it hits a completely blank row in the middle.
-                        $csvUrl = "https://docs.google.com/spreadsheets/d/{$spreadsheetId}/export?format=csv&sheet=" . urlencode($sheetName);
+                        // 1. Stream Download to Temp File (Low Memory)
+                        // 1. Stream Download to Temp File (Low Memory)
+                        // [FIX] Using gviz/tq with range=A1:Z to fetch all rows until the very end of the sheet,
+                        // bypassing any blank rows in between.
+                        $csvUrl = "https://docs.google.com/spreadsheets/d/{$spreadsheetId}/gviz/tq?tqx=out:csv&sheet=" . urlencode($sheetName) . "&range=A1:Z";
                         $tempFile = tempnam(sys_get_temp_dir(), 'sheet_' . $integration['id']);
 
                         $fp = fopen($tempFile, 'w+');
@@ -689,6 +718,9 @@ if (!function_exists('runIntegrationSync')) {
 
                         logIntegrationSync("ID {$integration['id']}: Synced $syncedCount rows (New: $newCount, Upsert: $updatedCount) in {$executionTime}s. Speed: {$rowsPerSecond} rows/s");
 
+                        // Release Lock
+                        $pdo->exec("DO RELEASE_LOCK('sync_lock_{$integration['id']}')");
+
                     } catch (Exception $e) {
                         // Error handling for sync block
                         if ($pdo->inTransaction()) {
@@ -720,6 +752,9 @@ if (!function_exists('runIntegrationSync')) {
                         logIntegrationSync("Error processing ID {$integration['id']}: " . $e->getMessage());
                         // Reset status on error
                         $pdo->prepare("UPDATE integrations SET sync_status = 'error' WHERE id = ?")->execute([$integration['id']]);
+                        
+                        // Release Lock
+                        $pdo->exec("DO RELEASE_LOCK('sync_lock_{$integration['id']}')");
                     }
 
                 }

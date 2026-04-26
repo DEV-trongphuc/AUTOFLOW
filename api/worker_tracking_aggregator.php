@@ -43,7 +43,7 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'worker_tracking_aggregator.php') 
         $pdo->beginTransaction();
         $stmt = $pdo->prepare(
             "SELECT id, type, payload FROM raw_event_buffer
-             WHERE processed = 0 ORDER BY id ASC LIMIT ? FOR UPDATE $skipLockedClause"
+             WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) AND processed = 0 ORDER BY id ASC LIMIT ? FOR UPDATE $skipLockedClause"
         );
         $stmt->execute([$batchSize]);
         $events = $stmt->fetchAll();
@@ -201,6 +201,10 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'worker_tracking_aggregator.php') 
     syncActivityBuffer($pdo);
     syncZaloActivityBuffer($pdo);
     syncTimestampBuffer($pdo);
+
+    // [PHASE 9 MEMORY FIX] Dọn dẹp RAM rác khổng lồ từ mảng Tracking Event (hàng nghìn objects JSON)
+    unset($events, $processedIds, $unprocessedIds, $seenRapidEvents);
+    gc_collect_cycles();
 
     echo json_encode(['status' => 'success', 'processed' => count($processedIds), 'retried' => count($unprocessedIds)]);
 }
@@ -582,9 +586,17 @@ function syncStatsBuffer($pdo)
         try {
             $cacheKey = "{$table}_{$col}";
             if (!isset($stmtStatsCache[$cacheKey])) {
-                $stmtStatsCache[$cacheKey] = $pdo->prepare("UPDATE $table SET $col = $col + ? WHERE id = ? AND workspace_id = ?");
+                if ($table === 'zalo_subscribers') {
+                    $stmtStatsCache[$cacheKey] = $pdo->prepare("UPDATE $table SET $col = $col + ? WHERE id = ?");
+                } else {
+                    $stmtStatsCache[$cacheKey] = $pdo->prepare("UPDATE $table SET $col = $col + ? WHERE id = ? AND workspace_id = ?");
+                }
             }
-            $stmtStatsCache[$cacheKey]->execute([$val, $id, $agg['workspace_id']]);
+            if ($table === 'zalo_subscribers') {
+                $stmtStatsCache[$cacheKey]->execute([$val, $id]);
+            } else {
+                $stmtStatsCache[$cacheKey]->execute([$val, $id, $agg['workspace_id']]);
+            }
         } catch (Exception $e) {
             error_log("Stats sync failed for $table.$col on $id: " . $e->getMessage());
         }

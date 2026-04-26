@@ -51,15 +51,33 @@ function runCleanup(PDO $pdo, string $label, string $sql): array
 function runPartitionCleanup(PDO $pdo, string $table, string $fallbackSql, int $retentionDays): array
 {
     try {
-        // Check if table is partitioned
-        $stmt = $pdo->prepare("SELECT PARTITION_NAME FROM information_schema.partitions WHERE table_schema = DATABASE() AND table_name = ? AND partition_name IS NOT NULL AND partition_name != 'p_future' AND partition_description < TO_DAYS(DATE_SUB(NOW(), INTERVAL ? DAY))");
-        $stmt->execute([$table, $retentionDays]);
-        $partitions = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        // Automatically determine the partition expression format to calculate the correct threshold
+        $stmtExpr = $pdo->prepare("SELECT PARTITION_EXPRESSION FROM information_schema.partitions WHERE table_schema = DATABASE() AND table_name = ? AND PARTITION_EXPRESSION IS NOT NULL LIMIT 1");
+        $stmtExpr->execute([$table]);
+        $expr = strtolower((string)$stmtExpr->fetchColumn());
         
-        if (!empty($partitions)) {
-            $partitionList = implode(',', $partitions);
-            $pdo->exec("ALTER TABLE `$table` DROP PARTITION $partitionList");
-            return ['label' => $table . ' (Partitions)', 'rows' => count($partitions), 'status' => 'DROPPED'];
+        $threshold = null;
+        if (strpos($expr, 'unix_timestamp') !== false) {
+            $stmtTh = $pdo->query("SELECT UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL $retentionDays DAY))");
+            $threshold = (int)$stmtTh->fetchColumn();
+        } elseif (strpos($expr, 'to_days') !== false) {
+            $stmtTh = $pdo->query("SELECT TO_DAYS(DATE_SUB(NOW(), INTERVAL $retentionDays DAY))");
+            $threshold = (int)$stmtTh->fetchColumn();
+        } elseif (strpos($expr, 'year') !== false && strpos($expr, 'month') !== false) {
+            $retentionMonths = ceil($retentionDays / 30);
+            $threshold = (int)date('Ym', strtotime("-$retentionMonths months"));
+        }
+
+        if ($threshold !== null && $threshold > 0) {
+            $stmt = $pdo->prepare("SELECT PARTITION_NAME FROM information_schema.partitions WHERE table_schema = DATABASE() AND table_name = ? AND partition_name IS NOT NULL AND partition_name != 'p_future' AND partition_description != 'MAXVALUE' AND CAST(partition_description AS UNSIGNED) < ?");
+            $stmt->execute([$table, $threshold]);
+            $partitions = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            if (!empty($partitions)) {
+                $partitionList = implode(',', $partitions);
+                $pdo->exec("ALTER TABLE `$table` DROP PARTITION $partitionList");
+                return ['label' => $table . ' (Partitions)', 'rows' => count($partitions), 'status' => 'DROPPED'];
+            }
         }
         
         // Fallback to traditional DELETE if not partitioned or no matching partitions found

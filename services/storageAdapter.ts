@@ -88,12 +88,8 @@ async function executeRequest(url: string, method: string, body?: any, signal?: 
       );
       const isAnyAdmin = isAdminById || isAdminByRole;
 
-      // [FIX] Send X-Admin-Token for ALL admins (not just id=1).
-      // db_connect.php PRIORITY 4 maps any valid X-Admin-Token to admin-001 session,
-      // so secondary admins no longer get 401 on protected endpoints.
-      if (isAnyAdmin) {
-        headers['X-Admin-Token'] = 'autoflow-admin-001';
-      }
+      // db_connect.php PRIORITY 3 maps any valid Session/Cookie back to the proper role,
+      // so secondary admins no longer get 401 on protected endpoints if their session is valid.
 
       // Send X-Autoflow-Auth for any authenticated user (even non-admin roles)
       // so db_connect.php PRIORITY 3 can set session from $_SESSION['role']

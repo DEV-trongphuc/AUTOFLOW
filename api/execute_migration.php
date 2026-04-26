@@ -5,9 +5,9 @@
  */
 require_once __DIR__ . '/db_connect.php';
 
-if (($_GET['admin_token'] ?? '') !== ADMIN_BYPASS_TOKEN) {
+if (php_sapi_name() !== 'cli') {
     http_response_code(403);
-    die('Unauthorized');
+    die('Unauthorized: This script can only be run from the command line (CLI).');
 }
 
 header('Content-Type: text/plain; charset=utf-8');

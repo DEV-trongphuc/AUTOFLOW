@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../services/storageAdapter';
@@ -405,12 +405,18 @@ const Audience: React.FC = () => {
 
     const fetchIntegrations = async (silent = false) => {
         if (!silent) setLoading(true);
-        const res = await api.get<any[]>('integrations');
-        if (res.success) {
-            setIntegrations(res.data);
+        try {
+            const res = await api.get<any[]>(`integrations?t=${Date.now()}`);
+            if (res.success) {
+                setIntegrations(res.data);
+            }
+            if (!silent) setLoading(false);
+            return res.success ? res.data : null;
+        } catch (error) {
+            console.error("Lỗi khi tải kết nối", error);
+            if (!silent) setLoading(false);
+            return null;
         }
-        if (!silent) setLoading(false);
-        return res.success ? res.data : null;
     };
 
 

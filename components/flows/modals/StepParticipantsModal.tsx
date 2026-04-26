@@ -666,13 +666,19 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                 <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">Thống kê điều kiện</h4>
                                             </div>
                                             <div className="grid grid-cols-2 gap-3">
-                                                <div className="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
-                                                    <div className="absolute inset-0 bg-emerald-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                <div 
+                                                    onClick={() => onBranchClick?.(activeBranchFilter === 'matched' ? null : 'matched')}
+                                                    className={`p-3 rounded-xl border shadow-sm flex flex-col items-center justify-center relative overflow-hidden group transition-all cursor-pointer ${activeBranchFilter === 'matched' ? 'bg-emerald-50 border-emerald-500 ring-2 ring-emerald-500/20' : 'bg-white border-emerald-100 hover:border-emerald-300'}`}
+                                                >
+                                                    <div className={`absolute inset-0 bg-emerald-50 transition-opacity ${activeBranchFilter === 'matched' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}></div>
                                                     <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider mb-1 relative z-10 flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" /> Đúng điều kiện</span>
                                                     <span className="text-2xl font-black text-emerald-700 relative z-10">{s.matched || 0}</span>
                                                 </div>
-                                                <div className="bg-white p-3 rounded-xl border border-rose-100 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
-                                                    <div className="absolute inset-0 bg-rose-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                <div 
+                                                    onClick={() => onBranchClick?.(activeBranchFilter === 'timed_out' ? null : 'timed_out')}
+                                                    className={`p-3 rounded-xl border shadow-sm flex flex-col items-center justify-center relative overflow-hidden group transition-all cursor-pointer ${activeBranchFilter === 'timed_out' ? 'bg-rose-50 border-rose-500 ring-2 ring-rose-500/20' : 'bg-white border-rose-100 hover:border-rose-300'}`}
+                                                >
+                                                    <div className={`absolute inset-0 bg-rose-50 transition-opacity ${activeBranchFilter === 'timed_out' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}></div>
                                                     <span className="text-[11px] font-bold text-rose-600 uppercase tracking-wider mb-1 relative z-10 flex items-center gap-1.5"><X className="w-3.5 h-3.5" /> Sai điều kiện</span>
                                                     <span className="text-2xl font-black text-rose-700 relative z-10">{s.timed_out || 0}</span>
                                                 </div>
@@ -689,13 +695,19 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                 <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">Thống kê A/B Test</h4>
                                             </div>
                                             <div className="grid grid-cols-2 gap-3">
-                                                <div className="bg-white p-3 rounded-xl border border-blue-100 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
-                                                    <div className="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                <div 
+                                                    onClick={() => onBranchClick?.(activeBranchFilter === 'path_a' ? null : 'path_a')}
+                                                    className={`p-3 rounded-xl border shadow-sm flex flex-col items-center justify-center relative overflow-hidden group transition-all cursor-pointer ${activeBranchFilter === 'path_a' ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-500/20' : 'bg-white border-blue-100 hover:border-blue-300'}`}
+                                                >
+                                                    <div className={`absolute inset-0 bg-blue-50 transition-opacity ${activeBranchFilter === 'path_a' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}></div>
                                                     <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-1 relative z-10 flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-blue-100 text-blue-700 flex items-center justify-center font-black">A</span> Nhánh A</span>
                                                     <span className="text-2xl font-black text-blue-700 relative z-10">{s.path_a || 0}</span>
                                                 </div>
-                                                <div className="bg-white p-3 rounded-xl border border-fuchsia-100 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
-                                                    <div className="absolute inset-0 bg-fuchsia-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                <div 
+                                                    onClick={() => onBranchClick?.(activeBranchFilter === 'path_b' ? null : 'path_b')}
+                                                    className={`p-3 rounded-xl border shadow-sm flex flex-col items-center justify-center relative overflow-hidden group transition-all cursor-pointer ${activeBranchFilter === 'path_b' ? 'bg-fuchsia-50 border-fuchsia-500 ring-2 ring-fuchsia-500/20' : 'bg-white border-fuchsia-100 hover:border-fuchsia-300'}`}
+                                                >
+                                                    <div className={`absolute inset-0 bg-fuchsia-50 transition-opacity ${activeBranchFilter === 'path_b' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}></div>
                                                     <span className="text-[11px] font-bold text-fuchsia-600 uppercase tracking-wider mb-1 relative z-10 flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-fuchsia-100 text-fuchsia-700 flex items-center justify-center font-black">B</span> Nhánh B</span>
                                                     <span className="text-2xl font-black text-fuchsia-700 relative z-10">{s.path_b || 0}</span>
                                                 </div>
@@ -715,16 +727,23 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                             </div>
                                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                                                 {branches.map((b: any, idx: number) => (
-                                                    <div key={b.id} className="bg-white p-3 rounded-xl border border-indigo-100 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
-                                                        <div className="absolute inset-0 bg-indigo-50/50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                    <div 
+                                                        key={b.id} 
+                                                        onClick={() => onBranchClick?.(activeBranchFilter === b.label ? null : b.label)}
+                                                        className={`p-3 rounded-xl border shadow-sm flex flex-col items-center justify-center relative overflow-hidden group transition-all cursor-pointer ${activeBranchFilter === b.label ? 'bg-indigo-50 border-indigo-500 ring-2 ring-indigo-500/20' : 'bg-white border-indigo-100 hover:border-indigo-300'}`}
+                                                    >
+                                                        <div className={`absolute inset-0 bg-indigo-50/50 transition-opacity ${activeBranchFilter === b.label ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}></div>
                                                         <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1 relative z-10 text-center truncate w-full px-2" title={b.label || "Nhánh "}>{b.label || "Nhánh "}</span>
-                                                        <span className="text-xl font-black text-indigo-600 relative z-10">{bStats[b.label] || 0}</span>
+                                                        <span className={`text-xl font-black relative z-10 ${activeBranchFilter === b.label ? 'text-indigo-700' : 'text-indigo-600'}`}>{bStats[b.label] || 0}</span>
                                                     </div>
                                                 ))}
-                                                <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
-                                                    <div className="absolute inset-0 bg-slate-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                <div 
+                                                    onClick={() => onBranchClick?.(activeBranchFilter === 'fallback' ? null : 'fallback')}
+                                                    className={`p-3 rounded-xl border shadow-sm flex flex-col items-center justify-center relative overflow-hidden group transition-all cursor-pointer ${activeBranchFilter === 'fallback' ? 'bg-slate-100 border-slate-500 ring-2 ring-slate-500/20' : 'bg-white border-slate-200 hover:border-slate-400'}`}
+                                                >
+                                                    <div className={`absolute inset-0 bg-slate-50 transition-opacity ${activeBranchFilter === 'fallback' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}></div>
                                                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1 relative z-10">Mặc định</span>
-                                                    <span className="text-xl font-black text-slate-700 relative z-10">{bStats['Fallback'] || bStats['fallback'] || 0}</span>
+                                                    <span className={`text-xl font-black relative z-10 ${activeBranchFilter === 'fallback' ? 'text-slate-900' : 'text-slate-700'}`}>{bStats['Fallback'] || bStats['fallback'] || 0}</span>
                                                 </div>
                                             </div>
                                         </div>

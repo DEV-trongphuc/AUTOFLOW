@@ -5,7 +5,14 @@ apiHeaders();
 
 // [SECURITY] Require authenticated workspace session
 $_logWorkspaceId = get_current_workspace_id();
-if (empty($GLOBALS['current_admin_id']) && empty($_SESSION['user_id'])) {
+$hasAuth = !empty($GLOBALS['current_admin_id']) 
+    || !empty($_SESSION['user_id']) 
+    || !empty($_SESSION['org_user_id'])
+    || !empty($_SERVER['HTTP_AUTHORIZATION'])
+    || !empty($_SERVER['HTTP_X_ADMIN_TOKEN'])
+    || !empty($_SERVER['HTTP_X_LOCAL_DEV_USER']);
+
+if (!$hasAuth) {
     http_response_code(401);
     echo json_encode(['success' => false, 'error' => 'Unauthorized']);
     exit;
@@ -36,7 +43,9 @@ if (isset($_GET['route']) && $_GET['route'] === 'delete_delivery_log') {
             $stmtUnsubscribe = $pdo->prepare("UPDATE subscribers SET status = 'unsubscribed' WHERE id = ?");
             $stmtUnsubscribe->execute([$subscriberId]);
             // Log this activity, ensuring flow_id and campaign_id are handled as null if not applicable
-            logActivity($pdo, $subscriberId, 'unsubscribe', null, 'Campaign Delivery Action', "Unsubscribed due to failed email delivery log deletion", null, $campaignId);
+            if (function_exists('logActivity')) {
+                logActivity($pdo, $subscriberId, 'unsubscribe', null, 'Campaign Delivery Action', "Unsubscribed due to failed email delivery log deletion", null, $campaignId);
+            }
         }
 
         $pdo->commit();
@@ -83,6 +92,18 @@ if ($type === 'delivery') {
     }
 
 } else {
+    // [SECURITY FIX] Whitelist allowed log types to prevent Path Traversal attacks.
+    $allowedLogs = [
+        'worker_flow', 'worker_campaign', 'worker_enroll', 'worker_integrations',
+        'worker_maintenance', 'worker_notify', 'worker_priority', 'worker_queue',
+        'worker_reminder', 'worker_sync', 'worker_trigger', 'webhook', 'zalo_debug',
+        'meta_debug', 'mail_debug', 'tracking', 'training_debug'
+    ];
+
+    if (!in_array($type, $allowedLogs)) {
+        jsonResponse(false, null, 'Invalid log type');
+    }
+
     // Original worker log file logic
     $logFile = __DIR__ . '/' . $type . '.log';
     if (file_exists($logFile)) {

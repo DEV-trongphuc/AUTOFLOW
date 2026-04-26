@@ -1,5 +1,6 @@
 <?php
 // api/ai_org_middleware.php
+require_once __DIR__ . '/auth_middleware.php';
 // Authentication Middleware for AI Space (Category Chat, Org Chat, Workspace)
 // This file should be included at the top of all AI Space API endpoints
 
@@ -21,7 +22,7 @@ function requireAISpaceAuth()
 
     // ── PRIORITY 0: System Admin Bypass (Overrides everything) ──────────────
     $adminToken = $normalizedHeaders['x-admin-token'] ?? $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? $_SERVER['HTTP_XADMINTOKEN'] ?? $_GET['admin_token'] ?? $_POST['admin_token'] ?? '';
-    if ($adminToken === ADMIN_BYPASS_TOKEN || $adminToken === 'admin-001') {
+    if ($adminToken === ADMIN_BYPASS_TOKEN || $adminToken === 'admin-001' || is_super_admin()) {
         if (session_status() === PHP_SESSION_ACTIVE) {
             $_SESSION['org_user_id'] = 'admin-001';
             $_SESSION['org_user_role'] = 'admin';
@@ -114,7 +115,7 @@ function requireAISpaceAuth()
     if (!$orgUserId) {
         $requestAdminId = $_GET['admin_id'] ?? $_POST['admin_id'] ?? null;
         if (!empty($requestAdminId)) {
-            if ($requestAdminId === 'admin-001') {
+            if ($requestAdminId === 'admin-001' || is_super_admin()) {
                 $orgUserId = 'admin-001';
             } else {
                 try {
@@ -218,7 +219,7 @@ function requireAISpaceAuth()
         if (!$user) {
             // IF it's the main admin (admin-001) but not in ai_org_users table,
             // we treat them as a virtual super admin.
-            if ($orgUserId === 'admin-001') {
+            if ($orgUserId === 'admin-001' || is_super_admin()) {
                 return [
                     'id' => 'admin-001',
                     'email' => $_SESSION['email'] ?? 'admin@autoflow.vn',
@@ -242,7 +243,7 @@ function requireAISpaceAuth()
         }
 
         // FORCE Super Admin rights for admin-001 regardless of database status (except banned)
-        if ($orgUserId === 'admin-001') {
+        if ($orgUserId === 'admin-001' || is_super_admin()) {
             $user['role'] = 'admin';
             $user['permissions'] = json_encode(['*']);
         }
@@ -265,7 +266,7 @@ function requireAISpaceAuth()
         $user['permissions'] = json_decode($user['permissions'] ?? '[]', true);
 
         // CRITICAL: admin-001 is always super admin regardless of DB role
-        if ($orgUserId === 'admin-001') {
+        if ($orgUserId === 'admin-001' || is_super_admin()) {
             $user['role'] = 'admin';
             $user['permissions'] = ['*'];
         }
@@ -307,6 +308,7 @@ function requireCategoryAccess($categoryId, $user)
     // Regular admins (role=admin but created under another admin) must be in the group list.
     $isSuperAdmin = (
         ($user['id'] ?? '') === 'admin-001' ||
+        is_super_admin() ||
         in_array('*', $user['permissions'] ?? []) ||
         (($user['role'] ?? '') === 'admin' && empty($user['admin_id']))
     );
@@ -408,8 +410,8 @@ function requireCategoryAccess($categoryId, $user)
 
     } catch (Exception $e) {
         error_log("Category Access Check Error: " . $e->getMessage());
-        // On error, ALLOW rather than blocking — don't disrupt users due to DB issues
-        return true;
+        // On error, DENY access for safety.
+        return false;
     }
 }
 

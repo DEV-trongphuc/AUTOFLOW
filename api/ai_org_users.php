@@ -2,6 +2,7 @@
 // api/ai_org_users.php
 require_once 'db_connect.php';
 require_once 'ai_org_middleware.php'; // For logAdminAction
+require_once 'auth_middleware.php';
 
 if (session_status() === PHP_SESSION_NONE)
     session_start();
@@ -30,14 +31,14 @@ $currentUserRole = $currentOrgUser['role'];
 $orgScopeAdminId = $currentOrgUser['admin_id'] ?? null;
 
 // Virtual 'admin-001' should not be used for database WHERE clauses if we have a real ID
-if ($orgScopeAdminId === 'admin-001') $orgScopeAdminId = null;
+if ($orgScopeAdminId === 'admin-001' || is_super_admin()) $orgScopeAdminId = null;
 
 if (!$orgScopeAdminId && $currentUserRole === 'admin') {
     $orgScopeAdminId = $currentUserId; // Top-level admin: use own ID as org scope
 }
 
 // Final fallback: if currentUserId is virtual, don't use it for scoping unless we specifically want global access
-if ($orgScopeAdminId === 'admin-001') $orgScopeAdminId = null;
+if ($orgScopeAdminId === 'admin-001' || is_super_admin()) $orgScopeAdminId = null;
 
 // Only Admin and Assistant can access the users management API
 if (!in_array($currentUserRole, ['admin', 'assistant'])) {

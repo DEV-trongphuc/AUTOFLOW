@@ -85,7 +85,9 @@ function updateZaloLeadScore($pdo, $zaloUserId, $type, $refId = null, $mainSubId
                 // Log Zalo Activity
                 $details = "Cộng $points điểm lead score cho sự kiện: $type";
                 if (!$workspace_id && $mainId) {
-                    $workspace_id = $pdo->query("SELECT workspace_id FROM subscribers WHERE id = '" . $mainId . "' LIMIT 1")->fetchColumn();
+                    $stmtWs = $pdo->prepare("SELECT workspace_id FROM subscribers WHERE id = ? LIMIT 1");
+                    $stmtWs->execute([$mainId]);
+                    $workspace_id = $stmtWs->fetchColumn();
                 }
                 logZaloSubscriberActivity($pdo, $zaloSubId, 'lead_score_reward', $refId, $details, $type, null, $workspace_id);
             } else {
@@ -134,7 +136,9 @@ function updateZaloLeadScore($pdo, $zaloUserId, $type, $refId = null, $mainSubId
         }
 
         if (!$workspace_id && $mainId) {
-            $workspace_id = $pdo->query("SELECT workspace_id FROM subscribers WHERE id = '" . $mainId . "' LIMIT 1")->fetchColumn();
+            $stmtWs = $pdo->prepare("SELECT workspace_id FROM subscribers WHERE id = ? LIMIT 1");
+            $stmtWs->execute([$mainId]);
+            $workspace_id = $stmtWs->fetchColumn();
         }
         logActivity($pdo, $mainId, 'lead_score_sync', $refId, 'Zalo Scoring', "$typeLabel (+$points điểm)", $refId, null, [], $workspace_id);
 

@@ -283,7 +283,7 @@ if (!function_exists('logActivity')) {
                         $c = curl_init();
                         curl_setopt($c, CURLOPT_URL, $url);
                         curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
-                        curl_setopt($c, CURLOPT_TIMEOUT, 1); // Fire and forget (very short timeout)
+                        curl_setopt($c, CURLOPT_TIMEOUT_MS, 200); // Fire and forget (200ms timeout)
                         curl_setopt($c, CURLOPT_NOSIGNAL, 1);
                         curl_setopt($c, CURLOPT_SSL_VERIFYPEER, true);
                         curl_setopt($c, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P36-FH] hostname verification
@@ -433,7 +433,7 @@ function dispatchFlowWorker($pdo, $type, $payload)
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $workerUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 200);
         curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P36-FH] hostname verification
@@ -540,7 +540,7 @@ function dispatchCampaignWorker($pdo, $campaignId)
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $workerUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+    curl_setopt($ch, CURLOPT_TIMEOUT_MS, 200);
     curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P36-FH] hostname verification

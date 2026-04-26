@@ -669,6 +669,10 @@ try {
                 curl_close($ch);
             }
             curl_multi_close($mh);
+            
+            // [PHASE 9 MEMORY FIX] Clear cURL handles and chunk arrays from memory
+            unset($handles, $mh, $chunk);
+            gc_collect_cycles();
         }
 
         $logs[] = "[Priority-Batch] Triggered workers for " . count($batchItems) . " items (concurrency: $CONCURRENCY).";

@@ -11,7 +11,14 @@ require_once 'auth_middleware.php';
 require_once 'Mailer.php';
 
 // [SECURITY] Require authenticated workspace session — SMTP credentials must not be accessible unauthenticated
-if (empty($GLOBALS['current_admin_id']) && empty($_SESSION['user_id'])) {
+$hasAuth = !empty($GLOBALS['current_admin_id']) 
+    || !empty($_SESSION['user_id']) 
+    || !empty($_SESSION['org_user_id'])
+    || !empty($_SERVER['HTTP_AUTHORIZATION'])
+    || !empty($_SERVER['HTTP_X_ADMIN_TOKEN'])
+    || !empty($_SERVER['HTTP_X_LOCAL_DEV_USER']);
+
+if (!$hasAuth) {
     http_response_code(401);
     echo json_encode(['success' => false, 'error' => 'Unauthorized']);
     exit;

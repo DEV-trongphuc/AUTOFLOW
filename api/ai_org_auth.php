@@ -21,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['ac
 }
 
 require_once 'db_connect.php';
+require_once 'auth_middleware.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
@@ -400,7 +401,7 @@ if ($method === 'GET' && $action === 'check') {
 
     if (!$orgUserId) {
         $adminTokenHeader = $normalized['x-admin-token'] ?? $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
-        if ($adminTokenHeader === ADMIN_BYPASS_TOKEN || $adminTokenHeader === 'admin-001') {
+        if ($adminTokenHeader === ADMIN_BYPASS_TOKEN || $adminTokenHeader === 'admin-001' || is_super_admin()) {
             $orgUserId = 'admin-001';
             $_SESSION['org_user_id'] = 'admin-001';
         }
@@ -420,7 +421,7 @@ if ($method === 'GET' && $action === 'check') {
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($user && $user['status'] !== 'banned') {
-                if ($orgUserId === 'admin-001') {
+                if ($orgUserId === 'admin-001' || is_super_admin()) {
                     $user['role'] = 'admin';
                     $user['permissions'] = ['*'];
                 } else {
@@ -432,7 +433,7 @@ if ($method === 'GET' && $action === 'check') {
                 unset($user['password_hash']);
                 jsonResponse(true, $user);
 
-            } elseif ($orgUserId === 'admin-001') {
+            } elseif ($orgUserId === 'admin-001' || is_super_admin()) {
                 jsonResponse(true, [
                     'id' => 'admin-001',
                     'email' => $_SESSION['email'] ?? $_SESSION['org_user_email'] ?? 'admin@autoflow.vn',

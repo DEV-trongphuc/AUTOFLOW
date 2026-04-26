@@ -852,7 +852,9 @@ if (!function_exists('runWorkerCampaign')) {
                         }
 
                         // [OPTIMIZATION] Explicit Garbage Collection (Zero-Leak Memory Profile)
-                        unset($recipients, $successIds, $failActivities, $successActivities, $flowEnrollments, $jobDispatches, $capCache, $enrollmentCache, $lockBinds, $lockVals, $allActivities, $binds, $vals, $subIdList, $placeholdersSub);
+                        unset($recipients, $successIds, $failActivities, $successActivities, $flowEnrollments, $jobDispatches, $capCache, $enrollmentCache, $lockBinds, $lockVals, $allActivitiesGrouped, $binds, $vals, $subIdList, $placeholdersSub);
+                        // [PHASE 9 MEMORY FIX] Force PHP Engine to clean up circular references immediately after each batch
+                        gc_collect_cycles();
                         
                     } catch (Throwable $e) {
                         if ($pdo->inTransaction()) {

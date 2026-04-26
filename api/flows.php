@@ -436,7 +436,17 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                              JOIN subscribers s_search ON sa.subscriber_id = s_search.id
                              WHERE sa.flow_id = ? AND " . str_replace('reference_id', 'sa.reference_id', $stepIdClause) . " AND sa.type IN ('$typePlaceholders')
                              AND (s_search.email LIKE ? OR s_search.first_name LIKE ? OR s_search.last_name LIKE ?)";
-                if ($branchFilter) {
+                if ($branchFilter === 'matched') {
+                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND (b.details LIKE 'Matched:%' OR b.details LIKE 'Condition matched:%'))";
+                } elseif ($branchFilter === 'timed_out') {
+                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.details LIKE 'Timed Out:%')";
+                } elseif ($branchFilter === 'path_a') {
+                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.details LIKE 'Split Test: A%')";
+                } elseif ($branchFilter === 'path_b') {
+                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.details LIKE 'Split Test: B%')";
+                } elseif ($branchFilter === 'fallback') {
+                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND (b.details LIKE 'Matched: Fallback%' OR b.details LIKE 'Matched: fallback%'))";
+                } else {
                     $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.type IN ('advanced_condition', 'condition_true', 'condition_false', 'ab_test_a', 'ab_test_b', 'split_test') AND (b.details LIKE ? OR b.details LIKE ?))";
                     $countParams[] = "%Matched: $branchFilter%";
                     $countParams[] = "%Condition matched: $branchFilter%";
@@ -449,7 +459,17 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                              FROM subscriber_activity sa
                              WHERE sa.flow_id = ? AND " . str_replace('reference_id', 'sa.reference_id', $stepIdClause) . " AND sa.type IN ('$typePlaceholders')";
                 $countParamsExec = array_merge([$flowId], $stepIdParams);
-                if ($branchFilter) {
+                if ($branchFilter === 'matched') {
+                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND (b.details LIKE 'Matched:%' OR b.details LIKE 'Condition matched:%'))";
+                } elseif ($branchFilter === 'timed_out') {
+                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.details LIKE 'Timed Out:%')";
+                } elseif ($branchFilter === 'path_a') {
+                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.details LIKE 'Split Test: A%')";
+                } elseif ($branchFilter === 'path_b') {
+                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.details LIKE 'Split Test: B%')";
+                } elseif ($branchFilter === 'fallback') {
+                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND (b.details LIKE 'Matched: Fallback%' OR b.details LIKE 'Matched: fallback%'))";
+                } else {
                     $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.type IN ('advanced_condition', 'condition_true', 'condition_false', 'ab_test_a', 'ab_test_b', 'split_test') AND (b.details LIKE ? OR b.details LIKE ?))";
                     $countParamsExec[] = "%Matched: $branchFilter%";
                     $countParamsExec[] = "%Condition matched: $branchFilter%";
@@ -485,7 +505,17 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                 $fetchParams[] = "%$search%";
                 $fetchParams[] = "%$search%";
             }
-            if ($branchFilter) {
+            if ($branchFilter === 'matched') {
+                $sql .= " HAVING branch_details LIKE 'Matched:%' OR branch_details LIKE 'Condition matched:%'";
+            } elseif ($branchFilter === 'timed_out') {
+                $sql .= " HAVING branch_details LIKE 'Timed Out:%'";
+            } elseif ($branchFilter === 'path_a') {
+                $sql .= " HAVING branch_details LIKE 'Split Test: A%'";
+            } elseif ($branchFilter === 'path_b') {
+                $sql .= " HAVING branch_details LIKE 'Split Test: B%'";
+            } elseif ($branchFilter === 'fallback') {
+                $sql .= " HAVING branch_details LIKE 'Matched: Fallback%' OR branch_details LIKE 'Matched: fallback%'";
+            } elseif ($branchFilter) {
                 $sql .= " HAVING branch_details LIKE ? OR branch_details LIKE ?";
                 $fetchParams[] = "%Matched: $branchFilter%";
                 $fetchParams[] = "%Condition matched: $branchFilter%";
@@ -542,7 +572,17 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
 
             $whereSql = implode(" AND ", $whereClauses);
 
-            if ($branchFilter) {
+            if ($branchFilter === 'matched') {
+                $whereSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sfs.flow_id AND b.subscriber_id = s.id AND b.reference_id = sfs.step_id AND (b.details LIKE 'Matched:%' OR b.details LIKE 'Condition matched:%'))";
+            } elseif ($branchFilter === 'timed_out') {
+                $whereSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sfs.flow_id AND b.subscriber_id = s.id AND b.reference_id = sfs.step_id AND b.details LIKE 'Timed Out:%')";
+            } elseif ($branchFilter === 'path_a') {
+                $whereSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sfs.flow_id AND b.subscriber_id = s.id AND b.reference_id = sfs.step_id AND b.details LIKE 'Split Test: A%')";
+            } elseif ($branchFilter === 'path_b') {
+                $whereSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sfs.flow_id AND b.subscriber_id = s.id AND b.reference_id = sfs.step_id AND b.details LIKE 'Split Test: B%')";
+            } elseif ($branchFilter === 'fallback') {
+                $whereSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sfs.flow_id AND b.subscriber_id = s.id AND b.reference_id = sfs.step_id AND (b.details LIKE 'Matched: Fallback%' OR b.details LIKE 'Matched: fallback%'))";
+            } elseif ($branchFilter) {
                 $whereSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sfs.flow_id AND b.subscriber_id = s.id AND b.reference_id = sfs.step_id AND b.type IN ('advanced_condition', 'condition_true', 'condition_false', 'ab_test_a', 'ab_test_b', 'split_test') AND (b.details LIKE ? OR b.details LIKE ?))";
                 $allParams[] = "%Matched: $branchFilter%";
                 $allParams[] = "%Condition matched: $branchFilter%";
@@ -2787,7 +2827,7 @@ switch ($method) {
                 }
             }
 
-            $isAdmin = ($GLOBALS['current_admin_id'] === 'admin-001');
+            $isAdmin = is_super_admin();
             if (!$isAdmin && in_array(strtolower($data['status'] ?? ''), ['active', 'sending', 'scheduled'])) {
                 $data['status'] = 'draft';
             }
@@ -2814,7 +2854,7 @@ switch ($method) {
             $stmtCurrent->execute([$path, $workspace_id]);
             $currentFlowStatus = strtolower($stmtCurrent->fetchColumn() ?: 'draft');
 
-            $isAdmin = ($GLOBALS['current_admin_id'] === 'admin-001');
+            $isAdmin = is_super_admin();
             if (!$isAdmin) {
                 if (in_array($currentFlowStatus, ['active', 'sending', 'scheduled', 'processing'])) {
                     if (strtolower($data['status'] ?? '') !== 'paused') {

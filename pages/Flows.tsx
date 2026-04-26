@@ -213,6 +213,7 @@ const Flows: React.FC = () => {
     const [analyticsSearchTerm, setAnalyticsSearchTerm] = useState('');
     const [analyticsActiveTab, setAnalyticsActiveTab] = useState<'all_touched' | 'waiting' | 'opened' | 'failed' | 'unsubscribed' | 'all' | 'clicks' | 'report' | 'zns_sent' | 'zns_clicked' | 'zns_replied' | 'zns_failed'>('all_touched');
     const [analyticsPagination, setAnalyticsPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
+    const [selectedBranchFilter, setSelectedBranchFilter] = useState<string | null>(null);
 
     // Filters - Changed default to 'all'
     const [activeTab, setActiveTab] = useState<FlowFilter>('all');
@@ -251,7 +252,7 @@ const Flows: React.FC = () => {
     const [addStepContext, setAddStepContext] = useState<{ parentId: string; branch?: 'yes' | 'no' | 'A' | 'B'; isInsert?: boolean } | null>(null);
 
     const [confirmModal, setConfirmModal] = useState<{
-        isOpen: boolean; title: string; message: string; onConfirm: () => void; variant?: 'danger' | 'warning'; confirmLabel?: string; requireConfirmText?: string; dangerText?: string; dangerAction?: () => void;
+        isOpen: boolean; title: string; message: React.ReactNode; onConfirm: () => void; variant?: 'danger' | 'warning' | 'info' | 'success'; confirmLabel?: string; requireConfirmText?: string; dangerText?: string; dangerAction?: () => void;
     }>({ isOpen: false, title: '', message: '', onConfirm: () => { } });
 
     // NEW: Activation Modal State
@@ -456,7 +457,7 @@ const Flows: React.FC = () => {
         }
     }, [isReportMode, selectedFlow?.id, fetchReportData]);
 
-    const fetchParticipants = useCallback(async (flowId: string, stepId: string, tab: string, page = 1, search = '') => {
+    const fetchParticipants = useCallback(async (flowId: string, stepId: string, tab: string, page = 1, search = '', branch: string | null = null) => {
         if (!selectedFlow) return;
         setLoadingParticipants(true);
         try {
@@ -498,6 +499,7 @@ const Flows: React.FC = () => {
             if (statusParam && route === 'participants') url += `&status=${statusParam}`;
             if (typeParam) url += `&type=${typeParam}`;
             if (search) url += `&search=${encodeURIComponent(search)}`;
+            if (branch) url += `&branch=${encodeURIComponent(branch)}`;
 
             const res = await api.get<any>(url);
             if (res.success) {
@@ -517,9 +519,9 @@ const Flows: React.FC = () => {
 
     useEffect(() => {
         if (isParticipantsModalOpen && selectedFlow && selectedAnalyticsStepId) {
-            fetchParticipants(selectedFlow.id, selectedAnalyticsStepId, analyticsActiveTab, analyticsPagination.page, analyticsSearchTerm);
+            fetchParticipants(selectedFlow.id, selectedAnalyticsStepId, analyticsActiveTab, analyticsPagination.page, analyticsSearchTerm, selectedBranchFilter);
         }
-    }, [isParticipantsModalOpen, analyticsActiveTab, analyticsPagination.page, analyticsSearchTerm, selectedFlow?.id, selectedAnalyticsStepId, fetchParticipants]);
+    }, [isParticipantsModalOpen, analyticsActiveTab, analyticsPagination.page, analyticsSearchTerm, selectedFlow?.id, selectedAnalyticsStepId, selectedBranchFilter, fetchParticipants]);
 
 
     const handleUpdateFlow = useCallback(async (updated: Flow, isSilent = true, logMsg?: string, skipApi = false) => {
@@ -1171,7 +1173,7 @@ const Flows: React.FC = () => {
         if (activeCount > 0) {
             setConfirmModal({
                 isOpen: true,
-                title: '⚠️ CẢNH BÁO: Đang có người dùng',
+                title: 'Cảnh báo: Đang có người dùng',
                 message: `Hiện có ${activeCount} người đang ở trong Flow này (đang chạy hoặc đang xử lý). Bạn muốn xử lý thế nào?`,
                 variant: 'danger',
                 confirmLabel: 'Hủy đăng ký & Xóa (Force Exit)',
@@ -1953,7 +1955,7 @@ const Flows: React.FC = () => {
                                     if (warnings.length > 0) {
                                         setConfirmModal({
                                             isOpen: true,
-                                            title: 'Cònh báo cấu hình',
+                                            title: 'Cảnh báo cấu hình',
                                             message: `Flow có ${warnings.length} cảnh báo. Bạn có muốn kích hoạt không?`,
                                             variant: 'warning',
                                             confirmLabel: 'Kích hoạt ngay',
@@ -1978,27 +1980,45 @@ const Flows: React.FC = () => {
                                     } catch { }
 
                                     const triggerWarnings: Record<string, string> = {
-                                        form: '📋 Form submit: Người dùng mới điền form sẽ KHÔNG được enroll vào Flow này. Email xác nhận/cảm ơn sẽ không được gửi.',
-                                        purchase: '🛒 Purchase Event: Đơn hàng mới được ghi nhận sẽ KHÔNG kích hoạt Flow. Email sau mua hàng sẽ bị Bỏ qua.',
-                                        custom_event: '⚡ Custom Event: Sự kiện mới kích hoạt trigger sẽ KHÔNG được xử lý. Flow sẽ không nhận thêm subscriber mới.',
-                                        campaign: '📧 Campaign trigger: Flow liên kết với chiến dịch email sẽ bị ngắt. Người nhận mở/click mail sẽ không tiếp tục được dẫn vào Flow.',
-                                        tag: '🏷️ Tag trigger: Subscriber được gắn tag mới sẽ KHÔNG được tự động enroll vào Flow.',
-                                        list: '📋 List trigger: Subscriber được thêm vào danh sách sẽ KHÔNG được enroll tự động.',
-                                        segment: '👥 Segment trigger: Subscriber mới vào phân khúc sẽ KHÔNG được xử lý tự động.',
-                                        date: '📅 Date trigger: Các lịch gửi theo ngày sinh/ngày kỷ niệm sẽ bị Bỏ qua trong Thời gian tạm dừng.',
+                                        form: 'Biểu mẫu: Người dùng mới điền form sẽ không được tham gia vào kịch bản này. Email xác nhận sẽ không được gửi.',
+                                        purchase: 'Mua hàng: Đơn hàng mới sẽ không kích hoạt kịch bản. Quy trình chăm sóc sau mua hàng sẽ bị tạm dừng.',
+                                        custom_event: 'Sự kiện tùy chỉnh: Các hành vi mới của khách hàng sẽ không được ghi nhận vào luồng tự động.',
+                                        campaign: 'Chiến dịch: Liên kết với các email đang gửi sẽ bị ngắt. Hành động mở/click mail sẽ không kích hoạt bước tiếp theo.',
+                                        tag: 'Gắn thẻ: Khách hàng được gắn thẻ mới sẽ không tự động tham gia vào kịch bản.',
+                                        list: 'Danh sách: Khách hàng mới thêm vào danh sách sẽ không được xử lý tự động.',
+                                        segment: 'Phân khúc: Khách hàng mới thỏa mãn điều kiện phân khúc sẽ không được đưa vào luồng.',
+                                        date: 'Ngày kỷ niệm: Các lịch gửi theo ngày sinh hoặc kỷ niệm sẽ bị bỏ qua trong thời gian này.',
                                     };
 
-                                    const specificWarning = triggerWarnings[triggerType] || '⚠️ Trigger của Flow này sẽ ngừng hoạt động trong Thời gian tạm dừng.';
+                                    const specificWarning = triggerWarnings[triggerType] || 'Cơ chế kích hoạt (Trigger) của kịch bản này sẽ ngừng hoạt động.';
                                     const activeWarning = activeCount > 0
-                                        ? `\n\n🔴 Hiện có ${activeCount} người đang chạy trong flow — tất cả sẽ bị DỪNG và không tiếp tục nhận email cho đến khi Flow được kích hoạt lại.`
-                                        : '\n\n✅ Hiện không có ai đang trong flow.';
+                                        ? `Hiện có ${activeCount} khách hàng đang trong luồng — tất cả sẽ bị tạm dừng xử lý cho đến khi được kích hoạt lại.`
+                                        : 'Hiện không có khách hàng nào đang trong luồng xử lý.';
 
                                     setConfirmModal({
                                         isOpen: true,
-                                        title: '⏸ Tạm dừng Flow',
-                                        message: `Bạn sắp tạm dừng flow này.\n\nHậu quả:\n${specificWarning}${activeWarning}\n\nBạn có thể kích hoạt lại bất cứ lúc nào, nhưng các sự kiện/dữ liệu trong Thời gian tạm dừng sẽ KHÔNG được xử lý hồi tố.`,
+                                        title: 'Tạm dừng Kịch bản',
+                                        message: (
+                                            <div className="space-y-4 text-left">
+                                                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/50 rounded-2xl flex gap-3">
+                                                    <PauseCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                                                    <p className="text-sm font-medium text-amber-900 dark:text-amber-200 leading-relaxed">
+                                                        {specificWarning}
+                                                    </p>
+                                                </div>
+                                                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 rounded-2xl flex gap-3">
+                                                    <Users className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                                                    <p className="text-sm font-medium text-blue-900 dark:text-blue-200 leading-relaxed">
+                                                        {activeWarning}
+                                                    </p>
+                                                </div>
+                                                <p className="text-xs text-slate-500 italic px-1 font-medium">
+                                                    * Bạn có thể kích hoạt lại bất cứ lúc nào, nhưng các sự kiện phát sinh trong thời gian tạm dừng sẽ không được xử lý hồi tố.
+                                                </p>
+                                            </div>
+                                        ),
                                         variant: 'warning',
-                                        confirmLabel: 'Tạm dừng ngay',
+                                        confirmLabel: 'Xác nhận tạm dừng',
                                         onConfirm: async () => {
                                             setConfirmModal(prev => ({ ...prev, isOpen: false }));
                                             await handleUpdateFlow({ ...selectedFlow, status: newStatus }, false, "Tạm dừng Flow");
@@ -2608,17 +2628,22 @@ const Flows: React.FC = () => {
             />
             <StepParticipantsModal
                 isOpen={isParticipantsModalOpen}
-                onClose={() => setIsParticipantsModalOpen(false)}
+                onClose={() => {
+                    setIsParticipantsModalOpen(false);
+                    setSelectedBranchFilter(null);
+                }}
                 title={selectedAnalyticsStepId ? (selectedFlow?.steps?.find(s => s.id === selectedAnalyticsStepId)?.label || 'Báo cáo bước') : 'Báo cáo'}
                 participants={modalParticipants}
                 loading={loadingParticipants}
                 pagination={analyticsPagination}
                 onPageChange={(p) => setAnalyticsPagination(prev => ({ ...prev, page: p }))}
-                onRefresh={() => selectedFlow && selectedAnalyticsStepId && fetchParticipants(selectedFlow.id, selectedAnalyticsStepId, analyticsActiveTab, analyticsPagination.page, analyticsSearchTerm)}
+                onRefresh={() => selectedFlow && selectedAnalyticsStepId && fetchParticipants(selectedFlow.id, selectedAnalyticsStepId, analyticsActiveTab, analyticsPagination.page, analyticsSearchTerm, selectedBranchFilter)}
                 searchTerm={analyticsSearchTerm}
                 onSearchChange={setAnalyticsSearchTerm}
                 activeTab={analyticsActiveTab}
                 onTabChange={setAnalyticsActiveTab}
+                activeBranchFilter={selectedBranchFilter}
+                onBranchClick={setSelectedBranchFilter}
                 getStepName={(id) => selectedFlow?.steps?.find(s => s.id === id)?.label || 'Unknown'}
                 stepType={selectedFlow?.steps?.find(s => s.id === selectedAnalyticsStepId)?.type}
                 stepConfig={selectedFlow?.steps?.find(s => s.id === selectedAnalyticsStepId)?.config}

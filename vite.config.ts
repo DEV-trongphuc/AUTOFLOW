@@ -1,6 +1,7 @@
 import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import viteCompression from 'vite-plugin-compression';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
@@ -31,7 +32,13 @@ export default defineConfig(({ mode }) => {
       }
     },
     appType: 'spa', // Serve index.html for ALL routes (fix direct deep URL access like /api-triggers)
-    plugins: [react()],
+    plugins: [
+      react(),
+      // [PERF NEW] Gzip compression
+      viteCompression({ algorithm: 'gzip', ext: '.gz' }),
+      // [PERF NEW] Brotli compression (extremely efficient)
+      viteCompression({ algorithm: 'brotliCompress', ext: '.br' })
+    ],
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
