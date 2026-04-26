@@ -1,69 +1,93 @@
 <?php
-// api/worker_maintenance.php - 10M UPGRADE MAINTENANCE ENGINE
-// Performs heavy cleanup and maintenance tasks asynchronously.
+/**
+ * api/worker_maintenance.php
+ * High-Performance System Maintenance & Self-Healing Service
+ * Running: Daily (Recommended 3:00 AM)
+ */
 
-require_once 'db_connect.php';
+require_once __DIR__ . '/db_connect.php';
 
-// Only allow CLI or specific secret/IP if needed
-if (php_sapi_name() !== 'cli' && !isset($_GET['run'])) {
-    die("Maintenance script restricted.");
+function runMaintenance($pdo) {
+    echo "[" . date('Y-m-d H:i:s') . "] Starting System Maintenance...\n";
+    
+    // 1. Auto-Partitioning for raw_event_buffer (2027+ Preparation)
+    try {
+        echo " - Checking Partitions...\n";
+        $currentPartitions = $pdo->query("SELECT PARTITION_NAME FROM information_schema.PARTITIONS WHERE TABLE_NAME = 'raw_event_buffer' AND TABLE_SCHEMA = DATABASE()")->fetchAll(PDO::FETCH_COLUMN);
+        
+        $nextYear = date('Y', strtotime('+1 year'));
+        $targetPartition = "p{$nextYear}_01";
+        
+        if (!in_array($targetPartition, $currentPartitions)) {
+            echo "   -> Creating partitions for $nextYear...\n";
+            $sql = "ALTER TABLE `raw_event_buffer` REORGANIZE PARTITION p_future INTO (";
+            for ($m = 1; $m <= 12; $m++) {
+                $pName = sprintf("p%s_%02d", $nextYear, $m);
+                $lessThan = strtotime(sprintf("%s-%02d-01 00:00:00", ($m == 12 ? $nextYear + 1 : $nextYear), ($m == 12 ? 1 : $m + 1)));
+                $sql .= "\n      PARTITION $pName VALUES LESS THAN ($lessThan) ENGINE=InnoDB,";
+            }
+            $sql .= "\n      PARTITION p_future VALUES LESS THAN MAXVALUE\n);";
+            $pdo->exec($sql);
+            echo "   -> [OK] $nextYear partitions added.\n";
+        }
+    } catch (Exception $e) {
+        echo "   -> [FAIL] Partition check failed: " . $e->getMessage() . "\n";
+    }
+
+    // 2. Capping Zalo Message History (Keep last 20 per user)
+    try {
+        echo " - Capping Zalo Message History...\n";
+        // Optimized cleanup using a single mass-delete
+        $pdo->exec("
+            DELETE FROM zalo_user_messages 
+            WHERE id NOT IN (
+                SELECT id FROM (
+                    SELECT id, ROW_NUMBER() OVER(PARTITION BY zalo_user_id ORDER BY created_at DESC) as rn 
+                    FROM zalo_user_messages
+                ) as t 
+                WHERE rn <= 20
+            )
+        ");
+        echo "   -> [OK] History capped.\n";
+    } catch (Exception $e) {
+        echo "   -> [FAIL] History cap failed: " . $e->getMessage() . "\n";
+    }
+
+    // 3. Strategic Index Healing (Moved from tracking worker)
+    try {
+        echo " - Checking Strategic Indexes...\n";
+        $indexes = [
+            'activity_buffer' => ['idx_workspace_batch' => 'workspace_id, processed, created_at'],
+            'zalo_activity_buffer' => ['idx_workspace_batch' => 'workspace_id, processed, created_at'],
+            'subscribers' => ['idx_perf_search' => 'workspace_id, status, id']
+        ];
+        
+        foreach ($indexes as $table => $idxs) {
+            foreach ($idxs as $name => $cols) {
+                try {
+                    $pdo->exec("ALTER TABLE `$table` ADD INDEX IF NOT EXISTS `$name` ($cols)");
+                } catch (Exception $ex) {}
+            }
+        }
+        echo "   -> [OK] Indexes verified.\n";
+    } catch (Exception $e) {
+        echo "   -> [FAIL] Index check failed: " . $e->getMessage() . "\n";
+    }
+
+    // 4. Queue Pruning & GC
+    try {
+        echo " - Pruning Queues...\n";
+        $pdo->exec("DELETE FROM queue_jobs WHERE status = 'completed' AND created_at < NOW() - INTERVAL 7 DAY");
+        $pdo->exec("DELETE FROM system_audit_logs WHERE created_at < NOW() - INTERVAL 90 DAY");
+        echo "   -> [OK] Old logs pruned.\n";
+    } catch (Exception $e) {
+        echo "   -> [FAIL] Pruning failed: " . $e->getMessage() . "\n";
+    }
+
+    echo "[" . date('Y-m-d H:i:s') . "] Maintenance Finished.\n";
 }
 
-echo "[" . date('Y-m-d H:i:s') . "] Starting Maintenance Cycle...\n";
-
-/**
- * 1. ACTIVITY LOGS - DISABLED PER USER REQUEST
- * Keep ALL activity logs permanently for complete audit trail.
- * No automatic pruning of subscriber_activity table.
- */
-echo "  -> Activity log pruning: DISABLED (keeping all records)\n";
-
-/**
- * 2. CLEANUP QUEUE JOBS
- * - Remove completed jobs immediately (no retention needed)
- * - Remove failed jobs older than 7 days (keep recent for debugging)
- * - Reset stuck jobs (processing >24h) to failed, then delete
- */
-echo "  -> Cleaning up queue jobs... ";
-
-// Clean ALL completed jobs immediately
-$pdo->exec("DELETE FROM queue_jobs WHERE status = 'completed'");
-
-// Clean old failed jobs (keep 7 days for debugging)
-$pdo->prepare("DELETE FROM queue_jobs WHERE status = 'failed' AND created_at < DATE_SUB(NOW(), INTERVAL 7 DAY)")->execute();
-
-// Handle stuck jobs (processing >24h) - mark as failed then delete immediately
-$pdo->exec("
-    UPDATE queue_jobs 
-    SET status = 'failed', 
-        finished_at = NOW(),
-        error_message = 'Auto-failed: Stuck in processing for >24 hours'
-    WHERE status = 'processing' AND created_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)
-");
-
-$pdo->exec("DELETE FROM queue_jobs WHERE status = 'failed' AND error_message = 'Auto-failed: Stuck in processing for >24 hours'");
-
-echo "Done.\n";
-
-/**
- * 3. CLEANUP ORPHANED FLOW STATES
- * Remove states belonging to deleted flows or deleted subscribers.
- */
-echo "  -> Cleaning up orphaned flow states... ";
-$pdo->exec("
-    DELETE FROM subscriber_flow_states 
-    WHERE NOT EXISTS (SELECT 1 FROM flows f WHERE f.id = subscriber_flow_states.flow_id)
-    OR NOT EXISTS (SELECT 1 FROM subscribers s WHERE s.id = subscriber_flow_states.subscriber_id)
-");
-echo "Done.\n";
-
-/**
- * 4. OPTIMIZE TABLES (Optional, run monthly)
- */
-if (date('j') == '1' || isset($_GET['full'])) {
-    echo "  -> Monthly Table Optimization... ";
-    $pdo->exec("OPTIMIZE TABLE subscriber_activity, queue_jobs, subscriber_flow_states");
-    echo "Done.\n";
+// Support for CLI and background trigger
+if (php_sapi_name() === 'cli' || (isset($_GET['action']) && $_GET['action'] === 'maintenance_cleanup')) {
+    runMaintenance($pdo);
 }
-
-echo "[" . date('Y-m-d H:i:s') . "] Maintenance Cycle Complete.\n";

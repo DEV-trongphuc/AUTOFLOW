@@ -205,11 +205,6 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'worker_tracking_aggregator.php') 
     echo json_encode(['status' => 'success', 'processed' => count($processedIds), 'retried' => count($unprocessedIds)]);
 }
 
-// [OPTIMIZATION] Periodic Index Check (1% chance)
-if (mt_rand(1, 100) === 1) {
-    checkStrategicIndexes($pdo);
-}
-
 /**
  * Syncs activity_buffer -> subscriber_activity
  *
@@ -259,13 +254,14 @@ function syncActivityBuffer($pdo)
         $refName = $extra['reference_name'] ?? null;
         $variation = $extra['variation'] ?? null;
 
-        $insertBinds[] = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $insertBinds[] = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         // [O(N) FIX] array_push with splat instead of array_merge.
         // array_merge creates a brand-new array each iteration: O(N) total copies.
         // array_push appends in-place: O(1) per call, O(N) total.
         array_push(
             $insertValues,
             $log['subscriber_id'],
+            $log['workspace_id'] ?? 1,
             $log['type'],
             $log['reference_id'],
             $log['flow_id'],
@@ -286,7 +282,7 @@ function syncActivityBuffer($pdo)
     if (!empty($insertValues)) {
         try {
             $sql = "INSERT INTO subscriber_activity
-                    (subscriber_id, type, reference_id, flow_id, campaign_id, reference_name,
+                    (subscriber_id, workspace_id, type, reference_id, flow_id, campaign_id, reference_name,
                      details, ip_address, user_agent, device_type, os, browser, location, created_at, variation)
                     VALUES " . implode(',', $insertBinds);
             $pdo->prepare($sql)->execute($insertValues);
@@ -345,11 +341,12 @@ function syncZaloActivityBuffer($pdo)
     $insertBinds = [];
 
     foreach ($logs as $log) {
-        $insertBinds[] = "(?, ?, ?, ?, ?, ?, ?)";
+        $insertBinds[] = "(?, ?, ?, ?, ?, ?, ?, ?)";
         // [O(N) FIX] array_push with splat  O(N) total vs array_merge O(N)
         array_push(
             $insertValues,
             $log['subscriber_id'],
+            $log['workspace_id'] ?? 1,
             $log['type'],
             $log['reference_id'],
             $log['reference_name'],
@@ -362,7 +359,7 @@ function syncZaloActivityBuffer($pdo)
     if (!empty($insertValues)) {
         try {
             $sql = "INSERT INTO zalo_subscriber_activity
-                    (subscriber_id, type, reference_id, reference_name, details, zalo_msg_id, created_at)
+                    (subscriber_id, workspace_id, type, reference_id, reference_name, details, zalo_msg_id, created_at)
                     VALUES " . implode(',', $insertBinds);
             $pdo->prepare($sql)->execute($insertValues);
         } catch (Exception $e) {
@@ -475,32 +472,6 @@ function syncTimestampBuffer($pdo)
 }
 
 /**
- * Ensures critical indexes exist (runs ~1% of the time as self-healing)
- */
-function checkStrategicIndexes($pdo)
-{
-    $indexes = [
-        'subscriber_activity' => ['idx_sub_type_date' => 'subscriber_id, type, created_at'],
-        'subscriber_flow_states' => [
-            'idx_status_created' => 'status, created_at',
-            'idx_sub_flow_step' => 'subscriber_id, flow_id, step_id'
-        ],
-        'raw_event_buffer' => ['idx_processed' => 'processed'],
-        'activity_buffer' => ['idx_processed' => 'processed'],
-        'zalo_activity_buffer' => ['idx_processed' => 'processed'],
-        'timestamp_buffer' => ['idx_processed' => 'processed'],
-        'stats_update_buffer' => ['idx_batch' => 'batch_id', 'idx_processed' => 'processed']
-    ];
-
-    foreach ($indexes as $table => $idxs) {
-        foreach ($idxs as $name => $cols) {
-            try {
-                $check = $pdo->query("SHOW INDEX FROM $table WHERE Key_name = '$name'");
-                if ($check && $check->rowCount() == 0) {
-                    $pdo->exec("ALTER TABLE $table ADD INDEX $name ($cols)");
-                }
-            } catch (Exception $e) { /* ignore */
-            }
         }
     }
 }
@@ -531,7 +502,7 @@ function syncStatsBuffer($pdo)
         // ORDER BY target_table, target_id causes filesort on non-indexed columns.
         // ksort($grouped) in PHP achieves deadlock-safe ordering without DB filesort.
         $stmt = $pdo->prepare(
-            "SELECT id, target_table, target_id, column_name, increment
+            "SELECT id, workspace_id, target_table, target_id, column_name, increment
              FROM stats_update_buffer
              WHERE processed = 0 AND batch_id IS NULL
              ORDER BY id ASC
@@ -565,12 +536,13 @@ function syncStatsBuffer($pdo)
     // Group by [table][id][col] and sum increments
     $grouped = []; // ["table|id|col" => [table, id, col, total]]
     foreach ($rows as $r) {
-        $key = $r['target_table'] . '|' . $r['target_id'] . '|' . $r['column_name'];
+        $key = $r['target_table'] . '|' . $r['target_id'] . '|' . $r['column_name'] . '|' . ($r['workspace_id'] ?? 1);
         if (!isset($grouped[$key])) {
             $grouped[$key] = [
                 'table' => $r['target_table'],
                 'id' => $r['target_id'],
                 'col' => $r['column_name'],
+                'workspace_id' => $r['workspace_id'] ?? 1,
                 'total' => 0
             ];
         }
@@ -610,9 +582,9 @@ function syncStatsBuffer($pdo)
         try {
             $cacheKey = "{$table}_{$col}";
             if (!isset($stmtStatsCache[$cacheKey])) {
-                $stmtStatsCache[$cacheKey] = $pdo->prepare("UPDATE $table SET $col = $col + ? WHERE id = ?");
+                $stmtStatsCache[$cacheKey] = $pdo->prepare("UPDATE $table SET $col = $col + ? WHERE id = ? AND workspace_id = ?");
             }
-            $stmtStatsCache[$cacheKey]->execute([$val, $id]);
+            $stmtStatsCache[$cacheKey]->execute([$val, $id, $agg['workspace_id']]);
         } catch (Exception $e) {
             error_log("Stats sync failed for $table.$col on $id: " . $e->getMessage());
         }

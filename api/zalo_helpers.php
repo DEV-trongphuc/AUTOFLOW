@@ -6,18 +6,7 @@
 
 require_once __DIR__ . '/zalo_formatter.php';
 
-function checkZaloAutomationSchema($pdo)
-{
-    try {
-        // [SCHEMA UPDATE] Ensure active_days can store long JSON for per-day schedules
-        $pdo->exec("ALTER TABLE zalo_automation_scenarios MODIFY COLUMN active_days TEXT");
-    } catch (Exception $e) {
-    }
-    try {
-        $pdo->exec("ALTER TABLE meta_automation_scenarios MODIFY COLUMN active_days TEXT");
-    } catch (Exception $e) {
-    }
-}
+// checkZaloAutomationSchema REMOVED - Logic moved to central migration scripts.
 
 /**
  * Generate secure random code verifier
@@ -87,10 +76,9 @@ function logZaloMsg($pdo, $zaloUserId, $direction, $text)
         $stmt = $pdo->prepare("INSERT INTO zalo_user_messages (zalo_user_id, direction, message_text) VALUES (?, ?, ?)");
         $stmt->execute([$zaloUserId, $direction, $text]);
 
-        // Cleanup: Keep only last 20 messages per user
-        $pdo->prepare("DELETE FROM zalo_user_messages WHERE zalo_user_id = ? AND id NOT IN (
-            SELECT id FROM (SELECT id FROM zalo_user_messages WHERE zalo_user_id = ? ORDER BY created_at DESC LIMIT 20) as tmp
-        )")->execute([$zaloUserId, $zaloUserId]);
+        // [PERF FIX] Removed per-message history pruning. 
+        // Capping to last 20 messages is now handled by maintenance_worker daily
+        // to prevent slow subqueries during high-volume message ingestion.
     } catch (Exception $e) {
     }
 }
@@ -115,38 +103,7 @@ function logZaloSubscriberActivity($pdo, $subscriberId, $type, $refId = null, $d
         $stmtBuf = $pdo->prepare("INSERT INTO zalo_activity_buffer (subscriber_id, workspace_id, type, reference_id, reference_name, details, zalo_msg_id, event_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $stmtBuf->execute([$subscriberId, $workspaceId ?: 1, $type, $refId, $refName, $details, $msgId, $eventId]);
     } catch (Exception $e) {
-        // Fallback: Create table if missing
-        if (strpos($e->getMessage(), "doesn't exist") !== false) {
-            try {
-                $pdo->exec("CREATE TABLE IF NOT EXISTS zalo_activity_buffer (
-                    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                    subscriber_id VARCHAR(100) NOT NULL,
-                    workspace_id INT DEFAULT 1,
-                    type VARCHAR(50) NOT NULL,
-                    reference_id VARCHAR(100),
-                    reference_name VARCHAR(255),
-                    details TEXT,
-                    zalo_msg_id VARCHAR(255),
-                    processed TINYINT(1) DEFAULT 0,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    INDEX idx_processed (processed),
-                    INDEX idx_workspace_id (workspace_id)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
-
-                if ($hasZaloWorkspaceCol) {
-                    $stmtBuf = $pdo->prepare("INSERT INTO zalo_activity_buffer (subscriber_id, workspace_id, type, reference_id, reference_name, details, zalo_msg_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                    $stmtBuf->execute([$subscriberId, $workspaceId ?: 1, $type, $refId, $refName, $details, $msgId]);
-                } else {
-                    $stmtBuf = $pdo->prepare("INSERT INTO zalo_activity_buffer (subscriber_id, type, reference_id, reference_name, details, zalo_msg_id) VALUES (?, ?, ?, ?, ?, ?)");
-                    $stmtBuf->execute([$subscriberId, $type, $refId, $refName, $details, $msgId]);
-                }
-            } catch (Exception $ex) {
-                // Last resort: log to error log
-                error_log("Failed to log Zalo activity: " . $ex->getMessage());
-            }
-        } else {
-            error_log("Failed to log Zalo activity: " . $e->getMessage());
-        }
+        error_log("Failed to log Zalo activity for sub $subscriberId: " . $e->getMessage());
     }
 }
 

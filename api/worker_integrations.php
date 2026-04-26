@@ -63,6 +63,12 @@ if (!function_exists('runIntegrationSync')) {
         }
         ini_set('memory_limit', '1024M'); // 1GB Memory
 
+        // [PERF-GUARD] Stop if server is saturated
+        if (!isSystemHealthy()) {
+            logIntegrationSync("Server load too high, pausing integration worker.");
+            return;
+        }
+
         // Ensure schema exists (Self-healing)
         try {
             $pdo->query("SELECT sync_status FROM integrations LIMIT 1");

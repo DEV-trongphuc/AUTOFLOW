@@ -58,3 +58,5 @@ api/worker_reminder.log
 scratch/
 seed_data_v5.json
 seed_data_v6.json
+domation_landing_export/
+api/*.log

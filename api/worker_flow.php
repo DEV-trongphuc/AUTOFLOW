@@ -41,6 +41,11 @@ if (!function_exists('runWorkerFlow')) {
         // $_SERVER['REQUEST_TIME'] kh�ng t?n t?i khi ch?y t? CLI/Cron tr�n m?t s? c?u h�nh server
         $workerStartTime = time();
 
+        // [PERF-GUARD] Stop if server is saturated
+        if (!isSystemHealthy()) {
+            return ['status' => 'throttled', 'message' => 'Server load too high, pausing flow worker'];
+        }
+
         // [ZOMBIE REAPER] Rescue stuck processes
         // [FIX BUG-WORKER-1] flow_subscribers table does not exist — correct table is subscriber_flow_states
         // Status 'queued' also wrong — correct rollback status is 'waiting'
@@ -232,7 +237,13 @@ if (!function_exists('runWorkerFlow')) {
         $stmtDynamicState = $pdo->prepare("UPDATE subscriber_flow_states SET status = ?, scheduled_at = ?, updated_at = NOW(), step_id = ?, step_type = ? WHERE id = ?");
 
         foreach ($items as $item) {
-            // [FIX #3] D�ng $workerStartTime thay v� $_SERVER['REQUEST_TIME'] (an to�n hon cho CLI/Cron)
+            // [PERF-GUARD] Stop if server is saturated (re-check every 10 subscribers)
+            if ($stepsProcessedInRun > 0 && $stepsProcessedInRun % 10 === 0 && !isSystemHealthy(2.0, 64)) {
+                $logs[] = "System saturated mid-flow run. Pausing batch.";
+                break;
+            }
+
+            // [FIX #3] Dng $workerStartTime thay v $_SERVER['REQUEST_TIME'] (an ton hon cho CLI/Cron)
             if (time() - $workerStartTime > 280)
                 break;
 

@@ -44,6 +44,12 @@ if (!function_exists('runWorkerCampaign')) {
         $logs[] = "--- CAMPAIGN WORKER START: $now ---";
         writeWorkerLog("--- WORKER STARTED ---");
 
+        // [PERF-GUARD] Stop if server is saturated
+        if (!isSystemHealthy()) {
+            writeWorkerLog("Server load too high, pausing campaign worker");
+            return ['status' => 'throttled'];
+        }
+
         // Initialize shared resources inside function scope
         $apiUrl = API_BASE_URL;
         // [FIX P38-WC] Only load the 2 settings keys this worker actually needs.
@@ -734,11 +740,18 @@ if (!function_exists('runWorkerCampaign')) {
                         }
 
                         // 1. Log Activities
-                        $allActivities = array_merge($successActivities, $failActivities);
-                        if (!empty($allActivities)) {
+                        $allActivitiesGrouped = [];
+                        foreach (array_merge($successActivities, $failActivities) as $act) {
+                            $allActivitiesGrouped[$act[0] . '_' . uniqid()] = $act;
+                        }
+                        
+                        if (!empty($allActivitiesGrouped)) {
+                            // [DEADLOCK FIX] Sort by subscriber_id to ensure consistent lock acquisition
+                            ksort($allActivitiesGrouped);
+                            
                             $vals = [];
                             $binds = [];
-                            foreach ($allActivities as $act) {
+                            foreach ($allActivitiesGrouped as $act) {
                                 $binds[] = "(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
                                 $vals = array_merge($vals, [$act[0], $campaignWorkspaceId, $act[1], $act[2], $act[6] ?? null, $act[5] ?? null, $act[3], $act[4], $act[7] ?? null]);
                             }
@@ -748,7 +761,8 @@ if (!function_exists('runWorkerCampaign')) {
 
                         // 2. Update Subscriber Stats
                         if (!empty($successIds)) {
-                            // [BUG-M2 FIX] Use parameterized query instead of string interpolation
+                            // [DEADLOCK FIX] Consistent locking order
+                            sort($successIds);
                             $idPlaceholders = implode(',', array_fill(0, count($successIds), '?'));
                             $pdo->prepare("UPDATE subscribers SET stats_sent = stats_sent + 1 WHERE id IN ($idPlaceholders)")->execute($successIds);
                         }

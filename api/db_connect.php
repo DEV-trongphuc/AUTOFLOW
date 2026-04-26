@@ -99,13 +99,30 @@ function isDatabaseSkipLockedSupported($pdo) {
         $version = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
         if (version_compare($version, '8.0.0', '>=')) return true;
         if (stripos($version, 'MariaDB') !== false) {
-            $mariaVersion = preg_replace('/^5\.5\.5-/', '', $version);
+            // MariaDB 10.6.0+ supports SKIP LOCKED
+            $mariaVersion = preg_replace('/^.*?-/', '', $version);
             return version_compare($mariaVersion, '10.6.0', '>=');
         }
         return false;
     } catch (Exception $e) {
         return false;
     }
+}
+
+/**
+ * [PERF] APCu Cache Helper with automatic fallback
+ */
+function apcu_fetch_or_callback($key, $callback, $ttl = 300) {
+    if (is_callable('apcu_fetch') && is_callable('apcu_store')) {
+        $success = false;
+        $data = apcu_fetch($key, $success);
+        if ($success) return $data;
+
+        $data = $callback();
+        @apcu_store($key, $data, $ttl); 
+        return $data;
+    }
+    return $callback();
 }
 
 /**
@@ -198,6 +215,61 @@ function triggerAsyncWorker($urlPath = '/worker_queue.php')
 
     $triggerService = new WorkerTriggerService($pdo, API_BASE_URL);
     return $triggerService->trigger($urlPath);
+}
+
+/**
+ * [PERF-GUARD] Zero-Hang System Guard
+ * Checks CPU load and RAM availability. Returns false if server is saturated.
+ * Background workers use this to pause execution and prevent total system hang.
+ */
+function isSystemHealthy($maxLoadMultiplier = 1.5, $minFreeRamMB = 128)
+{
+    // 1. Check CPU Load (Unix/Linux only)
+    if (function_exists('sys_getloadavg')) {
+        $load = sys_getloadavg();
+        $coreCount = 1;
+        if (is_file('/proc/cpuinfo')) {
+            $cpuinfo = file_get_contents('/proc/cpuinfo');
+            preg_match_all('/^processor/m', $cpuinfo, $matches);
+            $coreCount = count($matches[0]) ?: 1;
+        }
+        
+        // If 1-minute load average > (Cores * Multiplier), system is saturated
+        if ($load[0] > ($coreCount * $maxLoadMultiplier)) {
+            return false;
+        }
+    }
+
+    // 2. Check RAM (Linux only)
+    if (is_file('/proc/meminfo')) {
+        $meminfo = file_get_contents('/proc/meminfo');
+        if (preg_match('/MemAvailable:\s+(\d+) kB/', $meminfo, $matches)) {
+            $freeRamMB = $matches[1] / 1024;
+            if ($freeRamMB < $minFreeRamMB) {
+                return false;
+            }
+        }
+    }
+
+    // 3. Check Disk Space (Generic)
+    if (!isDiskSpaceHealthy(50)) { // 50MB safety margin
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * [PERF-GUARD] Disk Health Check
+ * Prevents DB corruption and log-write crashes if disk is nearly full.
+ */
+function isDiskSpaceHealthy($minFreeMB = 50)
+{
+    $freeBytes = disk_free_space(__DIR__);
+    if ($freeBytes === false) return true; // Could not determine
+    
+    $freeMB = $freeBytes / 1024 / 1024;
+    return ($freeMB >= $minFreeMB);
 }
 
 function apiHeaders()
@@ -438,12 +510,14 @@ function logSystemActivity($pdo, $module, $action, $target_id = null, $target_na
     }
 
     try {
+        $workspaceId = $_SESSION['workspace_id'] ?? 1;
         $stmt = $pdo->prepare("
             INSERT INTO system_audit_logs 
-            (user_id, user_name, module, action, target_id, target_name, details, ip_address) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            (workspace_id, user_id, user_name, module, action, target_id, target_name, details, ip_address) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         $stmt->execute([
+            $workspaceId,
             $userId, 
             $userName, 
             $module, 

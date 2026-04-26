@@ -85,14 +85,15 @@ class FlowExecutor
             $vals = [];
             foreach ($this->statsBuffer as $stat) {
                 if ($stat['increment'] === 0) continue;
-                $ph[] = "(?, ?, ?, ?, NOW())";
+                $ph[] = "(?, ?, ?, ?, ?, NOW())";
+                $vals[] = $stat['workspace_id'] ?? 1;
                 $vals[] = $stat['table'];
                 $vals[] = $stat['id'];
                 $vals[] = $stat['column'];
                 $vals[] = $stat['increment'];
             }
             if (!empty($ph)) {
-                $sql = "INSERT INTO stats_update_buffer (target_table, target_id, column_name, increment, created_at) VALUES " . implode(',', $ph);
+                $sql = "INSERT INTO stats_update_buffer (workspace_id, target_table, target_id, column_name, increment, created_at) VALUES " . implode(',', $ph);
                 $this->pdo->prepare($sql)->execute($vals);
             }
         } catch (Exception $e) {

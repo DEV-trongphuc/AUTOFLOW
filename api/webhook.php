@@ -42,19 +42,14 @@ $LSC = getGlobalLeadScoreConfig($pdo);
 // in multiple branches (GET handler, POST Zalo event handler, tracking redirect).
 // Using register_shutdown_function() guarantees it runs on script termination
 // regardless of how/where execution ends.
-register_shutdown_function(function () use ($pdo) {
-    if (mt_rand(1, 100) === 1) {
-        try {
-            if (file_exists(__DIR__ . '/prune_queues.php')) {
-                require_once __DIR__ . '/prune_queues.php';
-                if (function_exists('pruneQueues')) {
-                    pruneQueues($pdo);
-                }
-            }
-        } catch (Exception $e) { /* ignore gc errors */
-        }
-    }
-});
+// [BUG-1 FIX] Background Maintenance: dispatch to worker instead of synchronous execution.
+// Previously used register_shutdown_function which still blocks the PHP process.
+// Now: only 1% chance to trigger, and it fires an async worker job.
+if (mt_rand(1, 100) === 1) {
+    try {
+        dispatchQueueJob($pdo, 'low', ['action' => 'maintenance_cleanup']);
+    } catch (Exception $e) {}
+}
 
 // --- DEBUG LOGGING ---
 $input = file_get_contents('php://input');
@@ -69,14 +64,14 @@ if ($method === 'POST') {
 }
 
 if ($method === 'GET' && !isset($_GET['type'])) {
-    checkZaloAutomationSchema($pdo);
+// checkZaloAutomationSchema($pdo); // REMOVED: High-overhead redundant ALTER TABLE
     echo "<h1>MailFlow Pro - Zalo Webhook Listener</h1>";
     echo "<p>Status: <b style='color:green;'>ACTIVE</b></p>";
     echo "<p>Time: " . date('Y-m-d H:i:s') . "</p>";
     echo "<p>Log status: " . (file_exists($logFile) ? "✅ Logged" : "❌ Log Fail") . "</p>";
     exit;
 }
-checkZaloAutomationSchema($pdo);
+// checkZaloAutomationSchema($pdo); // REMOVED: High-overhead redundant ALTER TABLE
 
 if ($method === 'POST') {
     // [EARLY ABORT / DDOS MITIGATION] Vòng 98: Reject requests > 1MB or malformed before touching DB

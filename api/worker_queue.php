@@ -50,10 +50,13 @@ if (session_id())
 
 $now = date('Y-m-d H:i:s');
 $workerId = getmypid();
-$maxJobs = 200; // Process up to 200 jobs per run
-
 // 0. RESET HUNG JOBS (Reclaim jobs that crashed/timed out)
-// If a job is stuck in 'processing' for more than 15 minutes, it likely crashed.
+// [PERF-GUARD] Stop if server is saturated
+if (!isSystemHealthy()) {
+    echo json_encode(['status' => 'throttled', 'message' => 'Server load too high, pausing worker']);
+    exit;
+}
+
 $pdo->prepare("UPDATE queue_jobs SET status = 'pending', attempts = attempts + 1, available_at = NOW() 
                WHERE status = 'processing' AND reserved_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE)")
     ->execute();
@@ -135,6 +138,12 @@ foreach ($jobs as $jobItem) {
     $jobError = null;
 
     try {
+        // [PERF-GUARD] Re-check system health every job to catch sudden spikes
+        if ($jobsProcessed > 0 && $jobsProcessed % 5 === 0 && !isSystemHealthy(2.0, 64)) {
+            $jobError = "System saturated mid-batch. Pausing.";
+            break;
+        }
+
         switch ($jobType) {
             case 'high':
             case 'default':
@@ -571,15 +580,12 @@ try {
 }
 
 if ($hasDueFlowStates) {
-    // [FIX] Critical: `include` only loads the file's code  it does NOT call runWorkerFlow().
-    // worker_flow.php was refactored to wrap its logic in runWorkerFlow($pdo), with this guard:
-    //   if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) { runWorkerFlow($pdo); }
-    // When included from worker_queue.php, SCRIPT_FILENAME = 'worker_queue.php' ? 'worker_flow.php'
-    // ? The guard condition is FALSE ? runWorkerFlow() is NEVER called.
-    // ? All subscribers in a 'waiting' delay step are permanently stuck forever.
-    require_once __DIR__ . '/worker_flow.php';
-    if (function_exists('runWorkerFlow')) {
-        runWorkerFlow($pdo);
+    // [PERF-GUARD] Final health check before spawning heavy flow engine
+    if (isSystemHealthy()) {
+        require_once __DIR__ . '/worker_flow.php';
+        if (function_exists('runWorkerFlow')) {
+            runWorkerFlow($pdo);
+        }
     }
 }
 
