@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost:3306
--- Thời gian đã tạo: Th4 26, 2026 lúc 03:34 PM
+-- Thời gian đã tạo: Th4 26, 2026 lúc 08:49 PM
 -- Phiên bản máy phục vụ: 10.6.18-MariaDB-cll-lve-log
 -- Phiên bản PHP: 8.4.20
 
@@ -971,7 +971,8 @@ CREATE TABLE `meta_app_configs` (
   `mode` enum('live','dev') DEFAULT 'live',
   `created_at` datetime DEFAULT current_timestamp(),
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `token_expires_at` datetime DEFAULT NULL
+  `token_expires_at` datetime DEFAULT NULL,
+  `workspace_id` int(11) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1002,7 +1003,8 @@ CREATE TABLE `meta_automation_scenarios` (
   `holiday_start_at` datetime DEFAULT NULL,
   `holiday_end_at` datetime DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `workspace_id` int(11) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1023,7 +1025,8 @@ CREATE TABLE `meta_conversations` (
   `assigned_to` varchar(64) DEFAULT NULL,
   `ai_enabled` tinyint(1) DEFAULT 1,
   `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `workspace_id` int(11) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1039,7 +1042,8 @@ CREATE TABLE `meta_customer_journey` (
   `event_type` enum('message_sent','message_received','postback','read','delivery','regex_matched','tag_added','form_submit') NOT NULL,
   `event_name` varchar(255) DEFAULT NULL,
   `event_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`event_data`)),
-  `created_at` datetime DEFAULT current_timestamp()
+  `created_at` datetime DEFAULT current_timestamp(),
+  `workspace_id` int(11) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1062,7 +1066,8 @@ CREATE TABLE `meta_message_logs` (
   `error_message` text DEFAULT NULL,
   `timestamp` bigint(20) DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `workspace_id` int(11) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1715,17 +1720,6 @@ CREATE TABLE `timestamp_buffer` (
   `processed` tinyint(1) DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Cấu trúc bảng cho bảng `tmp_sl`
---
-
-CREATE TABLE `tmp_sl` (
-  `subscriber_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `list_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 -- --------------------------------------------------------
 
@@ -2748,18 +2742,9 @@ ALTER TABLE `login_attempts`
 --
 ALTER TABLE `mail_delivery_logs`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_reminder_delivery` (`reminder_id`),
-  ADD KEY `idx_mail_logs_campaign_status` (`campaign_id`,`status`,`sent_at`),
-  ADD KEY `idx_mail_logs_recipient` (`recipient`,`campaign_id`),
-  ADD KEY `idx_mail_logs_reminder` (`campaign_id`,`reminder_id`,`status`),
-  ADD KEY `idx_mail_log_recipient_sent` (`recipient`,`sent_at`),
-  ADD KEY `idx_perf_campaign_sub` (`campaign_id`,`recipient`,`status`),
-  ADD KEY `idx_lookup_speed` (`campaign_id`,`sent_at`),
-  ADD KEY `idx_delivery_logs_flow` (`flow_id`),
-  ADD KEY `idx_sent_at` (`sent_at`),
-  ADD KEY `idx_mdl_status_sent` (`status`,`sent_at`),
-  ADD KEY `idx_mdl_sub_camp` (`subscriber_id`,`campaign_id`),
-  ADD KEY `idx_mdl_camp_status_created` (`campaign_id`,`status`,`created_at`),
+  ADD KEY `idx_mdl_workspace_sent` (`workspace_id`,`sent_at` DESC),
+  ADD KEY `idx_mdl_workspace_campaign` (`workspace_id`,`campaign_id`,`status`),
+  ADD KEY `idx_mdl_workspace_subscriber` (`workspace_id`,`subscriber_id`),
   ADD KEY `idx_workspace_id` (`workspace_id`);
 
 --
@@ -2768,7 +2753,8 @@ ALTER TABLE `mail_delivery_logs`
 ALTER TABLE `meta_app_configs`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `idx_page_id` (`page_id`),
-  ADD KEY `idx_status` (`status`);
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_meta_workspace` (`workspace_id`);
 
 --
 -- Chỉ mục cho bảng `meta_automation_scenarios`
@@ -2802,15 +2788,13 @@ ALTER TABLE `meta_customer_journey`
 -- Chỉ mục cho bảng `meta_message_logs`
 --
 ALTER TABLE `meta_message_logs`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_mid` (`mid`),
-  ADD KEY `idx_conversation` (`page_id`,`psid`),
-  ADD KEY `idx_created_at` (`created_at`),
-  ADD KEY `idx_direction` (`direction`),
-  ADD KEY `idx_report_opt` (`page_id`,`direction`,`created_at`,`psid`),
-  ADD KEY `idx_psid_page_created` (`psid`,`page_id`,`created_at`),
-  ADD KEY `idx_psid` (`psid`),
-  ADD KEY `idx_status` (`status`);
+  `workspace_id` int(11) DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_mid` (`mid`),
+  KEY `idx_zum_workspace_user` (`workspace_id`,`psid`),
+  KEY `idx_meta_msg_created` (`workspace_id`,`created_at` DESC),
+  KEY `idx_meta_msg_direction` (`workspace_id`,`direction`),
+  KEY `idx_meta_msg_status` (`workspace_id`,`status`);
 
 --
 -- Chỉ mục cho bảng `meta_subscribers`
@@ -2986,60 +2970,19 @@ ALTER TABLE `subscribers` ADD FULLTEXT KEY `ft_subscriber_search` (`email`,`firs
 --
 ALTER TABLE `subscriber_activity`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_flow_activity` (`flow_id`,`created_at`),
-  ADD KEY `idx_campaign_activity` (`campaign_id`,`created_at`),
-  ADD KEY `idx_reminder_activity` (`reminder_id`,`created_at`),
-  ADD KEY `idx_subscriber_activity_created` (`created_at`),
-  ADD KEY `idx_sa_flow_sub_type` (`flow_id`,`subscriber_id`,`type`),
-  ADD KEY `idx_camp_type_var` (`campaign_id`,`type`,`variation`),
-  ADD KEY `idx_flow_type_var` (`flow_id`,`type`,`variation`),
-  ADD KEY `idx_flow_type_ref` (`flow_id`,`type`,`reference_id`,`created_at`),
-  ADD KEY `idx_subact_type_ref` (`type`,`reference_id`),
-  ADD KEY `idx_spam_debounce` (`subscriber_id`,`type`,`created_at`),
-  ADD KEY `idx_subid_type_ref` (`subscriber_id`,`type`,`reference_id`),
-  ADD KEY `idx_worker_check` (`subscriber_id`,`type`,`flow_id`,`created_at`),
-  ADD KEY `idx_sub_created` (`subscriber_id`,`created_at`),
-  ADD KEY `idx_campaign_sub_type` (`campaign_id`,`subscriber_id`,`type`),
-  ADD KEY `idx_type_created` (`type`,`created_at`),
-  ADD KEY `idx_campaign_type` (`campaign_id`,`type`),
-  ADD KEY `idx_activity_flow_ref_type` (`flow_id`,`reference_id`,`type`),
-  ADD KEY `idx_sa_flow_type` (`flow_id`,`type`),
-  ADD KEY `idx_sa_sub_type` (`subscriber_id`,`type`),
-  ADD KEY `idx_sa_subscriber` (`subscriber_id`),
-  ADD KEY `idx_sa_type_created` (`type`,`created_at`),
-  ADD KEY `idx_sub_type_date` (`subscriber_id`,`type`,`created_at`),
-  ADD KEY `idx_sa_workspace` (`workspace_id`),
-  ADD KEY `idx_activity_dedup` (`subscriber_id`,`type`(20),`reference_id`,`created_at`),
-  ADD KEY `idx_processing_campaign` (`campaign_id`,`type`(30),`created_at`),
-  ADD KEY `idx_activity_ws` (`workspace_id`);
+  ADD KEY `idx_sa_workspace_type_ref` (`workspace_id`,`type`,`reference_id`),
+  ADD KEY `idx_sa_workspace_sub_created` (`workspace_id`,`subscriber_id`,`created_at` DESC),
+  ADD KEY `idx_sa_workspace_flow_step` (`workspace_id`,`flow_id`,`created_at`);
 
 --
 -- Chỉ mục cho bảng `subscriber_flow_states`
 --
 ALTER TABLE `subscriber_flow_states`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_sub_flow` (`subscriber_id`,`flow_id`),
-  ADD KEY `idx_scheduled` (`scheduled_at`),
-  ADD KEY `idx_flow_states_flow_status_created` (`flow_id`,`status`,`created_at`),
-  ADD KEY `idx_flow_states_processing_opt` (`status`,`scheduled_at`,`updated_at`),
-  ADD KEY `idx_sub_flow_status` (`subscriber_id`,`flow_id`,`status`),
-  ADD KEY `idx_flow_state_step` (`flow_id`,`step_id`,`status`),
-  ADD KEY `idx_flow_status_step` (`flow_id`,`status`,`step_id`),
-  ADD KEY `idx_updated_at` (`updated_at`),
-  ADD KEY `idx_flow_status_scheduled` (`flow_id`,`status`,`scheduled_at`),
-  ADD KEY `idx_status_updated` (`status`,`updated_at`),
-  ADD KEY `idx_status_created` (`status`,`created_at`),
-  ADD KEY `idx_sub_flow_step` (`subscriber_id`,`flow_id`,`step_id`),
-  ADD KEY `idx_flow_sub_status` (`flow_id`,`subscriber_id`,`status`),
-  ADD KEY `idx_status_scheduled_created` (`status`,`scheduled_at`,`created_at`),
-  ADD KEY `idx_sub_flow_created` (`subscriber_id`,`flow_id`,`created_at`),
-  ADD KEY `idx_status_sched_flow` (`status`,`scheduled_at`,`flow_id`,`created_at`),
-  ADD KEY `idx_priority_lookup` (`id`,`subscriber_id`,`flow_id`,`status`),
-  ADD KEY `idx_sub_waiting` (`subscriber_id`,`status`),
-  ADD KEY `idx_flow_status` (`flow_id`,`status`),
-  ADD KEY `idx_workspace_id` (`workspace_id`),
-  ADD KEY `idx_flow_worker_v2` (`workspace_id`,`status`,`scheduled_at`),
-  ADD KEY `idx_perf_wakeup` (`status`,`scheduled_at`,`workspace_id`);
+  ADD UNIQUE KEY `unique_sub_flow` (`workspace_id`,`subscriber_id`,`flow_id`),
+  ADD KEY `idx_sfs_workspace_status_sched` (`workspace_id`,`status`,`scheduled_at`),
+  ADD KEY `idx_sfs_workspace_flow_status` (`workspace_id`,`flow_id`,`status`,`scheduled_at`),
+  ADD KEY `idx_sfs_workspace_sub_status` (`workspace_id`,`subscriber_id`,`status`);
 
 --
 -- Chỉ mục cho bảng `subscriber_lists`
