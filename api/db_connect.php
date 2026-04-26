@@ -159,6 +159,54 @@ function ensure_pdo_alive(&$pdo)
 
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
+    
+    // ─── GLOBAL LOCK MANAGER ───────────────────────────────────────────────────
+    // Track all MySQL GET_LOCK() calls to ensure they are released on shutdown.
+    // This prevents deadlocks if a script exits or dies while holding a lock.
+    $GLOBAL_HELD_LOCKS = [];
+
+    /**
+     * Secure wrapper for MySQL GET_LOCK
+     */
+    function db_get_lock($pdo, $lockName, $timeout = 10) {
+        global $GLOBAL_HELD_LOCKS;
+        $stmt = $pdo->prepare("SELECT GET_LOCK(?, ?)");
+        $stmt->execute([$lockName, $timeout]);
+        $result = $stmt->fetchColumn();
+        if ($result == 1) {
+            $GLOBAL_HELD_LOCKS[$lockName] = true;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Secure wrapper for MySQL RELEASE_LOCK
+     */
+    function db_release_lock($pdo, $lockName) {
+        global $GLOBAL_HELD_LOCKS;
+        $stmt = $pdo->prepare("SELECT RELEASE_LOCK(?)");
+        $stmt->execute([$lockName]);
+        unset($GLOBAL_HELD_LOCKS[$lockName]);
+        return true;
+    }
+
+    // Register auto-releaser
+    register_shutdown_function(function() use (&$pdo) {
+        global $GLOBAL_HELD_LOCKS;
+        if (empty($GLOBAL_HELD_LOCKS) || !$pdo) return;
+        
+        foreach (array_keys($GLOBAL_HELD_LOCKS) as $lockName) {
+            try {
+                // Use a fresh statement to avoid interfering with any ongoing fetches
+                $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]);
+            } catch (Exception $e) {
+                // Ignore errors during shutdown
+            }
+        }
+        $GLOBAL_HELD_LOCKS = [];
+    });
+
 } catch (\PDOException $e) {
     if (ob_get_length())
         ob_clean();

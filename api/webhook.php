@@ -148,10 +148,7 @@ if ($method === 'POST') {
                     if ($oaConfig) {
                         // [SECURE FIX] Add Idempotency Lock for Zalo Events to prevent duplicate AI triggers
                         $lockName = "zalo_msg_" . md5($eventId);
-                        $stmtGetLock = $pdo->prepare("SELECT GET_LOCK(?, 3)");
-                        $stmtGetLock->execute([$lockName]);
-                        $lockResult = $stmtGetLock->fetchColumn();
-                        if ($lockResult !== '1' && $lockResult !== 1) {
+                        if (!db_get_lock($pdo, $lockName, 3)) {
                             file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ⛔ Lock timeout — concurrent processing\n", FILE_APPEND);
                             echo json_encode(['status' => 'lock_timeout', 'reason' => 'concurrent_processing']);
                             exit;
@@ -161,7 +158,7 @@ if ($method === 'POST') {
                         $stmtCheck->execute([$eventId]);
                         if ($stmtCheck->fetchColumn()) {
                             file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ⛔ Duplicate event, skipping\n", FILE_APPEND);
-                            $pdo->prepare("SELECT RELEASE_LOCK(?)") ->execute([$lockName]);
+                            db_release_lock($pdo, $lockName);
                             echo json_encode(['status' => 'ignored', 'reason' => 'duplicate']);
                             exit;
                         }  // end idempotency check
@@ -259,7 +256,7 @@ if ($method === 'POST') {
                                     $welcome = $stmtW->fetch(PDO::FETCH_ASSOC);
                                     if ($welcome) {
                                         $accessToken = ensureZaloToken($pdo, $oaConfig['id']);
-                                        sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $welcome);
+                                        sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $welcome, '', $oaConfig['workspace_id']);
                                     }
                                 }
                             }
@@ -408,7 +405,7 @@ if ($method === 'POST') {
 
                                     if ($isRecentFollow || $inboundCount === 0) {
                                         // Log to chat history as system outbound but DONT pause automation
-                                        logZaloMsg($pdo, $zaloUserId, 'outbound', "[System Message] " . $staffMsg);
+                                        logZaloMsg($pdo, $zaloUserId, 'outbound', "[System Message] " . $staffMsg, $oaConfig['workspace_id']);
                                         // Log as system_reply instead of staff_reply
                                         logZaloSubscriberActivity($pdo, $subId, 'system_reply', null, "Zalo System/Greeting: $staffMsg", "Zalo Official Account", $eventId, $oaConfig['workspace_id']);
                                         $isAutomated = true; // Skip human logic below
@@ -419,7 +416,7 @@ if ($method === 'POST') {
 
                             if (!$isAutomated) {
                                 // Log to chat history as outbound
-                                logZaloMsg($pdo, $zaloUserId, 'outbound', $staffMsg);
+                                logZaloMsg($pdo, $zaloUserId, 'outbound', $staffMsg, $oaConfig['workspace_id']);
                                 // Log to activity timeline as staff_reply (CRITICAL for AI Cooldown)
                                 logZaloSubscriberActivity($pdo, $subId, 'staff_reply', null, "Tư vấn viên trả lời: $staffMsg", "Zalo Official Account", $eventId, $oaConfig['workspace_id']);
 
@@ -449,7 +446,7 @@ if ($method === 'POST') {
                         $msgEvents = ['user_send_text', 'user_send_image', 'user_send_link', 'user_send_audio', 'user_send_video', 'user_send_location', 'user_send_sticker', 'user_send_gif'];
                         if ($subId && in_array($event, $msgEvents)) {
                             $msgText = $data['message']['text'] ?? '[' . strtoupper(str_replace('user_send_', '', $event)) . ']';
-                            logZaloMsg($pdo, $zaloUserId, 'inbound', $msgText);
+                            logZaloMsg($pdo, $zaloUserId, 'inbound', $msgText, $oaConfig['workspace_id']);
 
                             // [REDUNDANCY FIX] Skip individual timeline/lead score for text events (batched later)
                             // Other events like user_send_image still log immediately.
@@ -899,7 +896,7 @@ if ($method === 'POST') {
                                     // [FIX-3] Use exit only — return in global scope is misleading,
                                     // and the exit below it was unreachable dead code.
                                     if (isset($lockName)) {
-                                        $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]);
+                                        db_release_lock($pdo, $lockName);
                                     }
                                     exit;
                                 }

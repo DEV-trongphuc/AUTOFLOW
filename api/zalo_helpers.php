@@ -91,15 +91,11 @@ function getCodeVerifier($pdo, $oa_id)
 /**
  * Log a Zalo message (Inbound/Outbound)
  */
-function logZaloMsg($pdo, $zaloUserId, $direction, $text)
+function logZaloMsg($pdo, $zaloUserId, $direction, $text, $workspaceId = null)
 {
     try {
-        $stmt = $pdo->prepare("INSERT INTO zalo_user_messages (zalo_user_id, direction, message_text) VALUES (?, ?, ?)");
-        $stmt->execute([$zaloUserId, $direction, $text]);
-
-        // [PERF FIX] Removed per-message history pruning. 
-        // Capping to last 20 messages is now handled by maintenance_worker daily
-        // to prevent slow subqueries during high-volume message ingestion.
+        $stmt = $pdo->prepare("INSERT INTO zalo_user_messages (zalo_user_id, workspace_id, direction, message_text) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$zaloUserId, $workspaceId ?: 1, $direction, $text]);
     } catch (Exception $e) {
     }
 }
@@ -131,7 +127,7 @@ function logZaloSubscriberActivity($pdo, $subscriberId, $type, $refId = null, $d
 /**
  * Send Zalo Automation Reply (CS API)
  */
-function sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg = '')
+function sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg = '', $workspaceId = null)
 {
     // Handle AI Reply Type
     if ($scenario['type'] === 'ai_reply' && !empty($scenario['ai_chatbot_id'])) {
@@ -268,7 +264,7 @@ function _sendZaloPayload($pdo, $zaloUserId, $accessToken, $payload, $logText)
     $res = json_decode($resRaw, true);
     if (isset($res['error']) && $res['error'] == 0) {
         $logged = (strpos($logText, '[Automation]') === 0) ? $logText : "[Automation] " . $logText;
-        logZaloMsg($pdo, $zaloUserId, 'outbound', $logged);
+        logZaloMsg($pdo, $zaloUserId, 'outbound', $logged, $workspaceId);
     } else {
         file_put_contents(__DIR__ . '/zalo_debug.log', date('[Y-m-d H:i:s] ') . "Send Scenario Failed: " . $resRaw . "\n", FILE_APPEND);
     }
@@ -605,7 +601,7 @@ function ensureZaloToken($pdo, $oaId)
     // [SCALING] ATOMIC REFRESH LOCK
     // Prevent multiple concurrent webhooks from refreshing the same token
     $lockName = "zalo_refresh_" . $oa['id'];
-    $pdo->query("SELECT GET_LOCK('$lockName', 10)"); // Wait up to 10s
+    db_get_lock($pdo, $lockName, 10); // Wait up to 10s using global manager
 
     try {
         // RE-FETCH: Check if another process already refreshed it while we waited for lock
@@ -613,15 +609,14 @@ function ensureZaloToken($pdo, $oaId)
         $stmtReload->execute([$oa['id']]);
         $oa = array_merge($oa, $stmtReload->fetch(PDO::FETCH_ASSOC));
 
-        $expiresAt = $oa['token_expires_at'] ? date('Y-m-d H:i:s', strtotime($oa['token_expires_at']) - 300) : null;
         if ($oa['access_token'] && ($expiresAt && $expiresAt > $now)) {
-            $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]); // [FIX P38-ZH] Prepared RELEASE_LOCK
+            db_release_lock($pdo, $lockName);
             return $oa['access_token'];
         }
 
         // Need refresh
         if (empty($oa['refresh_token'])) {
-            $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]); // [FIX P38-ZH]
+            db_release_lock($pdo, $lockName);
             return null;
         }
 
@@ -658,7 +653,7 @@ function ensureZaloToken($pdo, $oaId)
                 $stmtU = $pdo->prepare("UPDATE zalo_oa_configs SET access_token = ?, refresh_token = ?, token_expires_at = ?, updated_at = NOW() WHERE id = ?");
                 $stmtU->execute([$new_access_token, $new_refresh_token, $expires_at, $oa['id']]);
 
-                $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]); // [FIX P38-ZH]
+                db_release_lock($pdo, $lockName);
                 return $new_access_token;
             } elseif (isset($result['error']) && $result['error'] != 0) {
                 // [V�ng 33 FIX] Suspend dead token to prevent API hammering
@@ -672,7 +667,7 @@ function ensureZaloToken($pdo, $oaId)
         // Fallback log
     }
 
-    $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]); // [FIX P38-ZH]
+    db_release_lock($pdo, $lockName);
     return null;
 }
 

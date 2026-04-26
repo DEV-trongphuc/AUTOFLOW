@@ -74,7 +74,7 @@ if ($method === 'GET' && isset($_GET['route']) && $_GET['route'] === 'flow-snaps
         $snapshots = $stmt->fetchAll(PDO::FETCH_ASSOC);
         jsonResponse(true, $snapshots);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -93,7 +93,7 @@ if ($method === 'GET' && isset($_GET['route']) && $_GET['route'] === 'flow-snaps
         $snap['flow_data'] = json_decode($snap['flow_data'], true);
         jsonResponse(true, $snap);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -128,7 +128,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'flow-snap
         jsonResponse(true, ['id' => $snapshotId, 'message' => 'ÄÃ£ lÆ°u phiÃªn báº£n']);
     } catch (Exception $e) {
         error_log("Flow snapshot save error: " . $e->getMessage());
-        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -438,16 +438,22 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                              AND (s_search.email LIKE ? OR s_search.first_name LIKE ? OR s_search.last_name LIKE ?)";
                 if ($branchFilter === 'matched') {
                     $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND (b.details LIKE 'Matched:%' OR b.details LIKE 'Condition matched:%'))";
+                    $countParams = array_merge($countParams, $stepIdParams);
                 } elseif ($branchFilter === 'timed_out') {
                     $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.details LIKE 'Timed Out:%')";
+                    $countParams = array_merge($countParams, $stepIdParams);
                 } elseif ($branchFilter === 'path_a') {
                     $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.details LIKE 'Split Test: A%')";
+                    $countParams = array_merge($countParams, $stepIdParams);
                 } elseif ($branchFilter === 'path_b') {
                     $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.details LIKE 'Split Test: B%')";
+                    $countParams = array_merge($countParams, $stepIdParams);
                 } elseif ($branchFilter === 'fallback') {
                     $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND (b.details LIKE 'Matched: Fallback%' OR b.details LIKE 'Matched: fallback%'))";
+                    $countParams = array_merge($countParams, $stepIdParams);
                 } else {
                     $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.type IN ('advanced_condition', 'condition_true', 'condition_false', 'ab_test_a', 'ab_test_b', 'split_test') AND (b.details LIKE ? OR b.details LIKE ?))";
+                    $countParams = array_merge($countParams, $stepIdParams);
                     $countParams[] = "%Matched: $branchFilter%";
                     $countParams[] = "%Condition matched: $branchFilter%";
                 }
@@ -461,16 +467,22 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                 $countParamsExec = array_merge([$flowId], $stepIdParams);
                 if ($branchFilter === 'matched') {
                     $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND (b.details LIKE 'Matched:%' OR b.details LIKE 'Condition matched:%'))";
+                    $countParamsExec = array_merge($countParamsExec, $stepIdParams);
                 } elseif ($branchFilter === 'timed_out') {
                     $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.details LIKE 'Timed Out:%')";
+                    $countParamsExec = array_merge($countParamsExec, $stepIdParams);
                 } elseif ($branchFilter === 'path_a') {
                     $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.details LIKE 'Split Test: A%')";
+                    $countParamsExec = array_merge($countParamsExec, $stepIdParams);
                 } elseif ($branchFilter === 'path_b') {
                     $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.details LIKE 'Split Test: B%')";
+                    $countParamsExec = array_merge($countParamsExec, $stepIdParams);
                 } elseif ($branchFilter === 'fallback') {
                     $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND (b.details LIKE 'Matched: Fallback%' OR b.details LIKE 'Matched: fallback%'))";
+                    $countParamsExec = array_merge($countParamsExec, $stepIdParams);
                 } else {
                     $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.type IN ('advanced_condition', 'condition_true', 'condition_false', 'ab_test_a', 'ab_test_b', 'split_test') AND (b.details LIKE ? OR b.details LIKE ?))";
+                    $countParamsExec = array_merge($countParamsExec, $stepIdParams);
                     $countParamsExec[] = "%Matched: $branchFilter%";
                     $countParamsExec[] = "%Condition matched: $branchFilter%";
                 }
@@ -496,8 +508,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                         AND " . str_replace('reference_id', 'step_id', $stepIdClause ? "sfs_exclude.$stepIdClause" : '') . "
                         AND sfs_exclude.status IN ('waiting', 'processing')
                     WHERE sfs_exclude.id IS NULL
-                    " . ($search ? "AND (s.email LIKE ? OR s.first_name LIKE ? OR s.last_name LIKE ?)" : "") . "
-                    ORDER BY u.entered_at DESC LIMIT $limit OFFSET $offset";
+                    " . ($search ? "AND (s.email LIKE ? OR s.first_name LIKE ? OR s.last_name LIKE ?)" : "");
 
             $fetchParams = array_merge([$stepId, $flowId], $stepIdParams, [$flowId], $stepIdParams, [$flowId], $stepIdParams);
             if ($search) {
@@ -520,6 +531,8 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                 $fetchParams[] = "%Matched: $branchFilter%";
                 $fetchParams[] = "%Condition matched: $branchFilter%";
             }
+
+            $sql .= " ORDER BY u.entered_at DESC LIMIT $limit OFFSET $offset";
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute($fetchParams);
@@ -635,7 +648,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
 
         jsonResponse(true, ['data' => $participants, 'pagination' => ['total' => $total, 'totalPages' => $totalPages, 'page' => $page, 'limit' => $limit]]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -730,7 +743,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'click_summary') {
             ]
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -796,7 +809,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'click_details') {
             'pagination' => ['total' => $total, 'page' => $page, 'limit' => $limit, 'totalPages' => ceil($total / $limit)]
         ]);
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
+        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }
 }
 
@@ -1354,8 +1367,8 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
             try {
                 $targetStepType = $targetStepData['type'] ?? 'unknown';
                 $sqlState = "INSERT INTO subscriber_flow_states 
-                    (flow_id, subscriber_id, step_id, step_type, status, created_at, updated_at, last_step_at, scheduled_at)
-                    VALUES (?, ?, ?, ?, 'waiting', ?, ?, ?, ?)
+                    (flow_id, subscriber_id, workspace_id, step_id, step_type, status, created_at, updated_at, last_step_at, scheduled_at)
+                    VALUES (?, ?, ?, ?, ?, 'waiting', ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE
                         step_id = VALUES(step_id),
                         step_type = VALUES(step_type),
@@ -1365,13 +1378,13 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
                         scheduled_at = VALUES(scheduled_at)";
                 $stmt = $pdo->prepare($sqlState);
                 foreach ($finalStatesToInsert as $subId) {
-                    $stmt->execute([$flowId, $subId, $stepId, $targetStepType, $nowStr, $nowStr, $nowStr, $resolvedScheduledAt]);
+                    $stmt->execute([$flowId, $subId, $workspace_id, $stepId, $targetStepType, $nowStr, $nowStr, $nowStr, $resolvedScheduledAt]);
                     $rc = $stmt->rowCount();
                     if ($rc > 0)
                         $addedCount++;
                     if (function_exists('logActivity') && $rc > 0) {
-                        $logMsg = ($rc === 1) ? "ThÃªm thá»§ cÃ´ng qua batch" : "Ghi danh láº¡i thá»§ cÃ´ng";
-                        logActivity($pdo, $subId, 'enter_flow', $stepId, 'Manual Add', $logMsg, $flowId);
+                        $logMsg = ($rc === 1) ? "Thêm thủ công qua batch" : "Ghi danh lại thủ công";
+                        logActivity($pdo, $subId, 'enter_flow', $stepId, 'Manual Add', $logMsg, $flowId, null, [], $workspace_id);
                     }
                 }
                 $pdo->commit();
@@ -2289,19 +2302,19 @@ if (isset($_GET['route']) && $_GET['route'] === 'bulk-next-step') {
 
             if ($selectAll) {
                 // Batch log for ALL waiting subscribers in this step
-                // [FIX] Correct columns for subscriber_activity
-                $sqlLog = "INSERT INTO subscriber_activity (subscriber_id, type, reference_id, flow_id, reference_name, details, created_at)
-                           SELECT subscriber_id, ?, ?, flow_id, 'Flow Manual Move', ?, NOW()
+                // [HARDENING] Include workspace_id for 1B scalability
+                $sqlLog = "INSERT INTO subscriber_activity (subscriber_id, workspace_id, type, reference_id, flow_id, reference_name, details, created_at)
+                           SELECT subscriber_id, ?, ?, ?, flow_id, 'Flow Manual Move', ?, NOW()
                            FROM subscriber_flow_states
                            WHERE flow_id = ? AND step_id IN ($stepPlaceholders) AND status IN ('waiting', 'processing')";
-                $pdo->prepare($sqlLog)->execute(array_merge([$logType, $currentStepId, $details, $flowId], $expandedStepIds));
+                $pdo->prepare($sqlLog)->execute(array_merge([$workspace_id, $logType, $currentStepId, $details, $flowId], $expandedStepIds));
 
                 if ($isLastStep) {
-                    $sqlLogComp = "INSERT INTO subscriber_activity (subscriber_id, type, reference_id, flow_id, reference_name, details, created_at)
-                                   SELECT subscriber_id, 'complete_flow', ?, flow_id, 'Flow Finished', 'Flow finished manually', NOW()
+                    $sqlLogComp = "INSERT INTO subscriber_activity (subscriber_id, workspace_id, type, reference_id, flow_id, reference_name, details, created_at)
+                                   SELECT subscriber_id, ?, 'complete_flow', ?, flow_id, 'Flow Finished', 'Flow finished manually', NOW()
                                    FROM subscriber_flow_states
                                    WHERE flow_id = ? AND step_id IN ($stepPlaceholders) AND status IN ('waiting', 'processing')";
-                    $pdo->prepare($sqlLogComp)->execute(array_merge([$currentStepId, $flowId], $expandedStepIds));
+                    $pdo->prepare($sqlLogComp)->execute(array_merge([$workspace_id, $currentStepId, $flowId], $expandedStepIds));
                 }
             } else if (!empty($subscriberIds)) {
                 // log for specific IDs
@@ -3011,8 +3024,8 @@ switch ($method) {
                         // INSERT cancelled cho ngÆ°á»i CHÆ¯A cÃ³ báº¥t ká»³ record nÃ o trong flow nÃ y
                         // (KhÃ´ng ghi Ä‘Ã¨ waiting/processing cá»§a ngÆ°á»i Ä‘ang cháº¡y)
                         $_snapInsert = "INSERT INTO subscriber_flow_states
-                                        (flow_id, subscriber_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at)
-                                        SELECT ?, s.id, ?, ?, 'cancelled', NOW(), NOW(), NOW()
+                                        (flow_id, subscriber_id, workspace_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at)
+                                        SELECT ?, s.id, ?, ?, ?, 'cancelled', NOW(), NOW(), NOW()
                                         FROM subscribers s
                                         WHERE s.workspace_id = ?
                                         AND s.status IN ('active','lead','customer')
@@ -3023,7 +3036,8 @@ switch ($method) {
                                         )";
                         $_snapStmt = $pdo->prepare($_snapInsert);
                         $_snapStmt->execute(array_merge(
-                            [$path, $_snapTrigger['nextStepId'], date('Y-m-d H:i:s', strtotime('-1 second')), $workspace_id],
+                            [$path, $workspace_id, $_snapTrigger['nextStepId'], date('Y-m-d H:i:s', strtotime('-1 second'))],
+                            [$workspace_id],
                             $_snapParams,
                             [$path]
                         ));
@@ -3165,10 +3179,11 @@ switch ($method) {
                                             $existsCheckSql = "AND " . implode(" AND ", $checks);
                                         }
 
-                                        $sqlIns = "INSERT INTO subscriber_flow_states (flow_id, subscriber_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at)
-                                                   SELECT ?, s.id, ?, ?, ?, NOW(), NOW(), NOW()
+                                        $sqlIns = "INSERT INTO subscriber_flow_states (flow_id, subscriber_id, workspace_id, step_id, scheduled_at, status, created_at, updated_at, last_step_at)
+                                                   SELECT ?, s.id, ?, ?, ?, ?, NOW(), NOW(), NOW()
                                                    FROM subscribers s
                                                    WHERE s.id IN ($placeholders)
+                                                   AND s.workspace_id = ?
                                                    $existsCheckSql";
 
                                         $checkParams = [];
@@ -3183,8 +3198,8 @@ switch ($method) {
                                             $checkParams[] = $path;
                                         }
 
-                                        // Params: [flowId, stepId, time, targetStatus] + [sub IDs] + [checkParams]
-                                        $params = array_merge([$path, $trigger['nextStepId'], $initialSchedule, $targetStatus], $chunk, $checkParams);
+                                        // Params: [flowId, workspaceId, stepId, time, targetStatus] + [sub IDs] + [workspaceId] + [checkParams]
+                                        $params = array_merge([$path, $workspace_id, $trigger['nextStepId'], $initialSchedule, $targetStatus], $chunk, [$workspace_id], $checkParams);
 
                                         $stmtIns = $pdo->prepare($sqlIns);
                                         $stmtIns->execute($params);
