@@ -66,7 +66,7 @@ try {
             $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ? AND workspace_id = ?")
                 ->execute([$allCount, $segId, $wsId]);
         } else {
-            $segRes = buildSegmentWhereClause($seg['criteria'], $segId);
+            $segRes = buildSegmentWhereClause($seg['criteria'], $workspace_id, $segId);
             // [SECURITY FIX] Added workspace_id scope
             $stmtC = $pdo->prepare("SELECT COUNT(*) FROM subscribers s WHERE s.workspace_id = ? AND (" . $segRes['sql'] . ")");
             $stmtC->execute(array_merge([$wsId], $segRes['params']));
@@ -99,7 +99,7 @@ try {
                 $pdo->prepare("UPDATE segments SET subscriber_count = ?, synced_at = NOW() WHERE id = ? AND workspace_id = ?")
                     ->execute([$allCount2, $seg['id'], $wsId]);
             } else {
-                $segRes = buildSegmentWhereClause($seg['criteria'], $seg['id']);
+                $segRes = buildSegmentWhereClause($seg['criteria'], $workspace_id, $seg['id']);
                 // [SECURITY FIX] Added workspace_id scope
                 $stmtC = $pdo->prepare("SELECT COUNT(*) FROM subscribers s WHERE s.workspace_id = ? AND (" . $segRes['sql'] . ")");
                 $stmtC->execute(array_merge([$wsId], $segRes['params']));
@@ -157,7 +157,7 @@ foreach ($activeFlows as $flow) {
 
     if ($segDef) {
         // It's a Segment
-        $segRes = buildSegmentWhereClause($segDef['criteria'], $tConfig['targetId']);
+        $segRes = buildSegmentWhereClause($segDef['criteria'], $workspace_id, $tConfig['targetId']);
         $segSql = $segRes['sql'];
         $segParams = $segRes['params'];
     } else {

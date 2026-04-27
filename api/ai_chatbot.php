@@ -273,11 +273,45 @@ try {
         }
 
         // [SECURITY FIX] Enforce Authentication for sensitive actions
-        $sensitiveActions = ['list_conversations', 'get_available_pages', 'export_to_word', 'export_conversations', 'get_analysis'];
+        $sensitiveActions = [
+            'list_conversations', 'get_available_pages', 'export_to_word', 'export_conversations', 
+            'get_analysis', 'analyze_segment', 'get_messages', 'get_conversation', 'get_last_analysis', 
+            'delete_analysis', 'export_word', 'delete_conversation', 'send_human_reply', 
+            'update_status', 'update_visitor_info'
+        ];
+        
         if (in_array($action, $sensitiveActions)) {
             $currentOrgUser = requireAISpaceAuth();
+            
+            // Try to resolve propertyId from various sources if missing from GET
+            if (!$propertyId && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                $input = json_decode(file_get_contents('php://input'), true);
+                $propertyId = $input['property_id'] ?? null;
+            }
+
             if ($propertyId) {
+                $propertyId = resolvePropertyId($pdo, $propertyId);
                 requireCategoryAccess($propertyId, $currentOrgUser);
+            } else {
+                // For actions that rely on conversation_id, we MUST verify ownership of that conversation
+                $convIdFull = $_GET['conversation_id'] ?? $_GET['id'] ?? null;
+                if (!$convIdFull && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                    $input = $input ?? json_decode(file_get_contents('php://input'), true);
+                    $convIdFull = $input['conversation_id'] ?? null;
+                }
+
+                if ($convIdFull) {
+                    $isOrg = strpos($convIdFull, 'org_') === 0;
+                    $convId = $isOrg ? substr($convIdFull, 4) : (strpos($convIdFull, 'cust_') === 0 ? substr($convIdFull, 5) : $convIdFull);
+                    $table = $isOrg ? 'ai_org_conversations' : 'ai_conversations';
+                    
+                    $stmtOwner = $pdo->prepare("SELECT property_id FROM $table WHERE id = ? LIMIT 1");
+                    $stmtOwner->execute([$convId]);
+                    $targetPropertyId = $stmtOwner->fetchColumn();
+                    if ($targetPropertyId) {
+                        requireCategoryAccess($targetPropertyId, $currentOrgUser);
+                    }
+                }
             }
         }
 
@@ -358,15 +392,24 @@ try {
                 $where = ["c.status != 'deleted'"];
                 $params = [];
 
+                // [SECURITY HARDENING] Force organization scoping
+                $userOrgAdminId = !empty($currentOrgUser['admin_id']) ? $currentOrgUser['admin_id'] : $currentOrgUser['id'];
+                if ($userOrgAdminId !== 'admin-001') {
+                    // Category check: the conversation's property (bot) must belong to the user's org
+                    $where[] = "EXISTS (SELECT 1 FROM ai_chatbots b WHERE b.id = c.property_id AND b.admin_id = ?)";
+                    $params[] = $userOrgAdminId;
+                }
+
                 if ($propertyId) {
                     $isGroup = isset($_GET['is_group']) && $_GET['is_group'] == '1';
                     if ($isGroup) {
                         $where[] = "(c.property_id = ? OR c.property_id IN (SELECT id FROM ai_chatbots WHERE category_id = ?))";
                         $params[] = $propertyId;
+                        $params[] = $propertyId;
                     } else {
                         $where[] = "c.property_id = ?";
+                        $params[] = $propertyId;
                     }
-                    $params[] = $propertyId;
                 }
 
                 if (!empty($search)) {

@@ -75,6 +75,8 @@ if ($method === 'GET' && ($action === 'list' || $action === '')) {
     if ($categoryId) {
         require_once 'ai_org_middleware.php'; // For resolvePropertyId
         $categoryId = resolvePropertyId($pdo, $categoryId);
+        // [SECURITY FIX] Enforce access check for the category
+        requireCategoryAccess($categoryId, $currentOrgUser);
     }
 
     // Lazy Migration: Ensure ai_org_user_categories exists

@@ -64,7 +64,7 @@ try {
     }
 
     // 2. Fetch Sample Subscribers - Increased to 100 random for better analysis
-    $res = buildSegmentWhereClause($segment['criteria'], $segmentId);
+    $res = buildSegmentWhereClause($segment['criteria'], $workspace_id, $segmentId);
     $sql = "SELECT s.id, s.email, s.first_name, s.last_name, s.status, s.lead_score, s.last_activity_at 
             FROM subscribers s 
             WHERE s.workspace_id = ? AND s.status IN ('active', 'lead', 'customer') AND " . $res['sql'] . " 

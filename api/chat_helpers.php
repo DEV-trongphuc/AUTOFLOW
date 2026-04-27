@@ -5,13 +5,24 @@ require_once 'notification_helper.php';
 
 function logAIChat($visitorId, $propertyId, $action, $status, $details = '')
 {
+    // [SECURITY] Production hardening: Sanitize logs to prevent PII leakage
     $logDir = __DIR__ . '/logs';
     if (!is_dir($logDir)) {
         @mkdir($logDir, 0777, true);
     }
     $logFile = $logDir . '/ai_debug.log';
     $time = date('Y-m-d H:i:s');
-    $msg = "[$time] [$visitorId] [$propertyId] ACTION: $action | STATUS: $status | $details" . PHP_EOL;
+    
+    // Mask potential emails and phone numbers in details
+    $sanitizedDetails = preg_replace('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', '[EMAIL]', $details);
+    $sanitizedDetails = preg_replace('/(\+?\d{10,12})/', '[PHONE]', $sanitizedDetails);
+    
+    // Truncate to prevent disk exhaustion and excessive data exposure
+    if (strlen($sanitizedDetails) > 500) {
+        $sanitizedDetails = substr($sanitizedDetails, 0, 500) . '... [TRUNCATED]';
+    }
+
+    $msg = "[$time] [$visitorId] [$propertyId] ACTION: $action | STATUS: $status | $sanitizedDetails" . PHP_EOL;
     file_put_contents($logFile, $msg, FILE_APPEND);
 }
 
@@ -34,8 +45,8 @@ function syncLead($pdo, $visitorId, $propertyId, $email = null, $phone = null)
         return;
 
     try {
-        $stmt = $pdo->prepare("SELECT id, subscriber_id FROM web_visitors WHERE id = ? LIMIT 1");
-        $stmt->execute([$visitorId]);
+        $stmt = $pdo->prepare("SELECT id, subscriber_id FROM web_visitors WHERE id = ? AND property_id = ? LIMIT 1");
+        $stmt->execute([$visitorId, $propertyId]);
         $vis = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$vis)
             return;
@@ -46,8 +57,8 @@ function syncLead($pdo, $visitorId, $propertyId, $email = null, $phone = null)
             $pdo->prepare("INSERT INTO subscribers (id, property_id, email, phone, status, source) VALUES (?, ?, ?, ?, 'customer', 'ai_chat')")
                 ->execute([$subId, $propertyId, $email, $phone]);
 
-            $pdo->prepare("UPDATE web_visitors SET subscriber_id = ?, email = ?, phone = ? WHERE id = ?")
-                ->execute([$subId, $email, $phone, $visitorId]);
+            $pdo->prepare("UPDATE web_visitors SET subscriber_id = ?, email = ?, phone = ? WHERE id = ? AND property_id = ?")
+                ->execute([$subId, $email, $phone, $visitorId, $propertyId]);
 
             $pdo->prepare("INSERT INTO web_events (visitor_id, property_id, event_type, target_text) VALUES (?, ?, 'form', ?)")
                 ->execute([$visitorId, $propertyId, "Lead captured via AI Chat: " . ($email ?: $phone)]);
@@ -68,16 +79,16 @@ function syncLead($pdo, $visitorId, $propertyId, $email = null, $phone = null)
                 email = COALESCE(?, email), 
                 phone = COALESCE(?, phone), 
                 updated_at = NOW() 
-                WHERE id = ?")
-                ->execute([$email, $phone, $subId]);
+                WHERE id = ? AND property_id = ?")
+                ->execute([$email, $phone, $subId, $propertyId]);
 
             $pdo->prepare("UPDATE web_visitors SET 
                 email = COALESCE(?, email), 
                 phone = COALESCE(?, phone) 
-                WHERE id = ?")
-                ->execute([$email, $phone, $visitorId]);
+                WHERE id = ? AND property_id = ?")
+                ->execute([$email, $phone, $visitorId, $propertyId]);
 
-            // Notify on significant updates (like a newly identified email for an existing phone)
+            // Notify on significant updates
             dispatchQueueJob($pdo, 'default', [
                 'action' => 'notify_captured_lead',
                 'property_id' => $propertyId,
@@ -123,8 +134,8 @@ function handleFirstChatPoints($pdo, $visitorUuid, $propertyId, $tableName = 'ai
             $botSc = $LSC['leadscore_ai_chat'] ?? 5;
             $pdo->prepare("INSERT INTO web_events (visitor_id, property_id, event_type, target_text) VALUES (?, ?, 'form', 'Bắt đầu chat với AI (+$botSc points)')")
                 ->execute([$visitorUuid, $propertyId]);
-            $pdo->prepare("UPDATE subscribers s JOIN web_visitors v ON s.id = v.subscriber_id SET s.lead_score = s.lead_score + ? WHERE v.id = ?")
-                ->execute([$botSc, $visitorUuid]);
+            $pdo->prepare("UPDATE subscribers s JOIN web_visitors v ON s.id = v.subscriber_id SET s.lead_score = s.lead_score + ? WHERE v.id = ? AND s.property_id = ?")
+                ->execute([$botSc, $visitorUuid, $propertyId]);
         }
     } catch (Exception $e) {
     }

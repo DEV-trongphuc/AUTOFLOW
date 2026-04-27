@@ -95,6 +95,12 @@ const AdvancedConditionConfig: React.FC<AdvancedConditionConfigProps> = ({ confi
     const branches = config.branches || [];
     const [errors, setErrors] = useState<string[]>([]);
 
+    // Simple UUID fallback for older browsers
+    const generateId = () => {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+        return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    };
+
     // Auto-patch missing IDs
     useEffect(() => {
         if (disabled) return;
@@ -102,7 +108,7 @@ const AdvancedConditionConfig: React.FC<AdvancedConditionConfigProps> = ({ confi
         const patchedBranches = branches.map((b: any) => {
             if (!b.id) {
                 hasChanges = true;
-                return { ...b, id: crypto.randomUUID() };
+                return { ...b, id: generateId() };
             }
             return b;
         });
@@ -128,7 +134,7 @@ const AdvancedConditionConfig: React.FC<AdvancedConditionConfigProps> = ({ confi
     const handleAddBranch = () => {
         if (disabled) return;
         const newBranch = {
-            id: crypto.randomUUID(),
+            id: generateId(),
             label: `Nhánh ${branches.length + 1}`,
             stepId: null,
             conditions: [{ field: 'email', operator: 'contains', value: '' }]
@@ -295,7 +301,7 @@ const AdvancedConditionConfig: React.FC<AdvancedConditionConfigProps> = ({ confi
 
                                         <div className="flex-1 min-w-0 grid grid-cols-12 gap-2">
                                             {/* FIELD SELECT */}
-                                            <div className={(cond.field === 'web_activity' || cond.field === 'custom_field') ? "col-span-3 min-w-0" : "col-span-4 min-w-0"}>
+                                            <div className="col-span-3 min-w-0">
                                                 <Select
                                                     value={cond.field}
                                                     onChange={(val) => updateCondition(bIdx, cIdx, { field: val })}
@@ -305,21 +311,8 @@ const AdvancedConditionConfig: React.FC<AdvancedConditionConfigProps> = ({ confi
                                                 />
                                             </div>
 
-                                            {/* CUSTOM FIELD KEY */}
-                                            {cond.field === 'custom_field' && (
-                                                <div className="col-span-2 min-w-0">
-                                                    <input
-                                                        type="text"
-                                                        value={cond.key || ''}
-                                                        onChange={(e) => updateCondition(bIdx, cIdx, { key: e.target.value })}
-                                                        placeholder="Tên trường..."
-                                                        className="w-full h-8 text-[11px] border border-slate-200 rounded-xl px-3 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none font-bold text-slate-700 placeholder:text-slate-400 bg-slate-50/50 hover:bg-white transition-all shadow-sm truncate"
-                                                    />
-                                                </div>
-                                            )}
-
                                             {/* OPERATOR SELECT */}
-                                            <div className={cond.field === 'web_activity' ? "col-span-2 min-w-0" : (cond.field === 'custom_field' ? "col-span-3 min-w-0" : "col-span-3 min-w-0")}>
+                                            <div className="col-span-3 min-w-0">
                                                 <Select
                                                     value={cond.operator}
                                                     onChange={(val) => updateCondition(bIdx, cIdx, { operator: val })}
@@ -329,43 +322,60 @@ const AdvancedConditionConfig: React.FC<AdvancedConditionConfigProps> = ({ confi
                                                 />
                                             </div>
 
-                                            {/* VALUE INPUT (Dynamic) */}
-                                            <div className={cond.field === 'web_activity' ? "col-span-3 min-w-0" : (cond.field === 'custom_field' ? "col-span-4 min-w-0" : "col-span-5 min-w-0")}>
-                                                {renderValueInput(fieldDef, cond.operator, cond.value, (val) => updateCondition(bIdx, cIdx, { value: val }))}
-                                            </div>
-
-                                            {/* PAGE URL FOR WEB ACTIVITY */}
-                                            {cond.field === 'web_activity' && (
-                                                <div className="col-span-3 min-w-0">
-                                                    <input
-                                                        type="text"
-                                                        value={cond.page_url || ''}
-                                                        onChange={(e) => updateCondition(bIdx, cIdx, { page_url: e.target.value })}
-                                                        placeholder="Page URL / Title..."
-                                                        className="w-full h-8 text-[11px] border border-slate-200 rounded-xl px-3 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none font-bold text-slate-700 placeholder:text-slate-400 bg-slate-50/50 hover:bg-white transition-all shadow-sm truncate"
-                                                    />
-                                                </div>
-                                            )}
-
-                                            {/* LOOKBACK FOR WEB ACTIVITY */}
-                                            {cond.field === 'web_activity' && (
-                                                <div className="col-span-1 min-w-0">
-                                                    <div className="relative group">
-                                                        <select
-                                                            value={cond.lookback || 10}
-                                                            onChange={(e) => updateCondition(bIdx, cIdx, { lookback: e.target.value })}
-                                                            className="w-full h-8 text-[10px] border border-slate-200 rounded-xl pl-1 pr-0 appearance-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none font-bold text-slate-500 bg-slate-50/50 hover:bg-white transition-all shadow-sm text-center"
-                                                            title="Số hành động gần nhất"
-                                                        >
-                                                            <option value="5">5</option>
-                                                            <option value="10">10</option>
-                                                            <option value="20">20</option>
-                                                            <option value="50">50</option>
-                                                            <option value="1000">All</option>
-                                                        </select>
+                                            {/* VALUE / INPUT AREA */}
+                                            <div className="col-span-6 min-w-0 flex gap-2">
+                                                {/* CUSTOM FIELD KEY */}
+                                                {cond.field === 'custom_field' && (
+                                                    <div className="w-1/3 min-w-0">
+                                                        <input
+                                                            type="text"
+                                                            value={cond.key || ''}
+                                                            onChange={(e) => updateCondition(bIdx, cIdx, { key: e.target.value })}
+                                                            placeholder="Key..."
+                                                            className="w-full h-8 text-[11px] border border-slate-200 rounded-xl px-3 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none font-bold text-slate-700 placeholder:text-slate-400 bg-slate-50/50 hover:bg-white transition-all shadow-sm truncate"
+                                                        />
                                                     </div>
+                                                )}
+
+                                                <div className="flex-1 min-w-0">
+                                                    {renderValueInput(fieldDef, cond.operator, cond.value, (val) => updateCondition(bIdx, cIdx, { value: val }))}
                                                 </div>
-                                            )}
+
+                                                {/* PAGE URL FOR WEB ACTIVITY */}
+                                                {cond.field === 'web_activity' && (
+                                                    <div className="w-1/3 min-w-0">
+                                                        <input
+                                                            type="text"
+                                                            value={cond.page_url || ''}
+                                                            onChange={(e) => updateCondition(bIdx, cIdx, { page_url: e.target.value })}
+                                                            placeholder="URL..."
+                                                            className="w-full h-8 text-[11px] border border-slate-200 rounded-xl px-2 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none font-bold text-slate-700 placeholder:text-slate-400 bg-slate-50/50 hover:bg-white transition-all shadow-sm truncate"
+                                                        />
+                                                    </div>
+                                                )}
+                                                
+                                                {/* LOOKBACK */}
+                                                {cond.field === 'web_activity' && (
+                                                    <div className="w-12 shrink-0">
+                                                        <div className="relative group">
+                                                            <select
+                                                                value={cond.lookback || 10}
+                                                                onChange={(e) => updateCondition(bIdx, cIdx, { lookback: e.target.value })}
+                                                                className="w-full h-8 text-[10px] border border-slate-200 rounded-xl pl-1 pr-1 appearance-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none font-bold text-slate-500 bg-slate-50/50 hover:bg-white transition-all shadow-sm text-center"
+                                                                title="Số hành động gần nhất"
+                                                            >
+                                                                <option value="5">5</option>
+                                                                <option value="10">10</option>
+                                                                <option value="20">20</option>
+                                                                <option value="50">50</option>
+                                                            </select>
+                                                            <div className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
+                                                                <ChevronDown className="w-2.5 h-2.5" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
 
                                         <button

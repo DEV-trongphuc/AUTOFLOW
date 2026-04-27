@@ -171,30 +171,36 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
             
             $enrollStrategy = $tConfig['enrollStrategy'] ?? 'all';
             if ($enrollStrategy === 'new_only') {
-                $existsCheckSql .= " AND NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ? AND sfs.status = 'cancelled')";
+                $existsCheckSql .= " AND NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.workspace_id = ? AND sfs.subscriber_id = s.id AND sfs.flow_id = ? AND sfs.status = 'cancelled')";
+                $checkParams[] = $workspaceId;
                 $checkParams[] = $flow['id'];
             }
 
             if ($frequency === 'one-time') {
-                $existsCheckSql .= " AND NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ?)";
+                $existsCheckSql .= " AND NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.workspace_id = ? AND sfs.subscriber_id = s.id AND sfs.flow_id = ?)";
+                $checkParams[] = $workspaceId;
                 $checkParams[] = $flow['id'];
             } else {
                 $checks = [];
                 if ($maxEnrollments > 0) {
-                    $checks[] = "(SELECT COUNT(*) FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ?) < $maxEnrollments";
+                    $checks[] = "(SELECT COUNT(*) FROM subscriber_flow_states sfs WHERE sfs.workspace_id = ? AND sfs.subscriber_id = s.id AND sfs.flow_id = ?) < $maxEnrollments";
+                    $checkParams[] = $workspaceId;
                     $checkParams[] = $flow['id'];
                 }
                 if ($allowMultiple) {
-                    $checks[] = "NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.subscriber_id = s.id AND sfs.flow_id = ? AND (sfs.status IN ('waiting', 'processing') OR sfs.created_at >= DATE_SUB(NOW(), INTERVAL 3 SECOND)))";
+                    $checks[] = "NOT EXISTS (SELECT 1 FROM subscriber_flow_states sfs WHERE sfs.workspace_id = ? AND sfs.subscriber_id = s.id AND sfs.flow_id = ? AND (sfs.status IN ('waiting', 'processing') OR sfs.created_at >= DATE_SUB(NOW(), INTERVAL 3 SECOND)))";
+                    $checkParams[] = $workspaceId;
                     $checkParams[] = $flow['id'];
                 } else {
                     $safeHours = (int)$cooldownHours;
                     $checks[] = "NOT EXISTS (
                         SELECT 1 FROM subscriber_flow_states sfs 
-                        WHERE sfs.subscriber_id = s.id 
+                        WHERE sfs.workspace_id = ?
+                        AND sfs.subscriber_id = s.id 
                         AND sfs.flow_id = ? 
                         AND (sfs.status IN ('waiting', 'processing') OR sfs.updated_at > DATE_SUB(NOW(), INTERVAL $safeHours HOUR))
                     )";
+                    $checkParams[] = $workspaceId;
                     $checkParams[] = $flow['id'];
                 }
                 if (!empty($checks)) {
@@ -220,15 +226,15 @@ function enrollSubscribersBulk($pdo, array $subscriberIds, $triggerType, $target
             foreach (array_chunk($subscriberIds, $ENROLL_CHUNK) as $chunk) {
                 $placeholders = implode(',', array_fill(0, count($chunk), '?'));
 
-                $sqlIns = "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, step_type, scheduled_at, status, created_at, updated_at, last_step_at)
-                           SELECT s.id, ?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
+                $sqlIns = "INSERT INTO subscriber_flow_states (workspace_id, subscriber_id, flow_id, step_id, step_type, scheduled_at, status, created_at, updated_at, last_step_at)
+                           SELECT ?, s.id, ?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
                            FROM subscribers s
                            WHERE s.id IN ($placeholders)
                            AND s.workspace_id = ?
                            AND s.status IN ('active', 'lead', 'customer')
                            $existsCheckSql";
 
-                $params = array_merge([$flow['id'], $nextStepId, $nextStepType, $initialSchedule], $chunk, [$flow['workspace_id']], $checkParams);
+                $params = array_merge([$workspaceId, $flow['id'], $nextStepId, $nextStepType, $initialSchedule], $chunk, [$workspaceId], $checkParams);
                 $stmt = $pdo->prepare($sqlIns);
                 $stmt->execute($params);
                 $enrolledInThisFlow += $stmt->rowCount();
@@ -288,7 +294,7 @@ function checkDynamicTriggers($pdo, $subscriberId)
             $criteriaJson = $stmtSeg->fetchColumn();
 
             if ($criteriaJson) {
-                $segRes = buildSegmentWhereClause($criteriaJson, $tTargetId);
+                $segRes = buildSegmentWhereClause($criteriaJson, $workspace_id, $tTargetId);
                 // Check if THIS subscriber matches criteria
                 $sql = "SELECT 1 FROM subscribers s WHERE s.id = ? AND " . $segRes['sql'] . " LIMIT 1";
                 $params = array_merge([$subscriberId], $segRes['params']);
@@ -337,8 +343,8 @@ function checkDynamicTriggers($pdo, $subscriberId)
                     $sourceConditions = [];
                     if (!empty($targetListIds)) {
                         $phl = implode(',', array_fill(0, count($targetListIds), '?'));
-                        $sourceConditions[] = "s.id IN (SELECT subscriber_id FROM subscriber_lists WHERE list_id IN ($phl))";
-                        $params = array_merge($params, $targetListIds);
+                        $sourceConditions[] = "s.id IN (SELECT subscriber_id FROM subscriber_lists WHERE workspace_id = ? AND list_id IN ($phl))";
+                        $params = array_merge($params, [$workspaceId], $targetListIds);
                     }
                     if (!empty($targetSegmentIds)) {
                         foreach ($targetSegmentIds as $segId) {
@@ -346,7 +352,7 @@ function checkDynamicTriggers($pdo, $subscriberId)
                             $stmtSeg2->execute([$segId, $workspaceId]);
                             $segConfig = $stmtSeg2->fetchColumn();
                             if ($segConfig) {
-                                $segRes = buildSegmentWhereClause($segConfig, $segId);
+                                $segRes = buildSegmentWhereClause($segConfig, $workspace_id, $segId);
                                 if ($segRes && !empty($segRes['sql'])) {
                                     $sourceConditions[] = "({$segRes['sql']})";
                                     if (!empty($segRes['params']))
@@ -402,8 +408,8 @@ function checkDynamicTriggers($pdo, $subscriberId)
 
                 if ($targetMode === 'specific' && !empty($targetListIds)) {
                     $phl = implode(',', array_fill(0, count($targetListIds), '?'));
-                    $stmtF = $pdo->prepare("SELECT 1 FROM subscriber_lists WHERE subscriber_id = ? AND list_id IN ($phl)");
-                    $stmtF->execute(array_merge([$subscriberId], $targetListIds));
+                    $stmtF = $pdo->prepare("SELECT 1 FROM subscriber_lists WHERE workspace_id = ? AND subscriber_id = ? AND list_id IN ($phl)");
+                    $stmtF->execute(array_merge([$workspaceId, $subscriberId], $targetListIds));
                     if (!$stmtF->fetch())
                         continue;
                 }
@@ -422,17 +428,17 @@ function checkDynamicTriggers($pdo, $subscriberId)
                     AND (
                         NOT EXISTS (
                             SELECT 1 FROM subscriber_activity sa
-                            WHERE sa.subscriber_id = s.id
+                            WHERE sa.workspace_id = ? AND sa.subscriber_id = s.id
                             AND sa.type IN ('open_email','click_link','open_zns','click_zns')
                         )
                         OR (
                             SELECT MAX(sa2.created_at) FROM subscriber_activity sa2
-                            WHERE sa2.subscriber_id = s.id
+                            WHERE sa2.workspace_id = ? AND sa2.subscriber_id = s.id
                             AND sa2.type IN ('open_email','click_link','open_zns','click_zns')
                         ) < DATE_SUB(NOW(), INTERVAL ? DAY)
                     )
                 ");
-                $stmtLA->execute([$subscriberId, $inactiveDays]);
+                $stmtLA->execute([$workspaceId, $workspaceId, $subscriberId, $inactiveDays]);
                 if (!$stmtLA->fetch())
                     continue;
 
@@ -442,8 +448,8 @@ function checkDynamicTriggers($pdo, $subscriberId)
 
                 if ($targetMode === 'specific' && !empty($targetListIds)) {
                     $phl = implode(',', array_fill(0, count($targetListIds), '?'));
-                    $stmtF = $pdo->prepare("SELECT 1 FROM subscriber_lists WHERE subscriber_id = ? AND list_id IN ($phl)");
-                    $stmtF->execute(array_merge([$subscriberId], $targetListIds));
+                    $stmtF = $pdo->prepare("SELECT 1 FROM subscriber_lists WHERE workspace_id = ? AND subscriber_id = ? AND list_id IN ($phl)");
+                    $stmtF->execute(array_merge([$workspaceId, $subscriberId], $targetListIds));
                     if (!$stmtF->fetch())
                         continue;
                 }
@@ -516,9 +522,9 @@ function checkDynamicTriggers($pdo, $subscriberId)
                 if ($targetMode === 'specific' && !empty($targetListIds)) {
                     $placeholders = implode(',', array_fill(0, count($targetListIds), '?'));
                     $stmtFilter = $pdo->prepare(
-                        "SELECT 1 FROM subscriber_lists WHERE subscriber_id = ? AND list_id IN ($placeholders)"
+                        "SELECT 1 FROM subscriber_lists WHERE workspace_id = ? AND subscriber_id = ? AND list_id IN ($placeholders)"
                     );
-                    $stmtFilter->execute(array_merge([$subscriberId], $targetListIds));
+                    $stmtFilter->execute(array_merge([$workspaceId, $subscriberId], $targetListIds));
                     if (!$stmtFilter->fetch())
                         continue; // Not in any target list
                 }
@@ -537,8 +543,8 @@ if (!function_exists('wakeupWaitingSubscribers')) {
             // [FIX] Only wakeup 'condition' steps. 'wait' steps are time-based and should NOT be shortened by activity.
             // This prevents duration-based waits (e.g. Wait 3 Days) from being skipped when a user performs 
             // any action (click/open) from a previous step or different flow.
-            $stmt = $pdo->prepare("UPDATE subscriber_flow_states SET scheduled_at = NOW() WHERE subscriber_id = ? AND status = 'waiting' AND step_type = 'condition' AND scheduled_at > NOW()");
-            $stmt->execute([$subscriberId]);
+            $stmt = $pdo->prepare("UPDATE subscriber_flow_states SET scheduled_at = NOW() WHERE workspace_id = ? AND subscriber_id = ? AND status = 'waiting' AND step_type = 'condition' AND scheduled_at > NOW()");
+            $stmt->execute([$workspaceId, $subscriberId]);
             if ($stmt->rowCount() > 0) {
                 error_log("[wakeupWaitingSubscribers] Woke up Subscriber:{$subscriberId} (Step:Condition)");
             }

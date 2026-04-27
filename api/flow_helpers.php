@@ -162,22 +162,27 @@ if (!function_exists('logActivity')) {
 
         // 10M UPGRADE: Static cache for existence check to reduce redundant queries
         static $subCache = [];
-        if (!isset($subCache[$subscriberId])) {
-            // [FIX] LRU-style cap: prevent memory exhaustion during long worker runs
-            // processing thousands of subscribers. Without this cap, $subCache grows
-            // indefinitely, eventually triggering "Allowed memory size exhausted".
+        $cacheKey = $workspaceId ? "{$workspaceId}:{$subscriberId}" : $subscriberId;
+        if (!isset($subCache[$cacheKey])) {
+            // [FIX] LRU-style cap
             if (count($subCache) > 500) {
                 array_shift($subCache);
             }
-            // [FIX] Silent fail if subscriber is missing (e.g. from debug tests or deleted users)
-            $stmtCheckSub = $pdo->prepare("SELECT id FROM subscribers WHERE id = ?");
-            $stmtCheckSub->execute([$subscriberId]);
+            // [FIX] Scoped existence check
+            $sqlCheck = "SELECT id FROM subscribers WHERE id = ?";
+            $paramsCheck = [$subscriberId];
+            if ($workspaceId) {
+                $sqlCheck .= " AND workspace_id = ?";
+                $paramsCheck[] = $workspaceId;
+            }
+            $stmtCheckSub = $pdo->prepare($sqlCheck);
+            $stmtCheckSub->execute($paramsCheck);
             if (!$stmtCheckSub->fetch()) {
-                $subCache[$subscriberId] = false;
+                $subCache[$cacheKey] = false;
                 return;
             }
-            $subCache[$subscriberId] = true;
-        } else if ($subCache[$subscriberId] === false) {
+            $subCache[$cacheKey] = true;
+        } else if ($subCache[$cacheKey] === false) {
             return;
         }
 
@@ -243,9 +248,14 @@ if (!function_exists('logActivity')) {
 
             $updateParams[] = $subscriberId;
             $sql = "UPDATE subscribers SET " . implode(', ', $updateFields) . " WHERE id = ?";
+            if ($workspaceId) {
+                $sql .= " AND workspace_id = ?";
+                $updateParams[] = $workspaceId;
+            }
             try { $pdo->prepare($sql)->execute($updateParams); } catch (Exception $e) {}
         } else {
-            $GLOBAL_SUBSCRIBER_ACTIVE_IDS[$subscriberId] = true;
+            // [HARDENING] Store with workspaceId for scoped bulk update
+            $GLOBAL_SUBSCRIBER_ACTIVE_IDS[$subscriberId] = $workspaceId ?: 1;
         }
 
         // Auto-flush every 150 items to prevent MySQL max_allowed_packet overload
@@ -264,9 +274,15 @@ if (!function_exists('logActivity')) {
 
         if (in_array($type, $triggerTypes) && $subscriberId) {
             try {
-                // Find flows where this subscriber is WAITING
-                $stmtWait = $pdo->prepare("SELECT id, flow_id FROM subscriber_flow_states WHERE subscriber_id = ? AND status = 'waiting'");
-                $stmtWait->execute([$subscriberId]);
+                // Find flows where this subscriber is WAITING (Scoped by workspace_id)
+                $sqlWait = "SELECT id, flow_id FROM subscriber_flow_states WHERE subscriber_id = ? AND status = 'waiting'";
+                $paramsWait = [$subscriberId];
+                if ($workspaceId) {
+                    $sqlWait .= " AND workspace_id = ?";
+                    $paramsWait[] = $workspaceId;
+                }
+                $stmtWait = $pdo->prepare($sqlWait);
+                $stmtWait->execute($paramsWait);
                 $waitingFlows = $stmtWait->fetchAll(PDO::FETCH_ASSOC);
 
                 if (!empty($waitingFlows)) {
@@ -278,7 +294,11 @@ if (!function_exists('logActivity')) {
                     $channels = [];
 
                     foreach ($waitingFlows as $wf) {
+                        // [HARDENING] Pass workspace_id to background worker
                         $url = $apiUrl . "/worker_flow.php?priority_queue_id=" . $wf['id'] . "&priority_sub_id=" . $subscriberId . "&priority_flow_id=" . $wf['flow_id'];
+                        if ($workspaceId) {
+                            $url .= "&workspace_id=" . $workspaceId;
+                        }
 
                         $c = curl_init();
                         curl_setopt($c, CURLOPT_URL, $url);
@@ -296,9 +316,6 @@ if (!function_exists('logActivity')) {
                         $status = curl_multi_exec($mh, $running);
                         if ($running) {
                             // [PERF FIX] Reduced from 0.5s to 0.01s (fire-and-forget optimisation).
-                            // logActivity() is on the hot HTTP tracking path (webhook.php open/click pixel).
-                            // A 0.5s block here adds ~500ms latency to every tracked event at scale.
-                            // We only need to kick the workers \u2014 we don't wait for their responses.
                             curl_multi_select($mh, 0.01);
                         }
                     } while ($running && $status == CURLM_OK);
@@ -363,7 +380,8 @@ if (!function_exists('flushActivityLogBuffer')) {
                 $legacyBinds = array_fill(0, count($GLOBAL_ACTIVITY_BUFFER), "(?, ?, ?, ?, ?, ?, ?)");
                 $legacyVals = [];
                 foreach ($GLOBAL_ACTIVITY_BUFFER as $act) {
-                    $legacyVals = array_merge($legacyVals, $act);
+                    $legacyVals[] = $act[0]; $legacyVals[] = $act[1]; $legacyVals[] = $act[2];
+                    $legacyVals[] = $act[3]; $legacyVals[] = $act[4]; $legacyVals[] = $act[5]; $legacyVals[] = $act[6];
                 }
                 $sql = "INSERT INTO activity_buffer (subscriber_id, type, details, reference_id, flow_id, campaign_id, extra_data) VALUES " . implode(',', $legacyBinds);
                 $vals = $legacyVals;
@@ -389,7 +407,7 @@ if (!function_exists('flushActivityLogBuffer')) {
                         INDEX idx_workspace_id (workspace_id)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
-                    $sql = "INSERT INTO activity_buffer (subscriber_id, type, details, reference_id, flow_id, campaign_id, extra_data) VALUES " . implode(',', $binds);
+                    $sql = "INSERT INTO activity_buffer (subscriber_id, type, workspace_id, details, reference_id, flow_id, campaign_id, extra_data) VALUES " . implode(',', $binds);
                     $pdo->prepare($sql)->execute($vals);
                 } catch (Exception $ex) {
                     // ignore
@@ -397,16 +415,22 @@ if (!function_exists('flushActivityLogBuffer')) {
             }
         }
 
-        // 2. Bulk Update Last Activity
+        // 2. Bulk Update Last Activity (Grouped by workspace_id for strict isolation)
         if (!empty($GLOBAL_SUBSCRIBER_ACTIVE_IDS)) {
-            $ids = array_keys($GLOBAL_SUBSCRIBER_ACTIVE_IDS);
-            // Chunking to prevent placeholder exhaustion just in case
-            $chunks = array_chunk($ids, 500);
-            foreach ($chunks as $chunk) {
-                $placeholders = implode(',', array_fill(0, count($chunk), '?'));
-                try {
-                    $pdo->prepare("UPDATE subscribers SET last_activity_at = NOW() WHERE id IN ($placeholders)")->execute($chunk);
-                } catch (Exception $e) {}
+            $grouped = [];
+            foreach ($GLOBAL_SUBSCRIBER_ACTIVE_IDS as $subId => $wId) {
+                $grouped[$wId][] = $subId;
+            }
+
+            foreach ($grouped as $wId => $ids) {
+                $chunks = array_chunk($ids, 500);
+                foreach ($chunks as $chunk) {
+                    $placeholders = implode(',', array_fill(0, count($chunk), '?'));
+                    $updateParams = array_merge($chunk, [$wId]);
+                    try {
+                        $pdo->prepare("UPDATE subscribers SET last_activity_at = NOW() WHERE id IN ($placeholders) AND workspace_id = ?")->execute($updateParams);
+                    } catch (Exception $e) {}
+                }
             }
         }
 
@@ -726,6 +750,7 @@ function replaceMergeTags($html, $subscriber, $context = [])
 
             $campaignId = trim($m[1]);
             $subscriberId = $subscriber['id'] ?? ($subscriber['subscriber_id'] ?? null);
+            $workspaceId = $subscriber['workspace_id'] ?? null;
 
             // [PERF] 1. Check Pre-fetched Cache first (passed from worker_campaign/flow)
             if (isset($context['voucher_cache'][$campaignId])) {
@@ -737,8 +762,14 @@ function replaceMergeTags($html, $subscriber, $context = [])
 
             // 2. Check if this subscriber ALREADY has a code from this campaign
             if ($subscriberId) {
-                $stmtCheck = $pdo->prepare("SELECT id, code FROM voucher_codes WHERE campaign_id = ? AND subscriber_id = ? LIMIT 1");
-                $stmtCheck->execute([$campaignId, $subscriberId]);
+                $sqlCheck = "SELECT id, code FROM voucher_codes WHERE campaign_id = ? AND subscriber_id = ?";
+                $paramsCheck = [$campaignId, $subscriberId];
+                if ($workspaceId) {
+                    $sqlCheck .= " AND workspace_id = ?";
+                    $paramsCheck[] = $workspaceId;
+                }
+                $stmtCheck = $pdo->prepare($sqlCheck . " LIMIT 1");
+                $stmtCheck->execute($paramsCheck);
                 $existing = $stmtCheck->fetch(PDO::FETCH_ASSOC);
                 
                 if ($existing) {
@@ -748,8 +779,14 @@ function replaceMergeTags($html, $subscriber, $context = [])
             }
 
             // 3. Fetch Campaign Info
-            $stmtCamp = $pdo->prepare("SELECT code_type, static_code, expiration_days FROM voucher_campaigns WHERE id = ? AND status = 'active'");
-            $stmtCamp->execute([$campaignId]);
+            $sqlCamp = "SELECT code_type, static_code, expiration_days FROM voucher_campaigns WHERE id = ? AND status = 'active'";
+            $paramsCamp = [$campaignId];
+            if ($workspaceId) {
+                $sqlCamp .= " AND workspace_id = ?";
+                $paramsCamp[] = $workspaceId;
+            }
+            $stmtCamp = $pdo->prepare($sqlCamp);
+            $stmtCamp->execute($paramsCamp);
             $camp = $stmtCamp->fetch(PDO::FETCH_ASSOC);
 
             if (!$camp) return 'INVALID-VOUCHER';
@@ -766,13 +803,16 @@ function replaceMergeTags($html, $subscriber, $context = [])
                 $alreadyInTransaction = $pdo->inTransaction();
                 if (!$alreadyInTransaction) $pdo->beginTransaction();
 
-                // [RACE FIX] Re-check inside transaction. The outer check (above) runs outside
-                // any transaction — two concurrent workers can both see "no code" and then
-                // both enter here, each claiming a separate code → subscriber gets 2 vouchers.
-                // Fix: re-read inside TX with LOCK IN SHARE MODE (consistent point-in-time read).
+                // [RACE FIX] Re-check inside transaction (Scoped by workspace_id)
                 if ($subscriberId) {
-                    $stmtReCheck = $pdo->prepare("SELECT id, code FROM voucher_codes WHERE campaign_id = ? AND subscriber_id = ? LIMIT 1 LOCK IN SHARE MODE");
-                    $stmtReCheck->execute([$campaignId, $subscriberId]);
+                    $sqlReCheck = "SELECT id, code FROM voucher_codes WHERE campaign_id = ? AND subscriber_id = ?";
+                    $paramsReCheck = [$campaignId, $subscriberId];
+                    if ($workspaceId) {
+                        $sqlReCheck .= " AND workspace_id = ?";
+                        $paramsReCheck[] = $workspaceId;
+                    }
+                    $stmtReCheck = $pdo->prepare($sqlReCheck . " LIMIT 1 LOCK IN SHARE MODE");
+                    $stmtReCheck->execute($paramsReCheck);
                     $raceExisting = $stmtReCheck->fetch(PDO::FETCH_ASSOC);
                     if ($raceExisting) {
                         $pdo->prepare("UPDATE voucher_codes SET sent_at = NOW() WHERE id = ? AND sent_at IS NULL")->execute([$raceExisting['id']]);
@@ -781,18 +821,22 @@ function replaceMergeTags($html, $subscriber, $context = [])
                     }
                 }
 
-                // [FIX P10-C2] Inline MySQL version guard — SKIP LOCKED requires MySQL >= 8.0.
-                // On 5.7: PDOException "You have an error in your SQL syntax" → flow step fails,
-                // subscriber gets no voucher despite codes being available. Silent data loss.
-                // Fallback to FOR UPDATE (serial) — safe because LOCK IN SHARE MODE re-check
-                // above already prevents double-assignment under concurrency.
+                // [FIX P10-C2] Inline MySQL version guard
                 static $voucherSkipLocked = null;
                 if ($voucherSkipLocked === null) {
                     $v = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
                     $voucherSkipLocked = version_compare($v, '8.0.0', '>=') ? 'SKIP LOCKED' : '';
                 }
-                $stmtClaim = $pdo->prepare("SELECT id, code FROM voucher_codes WHERE campaign_id = ? AND status = 'unused' AND subscriber_id IS NULL ORDER BY id ASC LIMIT 1 FOR UPDATE $voucherSkipLocked");
-                $stmtClaim->execute([$campaignId]);
+                
+                $sqlClaim = "SELECT id, code FROM voucher_codes WHERE campaign_id = ? AND status = 'unused' AND subscriber_id IS NULL";
+                $paramsClaim = [$campaignId];
+                if ($workspaceId) {
+                    $sqlClaim .= " AND workspace_id = ?";
+                    $paramsClaim[] = $workspaceId;
+                }
+                
+                $stmtClaim = $pdo->prepare($sqlClaim . " ORDER BY id ASC LIMIT 1 FOR UPDATE $voucherSkipLocked");
+                $stmtClaim->execute($paramsClaim);
                 $row = $stmtClaim->fetch(PDO::FETCH_ASSOC);
 
                 if ($row) {
@@ -801,8 +845,15 @@ function replaceMergeTags($html, $subscriber, $context = [])
                         $expiresAt = date('Y-m-d H:i:s', strtotime("+{$camp['expiration_days']} days"));
                     }
                     
-                    $pdo->prepare("UPDATE voucher_codes SET status = 'available', subscriber_id = ?, sent_at = NOW(), expires_at = ? WHERE id = ?")
-                        ->execute([$subscriberId, $expiresAt, $row['id']]);
+                    // Scoped UPDATE
+                    $sqlUpdate = "UPDATE voucher_codes SET status = 'available', subscriber_id = ?, sent_at = NOW(), expires_at = ? WHERE id = ?";
+                    $paramsUpdate = [$subscriberId, $expiresAt, $row['id']];
+                    if ($workspaceId) {
+                        $sqlUpdate .= " AND workspace_id = ?";
+                        $paramsUpdate[] = $workspaceId;
+                    }
+                    
+                    $pdo->prepare($sqlUpdate)->execute($paramsUpdate);
                         
                     if (!$alreadyInTransaction) $pdo->commit();
                     return $row['code'];

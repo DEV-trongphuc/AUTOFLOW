@@ -44,16 +44,50 @@ switch ($method) {
                 return;
             }
 
-            $sql = "SELECT t.id, t.name, t.description, t.status,
-                    (SELECT COUNT(*) FROM subscriber_tags st 
-                     JOIN subscribers s ON st.subscriber_id = s.id
-                     WHERE st.tag_id = t.id AND s.workspace_id = ?) as subscriber_count 
-                    FROM tags t 
-                    WHERE t.workspace_id = ?
-                    ORDER BY name ASC";
+            // [PERF] Optimized for Scale: Use JOIN + GROUP BY instead of O(N) subqueries
+            $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+            $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 1000; // Large default for legacy compatibility
+            $offset = ($page - 1) * $limit;
+            $search = $_GET['search'] ?? '';
+
+            $whereClauses = ["t.workspace_id = ?"];
+            $params = [$workspace_id];
+
+            if (!empty($search)) {
+                $whereClauses[] = "t.name LIKE ?";
+                $params[] = "%$search%";
+            }
+
+            $whereSql = implode(' AND ', $whereClauses);
+
+            // 1. Get total for pagination
+            $totalStmt = $pdo->prepare("SELECT COUNT(*) FROM tags t WHERE $whereSql");
+            $totalStmt->execute($params);
+            $total = (int) $totalStmt->fetchColumn();
+
+            // 2. Get Data with Counts
+            $sql = "SELECT t.id, t.name, t.description, t.status, 
+                           COUNT(st.subscriber_id) as subscriber_count
+                    FROM tags t
+                    LEFT JOIN subscriber_tags st ON t.id = st.tag_id AND st.workspace_id = t.workspace_id
+                    WHERE $whereSql
+                    GROUP BY t.id
+                    ORDER BY t.name ASC
+                    LIMIT $limit OFFSET $offset";
+            
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([$workspace_id, $workspace_id]);
-            jsonResponse(true, $stmt->fetchAll());
+            $stmt->execute($params);
+            $tags = $stmt->fetchAll();
+
+            jsonResponse(true, [
+                'data' => $tags,
+                'pagination' => [
+                    'total' => $total,
+                    'totalPages' => ceil($total / $limit),
+                    'page' => $page,
+                    'limit' => $limit
+                ]
+            ]);
         } catch (Exception $e) {
             jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
@@ -136,9 +170,9 @@ switch ($method) {
                 // [FIX] Instead of WHERE JSON_CONTAINS (full-table scan + lock on 10M rows),
                 // use subscriber_tags (indexed) to get the affected IDs, then chunk-UPDATE.
                 $stmtAffected = $pdo->prepare(
-                    "SELECT st.subscriber_id FROM subscriber_tags st WHERE st.tag_id = ?"
+                    "SELECT st.subscriber_id FROM subscriber_tags st WHERE st.tag_id = ? AND st.workspace_id = ?"
                 );
-                $stmtAffected->execute([$path]);
+                $stmtAffected->execute([$path, $workspace_id]);
                 $affectedSubIds = $stmtAffected->fetchAll(PDO::FETCH_COLUMN);
 
                 foreach (array_chunk($affectedSubIds, 1000) as $chunk) {
@@ -147,14 +181,14 @@ switch ($method) {
                     $pdo->prepare(
                         "UPDATE subscribers
                          SET tags = JSON_SET(tags, JSON_UNQUOTE(JSON_SEARCH(tags, 'one', ?)), ?)
-                         WHERE id IN ($ph) AND JSON_CONTAINS(tags, JSON_QUOTE(?))"
-                    )->execute(array_merge([$oldName, $newName], $chunk, [$oldName]));
+                         WHERE id IN ($ph) AND workspace_id = ? AND JSON_CONTAINS(tags, JSON_QUOTE(?))"
+                    )->execute(array_merge([$oldName, $newName], $chunk, [$workspace_id, $oldName]));
                 }
 
                 // 3b. Cập nhật Flows (Tìm các flow có chứa tag cũ trong steps)
-                $stmtFlows = $pdo->prepare("SELECT id, steps, name FROM flows WHERE steps LIKE ?");
+                $stmtFlows = $pdo->prepare("SELECT id, steps, name FROM flows WHERE workspace_id = ? AND steps LIKE ?");
                 $likeQuery = '%"' . $oldName . '"%';
-                $stmtFlows->execute([$likeQuery]);
+                $stmtFlows->execute([$workspace_id, $likeQuery]);
                 $affectedFlows = $stmtFlows->fetchAll();
 
                 foreach ($affectedFlows as $flow) {
@@ -173,8 +207,8 @@ switch ($method) {
                         // [FIX 3] JSON_UNESCAPED_UNICODE: prevents Vietnamese/emoji chars
                         // being stored as escaped sequences (e.g. "chào" → "ch\u00e0o")
                         // which bloats DB storage and breaks raw JSON queries.
-                        $pdo->prepare("UPDATE flows SET steps = ? WHERE id = ?")
-                            ->execute([json_encode($steps, JSON_UNESCAPED_UNICODE), $flow['id']]);
+                        $pdo->prepare("UPDATE flows SET steps = ? WHERE id = ? AND workspace_id = ?")
+                            ->execute([json_encode($steps, JSON_UNESCAPED_UNICODE), $flow['id'], $workspace_id]);
                     }
                 }
             }
@@ -206,8 +240,8 @@ switch ($method) {
             }
 
             // 1b. KIỂM TRA FLOW ĐANG ACTIVE
-            $checkFlows = $pdo->prepare("SELECT name FROM flows WHERE status IN ('active', 'paused') AND steps LIKE ? LIMIT 1");
-            $checkFlows->execute(['%"' . $tagName . '"%']);
+            $checkFlows = $pdo->prepare("SELECT name FROM flows WHERE workspace_id = ? AND status IN ('active', 'paused') AND steps LIKE ? LIMIT 1");
+            $checkFlows->execute([$workspace_id, '%"' . $tagName . '"%']);
             $blockingFlow = $checkFlows->fetchColumn();
 
             if ($blockingFlow) {
@@ -216,17 +250,17 @@ switch ($method) {
 
             // 2a. Fetch affected subscriber IDs via subscriber_tags (indexed lookup)
             $stmtAffected = $pdo->prepare(
-                "SELECT st.subscriber_id FROM subscriber_tags st WHERE st.tag_id = ?"
+                "SELECT st.subscriber_id FROM subscriber_tags st WHERE st.tag_id = ? AND st.workspace_id = ?"
             );
-            $stmtAffected->execute([$path]);
+            $stmtAffected->execute([$path, $workspace_id]);
             $affectedSubIds = $stmtAffected->fetchAll(PDO::FETCH_COLUMN);
 
             // 2b. Delete relational join table rows (fast, indexed)
-            $pdo->prepare("DELETE FROM subscriber_tags WHERE tag_id = ?")->execute([$path]);
+            $pdo->prepare("DELETE FROM subscriber_tags WHERE tag_id = ? AND workspace_id = ?")->execute([$path, $workspace_id]);
 
             // [CLEANUP] Clean Queue Jobs & Buffers
-            $pdo->prepare("DELETE FROM queue_jobs WHERE (payload LIKE ? OR payload LIKE ?) AND status IN ('pending', 'processing')")
-                ->execute(['%"tag_id":"' . $path . '"%', '%"tag":"' . $tagName . '"%']);
+            $pdo->prepare("DELETE FROM queue_jobs WHERE (payload LIKE ? OR payload LIKE ?) AND workspace_id = ? AND status IN ('pending', 'processing')")
+                ->execute(['%"tag_id":"' . $path . '"%', '%"tag":"' . $tagName . '"%', $workspace_id]);
 
             $pdo->prepare("DELETE FROM stats_update_buffer WHERE target_id = ? AND target_table = 'tags'")->execute([$path]);
 
@@ -251,8 +285,8 @@ switch ($method) {
                 $pdo->prepare(
                     "UPDATE subscribers
                      SET tags = JSON_REMOVE(tags, JSON_UNQUOTE(JSON_SEARCH(tags, 'one', ?)))
-                     WHERE id IN ($ph) AND JSON_CONTAINS(tags, JSON_QUOTE(?))"
-                )->execute(array_merge([$tagName], $chunk, [$tagName]));
+                     WHERE id IN ($ph) AND workspace_id = ? AND JSON_CONTAINS(tags, JSON_QUOTE(?))"
+                )->execute(array_merge([$tagName], $chunk, [$workspace_id, $tagName]));
             }
 
             jsonResponse(true, ['id' => $path], 'Đã xóa nhãn hoàn toàn');

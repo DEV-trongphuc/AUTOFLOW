@@ -188,7 +188,7 @@ if ($method === 'POST') {
                             }
                         }
 
-                        $subId = upsertZaloSubscriberWebhook($pdo, $zaloUserId, $data, $oaConfig['id'], $oaConfig['name'], $event);
+                        $subId = upsertZaloSubscriberWebhook($pdo, $zaloUserId, $data, $oaConfig['id'], $oaConfig['name'], $event, $oaConfig['workspace_id']);
 
                         // [OPTIMIZATION] Send Response Immediately to avoid Timeout
                         if (function_exists('fastcgi_finish_request')) {
@@ -296,8 +296,8 @@ if ($method === 'POST') {
                                 if ($linkedSubId) {
                                     $msgId = $data['message']['msg_id'] ?? null;
                                     if ($msgId) {
-                                        // Update ZNS Log status to 'delivered'
-                                        $pdo->prepare("UPDATE zalo_delivery_logs SET status = 'delivered' WHERE zalo_msg_id = ? AND status NOT IN ('delivered', 'seen')")->execute([$msgId]);
+                                        // Update ZNS Log status to 'delivered' (Scoped by workspace_id)
+                                        $pdo->prepare("UPDATE zalo_delivery_logs SET status = 'delivered' WHERE zalo_msg_id = ? AND workspace_id = ? AND status NOT IN ('delivered', 'seen')")->execute([$msgId, $oaConfig['workspace_id']]);
                                     }
 
                                     // Find recent ZNS sent in flow (within last 15 minutes to be safe)
@@ -319,7 +319,7 @@ if ($method === 'POST') {
                                         require_once 'flow_helpers.php';
                                         $znsDelScore = max(1, floor($LSC['leadscore_zalo_interact'] / 2));
                                         logActivity($pdo, $linkedSubId, 'zns_delivered', $enrollment['step_id'], $enrollment['flow_name'], "ZNS Delivered (+$znsDelScore điểm)", $enrollment['flow_id'], $enrollment['flow_id'], [], $oaConfig['workspace_id']);
-                                        $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + ? WHERE id = ?")->execute([$znsDelScore, $linkedSubId]);
+                                        $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + ? WHERE id = ? AND workspace_id = ?")->execute([$znsDelScore, $linkedSubId, $oaConfig['workspace_id']]);
                                     }
                                 }
                             }
@@ -334,9 +334,9 @@ if ($method === 'POST') {
                                 if ($linkedSubId) {
                                     $msgId = $data['message']['msg_id'] ?? null;
                                     if ($msgId) {
-                                        // Update ZNS Log status to 'seen'
-                                        $stmtUpd = $pdo->prepare("UPDATE zalo_delivery_logs SET status = 'seen' WHERE zalo_msg_id = ? AND status != 'seen'");
-                                        $stmtUpd->execute([$msgId]);
+                                        // Update ZNS Log status to 'seen' (Scoped by workspace_id)
+                                        $stmtUpd = $pdo->prepare("UPDATE zalo_delivery_logs SET status = 'seen' WHERE zalo_msg_id = ? AND workspace_id = ? AND status != 'seen'");
+                                        $stmtUpd->execute([$msgId, $oaConfig['workspace_id']]);
 
                                         if ($stmtUpd->rowCount() > 0) {
                                             // Find campaign/flow associated with this message
@@ -349,17 +349,17 @@ if ($method === 'POST') {
                                                 // NOT a campaign ID. Blindly updating campaigns table with an
                                                 // unmatched ID causes silent data corruption.
                                                 // Verify it's actually a campaign before updating.
-                                                $stmtVerifyCamp = $pdo->prepare("SELECT id FROM campaigns WHERE id = ? LIMIT 1");
-                                                $stmtVerifyCamp->execute([$logEntry['flow_id']]);
+                                                $stmtVerifyCamp = $pdo->prepare("SELECT id FROM campaigns WHERE id = ? AND workspace_id = ? LIMIT 1");
+                                                $stmtVerifyCamp->execute([$logEntry['flow_id'], $oaConfig['workspace_id']]);
                                                 if ($stmtVerifyCamp->fetchColumn()) {
-                                                    $pdo->prepare("UPDATE campaigns SET count_unique_opened = count_unique_opened + 1 WHERE id = ?")->execute([$logEntry['flow_id']]);
+                                                    $pdo->prepare("UPDATE campaigns SET count_unique_opened = count_unique_opened + 1 WHERE id = ? AND workspace_id = ?")->execute([$logEntry['flow_id'], $oaConfig['workspace_id']]);
                                                 }
 
                                                 // Log activity
                                                 require_once 'flow_helpers.php';
                                                 $znsSeenScore = $LSC['leadscore_zalo_interact'];
                                                 logActivity($pdo, $linkedSubId, 'zns_seen', $logEntry['step_id'], 'ZNS', "ZNS Seen (+$znsSeenScore điểm)", $logEntry['flow_id'], $logEntry['flow_id'], [], $oaConfig['workspace_id']);
-                                                $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + ? WHERE id = ?")->execute([$znsSeenScore, $linkedSubId]);
+                                                $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + ? WHERE id = ? AND workspace_id = ?")->execute([$znsSeenScore, $linkedSubId, $oaConfig['workspace_id']]);
                                             }
                                         }
                                     }
@@ -423,7 +423,7 @@ if ($method === 'POST') {
                                 // [NEW] Sync human reply to AI History
                                 try {
                                     // 1. Always Pause Subscriber AI for 30 minutes
-                                    $pdo->prepare("UPDATE zalo_subscribers SET ai_paused_until = DATE_ADD(NOW(), INTERVAL 30 MINUTE) WHERE id = ?")->execute([$subId]);
+                                    $pdo->prepare("UPDATE zalo_subscribers SET ai_paused_until = DATE_ADD(NOW(), INTERVAL 30 MINUTE) WHERE id = ? AND workspace_id = ?")->execute([$subId, $oaConfig['workspace_id']]);
 
                                     // 2. Add log for debug tool
                                     file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "Human Zalo Reply Detected -> Pausing AI for Sub $subId\n", FILE_APPEND);
@@ -500,6 +500,7 @@ if ($method === 'POST') {
 
                                     // Update Conversation Last Message (So it appears in list immediately)
                                     $pdo->prepare("UPDATE ai_conversations SET last_message = ?, last_message_at = NOW() WHERE id = ?")->execute([$msgText, $convId]);
+                                    // Note: ai_conversations ID is a UUID and lacks workspace_id in current schema, but it's visitor-linked.
                                 }
                             } catch (Exception $e) { /* ignore */
                             }
@@ -588,7 +589,7 @@ if ($method === 'POST') {
                                         $stmtSpam->execute([$subId]);
                                         if ((int)$stmtSpam->fetchColumn() >= 15) {
                                             $skipAI = true;
-                                            $pdo->prepare("UPDATE zalo_subscribers SET ai_paused_until = DATE_ADD(NOW(), INTERVAL 30 MINUTE) WHERE id = ?")->execute([$subId]);
+                                            $pdo->prepare("UPDATE zalo_subscribers SET ai_paused_until = DATE_ADD(NOW(), INTERVAL 30 MINUTE) WHERE id = ? AND workspace_id = ?")->execute([$subId, $oaConfig['workspace_id']]);
                                             @file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "ANTI-SPAM LOOP TRIPPED for $zaloUserId. Paused AI for 30 mins.\n", FILE_APPEND);
                                         }
                                     }
@@ -1452,15 +1453,15 @@ function isScenarioActive($scenario, $nowTime, $nowDay)
     }
 }
 
-function upsertZaloSubscriberWebhook($pdo, $zaloUserId, $payload, $oaConfigId, $oaName, $event)
+function upsertZaloSubscriberWebhook($pdo, $zaloUserId, $payload, $oaConfigId, $oaName, $event, $workspaceId)
 {
     // 1. Get List ID
-    $stmt = $pdo->prepare("SELECT id FROM zalo_lists WHERE oa_config_id = ? LIMIT 1");
-    $stmt->execute([$oaConfigId]);
+    $stmt = $pdo->prepare("SELECT id FROM zalo_lists WHERE workspace_id = ? AND oa_config_id = ? LIMIT 1");
+    $stmt->execute([$workspaceId, $oaConfigId]);
     $list = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$list) {
         $listId = bin2hex(random_bytes(16));
-        $pdo->prepare("INSERT INTO zalo_lists (id, name, oa_config_id) VALUES (?, ?, ?)")->execute([$listId, "Người quan tâm: $oaName", $oaConfigId]);
+        $pdo->prepare("INSERT INTO zalo_lists (id, workspace_id, name, oa_config_id) VALUES (?, ?, ?, ?)")->execute([$listId, $workspaceId, "Người quan tâm: $oaName", $oaConfigId]);
     } else {
         $listId = $list['id'];
     }
@@ -1476,10 +1477,10 @@ function upsertZaloSubscriberWebhook($pdo, $zaloUserId, $payload, $oaConfigId, $
     try {
         $stmtInsert = $pdo->prepare("
             INSERT IGNORE INTO zalo_subscribers 
-            (id, zalo_list_id, zalo_user_id, display_name, avatar, joined_at, last_interaction_at, is_follower) 
-            VALUES (?, ?, ?, ?, ?, NOW(), NOW(), ?)
+            (id, workspace_id, zalo_list_id, zalo_user_id, display_name, avatar, joined_at, last_interaction_at, is_follower) 
+            VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW(), ?)
         ");
-        $stmtInsert->execute([$newSubId, $listId, $zaloUserId, $name ?: 'Zalo User', $avatar, $isFollower]);
+        $stmtInsert->execute([$newSubId, $workspaceId, $listId, $zaloUserId, $name ?: 'Zalo User', $avatar, $isFollower]);
 
         if ($stmtInsert->rowCount() > 0) {
             // First time created, increment count
@@ -1489,8 +1490,8 @@ function upsertZaloSubscriberWebhook($pdo, $zaloUserId, $payload, $oaConfigId, $
 
         // 3. IF ALREADY EXISTS, UPDATE
         // Lock the row for update to ensure we have the latest status
-        $stmtExisting = $pdo->prepare("SELECT id, display_name, avatar, is_follower FROM zalo_subscribers WHERE zalo_user_id = ? FOR UPDATE");
-        $stmtExisting->execute([$zaloUserId]);
+        $stmtExisting = $pdo->prepare("SELECT id, display_name, avatar, is_follower FROM zalo_subscribers WHERE workspace_id = ? AND zalo_user_id = ? FOR UPDATE");
+        $stmtExisting->execute([$workspaceId, $zaloUserId]);
         $existing = $stmtExisting->fetch(PDO::FETCH_ASSOC);
 
         if ($existing) {
@@ -1535,12 +1536,12 @@ function upsertZaloSubscriberWebhook($pdo, $zaloUserId, $payload, $oaConfigId, $
                 if ($newIsFollower !== null) {
                     try {
                         // Find linked subscriber
-                        $stmtLink = $pdo->prepare("SELECT id FROM subscribers WHERE zalo_user_id = (SELECT zalo_user_id FROM zalo_subscribers WHERE id = ? LIMIT 1) LIMIT 1");
-                        $stmtLink->execute([$subId]);
+                        $stmtLink = $pdo->prepare("SELECT id FROM subscribers WHERE workspace_id = ? AND zalo_user_id = (SELECT zalo_user_id FROM zalo_subscribers WHERE workspace_id = ? AND id = ? LIMIT 1) LIMIT 1");
+                        $stmtLink->execute([$workspaceId, $workspaceId, $subId]);
                         $linkedId = $stmtLink->fetchColumn();
 
                         if ($linkedId) {
-                            $pdo->prepare("UPDATE subscribers SET is_zalo_follower = ? WHERE id = ?")->execute([$newIsFollower, $linkedId]);
+                            $pdo->prepare("UPDATE subscribers SET is_zalo_follower = ? WHERE id = ? AND workspace_id = ?")->execute([$newIsFollower, $linkedId, $workspaceId]);
                         }
                     } catch (Exception $e) {
                         error_log('[webhook] is_zalo_follower sync failed for subId=' . $subId . ': ' . $e->getMessage());
@@ -1554,30 +1555,29 @@ function upsertZaloSubscriberWebhook($pdo, $zaloUserId, $payload, $oaConfigId, $
         error_log("Race condition in upsertZaloSubscriberWebhook: " . $e->getMessage());
     }
 
-    // Safety fallback: search with prepared statement
-    $stmtFallback = $pdo->prepare("SELECT id FROM zalo_subscribers WHERE zalo_user_id = ? LIMIT 1");
-    $stmtFallback->execute([$zaloUserId]);
+    // Safety fallback: search with prepared statement (Scoped by workspaceId)
+    $stmtFallback = $pdo->prepare("SELECT id FROM zalo_subscribers WHERE zalo_user_id = ? AND workspace_id = ? LIMIT 1");
+    $stmtFallback->execute([$zaloUserId, $workspaceId]);
     return $stmtFallback->fetchColumn();
 }
 
 // Helper to add tag
-function addSubscriberTag($pdo, $subId, $tag)
+function addSubscriberTag($pdo, $subId, $tag, $workspaceId)
 {
-    updateSubscriberTagsAtomic($pdo, $subId, [$tag], []);
+    updateSubscriberTagsAtomic($pdo, $subId, [$tag], [], $workspaceId);
 }
 
 // Helper to remove tag
-function removeSubscriberTag($pdo, $subId, $tag)
+function removeSubscriberTag($pdo, $subId, $tag, $workspaceId)
 {
-    updateSubscriberTagsAtomic($pdo, $subId, [], [$tag]);
+    updateSubscriberTagsAtomic($pdo, $subId, [], [$tag], $workspaceId);
 }
 
 // [NEW] Consolidated Tag Update (10M UPGRADE: Relational)
-// [BUG-5 FIX] subscriber_tags.subscriber_id is a FK to subscribers.id (Main ID table).
-// But callers sometimes pass $subId from zalo_subscribers (a different UUID namespace).
-// This function now auto-resolves the main subscriber ID via zalo_user_id linkage.
-function updateSubscriberTagsAtomic($pdo, $subId, $addTags = [], $removeTags = [])
+function updateSubscriberTagsAtomic($pdo, $subId, $addTags = [], $removeTags = [], $workspaceId = null)
 {
+    if (!$workspaceId) return; // Strict mode: workspaceId required
+
     try {
         // Safety: If $subId looks like a Zalo subscriber row (check via zalo_subscribers),
         // resolve the linked Main subscriber ID to avoid FK mismatch on subscriber_tags.
@@ -1585,9 +1585,9 @@ function updateSubscriberTagsAtomic($pdo, $subId, $addTags = [], $removeTags = [
         $stmtCheck = $pdo->prepare(
             "SELECT s.id FROM subscribers s "
             . "JOIN zalo_subscribers zs ON zs.zalo_user_id = s.zalo_user_id "
-            . "WHERE zs.id = ? LIMIT 1"
+            . "WHERE zs.id = ? AND s.workspace_id = ? AND zs.workspace_id = ? LIMIT 1"
         );
-        $stmtCheck->execute([$subId]);
+        $stmtCheck->execute([$subId, $workspaceId, $workspaceId]);
         $mainId = $stmtCheck->fetchColumn();
         if ($mainId) {
             $resolvedId = $mainId; // Use Main subscriber ID for subscriber_tags FK
@@ -1595,21 +1595,21 @@ function updateSubscriberTagsAtomic($pdo, $subId, $addTags = [], $removeTags = [
 
         if (!empty($addTags)) {
             foreach ($addTags as $tagName) {
-                $stmt = $pdo->prepare("SELECT id FROM tags WHERE name = ? LIMIT 1");
-                $stmt->execute([$tagName]);
+                $stmt = $pdo->prepare("SELECT id FROM tags WHERE name = ? AND workspace_id = ? LIMIT 1");
+                $stmt->execute([$tagName, $workspaceId]);
                 $tagId = $stmt->fetchColumn();
                 if ($tagId) {
-                    $pdo->prepare("INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES (?, ?)")->execute([$resolvedId, $tagId]);
+                    $pdo->prepare("INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id, workspace_id) VALUES (?, ?, ?)")->execute([$resolvedId, $tagId, $workspaceId]);
                 }
             }
         }
         if (!empty($removeTags)) {
             foreach ($removeTags as $tagName) {
-                $stmt = $pdo->prepare("SELECT id FROM tags WHERE name = ? LIMIT 1");
-                $stmt->execute([$tagName]);
+                $stmt = $pdo->prepare("SELECT id FROM tags WHERE name = ? AND workspace_id = ? LIMIT 1");
+                $stmt->execute([$tagName, $workspaceId]);
                 $tagId = $stmt->fetchColumn();
                 if ($tagId) {
-                    $pdo->prepare("DELETE FROM subscriber_tags WHERE subscriber_id = ? AND tag_id = ?")->execute([$resolvedId, $tagId]);
+                    $pdo->prepare("DELETE FROM subscriber_tags WHERE subscriber_id = ? AND tag_id = ? AND workspace_id = ?")->execute([$resolvedId, $tagId, $workspaceId]);
                 }
             }
         }

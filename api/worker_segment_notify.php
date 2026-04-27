@@ -53,7 +53,7 @@ if (!function_exists('runWorkerSegmentNotify')) {
                 $segName = $seg['name'];
                 $criteria = $seg['criteria'];
 
-                $res = buildSegmentWhereClause($criteria, $segId);
+                $res = buildSegmentWhereClause($criteria, $workspace_id, $segId);
                 if ($res['sql'] === '1=1' || empty($res['sql'])) {
                     continue; // Skip invalid or empty criteria
                 }

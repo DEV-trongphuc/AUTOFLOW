@@ -3,8 +3,10 @@ require_once 'db_connect.php';
 require_once 'auth_middleware.php';
 header('Content-Type: application/json');
 
-// Auth check bypassed for public demo endpoints in landing page.
-// The query is safely scoped by property_id.
+require_once 'ai_org_middleware.php';
+
+// [SECURITY] Enforce AISpace Authentication
+$currentOrgUser = requireAISpaceAuth();
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
@@ -25,12 +27,15 @@ function getRange($period)
 list($start, $end) = getRange($period);
 $property_id = $_GET['property_id'] ?? '';
 
-$propFilterConvs = "";
-$propFilterMsgs = "";
-if (!empty($property_id)) {
-    $propFilterConvs = " AND property_id = ?";
-    $propFilterMsgs = " AND conversation_id IN (SELECT id FROM ai_conversations WHERE property_id = ?)";
+if (empty($property_id)) {
+    jsonResponse(false, null, 'Missing property_id');
 }
+
+// [SECURITY] Verify organizational access to this property
+requireCategoryAccess($property_id, $currentOrgUser);
+
+$propFilterConvs = " AND property_id = ?";
+$propFilterMsgs = " AND conversation_id IN (SELECT id FROM ai_conversations WHERE property_id = ?)";
 
 if ($method === 'GET' && $action === 'summary') {
     try {

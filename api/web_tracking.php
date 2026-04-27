@@ -46,8 +46,8 @@ if ($method === 'GET' && $action === 'visitor_journey' && !empty($_GET['visitor_
         $visitorId = $_GET['visitor_id'];
 
         // Fetch Page Views
-        $stmtPage = $pdo->prepare("SELECT 'pageview' as type, title, url, loaded_at as time FROM web_page_views WHERE visitor_id = ? ORDER BY loaded_at DESC LIMIT 50");
-        $stmtPage->execute([$visitorId]);
+        $stmtPage = $pdo->prepare("SELECT 'pageview' as type, title, url, loaded_at as time FROM web_page_views WHERE visitor_id = ? AND workspace_id = ? ORDER BY loaded_at DESC LIMIT 50");
+        $stmtPage->execute([$visitorId, $workspace_id]);
         $pages = $stmtPage->fetchAll(PDO::FETCH_ASSOC);
 
         // Fetch Events with Page Info
@@ -61,11 +61,11 @@ if ($method === 'GET' && $action === 'visitor_journey' && !empty($_GET['visitor_
                 pv.url as page_url
             FROM web_events e
             LEFT JOIN web_page_views pv ON e.page_view_id = pv.id
-            WHERE e.visitor_id = ? AND e.event_type != 'ping'
+            WHERE e.visitor_id = ? AND e.workspace_id = ? AND e.event_type != 'ping'
             ORDER BY e.created_at DESC 
             LIMIT 50
         ");
-        $stmtEvt->execute([$visitorId]);
+        $stmtEvt->execute([$visitorId, $workspace_id]);
         $events = $stmtEvt->fetchAll(PDO::FETCH_ASSOC);
 
         $merged = array_merge($pages, $events);
@@ -608,11 +608,11 @@ if ($method === 'GET' && $action === 'live_visitors') {
             JOIN (
                 SELECT visitor_id, id as session_id, device_type, os, browser, last_active_at
                 FROM web_sessions
-                WHERE property_id = ?
+                WHERE property_id = ? AND workspace_id = ?
                 AND last_active_at >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)
                 ORDER BY last_active_at DESC
             ) sess ON v.id = sess.visitor_id
-            WHERE v.last_visit_at >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)
+            WHERE v.property_id = ? AND v.last_visit_at >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)
             AND sess.device_type != 'bot'
             GROUP BY v.id
             ORDER BY v.last_visit_at DESC
@@ -620,7 +620,7 @@ if ($method === 'GET' && $action === 'live_visitors') {
         ";
 
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$id]);
+        $stmt->execute([$id, $workspace_id, $id]);
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($data as &$row) {
@@ -644,15 +644,15 @@ if ($method === 'GET' && $action === 'visitors') {
             // 0. Summary Stats
             $stmtStats = $pdo->prepare("
                 SELECT 
-                    (SELECT COUNT(*) FROM web_events WHERE visitor_id = ? AND event_type = 'click') as clicks,
-                    (SELECT COUNT(*) FROM web_events WHERE visitor_id = ? AND event_type = 'canvas_click') as canvas_clicks,
-                    (SELECT COUNT(*) FROM web_page_views WHERE visitor_id = ?) as page_views,
+                    (SELECT COUNT(*) FROM web_events WHERE visitor_id = ? AND property_id = ? AND workspace_id = ? AND event_type = 'click') as clicks,
+                    (SELECT COUNT(*) FROM web_events WHERE visitor_id = ? AND property_id = ? AND workspace_id = ? AND event_type = 'canvas_click') as canvas_clicks,
+                    (SELECT COUNT(*) FROM web_page_views WHERE visitor_id = ? AND property_id = ? AND workspace_id = ?) as page_views,
                     (SELECT SUM(COALESCE(NULLIF(pv.time_on_page, 0), s.duration_seconds)) 
                      FROM web_page_views pv 
                      JOIN web_sessions s ON pv.session_id = s.id 
-                     WHERE pv.visitor_id = ?) as total_time
+                     WHERE pv.visitor_id = ? AND pv.property_id = ? AND pv.workspace_id = ? AND s.property_id = ? AND s.workspace_id = ?) as total_time
             ");
-            $stmtStats->execute([$visitorId, $visitorId, $visitorId, $visitorId]);
+            $stmtStats->execute([$visitorId, $id, $workspace_id, $visitorId, $id, $workspace_id, $visitorId, $id, $workspace_id, $visitorId, $id, $workspace_id, $id, $workspace_id]);
             $stats = $stmtStats->fetch(PDO::FETCH_ASSOC);
 
             // 1. Get PageViews
@@ -669,11 +669,11 @@ if ($method === 'GET' && $action === 'visitors') {
                     CONCAT(COALESCE(s.utm_source, 'direct'), ' / ', COALESCE(s.utm_medium, 'none')) as source
                 FROM web_page_views pv
                 JOIN web_sessions s ON pv.session_id = s.id
-                WHERE pv.visitor_id = ? AND pv.property_id = ? 
+                WHERE pv.visitor_id = ? AND pv.property_id = ? AND pv.workspace_id = ? AND s.workspace_id = ?
                 ORDER BY pv.loaded_at DESC 
                 LIMIT 100
             ");
-            $stmtPv->execute([$visitorId, $id]);
+            $stmtPv->execute([$visitorId, $id, $workspace_id, $workspace_id]);
             $pvs = $stmtPv->fetchAll(PDO::FETCH_ASSOC);
 
             // 2. Get Events joined with PageView info
@@ -689,12 +689,12 @@ if ($method === 'GET' && $action === 'visitors') {
                     e.created_at as time 
                 FROM web_events e
                 LEFT JOIN web_page_views pv ON e.page_view_id = pv.id
-                WHERE e.visitor_id = ? AND e.property_id = ? 
+                WHERE e.visitor_id = ? AND e.property_id = ? AND e.workspace_id = ?
                 AND e.event_type != 'ping'
                 ORDER BY e.created_at DESC 
                 LIMIT 100
             ");
-            $stmtEv->execute([$visitorId, $id]);
+            $stmtEv->execute([$visitorId, $id, $workspace_id]);
             $evs = $stmtEv->fetchAll(PDO::FETCH_ASSOC);
 
             // Merge & Sort

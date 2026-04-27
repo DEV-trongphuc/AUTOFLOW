@@ -126,7 +126,7 @@ try {
                                 foreach ($targetSegmentIds as $segId) {
                                     $segConfig = $segmentsMap[$segId] ?? null;
                                     if ($segConfig) {
-                                        $segRes = buildSegmentWhereClause($segConfig, $segId);
+                                        $segRes = buildSegmentWhereClause($segConfig, $workspace_id, $segId);
                                         if ($segRes && !empty($segRes['sql'])) {
                                             $sourceConditions[] = "({$segRes['sql']})";
                                             if (!empty($segRes['params']))
@@ -206,7 +206,7 @@ try {
                                 $stmtSeg->execute([$segId, $wsId]);
                                 $segConfig = $stmtSeg->fetchColumn();
                                 if ($segConfig) {
-                                    $segWhere = buildSegmentWhereClause($segConfig, $segId);
+                                    $segWhere = buildSegmentWhereClause($segConfig, $workspace_id, $segId);
                                     if ($segWhere && !empty($segWhere['sql'])) {
                                         $sourceConditions[] = "({$segWhere['sql']})";
                                         if (!empty($segWhere['params']))
@@ -362,7 +362,7 @@ try {
                                 $stmtSeg->execute([$segId, $wsId]);
                                 $segConfig = $stmtSeg->fetchColumn();
                                 if ($segConfig) {
-                                    $segWhere = buildSegmentWhereClause($segConfig, $segId);
+                                    $segWhere = buildSegmentWhereClause($segConfig, $workspace_id, $segId);
                                     if ($segWhere && !empty($segWhere['sql'])) {
                                         $sourceConditions[] = "({$segWhere['sql']})";
                                         if (!empty($segWhere['params']))

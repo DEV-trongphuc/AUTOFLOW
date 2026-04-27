@@ -265,6 +265,7 @@ const Flows: React.FC = () => {
     const [allLists, setAllLists] = useState<any[]>([]);
     const [allSegments, setAllSegments] = useState<Segment[]>([]);
     const [allTags, setAllTags] = useState<any[]>([]);
+    const [tagsPagination, setTagsPagination] = useState({ page: 1, limit: 100, total: 0 });
 
     // Modal Selection State
     const [selectedCampaignForDetail, setSelectedCampaignForDetail] = useState<Campaign | null>(null);
@@ -308,6 +309,34 @@ const Flows: React.FC = () => {
         else toast(message);
     }, []);
 
+    const loadTags = useCallback(async (page = 1, search = '') => {
+        const res = await api.get<any>(`tags?page=${page}&limit=100&search=${search}`);
+        if (res.success) {
+            const raw = res.data;
+            const tagList = Array.isArray(raw) ? raw : (raw?.data || []);
+            setAllTags(tagList);
+            if (raw?.pagination) {
+                setTagsPagination(raw.pagination);
+            }
+        }
+    }, []);
+
+    const loadLists = useCallback(async () => {
+        const res = await api.get<any[]>('lists');
+        if (res.success) {
+            const data = res.data;
+            setAllLists(Array.isArray(data) ? data : (data as any)?.data || []);
+        }
+    }, []);
+
+    const loadSegments = useCallback(async () => {
+        const res = await api.get<Segment[]>('segments');
+        if (res.success) {
+            const data = res.data;
+            setAllSegments(Array.isArray(data) ? data : (data as any)?.data || []);
+        }
+    }, []);
+
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
@@ -321,10 +350,9 @@ const Flows: React.FC = () => {
                 api.get<Segment[]>('segments'),
                 api.get<any[]>('tags')
             ]);
+
             if (flowsRes.success) {
                 const raw = flowsRes.data as any;
-                // Backend now returns { data: Flow[], pagination: {...} }
-                // Backward compat: also handle bare array
                 const flowList: Flow[] = Array.isArray(raw) ? raw : (raw?.data || []);
                 setFlows(flowList);
             }
@@ -356,6 +384,12 @@ const Flows: React.FC = () => {
                 const data = tagsRes.data;
                 setAllTags(Array.isArray(data) ? data : (data as any)?.data || []);
             }
+
+            // [LAZY] Refresh metadata in background
+            loadLists();
+            loadSegments();
+            loadTags();
+
             // ── Second-pass: resolve any segment/list names referenced by flow
             //    triggers that weren't included in the initial batch (e.g. pagination) ──
             const flowList2: Flow[] = flowsRes.success
@@ -380,11 +414,8 @@ const Flows: React.FC = () => {
                 if (!cfg.targetId || cfg.type !== 'segment') continue;
 
                 if (cfg.targetSubtype === 'list' || cfg.targetSubtype === 'sync') {
-                    // Explicitly a list/sync list
                     if (!knownListIds.has(cfg.targetId)) missingListIds.push(cfg.targetId);
                 } else {
-                    // targetSubtype not set — could be segment OR list
-                    // Queue both so the correct table resolves it
                     if (!knownSegIds.has(cfg.targetId))  missingSegIds.push(cfg.targetId);
                     if (!knownListIds.has(cfg.targetId)) missingListIds.push(cfg.targetId);
                 }
@@ -416,7 +447,7 @@ const Flows: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [showToast]);
+    }, [showToast, loadLists, loadSegments, loadTags]);
 
     const fetchReportData = useCallback(async (flowId: string) => {
         setLoadingReport(true);
@@ -461,6 +492,7 @@ const Flows: React.FC = () => {
         if (!selectedFlow) return;
         setLoadingParticipants(true);
         try {
+
             const limit = 50;
             let statusParam: string | null = '';
             let typeParam: string | null = null;

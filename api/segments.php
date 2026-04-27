@@ -22,7 +22,7 @@ if ($method === 'POST' && $route === 'estimate') {
     $criteriaJson = isset($data['criteria']) ? (is_string($data['criteria']) ? $data['criteria'] : json_encode($data['criteria'])) : '[]';
 
     require_once 'segment_helper.php';
-    $res = buildSegmentWhereClause($criteriaJson);
+    $res = buildSegmentWhereClause($criteriaJson, $workspace_id);
 
     // Default to count all ACTIVE subscribers if no criteria? Or 0?
     // buildSegmentWhereClause returns 1=1 if empty.
@@ -54,7 +54,7 @@ if ($method === 'POST' && $route === 'sync') {
         $segments = $stmt->fetchAll();
         $results = [];
         foreach ($segments as $seg) {
-            $res = buildSegmentWhereClause($seg['criteria']);
+            $res = buildSegmentWhereClause($seg['criteria'], $workspace_id);
             $stmtC = $pdo->prepare("SELECT COUNT(*) FROM subscribers s WHERE s.status IN ('active', 'lead', 'customer') AND s.workspace_id = ? AND " . $res['sql']);
             array_unshift($res['params'], $workspace_id);
             $stmtC->execute($res['params']);
@@ -88,7 +88,7 @@ if ($method === 'POST' && $route === 'cleanup') {
             jsonResponse(false, null, 'Không tìm thấy phân khúc');
             return;
         }
-        $res = buildSegmentWhereClause($criteria, $segmentId); // Pass ID to exclude currently excluded
+        $res = buildSegmentWhereClause($criteria, $workspace_id, $segmentId); // Pass ID to exclude currently excluded
 
         if ($type === 'invalid_status') {
             // Find users with problematic status
@@ -112,17 +112,18 @@ if ($method === 'POST' && $route === 'cleanup') {
         $count = count($targetIds);
         if ($count > 0) {
             foreach (array_chunk($targetIds, 500) as $chunk) {
-                $placeholders = implode(',', array_fill(0, count($chunk), '(?, ?)'));
+                $placeholders = implode(',', array_fill(0, count($chunk), '(?, ?, ?)'));
                 $values = [];
                 foreach ($chunk as $tid) {
+                    $values[] = $workspace_id;
                     $values[] = $segmentId;
                     $values[] = $tid;
                 }
-                $pdo->prepare("INSERT IGNORE INTO segment_exclusions (segment_id, subscriber_id) VALUES $placeholders")->execute($values);
+                $pdo->prepare("INSERT IGNORE INTO segment_exclusions (workspace_id, segment_id, subscriber_id) VALUES $placeholders")->execute($values);
             }
 
             // [OPTIMIZED] Queue segment count update instead of inline calculation
-            $pdo->prepare("INSERT INTO segment_count_update_queue (segment_id) VALUES (?) ON DUPLICATE KEY UPDATE queued_at = NOW()")->execute([$segmentId]);
+            $pdo->prepare("INSERT INTO segment_count_update_queue (workspace_id, segment_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE queued_at = NOW()")->execute([$workspace_id, $segmentId]);
         }
 
         jsonResponse(true, ['count' => $count], "Đã dọn dẹp $count người dùng khỏi phân khúc.");
@@ -206,7 +207,7 @@ if ($method === 'POST' && $route === 'split') {
             $criteria = $stmtS->fetchColumn();
 
             if ($criteria) {
-                $resS = buildSegmentWhereClause($criteria, $segmentId);
+                $resS = buildSegmentWhereClause($criteria, $workspace_id, $segmentId);
                 if ($resS) {
                     $segmentScope = " AND " . $resS['sql'];
                     $scopeParams = $resS['params'];
@@ -233,7 +234,7 @@ if ($method === 'POST' && $route === 'split') {
             $stmtS = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
             $stmtS->execute([$segmentId, $workspace_id]);
             $criteria = $stmtS->fetchColumn();
-            $res = buildSegmentWhereClause($criteria, $segmentId);
+            $res = buildSegmentWhereClause($criteria, $workspace_id, $segmentId);
             if ($res) {
                 $sql = "SELECT s.id FROM subscribers s WHERE s.status IN ('active', 'lead', 'customer') AND s.workspace_id = ? AND (s.phone_number IS NOT NULL AND LENGTH(s.phone_number) >= 9) AND " . $res['sql'];
                 $stmtP = $pdo->prepare($sql);
@@ -255,13 +256,14 @@ if ($method === 'POST' && $route === 'split') {
         $addedCount = 0;
         if (!empty($targetIds)) {
             foreach (array_chunk($targetIds, 500) as $chunk) {
-                $placeholders = implode(',', array_fill(0, count($chunk), '(?, ?)'));
+                $placeholders = implode(',', array_fill(0, count($chunk), '(?, ?, ?)'));
                 $values = [];
                 foreach ($chunk as $sid) {
+                    $values[] = $workspace_id;
                     $values[] = $sid;
                     $values[] = $listId;
                 }
-                $stmtIns = $pdo->prepare("INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id) VALUES $placeholders");
+                $stmtIns = $pdo->prepare("INSERT IGNORE INTO subscriber_lists (workspace_id, subscriber_id, list_id) VALUES $placeholders");
                 $stmtIns->execute($values);
                 $addedCount += $stmtIns->rowCount();
             }
@@ -271,13 +273,14 @@ if ($method === 'POST' && $route === 'split') {
         // 4. Handle Exclusion (Bulk Optimized)
         if ($excludeFromSource && $segmentId) {
             foreach (array_chunk($targetIds, 500) as $chunk) {
-                $placeholders = implode(',', array_fill(0, count($chunk), '(?, ?)'));
+                $placeholders = implode(',', array_fill(0, count($chunk), '(?, ?, ?)'));
                 $values = [];
                 foreach ($chunk as $tid) {
+                    $values[] = $workspace_id;
                     $values[] = $segmentId;
                     $values[] = $tid;
                 }
-                $pdo->prepare("INSERT IGNORE INTO segment_exclusions (segment_id, subscriber_id) VALUES $placeholders")->execute($values);
+                $pdo->prepare("INSERT IGNORE INTO segment_exclusions (workspace_id, segment_id, subscriber_id) VALUES $placeholders")->execute($values);
             }
         }
 
@@ -298,14 +301,14 @@ if ($method === 'POST' && $route === 'split') {
             if (!empty($badIds)) {
                 foreach (array_chunk($badIds, 500) as $chunk) {
                     $delPlaceholders = implode(',', array_fill(0, count($chunk), '?'));
-                    $pdo->prepare("DELETE FROM subscriber_lists WHERE list_id = ? AND subscriber_id IN ($delPlaceholders)")->execute(array_merge([$listId], $chunk));
+                    $pdo->prepare("DELETE FROM subscriber_lists WHERE workspace_id = ? AND list_id = ? AND subscriber_id IN ($delPlaceholders)")->execute(array_merge([$workspace_id, $listId], $chunk));
                 }
             }
         }
 
         // [OPTIMIZED] Queue segment count update
         if ($segmentId) {
-            $pdo->prepare("INSERT INTO segment_count_update_queue (segment_id) VALUES (?) ON DUPLICATE KEY UPDATE queued_at = NOW()")->execute([$segmentId]);
+            $pdo->prepare("INSERT INTO segment_count_update_queue (workspace_id, segment_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE queued_at = NOW()")->execute([$workspace_id, $segmentId]);
         }
 
         jsonResponse(true, ['count' => $addedCount], "Đã tách $addedCount người dùng vào danh sách '$destListName'.");
@@ -328,19 +331,20 @@ if ($method === 'POST' && $route === 'exclude') {
         $excludedCount = 0;
         // Optimized Bulk Insert
         foreach (array_chunk($subscriberIds, 500) as $chunk) {
-            $placeholders = implode(',', array_fill(0, count($chunk), '(?, ?)'));
+            $placeholders = implode(',', array_fill(0, count($chunk), '(?, ?, ?)'));
             $values = [];
             foreach ($chunk as $sid) {
+                $values[] = $workspace_id;
                 $values[] = $segmentId;
                 $values[] = $sid;
             }
-            $stmtEx = $pdo->prepare("INSERT IGNORE INTO segment_exclusions (segment_id, subscriber_id) VALUES $placeholders");
+            $stmtEx = $pdo->prepare("INSERT IGNORE INTO segment_exclusions (workspace_id, segment_id, subscriber_id) VALUES $placeholders");
             $stmtEx->execute($values);
             $excludedCount += $stmtEx->rowCount();
         }
 
         // [OPTIMIZED] Queue segment count update
-        $pdo->prepare("INSERT INTO segment_count_update_queue (segment_id) VALUES (?) ON DUPLICATE KEY UPDATE queued_at = NOW()")->execute([$segmentId]);
+        $pdo->prepare("INSERT INTO segment_count_update_queue (workspace_id, segment_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE queued_at = NOW()")->execute([$workspace_id, $segmentId]);
         jsonResponse(true, ['count' => $excludedCount], "Đã chặn vĩnh viễn $excludedCount người dùng khỏi phân khúc này.");
     } catch (Exception $e) {
         jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
@@ -361,7 +365,7 @@ switch ($method) {
                 $criteria = $stmt->fetchColumn();
 
                 if ($criteria) {
-                    $res = buildSegmentWhereClause($criteria, $path);
+                    $res = buildSegmentWhereClause($criteria, $workspace_id, $path);
                     $sql = "SELECT s.status, COUNT(*) as count FROM subscribers s WHERE s.workspace_id = ? AND " . $res['sql'] . " GROUP BY s.status";
                     $stmtStat = $pdo->prepare($sql);
                     array_unshift($res['params'], $workspace_id);

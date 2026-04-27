@@ -547,6 +547,9 @@ function updateChatbot($pdo, $data)
         logAdminAction($pdo, $currentAdminId, 'update_chatbot', 'bot', $id, $data);
 
     clearBotCache($pdo, $id, false);
+    
+    // ALSO CLEAR RAG CACHE for this property
+    $pdo->prepare("DELETE FROM ai_rag_search_cache WHERE property_id = ?")->execute([$id]);
 
     echo json_encode(['success' => true]);
 }
@@ -572,6 +575,9 @@ function deleteChatbot($pdo, $id, $adminId)
         $stmt = $pdo->prepare("DELETE FROM $table WHERE $col = ?");
         $stmt->execute([$id]);
     }
+
+    // Delete RAG cache
+    $pdo->prepare("DELETE FROM ai_rag_search_cache WHERE property_id = ?")->execute([$id]);
 
     global $currentAdminId;
     if ($currentAdminId)

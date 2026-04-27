@@ -196,6 +196,12 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
     const [customFields, setCustomFields] = useState<{ key: string; label: string }[]>([]);
     const varPickerRef = useRef<HTMLDivElement>(null);
 
+    // Simple UUID fallback
+    const generateId = () => {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+        return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    };
+
     useEffect(() => {
         fetchOAs();
         fetchCustomFields();
@@ -394,8 +400,10 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
 
                     // Validate rows
                     const rows = lines.slice(1);
+                    const csvRegex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/; // Split by comma not inside quotes
+
                     rows.forEach(r => {
-                        const cols = r.split(','); // Note: This simple split might fail on quoted commas
+                        const cols = r.split(csvRegex);
                         const val = cols[phoneIdx]?.trim().replace(/^"|"$/g, '');
                         if (val && val.length >= 9 && val.length <= 15 && /^\d+$/.test(val)) {
                             validCount++;
@@ -992,9 +1000,14 @@ const ZaloZNSStepConfig: React.FC<ZaloZNSStepConfigProps> = ({ config, onChange,
                                                         <span className="text-[9px] font-medium text-slate-400 italic">
                                                             {param.require ? '* Bắt buộc nhập' : 'Không bắt buộc'}
                                                         </span>
-                                                        {param.maxLength && (
-                                                            <span className="text-[9px] font-black text-slate-300 uppercase">Tối đa {param.maxLength} kí tự</span>
-                                                        )}
+                                                        <div className="flex items-center gap-3">
+                                                            {param.maxLength && (
+                                                                <span className="text-[9px] font-black text-slate-300 uppercase">Tối đa {param.maxLength} kí tự</span>
+                                                            )}
+                                                            <span className={`text-[9px] font-black px-2 py-0.5 rounded-md ${(config.template_data?.[fieldName] || '').length > (param.maxLength || 1000) ? 'bg-rose-50 text-rose-500 border border-rose-100' : 'bg-slate-50 text-slate-400'}`}>
+                                                                {(config.template_data?.[fieldName] || '').length} / {param.maxLength || '∞'}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             );

@@ -120,7 +120,7 @@ if ($method === 'GET' && $action === 'check') {
     if (isset($_SESSION['user_id'])) {
         try {
             // Lấy dữ liệu mới nhất từ DB để đảm bảo Avatar/Role luôn đúng
-            $stmt = $pdo->prepare("SELECT id, email, name, picture, role, status FROM users WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT id, email, name, picture, role, status, workspace_id FROM users WHERE id = ?");
             $stmt->execute([$_SESSION['user_id']]);
             $user = $stmt->fetch();
 

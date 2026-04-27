@@ -142,6 +142,21 @@ const UpdateTagConfig: React.FC<UpdateTagConfigProps> = ({ config, onChange, dis
             </div>
 
             <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar p-1">
+                {search && !globalTags.some(t => t.toLowerCase() === search.toLowerCase()) && (
+                  <button 
+                    onClick={() => {
+                      const newTag = search.trim();
+                      if (newTag) {
+                        setGlobalTags(prev => [...prev, newTag]);
+                        toggleTag(newTag);
+                      }
+                    }}
+                    disabled={disabled}
+                    className="px-4 py-2.5 rounded-xl text-xs font-black border-2 border-dashed border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all flex items-center gap-2 animate-in zoom-in-95"
+                  >
+                    <Plus className="w-4 h-4" /> Tạo nhãn mới: "{search}"
+                  </button>
+                )}
                 {filtered.map(t => {
                     const isSelected = tags.includes(t);
                     const isTrigger = action === 'add' && !!tagTriggerMap[t];
@@ -158,7 +173,7 @@ const UpdateTagConfig: React.FC<UpdateTagConfigProps> = ({ config, onChange, dis
                         </button>
                     );
                 })}
-                {globalTags.length === 0 && <p className="text-xs text-slate-400 italic">Chưa có nhãn nào trong kho. Hãy vào Cài đặt để thêm.</p>}
+                {globalTags.length === 0 && !search && <p className="text-xs text-slate-400 italic">Chưa có nhãn nào trong kho. Hãy nhập để tạo mới.</p>}
             </div>
         </div>
       </div>

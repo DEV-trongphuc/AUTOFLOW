@@ -774,8 +774,8 @@ function upsertZaloSubscriber($pdo, $zaloUserId, $profile, $oaConfigId = null)
         try {
             // Find List for this OA CONFIG (using oa_config_id)
             $listId = null;
-            $stmtL = $pdo->prepare("SELECT id FROM zalo_lists WHERE oa_config_id = ? LIMIT 1");
-            $stmtL->execute([$oaConfigId]);
+            $stmtL = $pdo->prepare("SELECT id FROM zalo_lists WHERE workspace_id = ? AND oa_config_id = ? LIMIT 1");
+            $stmtL->execute([$workspace_id, $oaConfigId]);
             $listId = $stmtL->fetchColumn();
 
             if (!$listId) {
@@ -787,31 +787,31 @@ function upsertZaloSubscriber($pdo, $zaloUserId, $profile, $oaConfigId = null)
                 $oaName = $oaData['name'] ?? 'Zalo OA';
 
                 $listId = bin2hex(random_bytes(16));
-                $pdo->prepare("INSERT INTO zalo_lists (id, name, oa_config_id, created_at) VALUES (?, ?, ?, NOW())")
-                    ->execute([$listId, $oaName, $oaConfigId]);
+                $pdo->prepare("INSERT INTO zalo_lists (id, workspace_id, name, oa_config_id, created_at) VALUES (?, ?, ?, ?, NOW())")
+                    ->execute([$listId, $workspace_id, $oaName, $oaConfigId]);
             }
 
             // Upsert into zalo_subscribers
-            $stmtZ = $pdo->prepare("SELECT id FROM zalo_subscribers WHERE zalo_user_id = ?");
-            $stmtZ->execute([$zaloUserId]);
+            $stmtZ = $pdo->prepare("SELECT id FROM zalo_subscribers WHERE workspace_id = ? AND zalo_user_id = ?");
+            $stmtZ->execute([$workspace_id, $zaloUserId]);
             $existingZId = $stmtZ->fetchColumn();
 
             // Status: 'active'. Is Follower: 1.
             // Using schema: status=active, is_follower=1, oa_id (real ID)
-            $stmtOAReal = $pdo->prepare("SELECT oa_id FROM zalo_oa_configs WHERE id = ?");
-            $stmtOAReal->execute([$oaConfigId]);
+            $stmtOAReal = $pdo->prepare("SELECT oa_id FROM zalo_oa_configs WHERE workspace_id = ? AND id = ?");
+            $stmtOAReal->execute([$workspace_id, $oaConfigId]);
             $oaRealId = $stmtOAReal->fetchColumn();
 
             if ($existingZId) {
-                $pdo->prepare("UPDATE zalo_subscribers SET is_follower = 1, status = 'active', last_interaction_at = NOW(), display_name = ?, avatar = ?, zalo_list_id = ?, oa_id = ? WHERE id = ?")
-                    ->execute([$name, $avatar, $listId, $oaRealId, $existingZId]);
+                $pdo->prepare("UPDATE zalo_subscribers SET is_follower = 1, status = 'active', last_interaction_at = NOW(), display_name = ?, avatar = ?, zalo_list_id = ?, oa_id = ? WHERE id = ? AND workspace_id = ?")
+                    ->execute([$name, $avatar, $listId, $oaRealId, $existingZId, $workspace_id]);
             } else {
                 $newZId = bin2hex(random_bytes(16));
                 $pdo->prepare("
                     INSERT INTO zalo_subscribers 
-                    (id, zalo_list_id, zalo_user_id, display_name, avatar, status, is_follower, oa_id, joined_at, last_interaction_at)
-                    VALUES (?, ?, ?, ?, ?, 'active', 1, ?, NOW(), NOW())
-                ")->execute([$newZId, $listId, $zaloUserId, $name, $avatar, $oaRealId]);
+                    (id, workspace_id, zalo_list_id, zalo_user_id, display_name, avatar, status, is_follower, oa_id, joined_at, last_interaction_at)
+                    VALUES (?, ?, ?, ?, ?, ?, 'active', 1, ?, NOW(), NOW())
+                ")->execute([$newZId, $workspace_id, $listId, $zaloUserId, $name, $avatar, $oaRealId]);
             }
 
         } catch (Exception $ex) {
@@ -826,8 +826,8 @@ function upsertZaloSubscriber($pdo, $zaloUserId, $profile, $oaConfigId = null)
     }
 
     if (!$mainSubId) {
-        $stmtFallback = $pdo->prepare("SELECT id FROM subscribers WHERE zalo_user_id = ? OR email = ? LIMIT 1");
-        $stmtFallback->execute([$zaloUserId, $email]);
+        $stmtFallback = $pdo->prepare("SELECT id FROM subscribers WHERE workspace_id = ? AND (zalo_user_id = ? OR email = ?) LIMIT 1");
+        $stmtFallback->execute([$workspace_id, $zaloUserId, $email]);
         $mainSubId = $stmtFallback->fetchColumn();
     }
 

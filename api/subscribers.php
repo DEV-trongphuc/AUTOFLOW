@@ -106,7 +106,7 @@ if ($method === 'GET' && $route === 'count_unique') {
                 $criteriaJson = $stmtSeg->fetchColumn();
 
                 if ($criteriaJson) {
-                    $segRes = buildSegmentWhereClause($criteriaJson, $segId);
+                    $segRes = buildSegmentWhereClause($criteriaJson, $workspace_id, $segId);
                     $whereGroups[] = "(" . $segRes['sql'] . ")";
                     $params = array_merge($params, $segRes['params']);
                 }
@@ -223,14 +223,14 @@ if ($method === 'POST' && ($route === 'bulk-add-tag' || $route === 'bulk-add-to-
         $sql = "SELECT sfs.subscriber_id
                 FROM subscriber_flow_states sfs
                 JOIN subscribers s ON sfs.subscriber_id = s.id
-                LEFT JOIN subscriber_activity sa ON sa.subscriber_id = sfs.subscriber_id 
+                LEFT JOIN subscriber_activity sa ON sa.workspace_id = s.workspace_id AND sa.subscriber_id = sfs.subscriber_id 
                     AND sa.flow_id = sfs.flow_id 
                     AND sa.type IN ('open_email', 'click_link', 'click_zns', 'zns_clicked', 'zns_replied', 'reply_email', 'form_submit', 'purchase')
-                WHERE sfs.flow_id = ? AND s.workspace_id = ?
+                WHERE sfs.workspace_id = ? AND sfs.flow_id = ? AND s.workspace_id = ?
                 AND sa.id IS NULL
                 AND sfs.status IN ('waiting', 'processing', 'completed', 'failed')";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$flowId, $workspace_id]);
+        $stmt->execute([$workspace_id, $flowId, $workspace_id]);
         $subscriberIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
@@ -261,11 +261,11 @@ if ($method === 'POST' && ($route === 'bulk-add-tag' || $route === 'bulk-add-to-
             $validIds = $stmtVerify->fetchAll(PDO::FETCH_COLUMN);
 
             if (!empty($validIds)) {
-                $insertPh = implode(',', array_fill(0, count($validIds), '(?, ?)'));
-                $sql = "INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES $insertPh";
+                $insertPh = implode(',', array_fill(0, count($validIds), '(?, ?, ?)'));
+                $sql = "INSERT IGNORE INTO subscriber_tags (workspace_id, subscriber_id, tag_id) VALUES $insertPh";
                 $params = [];
                 foreach ($validIds as $sid) {
-                    array_push($params, $sid, $tagId);
+                    array_push($params, $workspace_id, $sid, $tagId);
                 }
                 $pdo->prepare($sql)->execute($params);
                 $totalProcessed += count($validIds);
@@ -438,16 +438,16 @@ if ($method === 'POST' && $route === 'subscribers_bulk') {
                     foreach ($data['tags'] as $tagName) {
                         $tnL = strtolower(trim($tagName));
                         if (isset($tagMap[$tnL])) {
-                            $tagSubValues[] = "(?, ?)";
-                            array_push($tagSubParams, $id, $tagMap[$tnL]);
+                            $tagSubValues[] = "(?, ?, ?)";
+                            array_push($tagSubParams, $workspace_id, $id, $tagMap[$tnL]);
                         }
                     }
                 }
 
                 if (!empty($data['listIds'])) {
                     foreach ($data['listIds'] as $lid) {
-                        $listValues[] = "(?, ?)";
-                        array_push($listParams, $id, $lid);
+                        $listValues[] = "(?, ?, ?)";
+                        array_push($listParams, $workspace_id, $id, $lid);
                         if (!isset($allAffectedListSubscribers[$lid]))
                             $allAffectedListSubscribers[$lid] = [];
                         $allAffectedListSubscribers[$lid][] = $id;
@@ -470,12 +470,12 @@ anniversary_date = VALUES(anniversary_date)";
             }
 
             if (!empty($tagSubValues)) {
-                $sqlTag = "INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES " . implode(',', $tagSubValues);
+                $sqlTag = "INSERT IGNORE INTO subscriber_tags (workspace_id, subscriber_id, tag_id) VALUES " . implode(',', $tagSubValues);
                 $pdo->prepare($sqlTag)->execute($tagSubParams);
             }
 
             if (!empty($listValues)) {
-                $sqlList = "INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id) VALUES " . implode(',', $listValues);
+                $sqlList = "INSERT IGNORE INTO subscriber_lists (workspace_id, subscriber_id, list_id) VALUES " . implode(',', $listValues);
                 $pdo->prepare($sqlList)->execute($listParams);
             }
         }
@@ -491,7 +491,7 @@ anniversary_date = VALUES(anniversary_date)";
                 $subDataInChunk = array_filter($chunk, fn($c) => in_array($c['id'] ?? '', $subsInList));
                 $phoneInChunk = count(array_filter($subDataInChunk, fn($c) => !empty($c['phoneNumber'])));
 
-                $pdo->prepare("UPDATE lists SET subscriber_count = subscriber_count + ?, phone_count = phone_count + ? WHERE id = ?")->execute([$addedCount, $phoneInChunk, $lid]);
+                $pdo->prepare("UPDATE lists SET subscriber_count = subscriber_count + ?, phone_count = phone_count + ? WHERE workspace_id = ? AND id = ?")->execute([$addedCount, $phoneInChunk, $workspace_id, $lid]);
             }
         }
         $pdo->commit();
@@ -523,23 +523,22 @@ switch ($method) {
                 $subId = $sub['id'];
 
                 // Get Tags
-                $stmtT = $pdo->prepare("SELECT t.name FROM subscriber_tags st JOIN tags t ON st.tag_id = t.id WHERE st.subscriber_id =
-?");
-                $stmtT->execute([$subId]);
+                $stmtT = $pdo->prepare("SELECT t.name FROM subscriber_tags st JOIN tags t ON st.tag_id = t.id WHERE st.workspace_id = ? AND t.workspace_id = ? AND st.subscriber_id = ?");
+                $stmtT->execute([$workspace_id, $workspace_id, $subId]);
                 $tags = $stmtT->fetchAll(PDO::FETCH_COLUMN);
 
                 $sub = formatSubscriber($sub, $tags);
                 $sub['id'] = $subId; // Ensure ID is preserved after formatSubscriber unset
 
                 // Get Lists
-                $stmtLists = $pdo->prepare("SELECT list_id FROM subscriber_lists WHERE subscriber_id = ?");
-                $stmtLists->execute([$subId]);
+                $stmtLists = $pdo->prepare("SELECT list_id FROM subscriber_lists WHERE workspace_id = ? AND subscriber_id = ?");
+                $stmtLists->execute([$workspace_id, $subId]);
                 $sub['listIds'] = $stmtLists->fetchAll(PDO::FETCH_COLUMN);
 
                 // Get Activity History (Increased limit for Heatmap)
                 $stmtActs = $pdo->prepare("SELECT type, reference_name, details, created_at, flow_id, campaign_id FROM
-subscriber_activity WHERE subscriber_id = ? ORDER BY created_at DESC LIMIT 1000");
-                $stmtActs->execute([$subId]);
+subscriber_activity WHERE workspace_id = ? AND subscriber_id = ? ORDER BY created_at DESC LIMIT 1000");
+                $stmtActs->execute([$workspace_id, $subId]);
                 $sub['activity'] = $stmtActs->fetchAll();
 
                 // Get Active Flows
@@ -547,9 +546,9 @@ subscriber_activity WHERE subscriber_id = ? ORDER BY created_at DESC LIMIT 1000"
 SELECT f.id, f.name, f.status as flowStatus, sfs.step_id, sfs.status, sfs.created_at as enteredAt
 FROM subscriber_flow_states sfs
 JOIN flows f ON sfs.flow_id = f.id
-WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
+WHERE sfs.workspace_id = ? AND f.workspace_id = ? AND sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
 ");
-                $stmtFlows->execute([$subId]);
+                $stmtFlows->execute([$workspace_id, $workspace_id, $subId]);
                 $sub['activeFlows'] = $stmtFlows->fetchAll();
 
                 jsonResponse(true, $sub);
@@ -581,19 +580,14 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
             // Search
             if (!empty($search)) {
                 $trimmedSearch = trim($search);
-                $searchTerm = "%" . strtolower($trimmedSearch) . "%";
-                $rawSearchTerm = "%" . $trimmedSearch . "%";
                 
-                // [PERF] Search across all identifying fields including both phone columns
-                $whereClauses[] = "(LOWER(s.email) LIKE ? OR s.email LIKE ? OR s.phone_number LIKE ? OR s.phone LIKE ? OR LOWER(s.first_name) LIKE ? OR LOWER(s.last_name) LIKE ? OR LOWER(s.company_name) LIKE ?)";
+                // [PERF FIX] At 1B+ scale, LIKE '%term%' causes a Full Table Scan which hangs the DB.
+                // We utilize the ft_subscriber_search index (email, first_name, last_name, phone_number, company_name).
+                // Use Boolean Mode with trailing wildcards to allow partial matches (e.g. "thanh" matches "thanh@gmail.com")
+                $ftSearch = "+" . preg_replace('/[^\p{L}\p{N}_]+/u', ' +', $trimmedSearch) . "*";
                 
-                $params[] = $searchTerm;    // LOWER(s.email)
-                $params[] = $rawSearchTerm; // s.email (raw)
-                $params[] = $rawSearchTerm; // s.phone_number
-                $params[] = $rawSearchTerm; // s.phone
-                $params[] = $searchTerm;    // LOWER(s.first_name)
-                $params[] = $searchTerm;    // LOWER(s.last_name)
-                $params[] = $searchTerm;    // LOWER(s.company_name)
+                $whereClauses[] = "MATCH(s.email, s.first_name, s.last_name, s.phone_number, s.company_name) AGAINST(? IN BOOLEAN MODE)";
+                $params[] = $ftSearch;
             }
 
             // Status Filter
@@ -739,7 +733,7 @@ WHERE sfs.subscriber_id = ? AND sfs.status IN ('waiting', 'processing')
                     $criteriaJson = $stmtSeg->fetchColumn();
 
                     if ($criteriaJson) {
-                        $segRes = buildSegmentWhereClause($criteriaJson, $segmentId);
+                        $segRes = buildSegmentWhereClause($criteriaJson, $workspace_id, $segmentId);
                         // $segRes['sql'] uses 's.column' which matches our alias
                         $whereClauses[] = $segRes['sql'];
                         $params = array_merge($params, $segRes['params']);

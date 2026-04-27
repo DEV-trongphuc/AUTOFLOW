@@ -157,8 +157,8 @@ try {
 
                 if ($trigger && isset($trigger['nextStepId'])) {
                     // [SECURITY FIX] Added workspace_id check to prevent wiping other tenant states if ID collision occurs
-                    $pdo->prepare("DELETE FROM subscriber_flow_states WHERE subscriber_id = ? AND flow_id = ? AND status IN ('waiting', 'processing')")
-                        ->execute([$prioritySid, $manualFlow['id']]);
+                    $pdo->prepare("DELETE FROM subscriber_flow_states WHERE subscriber_id = ? AND flow_id = ? AND workspace_id = ? AND status IN ('waiting', 'processing')")
+                        ->execute([$prioritySid, $manualFlow['id'], $priorityWorkspaceId]);
 
                     // [OPT] Explicit column select — avoid SELECT * on heavy subscribers table
                     // Columns needed: all fields used by FlowExecutor + flow_helpers for merge tags,
@@ -314,8 +314,8 @@ try {
                     $frequency = $fConfig['frequency'] ?? 'one-time';
                     $cooldownHours = (int) ($fConfig['enrollmentCooldownHours'] ?? 12);
 
-                    $stmtCheck = $pdo->prepare("SELECT id, status, updated_at FROM subscriber_flow_states WHERE subscriber_id = ? AND flow_id = ? ORDER BY created_at DESC LIMIT 1");
-                    $stmtCheck->execute([$prioritySid, $flow['id']]);
+                    $stmtCheck = $pdo->prepare("SELECT id, status, updated_at FROM subscriber_flow_states WHERE subscriber_id = ? AND flow_id = ? AND workspace_id = ? ORDER BY created_at DESC LIMIT 1");
+                    $stmtCheck->execute([$prioritySid, $flow['id'], $priorityWorkspaceId]);
                     $existingState = $stmtCheck->fetch();
 
                     // [FIX BUG-H5] Initialize defaults BEFORE the if-block to prevent
@@ -450,16 +450,16 @@ try {
                             // [FIX] Plain INSERT here caused duplicate emails when two requests arrived
                             // within the same PHP-FPM request window for the same subscriber+flow.
                             traceLog("[Priority] allowMultiple=true, using debounce INSERT");
-                            $sqlIns = "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, step_type, scheduled_at, status, created_at, updated_at, last_step_at)
-                                       SELECT ?, ?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
+                            $sqlIns = "INSERT INTO subscriber_flow_states (workspace_id, subscriber_id, flow_id, step_id, step_type, scheduled_at, status, created_at, updated_at, last_step_at)
+                                       SELECT ?, ?, ?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
                                        FROM DUAL
                                        WHERE NOT EXISTS (
                                            SELECT 1 FROM subscriber_flow_states
-                                           WHERE subscriber_id = ? AND flow_id = ?
+                                           WHERE subscriber_id = ? AND flow_id = ? AND workspace_id = ?
                                            AND created_at >= DATE_SUB(NOW(), INTERVAL 3 SECOND)
                                        )";
                             $stmtE = $pdo->prepare($sqlIns);
-                            $stmtE->execute([$prioritySid, $flow['id'], $nextStepId, $nextStepType, $initialSchedule, $prioritySid, $flow['id']]);
+                            $stmtE->execute([$priorityWorkspaceId, $prioritySid, $flow['id'], $nextStepId, $nextStepType, $initialSchedule, $prioritySid, $flow['id'], $priorityWorkspaceId]);
                         } else {
                             // allowMultiple = false: Apply frequency and cooldown rules
                             if ($frequency === 'one-time') {
@@ -472,16 +472,16 @@ try {
                             $blockCondition = "status IN ('waiting', 'processing') OR updated_at > DATE_SUB(NOW(), INTERVAL $safeChHours HOUR)";
                             }
     
-                            $sqlIns = "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, step_id, step_type, scheduled_at, status, created_at, updated_at, last_step_at)
-                                       SELECT ?, ?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
+                            $sqlIns = "INSERT INTO subscriber_flow_states (workspace_id, subscriber_id, flow_id, step_id, step_type, scheduled_at, status, created_at, updated_at, last_step_at)
+                                       SELECT ?, ?, ?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
                                        FROM DUAL
                                        WHERE NOT EXISTS (
                                            SELECT 1 FROM subscriber_flow_states 
-                                           WHERE subscriber_id = ? AND flow_id = ? 
+                                           WHERE subscriber_id = ? AND flow_id = ? AND workspace_id = ?
                                            AND ($blockCondition)
                                        )";
                             $stmtE = $pdo->prepare($sqlIns);
-                            $stmtE->execute([$prioritySid, $flow['id'], $nextStepId, $nextStepType, $initialSchedule, $prioritySid, $flow['id']]);
+                            $stmtE->execute([$priorityWorkspaceId, $prioritySid, $flow['id'], $nextStepId, $nextStepType, $initialSchedule, $prioritySid, $flow['id'], $priorityWorkspaceId]);
                         }
 
                     if ($stmtE->rowCount() === 0) {
@@ -492,8 +492,8 @@ try {
                     $newQueueId = $pdo->lastInsertId();
 
                     $detailMessage = "Priority Trigger: {$priorityTriggerType} ({$priorityTargetId})";
-                    logActivity($pdo, $prioritySid, 'enter_flow', $flow['id'], $flow['name'], $detailMessage, $flow['id']);
-                    $pdo->prepare("UPDATE flows SET stat_enrolled = stat_enrolled + 1 WHERE id = ?")->execute([$flow['id']]);
+                    logActivity($pdo, $prioritySid, 'enter_flow', $flow['id'], $flow['name'], $detailMessage, $flow['id'], null, [], $priorityWorkspaceId);
+                    $pdo->prepare("UPDATE flows SET stat_enrolled = stat_enrolled + 1 WHERE id = ? AND workspace_id = ?")->execute([$flow['id'], $priorityWorkspaceId]);
 
                     if (!$item) {
                         $item = array_merge($subDetails, [
@@ -554,7 +554,7 @@ try {
                                  FROM subscriber_flow_states q 
                                  JOIN flows f ON q.flow_id = f.id 
                                  JOIN subscribers s ON q.subscriber_id = s.id 
-                                 WHERE q.id = ? AND q.subscriber_id = ? AND q.flow_id = ? AND s.workspace_id = ? AND q.status IN ('waiting', 'processing') AND f.status = 'active'
+                                 WHERE q.id = ? AND q.subscriber_id = ? AND q.flow_id = ? AND s.workspace_id = ? AND q.workspace_id = s.workspace_id AND q.status IN ('waiting', 'processing') AND f.status = 'active'
                                  LIMIT 1 FOR UPDATE $skipLockedClause");
         // [FIX] Added SKIP LOCKED to prevent duplicate chain execution when two concurrent priority
         // workers are fired for the same queue_id (e.g. double-click webhook, network retry).
@@ -577,7 +577,7 @@ try {
                 exit;
             }
 
-            $pdo->prepare("UPDATE subscriber_flow_states SET status = 'processing', updated_at = NOW() WHERE id = ?")->execute([$priorityQueueId]);
+            $pdo->prepare("UPDATE subscriber_flow_states SET status = 'processing', updated_at = NOW() WHERE id = ? AND workspace_id = ?")->execute([$priorityQueueId, $priorityWorkspaceId]);
             $item = $priorityItem;
             // [FIX] The JOIN query aliases s.email as 'sub_email'. FlowExecutor and
             // replaceMergeTags both need the 'email' key — map it here to prevent
@@ -601,7 +601,8 @@ try {
                                    FROM subscriber_flow_states q
                                    JOIN flows f ON q.flow_id = f.id
                                    JOIN subscribers s ON q.subscriber_id = s.id
-                                   WHERE q.status = 'waiting' AND q.scheduled_at <= NOW() AND f.status = 'active'";
+                                   WHERE q.status = 'waiting' AND q.scheduled_at <= NOW() AND f.status = 'active'
+                                   AND q.workspace_id = s.workspace_id";
         
         $paramsBatch = [];
         if ($priorityWorkspaceId) {
@@ -703,7 +704,7 @@ try {
     // [ELIGIBILITY CHECK]
     if (trim($item['sub_status']) === 'unsubscribed') {
         // Use 'unsubscribed' status — DB ENUM includes: waiting, processing, completed, failed, unsubscribed
-        $pdo->prepare("UPDATE subscriber_flow_states SET status = 'unsubscribed', updated_at = NOW() WHERE id = ?")->execute([$queueId]);
+        $pdo->prepare("UPDATE subscriber_flow_states SET status = 'unsubscribed', updated_at = NOW() WHERE id = ? AND workspace_id = ?")->execute([$queueId, $priorityWorkspaceId]);
         $logs[] = "[Priority-Exit] Sub {$subscriberId} is unsubscribed. Marking unsubscribed and skipping chain.";
         $pdo->commit();
         exit;
@@ -713,11 +714,11 @@ try {
     $todayStart = date('Y-m-d 00:00:00');
     $stmtCap = $pdo->prepare("
         SELECT COUNT(*) FROM subscriber_activity 
-        WHERE subscriber_id = ? 
+        WHERE subscriber_id = ? AND workspace_id = ?
         AND type IN ('receive_email', 'zalo_sent', 'meta_sent', 'zns_sent') 
         AND created_at >= ?
     ");
-    $stmtCap->execute([$subscriberId, $todayStart]);
+    $stmtCap->execute([$subscriberId, $priorityWorkspaceId, $todayStart]);
     $totalSentToday = (int) $stmtCap->fetchColumn();
 
     // [BUG-FIX] Decode fConfig from item FIRST so exitConditions below read the CORRECT flow's config.
@@ -746,18 +747,18 @@ try {
         $stmtExitActEarly = $pdo->prepare(
             "SELECT type, reference_id, campaign_id, details, created_at
              FROM subscriber_activity
-             WHERE subscriber_id = ? AND created_at >= ? AND type IN ($exitPlaceholdersEarly)
+             WHERE subscriber_id = ? AND workspace_id = ? AND created_at >= ? AND type IN ($exitPlaceholdersEarly)
              ORDER BY created_at DESC"
         );
-        $stmtExitActEarly->execute(array_merge([$subscriberId, $item['queue_created_at']], $exitActivityTypesEarly));
+        $stmtExitActEarly->execute(array_merge([$subscriberId, $priorityWorkspaceId, $item['queue_created_at']], $exitActivityTypesEarly));
         $exitActivityCacheEarly = $stmtExitActEarly->fetchAll();
     } else {
         $exitActivityCacheEarly = [];
     }
 
     // General activity cache — LIMIT 500 for condition-chain logic
-    $stmtAct = $pdo->prepare("SELECT type, reference_id, campaign_id, details, created_at FROM subscriber_activity WHERE subscriber_id = ? AND created_at >= ? ORDER BY created_at DESC LIMIT 500");
-    $stmtAct->execute([$subscriberId, $item['queue_created_at']]);
+    $stmtAct = $pdo->prepare("SELECT type, reference_id, campaign_id, details, created_at FROM subscriber_activity WHERE subscriber_id = ? AND workspace_id = ? AND created_at >= ? ORDER BY created_at DESC LIMIT 500");
+    $stmtAct->execute([$subscriberId, $priorityWorkspaceId, $item['queue_created_at']]);
     $activityCache = $stmtAct->fetchAll();
 
     $pdo->commit(); // Commit enrollment changes / status update before starting chain

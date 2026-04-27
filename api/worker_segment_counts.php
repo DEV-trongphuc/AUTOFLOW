@@ -21,38 +21,38 @@ try {
     while ((time() - $startTime) < $maxRuntime) {
         // Fetch batch of segments to update
         $stmt = $pdo->prepare("
-            SELECT segment_id 
+            SELECT segment_id, workspace_id
             FROM segment_count_update_queue 
             ORDER BY queued_at ASC 
             LIMIT ?
         ");
         $stmt->execute([$batchSize]);
-        $queue = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        $queueRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if (empty($queue)) {
+        if (empty($queueRows)) {
             $logs[] = "[IDLE] No segments in queue, exiting.";
             break;
         }
 
-        $logs[] = "[BATCH] Processing " . count($queue) . " segments";
+        $logs[] = "[BATCH] Processing " . count($queueRows) . " segments";
 
-        foreach ($queue as $segmentId) {
+        foreach ($queueRows as $row) {
+            $segmentId = $row['segment_id'];
+            $workspace_id = $row['workspace_id'];
             try {
                 // Get segment criteria
-                $stmtSeg = $pdo->prepare("SELECT criteria, workspace_id FROM segments WHERE id = ?");
-                $stmtSeg->execute([$segmentId]);
-                $segRow = $stmtSeg->fetch(PDO::FETCH_ASSOC);
-                $criteria = $segRow['criteria'] ?? null;
-                $workspace_id = $segRow['workspace_id'] ?? null;
+                $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
+                $stmtSeg->execute([$segmentId, $workspace_id]);
+                $criteria = $stmtSeg->fetchColumn();
 
-                if (!$criteria || !$workspace_id) {
-                    $logs[] = "[SKIP] Segment $segmentId not found or missing workspace_id, removing from queue";
-                    $pdo->prepare("DELETE FROM segment_count_update_queue WHERE segment_id = ?")->execute([$segmentId]);
+                if (!$criteria) {
+                    $logs[] = "[SKIP] Segment $segmentId not found, removing from queue";
+                    $pdo->prepare("DELETE FROM segment_count_update_queue WHERE workspace_id = ? AND segment_id = ?")->execute([$workspace_id, $segmentId]);
                     continue;
                 }
 
                 // Calculate count
-                $res = buildSegmentWhereClause($criteria, $segmentId);
+                $res = buildSegmentWhereClause($criteria, $workspace_id, $segmentId);
                 $stmtCount = $pdo->prepare("
                     SELECT COUNT(*) 
                     FROM subscribers s 
@@ -65,7 +65,7 @@ try {
                 $pdo->prepare("UPDATE segments SET subscriber_count = ? WHERE id = ? AND workspace_id = ?")->execute([$count, $segmentId, $workspace_id]);
 
                 // Remove from queue
-                $pdo->prepare("DELETE FROM segment_count_update_queue WHERE segment_id = ?")->execute([$segmentId]);
+                $pdo->prepare("DELETE FROM segment_count_update_queue WHERE workspace_id = ? AND segment_id = ?")->execute([$workspace_id, $segmentId]);
 
                 $logs[] = "[UPDATE] Segment $segmentId: $count subscribers";
 

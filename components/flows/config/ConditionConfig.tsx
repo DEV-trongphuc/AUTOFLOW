@@ -182,14 +182,14 @@ const ConditionConfig: React.FC<ConditionConfigProps> = ({ config, onChange, flo
         let newTargets: string[] = [];
 
         if (selectedLinks.length === 0) {
-            // If currently "Any" (empty), and user clicks a specific link, it means they want to UNCHECK it
-            // So new targets = everything EXCEPT this one
-            newTargets = availableLinks.filter(l => l.url !== url).map(l => l.url);
+            // If currently "Any" (empty), and user clicks a specific link, 
+            // switch to specific mode with ONLY that link selected.
+            newTargets = [url];
         } else if (selectedLinks.includes(url)) {
             newTargets = selectedLinks.filter(l => l !== url);
         } else {
             newTargets = [...selectedLinks, url];
-            // If all are selected, revert to "Any" (empty array)
+            // If all are selected, revert to "Any" (empty array) for cleaner state
             if (newTargets.length === availableLinks.length) {
                 newTargets = [];
             }

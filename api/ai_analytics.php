@@ -159,6 +159,9 @@ try {
                 throw new Exception('Missing required fields');
             }
 
+            // [SECURITY FIX] Enforce authorization for the requested group
+            requireCategoryAccess(resolvePropertyId($pdo, $groupId), $currentOrgUser);
+
             $stmt = $pdo->prepare("
                 INSERT INTO ai_usage_analytics 
                 (group_id, ai_id, user_email, conversation_id, message_count, tokens_used) 

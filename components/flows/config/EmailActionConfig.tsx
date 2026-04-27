@@ -54,8 +54,14 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [isLibraryOpen, setIsLibraryOpen] = useState(false);
-    // Flag khi template được cấu hình trong step đã bị xóa khỏi hệ thống
+    // [FIX] Template deleted flag
     const [templateDeleted, setTemplateDeleted] = useState(false);
+
+    // Simple UUID fallback
+    const generateId = () => {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+        return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    };
 
     // 'template' or 'html'
     const sourceMode = config.sourceMode || (config.templateId ? 'template' : (config.customHtml ? 'html' : 'template'));
@@ -179,7 +185,7 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
 
                 if (result.success && result.data) {
                     newAttachments.push({
-                        id: crypto.randomUUID(),
+                        id: generateId(),
                         name: result.data.name,
                         url: result.data.url,
                         size: result.data.size,
@@ -644,7 +650,7 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
                 onClose={() => setIsLibraryOpen(false)}
                 onSelect={(picked) => {
                     const newAtts = picked.map(f => ({
-                        id: crypto.randomUUID(),
+                        id: generateId(),
                         name: f.name,
                         url: f.url,
                         path: f.path,

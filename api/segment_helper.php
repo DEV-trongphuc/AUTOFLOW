@@ -13,11 +13,12 @@ try {
     if (isset($pdo)) {
         $pdo->exec("CREATE TABLE IF NOT EXISTS segment_exclusions (
             id INT AUTO_INCREMENT PRIMARY KEY,
+            workspace_id INT DEFAULT 1,
             segment_id VARCHAR(50) NOT NULL,
             subscriber_id CHAR(36) NOT NULL,
             excluded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE KEY unique_exclusion (segment_id, subscriber_id),
-            INDEX idx_seg_exclusions_seg (segment_id)
+            UNIQUE KEY unique_exclusion (workspace_id, segment_id, subscriber_id),
+            INDEX idx_seg_exclusions_seg (workspace_id, segment_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
 } catch (Throwable $e) {
@@ -27,7 +28,7 @@ try {
     }
 }
 
-function buildSegmentWhereClause($criteriaJson, $segmentId = null)
+function buildSegmentWhereClause($criteriaJson, $workspaceId, $segmentId = null)
 {
     global $pdo;
     try {
@@ -68,10 +69,14 @@ function buildSegmentWhereClause($criteriaJson, $segmentId = null)
                 } else if ($field === 'tags') {
                     // 10M UPGRADE: Using relational table JOIN instead of JSON_CONTAINS
                     if ($op === 'contains') {
-                        $condSqls[] = "s.id IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE t_sub.name = ?)";
+                        $condSqls[] = "s.id IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE st.workspace_id = ? AND t_sub.workspace_id = ? AND t_sub.name = ?)";
+                        $allParams[] = $workspaceId;
+                        $allParams[] = $workspaceId;
                         $allParams[] = $val;
                     } else if ($op === 'not_contains') {
-                        $condSqls[] = "s.id NOT IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE t_sub.name = ?)";
+                        $condSqls[] = "s.id NOT IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE st.workspace_id = ? AND t_sub.workspace_id = ? AND t_sub.name = ?)";
+                        $allParams[] = $workspaceId;
+                        $allParams[] = $workspaceId;
                         $allParams[] = $val;
                     }
                     continue;
@@ -88,7 +93,8 @@ function buildSegmentWhereClause($criteriaJson, $segmentId = null)
                     }
                     continue;
                 } else if ($field === 'web_activity') {
-                    $condSqls[] = "s.id IN (SELECT sa.subscriber_id FROM subscriber_activity sa WHERE sa.type LIKE 'web_%' AND (sa.details LIKE ? OR sa.reference_name LIKE ?))";
+                    $condSqls[] = "s.id IN (SELECT sa.subscriber_id FROM subscriber_activity sa WHERE sa.workspace_id = ? AND sa.type LIKE 'web_%' AND (sa.details LIKE ? OR sa.reference_name LIKE ?))";
+                    $allParams[] = $workspaceId;
                     $allParams[] = '%' . $val . '%';
                     $allParams[] = '%' . $val . '%';
                     continue;
@@ -210,7 +216,8 @@ function buildSegmentWhereClause($criteriaJson, $segmentId = null)
 
         // Append exclusion logic if segmentId is provided - USE PREPARED STATEMENT
         if ($segmentId) {
-            $sql .= " AND s.id NOT IN (SELECT subscriber_id FROM segment_exclusions WHERE segment_id = ?)";
+            $sql .= " AND s.id NOT IN (SELECT subscriber_id FROM segment_exclusions WHERE workspace_id = ? AND segment_id = ?)";
+            $allParams[] = $workspaceId;
             $allParams[] = $segmentId;
         }
 

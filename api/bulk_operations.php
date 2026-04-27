@@ -42,11 +42,11 @@ try {
         $whereClause = "id IN ($placeholders)";
         $params = $subscriberIds;
     } elseif ($targetType === 'list') {
-        $whereClause = "id IN (SELECT subscriber_id FROM subscriber_lists WHERE list_id = ?)";
-        $params = [$targetId];
+        $whereClause = "id IN (SELECT subscriber_id FROM subscriber_lists WHERE workspace_id = ? AND list_id = ?)";
+        $params = [$workspace_id, $targetId];
     } elseif ($targetType === 'tag') {
-        $whereClause = "id IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE t_sub.name = ?)";
-        $params = [$targetId];
+        $whereClause = "id IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE st.workspace_id = ? AND t_sub.workspace_id = ? AND t_sub.name = ?)";
+        $params = [$workspace_id, $workspace_id, $targetId];
     } elseif ($targetType === 'all') {
         $conds = ["workspace_id = ?"];
         $params = [$workspace_id]; // [FIX P34-B1] workspace_id was missing — 'all' ops could affect any workspace's subscribers
@@ -82,8 +82,8 @@ try {
         if ($tag !== 'all' && $tag !== '') {
             $tagArray = explode(',', $tag);
             $placeholders = implode(',', array_fill(0, count($tagArray), '?'));
-            $conds[] = "id IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE t_sub.name IN ($placeholders))";
-            $params = array_merge($params, $tagArray);
+            $conds[] = "id IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE st.workspace_id = ? AND t_sub.workspace_id = ? AND t_sub.name IN ($placeholders))";
+            $params = array_merge($params, [$workspace_id, $workspace_id], $tagArray);
         }
         
         $customAttrKey = $data['custom_attr_key'] ?? '';
@@ -118,7 +118,7 @@ try {
                 $stmtCriteria->execute([$segId, $workspace_id]);
                 $criteria = $stmtCriteria->fetchColumn();
                 if ($criteria) {
-                    $res = buildSegmentWhereClause($criteria, $segId);
+                    $res = buildSegmentWhereClause($criteria, $workspace_id, $segId);
                     $whereParts[] = $res['sql'];
                     $whereParams = array_merge($whereParams, $res['params']);
                 }
@@ -134,7 +134,8 @@ try {
                 $whereParams[] = (int) $filter['max_lead_score'];
             }
             if (isset($filter['list_id']) && $filter['list_id'] !== 'all' && !empty($filter['list_id'])) {
-                $whereParts[] = "EXISTS (SELECT 1 FROM subscriber_lists sl WHERE sl.subscriber_id = s.id AND sl.list_id = ?)";
+                $whereParts[] = "EXISTS (SELECT 1 FROM subscriber_lists sl WHERE sl.workspace_id = ? AND sl.subscriber_id = s.id AND sl.list_id = ?)";
+                $whereParams[] = $workspace_id;
                 $whereParams[] = $filter['list_id'];
             }
 
@@ -179,27 +180,27 @@ try {
                 $ph = implode(',', array_fill(0, count($chunk), '?'));
 
                 // 1. Decr list counts first
-                $stmtL = $pdo->prepare("SELECT list_id, COUNT(*) as cnt FROM subscriber_lists WHERE subscriber_id IN ($ph) GROUP BY list_id");
-                $stmtL->execute($chunk);
+                $stmtL = $pdo->prepare("SELECT list_id, COUNT(*) as cnt FROM subscriber_lists WHERE workspace_id = ? AND subscriber_id IN ($ph) GROUP BY list_id");
+                $stmtL->execute(array_merge([$workspace_id], $chunk));
                 foreach ($stmtL->fetchAll() as $row) {
-                    $pdo->prepare("UPDATE lists SET subscriber_count = GREATEST(0, subscriber_count - ?) WHERE id = ?")
-                        ->execute([$row['cnt'], $row['list_id']]);
+                    $pdo->prepare("UPDATE lists SET subscriber_count = GREATEST(0, subscriber_count - ?) WHERE workspace_id = ? AND id = ?")
+                        ->execute([$row['cnt'], $workspace_id, $row['list_id']]);
                 }
 
                 // 2. Clear relations & ghost data
-                $pdo->prepare("DELETE FROM subscriber_activity WHERE subscriber_id IN ($ph)")->execute($chunk);
-                $pdo->prepare("DELETE FROM subscriber_flow_states WHERE subscriber_id IN ($ph)")->execute($chunk);
-                $pdo->prepare("DELETE FROM subscriber_lists WHERE subscriber_id IN ($ph)")->execute($chunk);
-                $pdo->prepare("DELETE FROM subscriber_tags WHERE subscriber_id IN ($ph)")->execute($chunk);
-                $pdo->prepare("DELETE FROM mail_delivery_logs WHERE subscriber_id IN ($ph)")->execute($chunk);
-                $pdo->prepare("DELETE FROM activity_buffer WHERE subscriber_id IN ($ph)")->execute($chunk);
-                $pdo->prepare("DELETE FROM zalo_delivery_logs WHERE subscriber_id IN ($ph)")->execute($chunk);
-                $pdo->prepare("UPDATE zalo_subscribers SET subscriber_id = NULL WHERE subscriber_id IN ($ph)")->execute($chunk);
-                $pdo->prepare("UPDATE voucher_codes SET subscriber_id = NULL, status = 'unused', sent_at = NULL WHERE subscriber_id IN ($ph) AND status = 'available'")->execute($chunk);
+                $pdo->prepare("DELETE FROM subscriber_activity WHERE workspace_id = ? AND subscriber_id IN ($ph)")->execute(array_merge([$workspace_id], $chunk));
+                $pdo->prepare("DELETE FROM subscriber_flow_states WHERE workspace_id = ? AND subscriber_id IN ($ph)")->execute(array_merge([$workspace_id], $chunk));
+                $pdo->prepare("DELETE FROM subscriber_lists WHERE workspace_id = ? AND subscriber_id IN ($ph)")->execute(array_merge([$workspace_id], $chunk));
+                $pdo->prepare("DELETE FROM subscriber_tags WHERE workspace_id = ? AND subscriber_id IN ($ph)")->execute(array_merge([$workspace_id], $chunk));
+                $pdo->prepare("DELETE FROM mail_delivery_logs WHERE workspace_id = ? AND subscriber_id IN ($ph)")->execute(array_merge([$workspace_id], $chunk));
+                $pdo->prepare("DELETE FROM activity_buffer WHERE workspace_id = ? AND subscriber_id IN ($ph)")->execute(array_merge([$workspace_id], $chunk));
+                $pdo->prepare("DELETE FROM zalo_delivery_logs WHERE workspace_id = ? AND subscriber_id IN ($ph)")->execute(array_merge([$workspace_id], $chunk));
+                $pdo->prepare("UPDATE zalo_subscribers SET subscriber_id = NULL WHERE workspace_id = ? AND subscriber_id IN ($ph)")->execute(array_merge([$workspace_id], $chunk));
+                $pdo->prepare("UPDATE voucher_codes SET subscriber_id = NULL, status = 'unused', sent_at = NULL WHERE workspace_id = ? AND subscriber_id IN ($ph) AND status = 'available'")->execute(array_merge([$workspace_id], $chunk));
 
                 // 3. Delete subs
-                $stmtDel = $pdo->prepare("DELETE FROM subscribers WHERE id IN ($ph)");
-                $stmtDel->execute($chunk);
+                $stmtDel = $pdo->prepare("DELETE FROM subscribers WHERE workspace_id = ? AND id IN ($ph)");
+                $stmtDel->execute(array_merge([$workspace_id], $chunk));
                 $affectedCount += $stmtDel->rowCount();
 
                 // Commit each chunk to release row locks early — prevents "Waiting for lock"
@@ -234,13 +235,14 @@ try {
             $CHUNK = 500;
             $affectedCount = 0;
             foreach (array_chunk($subscriberIds, $CHUNK) as $chunk) {
-                $bPlace = implode(',', array_fill(0, count($chunk), '(?, ?)'));
+                $bPlace = implode(',', array_fill(0, count($chunk), '(?, ?, ?)'));
                 $vals = [];
                 foreach ($chunk as $sid) {
+                    $vals[] = $workspace_id;
                     $vals[] = $sid;
                     $vals[] = $tagId;
                 }
-                $stmtRel = $pdo->prepare("INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES $bPlace");
+                $stmtRel = $pdo->prepare("INSERT IGNORE INTO subscriber_tags (workspace_id, subscriber_id, tag_id) VALUES $bPlace");
                 $stmtRel->execute($vals);
                 $affectedCount += $stmtRel->rowCount();
             }
@@ -269,8 +271,8 @@ try {
                 $CHUNK = 500;
                 foreach (array_chunk($subscriberIds, $CHUNK) as $chunk) {
                     $ph = implode(',', array_fill(0, count($chunk), '?'));
-                    $pdo->prepare("DELETE FROM subscriber_tags WHERE tag_id = ? AND subscriber_id IN ($ph)")
-                        ->execute(array_merge([$tagId], $chunk));
+                    $pdo->prepare("DELETE FROM subscriber_tags WHERE workspace_id = ? AND tag_id = ? AND subscriber_id IN ($ph)")
+                        ->execute(array_merge([$workspace_id, $tagId], $chunk));
                 }
                 // affectedCount = number of subscribers that had this tag
                 $affectedCount = count($subscriberIds);
@@ -287,13 +289,14 @@ try {
             $CHUNK = 500;
             $affectedCount = 0;
             foreach (array_chunk($subscriberIds, $CHUNK) as $chunk) {
-                $bPh = implode(',', array_fill(0, count($chunk), '(?, ?)'));
+                $bPh = implode(',', array_fill(0, count($chunk), '(?, ?, ?)'));
                 $vals = [];
                 foreach ($chunk as $sid) {
+                    $vals[] = $workspace_id;
                     $vals[] = $sid;
                     $vals[] = $listId;
                 }
-                $stmtIns = $pdo->prepare("INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id) VALUES $bPh");
+                $stmtIns = $pdo->prepare("INSERT IGNORE INTO subscriber_lists (workspace_id, subscriber_id, list_id) VALUES $bPh");
                 $stmtIns->execute($vals);
                 $affectedCount += $stmtIns->rowCount();
             }
@@ -302,8 +305,8 @@ try {
             enrollSubscribersBulk($pdo, $subscriberIds, 'list', $listId, $workspace_id);
 
             // Update list count once (recalculate for accuracy)
-            $pdo->prepare("UPDATE lists SET subscriber_count = (SELECT COUNT(*) FROM subscriber_lists WHERE list_id = ?) WHERE id = ?")
-                ->execute([$listId, $listId]);
+            $pdo->prepare("UPDATE lists SET subscriber_count = (SELECT COUNT(*) FROM subscriber_lists WHERE workspace_id = ? AND list_id = ?) WHERE workspace_id = ? AND id = ?")
+                ->execute([$workspace_id, $listId, $workspace_id, $listId]);
             break;
 
         case 'list_remove':
@@ -317,14 +320,14 @@ try {
             $affectedCount = 0;
             foreach (array_chunk($subscriberIds, $CHUNK) as $chunk) {
                 $ph = implode(',', array_fill(0, count($chunk), '?'));
-                $stmt = $pdo->prepare("DELETE FROM subscriber_lists WHERE list_id = ? AND subscriber_id IN ($ph)");
-                $stmt->execute(array_merge([$listId], $chunk));
+                $stmt = $pdo->prepare("DELETE FROM subscriber_lists WHERE workspace_id = ? AND list_id = ? AND subscriber_id IN ($ph)");
+                $stmt->execute(array_merge([$workspace_id, $listId], $chunk));
                 $affectedCount += $stmt->rowCount();
             }
 
             // Update list count once after all chunks
-            $pdo->prepare("UPDATE lists SET subscriber_count = (SELECT COUNT(*) FROM subscriber_lists WHERE list_id = ?) WHERE id = ?")
-                ->execute([$listId, $listId]);
+            $pdo->prepare("UPDATE lists SET subscriber_count = (SELECT COUNT(*) FROM subscriber_lists WHERE workspace_id = ? AND list_id = ?) WHERE workspace_id = ? AND id = ?")
+                ->execute([$workspace_id, $listId, $workspace_id, $listId]);
             break;
 
         case 'enroll_flow':
@@ -334,8 +337,8 @@ try {
                 jsonResponse(false, null, 'Flow ID required');
 
             // Fetch Trigger Step ID to start from
-            $stmtFlow = $pdo->prepare("SELECT steps FROM flows WHERE id = ?");
-            $stmtFlow->execute([$flowId]);
+            $stmtFlow = $pdo->prepare("SELECT steps FROM flows WHERE id = ? AND workspace_id = ?");
+            $stmtFlow->execute([$flowId, $workspace_id]);
             $steps = json_decode($stmtFlow->fetchColumn(), true);
             $startStepId = null;
             if ($steps) {
@@ -400,17 +403,18 @@ try {
             foreach (array_chunk($subscriberIds, $ENROLL_CHUNK) as $chunk) {
                 $ph = implode(',', array_fill(0, count($chunk), '?'));
                 $sql = "INSERT INTO subscriber_flow_states 
-                        (flow_id, subscriber_id, step_id, status, created_at, updated_at, scheduled_at, last_step_at)
-                        SELECT ?, s.id, ?, 'waiting', NOW(), NOW(), ?, NOW()
+                        (workspace_id, flow_id, subscriber_id, step_id, status, created_at, updated_at, scheduled_at, last_step_at)
+                        SELECT ?, ?, s.id, ?, 'waiting', NOW(), NOW(), ?, NOW()
                         FROM subscribers s
                         WHERE s.id IN ($ph)
+                        AND s.workspace_id = ?
                         AND s.status IN ('active', 'lead', 'customer')
                         AND NOT EXISTS (
                             SELECT 1 FROM subscriber_flow_states sfs
-                            WHERE sfs.flow_id = ? AND sfs.subscriber_id = s.id 
+                            WHERE sfs.workspace_id = ? AND sfs.flow_id = ? AND sfs.subscriber_id = s.id 
                             AND sfs.status IN ('waiting', 'processing')
                         )";
-                $finalParams = array_merge([$flowId, $startStepId, $initialSchedule], $chunk, [$flowId]);
+                $finalParams = array_merge([$workspace_id, $flowId, $startStepId, $initialSchedule], $chunk, [$workspace_id, $workspace_id, $flowId]);
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($finalParams);
                 $affectedCount += $stmt->rowCount();
@@ -418,7 +422,7 @@ try {
 
             // Update Stats
             if ($affectedCount > 0) {
-                $pdo->prepare("UPDATE flows SET stat_enrolled = stat_enrolled + ? WHERE id = ?")->execute([$affectedCount, $flowId]);
+                $pdo->prepare("UPDATE flows SET stat_enrolled = stat_enrolled + ? WHERE workspace_id = ? AND id = ?")->execute([$affectedCount, $workspace_id, $flowId]);
             }
             break;
 
@@ -530,16 +534,17 @@ try {
                         foreach ($d['tags'] as $tagName) {
                             $tnL = strtolower(trim($tagName));
                             if (isset($tagMap[$tnL])) {
-                                $tagSubValues[] = "(?, ?)";
-                                array_push($tagSubParams, $id, $tagMap[$tnL]);
+                                $tagSubValues[] = "(?, ?, ?)";
+                                array_push($tagSubParams, $workspace_id, $id, $tagMap[$tnL]);
                             } else {
                                 // Create new tag on fly (Optional, but good for import)
                                 try {
-                                    $pdo->prepare("INSERT INTO tags (name) VALUES (?)")->execute([trim($tagName)]);
-                                    $newId = $pdo->lastInsertId();
-                                    $tagMap[$tnL] = $newId;
-                                    $tagSubValues[] = "(?, ?)";
-                                    array_push($tagSubParams, $id, $newId);
+                                    $newTagId = uniqid();
+                                    $pdo->prepare("INSERT INTO tags (id, name, workspace_id, created_at) VALUES (?, ?, ?, NOW())")->execute([$newTagId, trim($tagName), $workspace_id]);
+                                    $tagId = $newTagId;
+                                    $tagMap[$tnL] = $tagId;
+                                    $tagSubValues[] = "(?, ?, ?)";
+                                    array_push($tagSubParams, $workspace_id, $id, $tagId);
                                 } catch (Exception $e) {
                                 }
                             }
@@ -549,8 +554,8 @@ try {
                     // Lists
                     if (!empty($d['listIds']) && is_array($d['listIds'])) {
                         foreach ($d['listIds'] as $lid) {
-                            $listValues[] = "(?, ?)";
-                            array_push($listParams, $id, $lid);
+                            $listValues[] = "(?, ?, ?)";
+                            array_push($listParams, $workspace_id, $id, $lid);
                             if (!isset($allAffectedListSubscribers[$lid]))
                                 $allAffectedListSubscribers[$lid] = [];
                             $allAffectedListSubscribers[$lid][] = $id;
@@ -583,12 +588,12 @@ try {
                 }
 
                 if (!empty($tagSubValues)) {
-                    $sqlTag = "INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES " . implode(',', $tagSubValues);
+                    $sqlTag = "INSERT IGNORE INTO subscriber_tags (workspace_id, subscriber_id, tag_id) VALUES " . implode(',', $tagSubValues);
                     $pdo->prepare($sqlTag)->execute($tagSubParams);
                 }
 
                 if (!empty($listValues)) {
-                    $sqlList = "INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id) VALUES " . implode(',', $listValues);
+                    $sqlList = "INSERT IGNORE INTO subscriber_lists (workspace_id, subscriber_id, list_id) VALUES " . implode(',', $listValues);
                     $pdo->prepare($sqlList)->execute($listParams);
                 }
             }
@@ -599,7 +604,7 @@ try {
                 enrollSubscribersBulk($pdo, $subs, 'added_to_list', $lid, $workspace_id);
 
                 // Update counts properly
-                $pdo->prepare("UPDATE lists SET subscriber_count = (SELECT COUNT(*) FROM subscriber_lists WHERE list_id = ?) WHERE id = ?")->execute([$lid, $lid]);
+                $pdo->prepare("UPDATE lists SET subscriber_count = (SELECT COUNT(*) FROM subscriber_lists WHERE workspace_id = ? AND list_id = ?) WHERE workspace_id = ? AND id = ?")->execute([$workspace_id, $lid, $workspace_id, $lid]);
             }
 
             $affectedCount = $totalProcessed;

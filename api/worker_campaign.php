@@ -61,7 +61,7 @@ if (!function_exists('runWorkerCampaign')) {
             $settings[$row['key']] = $row['value'];
         }
         $defaultSender = !empty($settings['smtp_user']) ? $settings['smtp_user'] : "marketing@ka-en.com.vn";
-        $mailer = new Mailer($pdo, $apiUrl, $defaultSender, $campaignWorkspaceId);
+        $mailer = new Mailer($pdo, $apiUrl, $defaultSender, $workspace_id);
 
         // [FIX P9-C1] MySQL version guard for FOR UPDATE SKIP LOCKED.
         // SKIP LOCKED requires MySQL = 8.0  identical to fix in worker_queue.php (P7-C3).
@@ -115,7 +115,7 @@ if (!function_exists('runWorkerCampaign')) {
             $cid = $campaign['id'];
             $cName = $campaign['name'];
             // [FIX BUG-WC-1] Extract workspace_id to scope all subscriber queries
-            $campaignWorkspaceId = (int)($campaign['workspace_id'] ?? 0);
+            $workspace_id = (int)($campaign['workspace_id'] ?? 0);
 
             // [OPTIMIZATION] Clean up stale temporary locks to auto-recover if worker crashed on previous runs
             $pdo->prepare("DELETE FROM subscriber_activity WHERE campaign_id = ? AND type = 'processing_campaign' AND created_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE)")->execute([$cid]);
@@ -128,7 +128,7 @@ if (!function_exists('runWorkerCampaign')) {
                     // Calculate Audience Size (Snapshot)
                     // [FIX BUG-WC-1] Scope subscribers to campaign workspace
                     $countSql = "SELECT COUNT(DISTINCT s.id) FROM subscribers s WHERE s.status IN ('active', 'lead', 'customer') AND s.workspace_id = ?";
-                    $countParams = [$campaignWorkspaceId];
+                    $countParams = [$workspace_id];
 
                     // ZNS Requirement: Must have phone number
                     if (($campaign['type'] ?? 'email') === 'zalo_zns') {
@@ -142,14 +142,17 @@ if (!function_exists('runWorkerCampaign')) {
                     if (!empty($targetConf['listIds'])) {
                         // [BUG-M1 FIX] Use parameterized query to prevent SQL injection
                         $listPlaceholders = implode(',', array_fill(0, count($targetConf['listIds']), '?'));
-                        $countWheres[] = "s.id IN (SELECT subscriber_id FROM subscriber_lists WHERE list_id IN ($listPlaceholders))";
+                        $countWheres[] = "s.id IN (SELECT subscriber_id FROM subscriber_lists WHERE workspace_id = ? AND list_id IN ($listPlaceholders))";
+                        $countParams = array_merge([$workspace_id], $countParams); // Prepended for subquery
                         $countParams = array_merge($countParams, $targetConf['listIds']);
                     }
                     // B. TAGS (10M UPGRADE: Relational Join)
                     if (!empty($targetConf['tagIds'])) {
                         $tagConditions = [];
                         foreach ($targetConf['tagIds'] as $tag) {
-                            $tagConditions[] = "s.id IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE t_sub.name = ?)";
+                            $tagConditions[] = "s.id IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE st.workspace_id = ? AND t_sub.workspace_id = ? AND t_sub.name = ?)";
+                            $countParams[] = $workspace_id;
+                            $countParams[] = $workspace_id;
                             $countParams[] = $tag;
                         }
                         if (!empty($tagConditions)) {
@@ -161,10 +164,10 @@ if (!function_exists('runWorkerCampaign')) {
                         // [BUG-M1 FIX] Use parameterized query to prevent SQL injection
                         $segPlaceholders = implode(',', array_fill(0, count($targetConf['segmentIds']), '?'));
                         $stmtSegs = $pdo->prepare("SELECT criteria FROM segments WHERE id IN ($segPlaceholders) AND workspace_id = ?");
-                        $stmtSegs->execute(array_merge($targetConf['segmentIds'], [$campaignWorkspaceId]));
+                        $stmtSegs->execute(array_merge($targetConf['segmentIds'], [$workspace_id]));
                         if ($stmtSegs) {
                             foreach ($stmtSegs->fetchAll() as $seg) {
-                                $res = buildSegmentWhereClause($seg['criteria']);
+                                $res = buildSegmentWhereClause($seg['criteria'], $workspace_id);
                                 if ($res['sql'] !== '1=1') {
                                     $countWheres[] = $res['sql'];
                                     foreach ($res['params'] as $p)
@@ -208,7 +211,7 @@ if (!function_exists('runWorkerCampaign')) {
                 // Now: A JSON search filter (steps LIKE '%\"campaign\"%') pre-filters at DB level,
                 // then PHP validates the exact trigger match. Saves significant RAM + query time.
                 $stmtAllActive = $pdo->prepare("SELECT id, name, steps FROM flows WHERE workspace_id = ? AND status = 'active' AND steps LIKE '%\"campaign\"%'");
-                $stmtAllActive->execute([$campaignWorkspaceId]);
+                $stmtAllActive->execute([$workspace_id]);
                 $activeFlows = $stmtAllActive->fetchAll();
 
                 foreach ($activeFlows as $f) {
@@ -265,7 +268,9 @@ if (!function_exists('runWorkerCampaign')) {
                 if (!empty($target['tagIds'])) {
                     $tagConditions = [];
                     foreach ($target['tagIds'] as $tag) {
-                        $tagConditions[] = "s.id IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE t_sub.name = ?)";
+                        $tagConditions[] = "s.id IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE st.workspace_id = ? AND t_sub.workspace_id = ? AND t_sub.name = ?)";
+                        $queryBaseParams[] = $workspace_id;
+                        $queryBaseParams[] = $workspace_id;
                         $queryBaseParams[] = $tag;
                     }
                     if (!empty($tagConditions))
@@ -275,9 +280,9 @@ if (!function_exists('runWorkerCampaign')) {
                     // [BUG-M1 FIX] Use parameterized query to prevent SQL injection
                     $segPlaceholders = implode(',', array_fill(0, count($target['segmentIds']), '?'));
                     $stmtSegs = $pdo->prepare("SELECT criteria FROM segments WHERE id IN ($segPlaceholders) AND workspace_id = ?");
-                    $stmtSegs->execute(array_merge($target['segmentIds'], [$campaignWorkspaceId]));
+                    $stmtSegs->execute(array_merge($target['segmentIds'], [$workspace_id]));
                     foreach ($stmtSegs->fetchAll() as $seg) {
-                        $res = buildSegmentWhereClause($seg['criteria']);
+                        $res = buildSegmentWhereClause($seg['criteria'], $workspace_id);
                         if ($res['sql'] !== '1=1') {
                             $wheres[] = $res['sql'];
                             foreach ($res['params'] as $p)
@@ -318,7 +323,7 @@ if (!function_exists('runWorkerCampaign')) {
 
                 // [OPTIMIZATION] Pre-build the Recipient Fetch SQL to compile ONCE before the loop
                 $sqlFetch = "SELECT s.id, s.email, s.first_name, s.last_name, s.phone_number, s.custom_attributes FROM subscribers s WHERE s.status IN ('active', 'lead', 'customer') AND s.workspace_id = ?";
-                $execParams = array_merge([$campaignWorkspaceId], $queryBaseParams);
+                $execParams = array_merge([$workspace_id], $queryBaseParams);
                 if (($campaign['type'] ?? 'email') === 'zalo_zns') {
                     $sqlFetch .= " AND (s.phone_number IS NOT NULL AND s.phone_number != '')";
                 }
@@ -327,13 +332,15 @@ if (!function_exists('runWorkerCampaign')) {
                 }
                 $sqlFetch .= " AND NOT EXISTS (
                     SELECT 1 FROM subscriber_activity sa
-                    WHERE sa.subscriber_id = s.id
+                    WHERE sa.workspace_id = ?
+                    AND sa.subscriber_id = s.id
                     AND sa.campaign_id = ?
                     AND (
                         sa.type IN ('receive_email', 'failed_email', 'zalo_sent', 'meta_sent', 'zns_sent', 'zns_failed', 'enter_flow')
                         OR (sa.type = 'processing_campaign' AND sa.created_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE))
                     )
                 )";
+                $execParams[] = $workspace_id;
                 $execParams[] = $cid;
                 $sqlFetch .= " ORDER BY s.id ASC LIMIT " . (int)$BATCH_SIZE . " FOR UPDATE " . $skipLockedClause;
                 $stmtSubs = $pdo->prepare($sqlFetch);
@@ -377,8 +384,8 @@ if (!function_exists('runWorkerCampaign')) {
                             if (!empty($vCampIds)) {
                                 foreach ($vCampIds as $vCid) {
                                     $placeholders = implode(',', array_fill(0, count($recipients), '?'));
-                                    $stmtV = $pdo->prepare("SELECT subscriber_id, code FROM voucher_codes WHERE campaign_id = ? AND subscriber_id IN ($placeholders)");
-                                    $stmtV->execute(array_merge([$vCid], array_column($recipients, 'id')));
+                                    $stmtV = $pdo->prepare("SELECT subscriber_id, code FROM voucher_codes WHERE workspace_id = ? AND campaign_id = ? AND subscriber_id IN ($placeholders)");
+                                    $stmtV->execute(array_merge([$workspace_id, $vCid], array_column($recipients, 'id')));
                                     while ($vRow = $stmtV->fetch()) {
                                         $vouchersBatch[$vRow['subscriber_id']][$vCid] = $vRow['code'];
                                     }
@@ -388,7 +395,7 @@ if (!function_exists('runWorkerCampaign')) {
 
                         foreach ($recipients as $sub) {
                             $lockBinds[] = "(?, ?, 'processing_campaign', ?, ?, 'Processing...', ?, NOW())";
-                            $lockVals = array_merge($lockVals, [$sub['id'], $campaignWorkspaceId, $cid, $cName, $cid]);
+                            $lockVals = array_merge($lockVals, [$sub['id'], $workspace_id, $cid, $cName, $cid]);
                         }
                         if (!empty($lockBinds)) {
                             $sqlLockIns = "INSERT INTO subscriber_activity (subscriber_id, workspace_id, type, reference_id, reference_name, details, campaign_id, created_at) VALUES " . implode(',', $lockBinds);
@@ -413,12 +420,12 @@ if (!function_exists('runWorkerCampaign')) {
                             $stmtBatchCap = $pdo->prepare("
                                 SELECT subscriber_id, type, COUNT(*) as count 
                                 FROM subscriber_activity 
-                                WHERE subscriber_id IN ($placeholdersSub) 
+                                WHERE workspace_id = ? AND subscriber_id IN ($placeholdersSub) 
                                 AND type IN ('receive_email', 'zalo_sent', 'meta_sent', 'zns_sent') 
                                 AND created_at >= CURDATE()
                                 GROUP BY subscriber_id, type
                             ");
-                            $stmtBatchCap->execute($subIdList);
+                            $stmtBatchCap->execute(array_merge([$workspace_id], $subIdList));
                             foreach ($stmtBatchCap->fetchAll(PDO::FETCH_ASSOC) as $row) {
                                 // [FIX] Use string key to match $sub['id'] which is a string UUID.
                                 // PHP array keys cast integers automatically only for numeric strings.
@@ -446,10 +453,10 @@ if (!function_exists('runWorkerCampaign')) {
                             $stmtBatchEnroll = $pdo->prepare("
                         SELECT subscriber_id, status, updated_at, created_at 
                         FROM subscriber_flow_states 
-                        WHERE subscriber_id IN ($placeholdersSub) AND flow_id = ?
+                        WHERE workspace_id = ? AND subscriber_id IN ($placeholdersSub) AND flow_id = ?
                         ORDER BY created_at DESC
                     ");
-                            $stmtBatchEnroll->execute(array_merge($subIdList, [$fid]));
+                            $stmtBatchEnroll->execute(array_merge([$workspace_id], $subIdList, [$fid]));
                             foreach ($stmtBatchEnroll->fetchAll() as $row) {
                                 if (!isset($enrollmentCache[$row['subscriber_id']])) {
                                     $enrollmentCache[$row['subscriber_id']] = $row; // Keep latest
@@ -568,7 +575,7 @@ if (!function_exists('runWorkerCampaign')) {
                                     writeWorkerLog("Campaign $cid: [ZNS] Subscriber {$sub['id']} missing data for " . implode(', ', $missingParams));
                                 } else {
                                     // Send ZNS using preloaded token to save DB queries
-                                    $znsRes = sendZNSMessage($pdo, $oaConfigId, $campaign['template_id'], $sub['phone_number'], $templateData, null, null, $sub['id'], null, $preloadedZnsToken, $campaignWorkspaceId);
+                                    $znsRes = sendZNSMessage($pdo, $oaConfigId, $campaign['template_id'], $sub['phone_number'], $templateData, null, null, $sub['id'], null, $preloadedZnsToken, $workspace_id);
 
                                     // ZNS result standardization
                                     if ($znsRes['success']) {
@@ -592,7 +599,7 @@ if (!function_exists('runWorkerCampaign')) {
                                     // Shared with FlowExecutor ? campaign + flow combined = 10/s total.
                                     sesAcquireRateSlot(); // 100ms interval = 10/s shared total
 
-                                    $res = $mailer->send($sub['email'], $personalSubject, $personalHtml, $sub['id'], $cid, null, null, $attachments, null, null, $cName, false, $skipQA, $variationLabel, null, $campaignWorkspaceId);
+                                    $res = $mailer->send($sub['email'], $personalSubject, $personalHtml, $sub['id'], $cid, null, null, $attachments, null, null, $cName, false, $skipQA, $variationLabel, null, $workspace_id);
                                 }
                             }
 
@@ -753,7 +760,7 @@ if (!function_exists('runWorkerCampaign')) {
                             $binds = [];
                             foreach ($allActivitiesGrouped as $act) {
                                 $binds[] = "(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
-                                $vals = array_merge($vals, [$act[0], $campaignWorkspaceId, $act[1], $act[2], $act[6] ?? null, $act[5] ?? null, $act[3], $act[4], $act[7] ?? null]);
+                                $vals = array_merge($vals, [$act[0], $workspace_id, $act[1], $act[2], $act[6] ?? null, $act[5] ?? null, $act[3], $act[4], $act[7] ?? null]);
                             }
                             $sqlIns = "INSERT INTO subscriber_activity (subscriber_id, workspace_id, type, reference_id, flow_id, campaign_id, reference_name, details, variation, created_at) VALUES " . implode(',', $binds);
                             $pdo->prepare($sqlIns)->execute($vals);
@@ -871,8 +878,8 @@ if (!function_exists('runWorkerCampaign')) {
 
                 // Simpler: Just check if $hasMore became false naturally indicating we processed all batches
                 // Final Status Check - Double check if actually finished
-                $sqlLeft = "SELECT COUNT(*) FROM subscribers s WHERE s.status IN ('active', 'lead', 'customer')";
-                $execFinal = $queryBaseParams;
+                $sqlLeft = "SELECT COUNT(*) FROM subscribers s WHERE s.status IN ('active', 'lead', 'customer') AND s.workspace_id = ?";
+                $execFinal = array_merge([$workspace_id], $queryBaseParams);
 
                 if (!empty($wheres))
                     $sqlLeft .= " AND (" . implode(' OR ', $wheres) . ")";
@@ -881,13 +888,14 @@ if (!function_exists('runWorkerCampaign')) {
                 // Previously this comment was INSIDE the SQL string ? MySQL parse error ? campaign stuck at 'sending'.
                 $sqlLeft .= " AND NOT EXISTS (
             SELECT 1 FROM subscriber_activity sa 
-            WHERE sa.subscriber_id = s.id 
+            WHERE sa.workspace_id = ? AND sa.subscriber_id = s.id 
             AND sa.campaign_id = ?
             AND (
                 sa.type IN ('receive_email', 'failed_email', 'zalo_sent', 'meta_sent', 'zns_sent', 'zns_failed', 'enter_flow')
                 OR (sa.type = 'processing_campaign' AND sa.created_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE))
             )
         )";
+                $execFinal[] = $workspace_id;
                 $execFinal[] = $cid;
 
                 $stmtLeft = $pdo->prepare($sqlLeft);
@@ -895,7 +903,7 @@ if (!function_exists('runWorkerCampaign')) {
                 $remaining = (int) $stmtLeft->fetchColumn();
 
                 if ($remaining === 0) {
-                    $pdo->prepare("UPDATE campaigns SET status = 'sent' WHERE id = ?")->execute([$cid]);
+                    $pdo->prepare("UPDATE campaigns SET status = 'sent' WHERE id = ? AND workspace_id = ?")->execute([$cid, $workspace_id]);
                     $logs[] = "[Campaign {$cid}] Finished. Status set to 'sent'.";
                     writeWorkerLog("Campaign $cid: Finished. Status set to 'sent'.");
                 } else {
@@ -905,7 +913,7 @@ if (!function_exists('runWorkerCampaign')) {
                     // we gracefully exit and let the minute Cron Job handle the leftovers.
                     if ($totalProcessed > 0) {
                         if ($retryCount >= $MAX_RETRIES) {
-                            $pdo->prepare("UPDATE campaigns SET status = 'paused' WHERE id = ?")->execute([$cid]);
+                            $pdo->prepare("UPDATE campaigns SET status = 'paused' WHERE id = ? AND workspace_id = ?")->execute([$cid, $workspace_id]);
                             $errMsg = "[CIRCUIT BREAKER] Campaign $cid auto-paused after $MAX_RETRIES consecutive retries with $remaining unsent recipients. Manual review required.";
                             $logs[] = $errMsg;
                             writeWorkerLog($errMsg);

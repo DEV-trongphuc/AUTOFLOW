@@ -121,18 +121,18 @@ $method = $_SERVER['REQUEST_METHOD'];
 $input  = json_decode(file_get_contents('php://input'), true) ?? [];
 $propertyId = getScenarioPropertyId($input, $pdo) ?: getScenarioPropertyId($_GET, $pdo);
 
-if (!$propertyId && !in_array($action, ['list'])) {
+if (!$propertyId) {
     echo json_encode(['success' => false, 'message' => 'property_id required']);
     exit;
 }
 
+// [SECURITY FIX] Enforce organization isolation
+// Verify that the current user has access to this property/category/chatbot
+requireCategoryAccess($propertyId, $currentOrgUser);
+
 try {
     // ─── LIST ────────────────────────────────────────────────────────
     if ($action === 'list') {
-        if (!$propertyId) {
-            echo json_encode(['success' => false, 'message' => 'property_id required']);
-            exit;
-        }
 
         $stmt = $pdo->prepare("
             SELECT id, property_id, title, trigger_keywords, match_mode, reply_text,

@@ -128,7 +128,7 @@ try {
                     }
                 }
                 if (!empty($updateSqlParts)) {
-                    $pdo->prepare("UPDATE subscribers SET " . implode(', ', $updateSqlParts) . " WHERE id = ?")->execute(array_merge($updateValues, [$sid]));
+                    $pdo->prepare("UPDATE subscribers SET " . implode(', ', $updateSqlParts) . " WHERE id = ? AND workspace_id = ?")->execute(array_merge($updateValues, [$sid, $workspace_id]));
                 }
             } else {
                 $sid = bin2hex(random_bytes(16));
@@ -203,7 +203,7 @@ try {
             $details = "Sự kiện tùy chỉnh: {$eventName} (+$pCustom điểm)";
             if (!empty($properties))
                 $details .= " (Props: " . json_encode($properties, JSON_UNESCAPED_UNICODE) . ")";
-            logActivity($pdo, $sid, 'custom_event', $eventId, $eventName, $details, null, null, $extra);
+            logActivity($pdo, $sid, 'custom_event', $eventId, $eventName, $details, null, null, $extra, $workspace_id);
 
             // [POKE] Immediate Flow Interruption check
             // [FIX] Don't force NOW() here, just let the worker_priority call below re-evaluate.
@@ -406,9 +406,9 @@ try {
             if (session_id()) session_write_close();
             try {
                 $stmt = $pdo->prepare("SELECT c.*,
-                                    (SELECT COUNT(*) FROM subscriber_activity sa WHERE sa.type = 'custom_event' AND sa.reference_id = c.id) as count
+                                    (SELECT COUNT(*) FROM subscriber_activity sa WHERE sa.type = 'custom_event' AND sa.reference_id = c.id AND sa.workspace_id = ?) as count
                                     FROM custom_events c WHERE c.workspace_id = ? ORDER BY c.created_at DESC");
-                $stmt->execute([$workspace_id]);
+                $stmt->execute([$workspace_id, $workspace_id]);
                 $data = array_map(function ($row) {
                     return [
                         'id' => $row['id'],
@@ -484,7 +484,7 @@ try {
                 if (!$path)
                     jsonResponse(false, null, 'Thiếu ID sự kiện');
                 $pdo->prepare("DELETE FROM custom_events WHERE id = ? AND workspace_id = ?")->execute([$path, $workspace_id]);
-                $pdo->prepare("DELETE FROM subscriber_activity WHERE type = 'custom_event' AND reference_id = ?")->execute([$path]);
+                $pdo->prepare("DELETE FROM subscriber_activity WHERE type = 'custom_event' AND reference_id = ? AND workspace_id = ?")->execute([$path, $workspace_id]);
                 jsonResponse(true, ['id' => $path], 'Đã xóa sự kiện');
             } catch (Exception $e) {
                 jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');

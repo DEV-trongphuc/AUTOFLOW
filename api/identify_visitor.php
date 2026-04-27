@@ -222,8 +222,8 @@ try {
                 ->execute($params);
 
             // Refresh names for response
-            $stmtRef = $pdo->prepare("SELECT first_name, last_name, avatar FROM subscribers WHERE id = ?");
-            $stmtRef->execute([$emailSubscriberId]);
+            $stmtRef = $pdo->prepare("SELECT first_name, last_name, avatar FROM subscribers WHERE id = ? AND workspace_id = ?");
+            $stmtRef->execute([$emailSubscriberId, $workspaceId]);
             $ref = $stmtRef->fetch(PDO::FETCH_ASSOC);
             if ($ref) {
                 $subscriberFirstName = $ref['first_name'] ?? null;
@@ -246,8 +246,9 @@ try {
         $updateValues[] = $zaloSubscriberId;
     }
     $updateValues[] = $visitorId;
+    $updateValues[] = $workspaceId;
 
-    $pdo->prepare("UPDATE web_visitors SET " . implode(', ', $updateFields) . " WHERE id = ?")
+    $pdo->prepare("UPDATE web_visitors SET " . implode(', ', $updateFields) . " WHERE id = ? AND property_id IN (SELECT id FROM web_properties WHERE workspace_id = ?)")
         ->execute($updateValues);
 
     echo json_encode([

@@ -182,11 +182,11 @@ if ($method === 'POST' && $route === 'bulk_update_subscribers') {
             $chunks = array_chunk($validDeleteIds, 500);
             foreach ($chunks as $chunk) {
                 $ph = implode(',', array_fill(0, count($chunk), '?'));
-                $pdo->prepare("DELETE FROM subscriber_activity WHERE subscriber_id IN ($ph)")->execute($chunk);
-                $pdo->prepare("DELETE FROM subscriber_flow_states WHERE subscriber_id IN ($ph)")->execute($chunk);
-                $pdo->prepare("DELETE FROM subscriber_lists WHERE subscriber_id IN ($ph)")->execute($chunk);
-                $pdo->prepare("DELETE FROM subscriber_tags WHERE subscriber_id IN ($ph)")->execute($chunk);
-                $pdo->prepare("DELETE FROM subscribers WHERE id IN ($ph)")->execute($chunk);
+                $pdo->prepare("DELETE FROM subscriber_activity WHERE workspace_id = ? AND subscriber_id IN ($ph)")->execute(array_merge([$workspace_id], $chunk));
+                $pdo->prepare("DELETE FROM subscriber_flow_states WHERE workspace_id = ? AND subscriber_id IN ($ph)")->execute(array_merge([$workspace_id], $chunk));
+                $pdo->prepare("DELETE FROM subscriber_lists WHERE workspace_id = ? AND subscriber_id IN ($ph)")->execute(array_merge([$workspace_id], $chunk));
+                $pdo->prepare("DELETE FROM subscriber_tags WHERE workspace_id = ? AND subscriber_id IN ($ph)")->execute(array_merge([$workspace_id], $chunk));
+                $pdo->prepare("DELETE FROM subscribers WHERE workspace_id = ? AND id IN ($ph)")->execute(array_merge([$workspace_id], $chunk));
             }
             $successCount = count($deleteIds);
             $pdo->commit();
@@ -251,8 +251,8 @@ if ($method === 'POST' && $route === 'bulk_update_subscribers') {
 
             if ($action === 'add_tag') {
                 if ($tagId) {
-                    $stmtIns = $pdo->prepare("INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES (?, ?)");
-                    $stmtIns->execute([$subId, $tagId]);
+                    $stmtIns = $pdo->prepare("INSERT IGNORE INTO subscriber_tags (workspace_id, subscriber_id, tag_id) VALUES (?, ?, ?)");
+                    $stmtIns->execute([$workspace_id, $subId, $tagId]);
                     if ($stmtIns->rowCount() > 0) {
                         $enrolledForTag[] = $subId;
                         logActivity($pdo, $subId, 'update_tag', $originalValue, 'Bulk Action', "add_tag '{$originalValue}'", null, null);
@@ -262,24 +262,24 @@ if ($method === 'POST' && $route === 'bulk_update_subscribers') {
             } elseif ($action === 'remove_tag') {
                 // Note: if tag doesn't exist ($tagId == null), silently skip — not an error.
                 if ($tagId) {
-                    $pdo->prepare("DELETE FROM subscriber_tags WHERE subscriber_id = ? AND tag_id = ?")
-                        ->execute([$subId, $tagId]);
+                    $pdo->prepare("DELETE FROM subscriber_tags WHERE workspace_id = ? AND subscriber_id = ? AND tag_id = ?")
+                        ->execute([$workspace_id, $subId, $tagId]);
                     logActivity($pdo, $subId, 'update_tag', $originalValue, 'Bulk Action', "remove_tag '{$originalValue}'", null, null);
                     $successCount++;
                 }
             } elseif ($action === 'add_list') {
                 if ($listId) {
-                    $pdo->prepare("INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id) VALUES (?, ?)")->execute([$subId, $listId]);
+                    $pdo->prepare("INSERT IGNORE INTO subscriber_lists (workspace_id, subscriber_id, list_id) VALUES (?, ?, ?)")->execute([$workspace_id, $subId, $listId]);
                     logActivity($pdo, $subId, 'list_action', $listId, 'Bulk Action', "add_list List ID '{$listId}'", null, null);
                     $successCount++;
                 }
             } elseif ($action === 'remove_list') {
-                $pdo->prepare("DELETE FROM subscriber_lists WHERE subscriber_id = ? AND list_id = ?")->execute([$subId, $value]);
+                $pdo->prepare("DELETE FROM subscriber_lists WHERE workspace_id = ? AND subscriber_id = ? AND list_id = ?")->execute([$workspace_id, $subId, $value]);
                 logActivity($pdo, $subId, 'list_action', $value, 'Bulk Action', "remove_list List ID '{$value}'", null, null);
                 $successCount++;
             } elseif ($action === 'unsubscribe') {
                 if ($sub['status'] !== 'unsubscribed') {
-                    $pdo->prepare("UPDATE subscribers SET status = 'unsubscribed' WHERE id = ?")->execute([$subId]);
+                    $pdo->prepare("UPDATE subscribers SET status = 'unsubscribed' WHERE workspace_id = ? AND id = ?")->execute([$workspace_id, $subId]);
                     logActivity($pdo, $subId, 'unsubscribe', null, 'Bulk Action', "Unsubscribed via bulk action", null, null);
                     $successCount++;
                 }
@@ -298,8 +298,8 @@ if ($method === 'POST' && $route === 'bulk_update_subscribers') {
 
         // [PERF] Update List Count ONCE after loop
         if ($action === 'add_list' || $action === 'remove_list') {
-            $pdo->prepare("UPDATE lists SET subscriber_count = (SELECT COUNT(*) FROM subscriber_lists WHERE list_id = ?) WHERE id = ?")
-                ->execute([$value, $value]);
+            $pdo->prepare("UPDATE lists SET subscriber_count = (SELECT COUNT(*) FROM subscriber_lists WHERE workspace_id = ? AND list_id = ?) WHERE workspace_id = ? AND id = ?")
+                ->execute([$workspace_id, $value, $workspace_id, $value]);
         }
         $pdo->commit();
         logSystemActivity($pdo, 'audience', "bulk_{$action}", null, "Bulk {$action}", ['subscriber_count' => $successCount, 'value' => $value]);
@@ -347,18 +347,19 @@ if ($method === 'GET' && $route === 'audience_stats') {
         }
         if (!empty($targetConf['tagIds'])) {
             $tagPh = implode(',', array_fill(0, count($targetConf['tagIds']), '?'));
-            $countWheres[] = "s.id IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE t_sub.name IN ($tagPh) AND t_sub.workspace_id = ?)";
+            $countWheres[] = "s.id IN (SELECT st.subscriber_id FROM subscriber_tags st JOIN tags t_sub ON st.tag_id = t_sub.id WHERE st.workspace_id = ? AND t_sub.workspace_id = ? AND t_sub.name IN ($tagPh))";
+            $countParams[] = $workspace_id;
+            $countParams[] = $workspace_id;
             foreach ($targetConf['tagIds'] as $tagName)
                 $countParams[] = $tagName;
-            $countParams[] = $workspace_id; // For tag ownership
         }
         if (!empty($targetConf['segmentIds'])) {
             foreach ($targetConf['segmentIds'] as $segId) {
-                $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
-                $stmtSeg->execute([$segId]);
+                $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
+                $stmtSeg->execute([$segId, $workspace_id]);
                 $criteria = $stmtSeg->fetchColumn();
                 if ($criteria) {
-                    $res = buildSegmentWhereClause($criteria);
+                    $res = buildSegmentWhereClause($criteria, $workspace_id);
                     if ($res['sql'] !== '1=1') {
                         $countWheres[] = $res['sql'];
                         foreach ($res['params'] as $p)
@@ -384,8 +385,8 @@ if ($method === 'GET' && $route === 'audience_stats') {
 
         // [AUDIT-H3 FIX] Exclude 'enter_flow' from sentTotal — a subscriber can be enrolled in a flow
         // without having received any email yet. Counting enter_flow inflates the "sent" count.
-        $stmtSent = $pdo->prepare("SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_activity WHERE campaign_id = ? AND type IN ('receive_email', 'zalo_sent', 'meta_sent', 'zns_sent')");
-        $stmtSent->execute([$campaignId]);
+        $stmtSent = $pdo->prepare("SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_activity WHERE workspace_id = ? AND campaign_id = ? AND type IN ('receive_email', 'zalo_sent', 'meta_sent', 'zns_sent')");
+        $stmtSent->execute([$workspace_id, $campaignId]);
         $sentTotal = (int) $stmtSent->fetchColumn();
 
         $stmtRem = $pdo->prepare("SELECT id, type, trigger_mode, scheduled_at FROM campaign_reminders WHERE campaign_id = ?");
@@ -405,20 +406,21 @@ WHERE s.workspace_id = ? AND s.status IN ('active', 'lead', 'customer')
 AND ($audienceFilter)
 AND NOT EXISTS (
     SELECT 1 FROM subscriber_activity sa
-    WHERE sa.subscriber_id = s.id
+    WHERE sa.workspace_id = ?
+    AND sa.subscriber_id = s.id
     AND sa.campaign_id = ?
     AND sa.type IN ('receive_email', 'failed_email', 'zalo_sent', 'meta_sent', 'zns_sent', 'zns_failed', 'enter_flow')
 )";
 
-            // Params: [workspace_id, audience_filters..., campaign_id]
-            $gapParams = array_merge([$workspace_id], $countParams, [$campaignId]);
+            // Params: [workspace_id, audience_filters..., workspace_id, campaign_id]
+            $gapParams = array_merge([$workspace_id], $countParams, [$workspace_id, $campaignId]);
             $stmtGap = $pdo->prepare($gapSql);
             $stmtGap->execute($gapParams);
             $gap = (int) $stmtGap->fetchColumn();
         }
 
-        $stmtUnsub = $pdo->prepare("SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_activity WHERE campaign_id = ? AND type = 'unsubscribe'");
-        $stmtUnsub->execute([$campaignId]);
+        $stmtUnsub = $pdo->prepare("SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_activity WHERE workspace_id = ? AND campaign_id = ? AND type = 'unsubscribe'");
+        $stmtUnsub->execute([$workspace_id, $campaignId]);
         $unsubs = (int) $stmtUnsub->fetchColumn();
 
         jsonResponse(true, [
@@ -470,11 +472,11 @@ if ($method === 'POST' && $route === 'delete_unsubscribed') {
         foreach ($chunks as $chunk) {
             $ph = implode(',', array_fill(0, count($chunk), '?'));
             // Cascade cleanup first to avoid FK errors on strict setups
-            $pdo->prepare("DELETE FROM subscriber_activity WHERE subscriber_id IN ($ph)")->execute($chunk);
-            $pdo->prepare("DELETE FROM subscriber_lists WHERE subscriber_id IN ($ph)")->execute($chunk);
-            $pdo->prepare("DELETE FROM subscriber_tags WHERE subscriber_id IN ($ph)")->execute($chunk);
-            $pdo->prepare("DELETE FROM subscriber_flow_states WHERE subscriber_id IN ($ph)")->execute($chunk);
-            $pdo->prepare("DELETE FROM subscribers WHERE id IN ($ph)")->execute($chunk);
+            $pdo->prepare("DELETE FROM subscriber_activity WHERE workspace_id = ? AND subscriber_id IN ($ph)")->execute(array_merge([$workspace_id], $chunk));
+            $pdo->prepare("DELETE FROM subscriber_lists WHERE workspace_id = ? AND subscriber_id IN ($ph)")->execute(array_merge([$workspace_id], $chunk));
+            $pdo->prepare("DELETE FROM subscriber_tags WHERE workspace_id = ? AND subscriber_id IN ($ph)")->execute(array_merge([$workspace_id], $chunk));
+            $pdo->prepare("DELETE FROM subscriber_flow_states WHERE workspace_id = ? AND subscriber_id IN ($ph)")->execute(array_merge([$workspace_id], $chunk));
+            $pdo->prepare("DELETE FROM subscribers WHERE workspace_id = ? AND id IN ($ph)")->execute(array_merge([$workspace_id], $chunk));
             $deleted += count($chunk);
         }
         $pdo->commit();
@@ -503,8 +505,8 @@ if ($method === 'GET' && $route === 'unsubscribed_list') {
         $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
         $offset = ($page - 1) * $limit;
 
-        $stmtSubIds = $pdo->prepare("SELECT DISTINCT subscriber_id FROM subscriber_activity WHERE campaign_id = ? AND type = 'unsubscribe'");
-        $stmtSubIds->execute([$cid]);
+        $stmtSubIds = $pdo->prepare("SELECT DISTINCT subscriber_id FROM subscriber_activity WHERE workspace_id = ? AND campaign_id = ? AND type = 'unsubscribe'");
+        $stmtSubIds->execute([$workspace_id, $cid]);
         $subIds = $stmtSubIds->fetchAll(PDO::FETCH_COLUMN);
 
         if (empty($subIds)) {
@@ -514,13 +516,13 @@ if ($method === 'GET' && $route === 'unsubscribed_list') {
         
         $placeholders = implode(',', array_fill(0, count($subIds), '?'));
         
-        $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM subscribers WHERE id IN ($placeholders)");
-        $stmtCount->execute($subIds);
+        $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM subscribers WHERE workspace_id = ? AND id IN ($placeholders)");
+        $stmtCount->execute(array_merge([$workspace_id], $subIds));
         $total = (int) $stmtCount->fetchColumn();
         
-        $sql = "SELECT id, email, first_name, last_name, status, joined_at FROM subscribers WHERE id IN ($placeholders) ORDER BY joined_at DESC LIMIT $limit OFFSET $offset";
+        $sql = "SELECT id, email, first_name, last_name, status, joined_at FROM subscribers WHERE workspace_id = ? AND id IN ($placeholders) ORDER BY joined_at DESC LIMIT $limit OFFSET $offset";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute($subIds);
+        $stmt->execute(array_merge([$workspace_id], $subIds));
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         jsonResponse(true, [
@@ -591,11 +593,11 @@ WHERE t_sub.name = ? AND t_sub.workspace_id = ?)";
         }
         if (!empty($targetConf['segmentIds'])) {
             foreach ($targetConf['segmentIds'] as $segId) {
-                $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
-                $stmtSeg->execute([$segId]);
+                $stmtSeg = $pdo->prepare("SELECT criteria FROM segments WHERE id = ? AND workspace_id = ?");
+                $stmtSeg->execute([$segId, $workspace_id]);
                 $criteria = $stmtSeg->fetchColumn();
                 if ($criteria) {
-                    $res = buildSegmentWhereClause($criteria);
+                    $res = buildSegmentWhereClause($criteria, $workspace_id);
                     if ($res['sql'] !== '1=1') {
                         $countWheres[] = $res['sql'];
                         foreach ($res['params'] as $p)
@@ -1473,7 +1475,7 @@ switch ($method) {
                     $stmtSegs->execute(array_merge($segmentIds, [$workspace_id]));
                     $segments = $stmtSegs->fetchAll();
                     foreach ($segments as $seg) {
-                        $res = buildSegmentWhereClause($seg['criteria']);
+                        $res = buildSegmentWhereClause($seg['criteria'], $workspace_id);
                         if ($res['sql'] !== '1=1') {
                             $wheres[] = $res['sql'];
                             foreach ($res['params'] as $p)

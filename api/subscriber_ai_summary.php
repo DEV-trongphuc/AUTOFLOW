@@ -33,9 +33,10 @@ if (!$subscriberId) {
 }
 
 try {
+    $workspace_id = get_current_workspace_id();
     // 1. Get Subscriber Info
-    $stmt = $pdo->prepare("SELECT id, email, first_name, last_name, status, lead_score, created_at, phone_number, company_name, job_title, custom_attributes FROM subscribers WHERE id = ?");
-    $stmt->execute([$subscriberId]);
+    $stmt = $pdo->prepare("SELECT id, email, first_name, last_name, status, lead_score, created_at, phone_number, company_name, job_title, custom_attributes FROM subscribers WHERE id = ? AND workspace_id = ?");
+    $stmt->execute([$subscriberId, $workspace_id]);
     $subscriber = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$subscriber) {

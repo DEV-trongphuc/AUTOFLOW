@@ -658,8 +658,8 @@ try {
                         $form['notificationCcEmails'] = $form['notification_cc_emails'] ?? '';
                         $form['notificationSubject'] = $form['notification_subject'] ?? '';
                         // Use specialized index for count
-                        $stmtS = $pdo->prepare("SELECT COUNT(*) FROM subscriber_activity WHERE type='form_submit' AND reference_id = ?");
-                        $stmtS->execute([$path]);
+                        $stmtS = $pdo->prepare("SELECT COUNT(*) FROM subscriber_activity WHERE type='form_submit' AND reference_id = ? AND workspace_id = ?");
+                        $stmtS->execute([$path, $admin_workspace_id]);
                         $form['stats'] = ['submissions' => (int) $stmtS->fetchColumn()];
                         unset($form['fields_json'], $form['target_list_id'], $form['notification_enabled'], $form['notification_emails'], $form['notification_cc_emails'], $form['notification_subject']);
                         jsonResponse(true, $form);
@@ -680,13 +680,13 @@ try {
                          LEFT JOIN (
                              SELECT reference_id, COUNT(*) as cnt
                              FROM subscriber_activity
-                             WHERE type = 'form_submit'
+                             WHERE type = 'form_submit' AND workspace_id = ?
                              GROUP BY reference_id
                          ) sa_count ON sa_count.reference_id = f.id
                          WHERE f.workspace_id = ?
                          ORDER BY f.created_at DESC"
                     );
-                    $stmt->execute([$admin_workspace_id]);
+                    $stmt->execute([$admin_workspace_id, $admin_workspace_id]);
                     $data = array_map(function ($f) {
                         $f['fields'] = json_decode($f['fields_json'] ?? '[]');
                         $f['targetListId'] = $f['target_list_id'];
@@ -757,7 +757,7 @@ try {
                     jsonResponse(false, null, 'ID required');
                 $pdo->prepare("DELETE FROM forms WHERE id = ? AND workspace_id = ?")->execute([$path, $admin_workspace_id]);
                 // Subscriber activity deletion is secondary and safe
-                $pdo->prepare("DELETE FROM subscriber_activity WHERE type = 'form_submit' AND reference_id = ?")->execute([$path]);
+                $pdo->prepare("DELETE FROM subscriber_activity WHERE type = 'form_submit' AND reference_id = ? AND workspace_id = ?")->execute([$path, $admin_workspace_id]);
                 jsonResponse(true, ['id' => $path]);
             } catch (Exception $e) {
                 jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');

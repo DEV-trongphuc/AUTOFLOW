@@ -35,8 +35,8 @@ function checkScenario($pdo, $propertyId, $visitorUuid, $userMsg, $convId = null
         // 1. STATEFUL MATCHING (Are we in a flow?)
         $conv = null;
         if ($convId) {
-            $stmtConv = $pdo->prepare("SELECT id, active_scenario_id, active_node_id FROM ai_conversations WHERE id = ? LIMIT 1");
-            $stmtConv->execute([$convId]);
+            $stmtConv = $pdo->prepare("SELECT id, active_scenario_id, active_node_id FROM ai_conversations WHERE id = ? AND property_id = ? LIMIT 1");
+            $stmtConv->execute([$convId, $propertyId]);
             $conv = $stmtConv->fetch(PDO::FETCH_ASSOC);
         } else {
             $stmtConv = $pdo->prepare("SELECT id, active_scenario_id, active_node_id FROM ai_conversations WHERE visitor_id = ? AND property_id = ? ORDER BY last_message_at DESC LIMIT 1");
@@ -48,8 +48,8 @@ function checkScenario($pdo, $propertyId, $visitorUuid, $userMsg, $convId = null
             $scenarioId = $conv['active_scenario_id'];
             $nodeId = $conv['active_node_id'];
 
-            $stmtFlow = $pdo->prepare("SELECT flow_data FROM ai_chatbot_scenarios WHERE id = ? AND is_active = 1");
-            $stmtFlow->execute([$scenarioId]);
+            $stmtFlow = $pdo->prepare("SELECT flow_data FROM ai_chatbot_scenarios WHERE id = ? AND property_id = ? AND is_active = 1");
+            $stmtFlow->execute([$scenarioId, $propertyId]);
             $flowRow = $stmtFlow->fetch(PDO::FETCH_ASSOC);
 
             if ($flowRow && !empty($flowRow['flow_data'])) {

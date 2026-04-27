@@ -91,6 +91,9 @@ try {
                 throw new Exception('Missing group_id');
             }
 
+            // [SECURITY FIX] Enforce organization isolation
+            requireCategoryAccess($groupId, $currentOrgUser);
+
             $stmt = $pdo->prepare("
                 SELECT 
                     m.*,
@@ -144,14 +147,16 @@ try {
             $groupId = $data['group_id'] ?? null;
             $userEmail = $data['user_email'] ?? null;
             $role = $data['role'] ?? 'viewer';
-            $currentUserEmail = $data['current_user_email'] ?? null;
 
-            if (!$groupId || !$userEmail || !$currentUserEmail) {
+            if (!$groupId || !$userEmail) {
                 throw new Exception('Missing required fields');
             }
 
+            // [SECURITY FIX] Enforce organization isolation
+            requireCategoryAccess($groupId, $currentOrgUser);
+
             // Check permission (must be admin)
-            if (!hasPermission($pdo, $groupId, $currentUserEmail, 'admin')) {
+            if (!hasPermission($pdo, $groupId, $currentOrgUser['email'], 'admin')) {
                 throw new Exception('Permission denied. Admin role required.');
             }
 
@@ -176,10 +181,10 @@ try {
                 (group_id, user_email, role, invited_by) 
                 VALUES (?, ?, ?, ?)
             ");
-            $stmt->execute([$groupId, $userEmail, $role, $currentUserEmail]);
+            $stmt->execute([$groupId, $userEmail, $role, $currentOrgUser['email']]);
 
             // Log audit
-            logAudit($pdo, $groupId, $currentUserEmail, 'add_member', $userEmail, [
+            logAudit($pdo, $groupId, $currentOrgUser['email'], 'add_member', $userEmail, [
                 'role' => $role
             ]);
 
@@ -200,14 +205,16 @@ try {
             $groupId = $data['group_id'] ?? null;
             $userEmail = $data['user_email'] ?? null;
             $role = $data['role'] ?? null;
-            $currentUserEmail = $data['current_user_email'] ?? null;
 
-            if (!$groupId || !$userEmail || !$role || !$currentUserEmail) {
+            if (!$groupId || !$userEmail || !$role) {
                 throw new Exception('Missing required fields');
             }
 
+            // [SECURITY FIX] Enforce organization isolation
+            requireCategoryAccess($groupId, $currentOrgUser);
+
             // Check permission (must be admin)
-            if (!hasPermission($pdo, $groupId, $currentUserEmail, 'admin')) {
+            if (!hasPermission($pdo, $groupId, $currentOrgUser['email'], 'admin')) {
                 throw new Exception('Permission denied. Admin role required.');
             }
 
@@ -237,7 +244,7 @@ try {
             }
 
             // Log audit
-            logAudit($pdo, $groupId, $currentUserEmail, 'update_role', $userEmail, [
+            logAudit($pdo, $groupId, $currentOrgUser['email'], 'update_role', $userEmail, [
                 'new_role' => $role
             ]);
 
@@ -249,14 +256,16 @@ try {
             // Body: { group_id, user_email, current_user_email }
             $groupId = $data['group_id'] ?? null;
             $userEmail = $data['user_email'] ?? null;
-            $currentUserEmail = $data['current_user_email'] ?? null;
 
-            if (!$groupId || !$userEmail || !$currentUserEmail) {
+            if (!$groupId || !$userEmail) {
                 throw new Exception('Missing required fields');
             }
 
+            // [SECURITY FIX] Enforce organization isolation
+            requireCategoryAccess($groupId, $currentOrgUser);
+
             // Check permission (must be admin)
-            if (!hasPermission($pdo, $groupId, $currentUserEmail, 'admin')) {
+            if (!hasPermission($pdo, $groupId, $currentOrgUser['email'], 'admin')) {
                 throw new Exception('Permission denied. Admin role required.');
             }
 
@@ -280,7 +289,7 @@ try {
             }
 
             // Log audit
-            logAudit($pdo, $groupId, $currentUserEmail, 'remove_member', $userEmail);
+            logAudit($pdo, $groupId, $currentOrgUser['email'], 'remove_member', $userEmail);
 
             echo json_encode(['success' => true, 'message' => 'Member removed successfully']);
             break;

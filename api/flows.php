@@ -177,10 +177,12 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
 
             if ($search) {
                 // Search requires Joining Subscribers
-                $stmtCount = $pdo->prepare("SELECT COUNT(DISTINCT sa.subscriber_id) FROM subscriber_activity sa JOIN subscribers s ON sa.subscriber_id = s.id WHERE $whereSql");
+                $stmtCount = $pdo->prepare("SELECT COUNT(DISTINCT sa.subscriber_id) FROM subscriber_activity sa JOIN subscribers s ON sa.subscriber_id = s.id WHERE sa.workspace_id = ? AND $whereSql");
+                $countParams = array_merge([$workspace_id], $countParams);
             } else {
                 // Optimized Count
-                $stmtCount = $pdo->prepare("SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_activity sa WHERE $whereSql");
+                $stmtCount = $pdo->prepare("SELECT COUNT(DISTINCT sa.subscriber_id) FROM subscriber_activity sa WHERE sa.workspace_id = ? AND $whereSql");
+                $countParams = array_merge([$workspace_id], $countParams);
             }
             $stmtCount->execute($countParams);
             $total = (int) $stmtCount->fetchColumn();
@@ -193,7 +195,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                            MAX(sa.os) as os, MAX(sa.browser) as browser, MAX(sa.location) as location
                     FROM subscriber_activity sa
                     JOIN subscribers s ON sa.subscriber_id = s.id
-                    WHERE $whereSql ";
+                    WHERE sa.workspace_id = ? AND $whereSql ";
             // [FIX] ONLY_FULL_GROUP_BY: All non-aggregated columns must be in GROUP BY or wrapped
             // in aggregate functions. sa.ip_address, sa.device_type, sa.os, sa.browser, sa.location
             // were previously bare SELECT columns not in GROUP BY â€” crash on MySQL 5.7/8.0 strict mode.
@@ -254,11 +256,12 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
             $whereSql = implode(" AND ", $whereClauses);
 
             if ($search) {
-                $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM subscriber_activity sa JOIN subscribers s ON sa.subscriber_id = s.id WHERE $whereSql");
+                $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM subscriber_activity sa JOIN subscribers s ON sa.subscriber_id = s.id WHERE sa.workspace_id = ? AND $whereSql");
             } else {
-                $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM subscriber_activity sa WHERE $whereSql");
+                $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM subscriber_activity sa WHERE sa.workspace_id = ? AND $whereSql");
             }
-            $stmtCount->execute($queryParams);
+            $queryParamsExec = array_merge([$workspace_id], $queryParams);
+            $stmtCount->execute($queryParamsExec);
             $total = (int) $stmtCount->fetchColumn();
             $totalPages = ceil($total / $limit);
 
@@ -267,10 +270,10 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                            sa.ip_address, sa.device_type, sa.os, sa.browser, sa.location
                     FROM subscriber_activity sa
                     JOIN subscribers s ON sa.subscriber_id = s.id
-                    WHERE $whereSql
+                    WHERE sa.workspace_id = ? AND $whereSql
                     ORDER BY sa.created_at DESC LIMIT $limit OFFSET $offset";
             $stmt = $pdo->prepare($sql);
-            $stmt->execute($queryParams);
+            $stmt->execute($queryParamsExec);
 
             $participants = array_map(function ($p) {
                 return [
@@ -317,11 +320,12 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
             $whereSql = implode(" AND ", $whereClauses);
 
             if ($search) {
-                $stmtCount = $pdo->prepare("SELECT COUNT(DISTINCT sa.subscriber_id) FROM subscriber_activity sa JOIN subscribers s ON sa.subscriber_id = s.id WHERE $whereSql");
+                $stmtCount = $pdo->prepare("SELECT COUNT(DISTINCT sa.subscriber_id) FROM subscriber_activity sa JOIN subscribers s ON sa.subscriber_id = s.id WHERE sa.workspace_id = ? AND $whereSql");
             } else {
-                $stmtCount = $pdo->prepare("SELECT COUNT(DISTINCT sa.subscriber_id) FROM subscriber_activity sa WHERE $whereSql");
+                $stmtCount = $pdo->prepare("SELECT COUNT(DISTINCT sa.subscriber_id) FROM subscriber_activity sa WHERE sa.workspace_id = ? AND $whereSql");
             }
-            $stmtCount->execute($queryParams);
+            $queryParamsExec = array_merge([$workspace_id], $queryParams);
+            $stmtCount->execute($queryParamsExec);
             $total = (int) $stmtCount->fetchColumn();
             $totalPages = ceil($total / $limit);
 
@@ -329,11 +333,11 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                            sa.type as status, sa.created_at as entered_at, MAX(sa.created_at) as updated_at, MAX(sa.details) as details
                     FROM subscriber_activity sa
                     JOIN subscribers s ON sa.subscriber_id = s.id
-                    WHERE $whereSql
+                    WHERE sa.workspace_id = ? AND $whereSql
                     GROUP BY s.id, sa.reference_id
                     ORDER BY entered_at DESC, updated_at DESC LIMIT $limit OFFSET $offset";
             $stmt = $pdo->prepare($sql);
-            $stmt->execute($queryParams);
+            $stmt->execute($queryParamsExec);
 
             $participants = array_map(function ($p) {
                 return [
@@ -411,14 +415,14 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
             $historySql = "
                 SELECT subscriber_id, MAX(created_at) as entered_at 
                 FROM subscriber_activity
-                WHERE flow_id = ? AND $stepIdClause AND type IN ('$typePlaceholders')
+                WHERE workspace_id = ? AND flow_id = ? AND $stepIdClause AND type IN ('$typePlaceholders')
                 GROUP BY subscriber_id
             ";
 
             // Add search support
             $searchJoin = "";
             $searchWhere = "";
-            $countParams = array_merge([$flowId], $stepIdParams);
+            $countParams = array_merge([$workspace_id, $flowId], $stepIdParams);
 
             if ($search) {
                 $searchJoin = "JOIN subscribers s_search ON sa.subscriber_id = s_search.id";
@@ -434,10 +438,10 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                 $countSql = "SELECT COUNT(DISTINCT sa.subscriber_id) 
                              FROM subscriber_activity sa
                              JOIN subscribers s_search ON sa.subscriber_id = s_search.id
-                             WHERE sa.flow_id = ? AND " . str_replace('reference_id', 'sa.reference_id', $stepIdClause) . " AND sa.type IN ('$typePlaceholders')
+                             WHERE sa.workspace_id = ? AND sa.flow_id = ? AND " . str_replace('reference_id', 'sa.reference_id', $stepIdClause) . " AND sa.type IN ('$typePlaceholders')
                              AND (s_search.email LIKE ? OR s_search.first_name LIKE ? OR s_search.last_name LIKE ?)";
                 if ($branchFilter === 'matched') {
-                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND (b.details LIKE 'Matched:%' OR b.details LIKE 'Condition matched:%'))";
+                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.workspace_id = sa.workspace_id AND b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND (b.details LIKE 'Matched:%' OR b.details LIKE 'Condition matched:%'))";
                     $countParams = array_merge($countParams, $stepIdParams);
                 } elseif ($branchFilter === 'timed_out') {
                     $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.details LIKE 'Timed Out:%')";
@@ -463,25 +467,25 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                 // Direct unique count on Activity table (fast with index)
                 $countSql = "SELECT COUNT(DISTINCT sa.subscriber_id) 
                              FROM subscriber_activity sa
-                             WHERE sa.flow_id = ? AND " . str_replace('reference_id', 'sa.reference_id', $stepIdClause) . " AND sa.type IN ('$typePlaceholders')";
-                $countParamsExec = array_merge([$flowId], $stepIdParams);
+                             WHERE sa.workspace_id = ? AND sa.flow_id = ? AND " . str_replace('reference_id', 'sa.reference_id', $stepIdClause) . " AND sa.type IN ('$typePlaceholders')";
+                $countParamsExec = array_merge([$workspace_id, $flowId], $stepIdParams);
                 if ($branchFilter === 'matched') {
-                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND (b.details LIKE 'Matched:%' OR b.details LIKE 'Condition matched:%'))";
+                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.workspace_id = sa.workspace_id AND b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND (b.details LIKE 'Matched:%' OR b.details LIKE 'Condition matched:%'))";
                     $countParamsExec = array_merge($countParamsExec, $stepIdParams);
                 } elseif ($branchFilter === 'timed_out') {
-                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.details LIKE 'Timed Out:%')";
+                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.workspace_id = sa.workspace_id AND b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.details LIKE 'Timed Out:%')";
                     $countParamsExec = array_merge($countParamsExec, $stepIdParams);
                 } elseif ($branchFilter === 'path_a') {
-                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.details LIKE 'Split Test: A%')";
+                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.workspace_id = sa.workspace_id AND b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.details LIKE 'Split Test: A%')";
                     $countParamsExec = array_merge($countParamsExec, $stepIdParams);
                 } elseif ($branchFilter === 'path_b') {
-                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.details LIKE 'Split Test: B%')";
+                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.workspace_id = sa.workspace_id AND b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.details LIKE 'Split Test: B%')";
                     $countParamsExec = array_merge($countParamsExec, $stepIdParams);
                 } elseif ($branchFilter === 'fallback') {
-                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND (b.details LIKE 'Matched: Fallback%' OR b.details LIKE 'Matched: fallback%'))";
+                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.workspace_id = sa.workspace_id AND b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND (b.details LIKE 'Matched: Fallback%' OR b.details LIKE 'Matched: fallback%'))";
                     $countParamsExec = array_merge($countParamsExec, $stepIdParams);
                 } else {
-                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.type IN ('advanced_condition', 'condition_true', 'condition_false', 'ab_test_a', 'ab_test_b', 'split_test') AND (b.details LIKE ? OR b.details LIKE ?))";
+                    $countSql .= " AND EXISTS (SELECT 1 FROM subscriber_activity b WHERE b.workspace_id = sa.workspace_id AND b.flow_id = sa.flow_id AND b.subscriber_id = sa.subscriber_id AND " . str_replace('reference_id', 'b.reference_id', $stepIdClause) . " AND b.type IN ('advanced_condition', 'condition_true', 'condition_false', 'ab_test_a', 'ab_test_b', 'split_test') AND (b.details LIKE ? OR b.details LIKE ?))";
                     $countParamsExec = array_merge($countParamsExec, $stepIdParams);
                     $countParamsExec[] = "%Matched: $branchFilter%";
                     $countParamsExec[] = "%Condition matched: $branchFilter%";
@@ -499,18 +503,19 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                            u.entered_at,
                            'processed' as status,
                            ? as step_id,
-                           (SELECT details FROM subscriber_activity WHERE flow_id = ? AND subscriber_id = s.id AND " . str_replace('reference_id', 'reference_id', $stepIdClause) . " AND type IN ('advanced_condition', 'condition_true', 'condition_false', 'ab_test_a', 'ab_test_b', 'split_test') ORDER BY id DESC LIMIT 1) as branch_details
+                           (SELECT details FROM subscriber_activity WHERE workspace_id = ? AND flow_id = ? AND subscriber_id = s.id AND " . str_replace('reference_id', 'reference_id', $stepIdClause) . " AND type IN ('advanced_condition', 'condition_true', 'condition_false', 'ab_test_a', 'ab_test_b', 'split_test') ORDER BY id DESC LIMIT 1) as branch_details
                     FROM ($historySql) as u
                     JOIN subscribers s ON u.subscriber_id = s.id
                     LEFT JOIN subscriber_flow_states sfs_exclude 
                         ON u.subscriber_id = sfs_exclude.subscriber_id 
+                        AND sfs_exclude.workspace_id = ?
                         AND sfs_exclude.flow_id = ? 
                         AND " . str_replace('reference_id', 'step_id', $stepIdClause ? "sfs_exclude.$stepIdClause" : '') . "
                         AND sfs_exclude.status IN ('waiting', 'processing')
                     WHERE sfs_exclude.id IS NULL
                     " . ($search ? "AND (s.email LIKE ? OR s.first_name LIKE ? OR s.last_name LIKE ?)" : "");
 
-            $fetchParams = array_merge([$stepId, $flowId], $stepIdParams, [$flowId], $stepIdParams, [$flowId], $stepIdParams);
+            $fetchParams = array_merge([$stepId, $workspace_id, $flowId], $stepIdParams, [$workspace_id, $flowId], $stepIdParams, [$workspace_id, $flowId], $stepIdParams);
             if ($search) {
                 $fetchParams[] = "%$search%";
                 $fetchParams[] = "%$search%";
@@ -927,7 +932,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'estimate-
             foreach ($segCriteriaMap as $segId => $criteria) {
                 if (!$criteria)
                     continue;
-                $res = buildSegmentWhereClause($criteria, $segId);
+                $res = buildSegmentWhereClause($criteria, $workspace_id, $segId);
                 $sql = "SELECT s.email, s.phone_number, s.zalo_user_id FROM subscribers s WHERE s.workspace_id = ? AND s.status != 'unsubscribed' AND " . $res['sql'];
                 $stmtUsers = $pdo->prepare($sql);
                 $stmtUsers->execute(array_merge([$workspace_id], $res['params']));
@@ -986,8 +991,8 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'estimate-
             $chunkedIds = array_chunk($allSubIds, 1000);
             foreach ($chunkedIds as $chunk) {
                 $idPlaceholders = implode(',', array_fill(0, count($chunk), '?'));
-                $stmt = $pdo->prepare("SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_flow_states WHERE flow_id = ? AND subscriber_id IN ($idPlaceholders)");
-                $params = array_merge([$flowId], $chunk);
+                $stmt = $pdo->prepare("SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_flow_states WHERE workspace_id = ? AND flow_id = ? AND subscriber_id IN ($idPlaceholders)");
+                $params = array_merge([$workspace_id, $flowId], $chunk);
                 $stmt->execute($params);
                 $duplicatedCount += (int) $stmt->fetchColumn();
             }
@@ -1065,7 +1070,7 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
             foreach ($segCriteriaMap as $segId => $criteria) {
                 if (!$criteria)
                     continue;
-                $res = buildSegmentWhereClause($criteria, $segId);
+                $res = buildSegmentWhereClause($criteria, $workspace_id, $segId);
                 $sql = "SELECT s.email, s.phone_number, s.zalo_user_id FROM subscribers s WHERE s.workspace_id = ? AND s.status != 'unsubscribed' AND " . $res['sql'];
                 $stmtUsers = $pdo->prepare($sql);
                 $stmtUsers->execute(array_merge([$workspace_id], $res['params']));
@@ -1155,16 +1160,16 @@ if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'manual-ad
 
         if (!empty($zSearchPhones)) {
             $placeholders = implode(',', array_fill(0, count($zSearchPhones), '?'));
-            $stmt = $pdo->prepare("SELECT zalo_user_id, phone_number, manual_email, display_name FROM zalo_subscribers WHERE phone_number IN ($placeholders)");
-            $stmt->execute(array_values($zSearchPhones));
+            $stmt = $pdo->prepare("SELECT zalo_user_id, phone_number, manual_email, display_name FROM zalo_subscribers WHERE phone_number IN ($placeholders) AND workspace_id = ?");
+            $stmt->execute(array_merge(array_values($zSearchPhones), [$workspace_id]));
             foreach ($stmt->fetchAll() as $row)
                 $zaloSubs['phone'][$row['phone_number']] = $row;
         }
 
         if (!empty($zSearchUids)) {
             $placeholders = implode(',', array_fill(0, count($zSearchUids), '?'));
-            $stmt = $pdo->prepare("SELECT zalo_user_id, phone_number, manual_email, display_name FROM zalo_subscribers WHERE zalo_user_id IN ($placeholders)");
-            $stmt->execute(array_values($zSearchUids));
+            $stmt = $pdo->prepare("SELECT zalo_user_id, phone_number, manual_email, display_name FROM zalo_subscribers WHERE zalo_user_id IN ($placeholders) AND workspace_id = ?");
+            $stmt->execute(array_merge(array_values($zSearchUids), [$workspace_id]));
             foreach ($stmt->fetchAll() as $row)
                 $zaloSubs['uid'][$row['zalo_user_id']] = $row;
         }
@@ -2640,17 +2645,32 @@ switch ($method) {
                         }
                     }
 
-                    $stmtStats = $pdo->prepare("SELECT reference_id, type, COUNT(id) as total_count, COUNT(DISTINCT subscriber_id) as unique_count FROM subscriber_activity WHERE flow_id = ? GROUP BY reference_id, type");
-                    $stmtStats->execute([$path]);
-                    $rawStats = $stmtStats->fetchAll();
+                    // [PERF] Boss-grade Optimization: Cache heavy activity stats for 5 minutes
+                    // This prevents O(N^2) load on MySQL for 1B+ subscriber_activity rows.
+                    $cacheKeyStats = "flow_stats_v2_" . md5($path);
+                    $statsData = apcu_fetch_or_callback($cacheKeyStats, function() use ($pdo, $path) {
+                        $stmtStats = $pdo->prepare("SELECT reference_id, type, COUNT(id) as total_count, COUNT(DISTINCT subscriber_id) as unique_count FROM subscriber_activity WHERE flow_id = ? GROUP BY reference_id, type");
+                        $stmtStats->execute([$path]);
+                        $rawStats = $stmtStats->fetchAll();
 
-                    $stmtOcc = $pdo->prepare("SELECT step_id, COUNT(id) as count FROM subscriber_flow_states WHERE flow_id = ? AND status IN ('waiting', 'processing') GROUP BY step_id");
-                    $stmtOcc->execute([$path]);
-                    $rawOcc = $stmtOcc->fetchAll();
+                        $stmtOcc = $pdo->prepare("SELECT step_id, COUNT(id) as count FROM subscriber_flow_states WHERE flow_id = ? AND status IN ('waiting', 'processing') GROUP BY step_id");
+                        $stmtOcc->execute([$path]);
+                        $rawOcc = $stmtOcc->fetchAll();
 
-                    $stmtBranches = $pdo->prepare("SELECT reference_id, details, COUNT(id) as count FROM subscriber_activity WHERE flow_id = ? AND type IN ('condition_true', 'advanced_condition') GROUP BY reference_id, details");
-                    $stmtBranches->execute([$path]);
-                    $rawBranches = $stmtBranches->fetchAll();
+                        $stmtBranches = $pdo->prepare("SELECT reference_id, details, COUNT(id) as count FROM subscriber_activity WHERE flow_id = ? AND type IN ('condition_true', 'advanced_condition') GROUP BY reference_id, details");
+                        $stmtBranches->execute([$path]);
+                        $rawBranches = $stmtBranches->fetchAll();
+
+                        return [
+                            'rawStats' => $rawStats,
+                            'rawOcc' => $rawOcc,
+                            'rawBranches' => $rawBranches
+                        ];
+                    }, 300);
+
+                    $rawStats = $statsData['rawStats'];
+                    $rawOcc = $statsData['rawOcc'];
+                    $rawBranches = $statsData['rawBranches'];
 
                     $stepStatsMap = [];
                     foreach ($rawOcc as $o) {
@@ -3005,7 +3025,7 @@ switch ($method) {
 
                     if ($_snapCriteria) {
                         require_once 'segment_helper.php';
-                        $_snapRes = buildSegmentWhereClause($_snapCriteria, $_snapTargetId);
+                        $_snapRes = buildSegmentWhereClause($_snapCriteria, $workspace_id, $_snapTargetId);
                         if ($_snapRes['sql'] !== '1=1') {
                             $_snapSql    = $_snapRes['sql'];
                             $_snapParams = $_snapRes['params'];
@@ -3082,7 +3102,7 @@ switch ($method) {
 
                         if ($criteria) {
                             require_once 'segment_helper.php';
-                            $res = buildSegmentWhereClause($criteria, $targetId);
+                            $res = buildSegmentWhereClause($criteria, $workspace_id, $targetId);
                             if ($res['sql'] !== '1=1') {
                                 $enrollSql = $res['sql'];
                                 $enrollParams = $res['params'];
@@ -3397,7 +3417,7 @@ switch ($method) {
                                             $stmtSeg->execute([$segId]);
                                             $criteria = $stmtSeg->fetchColumn();
                                             if ($criteria) {
-                                                $res = buildSegmentWhereClause($criteria);
+                                                $res = buildSegmentWhereClause($criteria, $workspace_id);
                                                 if ($res['sql'] !== '1=1') {
                                                     $countWheres[] = $res['sql'];
                                                     foreach ($res['params'] as $p)

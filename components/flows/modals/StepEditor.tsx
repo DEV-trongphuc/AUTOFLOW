@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { Trash2, Save, Sparkles, Beaker, AlertCircle } from 'lucide-react';
 import { FlowStep, Flow } from '../../../types';
@@ -12,19 +10,22 @@ import ConditionConfig from '../config/ConditionConfig';
 import UpdateTagConfig from '../config/UpdateTagConfig';
 import LinkFlowConfig from '../config/LinkFlowConfig';
 import RemoveActionConfig from '../config/RemoveActionConfig';
-import ListActionConfig from '../config/ListActionConfig'; // Import New Component
+import ListActionConfig from '../config/ListActionConfig';
 import AdvancedConditionConfig from '../config/AdvancedConditionConfig';
 import ZaloZNSStepConfig from '../config/ZaloZNSStepConfig';
-import Input from '../../common/Input';
 
 const SplitTestConfig = ({ config, onChange, disabled }: any) => {
   const handleRatioChange = (val: string, isA: boolean) => {
     if (disabled) return;
+    if (val === '') {
+      if (isA) onChange({ ...config, ratioA: '', ratioB: '' });
+      else onChange({ ...config, ratioB: '', ratioA: '' });
+      return;
+    }
     let v = parseInt(val);
-    if (isNaN(v)) v = 50;
-    if (v < 1) v = 1;
-    if (v > 99) v = 99;
-
+    if (isNaN(v)) return;
+    if (v < 0) v = 0;
+    if (v > 100) v = 100;
     if (isA) {
       onChange({ ...config, ratioA: v, ratioB: 100 - v });
     } else {
@@ -43,7 +44,7 @@ const SplitTestConfig = ({ config, onChange, disabled }: any) => {
           <label className="text-[10px] font-black uppercase text-slate-400">Tỷ lệ nhánh A (%)</label>
           <input
             type="number"
-            value={config.ratioA || 50}
+            value={config.ratioA === '' ? '' : (config.ratioA ?? 50)}
             onChange={(e) => handleRatioChange(e.target.value, true)}
             className="w-full p-4 bg-slate-50 border-none rounded-2xl font-black text-xl text-violet-600 outline-none focus:ring-2 focus:ring-violet-200 transition-all"
             disabled={disabled}
@@ -53,7 +54,7 @@ const SplitTestConfig = ({ config, onChange, disabled }: any) => {
           <label className="text-[10px] font-black uppercase text-slate-400">Tỷ lệ nhánh B (%)</label>
           <input
             type="number"
-            value={config.ratioB || 50}
+            value={config.ratioB === '' ? '' : (config.ratioB ?? 50)}
             onChange={(e) => handleRatioChange(e.target.value, false)}
             className="w-full p-4 bg-slate-50 border-none rounded-2xl font-black text-xl text-slate-400 outline-none focus:ring-2 focus:ring-violet-200 transition-all"
             disabled={disabled}
@@ -74,10 +75,12 @@ interface StepEditorProps {
   flow?: Flow;
   allFlows?: Flow[];
   validationErrors?: any[];
-  isFlowArchived?: boolean; // Keep this to disable for archived flows
+  isFlowArchived?: boolean;
 }
 
-const StepEditor: React.FC<StepEditorProps> = ({ step, onClose, onSave, onDelete, onUpdateFlow, currentFlowId, flow, allFlows = [], validationErrors = [], isFlowArchived }) => {
+const StepEditor: React.FC<StepEditorProps> = ({ 
+  step, onClose, onSave, onDelete, onUpdateFlow, flow, allFlows = [], validationErrors = [], isFlowArchived 
+}) => {
   const [localStep, setLocalStep] = useState<FlowStep | null>(step);
   const [showActiveWarning, setShowActiveWarning] = useState(false);
 
@@ -86,7 +89,6 @@ const StepEditor: React.FC<StepEditorProps> = ({ step, onClose, onSave, onDelete
   if (!localStep) return null;
 
   const handleConfigChange = (newConfig: any, newLabel?: string) => {
-    // A Flow being archived means no changes can be made.
     if (isFlowArchived) return;
     setLocalStep(prev => {
       if (!prev) return null;
@@ -98,26 +100,8 @@ const StepEditor: React.FC<StepEditorProps> = ({ step, onClose, onSave, onDelete
 
   let stepErrors = validationErrors.filter(e => e.stepId === localStep.id);
 
-  // Auto-hide validation errors if they are fixed locally before saving
-  if (localStep.type === 'action') {
-    if (localStep.config.subject) stepErrors = stepErrors.filter(e => !e.msg.includes('tiêu đề'));
-    if (localStep.config.templateId || localStep.config.customHtml) stepErrors = stepErrors.filter(e => !e.msg.includes('nội dung'));
-    if (localStep.config.senderEmail) stepErrors = stepErrors.filter(e => !e.msg.includes('người gửi'));
-  } else if (localStep.type === 'zalo_zns') {
-    if (localStep.config.template_id) stepErrors = stepErrors.filter(e => !e.msg.includes('Template'));
-    if (localStep.config.zalo_oa_id) stepErrors = stepErrors.filter(e => !e.msg.includes('OA'));
-    if (localStep.config.senderEmail) stepErrors = stepErrors.filter(e => !e.msg.includes('nguồn Zalo') && !e.msg.includes('nguồn Email'));
-  } else if (localStep.type === 'update_tag') {
-    if (localStep.config.tags && localStep.config.tags.length > 0) stepErrors = stepErrors.filter(e => !e.msg.includes('Tags'));
-  }
-
-  // Logic: Nếu Flow đã có người tham gia (enrolled > 0) VÀ đây là bước Trigger,
-  // không cho sửa Trigger để bảo toàn dữ liệu.
   const hasEnrollment = (flow?.stats?.enrolled || 0) > 0;
   const isTriggerLocked = localStep.type === 'trigger' && hasEnrollment;
-
-  // Determine if all controls in this editor should be disabled.
-  // Disabled if flow is archived OR if it's the trigger and it's locked.
   const isDisabledForEditing = isFlowArchived || isTriggerLocked;
 
   const renderConfig = () => {
@@ -139,10 +123,10 @@ const StepEditor: React.FC<StepEditorProps> = ({ step, onClose, onSave, onDelete
 
   const isTrigger = localStep.type === 'trigger';
 
-  const getHeaderGradient = () => {
+  const getHeaderStyle = () => {
+    if (localStep.type === 'action') return 'from-blue-600 to-indigo-700';
     switch (localStep.type) {
       case 'trigger': return 'from-slate-800 to-slate-950';
-      case 'action': return 'from-blue-50 to-indigo-50'; // Background lighter for better text readability inside nodes, but here it's for header
       case 'update_tag': return 'from-emerald-500 to-emerald-700';
       case 'list_action': return 'from-orange-500 to-orange-700';
       case 'wait': return 'from-amber-400 to-amber-600';
@@ -155,12 +139,6 @@ const StepEditor: React.FC<StepEditorProps> = ({ step, onClose, onSave, onDelete
       default: return 'from-slate-800 to-slate-950';
     }
   };
-
-  // Fixed colors for action step header
-  const getHeaderStyle = () => {
-    if (localStep.type === 'action') return 'from-blue-600 to-indigo-700';
-    return getHeaderGradient();
-  }
 
   const getModalSize = () => {
     if (localStep.type === 'advanced_condition') return 'xl';
@@ -175,28 +153,38 @@ const StepEditor: React.FC<StepEditorProps> = ({ step, onClose, onSave, onDelete
         title={isTrigger ? "Bắt đầu quy trình" : "Cấu hình bước"}
         size={getModalSize()}
         footer={
-          // Footer should be hidden if disabled for editing (archived or locked trigger)
-          !isDisabledForEditing && (
-            <div className="flex justify-between w-full items-center">
-              <div>
-                {!isTrigger && (
-                  <Button variant="danger" size="md" icon={Trash2} onClick={() => {
+          <div className="flex justify-between w-full items-center">
+            <div>
+              {!isTrigger && (
+                <Button 
+                  variant="danger" 
+                  size="md" 
+                  icon={Trash2} 
+                  disabled={isDisabledForEditing}
+                  onClick={() => {
                     if (flow?.status === 'active') {
                       setShowActiveWarning(true);
                       return;
                     }
                     onDelete(localStep.id);
-                  }}>
-                    Xóa bước
-                  </Button>
-                )}
-              </div>
-              <div className="flex gap-3">
-                <Button variant="ghost" size="md" onClick={onClose}>Hủy</Button>
-                <Button size="md" icon={Save} onClick={() => onSave(localStep)} disabled={isTriggerLocked}>Lưu thay đổi</Button>
-              </div>
+                  }}
+                >
+                  Xóa bước
+                </Button>
+              )}
             </div>
-          )
+            <div className="flex gap-3">
+              <Button variant="ghost" size="md" onClick={onClose}>Hủy</Button>
+              <Button 
+                size="md" 
+                icon={Save} 
+                onClick={() => onSave(localStep)} 
+                disabled={isDisabledForEditing}
+              >
+                Lưu thay đổi
+              </Button>
+            </div>
+          </div>
         }
       >
         <div className="space-y-6">
@@ -208,11 +196,25 @@ const StepEditor: React.FC<StepEditorProps> = ({ step, onClose, onSave, onDelete
                 placeholder="Tên gợi nhớ..."
                 value={localStep.label}
                 onChange={(e) => setLocalStep({ ...localStep, label: e.target.value })}
-                disabled={isDisabledForEditing} // Disable if flow archived OR trigger locked
+                disabled={isDisabledForEditing}
               />
               <p className="text-[10px] font-black uppercase text-white/40 mt-3 tracking-[0.3em]">{localStep.type.replace('_', ' ')}</p>
             </div>
           </div>
+
+          {isDisabledForEditing && (
+            <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex gap-3 animate-in fade-in slide-in-from-top-2">
+              <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+              <div className="space-y-1">
+                <p className="text-xs font-black text-amber-800 uppercase tracking-wider">Chế độ xem chi tiết</p>
+                <p className="text-[11px] font-medium text-amber-700 leading-relaxed">
+                  {isFlowArchived 
+                    ? "Flow này đã được lưu trữ (Archived) nên không thể thay đổi cấu hình." 
+                    : "Bước Trigger này không thể sửa đổi vì đã có khách hàng tham gia vào luồng. Hãy nhân bản Flow nếu bạn muốn thay đổi điều kiện bắt đầu."}
+                </p>
+              </div>
+            </div>
+          )}
 
           {stepErrors.length > 0 && (
             <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex gap-3 animate-in fade-in zoom-in-95">
@@ -229,7 +231,6 @@ const StepEditor: React.FC<StepEditorProps> = ({ step, onClose, onSave, onDelete
         </div>
       </Modal>
 
-      {/* ACTIVE FLOW WARNING MODAL */}
       {showActiveWarning && (
         <Modal
           isOpen={true}
@@ -238,16 +239,10 @@ const StepEditor: React.FC<StepEditorProps> = ({ step, onClose, onSave, onDelete
           size="sm"
           footer={<Button onClick={() => setShowActiveWarning(false)} size="md">Đã hiểu</Button>}
         >
-          <div className="space-y-4">
-            <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex gap-3 text-amber-800">
-              <AlertCircle className="w-6 h-6 shrink-0" />
-              <p className="text-sm font-medium leading-relaxed">
-                Flow này đang chạy (Active). Để đảm bảo tính toàn vẹn dữ liệu cho các liên hệ đang chạy trong luồng, bạn <b>không thể xóa bước</b> khi Flow đang hoạt động.
-              </p>
-            </div>
-            <p className="text-xs text-slate-500 text-center font-bold">
-              Vui lòng <span className="text-rose-600 uppercase">Tạm dừng (Pause)</span> Flow trước khi thực hiện hành động này.
-            </p>
+          <div className="p-6 text-center">
+            <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
+            <p className="text-sm font-bold text-slate-800 mb-2">Flow đang hoạt động</p>
+            <p className="text-xs text-slate-500 leading-relaxed">Bạn cần Tạm dừng (Pause) Flow trước khi có thể xóa các bước bên trong để đảm bảo tính toàn vẹn dữ liệu.</p>
           </div>
         </Modal>
       )}

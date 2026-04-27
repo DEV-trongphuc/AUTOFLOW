@@ -25,7 +25,6 @@ const LinkFlowConfig: React.FC<LinkFlowConfigProps> = ({ config, onChange, curre
       if (res.success) {
         const rawF = res.data as any;
         const allFlowsList: Flow[] = Array.isArray(rawF) ? rawF : (rawF?.data || []);
-        // Filter: not current, not archived, must be active, not campaign-triggered
         setFlows(allFlowsList.filter(f => {
             const steps: any[] = Array.isArray(f.steps) ? f.steps : (typeof f.steps === 'string' ? (() => { try { return JSON.parse(f.steps as any); } catch { return []; } })() : []);
             const isSelf = f.id === currentFlowId;
@@ -51,8 +50,8 @@ const LinkFlowConfig: React.FC<LinkFlowConfigProps> = ({ config, onChange, curre
        <div className="p-4 bg-violet-50 text-violet-700 rounded-2xl border border-violet-100 flex gap-3">
           <GitMerge className="w-5 h-5 flex-shrink-0 mt-0.5" />
           <p className="text-xs font-medium leading-relaxed">
-             HÃ nh Ä‘á»™ng nÃ y sáº½ ngáº¯t ká»‹ch báº£n hiá»‡n táº¡i vÃ  Ä‘Æ°a KhÃ¡ch hÃ ng sang má»™t quy trÃ¬nh má»›i.
-             <br/><span className="text-[10px] opacity-70 italic">*Chá»‰ hiá»ƒn thá»‹ cÃ¡c Flow Ä‘ang hoáº¡t Ä‘á»™ng (Active) vÃ  khÃ´ng phá»¥ thuá»™c vÃ o Chiáº¿n dá»‹ch.</span>
+             Hành động này sẽ ngắt kịch bản hiện tại và đưa Khách hàng sang một quy trình mới.
+             <br/><span className="text-[10px] opacity-70 italic">*Chỉ hiển thị các Flow đang hoạt động (Active) và không phụ thuộc vào Chiến dịch.</span>
           </p>
        </div>
 
@@ -60,17 +59,17 @@ const LinkFlowConfig: React.FC<LinkFlowConfigProps> = ({ config, onChange, curre
            <div className="p-4 bg-rose-50 border-2 border-rose-200 rounded-2xl flex items-center gap-3">
                <AlertOctagon className="w-5 h-5 text-rose-600" />
                <div>
-                    <p className="text-xs font-black text-rose-800 uppercase tracking-tight">Lá»—i liÃªn káº¿t</p>
-                    <p className="text-[10px] text-rose-700 font-medium">Flow Ä‘Ã£ chá»n khÃ´ng cÃ²n há»£p lá»‡ (cÃ³ thá»ƒ Ä‘Ã£ bá»‹ táº¯t hoáº·c chuyá»ƒn sang Campaign mode).</p>
+                    <p className="text-xs font-black text-rose-800 uppercase tracking-tight">Lỗi liên kết</p>
+                    <p className="text-[10px] text-rose-700 font-medium">Flow đã chọn không còn hợp lệ (có thể đã bị tắt hoặc chuyển sang Campaign mode).</p>
                </div>
            </div>
        )}
 
        <div>
-          <label className="block text-sm font-bold text-slate-700 mb-3 ml-1">Chá»n ká»‹ch báº£n Ä‘Ã­ch</label>
+          <label className="block text-sm font-bold text-slate-700 mb-3 ml-1">Chọn kịch bản đích</label>
           <div className="mb-4">
             <Input 
-                placeholder="TÃ¬m ká»‹ch báº£n..." 
+                placeholder="Tìm kịch bản..." 
                 icon={Search} 
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -85,7 +84,7 @@ const LinkFlowConfig: React.FC<LinkFlowConfigProps> = ({ config, onChange, curre
              ) : filteredFlows.length === 0 ? (
                  <div className="text-center py-12 border-2 border-dashed border-slate-100 rounded-[32px] bg-slate-50/50">
                      <AlertOctagon className="w-8 h-8 text-slate-200 mx-auto mb-3" />
-                     <p className="text-xs font-bold text-slate-400">KhÃ´ng tÃ¬m tháº¥y ká»‹ch báº£n phÃ¹ há»£p.</p>
+                     <p className="text-xs font-bold text-slate-400">Không tìm thấy kịch bản phù hợp.</p>
                  </div>
              ) : filteredFlows.map((flow) => (
                 <label 
@@ -104,7 +103,7 @@ const LinkFlowConfig: React.FC<LinkFlowConfigProps> = ({ config, onChange, curre
                       <div>
                          <p className="text-sm font-black text-slate-800">{flow.name}</p>
                          <div className="flex items-center gap-2 mt-1">
-                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{flow.steps.length} BÆ¯á»šC</span>
+                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{flow.steps?.length || 0} BƯỚC</span>
                              <Badge variant="success" className="text-[7px] py-0 px-1.5 h-3.5 uppercase">ACTIVE</Badge>
                          </div>
                       </div>
@@ -119,4 +118,3 @@ const LinkFlowConfig: React.FC<LinkFlowConfigProps> = ({ config, onChange, curre
 };
 
 export default LinkFlowConfig;
-

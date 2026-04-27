@@ -242,8 +242,8 @@ $events = $input['events'] ?? [];
 
 try {
     // 1. Identify or Create Visitor
-    $stmtVis = $pdo->prepare("SELECT id, subscriber_id FROM web_visitors WHERE id = ?");
-    $stmtVis->execute([$visitorUuid]);
+    $stmtVis = $pdo->prepare("SELECT id, subscriber_id FROM web_visitors WHERE id = ? AND property_id = ?");
+    $stmtVis->execute([$visitorUuid, $propertyId]);
     $visitorData = $stmtVis->fetch(PDO::FETCH_ASSOC);
 
     // --- SECURITY & CACHE ---
@@ -323,8 +323,9 @@ try {
             $updateParams[] = $city;
         }
 
-        $updateSql .= " WHERE id = ?";
+        $updateSql .= " WHERE id = ? AND property_id = ?";
         $updateParams[] = $visitorUuid;
+        $updateParams[] = $propertyId;
 
         $pdo->prepare($updateSql)->execute($updateParams);
     }
@@ -412,7 +413,7 @@ try {
         // to prevent synchronous table locks and slow response times under high bot traffic.
 
         // Increment visit_count in web_visitors
-        $pdo->prepare("UPDATE web_visitors SET visit_count = visit_count + 1 WHERE id = ?")->execute([$visitorUuid]);
+        $pdo->prepare("UPDATE web_visitors SET visit_count = visit_count + 1 WHERE id = ? AND property_id = ?")->execute([$visitorUuid, $propertyId]);
     } else {
         $sessionId = $session['id'];
         $sessionPageCount = $session['page_count'];
@@ -441,7 +442,8 @@ try {
 
         if (!empty($updates)) {
             $params[] = $sessionId;
-            $sql = "UPDATE web_sessions SET " . implode(', ', $updates) . " WHERE id = ?";
+            $params[] = $propertyId;
+            $sql = "UPDATE web_sessions SET " . implode(', ', $updates) . " WHERE id = ? AND property_id = ?";
             $pdo->prepare($sql)->execute($params);
         }
     }
@@ -546,16 +548,16 @@ try {
                 $zaloSubscriberId = null;
                 // Check by Phone matches Zalo
                 if ($phone) {
-                    $stmtZ = $pdo->prepare("SELECT zalo_user_id FROM zalo_subscribers WHERE phone_number = ? LIMIT 1");
-                    $stmtZ->execute([$phone]);
+                    $stmtZ = $pdo->prepare("SELECT zalo_user_id FROM zalo_subscribers WHERE phone_number = ? AND workspace_id = ? LIMIT 1");
+                    $stmtZ->execute([$phone, $propWorkspaceId]);
                     $zs = $stmtZ->fetchColumn();
                     if ($zs)
                         $zaloSubscriberId = $zs;
                 }
                 // Check by Manual Email matches Zalo
                 if (!$zaloSubscriberId && $email) {
-                    $stmtZ = $pdo->prepare("SELECT zalo_user_id FROM zalo_subscribers WHERE manual_email = ? LIMIT 1");
-                    $stmtZ->execute([$email]);
+                    $stmtZ = $pdo->prepare("SELECT zalo_user_id FROM zalo_subscribers WHERE manual_email = ? AND workspace_id = ? LIMIT 1");
+                    $stmtZ->execute([$email, $propWorkspaceId]);
                     $zs = $stmtZ->fetchColumn();
                     if ($zs)
                         $zaloSubscriberId = $zs;
@@ -563,8 +565,8 @@ try {
 
                 if ($emailSubscriberId) {
                     // Update web_visitor mapping synchronously
-                    $pdo->prepare("UPDATE web_visitors SET subscriber_id = ?, email = ?, phone = ?, zalo_user_id = COALESCE(zalo_user_id, ?) WHERE id = ?")
-                        ->execute([$emailSubscriberId, $email, $phone, $zaloSubscriberId, $visitorUuid]);
+                    $pdo->prepare("UPDATE web_visitors SET subscriber_id = ?, email = ?, phone = ?, zalo_user_id = COALESCE(zalo_user_id, ?) WHERE id = ? AND property_id = ?")
+                        ->execute([$emailSubscriberId, $email, $phone, $zaloSubscriberId, $visitorUuid, $propertyId]);
 
                     // SYNC METADATA TO SUBSCRIBER (New Req)
                     // [FIX] NULLIF wraps each column so empty strings ("") are treated as NULL.
@@ -607,8 +609,9 @@ try {
                     }
                     // NOTE: last_name intentionally NOT updated from tracking payload to prevent duplication
 
-                    $updateSql .= " WHERE id = ?";
+                    $updateSql .= " WHERE id = ? AND workspace_id = ?";
                     $updateParams[] = $emailSubscriberId;
+                    $updateParams[] = $propWorkspaceId;
 
                     $pdo->prepare($updateSql)->execute($updateParams);
 
@@ -655,8 +658,8 @@ try {
                         $pdo->prepare("INSERT INTO subscribers (id, workspace_id, property_id, email, phone_number, first_name, last_name, status, source, last_os, last_browser, last_device, last_city, last_country, city, country, address, last_ip, zalo_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, 'active', 'website_tracking', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
                             ->execute([$newSid, $propWorkspaceId, $propertyId, $email, $phone, $finalFirstName, $finalLastName, $os, $browser, $deviceType, $city, $country, $city, $country, $data['address'] ?? null, $ip, $zaloSubscriberId]);
 
-                        $pdo->prepare("UPDATE web_visitors SET subscriber_id = ?, email = ?, phone = ?, address = ?, zalo_user_id = COALESCE(zalo_user_id, ?) WHERE id = ?")
-                            ->execute([$newSid, $email, $phone, $data['address'] ?? null, $zaloSubscriberId, $visitorUuid]);
+                        $pdo->prepare("UPDATE web_visitors SET subscriber_id = ?, email = ?, phone = ?, address = ?, zalo_user_id = COALESCE(zalo_user_id, ?) WHERE id = ? AND property_id = ?")
+                            ->execute([$newSid, $email, $phone, $data['address'] ?? null, $zaloSubscriberId, $visitorUuid, $propertyId]);
 
                         $emailSubscriberId = $newSid;
                         $subscriberFirstName = $finalFirstName;
@@ -678,15 +681,15 @@ try {
                         ]);
                     } else {
                         // Just update visitor columns without creating subscriber
-                        $pdo->prepare("UPDATE web_visitors SET email = ?, phone = ?, zalo_user_id = COALESCE(zalo_user_id, ?) WHERE id = ?")
-                            ->execute([$email, $phone, $zaloSubscriberId, $visitorUuid]);
+                        $pdo->prepare("UPDATE web_visitors SET email = ?, phone = ?, zalo_user_id = COALESCE(zalo_user_id, ?) WHERE id = ? AND property_id = ?")
+                            ->execute([$email, $phone, $zaloSubscriberId, $visitorUuid, $propertyId]);
                     }
                 }
 
                 // Refresh names/avatar for response (Try sync first, fallback to generic)
                 if ($emailSubscriberId) {
-                    $stmtRef = $pdo->prepare("SELECT first_name, last_name, avatar FROM subscribers WHERE id = ?");
-                    $stmtRef->execute([$emailSubscriberId]);
+                    $stmtRef = $pdo->prepare("SELECT first_name, last_name, avatar FROM subscribers WHERE id = ? AND workspace_id = ?");
+                    $stmtRef->execute([$emailSubscriberId, $propWorkspaceId]);
                     $ref = $stmtRef->fetch(PDO::FETCH_ASSOC);
                     if ($ref) {
                         $subscriberFirstName = $ref['first_name'] ?? null;
@@ -764,11 +767,11 @@ try {
         //   e.g. old=0, addedCount=1 → page_count becomes 1 → IF((1+1)>1) → marks as non-bounce ❌
         // AFTER  (CORRECT): IF(page_count > 1, ...) — uses the newly updated value
         //   e.g. old=0, addedCount=1 → page_count becomes 1 → IF(1>1) → stays bounce ✅
-        $pdo->prepare("UPDATE web_sessions SET page_count = page_count + ?, is_bounce = IF(page_count > 1, 0, is_bounce) WHERE id = ?")->execute([$addedCount, $sessionId]);
+        $pdo->prepare("UPDATE web_sessions SET page_count = page_count + ?, is_bounce = IF(page_count > 1, 0, is_bounce) WHERE id = ? AND property_id = ?")->execute([$addedCount, $sessionId, $propertyId]);
 
         // Explicitly clear bounce if interaction occurred (handled below, but good to ensure logic consistency)
         if ($hasInteraction) {
-            $pdo->prepare("UPDATE web_sessions SET is_bounce = 0 WHERE id = ?")->execute([$sessionId]);
+            $pdo->prepare("UPDATE web_sessions SET is_bounce = 0 WHERE id = ? AND property_id = ?")->execute([$sessionId, $propertyId]);
         }
     }
 
@@ -776,8 +779,8 @@ try {
     // Previously queried twice — now query ONCE here and reuse $lastPvId in both places.
     $lastPvId = null;
     if ($sessionId) {
-        $stmtLastPv = $pdo->prepare("SELECT id FROM web_page_views WHERE session_id = ? ORDER BY id DESC LIMIT 1");
-        $stmtLastPv->execute([$sessionId]);
+        $stmtLastPv = $pdo->prepare("SELECT id FROM web_page_views WHERE session_id = ? AND property_id = ? ORDER BY id DESC LIMIT 1");
+        $stmtLastPv->execute([$sessionId, $propertyId]);
         $lastPvId = $stmtLastPv->fetchColumn() ?: null;
     }
 
@@ -866,7 +869,7 @@ try {
         }
 
         if ($hasInteraction) {
-            $pdo->prepare("UPDATE web_sessions SET is_bounce = 0 WHERE id = ?")->execute([$sessionId]);
+            $pdo->prepare("UPDATE web_sessions SET is_bounce = 0 WHERE id = ? AND property_id = ?")->execute([$sessionId, $propertyId]);
         }
     } // end if (!empty($otherEvents))
 

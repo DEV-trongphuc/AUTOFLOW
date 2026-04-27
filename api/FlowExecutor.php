@@ -178,23 +178,23 @@ class FlowExecutor
                     // would find 'receive_email' from their 1st enrollment (same step_id) and
                     // SILENTLY SKIP every email step Ã¢â‚¬â€ never sending on re-enrollment.
                     try {
-                        $dedupParams = [$subscriberId, $currentStepId];
+                        $dedupParams = [$subscriber['workspace_id'], $subscriberId, $currentStepId];
                         $dedupCreatedAtClause = '';
                         if (!empty($queueCreatedAt)) {
                             $dedupCreatedAtClause = ' AND created_at >= ?';
                             $dedupParams[] = $queueCreatedAt;
                         }
-                        $bufferParams = [$subscriberId, $currentStepId];
+                        $bufferParams = [$subscriber['workspace_id'], $subscriberId, $currentStepId];
                         if (!empty($queueCreatedAt)) {
                             $bufferParams[] = $queueCreatedAt;
                         }
 
                         $stmtDedup = $this->pdo->prepare("
                             SELECT 1 FROM subscriber_activity
-                            WHERE subscriber_id = ? AND type IN ('receive_email','failed_email') AND reference_id = ?{$dedupCreatedAtClause}
+                            WHERE workspace_id = ? AND subscriber_id = ? AND type IN ('receive_email','failed_email') AND reference_id = ?{$dedupCreatedAtClause}
                             UNION ALL
                             SELECT 1 FROM activity_buffer
-                            WHERE subscriber_id = ? AND type IN ('receive_email','failed_email') AND reference_id = ?{$dedupCreatedAtClause}
+                            WHERE workspace_id = ? AND subscriber_id = ? AND type IN ('receive_email','failed_email') AND reference_id = ?{$dedupCreatedAtClause}
                             LIMIT 1
                         ");
                         $stmtDedup->execute(array_merge($dedupParams, $bufferParams));
@@ -332,8 +332,8 @@ class FlowExecutor
                     // [PERF #6] Fetch zalo_user_id AND last_interaction_at in a single query.
                     // Previously: 2 identical SELECT queries with same WHERE condition.
                     // Saves 1 DB round-trip per Zalo CS step execution.
-                    $stmtZ = $this->pdo->prepare("SELECT zalo_user_id, last_interaction_at FROM zalo_subscribers WHERE id = ? OR zalo_user_id = ? LIMIT 1");
-                    $stmtZ->execute([$subscriberId, $subscriberId]);
+                    $stmtZ = $this->pdo->prepare("SELECT zalo_user_id, last_interaction_at FROM zalo_subscribers WHERE workspace_id = ? AND (id = ? OR zalo_user_id = ?) LIMIT 1");
+                    $stmtZ->execute([$subscriber['workspace_id'], $subscriberId, $subscriberId]);
                     $zaloRow = $stmtZ->fetch();
                     $zaloUserId = $zaloRow['zalo_user_id'] ?? null;
                     $lastInteract = $zaloRow['last_interaction_at'] ?? null;
@@ -456,10 +456,10 @@ class FlowExecutor
                         }
                         $stmtZnsDedup = $this->pdo->prepare("
                             SELECT 1 FROM subscriber_activity
-                            WHERE subscriber_id = ? AND type IN ('zns_sent','zns_failed') AND reference_id = ?{$znsDedupCreatedAt}
+                            WHERE workspace_id = ? AND subscriber_id = ? AND type IN ('zns_sent','zns_failed') AND reference_id = ?{$znsDedupCreatedAt}
                             LIMIT 1
                         ");
-                        $stmtZnsDedup->execute($znsDedupParams);
+                        $stmtZnsDedup->execute(array_merge([$subscriber['workspace_id']], $znsDedupParams));
                         if ($stmtZnsDedup->fetchColumn()) {
                             $logs[] = "  -> [IDEMPOTENCY] ZNS already sent/failed for sub {$subscriberId} in this enrollment. Advancing.";
                             $nextStepId = $step['nextStepId'] ?? null;
@@ -874,8 +874,8 @@ class FlowExecutor
                         if (isset(self::$profileCache['_survey_responses'][$cacheKey])) {
                             $latestResp = self::$profileCache['_survey_responses'][$cacheKey];
                         } else {
-                            $sqlResp = "SELECT * FROM survey_responses WHERE subscriber_id = ?";
-                            $paramsResp = [$subscriberId];
+                            $sqlResp = "SELECT * FROM survey_responses WHERE workspace_id = ? AND subscriber_id = ?";
+                            $paramsResp = [$subscriber['workspace_id'], $subscriberId];
                             
                             // [FIX] Allow 1 hour grace period before queue creation to catch the survey response that triggered the flow
                             $graceStartTime = !empty($queueCreatedAt) ? $queueCreatedAt : $startTime;
@@ -1012,8 +1012,8 @@ class FlowExecutor
                             }
                         }
                     } else {
-                        $sqlCheck = "SELECT id, type, details, reference_id, campaign_id FROM subscriber_activity WHERE subscriber_id = ?";
-                        $params = [$subscriberId];
+                        $sqlCheck = "SELECT id, type, details, reference_id, campaign_id FROM subscriber_activity WHERE workspace_id = ? AND subscriber_id = ?";
+                        $params = [$subscriber['workspace_id'], $subscriberId];
                         $placeholders = implode(',', array_fill(0, count($types), '?'));
                         $sqlCheck .= " AND type IN ($placeholders)";
                         foreach ($types as $t)
@@ -1246,16 +1246,16 @@ class FlowExecutor
                             continue;
 
                         if ($action === 'remove') {
-                            $this->pdo->prepare("DELETE FROM subscriber_tags WHERE subscriber_id = ? AND tag_id = ?")->execute([$subscriberId, $tagId]);
+                            $this->pdo->prepare("DELETE FROM subscriber_tags WHERE workspace_id = ? AND subscriber_id = ? AND tag_id = ?")->execute([$tagWorkspaceId, $subscriberId, $tagId]);
                         } else {
-                            $stmtIn = $this->pdo->prepare("INSERT IGNORE INTO subscriber_tags (subscriber_id, tag_id) VALUES (?, ?)");
-                            $stmtIn->execute([$subscriberId, $tagId]);
+                            $stmtIn = $this->pdo->prepare("INSERT IGNORE INTO subscriber_tags (workspace_id, subscriber_id, tag_id) VALUES (?, ?, ?)");
+                            $stmtIn->execute([$tagWorkspaceId, $subscriberId, $tagId]);
                             if ($stmtIn->rowCount() > 0) {
                                 dispatchFlowWorker($this->pdo, 'flows', [
                                     'trigger_type' => 'tag', 
                                     'target_id' => $tagName, 
                                     'subscriber_id' => $subscriberId,
-                                    'workspace_id' => $tagWorkspaceId // Use the already resolved workspaceId
+                                    'workspace_id' => $tagWorkspaceId
                                 ]);
                             }
                         }
@@ -1272,13 +1272,13 @@ class FlowExecutor
                     $workspaceId = $subscriber['workspace_id'] ?? null;
                     if ($lid) {
                         if ($action === 'add') {
-                            $stmtL = $this->pdo->prepare("INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id) VALUES (?, ?)");
-                            $stmtL->execute([$subscriberId, $lid]);
+                            $stmtL = $this->pdo->prepare("INSERT IGNORE INTO subscriber_lists (workspace_id, subscriber_id, list_id) VALUES (?, ?, ?)");
+                            $stmtL->execute([$workspaceId, $subscriberId, $lid]);
                             if ($stmtL->rowCount() > 0) {
                                 enrollSubscribersBulk($this->pdo, [$subscriberId], 'list', $lid, $workspaceId);
                             }
                         } else {
-                            $this->pdo->prepare("DELETE FROM subscriber_lists WHERE subscriber_id = ? AND list_id = ?")->execute([$subscriberId, $lid]);
+                            $this->pdo->prepare("DELETE FROM subscriber_lists WHERE workspace_id = ? AND subscriber_id = ? AND list_id = ?")->execute([$workspaceId, $subscriberId, $lid]);
                         }
                         logActivity($this->pdo, $subscriberId, 'list_action', $currentStepId, "List Action", "$action list $lid", $flowId, null, [], $subscriber['workspace_id']);
                         $logs[] = "  -> List action done.";
@@ -1290,31 +1290,25 @@ class FlowExecutor
                 case 'remove_action':
                     $aType = $step['config']['actionType'] ?? '';
                     if ($aType === 'unsubscribe') {
-                        $this->pdo->prepare("UPDATE subscribers SET status='unsubscribed' WHERE id=?")->execute([$subscriberId]);
+                        $this->pdo->prepare("UPDATE subscribers SET status='unsubscribed' WHERE id=? AND workspace_id = ?")->execute([$subscriberId, $subscriber['workspace_id']]);
                         logActivity($this->pdo, $subscriberId, 'unsubscribe', $currentStepId, $flowName, "Unsubscribed via flow", $flowId, null, [], $subscriber['workspace_id']);
                     } elseif ($aType === 'delete_contact') {
-                        // [FIX] Log BEFORE delete Ã¢â‚¬â€ logActivity would fail (FK/orphan) if run after DELETE
+                        // [FIX] Log BEFORE delete Ã¢â‚¬â€  logActivity would fail (FK/orphan) if run after DELETE
                         logActivity($this->pdo, $subscriberId, 'delete_contact', $currentStepId, $flowName, "Deleted via flow", $flowId, null, [], $subscriber['workspace_id']);
                         // Delete all related records to prevent orphan data
-                        $this->pdo->prepare("DELETE FROM subscriber_lists WHERE subscriber_id=?")->execute([$subscriberId]);
-                        $this->pdo->prepare("DELETE FROM subscriber_tags WHERE subscriber_id=?")->execute([$subscriberId]);
-                        $this->pdo->prepare("DELETE FROM subscriber_flow_states WHERE subscriber_id=?")->execute([$subscriberId]);
-                        $this->pdo->prepare("DELETE FROM subscriber_activity WHERE subscriber_id=?")->execute([$subscriberId]);
+                        $this->pdo->prepare("DELETE FROM subscriber_lists WHERE workspace_id = ? AND subscriber_id=?")->execute([$subscriber['workspace_id'], $subscriberId]);
+                        $this->pdo->prepare("DELETE FROM subscriber_tags WHERE workspace_id = ? AND subscriber_id=?")->execute([$subscriber['workspace_id'], $subscriberId]);
+                        $this->pdo->prepare("DELETE FROM subscriber_flow_states WHERE workspace_id = ? AND subscriber_id=?")->execute([$subscriber['workspace_id'], $subscriberId]);
+                        $this->pdo->prepare("DELETE FROM subscriber_activity WHERE workspace_id = ? AND subscriber_id=?")->execute([$subscriber['workspace_id'], $subscriberId]);
                         // [FIX QUAL-5] Also clean up orphan records in related log tables
-                        // to prevent ghost data accumulation after contact deletion.
-                        $this->pdo->prepare("DELETE FROM mail_delivery_logs WHERE subscriber_id=?")->execute([$subscriberId]);
-                        $this->pdo->prepare("DELETE FROM activity_buffer WHERE subscriber_id=?")->execute([$subscriberId]);
-                        // [FIX F-1] Remove orphan ZNS delivery logs Ã¢â‚¬â€ without this, deleting subscriber
-                        // can fail silently if FK constraint exists on zalo_delivery_logs.subscriber_id.
-                        $this->pdo->prepare("DELETE FROM zalo_delivery_logs WHERE subscriber_id=?")->execute([$subscriberId]);
-                        // [FIX V3-M2] Unlink subscriber from zalo_subscribers to prevent ghost data.
-                        // zalo_subscribers has no FK CASCADE on subscriber_id Ã¢â‚¬â€ rows would orphan silently,
-                        // causing this Zalo contact to appear "linked" to a deleted account.
-                        $this->pdo->prepare("UPDATE zalo_subscribers SET subscriber_id = NULL WHERE subscriber_id = ?")->execute([$subscriberId]);
-                        // [FIX F-4] Reclaim voucher codes so they can be reassigned to future subscribers.
-                        // Without this, claimed codes orphan with a deleted subscriber_id, wasting the pool.
-                        $this->pdo->prepare("UPDATE voucher_codes SET subscriber_id = NULL, status = 'unused', sent_at = NULL WHERE subscriber_id = ? AND status = 'available'")->execute([$subscriberId]);
-                        $this->pdo->prepare("DELETE FROM subscribers WHERE id=?")->execute([$subscriberId]);
+                        $this->pdo->prepare("DELETE FROM mail_delivery_logs WHERE workspace_id = ? AND subscriber_id=?")->execute([$subscriber['workspace_id'], $subscriberId]);
+                        $this->pdo->prepare("DELETE FROM activity_buffer WHERE workspace_id = ? AND subscriber_id=?")->execute([$subscriber['workspace_id'], $subscriberId]);
+                        $this->pdo->prepare("DELETE FROM zalo_delivery_logs WHERE workspace_id = ? AND subscriber_id=?")->execute([$subscriber['workspace_id'], $subscriberId]);
+                        // [FIX V3-M2] Unlink subscriber from zalo_subscribers
+                        $this->pdo->prepare("UPDATE zalo_subscribers SET subscriber_id = NULL WHERE workspace_id = ? AND subscriber_id = ?")->execute([$subscriber['workspace_id'], $subscriberId]);
+                        // [FIX F-4] Reclaim voucher codes
+                        $this->pdo->prepare("UPDATE voucher_codes SET subscriber_id = NULL, status = 'unused', sent_at = NULL WHERE workspace_id = ? AND subscriber_id = ? AND status = 'available'")->execute([$subscriber['workspace_id'], $subscriberId]);
+                        $this->pdo->prepare("DELETE FROM subscribers WHERE id=? AND workspace_id = ?")->execute([$subscriberId, $subscriber['workspace_id']]);
                     }
                     $this->bufferStatsUpdate('flows', $flowId, 'stat_completed', 1, $subscriber['workspace_id']);
                     $shouldContinueChain = false;
@@ -1349,16 +1343,16 @@ class FlowExecutor
                                 $canEnroll = false;
                                 if ($lFrequency === 'one-time') {
                                     // One-time: only enroll if NEVER been in this flow before
-                                    $stmtCheck = $this->pdo->prepare("SELECT COUNT(*) FROM subscriber_flow_states WHERE subscriber_id = ? AND flow_id = ?");
-                                    $stmtCheck->execute([$subscriberId, $linkedId]);
+                                    $stmtCheck = $this->pdo->prepare("SELECT COUNT(*) FROM subscriber_flow_states WHERE workspace_id = ? AND subscriber_id = ? AND flow_id = ?");
+                                    $stmtCheck->execute([$subscriber['workspace_id'], $subscriberId, $linkedId]);
                                     $canEnroll = ($stmtCheck->fetchColumn() == 0);
                                 } else {
                                     // Recurring: block if currently active or within cooldown
                                     $stmtCheck = $this->pdo->prepare(
-                                        "SELECT COUNT(*) FROM subscriber_flow_states WHERE subscriber_id = ? AND flow_id = ?
+                                        "SELECT COUNT(*) FROM subscriber_flow_states WHERE workspace_id = ? AND subscriber_id = ? AND flow_id = ?
                                          AND (status IN ('waiting', 'processing') OR updated_at > DATE_SUB(NOW(), INTERVAL ? HOUR))"
                                     );
-                                    $stmtCheck->execute([$subscriberId, $linkedId, $lCooldownHours]);
+                                    $stmtCheck->execute([$subscriber['workspace_id'], $subscriberId, $linkedId, $lCooldownHours]);
                                     $canEnroll = ($stmtCheck->fetchColumn() == 0);
                                 }
 

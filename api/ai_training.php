@@ -425,6 +425,9 @@ try {
                     WHERE d.is_global_workspace = 1 AND d.is_active = 1";
             $params = [];
             if (!empty($groupId)) {
+                // [SECURITY FIX] Verify access to the requested group
+                requireCategoryAccess(resolvePropertyId($pdo, $groupId), $currentOrgUser);
+
                 $sql .= " AND d.property_id IN (SELECT b2.id FROM ai_chatbots b2 WHERE b2.category_id = ?)";
                 $params[] = $groupId;
             }
@@ -964,10 +967,10 @@ try {
             }
 
             // 1. Update Parent Doc (Persistence)
-            $pdo->prepare("UPDATE ai_training_docs SET tags = ? WHERE id = ?")->execute([$tags, $docId]);
+            $pdo->prepare("UPDATE ai_training_docs SET tags = ? WHERE id = ? AND property_id = ?")->execute([$tags, $docId, $propertyId]);
 
             // 2. Update Chunks (Runtime)
-            $pdo->prepare("UPDATE ai_training_chunks SET tags = ? WHERE doc_id = ?")->execute([$tags, $docId]);
+            $pdo->prepare("UPDATE ai_training_chunks SET tags = ? WHERE doc_id = ? AND property_id = ?")->execute([$tags, $docId, $propertyId]);
 
             echo json_encode(['success' => true]);
             exit;

@@ -92,7 +92,7 @@ if ($method === 'POST') {
                 return;
             }
 
-            $resS = buildSegmentWhereClause($criteria, $sourceId);
+            $resS = buildSegmentWhereClause($criteria, $workspace_id, $sourceId);
             // Base select from subscribers table for segments
             $sql = "SELECT s.id FROM subscribers s WHERE s.workspace_id = ? AND s.status IN ('active', 'lead', 'customer') AND " . $resS['sql'];
             $params = array_merge([$workspace_id], $resS['params']);
@@ -252,7 +252,7 @@ if ($method === 'POST') {
                 $stmtS = $pdo->prepare("SELECT criteria FROM segments WHERE id = ?");
                 $stmtS->execute([$sourceId]);
                 $criteria = $stmtS->fetchColumn();
-                $resCount = buildSegmentWhereClause($criteria, $sourceId);
+                $resCount = buildSegmentWhereClause($criteria, $workspace_id, $sourceId);
                 $stmtC = $pdo->prepare("SELECT COUNT(*) FROM subscribers s WHERE s.workspace_id = ? AND s.status IN ('active', 'lead', 'customer') AND " . $resCount['sql']);
                 $stmtC->execute(array_merge([$workspace_id], $resCount['params']));
                 $newCount = (int) $stmtC->fetchColumn();
