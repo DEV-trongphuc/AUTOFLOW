@@ -532,16 +532,16 @@ try {
             $activeApiKey = (!empty($settings['gemini_api_key'])) ? $settings['gemini_api_key'] : $GEMINI_API_KEY;
             // Ensure we use a model that supports caching (e.g. flash-1.5, pro-1.5). Default to user choice or flash.
             // Model name must have 'models/' prefix for caching API? Usually yes.
-            // If user stored 'gemini-1.5-flash', we need 'models/gemini-1.5-flash-001' typically.
+            // If user stored 'gemini-2.5-flash-lite', we need 'models/gemini-2.5-flash-lite-001' typically.
             // For safety, let's hardcode to a known cache-compatible model or use the setting with prefix.
-            $modelName = $settings['model_id'] ?? 'gemini-1.5-flash';
+            $modelName = $settings['model_id'] ?? 'gemini-2.5-flash-lite';
             if (strpos($modelName, 'models/') === false) {
                 $modelName = 'models/' . $modelName; // rough fix, might need specific version mapping
             }
-            // Caching usually requires explicit version e.g. gemini-1.5-flash-001. 
-            // Let's assume the user selects a valid one or we force 'models/gemini-1.5-flash-001' for now if generic.
-            if ($modelName == 'models/gemini-1.5-flash')
-                $modelName = 'models/gemini-1.5-flash-001';
+            // Caching usually requires explicit version e.g. gemini-2.5-flash-lite-001. 
+            // Let's assume the user selects a valid one or we force 'models/gemini-2.5-flash-lite-001' for now if generic.
+            if ($modelName == 'models/gemini-2.5-flash-lite')
+                $modelName = 'models/gemini-2.5-flash-lite-001';
 
 
             // 2. Fetch ALL Active Content

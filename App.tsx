@@ -84,7 +84,7 @@ if (
         role: 'admin', status: 'approved', isGuest: false
     }));
     localStorage.setItem('isAuthenticated', 'true');
-    localStorage.setItem('auth_fix_v3_logout_done_prod', 'true');
+    localStorage.setItem('auth_fix_v4_logout_done_prod', 'true');
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -221,14 +221,14 @@ const App: React.FC = () => {
             }));
             localStorage.setItem('isAuthenticated', 'true');
             // Also reset the force-logout flag so it doesn't kick the session out
-            localStorage.setItem('auth_fix_v3_logout_done_prod', 'true');
+            localStorage.setItem('auth_fix_v4_logout_done_prod', 'true');
             return;
         }
         // ─────────────────────────────────────────────────────────────────────
 
         // --- FORCE ONE-TIME LOGOUT TO FIX CORRUPTED SESSIONS ---
-        if (!localStorage.getItem('auth_fix_v3_logout_done_prod')) {
-            localStorage.setItem('auth_fix_v3_logout_done_prod', 'true');
+        if (!localStorage.getItem('auth_fix_v4_logout_done_prod')) {
+            localStorage.setItem('auth_fix_v4_logout_done_prod', 'true');
             if (localStorage.getItem('user')) {
                 localStorage.removeItem('user');
                 localStorage.removeItem('isAuthenticated');
@@ -273,7 +273,11 @@ const App: React.FC = () => {
             // [ISOLATION] Never ping production backend from DEMO_MODE
             if (DEMO_MODE) return;
             if (document.visibilityState !== 'visible') return;
-            fetch(`${apiBase}/auth.php?action=ping`, { method: 'GET', credentials: 'include' }).catch(() => { });
+            fetch(`${apiBase}/auth.php?action=ping`, { 
+                method: 'GET', 
+                headers: { 'Accept': 'application/json' },
+                credentials: 'include' 
+            }).catch(() => { });
         };
 
         // Immediate first ping, then every 60 seconds

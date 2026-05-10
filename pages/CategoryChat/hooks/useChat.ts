@@ -167,8 +167,10 @@ export function useChat(user: any) {
         const requestId = requestIdRef.current;
 
         try {
-            // FIX #1: Pass AbortSignal so the network request is actually cancelled
-            const data = await api.post<any>('ai_org_chatbot?stream=0', {
+            let fullBotRes = "";
+            let currentQuickActions: string[] = [];
+
+            await api.stream('ai_org_chatbot?stream=1', {
                 message,
                 visitor_id: sessionId,
                 property_id: activeBot.id,
@@ -199,48 +201,71 @@ export function useChat(user: any) {
                         cite_instruction: 'Khi trả lời, chỉ trích dẫn tài liệu nếu thông tin đó thực sự đến từ tài liệu trong knowledge base. Chỉ dùng đường link tài liệu có trong dữ liệu đã cung cấp, không tự tạo hoặc gợi ý link bên ngoài. Không bắt buộc mỗi câu phải có trích dẫn — chỉ trích dẫn khi thực sự cần thiết và có nguồn gốc rõ ràng.'
                     })
                 }
-            }, { signal: controller.signal });
-
-            if (data.success && data.data) {
-                // FIX #1: Bail if a newer request has taken over
+            }, (rawChunk) => {
                 if (requestId !== requestIdRef.current || !mountedRef.current) return;
 
-                const result = data.data;
-                const msgContent = result.message || '';
+                // Process EventStream format: "data: {...}\n\n"
+                const lines = rawChunk.split('\n');
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const content = line.substring(6).trim();
+                        if (content === '[DONE]') break;
 
-                let extractedActions: string[] = result.quick_actions || [];
-                if (extractedActions.length === 0) {
-                    const actionMatch = msgContent.match(/\[(?:ACTIONS|ACTION|BUTTONS|OPTIONS):?([\s\S]*?)\]/iu);
-                    if (actionMatch && actionMatch[1]) {
-                        extractedActions = actionMatch[1].split('|').map((a: string) => a.trim()).filter((a: string) => a.length > 0);
+                        try {
+                            const data = JSON.parse(content);
+
+                            if (data.conversation_id) {
+                                setRemoteConvId(data.conversation_id);
+                            }
+
+                            if (data.text) {
+                                fullBotRes += data.text;
+                                setMessages(prev => prev.map(m =>
+                                    m.id === assistantId ? { ...m, content: fullBotRes } : m
+                                ));
+                            }
+
+                            if (data.quick_actions) {
+                                currentQuickActions = data.quick_actions;
+                                setMessages(prev => prev.map(m =>
+                                    m.id === assistantId ? { ...m, quickActions: currentQuickActions } : m
+                                ));
+                            }
+
+                            if (data.status === 'generating_image') {
+                                setIsGeneratingImage(true);
+                            }
+
+                            if (data.image_generated && data.final_message) {
+                                fullBotRes = data.final_message;
+                                setIsGeneratingImage(false);
+                                setMessages(prev => prev.map(m =>
+                                    m.id === assistantId ? { ...m, content: fullBotRes } : m
+                                ));
+                            }
+
+                            if (data.error) {
+                                throw new Error(data.error);
+                            }
+                        } catch (e) {
+                            // Non-JSON or partial chunk, skip
+                            console.warn("SSE Parse Error:", content, e);
+                        }
                     }
                 }
+            }, { signal: controller.signal });
 
-                // FIX #2: Guard inside the setter — atomic, impossible for stale closure to sneak through
-                setMessages(prev => {
-                    if (requestId !== requestIdRef.current || !mountedRef.current) return prev;
-                    return prev.map(m =>
-                        m.id === assistantId ? {
-                            ...m,
-                            content: msgContent,
-                            quickActions: extractedActions.length > 0 ? extractedActions : m.quickActions
-                        } : m
-                    );
-                });
-
-                if (result.conversation_id) setRemoteConvId(result.conversation_id);
-
+            // Finalizing response
+            if (requestId === requestIdRef.current && mountedRef.current) {
                 // Code block capture (now that response is complete)
-                if (isCodeMode && msgContent.includes('```')) {
-                    handleAutoCaptureCode(msgContent, assistantId);
+                if (isCodeMode && fullBotRes.includes('```')) {
+                    handleAutoCaptureCode(fullBotRes, assistantId);
                 }
 
                 // TTS if enabled
                 if (autoTTS) {
-                    speakMessage(msgContent);
+                    speakMessage(fullBotRes);
                 }
-            } else if (data.message || data.error) {
-                throw new Error(data.message || data.error);
             }
 
         } catch (e: any) {

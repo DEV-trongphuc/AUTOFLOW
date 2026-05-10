@@ -408,7 +408,7 @@ const Audience: React.FC = () => {
         try {
             const res = await api.get<any[]>(`integrations?t=${Date.now()}`);
             if (res.success) {
-                setIntegrations(res.data);
+                setIntegrations(Array.isArray(res.data) ? res.data : ((res.data as any)?.data || []));
             }
             if (!silent) setLoading(false);
             return res.success ? res.data : null;
@@ -464,18 +464,20 @@ const Audience: React.FC = () => {
             ]);
 
             if (segRes.success) {
-                setSegments(segRes.data);
-                setAllSegments(segRes.data);
-                setSegmentsPagination(prev => ({ ...prev, total: segRes.data.length }));
+                const segData = Array.isArray(segRes.data) ? segRes.data : ((segRes.data as any)?.data || []);
+                setSegments(segData);
+                setAllSegments(segData);
+                setSegmentsPagination(prev => ({ ...prev, total: (segRes.data as any)?.pagination?.total || segData.length }));
             }
             if (listRes.success) {
-                setStaticLists(listRes.data);
-                setAllStaticLists(listRes.data);
-                setListsPagination(prev => ({ ...prev, total: listRes.data.length }));
+                const listData = Array.isArray(listRes.data) ? listRes.data : ((listRes.data as any)?.data || []);
+                setStaticLists(listData);
+                setAllStaticLists(listData);
+                setListsPagination(prev => ({ ...prev, total: (listRes.data as any)?.pagination?.total || listData.length }));
             }
             if (flowRes.success) { const rawF = flowRes.data as any; setFlows(Array.isArray(rawF) ? rawF : (rawF?.data || [])); }
-            if (tagRes.success) setTags(tagRes.data);
-            if (integRes.success) setIntegrations(integRes.data);
+            if (tagRes.success) setTags(Array.isArray(tagRes.data) ? tagRes.data : ((tagRes.data as any)?.data || []));
+            if (integRes.success) setIntegrations(Array.isArray(integRes.data) ? integRes.data : ((integRes.data as any)?.data || []));
 
             // Parse custom field keys from forms (now fetched in parallel)
             if (formsRes.success && Array.isArray(formsRes.data)) {
@@ -781,7 +783,7 @@ const Audience: React.FC = () => {
                 if (viewingGroup) fetchGroupMembers(viewingGroup, groupPagination.page, groupSearch);
 
                 const listRes = await api.get<any[]>('lists');
-                if (listRes.success) setStaticLists(listRes.data);
+                if (listRes.success) setStaticLists(Array.isArray(listRes.data) ? listRes.data : ((listRes.data as any)?.data || []));
 
                 showToast(`Đã gỡ ${res.data.affected} Khách hàng khỏi danh sách`, 'success');
             } else {
@@ -819,9 +821,9 @@ const Audience: React.FC = () => {
                         if (viewingGroup) fetchGroupMembers(viewingGroup, groupPagination.page, groupSearch);
 
                         const listRes = await api.get<any[]>('lists');
-                        if (listRes.success) setStaticLists(listRes.data);
+                        if (listRes.success) setStaticLists(Array.isArray(listRes.data) ? listRes.data : ((listRes.data as any)?.data || []));
                         const segRes = await api.get<Segment[]>('segments');
-                        if (segRes.success) setSegments(segRes.data);
+                        if (segRes.success) setSegments(Array.isArray(segRes.data) ? segRes.data : ((segRes.data as any)?.data || []));
 
                         if (selectedSubscriber?.id === id) setSelectedSubscriber(null);
                         if (selectedIds.has(id)) {
@@ -926,7 +928,7 @@ const Audience: React.FC = () => {
                     if (res.success) successCount++;
                 }
                 const lRes = await api.get<any[]>('lists');
-                if (lRes.success) setStaticLists(lRes.data);
+                if (lRes.success) setStaticLists(Array.isArray(lRes.data) ? lRes.data : ((lRes.data as any)?.data || []));
                 showToast(`Đã xóa ${successCount} danh sách`, 'success');
             }
         });
@@ -948,7 +950,7 @@ const Audience: React.FC = () => {
                     if (res.success) successCount++;
                 }
                 const sRes = await api.get<Segment[]>('segments');
-                if (sRes.success) setSegments(sRes.data);
+                if (sRes.success) setSegments(Array.isArray(sRes.data) ? sRes.data : ((sRes.data as any)?.data || []));
                 showToast(`Đã xóa ${successCount} phân khúc`, 'success');
             }
         });
@@ -978,7 +980,7 @@ const Audience: React.FC = () => {
                 setSelectedIds(new Set());
                 fetchSubscribers(pagination.page);
                 const tagRes = await api.get<{ id: string, name: string }[]>('tags');
-                if (tagRes.success) setTags(tagRes.data);
+                if (tagRes.success) setTags(Array.isArray(tagRes.data) ? tagRes.data : ((tagRes.data as any)?.data || []));
 
                 toast((t) => (
                     <UndoToastContent
@@ -999,7 +1001,7 @@ const Audience: React.FC = () => {
                             if (undoRes.success) {
                                 fetchSubscribers(pagination.page);
                                 const tagRes = await api.get<{ id: string, name: string }[]>('tags');
-                                if (tagRes.success) setTags(tagRes.data);
+                                if (tagRes.success) setTags(Array.isArray(tagRes.data) ? tagRes.data : ((tagRes.data as any)?.data || []));
                                 toast.success('Đã hoàn tác gắn nhãn', { icon: '↩️' });
                             }
                             setLoading(false);
@@ -1058,8 +1060,9 @@ const Audience: React.FC = () => {
                 fetchSubscribers(pagination.page);
                 const listRes = await api.get<any[]>('lists');
                 if (listRes.success) {
-                    setAllStaticLists(listRes.data);
-                    setStaticLists(listRes.data);
+                    const listData = Array.isArray(listRes.data) ? listRes.data : ((listRes.data as any)?.data || []);
+                    setAllStaticLists(listData);
+                    setStaticLists(listData);
                 }
             } else {
                 showToast(res.message || 'Lỗi khi thêm vào danh sách', 'error');
@@ -1073,7 +1076,7 @@ const Audience: React.FC = () => {
 
     return (
         <>
-            <div className="animate-fade-in space-y-8 pb-20">
+            <div className="animate-fade-in space-y-8 pb-20 w-full min-w-0">
                 <PageHero
                     title={<>Audience <span className="text-orange-100/80">Nexus</span></>}
                     subtitle="Quản lý vòng đời Khách hàng từ lúc đăng ký đến lúc chuyển đổi đa kênh."
@@ -1101,7 +1104,7 @@ const Audience: React.FC = () => {
                     ]}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-6">
                     <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-2xl md:rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-sm flex items-center justify-between group cursor-default">
                         <div>
                             <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-amber-600 transition-colors">Liên hệ</p>
@@ -1572,8 +1575,9 @@ const Audience: React.FC = () => {
                                                 fetchIntegrations();
                                                 const listRes = await api.get<any[]>('lists');
                                                 if (listRes.success) {
-                                                    setAllStaticLists(listRes.data);
-                                                    setStaticLists(listRes.data);
+                                                    const listData = Array.isArray(listRes.data) ? listRes.data : ((listRes.data as any)?.data || []);
+                                                    setAllStaticLists(listData);
+                                                    setStaticLists(listData);
                                                 }
                                                 showToast(
                                                     targetList
@@ -1609,7 +1613,7 @@ const Audience: React.FC = () => {
                                                             api.get<any[]>('lists'),
                                                             fetchReportStats(reportPeriod)
                                                         ]);
-                                                        if (listRes.success) setAllStaticLists(listRes.data);
+                                                        if (listRes.success) setAllStaticLists(Array.isArray(listRes.data) ? listRes.data : ((listRes.data as any)?.data || []));
                                                     } else {
                                                         showToast(res.message || 'Lỗi khi đồng bộ.', 'error');
                                                         fetchIntegrations(true);
@@ -1637,7 +1641,7 @@ const Audience: React.FC = () => {
                 const res = isNew ? await api.post<Segment>('segments', seg) : await api.put<Segment>(`segments/${seg.id}`, seg);
                 if (res.success) {
                     const sRes = await api.get<Segment[]>('segments');
-                    if (sRes.success) setAllSegments(sRes.data);
+                    if (sRes.success) setAllSegments(Array.isArray(sRes.data) ? sRes.data : ((sRes.data as any)?.data || []));
                     if (isNew) {
                         setSegmentsPagination(prev => ({ ...prev, page: 1 }));
                     } else {
@@ -1660,7 +1664,7 @@ const Audience: React.FC = () => {
                     }
                     if (res?.success) {
                         const lRes = await api.get<any[]>('lists');
-                        if (lRes.success) setAllStaticLists(lRes.data);
+                        if (lRes.success) setAllStaticLists(Array.isArray(lRes.data) ? lRes.data : ((lRes.data as any)?.data || []));
                         // Always call fetchLists directly — do NOT rely on pagination state change
                         // because setListsPagination({ page: 1 }) is a no-op when already on page 1
                         // and the useEffect would never fire
@@ -1738,8 +1742,8 @@ const Audience: React.FC = () => {
                                 api.get<any[]>('lists'),
                                 api.get<{ id: string, name: string }[]>('tags')
                             ]);
-                            if (lRes.success) setAllStaticLists(lRes.data);
-                            if (tagRes.success) setTags(tagRes.data);
+                            if (lRes.success) setAllStaticLists(Array.isArray(lRes.data) ? lRes.data : ((lRes.data as any)?.data || []));
+                            if (tagRes.success) setTags(Array.isArray(tagRes.data) ? tagRes.data : ((tagRes.data as any)?.data || []));
                             fetchLists(listsPagination.page);
                         }
                     } catch (error) {
@@ -1955,7 +1959,7 @@ const Audience: React.FC = () => {
                         fetchLists(listsPagination.page);
                         const lRes = api.get<any[]>('lists');
                         lRes.then(res => {
-                            if (res.success) setAllStaticLists(res.data);
+                            if (res.success) setAllStaticLists(Array.isArray(res.data) ? res.data : ((res.data as any)?.data || []));
                         });
                     }}
                 />

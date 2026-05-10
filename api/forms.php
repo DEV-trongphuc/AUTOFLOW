@@ -98,6 +98,12 @@ try {
                 unset($data['lastName'], $data['last_name']);
             }
 
+            // [VALIDATION] Normalize date fields to prevent SQL errors
+            if (isset($data['dateOfBirth'])) $data['dateOfBirth'] = normalizeDate($data['dateOfBirth']);
+            if (isset($data['anniversaryDate'])) $data['anniversaryDate'] = normalizeDate($data['anniversaryDate']);
+            if (isset($data['date_of_birth'])) $data['date_of_birth'] = normalizeDate($data['date_of_birth']);
+            if (isset($data['anniversary_date'])) $data['anniversary_date'] = normalizeDate($data['anniversary_date']);
+
             // Build custom attributes from submitted data (từ form definition)
             $newCustomAttrs = [];
             foreach ($customFieldKeys as $customKey => $label) {

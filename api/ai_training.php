@@ -84,8 +84,10 @@ if (!$isPublicAction) {
         // X-Admin-Token header
         if (!$orgUserId) {
             $adminTokenHeader = $normalizedHeaders['x-admin-token'] ?? $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
-            if ($adminTokenHeader === ADMIN_BYPASS_TOKEN || $adminTokenHeader === 'admin-001')
+            $validBypassToken = defined('ADMIN_BYPASS_TOKEN') ? ADMIN_BYPASS_TOKEN : null;
+            if (($validBypassToken && $adminTokenHeader === $validBypassToken) || $adminTokenHeader === 'admin-001') {
                 $orgUserId = 'admin-001';
+            }
         }
 
         // X-Autoflow-Auth header
@@ -129,6 +131,14 @@ if (session_id())
 set_time_limit(0);
 ini_set('memory_limit', '512M');
 $GEMINI_API_KEY = getenv('GEMINI_API_KEY') ?: '';
+
+// 2. DYNAMIC BASE URL: No hardcoded domains
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+$scriptPath = $_SERVER['SCRIPT_NAME'];
+$apiPath = dirname($scriptPath);
+$rootPath = dirname($apiPath);
+$baseUrl = $protocol . $host . rtrim($rootPath, '/') . "/uploads/ai_training/";
 
 function training_log($msg)
 {
@@ -648,7 +658,7 @@ try {
                 exit;
             }
 
-            $publicUrl = 'https://automation.ideas.edu.vn/uploads/ai_training/' . $uniqueName;
+            $publicUrl = $baseUrl . $uniqueName;
 
             // If totalPages is 0, default to 50 (safe fallback)
             if ($totalPages <= 0)
@@ -670,16 +680,18 @@ try {
             // Upload PDF lên Gemini Files API (1 lần duy nhất)
             $uploadResult = uploadFileToGeminiFiles($destPath, $activeKey, 'application/pdf');
             if (isset($uploadResult['error'])) {
-                if (file_exists($destPath)) @unlink($destPath); // cleanup on Gemini error
+                if (file_exists($destPath))
+                    @unlink($destPath); // cleanup on Gemini error
                 echo json_encode(['success' => false, 'message' => 'Upload lên Gemini thất bại: ' . $uploadResult['error']]);
                 exit;
             }
             $fileUri = $uploadResult['file_uri'];
 
             // [P24-C3] Validate Gemini file_uri format — must start with 'files/'
-            if (empty($fileUri) || !str_starts_with((string)$fileUri, 'files/')) {
+            if (empty($fileUri) || !str_starts_with((string) $fileUri, 'files/')) {
                 training_log("upload_training_file: Invalid Gemini file_uri received: " . json_encode($fileUri));
-                if (file_exists($destPath)) @unlink($destPath);
+                if (file_exists($destPath))
+                    @unlink($destPath);
                 echo json_encode(['success' => false, 'message' => 'Gemini trả về file URI không hợp lệ. Vui lòng thử lại.']);
                 exit;
             }
@@ -1164,7 +1176,7 @@ try {
             $cacheFile = __DIR__ . "/cache/settings_{$propertyId}.json";
             if (file_exists($cacheFile))
                 unlink($cacheFile);
-                
+
             $cacheFileOrg = __DIR__ . "/cache/settings_org_{$propertyId}.json";
             if (file_exists($cacheFileOrg))
                 unlink($cacheFileOrg);

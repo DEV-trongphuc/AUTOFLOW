@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronLeft, Pause, Play, Lock, Save, RefreshCw, Eye, EyeOff, Layout, BarChart3, Settings as SettingsIcon, Clock, TrendingUp, Sparkles, Loader2, Search, CheckCircle2, GitMerge, Mail, MessageSquare, Timer } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ChevronLeft, Pause, Play, Lock, Save, RefreshCw, Eye, EyeOff, Layout, BarChart3, Settings as SettingsIcon, Clock, TrendingUp, Sparkles, Loader2, Search, CheckCircle2, GitMerge, Mail, MessageSquare, Timer, MoreVertical } from 'lucide-react';
 import Badge from '../../common/Badge';
 import Button from '../../common/Button';
 import Modal from '../../common/Modal';
@@ -57,6 +57,22 @@ const FlowHeader: React.FC<FlowHeaderProps> = ({
   canSave = true
 }) => {
   const isArchived = flow.status === 'archived';
+
+  // More menu for mobile (collapses secondary icon buttons)
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close more menu on outside click
+  useEffect(() => {
+    if (!moreMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setMoreMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [moreMenuOpen]);
 
   // AI Review State
   const [aiModalOpen, setAiModalOpen] = useState(false);
@@ -228,9 +244,10 @@ const FlowHeader: React.FC<FlowHeaderProps> = ({
 
           {activeTab === 'builder' && (
             <div className="flex items-center gap-1.5">
+              {/* Desktop: show 3 icon buttons individually */}
               <button
                 onClick={onToggleReportMode}
-                className={`p-2 lg:p-2.5 rounded-xl transition-all flex items-center gap-2 border active:scale-95 ${isReportMode ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'border-transparent text-slate-400 hover:text-slate-900 dark:text-slate-100 hover:bg-slate-50 dark:bg-slate-950'}`}
+                className={`hidden sm:flex p-2 lg:p-2.5 rounded-xl transition-all items-center gap-2 border active:scale-95 ${isReportMode ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'border-transparent text-slate-400 hover:text-slate-900 dark:text-slate-100 hover:bg-slate-50 dark:bg-slate-950'}`}
                 title={isReportMode ? "Tắt Báo cáo nhanh" : "Xem Báo cáo nhanh"}
               >
                 <BarChart3 className="w-4 h-4 lg:w-5 h-5" />
@@ -238,7 +255,7 @@ const FlowHeader: React.FC<FlowHeaderProps> = ({
 
               <button
                 onClick={onToggleViewMode}
-                className={`p-2 lg:p-2.5 rounded-xl transition-all flex items-center gap-2 border active:scale-95 ${isViewMode ? 'bg-orange-50 text-[#ca7900] border-orange-200' : 'border-transparent text-slate-400 hover:text-slate-900 dark:text-slate-100 hover:bg-slate-50 dark:bg-slate-950'}`}
+                className={`hidden sm:flex p-2 lg:p-2.5 rounded-xl transition-all items-center gap-2 border active:scale-95 ${isViewMode ? 'bg-orange-50 text-[#ca7900] border-orange-200' : 'border-transparent text-slate-400 hover:text-slate-900 dark:text-slate-100 hover:bg-slate-50 dark:bg-slate-950'}`}
                 title={isViewMode ? "Thoát chế độ xem" : "Xem trước"}
               >
                 {isViewMode ? <EyeOff className="w-4 h-4 lg:w-5 h-5" /> : <Eye className="w-4 h-4 lg:w-5 h-5" />}
@@ -246,11 +263,53 @@ const FlowHeader: React.FC<FlowHeaderProps> = ({
 
               <button
                 onClick={onToggleSidebar}
-                className={`p-2 lg:p-2.5 rounded-xl transition-all flex items-center gap-2 border active:scale-95 ${isSidebarOpen ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'border-transparent text-slate-400 hover:text-slate-900 dark:text-slate-100 hover:bg-slate-50 dark:bg-slate-950'}`}
+                className={`hidden sm:flex p-2 lg:p-2.5 rounded-xl transition-all items-center gap-2 border active:scale-95 ${isSidebarOpen ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'border-transparent text-slate-400 hover:text-slate-900 dark:text-slate-100 hover:bg-slate-50 dark:bg-slate-950'}`}
                 title={isSidebarOpen ? "Ẩn thanh bên" : "Hiện thanh bên"}
               >
                 <Layout className="w-4 h-4 lg:w-5 h-5" />
               </button>
+
+              {/* Mobile: collapse all 3 into a single ⋯ More dropdown */}
+              <div className="relative sm:hidden" ref={moreMenuRef}>
+                <button
+                  onClick={() => setMoreMenuOpen(prev => !prev)}
+                  className={`flex p-2 rounded-xl transition-all border active:scale-95 ${moreMenuOpen ? 'bg-slate-100 text-slate-700 border-slate-200' : 'border-transparent text-slate-400 hover:bg-slate-50 hover:text-slate-700'}`}
+                  title="Thêm tùy chọn"
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+                {moreMenuOpen && (
+                  <div className="absolute right-0 top-full mt-1.5 w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                    <button
+                      onClick={() => { onToggleReportMode?.(); setMoreMenuOpen(false); }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-left transition-colors ${
+                        isReportMode ? 'text-indigo-600 bg-indigo-50' : 'text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <BarChart3 className="w-4 h-4" />
+                      {isReportMode ? 'Tắt Báo cáo nhanh' : 'Báo cáo nhanh'}
+                    </button>
+                    <button
+                      onClick={() => { onToggleViewMode?.(); setMoreMenuOpen(false); }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-left transition-colors border-t border-slate-50 dark:border-slate-800 ${
+                        isViewMode ? 'text-amber-600 bg-orange-50' : 'text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {isViewMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {isViewMode ? 'Thoát xem trước' : 'Xem trước'}
+                    </button>
+                    <button
+                      onClick={() => { onToggleSidebar?.(); setMoreMenuOpen(false); }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-left transition-colors border-t border-slate-50 dark:border-slate-800 ${
+                        isSidebarOpen ? 'text-emerald-600 bg-emerald-50' : 'text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Layout className="w-4 h-4" />
+                      {isSidebarOpen ? 'Ẩn thanh bên' : 'Hiện thanh bên'}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

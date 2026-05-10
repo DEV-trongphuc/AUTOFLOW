@@ -54,10 +54,10 @@ const SurveyCanvasBlock: React.FC<Props> = ({
 
     dragPreview(drop(ref));
 
-    const accentColor = block.style?.accentColor ?? theme.primaryColor ?? '#f59e0b';
-    const bgColor = block.style?.backgroundColor ?? theme.cardBackground ?? '#ffffff';
-    const textColor = block.style?.textColor ?? theme.textColor ?? '#1e293b';
-    const textAlign = block.style?.textAlign ?? 'left';
+    const accentColor = block.style?.accentColor || theme.primaryColor || '#f59e0b';
+    const bgColor = block.style?.backgroundColor || theme.cardBackground || '#ffffff';
+    const textColor = block.style?.textColor || theme.textColor || '#1e293b';
+    const textAlign = block.style?.textAlign || 'left';
     const boxShadow = block.style?.boxShadow && block.style.boxShadow !== 'none' 
         ? block.style.boxShadow 
         : (theme.cardShadow && theme.cardShadow !== 'none' ? theme.cardShadow : undefined);

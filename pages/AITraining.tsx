@@ -517,7 +517,7 @@ const AITraining: React.FC = () => {
                 pollingTimeoutRef.current = null;
             }
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }, [selectedProperty]);
 
 
@@ -1727,7 +1727,7 @@ Lịch sử hoạt động:
     ), [chatbots, searchTerm]);
 
     return (
-        <div className="animate-fade-in space-y-8 pb-20">
+        <div className="animate-fade-in space-y-8 pb-20 w-full min-w-0">
             {viewMode === 'grid' ? (
                 <AITrainingGrid
                     mainTab={mainTab}

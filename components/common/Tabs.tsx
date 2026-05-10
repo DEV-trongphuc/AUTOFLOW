@@ -49,7 +49,7 @@ const Tabs: React.FC<TabsProps> = ({ items, activeId, onChange, variant = 'under
               key={item.id}
               onClick={() => onChange(item.id)}
               className={`
-                            px-5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 border
+                            px-3 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-1.5 sm:gap-2 border
                             ${isActive
                   ? (isDarkTheme ? 'bg-slate-800 text-white border-slate-700 shadow-sm' : 'bg-slate-100 text-slate-700 border-slate-200 shadow-sm')
                   : (isDarkTheme ? 'bg-slate-900 text-slate-400 border-transparent hover:bg-slate-800 hover:text-slate-200' : 'bg-white text-slate-500 border-transparent hover:bg-slate-50 hover:text-slate-700')

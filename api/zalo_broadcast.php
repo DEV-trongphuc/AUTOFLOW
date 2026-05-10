@@ -135,10 +135,14 @@ try {
                 json_encode($selectedIds)
             ]);
 
-            // 2. Get Access Token
-            $stmt = $pdo->prepare("SELECT access_token FROM zalo_oa_configs WHERE id = ?");
-            $stmt->execute([$oaConfigId]);
-            $token = $stmt->fetchColumn();
+            // [SECURITY] Verify OA Config belongs to workspace
+            $stmtOa = $pdo->prepare("SELECT access_token FROM zalo_oa_configs WHERE id = ? AND workspace_id = ?");
+            $stmtOa->execute([$oaConfigId, $workspace_id]);
+            $token = $stmtOa->fetchColumn();
+            
+            if (!$token) {
+                throw new Exception("OA config not found or access denied");
+            }
 
             // 3. Find Recipients
             $sqlSub = "

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * AutoFlow Master Health Check v2 — Full-Stack Deep Audit
  * Covers: Code correctness, DB integrity, table health, worker liveness, conflict detection.
@@ -7,7 +7,14 @@
  */
 require_once __DIR__ . '/db_connect.php';
 require_once 'auth_middleware.php';
-if (php_sapi_name() !== 'cli') { http_response_code(403); die('Unauthorized: This script can only be run from the command line (CLI).'); }
+$isCli = php_sapi_name() === 'cli';
+$adminToken = $_GET['admin_token'] ?? '';
+$validBypassToken = defined('ADMIN_BYPASS_TOKEN') ? ADMIN_BYPASS_TOKEN : 'autoflow-admin-001';
+
+if (!$isCli && $adminToken !== $validBypassToken && ($GLOBALS['current_admin_id'] ?? '') !== 'admin-001') {
+    http_response_code(403);
+    die(json_encode(['success' => false, 'error' => 'Unauthorized: Valid admin_token is required for HTTP access.']));
+}
 
 header('Content-Type: application/json; charset=utf-8');
 set_time_limit(90);

@@ -7,7 +7,7 @@ register_shutdown_function(function () {
     if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
         if (!headers_sent()) {
             header('Content-Type: application/json; charset=utf-8');
-            
+
         }
         echo json_encode([
             'success' => false,
@@ -274,15 +274,26 @@ try {
 
         // [SECURITY FIX] Enforce Authentication for sensitive actions
         $sensitiveActions = [
-            'list_conversations', 'get_available_pages', 'export_to_word', 'export_conversations', 
-            'get_analysis', 'analyze_segment', 'get_messages', 'get_conversation', 'get_last_analysis', 
-            'delete_analysis', 'export_word', 'delete_conversation', 'send_human_reply', 
-            'update_status', 'update_visitor_info'
+            'list_conversations',
+            'get_available_pages',
+            'export_to_word',
+            'export_conversations',
+            'get_analysis',
+            'analyze_segment',
+            'get_messages',
+            'get_conversation',
+            'get_last_analysis',
+            'delete_analysis',
+            'export_word',
+            'delete_conversation',
+            'send_human_reply',
+            'update_status',
+            'update_visitor_info'
         ];
-        
+
         if (in_array($action, $sensitiveActions)) {
             $currentOrgUser = requireAISpaceAuth();
-            
+
             // Try to resolve propertyId from various sources if missing from GET
             if (!$propertyId && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $input = json_decode(file_get_contents('php://input'), true);
@@ -304,7 +315,7 @@ try {
                     $isOrg = strpos($convIdFull, 'org_') === 0;
                     $convId = $isOrg ? substr($convIdFull, 4) : (strpos($convIdFull, 'cust_') === 0 ? substr($convIdFull, 5) : $convIdFull);
                     $table = $isOrg ? 'ai_org_conversations' : 'ai_conversations';
-                    
+
                     $stmtOwner = $pdo->prepare("SELECT property_id FROM $table WHERE id = ? LIMIT 1");
                     $stmtOwner->execute([$convId]);
                     $targetPropertyId = $stmtOwner->fetchColumn();
@@ -838,7 +849,7 @@ try {
                     FROM ai_messages m
                     JOIN ai_conversations c ON m.conversation_id = c.id
                     LEFT JOIN web_visitors v ON c.visitor_id = v.id
-                    LEFT JOIN subscribers s ON (v.subscriber_id = s.id OR c.visitor_id = CONCAT('meta_', s.meta_psid) OR c.visitor_id = CONCAT('zalo_', s.zalo_user_id))
+                    LEFT JOIN subscribers s ON ((v.subscriber_id = s.id AND v.subscriber_id IS NOT NULL AND v.subscriber_id != '') OR (c.visitor_id = CONCAT('meta_', s.meta_psid) AND s.meta_psid IS NOT NULL AND s.meta_psid != '') OR (c.visitor_id = CONCAT('zalo_', s.zalo_user_id) AND s.zalo_user_id IS NOT NULL AND s.zalo_user_id != ''))
                     $whereSql
                     ORDER BY m.conversation_id, m.created_at ASC";
 
@@ -2973,14 +2984,14 @@ CHÚ Ý:
                             // Echo error info so bubble isn't empty
                             if (empty($fullBotRes)) {
                                 $errMsg = is_array($chunk['error']) ? ($chunk['error']['message'] ?? json_encode($chunk['error'])) : $chunk['error'];
-                                
+
                                 // Translate raw HTTP errors into customer-friendly polite messages
                                 if (strpos($errMsg, '403') !== false || strpos($errMsg, '429') !== false) {
                                     $fallback = "Dạ em xin lỗi, hiện tại hệ thống tư vấn đang quá tải. Anh/chị vui lòng thử lại sau ít phút hoặc để lại lời nhắn để tư vấn viên hỗ trợ trực tiếp ạ.";
                                 } else {
                                     $fallback = "Dạ em xin lỗi, kết nối đang bị gián đoạn. Anh/chị vui lòng thử lại sau ít phút ạ.";
                                 }
-                                
+
                                 $fullBotRes = $fallback;
                                 echo $fallback;
                                 flush();
@@ -3021,7 +3032,7 @@ CHÚ Ý:
                         $fullBotRes = processImageRequests(
                             $fullBotRes,
                             $apiKey,
-                            'gemini-2.5-flash-lite-image', // Default image model for public widget
+                            'gemini-2.5-flash-lite', // Default image model for public widget
                             [], // config
                             [], // reference images
                             $propertyId,
@@ -3064,7 +3075,7 @@ CHÚ Ý:
                     $botRes = processImageRequests(
                         $botRes,
                         $apiKey,
-                        'gemini-2.5-flash-lite-image',
+                        'gemini-2.5-flash-lite',
                         [],
                         [],
                         $propertyId,

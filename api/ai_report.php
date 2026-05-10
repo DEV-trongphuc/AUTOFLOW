@@ -41,7 +41,8 @@ if ($method === 'GET' && $action === 'summary') {
     try {
         // 1. Total Conversations
         $paramConvs = [$start, $end . ' 23:59:59'];
-        if (!empty($property_id)) $paramConvs[] = $property_id;
+        if (!empty($property_id))
+            $paramConvs[] = $property_id;
 
         $sqlTotal = "SELECT COUNT(*) FROM ai_conversations WHERE created_at BETWEEN ? AND ?" . $propFilterConvs;
         $stmt = $pdo->prepare($sqlTotal);
@@ -50,7 +51,8 @@ if ($method === 'GET' && $action === 'summary') {
 
         // 2. AI Replies
         $paramMsgs = [$start, $end . ' 23:59:59'];
-        if (!empty($property_id)) $paramMsgs[] = $property_id;
+        if (!empty($property_id))
+            $paramMsgs[] = $property_id;
 
         $sqlAI = "SELECT COUNT(*) FROM ai_messages WHERE sender='ai' AND created_at BETWEEN ? AND ?" . $propFilterMsgs;
         $stmt = $pdo->prepare($sqlAI);
@@ -97,7 +99,8 @@ if ($method === 'GET' && $action === 'chart') {
 
         $stmt = $pdo->prepare($sql);
         $paramChart = [$start, $end . ' 23:59:59'];
-        if (!empty($property_id)) $paramChart[] = $property_id;
+        if (!empty($property_id))
+            $paramChart[] = $property_id;
         $stmt->execute($paramChart);
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -109,8 +112,8 @@ if ($method === 'GET' && $action === 'chart') {
 if ($method === 'GET' && $action === 'detailed_ai_insights') {
     require_once 'chat_gemini.php';
     try {
-        $days = isset($_GET['days']) ? (int)$_GET['days'] : 7;
-        
+        $days = isset($_GET['days']) ? (int) $_GET['days'] : 7;
+
         $paramDates = [$start, $end . ' 23:59:59'];
         $paramMsgs = [$start, $end . ' 23:59:59'];
         if (!empty($property_id)) {
@@ -138,26 +141,30 @@ if ($method === 'GET' && $action === 'detailed_ai_insights') {
 
         // 4. Time chart formatting
         $chartData = array_fill(0, 24, ['hr' => 0, 'count' => 0]);
-        for ($i = 0; $i < 24; $i++) { $chartData[$i]['hr'] = $i; }
+        for ($i = 0; $i < 24; $i++) {
+            $chartData[$i]['hr'] = $i;
+        }
         foreach ($hourly as $h) {
-            $chartData[(int)$h['hr']]['count'] = (int)$h['count'];
+            $chartData[(int) $h['hr']]['count'] = (int) $h['count'];
         }
 
         // 5. Build AI Prompt
         $statsText = "Tổng lượng khách: " . $stats['total_visitors'] . "\n" .
-                     "Tổng hội thoại: " . $stats['total_convs'] . "\n" .
-                     "Tổng tin nhắn: " . $totalMsgs . "\n" .
-                     "Tải phân bổ theo giờ: \n";
-        foreach ($chartData as $c) { $statsText .= $c['hr'] . "h: " . $c['count'] . " tin nhắn\n"; }
+            "Tổng hội thoại: " . $stats['total_convs'] . "\n" .
+            "Tổng tin nhắn: " . $totalMsgs . "\n" .
+            "Tải phân bổ theo giờ: \n";
+        foreach ($chartData as $c) {
+            $statsText .= $c['hr'] . "h: " . $c['count'] . " tin nhắn\n";
+        }
 
         $globalKey = getenv('GEMINI_API_KEY') ?: '';
         $aiReport = "";
-        
+
         if (!empty($globalKey)) {
-            $prompt = "Bạn là chuyên gia phân tích dữ liệu AI Chatbot. Dưới đây là thống kê 7 ngày gần nhất của một Chatbot bán hàng/CSKH: \n" . 
-                      $statsText . 
-                      "\nHãy viết một đoạn báo cáo phân tích thật chuyên sâu bằng tiếng Việt (Format Markdown siêu đẹp, KHÔNG DÙNG header h1 h2, chỉ dùng in đậm, in nghiêng, list, blockquote). Đánh giá về traffic, chỉ ra giờ cao điểm thực sự (peak hours) khách hàng tương tác nhiều nhất để bộ phận marketing biết đường tung khuyến mãi. Nhận xét ngắn gọn, ấn tượng, chuyên nghiệp.";
-            
+            $prompt = "Bạn là chuyên gia phân tích dữ liệu AI Chatbot. Dưới đây là thống kê 7 ngày gần nhất của một Chatbot bán hàng/CSKH: \n" .
+                $statsText .
+                "\nHãy viết một đoạn báo cáo phân tích thật chuyên sâu bằng tiếng Việt (Format Markdown siêu đẹp, KHÔNG DÙNG header h1 h2, chỉ dùng in đậm, in nghiêng, list, blockquote). Đánh giá về traffic, chỉ ra giờ cao điểm thực sự (peak hours) khách hàng tương tác nhiều nhất để bộ phận marketing biết đường tung khuyến mãi. Nhận xét ngắn gọn, ấn tượng, chuyên nghiệp.";
+
             $contents = [
                 ["role" => "user", "parts" => [["text" => $prompt]]]
             ];
@@ -171,11 +178,16 @@ if ($method === 'GET' && $action === 'detailed_ai_insights') {
             $aiReport = "Vui lòng cấu hình GEMINI_API_KEY để sử dụng tính năng phân tích tự động.";
         }
 
-        echo json_encode(['success' => true, 'stats' => [
-            'visitors' => (int)$stats['total_visitors'],
-            'conversations' => (int)$stats['total_convs'],
-            'messages' => (int)$totalMsgs
-        ], 'chart' => $chartData, 'ai_report' => $aiReport]);
+        echo json_encode([
+            'success' => true,
+            'stats' => [
+                'visitors' => (int) $stats['total_visitors'],
+                'conversations' => (int) $stats['total_convs'],
+                'messages' => (int) $totalMsgs
+            ],
+            'chart' => $chartData,
+            'ai_report' => $aiReport
+        ]);
 
     } catch (Throwable $e) {
         error_log("AI Report Fatal: " . $e->getMessage());

@@ -1319,9 +1319,9 @@ class FlowExecutor
                 case 'link_flow':
                     $linkedId = $step['config']['linkedFlowId'] ?? '';
                     if ($linkedId) {
-                        // Get linked flow config + steps
-                        $stmtLF = $this->pdo->prepare("SELECT steps, config FROM flows WHERE id = ? AND status='active'");
-                        $stmtLF->execute([$linkedId]);
+                        // [SECURITY FIX] Get linked flow config + steps AND verify it belongs to the same workspace
+                        $stmtLF = $this->pdo->prepare("SELECT steps, config FROM flows WHERE id = ? AND workspace_id = ? AND status='active'");
+                        $stmtLF->execute([$linkedId, $subscriber['workspace_id']]);
                         $lRow = $stmtLF->fetch();
                         if ($lRow) {
                             $lSteps = json_decode($lRow['steps'], true) ?: [];

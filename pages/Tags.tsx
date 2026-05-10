@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Tag as TagIcon, Search, Trash2, Users, RefreshCw, Filter, ArrowRight, FileText, Info, Edit3, Check, X, AlertTriangle, Save, Plus, Codesandbox, Plug, Layers, Target, Lightbulb, LayoutGrid, List } from 'lucide-react';
 import { api } from '../services/storageAdapter';
@@ -93,8 +93,16 @@ const Tags: React.FC = () => {
     const fetchTags = async () => {
         setLoading(true);
         try {
-            const res = await api.get<Tag[]>('tags');
-            if (res.success) setTags(res.data);
+            const res = await api.get<any>('tags');
+            if (res.success) {
+                if (res.data && Array.isArray(res.data.data)) {
+                    setTags(res.data.data);
+                } else if (Array.isArray(res.data)) {
+                    setTags(res.data);
+                } else {
+                    setTags([]);
+                }
+            }
         } catch (err) {
             showToast('Không thể tải danh sách nhãn', 'error');
         } finally {

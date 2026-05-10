@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost:3306
--- Thời gian đã tạo: Th4 26, 2026 lúc 09:43 PM
+-- Thời gian đã tạo: Th5 08, 2026 lúc 08:32 AM
 -- Phiên bản máy phục vụ: 10.6.18-MariaDB-cll-lve-log
 -- Phiên bản PHP: 8.4.20
 
@@ -1282,7 +1282,8 @@ CREATE TABLE `segments` (
 
 CREATE TABLE `segment_count_update_queue` (
   `segment_id` varchar(255) NOT NULL,
-  `queued_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `queued_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `workspace_id` int(11) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1295,7 +1296,8 @@ CREATE TABLE `segment_exclusions` (
   `id` int(11) NOT NULL,
   `segment_id` varchar(50) NOT NULL,
   `subscriber_id` char(36) NOT NULL,
-  `excluded_at` timestamp NULL DEFAULT current_timestamp()
+  `excluded_at` timestamp NULL DEFAULT current_timestamp(),
+  `workspace_id` int(11) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1441,7 +1443,7 @@ CREATE TABLE `subscriber_activity` (
 
 CREATE TABLE `subscriber_flow_states` (
   `id` int(11) NOT NULL,
-  `workspace_id` int(11) DEFAULT 1,
+  `workspace_id` int(11) NOT NULL DEFAULT 1,
   `subscriber_id` char(36) NOT NULL,
   `flow_id` char(36) NOT NULL,
   `step_id` char(36) NOT NULL,
@@ -1462,7 +1464,8 @@ CREATE TABLE `subscriber_flow_states` (
 
 CREATE TABLE `subscriber_lists` (
   `subscriber_id` char(36) NOT NULL,
-  `list_id` char(36) NOT NULL
+  `list_id` char(36) NOT NULL,
+  `workspace_id` int(11) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -1504,7 +1507,7 @@ CREATE TABLE `subscriber_notes` (
 CREATE TABLE `subscriber_tags` (
   `subscriber_id` char(36) NOT NULL,
   `tag_id` char(36) NOT NULL,
-  `workspace_id` int(11) DEFAULT 1
+  `workspace_id` int(11) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -2914,7 +2917,8 @@ ALTER TABLE `segments`
 --
 ALTER TABLE `segment_count_update_queue`
   ADD PRIMARY KEY (`segment_id`),
-  ADD KEY `idx_queued` (`queued_at`);
+  ADD KEY `idx_queued` (`queued_at`),
+  ADD KEY `idx_scuq_ws_seg` (`workspace_id`,`segment_id`);
 
 --
 -- Chỉ mục cho bảng `segment_exclusions`
@@ -2923,7 +2927,7 @@ ALTER TABLE `segment_exclusions`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `unique_exclusion` (`segment_id`,`subscriber_id`),
   ADD KEY `fk_se_subscriber` (`subscriber_id`),
-  ADD KEY `idx_seg_exclusions_seg` (`segment_id`);
+  ADD KEY `idx_se_ws_seg_sub` (`workspace_id`,`segment_id`,`subscriber_id`);
 
 --
 -- Chỉ mục cho bảng `short_links`
@@ -3024,7 +3028,6 @@ ALTER TABLE `subscriber_activity`
 --
 ALTER TABLE `subscriber_flow_states`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_sub_flow` (`workspace_id`,`subscriber_id`,`flow_id`),
   ADD KEY `idx_flow_states_flow_status_created` (`flow_id`,`status`,`created_at`),
   ADD KEY `idx_flow_states_processing_opt` (`status`,`scheduled_at`,`updated_at`),
   ADD KEY `idx_sub_flow_status` (`subscriber_id`,`flow_id`,`status`),
@@ -3045,16 +3048,20 @@ ALTER TABLE `subscriber_flow_states`
   ADD KEY `idx_perf_wakeup` (`status`,`scheduled_at`,`workspace_id`),
   ADD KEY `idx_sfs_workspace_status_sched` (`workspace_id`,`status`,`scheduled_at`),
   ADD KEY `idx_sfs_workspace_flow_status` (`workspace_id`,`flow_id`,`status`,`scheduled_at`),
-  ADD KEY `idx_sfs_workspace_sub_status` (`workspace_id`,`subscriber_id`,`status`);
+  ADD KEY `idx_sfs_workspace_sub_status` (`workspace_id`,`subscriber_id`,`status`),
+  ADD KEY `idx_sfs_ws_status_sched` (`workspace_id`,`status`,`scheduled_at`),
+  ADD KEY `idx_sfs_ws_sub` (`workspace_id`,`subscriber_id`),
+  ADD KEY `idx_sub_flow_ws` (`workspace_id`,`subscriber_id`,`flow_id`);
 
 --
 -- Chỉ mục cho bảng `subscriber_lists`
 --
 ALTER TABLE `subscriber_lists`
-  ADD PRIMARY KEY (`subscriber_id`,`list_id`),
+  ADD PRIMARY KEY (`workspace_id`,`list_id`,`subscriber_id`),
   ADD UNIQUE KEY `unique_subscriber_list` (`subscriber_id`,`list_id`),
   ADD KEY `idx_subscriber_lists_list` (`list_id`,`subscriber_id`),
-  ADD KEY `idx_sl_subscriber` (`subscriber_id`);
+  ADD KEY `idx_sl_subscriber` (`subscriber_id`),
+  ADD KEY `idx_sub_lists_ws_sub` (`workspace_id`,`subscriber_id`);
 
 --
 -- Chỉ mục cho bảng `subscriber_notes`
@@ -3067,11 +3074,12 @@ ALTER TABLE `subscriber_notes`
 -- Chỉ mục cho bảng `subscriber_tags`
 --
 ALTER TABLE `subscriber_tags`
-  ADD PRIMARY KEY (`subscriber_id`,`tag_id`),
+  ADD PRIMARY KEY (`workspace_id`,`tag_id`,`subscriber_id`),
   ADD UNIQUE KEY `uq_sub_tag` (`subscriber_id`,`tag_id`),
   ADD KEY `idx_tag_lookup` (`tag_id`,`subscriber_id`),
   ADD KEY `idx_subtags_tag` (`tag_id`),
-  ADD KEY `idx_st_ws_sub_tag` (`workspace_id`,`subscriber_id`,`tag_id`);
+  ADD KEY `idx_st_ws_sub_tag` (`workspace_id`,`subscriber_id`,`tag_id`),
+  ADD KEY `idx_sub_tags_ws_sub` (`workspace_id`,`subscriber_id`);
 
 --
 -- Chỉ mục cho bảng `surveys`
@@ -3428,7 +3436,8 @@ ALTER TABLE `zalo_subscriber_activity`
   ADD KEY `idx_sub_type` (`subscriber_id`,`type`),
   ADD KEY `idx_type_ref` (`type`,`reference_id`),
   ADD KEY `idx_sub_type_created` (`subscriber_id`,`type`,`created_at`),
-  ADD KEY `idx_zsa_sub_type_created` (`subscriber_id`,`type`,`created_at`);
+  ADD KEY `idx_zsa_sub_type_created` (`subscriber_id`,`type`,`created_at`),
+  ADD KEY `idx_zsa_ws_sub` (`workspace_id`,`subscriber_id`);
 
 --
 -- Chỉ mục cho bảng `zalo_templates`

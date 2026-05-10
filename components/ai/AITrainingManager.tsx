@@ -444,7 +444,7 @@ const AITrainingManager: React.FC<AITrainingManagerProps> = ({ onClose, category
                 pollingTimeoutRef.current = null;
             }
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }, [selectedProperty]);
 
     useEffect(() => {

@@ -13,6 +13,7 @@ header('Content-Type: application/json');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS')
     exit(0);
 
+$workspace_id = get_current_workspace_id();
 $method = $_SERVER['REQUEST_METHOD'];
 $route = $_GET['route'] ?? '';
 
@@ -23,13 +24,16 @@ try {
             $oa_id = $_GET['oa_config_id'] ?? null;
             $sql = "SELECT s.*, b.bot_name as ai_bot_name 
                     FROM zalo_automation_scenarios s
-                    LEFT JOIN ai_chatbot_settings b ON s.ai_chatbot_id = b.property_id";
+                    JOIN zalo_oa_configs oa ON s.oa_config_id = oa.id
+                    LEFT JOIN ai_chatbot_settings b ON s.ai_chatbot_id = b.property_id
+                    WHERE oa.workspace_id = ?";
 
             if ($oa_id) {
-                $stmt = $pdo->prepare("$sql WHERE s.oa_config_id = ? ORDER BY s.created_at DESC");
-                $stmt->execute([$oa_id]);
+                $stmt = $pdo->prepare("$sql AND s.oa_config_id = ? ORDER BY s.created_at DESC");
+                $stmt->execute([$workspace_id, $oa_id]);
             } else {
-                $stmt = $pdo->query("$sql ORDER BY s.created_at DESC");
+                $stmt = $pdo->prepare("$sql ORDER BY s.created_at DESC");
+                $stmt->execute([$workspace_id]);
             }
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             foreach ($data as &$row) {
@@ -49,6 +53,11 @@ try {
 
             if ($type === 'keyword' && $trigger_text) {
                 $keywords = array_map('trim', explode(',', $trigger_text));
+                // [SECURITY] Verify OA config belongs to workspace
+                $stmtOa = $pdo->prepare("SELECT id FROM zalo_oa_configs WHERE id = ? AND workspace_id = ?");
+                $stmtOa->execute([$oa_config_id, $workspace_id]);
+                if (!$stmtOa->fetchColumn()) throw new Exception("OA config not found or access denied");
+
                 foreach ($keywords as $kw) {
                     $stmt = $pdo->prepare("SELECT id, title FROM zalo_automation_scenarios 
                                          WHERE oa_config_id = ? AND type = 'keyword' AND status = 'active' AND id != ?
@@ -74,6 +83,12 @@ try {
         if ($route === 'save') {
             $id = !empty($input['id']) ? $input['id'] : bin2hex(random_bytes(16));
             $oa_config_id = $input['oa_config_id'];
+            
+            // [SECURITY] Verify OA config belongs to workspace
+            $stmtOa = $pdo->prepare("SELECT id FROM zalo_oa_configs WHERE id = ? AND workspace_id = ?");
+            $stmtOa->execute([$oa_config_id, $workspace_id]);
+            if (!$stmtOa->fetchColumn()) throw new Exception("OA config not found or access denied");
+
             $type = $input['type'] ?? 'keyword';
             $trigger_text = $input['trigger_text'] ?? '';
             $match_type = $input['match_type'] ?? 'exact';
@@ -140,6 +155,16 @@ try {
         $id = $_GET['id'] ?? '';
         if (!$id)
             throw new Exception("ID required");
+            
+        // [SECURITY] Ensure scenario belongs to an OA in current workspace
+        $stmtCheck = $pdo->prepare("
+            SELECT s.id FROM zalo_automation_scenarios s 
+            JOIN zalo_oa_configs oa ON s.oa_config_id = oa.id 
+            WHERE s.id = ? AND oa.workspace_id = ?
+        ");
+        $stmtCheck->execute([$id, $workspace_id]);
+        if (!$stmtCheck->fetchColumn()) throw new Exception("Scenario not found or access denied");
+
         $stmt = $pdo->prepare("DELETE FROM zalo_automation_scenarios WHERE id = ?");
         $stmt->execute([$id]);
         echo json_encode(['success' => true]);

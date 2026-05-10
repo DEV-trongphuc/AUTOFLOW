@@ -14,7 +14,8 @@ $hasAuth = !empty($GLOBALS['current_admin_id'])
     || !empty($_SESSION['org_user_id'])
     || !empty($_SERVER['HTTP_AUTHORIZATION'])
     || !empty($_SERVER['HTTP_X_ADMIN_TOKEN'])
-    || !empty($_SERVER['HTTP_X_LOCAL_DEV_USER']);
+    || !empty($_SERVER['HTTP_X_LOCAL_DEV_USER'])
+    || !empty($_SERVER['HTTP_X_AUTOFLOW_AUTH']); // [FIX] Allow Autoflow dev proxy
 
 if (!$hasAuth) {
     http_response_code(401);

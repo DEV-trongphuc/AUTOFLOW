@@ -80,7 +80,7 @@ function is_super_admin() {
 
     // 3. Check global/session IDs directly
     $uid = $_SESSION['user_id'] ?? $GLOBALS['current_admin_id'] ?? null;
-    if ($uid === 'admin-001' || $uid == 1 || $uid === '1') {
+    if ($uid == 1 || $uid === '1') {
         return true;
     }
     

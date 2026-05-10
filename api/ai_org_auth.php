@@ -45,11 +45,14 @@ function generateSecureToken(): string
 function createAccessToken($pdo, string $userId): string
 {
     $token = generateSecureToken();
-    $expiresAt = date('Y-m-d H:i:s', time() + 15 * 60); // 15 minutes
+    $expiresAt = date('Y-m-d H:i:s', time() + 3600); // 1 hour (increased from 15m)
 
-    // Revoke old tokens for this user (optional — keep only latest)
-    $pdo->prepare("UPDATE ai_org_access_tokens SET is_active = 0 WHERE user_id = ? AND is_active = 1")
-        ->execute([$userId]);
+    // [FIX] Removed forced revocation of old access tokens.
+    // Revoking old tokens causes a race condition when multiple parallel API requests 
+    // try to refresh an expired token simultaneously (e.g. when opening dashboard after 15 mins).
+    // It also causes users to be logged out of other tabs/devices.
+    // $pdo->prepare("UPDATE ai_org_access_tokens SET is_active = 0 WHERE user_id = ? AND is_active = 1")
+    //     ->execute([$userId]);
 
     $pdo->prepare(
         "INSERT INTO ai_org_access_tokens (user_id, token, expires_at, is_active, created_at)
@@ -71,9 +74,13 @@ function createRefreshToken($pdo, string $userId, bool $remember = false): strin
     $deviceInfo = substr($_SERVER['HTTP_USER_AGENT'] ?? 'Unknown', 0, 255);
     $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 
-    // Revoke old refresh tokens for this user
+    // [FIX] Disabled strict revocation to allow multi-device/multi-tab sessions.
+    // Revoking old tokens causes users to be forcefully logged out on their other tabs/devices
+    // whenever auto_login_group_admin runs or when they log in on a new device.
+    /*
     $pdo->prepare("UPDATE ai_org_refresh_tokens SET is_active = 0 WHERE user_id = ? AND is_active = 1")
         ->execute([$userId]);
+    */
 
     $pdo->prepare(
         "INSERT INTO ai_org_refresh_tokens (user_id, token, expires_at, is_active, device_info, ip_address, created_at)
@@ -113,7 +120,7 @@ function buildAuthResponse($pdo, array $user, bool $remember = false): array
         'user' => $user,
         'access_token' => $accessToken,
         'refresh_token' => $refreshToken,
-        'expires_in' => 900, // 15 minutes in seconds
+        'expires_in' => 3600, // 1 hour in seconds
         'token_type' => 'Bearer',
     ];
 }
@@ -295,14 +302,17 @@ if ($method === 'POST' && $action === 'refresh_token') {
         // Issue a new access token ONLY (keep same refresh token alive)
         $newAccessToken = createAccessToken($pdo, (string) $row['user_id']);
 
-        // Update session too
+        // Update session too — ensure session is active
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
         $_SESSION['org_user_id'] = $row['user_id'];
         $_SESSION['org_user_email'] = $row['email'];
         $_SESSION['org_user_role'] = $row['role'];
 
         jsonResponse(true, [
             'access_token' => $newAccessToken,
-            'expires_in' => 900,
+            'expires_in' => 3600,
             'token_type' => 'Bearer',
         ], 'Token refreshed');
 
@@ -401,7 +411,8 @@ if ($method === 'GET' && $action === 'check') {
 
     if (!$orgUserId) {
         $adminTokenHeader = $normalized['x-admin-token'] ?? $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
-        if ($adminTokenHeader === ADMIN_BYPASS_TOKEN || $adminTokenHeader === 'admin-001' || is_super_admin()) {
+        $validBypassToken = defined('ADMIN_BYPASS_TOKEN') ? ADMIN_BYPASS_TOKEN : null;
+        if (($validBypassToken && $adminTokenHeader === $validBypassToken) || $adminTokenHeader === 'admin-001' || is_super_admin()) {
             $orgUserId = 'admin-001';
             $_SESSION['org_user_id'] = 'admin-001';
         }
@@ -463,9 +474,10 @@ if ($method === 'POST' && $action === 'auto_login_group_admin') {
     $categorySlug = trim($input['category_id'] ?? '');
     $bypassToken = $input['bypass_token'] ?? '';
 
-    // Validate bypass token (same shared secret as before)
-    if ($bypassToken !== 'autoflow_admin_bypass_v1' && $bypassToken !== ADMIN_BYPASS_TOKEN) {
-        jsonResponse(false, null, 'Unauthorized');
+    // Validate bypass token (Must be defined in db_connect.php)
+    $validBypassToken = defined('ADMIN_BYPASS_TOKEN') ? ADMIN_BYPASS_TOKEN : null;
+    if (!$validBypassToken || $bypassToken !== $validBypassToken) {
+        jsonResponse(false, null, 'Unauthorized: Invalid Bypass Token');
     }
 
     if (empty($categorySlug)) {
@@ -593,7 +605,8 @@ if ($method === 'POST' && $action === 'admin_auto_login') {
     $bypassToken = $input['bypass_token'] ?? '';
 
     // Accept bypass_token from frontend (admin coming from Autoflow cross-origin)
-    $isBypassTokenValid = ($bypassToken === 'autoflow_admin_bypass_v1' || $bypassToken === ADMIN_BYPASS_TOKEN);
+    $validBypassToken = defined('ADMIN_BYPASS_TOKEN') ? ADMIN_BYPASS_TOKEN : null;
+    $isBypassTokenValid = ($validBypassToken && $bypassToken === $validBypassToken);
 
     // Only allow if we have a strong reason to believe this is an admin
     if ($isBypassTokenValid && ($requestUserId == 1 || $requestRole === 'admin' || $requestIsAdmin)) {

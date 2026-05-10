@@ -48,7 +48,9 @@ function updateDeleteState(isDeleting: boolean) {
  */
 async function executeRequest(url: string, method: string, body?: any, signal?: AbortSignal): Promise<Response> {
   const isFormData = body instanceof FormData;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Accept': 'application/json'
+  };
 
   if (!isFormData && body !== undefined && body !== null) {
     headers['Content-Type'] = 'application/json';
@@ -229,6 +231,7 @@ async function request<T>(
 
       // ── Auto-retry on 401: token expired mid-flight ───────────────────────
       if (response.status === 401) {
+        let refreshSuccess = false;
         try {
           const refreshToken = getRawRefreshToken();
           if (refreshToken) {
@@ -246,14 +249,30 @@ async function request<T>(
                 updateAccessToken(refreshData.data.access_token, refreshData.data.expires_in ?? 900);
                 // Retry the original request with the fresh token
                 response = await executeRequest(url, method, body, options?.signal);
+                refreshSuccess = true;
               }
-            } else {
-              // Refresh token is expired — force logout
-              clearTokens();
             }
           }
         } catch (refreshErr) {
           console.error('[API] Token refresh failed on 401 retry:', refreshErr);
+        }
+
+        if (!refreshSuccess) {
+          // [FIX] Chỉ logout nếu thực sự không có Refresh Token hoặc Refresh Token bị server từ chối (401/403)
+          // Nếu là lỗi mạng hoặc lỗi server 500, chúng ta giữ nguyên trạng thái để người dùng thử lại sau.
+          const hasRefreshToken = !!getRawRefreshToken();
+          if (!hasRefreshToken) {
+            console.warn('[API] No refresh token available. Logging out.');
+            clearTokens();
+            localStorage.removeItem('user');
+            localStorage.removeItem('isAuthenticated');
+            localStorage.removeItem('currentUser');
+            if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+              window.location.href = '/login';
+            }
+          } else {
+            console.error('[API] Transient refresh failure. Staying on page to prevent data loss.');
+          }
         }
       }
 
@@ -389,6 +408,42 @@ export const api = {
   post: <T>(endpoint: string, data: any, options?: { signal?: AbortSignal }) => request<T>(endpoint, 'POST', data, options),
   put: <T>(endpoint: string, data: any) => request<T>(endpoint, 'PUT', data),
   delete: <T>(endpoint: string, data?: any) => request<T>(endpoint, 'DELETE', data),
+  stream: (endpoint: string, data: any, onChunk: (chunk: string) => void, options?: { signal?: AbortSignal }) => {
+    // Force production API URL
+    const baseUrl = API_BASE_URL;
+    const [pathString, queryString] = endpoint.split('?');
+    const parts = pathString.split('/');
+    let resource = parts[0];
+    const id = parts[1];
+    let phpFile = resource.replace(/\.php$/, '');
+    let finalQueryParams = queryString ? `?${queryString}` : '';
+    if (id) finalQueryParams += (finalQueryParams ? '&' : '?') + `id=${id}`;
+    const url = `${baseUrl}/${phpFile}.php${finalQueryParams}`;
+
+    return (async () => {
+      try {
+        const response = await executeRequest(url, 'POST', data, options?.signal);
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`Server error ${response.status}: ${text.substring(0, 100)}`);
+        }
+        if (!response.body) throw new Error('Response body is empty');
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          onChunk(chunk);
+        }
+      } catch (error: any) {
+        if (error.name === 'AbortError') return;
+        console.error('Streaming Request Failed', error);
+        throw error;
+      }
+    })();
+  },
   baseUrl: API_BASE_URL,
   clearCache: clearApiCache
 };

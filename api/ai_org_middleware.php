@@ -22,7 +22,9 @@ function requireAISpaceAuth()
 
     // ── PRIORITY 0: System Admin Bypass (Overrides everything) ──────────────
     $adminToken = $normalizedHeaders['x-admin-token'] ?? $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? $_SERVER['HTTP_XADMINTOKEN'] ?? $_GET['admin_token'] ?? $_POST['admin_token'] ?? '';
-    if ($adminToken === ADMIN_BYPASS_TOKEN || $adminToken === 'admin-001' || is_super_admin()) {
+    $validBypassToken = defined('ADMIN_BYPASS_TOKEN') ? ADMIN_BYPASS_TOKEN : null;
+    
+    if (($validBypassToken && $adminToken === $validBypassToken) || is_super_admin()) {
         if (session_status() === PHP_SESSION_ACTIVE) {
             $_SESSION['org_user_id'] = 'admin-001';
             $_SESSION['org_user_role'] = 'admin';
@@ -162,7 +164,8 @@ function requireAISpaceAuth()
     // Internal services must send: X-Autoflow-Auth: <ADMIN_BYPASS_TOKEN value>
     if (!$orgUserId) {
         $autoflowAuthHeader = $normalizedHeaders['x-autoflow-auth'] ?? $_SERVER['HTTP_X_AUTOFLOW_AUTH'] ?? '';
-        if (!empty($autoflowAuthHeader) && hash_equals(ADMIN_BYPASS_TOKEN, $autoflowAuthHeader)) {
+        $validBypassToken = defined('ADMIN_BYPASS_TOKEN') ? ADMIN_BYPASS_TOKEN : null;
+        if (!empty($autoflowAuthHeader) && $validBypassToken && hash_equals($validBypassToken, $autoflowAuthHeader)) {
             $orgUserId = 'admin-001';
             if (session_status() === PHP_SESSION_ACTIVE) {
                 $_SESSION['org_user_id'] = 'admin-001';
@@ -322,15 +325,27 @@ function requireCategoryAccess($categoryId, $user)
         $resolvedCategoryId = $categoryId;
 
         if (strpos($categoryId, 'chatbot_') === 0) {
-            $stmtResolve = $pdo->prepare("SELECT category_id FROM ai_chatbots WHERE id = ? LIMIT 1");
+            $stmtResolve = $pdo->prepare("SELECT category_id, admin_id FROM ai_chatbots WHERE id = ? LIMIT 1");
             $stmtResolve->execute([$categoryId]);
-            $botCategoryId = $stmtResolve->fetchColumn();
-            if ($botCategoryId) {
-                $resolvedCategoryId = $botCategoryId;
+            $botData = $stmtResolve->fetch(PDO::FETCH_ASSOC);
+            if ($botData) {
+                $resolvedCategoryId = $botData['category_id'];
+                // [SECURITY] If the bot itself belongs to a different admin, block immediately
+                if ($botData['admin_id'] && $botData['admin_id'] !== $userOrgAdminId && $userOrgAdminId !== 'admin-001') {
+                    http_response_code(403);
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => false,
+                        'error' => 'BOT_ACCESS_DENIED',
+                        'message' => 'Chatbot này không thuộc tổ chức của bạn.',
+                        'app' => 'ai_space'
+                    ]);
+                    exit;
+                }
             }
         }
 
-        // --- [NEW] STEP 1.5: Enforce Organization Isolation ---
+        // --- [NEW] STEP 1.5: Enforce Organization Isolation for Category ---
         // Ensure the category belongs to the user's organization (admin_id)
         $userOrgAdminId = !empty($user['admin_id']) ? $user['admin_id'] : $user['id'];
         

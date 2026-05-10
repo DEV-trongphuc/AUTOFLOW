@@ -8,8 +8,8 @@ require_once 'chat_helpers.php';
 apiHeaders();
 
 // [SECURITY] Require authenticated workspace session
-$hasAuth = !empty($GLOBALS['current_admin_id']) 
-    || !empty($_SESSION['user_id']) 
+$hasAuth = !empty($GLOBALS['current_admin_id'])
+    || !empty($_SESSION['user_id'])
     || !empty($_SESSION['org_user_id'])
     || !empty($_SERVER['HTTP_AUTHORIZATION'])
     || !empty($_SERVER['HTTP_X_ADMIN_TOKEN'])

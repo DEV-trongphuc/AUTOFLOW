@@ -19,7 +19,7 @@ content = content.replace(
 
 content = content.replace(
     /\$\{item\.type === 'wait' \? 'p-2 md:p-3 border-dashed bg-slate-100\/50 opacity-90' : 'bg-white dark:bg-slate-900 p-3 md:p-4 cursor-pointer'\}/g,
-    '\'
+    'bg-white dark:bg-slate-900 p-3 md:p-4 cursor-pointer'
 );
 
 content = content.replace(

@@ -90,25 +90,32 @@ async function refreshAccessToken(apiBaseUrl: string): Promise<string | null> {
         });
 
         if (!res.ok) {
-            // Refresh token is invalid / expired — force logout
-            clearTokens();
+            // Refresh token is invalid / expired (401/403) — only then force logout
+            if (res.status === 401 || res.status === 403) {
+                console.warn('[TokenManager] Refresh token invalid, clearing session.');
+                clearTokens();
+            } else {
+                console.error(`[TokenManager] Refresh failed with status ${res.status}. Keeping tokens.`);
+            }
             return null;
         }
 
         const data = await res.json();
         if (data.success && data.data?.access_token) {
             // Store the new access token (keep the same refresh token)
-            const expiresIn = data.data.expires_in ?? 900;
+            const expiresIn = data.data.expires_in ?? 3600;
             localStorage.setItem(STORAGE_KEY_ACCESS, data.data.access_token);
             localStorage.setItem(STORAGE_KEY_EXPIRY, String(Date.now() + expiresIn * 1000));
             return data.data.access_token;
         }
 
-        // Server said not ok — clear tokens
-        clearTokens();
+        // Server said not ok (but with 200 OK) — check if we should clear
+        if (data.message?.toLowerCase().includes('token')) {
+            clearTokens();
+        }
         return null;
     } catch (err) {
-        console.error('[TokenManager] Refresh request failed:', err);
+        console.error('[TokenManager] Refresh request failed (network error):', err);
         return null;
     }
 }
@@ -148,7 +155,7 @@ export function hasStoredTokens(): boolean {
 /**
  * Update only the access token (called after a successful refresh_token response).
  */
-export function updateAccessToken(newToken: string, expiresIn = 900): void {
+export function updateAccessToken(newToken: string, expiresIn = 3600): void {
     localStorage.setItem(STORAGE_KEY_ACCESS, newToken);
     localStorage.setItem(STORAGE_KEY_EXPIRY, String(Date.now() + expiresIn * 1000));
 }

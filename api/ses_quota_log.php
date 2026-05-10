@@ -18,7 +18,8 @@ if (!$isCLI) {
     // Cho phép truy cập nếu: admin session hợp lệ HOẶC header ADMIN_BYPASS_TOKEN
     $bypassHeader = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? ($_GET['token'] ?? '');
     $hasAdminSession = !empty($current_admin_id);
-    $hasBypassToken  = (defined('ADMIN_BYPASS_TOKEN') && $bypassHeader === ADMIN_BYPASS_TOKEN);
+    $validBypassToken = defined('ADMIN_BYPASS_TOKEN') ? ADMIN_BYPASS_TOKEN : null;
+    $hasBypassToken  = ($validBypassToken && $bypassHeader === $validBypassToken);
 
     if (!$hasAdminSession && !$hasBypassToken) {
         http_response_code(403);

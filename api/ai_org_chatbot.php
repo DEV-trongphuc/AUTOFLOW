@@ -10,6 +10,13 @@ $currentOrgUser = requireAISpaceAuth();
 // This prevents system-wide "Pending" hangs when long AI tasks (like Gemini) are running.
 if (session_id())
     session_write_close();
+
+// Ensure long AI generations don't timeout (30s default is too low for Gemini/RAG)
+set_time_limit(0);
+// Ensure we don't keep server resources busy if the user closes the tab (for non-stream mode)
+// For stream mode, we handle the loop termination manually based on connection status.
+ignore_user_abort(false);
+
 require_once 'chat_helpers.php';
 require_once 'chat_security.php';
 require_once 'chat_rag.php';
@@ -653,9 +660,16 @@ try {
             $realMime = finfo_file($fi, $file['tmp_name']);
             finfo_close($fi);
             $allowedMimes = [
-                'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+                'image/jpeg',
+                'image/png',
+                'image/gif',
+                'image/webp',
+                'image/svg+xml',
                 'application/pdf',
-                'text/plain', 'text/html', 'text/markdown', 'text/csv',
+                'text/plain',
+                'text/html',
+                'text/markdown',
+                'text/csv',
                 'application/json',
                 'application/vnd.ms-excel',
                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -848,8 +862,8 @@ try {
 
             // Access check: admin-001 sees all; otherwise verify ownership
             $callerIsAdmin = (($GLOBALS['current_admin_id'] ?? '') === 'admin-001' || is_super_admin());
-            $callerOrgId = (string)($currentOrgUser['id'] ?? '');
-            $fileOwnerId = (string)($verifyRow['user_id'] ?? '');
+            $callerOrgId = (string) ($currentOrgUser['id'] ?? '');
+            $fileOwnerId = (string) ($verifyRow['user_id'] ?? '');
             $fileVisitorId = $verifyRow['visitor_id'] ?? '';
             if (!$callerIsAdmin && $fileOwnerId !== $callerOrgId && $fileVisitorId !== ($input['visitor_id'] ?? '')) {
                 http_response_code(403);
@@ -1723,7 +1737,7 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
         $isKbOnly = $modelConfig['kb_only'] ?? false;
         $isImageGen = $modelConfig['is_image_gen'] ?? false;
         $isCiteMode = $modelConfig['cite_mode'] ?? false;
-        
+
         // [FIX] Initialize variables to prevent "Undefined variable" errors if is_image_gen is false
         $isPro = false;
         $aspectRatio = '1:1';
@@ -1854,10 +1868,40 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
 
         // If visitorUuid is provided and looks like it could be a conversation ID (or just search both columns)
         // We prioritize finding a match by ID if possible, then by visitor_id
-        $stmtConv = $pdo->prepare("SELECT id FROM ai_org_conversations WHERE (id = ? OR visitor_id = ?) AND
+        $stmtConv = $pdo->prepare("SELECT id, status FROM ai_org_conversations WHERE (id = ? OR visitor_id = ?) AND
             property_id = ? AND status != 'closed' ORDER BY created_at DESC LIMIT 1");
         $stmtConv->execute([$visitorUuid, $visitorUuid, $propertyId]);
-        $convId = $stmtConv->fetchColumn();
+        $conv = $stmtConv->fetch(PDO::FETCH_ASSOC);
+        $convId = $conv['id'] ?? null;
+
+        // [HUMAN TAKEOVER ENFORCEMENT]
+        // If conversation is in 'human' status or AI is paused, block AI response UNLESS the caller is an admin.
+        // This ensures the 30-minute "Human Pause" correctly blocks automated LLM responses.
+        $isPaused = false;
+        if ($convId && $conv['status'] === 'human') {
+            $isPaused = true;
+        }
+
+        // Check zalo_subscribers pause timer if applicable
+        if (!$isPaused && strpos($visitorUuid, 'zalo_') === 0) {
+            $zUserId = substr($visitorUuid, 5);
+            $stmtPause = $pdo->prepare("SELECT ai_paused_until FROM zalo_subscribers WHERE zalo_user_id = ? AND workspace_id = ? LIMIT 1");
+            $stmtPause->execute([$zUserId, $propertyId]);
+            $pausedUntil = $stmtPause->fetchColumn();
+            if ($pausedUntil && strtotime($pausedUntil) > time()) {
+                $isPaused = true;
+            }
+        }
+
+        // Block if paused AND caller is NOT an admin (visitors/bots)
+        if ($isPaused && !$isAdminCaller) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'AI is currently paused for this conversation (Human Takeover in progress).',
+                'is_paused' => true
+            ]);
+            exit;
+        }
 
         if (!$convId) {
             $convId = bin2hex(random_bytes(16));
@@ -2102,7 +2146,7 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
                     $globalWorkspaceFiles[] = [
                         'fileData' => [
                             'mimeType' => $mimeType,
-                            'fileUri'  => $gMeta['file_uri']
+                            'fileUri' => $gMeta['file_uri']
                         ]
                     ];
                 }
@@ -2383,10 +2427,9 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
                 }
 
                 if ($attUrl && strpos($attUrl, 'data:') !== 0) {
-                    $assetId = 'ga_' . bin2hex(random_bytes(12));
                     $stmtInfo = $pdo->prepare("INSERT IGNORE INTO global_assets (id, name, unique_name, url, type, extension, size,
             source, property_id, conversation_id, admin_id) VALUES (?, ?, ?, ?, ?, ?, ?, 'chat_user', ?, ?, ?)");
-                    $stmtInfo->execute([$assetId, $attName, $attName, $attUrl, $attType, $attExt, $attSize, $propertyId, $convId, $GLOBALS['current_admin_id'] ?? null]);
+                    $stmtInfo->execute([$assetId, $attName, $attName, $attUrl, $attType, $attExt, $attSize, $propertyId, $convId, $currentOrgUser['id']]);
                 }
             }
         }
@@ -2536,7 +2579,8 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
                         if (empty($refImg['base64']) && !empty($refImg['previewUrl']) && strpos($refImg['previewUrl'], 'data:') !== 0) {
                             if (function_exists('getBase64FromUrl')) {
                                 $b64 = getBase64FromUrl($refImg['previewUrl']);
-                                if ($b64) $refImg['base64'] = $b64;
+                                if ($b64)
+                                    $refImg['base64'] = $b64;
                             }
                         }
                     }
@@ -2655,7 +2699,8 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
                     if (empty($refImg['base64']) && !empty($refImg['previewUrl']) && strpos($refImg['previewUrl'], 'data:') !== 0) {
                         if (function_exists('getBase64FromUrl')) {
                             $b64 = getBase64FromUrl($refImg['previewUrl']);
-                            if ($b64) $refImg['base64'] = $b64;
+                            if ($b64)
+                                $refImg['base64'] = $b64;
                         }
                     }
                 }

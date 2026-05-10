@@ -380,7 +380,7 @@ const SurveyReportModal: React.FC<Props> = ({ survey, isOpen, onClose }) => {
     const ov = analytics?.overview;
     const questions: QuestionAnalytics[] = analytics?.questions ?? [];
     const byDate: Array<{ date: string; count: number }> = analytics?.by_date ?? [];
-    const primaryColor = survey.theme?.primaryColor ?? '#f59e0b';
+    const primaryColor = survey.theme?.primaryColor || '#f59e0b';
 
     const TABS = [
         { id: 'overview', label: 'Tổng quan' },

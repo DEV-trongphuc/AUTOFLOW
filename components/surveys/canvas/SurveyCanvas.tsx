@@ -65,8 +65,8 @@ const SurveyCover: React.FC<{
     onClick: () => void;
 }> = ({ survey, isSelected, onClick }) => {
     const theme = survey.theme;
-    const coverStyle = theme.coverStyle ?? 'minimal';
-    const coverHeight = theme.coverHeight ?? 'md';
+    const coverStyle = theme.coverStyle || 'minimal';
+    const coverHeight = theme.coverHeight || 'md';
     const primaryColor = theme.primaryColor || '#ea9310';
     const heightMap = { sm: '80px', md: '120px', lg: '180px' };
 
@@ -291,7 +291,7 @@ const SurveyCanvas: React.FC<Props> = ({
                     <h3 className="font-bold text-slate-700">{ty.title}</h3>
                     <p className="text-sm text-slate-500 mt-1">{ty.message}</p>
                     {ty.ctaText && (
-                        <div className="mt-4 inline-block px-6 py-2 rounded-xl text-sm font-bold text-white" style={{ background: theme.primaryColor }}>
+                        <div className="mt-4 inline-block px-6 py-2 rounded-xl text-sm font-bold text-white" style={{ background: theme.primaryColor || '#f59e0b' }}>
                             {ty.ctaText}
                         </div>
                     )}
@@ -314,7 +314,7 @@ const SurveyCanvas: React.FC<Props> = ({
                         <h3 className="font-bold text-slate-700">{page.title || `Trang cảm ơn phụ ${i+1}`}</h3>
                         <p className="text-sm text-slate-500 mt-1">{page.message}</p>
                         {page.ctaText && (
-                            <div className="mt-4 inline-block px-6 py-2 rounded-xl text-sm font-bold text-white" style={{ background: theme.primaryColor }}>
+                            <div className="mt-4 inline-block px-6 py-2 rounded-xl text-sm font-bold text-white" style={{ background: theme.primaryColor || '#f59e0b' }}>
                                 {page.ctaText}
                             </div>
                         )}

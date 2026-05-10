@@ -11,10 +11,10 @@ export const buildCss = (s: EmailBlockStyle, viewMode: 'desktop' | 'mobile', bod
 
     // Apply mobile-specific defaults if not explicitly set in either desktop or mobile style
     const getMobileDefault = (prop: keyof EmailBlockStyle, defaultVal: string) => {
-        if (!isMobile) return toPx(rs[prop]);
+        if (!isMobile) return toPx(rs[prop] as string | number | undefined);
         // If the property is explicitly set (even to '0' or '0px') in either desktop or mobile, respect it
         const isExplicit = (s[prop] !== undefined && s[prop] !== '') || (mobileStyles[prop] !== undefined && mobileStyles[prop] !== '');
-        return isExplicit ? toPx(rs[prop]) : defaultVal;
+        return isExplicit ? toPx(rs[prop] as string | number | undefined) : defaultVal;
     };
 
     const paddingTop = type === 'section' ? getMobileDefault('paddingTop', '10px') : toPx(rs.paddingTop);

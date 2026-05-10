@@ -28,7 +28,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   };
 
   return (
-    <header className="flex items-center justify-between h-20 px-6 lg:px-10 bg-white dark:bg-slate-950/80/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40">
+    <header className="flex items-center justify-between h-14 lg:h-20 px-3 sm:px-6 lg:px-10 bg-white dark:bg-slate-950/80/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40">
       <div className="flex items-center gap-4">
         <button
           onClick={onMenuClick}
@@ -62,9 +62,17 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             </div>
           </button>
         </div>
+        {/* Mobile Search Icon — visible only on mobile where the full search bar is hidden */}
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+          className="lg:hidden p-2 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-xl transition-all text-slate-400 hover:text-amber-600"
+          title="Tìm kiếm"
+        >
+          <Search className="w-5 h-5" />
+        </button>
       </div>
 
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-2 sm:gap-5">
         <div className="h-8 w-px bg-slate-100 hidden sm:block mx-1"></div>
 
         <div className="relative group">

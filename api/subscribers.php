@@ -404,8 +404,9 @@ if ($method === 'POST' && $route === 'subscribers_bulk') {
                 $country = $data['country'] ?? '';
                 $city = $data['city'] ?? '';
                 $gender = $data['gender'] ?? '';
-                $dob = !empty($data['dateOfBirth']) ? $data['dateOfBirth'] : null;
-                $anniv = !empty($data['anniversaryDate']) ? $data['anniversaryDate'] : null;
+                $gender = $data['gender'] ?? '';
+                $dob = normalizeDate($data['dateOfBirth'] ?? $data['date_of_birth'] ?? null);
+                $anniv = normalizeDate($data['anniversaryDate'] ?? $data['anniversary_date'] ?? null);
                 $createVirtualEmail = $data['createVirtualEmail'] ?? false;
 
                 if (empty($email) && !empty($phone) && $createVirtualEmail) {

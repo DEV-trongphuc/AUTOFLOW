@@ -1630,6 +1630,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'history') {
         $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 20;
         $offset = ($page - 1) * $limit;
         $search = $_GET['search'] ?? null;
+        $filter_type = $_GET['type'] ?? null;
 
         $sql = "SELECT sa.type, sa.details, sa.created_at, s.email, s.first_name, s.last_name, sa.reference_name as label 
                 FROM subscriber_activity sa
@@ -1651,13 +1652,6 @@ if (isset($_GET['route']) && $_GET['route'] === 'history') {
             }
         }
 
-        $sql = "SELECT sa.type, sa.details, sa.created_at, s.email, s.first_name, s.last_name, sa.reference_name as label 
-                FROM subscriber_activity sa
-                LEFT JOIN subscribers s ON sa.subscriber_id = s.id
-                WHERE ";
-        $whereClauses = [];
-        $params = [];
-
         if ($flowId) {
             if ($campaignId) {
                 // Include logs from Flow OR Campaign
@@ -1678,6 +1672,23 @@ if (isset($_GET['route']) && $_GET['route'] === 'history') {
             $params[] = "%$search%";
             $params[] = "%$search%";
             $params[] = "%$search%";
+        }
+
+        if ($filter_type) {
+            if ($filter_type === 'click') {
+                $whereClauses[] = "sa.type = 'click_link'";
+            } elseif ($filter_type === 'open') {
+                $whereClauses[] = "sa.type = 'open_email'";
+            } elseif ($filter_type === 'unsubscribe') {
+                $whereClauses[] = "sa.type IN ('unsubscribe', 'unsubscribed_from_flow')";
+            } elseif ($filter_type === 'failed') {
+                $whereClauses[] = "sa.type IN ('failed_email', 'zns_failed')";
+            } elseif ($filter_type === 'sent') {
+                $whereClauses[] = "sa.type IN ('sent_email', 'zns_sent', 'sent_zns')";
+            } else {
+                $whereClauses[] = "sa.type = ?";
+                $params[] = $filter_type;
+            }
         }
 
         $countSql = "SELECT COUNT(*) FROM subscriber_activity sa LEFT JOIN subscribers s ON sa.subscriber_id = s.id WHERE " . implode(" AND ", $whereClauses);

@@ -708,7 +708,7 @@ try {
                         require_once __DIR__ . '/trigger_helper.php';
                         triggerFlows($pdo, $emailSubscriberId, 'ai_capture', $propertyId);
                         // EVENT-DRIVEN WAKEUP
-                        wakeupWaitingSubscribers($pdo, $emailSubscriberId);
+                        wakeupWaitingSubscribers($pdo, $emailSubscriberId, $propWorkspaceId);
                     } catch (Exception $e) {
                         error_log("Failed to trigger flow for Web Autofill Capture: " . $e->getMessage());
                     }

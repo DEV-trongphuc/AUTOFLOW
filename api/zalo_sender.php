@@ -230,14 +230,8 @@ function sendZNSMessage($pdo, $oaConfigId, $templateId, $phoneNumber, $templateD
 
     // [SEC-FIX] Normalize and VERIFY oaConfigId ownership
     // This prevents attackers from using another tenant's OA by spoofing the ID in flow JSON.
-    $sqlOa = "SELECT id FROM zalo_oa_configs WHERE ";
-    $paramsOa = [];
-    if (ctype_digit((string) $oaConfigId)) {
-        $sqlOa .= "oa_id = ?";
-    } else {
-        $sqlOa .= "id = ?";
-    }
-    $paramsOa[] = $oaConfigId;
+    $sqlOa = "SELECT id FROM zalo_oa_configs WHERE (id = ? OR oa_id = ?)";
+    $paramsOa = [$oaConfigId, $oaConfigId];
 
     if ($workspaceId) {
         $sqlOa .= " AND workspace_id = ?";
@@ -680,14 +674,8 @@ function batchSendZNS($pdo, $oaConfigId, $messages)
 function sendConsultationMessage($pdo, $oaConfigId, $zaloUserId, $text, $attachment = null, $workspaceId = null)
 {
     // [SEC-FIX] VERIFY oaConfigId ownership
-    $sqlOa = "SELECT id FROM zalo_oa_configs WHERE ";
-    $paramsOa = [];
-    if (ctype_digit((string) $oaConfigId)) {
-        $sqlOa .= "oa_id = ?";
-    } else {
-        $sqlOa .= "id = ?";
-    }
-    $paramsOa[] = $oaConfigId;
+    $sqlOa = "SELECT id FROM zalo_oa_configs WHERE (id = ? OR oa_id = ?)";
+    $paramsOa = [$oaConfigId, $oaConfigId];
 
     if ($workspaceId) {
         $sqlOa .= " AND workspace_id = ?";

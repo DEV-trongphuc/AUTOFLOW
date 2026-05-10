@@ -564,7 +564,10 @@ export const createBlock = (type: string, layout?: string): EmailBlock => {
         styleOverrides.paddingRight = '24px';
         styleOverrides.borderRadius = '12px';
         styleOverrides.borderColor = '#86efac';
-        styleOverrides.borderWidth = '2px';
+        styleOverrides.borderTopWidth = '2px';
+        styleOverrides.borderRightWidth = '2px';
+        styleOverrides.borderBottomWidth = '2px';
+        styleOverrides.borderLeftWidth = '2px';
         styleOverrides.borderStyle = 'dashed';
         styleOverrides.marginTop = '20px';
         styleOverrides.marginBottom = '20px';

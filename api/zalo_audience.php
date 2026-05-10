@@ -27,6 +27,7 @@ if (!$hasAuth) {
     exit;
 }
 
+$workspace_id = get_current_workspace_id();
 $method = $_SERVER['REQUEST_METHOD'];
 $route = $_GET['route'] ?? '';
 
@@ -34,13 +35,15 @@ try {
     // --- GET METHODS ---
     if ($method === 'GET') {
         if ($route === 'lists') {
-            $stmt = $pdo->query("
+            $stmt = $pdo->prepare("
                 SELECT zl.*, 
-                (SELECT COUNT(*) FROM zalo_subscribers zs WHERE zs.zalo_list_id = zl.id) as real_count,
-                (SELECT COUNT(*) FROM zalo_subscribers zs WHERE zs.zalo_list_id = zl.id AND zs.is_follower = 1) as followed_count
+                (SELECT COUNT(*) FROM zalo_subscribers zs WHERE zs.zalo_list_id = zl.id AND zs.workspace_id = ?) as real_count,
+                (SELECT COUNT(*) FROM zalo_subscribers zs WHERE zs.zalo_list_id = zl.id AND zs.is_follower = 1 AND zs.workspace_id = ?) as followed_count
                 FROM zalo_lists zl
+                WHERE zl.workspace_id = ?
                 ORDER BY zl.created_at DESC
             ");
+            $stmt->execute([$workspace_id, $workspace_id, $workspace_id]);
             jsonResponse(true, $stmt->fetchAll(PDO::FETCH_ASSOC));
         } elseif ($route === 'subscribers') {
             $listId = $_GET['list_id'] ?? '';
@@ -53,21 +56,21 @@ try {
             $offset = ($page - 1) * $limit;
 
             // Get total count
-            $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM zalo_subscribers WHERE zalo_list_id = ?");
-            $stmtCount->execute([$listId]);
+            $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM zalo_subscribers WHERE zalo_list_id = ? AND workspace_id = ?");
+            $stmtCount->execute([$listId, $workspace_id]);
             $total = (int) $stmtCount->fetchColumn();
 
             // Get paginated data
-            $stmt = $pdo->prepare("SELECT * FROM zalo_subscribers WHERE zalo_list_id = ? ORDER BY last_interaction_at DESC LIMIT ? OFFSET ?");
-            $stmt->execute([$listId, $limit, $offset]);
+            $stmt = $pdo->prepare("SELECT * FROM zalo_subscribers WHERE zalo_list_id = ? AND workspace_id = ? ORDER BY last_interaction_at DESC LIMIT ? OFFSET ?");
+            $stmt->execute([$listId, $workspace_id, $limit, $offset]);
 
             jsonResponse(true, $stmt->fetchAll(PDO::FETCH_ASSOC), '', ['total' => $total, 'page' => $page, 'limit' => $limit]);
         } elseif ($route === 'user_details') {
             $id = $_GET['id'] ?? '';
             if (!$id)
                 jsonResponse(false, null, "Thiếu ID người dùng");
-            $stmt = $pdo->prepare("SELECT * FROM zalo_subscribers WHERE id = ?");
-            $stmt->execute([$id]);
+            $stmt = $pdo->prepare("SELECT * FROM zalo_subscribers WHERE id = ? AND workspace_id = ?");
+            $stmt->execute([$id, $workspace_id]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$user)
                 jsonResponse(false, null, "Không tìm thấy người dùng");
@@ -98,9 +101,9 @@ try {
             $stmt = $pdo->prepare("
                 UPDATE zalo_subscribers 
                 SET display_name = ?, gender = ?, phone_number = ?, birthday = ?, special_day = ?, manual_email = ?, notes = ? 
-                WHERE id = ?
+                WHERE id = ? AND workspace_id = ?
             ");
-            $stmt->execute([$name, $gender, $phone, $birthday, $specialDay, $manualEmail, $notes, $id]);
+            $stmt->execute([$name, $gender, $phone, $birthday, $specialDay, $manualEmail, $notes, $id, $workspace_id]);
 
             // [NEW] Sync with Main List
             require_once 'zalo_sync_helpers.php';
@@ -118,9 +121,9 @@ try {
                 SELECT oa.access_token 
                 FROM zalo_lists l
                 JOIN zalo_oa_configs oa ON l.oa_config_id = oa.id
-                WHERE l.id = ?
+                WHERE l.id = ? AND l.workspace_id = ?
             ");
-            $stmt->execute([$listId]);
+            $stmt->execute([$listId, $workspace_id]);
             $oa = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$oa)
@@ -185,14 +188,14 @@ try {
             if ($messageType === 'text' && !$messageContent)
                 jsonResponse(false, null, "Nội dung tin nhắn không được để trống");
 
-            $stmt = $pdo->prepare("SELECT l.id, l.oa_config_id, oa.access_token FROM zalo_lists l JOIN zalo_oa_configs oa ON l.oa_config_id = oa.id WHERE l.id = ?");
-            $stmt->execute([$listId]);
+            $stmt = $pdo->prepare("SELECT l.id, l.oa_config_id, oa.access_token FROM zalo_lists l JOIN zalo_oa_configs oa ON l.oa_config_id = oa.id WHERE l.id = ? AND l.workspace_id = ?");
+            $stmt->execute([$listId, $workspace_id]);
             $info = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$info)
                 jsonResponse(false, null, "Không tìm thấy danh sách hoặc cấu hình OA");
 
-            $sql = "SELECT zalo_user_id FROM zalo_subscribers WHERE zalo_list_id = ? AND status IN ('active', 'lead', 'customer')";
-            $params = [$listId];
+            $sql = "SELECT zalo_user_id FROM zalo_subscribers WHERE zalo_list_id = ? AND workspace_id = ? AND status IN ('active', 'lead', 'customer')";
+            $params = [$listId, $workspace_id];
             if ($targetGroup === 'follower') {
                 $sql .= " AND is_follower = 1";
             } elseif ($targetGroup === 'interacted') {
@@ -291,8 +294,8 @@ try {
         if (!$id) jsonResponse(false, null, "Thiếu ID người dùng");
 
         // [SECURITY] Fetch user to get zalo_user_id for cascading cleanup
-        $stmtF = $pdo->prepare("SELECT zalo_user_id FROM zalo_subscribers WHERE id = ?");
-        $stmtF->execute([$id]);
+        $stmtF = $pdo->prepare("SELECT zalo_user_id FROM zalo_subscribers WHERE id = ? AND workspace_id = ?");
+        $stmtF->execute([$id, $workspace_id]);
         $user = $stmtF->fetch(PDO::FETCH_ASSOC);
 
         if ($user) {

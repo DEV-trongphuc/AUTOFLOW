@@ -137,8 +137,8 @@ if ($action === 'list') {
                     FROM ai_messages m
                     JOIN ai_conversations c ON m.conversation_id = c.id
                     LEFT JOIN web_visitors v ON c.visitor_id = v.id
-                    LEFT JOIN subscribers s ON (v.subscriber_id = s.id OR c.visitor_id = CONCAT('meta_', s.meta_psid) OR c.visitor_id = CONCAT('zalo_', s.zalo_user_id))
-                    LEFT JOIN meta_subscribers ms ON c.visitor_id = CONCAT('meta_', ms.psid)
+                    LEFT JOIN subscribers s ON ((v.subscriber_id = s.id AND v.subscriber_id IS NOT NULL AND v.subscriber_id != '') OR (c.visitor_id = CONCAT('meta_', s.meta_psid) AND s.meta_psid IS NOT NULL AND s.meta_psid != '') OR (c.visitor_id = CONCAT('zalo_', s.zalo_user_id) AND s.zalo_user_id IS NOT NULL AND s.zalo_user_id != ''))
+                    LEFT JOIN meta_subscribers ms ON (c.visitor_id = CONCAT('meta_', ms.psid) AND ms.psid IS NOT NULL AND ms.psid != '')
                     WHERE " . implode(" AND ", $whereCust);
 
         $queries[] = "($sqlCust)";

@@ -29,7 +29,7 @@ const PageHero: React.FC<PageHeroProps> = ({
     shadowColor = 'shadow-amber-900/30'
 }) => {
     return (
-        <div className={`relative mb-8 rounded-[24px] overflow-hidden p-6 md:p-8 min-h-[140px] flex flex-col justify-center shadow-2xl ${shadowColor} border border-white/10 bg-gradient-to-r ${customGradient} group/hero`}>
+        <div className={`relative mb-4 sm:mb-8 rounded-[24px] overflow-hidden p-4 sm:p-6 md:p-8 min-h-[100px] sm:min-h-[140px] flex flex-col justify-center shadow-2xl ${shadowColor} border border-white/10 bg-gradient-to-r ${customGradient} group/hero`}>
             {/* Minimalist Background Decor */}
             <div className="absolute top-1/2 -right-10 w-48 h-48 border-[2px] border-dashed border-white/30 rounded-full transform -translate-y-1/2 pointer-events-none" />
             <div className="absolute top-1/4 right-1/4 opacity-20 pointer-events-none">
@@ -40,20 +40,18 @@ const PageHero: React.FC<PageHeroProps> = ({
             
             <div className="relative z-10">
                 <div className="flex items-center gap-2 mb-2">
-                    <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tight">
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
                         {title}
                     </h1>
                 </div>
                 
-                <p className="text-white/90 text-sm font-bold leading-relaxed max-w-xl mb-8">
+                <p className="hidden sm:block text-white/90 text-sm font-bold leading-relaxed max-w-xl mb-6 sm:mb-8">
                     {subtitle}
                 </p>
 
                 {actions && actions.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-3 w-full">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full mt-4 sm:mt-0">
                         {actions.map((action, idx) => {
-                            const isFirstIconOnly = !action.label && (idx === 0 || !!actions[idx - 1].label);
-                            
                             return (
                                 <button 
                                     key={idx}
@@ -61,16 +59,19 @@ const PageHero: React.FC<PageHeroProps> = ({
                                     title={action.title || action.label}
                                     className={`flex items-center justify-center transition-all shadow-xl ${
                                         action.label 
-                                            ? 'gap-2 px-6 h-[40px] rounded-xl font-black text-xs uppercase tracking-wider' 
-                                            : `h-[40px] w-[40px] rounded-xl`
+                                            ? 'gap-2 h-[36px] sm:h-[40px] rounded-xl font-black text-xs uppercase tracking-wider' 
+                                            : `h-[36px] sm:h-[40px] w-[36px] sm:w-[40px] rounded-xl`
                                     } ${
                                         action.primary 
-                                        ? 'bg-white text-[#333] hover:bg-slate-50 shadow-amber-950/20' 
-                                        : 'bg-[#fbbf24] text-[#451a03] border border-[#d97706] hover:bg-[#fcd34d] hover:scale-105 shadow-lg transition-all font-black'
+                                        ? 'bg-white text-[#333] hover:bg-slate-50 shadow-amber-950/20 px-4 sm:px-6' 
+                                        : 'bg-[#fbbf24] text-[#451a03] border border-[#d97706] hover:bg-[#fcd34d] hover:scale-105 shadow-lg transition-all font-black px-3 sm:px-6'
                                     }`}
                                 >
                                     {action.icon && <action.icon className={action.label ? "w-4 h-4" : "w-5 h-5"} />}
-                                    {action.label}
+                                    {/* Hide label on mobile for non-primary (secondary) actions to save space */}
+                                    {action.label && (
+                                        <span className={action.primary ? 'inline' : 'hidden sm:inline'}>{action.label}</span>
+                                    )}
                                 </button>
                             );
                         })}

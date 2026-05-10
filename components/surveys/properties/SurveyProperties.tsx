@@ -613,11 +613,11 @@ const SurveyProperties: React.FC<Props> = ({ survey, selectedBlock, selectedBloc
 
                     {settingsTab === 'theme' && (
                         <>
-                            <ColorRow label="Màu chủ đạo" value={survey.theme?.primaryColor ?? '#f59e0b'} onChange={v => onUpdateSurvey({ theme: { ...survey.theme, primaryColor: v } })} />
-                            <ColorRow label="Màu nền trang" value={survey.theme?.backgroundColor ?? '#0f172a'} onChange={v => onUpdateSurvey({ theme: { ...survey.theme, backgroundColor: v } })} />
-                            <ColorRow label="Màu card" value={survey.theme?.cardBackground ?? '#ffffff'} onChange={v => onUpdateSurvey({ theme: { ...survey.theme, cardBackground: v } })} />
-                            <ShadowRow label="Đổ bóng Card" value={survey.theme?.cardShadow ?? 'none'} onChange={v => onUpdateSurvey({ theme: { ...survey.theme, cardShadow: v } as any })} />
-                            <ColorRow label="Màu chữ" value={survey.theme?.textColor ?? '#1e293b'} onChange={v => onUpdateSurvey({ theme: { ...survey.theme, textColor: v } })} />
+                            <ColorRow label="Màu chủ đạo" value={survey.theme?.primaryColor || '#f59e0b'} onChange={v => onUpdateSurvey({ theme: { ...survey.theme, primaryColor: v } })} />
+                            <ColorRow label="Màu nền trang" value={survey.theme?.backgroundColor || '#0f172a'} onChange={v => onUpdateSurvey({ theme: { ...survey.theme, backgroundColor: v } })} />
+                            <ColorRow label="Màu card" value={survey.theme?.cardBackground || '#ffffff'} onChange={v => onUpdateSurvey({ theme: { ...survey.theme, cardBackground: v } })} />
+                            <ShadowRow label="Đổ bóng Card" value={survey.theme?.cardShadow || 'none'} onChange={v => onUpdateSurvey({ theme: { ...survey.theme, cardShadow: v } as any })} />
+                            <ColorRow label="Màu chữ" value={survey.theme?.textColor || '#1e293b'} onChange={v => onUpdateSurvey({ theme: { ...survey.theme, textColor: v } })} />
                             <SectionDivider label="Header / Cover" />
 
                             {/* Cover style toggle */}

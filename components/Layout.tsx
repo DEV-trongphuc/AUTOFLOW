@@ -62,8 +62,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <div className="flex-1 flex flex-col overflow-hidden relative">
         <Header onMenuClick={() => setSidebarOpen(true)} />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-0 scroll-smooth relative">
-          <div className="grid p-3 lg:p-10 min-h-full">
+        <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-0 scroll-smooth relative">
+          <div className="grid w-full p-3 lg:p-10 min-h-full overflow-hidden">
             {/* Golden glow decor — top-right corner accent */}
             <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[400px] z-0" style={{ background: 'radial-gradient(ellipse at 100% 0%, rgba(251,191,36,0.13) 0%, transparent 65%)' }} />
 
@@ -75,7 +75,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0, transition: { duration: 0.15, ease: "easeOut" } }}
                 transition={{ duration: 0.25, ease: "easeOut" }}
-                className="max-w-[1400px] w-full mx-auto col-start-1 row-start-1 z-1000"
+                className="max-w-[1400px] w-full min-w-0 mx-auto col-start-1 row-start-1 z-1000"
               >
                 {children}
               </motion.div>

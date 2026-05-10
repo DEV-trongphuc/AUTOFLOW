@@ -294,7 +294,7 @@ function checkDynamicTriggers($pdo, $subscriberId)
             $criteriaJson = $stmtSeg->fetchColumn();
 
             if ($criteriaJson) {
-                $segRes = buildSegmentWhereClause($criteriaJson, $workspace_id, $tTargetId);
+                $segRes = buildSegmentWhereClause($criteriaJson, $workspaceId, $tTargetId);
                 // Check if THIS subscriber matches criteria
                 $sql = "SELECT 1 FROM subscribers s WHERE s.id = ? AND " . $segRes['sql'] . " LIMIT 1";
                 $params = array_merge([$subscriberId], $segRes['params']);
@@ -352,7 +352,7 @@ function checkDynamicTriggers($pdo, $subscriberId)
                             $stmtSeg2->execute([$segId, $workspaceId]);
                             $segConfig = $stmtSeg2->fetchColumn();
                             if ($segConfig) {
-                                $segRes = buildSegmentWhereClause($segConfig, $workspace_id, $segId);
+                                $segRes = buildSegmentWhereClause($segConfig, $workspaceId, $segId);
                                 if ($segRes && !empty($segRes['sql'])) {
                                     $sourceConditions[] = "({$segRes['sql']})";
                                     if (!empty($segRes['params']))
@@ -537,8 +537,18 @@ function checkDynamicTriggers($pdo, $subscriberId)
 
 // [EVENT-DRIVEN ARCHITECTURE] Wake up subscriber waiting in flows
 if (!function_exists('wakeupWaitingSubscribers')) {
-    function wakeupWaitingSubscribers($pdo, $subscriberId) {
+    function wakeupWaitingSubscribers($pdo, $subscriberId, $workspaceId = null) {
         if (!$subscriberId) return;
+
+        // [FIX] Ensure workspaceId is present
+        if ($workspaceId === null) {
+            $stmtW = $pdo->prepare("SELECT workspace_id FROM subscribers WHERE id = ? LIMIT 1");
+            $stmtW->execute([$subscriberId]);
+            $workspaceId = $stmtW->fetchColumn();
+        }
+
+        if (!$workspaceId) return;
+
         try {
             // [FIX] Only wakeup 'condition' steps. 'wait' steps are time-based and should NOT be shortened by activity.
             // This prevents duration-based waits (e.g. Wait 3 Days) from being skipped when a user performs 
@@ -546,7 +556,7 @@ if (!function_exists('wakeupWaitingSubscribers')) {
             $stmt = $pdo->prepare("UPDATE subscriber_flow_states SET scheduled_at = NOW() WHERE workspace_id = ? AND subscriber_id = ? AND status = 'waiting' AND step_type = 'condition' AND scheduled_at > NOW()");
             $stmt->execute([$workspaceId, $subscriberId]);
             if ($stmt->rowCount() > 0) {
-                error_log("[wakeupWaitingSubscribers] Woke up Subscriber:{$subscriberId} (Step:Condition)");
+                error_log("[wakeupWaitingSubscribers] Woke up Subscriber:{$subscriberId} (Step:Condition) in WS:{$workspaceId}");
             }
         } catch (Exception $e) {
             error_log('[wakeupWaitingSubscribers] Failed: ' . $e->getMessage());

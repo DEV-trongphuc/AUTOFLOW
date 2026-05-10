@@ -495,7 +495,7 @@ try {
         // EVENT-DRIVEN WAKEUP FOR SURVEY CONDITIONS
         if (!empty($subscriberId)) {
             require_once 'trigger_helper.php';
-            wakeupWaitingSubscribers($pdo, $subscriberId);
+            wakeupWaitingSubscribers($pdo, $subscriberId, $survey['workspace_id']);
         }
 
         // INCREMENT SHORT LINK SUBMIT COUNT

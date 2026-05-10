@@ -37,7 +37,7 @@ const removeEnd = innerBody.indexOf("    const isCondition = step.type === 'cond
 
 innerBody = innerBody.substring(0, removeStart) + innerBody.substring(removeEnd);
 
-const commonPropsMatch = innerBody.match(/const commonProps = \{[\s\S]*?    \};\n/);
+const commonPropsMatch = innerBody.match(/const commonProps = \{[\s\S]*? {4}\};\n/);
 if (commonPropsMatch) {
     const hooksStr = `
     const handleNodeClick = useCallback(() => {

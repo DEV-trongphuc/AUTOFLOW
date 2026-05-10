@@ -4502,6 +4502,7 @@
                 State.cooldown = 0; // Clear cooldown on response
                 // botMsg.content = fullContent; // Already set in constructor above
                 saveState();
+                syncQuick(); // Fix: Force sync after loading state clears
                 checkEndOfResponse();
                 if (window.__mf_app && window.__mf_app.updateSendState)
                     window.__mf_app.updateSendState();

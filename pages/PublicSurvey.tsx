@@ -132,17 +132,20 @@ const PublicSurvey: React.FC = () => {
 
     const totalPages = pages.length;
     const currentBlocks = pages[currentPage] ?? [];
-    const theme = survey?.theme ?? {
-        primaryColor: '#f59e0b',
-        backgroundColor: '#0f1931ff',
-        cardBackground: '#ffffff',
-        textColor: '#1e293b',
-        fontFamily: "'Inter', sans-serif",
-        borderRadius: '12px',
+    const rawTheme: any = survey?.theme ?? {};
+    const theme = {
+        primaryColor: rawTheme.primaryColor || '#f59e0b',
+        backgroundColor: rawTheme.backgroundColor || '#0f172a',
+        cardBackground: rawTheme.cardBackground || '#ffffff',
+        textColor: rawTheme.textColor || '#1e293b',
+        fontFamily: rawTheme.fontFamily || "'Inter', sans-serif",
+        borderRadius: rawTheme.borderRadius || '12px',
+        coverStyle: (rawTheme as any).coverStyle || 'minimal',
+        coverHeight: (rawTheme as any).coverHeight || 'md',
     };
 
     // Support old surveys that formally defaulted to #f8fafc but visually rendered as #0f172a
-    const pageBgColor = theme.backgroundColor === '#f8fafc' ? '#0f172a' : (theme.backgroundColor || '#0f172a');
+    const pageBgColor = theme.backgroundColor === '#f8fafc' ? '#0f172a' : theme.backgroundColor;
 
     const setAnswer = (blockId: string, questionId: string, type: string, val: Partial<SurveyAnswer>) => {
         setAnswers(prev => ({

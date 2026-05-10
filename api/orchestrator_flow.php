@@ -14,8 +14,8 @@ $serverIp = $_SERVER['SERVER_ADDR'] ?? '';
 $isLocalhost = in_array($callerIp, ['127.0.0.1', '::1', 'localhost'])
     || ($serverIp && $callerIp === $serverIp);
 $adminToken = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
-if (!defined('ADMIN_BYPASS_TOKEN')) require_once __DIR__ . '/db_connect.php';
-$isAuthorized = $isLocalhost || ($adminToken === ADMIN_BYPASS_TOKEN);
+$validBypassToken = defined('ADMIN_BYPASS_TOKEN') ? ADMIN_BYPASS_TOKEN : null;
+$isAuthorized = $isLocalhost || ($validBypassToken && $adminToken === $validBypassToken);
 if (!$isAuthorized) {
     http_response_code(403);
     header('Content-Type: application/json');

@@ -18,19 +18,13 @@ ALTER TABLE `subscriber_flow_states`
 ALTER TABLE `system_audit_logs` 
     ADD COLUMN `workspace_id` INT(11) DEFAULT 1 AFTER `id`,
     ADD INDEX `idx_workspace_id` (`workspace_id`);
-
 -- 4. Standardize workspace_id defaults for existing tables to ensure consistency
 ALTER TABLE `mail_delivery_logs` MODIFY COLUMN `workspace_id` INT(11) DEFAULT 1;
 ALTER TABLE `system_settings` MODIFY COLUMN `workspace_id` INT(11) DEFAULT 1;
 
 -- 5. Add performance indexes for aggregator
--- [FIX] Ensure workspace_id exists in activity_buffer before indexing
-ALTER TABLE `activity_buffer` ADD COLUMN IF NOT EXISTS `workspace_id` INT(11) DEFAULT 1 AFTER `id`;
-ALTER TABLE `activity_buffer` ADD INDEX IF NOT EXISTS `idx_workspace_batch` (`workspace_id`, `processed`, `created_at`);
-
--- [PERF] Optimized index for Zalo buffer
-ALTER TABLE `zalo_activity_buffer` ADD COLUMN IF NOT EXISTS `workspace_id` INT(11) DEFAULT 1 AFTER `id`;
-ALTER TABLE `zalo_activity_buffer` ADD INDEX IF NOT EXISTS `idx_workspace_batch` (`workspace_id`, `processed`, `created_at`);
+ALTER TABLE `activity_buffer` ADD INDEX `idx_workspace_batch` (`workspace_id`, `id`);
+ALTER TABLE `zalo_activity_buffer` ADD INDEX `idx_workspace_batch` (`workspace_id`, `id`);
 
 -- 6. Extreme Performance Indexes for Workers
 ALTER TABLE `subscriber_flow_states` ADD INDEX IF NOT EXISTS `idx_perf_wakeup` (`status`, `scheduled_at`, `workspace_id`);

@@ -201,7 +201,7 @@ function sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $scenario, $user
         if (isset($payload['message']['text'])) {
             $payload['message']['text'] = formatZaloMessage($payload['message']['text']);
         }
-        _sendZaloPayload($pdo, $zaloUserId, $accessToken, $payload, $scenario['content'] ?? '');
+        _sendZaloPayload($pdo, $zaloUserId, $accessToken, $payload, $scenario['content'] ?? '', $workspaceId);
         return;
     }
 
@@ -234,7 +234,7 @@ function sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $scenario, $user
             $partPayload['message'] = ['text' => $part];
         }
 
-        _sendZaloPayload($pdo, $zaloUserId, $accessToken, $partPayload, $part);
+        _sendZaloPayload($pdo, $zaloUserId, $accessToken, $partPayload, $part, $workspaceId);
 
         // Delay nh? gi?a c�c tin d? tr�nh rate limit
         if (!$isLastPart) {
@@ -246,7 +246,7 @@ function sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $scenario, $user
 /**
  * Internal helper: G?i Zalo CS API v� log k?t qu?
  */
-function _sendZaloPayload($pdo, $zaloUserId, $accessToken, $payload, $logText)
+function _sendZaloPayload($pdo, $zaloUserId, $accessToken, $payload, $logText, $workspaceId = null)
 {
     $ch = curl_init("https://openapi.zalo.me/v3.0/oa/message/cs");
     curl_setopt($ch, CURLOPT_POST, true);
@@ -273,7 +273,7 @@ function _sendZaloPayload($pdo, $zaloUserId, $accessToken, $payload, $logText)
 /**
  * AI Reply Logic for Zalo
  */
-function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg)
+function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg, $workspaceId = null)
 {
     if (empty($userMsg))
         return;
@@ -376,12 +376,12 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg)
                     _sendZaloPayload($pdo, $zaloUserId, $accessToken, [
                         'recipient' => ['user_id' => $zaloUserId],
                         'message' => ['text' => $part]
-                    ], $part);
+                    ], $part, $workspaceId);
                     usleep(300000);
                 }
             }
 
-            // G?i image k�m buttons
+            // G?i image km buttons
             $imgScenario = [
                 'id' => ($scenario['id'] ?? 'ai') . '_img',
                 'title' => '',
@@ -391,7 +391,7 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg)
                 'buttons' => json_encode($finalButtons),
                 'type' => 'ai_processed'
             ];
-            sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $imgScenario);
+            sendZaloScenarioReply($pdo, $zaloUserId, $accessToken, $imgScenario, '', $workspaceId);
             return;
         }
         // Upload fail ? d�ng text v?i URL gi? nguy�n
@@ -418,7 +418,7 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg)
             $partPayload['message'] = ['text' => $part];
         }
 
-        _sendZaloPayload($pdo, $zaloUserId, $accessToken, $partPayload, $part);
+        _sendZaloPayload($pdo, $zaloUserId, $accessToken, $partPayload, $part, $workspaceId);
 
         if (!$isLastPart) {
             usleep(300000); // 0.3 gi�y

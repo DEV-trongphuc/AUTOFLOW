@@ -560,10 +560,10 @@ const Campaigns: React.FC = () => {
     ], [adminGuard]);
 
     return (
-        <div className="animate-fade-in space-y-8 pb-20">
+        <div className="animate-fade-in space-y-8 pb-20 w-full min-w-0">
 
             {/* PageHero with floating QUOTA button */}
-            <div className="relative">
+            <div className="relative overflow-hidden">
                 <PageHero
                     title={<>Campaign <span className="text-orange-100/80">Marketing</span></>}
                     subtitle="Gửi Email & Zalo ZNS · Theo dõi hành trình khách hàng, tracking đa điểm chạm & báo cáo hiệu suất chi tiết theo thời gian thực."
@@ -593,44 +593,44 @@ const Campaigns: React.FC = () => {
             </div>
 
             <div className="space-y-6">
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-white dark:bg-slate-900 p-5 rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-sm flex items-center justify-between group">
-                        <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-amber-600 transition-colors">Tổng chiến dịch</p>
-                            <h3 className="text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight">{campaigns.length}</h3>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+                    <div className="bg-white dark:bg-slate-900 p-3 sm:p-5 rounded-[20px] sm:rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-sm flex items-center justify-between gap-2 group">
+                        <div className="min-w-0">
+                            <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 sm:mb-1 group-hover:text-amber-600 transition-colors truncate">Tổng chiến dịch</p>
+                            <h3 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight">{campaigns.length}</h3>
                         </div>
-                        <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 text-white rounded-2xl shadow-lg shadow-amber-600/10 flex items-center justify-center transition-all group-hover:scale-110">
-                            <PieChart className="w-6 h-6" />
-                        </div>
-                    </div>
-
-                    <div className="bg-white dark:bg-slate-900 p-5 rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-sm flex items-center justify-between group">
-                        <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-indigo-500 transition-colors">Tổng gửi (Email/ZNS)</p>
-                            <h3 className="text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight">{stats.totalSent.toLocaleString()}</h3>
-                        </div>
-                        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded-2xl shadow-lg shadow-indigo-500/10 flex items-center justify-center transition-all group-hover:scale-110">
-                            <Send className="w-6 h-6" />
+                        <div className="w-9 h-9 sm:w-12 sm:h-12 shrink-0 bg-gradient-to-br from-amber-400 to-amber-600 text-white rounded-xl sm:rounded-2xl shadow-lg shadow-amber-600/10 flex items-center justify-center transition-all group-hover:scale-110">
+                            <PieChart className="w-4 h-4 sm:w-6 sm:h-6" />
                         </div>
                     </div>
 
-                    <div className="bg-white dark:bg-slate-900 p-5 rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-sm flex items-center justify-between group">
-                        <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-emerald-500 transition-colors">Tỷ lệ mở trung bình</p>
-                            <h3 className="text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight">{stats.openRate}%</h3>
+                    <div className="bg-white dark:bg-slate-900 p-3 sm:p-5 rounded-[20px] sm:rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-sm flex items-center justify-between gap-2 group">
+                        <div className="min-w-0">
+                            <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 sm:mb-1 group-hover:text-indigo-500 transition-colors truncate">Tổng gửi</p>
+                            <h3 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight">{stats.totalSent.toLocaleString()}</h3>
                         </div>
-                        <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-2xl shadow-lg shadow-emerald-500/10 flex items-center justify-center transition-all group-hover:scale-110">
-                            <MailOpen className="w-6 h-6" />
+                        <div className="w-9 h-9 sm:w-12 sm:h-12 shrink-0 bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded-xl sm:rounded-2xl shadow-lg shadow-indigo-500/10 flex items-center justify-center transition-all group-hover:scale-110">
+                            <Send className="w-4 h-4 sm:w-6 sm:h-6" />
                         </div>
                     </div>
 
-                    <div className="bg-white dark:bg-slate-900 p-5 rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-sm flex items-center justify-between group">
-                        <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-rose-500 transition-colors">Lượt Click</p>
-                            <h3 className="text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight">{stats.totalClicked.toLocaleString()}</h3>
+                    <div className="bg-white dark:bg-slate-900 p-3 sm:p-5 rounded-[20px] sm:rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-sm flex items-center justify-between gap-2 group">
+                        <div className="min-w-0">
+                            <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 sm:mb-1 group-hover:text-emerald-500 transition-colors truncate">Tỷ lệ mở</p>
+                            <h3 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight">{stats.openRate}%</h3>
                         </div>
-                        <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-rose-700 text-white rounded-2xl shadow-lg shadow-rose-500/10 flex items-center justify-center transition-all group-hover:scale-110">
-                            <MousePointerClick className="w-6 h-6" />
+                        <div className="w-9 h-9 sm:w-12 sm:h-12 shrink-0 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-xl sm:rounded-2xl shadow-lg shadow-emerald-500/10 flex items-center justify-center transition-all group-hover:scale-110">
+                            <MailOpen className="w-4 h-4 sm:w-6 sm:h-6" />
+                        </div>
+                    </div>
+
+                    <div className="bg-white dark:bg-slate-900 p-3 sm:p-5 rounded-[20px] sm:rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-sm flex items-center justify-between gap-2 group">
+                        <div className="min-w-0">
+                            <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 sm:mb-1 group-hover:text-rose-500 transition-colors truncate">Lượt Click</p>
+                            <h3 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight">{stats.totalClicked.toLocaleString()}</h3>
+                        </div>
+                        <div className="w-9 h-9 sm:w-12 sm:h-12 shrink-0 bg-gradient-to-br from-rose-500 to-rose-700 text-white rounded-xl sm:rounded-2xl shadow-lg shadow-rose-500/10 flex items-center justify-center transition-all group-hover:scale-110">
+                            <MousePointerClick className="w-4 h-4 sm:w-6 sm:h-6" />
                         </div>
                     </div>
                 </div>

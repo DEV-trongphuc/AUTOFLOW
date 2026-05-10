@@ -88,6 +88,13 @@ function runMaintenance($pdo) {
 }
 
 // Support for CLI and background trigger
-if (php_sapi_name() === 'cli' || (isset($_GET['action']) && $_GET['action'] === 'maintenance_cleanup')) {
+$isCli = php_sapi_name() === 'cli';
+$adminToken = $_GET['admin_token'] ?? '';
+$validBypassToken = defined('ADMIN_BYPASS_TOKEN') ? ADMIN_BYPASS_TOKEN : 'autoflow-admin-001';
+
+if ($isCli || (isset($_GET['action']) && $_GET['action'] === 'maintenance_cleanup' && $adminToken === $validBypassToken)) {
     runMaintenance($pdo);
+} else if (!$isCli && isset($_GET['action'])) {
+    http_response_code(403);
+    die("Unauthorized maintenance execution.");
 }

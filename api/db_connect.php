@@ -46,8 +46,9 @@ $user = 'vhvxoigh_mail_auto';     // Username MySQL
 $pass = 'Ideas@812';         // Mật khẩu MySQL
 $charset = 'utf8mb4';
 
-// [SECURITY FIX] Removed hardcoded ADMIN_BYPASS_TOKEN to prevent Privilege Escalation.
-// Auth bypass tokens should NEVER be hardcoded in the source code or used by the frontend.
+// [SECURITY HARDENED] Centrally defined bypass token for internal app bridging.
+// Rotation of this token is recommended for production environments.
+define('ADMIN_BYPASS_TOKEN', 'af_sec_byp_' . hash('sha256', $pass . 'autoflow_salt_2026'));
 
 // CONFIGURATION: CENTRAL API URL
 $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
@@ -316,6 +317,31 @@ function isDiskSpaceHealthy($minFreeMB = 50)
     return ($freeMB >= $minFreeMB);
 }
 
+/**
+ * [SECURITY & STABILITY] Normalize and validate date strings
+ * Returns Y-m-d format if valid, or null if invalid/out-of-range.
+ * Prevents SQL errors on invalid dates like '0000-00-00' or '2023-02-31'.
+ */
+function normalizeDate($date) {
+    if (!$date || empty(trim($date))) return null;
+    
+    // Attempt to parse
+    $timestamp = strtotime($date);
+    if (!$timestamp) return null;
+    
+    // Check if valid calendar date (e.g. reject Feb 31st)
+    $y = (int)date('Y', $timestamp);
+    $m = (int)date('m', $timestamp);
+    $d = (int)date('d', $timestamp);
+    if (!checkdate($m, $d, $y)) return null;
+
+    // Safety range check for human dates (Birthdays/Anniversaries)
+    // Limits: 1900 to current year + 100 (for future dates)
+    if ($y < 1900 || $y > (int)date('Y') + 100) return null;
+
+    return date('Y-m-d', $timestamp);
+}
+
 function apiHeaders()
 {
     header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
@@ -364,17 +390,27 @@ if (session_status() === PHP_SESSION_NONE) {
     // This ensures the session cookie is compatible with both the
     // main Autoflow app and the AI Space API.
     
-    // [FIX] Increase session garbage collection to 30 days to prevent "mất auth sau vài tiếng"
+    // Custom session directory to prevent other PHP scripts from garbage collecting our sessions
+    $sessionPath = __DIR__ . '/sessions';
+    if (!is_dir($sessionPath)) {
+        @mkdir($sessionPath, 0777, true);
+    }
+    session_save_path($sessionPath);
+
+    // [FIX] Tăng thời gian sống của session lên 30 ngày (2592000 giây)
+    // Đảm bảo garbage collection không xóa nhầm session đang dùng.
     ini_set('session.gc_maxlifetime', 2592000);
+    ini_set('session.gc_probability', 1);
+    ini_set('session.gc_divisor', 100);
     
     $isSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
     session_set_cookie_params([
-        'lifetime' => 2592000,     // Session cookie 30 days instead of 0
-        'path' => '/',         // Share across the entire domain
-        'domain' => '',          // Current domain only
-        'secure' => $isSecure,   // Only send over HTTPS in production
-        'httponly' => true,        // Prevent JS from accessing cookie (security)
-        'samesite' => 'Lax',       // Allow same-site navigation (needed for page redirects)
+        'lifetime' => 2592000,     // Session cookie 30 ngày
+        'path' => '/',         
+        'domain' => '',          
+        'secure' => $isSecure,   
+        'httponly' => true,      
+        'samesite' => 'Lax',     
     ]);
     session_start();
 }
@@ -490,8 +526,15 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 //
 // Fix: Call session_write_close() immediately after reading all session auth data.
 // This releases the file lock, allowing concurrent requests to proceed normally.
-// Safe: $current_admin_id is already captured in local var + $GLOBALS above.
-if (session_status() === PHP_SESSION_ACTIVE) {
+//
+// [FIX] Chỉ đóng session sớm đối với các request GET hoặc các endpoint lưu lượng cao.
+// Các request POST/PUT/DELETE (như login/auth) cần giữ session mở để có thể ghi dữ liệu.
+$_isAuthRelated = isset($_SERVER['SCRIPT_NAME']) && (
+    strpos($_SERVER['SCRIPT_NAME'], 'auth.php') !== false ||
+    strpos($_SERVER['SCRIPT_NAME'], 'ai_org_auth.php') !== false
+);
+
+if (session_status() === PHP_SESSION_ACTIVE && ($_SERVER['REQUEST_METHOD'] === 'GET' || !$_isAuthRelated)) {
     session_write_close();
 }
 

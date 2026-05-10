@@ -567,11 +567,11 @@ switch ($method) {
 
             // 1. Check for Active Flows (BLOCK DELETE if used, unless force is specified)
             if (!isset($_GET['force']) || $_GET['force'] != 1) {
-                $checkFlows = $pdo->prepare("SELECT name FROM flows WHERE status IN ('active', 'paused') AND (steps LIKE ? OR config LIKE ? OR steps LIKE ?)");
+                $checkFlows = $pdo->prepare("SELECT name FROM flows WHERE workspace_id = ? AND status IN ('active', 'paused') AND (steps LIKE ? OR config LIKE ? OR steps LIKE ?)");
                 $searchPattern = '%"list_id":"' . $path . '"%';
                 $configPattern = '%"list_id":"' . $path . '"%';
                 $stepPattern = '%"listId":"' . $path . '"%'; // For steps like 'Add to List'
-                $checkFlows->execute([$searchPattern, $configPattern, $stepPattern]);
+                $checkFlows->execute([$workspace_id, $searchPattern, $configPattern, $stepPattern]);
                 $blockingFlow = $checkFlows->fetchColumn();
 
                 if ($blockingFlow) {

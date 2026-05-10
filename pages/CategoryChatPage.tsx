@@ -1095,7 +1095,7 @@ const CategoryChatPage: React.FC = () => {
         // Reset page when switching categories or bots to ensure fresh global data
         setGlobalPage(1);
         fetchGlobalAssetsRef.current();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }, [viewMode, categoryId, activeBot?.id, workspaceFilter, globalTab, globalSourceFilter, globalSearch, globalPage, currentUser, orgUser]);
 
     // --- MULTI-SESSION STATE ---

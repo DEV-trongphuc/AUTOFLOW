@@ -5,7 +5,7 @@ require_once 'chat_helpers.php';
 function generateResponse($contents, $systemInst, $apiKey, $model = 'gemini-2.5-flash-lite', $temperature = 0.9, $maxOutputTokens = 16384)
 {
     if (empty($apiKey))
-        return "L?i: Chua c?u hình API Key.";
+        return "L?i: Chua c?u hï¿½nh API Key.";
 
     // OPTIMIZATION: Close session early to prevent locking other requests from same user
     if (session_status() === PHP_SESSION_ACTIVE) {
@@ -39,8 +39,8 @@ function generateResponse($contents, $systemInst, $apiKey, $model = 'gemini-2.5-
         curl_setopt($ch, CURLOPT_ENCODING, 'gzip'); // OPTIMIZED: Decompress gzip response
         curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0); // OPTIMIZED: Use HTTP/2
         curl_setopt($ch, CURLOPT_TIMEOUT, 120);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [SECURITY] Enforce TLS for Gemini API // Increased Timeout for reasoning/retries
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [SECURITY] Enforce TLS for Gemini API // Increased Timeout for reasoning/retries
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -108,10 +108,10 @@ function generateResponse($contents, $systemInst, $apiKey, $model = 'gemini-2.5-
                 }
             }
         }
-        return $fullText ?: "D?, em chua tìm th?y câu tr? l?i phù h?p nh?t lúc này.";
+        return $fullText ?: "D?, em chua tï¿½m th?y cï¿½u tr? l?i phï¿½ h?p nh?t lï¿½c nï¿½y.";
     }
 
-    return "D?, em chua tìm th?y câu tr? l?i phù h?p nh?t lúc này. Anh/Ch? có th? h?i c? th? hon không ??";
+    return "D?, em chua tï¿½m th?y cï¿½u tr? l?i phï¿½ h?p nh?t lï¿½c nï¿½y. Anh/Ch? cï¿½ th? h?i c? th? hon khï¿½ng ??";
 }
 
 /**
@@ -169,7 +169,7 @@ function generateResponseAsyncInit($contents, $systemInst, $apiKey, $model = 'ge
 function generateResponseAsyncWait($asyncHandle)
 {
     if (!$asyncHandle)
-        return "L?i: Handle không h?p l?.";
+        return "L?i: Handle khï¿½ng h?p l?.";
 
     $mh = $asyncHandle['mh'];
     $ch = $asyncHandle['ch'];
@@ -217,10 +217,10 @@ function generateResponseAsyncWait($asyncHandle)
                 }
             }
         }
-        return $fullText ?: "D?, em chua tìm th?y câu tr? l?i phù h?p nh?t lúc này.";
+        return $fullText ?: "D?, em chua tï¿½m th?y cï¿½u tr? l?i phï¿½ h?p nh?t lï¿½c nï¿½y.";
     }
 
-    return "D?, em chua tìm th?y câu tr? l?i phù h?p nh?t lúc này.";
+    return "D?, em chua tï¿½m th?y cï¿½u tr? l?i phï¿½ h?p nh?t lï¿½c nï¿½y.";
 }
 function streamResponse($contents, $systemInst, $apiKey, $onChunk, $model = 'gemini-2.5-flash-lite', $temperature = 0.9, $maxOutputTokens = 2048)
 {
@@ -296,7 +296,7 @@ function streamResponse($contents, $systemInst, $apiKey, $onChunk, $model = 'gem
         return strlen($data);
     });
 
-    // Ensure no output buffering is active — buffering kills streaming.
+    // Ensure no output buffering is active ï¿½ buffering kills streaming.
     // [FIX] Disable zlib.output_compression FIRST: even after all ob_* levels are cleared,
     // PHP's zlib handler keeps an invisible compression buffer that prevents real-time
     // SSE streaming until the request ends. Must be disabled at runtime before flushing.

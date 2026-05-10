@@ -3,30 +3,30 @@
 require_once 'db_connect.php';
 require_once 'auth_middleware.php';
 
-// Cần đăng nhập (bất kỳ quyền gì)
-$hasAuth = !empty($GLOBALS['current_admin_id']) 
-    || !empty($_SESSION['user_id']) 
-    || !empty($_SESSION['org_user_id'])
-    || !empty($_SERVER['HTTP_AUTHORIZATION'])
-    || !empty($_SERVER['HTTP_X_ADMIN_TOKEN'])
-    || !empty($_SERVER['HTTP_X_LOCAL_DEV_USER']);
+// 1. SECURITY: Handle Authentication
+// Required for any upload operation
+$isStaffAdmin = !empty($_SESSION['is_admin']) || !empty($_SESSION['role']) && $_SESSION['role'] === 'admin';
+$isOrgUser = !empty($_SESSION['org_user_id']) || !empty($GLOBALS['current_admin_id']);
 
-if (!$hasAuth) {
+// Check for Bearer token in headers (for API clients)
+$allHeaders = function_exists('getallheaders') ? getallheaders() : [];
+$normalizedHeaders = array_change_key_case($allHeaders, CASE_LOWER);
+$authHeader = $normalizedHeaders['authorization'] ?? $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+$hasBearer = !empty($authHeader) && preg_match('/Bearer\s+(.+)$/i', $authHeader);
+
+if (!$isStaffAdmin && !$isOrgUser && !$hasBearer) {
+    http_response_code(401);
     jsonResponse(false, null, 'Unauthorized');
 }
 
-// jsonResponse is already defined in db_connect.php — only define if missing
-if (!function_exists('jsonResponse')) {
-    function jsonResponse($success, $data = null, $message = '')
-    {
-        echo json_encode([
-            'success' => $success,
-            'data' => $data,
-            'message' => $message
-        ]);
-        exit;
-    }
-}
+// 2. DYNAMIC BASE URL: No hardcoded domains
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+// Determine the base path of the app
+$scriptPath = $_SERVER['SCRIPT_NAME'];
+$apiPath = dirname($scriptPath); // e.g. /api
+$rootPath = dirname($apiPath);   // e.g. /
+$baseUrl = $protocol . $host . rtrim($rootPath, '/') . "/uploadss/";
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS')
     exit(0);
@@ -37,10 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['route']) && $_GET['rout
     if (!is_dir($uploadDir)) {
         jsonResponse(true, []);
     }
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443)
-        ? "https://" : "http://";
-    $host = $_SERVER['HTTP_HOST'];
-    $baseUrl = $protocol . $host . "/uploadss/";
+    $baseUrl = $protocol . $host . rtrim($rootPath, '/') . "/uploadss/";
 
     $allowed = ['jpg','jpeg','png','gif','webp','pdf','doc','docx','xls','xlsx','zip','txt','csv'];
     $files = [];
@@ -132,9 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['route']) && $_GET['rou
         $newPath = $uploadDir . $newUniqueName;
     }
     if (rename($oldPath, $newPath)) {
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
-        $host = $_SERVER['HTTP_HOST'];
-        $baseUrl = $protocol . $host . "/uploadss/";
+        $baseUrl = $protocol . $host . rtrim($rootPath, '/') . "/uploadss/";
         jsonResponse(true, [
             'uniqueName' => $newUniqueName,
             'name'       => $safeLabelBase . '.' . $origExt,
@@ -207,14 +202,7 @@ if ($fileSize > 10 * 1024 * 1024) { // 10MB Limit
 $uniqueName = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', $fileName);
 $destination = $uploadDir . $uniqueName;
 
-// Always use absolute URL for email compatibility
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" :
-    "http://";
-$host = $_SERVER['HTTP_HOST'];
-// If on localhost but wanting external compatibility, one might hardcode but usually $host is fine if tunneled.
-// However, the system seems to prefer automation.ideas.edu.vn as the primary domain.
-    $baseUrl = $protocol . $host . "/uploadss/";
-
+// Use centralized $baseUrl defined at top
 $publicUrl = $baseUrl . $uniqueName;
 
 if (move_uploaded_file($fileTmp, $destination)) {

@@ -76,7 +76,7 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
         api.get<TemplateGroup[]>('template_groups').then(res => {
             if (res.success) setGroups(res.data);
         });
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, []);  
 
     // [AUTO-SELECT] Nếu bước chưa có email người gửi HOᡀC email đã lưu không còn tồn tại → tự chọn lại
     useEffect(() => {

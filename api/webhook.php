@@ -149,7 +149,7 @@ if ($method === 'POST') {
                         // [SECURE FIX] Add Idempotency Lock for Zalo Events to prevent duplicate AI triggers
                         $lockName = "zalo_msg_" . md5($eventId);
                         if (!db_get_lock($pdo, $lockName, 3)) {
-                            file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ⛔ Lock timeout — concurrent processing\n", FILE_APPEND);
+                            file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] ⛔ Lock timeout — concurrent processing\n", FILE_APPEND);
                             echo json_encode(['status' => 'lock_timeout', 'reason' => 'concurrent_processing']);
                             exit;
                         }
@@ -157,7 +157,7 @@ if ($method === 'POST') {
                         $stmtCheck = $pdo->prepare("SELECT id FROM zalo_subscriber_activity WHERE zalo_msg_id = ? LIMIT 1");
                         $stmtCheck->execute([$eventId]);
                         if ($stmtCheck->fetchColumn()) {
-                            file_put_contents($traceLog, date('[Y-m-d H:i:s] ') . "[TRACE] ⛔ Duplicate event, skipping\n", FILE_APPEND);
+                            file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] ⛔ Duplicate event, skipping\n", FILE_APPEND);
                             db_release_lock($pdo, $lockName);
                             echo json_encode(['status' => 'ignored', 'reason' => 'duplicate']);
                             exit;

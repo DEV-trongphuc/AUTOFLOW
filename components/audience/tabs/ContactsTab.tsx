@@ -1,4 +1,4 @@
-
+ 
 
 import React from 'react';
 import { MoreHorizontal, Clock, MailOpen, MousePointer2, UserPlus, ChevronLeft, ChevronRight, Check, Zap, BadgeCheck, MessageCircle, Facebook } from 'lucide-react';
@@ -10,8 +10,7 @@ import BulkActionsToolbar from '../BulkActionsToolbar';
 import Skeleton from '../../common/Skeleton';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ContextMenu } from '../../common/ContextMenu';
-import { PremiumEmptyState } from '../../common/PremiumEmptyState';
-import { Edit, Tag, PlusSquare, Trash2, Search as SearchIcon } from 'lucide-react';
+import { Edit, Tag, PlusSquare, Trash2 } from 'lucide-react';
 
 interface ContactsTabProps {
     loading?: boolean;
@@ -473,20 +472,7 @@ const ContactsTab = React.memo<ContactsTabProps>(({
                             </>
                         )}
                         {!loading && subscribers.length === 0 && (
-                            <tr>
-                                <td colSpan={visibleColumns.length + 2} className="py-12">
-                                    <PremiumEmptyState 
-                                        icon={SearchIcon}
-                                        title="Chưa có dữ liệu Khách hàng"
-                                        description="Bạn chưa có liên hệ nào trong hệ thống, hoặc không có liên hệ nào phù hợp với bộ lọc hiện tại. Hãy đồng bộ từ Google Sheets hoặc Zalo."
-                                        primaryAction={{
-                                            label: 'Đồng bộ Khách hàng',
-                                            icon: PlusSquare,
-                                            onClick: () => { /* Typically handled by parent, or just close filters */ }
-                                        }}
-                                    />
-                                </td>
-                            </tr>
+                            <tr><td colSpan={visibleColumns.length + 2} className="py-12 text-center text-slate-400 text-sm">{"Kh\u00F4ng t\u00ECm th\u1EA5y li\u00EAn h\u1EC7 n\u00E0o."}</td></tr>
                         )}
                     </tbody>
                 </table>

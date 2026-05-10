@@ -1,6 +1,6 @@
 
 import { EXTERNAL_ASSET_BASE } from '@/utils/config';
-import React, { useState, useMemo, useEffect, memo } from 'react';
+import React, { useState, useMemo, useEffect, memo, useRef } from 'react';
 import {
     Users, CheckCircle2, Mail, MousePointerClick, Activity, Filter,
     X, Target, Zap, Search, Download, UserPlus, Tag, ListPlus,
@@ -10,6 +10,7 @@ import {
     GitMerge, Beaker, Link as LinkIcon, Trash2, AlertOctagon, ShoppingCart, List, UserCheck,
     Play, Pause, Eraser, FileDown, ExternalLink, MessageSquare
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Flow, Subscriber } from '../../../types';
 import { api } from '../../../services/storageAdapter';
@@ -54,6 +55,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
     const [logPagination, setLogPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
     const [logSearchTerm, setLogSearchTerm] = useState('');
     const [debouncedLogSearch, setDebouncedLogSearch] = useState('');
+    const [logTypeFilter, setLogTypeFilter] = useState('');
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
     const [isLoadingMoreLogs, setIsLoadingMoreLogs] = useState(false);
 
@@ -63,6 +65,32 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
 
     // Confirmation Modal State
     const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: () => { } });
+
+    const [isLogFilterOpen, setIsLogFilterOpen] = useState(false);
+    const logFilterRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (logFilterRef.current && !logFilterRef.current.contains(event.target as Node)) {
+                setIsLogFilterOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const logTypeOptions = [
+        { id: '', label: 'Tất cả', icon: Filter, color: 'text-slate-400' },
+        { id: 'open', label: 'Mở email', icon: MailOpen, color: 'text-emerald-500' },
+        { id: 'click', label: 'Click link', icon: MousePointerClick, color: 'text-amber-500' },
+        { id: 'sent', label: 'Đã gửi', icon: Send, color: 'text-blue-500' },
+        { id: 'failed', label: 'Lỗi gửi', icon: AlertOctagon, color: 'text-rose-500' },
+        { id: 'unsubscribe', label: 'Hủy đăng ký', icon: UserMinus, color: 'text-orange-500' },
+        { id: 'enter_flow', label: 'Tham gia', icon: Plus, color: 'text-indigo-500' },
+        { id: 'complete_flow', label: 'Hoàn thành', icon: Check, color: 'text-emerald-500' },
+    ];
+
+    const currentLogFilter = logTypeOptions.find(opt => opt.id === logTypeFilter) || logTypeOptions[0];
 
     // Participants Modal State
     const [isParticipantsModalOpen, setIsParticipantsModalOpen] = useState(false);
@@ -516,7 +544,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
 
     useEffect(() => {
         refreshFlow();
-        fetchLogs(1, true, debouncedLogSearch);
+        fetchLogs(1, true, debouncedLogSearch, logTypeFilter);
         // Removed fetchParticipants(1) from here, it's handled by the unified effect below
     }, [flow.id]);
 
@@ -529,9 +557,9 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
 
     useEffect(() => {
         if (flow.id) {
-            fetchLogs(1, true, debouncedLogSearch);
+            fetchLogs(1, true, debouncedLogSearch, logTypeFilter);
         }
-    }, [debouncedLogSearch]);
+    }, [debouncedLogSearch, logTypeFilter]);
 
     // Unified effect for participants - Handles initial load and all filter changes
     useEffect(() => {
@@ -694,7 +722,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         }
     };
 
-    const fetchLogs = async (page = 1, reset = false, search = '') => {
+    const fetchLogs = async (page = 1, reset = false, search = '', type = '') => {
         if (reset) {
             setLoadingLogs(true);
             setLogPage(1);
@@ -705,6 +733,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         const limit = 50;
         let url = `flows?id=${flow.id}&route=history&page=${page}&limit=${limit}`;
         if (search) url += `&search=${encodeURIComponent(search)}`;
+        if (type) url += `&type=${encodeURIComponent(type)}`;
 
         // Parallel Fetch for Stats and History
         // Only fetch stats on first load or manual refresh
@@ -750,6 +779,11 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
             setLoadingLogs(false);
             setIsLoadingMoreLogs(false);
         }
+    };
+
+    const handleRefreshLogs = () => {
+        fetchLogs(1, true, debouncedLogSearch, logTypeFilter);
+        refreshFlow();
     };
 
     const getStepName = (stepId: string) => {
@@ -1379,6 +1413,58 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
 
                                     </div>
                                     <div className="flex items-center gap-3">
+                                        <div className="relative" ref={logFilterRef}>
+                                            <button
+                                                onClick={() => setIsLogFilterOpen(!isLogFilterOpen)}
+                                                className={`
+                                                    flex items-center gap-2 px-2.5 py-1.5 rounded-lg border transition-all duration-300
+                                                    ${isLogFilterOpen 
+                                                        ? 'bg-white dark:bg-slate-800 border-indigo-400 shadow-lg shadow-indigo-500/10' 
+                                                        : 'bg-white/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700/60 hover:border-slate-300'}
+                                                `}
+                                            >
+                                                <currentLogFilter.icon className={`w-3 h-3 ${currentLogFilter.color}`} />
+                                                <span className="text-[9px] font-bold text-slate-600 dark:text-slate-300">
+                                                    {currentLogFilter.label}
+                                                </span>
+                                                <ChevronDown className={`w-2.5 h-2.5 text-slate-400 transition-transform duration-300 ${isLogFilterOpen ? 'rotate-180' : ''}`} />
+                                            </button>
+
+                                            <AnimatePresence>
+                                                {isLogFilterOpen && (
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                        exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                                                        className="absolute right-0 mt-2 w-40 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-2xl p-1 z-[100] overflow-hidden"
+                                                    >
+                                                        <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                                                            {logTypeOptions.map((opt) => (
+                                                                <button
+                                                                    key={opt.id}
+                                                                    onClick={() => {
+                                                                        setLogTypeFilter(opt.id);
+                                                                        setIsLogFilterOpen(false);
+                                                                    }}
+                                                                    className={`
+                                                                        w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[9px] font-bold transition-all
+                                                                        ${logTypeFilter === opt.id 
+                                                                            ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' 
+                                                                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}
+                                                                    `}
+                                                                >
+                                                                    <opt.icon className={`w-3 h-3 ${opt.color}`} />
+                                                                    {opt.label}
+                                                                    {logTypeFilter === opt.id && (
+                                                                        <Check className="w-2.5 h-2.5 ml-auto" />
+                                                                    )}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
                                         <div className="relative group/search">
                                             <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-2.5 h-2.5 text-slate-400 group-focus-within/search:text-indigo-500 transition-colors" />
                                             <input
@@ -1389,7 +1475,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                 className="pl-7 pr-3 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-lg text-[9px] w-28 focus:w-44 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-400 transition-all outline-none"
                                             />
                                         </div>
-                                        <button onClick={() => { fetchLogs(1, true, debouncedLogSearch); refreshFlow(); }} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg border border-transparent hover:border-indigo-100 transition-all">
+                                        <button onClick={handleRefreshLogs} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg border border-transparent hover:border-indigo-100 transition-all">
                                             <RefreshCcw className={`w-3 h-3 ${loadingLogs ? 'animate-spin' : ''}`} />
                                         </button>
                                     </div>
@@ -1689,8 +1775,8 @@ const LogItem: React.FC<{
                                 {isExpanded ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
                             </button>
                         )}
-                        <span className="text-[9px] text-slate-400 font-mono tabular-nums opacity-60 group-hover:opacity-100 transition-opacity w-[45px] text-right">
-                            {new Date(log.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                        <span className="text-[9px] text-slate-400 font-mono tabular-nums opacity-60 group-hover:opacity-100 transition-opacity whitespace-nowrap min-w-[70px] text-right">
+                            {new Date(log.created_at).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
                         </span>
                     </div>
                 </div>
