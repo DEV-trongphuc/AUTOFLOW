@@ -449,11 +449,17 @@ function findZaloScenario($pdo, $oaConfig, $zId, $subId, $event, $msgLower)
     }
 
     if ($event === 'user_send_text' && !$skipAI) {
-        $stmtAI = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, trigger_text FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' AND (trigger_text IS NULL OR trigger_text = '' OR trigger_text = '*') AND status = 'active' LIMIT 1"); // [FIX P38-ZIP]
+        $stmtAI = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, trigger_text, schedule_type, active_days, start_time, end_time FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' AND (trigger_text IS NULL OR trigger_text = '' OR trigger_text = '*' OR trigger_text = 'default') AND status = 'active' LIMIT 1"); // [FIX] Added 'default' and missing schedule fields
         $stmtAI->execute([$oaId]);
         $rowAI = $stmtAI->fetch();
-        if ($rowAI && isScenarioActive($rowAI, $nowTime, $nowDay))
-            return $rowAI;
+        if ($rowAI) {
+            if (isScenarioActive($rowAI, $nowTime, $nowDay)) {
+                return $rowAI;
+            } else {
+                // Log for debugging: Scenario found but inactive due to time
+                file_put_contents(__DIR__ . '/zalo_debug.log', date('[Y-m-d H:i:s] ') . "AI Scenario found but INACTIVE due to schedule: " . $rowAI['title'] . " (Schedule: " . $rowAI['schedule_type'] . ")\n", FILE_APPEND);
+            }
+        }
     }
 
     return null;
