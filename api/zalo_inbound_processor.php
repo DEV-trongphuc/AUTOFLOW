@@ -81,7 +81,7 @@ function handleZaloInboundJob($pdo, $payload)
     }
 
     // 3. STAFF REPLY TRACKING & AI PAUSE (oa_send_*)
-    if (strpos($event, 'oa_send_') === 0) {
+    if ($event === 'oa_send_text') {
         processStaffReply($pdo, $event, $payload, $subId, $zaloUserId, $oaConfig);
         return true;
     }
