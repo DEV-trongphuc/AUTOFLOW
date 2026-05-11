@@ -109,13 +109,12 @@ if ($method === 'POST') {
         $stmtConfig->execute([$zaloOaId]);
         $oaConfig = $stmtConfig->fetch(PDO::FETCH_ASSOC);
 
+        if ($oaConfig) {
             // [SECURITY-BYPASS] Signature verification disabled as per user request to ensure reliability.
             $isValid = true; 
 
             if ($isValid) {
-                // Continue processing
-            } else {
-                // This branch is now unreachable
+                // Continue processing...
             }
         } else {
             // [FIX NM-03] Unknown OA ID — reject instead of silently continuing.
