@@ -336,7 +336,7 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg, $
         return;
     }
 
-    $aiText = $res['data']['message'] ?? null;
+    $aiText = $res['reply'] ?? $res['message'] ?? $res['data']['message'] ?? null;
     $quickActions = $res['data']['quick_actions'] ?? [];
 
     if (!$aiText) {

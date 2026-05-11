@@ -93,7 +93,8 @@ if ($scenario && !$isPaused) {
     if ($httpCode === 200) {
         $res = json_decode($resRaw, true);
         if ($res && isset($res['success']) && $res['success']) {
-            echo "✅ AI PHẢN HỒI: <i style='color:blue'>\"" . ($res['reply'] ?? $res['message']) . "\"</i><br>";
+            $reply = $res['reply'] ?? $res['message'] ?? $res['data']['message'] ?? 'Trống';
+            echo "✅ AI PHẢN HỒI: <i style='color:blue'>\"" . $reply . "\"</i><br>";
         } else {
             echo "❌ LỖI AI: " . ($res['message'] ?? 'Phản hồi không hợp lệ') . " | Raw: $resRaw<br>";
         }
