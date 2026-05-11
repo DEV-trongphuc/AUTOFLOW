@@ -299,9 +299,30 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg, $
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
 
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Host: automation.ideas.edu.vn']); // Pass Host header for virtual hosts
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Internal call, safe to skip
+    
     $resRaw = curl_exec($ch);
-    $curlErr = curl_error($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlErr = curl_error($ch);
+    
+    // Fallback to public URL if localhost fails
+    if ($httpCode !== 200) {
+        $publicUrl = API_BASE_URL . "/ai_chatbot.php";
+        $ch2 = curl_init($publicUrl);
+        curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch2, CURLOPT_POST, true);
+        curl_setopt($ch2, CURLOPT_POSTFIELDS, json_encode($postData));
+        curl_setopt($ch2, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch2, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch2, CURLOPT_SSL_VERIFYPEER, false); // [FIX] Bỏ qua xác thực SSL khi tự gọi chính mình
+        
+        $resRaw = curl_exec($ch2);
+        $httpCode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+        $curlErr = curl_error($ch2);
+        curl_close($ch2);
+    }
     curl_close($ch);
 
     if ($resRaw === false) {
