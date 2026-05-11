@@ -833,3 +833,44 @@ function upsertZaloSubscriber($pdo, $zaloUserId, $profile, $oaConfigId = null)
 
     return $mainSubId;
 }
+
+/**
+ * Check if a Zalo scenario is active based on schedule
+ */
+function isScenarioActive($scenario, $nowTime, $nowDay)
+{
+    if ($scenario['schedule_type'] === 'full')
+        return true;
+
+    // [NEW] Support per-day schedule in active_days (JSON)
+    if (strpos($scenario['active_days'] ?? '', '{') === 0) {
+        $custom = json_decode($scenario['active_days'], true);
+        if (isset($custom[$nowDay])) {
+            $s = $custom[$nowDay]['start'] ?? '00:00';
+            $e = $custom[$nowDay]['end'] ?? '23:59';
+            if ($s > $e) {
+                // Overnight (e.g. 22:00 - 08:00)
+                return ($nowTime >= $s || $nowTime <= $e);
+            } else {
+                // Normal (e.g. 08:00 - 17:00)
+                return ($nowTime >= $s && $nowTime <= $e);
+            }
+        }
+        return false;
+    }
+
+    $days = explode(',', $scenario['active_days'] ?? '');
+    if (!in_array((string) $nowDay, $days))
+        return false;
+
+    $s = $scenario['start_time'] ?? '00:00';
+    $e = $scenario['end_time'] ?? '23:59';
+
+    if ($s > $e) {
+        // Overnight (e.g. 22:00 - 08:00)
+        return ($nowTime >= $s || $nowTime <= $e);
+    } else {
+        // Normal (e.g. 08:00 - 17:00)
+        return ($nowTime >= $s && $nowTime <= $e);
+    }
+}
