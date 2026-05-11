@@ -56,11 +56,14 @@ echo "<p><b>Thử nghiệm với Secret mới:</b> <code>" . substr($secret, 0, 
 
 $tests = [
     'V3 Standard: appId + raw + ts + secret' => hash('sha256', $appId . $lastPayload . $lastTs . $secret),
+    'V3 No TS: appId + raw + secret' => hash('sha256', $appId . $lastPayload . $secret),
+    'V3 Swapped: raw + appId + ts + secret' => hash('sha256', $lastPayload . $appId . $lastTs . $secret),
     'V2 Fallback: raw + secret' => hash('sha256', $lastPayload . $secret),
     'V2 Alternative: secret + raw' => hash('sha256', $secret . $lastPayload),
-    'V3 No TS: appId + raw + secret' => hash('sha256', $appId . $lastPayload . $secret),
-    'HMAC SHA256: raw using secret' => hash_hmac('sha256', $lastPayload, $secret),
-    'HMAC SHA256: raw + ts using secret' => hash_hmac('sha256', $lastPayload . $lastTs, $secret),
+    'HMAC SHA256 (raw, secret)' => hash_hmac('sha256', $lastPayload, $secret),
+    'HMAC SHA256 (appId+raw+ts, secret)' => hash_hmac('sha256', $appId . $lastPayload . $lastTs, $secret),
+    'HMAC SHA256 (raw+secret, secret)' => hash_hmac('sha256', $lastPayload . $secret, $secret),
+    'V3 JSON Trimmed: appId + trimmedRaw + ts + secret' => hash('sha256', $appId . trim($lastPayload) . $lastTs . $secret),
 ];
 
 echo "<h3>📊 KẾT QUẢ THỬ NGHIỆM:</h3><ul>";
