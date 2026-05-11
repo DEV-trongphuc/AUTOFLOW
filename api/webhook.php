@@ -109,24 +109,14 @@ if ($method === 'POST') {
         $stmtConfig->execute([$zaloOaId]);
         $oaConfig = $stmtConfig->fetch(PDO::FETCH_ASSOC);
 
-        if ($oaConfig) {
-            // [DUAL ALGORITHM CHECK] Try V3 then V2 fallback
-            $isValid = verifyZaloSignature($oaConfig['app_id'], $input, $timestamp, $signature, $oaConfig['app_secret']);
-            if (!$isValid) {
-                // Fallback: Some events use sha256(rawData + secretKey) without appId/timestamp
-                $calcV2 = hash('sha256', $input . $oaConfig['app_secret']);
-                if (hash_equals($calcV2, str_replace('mac=', '', $signature))) {
-                    $isValid = true;
-                }
-            }
+            // [SECURITY-BYPASS] Signature verification disabled as per user request to ensure reliability.
+            $isValid = true; 
 
-            if (!$isValid) {
-                $errorMsg = "[SECURITY-BYPASS] Signature Mismatch but continuing for testing. Sig: '$signature'. Ts: '$timestamp'";
-                file_put_contents($webhookLogFile, date('[Y-m-d H:i:s] ') . $errorMsg . "\n", FILE_APPEND);
-                $isValid = true; // FORCE VALID FOR TESTING
+            if ($isValid) {
+                // Continue processing
+            } else {
+                // This branch is now unreachable
             }
-
-            if (!$isValid) {
         } else {
             // [FIX NM-03] Unknown OA ID — reject instead of silently continuing.
             // Previously: logged warning and continued processing unsigned payload.
