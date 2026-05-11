@@ -43,6 +43,13 @@ echo "<b>[BƯỚC 3] Tìm kịch bản AI phù hợp...</b><br>";
 $scenario = findZaloScenario($pdo, $oa, $zaloUserId, $sub['id'] ?? null, 'user_send_text', $testMsg);
 if (!$scenario) {
     echo "❌ LỖI: Không tìm thấy kịch bản AI phù hợp cho tin nhắn này.<br>";
+    echo "--- Kiểm tra kịch bản đang có trong DB cho OA ID: " . $oa['id'] . " ---<br>";
+    $stmtCheck = $pdo->prepare("SELECT id, title, type, trigger_text, status, schedule_type, start_time, end_time FROM zalo_automation_scenarios WHERE oa_config_id = ?");
+    $stmtCheck->execute([$oa['id']]);
+    $allScenarios = $stmtCheck->fetchAll(PDO::FETCH_ASSOC);
+    echo "<pre>";
+    print_r($allScenarios);
+    echo "</pre>";
 } else {
     echo "✅ OK: Đã khớp kịch bản: <b>" . $scenario['title'] . "</b> (Type: " . $scenario['type'] . ")<br>";
 }
