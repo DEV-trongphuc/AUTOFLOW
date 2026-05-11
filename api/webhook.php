@@ -88,8 +88,20 @@ if ($method === 'POST') {
     }
 
     // [SECURITY AUDIT] Zalo V3 Signature Verification
-    $signature = $_SERVER['HTTP_X_ZALO_SIGNATURE'] ?? '';
-    $timestamp = $_SERVER['HTTP_X_ZALO_TIMESTAMP'] ?? '';
+    // [ULTIMATE FIX] Use the actual Header names detected from the trace
+    $signature = $_SERVER['HTTP_X_ZEVENT_SIGNATURE'] ?? ($_SERVER['X_ZEVENT_SIGNATURE'] ?? '');
+    // If Zalo doesn't send a timestamp header, we must use the one inside the JSON payload
+    $timestamp = $_SERVER['HTTP_X_ZALO_TIMESTAMP'] ?? ($_SERVER['X_ZALO_TIMESTAMP'] ?? ($data['timestamp'] ?? ''));
+    
+    // Fallback: If still empty, check all headers manually
+    if (empty($signature) && function_exists('getallheaders')) {
+        $headers = getallheaders();
+        foreach ($headers as $name => $value) {
+            if (strcasecmp($name, 'X-ZEvent-Signature') === 0) $signature = $value;
+            if (strcasecmp($name, 'X-Zalo-Timestamp') === 0) $timestamp = $value;
+            if (strcasecmp($name, 'X-Zalo-Signature') === 0 && empty($signature)) $signature = $value;
+        }
+    }
     $zaloOaId = $data['oa_id'] ?? $data['recipient']['id'] ?? null;
 
     if ($zaloOaId) {
@@ -100,11 +112,10 @@ if ($method === 'POST') {
         if ($oaConfig) {
             $isValid = verifyZaloSignature($oaConfig['app_id'], $input, $timestamp, $signature, $oaConfig['app_secret']);
             if (!$isValid) {
-                $errorMsg = "[SECURITY] Zalo Signature Mismatch for OA: $zaloOaId. Signature: $signature";
+                $allHeaders = function_exists('getallheaders') ? json_encode(getallheaders()) : json_encode($_SERVER);
+                $errorMsg = "[SECURITY] Zalo Signature Mismatch for OA: $zaloOaId. Signature: '$signature'. Headers: $allHeaders";
                 error_log($errorMsg);
                 file_put_contents($webhookLogFile, date('[Y-m-d H:i:s] ') . $errorMsg . "\n", FILE_APPEND);
-                // [FIX NC-01] Re-enabled signature enforcement — was temporarily bypassed for debugging.
-                // Unsigned/tampered Zalo webhooks are now rejected with 403.
                 http_response_code(403);
                 exit(json_encode(['status' => 'error', 'reason' => 'invalid_signature']));
             }
@@ -1031,7 +1042,11 @@ if ($method === 'POST') {
                                         logZaloSubscriberActivity($pdo, $subId, 'automation_trigger', $scenario['id'], "Kích hoạt kịch bản: " . ($scenario['title'] ?? 'Auto Response'), $scenario['title'] ?? 'Auto Response', $eventId, $oaConfig['workspace_id']);
                                     }
                                     $freshScenarioToken = ensureZaloToken($pdo, $oaConfig['id']);
-                                    sendZaloScenarioReply($pdo, $zaloUserId, $freshScenarioToken, $scenario, $msgText);
+                                    if (($scenario['type'] ?? '') === 'ai_reply') {
+                                        sendZaloAIReply($pdo, $zaloUserId, $freshScenarioToken, $scenario, $msgText, $oaConfig['workspace_id']);
+                                    } else {
+                                        sendZaloScenarioReply($pdo, $zaloUserId, $freshScenarioToken, $scenario, $msgText, $oaConfig['workspace_id']);
+                                    }
                                 } else {
                                     file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] ❌ No scenario matched. skipAI=$skipAI\n", FILE_APPEND);
                                 }

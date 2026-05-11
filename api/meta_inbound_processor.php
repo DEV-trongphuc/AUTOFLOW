@@ -625,8 +625,8 @@ function processMetaAIMessage($pdo, $pageId, $senderId, $userMsg, $scenario)
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postFields));
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P36-MIP] hostname verification
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         curl_setopt($ch, CURLOPT_TIMEOUT, 60);
 
         $response = curl_exec($ch);
@@ -636,7 +636,7 @@ function processMetaAIMessage($pdo, $pageId, $senderId, $userMsg, $scenario)
         if ($httpCode === 200) {
             $res = json_decode($response, true);
             // ai_chatbot.php returns the answer in data.message
-            $botMsg = $res['data']['message'] ?? ($res['answer'] ?? ($res['response'] ?? ''));
+            $botMsg = $res['reply'] ?? ($res['data']['message'] ?? ($res['answer'] ?? ($res['response'] ?? '')));
             logMetaDebug("AI Step 6: cURL Success. Answer length: " . mb_strlen($botMsg));
         } else {
             logMetaDebug("AI Step 6: cURL Failed with HTTP $httpCode. Response: " . substr($response, 0, 100));

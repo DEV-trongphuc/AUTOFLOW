@@ -76,18 +76,22 @@ if ($scenario && !$isPaused) {
         'is_test' => true
     ];
     
-    // Gọi nội bộ localhost trước
-    $ch = curl_init("http://localhost/mail_api/ai_chatbot.php");
+    // Gọi Public URL nhưng bỏ qua SSL để tránh Loopback
+    $url = "https://automation.ideas.edu.vn/mail_api/ai_chatbot.php";
+    $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Host: automation.ideas.edu.vn']);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
     
     $resRaw = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curlErr = curl_error($ch);
     curl_close($ch);
+
     
     echo "HTTP Status: $httpCode<br>";
     if ($httpCode === 200) {

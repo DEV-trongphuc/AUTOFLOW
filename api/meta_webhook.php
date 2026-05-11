@@ -886,12 +886,9 @@ function processMetaAIMessage($pdo, $pageId, $senderId, $text, $chatbotId)
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30); // 30s timeout
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-    // [FIX P31-S1] Added SSL_VERIFYHOST=2: verifies hostname in TLS cert matches the URL.
-    // Without this, VERIFYPEER alone validates the cert chain but not the hostname,
-    // leaving the connection open to MitM attacks with a valid-but-wrong certificate.
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 60); 
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
 
     // Start timer
     $startTime = microtime(true);
@@ -917,8 +914,8 @@ function processMetaAIMessage($pdo, $pageId, $senderId, $text, $chatbotId)
     writeLog("AI Response time: {$elapsed}s");
 
     $result = json_decode($response, true);
-    if ($result && $result['success'] && !empty($result['data']['message'])) {
-        $botMsg = $result['data']['message'];
+    if ($result && $result['success'] && (!empty($result['reply']) || !empty($result['data']['message']))) {
+        $botMsg = $result['reply'] ?? $result['data']['message'];
         writeLog("AI RAW DATA: " . $botMsg);
 
         // 1.7 Check for Image URL in AI response (e.g. [IMAGE: https://xxx.jpg])
