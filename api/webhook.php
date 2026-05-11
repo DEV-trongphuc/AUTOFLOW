@@ -88,33 +88,40 @@ if ($method === 'POST') {
     }
 
     // [SECURITY AUDIT] Zalo V3 Signature Verification
-    // [ULTIMATE FIX] Use the actual Header names detected from the trace
-    $signature = $_SERVER['HTTP_X_ZEVENT_SIGNATURE'] ?? ($_SERVER['X_ZEVENT_SIGNATURE'] ?? '');
-    // If Zalo doesn't send a timestamp header, we must use the one inside the JSON payload
-    $timestamp = $_SERVER['HTTP_X_ZALO_TIMESTAMP'] ?? ($_SERVER['X_ZALO_TIMESTAMP'] ?? ($data['timestamp'] ?? ''));
-    
-    // Fallback: If still empty, check all headers manually
-    if (empty($signature) && function_exists('getallheaders')) {
-        $headers = getallheaders();
-        foreach ($headers as $name => $value) {
-            if (strcasecmp($name, 'X-ZEvent-Signature') === 0) $signature = $value;
-            if (strcasecmp($name, 'X-Zalo-Timestamp') === 0) $timestamp = $value;
-            if (strcasecmp($name, 'X-Zalo-Signature') === 0 && empty($signature)) $signature = $value;
+    // [ULTIMATE ROBUST HEADER FETCH]
+    $allHeaders = function_exists('getallheaders') ? getallheaders() : $_SERVER;
+    foreach ($allHeaders as $name => $value) {
+        $nameLower = strtolower($name);
+        if ($nameLower === 'x-zevent-signature' || $nameLower === 'x-zalo-signature' || $nameLower === 'http_x_zevent_signature' || $nameLower === 'http_x_zalo_signature') {
+            $signature = $value;
+        }
+        if ($nameLower === 'x-zalo-timestamp' || $nameLower === 'http_x_zalo_timestamp') {
+            $timestamp = $value;
         }
     }
+    if (empty($timestamp)) $timestamp = $data['timestamp'] ?? '';
+    
     $zaloOaId = $data['oa_id'] ?? $data['recipient']['id'] ?? null;
 
     if ($zaloOaId) {
+        // Fetch config early for signature check
         $stmtConfig = $pdo->prepare("SELECT id, oa_id, app_id, app_secret, access_token, name, workspace_id FROM zalo_oa_configs WHERE oa_id = ? LIMIT 1");
         $stmtConfig->execute([$zaloOaId]);
         $oaConfig = $stmtConfig->fetch(PDO::FETCH_ASSOC);
 
         if ($oaConfig) {
+            // [DUAL ALGORITHM CHECK] Try V3 then V2 fallback
             $isValid = verifyZaloSignature($oaConfig['app_id'], $input, $timestamp, $signature, $oaConfig['app_secret']);
             if (!$isValid) {
-                $allHeaders = function_exists('getallheaders') ? json_encode(getallheaders()) : json_encode($_SERVER);
-                $errorMsg = "[SECURITY] Zalo Signature Mismatch for OA: $zaloOaId. Signature: '$signature'. Headers: $allHeaders";
-                error_log($errorMsg);
+                // Fallback: Some events use sha256(rawData + secretKey) without appId/timestamp
+                $calcV2 = hash('sha256', $input . $oaConfig['app_secret']);
+                if (hash_equals($calcV2, str_replace('mac=', '', $signature))) {
+                    $isValid = true;
+                }
+            }
+
+            if (!$isValid) {
+                $errorMsg = "[SECURITY] Zalo Signature Mismatch for OA: $zaloOaId. Signature: '$signature'. Timestamp: '$timestamp'";
                 file_put_contents($webhookLogFile, date('[Y-m-d H:i:s] ') . $errorMsg . "\n", FILE_APPEND);
                 http_response_code(403);
                 exit(json_encode(['status' => 'error', 'reason' => 'invalid_signature']));
