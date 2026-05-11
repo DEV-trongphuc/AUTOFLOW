@@ -48,7 +48,8 @@ $LSC = getGlobalLeadScoreConfig($pdo);
 if (mt_rand(1, 100) === 1) {
     try {
         dispatchQueueJob($pdo, 'low', ['action' => 'maintenance_cleanup']);
-    } catch (Exception $e) {}
+    } catch (Exception $e) {
+    }
 }
 
 // --- DEBUG LOGGING ---
@@ -60,11 +61,14 @@ $zaloLogFile = __DIR__ . '/zalo_debug.log';
 // With high email volume, this caused zalo_debug.log to grow hundreds of MB/hour.
 // GET tracking requests have their own webhook_debug.log — no need to double-log here.
 if ($method === 'POST') {
+    if (file_exists($zaloLogFile) && filesize($zaloLogFile) > 5 * 1024 * 1024) {
+        @rename($zaloLogFile, $zaloLogFile . '.' . date('YmdHis') . '.bak');
+    }
     file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "POST | Payload: " . (strlen($input) > 2048 ? substr($input, 0, 2048) . '...[truncated]' : ($input ?: 'EMPTY')) . "\n", FILE_APPEND);
 }
 
 if ($method === 'GET' && !isset($_GET['type'])) {
-// checkZaloAutomationSchema($pdo); // REMOVED: High-overhead redundant ALTER TABLE
+    // checkZaloAutomationSchema($pdo); // REMOVED: High-overhead redundant ALTER TABLE
     echo "<h1>MailFlow Pro - Zalo Webhook Listener</h1>";
     echo "<p>Status: <b style='color:green;'>ACTIVE</b></p>";
     echo "<p>Time: " . date('Y-m-d H:i:s') . "</p>";
@@ -75,11 +79,11 @@ if ($method === 'GET' && !isset($_GET['type'])) {
 
 if ($method === 'POST') {
     // [EARLY ABORT / DDOS MITIGATION] Vòng 98: Reject requests > 1MB or malformed before touching DB
-    if (strlen($input) > 1048576) { 
+    if (strlen($input) > 1048576) {
         http_response_code(413);
         exit('Payload Too Large');
     }
-    
+
     $data = json_decode($input, true);
     if (!$data) {
         http_response_code(400);
@@ -102,12 +106,19 @@ if ($method === 'POST') {
                 $errorMsg = "[SECURITY] Zalo Signature Mismatch for OA: $zaloOaId. Signature: $signature";
                 error_log($errorMsg);
                 file_put_contents($webhookLogFile, date('[Y-m-d H:i:s] ') . $errorMsg . "\n", FILE_APPEND);
-                // [STRICT MODE BYPASS] Temporarily allow mismatch to troubleshoot config issues
-                // http_response_code(403);
-                // exit('Invalid Signature');
+                // [FIX NC-01] Re-enabled signature enforcement — was temporarily bypassed for debugging.
+                // Unsigned/tampered Zalo webhooks are now rejected with 403.
+                http_response_code(403);
+                exit(json_encode(['status' => 'error', 'reason' => 'invalid_signature']));
             }
         } else {
-            file_put_contents($webhookLogFile, date('[Y-m-d H:i:s] ') . "[WARN] No OA Config found for ID: $zaloOaId - Signature check skipped.\n", FILE_APPEND);
+            // [FIX NM-03] Unknown OA ID — reject instead of silently continuing.
+            // Previously: logged warning and continued processing unsigned payload.
+            // Now: reject with 400 to prevent forged events with non-existent oa_id.
+            $warnMsg = "[SECURITY] Rejected webhook — No OA Config for ID: $zaloOaId. Possible forged event.";
+            file_put_contents($webhookLogFile, date('[Y-m-d H:i:s] ') . $warnMsg . "\n", FILE_APPEND);
+            http_response_code(400);
+            exit(json_encode(['status' => 'error', 'reason' => 'unknown_oa_id']));
         }
     }
 
@@ -192,13 +203,15 @@ if ($method === 'POST') {
 
                         // [OPTIMIZATION] Send Response Immediately to avoid Timeout
                         if (function_exists('fastcgi_finish_request')) {
-                            while (ob_get_level() > 0) ob_end_clean();
+                            while (ob_get_level() > 0)
+                                ob_end_clean();
                             echo json_encode(['status' => 'success']);
                             fastcgi_finish_request();
                         } else {
                             // PHP-FPM not available, output buffer flush
                             ignore_user_abort(true);
-                            while (ob_get_level() > 0) ob_end_clean();
+                            while (ob_get_level() > 0)
+                                ob_end_clean();
                             ob_start();
                             echo json_encode(['status' => 'success']);
                             $size = ob_get_length();
@@ -207,7 +220,8 @@ if ($method === 'POST') {
                             header("Content-Length: $size");
                             ob_end_flush();
                             flush();
-                            if (session_id()) session_write_close();
+                            if (session_id())
+                                session_write_close();
                         }
 
                         // --- 1. DATA EXTRACTION LOGIC (Email & Phone) ---
@@ -377,7 +391,7 @@ if ($method === 'POST') {
                             // [FIX] Ensure we correctly detect human agents. Since Zalo sometimes omits admin_id for OA reps,
                             // we must assume it's human UNLESS we explicitly sent it just now in our DB.
                             $isAutomated = (strpos($staffMsg, '[Automation]') === 0);
-                            
+
                             if (!$hasAdminId && !$isAutomated) {
                                 // It doesn't have an admin_id, BUT it could still be a human using Zalo OA Web.
                                 // Let's check if AutoFlow JUST sent this exact message.
@@ -488,9 +502,14 @@ if ($method === 'POST') {
                                         // Generate UUID v4
                                         $convId = sprintf(
                                             '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-                                            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-                                            mt_rand(0, 0x0fff) | 0x4000, mt_rand(0, 0x3fff) | 0x8000,
-                                            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+                                            mt_rand(0, 0xffff),
+                                            mt_rand(0, 0xffff),
+                                            mt_rand(0, 0xffff),
+                                            mt_rand(0, 0x0fff) | 0x4000,
+                                            mt_rand(0, 0x3fff) | 0x8000,
+                                            mt_rand(0, 0xffff),
+                                            mt_rand(0, 0xffff),
+                                            mt_rand(0, 0xffff)
                                         );
                                         $pdo->prepare("INSERT INTO ai_conversations (id, property_id, visitor_id, status, created_at, updated_at, last_message_at) VALUES (?, ?, ?, 'ai', NOW(), NOW(), NOW())")->execute([$convId, $aiPropId, $zaloVid]);
                                     }
@@ -587,7 +606,7 @@ if ($method === 'POST') {
                                             AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MINUTE)
                                         ");
                                         $stmtSpam->execute([$subId]);
-                                        if ((int)$stmtSpam->fetchColumn() >= 15) {
+                                        if ((int) $stmtSpam->fetchColumn() >= 15) {
                                             $skipAI = true;
                                             $pdo->prepare("UPDATE zalo_subscribers SET ai_paused_until = DATE_ADD(NOW(), INTERVAL 30 MINUTE) WHERE id = ? AND workspace_id = ?")->execute([$subId, $oaConfig['workspace_id']]);
                                             @file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "ANTI-SPAM LOOP TRIPPED for $zaloUserId. Paused AI for 30 mins.\n", FILE_APPEND);
@@ -599,7 +618,7 @@ if ($method === 'POST') {
                             }
                             // ------------------------------------------
 
-                             file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] skipAI=$skipAI event=$event\n", FILE_APPEND);
+                            file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] skipAI=$skipAI event=$event\n", FILE_APPEND);
 
                             if ($event === 'follow') {
                                 $stmtS = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, schedule_type, active_days, start_time, end_time, priority_override, trigger_text FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'welcome' AND status = 'active' LIMIT 1"); // [FIX P38-WH] Explicit columns
@@ -629,7 +648,7 @@ if ($method === 'POST') {
                                 // If message matches a keyword or button payload exactly, bypass the 1s wait.
                                 $isFastPath = false;
                                 $msgLower = mb_strtolower($rawMsg, "UTF-8");
-                                
+
                                 // Check Keywords
                                 $stmtFast = $pdo->prepare("SELECT trigger_text, match_type FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'keyword' AND status = 'active'");
                                 $stmtFast->execute([$oaConfig['id']]);
@@ -637,7 +656,8 @@ if ($method === 'POST') {
                                     $kws = array_map('trim', explode(',', mb_strtolower($fs['trigger_text'] ?? '', "UTF-8")));
                                     foreach ($kws as $kw) {
                                         if ($fs['match_type'] === 'exact' && $msgLower === $kw) {
-                                            $isFastPath = true; break 2;
+                                            $isFastPath = true;
+                                            break 2;
                                         }
                                     }
                                 }
@@ -650,7 +670,8 @@ if ($method === 'POST') {
                                         $btns = json_decode($pr['buttons'] ?? '[]', true);
                                         foreach ($btns as $b) {
                                             if (isset($b['payload']) && mb_strtolower(trim($b['payload']), "UTF-8") === $msgLower) {
-                                                $isFastPath = true; break 2;
+                                                $isFastPath = true;
+                                                break 2;
                                             }
                                         }
                                     }
@@ -660,7 +681,7 @@ if ($method === 'POST') {
                                 if (!$isFastPath) {
                                     usleep(1000000); // 1 second debounce
                                 } else {
-                                     file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] ⚡ Fast Path triggered for: $rawMsg\n", FILE_APPEND);
+                                    file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] ⚡ Fast Path triggered for: $rawMsg\n", FILE_APPEND);
                                 }
 
                                 // STEP 3: Claim ALL pending messages for this user atomically
@@ -711,312 +732,312 @@ if ($method === 'POST') {
 
                                 if (empty($batchProcessedBySibling)) {
 
-                                // Payload Click Tracking & Debounce (Robust for batches & spaces)
-                                // Regex: Optional spaces around |, alphanumeric/underscore ID, Base64 label
-                                if (preg_match_all('/\s*\|\s*([a-zA-Z0-9_]+):([A-Za-z0-9+\/]+={0,2})/', $msgText, $matches, PREG_SET_ORDER)) {
-                                    // [BUG-6 FIX] N+1 query: Pre-fetch ALL recent click timestamps for this subscriber
-                                    // in ONE query, then check in PHP — avoids firing 1 DB query per button match.
-                                    $recentClickTimes = [];
+                                    // Payload Click Tracking & Debounce (Robust for batches & spaces)
+                                    // Regex: Optional spaces around |, alphanumeric/underscore ID, Base64 label
+                                    if (preg_match_all('/\s*\|\s*([a-zA-Z0-9_]+):([A-Za-z0-9+\/]+={0,2})/', $msgText, $matches, PREG_SET_ORDER)) {
+                                        // [BUG-6 FIX] N+1 query: Pre-fetch ALL recent click timestamps for this subscriber
+                                        // in ONE query, then check in PHP — avoids firing 1 DB query per button match.
+                                        $recentClickTimes = [];
+                                        if ($subId) {
+                                            $stmtAllDebounce = $pdo->prepare(
+                                                "SELECT reference_id, created_at FROM zalo_subscriber_activity "
+                                                . "WHERE subscriber_id = ? AND type = 'zalo_clicked' "
+                                                . "AND created_at >= DATE_SUB(NOW(), INTERVAL 2 SECOND)"
+                                            );
+                                            $stmtAllDebounce->execute([$subId]);
+                                            foreach ($stmtAllDebounce->fetchAll(PDO::FETCH_ASSOC) as $rc) {
+                                                $recentClickTimes[$rc['reference_id']] = $rc['created_at'];
+                                            }
+                                        }
+
+                                        foreach ($matches as $match) {
+                                            $fullMarker = $match[0];
+                                            $markerSid = $match[1];
+                                            $markerLabel = base64_decode($match[2]);
+
+                                            // Remove the marker from msgText immediately
+                                            $msgText = trim(str_replace($fullMarker, '', $msgText));
+
+                                            // Anti-Spam: Block click if < 2 seconds (PHP check, no extra DB hit)
+                                            if ($subId) {
+                                                if (isset($recentClickTimes[$markerSid])) {
+                                                    continue; // Already clicked within 2s — skip but clean marker
+                                                }
+
+                                                logZaloSubscriberActivity($pdo, $subId, 'zalo_clicked', $markerSid, "Click Button (+2 điểm): $markerLabel", $markerLabel, $eventId . "_click_" . $markerSid, $oaConfig['workspace_id']);
+
+                                                // Also log to Main Timeline if possible
+                                                $stmtMainClick = $pdo->prepare("SELECT id FROM subscribers WHERE zalo_user_id = ? LIMIT 1");
+                                                $stmtMainClick->execute([$zaloUserId]);
+                                                $mainIdClick = $stmtMainClick->fetchColumn();
+                                                if ($mainIdClick) {
+                                                    // [SYNCED] Determine Campaign/Flow context from markerSid (Scenario ID)
+                                                    $flowId = null;
+                                                    $campaignId = null;
+
+                                                    // Try to resolve if it's a flow or campaign
+                                                    $stmtFlow = $pdo->prepare("SELECT id FROM flows WHERE id = ?");
+                                                    $stmtFlow->execute([$markerSid]);
+                                                    if ($stmtFlow->fetchColumn()) {
+                                                        $flowId = $markerSid;
+                                                    } else {
+                                                        $stmtCamp = $pdo->prepare("SELECT id FROM campaigns WHERE id = ?");
+                                                        $stmtCamp->execute([$markerSid]);
+                                                        if ($stmtCamp->fetchColumn())
+                                                            $campaignId = $markerSid;
+                                                    }
+
+                                                    processTrackingEvent($pdo, 'stat_update', [
+                                                        'type' => 'zalo_clicked',
+                                                        'subscriber_id' => $mainIdClick,
+                                                        'reference_id' => $markerSid,
+                                                        'flow_id' => $flowId,
+                                                        'campaign_id' => $campaignId,
+                                                        'extra_data' => [
+                                                            'label' => $markerLabel,
+                                                            'zalo_sub_id' => $subId,
+                                                            'source' => 'Zalo Button'
+                                                        ]
+                                                    ]);
+
+                                                    updateZaloLeadScore($pdo, $zaloUserId, 'click', $markerSid);
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // [NEW] LOG ZNS REPLY (Contextual)
+                                    // If the active subscriber has received a ZNS in the last 24h, we consider this text a 'reply_zns' as well.
                                     if ($subId) {
-                                        $stmtAllDebounce = $pdo->prepare(
-                                            "SELECT reference_id, created_at FROM zalo_subscriber_activity "
-                                            . "WHERE subscriber_id = ? AND type = 'zalo_clicked' "
-                                            . "AND created_at >= DATE_SUB(NOW(), INTERVAL 2 SECOND)"
-                                        );
-                                        $stmtAllDebounce->execute([$subId]);
-                                        foreach ($stmtAllDebounce->fetchAll(PDO::FETCH_ASSOC) as $rc) {
-                                            $recentClickTimes[$rc['reference_id']] = $rc['created_at'];
-                                        }
-                                    }
+                                        // Check if this sub received a ZNS recently (24h)
+                                        // We need to look up in `subscriber_activity` for `zns_sent` for the MAIN subscriber ID.
+                                        // 1. Get Main Subscriber ID
+                                        $stmtMain = $pdo->prepare("SELECT zalo_user_id, id AS main_sub_id FROM subscribers WHERE zalo_user_id = ? LIMIT 1");
+                                        $stmtMain->execute([$zaloUserId]);
+                                        $mainSubRow = $stmtMain->fetch(PDO::FETCH_ASSOC);
 
-                                    foreach ($matches as $match) {
-                                        $fullMarker = $match[0];
-                                        $markerSid = $match[1];
-                                        $markerLabel = base64_decode($match[2]);
+                                        if ($mainSubRow) {
+                                            $mainId = $mainSubRow['main_sub_id'];
+                                            // 2. Check ZNS History
+                                            $stmtZns = $pdo->prepare("SELECT flow_id, created_at FROM subscriber_activity WHERE subscriber_id = ? AND type = 'zns_sent' AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR) ORDER BY created_at DESC LIMIT 1");
+                                            $stmtZns->execute([$mainId]);
+                                            $lastZns = $stmtZns->fetch(PDO::FETCH_ASSOC);
 
-                                        // Remove the marker from msgText immediately
-                                        $msgText = trim(str_replace($fullMarker, '', $msgText));
+                                            if ($lastZns) {
+                                                // User requested to remove automatic 'ZALO - Email Verify' segment creation.
+                                                // The 'verified' column is already set in the block above.
 
-                                        // Anti-Spam: Block click if < 2 seconds (PHP check, no extra DB hit)
-                                        if ($subId) {
-                                            if (isset($recentClickTimes[$markerSid])) {
-                                                continue; // Already clicked within 2s — skip but clean marker
-                                            }
-
-                                            logZaloSubscriberActivity($pdo, $subId, 'zalo_clicked', $markerSid, "Click Button (+2 điểm): $markerLabel", $markerLabel, $eventId . "_click_" . $markerSid, $oaConfig['workspace_id']);
-
-                                            // Also log to Main Timeline if possible
-                                            $stmtMainClick = $pdo->prepare("SELECT id FROM subscribers WHERE zalo_user_id = ? LIMIT 1");
-                                            $stmtMainClick->execute([$zaloUserId]);
-                                            $mainIdClick = $stmtMainClick->fetchColumn();
-                                            if ($mainIdClick) {
-                                                // [SYNCED] Determine Campaign/Flow context from markerSid (Scenario ID)
-                                                $flowId = null;
-                                                $campaignId = null;
-
-                                                // Try to resolve if it's a flow or campaign
-                                                $stmtFlow = $pdo->prepare("SELECT id FROM flows WHERE id = ?");
-                                                $stmtFlow->execute([$markerSid]);
-                                                if ($stmtFlow->fetchColumn()) {
-                                                    $flowId = $markerSid;
-                                                } else {
-                                                    $stmtCamp = $pdo->prepare("SELECT id FROM campaigns WHERE id = ?");
-                                                    $stmtCamp->execute([$markerSid]);
-                                                    if ($stmtCamp->fetchColumn())
-                                                        $campaignId = $markerSid;
-                                                }
-
-                                                processTrackingEvent($pdo, 'stat_update', [
-                                                    'type' => 'zalo_clicked',
-                                                    'subscriber_id' => $mainIdClick,
-                                                    'reference_id' => $markerSid,
-                                                    'flow_id' => $flowId,
-                                                    'campaign_id' => $campaignId,
-                                                    'extra_data' => [
-                                                        'label' => $markerLabel,
-                                                        'zalo_sub_id' => $subId,
-                                                        'source' => 'Zalo Button'
-                                                    ]
-                                                ]);
-
-                                                updateZaloLeadScore($pdo, $zaloUserId, 'click', $markerSid);
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // [NEW] LOG ZNS REPLY (Contextual)
-                                // If the active subscriber has received a ZNS in the last 24h, we consider this text a 'reply_zns' as well.
-                                if ($subId) {
-                                    // Check if this sub received a ZNS recently (24h)
-                                    // We need to look up in `subscriber_activity` for `zns_sent` for the MAIN subscriber ID.
-                                    // 1. Get Main Subscriber ID
-                                    $stmtMain = $pdo->prepare("SELECT zalo_user_id, id AS main_sub_id FROM subscribers WHERE zalo_user_id = ? LIMIT 1");
-                                    $stmtMain->execute([$zaloUserId]);
-                                    $mainSubRow = $stmtMain->fetch(PDO::FETCH_ASSOC);
-
-                                    if ($mainSubRow) {
-                                        $mainId = $mainSubRow['main_sub_id'];
-                                        // 2. Check ZNS History
-                                        $stmtZns = $pdo->prepare("SELECT flow_id, created_at FROM subscriber_activity WHERE subscriber_id = ? AND type = 'zns_sent' AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR) ORDER BY created_at DESC LIMIT 1");
-                                        $stmtZns->execute([$mainId]);
-                                        $lastZns = $stmtZns->fetch(PDO::FETCH_ASSOC);
-
-                                        if ($lastZns) {
-                                            // User requested to remove automatic 'ZALO - Email Verify' segment creation.
-                                            // The 'verified' column is already set in the block above.
-
-                                            // Log Profile Sync
-                                            logActivity($pdo, $mainId, 'profile_sync', null, 'Sync Profile', "Linked Zalo ID: $zaloUserId", null, null, [], $oaConfig['workspace_id']);
-                                            $znsRepScore = $LSC['leadscore_zalo_interact'] + 2; // Extra points for text reply
-                                            logActivity($pdo, $mainId, 'reply_zns', $lastZns['flow_id'] ?? null, 'Zalo Reply', "Replied to ZNS (+$znsRepScore điểm): $msgText", $lastZns['flow_id'] ?? null, null, [], $oaConfig['workspace_id']);
-                                            // Award points for ZNS reply
-                                            $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + ? WHERE id = ?")->execute([$znsRepScore, $mainId]);
-                                        }
-                                    }
-                                }
-
-                                // Search Keyword Scenarios
-                                // --- HOLIDAY SCENARIO CHECK ---
-                                $holidayTriggered = false;
-                                $stmtH = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, schedule_type, active_days, start_time, end_time, holiday_start_at, holiday_end_at, priority_override, trigger_text FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'holiday' AND status = 'active'"); // [FIX P38-WH] Explicit columns
-                                $stmtH->execute([$oaConfig['id']]);
-                                $holidays = $stmtH->fetchAll(PDO::FETCH_ASSOC);
-
-                                foreach ($holidays as $h) {
-                                    $isActive = false;
-                                    // 1. Check Schedule
-                                    if ($h['schedule_type'] === 'date_range') {
-                                        // Date Range Logic
-                                        if (!empty($h['holiday_start_at']) && !empty($h['holiday_end_at'])) {
-                                            $nowTs = time();
-                                            $startTs = strtotime($h['holiday_start_at']);
-                                            $endTs = strtotime($h['holiday_end_at']);
-                                            if ($nowTs >= $startTs && $nowTs <= $endTs)
-                                                $isActive = true;
-                                        }
-                                    } else {
-                                        // Daily Range Logic (Overnight support)
-                                        // Check Day of Week first
-                                        $activeDays = explode(',', $h['active_days']);
-                                        if (in_array((string) $nowDay, $activeDays)) {
-                                            if ($h['schedule_type'] === 'full') {
-                                                $isActive = true;
-                                            } else {
-                                                $curr = date('H:i:s');
-                                                $s = $h['start_time'];
-                                                $e = $h['end_time'];
-                                                if ($s > $e) {
-                                                    // Overnight (e.g. 22:00 - 05:00)
-                                                    if ($curr >= $s || $curr <= $e)
-                                                        $isActive = true;
-                                                } else {
-                                                    // Normal (e.g. 08:00 - 17:00)
-                                                    if ($curr >= $s && $curr <= $e)
-                                                        $isActive = true;
-                                                }
+                                                // Log Profile Sync
+                                                logActivity($pdo, $mainId, 'profile_sync', null, 'Sync Profile', "Linked Zalo ID: $zaloUserId", null, null, [], $oaConfig['workspace_id']);
+                                                $znsRepScore = $LSC['leadscore_zalo_interact'] + 2; // Extra points for text reply
+                                                logActivity($pdo, $mainId, 'reply_zns', $lastZns['flow_id'] ?? null, 'Zalo Reply', "Replied to ZNS (+$znsRepScore điểm): $msgText", $lastZns['flow_id'] ?? null, null, [], $oaConfig['workspace_id']);
+                                                // Award points for ZNS reply
+                                                $pdo->prepare("UPDATE subscribers SET lead_score = lead_score + ? WHERE id = ?")->execute([$znsRepScore, $mainId]);
                                             }
                                         }
                                     }
 
-                                    if ($isActive) {
-                                        // 2. Check Frequency (Once per day per user for this scenario)
-                                        if ($subId) {
-                                            $stmtFreq = $pdo->prepare("SELECT id FROM zalo_subscriber_activity WHERE subscriber_id = ? AND type = 'automation_reply' AND reference_id = ? AND created_at >= CURDATE()");
-                                            $stmtFreq->execute([$subId, $h['id']]);
-                                            if ($stmtFreq->fetchColumn()) {
-                                                // Already sent today, skip triggering but still respect priority if active? 
-                                                // User req: "Kịch bản này sẽ kích hoạt 1 lần...". 
-                                                // If priority override is ON, and it's active time, we should probably still BLOCK others even if we don't send?
-                                                // "nếu có kịch bản ngày nghĩ được kích hoạt thì các kịch bản khác trong khoảng thời gian này có trùng cũng ko được kích hoạt"
-                                                // -> This implies if the holiday condition is MET (isActive), strictly block others.
-                                                if ($h['priority_override']) {
-                                                    $holidayTriggered = true; // Block subsequent
-                                                }
-                                                continue;
-                                            }
-                                        }
+                                    // Search Keyword Scenarios
+                                    // --- HOLIDAY SCENARIO CHECK ---
+                                    $holidayTriggered = false;
+                                    $stmtH = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, schedule_type, active_days, start_time, end_time, holiday_start_at, holiday_end_at, priority_override, trigger_text FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'holiday' AND status = 'active'"); // [FIX P38-WH] Explicit columns
+                                    $stmtH->execute([$oaConfig['id']]);
+                                    $holidays = $stmtH->fetchAll(PDO::FETCH_ASSOC);
 
-                                        // 3. Trigger Holiday Reply
-                                        // [FIX BUG-C3] Use ensureZaloToken() which auto-refreshes expired tokens.
-                                        // $oaConfig['access_token'] is read from DB and may be stale/expired,
-                                        // causing silent send failures without any error log.
-                                        $freshHolidayToken = ensureZaloToken($pdo, $oaConfig['id']);
-                                        sendZaloScenarioReply($pdo, $zaloUserId, $freshHolidayToken, $h);
-                                        if ($subId) {
-                                            logZaloSubscriberActivity($pdo, $subId, 'automation_reply', $h['id'], "Sent Holiday Reply: " . $h['title'], $msgText, $eventId . "_holiday", $oaConfig['workspace_id']);
-                                        }
-
-                                        $holidayTriggered = true;
-                                        if ($h['priority_override'])
-                                            break; // Stop checking other holidays and keywords
-                                    }
-                                }
-
-                                if ($holidayTriggered) {
-                                    // [FIX-3] Use exit only — return in global scope is misleading,
-                                    // and the exit below it was unreachable dead code.
-                                    if (isset($lockName)) {
-                                        db_release_lock($pdo, $lockName);
-                                    }
-                                    exit;
-                                }
-
-                                // Search Keyword Scenarios
-                                // Search Keyword & AI Scenarios (Specific)
-                                $stmtS = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, trigger_text, match_type, schedule_type, active_days, start_time, end_time, priority_override FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type IN ('keyword', 'ai_reply') AND status = 'active' ORDER BY created_at DESC"); // [FIX P38-WH] Explicit columns
-                                $stmtS->execute([$oaConfig['id']]);
-                                $scenarios = $stmtS->fetchAll(PDO::FETCH_ASSOC);
-
-                                foreach ($scenarios as $s) {
-                                    if (!isScenarioActive($s, $nowTime, $nowDay))
-                                        continue;
-
-                                    // Skip wildcard AI for now, handle as fallback later
-                                    if ($s['type'] === 'ai_reply' && (empty($s['trigger_text']) || $s['trigger_text'] === '*' || $s['trigger_text'] === 'default'))
-                                        continue;
-
-                                    $keywords = array_map('trim', explode(',', mb_strtolower($s['trigger_text'] ?? '', "UTF-8")));
-                                    $matched = false;
-                                    $msgLower = mb_strtolower($msgText, "UTF-8");
-
-                                    foreach ($keywords as $kw) {
-                                        if (empty($kw))
-                                            continue;
-                                        if ($s['match_type'] === 'contains') {
-                                            if (mb_strpos($msgLower, $kw) !== false) {
-                                                $matched = true;
-                                                break;
+                                    foreach ($holidays as $h) {
+                                        $isActive = false;
+                                        // 1. Check Schedule
+                                        if ($h['schedule_type'] === 'date_range') {
+                                            // Date Range Logic
+                                            if (!empty($h['holiday_start_at']) && !empty($h['holiday_end_at'])) {
+                                                $nowTs = time();
+                                                $startTs = strtotime($h['holiday_start_at']);
+                                                $endTs = strtotime($h['holiday_end_at']);
+                                                if ($nowTs >= $startTs && $nowTs <= $endTs)
+                                                    $isActive = true;
                                             }
                                         } else {
-                                            // [FIX-2] Exact match per-line: batch debounce joins messages with \n,
-                                            // so "giá\nbao nhiêu" must match keyword "giá" on its own line.
-                                            $lines = explode("\n", $msgLower);
-                                            foreach ($lines as $line) {
-                                                if (trim($line) === $kw) {
-                                                    $matched = true;
-                                                    break 2; // break both foreach loops
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    if ($matched) {
-                                        if ($s['type'] === 'ai_reply' && $skipAI) {
-                                            // AI Cooldown active, skip this scenario and look for next match
-                                            continue;
-                                        }
-                                        $scenario = $s;
-                                        break;
-                                    }
-                                }
-
-                                // Search Payload Responses
-                                if (!$scenario) {
-                                    $stmtAll = $pdo->prepare("SELECT id, buttons FROM zalo_automation_scenarios WHERE oa_config_id = ? AND status = 'active' AND buttons IS NOT NULL");
-                                    $stmtAll->execute([$oaConfig['id']]);
-                                    while ($rec = $stmtAll->fetch()) {
-                                        $btns = json_decode($rec['buttons'] ?? '[]', true);
-                                        foreach ($btns as $b) {
-                                            if (isset($b['type']) && $b['type'] === 'oa.query.show' && isset($b['payload'])) {
-                                                if (mb_strtolower(trim($b['payload']), "UTF-8") === mb_strtolower($msgText, "UTF-8")) {
-                                                    if (!empty($b['auto_response_content'])) {
-                                                        $scenario = ['content' => $b['auto_response_content'], 'message_type' => 'text', 'title' => '', 'buttons' => '[]', 'id' => $rec['id']];
+                                            // Daily Range Logic (Overnight support)
+                                            // Check Day of Week first
+                                            $activeDays = explode(',', $h['active_days']);
+                                            if (in_array((string) $nowDay, $activeDays)) {
+                                                if ($h['schedule_type'] === 'full') {
+                                                    $isActive = true;
+                                                } else {
+                                                    $curr = date('H:i:s');
+                                                    $s = $h['start_time'];
+                                                    $e = $h['end_time'];
+                                                    if ($s > $e) {
+                                                        // Overnight (e.g. 22:00 - 05:00)
+                                                        if ($curr >= $s || $curr <= $e)
+                                                            $isActive = true;
+                                                    } else {
+                                                        // Normal (e.g. 08:00 - 17:00)
+                                                        if ($curr >= $s && $curr <= $e)
+                                                            $isActive = true;
                                                     }
-                                                    break 2;
                                                 }
+                                            }
+                                        }
+
+                                        if ($isActive) {
+                                            // 2. Check Frequency (Once per day per user for this scenario)
+                                            if ($subId) {
+                                                $stmtFreq = $pdo->prepare("SELECT id FROM zalo_subscriber_activity WHERE subscriber_id = ? AND type = 'automation_reply' AND reference_id = ? AND created_at >= CURDATE()");
+                                                $stmtFreq->execute([$subId, $h['id']]);
+                                                if ($stmtFreq->fetchColumn()) {
+                                                    // Already sent today, skip triggering but still respect priority if active? 
+                                                    // User req: "Kịch bản này sẽ kích hoạt 1 lần...". 
+                                                    // If priority override is ON, and it's active time, we should probably still BLOCK others even if we don't send?
+                                                    // "nếu có kịch bản ngày nghĩ được kích hoạt thì các kịch bản khác trong khoảng thời gian này có trùng cũng ko được kích hoạt"
+                                                    // -> This implies if the holiday condition is MET (isActive), strictly block others.
+                                                    if ($h['priority_override']) {
+                                                        $holidayTriggered = true; // Block subsequent
+                                                    }
+                                                    continue;
+                                                }
+                                            }
+
+                                            // 3. Trigger Holiday Reply
+                                            // [FIX BUG-C3] Use ensureZaloToken() which auto-refreshes expired tokens.
+                                            // $oaConfig['access_token'] is read from DB and may be stale/expired,
+                                            // causing silent send failures without any error log.
+                                            $freshHolidayToken = ensureZaloToken($pdo, $oaConfig['id']);
+                                            sendZaloScenarioReply($pdo, $zaloUserId, $freshHolidayToken, $h);
+                                            if ($subId) {
+                                                logZaloSubscriberActivity($pdo, $subId, 'automation_reply', $h['id'], "Sent Holiday Reply: " . $h['title'], $msgText, $eventId . "_holiday", $oaConfig['workspace_id']);
+                                            }
+
+                                            $holidayTriggered = true;
+                                            if ($h['priority_override'])
+                                                break; // Stop checking other holidays and keywords
+                                        }
+                                    }
+
+                                    if ($holidayTriggered) {
+                                        // [FIX-3] Use exit only — return in global scope is misleading,
+                                        // and the exit below it was unreachable dead code.
+                                        if (isset($lockName)) {
+                                            db_release_lock($pdo, $lockName);
+                                        }
+                                        exit;
+                                    }
+
+                                    // Search Keyword Scenarios
+                                    // Search Keyword & AI Scenarios (Specific)
+                                    $stmtS = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, trigger_text, match_type, schedule_type, active_days, start_time, end_time, priority_override FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type IN ('keyword', 'ai_reply') AND status = 'active' ORDER BY created_at DESC"); // [FIX P38-WH] Explicit columns
+                                    $stmtS->execute([$oaConfig['id']]);
+                                    $scenarios = $stmtS->fetchAll(PDO::FETCH_ASSOC);
+
+                                    foreach ($scenarios as $s) {
+                                        if (!isScenarioActive($s, $nowTime, $nowDay))
+                                            continue;
+
+                                        // Skip wildcard AI for now, handle as fallback later
+                                        if ($s['type'] === 'ai_reply' && (empty($s['trigger_text']) || $s['trigger_text'] === '*' || $s['trigger_text'] === 'default'))
+                                            continue;
+
+                                        $keywords = array_map('trim', explode(',', mb_strtolower($s['trigger_text'] ?? '', "UTF-8")));
+                                        $matched = false;
+                                        $msgLower = mb_strtolower($msgText, "UTF-8");
+
+                                        foreach ($keywords as $kw) {
+                                            if (empty($kw))
+                                                continue;
+                                            if ($s['match_type'] === 'contains') {
+                                                if (mb_strpos($msgLower, $kw) !== false) {
+                                                    $matched = true;
+                                                    break;
+                                                }
+                                            } else {
+                                                // [FIX-2] Exact match per-line: batch debounce joins messages with \n,
+                                                // so "giá\nbao nhiêu" must match keyword "giá" on its own line.
+                                                $lines = explode("\n", $msgLower);
+                                                foreach ($lines as $line) {
+                                                    if (trim($line) === $kw) {
+                                                        $matched = true;
+                                                        break 2; // break both foreach loops
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        if ($matched) {
+                                            if ($s['type'] === 'ai_reply' && $skipAI) {
+                                                // AI Cooldown active, skip this scenario and look for next match
+                                                continue;
+                                            }
+                                            $scenario = $s;
+                                            break;
+                                        }
+                                    }
+
+                                    // Search Payload Responses
+                                    if (!$scenario) {
+                                        $stmtAll = $pdo->prepare("SELECT id, buttons FROM zalo_automation_scenarios WHERE oa_config_id = ? AND status = 'active' AND buttons IS NOT NULL");
+                                        $stmtAll->execute([$oaConfig['id']]);
+                                        while ($rec = $stmtAll->fetch()) {
+                                            $btns = json_decode($rec['buttons'] ?? '[]', true);
+                                            foreach ($btns as $b) {
+                                                if (isset($b['type']) && $b['type'] === 'oa.query.show' && isset($b['payload'])) {
+                                                    if (mb_strtolower(trim($b['payload']), "UTF-8") === mb_strtolower($msgText, "UTF-8")) {
+                                                        if (!empty($b['auto_response_content'])) {
+                                                            $scenario = ['content' => $b['auto_response_content'], 'message_type' => 'text', 'title' => '', 'buttons' => '[]', 'id' => $rec['id']];
+                                                        }
+                                                        break 2;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    if (!$scenario && !$skipAI) {
+                                        $stmtAI = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, trigger_text, schedule_type, active_days, start_time, end_time FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' AND (trigger_text IS NULL OR trigger_text = '' OR trigger_text = '*' OR trigger_text = 'default') AND status = 'active' ORDER BY priority_override DESC, created_at DESC LIMIT 1");
+                                        $stmtAI->execute([$oaConfig['id']]);
+                                        $rowAI = $stmtAI->fetch(PDO::FETCH_ASSOC);
+
+                                        // [TRACE] AI scenario query result
+                                        if ($rowAI) {
+                                            $schedActive = isScenarioActive($rowAI, $nowTime, $nowDay);
+                                            file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] AI row found: id={$rowAI['id']} trigger='" . ($rowAI['trigger_text'] ?? 'NULL') . "' schedule={$rowAI['schedule_type']} isActive=" . ($schedActive ? 'YES' : 'NO') . " nowDay=$nowDay nowTime=$nowTime\n", FILE_APPEND);
+                                            if ($schedActive) {
+                                                $scenario = $rowAI;
+                                            }
+                                        } else {
+                                            // Count ALL ai_reply scenarios regardless of trigger_text to see if there's a mismatch
+                                            $stmtDbg = $pdo->prepare("SELECT id, trigger_text, status, schedule_type FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' LIMIT 5");
+                                            $stmtDbg->execute([$oaConfig['id']]);
+                                            $dbgRows = $stmtDbg->fetchAll(PDO::FETCH_ASSOC);
+                                            $dbgInfo = empty($dbgRows) ? 'NO ai_reply scenarios at all!' : json_encode(array_map(fn($r) => ['trigger' => $r['trigger_text'], 'status' => $r['status']], $dbgRows));
+                                            file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] ❌ AI query returned NULL for oa_config_id={$oaConfig['id']}. All ai_reply rows: $dbgInfo\n", FILE_APPEND);
+                                        }
+                                    }
+
+                                    // First Message Logic
+                                    if (!$scenario) {
+                                        $stmtSub = $pdo->prepare("SELECT is_follower FROM zalo_subscribers WHERE zalo_user_id = ? LIMIT 1");
+                                        $stmtSub->execute([$zaloUserId]);
+                                        if (!$stmtSub->fetchColumn()) {
+                                            $stmtFirst = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, trigger_text FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'first_message' AND status = 'active' LIMIT 1"); // [FIX P38-WH] Explicit columns
+                                            $stmtFirst->execute([$oaConfig['id']]);
+                                            $row = $stmtFirst->fetch(PDO::FETCH_ASSOC);
+                                            if ($row && isScenarioActive($row, $nowTime, $nowDay)) {
+                                                $scenario = $row;
                                             }
                                         }
                                     }
                                 }
 
-                                if (!$scenario && !$skipAI) {
-                                    $stmtAI = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, trigger_text, schedule_type, active_days, start_time, end_time FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' AND (trigger_text IS NULL OR trigger_text = '' OR trigger_text = '*' OR trigger_text = 'default') AND status = 'active' ORDER BY priority_override DESC, created_at DESC LIMIT 1");
-                                    $stmtAI->execute([$oaConfig['id']]);
-                                    $rowAI = $stmtAI->fetch(PDO::FETCH_ASSOC);
-
-                                    // [TRACE] AI scenario query result
-                                    if ($rowAI) {
-                                        $schedActive = isScenarioActive($rowAI, $nowTime, $nowDay);
-                                        file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] AI row found: id={$rowAI['id']} trigger='" . ($rowAI['trigger_text'] ?? 'NULL') . "' schedule={$rowAI['schedule_type']} isActive=" . ($schedActive ? 'YES' : 'NO') . " nowDay=$nowDay nowTime=$nowTime\n", FILE_APPEND);
-                                        if ($schedActive) {
-                                            $scenario = $rowAI;
-                                        }
-                                    } else {
-                                        // Count ALL ai_reply scenarios regardless of trigger_text to see if there's a mismatch
-                                        $stmtDbg = $pdo->prepare("SELECT id, trigger_text, status, schedule_type FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' LIMIT 5");
-                                        $stmtDbg->execute([$oaConfig['id']]);
-                                        $dbgRows = $stmtDbg->fetchAll(PDO::FETCH_ASSOC);
-                                        $dbgInfo = empty($dbgRows) ? 'NO ai_reply scenarios at all!' : json_encode(array_map(fn($r) => ['trigger' => $r['trigger_text'], 'status' => $r['status']], $dbgRows));
-                                        file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] ❌ AI query returned NULL for oa_config_id={$oaConfig['id']}. All ai_reply rows: $dbgInfo\n", FILE_APPEND);
+                                if ($scenario) {
+                                    file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] ✅ Scenario found: " . ($scenario['title'] ?? $scenario['type']) . " → sending reply\n", FILE_APPEND);
+                                    if (!empty($subId) && !empty($scenario['id'])) {
+                                        logZaloSubscriberActivity($pdo, $subId, 'automation_trigger', $scenario['id'], "Kích hoạt kịch bản: " . ($scenario['title'] ?? 'Auto Response'), $scenario['title'] ?? 'Auto Response', $eventId, $oaConfig['workspace_id']);
                                     }
+                                    $freshScenarioToken = ensureZaloToken($pdo, $oaConfig['id']);
+                                    sendZaloScenarioReply($pdo, $zaloUserId, $freshScenarioToken, $scenario, $msgText);
+                                } else {
+                                    file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] ❌ No scenario matched. skipAI=$skipAI\n", FILE_APPEND);
                                 }
-
-                                // First Message Logic
-                                if (!$scenario) {
-                                    $stmtSub = $pdo->prepare("SELECT is_follower FROM zalo_subscribers WHERE zalo_user_id = ? LIMIT 1");
-                                    $stmtSub->execute([$zaloUserId]);
-                                    if (!$stmtSub->fetchColumn()) {
-                                        $stmtFirst = $pdo->prepare("SELECT id, type, ai_chatbot_id, buttons, message_type, attachment_id, content, title, trigger_text FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'first_message' AND status = 'active' LIMIT 1"); // [FIX P38-WH] Explicit columns
-                                        $stmtFirst->execute([$oaConfig['id']]);
-                                        $row = $stmtFirst->fetch(PDO::FETCH_ASSOC);
-                                        if ($row && isScenarioActive($row, $nowTime, $nowDay)) {
-                                            $scenario = $row;
-                                        }
-                                    }
-                                }
-                            }
-
-                            if ($scenario) {
-                                file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] ✅ Scenario found: " . ($scenario['title'] ?? $scenario['type']) . " → sending reply\n", FILE_APPEND);
-                                if (!empty($subId) && !empty($scenario['id'])) {
-                                    logZaloSubscriberActivity($pdo, $subId, 'automation_trigger', $scenario['id'], "Kích hoạt kịch bản: " . ($scenario['title'] ?? 'Auto Response'), $scenario['title'] ?? 'Auto Response', $eventId, $oaConfig['workspace_id']);
-                                }
-                                $freshScenarioToken = ensureZaloToken($pdo, $oaConfig['id']);
-                                sendZaloScenarioReply($pdo, $zaloUserId, $freshScenarioToken, $scenario, $msgText);
-                            } else {
-                                file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] ❌ No scenario matched. skipAI=$skipAI\n", FILE_APPEND);
-                            }
 
                             } // end if (empty($batchProcessedBySibling))
                             else {
@@ -1076,16 +1097,16 @@ if ($method === 'POST') {
                     }
                 }
             } // end if ($oaConfig)
-                        // [FIX P4-C2] Release the Zalo idempotency lock after processing completes.
-                        // GET_LOCK was acquired at the top of this block but was ONLY released in the
-                        // 'duplicate event' early-exit branch. For all normal processing paths, the lock
-                        // was held until the MySQL connection closed (end of PHP-FPM request lifecycle).
-                        // With connection pooling (keep-alive), stale locks could block subsequent
-                        // Zalo webhooks for the same OA for up to 3 seconds each — causing 504 timeouts
-                        // under load (100+ events/min). Always release explicitly after processing.
-                        if (isset($lockName)) {
-                            $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]);
-                        }
+            // [FIX P4-C2] Release the Zalo idempotency lock after processing completes.
+            // GET_LOCK was acquired at the top of this block but was ONLY released in the
+            // 'duplicate event' early-exit branch. For all normal processing paths, the lock
+            // was held until the MySQL connection closed (end of PHP-FPM request lifecycle).
+            // With connection pooling (keep-alive), stale locks could block subsequent
+            // Zalo webhooks for the same OA for up to 3 seconds each — causing 504 timeouts
+            // under load (100+ events/min). Always release explicitly after processing.
+            if (isset($lockName)) {
+                $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]);
+            }
         } // end if ($zaloUserId && $zaloOaId)
 
         // [BUG-3 FIX] Removed duplicate echo here.
@@ -1217,18 +1238,55 @@ if ($method === 'POST') {
 
                 if (!$isBotClick) {
                     $botUaPatterns = [
-                        'GoogleImageProxy', 'YahooMailProxy', 'Googlebot', 'bingbot', 'BingPreview',
-                        'Twitterbot', 'facebookexternalhit', 'LinkedInBot', 'Slackbot', 
-                        'AhrefsBot', 'SemrushBot', 'DotBot', 'python-requests', 'python-urllib', 
-                        'curl/', 'wget/', 'HeadlessChrome', 'PhantomJS', 'SafeBrowsing',
-                        'GSecurityScanner', 'Barracuda', 'Proofpoint', 'Mimecast', 
-                        'MSIE 7.0', 'MS Web Services Client Protocol',
+                        'GoogleImageProxy',
+                        'YahooMailProxy',
+                        'Googlebot',
+                        'bingbot',
+                        'BingPreview',
+                        'Twitterbot',
+                        'facebookexternalhit',
+                        'LinkedInBot',
+                        'Slackbot',
+                        'AhrefsBot',
+                        'SemrushBot',
+                        'DotBot',
+                        'python-requests',
+                        'python-urllib',
+                        'curl/',
+                        'wget/',
+                        'HeadlessChrome',
+                        'PhantomJS',
+                        'SafeBrowsing',
+                        'GSecurityScanner',
+                        'Barracuda',
+                        'Proofpoint',
+                        'Mimecast',
+                        'MSIE 7.0',
+                        'MS Web Services Client Protocol',
                         // ADDITIONAL: Secure Web Gateways & Scanners
-                        'Microsoft Office', 'Outlook-Express', 'Outlook-iOS', 'Outlook-Android',
-                        'Office 365', 'Exchange Online', 'Safelinks', 'G-Security-Scanner',
-                        'CiscoUmbrella', 'Trend Micro', 'FireEye', 'Sophos', 'Fortinet',
-                        'Palo Alto Networks', 'Zscaler', 'Symantec', 'McAfee', 'Bitdefender',
-                        'Cloudflare-HealthCheck', 'Viber', 'WhatsApp', 'TelegramBot', 'Cyber-Security'
+                        'Microsoft Office',
+                        'Outlook-Express',
+                        'Outlook-iOS',
+                        'Outlook-Android',
+                        'Office 365',
+                        'Exchange Online',
+                        'Safelinks',
+                        'G-Security-Scanner',
+                        'CiscoUmbrella',
+                        'Trend Micro',
+                        'FireEye',
+                        'Sophos',
+                        'Fortinet',
+                        'Palo Alto Networks',
+                        'Zscaler',
+                        'Symantec',
+                        'McAfee',
+                        'Bitdefender',
+                        'Cloudflare-HealthCheck',
+                        'Viber',
+                        'WhatsApp',
+                        'TelegramBot',
+                        'Cyber-Security'
                     ];
                     foreach ($botUaPatterns as $pattern) {
                         if (stripos($ua, $pattern) !== false) {
@@ -1241,13 +1299,28 @@ if ($method === 'POST') {
                 // Also filter by known scanner IP ranges
                 if (!$isBotClick) {
                     $botIpPrefixes = [
-                        '66.249.', '64.233.', '72.14.', '209.85.', // Google
-                        '40.77.', '157.55.', '207.46.', '20.42.', '20.191.', // Bing/Microsoft
-                        '104.47.', '52.148.', '13.107.', '13.106.', // Microsoft EOP / Azure
-                        '104.143.', '104.146.', '104.147.', // Outlook
-                        '108.177.', '74.125.', // Google DCs
-                        '192.174.', '199.10.', // Proofpoint
-                        '204.14.', '208.75.',  // Mimecast
+                        '66.249.',
+                        '64.233.',
+                        '72.14.',
+                        '209.85.', // Google
+                        '40.77.',
+                        '157.55.',
+                        '207.46.',
+                        '20.42.',
+                        '20.191.', // Bing/Microsoft
+                        '104.47.',
+                        '52.148.',
+                        '13.107.',
+                        '13.106.', // Microsoft EOP / Azure
+                        '104.143.',
+                        '104.146.',
+                        '104.147.', // Outlook
+                        '108.177.',
+                        '74.125.', // Google DCs
+                        '192.174.',
+                        '199.10.', // Proofpoint
+                        '204.14.',
+                        '208.75.',  // Mimecast
                         '40.' // Broad MS range
                     ];
                     foreach ($botIpPrefixes as $prefix) {
@@ -1278,9 +1351,11 @@ if ($method === 'POST') {
                             header("Location: $url");
                             exit;
                         }
-                        if ($type === 'open') exit;
+                        if ($type === 'open')
+                            exit;
                     }
-                } catch (Exception $e) {}
+                } catch (Exception $e) {
+                }
 
                 try {
                     $rawPayload = json_encode([
@@ -1371,11 +1446,14 @@ if ($method === 'POST') {
 
         if ($type === 'unsubscribe') {
             // [BUG-J1 FIX] rawurlencode() params to prevent HTTP header injection
-            $redirect = "https://automation.ideas.edu.vn/crm/manage_subscription.php?sid=" . rawurlencode($sid);
+            // [FIX R4-H02] Use APP_BASE_URL env var instead of hardcoded domain.
+            // Hardcoded domain breaks if: (a) domain changes, (b) domain expires/hijacked.
+            $appBase = rtrim(getenv('APP_BASE_URL') ?: 'https://automation.ideas.edu.vn', '/');
+            $redirect = $appBase . '/crm/manage_subscription.php?sid=' . rawurlencode($sid);
             if ($fid)
-                $redirect .= "&fid=" . rawurlencode($fid);
+                $redirect .= '&fid=' . rawurlencode($fid);
             if ($cid)
-                $redirect .= "&cid=" . rawurlencode($cid);
+                $redirect .= '&cid=' . rawurlencode($cid);
             header('Location: ' . $redirect);
             exit;
         }
@@ -1576,7 +1654,8 @@ function removeSubscriberTag($pdo, $subId, $tag, $workspaceId)
 // [NEW] Consolidated Tag Update (10M UPGRADE: Relational)
 function updateSubscriberTagsAtomic($pdo, $subId, $addTags = [], $removeTags = [], $workspaceId = null)
 {
-    if (!$workspaceId) return; // Strict mode: workspaceId required
+    if (!$workspaceId)
+        return; // Strict mode: workspaceId required
 
     try {
         // Safety: If $subId looks like a Zalo subscriber row (check via zalo_subscribers),

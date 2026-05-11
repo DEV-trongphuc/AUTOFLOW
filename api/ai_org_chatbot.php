@@ -94,15 +94,65 @@ function getSettingsCached($pdo, $propertyId, $globalKey)
 
 function getUrlMetadata($url)
 {
+    // [FIX R4-M04] SSRF Prevention — URL comes from user chat messages, must be strictly validated.
+    // FILTER_VALIDATE_URL accepts file://, ftp://, etc. as valid — we must check scheme explicitly.
+
+    // Step 1: Validate URL format
     if (!filter_var($url, FILTER_VALIDATE_URL))
         return null;
+
+    // Step 2: Only allow http/https — block file://, ftp://, gopher://, dict://, etc.
+    $scheme = strtolower(parse_url($url, PHP_URL_SCHEME) ?? '');
+    if (!in_array($scheme, ['http', 'https'], true))
+        return null;
+
+    // Step 3: Resolve hostname and block private/internal IP ranges (SSRF defense)
+    $host = parse_url($url, PHP_URL_HOST);
+    if (!$host)
+        return null;
+
+    // Strip IPv6 brackets if present
+    $host = trim($host, '[]');
+
+    $resolvedIp = gethostbyname($host);
+    if ($resolvedIp) {
+        // Block loopback (127.x.x.x), link-local (169.254.x.x = AWS metadata),
+        // RFC1918 private ranges, IPv6 loopback (::1)
+        $blockedPatterns = [
+            '/^127\./',                     // Loopback
+            '/^10\./',                      // RFC1918 Class A
+            '/^172\.(1[6-9]|2[0-9]|3[01])\./', // RFC1918 Class B
+            '/^192\.168\./',               // RFC1918 Class C
+            '/^169\.254\./',               // Link-local (AWS metadata endpoint)
+            '/^0\./',                       // Invalid
+            '/^::1$/',                      // IPv6 loopback
+            '/^fc[0-9a-f]{2}:/i',          // IPv6 private
+        ];
+        foreach ($blockedPatterns as $pattern) {
+            if (preg_match($pattern, $resolvedIp)) {
+                error_log("[ai_org_chatbot] SSRF blocked: $url resolved to $resolvedIp");
+                return null;
+            }
+        }
+        // Also block if hostname IS an IP directly and it's private
+        if ($host === $resolvedIp) {
+            // Already checked above via resolvedIp, but double-check literal IPs
+            if (!filter_var($resolvedIp, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                error_log("[ai_org_chatbot] SSRF blocked: literal private IP $url");
+                return null;
+            }
+        }
+    }
+
+    // Step 4: Fetch URL safely (public web only, no redirects to private ranges)
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false); // [FIX R4-M04] Disable redirects — redirect could bypass IP check above
     curl_setopt($ch, CURLOPT_TIMEOUT, 5);
     curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (AI Assistant Link Preview)');
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);  // [FIX P37-AOC] Always verify SSL
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);     // [FIX P37-AOC] Hostname verification
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+    curl_setopt($ch, CURLOPT_MAXREDIRS, 0); // No redirects
     $html = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
@@ -2446,6 +2496,9 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
 
         try {
             if ($isStream) {
+                // CRITICAL: Disable zlib compression, otherwise PHP buffers the whole response
+                @ini_set('zlib.output_compression', '0');
+                
                 // CRITICAL: Clear ALL output buffers before streaming — any remaining ob_start() layer
                 // from db_connect.php, middleware, or PHP.ini will block streaming completely.
                 while (ob_get_level() > 0) {

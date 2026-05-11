@@ -28,11 +28,23 @@ if ($method === 'POST') {
     }
 
     $payload = json_decode($response, true);
+
+    // [FIX NC-02] Validate 'aud' claim — token MUST be issued for THIS app's Client ID.
+    // Google's /tokeninfo verifies the signature but not the audience.
+    // Without this check, a token from ANY Google app could be used to login here.
+    $expectedClientId = '641158233158-nsg8a8tdsj3fdgb34dc9tugm8god7tho.apps.googleusercontent.com';
+    $tokenAud = $payload['aud'] ?? '';
+    if ($tokenAud !== $expectedClientId) {
+        jsonResponse(false, null, 'Invalid token audience');
+    }
+
     $email = $payload['email'];
+    if (empty($email)) {
+        jsonResponse(false, null, 'Could not extract email from Google token');
+    }
     $name = $payload['name'] ?? 'User';
     $picture = $payload['picture'] ?? '';
-    
-    $adminEmails = ['dom.marketing.vn@gmail.com', 'marketing@ideas.edu.vn'];
+
 
     try {
         // Find user by email
@@ -42,8 +54,14 @@ if ($method === 'POST') {
 
         if (!$user) {
             // Auto Register new user
-            $role = (in_array($email, $adminEmails)) ? 'admin' : 'user';
-            $status = (in_array($email, $adminEmails)) ? 'approved' : 'pending';
+            // [FIX NC-03] Use named constant matching ROOT_ADMIN_EMAILS in admin_users.php.
+            // IMPORTANT: If you change admin emails, update BOTH this file AND admin_users.php.
+            // TODO: Move to a shared config file (e.g. config.php) to avoid duplication.
+            if (!defined('ROOT_ADMIN_EMAILS')) {
+                define('ROOT_ADMIN_EMAILS', ['dom.marketing.vn@gmail.com', 'marketing@ideas.edu.vn']);
+            }
+            $role = in_array($email, ROOT_ADMIN_EMAILS) ? 'admin' : 'user';
+            $status = in_array($email, ROOT_ADMIN_EMAILS) ? 'approved' : 'pending';
 
             $userId = bin2hex(random_bytes(16));
             $insert = $pdo->prepare("INSERT INTO users (id, username, email, name, picture, role, status, google_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
@@ -65,16 +83,22 @@ if ($method === 'POST') {
         }
 
         if ($user['status'] !== 'approved') {
+            // [FIX NM-02] Unset sensitive fields before returning to client.
+            unset($user['password_hash'], $user['google_id']);
             jsonResponse(true, $user, 'PENDING_APPROVAL');
         }
 
-        // Start session (Wait, db_connect already calls session_start and session_write_close)
-        // Since we need to write to session, we must reopen it or handle it before db_connect's close.
-        if (session_status() === PHP_SESSION_NONE || session_status() === PHP_SESSION_DISABLED) {
+        // [FIX NH-02] Replace @session_start() suppression with proper guard.
+        // @session_start() silently fails if session is active — data may not be written.
+        // db_connect.php calls session_write_close() only on GET requests;
+        // login_google is POST → session should still be active here.
+        // If somehow closed (edge case), re-open properly.
+        if (session_status() === PHP_SESSION_NONE) {
             session_start();
-        } else {
-            @session_start(); // Re-open if closed
         }
+        
+        // [SEC FIX] Prevent Session Fixation attacks
+        session_regenerate_id(true);
         
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['email'] = $user['email'];
@@ -94,6 +118,8 @@ if ($method === 'POST') {
         
         session_write_close();
 
+        // [FIX NM-02] Unset sensitive fields before returning to client.
+        unset($user['password_hash'], $user['google_id']);
         jsonResponse(true, $user, 'Login successful');
     } catch (Exception $e) {
         jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');

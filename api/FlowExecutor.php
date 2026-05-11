@@ -264,6 +264,8 @@ class FlowExecutor
                     // [MULTI-EMAIL] Inject sender_email if specified in Flow Step
                     if (!empty($config['senderEmail'])) {
                         $this->mailer->setDynamicSender($config['senderEmail']);
+                    } else {
+                        $this->mailer->setDynamicSender(null);
                     }
 
                     // [SES SHARED RATE LIMITER] Acquire slot from cross-process file-lock.
@@ -289,6 +291,11 @@ class FlowExecutor
                             $this->bufferStatsUpdate('subscribers', $subscriberId, 'stats_sent', 1, $subscriber['workspace_id']);
                             logActivity($this->pdo, $subscriberId, 'receive_email', $currentStepId, $flowName, "Email sent: " . $step['label'], $flowId, $campaignId, [], $subscriber['workspace_id']);
                             $logs[] = "  -> Email sent for {$subscriber['email']} (Step: {$step['label']}).";
+                            
+                            if (!isset($contextData['total_sent_today']) || !is_array($contextData['total_sent_today'])) {
+                                $contextData['total_sent_today'] = [];
+                            }
+                            $contextData['total_sent_today']['email'] = ($contextData['total_sent_today']['email'] ?? 0) + 1;
                         } else {
                             // [Váº¬N HÃ€NH] Log as skipped but ADVANCE the flow so Zalo/ZNS steps can still trigger
                             logActivity($this->pdo, $subscriberId, 'skipped_email', $currentStepId, $flowName, "Skipped: Virtual email ({$subscriber['email']})", $flowId, $campaignId, [], $subscriber['workspace_id']);
@@ -379,6 +386,11 @@ class FlowExecutor
                         logActivity($this->pdo, $subscriberId, 'zalo_sent', $currentStepId, $flowName, 'Zalo CS Sent: ' . $step['label'], $flowId, $campaignId, [], $subscriber['workspace_id']);
                         $logs[] = "  -> Zalo CS sent to {$zaloUserId}.";
                         $messageSent = true;
+
+                        if (!isset($contextData['total_sent_today']) || !is_array($contextData['total_sent_today'])) {
+                            $contextData['total_sent_today'] = [];
+                        }
+                        $contextData['total_sent_today']['zalo'] = ($contextData['total_sent_today']['zalo'] ?? 0) + 1;
                     } else {
                         $logs[] = "  -> Zalo CS failed: " . ($res['message'] ?? 'Unknown');
                         // Fallback ZNS
@@ -586,6 +598,11 @@ class FlowExecutor
                         logActivity($this->pdo, $subscriberId, 'zns_sent', $currentStepId, $flowName, 'ZNS Sent', $flowId, $campaignId, [], $subscriber['workspace_id']);
                         $logs[] = "  -> ZNS Sent.";
                         $messageSent = true;
+                        
+                        if (!isset($contextData['total_sent_today']) || !is_array($contextData['total_sent_today'])) {
+                            $contextData['total_sent_today'] = [];
+                        }
+                        $contextData['total_sent_today']['zalo'] = ($contextData['total_sent_today']['zalo'] ?? 0) + 1;
                     } else {
                         $this->bufferStatsUpdate('flows', $flowId, 'stat_zns_failed', 1, $subscriber['workspace_id']);
                         // [FIX] Normalize error keys: sendZNSMessage pre-checks return 'reason'/'message',
@@ -1409,10 +1426,17 @@ class FlowExecutor
                                         }
                                     }
 
+                                    // [PERF DEBOUNCE] Atomic check to prevent double-enrollment within 3 seconds
                                     $this->pdo->prepare(
                                         "INSERT INTO subscriber_flow_states (subscriber_id, workspace_id, flow_id, step_id, step_type, scheduled_at, status, created_at, updated_at, last_step_at)
-                                         VALUES (?, ?, ?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW())"
-                                    )->execute([$subscriberId, $subscriber['workspace_id'] ?? 1, $linkedId, $lStart, $lStartType, $linkedInitialSchedule]);
+                                         SELECT ?, ?, ?, ?, ?, ?, 'waiting', NOW(), NOW(), NOW()
+                                         FROM DUAL
+                                         WHERE NOT EXISTS (
+                                             SELECT 1 FROM subscriber_flow_states 
+                                             WHERE subscriber_id = ? AND flow_id = ? 
+                                             AND created_at >= DATE_SUB(NOW(), INTERVAL 3 SECOND)
+                                         )"
+                                    )->execute([$subscriberId, $subscriber['workspace_id'] ?? 1, $linkedId, $lStart, $lStartType, $linkedInitialSchedule, $subscriberId, $linkedId]);
                                     $newQ = $this->pdo->lastInsertId();
                                     if ($newQ) {
                                         dispatchFlowWorker($this->pdo, 'flows', ['priority_queue_id' => $newQ, 'subscriber_id' => $subscriberId, 'priority_flow_id' => $linkedId]);
