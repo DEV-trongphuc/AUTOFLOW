@@ -379,7 +379,7 @@ if ($method === 'POST') {
                         }
 
                         // --- [NEW] STAFF REPLY TRACKING ---
-                        if ($subId && strpos($event, 'oa_send_') === 0) {
+                        if ($subId && $event === 'oa_send_text') {
                             $staffMsg = $data['message']['text'] ?? '[' . strtoupper(str_replace('oa_send_', '', $event)) . ']';
 
                             // [KEY FIX] Fix Zalo Human vs Bot parsing since Zalo API doesn't give admin_id reliably
@@ -454,7 +454,7 @@ if ($method === 'POST') {
                             }
                         }
 
-                        $msgEvents = ['user_send_text', 'user_send_image', 'user_send_link', 'user_send_audio', 'user_send_video', 'user_send_location', 'user_send_sticker', 'user_send_gif'];
+
                         if ($subId && in_array($event, $msgEvents)) {
                             $msgText = $data['message']['text'] ?? '[' . strtoupper(str_replace('user_send_', '', $event)) . ']';
                             logZaloMsg($pdo, $zaloUserId, 'inbound', $msgText, $oaConfig['workspace_id']);
