@@ -332,11 +332,13 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg, $
         return;
     }
 
-    // 2. Strip to�n b? Markdown tru?c khi x? l� (b? *, **, #, v.v.)
-    $aiText = formatZaloMessage($aiText);
-
-    // 3. Parse AI Response for Zalo elements (URL, phone, links)
+    // 2. Parse AI Response for Zalo elements (URL, phone, links) BEFORE stripping Markdown
+    // This ensures we capture [text](url) format if Gemini uses it.
     $parsed = parseAIResponseForZalo($aiText);
+
+    // 3. Strip all Markdown and special tags AFTER parsing elements
+    $aiText = formatZaloMessage($aiText);
+    $cleanText = $aiText; // Define cleanText for later use
 
     // Merge Dynamic Quick Actions from AI with parsed buttons
     $finalButtons = $parsed['buttons'];

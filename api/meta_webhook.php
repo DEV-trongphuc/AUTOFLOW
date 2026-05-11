@@ -947,16 +947,6 @@ function processMetaAIMessage($pdo, $pageId, $senderId, $text, $chatbotId)
             writeLog("Parsed Action Buttons: " . count($actionButtons));
         }
 
-        // 1.5 Format Markdown for Meta Messenger
-        require_once 'zalo_formatter.php';
-        $botMsg = formatZaloMessage($botMsg);
-
-        // 1.8 Final Cleaning of internal tags
-        $botMsg = str_replace('[SHOW_LEAD_FORM]', '', $botMsg);
-        $botMsg = preg_replace('/\[[A-Z_]+\]/', '', $botMsg); // Strip [TAGS]
-        $botMsg = preg_replace('/\[[A-Z_]+:\s*.*?\]/ius', '', $botMsg); // Strip any remaining [TAG: ...]
-        $botMsg = trim($botMsg);
-
         $urlButtons = [];
         $imgExtRegex = '/https?:\/\/[^\s\)]+(?:\.jpg|\.png|\.webp|\.jpeg|\.gif|\.bmp)/iu';
 
@@ -968,21 +958,25 @@ function processMetaAIMessage($pdo, $pageId, $senderId, $text, $chatbotId)
         // 3.2 Find all links to convert to Buttons and STRIP them from text
         $anyLinkRegex = '/https?:\/\/[^\s\)]+/u';
         if (preg_match_all($anyLinkRegex, $botMsg, $linkMatches)) {
-            $foundLinks = array_unique($linkMatches[0]);
-            foreach ($foundLinks as $link) {
+            foreach (array_unique($linkMatches[0]) as $link) {
                 if ($foundImageUrl && $link === $foundImageUrl) {
                     $botMsg = trim(str_replace($link, '', $botMsg));
                     continue;
                 }
-                $urlButtons[] = [
-                    'type' => 'web_url',
-                    'url' => $link,
-                    'title' => 'Xem chi tiết'
-                ];
+                $urlButtons[] = ['type' => 'web_url', 'url' => $link, 'title' => 'Xem chi tiết'];
                 $botMsg = trim(str_replace($link, '', $botMsg));
             }
         }
 
+        // [FIX] Format Markdown for Meta Messenger AFTER parsing links
+        require_once 'zalo_formatter.php';
+        $botMsg = formatZaloMessage($botMsg);
+
+        // 1.8 Final Cleaning of internal tags
+        $botMsg = str_replace('[SHOW_LEAD_FORM]', '', $botMsg);
+        $botMsg = preg_replace('/\[[A-Z_]+\]/', '', $botMsg); // Strip [TAGS]
+        $botMsg = preg_replace('/\[[A-Z_]+:\s*.*?\]/ius', '', $botMsg); // Strip any remaining [TAG: ...]
+        $botMsg = trim($botMsg);
         // 3.3 Handle Layout: URL Buttons (Vertical) vs AI Actions (Horizontal Quick Replies)
         $finalButtons = array_slice($urlButtons, 0, 3); // Vertical (max 3)
         $quickReplies = [];

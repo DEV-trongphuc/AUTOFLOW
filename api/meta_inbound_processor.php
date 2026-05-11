@@ -676,10 +676,6 @@ function processMetaAIMessage($pdo, $pageId, $senderId, $userMsg, $scenario)
 
         $botMsg = preg_replace('/\[[A-Z_]+(?::\s*.*?)?\]/ius', '', $botMsg);
 
-        // [FIX] Strip toàn bộ Markdown cho Meta Messenger
-        require_once 'zalo_formatter.php';
-        $botMsg = formatZaloMessage($botMsg);
-
         $urlButtons = [];
         if (preg_match_all('/https?:\/\/[^\s\)]+/u', $botMsg, $linkMatches)) {
             foreach (array_unique($linkMatches[0]) as $link) {
@@ -691,6 +687,10 @@ function processMetaAIMessage($pdo, $pageId, $senderId, $userMsg, $scenario)
                 $botMsg = trim(str_replace($link, '', $botMsg));
             }
         }
+
+        // [FIX] Strip all Markdown for Meta Messenger AFTER parsing links
+        require_once 'zalo_formatter.php';
+        $botMsg = formatZaloMessage($botMsg);
 
         $finalButtons = array_slice($urlButtons, 0, 3);
         $quickReplies = [];
