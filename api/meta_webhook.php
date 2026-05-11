@@ -107,10 +107,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             writeLog("[WARN P16-C1] Could not verify signature (DB error): " . $e->getMessage());
         }
     } else {
-        writeLog("[DEBUG SIG] No X-Hub-Signature-256 header — skipping verify");
+        // [FIX R3-H01] No X-Hub-Signature-256 header — reject instead of silently processing.
+        // Meta ALWAYS sends this header in production webhooks (since API v2.2+).
+        // A missing header indicates: (a) a fake/test POST not from Meta, or (b) a stripped header.
+        // Reject with 400 to block fake events while Meta dashboard test events will retry with the header.
+        // To temporarily disable (e.g. local tunnel testing), set META_SKIP_SIG_CHECK=1 env var.
+        if (!getenv('META_SKIP_SIG_CHECK')) {
+            writeLog("[SECURITY R3-H01] Rejected POST: missing X-Hub-Signature-256 header.");
+            http_response_code(400);
+            echo json_encode(['error' => 'Missing webhook signature header']);
+            exit;
+        }
+        writeLog("[WARN R3-H01] META_SKIP_SIG_CHECK enabled — allowing unsigned request (dev only).");
     }
-    // Note: If no X-Hub-Signature-256 header is sent, we still process (e.g. test calls from Meta dashboard)
-    // In production, Meta always sends this header so missing it is unusual.
+    // [END SIGNATURE CHECK]
+
 
     $body = json_decode($input, true);
     writeLog($body); // Debug Log

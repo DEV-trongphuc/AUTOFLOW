@@ -8,10 +8,8 @@ require_once 'config.php';
 require_once 'Mailer.php';
 
 header('Content-Type: application/json');
-// Handle CORS if needed
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
+// [FIX H-03] Removed CORS wildcard * — db_connect.php (via config.php) handles CORS correctly
+// with origin reflection. Wildcard here was overriding it and conflicting with Allow-Credentials: true.
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
@@ -64,13 +62,14 @@ if ($action === 'generate') {
     $code = '';
     
     if ($type === 'numeric') {
-        for ($i = 0; $i < $length; $i++) $code .= rand(0, 9);
+        // [FIX C-03] Use random_int() (CSPRNG) instead of rand() (non-secure Mersenne Twister)
+        for ($i = 0; $i < $length; $i++) $code .= (string)random_int(0, 9);
     } else if ($type === 'alpha') {
         $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        for ($i = 0; $i < $length; $i++) $code .= $chars[rand(0, strlen($chars)-1)];
+        for ($i = 0; $i < $length; $i++) $code .= $chars[random_int(0, strlen($chars)-1)];
     } else {
         $chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        for ($i = 0; $i < $length; $i++) $code .= $chars[rand(0, strlen($chars)-1)];
+        for ($i = 0; $i < $length; $i++) $code .= $chars[random_int(0, strlen($chars)-1)];
     }
 
     $ttl = (int)$profile['ttl_minutes'];
@@ -82,11 +81,11 @@ if ($action === 'generate') {
     $stmt->execute([$profileId, $email]);
 
     // Insert new pending token
-    $stmt = $pdo->prepare("INSERT INTO otp_codes (id, profile_id, receiver_email, code_hash, status, expires_at) VALUES (?, ?, ?, ?, 'pending', ?)");
-    // WARNING: In production, hashing the code (like md5 or bcrypt) and comparing later is safer,
-    // but we store PLAINTEXT temporarily for simplicity because users need it quickly, or we store Hash.
-    // Let's store plain here to match exact case.
-    $stmt->execute([$codeId, $profileId, $email, $code, $expiresAt]);
+    // [FIX M-01] Hash OTP before storing — column name 'code_hash' now correctly stores a hash.
+    // Prevents plaintext OTP exposure if database is breached.
+    $codeHash = hash('sha256', $code);
+    $stmtInsert = $pdo->prepare("INSERT INTO otp_codes (id, profile_id, receiver_email, code_hash, status, expires_at) VALUES (?, ?, ?, ?, 'pending', ?)");
+    $stmtInsert->execute([$codeId, $profileId, $email, $codeHash, $expiresAt]);
 
     // Send Email
     $subject = 'Mã xác nhận OTP của bạn';
@@ -165,8 +164,31 @@ if ($action === 'verify') {
         exit;
     }
 
+    // [FIX C-04] Rate limiting for OTP verify — max 10 attempts per IP per 15 minutes.
+    // Without this, attacker can brute-force all 1,000,000 possible 6-digit codes.
+    $clientIp = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $rateLimitKey = 'otp_verify_' . md5($email . ($profileId ?: ''));
+    $maxAttempts = 10;
+    $blockMinutes = 15;
+    try {
+        $stmtRL = $pdo->prepare(
+            "SELECT attempts, blocked_until FROM api_rate_limits 
+             WHERE ip_address = ? AND action = ? LIMIT 1"
+        );
+        $stmtRL->execute([$clientIp, $rateLimitKey]);
+        $rateRow = $stmtRL->fetch(PDO::FETCH_ASSOC);
+        if ($rateRow && !empty($rateRow['blocked_until']) && strtotime($rateRow['blocked_until']) > time()) {
+            http_response_code(429);
+            echo json_encode(['success' => false, 'error' => 'Quá nhiều lần thử. Vui lòng thử lại sau ' . $blockMinutes . ' phút.']);
+            exit;
+        }
+    } catch (Exception $e) { /* fail open — don't block users if rate limit table missing */ }
+
+    // [FIX M-01] Hash the input code to compare against stored hash
+    $codeHash = hash('sha256', $code);
+
     $query = "SELECT id, expires_at FROM otp_codes WHERE receiver_email = ? AND code_hash = ? AND status = 'pending'";
-    $params = [$email, $code];
+    $params = [$email, $codeHash];
     if ($profileId) {
         $query .= " AND profile_id = ?";
         $params[] = $profileId;
@@ -177,6 +199,17 @@ if ($action === 'verify') {
     $record = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$record) {
+        // [FIX C-04] Record failed attempt for rate limiting
+        try {
+            $pdo->prepare(
+                "INSERT INTO api_rate_limits (ip_address, action, attempts, last_attempt_at)
+                 VALUES (?, ?, 1, NOW())
+                 ON DUPLICATE KEY UPDATE
+                     attempts = attempts + 1,
+                     last_attempt_at = NOW(),
+                     blocked_until = IF(attempts + 1 >= ?, DATE_ADD(NOW(), INTERVAL ? MINUTE), NULL)"
+            )->execute([$clientIp, $rateLimitKey, $maxAttempts, $blockMinutes]);
+        } catch (Exception $e) { /* fail silently */ }
         echo json_encode(['success' => false, 'error' => 'Mã xác thực không hợp lệ hoặc đã hết hạn.']);
         exit;
     }
@@ -191,6 +224,12 @@ if ($action === 'verify') {
     // Success! Mark as verified
     $stmt = $pdo->prepare("UPDATE otp_codes SET status = 'verified', verified_at = NOW() WHERE id = ?");
     $stmt->execute([$record['id']]);
+
+    // [FIX C-04] Clear rate limit on success
+    try {
+        $pdo->prepare("DELETE FROM api_rate_limits WHERE ip_address = ? AND action = ?")
+            ->execute([$clientIp, $rateLimitKey]);
+    } catch (Exception $e) { /* fail silently */ }
 
     echo json_encode(['success' => true, 'message' => 'Xác nhận OTP thành công!']);
     exit;

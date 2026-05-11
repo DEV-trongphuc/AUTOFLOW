@@ -144,9 +144,6 @@ class WorkerTriggerService
         if (!is_dir(dirname($logFile))) {
             @mkdir(dirname($logFile), 0777, true);
         }
-        if (file_exists($logFile) && filesize($logFile) > 5 * 1024 * 1024) {
-            @rename($logFile, $logFile . '.' . date('YmdHis') . '.bak');
-        }
         @file_put_contents($logFile, date('[Y-m-d H:i:s] ') . $message . "\n", FILE_APPEND);
     }
 }

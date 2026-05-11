@@ -37,25 +37,34 @@ if (!$link) {
 }
 
 // --- STATUS ENFORCEMENT ---
-if (($link['status'] ?? 'active') === 'paused') {
-if (($link['status'] ?? 'active') === 'paused') {
+// [FIX H-02] Handles all non-active statuses (paused, expired, deleted, etc.)
+if (($link['status'] ?? 'active') !== 'active') {
+    $linkStatus  = $link['status'] ?? 'inactive';
     $displayName = !empty($link['name']) ? $link['name'] : $link['slug'];
+    $statusMessages = [
+        'paused'   => 'Liên kết này hiện đang được quản trị viên tạm khóa. Vui lòng quay lại sau.',
+        'expired'  => 'Liên kết này đã hết hạn và không còn hoạt động.',
+        'deleted'  => 'Liên kết này đã bị xóa khỏi hệ thống.',
+    ];
+    $statusMsg = $statusMessages[$linkStatus] ?? 'Liên kết này hiện không khả dụng.';
     echo '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>'.$displayName.'</title><style>
     body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f8fafc;margin:0;padding:20px;box-sizing:border-box;} 
     .card{background:#fff;padding:3rem 2rem;border-radius:24px;box-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1);text-align:center;max-width:400px;width:100%;box-sizing:border-box;} 
     h2{color:#0f172a;margin-top:0;font-size:1.5rem;font-weight:800;letter-spacing:-0.025em;} 
     p{color:#64748b;font-size:0.95rem;margin-bottom:2rem;line-height:1.6;} 
     .icon-box{width:80px;height:80px;background:#fff7ed;border-radius:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;color:#f97316;}
-    </style></head><body><div class="card"><div class="icon-box"><svg style="width:40px;height:40px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div><h2>'.$displayName.'</h2><p>Liên kết này hiện đang được quản trị viên tạm khóa. Vui lòng quay lại sau.</p></div></body></html>';
+    </style></head><body><div class="card"><div class="icon-box"><svg style="width:40px;height:40px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div><h2>'.$displayName.'</h2><p>'.$statusMsg.'</p></div></body></html>';
     exit;
 }
-    exit;
-}
+
 
 // --- PIN PROTECTION ---
 $accessPin = $link['access_pin'] ?? null;
 if (!empty($accessPin)) {
-    session_start();
+    // [FIX H-07] Guard against double session_start() — config.php -> db_connect.php already started it.
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
     $pinSessionKey = 'link_auth_' . $link['id'];
     
     // Check if submitting PIN

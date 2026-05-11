@@ -3,21 +3,23 @@
 // NOTE: session_set_cookie_params MUST be called BEFORE session_start.
 // db_connect.php already calls session_start(), so we handle remember-me differently.
 
-// Check if login request wants "remember me" - must be done BEFORE db_connect starts session
+// [FIX H-01] Set CUSTOM_SESSION_LIFETIME before db_connect.php starts the session.
+// db_connect.php now reads this constant to set the correct cookie lifetime.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['action'] === 'login') {
     $rawInput = file_get_contents('php://input');
     $peekInput = json_decode($rawInput, true);
-    if (!empty($peekInput['remember']) && $peekInput['remember'] === true) {
-        $lifetime = 30 * 24 * 60 * 60;
-        session_set_cookie_params([
-            'lifetime' => $lifetime,
-            'path' => '/',
-            'domain' => '',
-            'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
-            'httponly' => true,
-            'samesite' => 'Lax'
-        ]);
-    }
+    $remember = !empty($peekInput['remember']) && $peekInput['remember'] === true;
+    // Remember me = 30 days; No remember me = session cookie (browser close clears it)
+    define('CUSTOM_SESSION_LIFETIME', $remember ? 2592000 : 0);
+    $isSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+    session_set_cookie_params([
+        'lifetime' => CUSTOM_SESSION_LIFETIME,
+        'path'     => '/',
+        'domain'   => '',
+        'secure'   => $isSecure,
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
 }
 
 require_once 'db_connect.php';
@@ -412,7 +414,9 @@ if ($method === 'GET' && $action === 'check') {
     if (!$orgUserId) {
         $adminTokenHeader = $normalized['x-admin-token'] ?? $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
         $validBypassToken = defined('ADMIN_BYPASS_TOKEN') ? ADMIN_BYPASS_TOKEN : null;
-        if (($validBypassToken && $adminTokenHeader === $validBypassToken) || $adminTokenHeader === 'admin-001' || is_super_admin()) {
+        // [FIX C-01] REMOVED hardcoded backdoor: || $adminTokenHeader === 'admin-001'
+        // Any caller with literal 'admin-001' could bypass all auth. Now requires valid computed token.
+        if (($validBypassToken && $adminTokenHeader === $validBypassToken) || is_super_admin()) {
             $orgUserId = 'admin-001';
             $_SESSION['org_user_id'] = 'admin-001';
         }

@@ -2496,9 +2496,6 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
 
         try {
             if ($isStream) {
-                // CRITICAL: Disable zlib compression, otherwise PHP buffers the whole response
-                @ini_set('zlib.output_compression', '0');
-                
                 // CRITICAL: Clear ALL output buffers before streaming — any remaining ob_start() layer
                 // from db_connect.php, middleware, or PHP.ini will block streaming completely.
                 while (ob_get_level() > 0) {

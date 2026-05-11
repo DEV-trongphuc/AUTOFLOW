@@ -8,13 +8,37 @@ require_once 'auth_middleware.php';
 $isStaffAdmin = !empty($_SESSION['is_admin']) || !empty($_SESSION['role']) && $_SESSION['role'] === 'admin';
 $isOrgUser = !empty($_SESSION['org_user_id']) || !empty($GLOBALS['current_admin_id']);
 
-// Check for Bearer token in headers (for API clients)
+// [FIX R3-C02] Validate Bearer token VALUE — not just its presence.
+// Previously: any request with "Authorization: Bearer anything" bypassed auth check.
+// Now: token must match a valid record in api_tokens table (or a server-configured env var).
+$bearerAuthed = false;
 $allHeaders = function_exists('getallheaders') ? getallheaders() : [];
 $normalizedHeaders = array_change_key_case($allHeaders, CASE_LOWER);
 $authHeader = $normalizedHeaders['authorization'] ?? $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-$hasBearer = !empty($authHeader) && preg_match('/Bearer\s+(.+)$/i', $authHeader);
+if (!empty($authHeader) && preg_match('/Bearer\s+(.+)$/i', $authHeader, $tokenMatch)) {
+    $rawToken = trim($tokenMatch[1]);
+    try {
+        // Check against api_tokens table (scoped: only 'upload' or 'full_access' scope allowed)
+        $stmtTok = $pdo->prepare(
+            "SELECT id FROM api_tokens WHERE token = ? AND (scope = 'upload' OR scope = 'full_access') AND (expires_at IS NULL OR expires_at > NOW()) LIMIT 1"
+        );
+        $stmtTok->execute([hash('sha256', $rawToken)]);
+        if ($stmtTok->fetchColumn()) {
+            $bearerAuthed = true;
+        } else {
+            // Fallback: check against UPLOAD_API_TOKEN env var (for server-to-server)
+            $envToken = getenv('UPLOAD_API_TOKEN');
+            if ($envToken && hash_equals(hash('sha256', $envToken), hash('sha256', $rawToken))) {
+                $bearerAuthed = true;
+            }
+        }
+    } catch (Exception $e) {
+        // DB error during token check — fail closed (reject)
+        error_log('[upload.php] Bearer token DB check failed: ' . $e->getMessage());
+    }
+}
 
-if (!$isStaffAdmin && !$isOrgUser && !$hasBearer) {
+if (!$isStaffAdmin && !$isOrgUser && !$bearerAuthed) {
     http_response_code(401);
     jsonResponse(false, null, 'Unauthorized');
 }
@@ -211,7 +235,8 @@ if (move_uploaded_file($fileTmp, $destination)) {
         'url' => $publicUrl,
         'size' => $fileSize,
         'type' => $fileExt,
-        'path' => $destination // Internal path for worker
+        // [FIX R3-C03] Removed 'path' field — internal server path (e.g. ../uploadss/abc.jpg)
+        // was being returned to client, leaking filesystem structure to authenticated callers.
     ]);
 } else {
     jsonResponse(false, null, 'Failed to move uploaded file');

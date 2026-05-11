@@ -97,9 +97,6 @@ if ($method === 'POST') {
             session_start();
         }
         
-        // [SEC FIX] Prevent Session Fixation attacks
-        session_regenerate_id(true);
-        
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['email'] = $user['email'];
         $_SESSION['role'] = $user['role'];

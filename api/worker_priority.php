@@ -713,13 +713,19 @@ try {
     // Optimization: Cache frequency check (GLOBAL)
     $todayStart = date('Y-m-d 00:00:00');
     $stmtCap = $pdo->prepare("
-        SELECT COUNT(*) FROM subscriber_activity 
+        SELECT type, COUNT(*) as cnt FROM subscriber_activity 
         WHERE subscriber_id = ? AND workspace_id = ?
         AND type IN ('receive_email', 'zalo_sent', 'meta_sent', 'zns_sent') 
         AND created_at >= ?
+        GROUP BY type
     ");
     $stmtCap->execute([$subscriberId, $priorityWorkspaceId, $todayStart]);
-    $totalSentToday = (int) $stmtCap->fetchColumn();
+    $totalSentToday = ['email' => 0, 'zalo' => 0, 'meta' => 0];
+    while ($rowCap = $stmtCap->fetch()) {
+        if ($rowCap['type'] === 'receive_email') $totalSentToday['email'] += $rowCap['cnt'];
+        if ($rowCap['type'] === 'meta_sent') $totalSentToday['meta'] += $rowCap['cnt'];
+        if (in_array($rowCap['type'], ['zalo_sent', 'zns_sent'])) $totalSentToday['zalo'] += $rowCap['cnt'];
+    }
 
     // [BUG-FIX] Decode fConfig from item FIRST so exitConditions below read the CORRECT flow's config.
     // Previously fConfig here referenced the last-iterated $flow['config'] from Scenario A loop,
@@ -784,7 +790,8 @@ try {
         if ($s['type'] === 'trigger' && ($s['config']['type'] ?? '') === 'campaign')
             $campaignIdForFlow = $s['config']['targetId'] ?? null;
 
-    $logs[] = "[Priority-Chain] Starting chain for Sub {$subscriberId} (Queue: {$queueId}) in '{$flowName}'. Current Sent: {$totalSentToday}";
+    $totalSentStr = json_encode($totalSentToday);
+    $logs[] = "[Priority-Chain] Starting chain for Sub {$subscriberId} (Queue: {$queueId}) in '{$flowName}'. Current Sent: {$totalSentStr}";
     $item['has_email_error'] = false;
 
     // [OMNI-FIX REMOVED] Priority Flows now bypass global flow frequency limits (activeDays, startTime, endTime).
@@ -900,7 +907,13 @@ try {
             if ($execResult['is_instant']) {
                 // Update local sent count if message was sent
                 if (!empty($execResult['message_sent'])) {
-                    $totalSentToday++;
+                    if (strpos(strtolower($currentStep['type']), 'zalo') !== false) {
+                        $totalSentToday['zalo']++;
+                    } elseif (strtolower($currentStep['type']) === 'meta_message') {
+                        $totalSentToday['meta']++;
+                    } elseif (strtolower($currentStep['type']) === 'action') {
+                        $totalSentToday['email']++;
+                    }
                 }
                 // [PERF] Persist step_type alongside step_id so tracking_processor can use
                 // the indexed column instead of json_decode on every open/click event.

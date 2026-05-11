@@ -2,6 +2,13 @@
 // api/admin_users.php
 require_once 'db_connect.php';
 
+// [FIX M-04] Root admin emails extracted to single constant — no longer duplicated 3x in code.
+// To add/remove root admins, only change this list.
+define('ROOT_ADMIN_EMAILS', [
+    'dom.marketing.vn@gmail.com',
+    'marketing@ideas.edu.vn',
+]);
+
 // Auth Check: Must be admin
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -31,7 +38,7 @@ if ($method === 'POST' && $action === 'update_status') {
     $userStmt = $pdo->prepare("SELECT email FROM users WHERE id = ?");
     $userStmt->execute([$id]);
     $userEmail = $userStmt->fetchColumn();
-    $rootAdmins = ['dom.marketing.vn@gmail.com', 'marketing@ideas.edu.vn'];
+    $rootAdmins = ROOT_ADMIN_EMAILS;
     if (in_array($userEmail, $rootAdmins)) jsonResponse(false, null, 'Cannot modify root admin');
 
     $stmt = $pdo->prepare("UPDATE users SET status = ? WHERE id = ?");
@@ -49,7 +56,7 @@ if ($method === 'POST' && $action === 'update_role') {
     $userStmt = $pdo->prepare("SELECT email FROM users WHERE id = ?");
     $userStmt->execute([$id]);
     $userEmail = $userStmt->fetchColumn();
-    $rootAdmins = ['dom.marketing.vn@gmail.com', 'marketing@ideas.edu.vn'];
+    $rootAdmins = ROOT_ADMIN_EMAILS;
     if (in_array($userEmail, $rootAdmins)) jsonResponse(false, null, 'Cannot modify root admin');
 
     $stmt = $pdo->prepare("UPDATE users SET role = ? WHERE id = ?");
@@ -66,7 +73,7 @@ if ($method === 'DELETE' || ($method === 'POST' && $action === 'delete')) {
     $userStmt = $pdo->prepare("SELECT email FROM users WHERE id = ?");
     $userStmt->execute([$id]);
     $userEmail = $userStmt->fetchColumn();
-    $rootAdmins = ['dom.marketing.vn@gmail.com', 'marketing@ideas.edu.vn'];
+    $rootAdmins = ROOT_ADMIN_EMAILS;
     if (in_array($userEmail, $rootAdmins)) jsonResponse(false, null, 'Cannot delete root admin');
 
     $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");

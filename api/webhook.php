@@ -61,9 +61,6 @@ $zaloLogFile = __DIR__ . '/zalo_debug.log';
 // With high email volume, this caused zalo_debug.log to grow hundreds of MB/hour.
 // GET tracking requests have their own webhook_debug.log — no need to double-log here.
 if ($method === 'POST') {
-    if (file_exists($zaloLogFile) && filesize($zaloLogFile) > 5 * 1024 * 1024) {
-        @rename($zaloLogFile, $zaloLogFile . '.' . date('YmdHis') . '.bak');
-    }
     file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "POST | Payload: " . (strlen($input) > 2048 ? substr($input, 0, 2048) . '...[truncated]' : ($input ?: 'EMPTY')) . "\n", FILE_APPEND);
 }
 

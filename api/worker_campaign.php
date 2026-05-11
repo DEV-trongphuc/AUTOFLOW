@@ -61,7 +61,7 @@ if (!function_exists('runWorkerCampaign')) {
             $settings[$row['key']] = $row['value'];
         }
         $defaultSender = !empty($settings['smtp_user']) ? $settings['smtp_user'] : "marketing@ka-en.com.vn";
-        $mailer = new Mailer($pdo, $apiUrl, $defaultSender, $workspace_id);
+        $mailer = new Mailer($pdo, $apiUrl, $defaultSender, 0);
 
         // [FIX P9-C1] MySQL version guard for FOR UPDATE SKIP LOCKED.
         // SKIP LOCKED requires MySQL = 8.0  identical to fix in worker_queue.php (P7-C3).

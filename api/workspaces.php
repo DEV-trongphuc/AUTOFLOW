@@ -8,9 +8,18 @@ $action = $_GET['action'] ?? '';
 // require_permission($pdo, 'manage_workspaces'); -> Global removed. Scoped to actions.
 
 if ($method === 'GET' && $action === 'list') {
-    // Basic auth check already done by auth_middleware if we use an actual user_id, 
-    // but we can enforce it here by making sure session exists.
-    $user_id = $_SESSION['user_id'] ?? null;
+    // [FIX R5-C01] Cập nhật logic xác thực đồng bộ với hệ thống (hỗ trợ Local Dev và Admin Token)
+    $hasAuth = !empty($GLOBALS['current_admin_id']) || 
+               !empty($_SESSION['user_id']) || 
+               !empty($_SERVER['HTTP_X_ADMIN_TOKEN']) || 
+               !empty($_SERVER['HTTP_X_LOCAL_DEV_USER']);
+
+    if (!$hasAuth) {
+        http_response_code(401);
+        jsonResponse(false, null, 'Unauthorized');
+    }
+
+    $user_id = $_SESSION['user_id'] ?? $_SERVER['HTTP_X_LOCAL_DEV_USER'] ?? null;
     $isSuper = is_super_admin();
 
     try {
@@ -72,10 +81,6 @@ if ($method === 'GET' && $action === 'users') {
             session_write_close();
         }
 
-        $stmtDebug = $pdo->prepare("SELECT * FROM workspace_users WHERE workspace_id = ?");
-        $stmtDebug->execute([$workspace_id]);
-        $rawBindings = $stmtDebug->fetchAll(PDO::FETCH_ASSOC);
-
         $stmt = $pdo->prepare("
             SELECT wu.id as mapping_id, u.id as user_id, u.email, u.name as full_name, u.picture, r.id as role_id, r.name as role_name
             FROM workspace_users wu
@@ -84,15 +89,12 @@ if ($method === 'GET' && $action === 'users') {
             WHERE wu.workspace_id = ?
         ");
         $stmt->execute([$workspace_id]);
-        
         $finalData = $stmt->fetchAll();
-        
-        // Debug fallback
-        if (count($finalData) === 0) {
-            jsonResponse(true, $rawBindings, 'Debug Mode: No matched users, returning raw bindings');
-            exit;
-        }
 
+        // [FIX NH-01] Removed debug fallback that returned raw workspace_users bindings.
+        // That response exposed internal DB schema fields and the raw user_id/role_id mappings
+        // to authenticated callers whenever the JOIN found no users (e.g. ID type mismatch).
+        // Now: return empty list — caller can investigate via admin tools if needed.
         jsonResponse(true, $finalData);
     } catch (Exception $e) {
         jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');

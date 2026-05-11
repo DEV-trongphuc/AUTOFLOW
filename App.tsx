@@ -74,9 +74,10 @@ import axios from 'axios';
 if (
     !DEMO_MODE &&
     typeof window !== 'undefined' &&
+    // [FIX M-02] Removed port !== '' — too broad, would trigger on production with non-standard ports.
+    // Only allow dev auto-login for explicit localhost/127.0.0.1 hostnames.
     (window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1' ||
-        window.location.port !== '') &&
+        window.location.hostname === '127.0.0.1') &&
     !localStorage.getItem('isAuthenticated')
 ) {
     localStorage.setItem('user', JSON.stringify({

@@ -18,7 +18,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 $route = $_GET['route'] ?? '';
 
 try {
-    checkZaloAutomationSchema($pdo);
+
     if ($method === 'GET') {
         if ($route === 'list') {
             $oa_id = $_GET['oa_config_id'] ?? null;

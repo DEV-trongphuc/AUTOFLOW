@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost:3306
--- Thời gian đã tạo: Th5 08, 2026 lúc 08:32 AM
+-- Thời gian đã tạo: Th5 10, 2026 lúc 11:05 PM
 -- Phiên bản máy phục vụ: 10.6.18-MariaDB-cll-lve-log
 -- Phiên bản PHP: 8.4.20
 
@@ -616,6 +616,26 @@ CREATE TABLE `api_rate_limits` (
   `attempts` int(11) DEFAULT 1,
   `last_attempt_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `blocked_until` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `api_tokens`
+--
+
+CREATE TABLE `api_tokens` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(100) NOT NULL COMMENT 'Nhãn mô tả token (vd: "S3 Uploader Bot")',
+  `token` char(64) NOT NULL COMMENT 'SHA-256 hash của raw token — không lưu plaintext',
+  `scope` enum('upload','read','write','full_access') NOT NULL DEFAULT 'upload',
+  `workspace_id` int(10) UNSIGNED DEFAULT NULL COMMENT 'NULL = global; có giá trị = giới hạn 1 workspace',
+  `created_by` int(10) UNSIGNED DEFAULT NULL COMMENT 'User ID tạo token',
+  `last_used_at` datetime DEFAULT NULL,
+  `expires_at` datetime DEFAULT NULL COMMENT 'NULL = không hết hạn',
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -2608,6 +2628,15 @@ ALTER TABLE `api_rate_limits`
   ADD KEY `idx_last_attempt` (`last_attempt_at`);
 
 --
+-- Chỉ mục cho bảng `api_tokens`
+--
+ALTER TABLE `api_tokens`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_token_hash` (`token`),
+  ADD KEY `idx_scope_active` (`scope`,`is_active`),
+  ADD KEY `idx_expires` (`expires_at`);
+
+--
 -- Chỉ mục cho bảng `campaigns`
 --
 ALTER TABLE `campaigns`
@@ -3570,6 +3599,12 @@ ALTER TABLE `ai_workspace_versions`
 --
 ALTER TABLE `api_rate_limits`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT cho bảng `api_tokens`
+--
+ALTER TABLE `api_tokens`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT cho bảng `flow_event_queue`

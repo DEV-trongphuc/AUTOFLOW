@@ -9,6 +9,25 @@ set_time_limit(300); // 5 minutes execution window
 ignore_user_abort(true);
 ini_set('memory_limit', '512M');
 
+// [FIX R4-A01] PHP-level access guard — Defense-in-depth (Layer 2, .htaccess is Layer 1).
+// Workers must only run via CLI (cron) or from localhost (internal trigger).
+// If called via public HTTP, reject immediately before any DB connection.
+if (php_sapi_name() !== 'cli') {
+    $remoteAddr = $_SERVER['REMOTE_ADDR'] ?? '';
+    $isLocalhost = in_array($remoteAddr, ['127.0.0.1', '::1'], true);
+    if (!$isLocalhost) {
+        // Check for internal worker secret (for WorkerTriggerService calling via HTTP)
+        $workerSecret = $_SERVER['HTTP_X_WORKER_SECRET'] ?? '';
+        $configuredSecret = getenv('WORKER_SECRET');
+        $secretValid = ($configuredSecret && hash_equals($configuredSecret, $workerSecret));
+        if (!$secretValid) {
+            http_response_code(403);
+            exit(json_encode(['status' => 'forbidden', 'message' => 'Workers are CLI-only']));
+        }
+    }
+}
+
+
 // ? EXCLUSIVE LOCK: Only 1 worker runs at a time for standard tasks to avoid starving PHP-FPM pool
 // Workers doing sleep(6) for embeddings need to be serialized.
 // HIGH PRIORITY jobs can bypass this lock to prevent system-wide hangs.
@@ -74,7 +93,9 @@ $isSkipLockedSupported = isDatabaseSkipLockedSupported($pdo);
 $skipLockedClause = $isSkipLockedSupported ? 'FOR UPDATE SKIP LOCKED' : 'FOR UPDATE';
 
 // [BUG FIX] Initialize $maxJobs which was previously undefined, causing LIMIT syntax errors
-$maxJobs = (int)($_GET['max_jobs'] ?? 100);
+// [FIX R4-H01] Cap max_jobs to prevent attacker-controlled massive DB scans.
+// Without cap: ?max_jobs=999999 would lock the entire queue_jobs table.
+$maxJobs = min((int)($_GET['max_jobs'] ?? 100), 1000);
 
 $pdo->beginTransaction();
 try {

@@ -60,6 +60,16 @@
     
     # Prevent clickjacking
     Header always set X-Frame-Options "SAMEORIGIN"
+
+    # [FIX R3-M02] HTTP Strict Transport Security — Force HTTPS for 1 year.
+    # Prevents protocol downgrade attacks (attacker stripping HTTPS to HTTP).
+    # Remove or adjust max-age if not yet on full HTTPS.
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
+    # [FIX R3-M02] Content Security Policy — Restrict resource origins.
+    # Prevents XSS by limiting where scripts/styles/frames can load from.
+    # 'unsafe-inline' allowed for legacy compatibility — tighten once inline scripts are removed.
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https:; frame-src 'self' https://accounts.google.com; object-src 'none'"
 </IfModule>
 
 # ─── PROTECT LOG FILES AND SENSITIVE SCRIPTS ─────────────────────────────────
@@ -68,7 +78,36 @@
     Deny from all
 </FilesMatch>
 
-<FilesMatch "^(diagnostic_tracking|db_schema_check|db_optimization_check|autoflow_health|system_health_check|system_perf_check|generate_diagnostic_log|recover|recover2|recover3|hard_clean_logs|clear_pauses|admin_fix_bounce|analyze_|trace_|forms_debug|timer_debug|worker_campaign_dryrun|campaign_audit|journey_audit|perf_audit|quick_check|debug_ai|check\.php|test_sync|test_states)\.php$">
+# [FIX R3-M04] Block dangerous migration, debug, and admin-only scripts.
+# These files have no business being accessible via public HTTP.
+# If you need to run a migration, use CLI: php api/execute_migration.php
+<FilesMatch "^(diagnostic_tracking|db_schema_check|db_optimization_check|autoflow_health|system_health_check|system_perf_check|generate_diagnostic_log|recover|recover2|recover3|hard_clean_logs|clear_pauses|admin_fix_bounce|analyze_|trace_|forms_debug|timer_debug|worker_campaign_dryrun|campaign_audit|journey_audit|perf_audit|quick_check|debug_ai|check\.php|test_sync|test_states|execute_migration|execute_hardening_migration|execute_audit_migration|run_migration|run_migration_trigger_status|migrate_v10M|migrate_v11M_cleanup|migrate_system_logic|scratch_.*|add_salesperson_column|fix_auth|fix_duplicates|cleanup_duplicates|cleanup_orphans|reconcile_counts|test_db|test_parse|check_schema|check_table|check_extensions|check_partitions|check_orphan_sources|check_ses_quota|check_salesperson|check_sales_sync|check_flow_status)\.php$">
     Order deny,allow
     Deny from all
+</FilesMatch>
+
+# [FIX R3-M02] Block PHP script execution inside uploadss/ to prevent RCE.
+# If an attacker uploads a .php file (bypassing upload checks), this prevents execution.
+<IfModule mod_alias.c>
+    <Directory "/uploadss">
+        php_flag engine off
+    </Directory>
+</IfModule>
+# Apache 2.4+ alternative (works even without mod_alias)
+<FilesMatch "\.(php|php3|php4|php5|php7|phtml|phps)$">
+    <If "%{REQUEST_URI} =~ m#^/uploadss/#">
+        Require all denied
+    </If>
+</FilesMatch>
+
+# [FIX R4-A01] Block all worker and orchestrator PHP files from public HTTP access.
+# Workers are intended to run via CLI cron jobs ONLY.
+# Public HTTP access allows attackers to: trigger mass email sends, DoS PHP-FPM pool,
+# manipulate automation flows, or force massive DB operations.
+# Allow from localhost (127.0.0.1 / ::1) for internal triggers (e.g. WorkerTriggerService).
+<FilesMatch "^(worker_queue|worker_flow|worker_campaign|worker_priority|worker_enroll|worker_trigger|worker_trigger_clean|worker_reminder|worker_segment_counts|worker_segment_notify|worker_integrations|worker_maintenance|worker_notify|worker_guard|worker_sync|worker_tracking_aggregator|worker_web_analytics|worker_web_geo|worker_zalo_token|orchestrator_flow|orchestrator_campaign|trigger_campaign_async|trigger_flow_now|cron_auto_cleanup|cron_auto_sync_flows|cron_cleanup|prune_queues|power_trigger)\.php$">
+    Order deny,allow
+    Deny from all
+    Allow from 127.0.0.1
+    Allow from ::1
 </FilesMatch>

@@ -3,7 +3,10 @@
 require_once 'db_connect.php';
 require_once 'auth_middleware.php';
 
-session_start();
+// [FIX H-06] Guard against double session_start() — db_connect.php already starts session.
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 apiHeaders();
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
@@ -158,21 +161,13 @@ if ($method === 'GET' && $action === 'ping') {
     try {
         // Throttle server-side: only update if last_login > 5 minutes ago
         $updateId = $_SESSION['user_id'] ?? '';
-        if (is_super_admin()) {
-            $stmt = $pdo->prepare("
-                UPDATE users SET last_login = NOW()
-                WHERE (id = ? OR email = 'dom.marketing.vn@gmail.com' OR email = 'admin@mailflow.com')
-                AND (last_login IS NULL OR last_login < DATE_SUB(NOW(), INTERVAL 5 MINUTE))
-            ");
-            $stmt->execute([$updateId]);
-        } else {
-            $stmt = $pdo->prepare("
-                UPDATE users SET last_login = NOW()
-                WHERE id = ?
-                AND (last_login IS NULL OR last_login < DATE_SUB(NOW(), INTERVAL 5 MINUTE))
-            ");
-            $stmt->execute([$updateId]);
-        }
+        // [FIX M-05] Removed hardcoded admin emails from SQL. Use role-based is_super_admin().
+        $stmt = $pdo->prepare("
+            UPDATE users SET last_login = NOW()
+            WHERE id = ?
+            AND (last_login IS NULL OR last_login < DATE_SUB(NOW(), INTERVAL 5 MINUTE))
+        ");
+        $stmt->execute([$updateId]);
         $rows = $stmt->rowCount();
         jsonResponse(true, ['user_id' => $updateId, 'affected' => $rows], 'ok');
     } catch (Exception $e) {

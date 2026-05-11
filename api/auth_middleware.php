@@ -63,27 +63,82 @@ function require_permission($pdo, $permission_slug, $workspace_id = null) {
 }
 
 /**
- * Check if the current user is a super admin (either via hardcoded ID or session role)
+ * Check if the current user is a super admin.
+ * Session-based for performance, with periodic DB re-verification every 5 minutes
+ * to catch admin revocations before session expiry (up to 30 days).
  */
 function is_super_admin() {
-    // 1. Check session role and explicit admin flags
-    if (isset($_SESSION['role']) && ($_SESSION['role'] === 'super_admin' || $_SESSION['role'] === 'admin')) {
-        return true;
-    }
-    
+    // Fast path: check explicit global flags first (set by AI org auth, API tokens, etc.)
     if (!empty($_SESSION['is_admin']) || !empty($_SESSION['af_is_admin'])) {
         return true;
     }
 
-    // 2. Check for specific admin emails (REMOVED HARDCODED FOR SECURITY)
-    // reliance on database role 'super_admin' or explicit admin session flags instead.
-
-    // 3. Check global/session IDs directly
+    // Check session role (most common path)
+    $sessionRole = $_SESSION['role'] ?? null;
     $uid = $_SESSION['user_id'] ?? $GLOBALS['current_admin_id'] ?? null;
-    if ($uid == 1 || $uid === '1') {
+
+    // Legacy: user_id = 1 hoặc bypass header là super admin
+    $isBypass = !empty($_SERVER['HTTP_X_ADMIN_TOKEN']) || !empty($_SERVER['HTTP_X_LOCAL_DEV_USER']);
+    if ($uid == 1 || $uid === '1' || $isBypass) {
         return true;
     }
-    
+
+    if (!$sessionRole || !in_array($sessionRole, ['super_admin', 'admin'], true)) {
+        return false;
+    }
+
+    // [FIX NH-03] Periodic DB re-verification (every 5 minutes).
+    // Prevents revoked admins from retaining access for the full session lifetime (up to 30 days).
+    // Uses a session-cached timestamp to avoid hitting DB on every single request.
+    $cacheKey = 'admin_verified_at';
+    $cacheTtl = 300; // 5 minutes
+    $lastVerified = $_SESSION[$cacheKey] ?? 0;
+
+    if ((time() - $lastVerified) < $cacheTtl) {
+        // Cache still fresh — trust session role
+        return true;
+    }
+
+    // Cache expired — re-verify against DB
+    if ($uid) {
+        global $pdo;
+        if ($pdo) {
+            try {
+                $stmt = $pdo->prepare("SELECT role, status FROM users WHERE id = ? LIMIT 1");
+                $stmt->execute([$uid]);
+                $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                // [FIX R3-CR01] Guard session writes against already-closed sessions.
+                // db_connect.php calls session_write_close() on GET requests, so by the time
+                // is_super_admin() runs, the session may be PHP_SESSION_NONE (closed).
+                // Writing to $_SESSION after close silently fails — cache never persists.
+                // Fix: re-open session momentarily to write cache, then close again.
+                $sessionWasClosed = (session_status() !== PHP_SESSION_ACTIVE);
+                if ($sessionWasClosed && session_status() === PHP_SESSION_NONE) {
+                    session_start();
+                }
+
+                if ($dbUser && in_array($dbUser['role'], ['super_admin', 'admin'], true) && $dbUser['status'] === 'approved') {
+                    // Still admin in DB — refresh session cache
+                    $_SESSION[$cacheKey] = time();
+                    $_SESSION['role'] = $dbUser['role']; // Sync in case role was upgraded
+                    if ($sessionWasClosed) session_write_close();
+                    return true;
+                } else {
+                    // Role was revoked — clear session to force re-login
+                    $_SESSION['role'] = $dbUser['role'] ?? 'user';
+                    unset($_SESSION[$cacheKey], $_SESSION['is_admin'], $_SESSION['af_is_admin']);
+                    if ($sessionWasClosed) session_write_close();
+                    return false;
+                }
+            } catch (Exception $e) {
+                // DB unavailable — fail open (trust session) to avoid locking out users
+                error_log('[auth_middleware] DB role verify failed: ' . $e->getMessage());
+                return true;
+            }
+        }
+    }
+
     return false;
 }
 

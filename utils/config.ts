@@ -13,10 +13,11 @@ export const DEMO_MODE = typeof window !== 'undefined' && (
     window.location.hostname === 'open.automation.net'
 );
 
-// Resolve API_BASE_URL: (Internal context, resolves to local proxy if in Dev Mode)
-export const API_BASE_URL = typeof window !== 'undefined' && localStorage.getItem('mailflow_api_url') 
-    ? localStorage.getItem('mailflow_api_url')! 
-    : (isLocal ? '/mail_api' : 'https://automation.ideas.edu.vn/mail_api');
+// [FIX R4-C03] API_BASE_URL must NOT be overrideable via localStorage.
+// localStorage is user-controlled storage — any XSS could redirect all API calls to an attacker's server,
+// enabling credential harvesting and man-in-the-middle attacks.
+// URL is determined by build-time env var (VITE_API_URL) or hostname-based fallback only.
+export const API_BASE_URL = (isLocal ? '/mail_api' : (import.meta.env.VITE_API_URL || 'https://automation.ideas.edu.vn/mail_api'));
 
 // Resolve EXTERNAL_API_BASE: (External context for webhooks, embedded scripts, HTML image sources)
 // ALWAYS returns absolute URL pointing to the production server.

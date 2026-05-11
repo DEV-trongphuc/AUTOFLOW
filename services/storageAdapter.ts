@@ -263,12 +263,16 @@ async function request<T>(
           const hasRefreshToken = !!getRawRefreshToken();
           if (!hasRefreshToken) {
             console.warn('[API] No refresh token available. Logging out.');
-            clearTokens();
-            localStorage.removeItem('user');
-            localStorage.removeItem('isAuthenticated');
-            localStorage.removeItem('currentUser');
-            if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-              window.location.href = '/login';
+            if (!isLocal) {
+              clearTokens();
+              localStorage.removeItem('user');
+              localStorage.removeItem('isAuthenticated');
+              localStorage.removeItem('currentUser');
+              if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+                window.location.href = '/login';
+              }
+            } else {
+              console.warn('[DEV] Suppressed automatic logout on 401 to prevent infinite loop. Please check your backend session/token.');
             }
           } else {
             console.error('[API] Transient refresh failure. Staying on page to prevent data loss.');
