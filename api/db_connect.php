@@ -40,10 +40,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 header("Content-Type: application/json; charset=UTF-8");
 
-$host = 'localhost';
-$db = 'vhvxoigh_mail_auto'; // Tên database
-$user = 'vhvxoigh_mail_auto';     // Username MySQL
-$pass = 'Ideas@812';         // Mật khẩu MySQL
+// [FIX C-02] Support environment variables for credentials — hardcoded values as fallback only.
+// Production: set DB_HOST, DB_NAME, DB_USER, DB_PASSWORD as server env vars or in php.ini.
+$host = getenv('DB_HOST') !== false ? getenv('DB_HOST') : 'localhost';
+$db   = getenv('DB_NAME') !== false ? getenv('DB_NAME') : 'vhvxoigh_mail_auto'; // Tên database
+$user = getenv('DB_USER') !== false ? getenv('DB_USER') : 'vhvxoigh_mail_auto'; // Username MySQL
+$pass = getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : 'Ideas@812';  // Mật khẩu MySQL
 $charset = 'utf8mb4';
 
 // [SECURITY HARDENED] Centrally defined bypass token for internal app bridging.
@@ -403,14 +405,18 @@ if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.gc_probability', 1);
     ini_set('session.gc_divisor', 100);
     
+    // [FIX H-01] Respect cookie lifetime set by individual files (e.g., ai_org_auth.php remember-me).
+    // If CUSTOM_SESSION_LIFETIME is defined (by a calling file before our include), use that value.
+    // This allows "remember me" (30 days) vs "session cookie" (0) to work correctly.
     $isSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+    $cookieLifetime = defined('CUSTOM_SESSION_LIFETIME') ? CUSTOM_SESSION_LIFETIME : 2592000;
     session_set_cookie_params([
-        'lifetime' => 2592000,     // Session cookie 30 ngày
-        'path' => '/',         
-        'domain' => '',          
-        'secure' => $isSecure,   
-        'httponly' => true,      
-        'samesite' => 'Lax',     
+        'lifetime' => $cookieLifetime, // Respects remember-me override; default = 30 days
+        'path'     => '/',
+        'domain'   => '',
+        'secure'   => $isSecure,
+        'httponly' => true,
+        'samesite' => 'Lax',
     ]);
     session_start();
 }
@@ -506,11 +512,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         $lastUpdate = $_SESSION['last_login_update_time'] ?? 0;
         if (time() - $lastUpdate > 300) { // 5 minutes throttle
             try {
-                if ($sessionUserId === '1' || $sessionUserId === 'admin-001') {
-                    $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?")->execute([$sessionUserId]);
-                } else {
-                    $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?")->execute([$sessionUserId]);
-                }
+                // [FIX M-03] Removed dead if/else — both branches were identical queries.
+                $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?")->execute([$sessionUserId]);
                 $_SESSION['last_login_update_time'] = time();
             } catch (Exception $e) {
                 error_log("LAST_LOGIN UPDATE FAILED: " . $e->getMessage());
@@ -531,7 +534,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 // Các request POST/PUT/DELETE (như login/auth) cần giữ session mở để có thể ghi dữ liệu.
 $_isAuthRelated = isset($_SERVER['SCRIPT_NAME']) && (
     strpos($_SERVER['SCRIPT_NAME'], 'auth.php') !== false ||
-    strpos($_SERVER['SCRIPT_NAME'], 'ai_org_auth.php') !== false
+    strpos($_SERVER['SCRIPT_NAME'], 'ai_org_auth.php') !== false ||
+    strpos($_SERVER['SCRIPT_NAME'], 'login_google.php') !== false
 );
 
 if (session_status() === PHP_SESSION_ACTIVE && ($_SERVER['REQUEST_METHOD'] === 'GET' || !$_isAuthRelated)) {

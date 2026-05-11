@@ -28,9 +28,6 @@ function requireAISpaceAuth()
         if (session_status() === PHP_SESSION_ACTIVE) {
             $_SESSION['org_user_id'] = 'admin-001';
             $_SESSION['org_user_role'] = 'admin';
-            if (empty($_SESSION['user_id'])) {
-                $_SESSION['user_id'] = '1'; // Phục hồi user_id
-            }
         }
         $GLOBALS['current_admin_id'] = 'admin-001';
         return [
@@ -114,23 +111,11 @@ function requireAISpaceAuth()
     }
 
     // ── PRIORITY 3: admin_id query/body param (legacy fallback) ─────────────
-    if (!$orgUserId) {
-        $requestAdminId = $_GET['admin_id'] ?? $_POST['admin_id'] ?? null;
-        if (!empty($requestAdminId)) {
-            if ($requestAdminId === 'admin-001' || is_super_admin()) {
-                $orgUserId = 'admin-001';
-            } else {
-                try {
-                    $stmtCheck = $pdo->prepare("SELECT id FROM ai_org_users WHERE id = ? AND status = 'active' LIMIT 1");
-                    $stmtCheck->execute([$requestAdminId]);
-                    if ($stmtCheck->fetchColumn()) {
-                        $orgUserId = $requestAdminId;
-                    }
-                } catch (Exception $e) { /* ignore */
-                }
-            }
-        }
-    }
+    // [FIX H-04] REMOVED: ?admin_id=admin-001 bypass.
+    // Accepting 'admin-001' as a GET/POST param grants admin without any real auth check.
+    // Users with valid sessions/tokens are already resolved above (Priority 1 & 2).
+    // This fallback only verified DB existence for non-admin IDs, but the admin-001 branch
+    // had no verification at all. Removed entirely for security.
 
     // ── PRIORITY 4: Autoflow admin session fallback ──────────────────────────
     // If admin is logged into Autoflow (user_id = 1 / is_admin / role = admin in session),
@@ -321,8 +306,10 @@ function requireCategoryAccess($categoryId, $user)
     }
 
     try {
-        // --- STEP 1: Resolve chatbot_xxx → actual category_id ---
+        // --- STEP 1 + 1.5: Resolve chatbot_xxx and enforce Org Isolation ---
+        // [FIX H-05] $userOrgAdminId declared FIRST so the chatbot admin check below is valid.
         $resolvedCategoryId = $categoryId;
+        $userOrgAdminId = !empty($user['admin_id']) ? $user['admin_id'] : $user['id'];
 
         if (strpos($categoryId, 'chatbot_') === 0) {
             $stmtResolve = $pdo->prepare("SELECT category_id, admin_id FROM ai_chatbots WHERE id = ? LIMIT 1");
@@ -330,7 +317,7 @@ function requireCategoryAccess($categoryId, $user)
             $botData = $stmtResolve->fetch(PDO::FETCH_ASSOC);
             if ($botData) {
                 $resolvedCategoryId = $botData['category_id'];
-                // [SECURITY] If the bot itself belongs to a different admin, block immediately
+                // [SECURITY] If the bot belongs to a different admin, block immediately
                 if ($botData['admin_id'] && $botData['admin_id'] !== $userOrgAdminId && $userOrgAdminId !== 'admin-001') {
                     http_response_code(403);
                     header('Content-Type: application/json');
@@ -345,10 +332,6 @@ function requireCategoryAccess($categoryId, $user)
             }
         }
 
-        // --- [NEW] STEP 1.5: Enforce Organization Isolation for Category ---
-        // Ensure the category belongs to the user's organization (admin_id)
-        $userOrgAdminId = !empty($user['admin_id']) ? $user['admin_id'] : $user['id'];
-        
         $stmtOrgCheck = $pdo->prepare("SELECT admin_id FROM ai_chatbot_categories WHERE id = ? LIMIT 1");
         $stmtOrgCheck->execute([$resolvedCategoryId]);
         $categoryAdminId = $stmtOrgCheck->fetchColumn();
