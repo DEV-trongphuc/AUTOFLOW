@@ -4,8 +4,9 @@ require_once 'chat_helpers.php';
 
 function generateResponse($contents, $systemInst, $apiKey, $model = 'gemini-2.5-flash-lite', $temperature = 0.9, $maxOutputTokens = 16384)
 {
-    if (empty($apiKey))
-        return "L?i: Chua c?u h�nh API Key.";
+    if (empty(trim($apiKey ?? ''))) {
+        return "Lỗi: Chưa cấu hình API Key.";
+    }
 
     // OPTIMIZATION: Close session early to prevent locking other requests from same user
     if (session_status() === PHP_SESSION_ACTIVE) {

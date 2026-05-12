@@ -44,7 +44,7 @@ try {
     }
 
     // 2. Fetch Activity
-    $stmtAct = $pdo->prepare("SELECT type, details, created_at FROM subscriber_activity WHERE subscriber_id = ? ORDER BY created_at DESC LIMIT 20");
+    $stmtAct = $pdo->prepare("SELECT type as activity_type, details as activity_data, created_at FROM subscriber_activity WHERE subscriber_id = ? ORDER BY created_at DESC LIMIT 30");
     $stmtAct->execute([$subscriberId]);
     $activities = $stmtAct->fetchAll(PDO::FETCH_ASSOC);
 
@@ -84,12 +84,30 @@ Yêu cầu:
         ["role" => "user", "parts" => [["text" => "Dữ liệu khách hàng:\n" . json_encode($promptData, JSON_UNESCAPED_UNICODE)]]]
     ];
 
-    // Get API Key
-    $stmtSet = $pdo->query("SELECT value FROM system_settings WHERE workspace_id = 0 AND `key` = 'gemini_api_key' LIMIT 1");
-    $apiKey = $stmtSet->fetchColumn();
+    // Get API Key (Order: Current Workspace -> System Wide (0) -> Environment Variable)
+    $apiKey = null;
+    
+    // 1. Check current workspace
+    $stmtKey = $pdo->prepare("SELECT value FROM system_settings WHERE workspace_id = ? AND `key` = 'gemini_api_key' LIMIT 1");
+    $stmtKey->execute([$workspace_id]);
+    $apiKey = $stmtKey->fetchColumn();
+    
+    // 2. Fallback to System Wide (0)
+    if (empty(trim($apiKey ?? ''))) {
+        $stmtKey = $pdo->prepare("SELECT value FROM system_settings WHERE workspace_id = 0 AND `key` = 'gemini_api_key' LIMIT 1");
+        $stmtKey->execute();
+        $apiKey = $stmtKey->fetchColumn();
+    }
+    
+    // 3. Fallback to Environment Variable
+    if (empty(trim($apiKey ?? ''))) {
+        $apiKey = getenv('GEMINI_API_KEY') ?: '';
+    }
 
-    if (!$apiKey) {
-        jsonResponse(false, null, 'Gemini API Key is not configured in settings.');
+    $apiKey = trim($apiKey ?? '');
+
+    if (empty($apiKey)) {
+        jsonResponse(false, null, 'Gemini API Key is not configured in settings or environment.');
     }
 
     $analysis = generateResponse($contents, $systemInst, $apiKey);
@@ -104,5 +122,6 @@ Yêu cầu:
     jsonResponse(true, ['summary' => trim($analysis)]);
 
 } catch (Exception $e) {
-    jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+    error_log("[" . date('Y-m-d H:i:s') . "] [subscriber_ai_summary.php] ERROR: " . $e->getMessage() . "\n", 3, __DIR__ . '/logs/error.log');
+    jsonResponse(false, null, 'Lỗi hệ thống: ' . $e->getMessage());
 }
