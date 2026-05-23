@@ -1475,7 +1475,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                                                 return (
                                                                                     <span className="inline-flex items-center gap-1 font-bold text-blue-600" title={`Kiểm tra - Làm mới mỗi 1 phút. Hết hạn lúc: ${new Date(Date.now() + 30000).toLocaleTimeString()}`}>
                                                                                         <Clock className="w-3.5 h-3.5" />
-                                                                                        Ch? {d > 0 ? `${d}d ` : ''}{h > 0 ? `${h}h ` : ''}{m}m (Deadline)
+                                                                                        Chờ {d > 0 ? `${d}d ` : ''}{h > 0 ? `${h}h ` : ''}{m}m (Deadline)
                                                                                     </span>
                                                                                 );
                                                                             }

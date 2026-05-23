@@ -153,7 +153,7 @@ const LiveTrafficModal: React.FC<LiveTrafficModalProps> = ({ isOpen, onClose: _o
                                                         {v.first_name && v.first_name !== 'Visitor' ? v.first_name : (v.email || (v.phone ? 'Phone Visitor' : 'Anonymous'))}
                                                     </p>
                                                     {(v.time_on_page > 300 || v.last_visit_at) && ( // Simple heuristic for live or returning
-                                                        <span className="text-[8px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded-lg font-bold uppercase tracking-wider">Quay l?i</span>
+                                                        <span className="text-[8px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded-lg font-bold uppercase tracking-wider">Quay lại</span>
                                                     )}
                                                 </div>
                                                 <div className="flex flex-col gap-0.5 mt-0.5">

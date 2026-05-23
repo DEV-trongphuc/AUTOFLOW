@@ -2213,7 +2213,7 @@ const CategoryChatPage: React.FC = () => {
                     bot_name: bot.name,
                     brand_color: '#ffa900',
                     bot_avatar: '',
-                    welcome_msg: 'Tôi s?n sàng h? tr?.'
+                    welcome_msg: 'Tôi sẵn sàng hỗ trợ.'
                 }
             };
             setActiveBot(fullBot);
@@ -3536,7 +3536,7 @@ const CategoryChatPage: React.FC = () => {
                                                     <button
                                                         onClick={() => setActiveDoc(null)}
                                                         className={`p-2 mx-2 rounded-lg transition-colors ${!activeDoc ? (isDarkTheme ? 'text-slate-200 bg-slate-700/50' : 'text-slate-800 bg-slate-200/50') : (isDarkTheme ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-400 hover:bg-slate-100')}`}
-                                                        title="M? Explorer"
+                                                        title="Mở Explorer"
                                                     >
                                                         <LayoutGrid className="w-4 h-4" />
                                                     </button>
@@ -3645,7 +3645,7 @@ const CategoryChatPage: React.FC = () => {
                                                                 <button
                                                                     onClick={() => {
                                                                         if (isImageGenMode) {
-                                                                            toast.error('Vui lòng t?t Image Mode d? t?tải lên tài liệu');
+                                                                            toast.error('Vui lòng tắt Image Mode để tải lên tài liệu');
                                                                             return;
                                                                         }
                                                                         docInputRef.current?.click();
@@ -4290,7 +4290,7 @@ const CategoryChatPage: React.FC = () => {
                                             property_id: activeBot?.id,
                                             name: doc.name
                                         });
-                                        toast.success('Đã xóa tệp kh?i Workspace');
+                                        toast.success('Đã xóa tệp khỏi Workspace');
                                     } catch (e) {
                                         toast.error('Lỗi khi xóa tệp');
                                     }
@@ -4470,7 +4470,7 @@ const CategoryChatPage: React.FC = () => {
                                             }}
                                             className="px-4 py-2 bg-amber-600 text-white text-xs font-bold rounded-xl hover:bg-amber-600 transition-colors"
                                         >
-                                            M? ch?nh s?a
+                                            Mở chỉnh sửa
                                         </button>
                                         <button onClick={() => setQuickLookDoc(null)} className={`p-2 rounded-xl transition-colors ${isDarkTheme ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}>
                                             <X className="w-5 h-5" />
@@ -4702,7 +4702,7 @@ const CategoryChatPage: React.FC = () => {
                 <Modal
                     isOpen={isWorkspaceTipsOpen}
                     onClose={() => setIsWorkspaceTipsOpen(false)}
-                    title="M?o s? d?ng Workspace & AI Studio"
+                    title="Mẹo sử dụng Workspace & AI Studio"
                     size="lg"
                     isDarkTheme={isDarkTheme}
                 >

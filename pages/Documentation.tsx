@@ -22,15 +22,15 @@ import {
 /* --- Nav structure ----------------------------------- */
 const navGroups = [
     {
-        title: '?? B?t d?u',
+        title: '🚀 Bắt đầu',
         items: [
-            { id: 'overview', name: 'T?ng quan h? th?ng', icon: Home },
+            { id: 'overview', name: 'Tổng quan hệ thống', icon: Home },
         ]
     },
     {
         title: '?? Marketing',
         items: [
-            { id: 'campaigns', name: 'Chi?n d?ch', icon: Send },
+            { id: 'campaigns', name: 'Chiến dịch', icon: Send },
             { id: 'email-builder', name: 'Email Builder', icon: FileEdit },
             { id: 'templates', name: 'Templates', icon: BookOpen },
             { id: 'marketplace', name: 'Marketplace', icon: Package },
@@ -65,7 +65,7 @@ const navGroups = [
             { id: 'analytics', name: 'Báo cáo', icon: BarChart3 },
             { id: 'workspace', name: 'AI Assets', icon: Database },
             { id: 'logic', name: 'Liquid Logic', icon: Code },
-            { id: 'settings', name: 'C?u h�nh', icon: Settings },
+            { id: 'settings', name: 'Cấu hình', icon: Settings },
         ]
     },
 ];
@@ -92,8 +92,8 @@ const sectionMap: Record<string, React.FC> = {
 };
 
 const sectionLabel: Record<string, string> = {
-    overview: 'T?ng quan',
-    campaigns: 'Chi?n d?ch',
+    overview: 'Tổng quan',
+    campaigns: 'Chiến dịch',
     'email-builder': 'Email Builder',
     templates: 'Templates',
     automation: 'DOMATION Flows',
@@ -105,7 +105,7 @@ const sectionLabel: Record<string, string> = {
     'zalo-meta': 'Zalo & Meta',
     'web-tracking': 'Web Tracking',
     analytics: 'Báo cáo',
-    settings: 'C?u h�nh',
+    settings: 'Cấu hình',
     marketplace: 'Marketplace',
     workspace: 'AI Assets',
     logic: 'Liquid Logic',
@@ -194,7 +194,7 @@ const Documentation: React.FC = () => {
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-amber-600 transition-colors" />
                                 <input
                                     type="text"
-                                    placeholder="T�m ki?m..."
+                                    placeholder="Tìm kiếm..."
                                     className="w-full bg-slate-50 border border-transparent focus:border-amber-200 focus:bg-white rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium transition-all outline-none"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
@@ -251,7 +251,7 @@ const Documentation: React.FC = () => {
                             className="flex items-center gap-3 px-5 py-3.5 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all group"
                         >
                             <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                            {sidebar && <span className="text-xs font-bold uppercase tracking-wider">V? App ch�nh</span>}
+                            {sidebar && <span className="text-xs font-bold uppercase tracking-wider">Về App chính</span>}
                         </NavLink>
                     </div>
                 </div>
@@ -296,7 +296,7 @@ const Documentation: React.FC = () => {
                                             <button onClick={() => navigate(prev.id)} className="flex items-center gap-3 px-6 py-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md hover:border-amber-200 transition-all group">
                                                 <ArrowLeft className="w-4 h-4 text-slate-300 group-hover:text-amber-600 transition-colors" />
                                                 <div className="text-left">
-                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Tru?c</p>
+                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Trước</p>
                                                     <p className="text-sm font-black text-slate-800">{prev.name}</p>
                                                 </div>
                                             </button>
@@ -304,7 +304,7 @@ const Documentation: React.FC = () => {
                                         {next ? (
                                             <button onClick={() => navigate(next.id)} className="flex items-center gap-3 px-6 py-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md hover:border-amber-200 transition-all group ml-auto">
                                                 <div className="text-right">
-                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Ti?p theo</p>
+                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Tiếp theo</p>
                                                     <p className="text-sm font-black text-slate-800">{next.name}</p>
                                                 </div>
                                                 <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-amber-600 transition-colors" />

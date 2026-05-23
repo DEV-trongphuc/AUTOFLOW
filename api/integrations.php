@@ -8,7 +8,7 @@ $workspace_id = get_current_workspace_id(); // [FIX P43-D]
 $method = $_SERVER['REQUEST_METHOD'];
 $path = isset($_GET['id']) ? $_GET['id'] : null;
 
-// [PERF] Gi?m thi?u kho session cho ton b? file v khng c?n update Session
+// [PERF] Giảm thiểu kho session cho toàn bộ file và không cần update Session
 if (session_id()) session_write_close();
 
 try {
@@ -16,13 +16,13 @@ try {
     if ($method === 'POST' && isset($_GET['route']) && $_GET['route'] === 'sync_now') {
         $id = $_GET['id'] ?? '';
         if (!$id)
-            jsonResponse(false, null, 'Thi?u ID k?t n?i');
+            jsonResponse(false, null, 'Thiếu ID kết nối');
 
         // [FIX P43-D1] Validate sync_now ownership  ensure integration belongs to this workspace
         $stmtOwn = $pdo->prepare("SELECT id FROM integrations WHERE id = ? AND workspace_id = ?");
         $stmtOwn->execute([$id, $workspace_id]);
         if (!$stmtOwn->fetchColumn())
-            jsonResponse(false, null, 'K?t n?i khng t?n t?i ho?c khng thu?c workspace c?a b?n');
+            jsonResponse(false, null, 'Kết nối không tồn tại hoặc không thuộc workspace của bạn');
 
         // SYNCHRONOUS SYNC - Run directly for reliability
         try {
@@ -79,7 +79,7 @@ try {
         $sheetName = $data['sheetName'] ?? 'Sheet1';
 
         if (!$spreadsheetId)
-            jsonResponse(false, null, 'Thi?u Spreadsheet ID');
+            jsonResponse(false, null, 'Thiếu Spreadsheet ID');
 
         // Note: For Truly "Real" fetch, we use Google Sheets API v4
         $stmtKey = $pdo->prepare("SELECT value FROM system_settings WHERE workspace_id = 0 AND `key` = 'google_api_key' LIMIT 1");
@@ -104,7 +104,7 @@ try {
 
             // FALLBACK 2: Simulated if fails
             jsonResponse(true, [
-                'headers' => ['Email', 'H? v tn', 'S? di?n tho?i', '?a ch?', 'Ngy t?o', 'Ngu?n'],
+                'headers' => ['Email', 'Họ và tên', 'Số điện thoại', 'Địa chỉ', 'Ngày tạo', 'Nguồn'],
                 'message' => 'Connected to MailFlow Server (Simulated headers - Could not fetch real data from public link)'
             ]);
             return;
@@ -138,7 +138,7 @@ try {
                 }
             }
 
-            jsonResponse(false, null, 'L?i khi d?c t? Google Sheets API. Hy d?m b?o Sheet CNG KHAI ho?c c?u hnh API Key.');
+            jsonResponse(false, null, 'Lỗi khi đọc từ Google Sheets API. Hãy đảm bảo Sheet CÔNG KHAI hoặc cấu hình API Key.');
         }
     }
 
@@ -149,7 +149,7 @@ try {
         $endpoint = $data['endpoint'] ?? 'https://crmconnect.misa.vn/api/v2';
 
         if (!$clientId || !$clientSecret)
-            jsonResponse(false, null, 'Thi?u Client ID ho?c Secret');
+            jsonResponse(false, null, 'Thiếu Client ID hoặc Secret');
 
         require_once 'misa_helper.php';
         $misa = new MisaHelper($clientId, $clientSecret, $endpoint);
@@ -168,7 +168,7 @@ try {
                 'data' => $sampleRecord ? [$sampleRecord] : []
             ]);
         } else {
-            jsonResponse(false, null, 'Khng th? k?t n?i t?i MISA');
+            jsonResponse(false, null, 'Không thể kết nối tới MISA');
         }
     }
 
@@ -180,7 +180,7 @@ try {
         $endpoint = $data['endpoint'] ?? 'https://crmconnect.misa.vn/api/v2';
 
         if (!$clientId || !$clientSecret)
-            jsonResponse(false, null, 'Thi?u Client ID ho?c Secret');
+            jsonResponse(false, null, 'Thiếu Client ID hoặc Secret');
 
         $entity = $data['entity'] ?? 'Contacts';
 
@@ -195,7 +195,7 @@ try {
                 'contact' => $recordsResult['data'][0]
             ]);
         } else {
-            jsonResponse(false, null, 'Khng th? l?y d? li?u m?u');
+            jsonResponse(false, null, 'Không thể lấy dữ liệu mẫu');
         }
     }
 
@@ -203,8 +203,8 @@ try {
         case 'GET':
             if (isset($_GET['route']) && $_GET['route'] === 'cleanup') {
                 // [FIX P43-D3] Cleanup scoped to workspace  old code deleted across all workspaces
-                $pdo->prepare("DELETE FROM lists WHERE name = 'T?ng Data' AND subscriber_count = 0 AND workspace_id = ?")->execute([$workspace_id]);
-                jsonResponse(true, ['deleted' => 'done'], " xa cc danh sch rc.");
+                $pdo->prepare("DELETE FROM lists WHERE name = 'Tổng Data' AND subscriber_count = 0 AND workspace_id = ?")->execute([$workspace_id]);
+                jsonResponse(true, ['deleted' => 'done'], " xóa các danh sách rác.");
                 break;
             }
 
@@ -244,7 +244,7 @@ try {
             try {
                 $data = json_decode(file_get_contents("php://input"), true);
                 if (empty($data['type']))
-                    jsonResponse(false, null, 'Lo?i k?t n?i khng du?c d? tr?ng');
+                    jsonResponse(false, null, 'Loại kết nối không được để trống');
 
                 $id = uniqid();
                 $name = $data['name'] ?? ($data['type'] . ' integration');
@@ -267,7 +267,7 @@ try {
                     }
                 }
 
-                jsonResponse(true, ['id' => $id], ' t?o k?t n?i m?i! B?m "Ch?y d?ng b? ngay" d? b?t d?u.');
+                jsonResponse(true, ['id' => $id], ' tạo kết nối mới! Bấm "Chạy đồng bộ ngay" để bắt đầu.');
             } catch (Exception $e) {
                 jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
@@ -276,7 +276,7 @@ try {
         case 'PUT':
             try {
                 if (!$path)
-                    jsonResponse(false, null, 'Thi?u ID k?t n?i');
+                    jsonResponse(false, null, 'Thiếu ID kết nối');
                 $data = json_decode(file_get_contents("php://input"), true);
 
                 $sql = "UPDATE integrations SET ";
@@ -297,14 +297,14 @@ try {
                 }
 
                 if (empty($updates))
-                    jsonResponse(false, null, 'Khng c d? li?u c?p nh?t');
+                    jsonResponse(false, null, 'Không có dữ liệu cập nhật');
 
                 $sql .= implode(', ', $updates) . " WHERE id = ? AND workspace_id = ?";
                 $params[] = $path;
                 $params[] = $workspace_id;
 
                 $pdo->prepare($sql)->execute($params);
-                jsonResponse(true, $data, ' c?p nh?t k?t n?i');
+                jsonResponse(true, $data, ' cập nhật kết nối');
             } catch (Exception $e) {
                 jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }
@@ -313,13 +313,13 @@ try {
         case 'DELETE':
             try {
                 if (!$path)
-                    jsonResponse(false, null, 'Thi?u ID k?t n?i');
+                    jsonResponse(false, null, 'Thiếu ID kết nối');
                 // [FIX P43-D5] Scope DELETE to workspace to prevent deleting another tenant's integration
                 $stmt = $pdo->prepare("DELETE FROM integrations WHERE id = ? AND workspace_id = ?");
                 $stmt->execute([$path, $workspace_id]);
                 if ($stmt->rowCount() === 0)
-                    throw new Exception('Khng tm th?y k?t n?i ho?c khng c quy?n xa');
-                jsonResponse(true, ['id' => $path], ' xa k?t n?i');
+                    throw new Exception('Không tìm thấy kết nối hoặc không có quyền xóa');
+                jsonResponse(true, ['id' => $path], ' xóa kết nối');
             } catch (Exception $e) {
                 jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
             }

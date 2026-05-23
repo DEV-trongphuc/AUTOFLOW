@@ -2,7 +2,7 @@
 require_once 'auth_middleware.php';
 /**
  * COMPREHENSIVE SYSTEM DEBUG & HEALTH CHECK
- * Ki?m tra toàn b? h? th?ng flow automation d? phát hi?n l?i
+ * Kiá»ƒm tra toÃ n bá»™ há»‡ thá»‘ng flow automation Ä‘á»ƒ phÃ¡t hiá»‡n lá»—i
  */
 
 ini_set('display_errors', 1);
@@ -11,8 +11,8 @@ error_reporting(E_ALL);
 header('Content-Type: text/plain; charset=utf-8');
 
 echo "+----------------------------------------------------------------+\n";
-echo "¦  MAILFLOW PRO - COMPREHENSIVE SYSTEM HEALTH CHECK              ¦\n";
-echo "¦  " . date('Y-m-d H:i:s') . "                                          ¦\n";
+echo "Â¦  MAILFLOW PRO - COMPREHENSIVE SYSTEM HEALTH CHECK              Â¦\n";
+echo "Â¦  " . date('Y-m-d H:i:s') . "                                          Â¦\n";
 echo "+----------------------------------------------------------------+\n\n";
 
 $errors = [];
@@ -39,7 +39,7 @@ try {
     $errors[] = "Database connection failed: " . $e->getMessage();
     echo "? Database connection: FAILED\n";
     echo "   Error: " . $e->getMessage() . "\n";
-    die("\n? Cannot proceed without database connection.\n");
+    die("\nâš ï¸ Cannot proceed without database connection.\n");
 }
 
 echo "\n";
@@ -225,7 +225,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 if ($statsIssues == 0) {
     echo "? All flow statistics are accurate\n";
 } else {
-    echo "\n??  Total flows with stat issues: $statsIssues\n";
+    echo "\nðŸ“Š  Total flows with stat issues: $statsIssues\n";
 }
 
 echo "\n";
@@ -297,7 +297,7 @@ echo "\n";
 // SUMMARY
 // ============================================
 echo "+----------------------------------------------------------------+\n";
-echo "¦  SUMMARY                                                       ¦\n";
+echo "Â¦  SUMMARY                                                       Â¦\n";
 echo "+----------------------------------------------------------------+\n\n";
 
 echo "?? Critical Errors: " . count($errors) . "\n";
@@ -307,7 +307,7 @@ if (!empty($errors)) {
     }
 }
 
-echo "\n?? Warnings: " . count($warnings) . "\n";
+echo "\nâš ï¸ Warnings: " . count($warnings) . "\n";
 if (!empty($warnings)) {
     foreach ($warnings as $i => $warn) {
         echo "   " . ($i + 1) . ". $warn\n";
@@ -318,18 +318,18 @@ echo "\n";
 
 if (count($errors) == 0 && count($warnings) == 0) {
     echo "+----------------------------------------------------------------+\n";
-    echo "¦  ? SYSTEM HEALTH: EXCELLENT                                   ¦\n";
-    echo "¦  All checks passed. System is operating normally.             ¦\n";
+    echo "Â¦  ? SYSTEM HEALTH: EXCELLENT                                   Â¦\n";
+    echo "Â¦  All checks passed. System is operating normally.             Â¦\n";
     echo "+----------------------------------------------------------------+\n";
 } else if (count($errors) == 0) {
     echo "+----------------------------------------------------------------+\n";
-    echo "¦  ??  SYSTEM HEALTH: GOOD (with warnings)                       ¦\n";
-    echo "¦  No critical errors, but some issues need attention.          ¦\n";
+    echo "Â¦  ??  SYSTEM HEALTH: GOOD (with warnings)                       Â¦\n";
+    echo "Â¦  No critical errors, but some issues need attention.          Â¦\n";
     echo "+----------------------------------------------------------------+\n";
 } else {
     echo "+----------------------------------------------------------------+\n";
-    echo "¦  ? SYSTEM HEALTH: CRITICAL                                    ¦\n";
-    echo "¦  Critical errors detected. Immediate action required.         ¦\n";
+    echo "Â¦  ? SYSTEM HEALTH: CRITICAL                                    Â¦\n";
+    echo "Â¦  Critical errors detected. Immediate action required.         Â¦\n";
     echo "+----------------------------------------------------------------+\n";
 }
 

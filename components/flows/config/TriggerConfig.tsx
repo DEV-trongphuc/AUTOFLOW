@@ -306,7 +306,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                 </div>
             )}
 
-            {/* 1. TINH TÚY: EVENT SELECTOR (GRID 2 C?T) */}
+            {/* 1. TINH TÚY: EVENT SELECTOR (GRID 2 CỘT) */}
             <div className="space-y-4">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Chọn sự kiện khởi đầu</label>
                 <div className="grid grid-cols-2 gap-3">
@@ -816,7 +816,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
                                         </div>
                                     )}
 
-                                    {/* 6. THEO CUSTOM FIELD NG�Y */}
+                                    {/* 6. THEO CUSTOM FIELD NGÀY */}
                                     <ConfigItem
                                         label="Theo Custom Field Ngày"
                                         desc="Trước/sau ngày lưu trong trường tùy chọn"

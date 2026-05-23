@@ -1,8 +1,8 @@
 <?php
-// api/check_ses_quota.php � Amazon SES Quota & Health Check Dashboard
-// Kh�ng c?n AWS SDK � d�ng raw SES Query API v?i HMAC-SHA256 signature (SigV4 tuong th�ch SES v1).
+// api/check_ses_quota.php — Amazon SES Quota & Health Check Dashboard
+// Không cần AWS SDK — dùng raw SES Query API với HMAC-SHA256 signature (SigV4 tương thích SES v1).
 // Truy c?p: https://your-domain.com/api/check_ses_quota.php
-// B?o m?t: Ch? ch?y trong admin session ho?c th�m IP whitelist
+// Bảo mật: Chỉ chạy trong admin session hoặc thêm IP whitelist
 
 error_reporting(E_ALL & ~E_NOTICE);
 ini_set('display_errors', 0);
@@ -10,7 +10,7 @@ require_once 'db_connect.php';
 require_once 'auth_middleware.php';
 
 // --- Security Gate -----------------------------------------------------------
-// Ch?p nh?n: admin session HO?C tham s? ?key= kh?p v?i smtp_pass (d�ng l�m API key t?m)
+// Chấp nhận: admin session HOẶC tham số ?key= khớp với smtp_pass (dùng làm API key tạm)
 $isAuth = false;
 if (isset($current_admin_id) && $current_admin_id) {
     $isAuth = true;
@@ -22,7 +22,7 @@ if (!$isAuth) {
 }
 
 // --- Load Settings ----------------------------------------------------------
-// [FIX P39-SES] Only load required SMTP settings � avoids loading ALL secrets into memory
+// [FIX P39-SES] Only load required SMTP settings — avoids loading ALL secrets into memory
 $stmtS = $pdo->prepare("SELECT `key`, `value` FROM system_settings WHERE workspace_id = 0 AND `key` IN ('smtp_host','smtp_user','smtp_pass','smtp_port','smtp_from_email','smtp_enabled')");
 $stmtS->execute();
 $settings = [];
@@ -52,7 +52,7 @@ if (preg_match('/email-smtp\.([a-z0-9-]+)\.amazonaws\.com/i', $smtpHost, $m)) {
     $awsRegion = $m[1];
 }
 
-// SES SMTP Password is derived from IAM Secret Key � NOT the raw secret key.
+// SES SMTP Password is derived from IAM Secret Key — NOT the raw secret key.
 // We cannot recover the raw IAM Secret Key from the SMTP password.
 // So we check for separate aws_access_key / aws_secret_key settings.
 $awsAccessKey = $settings['aws_access_key'] ?? '';
@@ -127,7 +127,7 @@ function callSESAPI(string $action, array $params = [], string $region, string $
 }
 
 // --- Fetch Local Stats from DB ------------------------------------------------
-// Bounce rate (last 30 days) � SES threshold: 5% warning, 10% critical
+// Bounce rate (last 30 days) — SES threshold: 5% warning, 10% critical
 $bounceStat = $pdo->query("
     SELECT 
         COUNT(*) as total_sent,
@@ -190,7 +190,7 @@ $identities = null;
 $apiErrors = [];
 
 if ($hasApiCreds && $isSES) {
-    // 1. GetSendQuota � daily sending limit + current 24h send count
+    // 1. GetSendQuota — daily sending limit + current 24h send count
     $quotaRes = callSESAPI('GetSendQuota', [], $awsRegion, $awsAccessKey, $awsSecretKey);
     if (!$quotaRes['error'] && $quotaRes['xml']) {
         $xml = $quotaRes['xml'];
@@ -210,7 +210,7 @@ if ($hasApiCreds && $isSES) {
         $apiErrors[] = 'GetSendQuota: ' . ($quotaRes['error'] ?? 'Parse error');
     }
 
-    // 2. GetSendStatistics � last 14 days of sending data (2-week bounces, complaints, rejects)
+    // 2. GetSendStatistics — last 14 days of sending data (2-week bounces, complaints, rejects)
     $statsRes = callSESAPI('GetSendStatistics', [], $awsRegion, $awsAccessKey, $awsSecretKey);
     if (!$statsRes['error'] && $statsRes['xml']) {
         $xml    = $statsRes['xml'];
@@ -237,7 +237,7 @@ if ($hasApiCreds && $isSES) {
         $apiErrors[] = 'GetSendStatistics: ' . ($statsRes['error'] ?? 'Parse error');
     }
 
-    // 3. ListVerifiedEmailAddresses � verify from-address is authenticated
+    // 3. ListVerifiedEmailAddresses — verify from-address is authenticated
     $verifRes = callSESAPI('ListVerifiedEmailAddresses', [], $awsRegion, $awsAccessKey, $awsSecretKey);
     if (!$verifRes['error'] && $verifRes['xml']) {
         $xml     = $verifRes['xml'];
@@ -258,52 +258,52 @@ $smtpIssues = [];
 $smtpOk = [];
 
 if (!$smtpEnabled) {
-    $smtpIssues[] = 'SMTP chua du?c b?t (smtp_enabled ? 1)';
+    $smtpIssues[] = 'SMTP chưa được bật (smtp_enabled = 1)';
 } else {
-    $smtpOk[] = 'SMTP d� b?t';
+    $smtpOk[] = 'SMTP đã bật';
 }
 
 if ($isSES) {
-    $smtpOk[] = "Host l� Amazon SES: $smtpHost";
+    $smtpOk[] = "Host là Amazon SES: $smtpHost";
 
     // SES requires STARTTLS on port 587 or SSL on port 465
     if (!in_array($smtpPort, [587, 465, 2587, 25])) {
-        $smtpIssues[] = "Port $smtpPort kh�ng ph?i SES standard (d�ng 587/465)";
+        $smtpIssues[] = "Port $smtpPort không phải SES standard (dùng 587/465)";
     } else {
-        $smtpOk[] = "Port $smtpPort d�ng chu?n SES";
+        $smtpOk[] = "Port $smtpPort dùng chuẩn SES";
     }
 
     // SES SMTP username must start with AKIA (IAM Access Key)
     if (!empty($smtpUser) && !preg_match('/^AKIA[A-Z0-9]{16}$/', $smtpUser)) {
-        $smtpIssues[] = "SMTP User '$smtpUser' kh�ng d�ng format IAM Access Key (ph?i b?t d?u b?ng AKIA...)";
+        $smtpIssues[] = "SMTP User '$smtpUser' không dùng format IAM Access Key (phải bắt đầu bằng AKIA...)";
     } else if (!empty($smtpUser)) {
-        $smtpOk[] = "SMTP User d�ng format IAM Access Key";
+        $smtpOk[] = "SMTP User dùng format IAM Access Key";
     }
 
     // SES SMTP password (SMTP-specific credential, derived from IAM secret)
     if (empty($smtpPass)) {
-        $smtpIssues[] = 'SMTP Password (SES SMTP credential) chua c?u h�nh';
+        $smtpIssues[] = 'SMTP Password (SES SMTP credential) chưa cấu hình';
     } elseif (strlen($smtpPass) < 44) {
-        $smtpIssues[] = 'SMTP Password qu� ng?n � SES SMTP credentials thu?ng d�i 44+ k� t?';
+        $smtpIssues[] = 'SMTP Password quá ngắn — SES SMTP credentials thường dài 44+ ký tự';
     } else {
-        $smtpOk[] = 'SMTP Password d� c?u h�nh (d? d�i h?p l?: ' . strlen($smtpPass) . ' chars)';
+        $smtpOk[] = 'SMTP Password đã cấu hình (độ dài hợp lệ: ' . strlen($smtpPass) . ' chars)';
     }
 
     // From email must be verified in SES
     if (empty($smtpFromEmail)) {
-        $smtpIssues[] = 'smtp_from_email chua c?u h�nh';
+        $smtpIssues[] = 'smtp_from_email chưa cấu hình';
     } else {
         $smtpOk[] = "From email: $smtpFromEmail";
     }
 
     // API credentials for quota checking
     if (!$hasApiCreds) {
-        $smtpIssues[] = "aws_access_key + aws_secret_key chua c?u h�nh trong system_settings ? kh�ng th? l?y quota t? AWS API";
+        $smtpIssues[] = "aws_access_key + aws_secret_key chưa cấu hình trong system_settings -> không thể lấy quota từ AWS API";
     } else {
-        $smtpOk[] = 'AWS API credentials c� s?n (quota checking d� k�ch ho?t)';
+        $smtpOk[] = 'AWS API credentials có sẵn (quota checking đã kích hoạt)';
     }
 } else {
-    $smtpIssues[] = "Host '$smtpHost' kh�ng ph?i Amazon SES (kh�ng ch?a amazonaws.com)";
+    $smtpIssues[] = "Host '$smtpHost' không phải Amazon SES (không chứa amazonaws.com)";
 }
 
 // --- Bounce/Complaint Rate Thresholds ----------------------------------------
@@ -311,14 +311,14 @@ if ($isSES) {
 // Bounce: >2% ? warning, >5% ? suspension risk
 // Complaint: >0.1% ? warning, >0.5% ? suspension risk
 function getBounceStatus(float $rate): array {
-    if ($rate >= 5.0)  return ['level' => 'critical', 'color' => '#dc3545', 'label' => 'CRITICAL � SES c� th? suspend t�i kho?n!'];
-    if ($rate >= 2.0)  return ['level' => 'warning',  'color' => '#ffc107', 'label' => 'WARNING � G?n ngu?ng AWS cho ph�p'];
-    if ($rate >= 0.5)  return ['level' => 'caution',  'color' => '#fd7e14', 'label' => 'CAUTION � C?n theo d�i'];
-    return ['level' => 'ok', 'color' => '#28a745', 'label' => 'GOOD � Trong ngu?ng an to�n'];
+    if ($rate >= 5.0)  return ['level' => 'critical', 'color' => '#dc3545', 'label' => 'CRITICAL — SES có thể suspend tài khoản!'];
+    if ($rate >= 2.0)  return ['level' => 'warning',  'color' => '#ffc107', 'label' => 'WARNING — Gần ngưỡng AWS cho phép'];
+    if ($rate >= 0.5)  return ['level' => 'caution',  'color' => '#fd7e14', 'label' => 'CAUTION — Cần theo dõi'];
+    return ['level' => 'ok', 'color' => '#28a745', 'label' => 'GOOD — Trong ngưỡng an toàn'];
 }
 function getComplaintStatus(float $rate): array {
-    if ($rate >= 0.5)  return ['level' => 'critical', 'color' => '#dc3545', 'label' => 'CRITICAL � R?i ro b? suspend!'];
-    if ($rate >= 0.1)  return ['level' => 'warning',  'color' => '#ffc107', 'label' => 'WARNING � G?n ngu?ng AWS'];
+    if ($rate >= 0.5)  return ['level' => 'critical', 'color' => '#dc3545', 'label' => 'CRITICAL — Rủi ro bị suspend!'];
+    if ($rate >= 0.1)  return ['level' => 'warning',  'color' => '#ffc107', 'label' => 'WARNING — Gần ngưỡng AWS'];
     if ($rate >= 0.05) return ['level' => 'caution',  'color' => '#fd7e14', 'label' => 'CAUTION'];
     return ['level' => 'ok', 'color' => '#28a745', 'label' => 'GOOD'];
 }
@@ -364,7 +364,7 @@ header('Content-Type: text/html; charset=utf-8');
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Amazon SES � Quota & Health Check</title>
+<title>Amazon SES — Quota & Health Check</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root {
@@ -405,23 +405,23 @@ header('Content-Type: text/html; charset=utf-8');
 <body>
 
 <h1>
-  ?? Amazon SES � Health Dashboard
+  ?? Amazon SES — Health Dashboard
   <?php if ($isSES): ?><span class="badge">SES Detected</span><?php endif; ?>
   <a href="?format=json" style="font-size:12px;color:var(--info);margin-left:auto;text-decoration:none;">?? JSON</a>
 </h1>
 
 <!-- -- SMTP Config Status ------------------------------------------- -->
-<div class="row-header">?? C?u h�nh SMTP <span class="tag-aws">region: <?= htmlspecialchars($awsRegion) ?></span></div>
+<div class="row-header">⚙️ Cấu hình SMTP <span class="tag-aws">region: <?= htmlspecialchars($awsRegion) ?></span></div>
 <div class="grid">
   <div class="card" style="grid-column: 1 / -1;">
     <?php if (!empty($smtpOk)): ?>
-    <h2>? ��ng chu?n</h2>
+    <h2>✅ Đúng chuẩn</h2>
     <ul class="checklist">
     <?php foreach ($smtpOk as $ok): ?><li><?= htmlspecialchars($ok) ?></li><?php endforeach; ?>
     </ul>
     <?php endif; ?>
     <?php if (!empty($smtpIssues)): ?>
-    <h2 style="margin-top:12px;color:var(--err);">? V?n d? ph�t hi?n</h2>
+    <h2 style="margin-top:12px;color:var(--err);">⚠️ Vấn đề phát hiện</h2>
     <ul class="checklist issues">
     <?php foreach ($smtpIssues as $issue): ?><li><?= htmlspecialchars($issue) ?></li><?php endforeach; ?>
     </ul>
@@ -429,64 +429,64 @@ header('Content-Type: text/html; charset=utf-8');
   </div>
 </div>
 
-<!-- -- AWS Quota (t? API) --------------------------------------- -->
+<!-- -- AWS Quota (từ API) --------------------------------------- -->
 <?php if ($quota): ?>
 <hr class="sep">
-<div class="row-header">?? AWS Sending Quota (Real-time t? API)</div>
+<div class="row-header">📊 AWS Sending Quota (Real-time từ API)</div>
 <div class="grid">
   <div class="card">
-    <h2>G?i trong 24h qua (AWS)</h2>
+    <h2>Gửi trong 24h qua (AWS)</h2>
     <div class="stat"><?= number_format($quota['sent_last_24_hours']) ?></div>
-    <div class="sub">/ <?= number_format($quota['max_24_hour_send']) ?> gi?i h?n ng�y</div>
+    <div class="sub">/ <?= number_format($quota['max_24_hour_send']) ?> giới hạn ngày</div>
     <div class="bar-wrap">
       <div class="bar" style="width:<?= min($quota['usage_pct'], 100) ?>%;background:<?= $quota['usage_pct'] > 80 ? '#ef4444' : ($quota['usage_pct'] > 60 ? '#f59e0b' : '#22c55e') ?>;"></div>
     </div>
-    <div class="sub" style="margin-top:6px;"><?= $quota['usage_pct'] ?>% d� d�ng � C�n <?= number_format($quota['remaining']) ?> emails</div>
+    <div class="sub" style="margin-top:6px;"><?= $quota['usage_pct'] ?>% đã dùng — Còn <?= number_format($quota['remaining']) ?> emails</div>
   </div>
   <div class="card">
     <h2>Max Send Rate</h2>
     <div class="stat"><?= $quota['max_send_rate'] ?></div>
-    <div class="sub">emails/gi�y (AWS hard limit)</div>
+    <div class="sub">emails/giây (AWS hard limit)</div>
   </div>
   <div class="card">
-    <h2>C�n l?i h�m nay</h2>
+    <h2>Còn lại hôm nay</h2>
     <div class="stat" style="color:<?= $quota['remaining'] < 1000 ? 'var(--err)' : 'var(--ok)' ?>"><?= number_format($quota['remaining']) ?></div>
-    <div class="sub">emails c� th? g?i trong 24h c�n l?i</div>
+    <div class="sub">emails có thể gửi trong 24h còn lại</div>
   </div>
 </div>
 <?php elseif ($isSES && !$hasApiCreds): ?>
 <hr class="sep">
 <div class="no-api">
-  ?? <strong>Quota AWS API chua k?t n?i</strong><br>
-  Th�m <code>aws_access_key</code> v� <code>aws_secret_key</code> v�o <code>system_settings</code> d? xem quota real-time.<br>
-  <small>��y ph?i l� IAM Access Key (AKIA...) + Secret Key c?a user c� quy?n <code>ses:GetSendQuota</code> v� <code>ses:GetSendStatistics</code>.</small>
+  📊 <strong>Quota AWS API chưa kết nối</strong><br>
+  Thêm <code>aws_access_key</code> và <code>aws_secret_key</code> vào <code>system_settings</code> để xem quota real-time.<br>
+  <small>Đây phải là IAM Access Key (AKIA...) + Secret Key của user có quyền <code>ses:GetSendQuota</code> và <code>ses:GetSendStatistics</code>.</small>
 </div>
 <?php endif; ?>
 
-<!-- -- AWS Stats (14 ng�y) -------------------------------------- -->
+<!-- -- AWS Stats (14 ngày) -------------------------------------- -->
 <?php if ($stats): ?>
 <hr class="sep">
-<div class="row-header">?? AWS Sending Statistics (14 ng�y qua)</div>
+<div class="row-header">📈 AWS Sending Statistics (14 ngày qua)</div>
 <div class="grid">
   <div class="card">
     <h2>Delivery Attempts</h2>
     <div class="stat"><?= number_format($stats['delivery_attempts']) ?></div>
-    <div class="sub">t?ng l?n g?i (<?= $stats['datapoints'] ?> data points)</div>
+    <div class="sub">tổng lần gửi (<?= $stats['datapoints'] ?> data points)</div>
   </div>
   <div class="card">
     <h2>Bounce Rate <span class="pill <?= $awsBounceStatus['level'] === 'ok' ? 'ok' : ($awsBounceStatus['level'] === 'critical' ? 'err' : 'warn') ?>"><?= $awsBounceStatus['label'] ?></span></h2>
     <div class="stat" style="color:<?= $awsBounceStatus['color'] ?>"><?= $stats['bounce_rate_pct'] ?>%</div>
-    <div class="sub"><?= number_format($stats['bounces']) ?> bounces / ngu?ng AWS: &lt;2% warning, &lt;5% safe</div>
+    <div class="sub"><?= number_format($stats['bounces']) ?> bounces / ngưỡng AWS: &lt;2% warning, &lt;5% safe</div>
   </div>
   <div class="card">
     <h2>Complaint Rate <span class="pill <?= $awsComplaintStatus['level'] === 'ok' ? 'ok' : ($awsComplaintStatus['level'] === 'critical' ? 'err' : 'warn') ?>"><?= $awsComplaintStatus['label'] ?></span></h2>
     <div class="stat" style="color:<?= $awsComplaintStatus['color'] ?>"><?= $stats['complaint_rate_pct'] ?>%</div>
-    <div class="sub"><?= number_format($stats['complaints']) ?> complaints / ngu?ng AWS: &lt;0.1%</div>
+    <div class="sub"><?= number_format($stats['complaints']) ?> complaints / ngưỡng AWS: &lt;0.1%</div>
   </div>
   <div class="card">
     <h2>Rejects</h2>
     <div class="stat"><?= number_format($stats['rejects']) ?></div>
-    <div class="sub"><?= $stats['reject_rate_pct'] ?>% b? t? ch?i (invalid email, suppression list)</div>
+    <div class="sub"><?= $stats['reject_rate_pct'] ?>% bị từ chối (invalid email, suppression list)</div>
   </div>
 </div>
 <?php endif; ?>
@@ -517,10 +517,10 @@ header('Content-Type: text/html; charset=utf-8');
   </table>
   <?php if (!$identities['from_verified']): ?>
   <div style="margin-top:12px;color:var(--err);font-size:13px;">
-    ?? From email <strong><?= htmlspecialchars($smtpFromEmail) ?></strong> chua du?c verify trong SES! Email s? b? reject.
+    📧 From email <strong><?= htmlspecialchars($smtpFromEmail) ?></strong> chưa được verify trong SES! Email sẽ bị reject.
   </div>
   <?php else: ?>
-  <div style="margin-top:12px;color:var(--ok);font-size:13px;">? From email d� du?c verify.</div>
+  <div style="margin-top:12px;color:var(--ok);font-size:13px;">✅ From email đã được verify.</div>
   <?php endif; ?>
 </div>
 <?php endif; ?>
@@ -528,37 +528,37 @@ header('Content-Type: text/html; charset=utf-8');
 <hr class="sep">
 
 <!-- -- Local DB Stats ------------------------------------------- -->
-<div class="row-header">?? Th?ng k� c?c b? (t? DB n?i b?)</div>
+<div class="row-header">🖥️ Thống kê cục bộ (từ DB nội bộ)</div>
 <div class="grid">
   <div class="card">
-    <h2>T?ng g?i 30 ng�y qua</h2>
+    <h2>Tổng gửi 30 ngày qua</h2>
     <div class="stat"><?= number_format($totalSent30) ?></div>
-    <div class="sub">email/ZNS/Zalo d� ghi nh?n</div>
+    <div class="sub">email/ZNS/Zalo đã ghi nhận</div>
   </div>
   <div class="card">
-    <h2>Bounce Rate (30 ng�y) <span class="pill <?= $localBounceStatus['level'] === 'ok' ? 'ok' : ($localBounceStatus['level'] === 'critical' ? 'err' : 'warn') ?>"><?= $localBounceStatus['label'] ?></span></h2>
+    <h2>Bounce Rate (30 ngày) <span class="pill <?= $localBounceStatus['level'] === 'ok' ? 'ok' : ($localBounceStatus['level'] === 'critical' ? 'err' : 'warn') ?>"><?= $localBounceStatus['label'] ?></span></h2>
     <div class="stat" style="color:<?= $localBounceStatus['color'] ?>"><?= $bounceRate ?>%</div>
     <div class="sub">Hard: <?= $hardBounces ?> | Soft: <?= $softBounces ?></div>
   </div>
   <div class="card">
-    <h2>Complaint Rate (30 ng�y) <span class="pill <?= $localComplaintStatus['level'] === 'ok' ? 'ok' : ($localComplaintStatus['level'] === 'critical' ? 'err' : 'warn') ?>"><?= $localComplaintStatus['label'] ?></span></h2>
+    <h2>Complaint Rate (30 ngày) <span class="pill <?= $localComplaintStatus['level'] === 'ok' ? 'ok' : ($localComplaintStatus['level'] === 'critical' ? 'err' : 'warn') ?>"><?= $localComplaintStatus['label'] ?></span></h2>
     <div class="stat" style="color:<?= $localComplaintStatus['color'] ?>"><?= $complaintRate ?>%</div>
-    <div class="sub"><?= $complaints ?> spam complaints ghi nh?n</div>
+    <div class="sub"><?= $complaints ?> spam complaints ghi nhận</div>
   </div>
   <div class="card">
-    <h2>24h g?n nh?t (mail_delivery_logs)</h2>
+    <h2>24h gần nhất (mail_delivery_logs)</h2>
     <div class="stat" style="color:var(--ok)"><?= number_format($successRecent) ?></div>
-    <div class="sub">th�nh c�ng / <span style="color:var(--err)"><?= $failedRecent ?> th?t b?i</span></div>
+    <div class="sub">thành công / <span style="color:var(--err)"><?= $failedRecent ?> thất bại</span></div>
   </div>
 </div>
 
 <!-- -- Daily Volume ---------------------------------------------- -->
 <?php if (!empty($dailySending)): ?>
 <hr class="sep">
-<div class="row-header">?? Volume g?i 7 ng�y g?n nh?t</div>
+<div class="row-header">📅 Volume gửi 7 ngày gần nhất</div>
 <div class="card">
   <table>
-    <tr><th>Ng�y</th><th>S? email</th><th>So v?i h�m qua</th></tr>
+    <tr><th>Ngày</th><th>Số email</th><th>So với hôm qua</th></tr>
     <?php 
     $prev = null;
     foreach ($dailySending as $i => $row): 
@@ -573,7 +573,7 @@ header('Content-Type: text/html; charset=utf-8');
         <span style="color:<?= $diff >= 0 ? 'var(--ok)' : 'var(--err)' ?>">
           <?= $diff >= 0 ? '+' : '' ?><?= number_format($diff) ?>
         </span>
-        <?php else: ?>�<?php endif; ?>
+        <?php else: ?>—<?php endif; ?>
       </td>
     </tr>
     <?php endforeach; ?>
@@ -584,22 +584,22 @@ header('Content-Type: text/html; charset=utf-8');
 <!-- -- Setup Guide ---------------------------------------------- -->
 <?php if (!$hasApiCreds || !$isSES): ?>
 <hr class="sep">
-<div class="row-header">?? Hu?ng d?n c?u h�nh d?y d?</div>
+<div class="row-header">📖 Hướng dẫn cấu hình đầy đủ</div>
 <div class="card">
-  <h2>�? b?t quota checking d?y d?, th�m v�o <code>system_settings</code>:</h2>
+  <h2>Để bật quota checking đầy đủ, thêm vào <code>system_settings</code>:</h2>
   <table>
-    <tr><th>Key</th><th>Value</th><th>Ghi ch�</th></tr>
-    <tr><td>smtp_host</td><td>email-smtp.us-east-1.amazonaws.com</td><td>�?i region ph� h?p</td></tr>
-    <tr><td>smtp_port</td><td>587</td><td>Ho?c 465 cho SSL</td></tr>
-    <tr><td>smtp_user</td><td>AKIA... (IAM Access Key)</td><td>C?n permission ses:SendEmail</td></tr>
+    <tr><th>Key</th><th>Value</th><th>Ghi chú</th></tr>
+    <tr><td>smtp_host</td><td>email-smtp.us-east-1.amazonaws.com</td><td>Đổi region phù hợp</td></tr>
+    <tr><td>smtp_port</td><td>587</td><td>Hoặc 465 cho SSL</td></tr>
+    <tr><td>smtp_user</td><td>AKIA... (IAM Access Key)</td><td>Cần permission ses:SendEmail</td></tr>
     <tr><td>smtp_pass</td><td>[SES SMTP Password]</td><td>Generate trong SES Console ? SMTP Settings</td></tr>
-    <tr><td>smtp_from_email</td><td>no-reply@yourdomain.com</td><td>Ph?i verify trong SES</td></tr>
-    <tr><td>aws_access_key</td><td>AKIA... (IAM Access Key)</td><td>C?n th�m permission: ses:GetSendQuota, ses:GetSendStatistics, ses:ListVerifiedEmailAddresses</td></tr>
-    <tr><td>aws_secret_key</td><td>[IAM Secret Key]</td><td>Luu an to�n, kh�ng expose</td></tr>
+    <tr><td>smtp_from_email</td><td>no-reply@yourdomain.com</td><td>Phải verify trong SES</td></tr>
+    <tr><td>aws_access_key</td><td>AKIA... (IAM Access Key)</td><td>Cần thêm permission: ses:GetSendQuota, ses:GetSendStatistics, ses:ListVerifiedEmailAddresses</td></tr>
+    <tr><td>aws_secret_key</td><td>[IAM Secret Key]</td><td>Lưu an toàn, không expose</td></tr>
   </table>
   <div style="margin-top:12px;font-size:12px;color:var(--muted);">
-    ?? <strong>Luu � SES SMTP credential ? IAM Secret Key.</strong><br>
-    SES SMTP password ph?i generate ri�ng trong SES Console (SMTP credentials section), kh�ng ph?i raw IAM secret.
+    ?? <strong>Luu ư SES SMTP credential ? IAM Secret Key.</strong><br>
+    SES SMTP password phải generate riêng trong SES Console (SMTP credentials section), không phải raw IAM secret.
   </div>
 </div>
 <?php endif; ?>

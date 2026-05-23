@@ -10,11 +10,20 @@ View your app in AI Studio: https://ai.studio/apps/drive/1x9NA0QZkRkfb4oxlseRnAG
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
+**Prerequisites:** Node.js
 
 1. Install dependencies:
    `npm install`
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+---
+
+## 🤖 AI Agent & Codebase Map Guidelines
+
+To optimize token consumption and prevent logic/database errors, this repository uses a unified codebase map:
+
+*   **Codebase Map & Architecture**: [CODEBASE_MAP.md](file:///e:/AUTOFLOW/DOMATION_FULLSTACK/DOMATION_FULLSTACK/DOMATION_FULLSTACK/CODEBASE_MAP.md) — Structural audits, database schemas, API endpoints, queue workers, and concurrency patterns.
+*   **Agent Guidelines**: [.agent/instructions.md](file:///e:/AUTOFLOW/DOMATION_FULLSTACK/DOMATION_FULLSTACK/DOMATION_FULLSTACK/.agent/instructions.md) — Instruction rules for incoming agent runs.
+*   **IDE Config**: [.cursorrules](file:///e:/AUTOFLOW/DOMATION_FULLSTACK/DOMATION_FULLSTACK/DOMATION_FULLSTACK/.cursorrules) — Auto-injects guidelines for AI-powered IDEs.

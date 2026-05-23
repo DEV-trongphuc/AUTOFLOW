@@ -1,12 +1,12 @@
 <?php
 /**
  * CRON JOB: Auto-sync Flow States (ENHANCED VERSION)
- * Ch?y d?nh k? m?i gi? d? t? d?ng fix các v?n d? d?ng b?
+ * Chạy định kỳ mỗi giờ để tự động fix các vấn đề đồng bộ
  * 
- * Crontab entry (ch?y m?i gi?):
+ * Crontab entry (chạy mỗi giờ):
  * 0 * * * * /usr/local/bin/php /home/vhvxoigh/automation.ideas.edu.vn/mail_api/cron_auto_sync_flows.php > /dev/null 2>&1
  * 
- * Ho?c ch?y m?i 30 phút (thay d?u * d?u tiên b?ng d?u sao-g?ch-30):
+ * Hoặc chạy mỗi 30 phút (thay dấu * đầu tiên bằng dấu sao-gạch-30):
  * 0,30 * * * * /usr/local/bin/php /home/vhvxoigh/automation.ideas.edu.vn/mail_api/cron_auto_sync_flows.php > /dev/null 2>&1
  */
 

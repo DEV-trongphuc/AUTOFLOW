@@ -294,7 +294,7 @@ try {
                 // SPECIAL CASE: Inbound Message Keyword Logic
                 if ($isMatch && $priorityTriggerType === 'inbound_message' && !empty($flowTargetId) && $flowTargetId !== 'all') {
                     // [FIX] Use mb_strtolower + mb_stripos for proper Vietnamese Unicode matching
-                    // Previously strpos() would fail on "Tu V?n" vs "tu v?n" etc.
+                    // Previously strpos() would fail on "Tư Vấn" vs "tư vấn" etc.
                     $keywords = array_map('trim', explode(',', mb_strtolower($flowTargetId, 'UTF-8')));
                     $msgLower = mb_strtolower($priorityTargetId, 'UTF-8');
                     $kwFound = false;

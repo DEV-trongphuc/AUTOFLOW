@@ -1,0 +1,9 @@
+# Cursor / AI IDE Instructions
+
+Always refer to the master codebase map at the start of any prompt or modification:
+👉 [CODEBASE_MAP.md](file:///e:/AUTOFLOW/DOMATION_FULLSTACK/DOMATION_FULLSTACK/DOMATION_FULLSTACK/CODEBASE_MAP.md)
+
+## Rules:
+1. **Read CODEBASE_MAP.md** before performing any workspace searches or code analyses.
+2. **Observe Concurrency Guards** detailed in `CODEBASE_MAP.md#7-critical-coding-patterns--concurrency-guards` (JSON updates, Row locking indexes, skip locked, session close, reconnect DSN, placeholder limits).
+3. **Sync changes**: Update `CODEBASE_MAP.md` if any files, schemas, APIs, or workers are added/modified.

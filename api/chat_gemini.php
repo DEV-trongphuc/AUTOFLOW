@@ -109,10 +109,10 @@ function generateResponse($contents, $systemInst, $apiKey, $model = 'gemini-2.5-
                 }
             }
         }
-        return $fullText ?: "D?, em chua t�m th?y c�u tr? l?i ph� h?p nh?t l�c n�y.";
+        return $fullText ?: "Dạ, em chưa tìm thấy câu trả lời phù hợp nhất lúc này.";
     }
 
-    return "D?, em chua t�m th?y c�u tr? l?i ph� h?p nh?t l�c n�y. Anh/Ch? c� th? h?i c? th? hon kh�ng ??";
+    return "Dạ, em chưa tìm thấy câu trả lời phù hợp nhất lúc này. Anh/Chị có thể hỏi cụ thể hơn không ạ?";
 }
 
 /**
@@ -170,7 +170,7 @@ function generateResponseAsyncInit($contents, $systemInst, $apiKey, $model = 'ge
 function generateResponseAsyncWait($asyncHandle)
 {
     if (!$asyncHandle)
-        return "L?i: Handle kh�ng h?p l?.";
+        return "Lỗi: Handle không hợp lệ.";
 
     $mh = $asyncHandle['mh'];
     $ch = $asyncHandle['ch'];
@@ -218,10 +218,10 @@ function generateResponseAsyncWait($asyncHandle)
                 }
             }
         }
-        return $fullText ?: "D?, em chua t�m th?y c�u tr? l?i ph� h?p nh?t l�c n�y.";
+        return $fullText ?: "Dạ, em chưa tìm thấy câu trả lời phù hợp nhất lúc này.";
     }
 
-    return "D?, em chua t�m th?y c�u tr? l?i ph� h?p nh?t l�c n�y.";
+    return "Dạ, em chưa tìm thấy câu trả lời phù hợp nhất lúc này.";
 }
 function streamResponse($contents, $systemInst, $apiKey, $onChunk, $model = 'gemini-2.5-flash-lite', $temperature = 0.9, $maxOutputTokens = 2048)
 {

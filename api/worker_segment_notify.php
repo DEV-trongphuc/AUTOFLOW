@@ -124,18 +124,18 @@ if (!function_exists('runWorkerSegmentNotify')) {
                     <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;'>
                         <div style='background-color: #2563eb; color: #ffffff; padding: 20px; text-align: center;'>
                             <h2 style='margin: 0; font-size: 20px;'>?? New Segment Lead Alert</h2>
-                            <p style='margin: 5px 0 0 0; font-size: 14px;'>Ph�n kh�c: <strong>{$segName}</strong></p>
+                            <p style='margin: 5px 0 0 0; font-size: 14px;'>Phân khúc: <strong>{$segName}</strong></p>
                         </div>
                         <div style='padding: 24px; background-color: #ffffff;'>
-                            <p style='color: #475569; font-size: 15px; line-height: 1.6;'>H? th?ng ghi nh?n c� m?t kh�ch h�ng m?i v?a th?a m�n b? l?c d? li?u c?a ph�n kh�c n�y.</p>
+                            <p style='color: #475569; font-size: 15px; line-height: 1.6;'>Hệ thống ghi nhận có một khách hàng mới vừa thỏa mãn bộ lọc dữ liệu của phân khúc này.</p>
                             
                             <table style='width: 100%; border-collapse: collapse; margin-top: 20px;'>
                                 <tr>
-                                    <td style='padding: 12px 0; border-bottom: 1px solid #f1f5f9; width: 40%; color: #64748b; font-size: 14px;'>H? & T�n</td>
+                                    <td style='padding: 12px 0; border-bottom: 1px solid #f1f5f9; width: 40%; color: #64748b; font-size: 14px;'>Họ & Tên</td>
                                     <td style='padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #0f172a; font-weight: 500;'>{$subName}</td>
                                 </tr>
                                 <tr>
-                                    <td style='padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 14px;'>S? di?n tho?i</td>
+                                    <td style='padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 14px;'>Số điện thoại</td>
                                     <td style='padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #0f172a; font-weight: 500;'>" . ($subPhone ?: '�') . "</td>
                                 </tr>
                                 <tr>
@@ -143,17 +143,17 @@ if (!function_exists('runWorkerSegmentNotify')) {
                                     <td style='padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #0f172a; font-weight: 500;'>" . ($subEmail ?: '�') . "</td>
                                 </tr>
                                 <tr>
-                                    <td style='padding: 12px 0; color: #64748b; font-size: 14px;'>Ng�y v�o h? th?ng</td>
+                                    <td style='padding: 12px 0; color: #64748b; font-size: 14px;'>Ngày vào hệ thống</td>
                                     <td style='padding: 12px 0; color: #0f172a; font-weight: 500;'>{$joinDate}</td>
                                 </tr>
                             </table>
 
                             <div style='margin-top: 30px; text-align: center;'>
-                                <a href='{$sysDashboardLink}' style='display: inline-block; padding: 12px 24px; background-color: #f8fafc; color: #334155; text-decoration: none; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: 600; font-size: 14px;'>Xem Chi Ti?t T?i OMNI-ENGINE</a>
+                                <a href='{$sysDashboardLink}' style='display: inline-block; padding: 12px 24px; background-color: #f8fafc; color: #334155; text-decoration: none; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: 600; font-size: 14px;'>Xem Chi Tiết Tại OMNI-ENGINE</a>
                             </div>
                         </div>
                         <div style='background-color: #f8fafc; padding: 16px; text-align: center; color: #94a3b8; font-size: 12px; border-top: 1px solid #e2e8f0;'>
-                            ��y l� email h? th?ng t? d?ng t? c?u h�nh Notify on Join.<br/>Vui l�ng kh�ng tr? l?i thu n�y.
+                            Đây là email hệ thống tự động từ cấu hình Notify on Join.<br/>Vui lòng không trả lời thư này.
                         </div>
                     </div>";
 

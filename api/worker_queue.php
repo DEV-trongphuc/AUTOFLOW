@@ -329,7 +329,7 @@ foreach ($jobs as $jobItem) {
                     if (!empty($buttons)) {
                         foreach ($buttons as $btn) {
                             if (!empty($btn['title']) && !empty($btn['url'])) {
-                                $finalText .= "\n?? " . $btn['title'] . ": " . $btn['url'];
+                                $finalText .= "\n🔗 " . $btn['title'] . ": " . $btn['url'];
                             }
                         }
                     }
@@ -401,7 +401,7 @@ foreach ($jobs as $jobItem) {
 
                 if (empty($activeKey)) {
                     $jobSuccess = false;
-                    $jobError = 'Khng c Gemini API Key cho property ' . $propertyId;
+                    $jobError = 'Không có Gemini API Key cho property ' . $propertyId;
                     break;
                 }
 
@@ -453,7 +453,7 @@ foreach ($jobs as $jobItem) {
                 }
 
                 training_log("ai_pdf_chunk worker: Firing " . count($pageRanges) . " parallel requests for doc={$docId} (chunks: " . implode(',', array_column($pageRanges, 'chunk_index')) . ")");
-                $pdo->prepare("UPDATE ai_training_docs SET error_message = 'ang trch xu?t " . count($pageRanges) . " do?n song song (trang " . $pageRanges[0]['start'] . "-" . end($pageRanges)['end'] . ")...' WHERE id = ?")
+                $pdo->prepare("UPDATE ai_training_docs SET error_message = 'Đang trích xuất " . count($pageRanges) . " đoạn song song (trang " . $pageRanges[0]['start'] . "-" . end($pageRanges)['end'] . ")...' WHERE id = ?")
                     ->execute([$docId]);
 
                 // Fire 5 concurrent Gemini requests
@@ -490,7 +490,7 @@ foreach ($jobs as $jobItem) {
                 if ($remaining === 0) {
                     // All chunks extracted ? merge & embed
                     training_log("ai_pdf_chunk worker: All chunks complete for doc={$docId}. Triggering merge & embed.");
-                    $pdo->prepare("UPDATE ai_training_docs SET error_message = 'T?t c? do?n d trch xu?t. ang merge v t?o Embedding...' WHERE id = ?")
+                    $pdo->prepare("UPDATE ai_training_docs SET error_message = 'Tất cả đoạn đã trích xuất. Đang merge và tạo Embedding...' WHERE id = ?")
                         ->execute([$docId]);
                     mergePdfChunksAndEmbed($pdo, $docId, $propertyId, $activeKey);
                 } elseif ($remaining > 0) {
@@ -501,7 +501,7 @@ foreach ($jobs as $jobItem) {
                     // and the worker inserts a new job forever ? fills queue_jobs table and pegs the worker.
                     // Solution: carry retry_count in payload, auto-fail doc after MAX_PDF_RETRIES rounds.
                     $pdfRetryCount = (int) ($payload['pdf_retry_count'] ?? 0);
-                    $MAX_PDF_RETRIES = 10; // 10 rounds  5 pages/round = 50 pages max ch?u d?ng l?i
+                    $MAX_PDF_RETRIES = 10; // 10 rounds  5 pages/round = 50 pages max chịu đựng lỗi
                     if ($pdfRetryCount >= $MAX_PDF_RETRIES) {
                         $errMsg = "[CIRCUIT BREAKER] Doc $docId auto-failed after $MAX_PDF_RETRIES retry rounds with $remaining chunks still unprocessed. Manual review required.";
                         training_log($errMsg);
@@ -516,7 +516,7 @@ foreach ($jobs as $jobItem) {
                             ->execute([$nextJobId, json_encode($nextPayload)]);
                         // Update progress message showing cooldown
                         $doneCount = $totalChunks - $remaining;
-                        $pdo->prepare("UPDATE ai_training_docs SET error_message = CONCAT(' trch xu?t ', ?, '/', ?, ' do?n  ngh? 15 giy d? trnh rate limit, s? ti?p t?c t? d?ng... (l?n ', ?, '/', ?)') WHERE id = ?")
+                        $pdo->prepare("UPDATE ai_training_docs SET error_message = CONCAT(' trích xuất ', ?, '/', ?, ' đoạn, nghỉ 15 giây để tránh rate limit, sẽ tiếp tục tự động... (lần ', ?, '/', ?)') WHERE id = ?")
                             ->execute([$doneCount, $totalChunks, $nextRetry, $MAX_PDF_RETRIES, $docId]);
                     }
 

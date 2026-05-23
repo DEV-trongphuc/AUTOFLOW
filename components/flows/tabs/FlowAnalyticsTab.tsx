@@ -226,7 +226,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         // Filter for Action Steps from the SORTED steps - ADD zalo_zns
         const actionSteps = sortedSteps.filter(s => ['action', 'zalo_zns', 'update_tag', 'condition', 'wait', 'list_action', 'remove_action'].includes(s.type));
 
-        // 2. T?o Map index d? bi?t th? t? bu?c
+        // 2. Tạo Map index để biết thứ tự bước
         const stepIndexMap: Record<string, number> = {};
         actionSteps.forEach((s, idx) => { stepIndexMap[s.id] = idx; });
 

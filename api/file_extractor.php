@@ -1,18 +1,18 @@
 <?php
 /**
  * api/file_extractor.php
- * Tr�ch xu?t text c� c?u tr�c t? PDF, DOCX, TXT
- * H? tr? nh?n bi?t Chuong / M?c / Trang d? AI tr�ch d?n ch�nh x�c
+ * Trích xuất text có cấu trúc từ PDF, DOCX, TXT
+ * Hỗ trợ nhận biết Chương / Mục / Trang để AI trích dẫn chính xác
  */
 
 if (!function_exists('extractTextFromFile')) {
 
     /**
-     * Entry point: Ph�t hi?n lo?i file v� g?i extractor ph� h?p
+     * Entry point: Phát hiện loại file và gọi extractor phù hợp
      *
-     * @param string $filePath  �u?ng d?n tuy?t d?i t?i file tr�n server
+     * @param string $filePath  Đường dẫn tuyệt đối tới file trên server
      * @param string $ext       Extension: pdf | docx | doc | txt
-     * @param string $apiKey    Gemini API Key (c?n cho PDF qua Gemini Files API)
+     * @param string $apiKey    Gemini API Key (cần cho PDF qua Gemini Files API)
      * @return array {
      *   book_title, author, language, chapters: [
      *     { index, title, sections: [
@@ -24,7 +24,7 @@ if (!function_exists('extractTextFromFile')) {
     function extractTextFromFile(string $filePath, string $ext, string $apiKey = ''): array
     {
         if (!file_exists($filePath)) {
-            return ['error' => 'File kh�ng t?n t?i: ' . $filePath];
+            return ['error' => 'File không tồn tại: ' . $filePath];
         }
 
         $ext = strtolower(trim($ext));
@@ -37,7 +37,7 @@ if (!function_exists('extractTextFromFile')) {
                 return extractDocxText($filePath);
 
             case 'doc':
-                // .doc cu ? th? convert ho?c fallback v? Gemini
+                // .doc cũ -> có thể convert hoặc fallback về Gemini
                 return extractDocText($filePath, $apiKey);
 
             case 'txt':
@@ -51,13 +51,13 @@ if (!function_exists('extractTextFromFile')) {
     // =========================================================
 
     /**
-     * �?c file .txt v� heuristic ph�t hi?n chuong/m?c
+     * Đọc file .txt và heuristic phát hiện chương/mục
      */
     function extractTxtText(string $filePath): array
     {
         $raw = file_get_contents($filePath);
         if ($raw === false)
-            return ['error' => 'Kh�ng d?c du?c file TXT'];
+            return ['error' => 'Không đọc được file TXT'];
 
         // Normalize encoding
         if (!mb_detect_encoding($raw, 'UTF-8', true)) {
@@ -68,18 +68,18 @@ if (!function_exists('extractTextFromFile')) {
     }
 
     // =========================================================
-    // DOCX EXTRACTOR (d?c XML b�n trong ZIP - kh�ng c?n thu vi?n)
+    // DOCX EXTRACTOR (đọc XML bên trong ZIP - không cần thư viện)
     // =========================================================
 
     function extractDocxText(string $filePath): array
     {
         if (!class_exists('ZipArchive')) {
-            return ['error' => 'ZipArchive extension kh�ng kh? d?ng'];
+            return ['error' => 'ZipArchive extension không khả dụng'];
         }
 
         $zip = new ZipArchive();
         if ($zip->open($filePath) !== true) {
-            return ['error' => 'Kh�ng m? du?c file DOCX'];
+            return ['error' => 'Không mở được file DOCX'];
         }
 
         $xmlContent = $zip->getFromName('word/document.xml');
@@ -87,9 +87,9 @@ if (!function_exists('extractTextFromFile')) {
         $zip->close();
 
         if (!$xmlContent)
-            return ['error' => 'File DOCX kh�ng h?p l? (thi?u document.xml)'];
+            return ['error' => 'File DOCX không hợp lệ (thiếu document.xml)'];
 
-        // L?y metadata t? core.xml
+        // Lấy metadata từ core.xml
         $bookTitle = '';
         $author = '';
         if ($coreXml) {
@@ -115,8 +115,8 @@ if (!function_exists('extractTextFromFile')) {
 
         // Walk paragraphs
         $chapters = [];
-        $currentChapter = ['index' => 0, 'title' => 'T?ng quan', 'sections' => []];
-        $currentSection = ['index' => 1, 'title' => 'T?ng quan', 'content' => '', 'page_start' => 1, 'page_end' => 1];
+        $currentChapter = ['index' => 0, 'title' => 'Tổng quan', 'sections' => []];
+        $currentSection = ['index' => 1, 'title' => 'Tổng quan', 'content' => '', 'page_start' => 1, 'page_end' => 1];
         $chapterIdx = 0;
         $sectionIdx = 1;
         $pageNum = 1;
@@ -202,7 +202,7 @@ if (!function_exists('extractTextFromFile')) {
             $chapters[] = $currentChapter;
         }
 
-        // N?u kh�ng parse du?c g�, fallback
+        // Nếu không parse được gì, fallback
         if (empty($chapters)) {
             $plain = '';
             foreach ($paragraphs as $p) {
@@ -222,12 +222,12 @@ if (!function_exists('extractTextFromFile')) {
     }
 
     // =========================================================
-    // PDF EXTRACTOR - D�ng Gemini Files API (t?t nh?t cho PDF)
+    // PDF EXTRACTOR - Dùng Gemini Files API (tốt nhất cho PDF)
     // =========================================================
 
     function extractPdfText(string $filePath, string $apiKey): array
     {
-        // Option A: pdftotext n?u c� tr�n server (ki?m tra shell_exec v� exec c� b? disable kh�ng)
+        // Option A: pdftotext nếu có trên server (kiểm tra shell_exec và exec có bị disable không)
         if (function_exists('shell_exec') && function_exists('exec')) {
             $hasPdftotext = trim(shell_exec('which pdftotext 2>/dev/null') ?: '');
             if (!empty($hasPdftotext)) {
@@ -237,33 +237,33 @@ if (!function_exists('extractTextFromFile')) {
             }
         }
 
-        // Option B: Gemini Files API (fallback, t?t nh?t)
+        // Option B: Gemini Files API (fallback, tốt nhất)
         if (!empty($apiKey)) {
             return extractPdfViaGemini($filePath, $apiKey);
         }
 
-        return ['error' => 'Kh�ng c� phuong th?c d?c PDF. C?n pdftotext ho?c Gemini API Key.'];
+        return ['error' => 'Không có phương thức đọc PDF. Cần pdftotext hoặc Gemini API Key.'];
     }
 
     // =========================================================
-    // [NEW] UPLOAD PDF 1 L?N ? L?y fileUri d�ng nhi?u l?n
+    // [NEW] UPLOAD PDF 1 LẦN -> Lấy fileUri dùng nhiều lần
     // =========================================================
 
     /**
-     * Upload file l�n Gemini Files API, tr? v? fileUri.
-     * fileUri n�y t?n t?i 48h, c� th? d�ng cho nhi?u l?n g?i.
+     * Upload file lên Gemini Files API, trả về fileUri.
+     * fileUri này tồn tại 48h, có thể dùng cho nhiều lần gửi.
      */
     function uploadFileToGeminiFiles(string $filePath, string $apiKey, string $mimeType = 'application/pdf'): array
     {
         if (empty($apiKey))
-            return ['error' => 'Thi?u API Key'];
+            return ['error' => 'Thiếu API Key'];
         if (!file_exists($filePath))
-            return ['error' => 'File kh�ng t?n t?i: ' . $filePath];
+            return ['error' => 'File không tồn tại: ' . $filePath];
 
         $fileSize = filesize($filePath);
         $startUrl = "https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=resumable&key={$apiKey}";
 
-        // Step 1: Kh?i t?o resumable upload
+        // Step 1: Khởi tạo resumable upload
         $ch = curl_init($startUrl);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
@@ -288,8 +288,8 @@ if (!function_exists('extractTextFromFile')) {
         $uploadUrl = trim($m[1] ?? '');
         if (empty($uploadUrl)) {
             if (function_exists('training_log'))
-                training_log("uploadFileToGeminiFiles: Kh�ng l?y du?c upload URL. Response header: " . mb_substr($startResponse, 0, 500));
-            return ['error' => 'Kh�ng kh?i t?o du?c upload l�n Gemini Files API'];
+                training_log("uploadFileToGeminiFiles: Không lấy được upload URL. Response header: " . mb_substr($startResponse, 0, 500));
+            return ['error' => 'Không khởi tạo được upload lên Gemini Files API'];
         }
 
         // Step 2: Upload bytes
@@ -321,56 +321,56 @@ if (!function_exists('extractTextFromFile')) {
         if (!$fileUri) {
             if (function_exists('training_log'))
                 training_log("uploadFileToGeminiFiles: Upload failed HTTP {$uploadHttpCode}. Response: " . json_encode($uploadResult));
-            return ['error' => 'Upload PDF l�n Gemini th?t b?i (HTTP ' . $uploadHttpCode . ')'];
+            return ['error' => 'Upload PDF lên Gemini thất bại (HTTP ' . $uploadHttpCode . ')'];
         }
 
         if (function_exists('training_log'))
             training_log("uploadFileToGeminiFiles: OK. URI={$fileUri}");
 
-        // Ch? Gemini x? l� file (d?c bi?t quan tr?ng cho file l?n)
+        // Chờ Gemini xử lý file (đặc biệt quan trọng cho file lớn)
         sleep(3);
 
         return ['file_uri' => $fileUri, 'file_name' => $fileName, 'file_size' => $fileSize];
     }
 
     // =========================================================
-    // [NEW] EXTRACT THEO PAGE RANGE (1 l?n g?i don l?)
+    // [NEW] EXTRACT THEO PAGE RANGE (1 lần gửi đơn lẻ)
     // =========================================================
 
     /**
-     * Tr�ch xu?t n?i dung t? 1 range trang c?a PDF d� upload.
+     * Trích xuất nội dung từ 1 range trang của PDF đã upload.
      *
-     * @param string $fileUri  URI t? Gemini Files API
-     * @param int    $pageStart Trang b?t d?u (1-indexed)
-     * @param int    $pageEnd   Trang k?t th�c
+     * @param string $fileUri  URI từ Gemini Files API
+     * @param int    $pageStart Trang bắt đầu (1-indexed)
+     * @param int    $pageEnd   Trang kết thúc
      * @param string $apiKey
      * @return array chapters array | ['error' => ...]
      */
     function extractPdfPageRange(string $fileUri, int $pageStart, int $pageEnd, string $apiKey): array
     {
         $prompt = <<<PROMPT
-B?n l� c�ng c? tr�ch xu?t n?i dung s�ch. H�y d?c �O?N PDF t? TRANG {$pageStart} �?N TRANG {$pageEnd} v� tr? v? JSON v?i c?u tr�c:
+Bạn là công cụ trích xuất nội dung sách. Hãy đọc ĐOẠN PDF từ TRANG {$pageStart} ĐẾN TRANG {$pageEnd} và trả về JSON với cấu trúc:
 
 {
   "chapters": [
     {
       "index": 1,
-      "title": "T�n chuong ho?c ti�u d? l?n nh?t trong do?n n�y",
+      "title": "Tên chương hoặc tiêu đề lớn nhất trong đoạn này",
       "sections": [
         {
           "index": 1,
-          "title": "T�n m?c/ti�u d? ph? (n?u c�, n?u kh�ng th� d? tr?ng)",
+          "title": "Tên mục/tiêu đề phụ (nếu có, nếu không thì để trống)",
           "page_start": {$pageStart},
           "page_end": {$pageEnd},
-          "content": "To�n b? n?i dung van b?n, gi? nguy�n c�u ch?, KH�NG t�m t?t"
+          "content": "Toàn bộ nội dung văn bản, giữ nguyên câu chữ, KHÔNG tóm tắt"
         }
       ]
     }
   ]
 }
 
-Quy t?c:
-- CH? x? l� trang {$pageStart} d?n {$pageEnd}, b? qua n?i dung ngo�i kho?ng n�y
+Quy tắc:
+- CHỈ xử lý trang {$pageStart} đến {$pageEnd}, bỏ qua nội dung ngoài khoảng này
 Bạn là công cụ trích xuất nội dung sách. Hãy đọc ĐOẠN PDF từ TRANG {$pageStart} ĐẾN TRANG {$pageEnd} và trả về JSON với cấu trúc:
 
 {
@@ -443,7 +443,7 @@ PROMPT;
         $result = json_decode($response, true);
         $rawJson = $result['candidates'][0]['content']['parts'][0]['text'] ?? null;
         if (!$rawJson)
-            return ['error' => "Gemini tr? v? r?ng (pages {$pageStart}-{$pageEnd})"];
+            return ['error' => "Gemini trả về rỗng (pages {$pageStart}-{$pageEnd})"];
 
         $rawJson = preg_replace('/^```json\s*/i', '', trim($rawJson));
         $rawJson = preg_replace('/```\s*$/i', '', $rawJson);
@@ -468,14 +468,14 @@ PROMPT;
     }
 
     // =========================================================
-    // [NEW] MULTI: G?i 5 page-range requests song song
+    // [NEW] MULTI: Gửi 5 page-range requests song song
     // =========================================================
 
     /**
-     * G?i �?NG TH?I t?i da 5 Gemini page-range requests d�ng curl_multi.
+     * Gửi ĐỒNG THỜI tối đa 5 Gemini page-range requests dùng curl_multi.
      *
      * @param string $fileUri
-     * @param array  $pageRanges  [ ['start'=>1,'end'=>5,'chunk_index'=>0], ... ] t?i da 5 ph?n t?
+     * @param array  $pageRanges  [ ['start'=>1,'end'=>5,'chunk_index'=>0], ... ] tối đa 5 phần tử
      * @param string $apiKey
      * @return array  Indexed by chunk_index: [ chunk_index => result_array | error_array ]
      */
@@ -491,31 +491,31 @@ PROMPT;
             $chunkIndex = $range['chunk_index'];
 
             $prompt = <<<PROMPT
-B?n l� c�ng c? tr�ch xu?t n?i dung s�ch. H�y d?c �O?N PDF t? TRANG {$pageStart} �?N TRANG {$pageEnd} v� tr? v? JSON v?i c?u tr�c:
+Bạn là công cụ trích xuất nội dung sách. Hãy đọc ĐOẠN PDF từ TRANG {$pageStart} ĐẾN TRANG {$pageEnd} và trả về JSON với cấu trúc:
 
 {
   "chapters": [
     {
       "index": 1,
-      "title": "T�n chuong ho?c ti�u d? l?n nh?t trong do?n n�y",
+      "title": "Tên chương hoặc tiêu đề lớn nhất trong đoạn này",
       "sections": [
         {
           "index": 1,
-          "title": "T�n m?c/ti�u d? ph? (n?u c�)",
+          "title": "Tên mục/tiêu đề phụ (nếu có)",
           "page_start": {$pageStart},
           "page_end": {$pageEnd},
-          "content": "To�n b? n?i dung van b?n, gi? nguy�n c�u ch?, KH�NG t�m t?t"
+          "content": "Toàn bộ nội dung văn bản, giữ nguyên câu chữ, KHÔNG tóm tắt"
         }
       ]
     }
   ]
 }
 
-Quy t?c:
-- CH? x? l� trang {$pageStart} d?n {$pageEnd}
-- Gi? NGUY�N V?N n?i dung, kh�ng t�m t?t, kh�ng b? s�t
-- M?i Heading 1/Chuong ? chapter m?i; Heading 2/M?c ? section m?i
-- Tr? v? JSON thu?n t�y (kh�ng markdown wrapper)
+Quy tắc:
+- CHỈ xử lý trang {$pageStart} đến {$pageEnd}
+- Giữ NGUYÊN VĂN nội dung, không tóm tắt, không bỏ sót
+- Mỗi Heading 1/Chương -> chapter mới; Heading 2/Mục -> section mới
+- Trả về JSON thuần túy (không markdown wrapper)
 PROMPT;
 
             $payload = [
@@ -550,7 +550,7 @@ PROMPT;
             $handles[$chunkIndex] = ['ch' => $ch, 'range' => $range];
         }
 
-        // Ch? t?t c? 5 requests ho�n th�nh
+        // Chờ tất cả 5 requests hoàn thành
         $active = null;
         do {
             $status = curl_multi_exec($mh, $active);
@@ -559,7 +559,7 @@ PROMPT;
             }
         } while ($active > 0 && $status === CURLM_OK);
 
-        // Thu th?p k?t qu?
+        // Thu thập kết quả
         $results = [];
         foreach ($handles as $chunkIndex => $info) {
             $ch = $info['ch'];
@@ -577,7 +577,7 @@ PROMPT;
                 continue;
             }
             if ($httpCode === 429) {
-                // Rate limit � tr? v? error d? caller re-queue
+                // Rate limit -> trả về error để caller re-queue
                 $results[$chunkIndex] = ['error' => 'rate_limit', 'retry' => true];
                 continue;
             }
@@ -592,7 +592,7 @@ PROMPT;
             $rawJson = $result['candidates'][0]['content']['parts'][0]['text'] ?? null;
 
             if (!$rawJson) {
-                $results[$chunkIndex] = ['error' => "Gemini r?ng pages {$range['start']}-{$range['end']}"];
+                $results[$chunkIndex] = ['error' => "Gemini rỗng pages {$range['start']}-{$range['end']}"];
                 continue;
             }
 
@@ -631,7 +631,7 @@ PROMPT;
 
 
     /**
-     * �?c PDF b?ng pdftotext (c?n c�i tr�n server Linux)
+     * Đọc PDF bằng pdftotext (cần cài trên server Linux)
      */
     function extractPdfViaPdftotext(string $filePath): array
     {
@@ -641,7 +641,7 @@ PROMPT;
         exec("pdftotext -layout {$escaped} - 2>&1", $output, $code);
 
         if ($code !== 0 || empty($output)) {
-            return ['error' => 'pdftotext th?t b?i'];
+            return ['error' => 'pdftotext thất bại'];
         }
 
         $text = implode("\n", $output);
@@ -664,8 +664,8 @@ PROMPT;
     }
 
     /**
-     * Upload PDF l�n Gemini Files API d? l?y text c� c?u tr�c
-     * Gemini c� th? d?c PDF, h�nh ?nh, scan
+     * Upload PDF lên Gemini Files API để lấy text có cấu trúc
+     * Gemini có thể đọc PDF, hình ảnh, scan
      */
     function extractPdfViaGemini(string $filePath, string $apiKey): array
     {
@@ -674,7 +674,7 @@ PROMPT;
         $mimeType = 'application/pdf';
         $fileSize = filesize($filePath);
 
-        // Step 1: Kh?i t?o resumable upload
+        // Step 1: Khởi tạo resumable upload
         $startUrl = "https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=resumable&key={$apiKey}";
 
         $ch = curl_init($startUrl);
@@ -697,13 +697,13 @@ PROMPT;
         $startResponse = curl_exec($ch);
         curl_close($ch);
 
-        // L?y upload URL t? header
+        // Lấy upload URL từ header
         preg_match('/x-goog-upload-url:\s*(https?:\/\/[^\r\n]+)/i', $startResponse, $m);
         $uploadUrl = trim($m[1] ?? '');
 
         if (empty($uploadUrl)) {
-            training_log("Gemini Files API: Kh�ng l?y du?c upload URL");
-            return ['error' => 'Kh�ng kh?i t?o du?c upload l�n Gemini'];
+            training_log("Gemini Files API: Không lấy được upload URL");
+            return ['error' => 'Không khởi tạo được upload lên Gemini'];
         }
 
         // Step 2: Upload bytes
@@ -731,44 +731,44 @@ PROMPT;
         $fileUri = $uploadResult['file']['uri'] ?? null;
         if (!$fileUri) {
             training_log("Gemini Files API upload failed: " . json_encode($uploadResult));
-            return ['error' => 'Upload PDF l�n Gemini th?t b?i'];
+            return ['error' => 'Upload PDF lên Gemini thất bại'];
         }
 
         training_log("Gemini Files API: Uploaded successfully. URI = {$fileUri}");
         sleep(3);
 
-        // Step 3: Y�u c?u Gemini tr�ch xu?t c?u tr�c JSON
+        // Step 3: Yêu cầu Gemini trích xuất cấu trúc JSON
         $prompt = <<<'PROMPT'
-B?n l� c�ng c? tr�ch xu?t n?i dung t? s�ch/t�i li?u. H�y d?c to�n b? t�i li?u PDF n�y v� tr? v? JSON v?i c?u tr�c ch�nh x�c nhu sau:
+Bạn là công cụ trích xuất nội dung từ sách/tài liệu. Hãy đọc toàn bộ tài liệu PDF này và trả về JSON với cấu trúc chính xác như sau:
 
 {
-  "book_title": "T�n s�ch ho?c t�i li?u",
-  "author": "T�n t�c gi? (n?u c�)",
-  "language": "vi ho?c en",
+  "book_title": "Tên sách hoặc tài liệu",
+  "author": "Tên tác giả (nếu có)",
+  "language": "vi hoặc en",
   "chapters": [
     {
       "index": 1,
-      "title": "T�n chuong",
+      "title": "Tên chương",
       "sections": [
         {
           "index": 1,
-          "title": "T�n m?c/ti�u d? ph?",
+          "title": "Tên mục/tiêu đề phụ",
           "page_start": 5,
           "page_end": 12,
-          "content": "To�n b? n?i dung van b?n c?a m?c n�y, gi? nguy�n c�u ch?, kh�ng t�m t?t"
+          "content": "Toàn bộ nội dung văn bản của mục này, giữ nguyên câu chữ, không tóm tắt"
         }
       ]
     }
   ]
 }
 
-Quy t?c:
-- Gi? NGUY�N V?N to�n b? n?i dung, kh�ng t�m t?t, kh�ng b? s�t
-- M?i Heading 1 / Chuong t?o m?t chapter m?i
-- M?i Heading 2 / M?c t?o m?t section m?i trong chapter
-- page_start v� page_end l� s? trang th?c t? trong PDF
-- N?u kh�ng c� c?u tr�c chapter r� r�ng, t?o 1 chapter duy nh?t v?i c�c section theo do?n
-- Tr? v? JSON thu?n t�y, kh�ng c� markdown wrapper hay gi?i th�ch
+Quy tắc:
+- Giữ NGUYÊN VĂN toàn bộ nội dung, không tóm tắt, không bỏ sót
+- Mỗi Heading 1 / Chương tạo một chapter mới
+- Mỗi Heading 2 / Mục tạo một section mới trong chapter
+- page_start và page_end là số trang thực tế trong PDF
+- Nếu không có cấu trúc chapter rõ ràng, tạo 1 chapter duy nhất với các section theo đoạn
+- Trả về JSON thuần túy, không có markdown wrapper hay giải thích
 PROMPT;
 
         $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={$apiKey}";
@@ -828,10 +828,10 @@ PROMPT;
 
         if (!$rawJson) {
             training_log("Gemini extraction: No content returned");
-            return ['error' => 'Gemini kh�ng tr? v? n?i dung'];
+            return ['error' => 'Gemini không trả về nội dung'];
         }
 
-        // Strip markdown code fences n?u c�
+        // Strip markdown code fences nếu có
         $rawJson = preg_replace('/^```json\s*/i', '', trim($rawJson));
         $rawJson = preg_replace('/```\s*$/i', '', $rawJson);
 
@@ -847,19 +847,19 @@ PROMPT;
     }
 
     /**
-     * .doc (Word 97-2003) - th? d�ng Gemini Files API
+     * .doc (Word 97-2003) - thử dùng Gemini Files API
      */
     function extractDocText(string $filePath, string $apiKey): array
     {
         if (!empty($apiKey)) {
-            // Gemini c� th? d?c .doc
+            // Gemini có thể đọc .doc
             return extractViaGeminiGeneric($filePath, 'application/msword', $apiKey);
         }
-        return ['error' => 'C?n Gemini API Key d? d?c file .doc cu'];
+        return ['error' => 'Cần Gemini API Key để đọc file .doc cũ'];
     }
 
     /**
-     * Generic Gemini Files API extractor cho m?i lo?i file
+     * Generic Gemini Files API extractor cho mỗi loại file
      */
     function extractViaGeminiGeneric(string $filePath, string $mimeType, string $apiKey): array
     {
@@ -915,7 +915,7 @@ PROMPT;
         if (!$uri)
             return ['error' => 'Upload failed'];
 
-        // Tr�ch xu?t
+        // Trích xuất
         sleep(3);
         $prompt = "Extract all text content from this document. Return as plain text preserving paragraphs.";
         $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={$apiKey}";
@@ -957,22 +957,22 @@ PROMPT;
     }
 
     // =========================================================
-    // HELPER: Parse plain text th�nh c?u tr�c chuong/m?c
+    // HELPER: Parse plain text thành cấu trúc chương/mục
     // =========================================================
 
     /**
-     * Heuristic ph�n t�ch text thu?n th�nh chapters/sections
-     * D�ng khi kh�ng c� heading r� r�ng
+     * Heuristic phân tích text thuần thành chapters/sections
+     * Dùng khi không có heading rõ ràng
      */
     function parseTextIntoChapters(string $text, string $bookTitle = '', string $author = ''): array
     {
         $lines = preg_split('/\r?\n/', $text);
         $chapters = [];
 
-        $currentChapter = ['index' => 1, 'title' => 'N?i dung', 'sections' => []];
+        $currentChapter = ['index' => 1, 'title' => 'Nội dung', 'sections' => []];
         $currentSection = [
             'index' => 1,
-            'title' => 'Ph?n 1',
+            'title' => 'Phần 1',
             'content' => '',
             'page_start' => 1,
             'page_end' => 1,
@@ -986,7 +986,7 @@ PROMPT;
             $lineCount++;
             $trimmed = trim($line);
 
-            // Simulate page (m?i ~40 d�ng � 1 trang)
+            // Simulate page (mỗi ~40 dòng = 1 trang)
             if ($lineCount % 40 === 0) {
                 $pageNum++;
                 $currentSection['page_end'] = $pageNum;
@@ -1045,11 +1045,11 @@ PROMPT;
             $chapters = [
                 [
                     'index' => 1,
-                    'title' => $bookTitle ?: 'T�i li?u',
+                    'title' => $bookTitle ?: 'Tài liệu',
                     'sections' => [
                         [
                             'index' => 1,
-                            'title' => 'N?i dung',
+                            'title' => 'Nội dung',
                             'content' => $text,
                             'page_start' => 1,
                             'page_end' => max(1, intdiv(count($lines), 40)),
@@ -1072,7 +1072,7 @@ PROMPT;
     // =========================================================
 
     /**
-     * Ph�t hi?n Chapter Heading (Heading 1 level)
+     * Phát hiện Chapter Heading (Heading 1 level)
      */
     function isChapterHeading(string $line): bool
     {
@@ -1080,8 +1080,8 @@ PROMPT;
         if (mb_strlen($line) > 120 || mb_strlen($line) < 2)
             return false;
 
-        // Numbered: "Chuong 1", "CHAPTER 1", "I.", "1.", "Ph?n 1"
-        if (preg_match('/^(chuong|chapter|ph?n|part|b�i|lesson|unit|module)\s*[\d\w]+/iu', $line))
+        // Numbered: "Chương 1", "CHAPTER 1", "I.", "1.", "Phần 1"
+        if (preg_match('/^(chuong|chapter|phần|part|bài|lesson|unit|module)\s*[\\d\\w]+/iu', $line))
             return true;
         if (preg_match('/^[IVXLC]+\.\s+\S/u', $line))
             return true; // Roman numerals
@@ -1096,7 +1096,7 @@ PROMPT;
     }
 
     /**
-     * Ph�t hi?n Section Heading (Heading 2 level)
+     * Phát hiện Section Heading (Heading 2 level)
      */
     function isSectionHeading(string $line): bool
     {
@@ -1111,7 +1111,7 @@ PROMPT;
             return true;
 
         // Keyword patterns
-        if (preg_match('/^(m?c|section|ti?u m?c|di?u|article)\s+[\d\w]+/iu', $line))
+        if (preg_match('/^(mục|section|tiểu mục|điều|article)\s+[\\d\\w]+/iu', $line))
             return true;
 
         return false;

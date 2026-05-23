@@ -1,5 +1,5 @@
 <?php
-// api/ses_quota.php � Lightweight SES Health API for Dashboard Widget
+// api/ses_quota.php — Lightweight SES Health API for Dashboard Widget
 // Returns local DB stats instantly + cached AWS quota (if IAM credentials configured)
 // Cache TTL: 5 minutes to avoid hammering AWS API
 
@@ -39,7 +39,7 @@ $endDate   = !empty($_GET['endDate'])   ? $_GET['endDate']   : null;
 
 // Calculate days in range (for label display)
 if ($startDate && $endDate) {
-    // [FIX P36-SQ] Validate date format before use � prevents SQL injection via date params
+    // [FIX P36-SQ] Validate date format before use — prevents SQL injection via date params
     $startDate = preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate) ? $startDate : date('Y-m-01');
     $endDate   = preg_match('/^\d{4}-\d{2}-\d{2}$/', $endDate)   ? $endDate   : date('Y-m-d');
     $days = max(1, (int) round((strtotime($endDate) - strtotime($startDate)) / 86400) + 1);
@@ -133,7 +133,7 @@ if ($cacheValid && !empty($settings['ses_quota_cache'])) {
 
 // --- Apply Fallback if AWS Quota failed --------------------------------------
 if (!$awsQuota && $isSES) {
-    // N?u chua l?y du?c t? AWS (do sai IAM/kh�ng c� cache) -> T?o limit gi? d?nh/b?o v? d?a tr�n localDb
+    // Nếu chưa lấy được từ AWS (do sai IAM/không có cache) -> Tạo limit giả định/bảo vệ dựa trên localDb
     $defaultLimit = (int) ($settings['manual_ses_quota'] ?? 50000); 
     $awsQuota = [
         'max_24h'   => $defaultLimit,
@@ -174,7 +174,7 @@ jsonResponse(true, [
 
     // Credential setup guide
     'credential_hint' => !$hasValidIAMKey && $isSES ? [
-        'issue' => $awsAccessKey ? 'SMTP password ? IAM Secret Key. aws_secret_key ph?i l� IAM Secret (~40 chars), kh�ng ph?i SES SMTP password (44+ chars).' : 'Chua c?u h�nh aws_access_key v� aws_secret_key.',
+        'issue' => $awsAccessKey ? 'SMTP password ? IAM Secret Key. aws_secret_key phải là IAM Secret (~40 chars), không phải SES SMTP password (44+ chars).' : 'Chưa cấu hình aws_access_key và aws_secret_key.',
         'setup_sql' => "INSERT INTO system_settings (key,value) VALUES ('aws_access_key','AKIA...'),('aws_secret_key','[IAM_SECRET_40_CHARS]') ON DUPLICATE KEY UPDATE value=VALUES(value);"
     ] : null,
 ]);

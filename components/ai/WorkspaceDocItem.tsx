@@ -125,7 +125,7 @@ const WorkspaceDocItem = React.memo(({
                             if (safeUrl) window.open(safeUrl, '_blank');
                         }}
                         className={`p-2 rounded-xl border shadow-sm transition-all font-bold ${isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10' : 'bg-white border-slate-200 text-slate-500 hover:text-blue-600 hover:bg-blue-50'}`}
-                        title="T?i xu?ng"
+                        title="Tải xuống"
                     >
                         <Download className="w-3.5 h-3.5" />
                     </button>
@@ -136,7 +136,7 @@ const WorkspaceDocItem = React.memo(({
                         onDelete(doc);
                     }}
                     className={`p-2 rounded-xl border shadow-sm transition-all font-bold ${isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10' : 'bg-white border-slate-200 text-slate-500 hover:text-rose-600 hover:bg-rose-50'}`}
-                    title="X�a t?p"
+                    title="Xóa tệp"
                 >
                     <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -149,7 +149,7 @@ const WorkspaceDocItem = React.memo(({
                         onToggleContext(doc);
                     }}
                     className={`absolute bottom-3 right-3 p-2 rounded-xl border shadow-sm transition-all font-bold z-10 ${isInContext ? 'bg-brand text-white border-brand shadow-brand' : (isDarkTheme ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-brand' : 'bg-white border-slate-200 text-slate-400 hover:text-brand hover:border-brand/40')}`}
-                    title={isInContext ? "G? kh?i Context" : "Ghim l�m Context d? h?i AI"}
+                    title={isInContext ? "Gỡ khỏi Context" : "Ghim làm Context để hỏi AI"}
                 >
                     <Pin className={`w-3.5 h-3.5 ${isInContext ? 'fill-current' : ''}`} />
                 </button>

@@ -54,7 +54,7 @@ Focus on:
 Return ONLY a valid JSON object where keys are the main keyword and values are arrays of synonyms.
 Example format:
 {
-  \"gi\": [\"chi ph\", \"h?c ph\", \"bao nhiu\"],
+  \"giá\": [\"chi phí\", \"học phí\", \"bao nhiêu\"],
   \"dang k\": [\"ghi danh\", \"mua\", \"tham gia\"]
 }
 

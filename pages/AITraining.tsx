@@ -1139,7 +1139,7 @@ Lịch sử hoạt động:
     }, [deleteTarget, selectedProperty, fetchDocs]);
 
     const handleAddManual = React.useCallback(async () => {
-        if (!newDoc.content) return toast.error('Nội dung không được d? tr?ng');
+        if (!newDoc.content) return toast.error('Nội dung không được để trống');
 
         setLoading(true);
         try {
@@ -1213,7 +1213,7 @@ Lịch sử hoạt động:
 
     const handleUpdateDoc = React.useCallback(async () => {
         if (!editingDoc) return;
-        if (!editingDoc.content) return toast.error('Nội dung không được d? tr?ng');
+        if (!editingDoc.content) return toast.error('Nội dung không được để trống');
 
         // Check for changes
         const originalDoc = docs.find(d => d.id === editingDoc.id);
@@ -1320,7 +1320,7 @@ Lịch sử hoạt động:
             } else {
                 toast.error('Lỗi: ' + res.message);
             }
-        } catch (e) { toast.error('Lỗi k?t n?i'); }
+        } catch (e) { toast.error('Lỗi kết nối'); }
         finally { setLoading(false); }
     }, [selectedProperty, fetchSettings]);
 
@@ -1477,7 +1477,7 @@ Lịch sử hoạt động:
                 toast.error('Lỗi khi lưu');
             }
         } catch (e) {
-            toast.error('Lỗi k?t n?i');
+            toast.error('Lỗi kết nối');
         } finally {
             setLoading(false);
         }
@@ -1650,7 +1650,7 @@ Lịch sử hoạt động:
                 toast.error(res.message || 'Lỗi khi xóa hàng loạt');
             }
         } catch (e) {
-            toast.error('Lỗi k?t n?i');
+            toast.error('Lỗi kết nối');
         } finally {
             setLoading(false);
         }
@@ -1682,7 +1682,7 @@ Lịch sử hoạt động:
                 toast.error(res.message);
             }
         } catch (e) {
-            toast.error('Lỗi k?t n?i');
+            toast.error('Lỗi kết nối');
         } finally {
             setLoading(false);
         }

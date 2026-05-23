@@ -37,8 +37,8 @@ if (!function_exists('traceLog')) {
 if (!function_exists('runWorkerFlow')) {
     function runWorkerFlow($pdo)
     {
-        // [FIX #3] D�ng bi?n c?c b? thay v� $_SERVER['REQUEST_TIME']
-        // $_SERVER['REQUEST_TIME'] kh�ng t?n t?i khi ch?y t? CLI/Cron tr�n m?t s? c?u h�nh server
+        // [FIX #3] Dùng biến cục bộ thay vì $_SERVER['REQUEST_TIME']
+        // $_SERVER['REQUEST_TIME'] không tồn tại khi chạy từ CLI/Cron trên một số cấu hình server
         $workerStartTime = time();
 
         // [PERF-GUARD] Stop if server is saturated
@@ -253,7 +253,7 @@ if (!function_exists('runWorkerFlow')) {
                 break;
             }
 
-            // [FIX #3] Dng $workerStartTime thay v $_SERVER['REQUEST_TIME'] (an ton hon cho CLI/Cron)
+            // [FIX #3] Dùng $workerStartTime thay vì $_SERVER['REQUEST_TIME'] (an toàn hơn cho CLI/Cron)
             if (time() - $workerStartTime > 280)
                 break;
 
@@ -327,7 +327,7 @@ if (!function_exists('runWorkerFlow')) {
                 // With $stepIndex: 20 iterations (one-time build) + O(1) per lookup = ~20 total.
                 $stepIndex = [];
 
-                // [FIX #1] Guard: n?u flow_steps kh�ng h?p l? ? fail item thay v� crash to�n worker
+                // [FIX #1] Guard: nếu flow_steps không hợp lệ -> fail item thay vì crash toàn worker
                 if (!is_array($flowSteps) || empty($flowSteps)) {
                     $stmtFailState->execute(['Invalid flow_steps JSON', $queueId, $item['subscriber_workspace_id']]);
                     $logs[] = "[ERROR] Flow {$flowId} has invalid steps JSON. Item {$queueId} marked failed.";
@@ -436,8 +436,8 @@ if (!function_exists('runWorkerFlow')) {
 
                 $currentStepId = $item['step_id'];
                 $stepsProcessedInRun = 0;
-                $MAX_STEPS = 50; // [FIX] Tang t? 20?50 d? nh?t qu�n v?i worker_priority.php
-                // Flow ph?c t?p >20 bu?c condition/split s? b? d?ng s?m n?u gi? 20
+                $MAX_STEPS = 50; // [FIX] Tăng từ 20 lên 50 để nhất quán với worker_priority.php
+                // Flow phức tạp >20 bước condition/split sẽ bị dừng sớm nếu giữ 20
                 $shouldContinueChain = true;
 
                 while ($shouldContinueChain && $stepsProcessedInRun < $MAX_STEPS) {
@@ -509,7 +509,7 @@ if (!function_exists('runWorkerFlow')) {
                             $stmtWaitSchedule->execute([$nextSendAt, $currentStepId, $queueId, $item['subscriber_workspace_id']]);
                             $logs[] = "  -> Step '{$currentStep['label']}' paused (Time Restriction). Re-scheduled to: $nextSendAt";
                             $shouldContinueChain = false;
-                            break; // Ng?t kh?i d�ng while ngay l?p t?c, d?i l?n ch?y sau
+                            break; // Ngắt khỏi vòng while ngay lập tức, đợi lần chạy sau
                         }
                     }
 
@@ -531,7 +531,7 @@ if (!function_exists('runWorkerFlow')) {
                         'total_sent_today' => $subscriberFreqCache[$cacheKey],
                         'activity_cache' => $activityCache,
                         'now' => $now,
-                        // [FIX #2] Cast (string) tru?c trim() � tr�nh PHP 8.1 Deprecated khi step_id l� null
+                        // [FIX #2] Cast (string) trước trim() để tránh PHP 8.1 Deprecated khi step_id là null
                         // [CRITICAL FIX] is_resumed_wait guards against the wait being re-calculated
                         // from scratch, but it MUST only be TRUE when:
                         // 1. This is the first step of this worker run (stepsProcessedInRun===1)
