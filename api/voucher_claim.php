@@ -148,10 +148,14 @@ try {
         $pdo->prepare("INSERT INTO subscribers ($cols) VALUES ($ph) ON DUPLICATE KEY UPDATE status = 'active'")
             ->execute(array_values($upsertFields));
 
-        // Add to Target List if configured
+        // Add to Target List if configured (explicitly set workspace_id for isolation and update counts idempotently)
         if (!empty($camp['claim_target_list_id'])) {
-            $pdo->prepare("INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id) VALUES (?, ?)")
-                ->execute([$sid, $camp['claim_target_list_id']]);
+            $stmtListIns = $pdo->prepare("INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id, workspace_id) VALUES (?, ?, ?)");
+            $stmtListIns->execute([$sid, $camp['claim_target_list_id'], $camp['workspace_id']]);
+            if ($stmtListIns->rowCount() > 0) {
+                $pdo->prepare("UPDATE lists SET subscriber_count = (SELECT COUNT(*) FROM subscriber_lists WHERE list_id = ? AND workspace_id = ?) WHERE id = ? AND workspace_id = ?")
+                    ->execute([$camp['claim_target_list_id'], $camp['workspace_id'], $camp['claim_target_list_id'], $camp['workspace_id']]);
+            }
         }
     }
 

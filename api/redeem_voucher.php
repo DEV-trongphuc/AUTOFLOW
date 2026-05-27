@@ -35,7 +35,7 @@ if (!empty($ids) && is_array($ids)) {
             JOIN voucher_campaigns c ON vc.campaign_id = c.id
             WHERE vc.id IN ($placeholders) 
               AND c.workspace_id = ?
-              AND vc.status != 'used' 
+              AND vc.status = 'unused' 
               AND vc.subscriber_id IS NOT NULL
             FOR UPDATE
         ");

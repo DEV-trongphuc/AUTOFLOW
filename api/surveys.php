@@ -51,7 +51,7 @@ try {
         case 'create': {
             $newId   = generateUUID();
             $name    = trim($input['name'] ?? 'Khảo sát mới');
-            $baseSlug= preg_replace('/[^a-z0-9]+/', '-', strtolower(iconv('UTF-8', 'ASCII//TRANSLIT', $name)));
+            $baseSlug= clean_slug($name);
             $slug    = $baseSlug . '-' . substr($newId, 0, 6);
 
             $blocks_json = '[]';
@@ -100,6 +100,28 @@ try {
 
         // ─── UPDATE (auto-save) ───────────────────────────────────────────────
         case 'update': {
+            // Validate slug if it is being updated
+            if (isset($input['slug'])) {
+                $rawSlug = trim($input['slug']);
+                if (empty($rawSlug)) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'Slug không được để trống']);
+                    exit;
+                }
+                $cleanSlug = preg_replace('/[^a-z0-9\-]+/', '-', strtolower($rawSlug));
+                $cleanSlug = preg_replace('/-+/', '-', trim($cleanSlug, '-'));
+                
+                // Check uniqueness
+                $stmtCheck = $pdo->prepare("SELECT id FROM surveys WHERE slug = ? AND id != ?");
+                $stmtCheck->execute([$cleanSlug, $id]);
+                if ($stmtCheck->fetchColumn()) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'Slug này đã tồn tại, vui lòng chọn đường dẫn khác']);
+                    exit;
+                }
+                $input['slug'] = $cleanSlug; // overwrite with cleaned slug
+            }
+
             $allowedFields = ['name','slug','status','blocks_json','settings_json','thank_you_page','cover_style',
                               'target_list_id','flow_trigger_id','response_limit','close_at','require_login',
                               'allow_anonymous','one_per_email'];
@@ -422,6 +444,13 @@ try {
         // ─── EXPORT CSV ───────────────────────────────────────────────────────
         case 'export': {
             $format = $_GET['format'] ?? 'csv';
+            
+            // 1. Fetch survey questions to define absolute columns and maintain alignment
+            $qStmt = $pdo->prepare("SELECT block_id, label FROM survey_questions WHERE survey_id = ? ORDER BY order_index");
+            $qStmt->execute([$id]);
+            $surveyQuestions = $qStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // 2. Fetch responses
             $stmt = $pdo->prepare("
                 SELECT r.submitted_at, r.source_channel, r.device_type, r.time_spent_sec,
                        r.completion_rate, r.geo_country, r.geo_city,
@@ -439,26 +468,43 @@ try {
             header('Content-Disposition: attachment; filename="survey-responses-' . date('Ymd') . '.csv"');
             $out = fopen('php://output', 'w');
             fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
-            if (!empty($rows)) {
-                $headers = ['Thời gian', 'Email', 'Tên', 'Kênh', 'Thiết bị', 'Thời gian điền (s)', 'Hoàn thành %', 'Quốc gia', 'Thành phố'];
-                // Add question columns from first answer
-                $firstAnswers = json_decode($rows[0]['answers_json'], true) ?? [];
-                foreach ($firstAnswers as $ans) { $headers[] = $ans['label'] ?? $ans['block_id']; }
-                fputcsv($out, $headers);
+            
+            $headers = ['Thời gian', 'Email', 'Tên', 'Kênh', 'Thiết bị', 'Thời gian điền (s)', 'Hoàn thành %', 'Quốc gia', 'Thành phố'];
+            foreach ($surveyQuestions as $q) {
+                $headers[] = $q['label'] ?? $q['block_id'];
+            }
+            fputcsv($out, $headers);
 
-                foreach ($rows as $row) {
-                    $answers = json_decode($row['answers_json'], true) ?? [];
-                    $csvRow = [
-                        $row['submitted_at'], $row['subscriber_email'] ?? '', $row['subscriber_name'] ?? '',
-                        $row['source_channel'], $row['device_type'], $row['time_spent_sec'],
-                        $row['completion_rate'], $row['geo_country'] ?? '', $row['geo_city'] ?? ''
-                    ];
-                    foreach ($answers as $ans) {
-                        $val = $ans['answer_text'] ?? $ans['answer_num'] ?? (is_array($ans['answer_json'] ?? null) ? implode(', ', $ans['answer_json']) : '');
-                        $csvRow[] = $val;
+            foreach ($rows as $row) {
+                $answers = json_decode($row['answers_json'], true) ?? [];
+                
+                // Map respondent answers by block_id
+                $ansMap = [];
+                foreach ($answers as $ans) {
+                    $bId = $ans['block_id'] ?? ($ans['question_id'] ?? '');
+                    if ($bId !== '') {
+                        $ansMap[$bId] = $ans['answer_text'] ?? $ans['answer_num'] ?? (is_array($ans['answer_json'] ?? null) ? implode(', ', $ans['answer_json']) : '');
                     }
-                    fputcsv($out, $csvRow);
                 }
+
+                $csvRow = [
+                    $row['submitted_at'],
+                    $row['subscriber_email'] ?? '',
+                    $row['subscriber_name'] ?? '',
+                    $row['source_channel'],
+                    $row['device_type'],
+                    $row['time_spent_sec'],
+                    $row['completion_rate'],
+                    $row['geo_country'] ?? '',
+                    $row['geo_city'] ?? ''
+                ];
+
+                // Append answer for each question in exact order
+                foreach ($surveyQuestions as $q) {
+                    $csvRow[] = $ansMap[$q['block_id']] ?? '';
+                }
+
+                fputcsv($out, $csvRow);
             }
             fclose($out);
             exit;
@@ -479,4 +525,30 @@ function generateUUID(): string {
         mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff),
         mt_rand(0, 0x0fff) | 0x4000, mt_rand(0, 0x3fff) | 0x8000,
         mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff));
+}
+
+function clean_slug(string $name): string {
+    $unicode = [
+        'a' => 'á|à|ả|ã|ạ|ă|ắ|ằ|ẳ|ẵ|ặ|â|ấ|ầ|ẩ|ẫ|ậ',
+        'd' => 'đ',
+        'e' => 'é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ',
+        'i' => 'í|ì|ỉ|ĩ|ị',
+        'o' => 'ó|ò|ỏ|õ|ọ|ô|ố|ồ|ổ|ỗ|ộ|ơ|ớ|ờ|ở|ỡ|ợ',
+        'u' => 'ú|ù|ủ|ũ|ụ|ư|ứ|ừ|ử|ữ|ự',
+        'y' => 'ý|ỳ|ỷ|ỹ|ỵ',
+        'A' => 'Á|À|Ả|Ã|Ạ|Ă|Ắ|Ằ|Ẳ|Ẵ|Ặ|Â|Ấ|Ầ|Ẩ|Ẫ|Ậ',
+        'D' => 'Đ',
+        'E' => 'É|È|Ẻ|Ẽ|Ẹ|Ê|Ế|Ề|Ể|Ễ|Ệ',
+        'I' => 'Í|Ì|Ỉ|Ĩ|Ị',
+        'O' => 'Ó|Ò|Ỏ|Õ|Ọ|Ô|Ố|Ồ|Ổ|Ỗ|Ộ|Ơ|Ớ|Ờ|Ở|Ỡ|Ợ',
+        'U' => 'Ú|Ù|Ủ|Ũ|Ụ|Ư|Ứ|Ừ|Ử|Ữ|Ự',
+        'Y' => 'Ý|Ỳ|Ỷ|Ỹ|Ỵ'
+    ];
+    foreach ($unicode as $nonUnicode => $uni) {
+        $name = preg_replace("/($uni)/i", $nonUnicode, $name);
+    }
+    $baseSlug = preg_replace('/[^a-z0-9]+/', '-', strtolower($name));
+    $baseSlug = preg_replace('/-+/', '-', $baseSlug);
+    $baseSlug = trim($baseSlug, '-');
+    return empty($baseSlug) ? 'survey' : $baseSlug;
 }

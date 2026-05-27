@@ -42,22 +42,21 @@ function claimVoucherAtomic($pdo, $campaignId, $subscriberId, $rewardItemId = nu
         if (!$alreadyInTx) $pdo->beginTransaction();
 
         // Check if already claimed from this campaign
-        $stmtExist = $pdo->prepare("SELECT code FROM voucher_codes WHERE campaign_id = ? AND subscriber_id = ? LIMIT 1");
+        $stmtExist = $pdo->prepare("SELECT id, code FROM voucher_codes WHERE campaign_id = ? AND subscriber_id = ? LIMIT 1");
         $stmtExist->execute([$campaignId, $subscriberId]);
-        $existing = $stmtExist->fetchColumn();
+        $existing = $stmtExist->fetch(PDO::FETCH_ASSOC);
 
+        $codeId = null;
         if ($existing) {
-            $codeAssigned = $existing;
+            $codeAssigned = $existing['code'];
+            $codeId = $existing['id'];
         } else {
             if ($camp['code_type'] === 'static') {
                 $codeAssigned = $camp['static_code'];
+                $codeId = null;
             } else {
                 // Dynamic code assignment with atomic locking
-                static $vcSkipLocked = null;
-                if ($vcSkipLocked === null) {
-                    $v = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
-                    $vcSkipLocked = version_compare($v, '8.0.0', '>=') ? 'SKIP LOCKED' : '';
-                }
+                $vcSkipLocked = isDatabaseSkipLockedSupported($pdo) ? 'SKIP LOCKED' : '';
                 
                 $rewardCondition = "";
                 $params = [$campaignId];
@@ -76,9 +75,11 @@ function claimVoucherAtomic($pdo, $campaignId, $subscriberId, $rewardItemId = nu
                         $expiresAt = date('Y-m-d H:i:s', strtotime("+{$camp['expiration_days']} days"));
                     }
                     
-                    $pdo->prepare("UPDATE voucher_codes SET subscriber_id = ?, status = 'used', claimed_at = NOW(), expires_at = ?, claimed_source = ?, claimed_source_id = ? WHERE id = ?")
+                    // Keep status as 'unused' during distribution/claiming (it only becomes 'used' on redemption)
+                    $pdo->prepare("UPDATE voucher_codes SET subscriber_id = ?, claimed_at = NOW(), expires_at = ?, claimed_source = ?, claimed_source_id = ? WHERE id = ?")
                         ->execute([$subscriberId, $expiresAt, $sourceChannel, $sourceId, $row['id']]);
                     $codeAssigned = $row['code'];
+                    $codeId = $row['id'];
                 }
             }
         }
@@ -99,7 +100,7 @@ function claimVoucherAtomic($pdo, $campaignId, $subscriberId, $rewardItemId = nu
             $stmtInsertClaim = $pdo->prepare("INSERT INTO voucher_claims (id, voucher_id, subscriber_id, email, name, phone, status, source_channel, source_id, assigned_code_id) 
                 VALUES (?, ?, ?, ?, ?, ?, 'approved', ?, ?, ?)
                 ON DUPLICATE KEY UPDATE status = 'approved', source_channel = VALUES(source_channel), source_id = VALUES(source_id)");
-            $stmtInsertClaim->execute([$claimId, $campaignId, $subscriberId, $email, $name, $phone, $sourceChannel, $sourceId, $codeAssigned]);
+            $stmtInsertClaim->execute([$claimId, $campaignId, $subscriberId, $email, $name, $phone, $sourceChannel, $sourceId, $codeId]);
         }
 
         if (!$alreadyInTx) $pdo->commit();

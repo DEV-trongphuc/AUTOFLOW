@@ -93,8 +93,19 @@ try {
             exit;
         }
 
-        // Rate limiting by IP hash (Support Cloudflare/Proxy)
-        $clientIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        // Rate limiting by IP hash (Support Cloudflare/Proxy and prevent spoofing)
+        $clientIp = '0.0.0.0';
+        if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+            $clientIp = $_SERVER['HTTP_CF_CONNECTING_IP'];
+        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+            $clientIp = trim($ips[0]);
+        } elseif (!empty($_SERVER['REMOTE_ADDR'])) {
+            $clientIp = $_SERVER['REMOTE_ADDR'];
+        }
+        if (!filter_var($clientIp, FILTER_VALIDATE_IP)) {
+            $clientIp = '0.0.0.0';
+        }
         $ipHash = hash('sha256', $clientIp);
         $rateLimitStmt = $pdo->prepare("
             SELECT COUNT(*) FROM survey_responses
@@ -237,18 +248,15 @@ try {
             $tagName = 'survey_responded_' . $survey['id'];
             // (Simplified — full tag system integration can be added)
             
-            // Add to Target List if configured
+            // Add to Target List if configured (explicitly set workspace_id for isolation)
             if (!empty($survey['target_list_id'])) {
-                // [FIX BUG-SQL-2] Wrong table name 'list_subscribers' doesn't exist.
-                // Correct table is 'subscriber_lists(subscriber_id, list_id)'
-                $stmtListIns = $pdo->prepare("INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id) VALUES (?, ?)");
-                $stmtListIns->execute([$subscriberId, $survey['target_list_id']]);
-                // [FIX BUG-SQL-2b] Only increment subscriber_count if the row was newly inserted.
-                // Original NOT EXISTS check ran AFTER the INSERT, so NOT EXISTS was always FALSE
-                // (the row already existed), and subscriber_count was never incremented.
+                $stmtListIns = $pdo->prepare("INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id, workspace_id) VALUES (?, ?, ?)");
+                $stmtListIns->execute([$subscriberId, $survey['target_list_id'], $survey['workspace_id']]);
+                // Only update lists counter if list subscription was newly created.
+                // Self-correcting count query guarantees no double-increment drift.
                 if ($stmtListIns->rowCount() > 0) {
-                    $pdo->prepare("UPDATE lists SET subscriber_count = subscriber_count + 1 WHERE id = ?")
-                        ->execute([$survey['target_list_id']]);
+                    $pdo->prepare("UPDATE lists SET subscriber_count = (SELECT COUNT(*) FROM subscriber_lists WHERE list_id = ? AND workspace_id = ?) WHERE id = ? AND workspace_id = ?")
+                        ->execute([$survey['target_list_id'], $survey['workspace_id'], $survey['target_list_id'], $survey['workspace_id']]);
                 }
             }
         }
@@ -363,7 +371,8 @@ try {
                 }
 
                 if (!empty($mappedAttrs)) {
-                    $pdo->prepare("UPDATE subscribers SET custom_attributes = JSON_MERGE_PATCH(COALESCE(custom_attributes, '{}'), ?) WHERE id = ?")
+                    // Safe JSON merge using COALESCE(NULLIF()) pattern to support empty string attributes in MariaDB
+                    $pdo->prepare("UPDATE subscribers SET custom_attributes = JSON_MERGE_PATCH(COALESCE(NULLIF(custom_attributes, ''), '{}'), ?) WHERE id = ?")
                         ->execute([json_encode($mappedAttrs, JSON_UNESCAPED_UNICODE), $subscriberId]);
                 }
             }

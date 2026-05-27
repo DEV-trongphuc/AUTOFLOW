@@ -821,12 +821,8 @@ function replaceMergeTags($html, $subscriber, $context = [])
                     }
                 }
 
-                // [FIX P10-C2] Inline MySQL version guard
-                static $voucherSkipLocked = null;
-                if ($voucherSkipLocked === null) {
-                    $v = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
-                    $voucherSkipLocked = version_compare($v, '8.0.0', '>=') ? 'SKIP LOCKED' : '';
-                }
+                // Consolidate skip-locked version check
+                $voucherSkipLocked = isDatabaseSkipLockedSupported($pdo) ? 'SKIP LOCKED' : '';
                 
                 $sqlClaim = "SELECT id, code FROM voucher_codes WHERE campaign_id = ? AND status = 'unused' AND subscriber_id IS NULL";
                 $paramsClaim = [$campaignId];
@@ -845,8 +841,8 @@ function replaceMergeTags($html, $subscriber, $context = [])
                         $expiresAt = date('Y-m-d H:i:s', strtotime("+{$camp['expiration_days']} days"));
                     }
                     
-                    // Scoped UPDATE
-                    $sqlUpdate = "UPDATE voucher_codes SET status = 'available', subscriber_id = ?, sent_at = NOW(), expires_at = ? WHERE id = ?";
+                    // Keep status as 'unused' during distribution/claiming (it only becomes 'used' on redemption)
+                    $sqlUpdate = "UPDATE voucher_codes SET subscriber_id = ?, sent_at = NOW(), expires_at = ? WHERE id = ?";
                     $paramsUpdate = [$subscriberId, $expiresAt, $row['id']];
                     if ($workspaceId) {
                         $sqlUpdate .= " AND workspace_id = ?";

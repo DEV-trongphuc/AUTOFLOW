@@ -557,6 +557,17 @@ if (!function_exists('wakeupWaitingSubscribers')) {
             $stmt->execute([$workspaceId, $subscriberId]);
             if ($stmt->rowCount() > 0) {
                 error_log("[wakeupWaitingSubscribers] Woke up Subscriber:{$subscriberId} (Step:Condition) in WS:{$workspaceId}");
+                // Trigger priority worker in batch mode to immediately execute the next flow step for the woken up subscriber
+                try {
+                    require_once __DIR__ . '/WorkerTriggerService.php';
+                    $triggerService = new WorkerTriggerService($pdo, API_BASE_URL);
+                    $triggerService->trigger('/worker_priority.php?' . http_build_query([
+                        'mode' => 'batch',
+                        'workspace_id' => $workspaceId
+                    ]));
+                } catch (Exception $triggerEx) {
+                    error_log("[wakeupWaitingSubscribers] Worker trigger failed: " . $triggerEx->getMessage());
+                }
             }
         } catch (Exception $e) {
             error_log('[wakeupWaitingSubscribers] Failed: ' . $e->getMessage());
