@@ -896,14 +896,14 @@ class FlowExecutor
                             
                             // [FIX] Allow 1 hour grace period before queue creation to catch the survey response that triggered the flow
                             $graceStartTime = !empty($queueCreatedAt) ? $queueCreatedAt : $startTime;
-                            $sqlResp .= " AND created_at >= ?";
+                            $sqlResp .= " AND submitted_at >= ?";
                             $paramsResp[] = (new DateTime($graceStartTime))->modify('-1 hour')->format('Y-m-d H:i:s');
 
                             if ($targetSurveyId) {
                                 $sqlResp .= " AND survey_id = ?";
                                 $paramsResp[] = $targetSurveyId;
                             }
-                            $sqlResp .= " ORDER BY created_at DESC LIMIT 1";
+                            $sqlResp .= " ORDER BY submitted_at DESC LIMIT 1";
                             $stmtR = $this->pdo->prepare($sqlResp);
                             $stmtR->execute($paramsResp);
                             $latestResp = $stmtR->fetch(PDO::FETCH_ASSOC);

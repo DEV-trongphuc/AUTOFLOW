@@ -183,11 +183,44 @@ try {
             }
 
             if ($search) {
-                $where .= " AND (s.name LIKE ? OR s.psid LIKE ? OR s.email LIKE ? OR s.phone LIKE ?)";
+                $searchClauses = [
+                    "s.name LIKE ?",
+                    "s.psid LIKE ?",
+                    "s.email LIKE ?"
+                ];
                 $params[] = "%$search%";
                 $params[] = "%$search%";
                 $params[] = "%$search%";
-                $params[] = "%$search%";
+
+                // Robust Phone Number Search (ignores spaces, dots, dashes, and formats)
+                $isMaybePhone = preg_match('/^[0-9\+\-\.\s\(\)]+$/', $search) && preg_match('/[0-9]{3,}/', $search);
+                if ($isMaybePhone) {
+                    $digits = preg_replace('/[^0-9]/', '', $search);
+                    if (strlen($digits) >= 3) {
+                        $searchClauses[] = "s.phone LIKE ?";
+                        $params[] = "%$digits%";
+                        
+                        $localDigits = $digits;
+                        if (substr($digits, 0, 2) === '84' && strlen($digits) > 9) {
+                            $localDigits = '0' . substr($digits, 2);
+                        } elseif (substr($digits, 0, 1) === '0') {
+                            $localDigits = substr($digits, 1);
+                        }
+                        
+                        if ($localDigits !== $digits) {
+                            $searchClauses[] = "s.phone LIKE ?";
+                            $params[] = "%$localDigits%";
+                        }
+
+                        $searchClauses[] = "REPLACE(REPLACE(REPLACE(REPLACE(s.phone, ' ', ''), '.', ''), '-', ''), '+', '') LIKE ?";
+                        $params[] = "%$localDigits%";
+                    }
+                } else {
+                    $searchClauses[] = "s.phone LIKE ?";
+                    $params[] = "%$search%";
+                }
+
+                $where .= " AND (" . implode(' OR ', $searchClauses) . ")";
             }
 
             // Apply Tab Filters

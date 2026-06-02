@@ -96,8 +96,12 @@ try {
     }
 
     if (!$emailSubscriberId && $phone) {
-        $stmt = $pdo->prepare("SELECT id, first_name, last_name, avatar FROM subscribers WHERE phone_number = ? AND workspace_id = ? LIMIT 1");
-        $stmt->execute([$phone, $workspaceId]);
+        $normPhone = preg_replace('/[^0-9]/', '', $phone);
+        if (substr($normPhone, 0, 2) === '84' && strlen($normPhone) > 9) {
+            $normPhone = '0' . substr($normPhone, 2);
+        }
+        $stmt = $pdo->prepare("SELECT id, first_name, last_name, avatar FROM subscribers WHERE (phone_number = ? OR phone_number = ? OR REPLACE(REPLACE(REPLACE(phone_number, ' ', ''), '.', ''), '-', '') = ?) AND workspace_id = ? LIMIT 1");
+        $stmt->execute([$phone, $normPhone, $normPhone, $workspaceId]);
         $subscriber = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($subscriber) {
             $emailSubscriberId = $subscriber['id'];
@@ -125,15 +129,19 @@ try {
 
     // 3. Check zalo_subscribers table
     if ($phone) {
+        $normPhone = preg_replace('/[^0-9]/', '', $phone);
+        if (substr($normPhone, 0, 2) === '84' && strlen($normPhone) > 9) {
+            $normPhone = '0' . substr($normPhone, 2);
+        }
         $stmt = $pdo->prepare("
             SELECT zs.zalo_user_id, zs.display_name 
             FROM zalo_subscribers zs
             JOIN zalo_lists zl ON zs.zalo_list_id = zl.id
             JOIN zalo_oa_configs zoc ON zl.oa_config_id = zoc.id
-            WHERE zs.phone_number = ? AND zoc.workspace_id = ? 
+            WHERE (zs.phone_number = ? OR zs.phone_number = ? OR REPLACE(REPLACE(REPLACE(zs.phone_number, ' ', ''), '.', ''), '-', '') = ?) AND zoc.workspace_id = ? 
             LIMIT 1
         ");
-        $stmt->execute([$phone, $workspaceId]);
+        $stmt->execute([$phone, $normPhone, $normPhone, $workspaceId]);
         $zaloSub = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($zaloSub) {
             $zaloSubscriberId = $zaloSub['zalo_user_id'];

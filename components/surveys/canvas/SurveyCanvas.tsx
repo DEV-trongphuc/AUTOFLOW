@@ -33,26 +33,26 @@ const InserterSlot: React.FC<{
     return (
         <div
             ref={drop as any}
-            className={`relative w-full flex items-center transition-all duration-200 ${isOver ? 'py-2' : canDrop ? 'py-0.5' : 'py-px'}`}
+            className={`relative w-full flex items-center transition-all duration-300 ease-in-out ${
+                isOver ? 'h-12 my-1.5' : canDrop ? 'h-4 my-0.5' : 'h-2'
+            }`}
         >
             {/* Permanent subtle line */}
-            <div className={`absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-center transition-all duration-200`}>
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-center transition-all duration-300 ease-in-out w-full">
                 {isOver ? (
                     /* Active drop: full zone */
-                    <div className="w-full h-10 rounded-xl border-2 border-dashed border-amber-400 bg-amber-50 flex items-center justify-center gap-1.5">
-                        <Plus className="w-3.5 h-3.5 text-amber-500" />
+                    <div className="w-full h-10 rounded-xl border-2 border-dashed border-amber-400 bg-amber-50 flex items-center justify-center gap-1.5 animate-in fade-in duration-200">
+                        <Plus className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
                         <span className="text-xs font-bold text-amber-600">Thả vào đây</span>
                     </div>
                 ) : canDrop ? (
                     /* Dragging but not over this slot: glowing thin line */
-                    <div className="w-full h-px bg-amber-300 rounded-full shadow-sm shadow-amber-200" />
+                    <div className="w-full h-1 bg-amber-300 rounded-full shadow-sm shadow-amber-200/50 animate-pulse" />
                 ) : (
                     /* Default: invisible fine line (hit target) */
                     <div className="w-full h-px bg-transparent" />
                 )}
             </div>
-            {/* Invisible tall hit area */}
-            <div className="w-full" style={{ height: isOver ? '48px' : canDrop ? '12px' : '6px' }} />
         </div>
     );
 };
@@ -218,7 +218,7 @@ const SurveyCanvas: React.FC<Props> = ({
             onClick={() => onSelectBlock(null)}
         >
             {/* Cover */}
-            <div className="w-full relative" style={{ maxWidth: canvasWidth }}>
+            <div id="block-__cover__" className="w-full relative" style={{ maxWidth: canvasWidth }}>
                 <SurveyCover
                     survey={survey}
                     isSelected={selectedBlockId === '__cover__'}
@@ -283,6 +283,7 @@ const SurveyCanvas: React.FC<Props> = ({
             {/* Thank You preview (clickable) */}
             {survey.blocks.length > 0 && (
                 <div
+                    id="block-__thankyou__"
                     className={`w-full mt-3 rounded-2xl p-6 text-center bg-white shadow-sm border-2 transition-all cursor-pointer ${selectedBlockId === '__thankyou__' ? 'border-amber-400 shadow-amber-100' : 'border-transparent hover:border-amber-200'}`}
                     style={{ maxWidth: canvasWidth }}
                     onClick={(e) => { e.stopPropagation(); onSelectBlock('__thankyou__'); }}
@@ -306,6 +307,7 @@ const SurveyCanvas: React.FC<Props> = ({
                 return (
                     <div
                         key={page.id ?? i}
+                        id={`block-${blockId}`}
                         className={`w-full mt-3 rounded-2xl p-6 text-center bg-white shadow-sm border-2 transition-all cursor-pointer ${isSelected ? 'border-amber-400 shadow-amber-100' : 'border-transparent hover:border-amber-200'}`}
                         style={{ maxWidth: canvasWidth }}
                         onClick={(e) => { e.stopPropagation(); onSelectBlock(blockId); }}

@@ -533,8 +533,12 @@ try {
                 }
 
                 if (!$emailSubscriberId && $phone) {
-                    $stmt = $pdo->prepare("SELECT id, first_name, last_name, avatar FROM subscribers WHERE phone_number = ? AND workspace_id = ? LIMIT 1");
-                    $stmt->execute([$phone, $propWorkspaceId]);
+                    $normPhone = preg_replace('/[^0-9]/', '', $phone);
+                    if (substr($normPhone, 0, 2) === '84' && strlen($normPhone) > 9) {
+                        $normPhone = '0' . substr($normPhone, 2);
+                    }
+                    $stmt = $pdo->prepare("SELECT id, first_name, last_name, avatar FROM subscribers WHERE (phone_number = ? OR phone_number = ? OR REPLACE(REPLACE(REPLACE(phone_number, ' ', ''), '.', ''), '-', '') = ?) AND workspace_id = ? LIMIT 1");
+                    $stmt->execute([$phone, $normPhone, $normPhone, $propWorkspaceId]);
                     $subscriber = $stmt->fetch(PDO::FETCH_ASSOC);
                     if ($subscriber) {
                         $emailSubscriberId = $subscriber['id'];
@@ -548,8 +552,12 @@ try {
                 $zaloSubscriberId = null;
                 // Check by Phone matches Zalo
                 if ($phone) {
-                    $stmtZ = $pdo->prepare("SELECT zalo_user_id FROM zalo_subscribers WHERE phone_number = ? AND workspace_id = ? LIMIT 1");
-                    $stmtZ->execute([$phone, $propWorkspaceId]);
+                    $normPhone = preg_replace('/[^0-9]/', '', $phone);
+                    if (substr($normPhone, 0, 2) === '84' && strlen($normPhone) > 9) {
+                        $normPhone = '0' . substr($normPhone, 2);
+                    }
+                    $stmtZ = $pdo->prepare("SELECT zalo_user_id FROM zalo_subscribers WHERE (phone_number = ? OR phone_number = ? OR REPLACE(REPLACE(REPLACE(phone_number, ' ', ''), '.', ''), '-', '') = ?) AND workspace_id = ? LIMIT 1");
+                    $stmtZ->execute([$phone, $normPhone, $normPhone, $propWorkspaceId]);
                     $zs = $stmtZ->fetchColumn();
                     if ($zs)
                         $zaloSubscriberId = $zs;
@@ -744,7 +752,7 @@ try {
             // Note: $pageViews array preserves order from Client (which should be chronological)
             $isEntrance = ($isSessionNew && $index === 0) ? 1 : 0;
 
-            $placeholders[] = "(?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+            $placeholders[] = "(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
             // Add is_entrance to params
             // Original $pv has 7 elements. We need to insert is_entrance at the end.
@@ -948,6 +956,7 @@ try {
 
     echo json_encode($response);
 } catch (Exception $e) {
+    error_log("Web Tracking track.php Fatal Error: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
     http_response_code(500);
     echo json_encode(['status' => 'error', 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
     exit;

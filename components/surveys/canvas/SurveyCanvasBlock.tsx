@@ -32,8 +32,15 @@ const SurveyCanvasBlock: React.FC<Props> = ({
     const [{ handlerId }, drop] = useDrop({
         accept: BLOCK_DND,
         collect: monitor => ({ handlerId: monitor.getHandlerId() }),
-        hover(item: { index: number }, monitor) {
+        hover(item: { index: number; lastSwap?: number }, monitor) {
             if (!ref.current || item.index === index) return;
+            
+            // Prevent rapid reordering swaps that cause layout flicker
+            const now = Date.now();
+            if (item.lastSwap && now - item.lastSwap < 200) {
+                return;
+            }
+
             const hoverBoundingRect = ref.current.getBoundingClientRect();
             const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
             const clientOffset = monitor.getClientOffset();
@@ -41,8 +48,10 @@ const SurveyCanvasBlock: React.FC<Props> = ({
             const hoverClientY = clientOffset.y - hoverBoundingRect.top;
             if (item.index < index && hoverClientY < hoverMiddleY) return;
             if (item.index > index && hoverClientY > hoverMiddleY) return;
+            
             onMove(item.index, index);
             item.index = index;
+            item.lastSwap = now;
         },
     });
 
@@ -69,13 +78,15 @@ const SurveyCanvasBlock: React.FC<Props> = ({
     return (
         <div
             ref={ref}
+            id={`block-${block.id}`}
             data-handler-id={handlerId}
             onClick={(e) => { e.stopPropagation(); onSelect(); }}
             className={`group relative rounded-2xl border-2 transition-all duration-150 cursor-pointer
-                ${isDragging ? 'opacity-20 scale-[0.98]' : ''}
-                ${isSelected
-                    ? 'border-amber-400 ring-4 ring-amber-400/20'
-                    : 'border-transparent hover:border-slate-200'
+                ${isDragging 
+                    ? 'opacity-40 border-dashed border-amber-400 bg-amber-50/20 scale-[0.98]' 
+                    : isSelected
+                        ? 'border-amber-400 ring-4 ring-amber-400/20'
+                        : 'border-transparent hover:border-slate-200'
                 }`}
             style={{ background: block.type === 'page_break' ? 'transparent' : bgColor, boxShadow: block.type === 'page_break' ? 'none' : boxShadow }}
         >

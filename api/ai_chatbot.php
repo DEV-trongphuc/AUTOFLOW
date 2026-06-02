@@ -1,31 +1,6 @@
 <?php
 // api/ai_chatbot.php – FINAL REFACTORED ORCHESTRATOR (v3 - 100% Logic Sync with Copy)
 
-// === GLOBAL ERROR HANDLER: Catch Fatal Errors and return JSON ===
-register_shutdown_function(function () {
-    $err = error_get_last();
-    if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
-        if (!headers_sent()) {
-            header('Content-Type: application/json; charset=utf-8');
-
-        }
-        echo json_encode([
-            'success' => false,
-            'error' => 'PHP Fatal Error: ' . $err['message'] . ' in ' . basename($err['file']) . ':' . $err['line']
-        ]);
-    }
-});
-
-// === HEADERS ===
-
-header('Access-Control-Expose-Headers: X-Conversation-Id');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS')
-    exit;
-
-// Default to JSON; specific actions (CSV, Word, Stream) will override this header
-header('Content-Type: application/json; charset=utf-8');
-
 // === INCLUDES ===
 require_once 'db_connect.php';
 require_once 'chat_helpers.php';
@@ -35,6 +10,30 @@ require_once 'chat_gemini.php';
 require_once 'chat_logic_fast.php'; // New module for fast replies
 require_once 'ai_org_middleware.php';
 require_once 'gemini_image_generator.php';
+
+// === GLOBAL ERROR HANDLER: Catch Fatal Errors and return JSON ===
+register_shutdown_function(function () {
+    $err = error_get_last();
+    if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+        }
+        echo json_encode([
+            'success' => false,
+            'error' => 'PHP Fatal Error: ' . $err['message'] . ' in ' . basename($err['file']) . ':' . $err['line']
+        ]);
+    }
+});
+
+// === HEADERS ===
+header('Access-Control-Expose-Headers: X-Conversation-Id');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit;
+}
+
+// Default to JSON; specific actions (CSV, Word, Stream) will override this header
+header('Content-Type: application/json; charset=utf-8');
 
 // Table checks moved to setup or wrapped for performance (Optional, but saves overhead in every request)
 /*

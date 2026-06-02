@@ -582,13 +582,84 @@ WHERE sfs.workspace_id = ? AND f.workspace_id = ? AND sfs.subscriber_id = ? AND 
             if (!empty($search)) {
                 $trimmedSearch = trim($search);
                 
-                // [PERF FIX] At 1B+ scale, LIKE '%term%' causes a Full Table Scan which hangs the DB.
-                // We utilize the ft_subscriber_search index (email, first_name, last_name, phone_number, company_name).
-                // Use Boolean Mode with trailing wildcards to allow partial matches (e.g. "thanh" matches "thanh@gmail.com")
-                $ftSearch = "+" . preg_replace('/[^\p{L}\p{N}_]+/u', ' +', $trimmedSearch) . "*";
+                // 1. Build safe Full-Text Search string to avoid double '+' or syntax errors.
+                // Extract only alphanumeric words (unicode letters + numbers + underscores)
+                preg_match_all('/\p{L}+|\p{N}+/u', $trimmedSearch, $matches);
+                $words = $matches[0] ?? [];
                 
-                $whereClauses[] = "MATCH(s.email, s.first_name, s.last_name, s.phone_number, s.company_name) AGAINST(? IN BOOLEAN MODE)";
-                $params[] = $ftSearch;
+                $ftSearchParts = [];
+                foreach ($words as $word) {
+                    // Only require words >= 3 characters (min token size fallback) with '+'
+                    if (mb_strlen($word) >= 3) {
+                        $ftSearchParts[] = "+" . $word . "*";
+                    } else {
+                        // For short words, we add them as optional or let them be searched via LIKE fallback
+                        $ftSearchParts[] = $word . "*";
+                    }
+                }
+                
+                $ftSearch = implode(' ', $ftSearchParts);
+                
+                // Construct search clauses
+                $searchClauses = [];
+                
+                // If we have valid words for full-text search, add the MATCH AGAINST clause
+                if (!empty($ftSearch)) {
+                    $searchClauses[] = "MATCH(s.email, s.first_name, s.last_name, s.phone_number, s.company_name) AGAINST(? IN BOOLEAN MODE)";
+                    $params[] = $ftSearch;
+                }
+                
+                // 2. Fallback for short name searches (e.g. "Vy", "Lê", "An" under min token size of 3)
+                if (mb_strlen($trimmedSearch) < 3) {
+                    $searchClauses[] = "s.first_name LIKE ?";
+                    $params[] = $trimmedSearch . "%";
+                    $searchClauses[] = "s.last_name LIKE ?";
+                    $params[] = $trimmedSearch . "%";
+                }
+                
+                // 3. Fallback for Email search (handles short emails, stopwords like "com", and partial domain matches)
+                if (strpos($trimmedSearch, '@') !== false || preg_match('/^[a-zA-Z0-9\.\_\-]+$/', $trimmedSearch)) {
+                    $searchClauses[] = "s.email LIKE ?";
+                    $params[] = "%" . $trimmedSearch . "%";
+                }
+                
+                // 4. Robust Phone Number Search (ignores spaces, dots, dashes, and formats)
+                // Detect if the search term looks like a phone number
+                $isMaybePhone = preg_match('/^[0-9\+\-\.\s\(\)]+$/', $trimmedSearch) && preg_match('/[0-9]{3,}/', $trimmedSearch);
+                if ($isMaybePhone) {
+                    $digits = preg_replace('/[^0-9]/', '', $trimmedSearch);
+                    if (strlen($digits) >= 3) {
+                        // Match stored phone number directly (index-friendly)
+                        $searchClauses[] = "s.phone_number LIKE ?";
+                        $params[] = "%" . $digits . "%";
+                        
+                        // If it contains country code or local format, also search by normalized variations
+                        // Standardize local (e.g. 0987...) vs international (e.g. 84987... or +84987...)
+                        $localDigits = $digits;
+                        if (substr($digits, 0, 2) === '84' && strlen($digits) > 9) {
+                            $localDigits = '0' . substr($digits, 2);
+                        } elseif (substr($digits, 0, 1) === '0') {
+                            $localDigits = substr($digits, 1);
+                        }
+                        
+                        if ($localDigits !== $digits) {
+                            $searchClauses[] = "s.phone_number LIKE ?";
+                            $params[] = "%" . $localDigits . "%";
+                        }
+                        
+                        // Strip common symbols from phone numbers in DB for formatted search fallback
+                        // (Only runs if search looks like a phone number, preserving performance)
+                        $searchClauses[] = "REPLACE(REPLACE(REPLACE(REPLACE(s.phone_number, ' ', ''), '.', ''), '-', ''), '+', '') LIKE ?";
+                        $params[] = "%" . $localDigits . "%";
+                    }
+                }
+                
+                // Combine search clauses with OR
+                if (!empty($searchClauses)) {
+                    $whereClauses[] = "(" . implode(' OR ', $searchClauses) . ")";
+                } else {
+                    $whereClauses[] = "1=0"; // Fail safe
+                }
             }
 
             // Status Filter

@@ -69,6 +69,18 @@ const SurveyEditor: React.FC = () => {
             .finally(() => setIsLoading(false));
     }, [id, isNew]);
 
+    // Scroll selected/added block into view smoothly
+    useEffect(() => {
+        if (!selectedBlockId) return;
+        const timer = setTimeout(() => {
+            const element = document.getElementById(`block-${selectedBlockId}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }, 100);
+        return () => clearTimeout(timer);
+    }, [selectedBlockId]);
+
     // ─── Auto-save ────────────────────────────────────────────────────────────
     useEffect(() => {
         if (!isDirty || !survey?.id) return;

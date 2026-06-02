@@ -75,7 +75,10 @@ const CanvasSection: React.FC<CanvasSectionProps> = (props) => {
             style={{
                 position: 'relative',
                 width: '100%',
-                margin: '0 auto'
+                marginTop: css.marginTop,
+                marginBottom: css.marginBottom,
+                marginLeft: 'auto',
+                marginRight: 'auto'
             }}
             draggable onDragStart={(e) => onDragStart(e, section.id)} onDragOver={(e) => onDragOver(e, section.id, 'section')} onDrop={(e) => onDrop(e, section.id)} onClick={(e) => { e.stopPropagation(); onSelectBlock(section.id); }}
         >

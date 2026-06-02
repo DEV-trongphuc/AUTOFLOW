@@ -1,12 +1,8 @@
 <?php
-// api/chat_feedback.php
-
-header("Content-Type: application/json; charset=UTF-8");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit(0);
-
 require_once 'db_connect.php';
 require_once 'auth_middleware.php';
+
+header("Content-Type: application/json; charset=UTF-8");
 
 $data = json_decode(file_get_contents("php://input"));
 

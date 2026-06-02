@@ -77,7 +77,7 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
         paddingLeft: paddingLeft ?? '0px',
     };
 
-    const isFilteredType = ['button', 'image', 'social', 'video', 'quote', 'divider', 'spacer', 'otp'].includes(block.type);
+    const isFilteredType = ['button', 'quote', 'review', 'order_list', 'header', 'otp'].includes(block.type);
 
     if (!isFilteredType) {
         decorativeProps.forEach(prop => {
@@ -125,10 +125,10 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                 const btnColor = css.color ?? '#ffffff';
                 const align = css.textAlign ?? 'center';
                 const btnWidth = css.width ?? 'auto';
-                const btnMarginTop = css.marginTop ?? '0px';
-                const btnMarginBottom = css.marginBottom ?? '0px';
-                const btnMarginLeft = (align === 'center' && !css.marginLeft) ? 'auto' : (css.marginLeft ?? (align === 'right' ? 'auto' : '0px'));
-                const btnMarginRight = (align === 'center' && !css.marginRight) ? 'auto' : (css.marginRight ?? (align === 'right' ? '0px' : 'auto'));
+                const btnMarginTop = '0px';
+                const btnMarginBottom = '0px';
+                const btnMarginLeft = '0px';
+                const btnMarginRight = '0px';
                 const flexJustify = align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center';
                 const btnRadius = sanitizeRadius(css.borderRadius);
                 return (
@@ -202,8 +202,6 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                         borderColor: css.borderColor ?? '#86efac',
                         borderWidth: css.borderTopWidth ?? '2px',
                         borderStyle: css.borderStyle ?? 'dashed',
-                        marginTop: css.marginTop ?? '20px',
-                        marginBottom: css.marginBottom ?? '20px',
                         fontFamily: css.fontFamily ?? bodyStyle.fontFamily,
                         display: 'block',
                         wordBreak: 'break-all'
@@ -328,10 +326,7 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                 return (
                     <div style={{
                         textAlign: css.textAlign as any ?? 'left',
-                        background: css.backgroundImage || css.backgroundColor || 'transparent',
-                        borderRadius: sanitizeRadius(css.borderRadius),
-                        padding: `${css.paddingTop ?? '0px'} ${css.paddingRight ?? '0px'} ${css.paddingBottom ?? '0px'} ${css.paddingLeft ?? '0px'}`,
-                        overflow: 'hidden'
+                        width: '100%'
                     }}>
                         {showTitle && (
                             <h3 style={{ fontSize: titleSize, fontWeight: 'bold', marginBottom: '15px', color: titleColor, textAlign: css.textAlign as any ?? 'left', fontFamily: titleFont }} dangerouslySetInnerHTML={{ __html: block.checkListTitle || 'Checklist' }} />
@@ -439,57 +434,43 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                 const borderRadius = sanitizeRadius(css.borderRadius);
 
                 return (
-                    <table width="100%" border={0} cellPadding={0} cellSpacing={0} style={{ display: 'inline-table' }}>
-                        <tbody>
-                            <tr>
-                                <td align={css.textAlign as any ?? 'center'} style={{
-                                    paddingTop: toPx(block.style.paddingTop),
-                                    paddingRight: toPx(block.style.paddingRight),
-                                    paddingBottom: toPx(block.style.paddingBottom),
-                                    paddingLeft: toPx(block.style.paddingLeft),
-                                    backgroundColor: block.style.backgroundColor ?? 'transparent',
-                                }}>
-                                    {block.content ? (
-                                        <div style={{ 
-                                            display: 'flex', 
-                                            justifyContent: css.textAlign === 'left' ? 'flex-start' : css.textAlign === 'right' ? 'flex-end' : 'center', 
-                                            width: '100%' 
-                                        }}>
-                                            <div style={{
-                                                width: imgWidth,
-                                                height: imgHeight,
-                                                aspectRatio: aspectRatio && aspectRatio !== 'auto' ? aspectRatio : undefined,
-                                                borderRadius: borderRadius,
-                                                overflow: 'hidden',
-                                                display: 'inline-block',
-                                                maxWidth: '100%',
-                                            }}>
-                                                <img
-                                                    src={block.content}
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        objectFit: objectFit as any,
-                                                        objectPosition: 'center',
-                                                        display: 'block',
-                                                        borderRadius: borderRadius
-                                                    }}
-                                                    alt={block.altText}
-                                                />
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="w-full aspect-video bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center group/img transition-all hover:bg-slate-100 hover:border-emerald-500/30">
-                                            <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-3 group-hover/img:scale-110 transition-transform">
-                                                <LucideIcons.Image className="text-slate-300 w-8 h-8" />
-                                            </div>
-                                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400" style={{ fontFamily: bodyStyle.fontFamily }}>Kéo thả hoặc chọn ảnh</span>
-                                        </div>
-                                    )}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div style={{ 
+                        display: 'flex', 
+                        justifyContent: css.textAlign === 'left' ? 'flex-start' : css.textAlign === 'right' ? 'flex-end' : 'center', 
+                        width: '100%' 
+                    }}>
+                        {block.content ? (
+                            <div style={{
+                                width: imgWidth,
+                                height: imgHeight,
+                                aspectRatio: aspectRatio && aspectRatio !== 'auto' ? aspectRatio : undefined,
+                                borderRadius: borderRadius,
+                                overflow: 'hidden',
+                                display: 'inline-block',
+                                maxWidth: '100%',
+                            }}>
+                                <img
+                                    src={block.content}
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: objectFit as any,
+                                        objectPosition: 'center',
+                                        display: 'block',
+                                        borderRadius: borderRadius
+                                    }}
+                                    alt={block.altText}
+                                />
+                            </div>
+                        ) : (
+                            <div className="w-full aspect-video bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center group/img transition-all hover:bg-slate-100 hover:border-emerald-500/30">
+                                <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-3 group-hover/img:scale-110 transition-transform">
+                                    <LucideIcons.Image className="text-slate-300 w-8 h-8" />
+                                </div>
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400" style={{ fontFamily: bodyStyle.fontFamily }}>Kéo thả hoặc chọn ảnh</span>
+                            </div>
+                        )}
+                    </div>
                 );
             }
 
@@ -627,9 +608,7 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                 
                 return (
                     <div style={{
-                        padding: `${css.paddingTop ?? '20px'} ${css.paddingRight ?? '20px'} ${css.paddingBottom ?? '20px'} ${css.paddingLeft ?? '20px'}`,
-                        backgroundColor: css.backgroundColor ?? 'transparent',
-                        borderRadius: sanitizeRadius(css.borderRadius ?? '16px')
+                        width: '100%'
                     }}>
                         <div style={{
                             border: `2px ${vBorderStyle} ${vBorderColor}`,
@@ -947,7 +926,7 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
 
                 <div style={{
                     ...decorativeStyles,
-                    ...(['button', 'quote', 'review', 'order_list', 'check_list', 'table'].includes(block.type) ? {} : innerPadding),
+                    ...(['button', 'quote', 'review', 'order_list', 'header', 'otp'].includes(block.type) ? {} : innerPadding),
                     marginTop: marginTop ?? '0',
                     marginRight: marginRight ?? '0',
                     marginBottom: marginBottom ?? '0',

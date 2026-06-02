@@ -41,7 +41,8 @@ require_once __DIR__ . '/worker_guard.php';
     file_put_contents($debugLogFile, "Mailer loaded\n", FILE_APPEND | LOCK_EX);
 
     date_default_timezone_set('Asia/Ho_Chi_Minh');
-    $pdo->exec("SET NAMES utf8mb4");
+    $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+    $pdo->exec("SET SESSION innodb_lock_wait_timeout = 5");
 
     // Params passed via GET request
     $prioritySid = $_GET['subscriber_id'] ?? $_GET['priority_sub_id'] ?? null;

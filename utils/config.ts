@@ -17,7 +17,7 @@ export const DEMO_MODE = typeof window !== 'undefined' && (
 // localStorage is user-controlled storage — any XSS could redirect all API calls to an attacker's server,
 // enabling credential harvesting and man-in-the-middle attacks.
 // URL is determined by build-time env var (VITE_API_URL) or hostname-based fallback only.
-export const API_BASE_URL = (isLocal ? '/mail_api' : (import.meta.env.VITE_API_URL || 'https://automation.ideas.edu.vn/mail_api'));
+export const API_BASE_URL = (isLocal ? '/mail_api' : ((import.meta as any).env.VITE_API_URL || 'https://automation.ideas.edu.vn/mail_api'));
 
 // Resolve EXTERNAL_API_BASE: (External context for webhooks, embedded scripts, HTML image sources)
 // ALWAYS returns absolute URL pointing to the production server.

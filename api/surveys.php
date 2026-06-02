@@ -443,6 +443,14 @@ try {
 
         // ─── EXPORT CSV ───────────────────────────────────────────────────────
         case 'export': {
+            $stmtOwn = $pdo->prepare("SELECT id FROM surveys WHERE id = ? AND workspace_id = ?");
+            $stmtOwn->execute([$id, $workspace_id]);
+            if (!$stmtOwn->fetchColumn()) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'error' => 'Not found or forbidden']);
+                exit;
+            }
+
             $format = $_GET['format'] ?? 'csv';
             
             // 1. Fetch survey questions to define absolute columns and maintain alignment

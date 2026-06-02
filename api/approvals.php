@@ -95,6 +95,7 @@ if ($method === 'GET' && $action === 'list') {
             LEFT JOIN users u ON u.id COLLATE utf8mb4_unicode_ci = a.request_user_id COLLATE utf8mb4_unicode_ci
             WHERE a.workspace_id = ? 
             ORDER BY a.created_at DESC
+            LIMIT 150
         ");
         $stmt->execute([$workspace_id]);
         jsonResponse(true, $stmt->fetchAll());

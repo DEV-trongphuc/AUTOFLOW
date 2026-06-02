@@ -84,6 +84,37 @@ try {
 
     // ─── SUBMIT ──────────────────────────────────────────────────────────────
     if ($action === 'submit' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        // Enforce status and accessibility check
+        $status = $survey['status'];
+        if ($status === 'draft') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'SURVEY_NOT_PUBLISHED']);
+            exit;
+        }
+        if (in_array($status, ['paused', 'closed'])) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'SURVEY_CLOSED']);
+            exit;
+        }
+
+        // Check close_at expiration
+        if (!empty($survey['close_at']) && strtotime($survey['close_at']) < time()) {
+            $pdo->prepare("UPDATE surveys SET status = 'closed' WHERE id = ?")->execute([$survey['id']]);
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'SURVEY_EXPIRED']);
+            exit;
+        }
+
+        // Check response_limit limit
+        if (!empty($survey['response_limit'])) {
+            $countStmt = $pdo->prepare("SELECT COUNT(*) FROM survey_responses WHERE survey_id = ?");
+            $countStmt->execute([$survey['id']]);
+            if ((int)$countStmt->fetchColumn() >= (int)$survey['response_limit']) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'error' => 'SURVEY_LIMIT_REACHED']);
+                exit;
+            }
+        }
 
         // Enforce countdown expiration lock
         $themeObj = json_decode($survey['cover_style'] ?? '{}', true);
@@ -162,10 +193,10 @@ try {
                 $emailCheckStmt = $pdo->prepare("
                     SELECT r.id FROM survey_responses r
                     JOIN subscribers s ON s.id = r.subscriber_id
-                    WHERE r.survey_id = ? AND s.email = ?
+                    WHERE r.survey_id = ? AND s.email = ? AND s.workspace_id = ?
                     LIMIT 1
                 ");
-                $emailCheckStmt->execute([$survey['id'], $submittedEmail]);
+                $emailCheckStmt->execute([$survey['id'], $submittedEmail, $survey['workspace_id']]);
                 if ($emailCheckStmt->fetch()) {
                     echo json_encode(['success' => false, 'error' => 'EMAIL_ALREADY_RESPONDED']);
                     exit;
@@ -318,8 +349,8 @@ try {
               (id, survey_id, subscriber_id, session_token, answers_json, completion_rate,
                time_spent_sec, source_channel, utm_source, utm_medium, utm_campaign,
                ip_hash, user_agent, device_type, referrer_url, geo_country, geo_city,
-               total_score, max_score, end_screen_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               total_score, max_score, end_screen_id, workspace_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ")->execute([
             $responseId, $survey['id'], $subscriberId, $sessionToken,
             json_encode($answers),
@@ -332,7 +363,8 @@ try {
             $ipHash, substr($ua, 0, 512), $device,
             substr($_SERVER['HTTP_REFERER'] ?? '', 0, 1024),
             $geoCountry, $geoCity,
-            $totalScore, $maxScore, $endScreenId
+            $totalScore, $maxScore, $endScreenId,
+            $survey['workspace_id']
         ]);
 
         // INSERT answer details
@@ -372,8 +404,8 @@ try {
 
                 if (!empty($mappedAttrs)) {
                     // Safe JSON merge using COALESCE(NULLIF()) pattern to support empty string attributes in MariaDB
-                    $pdo->prepare("UPDATE subscribers SET custom_attributes = JSON_MERGE_PATCH(COALESCE(NULLIF(custom_attributes, ''), '{}'), ?) WHERE id = ?")
-                        ->execute([json_encode($mappedAttrs, JSON_UNESCAPED_UNICODE), $subscriberId]);
+                    $pdo->prepare("UPDATE subscribers SET custom_attributes = JSON_MERGE_PATCH(COALESCE(NULLIF(custom_attributes, ''), '{}'), ?) WHERE id = ? AND workspace_id = ?")
+                        ->execute([json_encode($mappedAttrs, JSON_UNESCAPED_UNICODE), $subscriberId, $survey['workspace_id']]);
                 }
             }
         }
@@ -397,7 +429,8 @@ try {
                     // Find answer for this question
                     $ansMatched = null;
                     foreach ($answers as $a) {
-                        if (($a['question_id'] ?? '') === $qId) {
+                        $bId = $a['question_id'] ?? ($a['block_id'] ?? '');
+                        if ($bId === $qId) {
                             $ansMatched = $a;
                             break;
                         }

@@ -259,7 +259,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             // We use separate spacer rows before/after the section content for cross-client margin support
             const topSpacer = sectionMarginTop !== '0px' && sectionMarginTop !== '0' ? `<tr><td height="${parseInt(sectionMarginTop)||0}" style="font-size: ${parseInt(sectionMarginTop)||0}px; line-height: ${parseInt(sectionMarginTop)||0}px; mso-line-height-rule: exactly;">&nbsp;</td></tr>` : '';
             const bottomSpacer = sectionMarginBottom !== '0px' && sectionMarginBottom !== '0' ? `<tr><td height="${parseInt(sectionMarginBottom)||0}" style="font-size: ${parseInt(sectionMarginBottom)||0}px; line-height: ${parseInt(sectionMarginBottom)||0}px; mso-line-height-rule: exactly;">&nbsp;</td></tr>` : '';
-            return `${topSpacer}<tr><td align="center" valign="top" class="section-wrapper" ${getBgColorHtmlAttr(s)} style="${getBackgroundStyle(s)} ${paddingCss} ${radiusStyle}"><table class="full-width section-content" role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" align="center" style="max-width: ${bodyStyle.contentWidth}; ${innerBgCss}; margin: 0 auto;"><tbody>${childrenHtml}</tbody></table></td></tr>${bottomSpacer}`;
+            return `${topSpacer}<tr><td align="center" valign="top" class="section-wrapper" ${getBgColorHtmlAttr(s)} style="${getBackgroundStyle(s)} ${paddingCss} ${radiusStyle} ${getBorderStyle(s)}"><table class="full-width section-content" role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" align="center" style="max-width: ${bodyStyle.contentWidth}; ${innerBgCss}; margin: 0 auto;"><tbody>${childrenHtml}</tbody></table></td></tr>${bottomSpacer}`;
         }
 
         if (b.type === 'row') {
@@ -290,7 +290,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const rowClass = noStack ? "" : "row-resp";
             const rowWidth = s.width || '100%';
             const rowWidthHtml = typeof rowWidth === 'string' && rowWidth.includes('%') ? rowWidth : String(rowWidth).replace('px', '');
-            const rowMargin = `margin: ${s.marginTop || 0} ${s.marginRight || 'auto'} ${s.marginBottom || 0} ${s.marginLeft || 'auto'};`;
+            const rowMargin = `margin-top: 0px; margin-bottom: 0px; margin-left: ${s.marginLeft || 'auto'}; margin-right: ${s.marginRight || 'auto'};`;
             return wrapWithMargin(`<td align="${s.textAlign || 'center'}" style="${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${getBorderStyle(s)}"><table class="${rowClass}" role="presentation" border="0" cellspacing="0" cellpadding="0" width="${rowWidthHtml}" align="${s.textAlign || 'center'}" style="width: ${rowWidth}; ${rowMargin} overflow: hidden; border-collapse: collapse;"><tr>${columnsHtml}</tr></table></td>`);
         }
 
@@ -338,7 +338,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             }).join('');
 
             return wrapWithMargin(`
-                <td align="center" style="${paddingCss} ${getBackgroundStyle(s)}">
+                <td align="center" style="${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${getBorderStyle(s)}">
                     <!--[if mso]><table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"><tr><td width="30%" align="left" valign="middle"><![endif]-->
                     <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%">
                         <tr>
@@ -372,7 +372,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const lineStyle = s.timelineLineStyle || 'solid';
             const items = b.items || [];
 
-            return wrapWithMargin(`<td style="${paddingCss} ${getBackgroundStyle(s)}"><table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="border-collapse: collapse;">${items.map((item, i) => {
+            return wrapWithMargin(`<td style="${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${getBorderStyle(s)} overflow: hidden;"><table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="border-collapse: collapse;">${items.map((item, i) => {
                 const isFirst = i === 0;
                 const isLast = i === items.length - 1;
                 const centerPos = '14px';
@@ -389,7 +389,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const playBtnColor = s.playButtonColor || '#d97706';
             const radius = sanitizeRadius(s.borderRadius || '12px');
             return wrapWithMargin(`
-                <td align="${videoAlign}" style="${paddingCss} ${getBackgroundStyle(s)}">
+                <td align="${videoAlign}" style="${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${getBorderStyle(s)}">
                     <a href="${b.videoUrl || '#'}" target="_blank" style="display: inline-block; text-decoration: none; position: relative; width: 100%; max-width: 100%;">
                         <img src="${b.thumbnailUrl || 'https://via.placeholder.com/600x340?text=Video+Thumbnail'}" width="100%" style="display: block; max-width: 100%; width: 100%; height: auto; border-radius: ${radius};" alt="Video Thumbnail" />
                         <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.3); border-radius: ${radius}; pointer-events: none;"></div>
@@ -406,11 +406,15 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
         }
 
         if (b.type === 'order_list') {
+            const orderListBorder = getBorderStyle(s) || 'border: 1px solid #eeeeee;';
+            const orderListPadding = `padding: ${s.paddingTop || '24px'} ${s.paddingRight || '24px'} ${s.paddingBottom || '24px'} ${s.paddingLeft || '24px'};`;
+            const orderListBgStyle = getBackgroundStyle(s) || 'background-color: #ffffff;';
+            const orderListRadius = sanitizeRadius(s.borderRadius || '16px');
             return wrapWithMargin(`
-                    <td style="${paddingCss} ${getBackgroundStyle(s)}">
-                        <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="border-collapse: collapse; background-color: ${s.backgroundColor || '#ffffff'}; border-radius: ${sanitizeRadius(s.borderRadius || '12px')}; border: 1px solid #eeeeee;">
+                    <td align="center" style="padding: 0;">
+                        <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="border-collapse: collapse; border-radius: ${orderListRadius}; ${orderListBorder} ${orderListBgStyle}">
                             <tr>
-                                <td style="padding: 20px;">
+                                <td style="${orderListPadding}">
                                     <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 20px;">
                                         <tr>
                                             <td width="24" valign="middle" style="padding-right: 8px;">
@@ -461,7 +465,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             // Use server-side generated image for email compatibility
             const timerUrl = `${EXTERNAL_API_BASE}/timer.php?target=${encodeURIComponent(targetDateStr)}&color=${digitColor}&bg=${bg}&v=${Date.now()}`;
 
-            return wrapWithMargin(`\n                    <td align="center" style="${paddingCss} ${getBackgroundStyle(s)}">\n                        <!-- Timer Container -->
+            return wrapWithMargin(`\n                    <td align="center" style="${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${getBorderStyle(s)} overflow: hidden;">\n                        <!-- Timer Container -->
                         <table role="presentation" border="0" cellspacing="0" cellpadding="0" align="center" style="max-width: 400px;">
                             <tr>
                                 <td align="center">
@@ -490,8 +494,12 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const paddingHorizontal = s.paddingLeft || '25px';
             const quoteBorderColor = s.borderColor || '#ffa900';
             const quoteBorderWidth = s.borderLeftWidth || '4px';
-            // [FIX] Gmail-safe: use table instead of div for quote block
-            return wrapWithMargin(`<td class="quote-block" style="${paddingCss}"><table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="border-left: ${quoteBorderWidth} solid ${quoteBorderColor}; border-radius: ${sanitizeRadius(s.borderRadius || '0')}; background-color: ${s.backgroundColor || 'transparent'};"><tr><td style="padding: ${paddingVertical} ${s.paddingRight || '25px'} ${s.paddingBottom || '15px'} ${paddingHorizontal}; font-family: ${bodyStyle.fontFamily || "'Roboto', Arial, sans-serif"}; font-size: ${s.fontSize || '15px'}; font-style: ${s.fontStyle || 'italic'}; line-height: 1.6; color: ${s.color || 'inherit'}; text-align: ${s.textAlign || 'left'}; font-weight: ${s.fontWeight || 'normal'};">${b.content}</td></tr></table></td>`);
+            const quoteBorderLeft = `${quoteBorderWidth} ${s.borderStyle || 'solid'} ${quoteBorderColor}`;
+            const quoteBorderTop = s.borderTopWidth ? `border-top: ${s.borderTopWidth} ${s.borderStyle || 'solid'} ${quoteBorderColor}; ` : '';
+            const quoteBorderRight = s.borderRightWidth ? `border-right: ${s.borderRightWidth} ${s.borderStyle || 'solid'} ${quoteBorderColor}; ` : '';
+            const quoteBorderBottom = s.borderBottomWidth ? `border-bottom: ${s.borderBottomWidth} ${s.borderStyle || 'solid'} ${quoteBorderColor}; ` : '';
+            // [FIX] Gmail-safe: use table instead of div for quote block, remove double padding by zeroing outer td padding
+            return wrapWithMargin(`<td class="quote-block" style="padding: 0;"><table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="border-left: ${quoteBorderLeft}; ${quoteBorderTop}${quoteBorderRight}${quoteBorderBottom}border-radius: ${sanitizeRadius(s.borderRadius || '0')}; background-color: ${s.backgroundColor || 'transparent'};"><tr><td style="padding: ${paddingVertical} ${s.paddingRight || '25px'} ${s.paddingBottom || '15px'} ${paddingHorizontal}; font-family: ${bodyStyle.fontFamily || "'Roboto', Arial, sans-serif"}; font-size: ${s.fontSize || '15px'}; font-style: ${s.fontStyle || 'italic'}; line-height: 1.6; color: ${s.color || 'inherit'}; text-align: ${s.textAlign || 'left'}; font-weight: ${s.fontWeight || 'normal'};">${b.content}</td></tr></table></td>`);
         }
 
         if (b.type === 'check_list') {
@@ -512,7 +520,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const vAlignGlobal = s.checkIconVerticalAlign || 'top';
 
             return wrapWithMargin(`
-                    <td class="mobile-padding-y" style="${paddingCss} ${getBackgroundStyle(s)} border-radius: ${sanitizeRadius(s.borderRadius || '0')}; overflow: hidden;">
+                    <td class="mobile-padding-y" style="${paddingCss} ${getBackgroundStyle(s)} border-radius: ${sanitizeRadius(s.borderRadius || '0')}; ${getBorderStyle(s)} overflow: hidden;">
                         <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="${maxW}">
                         <tbody><tr><td style="text-align: ${s.textAlign || 'left'};">
                         ${showTitle ? `<h3 style="margin: 0 0 15px; font-family: ${titleFont}; font-size: ${titleSize}; font-weight: bold; color: ${titleColor}; text-align: ${s.textAlign || 'left'};">${title}</h3>` : ''}
@@ -635,7 +643,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                 return `<tr>${tds}</tr>`;
             }).join('');
 
-            return wrapWithMargin(`\n                    <td style="${paddingCss}">\n                        <!--[if mso]><table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"><tr><td><![endif]-->
+            return wrapWithMargin(`\n                    <td style="${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${getBorderStyle(s)} overflow: hidden;">\n                        <!--[if mso]><table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"><tr><td><![endif]-->
                         <div style="overflow-x: auto;">
                         <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="border-collapse: collapse; width: 100%; table-layout: fixed;">
                             ${colgroup}
@@ -743,7 +751,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
 
         if (b.type === 'otp') {
             const innerHtml = `
-                <table role="presentation" border="0" cellspacing="0" cellpadding="0" align="${align}" style="margin-top: ${s.marginTop || '20px'}; margin-bottom: ${s.marginBottom || '20px'}; text-align: ${align};">
+                <table role="presentation" border="0" cellspacing="0" cellpadding="0" align="${align}" style="text-align: ${align};">
                     <tr>
                         <td align="center" style="
                             background-color: ${s.backgroundColor || '#f0fdf4'};
@@ -766,7 +774,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                     </tr>
                 </table>
             `;
-            return wrapWithMargin(`<td align="${align}" style="${paddingCss} ${getBackgroundStyle(s)} text-align: ${align};">${innerHtml}</td>`);
+            return wrapWithMargin(`<td align="${align}" style="padding: 0; text-align: ${align};">${innerHtml}</td>`);
         }
 
         if (b.type === 'social') {
@@ -793,8 +801,8 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                     <img src="${iconUrl}" width="${imgSize}" height="${imgSize}" class="icon-img" style="vertical-align: middle; display: inline-block; width: ${imgSize}px !important; max-width: ${imgSize}px !important; height: ${imgSize}px; object-fit: contain;" />
                 </a></td>`;
             }).join('');
-            // [FIX] Add getBackgroundStyle so social block background color works in email clients
-            return wrapWithMargin(`<td align="${align}" style="${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} text-align: ${align};"><table role="presentation" border="0" cellspacing="0" cellpadding="0" style="display: inline-table;"><tr>${icons}</tr></table></td>`);
+            // [FIX] Add getBackgroundStyle so social block background color works in email clients, plus getBorderStyle(s)
+            return wrapWithMargin(`<td align="${align}" style="${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${getBorderStyle(s)} text-align: ${align};"><table role="presentation" border="0" cellspacing="0" cellpadding="0" style="display: inline-table;"><tr>${icons}</tr></table></td>`);
         }
 
         // Text block: full styles including border, radius, background
@@ -832,9 +840,9 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
 
 
         // [FIX] Divider: use hr-mimicking table cell (div is unreliable in Outlook)
-        if (b.type === 'divider') return wrapWithMargin(`<td style="${paddingCss}"><table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%"><tr><td height="1" style="font-size: 1px; line-height: 1px; border-top: ${s.borderTopWidth || '1px'} ${s.borderStyle || 'solid'} ${s.borderColor || '#eeeeee'}; mso-line-height-rule: exactly;">&nbsp;</td></tr></table></td>`);
+        if (b.type === 'divider') return wrapWithMargin(`<td style="${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${getBorderStyle(s)}"><table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%"><tr><td height="1" style="font-size: 1px; line-height: 1px; border-top: ${s.borderTopWidth || '1px'} ${s.borderStyle || 'solid'} ${s.borderColor || '#eeeeee'}; mso-line-height-rule: exactly;">&nbsp;</td></tr></table></td>`);
         // [FIX] Spacer: mso-line-height-rule: exactly for Outlook
-        if (b.type === 'spacer') { const h = parseInt(s.height?.replace('px', '') || '20'); return wrapWithMargin(`<td height="${h}" style="font-size: ${h}px; line-height: ${h}px; mso-line-height-rule: exactly; ${getBackgroundStyle(s)}">&nbsp;</td>`); }
+        if (b.type === 'spacer') { const h = parseInt(s.height?.replace('px', '') || '20'); return wrapWithMargin(`<td height="${h}" style="font-size: ${h}px; line-height: ${h}px; mso-line-height-rule: exactly; ${getBackgroundStyle(s)} ${paddingCss} ${radiusStyle} ${getBorderStyle(s)}">&nbsp;</td>`); }
 
         // Fallback for unknown types
         const borderCss = getBorderStyle(s);
@@ -917,7 +925,7 @@ ${HEAD_CSS}
   <td align="center" valign="top" width="${parseInt(bodyStyle.contentWidth || '600')}">
   <![endif]-->
   <!-- [FIX BUG-COMPILER-2] Use bodyStyle.contentWidth instead of hardcoded 600px so custom-width templates render correctly in all clients including old Outlook -->
-  <table role="presentation" class="email-container" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 0 auto; width: 100%; max-width: ${bodyStyle.contentWidth || '600px'};">
+  <table role="presentation" class="email-container" border="0" cellpadding="0" cellspacing="0" width="100%" ${bodyStyle.contentBackgroundColor ? `bgcolor="${bodyStyle.contentBackgroundColor}"` : ''} style="margin: 0 auto; width: 100%; max-width: ${bodyStyle.contentWidth || '600px'}; ${bodyStyle.contentBackgroundColor ? `background-color: ${bodyStyle.contentBackgroundColor};` : ''}">
   <tbody>
   ${isPreview ? '<tr><td height="40" style="font-size: 40px; line-height: 40px; mso-line-height-rule: exactly;">&nbsp;</td></tr>' : ''}
   ${allBlocksHtml}
