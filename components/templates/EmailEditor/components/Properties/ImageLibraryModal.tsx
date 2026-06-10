@@ -27,7 +27,7 @@ interface ImageFile {
     modified_at?: number;
 }
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 24;
 
 function formatSize(bytes: number) {
     if (bytes < 1024) return `${bytes} B`;
@@ -405,7 +405,7 @@ const ImageLibraryModal: React.FC<ImageLibraryModalProps> = ({ isOpen, onClose, 
                 </div>
 
                 {/* Image Grid */}
-                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                <div data-lenis-prevent="true" className="flex-1 overflow-y-auto p-6 custom-scrollbar">
                     {loading ? (
                         <div className="h-full flex items-center justify-center">
                             <div className="flex flex-col items-center gap-3 text-slate-400">
@@ -434,7 +434,7 @@ const ImageLibraryModal: React.FC<ImageLibraryModalProps> = ({ isOpen, onClose, 
                             </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
                             {paged.map(file => {
                                 const uniqueKey = file.uniqueName || file.url;
                                 return (

@@ -16,6 +16,7 @@ interface ModalProps {
   noHeader?: boolean;
   hideCloseButton?: boolean;
   isDarkTheme?: boolean;
+  noScroll?: boolean;
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -29,7 +30,8 @@ const Modal: React.FC<ModalProps> = ({
   noPadding = false,
   noHeader = false,
   hideCloseButton = false,
-  isDarkTheme = false
+  isDarkTheme = false,
+  noScroll = false
 }) => {
   useEffect(() => {
     if (isOpen) {
@@ -45,13 +47,13 @@ const Modal: React.FC<ModalProps> = ({
   // Best practice is `<Modal isOpen={state} />`
 
   const sizeClasses = {
-    sm: 'max-w-md rounded-[32px] max-h-[90vh]',
-    md: 'max-w-lg rounded-[32px] max-h-[90vh]',
-    lg: 'max-w-2xl rounded-[32px] max-h-[90vh]',
-    xl: 'max-w-4xl rounded-[32px] max-h-[95vh]',
-    '2xl': 'max-w-6xl rounded-[32px] max-h-[95vh]',
-    '3xl': 'max-w-7xl rounded-[32px] max-h-[95vh]',
-    '4xl': 'max-w-[1300px] rounded-[40px] max-h-[95vh]',
+    sm: 'max-w-md rounded-[24px] max-h-[90vh]',
+    md: 'max-w-lg rounded-[24px] max-h-[90vh]',
+    lg: 'max-w-2xl rounded-[24px] max-h-[90vh]',
+    xl: 'max-w-4xl rounded-[24px] max-h-[95vh]',
+    '2xl': 'max-w-6xl rounded-[24px] max-h-[95vh]',
+    '3xl': 'max-w-7xl rounded-[24px] max-h-[95vh]',
+    '4xl': 'max-w-[1300px] rounded-[28px] max-h-[95vh]',
     full: 'w-full h-full rounded-none max-w-full',
   };
 
@@ -64,57 +66,58 @@ const Modal: React.FC<ModalProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            transition={{ duration: 0.25 }}
+            className="absolute inset-0 bg-slate-950/70"
             onClick={onClose}
           />
 
           {/* Modal Content */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+            initial={{ opacity: 0, scale: 0.97, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 350, mass: 0.8 }}
+            exit={{ opacity: 0, scale: 0.97, y: 8 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 380, mass: 0.9 }}
             className={`
-            relative shadow-2xl w-full flex flex-col overflow-hidden
-            border shadow-[0_32px_120px_-10px_rgba(0,0,0,0.3)]
+            relative w-full flex flex-col overflow-hidden border
             ${sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md}
-            ${isDarkTheme ? 'bg-[#161B24] border-slate-800' : 'bg-white border-white/20'}
+            ${isDarkTheme 
+              ? 'bg-[#11151d] border-slate-800/80 shadow-[0_24px_60px_rgba(0,0,0,0.6)]' 
+              : 'bg-white border-slate-200/80 shadow-[0_24px_50px_rgba(0,0,0,0.1),0_1px_3px_rgba(0,0,0,0.02)]'}
           `}
           >
         {isLoading && (
-          <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-50 flex items-center justify-center">
+          <div className={`absolute inset-0 z-50 flex items-center justify-center ${isDarkTheme ? 'bg-[#11151d]/75' : 'bg-white/75'}`}>
             <div className="flex flex-col items-center gap-2">
               <Loader2 className="w-8 h-8 text-[#ffa900] animate-spin" />
-              <p className="text-xs font-bold text-slate-500 animate-pulse">Đang xử lý...</p>
+              <p className={`text-xs font-bold animate-pulse ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>Đang xử lý...</p>
             </div>
           </div>
         )}
         {/* Header */}
         {!noHeader && (
-          <div className={`px-6 py-5 flex justify-between items-center border-b shrink-0 ${isDarkTheme ? 'bg-[#161B24] border-slate-800' : 'bg-white border-slate-100'}`}>
+          <div className={`px-6 py-5 flex justify-between items-center border-b shrink-0 ${isDarkTheme ? 'bg-[#11151d] border-slate-800/85' : 'bg-white border-slate-100'}`}>
             <div>
               <h3 className={`text-base md:text-lg font-bold tracking-tight ${isDarkTheme ? 'text-slate-100' : 'text-slate-800'}`}>{title}</h3>
             </div>
             {!hideCloseButton && (
               <button
                 onClick={onClose}
-                className={`p-2.5 rounded-full transition-all duration-200 ${isDarkTheme ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'} hover:scale-110 active:scale-95 bg-transparent`}
+                className={`p-2 rounded-xl transition-all duration-200 ${isDarkTheme ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'} hover:scale-105 active:scale-95 bg-transparent`}
               >
-                <X className="w-5 h-5 stroke-[2.5px]" />
+                <X className="w-5 h-5 stroke-[2px]" />
               </button>
             )}
           </div>
         )}
 
         {/* Body */}
-        <div className={`${noPadding ? '' : 'px-6 py-6'} overflow-y-auto custom-scrollbar flex-1 ${isDarkTheme ? 'bg-[#161B24]' : 'bg-white'}`}>
+        <div className={`${noPadding ? '' : 'px-6 py-6'} ${noScroll ? 'overflow-hidden' : 'overflow-y-auto custom-scrollbar'} flex-1 min-h-0 ${isDarkTheme ? 'bg-[#11151d]' : 'bg-white'} flex flex-col`}>
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className={`px-6 py-4 border-t shrink-0 flex items-center justify-end ${isDarkTheme ? 'bg-[#1C232E] border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
+          <div className={`px-6 py-4 border-t shrink-0 flex items-center justify-end ${isDarkTheme ? 'bg-[#161b24] border-slate-800/80' : 'bg-slate-50 border-slate-100'}`}>
             {footer}
           </div>
         )}

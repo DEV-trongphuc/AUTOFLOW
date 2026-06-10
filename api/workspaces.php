@@ -34,7 +34,11 @@ if ($method === 'GET' && $action === 'list') {
             ");
             $stmt->execute([$user_id]);
         }
-        jsonResponse(true, $stmt->fetchAll());
+        $workspaces = $stmt->fetchAll();
+        foreach ($workspaces as &$ws) {
+            $ws['db_needs_migration'] = $GLOBALS['db_needs_migration'] ?? false;
+        }
+        jsonResponse(true, $workspaces);
     } catch (Exception $e) {
         jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
     }

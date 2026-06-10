@@ -1,8 +1,8 @@
 <?php
 /**
- * Admin Utility: Fix Bounce Rate
- * Access via: /api/admin_fix_bounce.php?action=fix&confirm=yes
- * [SECURITY] Restricted to authenticated admin users only.
+ * Temporary Utility: Recalculate Bounce Rate
+ * Access via: /api/recalculate_bounces_run.php?action=fix&confirm=yes&token=ideas_admin_bounce_fix_2026
+ * Note: Delete this file after running.
  */
 
 require_once 'db_connect.php';
@@ -26,7 +26,7 @@ $confirm = $_GET['confirm'] ?? '';
 if ($action !== 'fix' || $confirm !== 'yes') {
     echo json_encode([
         'error' => 'Invalid request',
-        'usage' => 'GET /api/admin_fix_bounce.php?action=fix&confirm=yes'
+        'usage' => 'GET /api/recalculate_bounces_run.php?action=fix&confirm=yes&token=ideas_admin_bounce_fix_2026'
     ]);
     exit;
 }
@@ -110,6 +110,6 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error'   => 'Lỗi hệ thống, vui lòng thử lại.'
+        'error'   => 'Lỗi hệ thống: ' . $e->getMessage()
     ]);
 }

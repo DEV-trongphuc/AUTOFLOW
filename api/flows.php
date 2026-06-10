@@ -1617,6 +1617,108 @@ if (isset($_GET['route']) && $_GET['route'] === 'migrate-users') {
     }
 }
 
+// --- ROUTE: Export History ---
+if (isset($_GET['route']) && $_GET['route'] === 'export-history') {
+    try {
+        $flowId = $_GET['id'] ?? null;
+        $campaignId = $_GET['campaign_id'] ?? null;
+        if (!$flowId && !$campaignId) {
+            http_response_code(400);
+            jsonResponse(false, null, 'Flow ID or Campaign ID required');
+        }
+        if ($flowId) verifyFlowOwnership($pdo, $flowId, $workspace_id);
+
+        $search = $_GET['search'] ?? null;
+        $filter_type = $_GET['type'] ?? null;
+
+        $sql = "SELECT sa.type, sa.details, sa.created_at, s.email, s.first_name, s.last_name, sa.reference_name as label 
+                FROM subscriber_activity sa
+                LEFT JOIN subscribers s ON sa.subscriber_id = s.id
+                WHERE ";
+        $whereClauses = [];
+        $params = [];
+        if ($flowId && !$campaignId) {
+            // [10M UPGRADE] Auto-detect Campaign Trigger to include Campaign Logs
+            $stmtF = $pdo->prepare("SELECT steps FROM flows WHERE id = ? AND workspace_id = ?");
+            $stmtF->execute([$flowId, $workspace_id]);
+            $stepsJson = $stmtF->fetchColumn();
+            $steps = json_decode($stepsJson, true) ?: [];
+            foreach ($steps as $s) {
+                if (($s['type'] === 'trigger') && ($s['config']['type'] ?? '') === 'campaign' && !empty($s['config']['targetId'])) {
+                    $campaignId = $s['config']['targetId'];
+                    break;
+                }
+            }
+        }
+
+        if ($flowId) {
+            if ($campaignId) {
+                $whereClauses[] = "(sa.flow_id = ? OR sa.campaign_id = ?)";
+                $params[] = $flowId;
+                $params[] = $campaignId;
+            } else {
+                $whereClauses[] = "sa.flow_id = ?";
+                $params[] = $flowId;
+            }
+        } else {
+            $whereClauses[] = "sa.campaign_id = ?";
+            $params[] = $campaignId;
+        }
+
+        if ($search) {
+            $whereClauses[] = "(s.email LIKE ? OR s.first_name LIKE ? OR s.last_name LIKE ?)";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+        }
+
+        if ($filter_type) {
+            if ($filter_type === 'click') {
+                $whereClauses[] = "sa.type = 'click_link'";
+            } elseif ($filter_type === 'open') {
+                $whereClauses[] = "sa.type = 'open_email'";
+            } elseif ($filter_type === 'unsubscribe') {
+                $whereClauses[] = "sa.type IN ('unsubscribe', 'unsubscribed_from_flow')";
+            } elseif ($filter_type === 'failed') {
+                $whereClauses[] = "sa.type IN ('failed_email', 'zns_failed')";
+            } elseif ($filter_type === 'sent') {
+                $whereClauses[] = "sa.type IN ('sent_email', 'zns_sent', 'sent_zns')";
+            } else {
+                $whereClauses[] = "sa.type = ?";
+                $params[] = $filter_type;
+            }
+        }
+
+        $sql .= implode(" AND ", $whereClauses);
+        $sql .= " ORDER BY sa.created_at DESC";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="flow-history-' . date('Ymd_His') . '.csv"');
+        $out = fopen('php://output', 'w');
+        fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
+        
+        fputcsv($out, ['Thời gian', 'Email', 'Họ tên', 'Hành động', 'Chi tiết']);
+        foreach ($logs as $row) {
+            $fullName = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
+            fputcsv($out, [
+                $row['created_at'],
+                $row['email'] ?? '',
+                $fullName,
+                strtoupper(str_replace('_', ' ', $row['type'] ?? '')),
+                $row['details'] ?? ''
+            ]);
+        }
+        fclose($out);
+        exit;
+    } catch (Exception $e) {
+        http_response_code(500);
+        jsonResponse(false, null, 'Lỗi hệ thống khi xuất lịch sử: ' . $e->getMessage());
+    }
+}
+
 // --- ROUTE: History ---
 if (isset($_GET['route']) && $_GET['route'] === 'history') {
     try {

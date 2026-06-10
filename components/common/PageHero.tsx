@@ -1,5 +1,4 @@
 import React from 'react';
-import { Star } from 'lucide-react';
 
 interface Action {
     label: string;
@@ -30,22 +29,22 @@ const PageHero: React.FC<PageHeroProps> = ({
 }) => {
     return (
         <div className={`relative mb-4 sm:mb-8 rounded-[24px] overflow-hidden p-4 sm:p-6 md:p-8 min-h-[100px] sm:min-h-[140px] flex flex-col justify-center shadow-2xl ${shadowColor} border border-white/10 bg-gradient-to-r ${customGradient} group/hero`}>
-            {/* Minimalist Background Decor */}
-            <div className="absolute top-1/2 -right-10 w-48 h-48 border-[2px] border-dashed border-white/30 rounded-full transform -translate-y-1/2 pointer-events-none" />
-            <div className="absolute top-1/4 right-1/4 opacity-20 pointer-events-none">
-                <Star className="w-12 h-12 text-white fill-white" />
-            </div>
-            <div className="absolute bottom-10 left-1/4 w-32 h-32 bg-white/20 rounded-full blur-[40px] pointer-events-none" />
-            <div className="absolute top-0 right-0 w-full h-full bg-black/5 pointer-events-none" />
+            {/* Ambient overlay: Clean high-tech grid pattern */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_at_center,black_70%,transparent_110%)] opacity-30 pointer-events-none" />
+            
+            {/* Glowing radial ambient background lights */}
+            <div className="absolute -right-20 -top-20 w-[380px] h-[380px] bg-white/10 rounded-full blur-[80px] pointer-events-none group-hover/hero:scale-110 transition-transform duration-700" />
+            <div className="absolute left-[15%] bottom-[-50px] w-[250px] h-[250px] bg-black/15 rounded-full blur-[60px] pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent pointer-events-none" />
             
             <div className="relative z-10">
                 <div className="flex items-center gap-2 mb-2">
-                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
                         {title}
                     </h1>
                 </div>
                 
-                <p className="hidden sm:block text-white/90 text-sm font-bold leading-relaxed max-w-xl mb-6 sm:mb-8">
+                <p className="hidden sm:block text-white/85 text-sm font-medium leading-relaxed max-w-2xl mb-6 sm:mb-8">
                     {subtitle}
                 </p>
 
@@ -57,14 +56,14 @@ const PageHero: React.FC<PageHeroProps> = ({
                                     key={idx}
                                     onClick={action.onClick}
                                     title={action.title || action.label}
-                                    className={`flex items-center justify-center transition-all shadow-xl ${
+                                    className={`flex items-center justify-center transition-all duration-200 ${
                                         action.label 
-                                            ? 'gap-2 h-[36px] sm:h-[40px] rounded-xl font-black text-xs uppercase tracking-wider' 
-                                            : `h-[36px] sm:h-[40px] w-[36px] sm:w-[40px] rounded-xl`
+                                            ? 'gap-2 h-[36px] sm:h-[40px] rounded-xl font-bold text-xs uppercase tracking-wider px-4 sm:px-6' 
+                                            : 'h-[36px] sm:h-[40px] w-[36px] sm:w-[40px] rounded-xl'
                                     } ${
                                         action.primary 
-                                        ? 'bg-white text-[#333] hover:bg-slate-50 shadow-amber-950/20 px-4 sm:px-6' 
-                                        : 'bg-[#fbbf24] text-[#451a03] border border-[#d97706] hover:bg-[#fcd34d] hover:scale-105 shadow-lg transition-all font-black px-3 sm:px-6'
+                                        ? 'bg-white text-slate-900 border border-white/40 shadow-[0_8px_25px_rgba(0,0,0,0.1)] hover:bg-slate-50 hover:scale-[1.02] active:scale-[0.98]' 
+                                        : 'bg-white/10 text-white border border-white/20 hover:bg-white/25 hover:border-white/35 shadow-[0_8px_25px_rgba(0,0,0,0.05)] backdrop-blur-sm hover:scale-[1.02] active:scale-[0.98]'
                                     }`}
                                 >
                                     {action.icon && <action.icon className={action.label ? "w-4 h-4" : "w-5 h-5"} />}
@@ -80,9 +79,12 @@ const PageHero: React.FC<PageHeroProps> = ({
             </div>
 
             {showStatus && (
-                <div className="absolute top-8 right-8 hidden md:flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
-                    <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)]" />
-                    <span className="text-[10px] font-black text-white tracking-[0.1em] uppercase">{statusText}</span>
+                <div className="absolute top-6 right-6 hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/15 shadow-[0_4px_30px_rgba(0,0,0,0.05)] hover:border-white/30 transition-colors pointer-events-none">
+                    <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                    </span>
+                    <span className="text-[10px] font-bold text-white tracking-[0.12em] uppercase">{statusText}</span>
                 </div>
             )}
         </div>

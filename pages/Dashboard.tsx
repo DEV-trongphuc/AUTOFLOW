@@ -5,6 +5,7 @@ import {
     Star, Sparkles, LayoutDashboard, Activity, Mail, Zap, FileText, Bot, Globe, Users, BarChart3, Settings, Clock, ArrowRight, MessageSquare, Facebook, Share2, Ticket, Webhook, Code2, Link, Play, Target, ClipboardList, QrCode
 } from 'lucide-react';
 import PageHero from '../components/common/PageHero';
+import { useAuth } from '../components/contexts/AuthContext';
 import { SystemOverviewModal } from '../components/common/SystemOverviewModal';
 import { SystemConnectionsModal } from '../components/common/SystemConnectionsModal';
 import { LeadscoreSetupModal } from '../components/settings/LeadscoreSetupModal';
@@ -158,6 +159,7 @@ export const ALL_MODULES: Module[] = [
 
 const Dashboard: React.FC = () => {
     const navigate = useNavigate();
+    const { dbNeedsMigration } = useAuth();
     const [recentIds, setRecentIds] = useState<string[]>([]);
     const [userName, setUserName] = useState('Bạn');
     const [isOverviewOpen, setIsOverviewOpen] = useState(false);
@@ -217,6 +219,28 @@ const Dashboard: React.FC = () => {
                     { label: 'TỔNG QUAN HỆ THỐNG', icon: BarChart3, onClick: () => setIsOverviewOpen(true) }
                 ]}
             />
+
+            {dbNeedsMigration && (
+                <div className="mb-8 p-5 bg-amber-500/10 dark:bg-amber-500/5 border border-amber-500/20 rounded-[20px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-pulse">
+                    <div className="flex items-start gap-3.5">
+                        <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-600 shrink-0">
+                            <Zap className="w-6 h-6 animate-bounce" />
+                        </div>
+                        <div>
+                            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">Cơ sở dữ liệu cần cập nhật ⚙️</h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">Hệ thống đã được nâng cấp nhưng cấu trúc cơ sở dữ liệu hiện tại chưa đồng bộ với phiên bản mới (phiên bản target: 35).</p>
+                        </div>
+                    </div>
+                    <a
+                        href="/mail_api/run_migrations.php"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-5 py-3 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-amber-500/25 transition-all text-center self-start sm:self-center shrink-0"
+                    >
+                        Cập nhật ngay 🚀
+                    </a>
+                </div>
+            )}
 
             <SystemOverviewModal isOpen={isOverviewOpen} onClose={() => setIsOverviewOpen(false)} />
             <SystemConnectionsModal isOpen={isConnectionsOpen} onClose={() => setIsConnectionsOpen(false)} />

@@ -9,10 +9,12 @@ import MetaGrowthReport from '../meta/MetaGrowthReport';
 import ZaloReportTab from '../zalo/ZaloReportTab';
 import AIChatReport from '../reports/AIChatReport';
 import WebJourneyReport from '../reports/WebJourneyReport';
+import Modal from './Modal';
 
 interface Props {
     isOpen: boolean;
     onClose: () => void;
+    isDarkTheme?: boolean;
 }
 
 const MODAL_STYLES = `
@@ -28,7 +30,7 @@ const MODAL_STYLES = `
 }
 `;
 
-export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose }) => {
+export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose, isDarkTheme }) => {
     const [loading, setLoading] = useState(true);
     const [scanProgress, setScanProgress] = useState(0);
     const [scanText, setScanText] = useState('Đang khởi tạo kết nối...');
@@ -108,14 +110,20 @@ export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            size="2xl"
+            noHeader
+            noPadding
+            noScroll
+            isDarkTheme={isDarkTheme}
+        >
             <style>{MODAL_STYLES}</style>
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm shadow-2xl" onClick={onClose} />
-
-            <div className="relative bg-white w-full max-w-6xl max-h-[90vh] min-h-[500px] rounded-[24px] shadow-2xl overflow-hidden flex flex-col animate-scale-in">
+            <div className={`relative w-full h-full flex flex-col overflow-hidden ${isDarkTheme ? 'bg-[#11151d] text-slate-100' : 'bg-white text-slate-800'}`}>
 
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 relative overflow-hidden">
+                <div className={`px-6 py-4 border-b flex items-center justify-between relative overflow-hidden shrink-0 ${isDarkTheme ? 'bg-[#11151d] border-slate-800/80' : 'bg-slate-50 border-slate-100'}`}>
                     <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700" />
 
                     <div className="flex items-center gap-3 relative z-10">
@@ -132,18 +140,18 @@ export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
                     {!loading && (
                         <div className="flex items-center gap-4">
-                            <div className="flex p-1 bg-slate-100/80 backdrop-blur rounded-xl border border-slate-200/50">
+                            <div className={`flex p-1 rounded-xl border ${isDarkTheme ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200/50'}`}>
                                 {[3, 7, 14, 30].map(d => (
                                     <button
                                         key={d}
                                         onClick={() => setDays(d)}
-                                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all duration-300 ${days === d ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all duration-300 ${days === d ? (isDarkTheme ? 'bg-slate-900 text-amber-500' : 'bg-white shadow-sm text-indigo-600') : (isDarkTheme ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
                                     >
                                         {d} ngày
                                     </button>
                                 ))}
                             </div>
-                            <button onClick={onClose} className="p-2 bg-slate-50 hover:bg-slate-200 rounded-full transition-colors text-slate-400">
+                            <button onClick={onClose} className={`p-2 rounded-full transition-colors ${isDarkTheme ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200' : 'bg-slate-50 hover:bg-slate-200 text-slate-400'}`}>
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
@@ -151,7 +159,7 @@ export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose }) => {
                 </div>
 
                 {/* Sub-Navigation Tabs */}
-                <div className="px-6 py-3 border-b border-slate-100 bg-white">
+                <div className={`px-6 py-3 border-b ${isDarkTheme ? 'bg-[#11151d] border-slate-800/80' : 'bg-white border-slate-100'}`}>
                     <Tabs
                         activeId={activeTab}
                         onChange={(id) => setActiveTab(id as any)}
@@ -167,10 +175,10 @@ export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose }) => {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto bg-slate-50 p-6 relative">
+                <div className={`flex-1 overflow-y-auto p-6 relative custom-scrollbar ${isDarkTheme ? 'bg-[#141822]' : 'bg-slate-50'}`}>
 
                     {loading ? (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur z-20">
+                        <div className={`absolute inset-0 flex flex-col items-center justify-center z-20 ${isDarkTheme ? 'bg-[#11151d]' : 'bg-slate-900/95'}`}>
                             {/* Spinning rings from AI Generator */}
                             <div style={{ position: 'relative', width: '96px', height: '96px', marginBottom: '24px' }}>
                                 <div style={{ position: 'absolute', inset: '-14px', borderRadius: '50%', border: '2px solid rgba(217,119,6,0.12)', animation: 'pulseRing 2s ease-in-out infinite' }} />
@@ -357,7 +365,7 @@ export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose }) => {
                     )}
                 </div>
             </div>
-        </div>
+        </Modal>
     );
 }
 

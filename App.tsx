@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import Lenis from 'lenis';
 import { createPortal } from 'react-dom';
 import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -29,6 +30,7 @@ import { KeyboardShortcutsProvider } from './components/common/KeyboardShortcuts
 import { AuthProvider } from './components/contexts/AuthContext';
 import { SettingsProvider } from './components/contexts/SettingsContext';
 import { apiEvents } from './services/storageAdapter';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 import { NProgressHandler } from './components/common/NProgressHandler';
 
@@ -198,6 +200,55 @@ const GlobalDeleteOverlay = () => {
 };
 
 const App: React.FC = () => {
+    // Global auto-prevent for Lenis scroll hijacking on nested scrollable elements
+    useEffect(() => {
+        const isScrollable = (el: HTMLElement) => {
+            const cls = el.className;
+            if (typeof cls === 'string' && (
+                cls.includes('overflow-y-auto') || 
+                cls.includes('overflow-y-scroll') || 
+                cls.includes('overflow-auto') || 
+                cls.includes('overflow-scroll') ||
+                cls.includes('overflow-x-auto') ||
+                cls.includes('overflow-x-scroll')
+            )) {
+                return true;
+            }
+            if (el.style.overflowY === 'auto' || el.style.overflowY === 'scroll' || el.style.overflowX === 'auto' || el.style.overflowX === 'scroll') {
+                return true;
+            }
+            if (el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth) {
+                const style = window.getComputedStyle(el);
+                return style.overflowY === 'auto' || style.overflowY === 'scroll' || style.overflowX === 'auto' || style.overflowX === 'scroll';
+            }
+            return false;
+        };
+
+        const autoPreventLenis = (e: Event) => {
+            let target = e.target as HTMLElement | null;
+            while (target && target !== document.body) {
+                if (target.hasAttribute('data-lenis-prevent')) {
+                    break;
+                }
+                if (isScrollable(target)) {
+                    target.setAttribute('data-lenis-prevent', 'true');
+                    break;
+                }
+                target = target.parentElement;
+            }
+        };
+
+        window.addEventListener('wheel', autoPreventLenis, { capture: true, passive: true });
+        window.addEventListener('touchstart', autoPreventLenis, { capture: true, passive: true });
+        window.addEventListener('touchmove', autoPreventLenis, { capture: true, passive: true });
+
+        return () => {
+            window.removeEventListener('wheel', autoPreventLenis, { capture: true });
+            window.removeEventListener('touchstart', autoPreventLenis, { capture: true });
+            window.removeEventListener('touchmove', autoPreventLenis, { capture: true });
+        };
+    }, []);
+
     useEffect(() => {
         // [ISOLATION] Skip all production auth side-effects in DEMO_MODE
         if (DEMO_MODE) return;
@@ -320,141 +371,143 @@ const App: React.FC = () => {
 
     return (
         <QueryClientProvider client={queryClient}>
-            <Toaster
-                position="top-right"
-                containerStyle={{
-                    zIndex: 999999,
-                }}
-                toastOptions={{
-                    style: {
-                        borderRadius: '16px',
-                        background: '#ffffff',
-                        color: '#0f172a',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        padding: '12px 16px',
-                        boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                        border: '1px solid #f1f5f9'
-                    },
-                    success: {
-                        iconTheme: {
-                            primary: '#1e293b',
-                            secondary: '#fff',
+            <ThemeProvider>
+                <Toaster
+                    position="top-right"
+                    containerStyle={{
+                        zIndex: 999999,
+                    }}
+                    toastOptions={{
+                        style: {
+                            borderRadius: '16px',
+                            background: '#ffffff',
+                            color: '#0f172a',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            padding: '12px 16px',
+                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                            border: '1px solid #f1f5f9'
                         },
-                    },
-                }}
-            />
-            <GlobalDeleteOverlay />
-            <AuthProvider>
-                <SettingsProvider>
-                <BrowserRouter>
-                    <NProgressHandler />
-                    <HashRedirect />
-                    <KeyboardShortcutsProvider>
-                        <NavigationProvider>
-                            {/* [PERF] Outer Suspense for initial app boot only */}
-                            <Suspense fallback={<PageLoader />}>
-                                <Routes>
-                                    {/* Public routes */}
-                                    <Route path="/landing" element={<P c={Landing} />} />
-                                    <Route path="/login" element={<P c={Login} />} />
-                                    <Route path="/docs" element={<P c={Documentation} />} />
-                                    <Route path="/chat/:chatbotId" element={<P c={ChatPage} />} />
-                                    <Route
-                                        path="/ai-space/:categoryId/*"
-                                        element={
-                                            <ChatPageProvider>
-                                                <Routes>
-                                                    <Route path="login" element={<P c={LoginPage} />} />
-                                                    <Route index element={<P c={CategoryChatPage} />} />
-                                                    <Route path=":chatbotId" element={<P c={CategoryChatPage} />} />
-                                                    <Route path=":chatbotId/:sessionId" element={<P c={CategoryChatPage} />} />
-                                                </Routes>
-                                            </ChatPageProvider>
-                                        }
-                                    />
-                                    <Route path="/public-report/:propertyId" element={<P c={PublicReport} />} />
-                                    <Route path="/public-report/:propertyId/index/:index" element={<P c={PublicReport} />} />
-                                    {/* Public survey renderer */}
-                                    <Route path="/s/:slug" element={<P c={PublicSurvey} />} />
-                                    <Route path="/claim/:id" element={<P c={PublicClaim} />} />
+                        success: {
+                            iconTheme: {
+                                primary: '#1e293b',
+                                secondary: '#fff',
+                            },
+                        },
+                    }}
+                />
+                <GlobalDeleteOverlay />
+                <AuthProvider>
+                    <SettingsProvider>
+                    <BrowserRouter>
+                        <NProgressHandler />
+                        <HashRedirect />
+                        <KeyboardShortcutsProvider>
+                            <NavigationProvider>
+                                {/* [PERF] Outer Suspense for initial app boot only */}
+                                <Suspense fallback={<PageLoader />}>
+                                    <Routes>
+                                        {/* Public routes */}
+                                        <Route path="/landing" element={<P c={Landing} />} />
+                                        <Route path="/login" element={<P c={Login} />} />
+                                        <Route path="/docs" element={<P c={Documentation} />} />
+                                        <Route path="/chat/:chatbotId" element={<P c={ChatPage} />} />
+                                        <Route
+                                            path="/ai-space/:categoryId/*"
+                                            element={
+                                                <ChatPageProvider>
+                                                    <Routes>
+                                                        <Route path="login" element={<P c={LoginPage} />} />
+                                                        <Route index element={<P c={CategoryChatPage} />} />
+                                                        <Route path=":chatbotId" element={<P c={CategoryChatPage} />} />
+                                                        <Route path=":chatbotId/:sessionId" element={<P c={CategoryChatPage} />} />
+                                                    </Routes>
+                                                </ChatPageProvider>
+                                            }
+                                        />
+                                        <Route path="/public-report/:propertyId" element={<P c={PublicReport} />} />
+                                        <Route path="/public-report/:propertyId/index/:index" element={<P c={PublicReport} />} />
+                                        {/* Public survey renderer */}
+                                        <Route path="/s/:slug" element={<P c={PublicSurvey} />} />
+                                        <Route path="/claim/:id" element={<P c={PublicClaim} />} />
 
-                                    {/* Protected Routes — each has its own Suspense via P */}
-                                    <Route path="/" element={
-                                        <ProtectedRoute><Layout><P c={Dashboard} /></Layout></ProtectedRoute>
-                                    } />
-                                    <Route path="/campaigns" element={
-                                        <ProtectedRoute><Layout><P c={Campaigns} /></Layout></ProtectedRoute>
-                                    } />
-                                    <Route path="/templates" element={
-                                        <ProtectedRoute><Layout><P c={Templates} /></Layout></ProtectedRoute>
-                                    } />
-                                    <Route path="/audience" element={
-                                        <ProtectedRoute><Layout><P c={Audience} /></Layout></ProtectedRoute>
-                                    } />
-                                    <Route path="/flows" element={
-                                        <ProtectedRoute><Layout><P c={Flows} /></Layout></ProtectedRoute>
-                                    } />
-                                    <Route path="/tags" element={
-                                        <ProtectedRoute><Layout><P c={Tags} /></Layout></ProtectedRoute>
-                                    } />
-                                    <Route path="/vouchers" element={
-                                        <ProtectedRoute><Layout><P c={Vouchers} /></Layout></ProtectedRoute>
-                                    } />
-                                    <Route path="/api-triggers" element={
-                                        <ProtectedRoute><Layout><P c={ApiTriggers} /></Layout></ProtectedRoute>
-                                    } />
-                                    <Route path="/settings" element={
-                                        <ProtectedRoute><Layout><P c={Settings} /></Layout></ProtectedRoute>
-                                    } />
-                                    <Route path="/zalo-settings" element={
-                                        <ProtectedRoute><Layout><P c={ZaloSettings} /></Layout></ProtectedRoute>
-                                    } />
-                                    <Route path="/meta-messenger" element={
-                                        <ProtectedRoute><Layout><P c={MetaMessenger} /></Layout></ProtectedRoute>
-                                    } />
-                                    <Route path="/web-tracking" element={
-                                        <ProtectedRoute><Layout><P c={WebTracking} /></Layout></ProtectedRoute>
-                                    } />
-                                    <Route path="/links-qr" element={
-                                        <ProtectedRoute><Layout><P c={LinksQR} /></Layout></ProtectedRoute>
-                                    } />
-                                    <Route path="/ai-training" element={
-                                        <ProtectedRoute>
-                                            <ChatPageProvider><Layout><P c={AITraining} /></Layout></ChatPageProvider>
-                                        </ProtectedRoute>
-                                    } />
-                                    <Route path="/admin/users" element={
-                                        <ProtectedRoute><Layout><P c={AdminUsers} /></Layout></ProtectedRoute>
-                                    } />
-                                    <Route path="/admin/workspace" element={
-                                        <ProtectedRoute><Layout><P c={WorkspaceSettings} /></Layout></ProtectedRoute>
-                                    } />
-                                    <Route path="/profile" element={
-                                        <ProtectedRoute><Layout><P c={Profile} /></Layout></ProtectedRoute>
-                                    } />
-                                    {/* Survey Builder Routes */}
-                                    <Route path="/surveys" element={
-                                        <ProtectedRoute><Layout><P c={Surveys} /></Layout></ProtectedRoute>
-                                    } />
-                                    <Route path="/surveys/:id/edit" element={
-                                        <ProtectedRoute><P c={SurveyEditorPage} /></ProtectedRoute>
-                                    } />
-                                    <Route path="/surveys/:id/analytics" element={
-                                        <ProtectedRoute><Layout><P c={Surveys} /></Layout></ProtectedRoute>
-                                    } />
+                                        {/* Protected Routes — each has its own Suspense via P */}
+                                        <Route path="/" element={
+                                            <ProtectedRoute><Layout><P c={Dashboard} /></Layout></ProtectedRoute>
+                                        } />
+                                        <Route path="/campaigns" element={
+                                            <ProtectedRoute><Layout><P c={Campaigns} /></Layout></ProtectedRoute>
+                                        } />
+                                        <Route path="/templates" element={
+                                            <ProtectedRoute><Layout><P c={Templates} /></Layout></ProtectedRoute>
+                                        } />
+                                        <Route path="/audience" element={
+                                            <ProtectedRoute><Layout><P c={Audience} /></Layout></ProtectedRoute>
+                                        } />
+                                        <Route path="/flows" element={
+                                            <ProtectedRoute><Layout><P c={Flows} /></Layout></ProtectedRoute>
+                                        } />
+                                        <Route path="/tags" element={
+                                            <ProtectedRoute><Layout><P c={Tags} /></Layout></ProtectedRoute>
+                                        } />
+                                        <Route path="/vouchers" element={
+                                            <ProtectedRoute><Layout><P c={Vouchers} /></Layout></ProtectedRoute>
+                                        } />
+                                        <Route path="/api-triggers" element={
+                                            <ProtectedRoute><Layout><P c={ApiTriggers} /></Layout></ProtectedRoute>
+                                        } />
+                                        <Route path="/settings" element={
+                                            <ProtectedRoute><Layout><P c={Settings} /></Layout></ProtectedRoute>
+                                        } />
+                                        <Route path="/zalo-settings" element={
+                                            <ProtectedRoute><Layout><P c={ZaloSettings} /></Layout></ProtectedRoute>
+                                        } />
+                                        <Route path="/meta-messenger" element={
+                                            <ProtectedRoute><Layout><P c={MetaMessenger} /></Layout></ProtectedRoute>
+                                        } />
+                                        <Route path="/web-tracking" element={
+                                            <ProtectedRoute><Layout><P c={WebTracking} /></Layout></ProtectedRoute>
+                                        } />
+                                        <Route path="/links-qr" element={
+                                            <ProtectedRoute><Layout><P c={LinksQR} /></Layout></ProtectedRoute>
+                                        } />
+                                        <Route path="/ai-training" element={
+                                            <ProtectedRoute>
+                                                <ChatPageProvider><Layout><P c={AITraining} /></Layout></ChatPageProvider>
+                                            </ProtectedRoute>
+                                        } />
+                                        <Route path="/admin/users" element={
+                                            <ProtectedRoute><Layout><P c={AdminUsers} /></Layout></ProtectedRoute>
+                                        } />
+                                        <Route path="/admin/workspace" element={
+                                            <ProtectedRoute><Layout><P c={WorkspaceSettings} /></Layout></ProtectedRoute>
+                                        } />
+                                        <Route path="/profile" element={
+                                            <ProtectedRoute><Layout><P c={Profile} /></Layout></ProtectedRoute>
+                                        } />
+                                        {/* Survey Builder Routes */}
+                                        <Route path="/surveys" element={
+                                            <ProtectedRoute><Layout><P c={Surveys} /></Layout></ProtectedRoute>
+                                        } />
+                                        <Route path="/surveys/:id/edit" element={
+                                            <ProtectedRoute><P c={SurveyEditorPage} /></ProtectedRoute>
+                                        } />
+                                        <Route path="/surveys/:id/analytics" element={
+                                            <ProtectedRoute><Layout><P c={Surveys} /></Layout></ProtectedRoute>
+                                        } />
 
-                                    {/* 404 — unknown routes */}
-                                    <Route path="*" element={
-                                        <Suspense fallback={<TabLoader />}><NotFound /></Suspense>
-                                    } />
-                                </Routes>
-                            </Suspense>
-                        </NavigationProvider>
-                    </KeyboardShortcutsProvider>
-                </BrowserRouter>
-                </SettingsProvider>
-            </AuthProvider>
+                                        {/* 404 — unknown routes */}
+                                        <Route path="*" element={
+                                            <Suspense fallback={<TabLoader />}><NotFound /></Suspense>
+                                        } />
+                                    </Routes>
+                                </Suspense>
+                            </NavigationProvider>
+                        </KeyboardShortcutsProvider>
+                    </BrowserRouter>
+                    </SettingsProvider>
+                </AuthProvider>
+            </ThemeProvider>
         </QueryClientProvider>
     );
 };

@@ -373,7 +373,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
 
     return ReactDOM.createPortal(
         <div className={`fixed inset-0 z-[9999] flex justify-end ${isVisible ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-            <div className={`absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`} onClick={onClose} />
+            <div className={`absolute inset-0 bg-slate-950/70 transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`} onClick={onClose} />
             <div
                 className={`relative w-full lg:max-w-6xl bg-[#f8fafc] shadow-2xl h-full lg:h-screen flex flex-col transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${animateIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}
             >
@@ -578,7 +578,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                         {associatedFlow && (
                                             <div className="bg-gradient-to-r from-violet-900 via-indigo-950 to-slate-950 p-6 rounded-[24px] shadow-lg shadow-indigo-900/20 text-white flex flex-col md:flex-row items-center justify-between gap-6 animate-in fade-in zoom-in duration-500 border border-white/5">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center">
+                                                    <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
                                                         <GitBranch className="w-6 h-6 text-orange-300" />
                                                     </div>
                                                     <div>

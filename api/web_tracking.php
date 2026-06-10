@@ -966,7 +966,7 @@ if ($method === 'GET' && $action === 'page_details') {
             SELECT COUNT(DISTINCT s.id) as total
             FROM web_page_views pv
             JOIN web_sessions s ON pv.session_id = s.id
-            WHERE pv.property_id = ? AND $urlCondition AND pv.loaded_at >= ? AND pv.loaded_at <= ?
+            WHERE pv.property_id = ? AND $urlCondition AND s.started_at >= ? AND s.started_at <= ?
             AND pv.id = (SELECT MIN(id) FROM web_page_views WHERE session_id = s.id)
             $deviceCondition
         ";

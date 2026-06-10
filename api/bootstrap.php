@@ -17,43 +17,10 @@ apiHeaders();
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 
 /**
- * Optimized System Initialization / Migration
- * Instead of checking schema on every request, we check a version flag.
+ * Deprecated: System Initialization / Migration check.
+ * Migration is now handled asynchronously via run_migrations.php.
  */
 function initializeSystem($pdo)
 {
-    $currentVersion = '29.8'; // Optimized lists with phone_count
-
-    // Use a lightweight check for the version
-    static $initialized = false;
-    if ($initialized)
-        return;
-
-    try {
-        $stmt = $pdo->prepare("SELECT value FROM system_settings WHERE workspace_id = 0 AND `key` = 'schema_version' LIMIT 1");
-        $stmt->execute();
-        $installedVersion = $stmt->fetchColumn();
-
-        if ($installedVersion !== $currentVersion) {
-            // Run migration logic once
-            require_once 'migrate_system_logic.php';
-            if (function_exists('runSystemMigration')) {
-                runSystemMigration($pdo, $currentVersion);
-            }
-        }
-    } catch (Exception $e) {
-        // Fallback: If table missing, run migration to create it
-        if (strpos($e->getMessage(), "doesn't exist") !== false) {
-            require_once 'migrate_system_logic.php';
-            if (function_exists('runSystemMigration')) {
-                runSystemMigration($pdo, $currentVersion);
-            }
-        }
-    }
-
-    $initialized = true;
+    // No-op. Migration checks are deferred to run_migrations.php.
 }
-
-// Optional: Global trigger for initialization
-// However, it might be better to call this only on high-level entry points (GET/POST /flows, /campaigns)
-// than on every single tracking ping.

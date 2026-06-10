@@ -8,6 +8,7 @@ import AITrainingDetail from '../components/ai/training/AITrainingDetail';
 import AIModals from '../components/ai/modals/AIModals';
 import { ManualAddModal, EditDocModal } from '../components/ai/modals/TrainingModals';
 import { useNavigation } from '../contexts/NavigationContext';
+import Modal from '../components/common/Modal';
 import TipsModal from '../components/common/TipsModal';
 import { Lightbulb, Target, Sparkles, Zap, ShieldCheck, Brain, MessageSquare, UserCheck, Search, ListCheck, Users, Shield, Activity } from 'lucide-react';
 import { useChatPage } from '../contexts/ChatPageContext';
@@ -1978,35 +1979,23 @@ Lịch sử hoạt động:
             />
 
             {/* Org Manager Modal */}
-            {isOrgManagerOpen && (
-                <div
-                    className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
-                    onClick={() => setIsOrgManagerOpen(false)}
-                >
-                    <div
-                        className="rounded-2xl shadow-2xl overflow-hidden w-full max-w-5xl h-[85vh] flex flex-col bg-white"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div className="p-4 border-b flex items-center justify-between bg-white border-slate-100">
-                            <h3 className="font-bold text-lg text-slate-800">Quản trị Tổ chức</h3>
-                            <button
-                                onClick={() => setIsOrgManagerOpen(false)}
-                                className="p-2 rounded-full hover:bg-slate-100 text-slate-500"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                            </button>
-                        </div>
-                        <div className="flex-1 overflow-hidden p-6 bg-slate-50">
-                            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0 max-w-fit">
-                                <OrgUserManager
-                                    isDarkTheme={false}
-                                    categoryId={selectedCategoryId || undefined}
-                                />
-                            </div>
-                        </div>
+            <Modal
+                isOpen={isOrgManagerOpen}
+                onClose={() => setIsOrgManagerOpen(false)}
+                title="Quản trị Tổ chức"
+                size="4xl"
+                isDarkTheme={isAITrainingDarkTheme}
+                noPadding
+            >
+                <div className={`flex-1 overflow-hidden p-6 ${isAITrainingDarkTheme ? 'bg-[#11151d]' : 'bg-slate-50'}`}>
+                    <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0 max-w-fit">
+                        <OrgUserManager
+                            isDarkTheme={isAITrainingDarkTheme}
+                            categoryId={selectedCategoryId || undefined}
+                        />
                     </div>
                 </div>
-            )}
+            </Modal>
         </div>
     );
 };

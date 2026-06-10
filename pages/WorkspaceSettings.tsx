@@ -4,7 +4,9 @@ import { Users, Shield, Plus, Trash2, ShieldAlert, KeyRound, ChevronDown, Check,
 import PageHero from '../components/common/PageHero';
 import Tabs from '../components/common/Tabs';
 import Modal from '../components/common/Modal';
+import ConfirmModal from '../components/common/ConfirmModal';
 import { useAuth } from '../components/contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { api } from '../services/storageAdapter';
 
 interface Role {
@@ -94,7 +96,7 @@ const CustomDropdown = ({ value, options, onChange, disabled, fullWidth = false 
             </button>
 
             {isOpen && (
-                <div className={`absolute z-[100] ${fullWidth ? 'w-full' : 'min-w-[180px]'} top-[calc(100%+8px)] bg-white/90 backdrop-blur-xl border border-white/50 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] py-2 left-0 transform origin-top-left animate-in fade-in zoom-in-95 duration-200 ring-1 ring-black/5`}>
+                <div className={`absolute z-[100] ${fullWidth ? 'w-full' : 'min-w-[180px]'} top-[calc(100%+8px)] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] py-2 left-0 transform origin-top-left animate-in fade-in zoom-in-95 duration-200 ring-1 ring-black/5`}>
                     {options.map((opt: any) => {
                         const optIsAdmin = opt.name.toLowerCase().includes('admin');
                         return (
@@ -126,6 +128,7 @@ const CustomDropdown = ({ value, options, onChange, disabled, fullWidth = false 
 
 const WorkspaceSettings: React.FC = () => {
     const { currentWorkspace, can, user } = useAuth();
+    const { isDark } = useTheme();
     const [activeTab, setActiveTab] = useState<'members' | 'roles'>('members');
 
     const [members, setMembers] = useState<WorkspaceUser[]>([]);
@@ -397,7 +400,7 @@ const WorkspaceSettings: React.FC = () => {
             </div>
 
             {/* Modal Add User */}
-            <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Mời thành viên mới" size="md">
+            <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Mời thành viên mới" size="md" isDarkTheme={isDark}>
                 <div className="space-y-6 pb-4">
                     <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex gap-3">
                         <ShieldAlert className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
@@ -448,46 +451,16 @@ const WorkspaceSettings: React.FC = () => {
             </Modal>
 
             {/* Confirm Actions Modal System */}
-            {confirmModal.isOpen && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-400">
-                        <div className={`p-8 relative overflow-hidden ${confirmModal.variant === 'danger' ? 'bg-rose-50/80' : 'bg-amber-50/80'}`}>
-                            {/* Decorative blur blob */}
-                            <div className={`absolute top-0 right-0 w-32 h-32 blur-3xl opacity-50 rounded-full translate-x-10 -translate-y-10
-                                ${confirmModal.variant === 'danger' ? 'bg-rose-400' : 'bg-amber-400'}`}></div>
-
-                            <div className="relative z-10 flex items-start gap-5 mb-2">
-                                <div className={`w-14 h-14 rounded-[1.2rem] flex items-center justify-center shrink-0 shadow-sm
-                                    ${confirmModal.variant === 'danger' ? 'bg-rose-100 text-rose-600 border border-rose-200/50' : 'bg-amber-100 text-amber-600 border border-amber-200/50'}`}>
-                                    <AlertTriangle className="w-7 h-7" />
-                                </div>
-                                <h3 className="text-xl font-black text-slate-800 pt-2 leading-tight">{confirmModal.title}</h3>
-                            </div>
-                            <p className="text-sm font-medium text-slate-600 leading-relaxed mt-4 relative z-10">{confirmModal.message}</p>
-                        </div>
-
-                        <div className="p-6 bg-white flex justify-end gap-3 border-t border-slate-100">
-                            <button
-                                onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-                                className="px-6 py-3 rounded-2xl text-xs font-bold tracking-wider text-slate-500 bg-slate-50 hover:bg-slate-100 transition-colors"
-                            >
-                                ĐÓNG LẠI
-                            </button>
-                            <button
-                                onClick={confirmModal.onConfirm}
-                                className={`px-8 py-3 rounded-2xl text-xs font-bold tracking-wider text-white flex items-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-md
-                                    ${confirmModal.variant === 'danger'
-                                        ? 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/20'
-                                        : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:to-orange-600 shadow-amber-500/30'}
-                                `}
-                            >
-                                <Check className="w-4 h-4" />
-                                {confirmModal.actionLabel}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmModal.onConfirm}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                confirmText={confirmModal.actionLabel}
+                variant={confirmModal.variant as any}
+                isDarkTheme={isDark}
+            />
         </div>
     );
 };

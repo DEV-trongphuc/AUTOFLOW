@@ -20,6 +20,7 @@ import { DEFAULT_BODY_STYLE, DEFAULT_BLOCKS } from './constants/editorConstants'
 import { compileHTML } from './utils/htmlCompiler';
 import { createBlock, insertDeep, deleteBlockDeep, duplicateBlockDeep } from './utils/blockUtils'; // Import necessary block utils
 import { API_BASE_URL } from '@/utils/config';
+import { api } from '../../../services/storageAdapter';
 
 interface EmailEditorProps {
     template?: Template;
@@ -323,6 +324,12 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
     const [groupId, setGroupId] = useState(template?.groupId || '');
 
     const [customHtml, setCustomHtml] = useState(template?.htmlContent || '');
+    const handleSetEditorMode = useCallback((newMode: 'visual' | 'code') => {
+        if (newMode === 'code' && editorMode === 'visual') {
+            setCustomHtml(compileHTML(blocks, bodyStyle, name));
+        }
+        setEditorMode(newMode);
+    }, [editorMode, blocks, bodyStyle, name]);
     const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
     const [history, setHistory] = useState<EmailBlock[][]>([template?.blocks || DEFAULT_BLOCKS]);
@@ -408,12 +415,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // only on mount
 
-    // Optimize: Only compile HTML when switching to code mode to prevent heavy re-renders on every keystroke
-    useEffect(() => {
-        if (editorMode === 'code') {
-            setCustomHtml(compileHTML(blocks, bodyStyle, name));
-        }
-    }, [editorMode]); // Only depend on editorMode!
+
 
     const addToHistory = useCallback((newBlocks: EmailBlock[]) => {
         const newHistory = history.slice(0, historyIndex + 1);
@@ -641,24 +643,16 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
         try {
             const finalHtml = editorMode === 'code' ? customHtml : compileHTML(blocks, bodyStyle, name);
 
-            // Fixed: Use absolute production URL as requested
-            const response = await fetch(`${API_BASE_URL}/send_test_email.php`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email,
-                    subject: `[Test] ${name}`,
-                    content: finalHtml
-                })
+            const result = await api.post<any>('send_test_email', {
+                email,
+                subject: `[Test] ${name}`,
+                content: finalHtml
             });
-            if (!response.ok) throw new Error("Failed to send test email");
-
-            const result = await response.json();
 
             if (result.success) {
                 toast.success(`Đã gửi email test đến ${email}`);
             } else {
-                toast.error(result.error || 'Gửi thất bại');
+                toast.error(result.message || result.error || 'Gửi thất bại');
             }
         } catch (error) {
             toast.error('Lỗi kết nối server');
@@ -672,7 +666,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
                 name={name} setName={setName}
                 groupId={groupId} setGroupId={setGroupId}
                 groups={groups}
-                editorMode={editorMode} setEditorMode={setEditorMode}
+                editorMode={editorMode} setEditorMode={handleSetEditorMode}
                 viewMode={viewMode} setViewMode={setViewMode} canUndo={historyIndex > 0} canRedo={historyIndex < history.length - 1}
                 onUndo={handleUndo} onRedo={handleRedo} onSave={handleSaveData} onCancel={onCancel}
                 onPreview={() => { const win = window.open(); win?.document.write(editorMode === 'code' ? customHtml : compileHTML(blocks, bodyStyle, name, { isPreview: true })); }}

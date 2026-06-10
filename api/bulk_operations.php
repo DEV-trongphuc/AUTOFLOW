@@ -433,6 +433,56 @@ try {
                 jsonResponse(false, null, 'Invalid data format or empty list.');
             }
 
+            if (!function_exists('standardize_phone')) {
+                function standardize_phone($phone) {
+                    if ($phone === null || $phone === '') {
+                        return '';
+                    }
+                    $clean = preg_replace('/[^0-9]/', '', $phone);
+                    if (empty($clean)) {
+                        return '';
+                    }
+                    if (substr($clean, 0, 3) === '084') {
+                        $clean = '0' . substr($clean, 3);
+                    } elseif (substr($clean, 0, 2) === '84') {
+                        $clean = '0' . substr($clean, 2);
+                    }
+                    if (strlen($clean) === 9 && substr($clean, 0, 1) !== '0') {
+                        $clean = '0' . $clean;
+                    }
+                    return $clean;
+                }
+            }
+
+            if (!function_exists('standardize_dob')) {
+                function standardize_dob($dob) {
+                    if (empty($dob)) {
+                        return null;
+                    }
+                    $dob = trim($dob);
+                    if (preg_match('/^\d{4}$/', $dob)) {
+                        return $dob . '-01-01';
+                    }
+                    if (preg_match('/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/', $dob, $matches)) {
+                        $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+                        $month = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+                        $year = $matches[3];
+                        return "$year-$month-$day";
+                    }
+                    if (preg_match('/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/', $dob, $matches)) {
+                        $year = $matches[1];
+                        $month = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+                        $day = str_pad($matches[3], 2, '0', STR_PAD_LEFT);
+                        return "$year-$month-$day";
+                    }
+                    $timestamp = strtotime($dob);
+                    if ($timestamp !== false) {
+                        return date('Y-m-d', $timestamp);
+                    }
+                    return null;
+                }
+            }
+
             $chunkSize = 500;
             $chunks = array_chunk($subscribers, $chunkSize);
             $createVirtualEmail = $data['createVirtualEmail'] ?? false;
@@ -457,6 +507,7 @@ try {
                     if (!empty($d['email']))
                         $emailsInChunk[] = $d['email'];
                     $ph = $d['phoneNumber'] ?? $d['phone'] ?? '';
+                    $ph = standardize_phone($ph);
                     if (!empty($ph))
                         $phonesInChunk[] = $ph;
                 }
@@ -479,10 +530,11 @@ try {
                     while ($row = $stmtEx->fetch(PDO::FETCH_ASSOC)) {
                         if ($row['email']) $existingMap[strtolower(trim($row['email']))] = $row['id'];
                         if ($row['phone_number']) {
-                            // Normalize stored phone for lookup
-                            $norm = preg_replace('/[^0-9]/', '', $row['phone_number']);
-                            if (substr($norm, 0, 2) === '84' && strlen($norm) > 9) $norm = '0' . substr($norm, 2);
-                            $existingPhoneMap[$norm] = $row['id'];
+                            // Normalize stored phone for lookup using the same standardize_phone logic
+                            $norm = standardize_phone($row['phone_number']);
+                            if ($norm) {
+                                $existingPhoneMap[$norm] = $row['id'];
+                            }
                         }
                     }
                 }
@@ -497,6 +549,7 @@ try {
                 foreach ($chunk as $d) {
                     $email = $d['email'] ?? '';
                     $phone = $d['phoneNumber'] ?? $d['phone'] ?? '';
+                    $phone = standardize_phone($phone);
 
                     if (empty($email) && !empty($phone) && $createVirtualEmail) {
                         $email = $phone . '@no-email.domation';
@@ -506,8 +559,7 @@ try {
                         continue;
                     // Use existing ID if available, otherwise generate new
                     $cleanEmail = strtolower(trim($email));
-                    $normPhone = preg_replace('/[^0-9]/', '', $phone);
-                    if (substr($normPhone, 0, 2) === '84' && strlen($normPhone) > 9) $normPhone = '0' . substr($normPhone, 2);
+                    $normPhone = $phone;
 
                     $id = $existingMap[$cleanEmail] ?? $existingPhoneMap[$normPhone] ?? ($d['id'] ?? bin2hex(random_bytes(16)));
 
@@ -521,12 +573,12 @@ try {
                     $country = $d['country'] ?? '';
                     $city = $d['city'] ?? '';
                     $gender = $d['gender'] ?? '';
-                    $dob = !empty($d['dateOfBirth']) ? $d['dateOfBirth'] : null;
-                    $anniv = !empty($d['anniversaryDate']) ? $d['anniversaryDate'] : null;
+                    $dob = !empty($d['dateOfBirth']) ? standardize_dob($d['dateOfBirth']) : null;
+                    $anniv = !empty($d['anniversaryDate']) ? standardize_dob($d['anniversaryDate']) : null;
 
                     // Insert Subscriber
                     $customAt = !empty($d['customAttributes']) ? json_encode($d['customAttributes']) : '{}';
-                    $subValues[] = "(?, ?, ?, ?, ?, ?, ?, NOW(), '[]', ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    $subValues[] = "(?, ?, ?, ?, ?, ?, ?, ?, NOW(), '[]', ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                     array_push($subParams, $workspace_id, $id, $email, $firstName, $lastName, $status, $source, $salesperson, $phone, $job, $company, $country, $city, $gender, $dob, $anniv, $customAt);
 
                     // Tags

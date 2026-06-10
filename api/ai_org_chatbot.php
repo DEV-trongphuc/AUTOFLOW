@@ -240,6 +240,23 @@ try {
 
         if ($action === 'get_settings' && $propertyId) {
             $settings = getSettingsCached($pdo, $propertyId, $GLOBAL_GEMINI_KEY);
+            
+            // Security: Remove sensitive fields from settings payload
+            $sensitiveFields = [
+                'gemini_api_key',
+                'p_key',
+                'cat_gemini_api_key',
+                'system_instruction',
+                'persona_prompt',
+                'fast_replies',
+                'intent_configs',
+                'webhook_url',
+                'webhook_secret'
+            ];
+            foreach ($sensitiveFields as $field) {
+                unset($settings[$field]);
+            }
+            
             echo json_encode(['success' => true, 'version' => API_VERSION, 'data' => $settings]);
             exit;
         }

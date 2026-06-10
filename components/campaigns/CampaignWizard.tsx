@@ -911,7 +911,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
         <>
             <div className="fixed inset-0 z-[150] flex justify-end">
                 <div
-                    className={`absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-500 ${animateWizardIn ? 'opacity-100' : 'opacity-0'}`}
+                    className={`absolute inset-0 bg-slate-950/70 transition-opacity duration-500 ${animateWizardIn ? 'opacity-100' : 'opacity-0'}`}
                     onClick={handleIntentClose}
                 />
                 <div className={`relative w-full lg:max-w-[1400px] bg-[#fdfdfd] shadow-2xl h-full flex flex-col border-l border-slate-100 transform transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${animateWizardIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}>
@@ -1554,10 +1554,10 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                     </div>
                 </div>
 
-                {/* PRE-LAUNCH NURTURE OFFER MODAL (GLASSMORPHISM) */}
+                {/* PRE-LAUNCH NURTURE OFFER MODAL */}
                 {showNurtureOffer && (
                     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 lg:p-6 animate-in fade-in duration-300">
-                        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => { setShowNurtureOffer(false); setShowFlowSelectModal(false); }} />
+                        <div className="absolute inset-0 bg-slate-950/70" onClick={() => { setShowNurtureOffer(false); setShowFlowSelectModal(false); }} />
                         <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden max-w-lg w-full transform transition-all border border-slate-200/60 animate-in zoom-in-95 duration-500">
                             {showFlowSelectModal ? (
                                 <div className="p-8 pb-6 flex flex-col gap-3 bg-white animate-in slide-in-from-right-4 duration-300">
@@ -1800,7 +1800,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
             {/* Confirm modal when closing wizard with unsaved changes */}
             {showCloseConfirm && (
                 <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowCloseConfirm(false)}/>
+                    <div className="absolute inset-0 bg-slate-950/70" onClick={() => setShowCloseConfirm(false)}/>
                     <div className="relative bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full animate-in zoom-in-95 duration-200">
                         <button
                             onClick={() => setShowCloseConfirm(false)}

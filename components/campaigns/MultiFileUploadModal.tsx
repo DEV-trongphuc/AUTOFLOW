@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, UploadCloud, CheckCircle2, AlertTriangle, Loader2, File as FileIcon, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -159,7 +159,7 @@ export const MultiFileUploadModal: React.FC<MultiFileUploadModalProps> = ({ isOp
     const successCount = files.filter(f => f.status === 'success').length;
 
     const modalContent = (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/70 animate-in fade-in duration-300">
             <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-5xl h-[85vh] min-h-[600px] flex flex-col overflow-hidden animate-in zoom-in-95">
                 
                 {/* HEAD */}
@@ -220,7 +220,7 @@ export const MultiFileUploadModal: React.FC<MultiFileUploadModalProps> = ({ isOp
                      {/* RIGHT PANEL - LIST */}
                      <div className="flex-1 p-6 flex flex-col overflow-hidden relative">
                          {isChecking && (
-                             <div className="absolute inset-0 bg-white/80 backdrop-blur z-10 flex flex-col items-center justify-center">
+                             <div className="absolute inset-0 bg-white/95 z-10 flex flex-col items-center justify-center">
                                  <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-4" />
                                  <p className="text-sm font-bold text-slate-700">Đang phân tích và đối soát Database...</p>
                              </div>

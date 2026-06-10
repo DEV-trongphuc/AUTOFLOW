@@ -43,6 +43,7 @@ import FlowHeader from '../components/flows/builder/FlowHeader';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import FlowSidebar from '../components/flows/builder/FlowSidebar';
 import ConfirmModal from '../components/common/ConfirmModal';
+import { useTheme } from '../contexts/ThemeContext';
 import Select from '../components/common/Select';
 import CampaignDetailDrawer from '../components/campaigns/CampaignDetailDrawer';
 import FormEditorModal from '../components/forms/FormEditorModal';
@@ -182,6 +183,7 @@ const Flows: React.FC = () => {
     const isAdmin = useIsAdmin();
     const currentUser = useAuthUser();
     const { guard: adminGuard, PermModal: AdminPermModal } = usePermissionGuard(isAdmin);
+    const { isDark: isDarkTheme } = useTheme();
 
     const [flows, setFlows] = useState<Flow[]>([]);
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -1941,7 +1943,7 @@ const Flows: React.FC = () => {
 
             {
                 selectedFlow && (
-                    <div className="fixed inset-0 z-[100] flex flex-col bg-white dark:bg-slate-900 dark:bg-slate-900 animate-in fade-in duration-300 overflow-hidden">
+                    <div data-lenis-prevent="true" className="fixed inset-0 z-[100] flex flex-col bg-white dark:bg-slate-900 dark:bg-slate-900 animate-in fade-in duration-300 overflow-hidden">
                         <FlowHeader
                             flow={selectedFlow}
                             isSaving={isSaving}
@@ -2375,6 +2377,7 @@ const Flows: React.FC = () => {
                 requireConfirmText={confirmModal.requireConfirmText}
                 dangerText={confirmModal.dangerText}
                 dangerAction={confirmModal.dangerAction}
+                isDarkTheme={isDarkTheme}
             />
 
             <TipsModal
@@ -2694,52 +2697,33 @@ const Flows: React.FC = () => {
             )}
             {/* Restore Confirm Dialog */}
             {restoreConfirmSnapshot && (
-                <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-slate-900 dark:bg-slate-900 rounded-2xl shadow-2xl w-[480px] max-w-[95vw] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        <div className="p-5 border-b border-slate-100 dark:border-slate-800 dark:border-slate-800/60 flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-[#ffa900] shrink-0">
-                                <RotateCcw className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 dark:text-slate-200">Xác nhận khôi phục phiên bản</h3>
-                                <p className="text-[11px] text-slate-400 font-medium mt-0.5">Hành động này sẽ thay thế flow hiện tại</p>
-                            </div>
-                        </div>
-                        <div className="p-5 space-y-3">
-                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-2">
-                                <p className="text-xs font-black text-amber-800">📋 Phiên bản được chọn:</p>
-                                <p className="text-sm font-bold text-slate-700 dark:text-slate-200 dark:text-slate-200">{restoreConfirmSnapshot.label}</p>
-                                <div className="flex gap-4 text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-400 font-medium">
+                <ConfirmModal
+                    isOpen={!!restoreConfirmSnapshot}
+                    onClose={() => setRestoreConfirmSnapshot(null)}
+                    onConfirm={handleConfirmRestore}
+                    title="Xác nhận khôi phục phiên bản"
+                    isDarkTheme={isDarkTheme}
+                    variant="warning"
+                    confirmText="Khôi phục ngay"
+                    cancelText="Hủy bỏ"
+                    isLoading={isRestoringSnapshot}
+                    message={
+                        <div className="space-y-4">
+                            <p className="text-[13px]">Hành động này sẽ thay thế flow hiện tại.</p>
+                            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-500/20 rounded-xl p-4 space-y-2 text-left">
+                                <p className="text-xs font-black text-amber-800 dark:text-amber-405">📋 Phiên bản được chọn:</p>
+                                <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{restoreConfirmSnapshot.label}</p>
+                                <div className="flex gap-4 text-[10px] text-slate-500 dark:text-slate-400 font-medium">
                                     <span>🕐 {new Date(restoreConfirmSnapshot.created_at).toLocaleString('vi-VN')}</span>
                                     {restoreConfirmSnapshot.created_by && <span>👤 {restoreConfirmSnapshot.created_by}</span>}
                                 </div>
                             </div>
-                            <div className="bg-rose-50 border border-rose-200 rounded-xl p-3">
-                                <p className="text-[11px] font-bold text-rose-700">⚠️ Cònh báo: Mọi thay đổi chưa lưu hiện tại sẽ bị mất. Sau khi khôi phục, bạn cần bấm <strong>Lưu</strong> để áp dụng lên server.</p>
+                            <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-500/20 rounded-xl p-3 text-left">
+                                <p className="text-[11px] font-bold text-rose-700 dark:text-rose-405">⚠️ Cảnh báo: Mọi thay đổi chưa lưu hiện tại sẽ bị mất. Sau khi khôi phục, bạn cần bấm <strong>Lưu</strong> để áp dụng lên server.</p>
                             </div>
                         </div>
-                        <div className="p-4 border-t border-slate-100 dark:border-slate-800 dark:border-slate-800/60 flex gap-3 justify-end">
-                            <button
-                                onClick={() => setRestoreConfirmSnapshot(null)}
-                                disabled={isRestoringSnapshot}
-                                className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
-                            >
-                                Hủy bỏ
-                            </button>
-                            <button
-                                onClick={handleConfirmRestore}
-                                disabled={isRestoringSnapshot}
-                                className="px-5 py-2 text-xs font-black text-white bg-[#ffa900] hover:bg-[#e69500] rounded-xl transition-colors flex items-center gap-2 disabled:opacity-60"
-                            >
-                                {isRestoringSnapshot ? (
-                                    <><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Đang khôi phục...</>
-                                ) : (
-                                    <><RotateCcw className="w-3.5 h-3.5" />Khôi phục ngay</>
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                    }
+                />
             )}
             </React.Suspense>
         </div>

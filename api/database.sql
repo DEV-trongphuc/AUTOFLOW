@@ -182,6 +182,7 @@ CREATE TABLE `ai_chatbot_settings` (
   `auto_open_excluded_pages` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`auto_open_excluded_pages`)),
   `auto_open_excluded_paths` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`auto_open_excluded_paths`)),
   `auto_open` tinyint(1) DEFAULT 0,
+  `notification_enabled` tinyint(1) DEFAULT 0,
   `notification_emails` text DEFAULT NULL,
   `notification_cc_emails` text DEFAULT NULL,
   `notification_subject` varchar(255) DEFAULT NULL,

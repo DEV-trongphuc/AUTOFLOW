@@ -8,6 +8,7 @@ import Select from '../components/common/Select';
 import Modal from '../components/common/Modal';
 import ConfirmModal from '../components/common/ConfirmModal';
 import LinkGuideModal from '../components/links/LinkGuideModal';
+import { useTheme } from '../contexts/ThemeContext';
 import { api } from '../services/storageAdapter';
 import toast from 'react-hot-toast';
 import { EXTERNAL_API_BASE, EXTERNAL_ASSET_BASE } from '../utils/config';
@@ -90,6 +91,7 @@ interface Survey {
 }
 
 const LinksQR: React.FC = () => {
+    const { isDark } = useTheme();
     const [links, setLinks] = useState<ShortLink[]>([]);
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<'list' | 'report'>('list');
@@ -761,7 +763,7 @@ const LinksQR: React.FC = () => {
                 </div>
             )}
 
-            <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title="Tạo Link Tracking" size="md" footer={<div className="flex justify-between w-full"><Button variant="ghost" onClick={() => setIsAddOpen(false)}>Hủy</Button><Button onClick={handleSave} isLoading={isSubmitting} icon={CheckCircle2}>Tạo Link</Button></div>}>
+            <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title="Tạo Link Tracking" size="md" isDarkTheme={isDark} footer={<div className="flex justify-between w-full"><Button variant="ghost" onClick={() => setIsAddOpen(false)}>Hủy</Button><Button onClick={handleSave} isLoading={isSubmitting} icon={CheckCircle2}>Tạo Link</Button></div>}>
                 <div className="space-y-5 py-2">
                     <Input label="Tên chiến dịch / Link" value={formData.name || ''} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="VD: Link báo giá Tết..." autoFocus />
                     <Input label="URL Đích (Redirect)" value={formData.target_url || ''} onChange={e => setFormData({ ...formData, target_url: e.target.value })} placeholder="https://..." />
@@ -843,7 +845,7 @@ const LinksQR: React.FC = () => {
                 </div>
             </Modal>
 
-            <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title="Nâng cao & Bảo mật" size="md" footer={<div className="flex justify-between w-full"><Button variant="ghost" onClick={() => setIsSettingsOpen(false)}>Hủy</Button><Button onClick={handleSaveSettings} isLoading={isSubmitting} icon={Save}>Cập nhật lưu</Button></div>}>
+            <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title="Nâng cao & Bảo mật" size="md" isDarkTheme={isDark} footer={<div className="flex justify-between w-full"><Button variant="ghost" onClick={() => setIsSettingsOpen(false)}>Hủy</Button><Button onClick={handleSaveSettings} isLoading={isSubmitting} icon={Save}>Cập nhật lưu</Button></div>}>
                 <div className="space-y-6 py-2">
                     <Input 
                         label="URL Đích (Redirect target)" 
@@ -953,37 +955,21 @@ const LinksQR: React.FC = () => {
             </Modal>
 
             {/* ── Delete confirm modal ──────────────────────────────────────── */}
-            {linkToDelete && (
-                <>
-                    <div className="fixed inset-0 z-[300] bg-black/40 backdrop-blur-sm" onClick={() => setLinkToDelete(null)} />
-                    <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[301] max-w-sm mx-auto bg-white rounded-[28px] shadow-2xl p-8 flex flex-col items-center gap-5 animate-in zoom-in-95 fade-in duration-200">
-                        <div className="w-16 h-16 rounded-full bg-rose-100 flex items-center justify-center">
-                            <Trash2 className="w-8 h-8 text-rose-600" />
-                        </div>
-                        <div className="text-center">
-                            <p className="font-bold text-slate-800">Xóa link này?</p>
-                            <p className="text-xs text-slate-400 mt-1 font-medium">
-                                <span className="font-bold text-slate-600">{linkToDelete.name || linkToDelete.slug}</span> sẽ bị xóa vĩnh viễn.
-                            </p>
-                        </div>
-                        <div className="flex gap-3 w-full">
-                            <button
-                                onClick={() => setLinkToDelete(null)}
-                                className="flex-1 py-2.5 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
-                            >
-                                Hủy
-                            </button>
-                            <button
-                                onClick={handleDeleteConfirm}
-                                disabled={isDeleting}
-                                className="flex-1 py-2.5 text-sm font-bold text-white bg-rose-500 hover:bg-rose-600 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-                            >
-                                {isDeleting ? <><Loader2 className="w-4 h-4 animate-spin" /> Đang xóa...</> : <><Trash2 className="w-4 h-4" /> Xóa</>}
-                            </button>
-                        </div>
-                    </div>
-                </>
-            )}
+            <ConfirmModal
+                isOpen={!!linkToDelete}
+                onClose={() => setLinkToDelete(null)}
+                onConfirm={handleDeleteConfirm}
+                title="Xóa link này?"
+                message={
+                    <>
+                        <span className="font-bold text-slate-800 dark:text-slate-200">{linkToDelete?.name || linkToDelete?.slug}</span> sẽ bị xóa vĩnh viễn.
+                    </>
+                }
+                confirmText="Xóa"
+                variant="danger"
+                isLoading={isDeleting}
+                isDarkTheme={isDark}
+            />
 
             <LinkGuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
             

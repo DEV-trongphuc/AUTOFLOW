@@ -97,7 +97,7 @@ const COLUMN_DEFINITIONS = [
     { id: 'joinedAt', label: 'Ngày tham gia', required: false },
 ];
 
-const DEFAULT_VISIBLE_COLUMNS = ['name', 'email', 'status', 'lastActivity', 'leadScore', 'tags', 'salesperson'];
+const DEFAULT_VISIBLE_COLUMNS = ['name', 'email', 'status', 'lastActivity', 'leadScore', 'tags'];
 
 const formatRelativeTime = (dateString?: string) => {
     if (!dateString) return 'Chưa có dữ liệu';
@@ -176,6 +176,26 @@ const Audience: React.FC = () => {
     });
 
     const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
+        // Migration to default remove salesperson column
+        const migrationKey = 'mailflow_visible_columns_migrated_v2';
+        const isMigrated = localStorage.getItem(migrationKey);
+        if (!isMigrated) {
+            localStorage.setItem(migrationKey, 'true');
+            const saved = localStorage.getItem('mailflow_visible_columns');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed)) {
+                        const filtered = parsed.filter((col: string) => col !== 'salesperson');
+                        localStorage.setItem('mailflow_visible_columns', JSON.stringify(filtered));
+                        return filtered;
+                    }
+                } catch (e) {
+                    // Ignore parsing errors
+                }
+            }
+        }
+
         const saved = localStorage.getItem('mailflow_visible_columns');
         return saved ? JSON.parse(saved) : DEFAULT_VISIBLE_COLUMNS;
     });
@@ -204,8 +224,9 @@ const Audience: React.FC = () => {
         title: string;
         message: React.ReactNode;
         variant: 'danger' | 'warning' | 'info';
-        onConfirm: () => void;
+        onConfirm: () => void | Promise<any>;
         requireConfirmText?: string;
+        isLoading?: boolean;
     }>({ isOpen: false, title: '', message: '', variant: 'warning', onConfirm: () => { } });
 
     const [bulkTagModalOpen, setBulkTagModalOpen] = useState(false);
@@ -1644,6 +1665,7 @@ const Audience: React.FC = () => {
                     if (sRes.success) setAllSegments(Array.isArray(sRes.data) ? sRes.data : ((sRes.data as any)?.data || []));
                     if (isNew) {
                         setSegmentsPagination(prev => ({ ...prev, page: 1 }));
+                        fetchSegments(1);
                     } else {
                         fetchSegments(segmentsPagination.page);
                     }
@@ -1737,14 +1759,10 @@ const Audience: React.FC = () => {
                             });
                             showToast(`Đã import thành công ${newSubs.length} liên hệ!`, 'success');
 
-                            fetchSubscribers(1);
-                            const [lRes, tagRes] = await Promise.all([
-                                api.get<any[]>('lists'),
-                                api.get<{ id: string, name: string }[]>('tags')
+                            await Promise.all([
+                                fetchSubscribers(1),
+                                fetchInitialData()
                             ]);
-                            if (lRes.success) setAllStaticLists(Array.isArray(lRes.data) ? lRes.data : ((lRes.data as any)?.data || []));
-                            if (tagRes.success) setTags(Array.isArray(tagRes.data) ? tagRes.data : ((tagRes.data as any)?.data || []));
-                            fetchLists(listsPagination.page);
                         }
                     } catch (error) {
                         showToast('Lỗi khi import dữ liệu', 'error');
@@ -1887,6 +1905,7 @@ const Audience: React.FC = () => {
                 message={confirmModal.message}
                 variant={confirmModal.variant || 'danger'}
                 requireConfirmText={confirmModal.requireConfirmText}
+                isLoading={confirmModal.isLoading}
             />
 
             <ConfirmModal
@@ -1937,8 +1956,14 @@ const Audience: React.FC = () => {
                     }}
                     onSuccess={() => {
                         fetchInitialData();
-                        if (activeTab === 'lists') setListsPagination(prev => ({ ...prev, page: 1 }));
-                        if (activeTab === 'segments') setSegmentsPagination(prev => ({ ...prev, page: 1 }));
+                        if (activeTab === 'lists') {
+                            setListsPagination(prev => ({ ...prev, page: 1 }));
+                            fetchLists(1);
+                        }
+                        if (activeTab === 'segments') {
+                            setSegmentsPagination(prev => ({ ...prev, page: 1 }));
+                            fetchSegments(1);
+                        }
 
                         // Also refresh group members if we are viewing that group
                         if (viewingGroup && viewingGroup.id === splittingTarget.id) {

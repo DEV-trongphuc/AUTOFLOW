@@ -1,4 +1,5 @@
 (function () {
+    const console = { log: () => {}, error: () => {}, warn: () => {}, info: () => {}, debug: () => {} };
     if (window._mfChatLoaded && document.getElementById("mf-root")) return;
     window._mfChatLoaded = true;
     // Standalone Embedded AI Chat Widget
@@ -35,6 +36,24 @@
             new URLSearchParams(window.location.search).get("is_test") === "1" ||
             new URLSearchParams(window.location.search).get("mode") === "test" ||
             false,
+    };
+
+    const getOrGenerateVisitorId = () => {
+        let vid = "";
+        try {
+            vid = localStorage.getItem("_mf_vid");
+        } catch (e) {
+            // Storage access blocked
+        }
+        if (!vid || vid === "null" || vid === "undefined") {
+            vid = "v_anon_" + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+            try {
+                localStorage.setItem("_mf_vid", vid);
+            } catch (e) {
+                // Storage write blocked
+            }
+        }
+        return vid;
     };
 
     if (!CONFIG.propertyId) {
@@ -1706,18 +1725,18 @@
                 quickContainer.style.display = "none";
             } else {
                 quickContainer.style.display = "flex";
-                quickContainer.style.alignItems = "flex-start";
+                quickContainer.style.alignItems = "center";
                 quickContainer.style.gap = "10px";
 
                 const chipsWrapper = document.createElement("div");
-                chipsWrapper.style.cssText = "display:flex; flex-direction:column; align-items:stretch; gap:8px; flex:1; width:100%; max-height:200px; overflow-y:auto; scrollbar-width:none;";
-                chipsWrapper.className = "mf-ignore-tracking";
+                chipsWrapper.style.cssText = "display:flex; flex-direction:row; flex-wrap:nowrap; align-items:center; gap:6px; flex:1; overflow-x:auto; scrollbar-width:none; -ms-overflow-style:none;";
+                chipsWrapper.className = "mf-ignore-tracking mf-no-scrollbar";
 
                 State.quickActions.forEach((qa) => {
                     const el = document.createElement("button");
                     el.className = "mf-chip mf-ignore-tracking";
-                    el.style.cssText = "white-space: normal; text-align: left; height: auto; align-items: flex-start; line-height: 1.4; border-radius: 12px; padding: 10px 14px;";
-                    el.innerHTML = `<div style="margin-top: 1px; flex-shrink: 0;">${ICONS.sparkles}</div> <div style="flex: 1;">${qa}</div>`;
+                    el.style.cssText = "white-space: nowrap; text-align: left; height: auto; align-items: center; line-height: 1.2; flex-shrink: 0;";
+                    el.innerHTML = `<div style="margin-top: 1px; flex-shrink: 0; display: flex; align-items: center;">${ICONS.sparkles}</div> <div style="flex: 1;">${qa}</div>`;
                     el.onclick = (e) => {
                         e.preventDefault();
                         State.quickActions = [];
@@ -2239,7 +2258,7 @@
         } else {
             win.classList.remove("open");
             trigger.classList.remove("hidden");
-            if (teaser && CONFIG.teaserMsg) teaser.style.display = "block";
+            if (teaser && CONFIG.teaserMsg) teaser.style.display = "flex";
             State.userClosed = true; // Set userClosed flag when chat is manually closed
             // Reset visible limit on close? Optional, but safer to keep lightweight
             State.visibleLimit = 10;
@@ -3092,13 +3111,14 @@
                 display: flex; gap: 10px; overflow-x: auto;
                 scrollbar-width: none;
             }
-            #mf-quick::-webkit-scrollbar { display: none; }
+            #mf-quick::-webkit-scrollbar, .mf-no-scrollbar::-webkit-scrollbar { display: none; }
             .mf-chip {
-                white-space: nowrap; padding: 8px 16px;
+                white-space: nowrap; padding: 4px 10px;
                 background: #f8fafc; color: #475569;
-                border-radius: 9999px; font-size: 12px; font-weight: 700;
+                border-radius: 9999px; font-size: 11px; font-weight: 600;
                 cursor: pointer; transition: 0.2s; border: 1px solid #f1f5f9;
-                display: flex; align-items: center; gap: 6px;
+                display: flex; align-items: center; gap: 4px;
+                flex-shrink: 0;
             }
             .mf-chip:hover { background: #fff7ed; color: #ea580c; border-color: #fed7aa; }
 
@@ -3612,7 +3632,7 @@
         root.lang = "vi"; // Force Vietnamese hint for browser
         root.className = "mf-ignore-tracking"; // Signal to tracker to ignore EVERYTHING inside
         root.innerHTML = `
-            <div id="mf-window" class="mf-ignore-tracking">
+            <div id="mf-window" class="mf-ignore-tracking" data-lenis-prevent>
                 <div id="mf-header" class="mf-ignore-tracking">
                     <div class="mf-bg-pattern"></div>
                     <div style="display:flex;align-items:center;gap:16px;position:relative;z-index:10;" class="mf-ignore-tracking">
@@ -3697,14 +3717,14 @@
                     <div style="position:absolute;top:-4px;right:-4px;width:20px;height:20px;background:#10b981;border:4px solid white;border-radius:50%;animation:mfBounce 1s infinite;" class="mf-ignore-tracking"></div>
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4m0 0h2m-2 0h-2"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M9 16a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm8 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/></svg>
                 </div>
-                <div id="mf-teaser" class="mf-ignore-tracking">
+                <div id="mf-teaser" class="mf-ignore-tracking" style="display: ${CONFIG.teaserMsg ? 'flex' : 'none'};">
                     <div class="mf-live-dot mf-ignore-tracking"></div>
                     <span id="mf-teaser-text" class="mf-ignore-tracking">${CONFIG.teaserMsg}</span>
                     <div id="mf-teaser-close" class="mf-ignore-tracking">×</div>
                 </div>
             </div>
 
-            <div id="mf-live-overlay" class="mf-ignore-tracking">
+            <div id="mf-live-overlay" class="mf-ignore-tracking" data-lenis-prevent>
                 <button id="mf-live-close" class="mf-live-close">${ICONS.x
             }</button>
                 <div class="mf-live-orb">
@@ -4098,13 +4118,7 @@
             : text;
 
         // Ensure we always have a visitor ID (Fallback for Incognito/No-Track-Script)
-        let vid = localStorage.getItem("_mf_vid");
-        if (!vid) {
-            // Generate a simple casual UUID
-            vid = "v_anon_" + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem("_mf_vid", vid);
-            console.log("[MF AI] Auto-generated Anonymous Visitor ID:", vid);
-        }
+        const vid = getOrGenerateVisitorId();
 
         const payload = {
             message: messageText,
@@ -4144,7 +4158,7 @@
                 body: JSON.stringify({
                     action: "chat",
                     property_id: CONFIG.propertyId,
-                    visitor_id: localStorage.getItem("_mf_vid"),
+                    visitor_id: vid,
                     conversation_id: State.conversationId,
                     message: text, // Use 'text' which is State.sendBuffer.join('\n')
                     stream: true,
@@ -5132,7 +5146,7 @@
         loadState(); // <-- LOAD STATE FIRST
 
         try {
-            const vid = localStorage.getItem("_mf_vid") || "";
+            const vid = getOrGenerateVisitorId();
             let url = `${CONFIG.apiEndpoint}?action=get_settings&property_id=${CONFIG.propertyId}&visitor_id=${vid}`;
             if (CONFIG.isTest) url += "&is_test=1";
 
@@ -5157,6 +5171,14 @@
                 CONFIG.welcomeMsg = s.welcome_msg || CONFIG.welcomeMsg;
                 CONFIG.botAvatar = s.bot_avatar;
                 if (s.widget_position) CONFIG.position = s.widget_position;
+
+                if (s.teaser_msg !== undefined) {
+                    if (s.teaser_msg && s.teaser_msg.trim()) {
+                        CONFIG.teaserMsg = s.teaser_msg.trim();
+                    } else {
+                        CONFIG.teaserMsg = "";
+                    }
+                }
 
                 // [REMOVED FROM HERE - MOVED AFTER RENDER]
 
@@ -5244,14 +5266,13 @@
                     window.__mf_app.toggle(true);
                 } else {
                     // [MOVED HERE] Initialize Teaser after render
-                    if (s.teaser_msg) {
-                        CONFIG.teaserMsg = s.teaser_msg;
-                        const teaserText = document.getElementById("mf-teaser-text");
-                        if (teaserText) teaserText.innerText = CONFIG.teaserMsg;
-                    }
                     const teaserEl = document.getElementById("mf-teaser");
-                    if (teaserEl && CONFIG.teaserMsg) {
-                        teaserEl.style.display = "block";
+                    if (teaserEl) {
+                        if (CONFIG.teaserMsg) {
+                            teaserEl.style.display = "flex";
+                        } else {
+                            teaserEl.style.display = "none";
+                        }
                     }
                 }
 

@@ -4445,52 +4445,60 @@ const CategoryChatPage: React.FC = () => {
                 }
 
                 {/* Quick Look Modal */}
-                {
-                    quickLookDoc && (
-                        <div className="fixed inset-0 z-[200] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setQuickLookDoc(null)}>
-                            <div className={`rounded-2xl shadow-2xl overflow-hidden max-w-4xl w-full max-h-[85vh] flex flex-col ${isDarkTheme ? 'bg-slate-900' : 'bg-white'}`} onClick={e => e.stopPropagation()}>
-                                <div className={`p-4 border-b flex items-center justify-between ${isDarkTheme ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
-                                    <div className="flex items-center gap-3">
-                                        <div className={`p-2 border rounded-lg ${isDarkTheme ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
-                                            <FileText className="w-5 h-5 text-amber-600" />
-                                        </div>
-                                        <div>
-                                            <h3 className={`font-bold text-sm ${isDarkTheme ? 'text-slate-100' : 'text-slate-800'}`}>{quickLookDoc.name}</h3>
-                                            <p className={`text-[10px] font-mono ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>{formatFileSize(quickLookDoc.size)}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => {
-                                                if (!openTabNames.includes(quickLookDoc.name)) {
-                                                    setOpenTabNames(prev => [...prev, quickLookDoc.name]);
-                                                }
-                                                setActiveDoc(quickLookDoc);
-                                                setQuickLookDoc(null);
-                                            }}
-                                            className="px-4 py-2 bg-amber-600 text-white text-xs font-bold rounded-xl hover:bg-amber-600 transition-colors"
-                                        >
-                                            Mở chỉnh sửa
-                                        </button>
-                                        <button onClick={() => setQuickLookDoc(null)} className={`p-2 rounded-xl transition-colors ${isDarkTheme ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}>
-                                            <X className="w-5 h-5" />
-                                        </button>
-                                    </div>
+                <Modal
+                    isOpen={!!quickLookDoc}
+                    onClose={() => setQuickLookDoc(null)}
+                    title={
+                        quickLookDoc ? (
+                            <div className="flex items-center gap-3 text-left">
+                                <div className={`p-2 border rounded-lg ${isDarkTheme ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
+                                    <FileText className="w-5 h-5 text-amber-600" />
                                 </div>
-                                <div className={`flex-1 overflow-auto p-8 flex items-center justify-center ${isDarkTheme ? 'bg-slate-800' : 'bg-slate-100'}`}>
-                                    {quickLookDoc.type.startsWith('image/') ? (
-                                        <img src={quickLookDoc.previewUrl || quickLookDoc.base64} className="max-w-full max-h-full object-contain rounded-lg shadow-sm" />
-                                    ) : (
-                                        <div className={`p-8 rounded-xl shadow-sm max-w-2xl w-full text-center ${isDarkTheme ? 'bg-slate-900' : 'bg-white'}`}>
-                                            <FileText className="w-20 h-20 text-slate-300 mx-auto mb-4" />
-                                            <p className={`text-slate-500 ${isDarkTheme ? 'text-slate-400' : ''}`}>Bản xem trước không có sẵn cho loại tệp này.</p>
-                                        </div>
-                                    )}
+                                <div>
+                                    <h3 className={`font-bold text-sm ${isDarkTheme ? 'text-slate-100' : 'text-slate-800'}`}>{quickLookDoc.name}</h3>
+                                    <p className={`text-[10px] font-mono ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>{formatFileSize(quickLookDoc.size)}</p>
                                 </div>
                             </div>
+                        ) : ""
+                    }
+                    size="4xl"
+                    isDarkTheme={isDarkTheme}
+                    noPadding
+                    footer={
+                        quickLookDoc ? (
+                            <div className="flex justify-end gap-2 w-full">
+                                <button
+                                    onClick={() => {
+                                        if (!openTabNames.includes(quickLookDoc.name)) {
+                                            setOpenTabNames(prev => [...prev, quickLookDoc.name]);
+                                        }
+                                        setActiveDoc(quickLookDoc);
+                                        setQuickLookDoc(null);
+                                    }}
+                                    className="px-4 py-2 bg-amber-600 text-white text-xs font-bold rounded-xl hover:bg-amber-700 transition-colors"
+                                >
+                                    Mở chỉnh sửa
+                                </button>
+                                <button onClick={() => setQuickLookDoc(null)} className={`px-4 py-2 text-xs font-bold rounded-xl border transition-colors ${isDarkTheme ? 'border-slate-700 hover:bg-slate-800 text-slate-400' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}>
+                                    Đóng
+                                </button>
+                            </div>
+                        ) : undefined
+                    }
+                >
+                    {quickLookDoc && (
+                        <div className={`flex-1 overflow-auto p-8 flex items-center justify-center ${isDarkTheme ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                            {quickLookDoc.type.startsWith('image/') ? (
+                                <img src={quickLookDoc.previewUrl || quickLookDoc.base64} className="max-w-full max-h-full object-contain rounded-lg shadow-sm" />
+                            ) : (
+                                <div className={`p-8 rounded-xl shadow-sm max-w-2xl w-full text-center ${isDarkTheme ? 'bg-slate-900' : 'bg-white'}`}>
+                                    <FileText className="w-20 h-20 text-slate-300 mx-auto mb-4" />
+                                    <p className={`text-slate-500 ${isDarkTheme ? 'text-slate-400' : ''}`}>Bản xem trước không có sẵn cho loại tệp này.</p>
+                                </div>
+                            )}
                         </div>
-                    )
-                }
+                    )}
+                </Modal>
 
                 {/* AI Studio Sidebar Overlay - Placed at Root for Maximum Coverage */}
                 <ImageSettingsSidebar
@@ -4806,21 +4814,18 @@ const CategoryChatPage: React.FC = () => {
                 </Modal>
 
                 {/* Org User Manager Modal */}
-                {isOrgManagerOpen && (
-                    <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setIsOrgManagerOpen(false)}>
-                        <div className={`rounded-2xl shadow-2xl overflow-hidden w-full max-w-5xl h-[85vh] flex flex-col ${isDarkTheme ? 'bg-slate-900' : 'bg-white'}`} onClick={e => e.stopPropagation()}>
-                            <div className={`p-4 border-b flex items-center justify-between ${isDarkTheme ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'}`}>
-                                <h3 className={`font-bold text-lg ${isDarkTheme ? 'text-slate-100' : ''}`}>Organization Management</h3>
-                                <button onClick={() => { setIsOrgManagerOpen(false); setTargetEditUserId(null); }} className={`p-2 rounded-full ${isDarkTheme ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}>
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-                            <div className={`flex-1 overflow-hidden p-6 ${isDarkTheme ? 'bg-slate-800' : 'bg-slate-50'}`}>
-                                <React.Suspense fallback={null}><OrgUserManager initialEditUserId={targetEditUserId} isDarkTheme={isDarkTheme} /></React.Suspense>
-                            </div>
-                        </div>
+                <Modal
+                    isOpen={isOrgManagerOpen}
+                    onClose={() => { setIsOrgManagerOpen(false); setTargetEditUserId(null); }}
+                    title="Organization Management"
+                    size="xl"
+                    isDarkTheme={isDarkTheme}
+                    noPadding
+                >
+                    <div className={`flex-1 overflow-hidden p-6 ${isDarkTheme ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                        <React.Suspense fallback={null}><OrgUserManager initialEditUserId={targetEditUserId} isDarkTheme={isDarkTheme} /></React.Suspense>
                     </div>
-                )}
+                </Modal>
             </div>
 
             {/* Share Modal */}
@@ -4859,119 +4864,107 @@ const CategoryChatPage: React.FC = () => {
             }
 
             {/* ===== SHARE CONVERSATION MODAL ===== */}
-            {isShareConvModalOpen && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={() => setIsShareConvModalOpen(false)}>
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm anim-backdrop-in" />
-                    <div
-                        className={`relative w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border anim-modal-in ${isDarkTheme ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'
-                            }`}
-                        onClick={e => e.stopPropagation()}
-                    >
-                        {/* Header */}
-                        <div className="p-6 bg-gradient-to-br from-blue-500/10 to-indigo-500/5 border-b border-slate-100 dark:border-slate-800">
-                            <div className="flex items-center gap-3 mb-1">
-                                <div className="w-10 h-10 rounded-2xl bg-blue-500/10 flex items-center justify-center">
-                                    <Share2 className="w-5 h-5 text-blue-500" />
-                                </div>
-                                <div>
-                                    <h3 className={`font-black text-base ${isDarkTheme ? 'text-white' : 'text-slate-800'}`}>
-                                        {isConvPublic ? '🔗 Cuộc trò chuyện đã được chia sẻ' : '🔒 Đã đặt về riêng tư'}
-                                    </h3>
-                                    <p className={`text-xs ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
-                                        {isConvPublic ? 'Bất kỳ ai có link đều có thể xem và duplicate' : 'Chỉ bạn mới có thể xem'}
-                                    </p>
-                                </div>
-                            </div>
+            <Modal
+                isOpen={isShareConvModalOpen}
+                onClose={() => setIsShareConvModalOpen(false)}
+                title={
+                    <div className="flex items-center gap-3 text-left">
+                        <div className="w-10 h-10 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 shadow-sm shrink-0">
+                            <Share2 className="w-5 h-5" />
                         </div>
-                        {/* Body */}
-                        <div className="p-6 space-y-4">
-                            {isConvPublic && (
-                                <>
-                                    <div className={`flex items-center gap-2 p-3 rounded-xl border ${isDarkTheme ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
-                                        }`}>
-                                        <input
-                                            readOnly
-                                            value={shareConvUrl}
-                                            className={`flex-1 text-xs font-mono bg-transparent outline-none truncate ${isDarkTheme ? 'text-slate-300' : 'text-slate-600'
-                                                }`}
-                                        />
-                                        <button
-                                            onClick={() => { navigator.clipboard.writeText(shareConvUrl); toast.success('Đã copy link!'); }}
-                                            className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-all shrink-0"
-                                        >
-                                            Copy
-                                        </button>
-                                    </div>
-                                    <p className={`text-[11px] ${isDarkTheme ? 'text-slate-500' : 'text-slate-400'}`}>
-                                        💡 Khi người khác truy cập link này, họ sẽ được hỏi có muốn tạo bản sao không.
-                                    </p>
-                                </>
-                            )}
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => { setIsConvPublic(false); handleShareConversation(); }}
-                                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border ${!isConvPublic
-                                        ? 'bg-slate-800 text-white border-slate-700'
-                                        : (isDarkTheme ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-200 text-slate-500 hover:bg-slate-50')
-                                        }`}
-                                >
-                                    🔒 Riêng tư
-                                </button>
-                                <button
-                                    onClick={() => setIsShareConvModalOpen(false)}
-                                    className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-all"
-                                >
-                                    Xong
-                                </button>
-                            </div>
+                        <div>
+                            <h3 className={`font-black text-base ${isDarkTheme ? 'text-white' : 'text-slate-800'}`}>
+                                {isConvPublic ? '🔗 Cuộc trò chuyện đã được chia sẻ' : '🔒 Đã đặt về riêng tư'}
+                            </h3>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+                                {isConvPublic ? 'Bất kỳ ai có link đều có thể xem và duplicate' : 'Chỉ bạn mới có thể xem'}
+                            </p>
                         </div>
                     </div>
+                }
+                size="sm"
+                isDarkTheme={isDarkTheme}
+            >
+                <div className="space-y-4 py-2">
+                    {isConvPublic && (
+                        <>
+                            <div className={`flex items-center gap-2 p-3 rounded-xl border ${isDarkTheme ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
+                                }`}>
+                                <input
+                                    readOnly
+                                    value={shareConvUrl}
+                                    className={`flex-1 text-xs font-mono bg-transparent outline-none truncate ${isDarkTheme ? 'text-slate-300' : 'text-slate-600'
+                                        }`}
+                                />
+                                <button
+                                    onClick={() => { navigator.clipboard.writeText(shareConvUrl); toast.success('Đã copy link!'); }}
+                                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-all shrink-0"
+                                >
+                                    Copy
+                                </button>
+                            </div>
+                            <p className={`text-[11px] ${isDarkTheme ? 'text-slate-500' : 'text-slate-400'}`}>
+                                💡 Khi người khác truy cập link này, họ sẽ được hỏi có muốn tạo bản sao không.
+                            </p>
+                        </>
+                    )}
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => { setIsConvPublic(false); handleShareConversation(); }}
+                            className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border ${!isConvPublic
+                                ? 'bg-slate-800 text-white border-slate-700'
+                                : (isDarkTheme ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-200 text-slate-500 hover:bg-slate-50')
+                                }`}
+                        >
+                            🔒 Riêng tư
+                        </button>
+                        <button
+                            onClick={() => setIsShareConvModalOpen(false)}
+                            className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-all"
+                        >
+                            Xong
+                        </button>
+                    </div>
                 </div>
-            )}
+            </Modal>
 
             {/* ===== DUPLICATE CONVERSATION MODAL (shown when accessing public conversation) ===== */}
-            {isDuplicateModalOpen && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/70 backdrop-blur-md anim-backdrop-in" />
-                    <div
-                        className={`relative w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden border anim-modal-in ${isDarkTheme ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'
-                            }`}
-                    >
-                        {/* Decorative top */}
-                        <div className="h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
-                        <div className="p-6">
-                            <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
-                                <Copy className="w-7 h-7 text-blue-500" />
-                            </div>
-                            <h3 className={`text-center font-black text-lg mb-1 ${isDarkTheme ? 'text-white' : 'text-slate-800'
-                                }`}>Cuộc trò chuyện được chia sẻ</h3>
-                            <p className={`text-center text-sm mb-1 font-semibold ${isDarkTheme ? 'text-slate-300' : 'text-slate-700'
-                                }`}>"{duplicateSourceTitle}"</p>
-                            <p className={`text-center text-xs mb-6 ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'
-                                }`}>
-                                Cuộc trò chuyện này không thuộc về bạn. Bạn có muốn tạo bản sao để tiếp tục không?
-                            </p>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => { setIsDuplicateModalOpen(false); navigate(-1); }}
-                                    className={`flex-1 py-3 rounded-2xl text-sm font-bold transition-all border ${isDarkTheme ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-200 text-slate-500 hover:bg-slate-50'
-                                        }`}
-                                >
-                                    Quay lại
-                                </button>
-                                <button
-                                    onClick={handleDuplicateConversation}
-                                    disabled={isDuplicating}
-                                    className="flex-1 py-3 rounded-2xl text-sm font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-60 flex items-center justify-center gap-2"
-                                >
-                                    {isDuplicating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Copy className="w-4 h-4" />}
-                                    {isDuplicating ? 'Đang tạo...' : 'Tạo bản sao'}
-                                </button>
-                            </div>
-                        </div>
+            <Modal
+                isOpen={isDuplicateModalOpen}
+                onClose={() => { setIsDuplicateModalOpen(false); navigate(-1); }}
+                title="Cuộc trò chuyện được chia sẻ"
+                size="sm"
+                isDarkTheme={isDarkTheme}
+            >
+                <div className="p-2 text-center space-y-4">
+                    <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center mx-auto shadow-sm">
+                        <Copy className="w-7 h-7 text-blue-500" />
+                    </div>
+                    <p className={`text-center text-sm font-semibold ${isDarkTheme ? 'text-slate-300' : 'text-slate-700'
+                        }`}>"{duplicateSourceTitle}"</p>
+                    <p className={`text-center text-xs ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'
+                        }`}>
+                        Cuộc trò chuyện này không thuộc về bạn. Bạn có muốn tạo bản sao để tiếp tục không?
+                    </p>
+                    <div className="flex gap-3 pt-2">
+                        <button
+                            onClick={() => { setIsDuplicateModalOpen(false); navigate(-1); }}
+                            className={`flex-1 py-3 rounded-2xl text-sm font-bold transition-all border ${isDarkTheme ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-200 text-slate-500 hover:bg-slate-50'
+                                }`}
+                        >
+                            Quay lại
+                        </button>
+                        <button
+                            onClick={handleDuplicateConversation}
+                            disabled={isDuplicating}
+                            className="flex-1 py-3 rounded-2xl text-sm font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-60 flex items-center justify-center gap-2"
+                        >
+                            {isDuplicating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Copy className="w-4 h-4" />}
+                            {isDuplicating ? 'Đang tạo...' : 'Tạo bản sao'}
+                        </button>
                     </div>
                 </div>
-            )}
+            </Modal>
             {/* Keyboard Shortcuts Help */}
             <KeyboardHelpModal
                 isOpen={isKeyboardHelpOpen}

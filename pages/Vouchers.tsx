@@ -12,9 +12,12 @@ import VoucherCampaignModal from '../components/vouchers/VoucherCampaignModal';
 import VoucherCodeManager from '../components/vouchers/VoucherCodeManager';
 import VoucherGuideModal from '../components/vouchers/VoucherGuideModal';
 import VoucherApiEmbedModal from '../components/vouchers/VoucherApiEmbedModal';
+import ConfirmModal from '../components/common/ConfirmModal';
+import { useTheme } from '../contexts/ThemeContext';
 import { BookOpen, Code } from 'lucide-react';
 
 const Vouchers: React.FC = () => {
+    const { isDark } = useTheme();
     const [campaigns, setCampaigns] = useState<VoucherCampaign[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('all');
@@ -366,30 +369,29 @@ const Vouchers: React.FC = () => {
             />
 
             {/* Custom Delete Warning Modal */}
-            {deleteTarget && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-3xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
-                        <div className="p-6">
-                            <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center text-rose-600 mb-4">
-                                <AlertTriangle className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-xl font-bold text-slate-800 mb-2">Cảnh báo xóa chiến dịch</h3>
-                            <p className="text-sm text-slate-600 leading-relaxed mb-4">
-                                Khách hàng sẽ <span className="font-bold text-rose-600">không thể nhận phần thưởng</span> nếu nhấp vào nút trong Email chứa Voucher này nữa!
+            <ConfirmModal
+                isOpen={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={executeDelete}
+                title="Cảnh báo xóa chiến dịch"
+                message={
+                    <div className="space-y-4">
+                        <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-650'}`}>
+                            Khách hàng sẽ <span className="font-bold text-rose-600">không thể nhận phần thưởng</span> nếu nhấp vào nút trong Email chứa Voucher này nữa!
+                        </p>
+                        <div className="bg-amber-50/50 dark:bg-amber-950/20 rounded-2xl p-4 border border-amber-200/40">
+                            <p className="text-xs font-medium text-amber-800 dark:text-amber-500">
+                                Vui lòng chuyển qua mục Chiến dịch (Email/Zalo) và xóa hoặc thay thế khối Voucher lỗi trước khi bấm nút xóa tại đây.
                             </p>
-                            <div className="bg-amber-50 rounded-2xl p-4 border border-amber-100 mb-6">
-                                <p className="text-xs font-medium text-amber-800">
-                                    Vui lòng chuyển qua mục Chiến dịch (Email/Zalo) và xóa hoặc thay thế khối Voucher lỗi trước khi bấm nút xóa tại đây.
-                                </p>
-                            </div>
-                            <div className="flex gap-3 justify-end mt-6">
-                                <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Suy nghĩ lại</Button>
-                                <Button variant="danger" onClick={executeDelete}>Vẫn Xóa</Button>
-                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                }
+                confirmText="Vẫn Xóa"
+                cancelText="Suy nghĩ lại"
+                variant="danger"
+                isLoading={isDeleting}
+                isDarkTheme={isDark}
+            />
         </div>
     );
 };

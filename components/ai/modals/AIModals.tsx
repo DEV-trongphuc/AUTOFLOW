@@ -1094,7 +1094,7 @@ const AIModals: React.FC<AIModalsProps> = (props) => {
                     </div>
 
                     {/* Footer Actions - STICKY */}
-                    <div className={`sticky bottom-0 -mx-6 px-6 py-4 backdrop-blur-md border-t flex items-center justify-between z-10 rounded-b-3xl ${isDarkTheme ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-100'}`}>
+                    <div className={`sticky bottom-0 -mx-6 px-6 py-4 border-t flex items-center justify-between z-10 rounded-b-3xl ${isDarkTheme ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
                         <button
                             onClick={() => { setIsEditCategoryModalOpen(false); setEditingCategory(null); }}
                             className={`text-xs font-bold transition-colors ${isDarkTheme ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}

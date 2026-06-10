@@ -479,6 +479,14 @@ try {
             $stmt->execute($params);
             echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
         } elseif ($action === 'get_settings') {
+            try {
+                $stmtCheck = $pdo->query("SHOW COLUMNS FROM ai_chatbot_settings LIKE 'notification_enabled'");
+                if ($stmtCheck->rowCount() == 0) {
+                    $pdo->exec("ALTER TABLE ai_chatbot_settings ADD COLUMN notification_enabled TINYINT(1) DEFAULT 0 AFTER auto_open");
+                }
+            } catch (Exception $e) {
+            }
+
             $stmt = $pdo->prepare("
     SELECT s.*,
     p.brand_color as cat_brand_color,
@@ -1045,6 +1053,14 @@ try {
             echo json_encode(['success' => true, 'doc_id' => $docId]);
 
         } elseif ($action === 'update_settings') {
+            try {
+                $stmtCheck = $pdo->query("SHOW COLUMNS FROM ai_chatbot_settings LIKE 'notification_enabled'");
+                if ($stmtCheck->rowCount() == 0) {
+                    $pdo->exec("ALTER TABLE ai_chatbot_settings ADD COLUMN notification_enabled TINYINT(1) DEFAULT 0 AFTER auto_open");
+                }
+            } catch (Exception $e) {
+            }
+
             // Settings update logic follows...
 
             $status = $input['is_enabled'] ?? 0;
@@ -1064,6 +1080,7 @@ try {
             $notification_emails = $input['notification_emails'] ?? '';
             $notification_cc_emails = $input['notification_cc_emails'] ?? '';
             $notification_subject = $input['notification_subject'] ?? '';
+            $notification_enabled = isset($input['notification_enabled']) ? (int) $input['notification_enabled'] : 0;
 
             $fast_replies = isset($input['fast_replies']) ? json_encode($input['fast_replies']) : null;
 
@@ -1100,8 +1117,8 @@ try {
             $stmt = $pdo->prepare("INSERT INTO ai_chatbot_settings (property_id, is_enabled, bot_name, company_name,
     brand_color, bot_avatar, welcome_msg, teaser_msg, persona_prompt, gemini_api_key, quick_actions, chunk_size, chunk_overlap,
     system_instruction, notification_emails, notification_cc_emails, notification_subject, fast_replies, similarity_threshold, top_k, history_limit, temperature, max_output_tokens,
-    widget_position, excluded_pages, excluded_paths, auto_open_excluded_pages, auto_open_excluded_paths, auto_open, intent_configs)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    widget_position, excluded_pages, excluded_paths, auto_open_excluded_pages, auto_open_excluded_paths, auto_open, intent_configs, notification_enabled)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE
     is_enabled = VALUES(is_enabled),
     bot_name = VALUES(bot_name),
@@ -1131,7 +1148,8 @@ try {
     auto_open_excluded_pages = VALUES(auto_open_excluded_pages),
     auto_open_excluded_paths = VALUES(auto_open_excluded_paths),
     auto_open = VALUES(auto_open),
-    intent_configs = VALUES(intent_configs)");
+    intent_configs = VALUES(intent_configs),
+    notification_enabled = VALUES(notification_enabled)");
             $stmt->execute([
                 $propertyId,
                 $status,
@@ -1162,7 +1180,8 @@ try {
                 $auto_open_excluded_pages,
                 $auto_open_excluded_paths,
                 $autoOpen,
-                $intent_configs
+                $intent_configs,
+                $notification_enabled
             ]);
 
             // Sync with ai_chatbots table to ensure list consistency

@@ -1,9 +1,8 @@
-
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { useNavigate } from 'react-router-dom';
 import { X, Keyboard, Command, ChevronRight } from 'lucide-react';
-import Card from './Card';
+import Modal from './Modal';
 
 interface KeyboardShortcutsContextType {
     isHelpOpen: boolean;
@@ -56,64 +55,53 @@ export const KeyboardShortcutsProvider: React.FC<{ children: React.ReactNode }> 
         <KeyboardShortcutsContext.Provider value={{ isHelpOpen, toggleHelp }}>
             {children}
 
-            {isHelpOpen && (
-                <div className="fixed inset-0 z-[1000000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="w-full max-w-lg animate-in zoom-in-95 duration-300">
-                        <Card className="relative overflow-hidden shadow-2xl border-0">
-                            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500" />
-
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
-                                        <Keyboard className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-lg font-black text-slate-800 tracking-tight">Phím tắt hệ thống</h2>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tăng tốc quy trình làm việc của bạn</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => setIsHelpOpen(false)}
-                                    className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-all"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
-                                <div>
-                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                        <ChevronRight className="w-3 h-3 text-orange-400" />
-                                        Tổng quan
-                                    </h3>
-                                    <ShortcutItem keys={['?']} label="Mở bảng phím tắt" />
-                                    <ShortcutItem keys={['Esc']} label="Đóng / Hủy" />
-                                    <ShortcutItem keys={['N']} label="Tạo mới (trong danh sách)" />
-                                    <ShortcutItem keys={['Ctrl', 'S']} label="Lưu thay đổi" />
-                                </div>
-                                <div>
-                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                        <ChevronRight className="w-3 h-3 text-blue-400" />
-                                        Chuyển trang nhanh
-                                    </h3>
-                                    <ShortcutItem keys={['Alt', 'C']} label="Chiến dịch (Campaigns)" />
-                                    <ShortcutItem keys={['Alt', 'A']} label="Liên hệ (Audience)" />
-                                    <ShortcutItem keys={['Alt', 'F']} label="Kịch bản (Flows)" />
-                                    <ShortcutItem keys={['Alt', 'S']} label="Cài đặt (Settings)" />
-                                </div>
-                            </div>
-
-                            <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between text-slate-400">
-                                <div className="flex items-center gap-2 text-[10px] font-bold">
-                                    <Command className="w-3 h-3" />
-                                    <span>Gợi ý: Nhấn Esc để thoát nhanh</span>
-                                </div>
-                                <span className="text-[9px] font-black uppercase tracking-tighter opacity-50">MailFlow Pro v2.5</span>
-                            </div>
-                        </Card>
+            <Modal
+                isOpen={isHelpOpen}
+                onClose={() => setIsHelpOpen(false)}
+                title={
+                    <div className="flex items-center gap-3 text-left">
+                        <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+                            <Keyboard className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-black text-slate-800 tracking-tight">Phím tắt hệ thống</h2>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tăng tốc quy trình làm việc của bạn</p>
+                        </div>
+                    </div>
+                }
+                size="lg"
+            >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 py-2">
+                    <div>
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <ChevronRight className="w-3 h-3 text-orange-400" />
+                            Tổng quan
+                        </h3>
+                        <ShortcutItem keys={['?']} label="Mở bảng phím tắt" />
+                        <ShortcutItem keys={['Esc']} label="Đóng / Hủy" />
+                        <ShortcutItem keys={['N']} label="Tạo mới (trong danh sách)" />
+                        <ShortcutItem keys={['Ctrl', 'S']} label="Lưu thay đổi" />
+                    </div>
+                    <div>
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <ChevronRight className="w-3 h-3 text-blue-400" />
+                            Chuyển trang nhanh
+                        </h3>
+                        <ShortcutItem keys={['Alt', 'C']} label="Chiến dịch (Campaigns)" />
+                        <ShortcutItem keys={['Alt', 'A']} label="Liên hệ (Audience)" />
+                        <ShortcutItem keys={['Alt', 'F']} label="Kịch bản (Flows)" />
+                        <ShortcutItem keys={['Alt', 'S']} label="Cài đặt (Settings)" />
                     </div>
                 </div>
-            )}
+
+                <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between text-slate-400">
+                    <div className="flex items-center gap-2 text-[10px] font-bold">
+                        <Command className="w-3 h-3" />
+                        <span>Gợi ý: Nhấn Esc để thoát nhanh</span>
+                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-tighter opacity-50">MailFlow Pro v2.5</span>
+                </div>
+            </Modal>
         </KeyboardShortcutsContext.Provider>
     );
 };

@@ -128,7 +128,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-md anim-backdrop-in" onClick={onClose} />
+            <div className="absolute inset-0 bg-slate-950/70 anim-backdrop-in" onClick={onClose} />
 
             <div className={`relative w-full max-w-4xl overflow-hidden rounded-[32px] shadow-2xl border transition-all duration-500 anim-modal-in ${isDarkTheme ? 'bg-[#0D1117] border-slate-800' : 'bg-white border-slate-100'}`}>
 
@@ -415,7 +415,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
                 {/* Reset Confirmation Overlay */}
                 {isResetConfirmOpen && (
-                    <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-center justify-center p-6 anim-fade-in">
+                    <div className="absolute inset-0 z-[100] bg-slate-950/85 flex items-center justify-center p-6 anim-fade-in">
                         <div className={`w-full max-w-md p-8 rounded-[32px] border text-center space-y-6 anim-scale-in ${isDarkTheme ? 'bg-[#0D1117] border-slate-700 shadow-2xl shadow-rose-500/20' : 'bg-white border-slate-200 shadow-2xl'}`}>
                             <div className="w-20 h-20 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 mx-auto">
                                 <AlertTriangle className="w-10 h-10 animate-bounce" />

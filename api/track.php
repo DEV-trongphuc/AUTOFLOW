@@ -174,6 +174,24 @@ try {
 }
 
 $input = json_decode(file_get_contents('php://input'), true);
+
+// [FIX] Sanitize and validate visitor_id to prevent null/undefined strings
+if ($input && isset($input['visitor_id'])) {
+    $vid = trim((string)$input['visitor_id']);
+    $vidLower = strtolower($vid);
+    if ($vid === '' || $vidLower === 'null' || $vidLower === 'undefined' || !preg_match('/^[a-zA-Z0-9\-_]{8,100}$/', $vid)) {
+        // Generate a new fallback UUID
+        $newVid = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0x0fff) | 0x4000,
+            mt_rand(0, 0x3fff) | 0x8000,
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+        );
+        $input['visitor_id'] = $newVid;
+    }
+}
+
 if (!$input || empty($input['property_id']) || empty($input['visitor_id'])) {
     echo json_encode(['status' => 'error', 'message' => 'Missing ID', 'debug' => $input]);
     exit;
@@ -498,6 +516,22 @@ try {
             $email = $data['email'] ?? null;
             $phone = $data['phone'] ?? null;
 
+            // [FIX] Security: Prevent mapping any anonymous visitor to a system admin/user account
+            if ($email) {
+                $email = trim($email);
+                $stmtUserCheck = $pdo->prepare("SELECT 1 FROM users WHERE email = ? LIMIT 1");
+                $stmtUserCheck->execute([$email]);
+                $isUser = $stmtUserCheck->fetchColumn();
+
+                $stmtOrgUserCheck = $pdo->prepare("SELECT 1 FROM ai_org_users WHERE email = ? LIMIT 1");
+                $stmtOrgUserCheck->execute([$email]);
+                $isOrgUser = $stmtOrgUserCheck->fetchColumn();
+
+                if ($isUser || $isOrgUser) {
+                    $email = null; // Discard mapping to admin email
+                }
+            }
+
             if ($email || $phone) {
                 // Try to find matching subscriber
                 $emailSubscriberId = null;
@@ -773,9 +807,11 @@ try {
         //
         // BEFORE (WRONG): IF((page_count + ?) > 1, ...) — page_count here is already the NEW value!
         //   e.g. old=0, addedCount=1 → page_count becomes 1 → IF((1+1)>1) → marks as non-bounce ❌
-        // AFTER  (CORRECT): IF(page_count > 1, ...) — uses the newly updated value
-        //   e.g. old=0, addedCount=1 → page_count becomes 1 → IF(1>1) → stays bounce ✅
-        $pdo->prepare("UPDATE web_sessions SET page_count = page_count + ?, is_bounce = IF(page_count > 1, 0, is_bounce) WHERE id = ? AND property_id = ?")->execute([$addedCount, $sessionId, $propertyId]);
+        // [FIX] Atomic bounce status and page count update, safe on both MySQL and MariaDB
+        // Regardless of left-to-right (MySQL) or parallel (MariaDB) SET evaluation order,
+        // placing is_bounce first and referencing (page_count + $addedCount) ensures we always
+        // evaluate the bounce status against the new/correct target page count.
+        $pdo->prepare("UPDATE web_sessions SET is_bounce = IF(page_count + ? > 1, 0, is_bounce), page_count = page_count + ? WHERE id = ? AND property_id = ?")->execute([$addedCount, $addedCount, $sessionId, $propertyId]);
 
         // Explicitly clear bounce if interaction occurred (handled below, but good to ensure logic consistency)
         if ($hasInteraction) {

@@ -22,6 +22,7 @@ interface AuthContextType {
   switchWorkspace: (id: number) => void;
   can: (permissionSlug: string) => boolean;
   isLoading: boolean;
+  dbNeedsMigration: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -30,7 +31,8 @@ const AuthContext = createContext<AuthContextType>({
   workspaces: [],
   switchWorkspace: () => {},
   can: () => false,
-  isLoading: true
+  isLoading: true,
+  dbNeedsMigration: false
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -38,6 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [dbNeedsMigration, setDbNeedsMigration] = useState(false);
 
   useEffect(() => {
     const loadAuth = async () => {
@@ -52,6 +55,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             ? wsData.data.find((w: Workspace) => w.id === parseInt(savedWsId))
             : null;
           setCurrentWorkspace(savedWs || wsData.data[0]);
+
+          // Check if any workspace indicates database migration is needed
+          const needsMigration = wsData.data.some((ws: any) => ws.db_needs_migration);
+          setDbNeedsMigration(needsMigration);
         }
 
         // Load logged-in user from localStorage (set by Login.tsx on auth success)
@@ -108,7 +115,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, currentWorkspace, workspaces, switchWorkspace, can, isLoading }}>
+    <AuthContext.Provider value={{ user, currentWorkspace, workspaces, switchWorkspace, can, isLoading, dbNeedsMigration }}>
       {children}
     </AuthContext.Provider>
   );

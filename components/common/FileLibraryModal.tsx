@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
 import toast from 'react-hot-toast';
+import Modal from './Modal';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface LibraryFile {
     name: string;
@@ -26,6 +28,7 @@ interface FileLibraryModalProps {
     onSelect: (files: LibraryFile[]) => void;
     /** Allow picking multiple files */
     multi?: boolean;
+    isDarkTheme?: boolean;
 }
 
 type FilterType = 'all' | 'image' | 'pdf' | 'doc';
@@ -50,11 +53,11 @@ function FileTypeIcon({ ext, className = '' }: { ext: string; className?: string
     return <FileIcon className={`w-5 h-5 text-slate-400 ${className}`} />;
 }
 
-function iconBg(ext: string): string {
-    if (IMAGES.includes(ext)) return 'bg-violet-50 border-violet-100';
-    if (PDFS.includes(ext))   return 'bg-rose-50   border-rose-100';
-    if (['xls', 'xlsx', 'csv'].includes(ext)) return 'bg-emerald-50 border-emerald-100';
-    return 'bg-slate-50 border-slate-100';
+function iconBg(ext: string, isDark: boolean = false): string {
+    if (IMAGES.includes(ext)) return isDark ? 'bg-violet-950/40 border-violet-900/40' : 'bg-violet-50 border-violet-100';
+    if (PDFS.includes(ext))   return isDark ? 'bg-rose-950/40 border-rose-900/40' : 'bg-rose-50 border-rose-100';
+    if (['xls', 'xlsx', 'csv'].includes(ext)) return isDark ? 'bg-emerald-950/40 border-emerald-900/40' : 'bg-emerald-50 border-emerald-100';
+    return isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-100';
 }
 
 function formatSize(bytes: number) {
@@ -77,8 +80,16 @@ const FILTERS: { key: FilterType; label: string }[] = [
 ];
 
 const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
-    isOpen, onClose, onSelect, multi = true
+    isOpen, onClose, onSelect, multi = true, isDarkTheme
 }) => {
+    const { isDark } = (() => {
+        try {
+            return useTheme();
+        } catch {
+            return { isDark: false };
+        }
+    })();
+    const activeDark = isDarkTheme ?? isDark;
     const [files, setFiles]         = useState<LibraryFile[]>([]);
     const [loading, setLoading]     = useState(false);
     const [search, setSearch]       = useState('');
@@ -251,33 +262,30 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
         if (failed > 0) {
             setBulkDeleteError(`Xóa thất bại ${failed} file.`);
         } else {
-            // [FIX P26-F4] Clear selection after successful bulk delete
-            // Previously: files removed from list but selected Set still had old keys → badge showed stale count
             setSelected(new Set());
         }
-
     };
 
     return (
-        <>
-            {/* Backdrop */}
-            <div
-                className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
-                onClick={onClose}
-            />
-
-            {/* Modal */}
-            <div className="fixed inset-x-4 top-2 md:top-4 bottom-2 md:bottom-4 md:inset-x-[5%] lg:inset-x-[10%] xl:inset-x-[15%] z-[201] flex flex-col bg-white rounded-[28px] shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
-
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            size="4xl"
+            isDarkTheme={activeDark}
+            noPadding
+            noHeader
+            noScroll
+        >
+            <div className={`flex flex-col h-full select-none ${activeDark ? 'bg-[#11151d] text-slate-100' : 'bg-white text-slate-800'}`}>
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
+                <div className={`flex items-center justify-between px-6 py-4 border-b shrink-0 ${activeDark ? 'border-slate-800/85' : 'border-slate-100'}`}>
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-violet-50 rounded-xl text-violet-600">
+                        <div className={`p-2 rounded-xl ${activeDark ? 'bg-violet-950/40 text-violet-400' : 'bg-violet-50 text-violet-600'}`}>
                             <FolderOpen className="w-5 h-5" />
                         </div>
                         <div>
-                            <h3 className="font-bold text-slate-800 text-sm">Thư viện File</h3>
-                            <p className="text-[10px] text-slate-400 font-medium">
+                            <h3 className={`font-bold text-sm ${activeDark ? 'text-slate-200' : 'text-slate-800'}`}>Thư viện File</h3>
+                            <p className={`text-[10px] font-medium ${activeDark ? 'text-slate-450' : 'text-slate-400'}`}>
                                 {files.length} file đã upload — chọn để đính kèm
                             </p>
                         </div>
@@ -286,14 +294,14 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
                         <button
                             onClick={fetchFiles}
                             disabled={loading}
-                            className="p-2 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-colors"
+                            className={`p-2 rounded-xl transition-all duration-200 ${activeDark ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'} hover:scale-105 active:scale-95`}
                             title="Tải lại"
                         >
                             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                         </button>
                         <button
                             onClick={onClose}
-                            className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+                            className={`p-2 rounded-xl transition-all duration-200 ${activeDark ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'} hover:scale-105 active:scale-95`}
                         >
                             <X className="w-4 h-4" />
                         </button>
@@ -301,29 +309,33 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
                 </div>
 
                 {/* Toolbar */}
-                <div className="px-6 py-3 border-b border-slate-100 flex items-center gap-3 shrink-0 flex-wrap">
+                <div className={`px-6 py-3 border-b flex items-center gap-3 shrink-0 flex-wrap ${activeDark ? 'border-slate-800/80 bg-slate-900/20' : 'border-slate-100'}`}>
                     {/* Search */}
                     <div className="relative flex-1 min-w-[180px]">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-455" />
                         <input
                             type="text"
                             placeholder="Tìm kiếm tên file..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-50 transition-all"
+                            className={`w-full pl-9 pr-4 py-2 text-xs rounded-xl outline-none transition-all ${
+                                activeDark
+                                    ? 'bg-slate-900 border border-slate-800 text-slate-200 placeholder-slate-500 focus:border-violet-500 focus:ring-2 focus:ring-violet-900/30'
+                                    : 'bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-50'
+                            }`}
                         />
                     </div>
 
                     {/* Filter pills */}
-                    <div className="flex gap-1 p-1 bg-slate-100 rounded-xl">
+                    <div className={`flex gap-1 p-1 rounded-xl ${activeDark ? 'bg-slate-900' : 'bg-slate-100'}`}>
                         {FILTERS.map(f => (
                             <button
                                 key={f.key}
                                 onClick={() => setFilter(f.key)}
                                 className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
                                     filter === f.key
-                                        ? 'bg-violet-600 text-white shadow'
-                                        : 'text-slate-500 hover:text-slate-700'
+                                        ? 'bg-violet-600 text-white shadow shadow-violet-500/20'
+                                        : `${activeDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`
                                 }`}
                             >
                                 {f.label}
@@ -333,12 +345,12 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
                 </div>
 
                 {/* File Grid */}
-                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                <div className={`flex-1 overflow-y-auto p-6 custom-scrollbar ${activeDark ? 'bg-[#11151d]' : 'bg-white'}`}>
                     {loading ? (
                         <div className="h-full flex items-center justify-center">
                             <div className="flex flex-col items-center gap-3 text-slate-400">
                                 <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
-                                <p className="text-xs font-medium">Đang tải thư viện...</p>
+                                <p className={`text-xs font-medium ${activeDark ? 'text-slate-450' : 'text-slate-400'}`}>Đang tải thư viện...</p>
                             </div>
                         </div>
                     ) : error ? (
@@ -352,11 +364,11 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
                     ) : filtered.length === 0 ? (
                         <div className="h-full flex items-center justify-center">
                             <div className="flex flex-col items-center gap-3 text-slate-400">
-                                <FolderOpen className="w-12 h-12 text-slate-200" />
-                                <p className="text-sm font-medium">
+                                <FolderOpen className={`w-12 h-12 ${activeDark ? 'text-slate-800' : 'text-slate-200'}`} />
+                                <p className={`text-sm font-bold ${activeDark ? 'text-slate-300' : 'text-slate-700'}`}>
                                     {search ? 'Không tìm thấy file nào' : 'Thư viện trống'}
                                 </p>
-                                <p className="text-xs text-slate-400">
+                                <p className={`text-xs ${activeDark ? 'text-slate-500' : 'text-slate-400'}`}>
                                     {search ? 'Thử từ khóa khác.' : 'Upload file đính kèm để chúng xuất hiện ở đây.'}
                                 </p>
                             </div>
@@ -373,12 +385,16 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
                                         className={`
                                             group relative rounded-2xl border-2 transition-all duration-200 cursor-pointer overflow-hidden
                                             ${isSelected
-                                                ? 'border-violet-500 bg-violet-50/40 ring-2 ring-violet-100 shadow-lg shadow-violet-100'
-                                                : 'border-slate-100 bg-white hover:border-slate-200 hover:shadow-md'}
+                                                ? (activeDark
+                                                    ? 'border-violet-500 bg-violet-950/20 ring-2 ring-violet-900/30 shadow-lg shadow-violet-950/50'
+                                                    : 'border-violet-500 bg-violet-50/40 ring-2 ring-violet-100 shadow-lg shadow-violet-100')
+                                                : (activeDark
+                                                    ? 'border-slate-800/80 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-900 hover:shadow-md'
+                                                    : 'border-slate-100 bg-white hover:border-slate-200 hover:shadow-md')}
                                         `}
                                     >
                                         {/* Thumbnail / Icon area */}
-                                        <div className="aspect-square relative overflow-hidden bg-slate-50">
+                                        <div className={`aspect-square relative overflow-hidden ${activeDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
                                             {isImage ? (
                                                 <img
                                                     src={file.url}
@@ -388,21 +404,21 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
                                                     onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                                 />
                                             ) : (
-                                                <div className={`w-full h-full flex items-center justify-center border-b ${iconBg(file.type)}`}>
+                                                <div className={`w-full h-full flex items-center justify-center border-b ${activeDark ? 'border-slate-850' : 'border-slate-100'} ${iconBg(file.type, activeDark)}`}>
                                                     <FileTypeIcon ext={file.type} className="!w-10 !h-10 opacity-70" />
                                                 </div>
                                             )}
 
                                             {/* Extension badge */}
                                             <div className="absolute top-2 left-2">
-                                                <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md border ${iconBg(file.type)}`}>
+                                                <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md border ${iconBg(file.type, activeDark)}`}>
                                                     {file.type}
                                                 </span>
                                             </div>
 
                                             {/* Selection indicator */}
                                             <div className={`absolute top-2 right-2 transition-all duration-200 ${isSelected ? 'opacity-100 scale-100' : 'opacity-0 scale-75 group-hover:opacity-60 group-hover:scale-90'}`}>
-                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center shadow ${isSelected ? 'bg-violet-600' : 'bg-white/90 border border-slate-200'}`}>
+                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center shadow ${isSelected ? 'bg-violet-600' : (activeDark ? 'bg-slate-900 border border-slate-700' : 'bg-white/90 border border-slate-200')}`}>
                                                     {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
                                                 </div>
                                             </div>
@@ -414,10 +430,10 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
                                             {/* Delete - inside thumbnail zone */}
                                             {confirmDelete === file.uniqueName ? (
                                                 <div
-                                                    className="absolute bottom-0 inset-x-0 flex items-center justify-between gap-1 bg-white/95 backdrop-blur-sm border-t border-rose-200 px-2 py-1.5 z-20"
+                                                    className={`absolute bottom-0 inset-x-0 flex items-center justify-between gap-1 border-t px-2 py-1.5 z-20 ${activeDark ? 'bg-slate-900/98 border-rose-950' : 'bg-white/95 border-rose-200'}`}
                                                     onClick={e => e.stopPropagation()}
                                                 >
-                                                    <span className="text-[9px] font-bold text-rose-600 truncate">
+                                                    <span className="text-[9px] font-bold text-rose-500 truncate">
                                                         {deleteError === file.uniqueName ? 'Lỗi! Thử lại?' : 'Xóa file này?'}
                                                     </span>
                                                     <div className="flex gap-1 shrink-0">
@@ -430,7 +446,7 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
                                                         </button>
                                                         <button
                                                             onClick={handleDeleteCancel}
-                                                            className="text-[9px] font-bold text-slate-500 hover:text-slate-700 px-1.5 py-0.5 rounded hover:bg-slate-100"
+                                                            className={`text-[9px] font-bold px-1.5 py-0.5 rounded transition-colors ${activeDark ? 'text-slate-400 hover:text-slate-250 hover:bg-slate-800' : 'text-slate-500 hover:text-slate-750 hover:bg-slate-100'}`}
                                                         >
                                                             Không
                                                         </button>
@@ -440,7 +456,11 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
                                                 <button
                                                     onClick={e => handleDeleteClick(e, file.uniqueName)}
                                                     title="Xóa file"
-                                                    className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-white/90 border border-slate-200 text-slate-400 hover:text-rose-500 hover:border-rose-200 shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
+                                                    className={`absolute bottom-2 right-2 p-1.5 rounded-lg border shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 ${
+                                                        activeDark
+                                                            ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-rose-400 hover:border-rose-900/50'
+                                                            : 'bg-white/90 border border-slate-200 text-slate-400 hover:text-rose-500 hover:border-rose-200'
+                                                    }`}
                                                 >
                                                     <Trash2 className="w-3 h-3" />
                                                 </button>
@@ -461,34 +481,38 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
                                                             if (e.key === 'Enter') commitRename(file.uniqueName);
                                                             if (e.key === 'Escape') setRenamingKey(null);
                                                         }}
-                                                        className="flex-1 min-w-0 text-[10px] font-bold text-slate-700 border border-violet-400 rounded px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-violet-300 bg-white"
+                                                        className={`flex-1 min-w-0 text-[10px] font-bold border rounded px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-violet-500 ${
+                                                            activeDark
+                                                                ? 'text-slate-200 border-slate-700 bg-slate-950'
+                                                                : 'text-slate-700 border-violet-400 bg-white'
+                                                        }`}
                                                         autoFocus
                                                     />
                                                     <button
                                                         onClick={() => commitRename(file.uniqueName)}
                                                         disabled={renameSaving}
-                                                        className="p-1 rounded text-emerald-600 hover:bg-emerald-50 transition-colors shrink-0"
+                                                        className="p-1 rounded text-emerald-650 hover:bg-emerald-50 transition-colors shrink-0"
                                                     >
                                                         {renameSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
                                                     </button>
                                                 </div>
                                             ) : (
                                                 <div className="group/name flex items-center gap-1 min-w-0 mb-1">
-                                                    <p className="text-[10px] font-bold text-slate-700 truncate leading-tight flex-1" title={file.name}>
+                                                    <p className={`text-[10px] font-bold truncate leading-tight flex-1 ${activeDark ? 'text-slate-200' : 'text-slate-700'}`} title={file.name}>
                                                         {file.name}
                                                     </p>
                                                     <button
                                                         onClick={e => startRename(e, file)}
                                                         title="Đổi tên"
-                                                        className="shrink-0 p-0.5 rounded text-slate-300 hover:text-violet-500 opacity-0 group-hover:opacity-100 transition-all duration-150"
+                                                        className="shrink-0 p-0.5 rounded text-slate-350 hover:text-violet-500 opacity-0 group-hover:opacity-100 transition-all duration-150"
                                                     >
                                                         <Pencil className="w-2.5 h-2.5" />
                                                     </button>
                                                 </div>
                                             )}
                                             <div className="flex items-center justify-between">
-                                                <span className="text-[9px] text-slate-400 font-mono">{formatSize(file.size)}</span>
-                                                <span className="text-[9px] text-slate-400">{formatDate(file.modified_at)}</span>
+                                                <span className={`text-[9px] font-mono ${activeDark ? 'text-slate-500' : 'text-slate-400'}`}>{formatSize(file.size)}</span>
+                                                <span className={`text-[9px] ${activeDark ? 'text-slate-500' : 'text-slate-400'}`}>{formatDate(file.modified_at)}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -500,15 +524,15 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
 
                 {/* Bulk delete confirm overlay */}
                 {bulkDeleteConfirm && (
-                    <div className="absolute inset-0 z-30 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center gap-4 rounded-[28px]">
-                        <div className="w-14 h-14 rounded-full bg-rose-100 flex items-center justify-center">
-                            <Trash2 className="w-7 h-7 text-rose-600" />
+                    <div className={`absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 rounded-[28px] ${activeDark ? 'bg-slate-950/98' : 'bg-white/95'}`}>
+                        <div className={`w-14 h-14 rounded-full flex items-center justify-center ${activeDark ? 'bg-rose-950/30' : 'bg-rose-105'}`}>
+                            <Trash2 className="w-7 h-7 text-rose-500" />
                         </div>
                         <div className="text-center">
-                            <p className="font-bold text-slate-800 text-sm">
+                            <p className={`font-bold text-sm ${activeDark ? 'text-slate-200' : 'text-slate-800'}`}>
                                 Xóa {selected.size} file đã chọn?
                             </p>
-                            <p className="text-xs text-slate-400 mt-1">Hành động này không thể hoàn tác.</p>
+                            <p className={`text-xs mt-1 ${activeDark ? 'text-slate-500' : 'text-slate-400'}`}>Hành động này không thể hoàn tác.</p>
                             {bulkDeleteError && (
                                 <p className="text-xs text-rose-500 font-bold mt-2">{bulkDeleteError}</p>
                             )}
@@ -517,14 +541,14 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
                             <button
                                 onClick={() => { setBulkDeleteConfirm(false); setBulkDeleteError(''); }}
                                 disabled={bulkDeleting}
-                                className="px-5 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all disabled:opacity-50"
+                                className={`px-5 py-2 text-xs font-bold rounded-xl transition-all disabled:opacity-50 ${activeDark ? 'text-slate-300 bg-slate-800 hover:bg-slate-750' : 'text-slate-605 bg-slate-100 hover:bg-slate-200'}`}
                             >
                                 Không
                             </button>
                             <button
                                 onClick={handleBulkDelete}
                                 disabled={bulkDeleting}
-                                className="px-5 py-2 text-xs font-bold text-white bg-rose-500 hover:bg-rose-600 rounded-xl transition-all flex items-center gap-2 disabled:opacity-60 shadow-lg shadow-rose-200"
+                                className="px-5 py-2 text-xs font-bold text-white bg-rose-500 hover:bg-rose-600 rounded-xl transition-all flex items-center gap-2 disabled:opacity-60 shadow-lg shadow-rose-900/10"
                             >
                                 {bulkDeleting
                                     ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang xóa...</>
@@ -534,15 +558,16 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
                     </div>
                 )}
 
-                <div className="shrink-0 px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
-                    <div className="text-xs text-slate-500 font-medium">
+                {/* Footer */}
+                <div className={`shrink-0 px-6 py-4 border-t flex items-center justify-between ${activeDark ? 'bg-slate-900 border-slate-800/80' : 'bg-slate-50/50 border-slate-100'}`}>
+                    <div className={`text-xs font-medium ${activeDark ? 'text-slate-400' : 'text-slate-500'}`}>
                         {selected.size > 0 ? (
-                            <span className="flex items-center gap-1.5 text-violet-700 font-bold">
+                            <span className={`flex items-center gap-1.5 font-bold ${activeDark ? 'text-violet-400' : 'text-violet-750'}`}>
                                 <CheckCircle2 className="w-4 h-4" />
                                 Đã chọn {selected.size} file
                             </span>
                         ) : (
-                            <span className="text-slate-400">
+                            <span className={`${activeDark ? 'text-slate-500' : 'text-slate-400'}`}>
                                 {filtered.length > 0 ? `${filtered.length} file · Trang ${safePage}/${totalPages}` : 'Chưa chọn file nào'}
                             </span>
                         )}
@@ -554,17 +579,21 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
                                 <button
                                     onClick={() => setPage(p => Math.max(1, p - 1))}
                                     disabled={safePage <= 1}
-                                    className="flex items-center gap-0.5 px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 rounded-lg hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                    className={`flex items-center gap-0.5 px-2.5 py-1.5 text-xs font-bold rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all ${
+                                        activeDark ? 'text-slate-400 hover:text-slate-250 hover:bg-slate-800' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                                    }`}
                                 >
                                     <ChevronLeft className="w-3.5 h-3.5" /> Trước
                                 </button>
-                                <span className="text-xs font-bold text-slate-700 min-w-[60px] text-center">
+                                <span className={`text-xs font-bold min-w-[60px] text-center ${activeDark ? 'text-slate-300' : 'text-slate-700'}`}>
                                     {safePage} / {totalPages}
                                 </span>
                                 <button
                                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                     disabled={safePage >= totalPages}
-                                    className="flex items-center gap-0.5 px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 rounded-lg hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                    className={`flex items-center gap-0.5 px-2.5 py-1.5 text-xs font-bold rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all ${
+                                        activeDark ? 'text-slate-400 hover:text-slate-250 hover:bg-slate-800' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                                    }`}
                                 >
                                     Sau <ChevronRight className="w-3.5 h-3.5" />
                                 </button>
@@ -582,7 +611,7 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
                         )}
                         <button
                             onClick={onClose}
-                            className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 transition-colors"
+                            className={`px-4 py-2 text-xs font-bold transition-colors ${activeDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-505 hover:text-slate-700'}`}
                         >
                             Hủy
                         </button>
@@ -591,8 +620,8 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
                             disabled={selected.size === 0}
                             className={`px-5 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 ${
                                 selected.size > 0
-                                    ? 'bg-violet-600 hover:bg-violet-700 text-white shadow-lg shadow-violet-200 hover:scale-[1.02]'
-                                    : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                    ? 'bg-violet-600 hover:bg-violet-700 text-white shadow-lg shadow-violet-500/20 hover:scale-[1.02]'
+                                    : `${activeDark ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`
                             }`}
                         >
                             <Download className="w-3.5 h-3.5" />
@@ -601,7 +630,7 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
                     </div>
                 </div>
             </div>
-        </>
+        </Modal>
     );
 };
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ShieldX, Lock } from 'lucide-react';
+import Modal from './Modal';
 
 // ─── Permission Modal ──────────────────────────────────────────────────────────
 const PermissionDeniedModal: React.FC<{
@@ -7,46 +8,43 @@ const PermissionDeniedModal: React.FC<{
     onClose: () => void;
     action?: string;
 }> = ({ isOpen, onClose, action }) => {
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4" onClick={onClose}>
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-            <div
-                className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800/60 max-w-sm w-full p-6 animate-in zoom-in-95 duration-200"
-                onClick={e => e.stopPropagation()}
-            >
-                <div className="flex flex-col items-center text-center gap-4">
-                    {/* Icon */}
-                    <div className="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center">
-                        <ShieldX className="w-8 h-8 text-rose-500" />
-                    </div>
-
-                    {/* Text */}
-                    <div>
-                        <h3 className="text-base font-black text-slate-900 dark:text-slate-100 mb-1">
-                            Không đủ quyền truy cập
-                        </h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                            {action
-                                ? <>Bạn không có quyền thực hiện <b className="text-slate-700 dark:text-slate-300">{action}</b>.</>
-                                : 'Bạn không có quyền thực hiện thao tác này.'
-                            }
-                            <br />
-                            <span className="text-xs mt-1 block">Vui lòng liên hệ <b>Admin</b> để được cấp quyền.</span>
-                        </p>
-                    </div>
-
-                    {/* Button */}
-                    <button
-                        onClick={onClose}
-                        className="w-full py-2.5 px-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-sm font-bold hover:bg-slate-700 dark:hover:bg-white transition-colors"
-                    >
-                        Đã hiểu
-                    </button>
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            size="sm"
+            noHeader
+        >
+            <div className="flex flex-col items-center text-center gap-4 py-2">
+                {/* Icon */}
+                <div className="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center">
+                    <ShieldX className="w-8 h-8 text-rose-500" />
                 </div>
+
+                {/* Text */}
+                <div>
+                    <h3 className="text-base font-black text-slate-900 dark:text-slate-100 mb-1">
+                        Không đủ quyền truy cập
+                    </h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                        {action
+                            ? <>Bạn không có quyền thực hiện <b className="text-slate-700 dark:text-slate-300">{action}</b>.</>
+                            : 'Bạn không có quyền thực hiện thao tác này.'
+                        }
+                        <br />
+                        <span className="text-xs mt-1 block">Vui lòng liên hệ <b>Admin</b> để được cấp quyền.</span>
+                    </p>
+                </div>
+
+                {/* Button */}
+                <button
+                    onClick={onClose}
+                    className="w-full py-2.5 px-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-sm font-bold hover:bg-slate-700 dark:hover:bg-white transition-colors"
+                >
+                    Đã hiểu
+                </button>
             </div>
-        </div>
+        </Modal>
     );
 };
 

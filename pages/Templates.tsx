@@ -447,33 +447,33 @@ const Templates: React.FC = () => {
                         <div className="flex items-center gap-4 relative group/categories">
                             <button
                                 onClick={() => scrollCategories('left')}
-                                className="hidden group-hover/categories:flex absolute -left-4 z-10 w-10 h-10 bg-white dark:bg-slate-900 shadow-xl border border-slate-100 dark:border-slate-800/60 rounded-full items-center justify-center text-slate-400 hover:text-amber-600 hover:scale-110 transition-all active:scale-95"
+                                className="hidden group-hover/categories:flex absolute -left-4 z-10 w-8 h-8 bg-white dark:bg-slate-900 shadow-xl border border-slate-100 dark:border-slate-800/60 rounded-full items-center justify-center text-slate-400 hover:text-amber-600 hover:scale-110 transition-all active:scale-95"
                             >
-                                <ChevronLeft className="w-5 h-5" />
+                                <ChevronLeft className="w-4 h-4" />
                             </button>
 
                             <div
                                 ref={categoryScrollRef}
-                                className="flex-1 bg-white dark:bg-slate-900 rounded-2xl lg:rounded-full p-1.5 lg:p-2 shadow-sm border border-slate-200 dark:border-slate-700/60 flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth"
+                                className="flex-1 bg-white dark:bg-slate-900 rounded-xl lg:rounded-full p-1 lg:p-1.5 shadow-sm border border-slate-200 dark:border-slate-700/60 flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth"
                             >
                                 <button
                                     onClick={() => handleFilterGroupChange('all')}
-                                    className={`whitespace-nowrap flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 rounded-xl lg:rounded-full text-xs lg:text-sm font-bold transition-all duration-300 ${filterGroupId === 'all' ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:bg-slate-950 hover:text-slate-700 dark:text-slate-200'}`}
+                                    className={`whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 lg:px-5 lg:py-2 rounded-lg lg:rounded-full text-[11px] lg:text-xs font-bold transition-all duration-300 ${filterGroupId === 'all' ? 'bg-amber-600 text-white shadow-md shadow-amber-600/15' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:bg-slate-950 hover:text-slate-700 dark:text-slate-200'}`}
                                 >
-                                    <Globe className={`w-3.5 h-3.5 lg:w-4 h-4 transition-transform duration-500 ${filterGroupId === 'all' ? 'rotate-12 scale-110' : ''}`} />
+                                    <Globe className={`w-3.5 h-3.5 transition-transform duration-500 ${filterGroupId === 'all' ? 'rotate-12 scale-110' : ''}`} />
                                     Tất cả mẫu
-                                    <span className={`text-[9px] lg:text-[10px] px-1.5 lg:px-2 py-0.5 rounded-full ${filterGroupId === 'all' ? 'bg-white text-amber-600 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>{allMergedTemplates.length}</span>
+                                    <span className={`text-[8px] lg:text-[9px] px-1 py-0.5 rounded-full ${filterGroupId === 'all' ? 'bg-white text-amber-600 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>{allMergedTemplates.length}</span>
                                 </button>
 
                                 {groups.map(group => (
                                     <div key={group.id} className="group/item relative flex items-center shrink-0">
                                         <button
                                             onClick={() => handleFilterGroupChange(group.id)}
-                                            className={`flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 rounded-xl lg:rounded-full text-xs lg:text-sm font-bold transition-all duration-300 ${filterGroupId === group.id ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:bg-slate-950 hover:text-slate-700 dark:text-slate-200'}`}
+                                            className={`flex items-center gap-1.5 px-3.5 py-1.5 lg:px-5 lg:py-2 rounded-lg lg:rounded-full text-[11px] lg:text-xs font-bold transition-all duration-300 ${filterGroupId === group.id ? 'bg-amber-600 text-white shadow-md shadow-amber-600/15' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:bg-slate-950 hover:text-slate-700 dark:text-slate-200'}`}
                                         >
-                                            <FolderOpen className={`w-3.5 h-3.5 lg:w-4 h-4 transition-transform duration-500 ${filterGroupId === group.id ? 'rotate-12 scale-110' : 'opacity-50'}`} />
-                                            <span className="truncate max-w-[120px] lg:max-w-[150px]">{group.name}</span>
-                                            <span className={`text-[9px] lg:text-[10px] px-1.5 lg:px-2 py-0.5 rounded-full ${filterGroupId === group.id ? 'bg-white text-amber-600 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
+                                            <FolderOpen className={`w-3.5 h-3.5 transition-transform duration-500 ${filterGroupId === group.id ? 'rotate-12 scale-110' : 'opacity-50'}`} />
+                                            <span className="truncate max-w-[100px] lg:max-w-[130px]">{group.name}</span>
+                                            <span className={`text-[8px] lg:text-[9px] px-1 py-0.5 rounded-full ${filterGroupId === group.id ? 'bg-white text-amber-600 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
                                                 {allMergedTemplates.filter(t => t.groupId === group.id).length}
                                             </span>
                                         </button>
@@ -498,18 +498,18 @@ const Templates: React.FC = () => {
 
                                 <button
                                     onClick={() => { setEditingGroup(null); setNewGroupName(''); setIsGroupModalOpen(true); }}
-                                    className="p-3 bg-slate-50 dark:bg-slate-950 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-all group shrink-0"
+                                    className="p-2 bg-slate-50 dark:bg-slate-950 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-all group shrink-0"
                                     title="Tạo nhóm mới"
                                 >
-                                    <FolderPlus className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                    <FolderPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
                                 </button>
                             </div>
 
                             <button
                                 onClick={() => scrollCategories('right')}
-                                className="hidden group-hover/categories:flex absolute -right-4 z-10 w-10 h-10 bg-white dark:bg-slate-900 shadow-xl border border-slate-100 dark:border-slate-800/60 rounded-full items-center justify-center text-slate-400 hover:text-amber-600 hover:scale-110 transition-all active:scale-95"
+                                className="hidden group-hover/categories:flex absolute -right-4 z-10 w-8 h-8 bg-white dark:bg-slate-900 shadow-xl border border-slate-100 dark:border-slate-800/60 rounded-full items-center justify-center text-slate-400 hover:text-amber-600 hover:scale-110 transition-all active:scale-95"
                             >
-                                <ChevronRight className="w-5 h-5" />
+                                <ChevronRight className="w-4 h-4" />
                             </button>
                         </div>
 
@@ -730,7 +730,7 @@ const Templates: React.FC = () => {
             <ConfirmModal
                 isOpen={deleteConfirm.isOpen}
                 onClose={() => setDeleteConfirm({ isOpen: false, ids: [], type: 'template' })}
-                onConfirm={() => deleteConfirm.ids.length > 0 && handleDelete(deleteConfirm.ids, deleteConfirm.type)}
+                onConfirm={async () => { if (deleteConfirm.ids.length > 0) await handleDelete(deleteConfirm.ids, deleteConfirm.type); }}
                 title={deleteConfirm.type === 'template'
                     ? (deleteConfirm.ids.length > 1 ? `Xóa ${deleteConfirm.ids.length} mẫu đã chọn?` : "Xóa mẫu email này?")
                     : "Xóa nhóm mẫu này?"}

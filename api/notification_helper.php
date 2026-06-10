@@ -3,11 +3,20 @@ require_once __DIR__ . '/Mailer.php';
 
 function sendLeadNotificationEmail($pdo, $propertyId, $leadData, $source = 'AutoCapture') {
     try {
-        $stmt = $pdo->prepare("SELECT notification_subject, notification_emails, notification_cc_emails, company_name FROM ai_chatbot_settings WHERE property_id = ?");
+        // Ensure notification_enabled column exists (Lazy Migration)
+        try {
+            $stmtCheck = $pdo->query("SHOW COLUMNS FROM ai_chatbot_settings LIKE 'notification_enabled'");
+            if ($stmtCheck->rowCount() == 0) {
+                $pdo->exec("ALTER TABLE ai_chatbot_settings ADD COLUMN notification_enabled TINYINT(1) DEFAULT 0 AFTER auto_open");
+            }
+        } catch (Exception $e) {
+        }
+
+        $stmt = $pdo->prepare("SELECT notification_subject, notification_emails, notification_cc_emails, company_name, notification_enabled FROM ai_chatbot_settings WHERE property_id = ?");
         $stmt->execute([$propertyId]);
         $settings = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$settings || empty(trim($settings['notification_emails']))) {
+        if (!$settings || !($settings['notification_enabled'] ?? 0) || empty(trim($settings['notification_emails']))) {
             return false;
         }
 

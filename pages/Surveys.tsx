@@ -11,11 +11,13 @@ import SurveyReportModal from '../components/surveys/SurveyReportModal';
 import SurveyGuideModal from '../components/surveys/SurveyGuideModal';
 import PageHero from '../components/common/PageHero';
 import Modal from '../components/common/Modal';
+import ConfirmModal from '../components/common/ConfirmModal';
 import Input from '../components/common/Input';
 import Tabs from '../components/common/Tabs';
 import Button from '../components/common/Button';
 import { api } from '../services/storageAdapter';
 import { toast } from 'react-hot-toast';
+import { useTheme } from '../contexts/ThemeContext';
 
 // ─── Status config ───────────────────────────────────────────────────────────
 const STATUS = {
@@ -30,48 +32,25 @@ const ConfirmDeleteModal: React.FC<{
     survey: Survey | null;
     onConfirm: () => void;
     onCancel: () => void;
-}> = ({ survey, onConfirm, onCancel }) => {
+    isDark?: boolean;
+}> = ({ survey, onConfirm, onCancel, isDark }) => {
     if (!survey) return null;
     return (
-        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" onClick={onCancel} />
-            <div className="relative bg-white rounded-[28px] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
-                {/* Red header strip */}
-                <div className="px-6 pt-6 pb-5 bg-gradient-to-br from-red-500 to-rose-600 relative overflow-hidden">
-                    <div className="absolute inset-0" style={{backgroundImage:'radial-gradient(circle at 80% 30%, rgba(255,255,255,0.1) 0%, transparent 50%)'}} />
-                    <div className="relative flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center">
-                            <AlertTriangle className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                            <p className="text-white font-black text-base leading-tight">Xoá khảo sát</p>
-                            <p className="text-white/70 text-xs mt-0.5">Hành động không thể hoàn tác</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="px-6 py-5 space-y-4">
-                    <p className="text-sm text-slate-600 leading-relaxed">
-                        Bạn có chắc muốn xoá khảo sát{' '}
-                        <span className="font-black text-slate-800">"{survey.name}"</span>?
-                        <br />Toàn bộ phản hồi và dữ liệu sẽ bị xoá vĩnh viễn.
-                    </p>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={onCancel}
-                            className="flex-1 py-2.5 rounded-2xl border-2 border-slate-200 text-slate-600 font-bold text-sm hover:border-slate-300 hover:bg-slate-50 transition-all"
-                        >
-                            Huỷ
-                        </button>
-                        <button
-                            onClick={onConfirm}
-                            className="flex-[2] py-2.5 rounded-2xl bg-gradient-to-r from-red-500 to-rose-600 text-white font-black text-sm shadow-lg hover:brightness-110 transition-all"
-                        >
-                            Xoá khảo sát
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <ConfirmModal
+            isOpen={!!survey}
+            onClose={onCancel}
+            onConfirm={onConfirm}
+            title="Xoá khảo sát"
+            message={
+                <>
+                    Bạn có chắc muốn xoá khảo sát <span className="font-bold text-slate-900 dark:text-slate-200">"{survey.name}"</span>?
+                    <br />Toàn bộ phản hồi và dữ liệu sẽ bị xoá vĩnh viễn.
+                </>
+            }
+            confirmText="Xoá khảo sát"
+            variant="danger"
+            isDarkTheme={isDark}
+        />
     );
 };
 
@@ -80,7 +59,8 @@ const SurveyPreviewModal: React.FC<{
     survey: Survey | null;
     onClose: () => void;
     onEdit: () => void;
-}> = ({ survey, onClose, onEdit }) => {
+    isDark?: boolean;
+}> = ({ survey, onClose, onEdit, isDark }) => {
     const [copied, setCopied] = useState(false);
     if (!survey) return null;
 
@@ -101,126 +81,119 @@ const SurveyPreviewModal: React.FC<{
         : null;
 
     return (
-        <div className="fixed inset-0 z-[999998] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-white rounded-[28px] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-                {/* Amber header */}
-                <div className="px-6 pt-6 pb-5 relative overflow-hidden" style={{background:'linear-gradient(135deg,#b45309 0%,#d97706 40%,#f59e0b 100%)'}}>
-                    <div className="absolute inset-0" style={{backgroundImage:'radial-gradient(circle at 80% 30%, rgba(255,255,255,0.12) 0%, transparent 55%)'}} />
-                    <div className="relative flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                            {/* Rounded-square icon */}
-                            <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
-                                <FileText className="w-6 h-6 text-white" />
-                            </div>
-                            <div>
-                                <p className="text-white/70 text-[10px] font-black uppercase tracking-widest">Khảo sát</p>
-                                <h3 className="text-white font-black text-base leading-tight line-clamp-1">{survey.name}</h3>
-                                <span className={`inline-flex items-center gap-1 mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                    isPublic ? 'bg-emerald-500/30 text-white' : 'bg-white/20 text-white/70'
-                                }`}>
-                                    <span className={`w-1.5 h-1.5 rounded-full ${isPublic ? 'bg-emerald-300 animate-pulse' : 'bg-white/50'}`} />
-                                    {STATUS[survey.status as keyof typeof STATUS]?.label ?? survey.status}
-                                </span>
-                            </div>
-                        </div>
-                        <button onClick={onClose} className="text-white/60 hover:text-white transition-colors">
-                            <X className="w-5 h-5" />
-                        </button>
+        <Modal
+            isOpen={!!survey}
+            onClose={onClose}
+            size="md"
+            title={
+                <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-6 h-6 text-amber-600 dark:text-amber-500" />
+                    </div>
+                    <div>
+                        <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest">Khảo sát</p>
+                        <h3 className="text-slate-800 dark:text-slate-100 font-black text-base leading-tight line-clamp-1">{survey.name}</h3>
+                        <span className={`inline-flex items-center gap-1 mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            isPublic ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                        }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${isPublic ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                            {STATUS[survey.status as keyof typeof STATUS]?.label ?? survey.status}
+                        </span>
                     </div>
                 </div>
+            }
+            isDarkTheme={isDark}
+        >
+            <div className="space-y-4">
+                {/* Slug link */}
+                {publicUrl ? (
+                    <>
+                        <div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Link công khai</p>
+                            <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-2xl">
+                                <Link2 className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                                <span className="flex-1 text-xs font-medium text-amber-700 dark:text-amber-400 truncate font-mono">{publicUrl}</span>
+                                <button
+                                    onClick={() => copy(publicUrl)}
+                                    className="flex-shrink-0 p-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/60 hover:bg-amber-200 transition-all"
+                                    title="Copy link"
+                                >
+                                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500" />}
+                                </button>
+                            </div>
+                        </div>
 
-                <div className="px-6 py-5 space-y-4">
-                    {/* Slug link */}
-                    {publicUrl ? (
-                        <>
-                            <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Link công khai</p>
-                                <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-2xl">
-                                    <Link2 className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
-                                    <span className="flex-1 text-xs font-medium text-amber-700 truncate font-mono">{publicUrl}</span>
-                                    <button
-                                        onClick={() => copy(publicUrl)}
-                                        className="flex-shrink-0 p-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 transition-all"
-                                        title="Copy link"
-                                    >
-                                        {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-amber-600" />}
+                        {/* Sharing options */}
+                        {isPublic && (
+                            <div className="grid grid-cols-3 gap-2">
+                                <a
+                                    href={publicUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex flex-col items-center gap-1.5 p-3 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-800 transition-all group"
+                                >
+                                    <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <ExternalLink className="w-4 h-4 text-blue-600 dark:text-blue-500" />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Mở trang</span>
+                                </a>
+                                <button
+                                    onClick={onEdit}
+                                    className="flex flex-col items-center gap-1.5 p-3 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-800 transition-all group"
+                                >
+                                    <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <PenLine className="w-4 h-4 text-amber-600 dark:text-amber-500" />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Thiết kế</span>
+                                </button>
+                                <button
+                                    onClick={() => copy(emailTrackUrl ?? '')}
+                                    className="flex flex-col items-center gap-1.5 p-3 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-800 transition-all group"
+                                >
+                                    <div className="w-8 h-8 rounded-xl bg-violet-100 dark:bg-violet-950/40 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <QrCode className="w-4 h-4 text-violet-600 dark:text-violet-500" />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Email link</span>
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Email tracking */}
+                        {isPublic && emailTrackUrl && (
+                            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 rounded-2xl p-3.5 space-y-1.5">
+                                <p className="text-[11px] font-black text-blue-700 dark:text-blue-400 flex items-center gap-1.5">
+                                    <Link2 className="w-3 h-3" /> Email Tracking Link
+                                </p>
+                                <p className="text-[10px] text-blue-600 dark:text-blue-500 leading-relaxed">
+                                    Thêm vào cuối URL khi gửi qua email:
+                                </p>
+                                <div className="flex items-center gap-2 bg-white dark:bg-slate-900 rounded-xl px-3 py-2 border border-blue-100 dark:border-blue-900/40">
+                                    <code className="text-[10px] text-slate-500 dark:text-slate-400 flex-1 break-all font-mono">{emailTrackUrl}</code>
+                                    <button onClick={() => copy(emailTrackUrl)} className="flex-shrink-0">
+                                        {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />}
                                     </button>
                                 </div>
                             </div>
+                        )}
+                    </>
+                ) : (
+                    <div className="bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 text-center">
+                        <Globe className="w-8 h-8 text-slate-300 dark:text-slate-650 mx-auto mb-2" />
+                        <p className="text-sm font-bold text-slate-500 dark:text-slate-400">Chưa xuất bản</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Nhấn "Thiết kế" để cấu hình và xuất bản</p>
+                    </div>
+                )}
 
-                            {/* Sharing options */}
-                            {isPublic && (
-                                <div className="grid grid-cols-3 gap-2">
-                                    <a
-                                        href={publicUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex flex-col items-center gap-1.5 p-3 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-200 transition-all group"
-                                    >
-                                        <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                            <ExternalLink className="w-4 h-4 text-blue-600" />
-                                        </div>
-                                        <span className="text-[10px] font-bold text-slate-500">Mở trang</span>
-                                    </a>
-                                    <button
-                                        onClick={onEdit}
-                                        className="flex flex-col items-center gap-1.5 p-3 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-200 transition-all group"
-                                    >
-                                        <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                            <PenLine className="w-4 h-4 text-amber-600" />
-                                        </div>
-                                        <span className="text-[10px] font-bold text-slate-500">Thiết kế</span>
-                                    </button>
-                                    <button
-                                        onClick={() => copy(emailTrackUrl ?? '')}
-                                        className="flex flex-col items-center gap-1.5 p-3 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-200 transition-all group"
-                                    >
-                                        <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                            <QrCode className="w-4 h-4 text-violet-600" />
-                                        </div>
-                                        <span className="text-[10px] font-bold text-slate-500">Email link</span>
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* Email tracking */}
-                            {isPublic && emailTrackUrl && (
-                                <div className="bg-blue-50 border border-blue-100 rounded-2xl p-3.5 space-y-1.5">
-                                    <p className="text-[11px] font-black text-blue-700 flex items-center gap-1.5">
-                                        <Link2 className="w-3 h-3" /> Email Tracking Link
-                                    </p>
-                                    <p className="text-[10px] text-blue-600 leading-relaxed">
-                                        Thêm vào cuối URL khi gửi qua email:
-                                    </p>
-                                    <div className="flex items-center gap-2 bg-white rounded-xl px-3 py-2 border border-blue-100">
-                                        <code className="text-[10px] text-slate-500 flex-1 break-all font-mono">{emailTrackUrl}</code>
-                                        <button onClick={() => copy(emailTrackUrl)} className="flex-shrink-0">
-                                            {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-slate-400" />}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </>
-                    ) : (
-                        <div className="bg-slate-50 rounded-2xl border border-slate-200 p-4 text-center">
-                            <Globe className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                            <p className="text-sm font-bold text-slate-500">Chưa xuất bản</p>
-                            <p className="text-xs text-slate-400 mt-0.5">Nhấn "Thiết kế" để cấu hình và xuất bản</p>
-                        </div>
-                    )}
-
-                    <button
-                        onClick={onEdit}
-                        className="w-full py-3 rounded-2xl font-black text-white text-sm shadow-lg hover:brightness-110 transition-all"
-                        style={{background:'linear-gradient(135deg,#f59e0b,#f97316)'}}
-                    >
-                        <PenLine className="w-4 h-4 inline mr-1.5 -mt-0.5" />
-                        Mở trình thiết kế
-                    </button>
-                </div>
+                <button
+                    onClick={onEdit}
+                    className="w-full py-3 rounded-2xl font-black text-white text-sm shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2"
+                    style={{background:'linear-gradient(135deg,#f59e0b,#f97316)'}}
+                >
+                    <PenLine className="w-4 h-4" />
+                    Mở trình thiết kế
+                </button>
             </div>
-        </div>
+        </Modal>
     );
 };
 
@@ -229,7 +202,8 @@ const CreateSurveyModal: React.FC<{
     isOpen: boolean;
     onClose: () => void;
     onCreate: (name: string) => Promise<void>;
-}> = ({ isOpen, onClose, onCreate }) => {
+    isDark?: boolean;
+}> = ({ isOpen, onClose, onCreate, isDark }) => {
     const [name, setName] = useState('Khảo sát mới');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -242,76 +216,61 @@ const CreateSurveyModal: React.FC<{
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="sm" noHeader noPadding>
-            <div className="flex flex-col">
-                {/* Gradient header strip */}
-                <div className="px-6 pt-8 pb-5 bg-gradient-to-br from-amber-500 to-orange-500 relative overflow-hidden">
-                    <div className="absolute inset-0" style={{backgroundImage:'radial-gradient(circle at 80% 40%, rgba(255,255,255,0.15) 0%, transparent 55%)'}} />
-                    <div className="flex items-start justify-between relative">
-                        <div>
-                            <p className="text-white font-black text-xl leading-tight">Tạo khảo sát mới</p>
-                            <p className="text-white/70 text-xs mt-1">Chọn mẫu hoặc nhập tên để bắt đầu</p>
-                        </div>
-                        <button onClick={onClose} className="text-white/60 hover:text-white transition-colors ml-4 mt-0.5">
-                            <X className="w-5 h-5" />
-                        </button>
-                    </div>
-                </div>
+        <Modal isOpen={isOpen} onClose={onClose} size="sm" isDarkTheme={isDark} title="Tạo khảo sát mới">
+            <div className="space-y-4">
+                <Input
+                    label="Tên khảo sát"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    placeholder="VD: Khảo sát hài lòng sản phẩm Q2/2026"
+                    onKeyDown={e => { if (e.key === 'Enter') handleSubmit(); }}
+                    autoFocus
+                />
 
-                <div className="px-6 py-5 space-y-4 bg-white">
-                    <Input
-                        label="Tên khảo sát"
-                        value={name}
-                        onChange={e => setName(e.target.value)}
-                        placeholder="VD: Khảo sát hài lòng sản phẩm Q2/2026"
-                        onKeyDown={e => { if (e.key === 'Enter') handleSubmit(); }}
-                        autoFocus
-                    />
-
-                    <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-2.5">Mẫu phổ biến</p>
-                        <div className="grid grid-cols-2 gap-2.5">
-                            {([
-                                { label: 'Khảo sát NPS', desc: 'Đo điểm hài lòng khách hàng', color: '#f59e0b', bg: '#fffbeb',
-                                  svg: (<svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" strokeLinejoin="round"/></svg>) },
-                                { label: 'Phản hồi sản phẩm', desc: 'Thu thập ý kiến về sản phẩm', color: '#3b82f6', bg: '#eff6ff',
-                                  svg: (<svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>) },
-                                { label: 'Đánh giá dịch vụ', desc: 'Chất lượng dịch vụ sau mua', color: '#10b981', bg: '#ecfdf5',
-                                  svg: (<svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>) },
-                                { label: 'Khảo sát thị trường', desc: 'Nghiên cứu thói quen người dùng', color: '#8b5cf6', bg: '#f5f3ff',
-                                  svg: (<svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>) },
-                                { label: 'Mẫu Quiz (Trắc nghiệm)', desc: 'Kiểm tra kiến thức, đánh giá', color: '#ec4899', bg: '#fdf2f8',
-                                  svg: (<svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>) },
-                                { label: 'Mẫu Check-in Event', desc: 'Đăng ký tham gia sự kiện, quét QR', color: '#14b8a6', bg: '#f0fdfa',
-                                  svg: (<svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>) },
-                            ] as const).map((t: any) => {
-                                const isActive = name === t.label;
-                                return (
-                                    <button
-                                        key={t.label}
-                                        onClick={() => setName(t.label)}
-                                        className={`flex items-start gap-3 p-3.5 rounded-2xl border-2 text-left transition-all duration-200 ${
-                                            isActive ? 'border-amber-400 shadow-md' : 'border-slate-100 hover:border-slate-200 hover:shadow-sm'
-                                        }`}
-                                        style={{ background: isActive ? t.bg : 'white' }}
+                <div>
+                    <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] mb-2.5">Mẫu phổ biến</p>
+                    <div className="grid grid-cols-2 gap-2.5">
+                        {([
+                            { label: 'Khảo sát NPS', desc: 'Đo điểm hài lòng khách hàng', color: '#f59e0b', bg: '#fffbeb',
+                              svg: (<svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" strokeLinejoin="round"/></svg>) },
+                            { label: 'Phản hồi sản phẩm', desc: 'Thu thập ý kiến về sản phẩm', color: '#3b82f6', bg: '#eff6ff',
+                              svg: (<svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>) },
+                            { label: 'Đánh giá dịch vụ', desc: 'Chất lượng dịch vụ sau mua', color: '#10b981', bg: '#ecfdf5',
+                              svg: (<svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>) },
+                            { label: 'Khảo sát thị trường', desc: 'Nghiên cứu thói quen người dùng', color: '#8b5cf6', bg: '#f5f3ff',
+                              svg: (<svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>) },
+                            { label: 'Mẫu Quiz (Trắc nghiệm)', desc: 'Kiểm tra kiến thức, đánh giá', color: '#ec4899', bg: '#fdf2f8',
+                              svg: (<svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>) },
+                            { label: 'Mẫu Check-in Event', desc: 'Đăng ký tham gia sự kiện, quét QR', color: '#14b8a6', bg: '#f0fdfa',
+                              svg: (<svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>) },
+                        ] as const).map((t: any) => {
+                            const isActive = name === t.label;
+                            return (
+                                <button
+                                    key={t.label}
+                                    type="button"
+                                    onClick={() => setName(t.label)}
+                                    className={`flex items-start gap-3 p-3.5 rounded-2xl border-2 text-left transition-all duration-200 ${
+                                        isActive ? 'border-amber-400 shadow-md' : 'border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 hover:shadow-sm'
+                                    }`}
+                                    style={{ background: isActive ? (isDark ? 'rgba(245,158,11,0.15)' : t.bg) : (isDark ? '#161b24' : 'white') }}
+                                >
+                                    <div
+                                        className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all bg-white dark:bg-slate-900"
+                                        style={{ color: t.color, boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
                                     >
-                                        <div
-                                            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
-                                            style={{ color: t.color, background: 'white', boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
-                                        >
-                                            {t.svg}
-                                        </div>
-                                        <div className="flex-1 mt-0.5">
-                                            <p className="text-[11px] font-bold text-slate-800 leading-tight mb-0.5">{t.label}</p>
-                                            <p className="text-[9px] font-medium text-slate-500 leading-snug line-clamp-2">{t.desc}</p>
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                        </div>
+                                        {t.svg}
+                                    </div>
+                                    <div className="flex-1 mt-0.5">
+                                        <p className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight mb-0.5">{t.label}</p>
+                                        <p className="text-[9px] font-medium text-slate-500 dark:text-slate-450 leading-snug line-clamp-2">{t.desc}</p>
+                                    </div>
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
-                <div className="px-6 py-5 bg-slate-50 flex items-center justify-between border-t border-slate-100 mt-2 shrink-0">
+                <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800 mt-2 shrink-0">
                     <button onClick={onClose} className="px-6 py-2.5 text-xs font-bold text-slate-500 hover:text-slate-700 transition-colors">
                         Huỷ
                     </button>
@@ -485,6 +444,7 @@ const SurveyCard: React.FC<{
 // ─── Main Surveys Page ───────────────────────────────────────────────────────
 const Surveys: React.FC = () => {
     const navigate = useNavigate();
+    const { isDark } = useTheme();
     const [surveys, setSurveys] = useState<Survey[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -649,6 +609,7 @@ const Surveys: React.FC = () => {
                 isOpen={showCreate}
                 onClose={() => setShowCreate(false)}
                 onCreate={handleCreate}
+                isDark={isDark}
             />
 
             {/* Report modal */}
@@ -663,6 +624,7 @@ const Surveys: React.FC = () => {
                 survey={deleteTarget}
                 onConfirm={handleDeleteConfirm}
                 onCancel={() => setDeleteTarget(null)}
+                isDark={isDark}
             />
 
             {/* Share / preview modal */}
@@ -671,6 +633,7 @@ const Surveys: React.FC = () => {
                     survey={previewSurvey}
                     onClose={() => setPreviewSurvey(null)}
                     onEdit={() => { navigate(`/surveys/${previewSurvey.id}/edit`); setPreviewSurvey(null); }}
+                    isDark={isDark}
                 />
             )}
 

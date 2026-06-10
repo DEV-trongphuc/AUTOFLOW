@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import {
     Send, Users, FileEdit, BarChart3, GitMerge, Tag, Webhook, Zap, Bot,
@@ -8,6 +8,7 @@ import {
     Home, TrendingUp, Mail, GitBranch, Package, Eye, Database
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
+import Lenis from 'lenis';
 import {
     SectionOverview, SectionCampaigns, SectionAutomation,
     SectionEmailBuilder, SectionTemplates, SectionAudience, SectionTags,
@@ -118,6 +119,34 @@ const Documentation: React.FC = () => {
     const [search, setSearch] = useState('');
     const [scroll, setScroll] = useState(0);
     const mainRef = useRef<HTMLDivElement>(null);
+
+    // Initialize Lenis on documentation content container
+    useEffect(() => {
+        if (!mainRef.current) return;
+
+        const lenis = new Lenis({
+            wrapper: mainRef.current,
+            content: mainRef.current.firstElementChild as HTMLElement,
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            orientation: 'vertical',
+            gestureOrientation: 'vertical',
+            smoothWheel: true,
+        });
+
+        let rafId: number;
+        function raf(time: number) {
+            lenis.raf(time);
+            rafId = requestAnimationFrame(raf);
+        }
+
+        rafId = requestAnimationFrame(raf);
+
+        return () => {
+            cancelAnimationFrame(rafId);
+            lenis.destroy();
+        };
+    }, []);
 
     // Responsive sidebar
     useEffect(() => {
@@ -320,7 +349,7 @@ const Documentation: React.FC = () => {
 
             {/* Mobile Overlay */}
             {sidebar && window.innerWidth < 1024 && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40" onClick={() => setSidebar(false)} />
+                <div className="fixed inset-0 bg-slate-950/60 z-40" onClick={() => setSidebar(false)} />
             )}
 
             <style>{`

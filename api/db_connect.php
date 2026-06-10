@@ -643,3 +643,43 @@ function getGlobalLeadScoreConfig($pdo) {
 
     return $config;
 }
+
+// ─── AUTO MIGRATION VERSION CHECK ──────────────────────────────────────────
+$db_needs_migration = false;
+$targetDbVersion = 35;
+
+if (!isset($isHighTrafficEndpoint) || !$isHighTrafficEndpoint) {
+    try {
+        $vStmt = $pdo->prepare("SELECT value FROM system_settings WHERE workspace_id = 0 AND `key` = 'db_version' LIMIT 1");
+        $vStmt->execute();
+        $dbVerVal = $vStmt->fetchColumn();
+        if ($dbVerVal !== false) {
+            $dbVer = (int)$dbVerVal;
+            if ($dbVer < $targetDbVersion) {
+                $db_needs_migration = true;
+            }
+        } else {
+            // Check if schema_version exists (legacy setup)
+            $vStmtLegacy = $pdo->prepare("SELECT value FROM system_settings WHERE workspace_id = 0 AND `key` = 'schema_version' LIMIT 1");
+            $vStmtLegacy->execute();
+            $legacyVer = $vStmtLegacy->fetchColumn();
+            // If even legacy version is missing, or not up to date, trigger migration
+            if ($legacyVer === false || $legacyVer !== '29.8') {
+                $db_needs_migration = true;
+            } else {
+                // If it is 29.8, we have baseline v30, but we need to run migrations v31-34.
+                // We should write db_version = 30 to settings, but for now we say migration is needed
+                $db_needs_migration = true;
+            }
+        }
+    } catch (Throwable $e) {
+        $db_needs_migration = true;
+    }
+}
+
+$GLOBALS['db_needs_migration'] = $db_needs_migration;
+
+if ($db_needs_migration && !headers_sent()) {
+    header('X-DB-Needs-Migration: 1');
+}
+?>

@@ -1,6 +1,7 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState } from 'react';
-import { X, GitBranch, Check } from 'lucide-react';
+import { GitBranch, Check } from 'lucide-react';
+import Modal from './Modal';
 
 interface Branch {
     id: string;
@@ -15,33 +16,24 @@ interface SelectBranchModalProps {
     branches: Branch[];
     title: string;
     stepType: string;
+    isDarkTheme?: boolean;
 }
 
 const SelectBranchModal: React.FC<SelectBranchModalProps> = ({
     isOpen,
-    onClose: _onClose,
+    onClose,
     onConfirm,
     branches,
     title,
-    stepType
+    isDarkTheme
 }) => {
     const [selectedBranch, setSelectedBranch] = useState<string>('');
-    const [animateIn, setAnimateIn] = useState(false);
 
     React.useEffect(() => {
         if (isOpen) {
-            setTimeout(() => setAnimateIn(true), 10);
-        } else {
-            setAnimateIn(false);
+            setSelectedBranch('');
         }
     }, [isOpen]);
-
-    const onClose = () => {
-        setAnimateIn(false);
-        setTimeout(_onClose, 400);
-    };
-
-    if (!isOpen && !animateIn) return null;
 
     const handleConfirm = () => {
         if (selectedBranch) {
@@ -51,93 +43,78 @@ const SelectBranchModal: React.FC<SelectBranchModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 overflow-hidden">
-            {/* Backdrop */}
-            <div
-                className={`absolute inset-0 bg-slate-900/60 backdrop-blur-md transition-all duration-500 ease-in-out ${animateIn ? 'opacity-100' : 'opacity-0'}`}
-                onClick={onClose}
-            />
-
-            {/* Modal */}
-            <div
-                style={{
-                    transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-                    perspective: '1000px'
-                }}
-                className={`bg-white rounded-[32px] shadow-2xl border border-white/20 w-full max-w-lg transform transition-all duration-500 relative overflow-hidden ${animateIn ? 'scale-100 opacity-100 translate-y-0 rotate-0' : 'scale-[0.92] opacity-0 translate-y-12 rotate-x-12'}`}>
-                {/* Header */}
-                <div className="p-8 pb-6">
-                    <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center shadow-lg shadow-blue-500/5 group">
-                            <GitBranch className="w-7 h-7 text-blue-600 transition-transform group-hover:rotate-12" />
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="text-2xl font-black text-slate-800 tracking-tight">{title}</h3>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Chọn nhánh điều hướng</p>
-                        </div>
-                        <button
-                            onClick={onClose}
-                            className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-all absolute top-6 right-6"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            size="md"
+            isDarkTheme={isDarkTheme}
+            title={
+                <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all ${isDarkTheme ? 'bg-slate-800 text-blue-400 shadow-blue-500/10' : 'bg-blue-50 text-blue-600 shadow-blue-500/5'} group`}>
+                        <GitBranch className="w-6 h-6 transition-transform group-hover:rotate-12" />
+                    </div>
+                    <div className="flex-1">
+                        <h3 className={`text-lg font-black tracking-tight ${isDarkTheme ? 'text-slate-100' : 'text-slate-800'}`}>{title}</h3>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Chọn nhánh điều hướng</p>
                     </div>
                 </div>
-
-                {/* Content */}
-                <div className="px-8 pb-8">
-                    <div className="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
-                        {branches.map((branch) => (
-                            <button
-                                key={branch.id}
-                                onClick={() => setSelectedBranch(branch.id)}
-                                className={`w-full p-4 rounded-2xl border-2 transition-all text-left relative group ${selectedBranch === branch.id
-                                    ? 'border-blue-600 bg-blue-50/50 shadow-lg shadow-blue-500/5'
-                                    : 'border-slate-100 hover:border-blue-200 hover:bg-slate-50'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedBranch === branch.id
-                                        ? 'border-blue-600 bg-blue-600'
-                                        : 'border-slate-200 group-hover:border-blue-300'
-                                        }`}>
-                                        {selectedBranch === branch.id && (
-                                            <Check className="w-3.5 h-3.5 text-white" />
-                                        )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="font-black text-sm text-slate-800 truncate">{branch.label}</div>
-                                        {branch.description && (
-                                            <div className="text-[11px] text-slate-500 mt-0.5 line-clamp-1 font-medium">{branch.description}</div>
-                                        )}
-                                    </div>
-                                </div>
-                            </button>
-                        ))}
-                    </div>
-
-                    <div className="flex items-center gap-3 mt-8">
-                        <button
-                            onClick={onClose}
-                            className="flex-1 h-12 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all"
-                        >
-                            Hủy bỏ
-                        </button>
-                        <button
-                            onClick={handleConfirm}
-                            disabled={!selectedBranch}
-                            className={`flex-1 h-12 rounded-2xl font-black uppercase tracking-widest text-[11px] transition-all shadow-lg
-                                ${selectedBranch
-                                    ? 'bg-slate-800 text-white hover:bg-slate-900 shadow-slate-200'
-                                    : 'bg-slate-100 text-slate-300 cursor-not-allowed shadow-none'
-                                }`}
-                        >
-                            Xác nhận chuyển
-                        </button>
-                    </div>
+            }
+            footer={
+                <div className="flex items-center gap-3 w-full justify-end">
+                    <button
+                        onClick={onClose}
+                        className={`px-5 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-sm ${isDarkTheme ? 'text-slate-400 bg-slate-800 border border-slate-700/50 hover:bg-slate-700 hover:text-slate-200' : 'text-slate-500 bg-slate-100 hover:bg-slate-200'} active:scale-95`}
+                    >
+                        Hủy bỏ
+                    </button>
+                    <button
+                        onClick={handleConfirm}
+                        disabled={!selectedBranch}
+                        className={`px-7 py-3 rounded-xl font-black uppercase tracking-widest text-[11px] transition-all shadow-lg active:scale-95
+                            ${selectedBranch
+                                ? 'bg-slate-800 text-white hover:bg-slate-900 shadow-slate-200'
+                                : `${isDarkTheme ? 'bg-slate-800/40 text-slate-600 border border-slate-800' : 'bg-slate-100 text-slate-300'} cursor-not-allowed shadow-none`
+                            }`}
+                    >
+                        Xác nhận chuyển
+                    </button>
                 </div>
+            }
+        >
+            <div className="space-y-3 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
+                {branches.map((branch) => (
+                    <button
+                        key={branch.id}
+                        onClick={() => setSelectedBranch(branch.id)}
+                        className={`w-full p-4 rounded-2xl border-2 transition-all text-left relative group ${selectedBranch === branch.id
+                            ? (isDarkTheme 
+                                ? 'border-blue-500 bg-blue-950/20 shadow-lg shadow-blue-500/5' 
+                                : 'border-blue-600 bg-blue-50/30 shadow-lg shadow-blue-500/5')
+                            : (isDarkTheme 
+                                ? 'border-slate-800 hover:border-slate-700 hover:bg-slate-800/40' 
+                                : 'border-slate-100 hover:border-blue-200 hover:bg-slate-50')
+                            }`}
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedBranch === branch.id
+                                ? 'border-blue-600 bg-blue-600'
+                                : (isDarkTheme ? 'border-slate-700 group-hover:border-blue-500' : 'border-slate-200 group-hover:border-blue-300')
+                                }`}>
+                                {selectedBranch === branch.id && (
+                                    <Check className="w-3.5 h-3.5 text-white" />
+                                )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className={`font-black text-sm truncate ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`}>{branch.label}</div>
+                                {branch.description && (
+                                    <div className={`text-[11px] mt-0.5 line-clamp-1 font-medium ${isDarkTheme ? 'text-slate-500' : 'text-slate-500'}`}>{branch.description}</div>
+                                )}
+                            </div>
+                        </div>
+                    </button>
+                ))}
             </div>
-        </div>
+        </Modal>
     );
 };
 

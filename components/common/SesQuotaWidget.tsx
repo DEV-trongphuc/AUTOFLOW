@@ -238,7 +238,7 @@ const SesQuotaWidget: React.FC<Props> = ({ mode = 'sidebar', className = '', sta
 
                 {/* IAM Setup Modal */}
                 {showIamModal && (
-                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-slate-950/70 z-[9999] flex items-center justify-center p-4">
                         <div className="bg-white dark:bg-slate-900 rounded-[28px] w-full max-w-2xl shadow-2xl overflow-hidden text-left border border-slate-100 dark:border-slate-800 config-modal-entrance">
                             <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/30">
                                 <div className="flex items-center gap-4">

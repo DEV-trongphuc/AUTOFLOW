@@ -84,9 +84,9 @@ const ContactRow = React.memo(React.forwardRef<HTMLTableRowElement, ContactRowPr
                 <div className="flex items-center">
                     <div className="relative">
                         {sub.avatar ? (
-                            <img src={sub.avatar} alt={fullName} className="h-9 w-9 rounded-xl object-cover mr-3 border border-slate-200 shadow-sm" />
+                            <img src={sub.avatar} alt={fullName} className="h-9 w-9 rounded-full object-cover mr-3 border border-slate-200 shadow-sm" />
                         ) : (
-                            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-600 font-bold text-xs mr-3 border border-slate-200 group-hover:from-[#fff4e0] group-hover:to-[#ffe8cc] group-hover:text-[#ca7900] transition-all shadow-sm">
+                            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-600 font-bold text-xs mr-3 border border-slate-200 group-hover:from-[#fff4e0] group-hover:to-[#ffe8cc] group-hover:text-[#ca7900] transition-all shadow-sm">
                                 {(cleanFirstName || '?')[0]}{(cleanLastName || '')[0]}
                             </div>
                         )}
@@ -97,7 +97,7 @@ const ContactRow = React.memo(React.forwardRef<HTMLTableRowElement, ContactRowPr
                         )}
                     </div>
                     <div>
-                        <div className="text-sm font-bold text-slate-800 group-hover:text-[#ca7900] transition-colors flex items-center gap-1">
+                        <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 group-hover:text-[#ca7900] transition-colors flex items-center gap-1">
                             {fullName}
                             {(Number(sub.verified) === 1) && <span title="Verified"><BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-50" /></span>}
                             {sub.status === "customer" ? <span title="Customer"><BadgeCheck className="w-3.5 h-3.5 text-amber-600 fill-amber-50" /></span> : null}
@@ -212,7 +212,7 @@ const ContactSkeleton: React.FC<{ visibleColumns: string[] }> = ({ visibleColumn
         <td className="px-6 py-4 pl-8"><Skeleton variant="rounded" width={20} height={20} className="rounded" /></td>
         <td className="px-6 py-4">
             <div className="flex items-center">
-                <Skeleton variant="rounded" width={36} height={36} className="rounded-xl mr-3" />
+                <Skeleton variant="circular" width={36} height={36} className="mr-3" />
                 <div className="space-y-2">
                     <Skeleton variant="text" width={120} height={16} />
                     <Skeleton variant="text" width={80} height={12} />

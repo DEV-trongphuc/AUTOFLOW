@@ -342,6 +342,22 @@ try {
                         $settings['welcome_msg'] = "Chào mừng Anh/Chị $name quay trở lại! Em có thể hỗ trợ gì thêm cho mình không ạ?";
                 }
             }
+            // Security: Remove sensitive fields from public settings payload
+            $sensitiveFields = [
+                'gemini_api_key',
+                'p_key',
+                'cat_gemini_api_key',
+                'system_instruction',
+                'persona_prompt',
+                'fast_replies',
+                'intent_configs',
+                'webhook_url',
+                'webhook_secret'
+            ];
+            foreach ($sensitiveFields as $field) {
+                unset($settings[$field]);
+            }
+
             echo json_encode(['success' => true, 'version' => API_VERSION, 'data' => $settings]);
             exit;
         }
@@ -2304,6 +2320,24 @@ CHÚ Ý:
             $propertyId = resolvePropertyId($pdo, $propertyId);
         }
         $visitorUuid = $input['visitor_id'] ?? $context['visitor_id'] ?? null;
+        if ($visitorUuid !== null) {
+            $visitorUuid = trim((string)$visitorUuid);
+            $visitorUuidLower = strtolower($visitorUuid);
+            if ($visitorUuid === '' || $visitorUuidLower === 'null' || $visitorUuidLower === 'undefined' || !preg_match('/^[a-zA-Z0-9\-_]{8,100}$/', $visitorUuid)) {
+                $visitorUuid = null;
+            }
+        }
+        if (empty($visitorUuid)) {
+            // Generate fallback UUID
+            $visitorUuid = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+                mt_rand(0, 0xffff),
+                mt_rand(0, 0x0fff) | 0x4000,
+                mt_rand(0, 0x3fff) | 0x8000,
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+            );
+        }
+        $input['visitor_id'] = $visitorUuid;
         $clientIp = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
         if (empty($userMsg) || empty($propertyId)) {

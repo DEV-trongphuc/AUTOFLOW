@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import Lenis from 'lenis';
 import Sidebar from './Layout/Sidebar';
 import Header from './Layout/Header';
 import CommandPalette from './Layout/CommandPalette';
@@ -28,6 +29,49 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       return next;
     });
   };
+
+  const mainRef = useRef<HTMLElement>(null);
+  const lenisRef = useRef<Lenis | null>(null);
+
+  // Initialize Lenis smooth scroll on the dashboard main container
+  useEffect(() => {
+    if (!mainRef.current) return;
+
+    const lenis = new Lenis({
+      wrapper: mainRef.current,
+      content: mainRef.current.firstElementChild as HTMLElement,
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+    });
+
+    lenisRef.current = lenis;
+
+    let rafId: number;
+    function raf(time: number) {
+      lenis.raf(time);
+      rafId = requestAnimationFrame(raf);
+    }
+
+    rafId = requestAnimationFrame(raf);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      lenis.destroy();
+      lenisRef.current = null;
+    };
+  }, []);
+
+  // Instantly scroll back to top on route change
+  useEffect(() => {
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(0, { immediate: true });
+    } else if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+  }, [location.pathname]);
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] overflow-hidden font-sans text-slate-800 antialiased bg-noise">
@@ -62,7 +106,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <div className="flex-1 flex flex-col overflow-hidden relative">
         <Header onMenuClick={() => setSidebarOpen(true)} />
 
-        <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-0 scroll-smooth relative">
+        <main ref={mainRef} className="flex-1 w-full overflow-y-auto overflow-x-hidden p-0 relative">
           <div className="grid w-full p-3 lg:p-10 min-h-full overflow-hidden">
             {/* Golden glow decor — top-right corner accent */}
             <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[400px] z-0" style={{ background: 'radial-gradient(ellipse at 100% 0%, rgba(251,191,36,0.13) 0%, transparent 65%)' }} />

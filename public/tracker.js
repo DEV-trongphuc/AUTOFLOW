@@ -446,14 +446,26 @@
     });
 
     // --- OTHER LISTENERS ---
+    var trackedMilestones = { 25: false, 50: false, 75: false, 90: false, 100: false };
     var scrollTimer = null;
     document.addEventListener('scroll', function () {
         if (scrollTimer) return;
         scrollTimer = setTimeout(function () {
-            var p = Math.round((window.scrollY + window.innerHeight) / document.body.scrollHeight * 100);
+            var s = window.scrollY || window.pageYOffset || 0;
+            var h = window.innerHeight || document.documentElement.clientHeight || 0;
+            var d = document.documentElement.scrollHeight || document.body.scrollHeight || 0;
+            var p = d > h ? Math.round((s + h) / d * 100) : 100;
+            if (p > 100) p = 100;
+            
+            [25, 50, 75, 90, 100].forEach(function (m) {
+                if (p >= m && !trackedMilestones[m]) {
+                    trackedMilestones[m] = true;
+                    track('scroll', { percent: m, depth: p });
+                }
+            });
+
             if (p > maxScroll) {
                 maxScroll = p;
-                if ([25, 50, 75, 90].some(function (m) { return maxScroll >= m && maxScroll < m + 5; })) track('scroll', { depth: maxScroll });
             }
             scrollTimer = null;
         }, 500);
@@ -561,130 +573,25 @@
     // --- DOM SCANNER FOR VISIBLE EMAIL/PHONE ---
     // Aggressive global scan
     function scanPageForIdentifiers() {
-        var emailRegex = /\b[A-Za-z0-9._%+-]+@gmail\.com\b/g; // Phổ biến nhất
-        var genericEmailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
-        var phoneRegex = /\b0\d{9,10}\b/g;
-
-        var blacklistPrefixes = ['support@', 'info@', 'contact@', 'admin@', 'hello@', 'sale@', 'care@', 'noreply@'];
-        var foundEmails = [];
-        var foundPhones = [];
-
-        // Walker quét TOÀN BỘ text node trong body
-        var walker = document.createTreeWalker(
-            document.body,
-            NodeFilter.SHOW_TEXT,
-            {
-                acceptNode: function (node) {
-                    var parent = node.parentElement;
-                    if (!parent) return NodeFilter.FILTER_REJECT;
-                    var tag = parent.tagName;
-                    // Chỉ bỏ qua các thẻ code/kỹ thuật
-                    if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'IFRAME'].indexOf(tag) !== -1) return NodeFilter.FILTER_REJECT;
-                    return NodeFilter.FILTER_ACCEPT;
-                }
-            }
-        );
-
-        var node;
-        while (node = walker.nextNode()) {
-            processText(node.textContent);
-            if (node.parentElement) {
-                // Quét cả thuộc tính ẩn (nơi dev thường giấu data)
-                ['title', 'aria-label', 'placeholder', 'value', 'data-user', 'data-email'].forEach(function (attr) {
-                    var val = node.parentElement.getAttribute(attr);
-                    if (val) processText(val);
-                });
-            }
-        }
-
-        function processText(str) {
-            if (!str || typeof str !== 'string') return;
-            // Ưu tiên quét Gmail trước, sau đó mới đến các email khác
-            [emailRegex, genericEmailRegex].forEach(function (reg) {
-                var matches = str.match(reg);
-                if (matches) {
-                    matches.forEach(function (em) {
-                        em = em.toLowerCase();
-                        var isBlacklisted = blacklistPrefixes.some(function (p) { return em.indexOf(p) === 0; });
-                        if (!isBlacklisted && validateEmail(em) && foundEmails.indexOf(em) === -1) foundEmails.push(em);
-                    });
-                }
-            });
-            var phones = str.match(phoneRegex);
-            if (phones) {
-                phones.forEach(function (ph) {
-                    if (validatePhone(ph) && foundPhones.indexOf(ph) === -1) foundPhones.push(ph);
-                });
-            }
-        }
-
-        if (foundEmails.length > 0 || foundPhones.length > 0) {
-            attemptIdentify(foundEmails[0] || null, foundPhones[0] || null, 0);
-        }
+        return; // [FIX] Disabled passive scanning to prevent incorrect mapping to footer/static emails
     }
 
     // --- STORAGE & COOKIE SCANNER ---
     // Quét sạch sẽ Cookie và Local/Session Storage
     function scanStorage() {
-        var emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
-        var found = [];
-
-        // 1. Web Storage
-        [localStorage, sessionStorage].forEach(function (s) {
-            try {
-                for (var i = 0; i < s.length; i++) {
-                    var k = s.key(i);
-                    var v = s.getItem(k);
-                    if (v && v.length < 1000) { // Chỉ quét nếu value không quá lớn (tránh lag)
-                        var m = v.match(emailRegex);
-                        if (m) m.forEach(function (em) { found.push(em.toLowerCase()); });
-                    }
-                }
-            } catch (e) { }
-        });
-
-        // 2. Cookies
-        try {
-            var c = document.cookie;
-            if (c) {
-                var m = c.match(emailRegex);
-                if (m) m.forEach(function (em) { found.push(em.toLowerCase()); });
-            }
-        } catch (e) { }
-
-        if (found.length > 0) {
-            found.forEach(function (em) {
-                if (validateEmail(em)) attemptIdentify(em, null, 0);
-            });
-        }
+        return; // [FIX] Disabled passive scanning of storage keys
     }
 
     // --- DEEP SCRIPT SCANNER ---
     function scanScripts() {
-        var scripts = document.scripts;
-        var emailRegex = /\b[A-Za-z0-9._%+-]+@gmail\.com\b/g;
-        var foundEmails = [];
-
-        for (var i = 0; i < scripts.length; i++) {
-            var content = scripts[i].textContent;
-            if (content && content.length > 0 && content.length < 50000) { // Limit size
-                var matches = content.match(emailRegex);
-                if (matches) {
-                    matches.forEach(function (em) {
-                        em = em.toLowerCase();
-                        if (validateEmail(em) && foundEmails.indexOf(em) === -1) foundEmails.push(em);
-                    });
-                }
-            }
-        }
-        if (foundEmails.length > 0) attemptIdentify(foundEmails[0], null, 0);
+        return; // [FIX] Disabled script text scanning
     }
 
     // Comprehensive Init
     function runAllScanners() {
-        scanStorage();
-        scanPageForIdentifiers();
-        scanScripts();
+        // [FIX] Disabled all scanners to prevent false-positive identifications.
+        // We now rely solely on active user inputs (input, change, submit listeners).
+        return;
     }
 
     // Scan on page load

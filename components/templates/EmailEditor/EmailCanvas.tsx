@@ -390,7 +390,68 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
         onUpdateBlocks(updateDeep(blocks));
     }, [blocks, onUpdateBlocks]);
 
-    if (mode === 'code') return <div className="flex-1 bg-[#0f172a] p-8"><textarea value={customHtml} onChange={(e) => setCustomHtml(e.target.value)} className="w-full h-full bg-transparent text-amber-400 font-mono text-xs outline-none resize-none leading-relaxed" /></div>;
+    const [debouncedHtml, setDebouncedHtml] = useState(customHtml);
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedHtml(customHtml);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [customHtml]);
+
+    if (mode === 'code') {
+        const isMobile = viewMode === 'mobile';
+        return (
+            <div className="flex-1 flex overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl m-4 shadow-2xl">
+                {/* Left: Code Editor */}
+                <div className="flex-1 flex flex-col min-w-[300px] border-r border-slate-800">
+                    <div className="flex justify-between items-center px-6 py-4 bg-slate-950 border-b border-slate-800 shrink-0">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                            HTML Code Editor
+                        </span>
+                    </div>
+                    <div className="flex-1 p-6 bg-slate-950/40 relative">
+                        <textarea 
+                            value={customHtml} 
+                            onChange={(e) => setCustomHtml(e.target.value)} 
+                            className="w-full h-full bg-transparent text-amber-500 font-mono text-xs outline-none resize-none leading-relaxed custom-scrollbar border-none"
+                            placeholder="Dán hoặc viết mã HTML của bạn tại đây..."
+                        />
+                    </div>
+                </div>
+
+                {/* Right: Visual Preview */}
+                <div className="flex-1 flex flex-col min-w-[300px] bg-slate-950">
+                    <div className="flex justify-between items-center px-6 py-4 bg-slate-950 border-b border-slate-800 shrink-0">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            Visual Preview ({isMobile ? 'Mobile' : 'Desktop'})
+                        </span>
+                    </div>
+                    <div 
+                        className="flex-1 overflow-y-auto custom-scrollbar relative flex items-center justify-center p-6 transition-all duration-300"
+                        style={{
+                            backgroundColor: bodyStyle.backgroundColor || '#f8fafc',
+                            backgroundImage: bodyStyle.backgroundImage || 'radial-gradient(#cbd5e1 1px, transparent 1px)',
+                            backgroundSize: bodyStyle.backgroundSize || '24px 24px',
+                        }}
+                    >
+                        <div 
+                            className={`transition-all duration-500 flex flex-col overflow-hidden relative mx-auto ${isMobile ? 'w-[375px] h-[600px] rounded-[40px] border-[12px] border-slate-800 shadow-2xl bg-white' : 'w-full h-full max-w-[600px] border border-slate-200 rounded-2xl bg-white'}`}
+                        >
+                            {isMobile && <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-xl z-50 pointer-events-none"></div>}
+                            <iframe
+                                srcDoc={debouncedHtml || '<!DOCTYPE html><html><body></body></html>'}
+                                className="w-full h-full border-none bg-white"
+                                title="html-code-preview"
+                            />
+                            {isMobile && <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-800 rounded-full z-50 pointer-events-none"></div>}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const isMobile = viewMode === 'mobile';
 

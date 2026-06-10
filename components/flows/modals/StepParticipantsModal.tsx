@@ -50,6 +50,7 @@ interface StepParticipantsModalProps {
     onActionComplete?: () => void;
     activeBranchFilter?: string | null;
     onBranchClick?: (branch: string | null) => void;
+    isDarkTheme?: boolean;
 }
 
 const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
@@ -73,7 +74,8 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
     stepData,
     onActionComplete,
     activeBranchFilter,
-    onBranchClick
+    onBranchClick,
+    isDarkTheme = false
 }) => {
     const [animateIn, setAnimateIn] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -624,15 +626,15 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4 !mt-0">
             <div
-                className={`absolute inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity duration-300 ease-out ${animateIn ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute inset-0 bg-slate-950/70 transition-opacity duration-300 ease-out ${animateIn ? 'opacity-100' : 'opacity-0'}`}
                 onClick={handleClose}
             />
             <div
                 style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
-                className={`bg-white w-full max-w-5xl rounded-[24px] shadow-2xl border border-slate-100 flex flex-col max-h-[92vh] transform transition-all duration-500 ${animateIn ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-8'}`}
+                className={`w-full max-w-5xl rounded-[24px] flex flex-col max-h-[92vh] border transform transition-all duration-500 ${animateIn ? 'scale-100 opacity-100 translate-y-0' : 'scale-97 opacity-0 translate-y-4'} ${isDarkTheme ? 'bg-[#11151d] border-slate-800/80 shadow-[0_24px_60px_rgba(0,0,0,0.6)] text-slate-100' : 'bg-white border-slate-200/80 shadow-[0_24px_50px_rgba(0,0,0,0.1),0_1px_3px_rgba(0,0,0,0.02)] text-slate-800'}`}
             >
                 {/* Header */}
-                <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-[24px]">
+                <div className={`px-6 py-5 border-b flex items-center justify-between rounded-t-[24px] ${isDarkTheme ? 'bg-[#11151d] border-slate-800/80' : 'bg-slate-50/50 border-slate-100'}`}>
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm border border-blue-100">
                             {stepType === 'zalo_zns' ? (
@@ -1563,14 +1565,14 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
 
             {/* Add User Modal */}
             {isAddModalOpen && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-2xl shrink-0">
-                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 p-4">
+                    <div className={`w-full max-w-3xl border rounded-2xl shadow-2xl animate-in fade-in zoom-in-97 duration-200 flex flex-col max-h-[90vh] ${isDarkTheme ? 'bg-[#11151d] border-slate-800/80 text-slate-100' : 'bg-white border-slate-200/80 text-slate-800'}`}>
+                        <div className={`px-6 py-4 border-b flex items-center justify-between rounded-t-2xl shrink-0 ${isDarkTheme ? 'bg-[#11151d] border-slate-800/80' : 'bg-slate-50/50 border-slate-100'}`}>
+                            <h3 className={`font-bold flex items-center gap-2 ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`}>
                                 <UserPlus className="w-5 h-5 text-blue-600" />
                                 Thêm người dùng vào bước này
                             </h3>
-                            <button onClick={() => setIsAddModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
+                            <button onClick={() => setIsAddModalOpen(false)} className={`p-2 rounded-full transition-colors ${isDarkTheme ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-400'}`}>
                                 <X className="w-5 h-5" />
                             </button>
                         </div>

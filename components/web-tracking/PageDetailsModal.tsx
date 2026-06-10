@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { X, Eye, Users, Clock, MousePointer2, TrendingDown, Globe, Activity, TrendingUp } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
@@ -288,7 +288,7 @@ const PageDetailsModal: React.FC<PageDetailsModalProps> = ({
                                         return filteredEvents.length > 0 ? (
                                             filteredEvents.map((event, idx) => {
                                                 const isScroll = event.type === 'scroll';
-                                                const displayName = isScroll ? 'Số lượt cuộn trang' : (event.target || 'Không rõ');
+                                                const displayName = isScroll ? `Cuộn trang ${event.target}%` : (event.target || 'Không rõ');
 
                                                 return (
                                                     <div key={idx} className="flex items-center justify-between p-3.5 bg-white hover:bg-slate-50 border border-slate-100 rounded-xl transition-all group">

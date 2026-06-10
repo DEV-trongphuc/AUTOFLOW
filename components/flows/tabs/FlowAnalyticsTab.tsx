@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import Lenis from 'lenis';
 import { Flow, Subscriber } from '../../../types';
 import { api } from '../../../services/storageAdapter';
 import Skeleton from '../../common/Skeleton';
@@ -27,6 +28,40 @@ import { generateFlowStepLabels } from '../../../utils/flowLabeling';
 
 const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
     const navigate = useNavigate();
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Initialize local Lenis smooth scroll on parent container
+    useEffect(() => {
+        const parent = containerRef.current?.parentElement;
+        if (!parent) return;
+
+        // Set prevent attribute so the global layout Lenis ignores this scrolling container
+        parent.setAttribute('data-lenis-prevent', 'true');
+
+        const lenis = new Lenis({
+            wrapper: parent,
+            content: containerRef.current,
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            orientation: 'vertical',
+            gestureOrientation: 'vertical',
+            smoothWheel: true,
+        });
+
+        let rafId: number;
+        function raf(time: number) {
+            lenis.raf(time);
+            rafId = requestAnimationFrame(raf);
+        }
+
+        rafId = requestAnimationFrame(raf);
+
+        return () => {
+            cancelAnimationFrame(rafId);
+            lenis.destroy();
+        };
+    }, []);
+
     const [modalParticipants, setModalParticipants] = useState<any[]>([]);
     const [logs, setLogs] = useState<any[]>([]);
     const [currentFlow, setCurrentFlow] = useState<Flow>(flow); // Local copy for fresh stats
@@ -153,20 +188,20 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         if (type === 'trigger') {
             const tType = config.type || 'segment';
             switch (tType) {
-                case 'segment': return (config.targetSubtype === 'list' || config.targetSubtype === 'sync') ? { icon: ListPlus, gradient: 'from-emerald-500 to-teal-600', text: 'text-emerald-600', bg: 'bg-emerald-50', label: 'List Trigger' } : { icon: Layers, gradient: 'from-orange-500 to-[#ca7900]', text: 'text-orange-600', bg: 'bg-orange-50', label: 'Segment Trigger' };
-                case 'form': return { icon: FileInput, gradient: 'from-amber-400 to-orange-500', text: 'text-amber-600', bg: 'bg-amber-50', label: 'Form Trigger' };
-                case 'purchase': return { icon: ShoppingCart, gradient: 'from-pink-500 to-rose-600', text: 'text-pink-600', bg: 'bg-pink-50', label: 'Purchase Trigger' };
-                case 'custom_event': return { icon: Zap, gradient: 'from-violet-500 to-indigo-600', text: 'text-violet-600', bg: 'bg-violet-50', label: 'Custom Event' };
-                case 'tag': return { icon: Tag, gradient: 'from-emerald-500 to-teal-600', text: 'text-emerald-600', bg: 'bg-emerald-50', label: 'Tag Trigger' };
-                case 'date': return { icon: Calendar, gradient: 'from-blue-500 to-indigo-600', text: 'text-blue-600', bg: 'bg-blue-50', label: 'Date Event' };
-                case 'campaign': return { icon: Send, gradient: 'from-violet-500 to-purple-600', text: 'text-violet-600', bg: 'bg-violet-50', label: 'Campaign Trigger' };
-                default: return { icon: Zap, gradient: 'from-slate-700 to-slate-900', text: 'text-slate-600 dark:text-slate-300', bg: 'bg-slate-50 dark:bg-slate-950', label: 'Trigger' };
+                case 'segment': return (config.targetSubtype === 'list' || config.targetSubtype === 'sync') ? { icon: ListPlus, gradient: 'from-emerald-500 to-teal-600', text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/10', label: 'List Trigger' } : { icon: Layers, gradient: 'from-orange-500 to-[#ca7900]', text: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-500/10', label: 'Segment Trigger' };
+                case 'form': return { icon: FileInput, gradient: 'from-amber-400 to-orange-500', text: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10', label: 'Form Trigger' };
+                case 'purchase': return { icon: ShoppingCart, gradient: 'from-pink-500 to-rose-600', text: 'text-pink-600 dark:text-pink-400', bg: 'bg-pink-50 dark:bg-pink-500/10', label: 'Purchase Trigger' };
+                case 'custom_event': return { icon: Zap, gradient: 'from-violet-500 to-indigo-600', text: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-500/10', label: 'Custom Event' };
+                case 'tag': return { icon: Tag, gradient: 'from-emerald-500 to-teal-600', text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/10', label: 'Tag Trigger' };
+                case 'date': return { icon: Calendar, gradient: 'from-blue-500 to-indigo-600', text: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-500/10', label: 'Date Event' };
+                case 'campaign': return { icon: Send, gradient: 'from-violet-500 to-purple-600', text: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-500/10', label: 'Campaign Trigger' };
+                default: return { icon: Zap, gradient: 'from-slate-700 to-slate-900', text: 'text-slate-600 dark:text-slate-300', bg: 'bg-slate-50 dark:bg-slate-800', label: 'Trigger' };
             }
         }
 
         // 2. ACTION STYLES
         switch (type) {
-            case 'action': return { icon: Mail, gradient: 'from-blue-600 to-indigo-700', text: 'text-blue-600', bg: 'bg-blue-50', label: 'Email' };
+            case 'action': return { icon: Mail, gradient: 'from-blue-600 to-indigo-700', text: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-500/10', label: 'Email' };
             case 'zalo_zns': return {
                 icon: ({ className }: { className?: string }) => (
                     <img
@@ -176,19 +211,19 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                     />
                 ),
                 gradient: 'from-blue-400 to-blue-600',
-                text: 'text-blue-600',
-                bg: 'bg-blue-50',
+                text: 'text-blue-600 dark:text-blue-400',
+                bg: 'bg-blue-50 dark:bg-blue-500/10',
                 label: 'Zalo ZNS'
             };
-            case 'wait': return { icon: Clock, gradient: 'from-amber-400 to-orange-500', text: 'text-amber-600', bg: 'bg-amber-50', label: 'Delay' };
-            case 'condition': return { icon: GitMerge, gradient: 'from-indigo-500 to-purple-600', text: 'text-indigo-600', bg: 'bg-indigo-50', label: 'Condition' };
-            case 'advanced_condition': return { icon: GitMerge, gradient: 'from-indigo-500 to-purple-600', text: 'text-indigo-600', bg: 'bg-indigo-50', label: 'Adv. Condition' };
-            case 'split_test': return { icon: Beaker, gradient: 'from-violet-500 to-fuchsia-600', text: 'text-violet-600', bg: 'bg-violet-50', label: 'A/B Test' };
-            case 'update_tag': return { icon: Tag, gradient: 'from-emerald-500 to-emerald-700', text: 'text-emerald-600', bg: 'bg-emerald-50', label: 'Update Tag' };
-            case 'list_action': return { icon: List, gradient: 'from-orange-500 to-orange-700', text: 'text-orange-600', bg: 'bg-orange-50', label: 'List Action' };
-            case 'link_flow': return { icon: LinkIcon, gradient: 'from-slate-700 to-slate-900', text: 'text-slate-600 dark:text-slate-300', bg: 'bg-slate-50 dark:bg-slate-950', label: 'Jump Flow' };
-            case 'remove_action': return { icon: UserMinus, gradient: 'from-rose-500 to-red-600', text: 'text-rose-600', bg: 'bg-rose-50', label: 'Clean Up' };
-            default: return { icon: CheckCircle2, gradient: 'from-slate-400 to-slate-500', text: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-50 dark:bg-slate-950', label: 'Step' };
+            case 'wait': return { icon: Clock, gradient: 'from-amber-400 to-orange-500', text: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10', label: 'Delay' };
+            case 'condition': return { icon: GitMerge, gradient: 'from-indigo-500 to-purple-600', text: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-500/10', label: 'Condition' };
+            case 'advanced_condition': return { icon: GitMerge, gradient: 'from-indigo-500 to-purple-600', text: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-500/10', label: 'Adv. Condition' };
+            case 'split_test': return { icon: Beaker, gradient: 'from-violet-500 to-fuchsia-600', text: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-500/10', label: 'A/B Test' };
+            case 'update_tag': return { icon: Tag, gradient: 'from-emerald-500 to-emerald-700', text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/10', label: 'Update Tag' };
+            case 'list_action': return { icon: List, gradient: 'from-orange-500 to-orange-700', text: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-500/10', label: 'List Action' };
+            case 'link_flow': return { icon: LinkIcon, gradient: 'from-slate-700 to-slate-900', text: 'text-slate-600 dark:text-slate-300', bg: 'bg-slate-50 dark:bg-slate-800', label: 'Jump Flow' };
+            case 'remove_action': return { icon: UserMinus, gradient: 'from-rose-500 to-red-600', text: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-500/10', label: 'Clean Up' };
+            default: return { icon: CheckCircle2, gradient: 'from-slate-400 to-slate-500', text: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-50 dark:bg-slate-800', label: 'Step' };
         }
     };
 
@@ -437,7 +472,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                     rate: 100,
                     detailStat: `Hoàn tất: ${completedCount}`,
                     config: {},
-                    style: { icon: CheckCircle2, gradient: 'from-emerald-500 to-teal-600', text: 'text-emerald-600', bg: 'bg-emerald-50', label: 'Completed' }
+                    style: { icon: CheckCircle2, gradient: 'from-emerald-500 to-teal-600', text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/10', label: 'Completed' }
                 });
             }
 
@@ -905,6 +940,65 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         }
     };
 
+    const handleExportLogs = async () => {
+        showToast('Đang tạo file xuất...', 'info');
+        try {
+            const isLocal =
+                window.location.hostname === 'localhost' ||
+                window.location.hostname === '127.0.0.1' ||
+                window.location.port !== '';
+            const phpFile = 'flows';
+            const finalQueryParams = `?id=${flow.id}&route=export-history&search=${encodeURIComponent(logSearchTerm)}&type=${encodeURIComponent(logTypeFilter)}`;
+            
+            const headers: Record<string, string> = {
+                'Accept': 'text/csv'
+            };
+            
+            const savedUser = JSON.parse(
+                localStorage.getItem('user') || localStorage.getItem('currentUser') || 'null'
+            );
+            const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+            const isAdminById = savedUser && (savedUser.id === 1 || savedUser.id === '1');
+            const isAdminByRole = savedUser && (
+                savedUser.role === 'admin' ||
+                savedUser.role === 'super_admin' ||
+                savedUser.is_admin == 1 ||
+                savedUser.isAdmin === true
+            );
+            if (isAuthenticated || isAdminById || isAdminByRole) {
+                headers['X-Autoflow-Auth'] = '1';
+            }
+            if (isLocal && savedUser && savedUser.id) {
+                headers['X-Local-Dev-User'] = String(savedUser.id);
+            }
+
+            const url = `${api.baseUrl}/${phpFile}.php${finalQueryParams}`;
+            const response = await fetch(url, {
+                method: 'GET',
+                headers,
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}`);
+            }
+
+            const blob = await response.blob();
+            const downloadUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = `flow-history-${currentFlow.name || 'export'}-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(downloadUrl);
+            showToast('Xuất lịch sử thành công!');
+        } catch (err) {
+            console.error('Failed to export history:', err);
+            showToast('Lỗi khi xuất lịch sử', 'error');
+        }
+    };
+
     const fetchInactiveUsers = async (page = 1) => {
         setLoadingInactive(true);
         setIsInactiveModalOpen(true);
@@ -945,26 +1039,42 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         });
     };
 
-    const StatItem = ({ label, value, icon: Icon, color, trend, onClick }: any) => (
-        <div
-            onClick={onClick}
-            className={`bg-white dark:bg-slate-900 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800/60 flex items-center justify-between hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 group ${onClick ? 'cursor-pointer hover:border-blue-200' : 'cursor-default'}`}
-        >
-            <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">{label}</p>
-                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200 tracking-tight">{value}</p>
-                {trend && <span className="text-[9px] font-bold text-emerald-600 flex items-center gap-1 mt-1.5 bg-emerald-50 w-fit px-2 py-0.5 rounded-full border border-emerald-100">{trend}</span>}
+    const StatItem = ({ label, value, icon: Icon, color, subText, trendText, trendType, onClick }: any) => {
+        let iconColorClass = 'text-slate-500 dark:text-slate-400';
+        if (color === 'bg-blue-600') iconColorClass = 'text-blue-500 dark:text-blue-400';
+        else if (color === 'bg-indigo-600') iconColorClass = 'text-indigo-500 dark:text-indigo-400';
+        else if (color === 'bg-[#ffa900]') iconColorClass = 'text-amber-500 dark:text-amber-400';
+        else if (color === 'bg-rose-500') iconColorClass = 'text-rose-500 dark:text-rose-400';
+
+        const isTrendSuccess = trendType === 'success';
+
+        return (
+            <div
+                onClick={onClick}
+                className={`bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-100 dark:border-slate-800/60 flex flex-col justify-between hover:shadow-md hover:border-slate-200 dark:hover:border-slate-700/60 transition-all duration-300 group ${onClick ? 'cursor-pointer' : 'cursor-default'}`}
+            >
+                <div>
+                    <div className="flex items-center justify-between gap-2">
+                        <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">{label}</p>
+                        <Icon className={`w-5 h-5 shrink-0 ${iconColorClass}`} />
+                    </div>
+                    <p className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-slate-100 tracking-tight mt-3 mb-1">{value}</p>
+                </div>
+                <div className="mt-2 space-y-1">
+                    {subText && (
+                        <div className="text-[11px] text-slate-400 dark:text-slate-500 font-medium flex items-center flex-wrap gap-x-2 gap-y-1">
+                            {subText}
+                        </div>
+                    )}
+                    {trendText && (
+                        <p className={`text-[10px] font-bold flex items-center gap-1 ${isTrendSuccess ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                            {trendText}
+                        </p>
+                    )}
+                </div>
             </div>
-            <div className={`w-14 h-14 rounded-2xl text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br ${color === 'bg-blue-600' ? 'from-blue-500 to-indigo-600 shadow-indigo-500/10' :
-                color === 'bg-[#ffa900]' ? 'from-orange-500 to-[#ca7900] shadow-orange-500/10' :
-                    color === 'bg-indigo-600' ? 'from-indigo-500 to-blue-600 shadow-indigo-500/10' :
-                        color === 'bg-emerald-500' ? 'from-emerald-500 to-teal-600 shadow-emerald-500/10' :
-                            'from-slate-500 to-slate-600 shadow-slate-500/10'
-                }`}>
-                <Icon className="w-7 h-7" />
-            </div>
-        </div>
-    );
+        );
+    };
 
     // --- BOTTLENECK INDICATOR COMPONENT ---
     const BottleneckBadge = ({ type, value, tooltip }: { type: 'time' | 'drop', value: string, tooltip?: string }) => (
@@ -979,10 +1089,10 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
     );
 
     return (
-        <div className="p-3 md:p-6 lg:px-8 lg:pb-8 lg:pt-4 space-y-4 md:space-y-8 max-w-[1400px] mx-auto animate-in fade-in duration-500 relative pb-20">
+        <div ref={containerRef} className="p-3 md:p-6 lg:px-8 lg:pb-8 lg:pt-4 space-y-4 md:space-y-8 max-w-[1400px] mx-auto animate-in fade-in duration-500 relative pb-20">
 
             {/* Premium Header Dashboard */}
-            <div className="bg-[#0f172a] rounded-[24px] md:rounded-[40px] p-5 md:p-10 text-white shadow-2xl relative overflow-hidden group border border-white/5">
+            <div className="bg-gradient-to-br from-slate-950 via-[#0f172a] to-slate-900 rounded-2xl md:rounded-[24px] p-6 md:p-10 text-white shadow-xl relative overflow-hidden group border border-slate-800/80">
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600 opacity-[0.1] rounded-full blur-[120px] -mr-48 -mt-48 transition-all duration-700 group-hover:opacity-[0.15]"></div>
                 <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-emerald-500 opacity-[0.05] rounded-full blur-[100px] -ml-32 -mb-32"></div>
 
@@ -991,13 +1101,13 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                     <div className="lg:col-span-5 lg:border-r border-white/10 lg:pr-10">
                         <div className="flex items-center justify-between mb-6 md:mb-8">
                             <div className="flex items-center gap-3 md:gap-4">
-                                <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-600 rounded-[14px] md:rounded-[18px] flex items-center justify-center shadow-lg shadow-blue-500/20">
+                                <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
                                     <Activity className="w-5 h-5 md:w-6 md:h-6 text-white" />
                                 </div>
                                 <div>
                                     <h3 className="text-lg md:text-2xl font-bold tracking-tight">Hiệu suất vận hành</h3>
                                     <div className="flex items-center gap-2 mt-0.5 md:mt-1">
-                                        <span className={`w-1.5 h-1.5 rounded-full ${currentFlow.status === 'active' ? 'bg-emerald-400 animate-pulse' : 'bg-slate-50 dark:bg-slate-9500'}`} title={currentFlow.status === 'active' ? 'Active' : 'Paused'}></span>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${currentFlow.status === 'active' ? 'bg-emerald-400 animate-pulse' : 'bg-slate-50 dark:bg-slate-950'}`} title={currentFlow.status === 'active' ? 'Active' : 'Paused'}></span>
                                         <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">
                                             ID: {currentFlow.id}
                                         </span>
@@ -1006,7 +1116,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                             </div>
                             <button
                                 onClick={() => setIsSimulateModalOpen(true)}
-                                className="px-3 md:px-5 py-2 md:py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl md:rounded-2xl text-[9px] md:text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 md:gap-2 backdrop-blur-md"
+                                className="px-3 md:px-5 py-2 md:py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg md:rounded-xl text-[9px] md:text-[11px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 md:gap-2"
                             >
                                 <Beaker className="w-3.5 h-3.5 md:w-4 h-4 text-blue-400" />
                                 <span className="hidden xs:inline">FLOW TEST</span>
@@ -1087,8 +1197,8 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
 
                         {/* NEW: Campaign Link - REPOSITIONED & UNIFIED */}
                         {triggerStep?.config?.type === 'campaign' && triggerStep.config.targetId && (
-                            <div className="flex items-center gap-4 p-3 md:p-4 bg-white/5 border border-white/10 rounded-xl md:rounded-2xl backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                <div className="w-10 h-10 bg-violet-500/20 rounded-lg md:rounded-xl flex items-center justify-center border border-violet-500/30">
+                            <div className="flex items-center gap-4 p-3 md:p-4 bg-white/[0.03] border border-white/5 rounded-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                <div className="w-10 h-10 bg-violet-500/10 rounded-lg flex items-center justify-center border border-violet-500/20">
                                     <Send className="w-5 h-5 text-violet-300" />
                                 </div>
                                 <div className="flex-1">
@@ -1097,7 +1207,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                 </div>
                                 <button
                                     onClick={() => navigate('/campaigns', { state: { openCampaignId: triggerStep.config.targetId } })}
-                                    className="px-3 md:px-4 py-2 bg-white dark:bg-slate-900 text-[#0f172a] hover:bg-slate-100 rounded-lg md:rounded-xl text-[10px] md:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1.5 md:gap-2"
+                                    className="px-3 md:px-4 py-2 bg-white text-slate-950 hover:bg-slate-100 rounded-lg text-[10px] md:text-[11px] font-bold uppercase tracking-tight transition-all flex items-center gap-1.5 md:gap-2"
                                 >
                                     <span className="hidden xs:inline">Báo cáo</span><span className="xs:hidden">Xem</span> <ExternalLink className="w-3 h-3 md:w-3.5 md:h-3.5" />
                                 </button>
@@ -1108,12 +1218,33 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                <StatItem label="Khách hàng" value={(stats.enrolled || 0).toLocaleString()} icon={Users} color="bg-blue-600" />
+                <StatItem
+                    label="Khách hàng"
+                    value={(stats.enrolled || 0).toLocaleString()}
+                    icon={Users}
+                    color="bg-blue-600"
+                    subText={
+                        <span className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                            <span>Hoàn thành: {(stats.completed || 0).toLocaleString()}</span>
+                        </span>
+                    }
+                    trendText={`▲ Tỷ lệ hoàn tất: ${completionRate}%`}
+                    trendType="success"
+                />
                 <StatItem
                     label="Lượt mở duy nhất"
                     value={(stats.uniqueOpened || 0).toLocaleString()}
                     icon={UserCheck}
                     color="bg-indigo-600"
+                    subText={
+                        <span className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0"></span>
+                            <span>Tổng mở: {(stats.totalOpened || 0).toLocaleString()}</span>
+                        </span>
+                    }
+                    trendText={`▲ Tỷ lệ mở TB: ${realOpenRate}%`}
+                    trendType="success"
                     onClick={() => {
                         if (triggerStep?.config?.type === 'campaign' && triggerStep.config.targetId) {
                             navigate('/campaigns', { state: { openCampaignId: triggerStep.config.targetId } });
@@ -1125,6 +1256,14 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                     value={(stats.totalClicked || 0).toLocaleString()}
                     icon={MousePointerClick}
                     color="bg-[#ffa900]"
+                    subText={
+                        <span className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                            <span>Tổng gửi: {(stats.totalSent || 0).toLocaleString()}</span>
+                        </span>
+                    }
+                    trendText={`▲ Tỷ lệ click TB: ${stats.totalSent > 0 ? Math.round((stats.totalClicked / stats.totalSent) * 100) : 0}%`}
+                    trendType="success"
                     onClick={() => {
                         if (triggerStep?.config?.type === 'campaign' && triggerStep.config.targetId) {
                             navigate('/campaigns', { state: { openCampaignId: triggerStep.config.targetId } });
@@ -1136,6 +1275,22 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                     value={errorRate + '%'}
                     icon={AlertOctagon}
                     color="bg-rose-500"
+                    subText={
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <span className="flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+                                <span>Lỗi: {(stats.totalFailed || 0).toLocaleString()}</span>
+                            </span>
+                            {stats.totalUnsubscribed > 0 && (
+                                <span className="flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0"></span>
+                                    <span>Hủy: {(stats.totalUnsubscribed || 0).toLocaleString()}</span>
+                                </span>
+                            )}
+                        </div>
+                    }
+                    trendText={`${parseFloat(errorRate) > 5 ? '▲' : '▼'} Tỷ lệ lỗi: ${errorRate}%`}
+                    trendType={parseFloat(errorRate) > 5 ? 'danger' : 'success'}
                 />
             </div>
 
@@ -1145,15 +1300,15 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                 <div className="lg:col-span-2 space-y-8">
 
                     {/* JOURNEY VISUALIZATION */}
-                    <Card className="rounded-[24px] md:rounded-[32px] border border-slate-100 dark:border-slate-800/60 shadow-sm overflow-hidden bg-white dark:bg-slate-900" noPadding>
-                        <div className="px-5 md:px-8 py-4 md:py-6 border-b border-slate-50 flex flex-col md:flex-row md:justify-between md:items-center bg-slate-50 dark:bg-slate-950/30 gap-3">
+                    <Card className="rounded-2xl border border-slate-100 dark:border-slate-800/60 shadow-md shadow-slate-100/40 dark:shadow-none overflow-hidden bg-white dark:bg-slate-900" noPadding>
+                        <div className="px-5 md:px-8 py-4 md:py-5 border-b border-slate-100 dark:border-slate-800/60 flex flex-col md:flex-row md:justify-between md:items-center bg-slate-50/50 dark:bg-slate-950/20 gap-3">
                             <div>
-                                <h3 className="text-xs md:text-sm font-black text-slate-800 dark:text-slate-200">Hành trình Khách hàng</h3>
-                                <p className="text-[9px] md:text-[10px] text-slate-400 mt-0.5 uppercase tracking-widest">Cumulative Flow Analytics</p>
+                                <h3 className="text-xs md:text-sm font-bold text-slate-800 dark:text-slate-200">Hành trình Khách hàng</h3>
+                                <p className="text-[9px] md:text-[10px] text-slate-400 mt-0.5 uppercase tracking-widest font-bold">Cumulative Flow Analytics</p>
                             </div>
                             <button
                                 onClick={() => fetchInactiveUsers()}
-                                className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 hover:border-slate-300 hover:bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+                                className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-300 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2"
                             >
                                 <UserMinus className="w-3.5 h-3.5 text-slate-400" />
                                 KHÔNG TƯƠNG TÁC
@@ -1162,40 +1317,57 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
 
                         <div className="p-4 md:p-8">
                             {funnelData.length > 0 ? (
-                                <div className="relative pl-6 border-l-2 border-slate-100 dark:border-slate-800/60 space-y-8">
+                                <div className="relative pl-6 md:pl-8 border-l border-slate-100 dark:border-slate-800/80 space-y-8">
                                     {funnelData.map((item, idx) => {
                                         const Icon = item.style.icon;
+                                        const dotColorClass = (() => {
+                                            if (item.users === 0) return 'bg-slate-200 dark:bg-slate-800';
+                                            switch (item.type) {
+                                                case 'completed': return 'bg-emerald-500 dark:bg-emerald-400';
+                                                case 'trigger': return 'bg-orange-500 dark:bg-orange-400';
+                                                case 'action': return 'bg-blue-600 dark:bg-blue-500';
+                                                case 'zalo_zns': return 'bg-blue-500 dark:bg-blue-400';
+                                                case 'wait': return 'bg-amber-500 dark:bg-amber-400';
+                                                case 'condition':
+                                                case 'advanced_condition': return 'bg-indigo-500 dark:bg-indigo-400';
+                                                case 'split_test': return 'bg-violet-500 dark:bg-violet-400';
+                                                case 'update_tag': return 'bg-emerald-500 dark:bg-emerald-400';
+                                                case 'list_action': return 'bg-orange-500 dark:bg-orange-400';
+                                                case 'remove_action': return 'bg-rose-500 dark:bg-rose-400';
+                                                default: return 'bg-indigo-500 dark:bg-indigo-400';
+                                            }
+                                        })();
                                         return (
                                             <div key={idx} className="relative group">
-                                                {/* Timeline Connector Dot */}
-                                                <div className={`absolute -left-[21px] md:-left-[33px] top-1/2 -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 rounded-full border-2 border-white shadow-sm z-10 flex items-center justify-center ${item.users > 0 ? 'bg-[#ffa900]' : 'bg-slate-200'}`}>
-                                                    <div className="w-1 md:w-1.5 h-1 md:h-1.5 bg-white dark:bg-slate-900 rounded-full"></div>
+                                                {/* Timeline Connector Dot (Top Aligned to step icon) */}
+                                                <div className={`absolute -left-[21px] md:-left-[33px] top-[26px] md:top-[30px] w-3 h-3 md:w-4 md:h-4 rounded-full border-2 border-white dark:border-slate-950 shadow-sm z-10 flex items-center justify-center ${dotColorClass}`}>
+                                                    <div className="w-1 md:w-1.5 h-1 md:h-1.5 bg-white dark:bg-slate-950 rounded-full"></div>
                                                 </div>
 
                                                 {/* Step Card */}
                                                 <div
                                                     onClick={() => item.type !== 'wait' && handleStepClick(item.id, item.type)}
-                                                    className={`flex flex-col border rounded-xl md:rounded-[20px] transition-all duration-300 group 
-                                                        ${item.type === 'wait' ? 'p-2 md:p-3 border-dashed bg-slate-100/50 opacity-90 cursor-default' : 'bg-white dark:bg-slate-900 p-3 md:p-4 cursor-pointer'} 
+                                                    className={`flex flex-col border rounded-xl transition-all duration-300 group 
+                                                        ${item.type === 'wait' ? 'p-2 md:p-3 border-dashed bg-slate-100/50 dark:bg-slate-800/20 opacity-90 cursor-default' : 'bg-white dark:bg-slate-900 p-3 md:p-4 cursor-pointer'} 
                                                         ${(selectedStepId === item.id || (selectedStatus === 'completed' && item.type === 'completed'))
-                                                            ? 'border-[#ffa900] shadow-lg ring-1 ring-[#ffa900]/20'
-                                                            : (item.type === 'wait' ? 'border-slate-300 dark:border-slate-700' : 'border-slate-100 dark:border-slate-800/60 hover:shadow-lg hover:border-slate-200 dark:border-slate-700/60')
+                                                            ? 'border-amber-500 dark:border-amber-400 shadow-md ring-4 ring-amber-500/10 dark:ring-amber-400/5'
+                                                            : (item.type === 'wait' ? 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20' : 'border-slate-100 dark:border-slate-800/50 hover:shadow-md hover:border-slate-200 dark:hover:border-slate-700/60')
                                                         }`}
                                                 >
                                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-4">
 
                                                         <div className="flex items-center flex-1 min-w-0 gap-3 md:gap-4">
-                                                            <div className={`${item.type === 'wait' ? 'w-8 h-8 md:w-10 md:h-10' : 'w-10 h-10 md:w-12 md:h-12'} rounded-lg md:rounded-xl flex items-center justify-center shadow-md bg-gradient-to-br ${item.style.gradient} text-white shrink-0`}>
-                                                                <Icon className={`${item.type === 'wait' ? 'w-4 h-4 md:w-5 md:h-5' : 'w-5 h-5 md:w-6 md:h-6'}`} />
+                                                            <div className={`${item.type === 'wait' ? 'w-8 h-8' : 'w-10 h-10'} rounded-lg flex items-center justify-center shadow-sm bg-gradient-to-br ${item.style.gradient} text-white shrink-0`}>
+                                                                <Icon className={`${item.type === 'wait' ? 'w-4 h-4' : 'w-5 h-5'}`} />
                                                             </div>
                                                             <div className="min-w-0 flex-1">
                                                                 <div className="flex flex-wrap items-center gap-1.5 md:gap-2 mb-1">
-                                                                    <span className={`text-[8px] md:text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md ${item.style.bg} ${item.style.text}`}>
+                                                                    <span className={`text-[8px] md:text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-md ${item.style.bg} ${item.style.text}`}>
                                                                         {item.stepNumberLabel}: {item.style.label}
                                                                     </span>
                                                                     {item.waiting > 0 && (
-                                                                        <span className="flex items-center gap-1 text-[8px] md:text-[9px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-md animate-pulse">
-                                                                            <div className="w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-amber-600"></div>
+                                                                        <span className="flex items-center gap-1 text-[8px] md:text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 rounded-md animate-pulse">
+                                                                            <div className="w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-amber-600 dark:bg-amber-400"></div>
                                                                             Chờ: {item.waiting}
                                                                         </span>
                                                                     )}
@@ -1218,31 +1390,31 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                         <div className="flex items-center shrink-0 justify-between sm:justify-end gap-4 md:gap-8 text-right">
                                                             <div className="flex flex-col sm:flex-row gap-2 md:gap-3 items-end sm:items-center">
                                                                 {item.type === 'completed' ? (
-                                                                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100 shadow-sm">
-                                                                        <CheckCircle2 size={13} className="text-emerald-500" />
-                                                                        <span className="text-[11px] md:text-xs font-bold text-emerald-600">{(item as any).users?.toLocaleString() || 0} Hoàn thành</span>
+                                                                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 shadow-none">
+                                                                        <CheckCircle2 size={13} className="text-emerald-500 dark:text-emerald-400" />
+                                                                        <span className="text-[11px] md:text-xs font-bold">{(item as any).users?.toLocaleString() || 0} Hoàn thành</span>
                                                                     </div>
                                                                 ) : item.type === 'wait' ? null : (
                                                                     <>
                                                                         <div className="flex items-center gap-1.5" title="Đang ở đây (Waiting)">
                                                                             <div
                                                                                 onClick={(e) => { e.stopPropagation(); handleStepClick(item.id, item.type, 'waiting'); }}
-                                                                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-amber-50/70 border border-amber-200/40 shadow-sm transition-colors hover:bg-amber-500 hover:border-amber-500 group/pill cursor-pointer"
+                                                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50/60 dark:bg-amber-500/5 border border-amber-200/40 dark:border-amber-500/20 transition-all hover:bg-amber-500 hover:border-amber-500 dark:hover:bg-amber-500 group/pill cursor-pointer text-amber-700 dark:text-amber-400 hover:text-white dark:hover:text-white"
                                                                             >
-                                                                                <Clock size={12} className="text-amber-500 group-hover/pill:text-white" />
-                                                                                <span className="text-[11px] md:text-xs font-semibold text-amber-600 group-hover/pill:text-white transition-colors">
-                                                                                    {(item as any).waiting?.toLocaleString() || 0} <span className="font-medium text-amber-500 group-hover/pill:text-white hidden xl:inline transition-colors">Chờ</span>
+                                                                                <Clock size={12} className="text-amber-500 dark:text-amber-400 group-hover/pill:text-white" />
+                                                                                <span className="text-[11px] md:text-xs font-bold group-hover/pill:text-white">
+                                                                                    {(item as any).waiting?.toLocaleString() || 0} <span className="font-normal text-amber-600 dark:text-amber-500 group-hover/pill:text-white/80 hidden xl:inline">Chờ</span>
                                                                                 </span>
                                                                             </div>
                                                                         </div>
                                                                         <div className="flex items-center gap-1.5" title="Đã đi qua (Processed)">
                                                                             <div
                                                                                 onClick={(e) => { e.stopPropagation(); handleStepClick(item.id, item.type, 'all_touched'); }}
-                                                                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-emerald-50/70 border border-emerald-200/40 shadow-sm transition-colors hover:bg-emerald-500 hover:border-emerald-500 group/pill2 cursor-pointer"
+                                                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50/60 dark:bg-emerald-500/5 border border-emerald-200/40 dark:border-emerald-500/20 transition-all hover:bg-emerald-500 hover:border-emerald-500 dark:hover:bg-emerald-500 group/pill2 cursor-pointer text-emerald-700 dark:text-emerald-400 hover:text-white dark:hover:text-white"
                                                                             >
-                                                                                <FastForward size={12} className="text-emerald-500 group-hover/pill2:text-white transition-colors" />
-                                                                                <span className="text-[11px] md:text-xs font-semibold text-emerald-600 group-hover/pill2:text-white transition-colors">
-                                                                                    {(item as any).processedHere?.toLocaleString() || 0} <span className="font-medium text-emerald-500 group-hover/pill2:text-white hidden xl:inline transition-colors">Qua</span>
+                                                                                <FastForward size={12} className="text-emerald-500 dark:text-emerald-400 group-hover/pill2:text-white" />
+                                                                                <span className="text-[11px] md:text-xs font-bold group-hover/pill2:text-white">
+                                                                                    {(item as any).processedHere?.toLocaleString() || 0} <span className="font-normal text-emerald-600 dark:text-emerald-500 group-hover/pill2:text-white/80 hidden xl:inline">Qua</span>
                                                                                 </span>
                                                                             </div>
                                                                         </div>
@@ -1258,7 +1430,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                                             <MailOpen className="w-3 h-3 text-slate-400" />
                                                                             <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Unique Open</span>
                                                                         </div>
-                                                                        <div className="text-sm font-black text-[#ffa900]">{item.rate}%</div>
+                                                                        <div className="text-sm font-bold text-[#ffa900]">{item.rate}%</div>
                                                                     </>
                                                                 )}
                                                                 {item.type === 'condition' && (
@@ -1266,7 +1438,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                                         <div className="flex justify-end items-center gap-1 mb-1">
                                                                             <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Wait: {item.config.waitDuration}{item.config.waitUnit === 'days' ? 'd' : (item.config.waitUnit === 'hours' ? 'h' : 'm')}</span>
                                                                         </div>
-                                                                        <div className="text-[10px] font-black text-indigo-600">{item.detailStat || '--'}</div>
+                                                                        <div className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">{item.detailStat || '--'}</div>
                                                                     </>
                                                                 )}
                                                                 {item.type === 'split_test' && (
@@ -1274,7 +1446,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                                         <div className="flex justify-end items-center gap-1 mb-1">
                                                                             <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Split</span>
                                                                         </div>
-                                                                        <div className="text-[10px] font-black text-violet-600">{item.detailStat || '--'}</div>
+                                                                        <div className="text-[10px] font-bold text-violet-600 dark:text-violet-400">{item.detailStat || '--'}</div>
                                                                     </>
                                                                 )}
                                                                 {item.type === 'advanced_condition' && (
@@ -1282,7 +1454,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                                         <div className="flex justify-end items-center gap-1 mb-1">
                                                                             <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Results</span>
                                                                         </div>
-                                                                        <div className="text-[10px] font-black text-indigo-600 truncate max-w-[120px]" title={item.detailStat}>
+                                                                        <div className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 truncate max-w-[120px]" title={item.detailStat}>
                                                                             {item.detailStat || '--'}
                                                                         </div>
                                                                     </>
@@ -1305,7 +1477,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
 
                                                             if (failed === 0 && unsubscribed === 0) {
                                                                 return (
-                                                                    <div className="flex items-center gap-1.5 mt-2 ml-16 text-[10px] font-bold text-emerald-600 opacity-60">
+                                                                    <div className="flex items-center gap-1.5 mt-2 ml-14 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 opacity-60">
                                                                         <CheckCircle2 className="w-3.5 h-3.5" />
                                                                         <span>Hoạt động tốt</span>
                                                                     </div>
@@ -1313,14 +1485,14 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                             }
 
                                                             return (
-                                                                <div className="flex items-center gap-2 mt-2 ml-16">
+                                                                    <div className="flex items-center gap-2 mt-2 ml-14">
                                                                     {failed > 0 && (
                                                                         <button
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
                                                                                 fetchStepErrors(item.id, item.label);
                                                                             }}
-                                                                            className="flex items-center gap-1 px-2 py-1 text-[9px] font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-md border border-rose-200 transition-colors"
+                                                                            className="flex items-center gap-1 px-2 py-1 text-[9px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-md border border-rose-200 dark:border-rose-500/20 transition-colors"
                                                                         >
                                                                             <AlertOctagon className="w-3 h-3" />
                                                                             Lỗi ({failed})
@@ -1332,7 +1504,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                                                 e.stopPropagation();
                                                                                 fetchStepUnsubscribes(item.id, item.label);
                                                                             }}
-                                                                            className="flex items-center gap-1 px-2 py-1 text-[9px] font-bold text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-md border border-orange-200 transition-colors"
+                                                                            className="flex items-center gap-1 px-2 py-1 text-[9px] font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-500/10 hover:bg-orange-100 dark:hover:bg-orange-500/20 rounded-md border border-orange-200 dark:border-orange-500/20 transition-colors"
                                                                         >
                                                                             <UserMinus className="w-3 h-3" />
                                                                             Hủy ({unsubscribed})
@@ -1346,14 +1518,14 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
 
                                                 {/* Branch Switching UI */}
                                                 {item.hasBranches && (
-                                                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex bg-white dark:bg-slate-900 rounded-full shadow-md border border-slate-100 dark:border-slate-800/60 p-0.5 transition-all z-20">
+                                                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex bg-white dark:bg-slate-950 rounded-lg shadow-md border border-slate-100 dark:border-slate-800/80 p-0.5 transition-all z-20">
                                                         {item.type === 'advanced_condition' ? (
                                                             <div className="flex items-center gap-1 px-2">
                                                                 {(item.config.branches || []).map((b: any, i: number) => (
                                                                     <button
                                                                         key={b.id || i}
                                                                         onClick={(e) => { e.stopPropagation(); setActiveBranches(prev => ({ ...prev, [item.id]: b.id })); }}
-                                                                        className={`px-2 py-0.5 text-[9px] font-bold rounded-full transition-colors whitespace-nowrap ${item.activeBranch === b.id || (!item.activeBranch && i === 0 && item.activeBranch !== 'fallback') ? 'bg-indigo-100 text-indigo-700' : 'text-slate-400 hover:text-indigo-600'}`}
+                                                                        className={`px-2 py-0.5 text-[9px] font-bold rounded-md transition-colors whitespace-nowrap ${item.activeBranch === b.id || (!item.activeBranch && i === 0 && item.activeBranch !== 'fallback') ? 'bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400'}`}
                                                                     >
                                                                         {b.label || `Branch ${i + 1}`}
                                                                     </button>
@@ -1361,7 +1533,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                                 {/* Fallback Branch Button */}
                                                                 <button
                                                                     onClick={(e) => { e.stopPropagation(); setActiveBranches(prev => ({ ...prev, [item.id]: 'fallback' })); }}
-                                                                    className={`px-2 py-0.5 text-[9px] font-bold rounded-full transition-colors whitespace-nowrap ${item.activeBranch === 'fallback' ? 'bg-slate-200 text-slate-700 dark:text-slate-200' : 'text-slate-400 hover:text-indigo-600'}`}
+                                                                    className={`px-2 py-0.5 text-[9px] font-bold rounded-md transition-colors whitespace-nowrap ${item.activeBranch === 'fallback' ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200' : 'text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400'}`}
                                                                 >
                                                                     Mặc định (Fallback)
                                                                 </button>
@@ -1370,13 +1542,13 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                             <>
                                                                 <button
                                                                     onClick={(e) => { e.stopPropagation(); setActiveBranches(prev => ({ ...prev, [item.id]: item.type === 'split_test' ? 'A' : 'yes' })); }}
-                                                                    className={`px-4 min-w-[50px] py-1 text-[10px] font-bold rounded-full transition-all flex items-center justify-center ${item.activeBranch === 'yes' || item.activeBranch === 'A' || (!item.activeBranch) ? 'bg-indigo-100 text-indigo-700' : 'text-slate-400 hover:text-indigo-600'}`}
+                                                                    className={`px-3 min-w-[45px] py-0.5 text-[9px] font-bold rounded-md transition-all flex items-center justify-center ${item.activeBranch === 'yes' || item.activeBranch === 'A' || (!item.activeBranch) ? 'bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400'}`}
                                                                 >
                                                                     {item.type === 'split_test' ? 'Path A' : 'IF'}
                                                                 </button>
                                                                 <button
                                                                     onClick={(e) => { e.stopPropagation(); setActiveBranches(prev => ({ ...prev, [item.id]: item.type === 'split_test' ? 'B' : 'no' })); }}
-                                                                    className={`px-4 min-w-[50px] py-1 text-[10px] font-bold rounded-full transition-all flex items-center justify-center ${item.activeBranch === 'no' || item.activeBranch === 'B' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-400 hover:text-indigo-600'}`}
+                                                                    className={`px-3 min-w-[45px] py-0.5 text-[9px] font-bold rounded-md transition-all flex items-center justify-center ${item.activeBranch === 'no' || item.activeBranch === 'B' ? 'bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400'}`}
                                                                 >
                                                                     {item.type === 'split_test' ? 'Path B' : 'ELSE'}
                                                                 </button>
@@ -1402,8 +1574,8 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
 
                 <div className="lg:col-span-1">
                     <div className="sticky top-4 flex flex-col" style={{ maxHeight: 'calc(100vh - 80px)' }}>
-                        <Card className="rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-xl shadow-slate-200/40 bg-white dark:bg-slate-900 overflow-hidden flex-1 min-h-0 flex flex-col" title="Live Events" noPadding>
-                            <div className="px-4 py-3 border-b border-slate-50 bg-slate-50 dark:bg-slate-950/30 backdrop-blur-sm sticky top-0 z-10">
+                        <Card className="rounded-2xl border border-slate-100 dark:border-slate-800/60 shadow-md shadow-slate-200/10 dark:shadow-none bg-white dark:bg-slate-900 overflow-hidden flex-1 min-h-0 flex flex-col" title="Live Events" noPadding>
+                            <div className="px-4 py-3.5 border-b border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-950/20 sticky top-0 z-10">
                                 <div className="flex justify-between items-center">
                                     <div className="flex items-center gap-2">
                                         <div className="p-1 bg-indigo-50 text-indigo-600 rounded-lg">
@@ -1475,6 +1647,13 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                 className="pl-7 pr-3 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-lg text-[9px] w-28 focus:w-44 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-400 transition-all outline-none"
                                             />
                                         </div>
+                                        <button 
+                                            onClick={handleExportLogs} 
+                                            title="Xuất nhật ký CSV"
+                                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg border border-transparent hover:border-indigo-100 transition-all"
+                                        >
+                                            <FileDown className="w-3 h-3" />
+                                        </button>
                                         <button onClick={handleRefreshLogs} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg border border-transparent hover:border-indigo-100 transition-all">
                                             <RefreshCcw className={`w-3 h-3 ${loadingLogs ? 'animate-spin' : ''}`} />
                                         </button>

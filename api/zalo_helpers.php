@@ -361,7 +361,7 @@ function sendZaloAIReply($pdo, $zaloUserId, $accessToken, $scenario, $userMsg, $
         }
     }
 
-    $cleanText = $parsed['text'];
+    $cleanText = formatZaloMessage($parsed['text']);
 
     // 4. Nếu có image, xử lý riêng
     if ($parsed['image_url']) {
@@ -475,6 +475,40 @@ function parseAIResponseForZalo($text)
 
             $buttons[] = ['title' => $label, 'type' => 'oa.open.url', 'payload' => $cleanUrl];
         }
+    }
+
+    // Parse [ACTIONS: ...] tags
+    $actionRegex = '/\[(?:ACTIONS|ACTION|BUTTONS|BUTTON|OPTIONS):?\s*([^\]]+)\]/iu';
+    if (preg_match_all($actionRegex, $text, $matches)) {
+        foreach ($matches[1] as $rawActions) {
+            if (empty(trim($rawActions))) continue;
+            $separator = strpos($rawActions, '|') !== false ? '|' : ',';
+            $items = explode($separator, $rawActions);
+            foreach ($items as $item) {
+                $item = trim($item);
+                if (empty($item)) continue;
+                
+                // Zalo OA API strictly limits button titles to 20 characters.
+                $safeTitle = mb_strlen($item, 'UTF-8') > 20 ? mb_substr($item, 0, 17, 'UTF-8') . '...' : $item;
+                
+                // Check if button title or payload already exists
+                $exists = false;
+                foreach ($buttons as $b) {
+                    if ($b['title'] === $safeTitle || ($b['payload'] ?? '') === $item) {
+                        $exists = true;
+                        break;
+                    }
+                }
+                if (!$exists) {
+                    $buttons[] = [
+                        'title' => $safeTitle,
+                        'type' => 'oa.query.show',
+                        'payload' => $item
+                    ];
+                }
+            }
+        }
+        $text = preg_replace($actionRegex, '', $text);
     }
 
     return [
