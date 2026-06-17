@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { Upload, FileText, CheckCircle2, AlertTriangle, ArrowRight, List, Plus, X, Database, FileSpreadsheet, DownloadCloud, Loader2, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
+import * as XLSX from 'xlsx';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import Select from '../common/Select';
@@ -61,12 +62,32 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
         const file = e.target.files?.[0];
         if (!file) return;
         setFileName(file.name);
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const text = event.target?.result as string;
-            setRawData(text);
-        };
-        reader.readAsText(file);
+
+        const fileExt = file.name.split('.').pop()?.toLowerCase();
+        if (fileExt === 'xlsx' || fileExt === 'xls') {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = new Uint8Array(event.target?.result as ArrayBuffer);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const csv = XLSX.utils.sheet_to_csv(worksheet);
+                    setRawData(csv);
+                } catch (error) {
+                    toast.error('Lỗi khi đọc file Excel. Vui lòng kiểm tra lại định dạng tệp.');
+                    setFileName('');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const text = event.target?.result as string;
+                setRawData(text);
+            };
+            reader.readAsText(file);
+        }
     };
 
     const detectDelimiter = (str: string) => {
@@ -87,12 +108,12 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
     };
 
     const VALID_HEADERS = {
-        email: ['email', 'mail', 'hòm thư', 'hom thu'],
-        firstName: ['firstname', 'tên', 'first name', 'given name', 'ten'],
+        email: ['email', 'mail', 'hòm thư', 'hom thu', 'địa chỉ email', 'dia chi email', 'e-mail'],
+        firstName: ['firstname', 'tên', 'first name', 'given name', 'ten', 'họ tên', 'ho ten', 'họ và tên', 'ho va ten', 'full name', 'fullname', 'tên khách hàng', 'ten khach hang'],
         lastName: ['lastname', 'họ', 'last name', 'family name', 'ho'],
-        phoneNumber: ['phone', 'số điện thoại', 'sđt', 'telephone', 'mobile', 'dien thoai', 'so dien thoai', 'SDT'],
-        jobTitle: ['job', 'chức vụ', 'vị trí', 'title', 'cong viec', 'chuc vu', 'vi tri'],
-        companyName: ['company', 'công ty', 'tổ chức', 'organization', 'cong ty', 'to chuc'],
+        phoneNumber: ['phone', 'số điện thoại', 'sđt', 'telephone', 'mobile', 'dien thoai', 'so dien thoai', 'SDT', 'sdt', 'di động', 'di dong'],
+        jobTitle: ['job', 'chức vụ', 'vị trí', 'title', 'cong viec', 'chuc vu', 'vi tri', 'chức danh', 'chuc danh'],
+        companyName: ['company', 'công ty', 'tổ chức', 'organization', 'cong ty', 'to chuc', 'đơn vị', 'don vi'],
         city: ['city', 'thành phố', 'tỉnh', 'thanh pho', 'tinh'],
         country: ['country', 'quốc gia', 'quoc gia'],
         gender: ['gender', 'giới tính', 'sex', 'gioi tinh'],
@@ -104,12 +125,50 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
         joinedAt: ['joinedat', 'ngày tham gia', 'date', 'ngày', 'ngay tham gia']
     };
 
+    const parseCSV = (text: string, delimiter: string = ','): string[][] => {
+        const result: string[][] = [];
+        let row: string[] = [];
+        let current = '';
+        let inQuotes = false;
+        
+        const cleanText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        const textToParse = cleanText.endsWith('\n') ? cleanText : cleanText + '\n';
+        
+        for (let i = 0; i < textToParse.length; i++) {
+            const char = textToParse[i];
+            
+            if (char === '"') {
+                if (inQuotes && textToParse[i + 1] === '"') {
+                    current += '"';
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (char === delimiter && !inQuotes) {
+                row.push(current);
+                current = '';
+            } else if (char === '\n' && !inQuotes) {
+                row.push(current);
+                if (row.length > 1 || (row.length === 1 && row[0] !== '')) {
+                    result.push(row);
+                }
+                row = [];
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        return result;
+    };
+
     const parseData = () => {
         if (!rawData.trim()) return;
 
         const delimiter = detectDelimiter(rawData);
-        const lines = rawData.trim().split('\n');
-        const headerRow = lines[0].split(delimiter).map(h => h.trim().replace(/['"]+/g, ''));
+        const parsedAll = parseCSV(rawData.trim(), delimiter);
+        if (parsedAll.length === 0) return;
+
+        const headerRow = parsedAll[0].map(h => h.trim());
 
         // Xác định các cột hợp lệ và cột tùy chỉnh
         const columnMapping: { [index: number]: string } = {};
@@ -129,15 +188,16 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
             }
         });
 
-        const dataRows = lines.slice(1).map(line => {
-            if (!line.trim()) return null;
-            const values = line.split(delimiter).map(v => v.trim().replace(/['"]+/g, ''));
+        const dataRows = parsedAll.slice(1).map(values => {
+            const trimmedValues = values.map(v => v.trim());
+            if (trimmedValues.length === 0 || (trimmedValues.length === 1 && !trimmedValues[0])) return null;
+
             const rowObj: any = {};
 
             Object.keys(columnMapping).forEach(indexStr => {
                 const index = parseInt(indexStr);
                 const key = columnMapping[index];
-                rowObj[key] = values[index] || '';
+                rowObj[key] = trimmedValues[index] || '';
             });
 
             if (rowObj.email && !rowObj.firstName) {
@@ -292,7 +352,7 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
                         >
                             <input
                                 type="file"
-                                accept=".csv,.txt"
+                                accept=".csv,.txt,.xlsx,.xls"
                                 className="hidden"
                                 ref={fileInputRef}
                                 onChange={handleFileUpload}
@@ -314,7 +374,7 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
                             ) : (
                                 <div className="text-center">
                                     <p className="text-sm font-black text-slate-800">Bấm để tải tệp lên</p>
-                                    <p className="text-xs text-slate-400 mt-1 font-medium">Hỗ trợ định dạng .CSV hoặc .TXT (UTF-8)</p>
+                                    <p className="text-xs text-slate-400 mt-1 font-medium">Hỗ trợ định dạng .CSV, .TXT, .XLSX, .XLS</p>
                                 </div>
                             )}
                         </div>

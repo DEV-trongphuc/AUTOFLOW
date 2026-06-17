@@ -375,6 +375,7 @@ const FlowCreationModal: React.FC<FlowCreationModalProps> = ({
         steps: finalSteps,
         description: selectedTemplate?.desc || 'Kịch bản tự động hóa.'
       });
+      onClose();
       reset();
     } catch (error) {
       console.error("Error creating flow:", error);

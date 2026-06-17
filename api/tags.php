@@ -259,8 +259,8 @@ switch ($method) {
             $pdo->prepare("DELETE FROM subscriber_tags WHERE tag_id = ? AND workspace_id = ?")->execute([$path, $workspace_id]);
 
             // [CLEANUP] Clean Queue Jobs & Buffers
-            $pdo->prepare("DELETE FROM queue_jobs WHERE (payload LIKE ? OR payload LIKE ?) AND workspace_id = ? AND status IN ('pending', 'processing')")
-                ->execute(['%"tag_id":"' . $path . '"%', '%"tag":"' . $tagName . '"%', $workspace_id]);
+            $pdo->prepare("DELETE FROM queue_jobs WHERE (payload LIKE ? OR payload LIKE ?) AND status IN ('pending', 'processing')")
+                ->execute(['%"tag_id":"' . $path . '"%', '%"tag":"' . $tagName . '"%']);
 
             $pdo->prepare("DELETE FROM stats_update_buffer WHERE target_id = ? AND target_table = 'tags'")->execute([$path]);
 

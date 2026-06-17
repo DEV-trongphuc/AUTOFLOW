@@ -584,8 +584,8 @@ switch ($method) {
 
             // 2. Clean up Queue Jobs (Triggers like 'added_to_list')
             // Payload often contains {"list_id":"XYZ"}
-            $pdo->prepare("DELETE FROM queue_jobs WHERE payload LIKE ? AND workspace_id = ? AND status IN ('pending', 'processing')")
-                ->execute(['%"list_id":"' . $path . '"%', $workspace_id]);
+            $pdo->prepare("DELETE FROM queue_jobs WHERE payload LIKE ? AND status IN ('pending', 'processing')")
+                ->execute(['%"list_id":"' . $path . '"%']);
 
             // 3. Clean up Buffers
             $pdo->prepare("DELETE FROM stats_update_buffer WHERE target_id = ? AND target_table = 'lists'")->execute([$path]);

@@ -103,7 +103,7 @@ function isDatabaseSkipLockedSupported($pdo) {
             return version_compare($mariaVersion, '10.6.0', '>=');
         }
         return false;
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         return false;
     }
 }
@@ -136,7 +136,7 @@ function ensure_pdo_alive(&$pdo)
         } else {
             throw new Exception("PDO not initialized");
         }
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         // Re-establish connection using the same $dsn as the initial connection.
         // [FIX] Previously hardcoded "charset=utf8mb4" — if $charset var is ever changed
         // at the top of this file, the reconnect would silently use a different encoding,
@@ -203,7 +203,7 @@ try {
             try {
                 // Use a fresh statement to avoid interfering with any ongoing fetches
                 $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]);
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 // Ignore errors during shutdown
             }
         }
@@ -515,7 +515,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
                 // [FIX M-03] Removed dead if/else — both branches were identical queries.
                 $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?")->execute([$sessionUserId]);
                 $_SESSION['last_login_update_time'] = time();
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 error_log("LAST_LOGIN UPDATE FAILED: " . $e->getMessage());
             }
         }
@@ -565,7 +565,8 @@ function logSystemActivity($pdo, $module, $action, $target_id = null, $target_na
     $userId = $_SESSION['user_id'] ?? $GLOBALS['current_admin_id'] ?? 'unknown';
     $userName = $_SESSION['full_name'] ?? $_SESSION['username'] ?? 'System';
 
-    if (($userName === 'System' || trim($userName) === '') && is_numeric($userId)) {
+    $userNameStr = is_string($userName) ? $userName : '';
+    if (($userName === 'System' || trim($userNameStr) === '') && is_numeric($userId)) {
         try {
             $uStmt = $pdo->prepare("SELECT COALESCE(NULLIF(full_name, ''), NULLIF(name, ''), username) FROM users WHERE id = ? LIMIT 1");
             $uStmt->execute([$userId]);
@@ -573,7 +574,7 @@ function logSystemActivity($pdo, $module, $action, $target_id = null, $target_na
             if ($fetchedName) {
                 $userName = $fetchedName;
             }
-        } catch (Exception $e) { /* fallback to System if table error */ }
+        } catch (Throwable $e) { /* fallback to System if table error */ }
     }
 
     if ($userId === 'admin-001' && $userName === 'System') {
@@ -605,7 +606,7 @@ function logSystemActivity($pdo, $module, $action, $target_id = null, $target_na
             $detailsJson, 
             $ip
         ]);
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         error_log("[AuditLogError] " . $e->getMessage());
     }
 }
@@ -637,7 +638,7 @@ function getGlobalLeadScoreConfig($pdo) {
                 $config[$row['key']] = (int) $row['value'];
             }
         }
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         // Fallback to default safely if table error
     }
 

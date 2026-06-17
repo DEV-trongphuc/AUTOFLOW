@@ -969,10 +969,12 @@ const Flows: React.FC = () => {
                 newParams.delete('template_id');
                 newParams.delete('flow_name');
                 const newSearch = newParams.toString();
-                // We use replaceState to clean the URL without adding to history
-                window.history.replaceState({}, document.title, window.location.pathname + window.location.hash.split('?')[0] + (newSearch ? '?' + newSearch : ''));
+                // Clear state for React Router and browser history in one go
+                navigate({
+                    pathname: '/flows',
+                    search: newSearch ? '?' + newSearch : ''
+                }, { replace: true, state: {} });
             } else if (stateAction === 'create') {
-                window.history.replaceState({}, document.title);
                 // Also clear location state for React Router
                 navigate('/flows', { replace: true, state: {} });
             }
@@ -2289,14 +2291,18 @@ const Flows: React.FC = () => {
                         const res = await api.post<Flow>('flows', newFlow);
                         if (res.success) {
                             logAction("Tạo kịch bản mới", newFlow.name, newFlow.id);
-                            await loadData();
+                            setIsCreateModalOpen(false);
                             setSelectedFlow(newFlow);
                             setIsNewUnsavedFlow(true);
                             setFlowViewTab('builder');
-                            setIsCreateModalOpen(false);
                             setPrefillCampaignId(undefined);
                             setPrefillTemplateId(undefined);
                             setPrefillFlowName(undefined);
+
+                            // Trigger data refresh in background without awaiting it to avoid blocking modal completion
+                            loadData().catch(loadErr => {
+                                console.error("Error refreshing data after flow creation:", loadErr);
+                            });
                         } else {
                             showToast(res.message || 'Lỗi khi tạo kịch bản mới', 'error');
                         }
