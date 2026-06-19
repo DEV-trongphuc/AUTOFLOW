@@ -1,6 +1,7 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import RichTextToolbar from './components/RichTextToolbar';
+import { sanitizeHtmlLineHeight } from './utils/styleUtils';
 
 interface RichTextProps {
     html: string;
@@ -28,8 +29,12 @@ const RichText: React.FC<RichTextProps> = ({ html, onChange, placeholder, classN
     const instanceId = useRef(`rte-${Math.random().toString(36).slice(2, 8)}`).current;
 
     useEffect(() => {
-        if (elementRef.current && elementRef.current.innerHTML !== html) {
-            elementRef.current.innerHTML = html;
+        if (elementRef.current) {
+            const sanitized = sanitizeHtmlLineHeight(html);
+            console.log("RichText Canvas html update:", { html, sanitized, current: elementRef.current.innerHTML });
+            if (elementRef.current.innerHTML !== sanitized) {
+                elementRef.current.innerHTML = sanitized;
+            }
         }
     }, [html]);
 
@@ -42,7 +47,8 @@ const RichText: React.FC<RichTextProps> = ({ html, onChange, placeholder, classN
 
     const handleInput = () => {
         if (elementRef.current) {
-            onChange(elementRef.current.innerHTML);
+            const sanitized = sanitizeHtmlLineHeight(elementRef.current.innerHTML);
+            onChange(sanitized);
         }
     };
 
@@ -280,6 +286,14 @@ const RichText: React.FC<RichTextProps> = ({ html, onChange, placeholder, classN
                 />
             )}
             <style>{`
+                #${instanceId} {
+                    color: ${style?.color || '#1e293b'} !important;
+                    display: block !important;
+                    min-height: 1em !important;
+                }
+                #${instanceId} p {
+                    color: ${style?.color || '#1e293b'} !important;
+                }
                 #${instanceId} a { color: ${bodyLinkColor} !important; text-decoration: underline !important; }
                 ${blockFontSize ? `#${instanceId} p, #${instanceId} div:not([class]) { font-size: ${typeof blockFontSize === 'number' ? blockFontSize + 'px' : blockFontSize}; }` : ''}
                 ${blockLineHeight ? `#${instanceId} p { line-height: ${blockLineHeight}; }` : ''}

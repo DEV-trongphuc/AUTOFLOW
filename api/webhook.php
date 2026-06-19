@@ -164,7 +164,8 @@ if ($method === 'POST') {
                     if ($oaConfig) {
                         // [SECURE FIX] Add Idempotency Lock for Zalo Events to prevent duplicate AI triggers
                         $lockName = "zalo_msg_" . md5($eventId);
-                        if (!db_get_lock($pdo, $lockName, 3)) {
+                        $lockResult = db_get_lock($pdo, $lockName, 3);
+                        if (!$lockResult) {
                             file_put_contents($zaloLogFile, date('[Y-m-d H:i:s] ') . "[TRACE] ⛔ Lock timeout — concurrent processing\n", FILE_APPEND);
                             echo json_encode(['status' => 'lock_timeout', 'reason' => 'concurrent_processing']);
                             exit;

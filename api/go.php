@@ -1,5 +1,6 @@
 <?php
 require_once 'config.php';
+apiHeaders();
 header("Content-Type: text/html; charset=UTF-8");
 
 $slug = $_GET['s'] ?? '';
@@ -170,14 +171,14 @@ if ($link['is_survey_checkin'] && $link['survey_id']) {
     
     $next = urlencode($targetUrl);
     
-    $redirectUrl = rtrim($frontendBase, '/') . "/#/s/$surveyId?next=$next&src=qr_code&ref=$slug&slid=" . urlencode($link['id']);
+    $redirectUrl = rtrim($frontendBase, '/') . "/s/$surveyId?next=$next&src=qr_code&ref=$slug&slid=" . urlencode($link['id']) . "&t=" . time();
     header("Location: $redirectUrl");
     exit;
 }
 
 // Ensure normal link tracking passes slid if target URL already has params
 $separator = (strpos($targetUrl, '?') === false) ? '?' : '&';
-$targetUrlWithSlid = $targetUrl . $separator . "slid=" . urlencode($link['id']);
+$targetUrlWithSlid = $targetUrl . $separator . "slid=" . urlencode($link['id']) . "&t=" . time();
 
 // Default Direct Redirect
 header("Location: $targetUrlWithSlid");

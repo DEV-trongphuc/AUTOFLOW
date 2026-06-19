@@ -47,6 +47,8 @@ interface QRConfig {
     frameId: string;
     frameText: string;
     frameColor: string;
+    logoRadius?: number;
+    useDirectLink?: boolean;
 }
 
 const DEFAULT_CONFIG: QRConfig = {
@@ -58,37 +60,128 @@ const DEFAULT_CONFIG: QRConfig = {
     isTransparent: false, eyeFrame: 'square', eyeBall: 'square',
     eyeFrameColor: '#000000', eyeBallColor: '#000000',
     logo: undefined, logoSize: 0.3, logoMargin: 5, excavate: true,
-    frameId: 'none', frameText: 'SCAN ME!', frameColor: '#f97316'
+    frameId: 'none', frameText: 'SCAN ME!', frameColor: '#f97316',
+    logoRadius: 0,
+    useDirectLink: false
 };
 
-const QRDesignerModal: React.FC<any> = ({ isOpen, onClose, onSave, initialConfig, linkUrl, linkName }) => {
+const getProxiedUrl = (url: string | undefined): string | undefined => {
+    if (!url) return url;
+    return url.replace(/^https?:\/\/automation\.ideas\.edu\.vn\/uploadss\//, '/uploadss/');
+};
+
+const getRoundedImage = (src: string, radiusPercent: number): Promise<string> => {
+    return new Promise((resolve) => {
+        if (!src) {
+            resolve('');
+            return;
+        }
+        if (radiusPercent <= 0) {
+            resolve(src);
+            return;
+        }
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const size = Math.max(img.width, img.height, 512);
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                resolve('');
+                return;
+            }
+
+            ctx.clearRect(0, 0, size, size);
+            const r = (size * Math.min(radiusPercent, 50)) / 100;
+
+            ctx.beginPath();
+            ctx.moveTo(r, 0);
+            ctx.lineTo(size - r, 0);
+            ctx.quadraticCurveTo(size, 0, size, r);
+            ctx.lineTo(size, size - r);
+            ctx.quadraticCurveTo(size, size, size - r, size);
+            ctx.lineTo(r, size);
+            ctx.quadraticCurveTo(0, size, 0, size - r);
+            ctx.lineTo(0, r);
+            ctx.quadraticCurveTo(0, 0, r, 0);
+            ctx.closePath();
+            ctx.clip();
+            
+            const imgAspect = img.width / img.height;
+            let drawWidth = size;
+            let drawHeight = size;
+            let xOffset = 0;
+            let yOffset = 0;
+            
+            if (imgAspect > 1) {
+                drawWidth = size * imgAspect;
+                xOffset = -(drawWidth - size) / 2;
+            } else if (imgAspect < 1) {
+                drawHeight = size / imgAspect;
+                yOffset = -(drawHeight - size) / 2;
+            }
+            
+            ctx.drawImage(img, xOffset, yOffset, drawWidth, drawHeight);
+            
+            try {
+                resolve(canvas.toDataURL('image/png'));
+            } catch (err) {
+                console.error('Canvas toDataURL failed', err);
+                resolve('');
+            }
+        };
+        img.onerror = () => {
+            resolve('');
+        };
+        img.src = src;
+    });
+};
+
+const QRDesignerModal: React.FC<any> = ({ isOpen, onClose, onSave, initialConfig, linkUrl, targetUrl, linkName }) => {
     const [config, setConfig] = useState<QRConfig>({ ...DEFAULT_CONFIG, value: linkUrl });
     const [isSaving, setIsSaving] = useState(false);
     const [expandedSections, setExpandedSections] = useState<string[]>(['pattern', 'eye', 'logo']);
     const [isLibraryOpen, setIsLibraryOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [processedLogo, setProcessedLogo] = useState<string | undefined>(undefined);
     
     const qrRef = useRef<HTMLDivElement>(null);
     const qrCode = useRef<QRCodeStyling | null>(null);
 
     useEffect(() => {
-        if (!isOpen) return;
-        if (!qrCode.current) {
-            qrCode.current = new QRCodeStyling({
-                width: 320, height: 320, type: 'svg', data: config.value,
-                image: config.logo,
-                dotsOptions: { color: config.fgColor, type: config.pattern },
-                backgroundOptions: { color: config.isTransparent ? 'transparent' : config.bgColor },
-                imageOptions: { crossOrigin: 'anonymous', margin: config.logoMargin, imageSize: config.logoSize },
-                cornersSquareOptions: { type: config.eyeFrame, color: config.eyeFrameColor },
-                cornersDotOptions: { type: config.eyeBall, color: config.eyeBallColor },
-                qrOptions: { errorCorrectionLevel: 'H' }
-            });
+        let isCurrent = true;
+        if (!config.logo) {
+            setProcessedLogo(undefined);
+            return;
         }
+        const proxiedUrl = getProxiedUrl(config.logo);
+        if (!config.logoRadius || config.logoRadius <= 0) {
+            setProcessedLogo(proxiedUrl);
+            return;
+        }
+        getRoundedImage(proxiedUrl || '', config.logoRadius).then(res => {
+            if (isCurrent) {
+                setProcessedLogo(res || undefined);
+            }
+        });
+        return () => {
+            isCurrent = false;
+        };
+    }, [config.logo, config.logoRadius]);
 
-        const options: Options = {
-            data: config.value,
-            image: config.logo,
+    useEffect(() => {
+        if (!isOpen) return;
+        
+        const qrValue = config.useDirectLink && targetUrl ? targetUrl : config.value;
+
+        qrCode.current = new QRCodeStyling({
+            width: 320,
+            height: 320,
+            type: 'canvas',
+            data: qrValue,
+            image: processedLogo,
             dotsOptions: {
                 color: config.fgGradientEnabled ? undefined : config.fgColor,
                 gradient: config.fgGradientEnabled ? {
@@ -106,17 +199,21 @@ const QRDesignerModal: React.FC<any> = ({ isOpen, onClose, onSave, initialConfig
                     colorStops: config.bgGradient.colorStops
                 } : undefined
             },
-            imageOptions: { margin: config.logoMargin, imageSize: config.logoSize },
+            imageOptions: {
+                crossOrigin: 'anonymous',
+                margin: config.logoMargin,
+                imageSize: config.logoSize
+            },
             cornersSquareOptions: { type: config.eyeFrame, color: config.eyeFrameColor },
-            cornersDotOptions: { type: config.eyeBall, color: config.eyeBallColor }
-        };
+            cornersDotOptions: { type: config.eyeBall, color: config.eyeBallColor },
+            qrOptions: { errorCorrectionLevel: 'H' }
+        });
 
-        qrCode.current.update(options);
         if (qrRef.current) {
             qrRef.current.innerHTML = '';
             qrCode.current.append(qrRef.current);
         }
-    }, [config, isOpen]);
+    }, [config, isOpen, processedLogo]);
 
     useEffect(() => {
         if (initialConfig && isOpen) {
@@ -138,6 +235,43 @@ const QRDesignerModal: React.FC<any> = ({ isOpen, onClose, onSave, initialConfig
             const res = await api.post<{ url: string }>('upload', formData);
             if (res.success && res.data?.url) { setConfig(prev => ({ ...prev, logo: res.data!.url })); toast.success('Đã tải ảnh'); }
         } catch { toast.error('Lỗi kết nối'); } finally { setIsUploading(false); }
+    };
+
+    const handleDownload = () => {
+        const qrValue = config.useDirectLink && targetUrl ? targetUrl : config.value;
+        const downloadQrCode = new QRCodeStyling({
+            width: 1024,
+            height: 1024,
+            type: 'canvas',
+            data: qrValue,
+            image: processedLogo,
+            dotsOptions: {
+                color: config.fgGradientEnabled ? undefined : config.fgColor,
+                gradient: config.fgGradientEnabled ? {
+                    type: config.fgGradient.type,
+                    rotation: (config.fgGradient.rotation * Math.PI) / 180,
+                    colorStops: config.fgGradient.colorStops
+                } : undefined,
+                type: config.pattern
+            },
+            backgroundOptions: {
+                color: config.isTransparent ? 'transparent' : (config.bgGradientEnabled ? undefined : config.bgColor),
+                gradient: (!config.isTransparent && config.bgGradientEnabled) ? {
+                    type: config.bgGradient.type,
+                    rotation: (config.bgGradient.rotation * Math.PI) / 180,
+                    colorStops: config.bgGradient.colorStops
+                } : undefined
+            },
+            imageOptions: {
+                crossOrigin: 'anonymous',
+                margin: config.logoMargin,
+                imageSize: config.logoSize
+            },
+            cornersSquareOptions: { type: config.eyeFrame, color: config.eyeFrameColor },
+            cornersDotOptions: { type: config.eyeBall, color: config.eyeBallColor },
+            qrOptions: { errorCorrectionLevel: 'H' }
+        });
+        downloadQrCode.download({ name: `QR_${linkName}`, extension: 'png' });
     };
 
     if (!isOpen) return null;
@@ -365,6 +499,23 @@ const QRDesignerModal: React.FC<any> = ({ isOpen, onClose, onSave, initialConfig
                             </div>
                             {expandedSections.includes('logo') && (
                                 <div className="p-5 pt-0 space-y-6">
+                                    {targetUrl && (
+                                        <div 
+                                            className="flex items-center justify-between p-4 bg-amber-50/50 rounded-2xl border border-amber-100 cursor-pointer" 
+                                            onClick={() => setConfig(prev => ({ ...prev, useDirectLink: !prev.useDirectLink }))}
+                                        >
+                                            <div>
+                                                <span className="text-xs font-black text-amber-900 uppercase block">Hướng trực tiếp tới Web gốc</span>
+                                                <span className="text-[9px] text-amber-700/80 font-medium block">Hiển thị tên web của bạn khi quét (Không thống kê click)</span>
+                                            </div>
+                                            <button 
+                                                onClick={(e) => { e.preventDefault(); setConfig(prev => ({ ...prev, useDirectLink: !prev.useDirectLink })); }}
+                                                className={`w-9 h-5 rounded-full p-0.5 transition-colors ${config.useDirectLink ? 'bg-amber-500' : 'bg-slate-200'}`}
+                                            >
+                                                <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${config.useDirectLink ? 'translate-x-4' : 'translate-x-0'}`} />
+                                            </button>
+                                        </div>
+                                    )}
                                     <div className="flex gap-2">
                                         <div className="flex-1"><Input label="URL Logo" value={config.logo || ''} onChange={e => setConfig(prev => ({ ...prev, logo: e.target.value || undefined }))} /></div>
                                         <div className="flex items-end gap-2 pb-1">
@@ -373,6 +524,59 @@ const QRDesignerModal: React.FC<any> = ({ isOpen, onClose, onSave, initialConfig
                                             <input type="file" id="logo-up" hidden accept="image/*" onChange={handleFileUpload} />
                                         </div>
                                     </div>
+                                    {config.logo && (
+                                        <div className="space-y-4 p-5 bg-slate-50/50 rounded-3xl border border-slate-100">
+                                            <span className="text-xs font-black text-slate-800 uppercase tracking-tighter block mb-2">Tùy chỉnh logo</span>
+                                            
+                                            {/* Slider: Logo Size */}
+                                            <div className="space-y-1.5">
+                                                <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase">
+                                                    <span>Kích thước logo</span>
+                                                    <span className="font-mono text-slate-600">{(config.logoSize * 100).toFixed(0)}%</span>
+                                                </div>
+                                                <input 
+                                                    type="range" min="10" max="50" value={config.logoSize * 100}
+                                                    onChange={e => setConfig(prev => ({ ...prev, logoSize: parseInt(e.target.value) / 100 }))}
+                                                    style={{ 
+                                                        background: `linear-gradient(to right, #4f46e5 0%, #4f46e5 ${((config.logoSize * 100 - 10) / 40) * 100}%, #e2e8f0 ${((config.logoSize * 100 - 10) / 40) * 100}%, #e2e8f0 100%)` 
+                                                    }}
+                                                    className="w-full h-2 rounded-full appearance-none cursor-pointer outline-none touch-none hover:shadow-sm [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-indigo-600 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-md hover:[&::-webkit-slider-thumb]:scale-110 active:[&::-webkit-slider-thumb]:scale-110 [&::-webkit-slider-thumb]:transition-transform"
+                                                />
+                                            </div>
+
+                                            {/* Slider: Logo Margin */}
+                                            <div className="space-y-1.5">
+                                                <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase">
+                                                    <span>Khoảng lề logo</span>
+                                                    <span className="font-mono text-slate-600">{config.logoMargin}px</span>
+                                                </div>
+                                                <input 
+                                                    type="range" min="0" max="20" value={config.logoMargin}
+                                                    onChange={e => setConfig(prev => ({ ...prev, logoMargin: parseInt(e.target.value) }))}
+                                                    style={{ 
+                                                        background: `linear-gradient(to right, #4f46e5 0%, #4f46e5 ${(config.logoMargin / 20) * 100}%, #e2e8f0 ${(config.logoMargin / 20) * 100}%, #e2e8f0 100%)` 
+                                                    }}
+                                                    className="w-full h-2 rounded-full appearance-none cursor-pointer outline-none touch-none hover:shadow-sm [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-indigo-600 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-md hover:[&::-webkit-slider-thumb]:scale-110 active:[&::-webkit-slider-thumb]:scale-110 [&::-webkit-slider-thumb]:transition-transform"
+                                                />
+                                            </div>
+
+                                            {/* Slider: Logo Border Radius */}
+                                            <div className="space-y-1.5">
+                                                <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase">
+                                                    <span>Bo góc logo</span>
+                                                    <span className="font-mono text-slate-600">{config.logoRadius || 0}%</span>
+                                                </div>
+                                                <input 
+                                                    type="range" min="0" max="50" value={config.logoRadius || 0}
+                                                    onChange={e => setConfig(prev => ({ ...prev, logoRadius: parseInt(e.target.value) }))}
+                                                    style={{ 
+                                                        background: `linear-gradient(to right, #4f46e5 0%, #4f46e5 ${((config.logoRadius || 0) / 50) * 100}%, #e2e8f0 ${((config.logoRadius || 0) / 50) * 100}%, #e2e8f0 100%)` 
+                                                    }}
+                                                    className="w-full h-2 rounded-full appearance-none cursor-pointer outline-none touch-none hover:shadow-sm [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-indigo-600 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-md hover:[&::-webkit-slider-thumb]:scale-110 active:[&::-webkit-slider-thumb]:scale-110 [&::-webkit-slider-thumb]:transition-transform"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                     <ColorBlock 
                                         label="Màu nền mã QR" color={config.bgColor} 
                                         isGradient={config.bgGradientEnabled} gradient={config.bgGradient}
@@ -425,7 +629,7 @@ const QRDesignerModal: React.FC<any> = ({ isOpen, onClose, onSave, initialConfig
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Preview
                             </div>
                             <button 
-                                onClick={() => qrCode.current?.download({ name: `QR_${linkName}`, extension: 'png' })} 
+                                onClick={handleDownload} 
                                 className="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white text-[10px] font-black rounded-full uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg shadow-slate-200"
                             >
                                 <Download className="w-3.5 h-3.5" /> Tải về
@@ -450,7 +654,7 @@ const QRDesignerModal: React.FC<any> = ({ isOpen, onClose, onSave, initialConfig
                                 }}
                             >
                                 <div className="bg-white p-2 rounded-2xl relative z-10 w-full h-full flex flex-col items-center justify-center shadow-inner">
-                                    <div ref={qrRef} className="w-full h-full [&>svg]:w-full [&>svg]:h-full" />
+                                    <div ref={qrRef} className="w-full h-full [&>svg]:w-full [&>svg]:h-full [&>canvas]:w-full [&>canvas]:h-full" />
                                 </div>
                                 {config.frameId !== 'none' && (
                                     <div className="absolute bottom-5 left-0 right-0 text-center z-10 px-4">
@@ -468,7 +672,7 @@ const QRDesignerModal: React.FC<any> = ({ isOpen, onClose, onSave, initialConfig
 
             </div>
 
-            <FileLibraryModal isOpen={isLibraryOpen} onClose={() => setIsLibraryOpen(false)} multi={false} onSelect={(f) => f.length && setConfig(p => ({ ...p, logo: f[0].url }))} />
+            <FileLibraryModal isOpen={isLibraryOpen} onClose={() => setIsLibraryOpen(false)} multi={false} onSelect={(f) => f.length && setConfig(p => ({ ...p, logo: f[0].url }))} zIndex={10000} />
         </div>,
         document.body
     );

@@ -29,6 +29,7 @@ interface FileLibraryModalProps {
     /** Allow picking multiple files */
     multi?: boolean;
     isDarkTheme?: boolean;
+    zIndex?: number;
 }
 
 type FilterType = 'all' | 'image' | 'pdf' | 'doc';
@@ -80,7 +81,7 @@ const FILTERS: { key: FilterType; label: string }[] = [
 ];
 
 const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
-    isOpen, onClose, onSelect, multi = true, isDarkTheme
+    isOpen, onClose, onSelect, multi = true, isDarkTheme, zIndex
 }) => {
     const { isDark } = (() => {
         try {
@@ -151,12 +152,18 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
     const paged      = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
     const toggleSelect = (uniqueName: string) => {
+        if (!multi) {
+            const picked = files.filter(f => f.uniqueName === uniqueName);
+            onSelect(picked);
+            onClose();
+            return;
+        }
+
         setSelected(prev => {
             const next = new Set(prev);
             if (next.has(uniqueName)) {
                 next.delete(uniqueName);
             } else {
-                if (!multi) next.clear();
                 next.add(uniqueName);
             }
             return next;
@@ -275,6 +282,7 @@ const FileLibraryModal: React.FC<FileLibraryModalProps> = ({
             noPadding
             noHeader
             noScroll
+            zIndex={zIndex}
         >
             <div className={`flex flex-col h-full select-none ${activeDark ? 'bg-[#11151d] text-slate-100' : 'bg-white text-slate-800'}`}>
                 {/* Header */}

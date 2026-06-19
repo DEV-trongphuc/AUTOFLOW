@@ -96,6 +96,14 @@ const CanvasColumn: React.FC<CanvasColumnProps> = (props) => {
     const finalPaddingLeft = toPx(fromPx(css.paddingLeft as string) + halfGap);
     const finalPaddingRight = toPx(fromPx(css.paddingRight as string) + halfGap);
 
+    const isColActive = (() => {
+        const hasSelectedChild = (b: EmailBlock): boolean => {
+            if (b.id === selectedBlockId) return true;
+            return (b.children || []).some(hasSelectedChild);
+        };
+        return isSelected || hasSelectedChild(col);
+    })();
+
     return (
         <Tag
             key={col.id} id={`block-${col.id}`}
@@ -115,11 +123,12 @@ const CanvasColumn: React.FC<CanvasColumnProps> = (props) => {
                 borderRight: borderRightWidth && borderStyle !== 'none' ? `${borderRightWidth} ${borderStyle || 'solid'} ${borderColor || '#000'}` : 'none',
                 borderBottom: borderBottomWidth && borderStyle !== 'none' ? `${borderBottomWidth} ${borderStyle || 'solid'} ${borderColor || '#000'}` : 'none',
                 borderLeft: borderLeftWidth && borderStyle !== 'none' ? `${borderLeftWidth} ${borderStyle || 'solid'} ${borderColor || '#000'}` : 'none',
-                position: 'relative',
+                position: isColActive ? 'relative' : 'static',
+                zIndex: isColActive ? 1000 : 'auto',
                 textAlign: css.textAlign as any,
                 minHeight: '80px',
                 height: '100%',
-                overflow: isSelected ? 'visible' : (borderRadius ? 'hidden' : 'visible'),
+                overflow: isColActive ? 'visible' : (borderRadius && parseFloat(String(borderRadius)) > 0 ? 'hidden' : 'visible'),
                 boxSizing: 'border-box',
             }}
             onDragOver={(e) => onDragOver(e, col.id, 'column')}

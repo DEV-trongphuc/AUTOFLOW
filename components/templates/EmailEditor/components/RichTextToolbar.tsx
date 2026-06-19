@@ -403,6 +403,7 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
                 title="Chèn đường dẫn"
                 placeholder="https://example.com"
                 confirmLabel="Chèn"
+                zIndex={100200}
             />
         </>,
         document.body

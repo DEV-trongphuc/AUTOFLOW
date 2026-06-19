@@ -16,13 +16,13 @@ interface VisualMeasureProps {
 }
 
 const VisualMeasure: React.FC<VisualMeasureProps> = ({ label, value, onChange, max = 800, canAuto = false, unit: forcedUnit, bodyWidth = 600, defaultValue = 0, hideSlider = false, tooltip }) => {
-    const currentUnit = forcedUnit || (value?.toString().includes('%') ? '%' : 'px');
+    const currentUnit = forcedUnit !== undefined ? forcedUnit : (value?.toString().includes('%') ? '%' : 'px');
     const isAuto = value === 'auto';
-    const displayValue = (value === 'auto' || value === undefined || value === null) ? defaultValue : parseInt(value);
+    const displayValue = (value === 'auto' || value === undefined || value === null) ? defaultValue : parseFloat(value);
 
     const handleUpdate = (val: string) => {
         if (val === 'auto') { onChange('auto'); return; }
-        let newNum = parseInt(val);
+        let newNum = parseFloat(val);
         // ✅ Fix: detect unit từ val rõ ràng — tránh dùng currentUnit làm fallback
         // Vd: currentUnit='%' + val='150px' → phải emit 'px', không phải '%'
         const newUnit = val.includes('%') ? '%' : (val.toLowerCase().includes('px') ? 'px' : currentUnit);
@@ -58,7 +58,7 @@ const VisualMeasure: React.FC<VisualMeasureProps> = ({ label, value, onChange, m
                         <input type="range" min="0" max={currentUnit === '%' ? 100 : max} value={isNaN(displayValue) ? 0 : displayValue} onChange={(e) => handleUpdate(`${e.target.value}${currentUnit}`)} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-600" />
                     </div>}
                     <div className={`relative ${hideSlider ? 'w-full' : 'w-14'} shrink-0`}>
-                        <input type="number" value={isNaN(displayValue) ? 0 : displayValue} onChange={(e) => handleUpdate(`${e.target.value}${currentUnit}`)} className="w-full text-right text-[10px] font-black text-slate-700 bg-white border border-slate-200 rounded-md py-1 pr-5 pl-1 outline-none focus:border-amber-600" />
+                        <input type="number" step="any" value={isNaN(displayValue) ? 0 : displayValue} onChange={(e) => handleUpdate(`${e.target.value}${currentUnit}`)} className="w-full text-right text-[10px] font-black text-slate-700 bg-white border border-slate-200 rounded-md py-1 pr-5 pl-1 outline-none focus:border-amber-600" />
                         <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-400 select-none">{currentUnit}</span>
                     </div>
                 </div>

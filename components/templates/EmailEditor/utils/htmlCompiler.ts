@@ -1,7 +1,7 @@
 import { API_BASE_URL, EXTERNAL_API_BASE } from '@/utils/config';
 import { EmailBlock, EmailBodyStyle, EmailBlockStyle } from '../../../../types';
 import { SHARED_EMAIL_CSS } from '../constants/editorStyles';
-import { fromPx, sanitizeRadius, toPx } from './styleUtils';
+import { fromPx, sanitizeRadius, toPx, sanitizeLineHeight, sanitizeHtmlLineHeight } from './styleUtils';
 
 const CHECKLIST_SVGS: Record<string, string> = {
     CheckCircle: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>',
@@ -225,7 +225,8 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
     };
 
     const renderBlock = (b: EmailBlock, parentAlign: string = 'center', parentNoStack: boolean = false): string => {
-        const s = b.style || {};
+        const rawStyle = b.style || {};
+        const s = { ...rawStyle, lineHeight: sanitizeLineHeight(rawStyle.lineHeight) } as EmailBlockStyle;
         const getBorderStyle = (styleObj: EmailBlockStyle) => {
             if (!styleObj.borderTopWidth && !styleObj.borderRightWidth && !styleObj.borderBottomWidth && !styleObj.borderLeftWidth) return '';
             return `border-top: ${toPx(styleObj.borderTopWidth) || '0'} ${styleObj.borderStyle || 'solid'} ${styleObj.borderColor || '#dddddd'}; border-right: ${toPx(styleObj.borderRightWidth) || '0'} ${styleObj.borderStyle || 'solid'} ${styleObj.borderColor || '#dddddd'}; border-bottom: ${toPx(styleObj.borderBottomWidth) || '0'} ${styleObj.borderStyle || 'solid'} ${styleObj.borderColor || '#dddddd'}; border-left: ${toPx(styleObj.borderLeftWidth) || '0'} ${styleObj.borderStyle || 'solid'} ${styleObj.borderColor || '#dddddd'};`;
@@ -499,7 +500,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const quoteBorderRight = s.borderRightWidth ? `border-right: ${s.borderRightWidth} ${s.borderStyle || 'solid'} ${quoteBorderColor}; ` : '';
             const quoteBorderBottom = s.borderBottomWidth ? `border-bottom: ${s.borderBottomWidth} ${s.borderStyle || 'solid'} ${quoteBorderColor}; ` : '';
             // [FIX] Gmail-safe: use table instead of div for quote block, remove double padding by zeroing outer td padding
-            return wrapWithMargin(`<td class="quote-block" style="padding: 0;"><table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="border-left: ${quoteBorderLeft}; ${quoteBorderTop}${quoteBorderRight}${quoteBorderBottom}border-radius: ${sanitizeRadius(s.borderRadius || '0')}; background-color: ${s.backgroundColor || 'transparent'};"><tr><td style="padding: ${paddingVertical} ${s.paddingRight || '25px'} ${s.paddingBottom || '15px'} ${paddingHorizontal}; font-family: ${bodyStyle.fontFamily || "'Roboto', Arial, sans-serif"}; font-size: ${s.fontSize || '15px'}; font-style: ${s.fontStyle || 'italic'}; line-height: 1.6; color: ${s.color || 'inherit'}; text-align: ${s.textAlign || 'left'}; font-weight: ${s.fontWeight || 'normal'};">${b.content}</td></tr></table></td>`);
+            return wrapWithMargin(`<td class="quote-block" style="padding: 0;"><table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="border-left: ${quoteBorderLeft}; ${quoteBorderTop}${quoteBorderRight}${quoteBorderBottom}border-radius: ${sanitizeRadius(s.borderRadius || '0')}; background-color: ${s.backgroundColor || 'transparent'};"><tr><td style="padding: ${paddingVertical} ${s.paddingRight || '25px'} ${s.paddingBottom || '15px'} ${paddingHorizontal}; font-family: ${bodyStyle.fontFamily || "'Roboto', Arial, sans-serif"}; font-size: ${s.fontSize || '15px'}; font-style: ${s.fontStyle || 'italic'}; line-height: 1.6; color: ${s.color || 'inherit'}; text-align: ${s.textAlign || 'left'}; font-weight: ${s.fontWeight || 'normal'};">${sanitizeHtmlLineHeight(b.content)}</td></tr></table></td>`);
         }
 
         if (b.type === 'check_list') {
@@ -638,7 +639,16 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                     const isHeader = headerRow && ri === 0;
                     const bg = getCellBg(ri, ci);
                     const color = getCellColor(ri, ci);
-                    return `<td align="${cellAlign}" valign="middle" style="padding: ${cellPad}; border: ${borderStyle}; font-family: ${bodyStyle.fontFamily || "'Roboto', Arial, sans-serif"}; font-size: ${fontSize}; font-weight: ${isHeader ? 'bold' : 'normal'}; color: ${color}; text-align: ${cellAlign}; background-color: ${bg};">${cell.content || '&nbsp;'}</td>`;
+                    const formattedContent = cell.content
+                        ? cell.content
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;')
+                            .replace(/"/g, '&quot;')
+                            .replace(/'/g, '&#039;')
+                            .replace(/\n/g, '<br />')
+                        : '&nbsp;';
+                    return `<td align="${cellAlign}" valign="middle" style="padding: ${cellPad}; border: ${borderStyle}; font-family: ${bodyStyle.fontFamily || "'Roboto', Arial, sans-serif"}; font-size: ${fontSize}; font-weight: ${isHeader ? 'bold' : 'normal'}; color: ${color}; text-align: ${cellAlign}; background-color: ${bg}; white-space: pre-wrap; word-break: break-word;">${formattedContent}</td>`;
                 }).join('');
                 return `<tr>${tds}</tr>`;
             }).join('');
@@ -741,7 +751,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                                         <div style="margin-bottom: 15px; text-align: center; font-size: 0;">
                                             ${starsHtml}
                                         </div>
-                                        <div style="${commonStyle} font-size: ${s.fontSize || '14px'}; line-height: ${s.lineHeight || '1.5'};">${b.content}</div>
+                                        <div style="${commonStyle} font-size: ${s.fontSize || '14px'}; line-height: ${s.lineHeight || '1.5'};">${sanitizeHtmlLineHeight(b.content)}</div>
                                     </td>
                                 </tr>
                             </tbody>
@@ -811,7 +821,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const overflowCss = s.borderRadius ? 'overflow: hidden;' : '';
             // [FIX] Margin on <td> is ignored by Outlook/Gmail.
             // When margin is set, wrap in an outer table with margin for cross-client support.
-            return wrapWithMargin(`<td align="${align}" class="text-block" style="${paddingCss} ${commonStyle} font-size: ${s.fontSize || '14px'}; line-height: ${s.lineHeight || '1.5'}; ${getBackgroundStyle(s)} ${radiusStyle} ${borderCss} ${overflowCss} text-align: ${align};">${b.content}</td>`);
+            return wrapWithMargin(`<td align="${align}" class="text-block" style="${paddingCss} ${commonStyle} font-size: ${s.fontSize || '14px'}; line-height: ${s.lineHeight || '1.5'}; ${getBackgroundStyle(s)} ${radiusStyle} ${borderCss} ${overflowCss} text-align: ${align};">${sanitizeHtmlLineHeight(b.content)}</td>`);
         }
         if (b.type === 'image') {
             const imgWidth = s.width || '100%';

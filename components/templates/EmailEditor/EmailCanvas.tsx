@@ -477,6 +477,7 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
                         style={{
                             backgroundColor: bodyStyle.contentBackgroundColor || '#ffffff',
                             fontFamily: bodyStyle.fontFamily,
+                            color: '#1e293b', // Enforce dark text color for canvas contents
                             width: isMobile ? undefined : bodyStyle.contentWidth,
                             boxShadow: isMobile ? undefined : '0 10px 50px -10px rgba(0,0,0,0.1), 0 4px 20px -5px rgba(0,0,0,0.05)',
                         }}

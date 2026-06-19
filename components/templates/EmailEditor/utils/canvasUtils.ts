@@ -1,7 +1,7 @@
 // components/templates/EmailEditor/utils/canvasUtils.ts
 import React from 'react';
 import { EmailBlockStyle } from '../../../../types';
-import { toPx, sanitizeRadius } from './styleUtils';
+import { toPx, sanitizeRadius, sanitizeLineHeight } from './styleUtils';
 
 // Builds CSSProperties from an EmailBlockStyle object, considering mobile overrides
 export const buildCss = (s: EmailBlockStyle, viewMode: 'desktop' | 'mobile', bodyFontFamily: string, type?: string): React.CSSProperties => {
@@ -46,12 +46,12 @@ export const buildCss = (s: EmailBlockStyle, viewMode: 'desktop' | 'mobile', bod
         backgroundPosition: rs.backgroundPosition || 'center',
         backgroundRepeat: rs.backgroundRepeat || 'no-repeat',
         color: rs.color,
-        fontSize: toPx(rs.fontSize),
+        fontSize: rs.fontSize ? toPx(rs.fontSize) : undefined,
         fontWeight: rs.fontWeight,
         // ✅ FIX: Ưu tiên rs.fontFamily (block setting), fallback về body font
         fontFamily: rs.fontFamily || bodyFontFamily || 'Arial, sans-serif',
         textAlign: rs.textAlign as any,
-        lineHeight: rs.lineHeight,
+        lineHeight: sanitizeLineHeight(rs.lineHeight),
         borderStyle: rs.borderStyle as any,
         borderColor: rs.borderColor,
         borderTopWidth: toPx(rs.borderTopWidth),

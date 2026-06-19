@@ -2,7 +2,8 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import {
     Plus, Trash2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight,
-    AlignLeft, AlignCenter, AlignRight, ChevronsLeftRight, Palette
+    AlignLeft, AlignCenter, AlignRight, ChevronsLeftRight, Palette,
+    List, ListOrdered
 } from 'lucide-react';
 import { EmailBlock, TableCell } from '../../../../types';
 import { useEditorContext } from '../contexts/EditorContext';
@@ -304,6 +305,47 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
         return () => document.removeEventListener('mousedown', close);
     }, []);
 
+    const insertListInCell = (r: number, c: number, type: 'bullet' | 'number') => {
+        const activeEl = document.activeElement as HTMLTextAreaElement;
+        if (activeEl && activeEl.tagName === 'TEXTAREA') {
+            const start = activeEl.selectionStart;
+            const end = activeEl.selectionEnd;
+            const text = activeEl.value;
+            
+            let prefix = '';
+            if (type === 'bullet') {
+                prefix = '\n- ';
+                if (start === 0 || text[start - 1] === '\n') {
+                    prefix = '- ';
+                }
+            } else {
+                prefix = '\n1. ';
+                if (start === 0 || text[start - 1] === '\n') {
+                    prefix = '1. ';
+                }
+            }
+            
+            const newContent = text.substring(0, start) + prefix + text.substring(end);
+            patchCell(r, c, { content: newContent });
+            
+            setTimeout(() => {
+                activeEl.focus();
+                const newCursorPos = start + prefix.length;
+                activeEl.setSelectionRange(newCursorPos, newCursorPos);
+                activeEl.style.height = 'auto';
+                activeEl.style.height = activeEl.scrollHeight + 'px';
+            }, 50);
+        } else {
+            const cell = cells[r]?.[c];
+            if (cell) {
+                const current = cell.content || '';
+                const prefix = current === '' ? '' : '\n';
+                const suffix = type === 'bullet' ? '- ' : '1. ';
+                patchCell(r, c, { content: current + prefix + suffix });
+            }
+        }
+    };
+
     // ── Cell styling ───────────────────────────────────────────────
     const borderStr = `${borderWidth} solid ${borderColor}`;
 
@@ -344,7 +386,7 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
     };
 
     return (
-        <div style={{ position: 'relative', userSelect: 'none', overflowX: 'visible' }}>
+        <div style={{ position: 'relative', userSelect: 'none', overflow: 'visible' }}>
             {/* Auto-equalize */}
             {isSelected && (
                 <button
@@ -370,36 +412,46 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
 
                 <tbody>
                     {cells.map((row, rIdx) => (
-                        <tr key={rIdx}>
+                        <tr
+                            key={rIdx}
+                            style={{
+                                position: rowMenu === rIdx ? 'relative' : 'static',
+                                zIndex: rowMenu === rIdx ? 100 : 'auto',
+                            }}
+                        >
                             {/* Row number / menu — real td inside table */}
                             {isSelected && (
                                 <td
                                     style={{
                                         width: 22, maxWidth: 22, padding: 0,
                                         border: borderStr, background: '#f1f5f9',
-                                        position: 'relative', verticalAlign: 'middle',
-                                        zIndex: rowMenu === rIdx ? 60 : 'auto',
+                                        verticalAlign: 'middle',
+                                        position: rowMenu === rIdx ? 'relative' : 'static',
+                                        zIndex: rowMenu === rIdx ? 200 : 'auto',
+                                        overflow: 'visible',
                                     }}
                                     onMouseDown={e => { e.stopPropagation(); setRowMenu(rIdx === rowMenu ? null : rIdx); setColMenu(null); }}
                                 >
-                                    <div className="flex items-center justify-center cursor-pointer hover:bg-amber-100 min-h-[28px] text-[9px] text-slate-400 font-bold select-none">
-                                        {rIdx + 1}
-                                    </div>
-                                    {rowMenu === rIdx && (
-                                        <div
-                                            onMouseDown={e => e.stopPropagation()}
-                                            className="absolute left-[24px] top-0 z-[200] bg-white border border-slate-200 rounded-xl py-1 min-w-[160px] text-xs"
-                                            style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}
-                                        >
-                                            <button onClick={() => insertRow(rIdx, true)} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700"><ChevronUp className="w-3 h-3 text-slate-400" /> Chèn hàng trên</button>
-                                            <button onClick={() => insertRow(rIdx, false)} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700"><ChevronDown className="w-3 h-3 text-slate-400" /> Chèn hàng dưới</button>
-                                            <div className="border-t border-slate-100 my-0.5" />
-                                            <button onClick={() => moveRow(rIdx, 'up')} disabled={rIdx === 0} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronUp className="w-3 h-3 text-amber-600" /> Lên trên</button>
-                                            <button onClick={() => moveRow(rIdx, 'down')} disabled={rIdx === effectiveRows - 1} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronDown className="w-3 h-3 text-amber-600" /> Xuống dưới</button>
-                                            <div className="border-t border-slate-100 my-0.5" />
-                                            <button onClick={() => deleteRow(rIdx)} disabled={effectiveRows <= 2} className="w-full text-left px-3 py-1.5 hover:bg-rose-50 flex items-center gap-2 text-rose-600 disabled:opacity-30"><Trash2 className="w-3 h-3" /> Xóa hàng này</button>
+                                    <div style={{ position: 'relative', overflow: 'visible', width: '100%', height: '100%' }}>
+                                        <div className="flex items-center justify-center cursor-pointer hover:bg-amber-100 min-h-[28px] text-[9px] text-slate-400 font-bold select-none">
+                                            {rIdx + 1}
                                         </div>
-                                    )}
+                                        {rowMenu === rIdx && (
+                                            <div
+                                                onMouseDown={e => e.stopPropagation()}
+                                                className="absolute left-[24px] top-0 z-[200] bg-white border border-slate-200 rounded-xl py-1 min-w-[160px] text-xs"
+                                                style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}
+                                            >
+                                                <button onClick={() => insertRow(rIdx, true)} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700"><ChevronUp className="w-3 h-3 text-slate-400" /> Chèn hàng trên</button>
+                                                <button onClick={() => insertRow(rIdx, false)} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700"><ChevronDown className="w-3 h-3 text-slate-400" /> Chèn hàng dưới</button>
+                                                <div className="border-t border-slate-100 my-0.5" />
+                                                <button onClick={() => moveRow(rIdx, 'up')} disabled={rIdx === 0} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronUp className="w-3 h-3 text-amber-600" /> Lên trên</button>
+                                                <button onClick={() => moveRow(rIdx, 'down')} disabled={rIdx === effectiveRows - 1} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronDown className="w-3 h-3 text-amber-600" /> Xuống dưới</button>
+                                                <div className="border-t border-slate-100 my-0.5" />
+                                                <button onClick={() => deleteRow(rIdx)} disabled={effectiveRows <= 2} className="w-full text-left px-3 py-1.5 hover:bg-rose-50 flex items-center gap-2 text-rose-600 disabled:opacity-30"><Trash2 className="w-3 h-3" /> Xóa hàng này</button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </td>
                             )}
 
@@ -474,6 +526,34 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
                                                     title="Màu ô"
                                                 >
                                                     <Palette style={{ width: 11, height: 11 }} />
+                                                </button>
+
+                                                <div style={{ width: 1, height: 16, background: '#334155', margin: '0 2px' }} />
+
+                                                <button
+                                                    onMouseDown={e => { e.preventDefault(); e.stopPropagation(); insertListInCell(rIdx, cIdx, 'bullet'); }}
+                                                    style={{
+                                                        padding: '3px 5px', borderRadius: 6, border: 'none', cursor: 'pointer',
+                                                        background: 'transparent',
+                                                        color: '#94a3b8',
+                                                        display: 'flex', alignItems: 'center',
+                                                    }}
+                                                    title="Thêm danh sách dấu chấm"
+                                                >
+                                                    <List style={{ width: 11, height: 11 }} />
+                                                </button>
+
+                                                <button
+                                                    onMouseDown={e => { e.preventDefault(); e.stopPropagation(); insertListInCell(rIdx, cIdx, 'number'); }}
+                                                    style={{
+                                                        padding: '3px 5px', borderRadius: 6, border: 'none', cursor: 'pointer',
+                                                        background: 'transparent',
+                                                        color: '#94a3b8',
+                                                        display: 'flex', alignItems: 'center',
+                                                    }}
+                                                    title="Thêm danh sách số thứ tự"
+                                                >
+                                                    <ListOrdered style={{ width: 11, height: 11 }} />
                                                 </button>
 
                                                 {/* Color panel — xuất hiện bên dưới tooltip bar */}
@@ -624,36 +704,47 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
                 {/* tfoot: column labels + add-row — aligned with data cols */}
                 {isSelected && (
                     <tfoot>
-                        <tr>
+                        <tr style={{
+                            position: colMenu !== null ? 'relative' : 'static',
+                            zIndex: colMenu !== null ? 100 : 'auto',
+                        }}>
                             {/* Empty cell under row-num col */}
                             <td style={{ width: 22, padding: 0, border: 'none', background: 'transparent' }} />
                             {Array.from({ length: effectiveCols }, (_, cIdx) => (
                                 <td
                                     key={cIdx}
-                                    style={{ padding: 0, border: 'none', position: 'relative' }}
+                                    style={{
+                                        padding: 0,
+                                        border: 'none',
+                                        overflow: 'visible',
+                                        position: colMenu === cIdx ? 'relative' : 'static',
+                                        zIndex: colMenu === cIdx ? 200 : 'auto',
+                                    }}
                                     onMouseDown={e => { e.stopPropagation(); setColMenu(cIdx === colMenu ? null : cIdx); setRowMenu(null); }}
                                 >
-                                    <div className="text-[9px] text-center py-1.5 bg-slate-100 border-x border-b border-slate-200 text-slate-500 font-bold cursor-pointer hover:bg-amber-50 select-none">
-                                        C{cIdx + 1}
-                                    </div>
-                                    {colMenu === cIdx && (
-                                        <div
-                                            onMouseDown={e => e.stopPropagation()}
-                                            className="absolute top-full z-[500] bg-white border border-slate-200 rounded-xl py-1 min-w-[160px] text-xs"
-                                            style={{
-                                                boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-                                                ...(cIdx >= effectiveCols - 2 ? { right: 0 } : { left: 0 }),
-                                            }}
-                                        >
-                                            <button onClick={() => insertCol(cIdx, true)} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700"><ChevronLeft className="w-3 h-3 text-slate-400" /> Chèn cột trái</button>
-                                            <button onClick={() => insertCol(cIdx, false)} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700"><ChevronRight className="w-3 h-3 text-slate-400" /> Chèn cột phải</button>
-                                            <div className="border-t border-slate-100 my-0.5" />
-                                            <button onClick={() => moveCol(cIdx, 'left')} disabled={cIdx === 0} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronLeft className="w-3 h-3 text-amber-600" /> Sang trái</button>
-                                            <button onClick={() => moveCol(cIdx, 'right')} disabled={cIdx === effectiveCols - 1} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronRight className="w-3 h-3 text-amber-600" /> Sang phải</button>
-                                            <div className="border-t border-slate-100 my-0.5" />
-                                            <button onClick={() => deleteCol(cIdx)} disabled={effectiveCols <= 2} className="w-full text-left px-3 py-1.5 hover:bg-rose-50 flex items-center gap-2 text-rose-600 disabled:opacity-30"><Trash2 className="w-3 h-3" /> Xóa cột này</button>
+                                    <div style={{ position: 'relative', overflow: 'visible', width: '100%', height: '100%', zIndex: colMenu === cIdx ? 500 : 'auto' }}>
+                                        <div className="text-[9px] text-center py-1.5 bg-slate-100 border-x border-b border-slate-200 text-slate-500 font-bold cursor-pointer hover:bg-amber-50 select-none">
+                                            C{cIdx + 1}
                                         </div>
-                                    )}
+                                        {colMenu === cIdx && (
+                                            <div
+                                                onMouseDown={e => e.stopPropagation()}
+                                                className="absolute top-full z-[500] bg-white border border-slate-200 rounded-xl py-1 min-w-[160px] text-xs"
+                                                style={{
+                                                    boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+                                                    ...(cIdx >= effectiveCols - 2 ? { right: 0 } : { left: 0 }),
+                                                }}
+                                            >
+                                                <button onClick={() => insertCol(cIdx, true)} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700"><ChevronLeft className="w-3 h-3 text-slate-400" /> Chèn cột trái</button>
+                                                <button onClick={() => insertCol(cIdx, false)} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700"><ChevronRight className="w-3 h-3 text-slate-400" /> Chèn cột phải</button>
+                                                <div className="border-t border-slate-100 my-0.5" />
+                                                <button onClick={() => moveCol(cIdx, 'left')} disabled={cIdx === 0} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronLeft className="w-3 h-3 text-amber-600" /> Sang trái</button>
+                                                <button onClick={() => moveCol(cIdx, 'right')} disabled={cIdx === effectiveCols - 1} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronRight className="w-3 h-3 text-amber-600" /> Sang phải</button>
+                                                <div className="border-t border-slate-100 my-0.5" />
+                                                <button onClick={() => deleteCol(cIdx)} disabled={effectiveCols <= 2} className="w-full text-left px-3 py-1.5 hover:bg-rose-50 flex items-center gap-2 text-rose-600 disabled:opacity-30"><Trash2 className="w-3 h-3" /> Xóa cột này</button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </td>
                             ))}
                         </tr>

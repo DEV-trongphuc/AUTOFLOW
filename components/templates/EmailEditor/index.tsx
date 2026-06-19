@@ -819,6 +819,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
                     onClose={() => setSaveSectionModal({ isOpen: false, block: null, name: '' })}
                     title="Lưu mẫu giao diện (Section)"
                     size="sm"
+                    zIndex={100300}
                     footer={
                         <div className="flex justify-between w-full">
                             <Button variant="ghost" onClick={() => setSaveSectionModal({ isOpen: false, block: null, name: '' })}>Hủy</Button>

@@ -17,6 +17,7 @@ interface ModalProps {
   hideCloseButton?: boolean;
   isDarkTheme?: boolean;
   noScroll?: boolean;
+  zIndex?: number;
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -31,7 +32,8 @@ const Modal: React.FC<ModalProps> = ({
   noHeader = false,
   hideCloseButton = false,
   isDarkTheme = false,
-  noScroll = false
+  noScroll = false,
+  zIndex
 }) => {
   useEffect(() => {
     if (isOpen) {
@@ -60,7 +62,10 @@ const Modal: React.FC<ModalProps> = ({
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className={`fixed inset-0 z-[150] flex items-center justify-center overflow-y-auto overflow-x-hidden ${size === 'full' ? 'w-full h-full' : 'p-4 py-8 sm:p-6 sm:py-12'}`}>
+        <div 
+          className={`fixed inset-0 flex items-center justify-center overflow-y-auto overflow-x-hidden ${size === 'full' ? 'w-full h-full' : 'p-4 py-8 sm:p-6 sm:py-12'}`}
+          style={{ zIndex: zIndex ?? 150 }}
+        >
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}

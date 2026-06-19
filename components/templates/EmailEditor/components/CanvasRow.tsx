@@ -224,7 +224,10 @@ const CanvasRow: React.FC<CanvasRowProps> = (props) => {
     return (
         <tr
             id={`block-${row.id}`}
-            style={{ position: 'relative' }}
+            style={{
+                position: isRowActive ? 'relative' : 'static',
+                zIndex: isRowActive ? 1000 : 'auto'
+            }}
             draggable
             onDragStart={(e) => onDragStart(e, row.id)}
             onDragOver={(e) => onDragOver(e, row.id, 'row')}
@@ -262,7 +265,7 @@ const CanvasRow: React.FC<CanvasRowProps> = (props) => {
                         borderRight: borderRightWidth && borderStyle !== 'none' ? `${borderRightWidth} ${borderStyle || 'solid'} ${borderColor || '#000'}` : 'none',
                         borderBottom: borderBottomWidth && borderStyle !== 'none' ? `${borderBottomWidth} ${borderStyle || 'solid'} ${borderColor || '#000'}` : 'none',
                         borderLeft: borderLeftWidth && borderStyle !== 'none' ? `${borderLeftWidth} ${borderStyle || 'solid'} ${borderColor || '#000'}` : 'none',
-                        overflow: borderRadius ? 'hidden' : 'visible',
+                        overflow: (borderRadius && parseFloat(String(borderRadius)) > 0 && !isRowActive) ? 'hidden' : 'visible',
                         boxSizing: 'border-box'
                     }}
                 >

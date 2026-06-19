@@ -80,6 +80,73 @@ const S = {
     }),
 };
 
+const findFirstImageUrl = (blocks: any[]): string | null => {
+    if (!blocks || !Array.isArray(blocks)) return null;
+    for (const b of blocks) {
+        if (b.type === 'image' && b.url && b.url.trim() !== '') {
+            return b.url;
+        }
+        if (b.children && Array.isArray(b.children) && b.children.length > 0) {
+            const childUrl = findFirstImageUrl(b.children);
+            if (childUrl) return childUrl;
+        }
+    }
+    return null;
+};
+
+const ensureAbsoluteUrl = (url: string): string => {
+    if (!url) return '';
+    const trimmed = url.trim();
+    if (trimmed.startsWith('data:')) {
+        return trimmed;
+    }
+    if (/^https?:\/\//i.test(trimmed)) {
+        return trimmed;
+    }
+    if (trimmed.startsWith('//')) {
+        return `https:${trimmed}`;
+    }
+    if (trimmed.startsWith('/')) {
+        try {
+            const origin = new URL(api.baseUrl).origin;
+            return `${origin}${trimmed}`;
+        } catch {
+            return `https://automation.ideas.edu.vn${trimmed}`;
+        }
+    }
+    if (/^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/i.test(trimmed)) {
+        return `https://${trimmed}`;
+    }
+    try {
+        const base = api.baseUrl.replace(/\/+$/, '');
+        return `${base}/${trimmed}`;
+    } catch {
+        return `https://automation.ideas.edu.vn/${trimmed}`;
+    }
+};
+
+const getThumbnailUrl = (t: any, index: number) => {
+    let rawUrl = '';
+    if (t.thumbnail && t.thumbnail.trim() !== '' && !t.thumbnail.includes('placehold.co')) {
+        rawUrl = t.thumbnail;
+    } else if (t.blocks && Array.isArray(t.blocks)) {
+        const firstImg = findFirstImageUrl(t.blocks);
+        if (firstImg) rawUrl = firstImg;
+    }
+
+    if (rawUrl) {
+        return ensureAbsoluteUrl(rawUrl);
+    }
+
+    const defaults = [
+        'https://images.unsplash.com/photo-1557200134-90327ee9fafa?w=500&h=300&fit=crop',
+        'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?w=500&h=300&fit=crop',
+        'https://images.unsplash.com/photo-1504711331083-9c895941bf81?w=500&h=300&fit=crop',
+        'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=500&h=300&fit=crop'
+    ];
+    return defaults[index % defaults.length];
+};
+
 const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
     isOpen, onClose, onApply, onSaveSection, currentBlocks, bodyStyle = DEFAULT_BODY_STYLE, templateName = 'Email', emailId
 }) => {
@@ -98,6 +165,9 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
     const [error, setError] = useState('');
     const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
     const [visible, setVisible] = useState(false);
+    const [templates, setTemplates] = useState<any[]>([]);
+    const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
+    const [previewingTemplate, setPreviewingTemplate] = useState<any | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const iframeNewRef = useRef<HTMLIFrameElement>(null);
@@ -107,13 +177,42 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
         if (isOpen) {
             setTimeout(() => setVisible(true), 10);
             // Compile old HTML on open if redesign blocks exist
-            if (currentBlocks?.length) {
+            if (currentBlocks && currentBlocks.length > 0) {
+                setMode('redesign');
                 setOldHtml(compileHTML(currentBlocks, bodyStyle, templateName));
+            } else {
+                setMode('generate');
             }
+
+            // Fetch templates for reference
+            const fetchTemplates = async () => {
+                try {
+                    const res = await api.get('templates');
+                    if (res.success && Array.isArray(res.data)) {
+                        const editorTpls = res.data.filter((t: any) => t.blocks && Array.isArray(t.blocks) && t.blocks.length > 0);
+                        setTemplates(editorTpls);
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch templates for AI reference:', err);
+                }
+            };
+            fetchTemplates();
         } else {
             setVisible(false);
         }
     }, [isOpen]);
+
+    const handleToggleTemplateSelection = (id: string) => {
+        setSelectedTemplateIds(prev => {
+            if (prev.includes(id)) {
+                return prev.filter(tId => tId !== id);
+            }
+            if (prev.length >= 3) {
+                return prev;
+            }
+            return [...prev, id];
+        });
+    };
 
     const reset = useCallback(() => {
         setStep('prompt'); setGeneratedBlocks(null);
@@ -172,6 +271,9 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                 prompt: fullPrompt || 'Redesign email hiện tại đẹp hơn, chuyên nghiệp hơn.',
                 improve_content: improveContent,
             };
+            if (selectedTemplateIds.length > 0) {
+                payload.reference_template_ids = selectedTemplateIds;
+            }
             if (useExisting && currentBlocks?.length) {
                 payload.existing_blocks = currentBlocks;
                 payload.body_style = bodyStyle;
@@ -384,6 +486,145 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                         />
                                         <p style={{ margin: '4px 0 0', fontSize: '10px', color: '#cbd5e1', textAlign: 'right' }}>Ctrl+Enter để Generate</p>
                                     </div>
+
+                                    {/* Reference templates selection (1-3 templates) */}
+                                    {templates.length > 0 && (
+                                        <div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                                <label style={{ fontSize: '11px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                                    Chọn mẫu thiết kế tham khảo (Chọn tối đa 3 mẫu)
+                                                </label>
+                                                <span style={{ fontSize: '10px', fontWeight: 700, color: selectedTemplateIds.length > 0 ? '#d97706' : '#94a3b8' }}>
+                                                    Đã chọn: {selectedTemplateIds.length}/3
+                                                </span>
+                                            </div>
+                                            <div style={{ 
+                                                display: 'grid', 
+                                                gridTemplateColumns: 'repeat(2, 1fr)', 
+                                                gap: '12px', 
+                                                maxHeight: '230px', 
+                                                overflowY: 'auto', 
+                                                padding: '8px',
+                                                border: '1.5px solid #e2e8f0', 
+                                                borderRadius: '16px',
+                                                background: '#f8fafc',
+                                                boxSizing: 'border-box'
+                                            }}>
+                                                {templates.map((t, idx) => {
+                                                    const isSelected = selectedTemplateIds.includes(t.id);
+                                                    const isDisabled = !isSelected && selectedTemplateIds.length >= 3;
+                                                    const thumb = getThumbnailUrl(t, idx);
+                                                    return (
+                                                        <div 
+                                                            key={t.id}
+                                                            style={{
+                                                                position: 'relative',
+                                                                borderRadius: '12px',
+                                                                overflow: 'hidden',
+                                                                border: `2px solid ${isSelected ? '#d97706' : '#e2e8f0'}`,
+                                                                boxShadow: isSelected ? '0 4px 12px rgba(217,119,6,0.15)' : 'none',
+                                                                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                                                                opacity: isDisabled ? 0.6 : 1,
+                                                                transition: 'all 0.25s ease',
+                                                                aspectRatio: '16/10',
+                                                                background: '#fff',
+                                                            }}
+                                                            onClick={() => {
+                                                                if (!isDisabled) {
+                                                                    handleToggleTemplateSelection(t.id);
+                                                                }
+                                                            }}
+                                                        >
+                                                            {/* Image / Thumbnail */}
+                                                            <img 
+                                                                src={thumb} 
+                                                                alt={t.name}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    height: '100%',
+                                                                    objectFit: 'cover',
+                                                                }}
+                                                            />
+                                                            
+                                                            {/* Shadow Overlay */}
+                                                            <div style={{
+                                                                position: 'absolute',
+                                                                inset: 0,
+                                                                background: 'linear-gradient(to top, rgba(15,23,42,0.85) 0%, rgba(15,23,42,0.3) 60%, rgba(15,23,42,0) 100%)',
+                                                                display: 'flex',
+                                                                flexDirection: 'column',
+                                                                justifyContent: 'end',
+                                                                padding: '8px 12px',
+                                                                boxSizing: 'border-box',
+                                                            }}>
+                                                                <p style={{
+                                                                    margin: 0,
+                                                                    fontSize: '11px',
+                                                                    fontWeight: 700,
+                                                                    color: '#fff',
+                                                                    textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    display: '-webkit-box',
+                                                                    WebkitLineClamp: 2,
+                                                                    WebkitBoxOrient: 'vertical',
+                                                                    lineHeight: '1.3',
+                                                                }}>
+                                                                    {t.name}
+                                                                </p>
+                                                            </div>
+
+                                                            {/* Top Left: Preview Button */}
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setPreviewingTemplate(t);
+                                                                }}
+                                                                title="Xem trước mẫu"
+                                                                style={{
+                                                                    position: 'absolute',
+                                                                    top: '8px',
+                                                                    left: '8px',
+                                                                    width: '26px',
+                                                                    height: '26px',
+                                                                    borderRadius: '8px',
+                                                                    border: 'none',
+                                                                    background: 'rgba(15,23,42,0.6)',
+                                                                    backdropFilter: 'blur(4px)',
+                                                                    cursor: 'pointer',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    zIndex: 10,
+                                                                }}
+                                                            >
+                                                                <Eye style={{ width: 13, height: 13, color: '#fff' }} />
+                                                            </button>
+
+                                                            {/* Top Right: Selection Badge */}
+                                                            <div style={{
+                                                                position: 'absolute',
+                                                                top: '8px',
+                                                                right: '8px',
+                                                                width: '20px',
+                                                                height: '20px',
+                                                                borderRadius: '50%',
+                                                                background: isSelected ? '#d97706' : 'rgba(255,255,255,0.8)',
+                                                                border: isSelected ? 'none' : '1px solid #cbd5e1',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                                                zIndex: 10,
+                                                            }}>
+                                                                {isSelected && <Check style={{ width: 11, height: 11, color: '#fff', strokeWidth: 3 }} />}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Images section */}
                                     <div>
@@ -727,6 +968,95 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                     setShowLibrary(false);
                 }}
             />
+
+            {/* Template Live Preview Dialog */}
+            {previewingTemplate && (
+                <div style={{
+                    position: 'fixed',
+                    inset: 0,
+                    zIndex: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '24px',
+                    boxSizing: 'border-box',
+                }}>
+                    {/* Dark backdrop */}
+                    <div 
+                        onClick={() => setPreviewingTemplate(null)}
+                        style={{
+                            position: 'absolute',
+                            inset: 0,
+                            background: 'rgba(15,23,42,0.6)',
+                            backdropFilter: 'blur(4px)',
+                            animation: 'backdropIn 0.2s ease forwards',
+                        }} 
+                    />
+                    
+                    {/* Preview box */}
+                    <div style={{
+                        position: 'relative',
+                        width: '100%',
+                        maxWidth: '680px',
+                        height: '80vh',
+                        background: '#fff',
+                        borderRadius: '24px',
+                        boxShadow: '0 24px 64px rgba(0,0,0,0.25)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                        animation: 'modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards',
+                    }}>
+                        {/* Header */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '16px 20px',
+                            borderBottom: '1px solid #f1f5f9',
+                        }}>
+                            <div>
+                                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 800, color: '#0f172a' }}>
+                                    Xem trước mẫu: {previewingTemplate.name}
+                                </h3>
+                                <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>
+                                    Mẫu thiết kế tham khảo cho AI
+                                </p>
+                            </div>
+                            <button 
+                                onClick={() => setPreviewingTemplate(null)}
+                                style={{
+                                    width: '28px',
+                                    height: '28px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    background: '#f8fafc',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}
+                            >
+                                <X style={{ width: 14, height: 14, color: '#64748b' }} />
+                            </button>
+                        </div>
+
+                        {/* Iframe View */}
+                        <div style={{ flex: 1, background: '#f1f5f9', position: 'relative' }}>
+                            <iframe
+                                title="Template Preview"
+                                srcDoc={compileHTML(previewingTemplate.blocks, bodyStyle, previewingTemplate.name, { isPreview: true })}
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    border: 'none',
+                                    background: '#fff',
+                                }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 };

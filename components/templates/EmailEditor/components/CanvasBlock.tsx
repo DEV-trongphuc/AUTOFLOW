@@ -66,7 +66,8 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
     const wrapperTdStyles: React.CSSProperties = {
         position: 'relative',
         width: '100%',
-        verticalAlign: 'top'
+        verticalAlign: 'top',
+        zIndex: isSelected ? 1000 : 'auto'
     };
 
     const decorativeStyles: React.CSSProperties = {};
@@ -84,7 +85,7 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
             // @ts-ignore
             if (css[prop] !== undefined) decorativeStyles[prop] = css[prop];
         });
-        decorativeStyles.overflow = css.borderRadius ? 'hidden' : 'visible';
+        decorativeStyles.overflow = (css.borderRadius && parseFloat(String(css.borderRadius)) > 0 && !isSelected) ? 'hidden' : 'visible';
         decorativeStyles.borderRadius = css.borderRadius ? sanitizeRadius(css.borderRadius) : undefined;
     } else {
         innerPadding.paddingTop = '0px';
@@ -919,6 +920,10 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
         <tr
             key={block.id} id={`block-${block.id}`}
             draggable onDragStart={(e) => onDragStart(e, block.id)} onDragOver={(e) => onDragOver(e, block.id, block.type)} onDrop={(e) => onDrop(e, block.id)} onClick={(e) => { e.stopPropagation(); onSelectBlock(block.id); }}
+            style={{
+                position: isSelected ? 'relative' : 'static',
+                zIndex: isSelected ? 1000 : 'auto'
+            }}
         >
             <td className={`relative transition-all w-full ${!isSelected ? 'hover:ring-2 hover:ring-amber-600 hover:ring-dashed hover:bg-amber-600/5' : ''}`} style={wrapperTdStyles}>
                 {dragOverId === block.id && dropPosition && <CanvasDropIndicator dropPosition={dropPosition} />}

@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import Modal from './Modal';
 import Button from './Button';
@@ -13,10 +13,11 @@ interface InputModalProps {
     defaultValue?: string;
     confirmLabel?: string;
     isDarkTheme?: boolean;
+    zIndex?: number;
 }
 
 const InputModal: React.FC<InputModalProps> = ({
-    isOpen, onClose, onConfirm, title, message, placeholder, defaultValue = '', confirmLabel = 'Xác nhận', isDarkTheme
+    isOpen, onClose, onConfirm, title, message, placeholder, defaultValue = '', confirmLabel = 'Xác nhận', isDarkTheme, zIndex
 }) => {
     const [value, setValue] = useState(defaultValue);
 
@@ -37,6 +38,7 @@ const InputModal: React.FC<InputModalProps> = ({
             title={title}
             size="sm"
             isDarkTheme={isDarkTheme}
+            zIndex={zIndex}
             footer={
                 <div className="flex gap-3 w-full justify-end">
                     <Button variant="ghost" onClick={onClose} className={isDarkTheme ? 'text-slate-400 hover:bg-slate-800' : ''}>Hủy bỏ</Button>

@@ -73,6 +73,26 @@ export default defineConfig(({ mode }) => {
               proxyReq.removeHeader('Via');
             });
           }
+        },
+        '/go/': {
+          target: 'https://automation.ideas.edu.vn',
+          changeOrigin: true,
+          secure: false,
+          configure: (proxy, _options) => {
+            proxy.on('proxyReq', (proxyReq, req, _res) => {
+              if (req.method === 'GET' || req.method === 'OPTIONS') {
+                proxyReq.removeHeader('Content-Type');
+                proxyReq.removeHeader('Content-Length');
+              }
+              proxyReq.setHeader('Origin', 'https://automation.ideas.edu.vn');
+              proxyReq.setHeader('Referer', 'https://automation.ideas.edu.vn/');
+              proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+              proxyReq.removeHeader('X-Forwarded-For');
+              proxyReq.removeHeader('X-Forwarded-Host');
+              proxyReq.removeHeader('X-Forwarded-Proto');
+              proxyReq.removeHeader('Via');
+            });
+          }
         }
       }
     },

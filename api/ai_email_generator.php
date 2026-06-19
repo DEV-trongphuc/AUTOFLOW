@@ -32,17 +32,53 @@ if (!$hasAuth) {
 }
 
 // ── Fetch Gemini API key from system_settings (Cấu hình Trí tuệ Nhân tạo) ──
-function getGeminiKey($pdo)
+function getGeminiKey($pdo, $workspace_id = 0)
 {
-  // Lấy từ bảng system_settings — cùng nơi lưu khi dùng trang "Cấu hình AI"
-  $stmt = $pdo->prepare("SELECT `value` FROM system_settings WHERE workspace_id = 0 AND `key` = 'gemini_api_key' LIMIT 1");
-  $stmt->execute();
+  // Lấy từ bảng system_settings — Ưu tiên workspace hiện tại, sau đó fallback sang workspace 0 (global)
+  $stmt = $pdo->prepare("SELECT `value` FROM system_settings WHERE workspace_id IN (0, ?) AND `key` = 'gemini_api_key' ORDER BY workspace_id DESC LIMIT 1");
+  $stmt->execute([$workspace_id]);
   $val = $stmt->fetchColumn();
   if (!empty($val))
     return $val;
 
   // Fallback: biến môi trường server
   return getenv('GEMINI_API_KEY') ?: '';
+}
+
+// ── Extract brand colors from existing blocks ────────────────────────
+function extractBrandColors($blocks, &$colors = [])
+{
+  if (!is_array($blocks))
+    return;
+  foreach ($blocks as $block) {
+    $style = $block['style'] ?? [];
+    // Collect non-white, non-transparent colors
+    $colorFields = ['backgroundColor', 'contentBackgroundColor', 'color', 'borderColor'];
+    foreach ($colorFields as $f) {
+      if (!empty($style[$f])) {
+        $c = strtolower(trim($style[$f]));
+        if ($c !== '#ffffff' && $c !== '#fff' && $c !== 'transparent' && $c !== '' && strpos($c, '#') === 0) {
+          $colors[$c] = ($colors[$c] ?? 0) + 1;
+        }
+      }
+    }
+    // Scan HTML content for color styles
+    if (!empty($block['content'])) {
+      preg_match_all('/color:\s*(#[0-9a-fA-F]{3,6})/', $block['content'], $m);
+      foreach ($m[1] as $c) {
+        $c = strtolower($c);
+        if ($c !== '#ffffff' && $c !== '#fff')
+          $colors[$c] = ($colors[$c] ?? 0) + 1;
+      }
+      preg_match_all('/background(?:-color)?:\s*(#[0-9a-fA-F]{3,6})/', $block['content'], $m);
+      foreach ($m[1] as $c) {
+        $c = strtolower($c);
+        $colors[$c] = ($colors[$c] ?? 0) + 1;
+      }
+    }
+    if (!empty($block['children']))
+      extractBrandColors($block['children'], $colors);
+  }
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────
@@ -63,7 +99,8 @@ try {
     exit;
   }
 
-  $apiKey = getGeminiKey($pdo);
+  $workspace_id = get_current_workspace_id();
+  $apiKey = getGeminiKey($pdo, $workspace_id);
   if (empty($apiKey)) {
     echo json_encode(['success' => false, 'message' => 'Chưa cấu hình Gemini API Key.']);
     exit;
@@ -140,6 +177,16 @@ BRAND COLORS:
   - Màu nền section: xen kẽ giữa trắng (#ffffff) và cực nhạt (#f8fafc, #fafafa) để tạo nhịp
   - Tránh dùng quá 3 màu chính trong 1 email
 
+=== QUY TẮC CẮT GỌN NỘI DUNG VĂN BẢN (MANDATORY) ===
+1. TIÊU ĐỀ (TITLES): Luôn viết ngắn gọn, tinh gọn, súc tích, tránh tiêu đề quá dài dòng. Tiêu đề chính nên dưới 8 từ.
+2. NỘI DUNG (BODY TEXT): Tuyệt đối không bê nguyên đoạn văn dài dòng lê thê của người dùng. Hãy tóm tắt, lọc ý chính, cắt gọn từ ngữ tối đa. Chia nhỏ nội dung thành các câu ngắn (mỗi đoạn không quá 2-3 câu ngắn), sử dụng gạch đầu dòng (bullet points) hoặc list/check_list để email trông thoáng đãng.
+3. KHÔNG GIAN THOÁNG: Hãy chèn khoảng trống (spacer) vừa phải giữa các khối chữ để tăng tính thẩm mỹ và dễ đọc.
+
+=== QUY TẮC PHONG CÁCH & FONT CHỮ (FONT FAMILY, FONT SIZE, COLOR, SPACING) ===
+1. FONT FAMILY: Phải lấy và sử dụng đúng font-family từ các mẫu email được chọn làm tham khảo (ví dụ: "Roboto", "Montserrat", "Playfair Display", v.v. được định nghĩa trong style.fontFamily của các mẫu). Áp dụng đồng bộ cho tất cả các block chữ và button mới.
+2. CỠ CHỮ & MÀU CHỮ: Kích thước chữ (fontSize), màu chữ (color), độ đậm nhạt (fontWeight), khoảng cách dòng (lineHeight), bo góc (borderRadius) và padding của các khối văn bản, tiêu đề, nút bấm trong email mới PHẢI SAO CHÉP Y HỆT từ các thông số style tương ứng trong các block của mẫu email tham khảo.
+3. GIỮ NGUYÊN BỐ CỤC: Bắt chước chuẩn cấu trúc layout chia cột (column widths), các phần spacer, logo ở header, banner hình ảnh và toàn bộ thông tin/links ở phần FOOTER từ các mẫu tham khảo.
+
 === TIÊU CHUẨN REDESIGN ===
 Khi redesign từ email gốc:
   1. PHÂN TÍCH màu brand từ buttons, headers, links trong email gốc
@@ -158,40 +205,48 @@ Khi redesign từ email gốc:
 - Minimum 4 sections, maximum 10 sections
 SYSTEM;
 
-  // ── Extract brand colors from existing blocks ────────────────────────
-  function extractBrandColors($blocks, &$colors = [])
-  {
-    if (!is_array($blocks))
-      return;
-    foreach ($blocks as $block) {
-      $style = $block['style'] ?? [];
-      // Collect non-white, non-transparent colors
-      $colorFields = ['backgroundColor', 'contentBackgroundColor', 'color', 'borderColor'];
-      foreach ($colorFields as $f) {
-        if (!empty($style[$f])) {
-          $c = strtolower(trim($style[$f]));
-          if ($c !== '#ffffff' && $c !== '#fff' && $c !== 'transparent' && $c !== '' && strpos($c, '#') === 0) {
-            $colors[$c] = ($colors[$c] ?? 0) + 1;
+  // ── Fetch active workspace ID and style references ────────────────────
+  $workspace_id = get_current_workspace_id();
+  $recentStyleHint = "";
+  try {
+      $refTemplateIds = $body['reference_template_ids'] ?? [];
+      
+      $recentTemplates = [];
+      if (!empty($refTemplateIds) && is_array($refTemplateIds)) {
+          // Fetch user-selected templates
+          $placeholders = implode(',', array_fill(0, count($refTemplateIds), '?'));
+          $sql = "SELECT name, blocks, body_style FROM templates WHERE workspace_id = ? AND id IN ($placeholders) AND blocks IS NOT NULL AND blocks != '' AND blocks != '[]' LIMIT 3";
+          $stmtTpl = $pdo->prepare($sql);
+          $stmtTpl->execute(array_merge([$workspace_id], $refTemplateIds));
+          $recentTemplates = $stmtTpl->fetchAll(PDO::FETCH_ASSOC);
+      }
+      
+      // Fallback: if no templates found or none selected, fetch the 3 most recent templates
+      if (empty($recentTemplates)) {
+          $stmtTpl = $pdo->prepare("SELECT name, blocks, body_style FROM templates WHERE workspace_id = ? AND blocks IS NOT NULL AND blocks != '' AND blocks != '[]' ORDER BY updated_at DESC LIMIT 3");
+          $stmtTpl->execute([$workspace_id]);
+          $recentTemplates = $stmtTpl->fetchAll(PDO::FETCH_ASSOC);
+      }
+
+      if (!empty($recentTemplates)) {
+          $styleExcerpts = [];
+          foreach ($recentTemplates as $idx => $tpl) {
+              $blocksArr = json_decode($tpl['blocks'], true);
+              $bodyStyleArr = json_decode($tpl['body_style'] ?? '{}', true);
+
+              $styleExcerpts[] = "Mẫu " . ($idx + 1) . ": \"" . $tpl['name'] . "\"\n" .
+                                 "- blocks (JSON): " . json_encode($blocksArr, JSON_UNESCAPED_UNICODE) . "\n" .
+                                 "- bodyStyle (JSON): " . json_encode($bodyStyleArr, JSON_UNESCAPED_UNICODE);
           }
-        }
+
+          $recentStyleHint = "\n\n=== CẤU TRÚC VÀ PHONG CÁCH CỦA CÁC MẪU EMAIL THAM KHẢO (BẮT BUỘC BẮT CHƯỚC Y HỆT) ===\n" .
+                             "Dưới đây là cấu trúc blocks JSON và bodyStyle của các mẫu email được chọn làm tham khảo từ hệ thống.\n" .
+                             "Nhiệm vụ của bạn là bắt chước cấu trúc blocks của các mẫu này: giữ nguyên bố cục (layout), banner, logo, font chữ (style.fontFamily), cỡ chữ (style.fontSize), màu chữ (style.color), màu nền, nút bấm, padding, spacer và phần footer.\n" .
+                             "Hãy điền nội dung mới vào cấu trúc layout đó, đặc biệt PHẢI CẮT GỌN NỘI DUNG VĂN BẢN cực kỳ ngắn gọn (tiêu đề dưới 8 từ, đoạn văn ngắn gọn dưới 3 câu, dùng gạch đầu dòng) để email mới có phong cách thoáng đãng, đồng bộ về font chữ, cỡ chữ và giao diện y hệt phong cách mẫu tham khảo này:\n\n" .
+                             implode("\n\n", $styleExcerpts) . "\n======================================\n";
       }
-      // Scan HTML content for color styles
-      if (!empty($block['content'])) {
-        preg_match_all('/color:\s*(#[0-9a-fA-F]{3,6})/', $block['content'], $m);
-        foreach ($m[1] as $c) {
-          $c = strtolower($c);
-          if ($c !== '#ffffff' && $c !== '#fff')
-            $colors[$c] = ($colors[$c] ?? 0) + 1;
-        }
-        preg_match_all('/background(?:-color)?:\s*(#[0-9a-fA-F]{3,6})/', $block['content'], $m);
-        foreach ($m[1] as $c) {
-          $c = strtolower($c);
-          $colors[$c] = ($colors[$c] ?? 0) + 1;
-        }
-      }
-      if (!empty($block['children']))
-        extractBrandColors($block['children'], $colors);
-    }
+  } catch (Exception $eTpl) {
+      // Bỏ qua nếu có lỗi truy vấn
   }
 
   // ── Build user message ────────────────────────────────────────────────
@@ -217,6 +272,11 @@ SYSTEM;
     $userMsg .= "\n\nEmail gốc cần redesign:\n" . $existingJson;
   }
 
+  // Inject style guidance from recent workspace templates
+  if (!empty($recentStyleHint)) {
+      $userMsg .= $recentStyleHint;
+  }
+
   $contents = [
     ['role' => 'user', 'parts' => [['text' => $userMsg]]]
   ];
@@ -226,8 +286,8 @@ SYSTEM;
     $contents,
     $systemPrompt,
     $apiKey,
-    'gemini-3-flash-preview',
-    1.1,
+    'gemini-2.5-flash-lite',
+    0.3,
     60000
   );
 
@@ -283,8 +343,11 @@ SYSTEM;
   ], JSON_UNESCAPED_UNICODE);
 
 } catch (Exception $e) {
+  if (function_exists('logChatError')) {
+      logChatError("AI Email Generator Error: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
+  }
   echo json_encode([
     'success' => false,
-    'message' => 'Lỗi hệ thống, vui lòng thử lại.'
-  ]);
+    'message' => 'Lỗi hệ thống: ' . $e->getMessage()
+  ], JSON_UNESCAPED_UNICODE);
 }

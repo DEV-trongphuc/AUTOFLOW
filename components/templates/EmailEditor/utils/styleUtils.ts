@@ -53,3 +53,35 @@ export const getMarginStyle = (s: Partial<EmailBlockStyle>) => {
         marginLeft: toPx(s.marginLeft),
     };
 };
+
+/**
+ * Sanitizes line-height: if it has "px" and the numeric part is < 10, it is treated as a unitless value.
+ */
+export const sanitizeLineHeight = (val: string | number | undefined): string | number | undefined => {
+    if (val === undefined || val === null || val === '') return val;
+    const sVal = String(val).trim();
+    if (sVal.toLowerCase().endsWith('px')) {
+        const num = parseFloat(sVal);
+        if (!isNaN(num) && num < 10) {
+            return num; // strip 'px'
+        }
+    }
+    return val;
+};
+
+/**
+ * Sanitizes inline styles in HTML, specifically replacing line-height values under 10 ending in px (e.g. line-height: 1.5px)
+ * with their unitless equivalent (e.g. line-height: 1.5).
+ */
+export const sanitizeHtmlLineHeight = (html: string | undefined): string => {
+    if (!html) return '';
+    // Match line-height: Xpx where X is a float/integer, case-insensitive
+    return html.replace(/line-height\s*:\s*([0-9.]+)\s*px/gi, (match, val) => {
+        const num = parseFloat(val);
+        if (!isNaN(num) && num < 10) {
+            return `line-height: ${num}`;
+        }
+        return match;
+    });
+};
+

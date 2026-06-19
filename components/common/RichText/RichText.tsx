@@ -6,6 +6,7 @@ import {
     Heading, Lock
 } from 'lucide-react';
 import PopoverColorPicker from './PopoverColorPicker';
+import { sanitizeHtmlLineHeight } from '../../templates/EmailEditor/utils/styleUtils';
 
 interface RichTextProps {
     value: string;
@@ -48,12 +49,19 @@ const RichText: React.FC<RichTextProps> = ({ value, onChange, className = "", bo
     const FONT_SIZES = ['10px', '12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '48px', '64px'];
 
     useEffect(() => {
-        if (editorRef.current && editorRef.current.innerHTML !== value) {
-            if (document.activeElement !== editorRef.current) {
-                editorRef.current.innerHTML = value;
+        if (editorRef.current) {
+            const sanitized = sanitizeHtmlLineHeight(value);
+            if (editorRef.current.innerHTML !== sanitized) {
+                if (document.activeElement !== editorRef.current) {
+                    editorRef.current.innerHTML = sanitized;
+                }
             }
         }
     }, [value]);
+
+    const handleChange = (htmlVal: string) => {
+        onChange(sanitizeHtmlLineHeight(htmlVal));
+    };
 
     const checkActiveFormats = () => {
         const formats: string[] = [];
@@ -116,7 +124,7 @@ const RichText: React.FC<RichTextProps> = ({ value, onChange, className = "", bo
             document.execCommand('styleWithCSS', false, 'true');
         }
         document.execCommand(command, false, val);
-        if (editorRef.current) onChange(editorRef.current.innerHTML);
+        if (editorRef.current) handleChange(editorRef.current.innerHTML);
         checkActiveFormats();
     };
 
@@ -153,7 +161,7 @@ const RichText: React.FC<RichTextProps> = ({ value, onChange, className = "", bo
             el.parentNode?.replaceChild(span, el);
         });
 
-        if (editorRef.current) onChange(editorRef.current.innerHTML);
+        if (editorRef.current) handleChange(editorRef.current.innerHTML);
         setShowFontSizeDropdown(false);
         setCustomFontSize(size.replace('px', ''));
     };
@@ -210,7 +218,7 @@ const RichText: React.FC<RichTextProps> = ({ value, onChange, className = "", bo
                     el.style.textDecoration = 'underline';
                 }
             }
-            if (editorRef.current) onChange(editorRef.current.innerHTML);
+            if (editorRef.current) handleChange(editorRef.current.innerHTML);
         }
         setShowLinkInput(false);
         setLinkUrl('');
@@ -440,8 +448,8 @@ const RichText: React.FC<RichTextProps> = ({ value, onChange, className = "", bo
                 contentEditable
                 className="rich-text-editor p-4 outline-none text-sm text-slate-700 leading-relaxed custom-scrollbar prose prose-sm max-w-none empty:before:content-['Nhập_nội_dung_văn_bản...'] empty:before:text-slate-300 empty:before:italic cursor-text"
                 style={{ minHeight }}
-                onInput={() => onChange(editorRef.current?.innerHTML || '')}
-                onBlur={() => { onChange(editorRef.current?.innerHTML || ''); checkActiveFormats(); }}
+                onInput={() => handleChange(editorRef.current?.innerHTML || '')}
+                onBlur={() => { handleChange(editorRef.current?.innerHTML || ''); checkActiveFormats(); }}
                 onMouseUp={saveSelection}
                 onKeyUp={saveSelection}
                 onFocus={checkActiveFormats}

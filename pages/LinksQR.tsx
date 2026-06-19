@@ -17,8 +17,110 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import QRCodeStyling from 'qr-code-styling';
 import QRDesignerModal from '../components/links/QRDesignerModal';
 
+const getProxiedUrl = (url: string | undefined): string | undefined => {
+    if (!url) return url;
+    return url.replace(/^https?:\/\/automation\.ideas\.edu\.vn\/uploadss\//, '/uploadss/');
+};
+
+const getRoundedImage = (src: string, radiusPercent: number): Promise<string> => {
+    return new Promise((resolve) => {
+        if (!src) {
+            resolve('');
+            return;
+        }
+        if (radiusPercent <= 0) {
+            resolve(src);
+            return;
+        }
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const size = Math.max(img.width, img.height, 512);
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                resolve('');
+                return;
+            }
+
+            ctx.clearRect(0, 0, size, size);
+            const r = (size * Math.min(radiusPercent, 50)) / 100;
+
+            ctx.beginPath();
+            ctx.moveTo(r, 0);
+            ctx.lineTo(size - r, 0);
+            ctx.quadraticCurveTo(size, 0, size, r);
+            ctx.lineTo(size, size - r);
+            ctx.quadraticCurveTo(size, size, size - r, size);
+            ctx.lineTo(r, size);
+            ctx.quadraticCurveTo(0, size, 0, size - r);
+            ctx.lineTo(0, r);
+            ctx.quadraticCurveTo(0, 0, r, 0);
+            ctx.closePath();
+            ctx.clip();
+            
+            const imgAspect = img.width / img.height;
+            let drawWidth = size;
+            let drawHeight = size;
+            let xOffset = 0;
+            let yOffset = 0;
+            
+            if (imgAspect > 1) {
+                drawWidth = size * imgAspect;
+                xOffset = -(drawWidth - size) / 2;
+            } else if (imgAspect < 1) {
+                drawHeight = size / imgAspect;
+                yOffset = -(drawHeight - size) / 2;
+            }
+            
+            ctx.drawImage(img, xOffset, yOffset, drawWidth, drawHeight);
+            
+            try {
+                resolve(canvas.toDataURL('image/png'));
+            } catch (err) {
+                console.error('Canvas toDataURL failed', err);
+                resolve('');
+            }
+        };
+        img.onerror = () => {
+            resolve('');
+        };
+        img.src = src;
+    });
+};
+
 const QRPreview = ({ configJson, value, size = 300 }: { configJson?: string, value: string, size?: number }) => {
     const ref = useRef<HTMLDivElement>(null);
+    const [processedLogo, setProcessedLogo] = useState<string | undefined>(undefined);
+
+    useEffect(() => {
+        let isCurrent = true;
+        try {
+            const config = JSON.parse(configJson || '{}');
+            if (!config.logo) {
+                setProcessedLogo(undefined);
+                return;
+            }
+            const proxiedUrl = getProxiedUrl(config.logo);
+            if (!config.logoRadius || config.logoRadius <= 0) {
+                setProcessedLogo(proxiedUrl);
+                return;
+            }
+            getRoundedImage(proxiedUrl || '', config.logoRadius).then(res => {
+                if (isCurrent) {
+                    setProcessedLogo(res || undefined);
+                }
+            });
+        } catch {
+            setProcessedLogo(undefined);
+        }
+        return () => {
+            isCurrent = false;
+        };
+    }, [configJson]);
+
     useEffect(() => {
         if (!ref.current) return;
         try {
@@ -26,9 +128,9 @@ const QRPreview = ({ configJson, value, size = 300 }: { configJson?: string, val
             const qrCode = new QRCodeStyling({
                 width: size,
                 height: size,
-                type: 'svg',
+                type: 'canvas',
                 data: value,
-                image: config.logo,
+                image: processedLogo,
                 dotsOptions: {
                     color: config.fgGradientEnabled ? undefined : (config.fgColor || '#000000'),
                     gradient: config.fgGradientEnabled ? {
@@ -65,9 +167,9 @@ const QRPreview = ({ configJson, value, size = 300 }: { configJson?: string, val
         } catch (e) {
             console.error('QR Render Error', e);
         }
-    }, [configJson, value, size]);
+    }, [configJson, value, size, processedLogo]);
 
-    return <div ref={ref} className="rounded-xl overflow-hidden shadow-inner bg-slate-50" />;
+    return <div ref={ref} className="rounded-xl overflow-hidden shadow-inner bg-slate-50 w-full h-full flex items-center justify-center [&>canvas]:w-full [&>canvas]:h-full" />;
 };
 
 export interface ShortLink {
@@ -580,6 +682,7 @@ const LinksQR: React.FC = () => {
                                 {(() => {
                                     const cfg = JSON.parse(selectedLink.qr_config_json || '{}');
                                     const hasFrame = cfg.frameId && cfg.frameId !== 'none';
+                                    const qrValue = cfg.useDirectLink && selectedLink.target_url ? selectedLink.target_url : `${EXTERNAL_ASSET_BASE}/go/${selectedLink.slug}`;
                                     
                                     return (
                                         <div 
@@ -595,7 +698,7 @@ const LinksQR: React.FC = () => {
                                             <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
                                                 <QRPreview 
                                                     configJson={selectedLink.qr_config_json}
-                                                    value={`${EXTERNAL_ASSET_BASE}/go/${selectedLink.slug}`}
+                                                    value={qrValue}
                                                     size={240}
                                                 />
                                             </div>
@@ -610,15 +713,25 @@ const LinksQR: React.FC = () => {
 
                                 <div className="mt-8 text-center w-full max-w-[200px]">
                                     <button 
-                                        onClick={() => {
+                                        onClick={async () => {
                                             try {
                                                 const config = JSON.parse(selectedLink.qr_config_json || '{}');
+                                                const proxiedUrl = getProxiedUrl(config.logo);
+                                                
+                                                let finalLogo = proxiedUrl;
+                                                if (config.logo && config.logoRadius && config.logoRadius > 0) {
+                                                    finalLogo = await getRoundedImage(proxiedUrl || '', config.logoRadius);
+                                                }
+ 
+                                                const qrValue = config.useDirectLink && selectedLink.target_url ? selectedLink.target_url : `${EXTERNAL_ASSET_BASE}/go/${selectedLink.slug}`;
+ 
                                                 const qr = new QRCodeStyling({
-                                                    data: `${EXTERNAL_ASSET_BASE}/go/${selectedLink.slug}`,
-                                                    width: 1500,
-                                                    height: 1500,
+                                                    data: qrValue,
+                                                    width: 1000,
+                                                    height: 1000,
+                                                    type: 'canvas',
                                                     margin: 20,
-                                                    image: config.logo,
+                                                    image: finalLogo,
                                                     dotsOptions: {
                                                         color: config.fgGradientEnabled ? undefined : (config.fgColor || '#000000'),
                                                         gradient: config.fgGradientEnabled && config.fgGradient ? {
