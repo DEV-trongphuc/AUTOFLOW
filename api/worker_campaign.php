@@ -74,7 +74,12 @@ if (!function_exists('runWorkerCampaign')) {
         // Passed via ?retry_count=N in the async trigger URL. If count exceeds MAX, auto-pause.
         // [SECURITY FIX] Cap retry_count to MAX_RETRIES+1 to prevent circuit-breaker bypass
         // via crafted URL (e.g. ?retry_count=999999 would skip the guard entirely).
-        $MAX_RETRIES = 8;
+        // [FIX CB-1] Increased MAX_RETRIES 8 → 15.
+        // Old value caused false-positive Circuit Breaker pauses on campaigns with 2k+ recipients:
+        // each async batch re-trigger increments retry_count even when sending is healthy.
+        // At 200 recipients/batch and 14/s, a 2k campaign needs ~10 retries minimum — the old
+        // limit of 8 would auto-pause campaigns that still had recipients left to send.
+        $MAX_RETRIES = 15;
         $retryCount = min((int) ($_GET['retry_count'] ?? 0), $MAX_RETRIES + 1);
         if ($manualCampaignId) {
             $logs[] = "-> Direct trigger received for Campaign ID: $manualCampaignId (retry #$retryCount)";
@@ -123,6 +128,11 @@ if (!function_exists('runWorkerCampaign')) {
             // Start a transaction for the campaign processing
             $pdo->beginTransaction();
             try {
+                // [FIX PROG-1] On resume from 'paused' status, always re-sync count_sent from real
+                // delivery logs so the progress bar reflects actual sends (not a stale counter).
+                // This fixes the mismatch where history tab shows 1,904 but progress shows 1,071.
+                $wasResumedFromPause = ($campaign['status'] === 'paused');
+
                 // Initialize if NOT already sending, or if sent_at is missing (manual trigger case)
                 if ($campaign['status'] !== 'sending' || empty($campaign['sent_at'])) {
                     // Calculate Audience Size (Snapshot)
@@ -184,15 +194,24 @@ if (!function_exists('runWorkerCampaign')) {
                     }
 
                     $totalAudience = (int) ($campaign['total_target_audience'] ?? 0);
-                    if (!empty($countWheres) && ($totalAudience === 0 || $manualCampaignId)) {
+                    // [FIX PROG-1] Force re-count when: no audience set, manual trigger, OR resuming from pause
+                    if (!empty($countWheres) && ($totalAudience === 0 || $manualCampaignId || $wasResumedFromPause)) {
                         $countSql .= " AND (" . implode(' OR ', $countWheres) . ")";
                         $stmtCount = $pdo->prepare($countSql);
                         $stmtCount->execute($countParams);
                         $totalAudience = (int) $stmtCount->fetchColumn();
                     }
 
-                    // Change status to 'sending' and ensure sent_at is marked
-                    $pdo->prepare("UPDATE campaigns SET status = 'sending', sent_at = IFNULL(sent_at, NOW()), total_target_audience = ? WHERE id = ?")->execute([$totalAudience, $cid]);
+                    // [FIX PROG-1] On resume from paused: atomically re-sync count_sent from delivery
+                    // logs AND update status + audience in ONE UPDATE to avoid double row-lock on the
+                    // campaigns table within the same transaction.
+                    if ($wasResumedFromPause) {
+                        $pdo->prepare("UPDATE campaigns SET status = 'sending', sent_at = IFNULL(sent_at, NOW()), total_target_audience = ?, count_sent = (SELECT COUNT(*) FROM mail_delivery_logs WHERE campaign_id = ? AND status = 'success') WHERE id = ? AND workspace_id = ?")->execute([$totalAudience, $cid, $cid, $workspace_id]);
+                        writeWorkerLog("Campaign $cid: Resumed from paused — status=sending, count_sent synced from delivery logs, audience=$totalAudience.");
+                    } else {
+                        // Change status to 'sending' and ensure sent_at is marked
+                        $pdo->prepare("UPDATE campaigns SET status = 'sending', sent_at = IFNULL(sent_at, NOW()), total_target_audience = ? WHERE id = ?")->execute([$totalAudience, $cid]);
+                    }
                     $logs[] = "[Campaign {$cid}] Initialized. Status: sending. Total Audience: $totalAudience";
                     writeWorkerLog("Campaign $cid Initialized. Audience: $totalAudience");
 
@@ -330,13 +349,17 @@ if (!function_exists('runWorkerCampaign')) {
                 if (!empty($wheres)) {
                     $sqlFetch .= " AND (" . implode(' OR ', $wheres) . ")";
                 }
+                // [FIX STUCK-1] Added 'skipped_email' to NOT EXISTS exclusion.
+                // Virtual emails are logged as 'skipped_email' (not 'failed_email'), so without this
+                // they were never excluded from the fetch query and got re-fetched every batch →
+                // worker runs N batches of all-skipped, sees remaining>0, retries until circuit breaker.
                 $sqlFetch .= " AND NOT EXISTS (
                     SELECT 1 FROM subscriber_activity sa
                     WHERE sa.workspace_id = ?
                     AND sa.subscriber_id = s.id
                     AND sa.campaign_id = ?
                     AND (
-                        sa.type IN ('receive_email', 'failed_email', 'zalo_sent', 'meta_sent', 'zns_sent', 'zns_failed', 'enter_flow')
+                        sa.type IN ('receive_email', 'failed_email', 'skipped_email', 'zalo_sent', 'meta_sent', 'zns_sent', 'zns_failed', 'enter_flow')
                         OR (sa.type = 'processing_campaign' AND sa.created_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE))
                     )
                 )";
@@ -347,8 +370,8 @@ if (!function_exists('runWorkerCampaign')) {
 
                 // [OPTIMIZATION] Pre-compile UPDATE queries
                 $stmtUpdateFlowEnrolled = $pdo->prepare("UPDATE flows SET stat_enrolled = stat_enrolled + ? WHERE id = ?");
-                $stmtUpdateCampSentJSON = $pdo->prepare("UPDATE campaigns SET count_sent = count_sent + ?, stats = JSON_SET(COALESCE(NULLIF(stats, ''), '{}'), '$.sent', COALESCE(JSON_EXTRACT(stats, '$.sent'), 0) + ?) WHERE id = ?");
-                $stmtUpdateCampSentFB = $pdo->prepare("UPDATE campaigns SET count_sent = count_sent + ? WHERE id = ?");
+                $stmtUpdateCampSentJSON = $pdo->prepare("UPDATE campaigns SET count_sent = count_sent + ?, count_bounced = count_bounced + ?, stats = JSON_SET(COALESCE(NULLIF(stats, ''), '{}'), '$.sent', COALESCE(JSON_EXTRACT(stats, '$.sent'), 0) + ?, '$.failed', COALESCE(JSON_EXTRACT(stats, '$.failed'), 0) + ?) WHERE id = ?");
+                $stmtUpdateCampSentFB = $pdo->prepare("UPDATE campaigns SET count_sent = count_sent + ?, count_bounced = count_bounced + ? WHERE id = ?");
 
                 while ($hasMore && $batchCount < $MAX_BATCHES) {
                     $batchCount++;
@@ -530,11 +553,16 @@ if (!function_exists('runWorkerCampaign')) {
                                 $totalToday = $subCapData[$campChannel] ?? 0;
                                 if ($totalToday >= $maxPerDay) {
                                     $logs[] = "  -> Skipping {$sub['email']}: Frequency cap reached ($totalToday/$maxPerDay) for channel $campChannel";
+                                    // [FIX STUCK-2] Log a 'skipped_email' activity so this subscriber is EXCLUDED
+                                    // from future batches. Without this, frequency-capped subscribers are hit with
+                                    // bare `continue` and NO activity is logged → they keep getting re-fetched
+                                    // every batch retry until the circuit breaker fires.
+                                    $failActivities[] = [$subId, 'skipped_email', $cid, $cName, "Skipped: Frequency cap ($totalToday/$maxPerDay per day)", $cid, null, $isABTest ? $variationLabel : null];
                                     continue;
                                 }
                                 // Increment local cache for this batch
                                 if (!isset($capCache[$subId])) $capCache[$subId] = ['email' => 0, 'zalo' => 0, 'meta' => 0];
-                                $capCache[$subId][$campChannel]++; 
+                                $capCache[$subId][$campChannel]++;
                             }
 
                             if (($campaign['type'] ?? 'email') === 'zalo_zns') {
@@ -596,8 +624,11 @@ if (!function_exists('runWorkerCampaign')) {
                                     }
 
                                     // [SES SHARED RATE LIMITER] Acquire slot from cross-process file-lock.
-                                    // Shared with FlowExecutor ? campaign + flow combined = 10/s total.
-                                    sesAcquireRateSlot(); // 100ms interval = 10/s shared total
+                                    // [FIX SPEED-1] Interval 100ms → 70ms = 14/s shared total.
+                                    // At 10/s, 2k emails take ~200s (3.3 min) minimum.
+                                    // At 14/s, same 2k emails take ~143s (2.4 min), ~30% faster.
+                                    // 14/s remains well within Amazon SES 14/s sending quota.
+                                    sesAcquireRateSlot(70000); // 70ms interval = ~14/s shared total
 
                                     $res = $mailer->send($sub['email'], $personalSubject, $personalHtml, $sub['id'], $cid, null, null, $attachments, null, null, $cName, false, $skipQA, $variationLabel, null, $workspace_id);
                                 }
@@ -818,14 +849,20 @@ if (!function_exists('runWorkerCampaign')) {
 
                         // 4. Update Campaign Count
                         $sentCount = count($successIds);
-                        // Update count_sent AND stats JSON structure so UI polls see progress
+                        $failedCount = 0;
+                        foreach ($failActivities as $act) {
+                            if (in_array($act[1], ['failed_email', 'zns_failed'])) {
+                                $failedCount++;
+                            }
+                        }
+                        // Update count_sent, count_bounced AND stats JSON structure so UI polls see progress
                         try {
                             // Optimized SQL to handle NULL or Empty String for stats
-                            $stmtUpdateCampSentJSON->execute([$sentCount, $sentCount, $cid]);
+                            $stmtUpdateCampSentJSON->execute([$sentCount, $failedCount, $sentCount, $failedCount, $cid]);
                         } catch (Exception $e) {
                             // Fallback to simple update if JSON fails
                             $logs[] = "[WARN] Stats JSON update failed (fallback used): " . $e->getMessage();
-                            $stmtUpdateCampSentFB->execute([$sentCount, $cid]);
+                            $stmtUpdateCampSentFB->execute([$sentCount, $failedCount, $cid]);
                         }
 
                         $pdo->commit();
@@ -886,12 +923,15 @@ if (!function_exists('runWorkerCampaign')) {
 
                 // [FIX P35-W1] Mirror main batch query: also exclude fresh processing_campaign locks (<10min).
                 // Previously this comment was INSIDE the SQL string ? MySQL parse error ? campaign stuck at 'sending'.
+                // [FIX STUCK-1] Mirror main batch NOT EXISTS: add 'skipped_email' here too.
+                // Without this, the $remaining count includes virtually-skipped subscribers,
+                // making it appear as if there are always unsent recipients → circuit breaker loops.
                 $sqlLeft .= " AND NOT EXISTS (
             SELECT 1 FROM subscriber_activity sa 
             WHERE sa.workspace_id = ? AND sa.subscriber_id = s.id 
             AND sa.campaign_id = ?
             AND (
-                sa.type IN ('receive_email', 'failed_email', 'zalo_sent', 'meta_sent', 'zns_sent', 'zns_failed', 'enter_flow')
+                sa.type IN ('receive_email', 'failed_email', 'skipped_email', 'zalo_sent', 'meta_sent', 'zns_sent', 'zns_failed', 'enter_flow')
                 OR (sa.type = 'processing_campaign' AND sa.created_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE))
             )
         )";
@@ -913,7 +953,8 @@ if (!function_exists('runWorkerCampaign')) {
                     // we gracefully exit and let the minute Cron Job handle the leftovers.
                     if ($totalProcessed > 0) {
                         if ($retryCount >= $MAX_RETRIES) {
-                            $pdo->prepare("UPDATE campaigns SET status = 'paused' WHERE id = ? AND workspace_id = ?")->execute([$cid, $workspace_id]);
+                            // [FIX CB-2] Sync count_sent before pausing so UI shows accurate progress.
+                            $pdo->prepare("UPDATE campaigns SET count_sent = (SELECT COUNT(*) FROM mail_delivery_logs WHERE campaign_id = ? AND status = 'success'), status = 'paused' WHERE id = ? AND workspace_id = ?")->execute([$cid, $cid, $workspace_id]);
                             $errMsg = "[CIRCUIT BREAKER] Campaign $cid auto-paused after $MAX_RETRIES consecutive retries with $remaining unsent recipients. Manual review required.";
                             $logs[] = $errMsg;
                             writeWorkerLog($errMsg);

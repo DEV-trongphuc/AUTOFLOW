@@ -167,9 +167,29 @@ function handleBounce($pdo, $message)
             // Log activity for the first subscriber found (audit trail — workspace-independent)
             $firstSub = $pdo->prepare("SELECT id FROM subscribers WHERE email = ? LIMIT 1");
             $firstSub->execute([$email]);
-            if ($subId = $firstSub->fetchColumn()) {
-                $pdo->prepare("INSERT INTO subscriber_activity (subscriber_id, type, details, created_at) VALUES (?, 'bounce', ?, NOW())")
-                    ->execute([$subId, $detail]);
+            $subId = $firstSub->fetchColumn();
+            if ($subId) {
+                // [REAL-TIME STATS] Find campaigns sent to this recipient that succeeded,
+                // mark them as failed in mail_delivery_logs, and update campaign stats.
+                $stmtLogs = $pdo->prepare("SELECT DISTINCT campaign_id FROM mail_delivery_logs WHERE recipient = ? AND status = 'success'");
+                $stmtLogs->execute([$email]);
+                $campaignIds = $stmtLogs->fetchAll(PDO::FETCH_COLUMN);
+
+                if (!empty($campaignIds)) {
+                    $pdo->prepare("UPDATE mail_delivery_logs SET status = 'failed', error_message = ? WHERE recipient = ? AND status = 'success'")
+                        ->execute([$detail, $email]);
+
+                    foreach ($campaignIds as $campaignId) {
+                        if ($campaignId) {
+                            $pdo->prepare("UPDATE campaigns SET count_bounced = count_bounced + 1, count_sent = GREATEST(0, count_sent - 1) WHERE id = ?")
+                                ->execute([$campaignId]);
+                        }
+                    }
+                }
+
+                $recentCampaignId = !empty($campaignIds) ? $campaignIds[0] : null;
+                $pdo->prepare("INSERT INTO subscriber_activity (subscriber_id, type, details, campaign_id, created_at) VALUES (?, 'bounce', ?, ?, NOW())")
+                    ->execute([$subId, $detail, $recentCampaignId]);
             }
 
         } elseif ($bounceType === 'Transient') {
@@ -215,8 +235,23 @@ function handleComplaint($pdo, $message)
             $pdo->prepare("UPDATE subscriber_flow_states SET status = 'cancelled', updated_at = NOW() WHERE subscriber_id = ? AND status IN ('waiting', 'processing')")
                 ->execute([$subId]);
 
-            $pdo->prepare("INSERT INTO subscriber_activity (subscriber_id, type, details, created_at) VALUES (?, 'complaint', ?, NOW())")
-                ->execute([$subId, "Spam Complaint via SES (feedback: $feedbackType)"]);
+            // [REAL-TIME STATS] Find campaigns sent to this recipient and increment count_spam
+            $stmtLogs = $pdo->prepare("SELECT DISTINCT campaign_id FROM mail_delivery_logs WHERE recipient = ? AND status = 'success'");
+            $stmtLogs->execute([$email]);
+            $campaignIds = $stmtLogs->fetchAll(PDO::FETCH_COLUMN);
+
+            if (!empty($campaignIds)) {
+                foreach ($campaignIds as $campaignId) {
+                    if ($campaignId) {
+                        $pdo->prepare("UPDATE campaigns SET count_spam = count_spam + 1 WHERE id = ?")
+                            ->execute([$campaignId]);
+                    }
+                }
+            }
+
+            $recentCampaignId = !empty($campaignIds) ? $campaignIds[0] : null;
+            $pdo->prepare("INSERT INTO subscriber_activity (subscriber_id, type, details, campaign_id, created_at) VALUES (?, 'complaint', ?, ?, NOW())")
+                ->execute([$subId, "Spam Complaint via SES (feedback: $feedbackType)", $recentCampaignId]);
         }
         } catch (Exception $e) {
             error_log('[ses_webhook] handleComplaint error for ' . $email . ': ' . $e->getMessage());

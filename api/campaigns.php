@@ -36,7 +36,8 @@ function formatCampaign($row)
         'total_clicked' => (int) ($row['count_clicked'] ?? 0),
         'bounced' => (int) ($row['count_bounced'] ?? 0),
         'spam' => (int) ($row['count_spam'] ?? 0),
-        'unsubscribed' => (int) ($row['count_unsubscribed'] ?? 0)
+        'unsubscribed' => (int) ($row['count_unsubscribed'] ?? 0),
+        'failed' => (int) ($row['count_bounced'] ?? 0)
     ];
 
     $row['reminders'] = []; // Fetched separately
@@ -844,6 +845,7 @@ AND $col IS NOT NULL AND $col != '' $locFilter GROUP BY $col ORDER BY value DESC
 // Now uses the same ?route=send_test pattern as all other routes in this file.
 $inputData = json_decode(file_get_contents("php://input"), true);
 if ($method === 'POST' && $route === 'send_test') {
+    require_once 'flow_helpers.php';
     try {
         $data = $inputData;
         $campaignId = $data['campaign_id'];
@@ -853,7 +855,7 @@ if ($method === 'POST' && $route === 'send_test') {
 
         // Fetch Campaign First to Determine Type
         // [FIX P39-CAM] Explicit columns — avoids loading subscriber_data/large blobs into memory
-        $stmtCamp = $pdo->prepare("SELECT id, type, subject, template_id, custom_html, content_body, attachments, config FROM campaigns WHERE id = ? LIMIT 1");
+        $stmtCamp = $pdo->prepare("SELECT id, type, subject, template_id, content_body, attachments, config FROM campaigns WHERE id = ? LIMIT 1");
         $stmtCamp->execute([$campaignId]);
         $campaign = $stmtCamp->fetch();
 
@@ -975,10 +977,10 @@ if ($method === 'POST' && $route === 'send_test') {
 
             $finalSubject = replaceMergeTags($subject, $subscriber);
             $finalHtml = replaceMergeTags($htmlContent, $subscriber);
-            $stmtSettings = $pdo->query("SELECT `key`, `value` FROM system_settings");
-            $settings = $stmtSettings->fetchAll(PDO::FETCH_KEY_PAIR);
-            $defaultSender = $settings['smtp_user'] ?? "marketing@ka-en.com.vn";
-            $mailer = new Mailer($pdo, API_BASE_URL, $defaultSender);
+            $stmtSettings = $pdo->prepare("SELECT `value` FROM system_settings WHERE `key` = 'smtp_user' AND workspace_id IN (0, ?) ORDER BY workspace_id DESC LIMIT 1");
+            $stmtSettings->execute([$workspace_id]);
+            $defaultSender = $stmtSettings->fetchColumn() ?: "marketing@ka-en.com.vn";
+            $mailer = new Mailer($pdo, API_BASE_URL, $defaultSender, $workspace_id);
             $testLabel = $reminderId ? "Test Reminder: " . $reminder['subject'] : "Test Campaign: " . $campaign['name'];
             $res = $mailer->send(
                 $targetEmail,
@@ -1001,7 +1003,7 @@ if ($method === 'POST' && $route === 'send_test') {
                 jsonResponse(false, null, 'Failed to send test email: ' . (is_string($res) ? $res : 'Unknown error'));
         }
     } catch (Exception $e) {
-        jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+        jsonResponse(false, null, 'Lỗi hệ thống: ' . $e->getMessage() . ' in ' . basename($e->getFile()) . ':' . $e->getLine());
     }
 }
 
@@ -1223,7 +1225,7 @@ switch ($method) {
                 // [FIX P42-C1] SELECT * loaded full content_body (can be MBs of HTML) for every campaign GET.
                 // Explicit columns only — content_body is fetched indirectly via resolveEmailContent() for sends anyway.
                 $stmt = $pdo->prepare("SELECT id, workspace_id, name, subject, sender_email, status, sent_at, scheduled_at,
-                    template_id, content_body, custom_html, target_config, count_sent, count_opened, count_unique_opened,
+                    template_id, content_body, target_config, count_sent, count_opened, count_unique_opened,
                     count_clicked, count_unique_clicked, count_bounced, count_spam, count_unsubscribed, tracking_enabled,
                     created_at, updated_at, type, config, total_target_audience, attachments,
                     is_deleted FROM campaigns WHERE id = ? AND workspace_id = ?");
@@ -1247,18 +1249,32 @@ switch ($method) {
                         }
                     }
 
-                    // [SELF-HEALING] count_sent sync (only while sending, throttled)
-                    if ($syncNeeded && strtolower($camp['status'] ?? '') === 'sending') {
+                    // [SELF-HEALING] count_sent and count_bounced sync (throttled)
+                    if ($syncNeeded && in_array(strtolower($camp['status'] ?? ''), ['sent', 'sending'])) {
                         $isZns = ($camp['type'] ?? '') === 'zalo_zns';
-                        $statsSql = $isZns
-                            ? "SELECT COUNT(*) FROM zalo_delivery_logs WHERE flow_id = ? AND status IN ('sent', 'seen', 'delivered')"
-                            : "SELECT COUNT(*) FROM mail_delivery_logs WHERE campaign_id = ? AND status = 'success'";
-                        $stmtSync = $pdo->prepare($statsSql);
-                        $stmtSync->execute([$path]);
-                        $realSent = (int)$stmtSync->fetchColumn();
-                        if ($realSent > (int)$camp['count_sent']) {
+                        if ($isZns) {
+                            $stmtSync = $pdo->prepare("SELECT COUNT(*) FROM zalo_delivery_logs WHERE flow_id = ? AND status IN ('sent', 'seen', 'delivered')");
+                            $stmtSync->execute([$path]);
+                            $realSent = (int)$stmtSync->fetchColumn();
+
+                            $stmtSyncFail = $pdo->prepare("SELECT COUNT(*) FROM zalo_delivery_logs WHERE flow_id = ? AND status = 'failed'");
+                            $stmtSyncFail->execute([$path]);
+                            $realFailed = (int)$stmtSyncFail->fetchColumn();
+                        } else {
+                            $stmtSync = $pdo->prepare("SELECT COUNT(*) FROM mail_delivery_logs WHERE campaign_id = ? AND status = 'success'");
+                            $stmtSync->execute([$path]);
+                            $realSent = (int)$stmtSync->fetchColumn();
+
+                            $stmtSyncFail = $pdo->prepare("SELECT COUNT(*) FROM mail_delivery_logs WHERE campaign_id = ? AND status = 'failed'");
+                            $stmtSyncFail->execute([$path]);
+                            $realFailed = (int)$stmtSyncFail->fetchColumn();
+                        }
+
+                        if ($realSent !== (int)$camp['count_sent'] || $realFailed !== (int)$camp['count_bounced']) {
                             $camp['count_sent'] = $realSent;
-                            $pdo->prepare("UPDATE campaigns SET count_sent = ? WHERE id = ?")->execute([$realSent, $path]);
+                            $camp['count_bounced'] = $realFailed;
+                            $pdo->prepare("UPDATE campaigns SET count_sent = ?, count_bounced = ? WHERE id = ?")
+                                ->execute([$realSent, $realFailed, $path]);
                         }
                     }
 
