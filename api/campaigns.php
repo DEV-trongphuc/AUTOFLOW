@@ -637,34 +637,18 @@ WHERE t_sub.name = ? AND t_sub.workspace_id = ?)";
         $stmt->execute([$totalAudience, $campaignId, $workspace_id]);
 
         if ($stmt->rowCount() > 0 || $currentStatus === 'sending') {
-            $workerUrl = API_BASE_URL . "/worker_campaign.php?campaign_id=$campaignId";
-
-            // Log the trigger attempt
+            // [FIX] Use the central triggerAsyncWorker service to spawn the campaign worker asynchronously in the background.
+            // This prevents the triggering request from blocking for 5s (causing client-timeout process kills)
+            // and guarantees the worker continues running completely detached from the client session.
+            $urlPath = '/worker_campaign.php?campaign_id=' . $campaignId;
+            
             if (function_exists('writeWorkerLog')) {
-                writeWorkerLog("Triggering worker via campaigns.php for campaign $campaignId. URL: $workerUrl");
+                writeWorkerLog("Triggering worker via campaigns.php asynchronously. Path: $urlPath");
             } else {
-                file_put_contents(__DIR__ . '/worker_campaign.log', "[" . date('Y-m-d H:i:s') . "] Triggering worker via campaigns.php
-for campaign $campaignId. URL: $workerUrl\n", FILE_APPEND);
+                file_put_contents(__DIR__ . '/worker_campaign.log', "[" . date('Y-m-d H:i:s') . "] Triggering worker via campaigns.php asynchronously. Path: $urlPath\n", FILE_APPEND);
             }
 
-            $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $workerUrl);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Changed to true to capture result
-            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-            curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P11-H1] was 0, disabling hostname verification
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
-            $curlResult = curl_exec($ch);
-            $curlError = curl_error($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-
-            if ($curlError) {
-                file_put_contents(__DIR__ . '/worker_campaign.log', "[" . date('Y-m-d H:i:s') . "] CURL ERROR triggering worker:
-$curlError\n", FILE_APPEND);
-            }
+            triggerAsyncWorker($urlPath);
 
             logSystemActivity($pdo, 'campaigns', 'refresh_audience', $campaignId, "Campaign $campaignId", ['audience' => $totalAudience]);
 

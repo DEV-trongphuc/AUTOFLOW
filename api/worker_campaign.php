@@ -913,27 +913,21 @@ if (!function_exists('runWorkerCampaign')) {
                 // Final Status Check
                 $pdo->beginTransaction(); // New transaction for final status
 
-                // Simpler: Just check if $hasMore became false naturally indicating we processed all batches
                 // Final Status Check - Double check if actually finished
+                // [BUG FIX] We must check if there are subscribers who have NOT been sent/failed/skipped yet.
+                // We should NOT exclude 'processing_campaign' here, because if they are locked but not sent,
+                // the campaign is NOT finished (the worker might have crashed, leaving them locked).
                 $sqlLeft = "SELECT COUNT(*) FROM subscribers s WHERE s.status IN ('active', 'lead', 'customer') AND s.workspace_id = ?";
                 $execFinal = array_merge([$workspace_id], $queryBaseParams);
 
                 if (!empty($wheres))
                     $sqlLeft .= " AND (" . implode(' OR ', $wheres) . ")";
 
-                // [FIX P35-W1] Mirror main batch query: also exclude fresh processing_campaign locks (<10min).
-                // Previously this comment was INSIDE the SQL string ? MySQL parse error ? campaign stuck at 'sending'.
-                // [FIX STUCK-1] Mirror main batch NOT EXISTS: add 'skipped_email' here too.
-                // Without this, the $remaining count includes virtually-skipped subscribers,
-                // making it appear as if there are always unsent recipients → circuit breaker loops.
                 $sqlLeft .= " AND NOT EXISTS (
             SELECT 1 FROM subscriber_activity sa 
             WHERE sa.workspace_id = ? AND sa.subscriber_id = s.id 
             AND sa.campaign_id = ?
-            AND (
-                sa.type IN ('receive_email', 'failed_email', 'skipped_email', 'zalo_sent', 'meta_sent', 'zns_sent', 'zns_failed', 'enter_flow')
-                OR (sa.type = 'processing_campaign' AND sa.created_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE))
-            )
+            AND sa.type IN ('receive_email', 'failed_email', 'skipped_email', 'zalo_sent', 'meta_sent', 'zns_sent', 'zns_failed', 'enter_flow')
         )";
                 $execFinal[] = $workspace_id;
                 $execFinal[] = $cid;
