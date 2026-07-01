@@ -132,11 +132,11 @@ const SpacingControl: React.FC<SpacingControlProps> = ({ label, values, onChange
                             <div key={k} className="relative flex flex-col gap-1">
                                 <span className="text-[8px] font-black text-slate-400 uppercase ml-1">{label}</span>
                                 <div className="relative group">
-                                    <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none group-focus-within:text-amber-600 transition-all scale-75">
+                                    <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none group-focus-within:text-violet-600 transition-all scale-75">
                                         <Icon className="w-4 h-4" />
                                     </div>
                                     <input
-                                        className="w-full pl-8 pr-6 py-2 text-right text-[11px] font-black rounded-xl border border-slate-200 outline-none focus:border-amber-600 transition-all bg-white text-slate-700 shadow-sm group-hover:border-slate-300"
+                                        className="w-full pl-8 pr-6 py-2 text-right text-[11px] font-black rounded-xl border border-slate-200 outline-none focus:border-violet-600 transition-all bg-white text-slate-700 shadow-sm group-hover:border-slate-300"
                                         value={getNum(values[k as keyof typeof values])}
                                         onChange={(e) => handleSubChange(k, e.target.value)}
                                         placeholder="0"

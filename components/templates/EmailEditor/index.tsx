@@ -828,13 +828,13 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
                     }
                 >
                     <div className="space-y-6">
-                        <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex gap-4 items-center">
-                            <div className="p-3 bg-white rounded-2xl shadow-sm text-amber-600">
+                        <div className="p-4 bg-violet-50 border border-violet-100 rounded-2xl flex gap-4 items-center">
+                            <div className="p-3 bg-white rounded-2xl shadow-sm text-violet-600">
                                 <Box className="w-6 h-6" />
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-amber-900">Reusable Block</p>
-                                <p className="text-[11px] text-amber-700 leading-tight mt-0.5">Lưu lại block này vào thư viện để tái sử dụng nhanh chóng cho các email khác.</p>
+                                <p className="text-sm font-bold text-violet-900">Reusable Block</p>
+                                <p className="text-[11px] text-violet-700 leading-tight mt-0.5">Lưu lại block này vào thư viện để tái sử dụng nhanh chóng cho các email khác.</p>
                             </div>
                         </div>
                         <Input

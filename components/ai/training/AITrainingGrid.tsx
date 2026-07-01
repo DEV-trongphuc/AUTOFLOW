@@ -148,7 +148,7 @@ const AITrainingGrid: React.FC<AITrainingGridProps> = (props) => {
             `}} />
             <div className="space-y-8">
                 <PageHero
-                    title={<>AI <span className={hideWebsiteTab ? "text-white/70" : "text-orange-100/80"}>Training Center</span></>}
+                    title={<>AI <span className={hideWebsiteTab ? "text-white/70" : "text-violet-600"}>Training Center</span></>}
                     subtitle="Nạp kiến thức và huấn luyện bộ não AI cho từng website hoặc các kênh chatbot tập trung của bạn."
                     showStatus={true}
                     statusText="Neural Engine Ready"

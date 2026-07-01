@@ -110,7 +110,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
     const [showAIStats, setShowAIStats] = useState(false);
     const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
 
-    const [activeFeatureTab, setActiveFeatureTab] = useState<'scenarios' | 'knowledge'>('scenarios');
+    const [activeFeatureTab, setActiveFeatureTab] = useState<'scenarios' | 'knowledge'>('knowledge');
 
     // [NEW] Page-count modal state for chunked PDF upload
     const [pendingPdfFile, setPendingPdfFile] = useState<File | null>(null);
@@ -604,23 +604,23 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                     {/* FEATURE SELECTOR TABS */}
                     <div className={`flex items-center gap-8 border-b mb-8 px-2 ${isDarkTheme ? 'border-slate-800' : 'border-slate-200/80'}`}>
                         <button 
-                            onClick={() => setActiveFeatureTab('scenarios')}
-                            className={`relative pb-4 flex items-center gap-2.5 text-[15px] font-bold transition-all ${activeFeatureTab === 'scenarios' ? (isDarkTheme ? 'text-white' : 'text-slate-900') : (isDarkTheme ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600')}`}
-                        >
-                            <Zap className={`w-4 h-4 ${activeFeatureTab === 'scenarios' ? 'text-orange-500' : 'opacity-70'}`} />
-                            Kịch bản hội thoại
-                            {activeFeatureTab === 'scenarios' && (
-                                <span className="absolute bottom-[-1px] left-0 w-full h-[3px] bg-orange-500 rounded-t-full"></span>
-                            )}
-                        </button>
-
-                        <button 
                             onClick={() => setActiveFeatureTab('knowledge')}
                             className={`relative pb-4 flex items-center gap-2.5 text-[15px] font-bold transition-all ${activeFeatureTab === 'knowledge' ? (isDarkTheme ? 'text-white' : 'text-slate-900') : (isDarkTheme ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600')}`}
                         >
                             <Database className={`w-4 h-4 ${activeFeatureTab === 'knowledge' ? 'text-orange-500' : 'opacity-70'}`} />
                             Kho kiến thức AI
                             {activeFeatureTab === 'knowledge' && (
+                                <span className="absolute bottom-[-1px] left-0 w-full h-[3px] bg-orange-500 rounded-t-full"></span>
+                            )}
+                        </button>
+
+                        <button 
+                            onClick={() => setActiveFeatureTab('scenarios')}
+                            className={`relative pb-4 flex items-center gap-2.5 text-[15px] font-bold transition-all ${activeFeatureTab === 'scenarios' ? (isDarkTheme ? 'text-white' : 'text-slate-900') : (isDarkTheme ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600')}`}
+                        >
+                            <Zap className={`w-4 h-4 ${activeFeatureTab === 'scenarios' ? 'text-orange-500' : 'opacity-70'}`} />
+                            Kịch bản hội thoại
+                            {activeFeatureTab === 'scenarios' && (
                                 <span className="absolute bottom-[-1px] left-0 w-full h-[3px] bg-orange-500 rounded-t-full"></span>
                             )}
                         </button>

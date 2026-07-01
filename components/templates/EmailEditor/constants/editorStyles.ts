@@ -18,11 +18,11 @@ export const SHARED_EMAIL_CSS = `
 
 export const EDITOR_SPECIFIC_CSS = `
   .email-block-hover {
-    outline: 2px solid #ffa900;
+    outline: 2px solid #683df2;
     outline-offset: -2px;
   }
   .email-block-selected {
-    outline: 2px solid #ffa900;
+    outline: 2px solid #683df2;
     outline-offset: -2px;
     z-index: 10;
   }
@@ -31,7 +31,7 @@ export const EDITOR_SPECIFIC_CSS = `
     min-height: 1em;
   }
   .rich-text-editor:focus {
-    background-color: rgba(255, 169, 0, 0.05);
+    background-color: rgba(104, 61, 242, 0.05);
   }
   .rich-text-editor * {
     text-align: inherit;

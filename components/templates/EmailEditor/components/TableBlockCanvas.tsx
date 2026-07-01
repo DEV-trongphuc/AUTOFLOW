@@ -433,7 +433,7 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
                                     onMouseDown={e => { e.stopPropagation(); setRowMenu(rIdx === rowMenu ? null : rIdx); setColMenu(null); }}
                                 >
                                     <div style={{ position: 'relative', overflow: 'visible', width: '100%', height: '100%' }}>
-                                        <div className="flex items-center justify-center cursor-pointer hover:bg-amber-100 min-h-[28px] text-[9px] text-slate-400 font-bold select-none">
+                                        <div className="flex items-center justify-center cursor-pointer hover:bg-violet-100 min-h-[28px] text-[9px] text-slate-400 font-bold select-none">
                                             {rIdx + 1}
                                         </div>
                                         {rowMenu === rIdx && (
@@ -445,8 +445,8 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
                                                 <button onClick={() => insertRow(rIdx, true)} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700"><ChevronUp className="w-3 h-3 text-slate-400" /> Chèn hàng trên</button>
                                                 <button onClick={() => insertRow(rIdx, false)} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700"><ChevronDown className="w-3 h-3 text-slate-400" /> Chèn hàng dưới</button>
                                                 <div className="border-t border-slate-100 my-0.5" />
-                                                <button onClick={() => moveRow(rIdx, 'up')} disabled={rIdx === 0} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronUp className="w-3 h-3 text-amber-600" /> Lên trên</button>
-                                                <button onClick={() => moveRow(rIdx, 'down')} disabled={rIdx === effectiveRows - 1} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronDown className="w-3 h-3 text-amber-600" /> Xuống dưới</button>
+                                                <button onClick={() => moveRow(rIdx, 'up')} disabled={rIdx === 0} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronUp className="w-3 h-3 text-violet-600" /> Lên trên</button>
+                                                <button onClick={() => moveRow(rIdx, 'down')} disabled={rIdx === effectiveRows - 1} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronDown className="w-3 h-3 text-violet-600" /> Xuống dưới</button>
                                                 <div className="border-t border-slate-100 my-0.5" />
                                                 <button onClick={() => deleteRow(rIdx)} disabled={effectiveRows <= 2} className="w-full text-left px-3 py-1.5 hover:bg-rose-50 flex items-center gap-2 text-rose-600 disabled:opacity-30"><Trash2 className="w-3 h-3" /> Xóa hàng này</button>
                                             </div>
@@ -504,7 +504,7 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
                                                             onMouseDown={e => { e.preventDefault(); e.stopPropagation(); patchCell(rIdx, cIdx, { align: a }); }}
                                                             style={{
                                                                 padding: '3px 5px', borderRadius: 6, border: 'none', cursor: 'pointer',
-                                                                background: effectiveAlign === a ? '#d97706' : 'transparent',
+                                                                background: effectiveAlign === a ? '#7c3aed' : 'transparent',
                                                                 color: effectiveAlign === a ? '#fff' : '#94a3b8',
                                                                 display: 'flex', alignItems: 'center',
                                                             }}
@@ -519,7 +519,7 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
                                                     onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setColorCell(v => !v); }}
                                                     style={{
                                                         padding: '3px 5px', borderRadius: 6, border: 'none', cursor: 'pointer',
-                                                        background: colorCell ? '#d97706' : 'transparent',
+                                                        background: colorCell ? '#7c3aed' : 'transparent',
                                                         color: colorCell ? '#fff' : '#94a3b8',
                                                         display: 'flex', alignItems: 'center',
                                                     }}
@@ -686,10 +686,10 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
                                                 style={{
                                                     position: 'absolute', top: 0, bottom: 0, right: 0,
                                                     width: 8, cursor: 'col-resize', zIndex: 20,
-                                                    background: draggingCol === cIdx ? 'rgba(245,158,11,0.6)' : 'transparent',
+                                                    background: draggingCol === cIdx ? 'rgba(124,58,237,0.6)' : 'transparent',
                                                     transition: 'background 0.1s',
                                                 }}
-                                                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(245,158,11,0.4)'; }}
+                                                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(124,58,237,0.4)'; }}
                                                 onMouseLeave={e => { if (draggingCol !== cIdx) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
                                                 title="Kéo để thay đổi độ rộng"
                                             />
@@ -723,7 +723,7 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
                                     onMouseDown={e => { e.stopPropagation(); setColMenu(cIdx === colMenu ? null : cIdx); setRowMenu(null); }}
                                 >
                                     <div style={{ position: 'relative', overflow: 'visible', width: '100%', height: '100%', zIndex: colMenu === cIdx ? 500 : 'auto' }}>
-                                        <div className="text-[9px] text-center py-1.5 bg-slate-100 border-x border-b border-slate-200 text-slate-500 font-bold cursor-pointer hover:bg-amber-50 select-none">
+                                        <div className="text-[9px] text-center py-1.5 bg-slate-100 border-x border-b border-slate-200 text-slate-500 font-bold cursor-pointer hover:bg-violet-50 select-none">
                                             C{cIdx + 1}
                                         </div>
                                         {colMenu === cIdx && (
@@ -738,8 +738,8 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
                                                 <button onClick={() => insertCol(cIdx, true)} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700"><ChevronLeft className="w-3 h-3 text-slate-400" /> Chèn cột trái</button>
                                                 <button onClick={() => insertCol(cIdx, false)} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700"><ChevronRight className="w-3 h-3 text-slate-400" /> Chèn cột phải</button>
                                                 <div className="border-t border-slate-100 my-0.5" />
-                                                <button onClick={() => moveCol(cIdx, 'left')} disabled={cIdx === 0} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronLeft className="w-3 h-3 text-amber-600" /> Sang trái</button>
-                                                <button onClick={() => moveCol(cIdx, 'right')} disabled={cIdx === effectiveCols - 1} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronRight className="w-3 h-3 text-amber-600" /> Sang phải</button>
+                                                <button onClick={() => moveCol(cIdx, 'left')} disabled={cIdx === 0} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronLeft className="w-3 h-3 text-violet-600" /> Sang trái</button>
+                                                <button onClick={() => moveCol(cIdx, 'right')} disabled={cIdx === effectiveCols - 1} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 disabled:opacity-30"><ChevronRight className="w-3 h-3 text-violet-600" /> Sang phải</button>
                                                 <div className="border-t border-slate-100 my-0.5" />
                                                 <button onClick={() => deleteCol(cIdx)} disabled={effectiveCols <= 2} className="w-full text-left px-3 py-1.5 hover:bg-rose-50 flex items-center gap-2 text-rose-600 disabled:opacity-30"><Trash2 className="w-3 h-3" /> Xóa cột này</button>
                                             </div>

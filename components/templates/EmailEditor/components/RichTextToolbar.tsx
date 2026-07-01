@@ -60,7 +60,7 @@ const ToolbarBtn: React.FC<{ onClick: () => void; title: string; active?: boolea
     <button
         onMouseDown={(e) => { e.preventDefault(); onClick(); }}
         title={title}
-        className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${active ? 'bg-amber-600 text-white' : 'hover:bg-slate-700 text-slate-300 hover:text-white'}`}
+        className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${active ? 'bg-violet-600 text-white' : 'hover:bg-slate-700 text-slate-300 hover:text-white'}`}
     >
         {children}
     </button>
@@ -269,7 +269,7 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
                                                 setPreviewColor('');
                                             }
                                         }}
-                                        className="bg-amber-600 text-white rounded-lg px-2 py-1.5 text-[10px] font-bold hover:bg-amber-400 transition-colors flex-shrink-0"
+                                        className="bg-violet-600 text-white rounded-lg px-2 py-1.5 text-[10px] font-bold hover:bg-violet-500 transition-colors flex-shrink-0"
                                     >OK</button>
                                 </div>
                                 <input
@@ -287,7 +287,7 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
                                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Đang dùng</p>
                                         <div className="flex flex-wrap gap-1.5 max-w-[190px]">
                                             {usedColors.filter(c => c && c !== 'transparent' && c !== 'none' && !c.includes('gradient')).slice(0, 10).map((c, i) => (
-                                                <button key={i} onClick={() => { execCommand(colorPickerMode === 'text' ? 'foreColor' : 'backColor', c); setShowColorPicker(false); }} className="w-5 h-5 rounded-full border border-white/10 hover:scale-125 transition-transform shadow-sm ring-offset-slate-900 hover:ring-2 hover:ring-amber-400" style={{ backgroundColor: c }} title={c} />
+                                                <button key={i} onClick={() => { execCommand(colorPickerMode === 'text' ? 'foreColor' : 'backColor', c); setShowColorPicker(false); }} className="w-5 h-5 rounded-full border border-white/10 hover:scale-125 transition-transform shadow-sm ring-offset-slate-900 hover:ring-2 hover:ring-violet-400" style={{ backgroundColor: c }} title={c} />
                                             ))}
                                         </div>
                                     </div>
@@ -308,7 +308,7 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
                         <button
                             onClick={() => { saveSelection(); closeAllDropdowns(); setShowMergeTags(v => !v); }}
                             title="Chèn biến"
-                            className="px-2 py-1 rounded-lg transition-colors text-[9px] font-black text-amber-400 hover:bg-amber-600/20 border border-amber-600/30 hover:border-amber-600 flex-shrink-0"
+                            className="px-2 py-1 rounded-lg transition-colors text-[9px] font-black text-violet-400 hover:bg-violet-600/20 border border-violet-600/30 hover:border-violet-600 flex-shrink-0"
                         >BIẾN</button>
                         {showMergeTags && (
                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-slate-900 border border-slate-700 rounded-xl shadow-xl p-1 w-56 z-50 animate-in slide-in-from-bottom-2 max-h-72 overflow-y-auto">
@@ -316,7 +316,7 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
                                 {MERGE_TAGS.map(tag => (
                                     <button key={tag.val} onClick={() => insertMergeTag(tag.val)} className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-800 rounded-lg transition-colors flex justify-between items-center">
                                         <span className="text-slate-300">{tag.label}</span>
-                                        <span className="text-amber-400 text-[9px] font-mono">{tag.val}</span>
+                                        <span className="text-violet-400 text-[9px] font-mono">{tag.val}</span>
                                     </button>
                                 ))}
 

@@ -12,7 +12,7 @@ const ToolboxSavedItem: React.FC<SavedItemProps> = ({ item, onDragStart, onDelet
     <div
         draggable
         onDragStart={(e) => onDragStart(e, 'saved', JSON.stringify(item.data))}
-        className="bg-white border border-slate-100 rounded-xl p-4 cursor-grab active:cursor-grabbing hover:border-amber-400 hover:shadow-md transition-all group relative overflow-hidden mb-2"
+        className="bg-white border border-slate-100 rounded-xl p-4 cursor-grab active:cursor-grabbing hover:border-violet-400 hover:shadow-md transition-all group relative overflow-hidden mb-2"
     >
         {/* Delete button */}
         <button
@@ -45,11 +45,11 @@ const ToolboxSavedItem: React.FC<SavedItemProps> = ({ item, onDragStart, onDelet
             <Trash2 className="w-3.5 h-3.5" />
         </button>
 
-        <div className="absolute top-0 right-0 p-1 bg-amber-50 rounded-bl-xl text-amber-600 opacity-0 group-hover:opacity-0 transition-opacity">
+        <div className="absolute top-0 right-0 p-1 bg-violet-50 rounded-bl-xl text-violet-600 opacity-0 group-hover:opacity-0 transition-opacity">
             <Box className="w-3 h-3" />
         </div>
         <div className="flex items-center gap-3">
-            <div className="p-2 bg-slate-50 rounded-lg text-slate-400 group-hover:text-amber-600 group-hover:bg-amber-50 transition-colors">
+            <div className="p-2 bg-slate-50 rounded-lg text-slate-400 group-hover:text-violet-600 group-hover:bg-violet-50 transition-colors">
                 <Box className="w-4 h-4" />
             </div>
             <span className="text-xs font-bold text-slate-700 truncate">{item.name}</span>

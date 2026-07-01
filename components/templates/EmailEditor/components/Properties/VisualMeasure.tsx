@@ -37,7 +37,7 @@ const VisualMeasure: React.FC<VisualMeasureProps> = ({ label, value, onChange, m
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{label}</label>
                     {tooltip && (
                         <div className="group relative flex items-center">
-                            <div className="w-3.5 h-3.5 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center cursor-help hover:bg-amber-100 hover:text-amber-600 transition-colors">
+                            <div className="w-3.5 h-3.5 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center cursor-help hover:bg-violet-100 hover:text-violet-600 transition-colors">
                                 <span className="text-[9px] font-black italic">?</span>
                             </div>
                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-48 bg-slate-800 text-white text-[10px] p-2 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 text-center shadow-lg font-medium tracking-wide">
@@ -49,16 +49,16 @@ const VisualMeasure: React.FC<VisualMeasureProps> = ({ label, value, onChange, m
                 </div>
                 <div className="flex bg-white border border-slate-200 rounded-lg p-0.5 scale-90 origin-right">
                     {canAuto && <button onClick={() => onChange('auto')} className={`px-2 py-0.5 rounded text-[9px] font-bold transition-all ${isAuto ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-600'}`}>AUTO</button>}
-                    {!forcedUnit && (<><button onClick={() => handleUpdate(`${displayValue}px`)} className={`p-1 rounded transition-all ${currentUnit === 'px' && !isAuto ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-slate-600'}`}><PxIcon className="w-3 h-3" /></button><button onClick={() => handleUpdate(`${displayValue}%`)} className={`p-1 rounded transition-all ${currentUnit === '%' && !isAuto ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-slate-600'}`}><Percent className="w-3 h-3" /></button></>)}
+                    {!forcedUnit && (<><button onClick={() => handleUpdate(`${displayValue}px`)} className={`p-1 rounded transition-all ${currentUnit === 'px' && !isAuto ? 'bg-violet-600 text-white' : 'text-slate-400 hover:text-slate-600'}`}><PxIcon className="w-3 h-3" /></button><button onClick={() => handleUpdate(`${displayValue}%`)} className={`p-1 rounded transition-all ${currentUnit === '%' && !isAuto ? 'bg-violet-600 text-white' : 'text-slate-400 hover:text-slate-600'}`}><Percent className="w-3 h-3" /></button></>)}
                 </div>
             </div>
             {!isAuto && (
                 <div className="flex items-center gap-3">
                     {!hideSlider && <div className="flex-1 relative h-6 flex items-center">
-                        <input type="range" min="0" max={currentUnit === '%' ? 100 : max} value={isNaN(displayValue) ? 0 : displayValue} onChange={(e) => handleUpdate(`${e.target.value}${currentUnit}`)} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-600" />
+                        <input type="range" min="0" max={currentUnit === '%' ? 100 : max} value={isNaN(displayValue) ? 0 : displayValue} onChange={(e) => handleUpdate(`${e.target.value}${currentUnit}`)} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-violet-600" />
                     </div>}
                     <div className={`relative ${hideSlider ? 'w-full' : 'w-14'} shrink-0`}>
-                        <input type="number" step="any" value={isNaN(displayValue) ? 0 : displayValue} onChange={(e) => handleUpdate(`${e.target.value}${currentUnit}`)} className="w-full text-right text-[10px] font-black text-slate-700 bg-white border border-slate-200 rounded-md py-1 pr-5 pl-1 outline-none focus:border-amber-600" />
+                        <input type="number" step="any" value={isNaN(displayValue) ? 0 : displayValue} onChange={(e) => handleUpdate(`${e.target.value}${currentUnit}`)} className="w-full text-right text-[10px] font-black text-slate-700 bg-white border border-slate-200 rounded-md py-1 pr-5 pl-1 outline-none focus:border-violet-600" />
                         <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-400 select-none">{currentUnit}</span>
                     </div>
                 </div>
