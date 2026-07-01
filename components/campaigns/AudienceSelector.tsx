@@ -395,25 +395,25 @@ const AudienceSelector: React.FC<AudienceSelectorProps> = ({
         <div className={`relative bg-white rounded-[24px] border shadow-sm overflow-hidden transition-all min-h-[400px] flex flex-col ${error ? 'border-rose-500 ring-4 ring-rose-50' : 'border-slate-200'}`}>
             <div className="px-6 pt-6 pb-2 flex justify-between items-center border-b border-slate-100">
                 <div className="flex gap-6 overflow-x-auto scrollbar-hide">
-                    <button onClick={() => setActiveTab('lists')} className={`pb-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'lists' ? 'border-[#ffa900] text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
+                    <button onClick={() => setActiveTab('lists')} className={`pb-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'lists' ? 'border-violet-600 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
                         <List className="w-4 h-4" /> Danh sách ({filteredLists.length})
-                        {selectedListCount > 0 && <span className="ml-1 bg-[#ffa900] text-white text-[9px] px-1.5 py-0.5 rounded-full">{selectedListCount}</span>}
+                        {selectedListCount > 0 && <span className="ml-1 bg-violet-600 text-white text-[9px] px-1.5 py-0.5 rounded-full">{selectedListCount}</span>}
                     </button>
-                    <button onClick={() => setActiveTab('sheets')} className={`pb-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'sheets' ? 'border-[#ffa900] text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
+                    <button onClick={() => setActiveTab('sheets')} className={`pb-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'sheets' ? 'border-violet-600 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
                         <Zap className="w-4 h-4" /> Nguồn đồng bộ ({filteredSheets.length})
-                        {selectedSheetCount > 0 && <span className="ml-1 bg-[#ffa900] text-white text-[9px] px-1.5 py-0.5 rounded-full">{selectedSheetCount}</span>}
+                        {selectedSheetCount > 0 && <span className="ml-1 bg-violet-600 text-white text-[9px] px-1.5 py-0.5 rounded-full">{selectedSheetCount}</span>}
                     </button>
-                    <button onClick={() => setActiveTab('segments')} className={`pb-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'segments' ? 'border-[#ffa900] text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
+                    <button onClick={() => setActiveTab('segments')} className={`pb-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'segments' ? 'border-violet-600 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
                         <Layers className="w-4 h-4" /> Phân khúc ({filteredSegs.length})
-                        {selectedSegCount > 0 && <span className="ml-1 bg-[#ffa900] text-white text-[9px] px-1.5 py-0.5 rounded-full">{selectedSegCount}</span>}
+                        {selectedSegCount > 0 && <span className="ml-1 bg-violet-600 text-white text-[9px] px-1.5 py-0.5 rounded-full">{selectedSegCount}</span>}
                     </button>
-                    <button onClick={() => setActiveTab('tags')} className={`pb-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'tags' ? 'border-[#ffa900] text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
+                    <button onClick={() => setActiveTab('tags')} className={`pb-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'tags' ? 'border-violet-600 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
                         <Tag className="w-4 h-4" /> Nhãn ({filteredTags.length})
-                        {selectedTagCount > 0 && <span className="ml-1 bg-[#ffa900] text-white text-[9px] px-1.5 py-0.5 rounded-full">{selectedTagCount}</span>}
+                        {selectedTagCount > 0 && <span className="ml-1 bg-violet-600 text-white text-[9px] px-1.5 py-0.5 rounded-full">{selectedTagCount}</span>}
                     </button>
                 </div>
                 <div className="pb-2 pl-4">
-                    <button onClick={() => setIsImporting(true)} className="text-[10px] font-bold uppercase tracking-wider text-[#ca7900] hover:bg-orange-50 px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 whitespace-nowrap">
+                    <button onClick={() => setIsImporting(true)} className="text-[10px] font-bold uppercase tracking-wider text-violet-600 hover:bg-violet-50 px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 whitespace-nowrap">
                         <Plus className="w-3.5 h-3.5" /> Import Nhanh
                     </button>
                 </div>
@@ -422,20 +422,20 @@ const AudienceSelector: React.FC<AudienceSelectorProps> = ({
             <div className="flex-1 p-4 bg-slate-50/50 relative">
                 <div className="relative mb-4">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input value={search} onChange={e => setSearch(e.target.value)} placeholder={activeTab === 'lists' ? "Tìm danh sách..." : (activeTab === 'sheets' ? "Tìm nguồn đồng bộ..." : (activeTab === 'segments' ? "Tìm phân khúc..." : "Tìm nhãn..."))} className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-[#ffa900] transition-all" />
+                    <input value={search} onChange={e => setSearch(e.target.value)} placeholder={activeTab === 'lists' ? "Tìm danh sách..." : (activeTab === 'sheets' ? "Tìm nguồn đồng bộ..." : (activeTab === 'segments' ? "Tìm phân khúc..." : "Tìm nhãn..."))} className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-violet-600 transition-all" />
                 </div>
 
                 <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
                     {activeTab === 'lists' && (
                         filteredLists.length > 0 ? filteredLists.map(l => (
-                            <div key={l.id} onClick={() => toggle('list', l.id)} className={`group flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${selectedTarget.listIds?.includes(l.id) ? 'bg-[#fff9f0] border-orange-200' : 'bg-white border-slate-100 hover:border-slate-300'}`}>
+                            <div key={l.id} onClick={() => toggle('list', l.id)} className={`group flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${selectedTarget.listIds?.includes(l.id) ? 'bg-violet-50/40 border-violet-200' : 'bg-white border-slate-100 hover:border-slate-300'}`}>
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${selectedTarget.listIds?.includes(l.id) ? 'bg-[#ffa900] text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${selectedTarget.listIds?.includes(l.id) ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
                                         <List className="w-4 h-4" />
                                     </div>
                                     <div><p className="text-xs font-bold text-slate-800">{l.name}</p><p className="text-[9px] text-slate-400 font-semibold">{l.count.toLocaleString()} liên hệ</p></div>
                                 </div>
-                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${selectedTarget.listIds?.includes(l.id) ? 'border-[#ffa900] bg-[#ffa900] text-white' : 'border-slate-300'}`}>{selectedTarget.listIds?.includes(l.id) && <CheckCircle2 className="w-3.5 h-3.5" />}</div>
+                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${selectedTarget.listIds?.includes(l.id) ? 'border-violet-600 bg-violet-600 text-white' : 'border-slate-300'}`}>{selectedTarget.listIds?.includes(l.id) && <CheckCircle2 className="w-3.5 h-3.5" />}</div>
                             </div>
                         )) : <div className="text-center py-8 text-xs text-slate-400 font-medium">Không tìm thấy danh sách nào.</div>
                     )}
@@ -481,7 +481,7 @@ const AudienceSelector: React.FC<AudienceSelectorProps> = ({
                 </div>
 
                 <div className="absolute bottom-4 right-4 bg-slate-900/90 backdrop-blur-md text-white px-4 py-2.5 rounded-full shadow-xl flex items-center gap-3 animate-in slide-in-from-bottom-2">
-                    <Sparkles className="w-3.5 h-3.5 text-[#ffa900] animate-pulse" />
+                    <Sparkles className="w-3.5 h-3.5 text-violet-400 animate-pulse" />
                     <div className="flex items-baseline gap-1">
                         <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">Ước tính:</span>
                         <span className="text-sm font-bold">{estimatedReach.toLocaleString()}</span>

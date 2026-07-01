@@ -35,7 +35,7 @@ interface SegmentRowProps {
 const SegmentRow = React.memo<SegmentRowProps>(({ seg, isSelected, onView, onToggleSelect, onSplit, onCleanup, onEdit, onDelete }) => {
     return (
         <tr
-            className={`group hover:bg-slate-50/50 transition-all duration-300 cursor-pointer ${isSelected ? 'bg-orange-50/20' : ''}`}
+            className={`group hover:bg-slate-50/50 transition-all duration-300 cursor-pointer ${isSelected ? 'bg-violet-50/20' : ''}`}
             onClick={() => onView(seg)}
         >
             <td className="px-6 py-5 pl-8 text-center" onClick={(e) => { e.stopPropagation(); onToggleSelect(seg.id); }}>
@@ -44,18 +44,18 @@ const SegmentRow = React.memo<SegmentRowProps>(({ seg, isSelected, onView, onTog
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => { }}
-                        className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-[#ffa900] checked:bg-[#ffa900] hover:border-[#ffa900]"
+                        className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-violet-600 checked:bg-violet-600 hover:border-violet-600"
                     />
                     <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" />
                 </div>
             </td>
             <td className="px-6 py-5 pl-2">
                 <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#ca7900] flex items-center justify-center shrink-0 border border-orange-100 group-hover:bg-[#ffa900] group-hover:text-white transition-all">
+                    <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center shrink-0 border border-violet-100 group-hover:bg-violet-600 group-hover:text-white transition-all">
                         <Layers className="w-5 h-5" />
                     </div>
                     <div>
-                        <p className="text-sm font-bold text-slate-800 group-hover:text-[#ca7900] transition-colors">{seg.name}</p>
+                        <p className="text-sm font-bold text-slate-800 group-hover:text-violet-600 transition-colors">{seg.name}</p>
                         <p className="text-[10px] text-slate-400 font-medium mt-0.5 truncate max-w-[200px]">{seg.description}</p>
                     </div>
                 </div>
@@ -88,7 +88,7 @@ const SegmentRow = React.memo<SegmentRowProps>(({ seg, isSelected, onView, onTog
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onCleanup(seg); }}
-                        className="p-2 text-slate-300 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-all"
+                        className="p-2 text-slate-300 hover:text-violet-600 hover:bg-violet-50 rounded-full transition-all"
                         title="Dọn dẹp phân khúc"
                     >
                         <Eraser className="w-3.5 h-3.5" />
@@ -184,17 +184,17 @@ const SegmentsTab: React.FC<SegmentsTabProps> = ({ loading, segments, currentPag
                 <table className="w-full">
                     <thead className="bg-slate-50/80 border-b border-slate-200 text-left sticky top-0 z-20 backdrop-blur-sm">
                         {selectedIds.size > 0 ? (
-                            <tr className="bg-[#fffbf0] border-b border-orange-200 shadow-sm animate-in fade-in duration-200">
+                            <tr className="bg-violet-50/40 border-b border-violet-200 shadow-sm animate-in fade-in duration-200">
                                 <th colSpan={6} className="px-4 py-3">
                                     <div className="flex items-center justify-between w-full">
                                         <div className="flex items-center gap-3">
-                                            <button onClick={toggleSelectAll} className="p-1 hover:bg-orange-100 rounded text-orange-600 transition-colors" title="Bỏ chọn tất cả">
+                                            <button onClick={toggleSelectAll} className="p-1 hover:bg-violet-100 rounded text-violet-600 transition-colors" title="Bỏ chọn tất cả">
                                                 <div className="relative flex items-center justify-center">
-                                                    <input type="checkbox" checked readOnly className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-orange-400 bg-orange-400" />
+                                                    <input type="checkbox" checked readOnly className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-violet-600 bg-violet-600" />
                                                     <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none" />
                                                 </div>
                                             </button>
-                                            <span className="text-xs font-bold text-slate-700">Đã chọn <span className="text-orange-600 font-black text-sm">{selectedIds.size.toLocaleString()}</span> phân khúc</span>
+                                            <span className="text-xs font-bold text-slate-700">Đã chọn <span className="text-violet-600 font-black text-sm">{selectedIds.size.toLocaleString()}</span> phân khúc</span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <button
@@ -219,7 +219,7 @@ const SegmentsTab: React.FC<SegmentsTabProps> = ({ loading, segments, currentPag
                             <tr>
                                 <th className="px-6 py-4 w-10 pl-8 text-center">
                                     <div className="relative flex items-center justify-center">
-                                        <input type="checkbox" checked={isAllSelected} onChange={toggleSelectAll} className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-[#ffa900] checked:bg-[#ffa900] hover:border-[#ffa900]" />
+                                        <input type="checkbox" checked={isAllSelected} onChange={toggleSelectAll} className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-violet-600 checked:bg-violet-600 hover:border-violet-600" />
                                         <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" />
                                     </div>
                                 </th>

@@ -1099,7 +1099,7 @@ const Audience: React.FC = () => {
         <>
             <div className="animate-fade-in space-y-8 pb-20 w-full min-w-0">
                 <PageHero
-                    title={<>Audience <span className="text-orange-100/80">Nexus</span></>}
+                    title={<>Audience <span className="text-violet-600">Nexus</span></>}
                     subtitle="Quản lý vòng đời Khách hàng từ lúc đăng ký đến lúc chuyển đổi đa kênh."
                     showStatus={true}
                     statusText="Database Online"

@@ -217,8 +217,8 @@ const Flows: React.FC = () => {
     const [analyticsPagination, setAnalyticsPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
     const [selectedBranchFilter, setSelectedBranchFilter] = useState<string | null>(null);
 
-    // Filters - Changed default to 'all'
-    const [activeTab, setActiveTab] = useState<FlowFilter>('all');
+    // Filters - Changed default to 'active'
+    const [activeTab, setActiveTab] = useState<FlowFilter>('active');
     const [filterType, setFilterType] = useState<TriggerTypeFilter>('all');
     const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
     // Date filter (mirrors Campaign page)
