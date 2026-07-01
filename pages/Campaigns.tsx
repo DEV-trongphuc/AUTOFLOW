@@ -592,13 +592,13 @@ const Campaigns: React.FC = () => {
                         className="flex items-center gap-2 h-[38px] px-3.5 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 border border-slate-200/80 dark:border-slate-700/50 rounded-xl transition-all group"
                         title="Xem AWS SES Quota"
                     >
-                        <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500 group-hover:scale-110 transition-transform" />
-                        <span className="text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest">QUOTA</span>
+                        <Zap className="w-3.5 h-3.5 text-emerald-500 fill-emerald-500 group-hover:scale-110 transition-transform" />
+                        <span className="text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest">DAILY QUOTA</span>
                         {awsQuickInfo !== null ? (
                             <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md leading-none ${
                                 awsQuickInfo.usage_pct > 80 ? 'bg-red-500 text-white'
-                                : awsQuickInfo.usage_pct > 60 ? 'bg-amber-500 text-white'
-                                : 'bg-amber-500 text-white'
+                                : awsQuickInfo.usage_pct > 60 ? 'bg-yellow-500 text-white'
+                                : 'bg-emerald-500 text-white'
                             }`}>
                                 {awsQuickInfo.remaining.toLocaleString()} left
                             </span>
