@@ -4,7 +4,7 @@
  * ============================================================
  * Safe and Unified database migration check and execution script.
  * 
- * Target Database Version: 35
+ * Target Database Version: 36
  * 
  * Features:
  *   - Idempotent: wraps updates sequentially and handles duplicates gracefully.
@@ -16,11 +16,13 @@
 
 require_once __DIR__ . '/db_connect.php';
 
+$silent = isset($GLOBALS['AUTOFLOW_MIGRATE_SILENT']) && $GLOBALS['AUTOFLOW_MIGRATE_SILENT'] === true;
+
 // Safe check: Allow CLI or check session authorization
 $isCli = (php_sapi_name() === 'cli');
-$hasAccess = $isCli;
+$hasAccess = $isCli || $silent;
 
-if (!$isCli) {
+if (!$isCli && !$silent) {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
@@ -40,7 +42,8 @@ if (!$hasAccess) {
     exit(1);
 }
 
-$apply = (isset($_GET['apply']) && $_GET['apply'] === 'true')
+$apply = $silent
+      || (isset($_GET['apply']) && $_GET['apply'] === 'true')
       || (isset($_GET['run']) && $_GET['run'] === '1')
       || (isset($_POST['execute_migration']) && $_POST['execute_migration'] === '1')
       || ($isCli && in_array('--apply', $argv));
@@ -150,7 +153,7 @@ function safeRebuildPK($pdo, $table, $columnsArray, $execSql, $logMsg) {
     }
 }
 
-$targetVersion = 35;
+$targetVersion = 36;
 $currentVersion = 0;
 
 // Query current DB version
@@ -171,7 +174,7 @@ if ($checkSettings && $checkSettings->rowCount() > 0) {
 // ----------------------------------------------------
 // UI Styles & Header
 // ----------------------------------------------------
-if (!$isCli) {
+if (!$isCli && !$silent) {
     header("Content-Type: text/html; charset=utf-8");
     echo "<html><head><title>Hệ thống Cập nhật Cơ sở dữ liệu</title>";
     echo "<style>
@@ -198,7 +201,7 @@ if (!$isCli) {
         .version-label { font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: bold; }
     </style></head><body>";
     echo "<h1>⚙️ Hệ thống Cập nhật Cơ sở dữ liệu</h1>";
-} else {
+} elseif (!$silent) {
     echo "=== HỆ THỐNG CẬP NHẬT CƠ SỞ DỮ LIỆU ===\n";
     echo "Phiên bản hiện tại: " . $currentVersion . "\n";
     echo "Phiên bản mục tiêu: " . $targetVersion . "\n\n";
@@ -265,16 +268,19 @@ if (!$apply) {
 // ----------------------------------------------------
 // Mode: Live Run (Execute updates)
 // ----------------------------------------------------
-if (!$isCli) {
+if (!$isCli && !$silent) {
     echo "<div class='card'>";
     echo "<h3>🚀 Tiến trình chạy Migration thực tế</h3>";
     echo "<div class='step-log'>";
 }
 
 $logs = [];
-$logMsg = function($msg, $type = 'info') use ($isCli, &$logs) {
+$logMsg = function($msg, $type = 'info') use ($isCli, $silent, &$logs) {
     $line = '[' . date('Y-m-d H:i:s') . '] ' . ($type === 'success' ? '[OK] ' : ($type === 'error' ? '[FAIL] ' : '[INFO] ')) . $msg;
     $logs[] = $line;
+    if ($silent) {
+        return;
+    }
     if ($isCli) {
         echo $line . "\n";
     } else {
@@ -292,7 +298,8 @@ $lockRes = $lockStmt->fetch();
 
 if (!$lockRes || (int)$lockRes['get_lock'] !== 1) {
     $logMsg("Không thể lấy khóa Advisory Lock (tiến trình khác đang chạy migration). Vui lòng thử lại sau.", "error");
-    if (!$isCli) echo "</div></div></body></html>";
+    if (!$isCli && !$silent) echo "</div></div></body></html>";
+    if ($silent) return;
     exit();
 }
 
@@ -613,6 +620,36 @@ try {
         $currentVersion = 35;
     }
 
+    // --------------------------------------------------
+    // Version 36: Standardize workspace_id across tracking tables
+    // --------------------------------------------------
+    if ($currentVersion < 36) {
+        $logMsg("Đang chạy cập nhật v36 (Chuẩn hóa workspace_id)...", "info");
+
+        // Web Page Views
+        try {
+            $execSql($pdo, "ALTER TABLE `web_page_views` MODIFY COLUMN `workspace_id` INT(11) DEFAULT 1");
+        } catch (Throwable $e) {
+            $logMsg("Lỗi thay đổi cột workspace_id trong web_page_views: " . $e->getMessage(), "error");
+        }
+
+        // Web Sessions
+        try {
+            $execSql($pdo, "ALTER TABLE `web_sessions` MODIFY COLUMN `workspace_id` INT(11) DEFAULT 1");
+        } catch (Throwable $e) {
+            $logMsg("Lỗi thay đổi cột workspace_id trong web_sessions: " . $e->getMessage(), "error");
+        }
+
+        // Web Events
+        try {
+            $execSql($pdo, "ALTER TABLE `web_events` MODIFY COLUMN `workspace_id` INT(11) DEFAULT 1");
+        } catch (Throwable $e) {
+            $logMsg("Lỗi thay đổi cột workspace_id trong web_events: " . $e->getMessage(), "error");
+        }
+
+        $currentVersion = 36;
+    }
+
     // Update settings table with new db_version
     $stmtVer = $pdo->prepare("INSERT INTO system_settings (`workspace_id`, `key`, `value`) VALUES (0, 'db_version', ?) 
                               ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)");
@@ -640,6 +677,10 @@ if (!is_dir($logDir)) {
 $logFile = $logDir . '/migration_' . date('Ymd_His') . '.log';
 file_put_contents($logFile, implode("\n", $logs));
 $logMsg("Đã ghi log chi tiết vào " . $logFile, "info");
+
+if ($silent) {
+    return;
+}
 
 if (!$isCli) {
     echo "</div>";

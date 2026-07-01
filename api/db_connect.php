@@ -647,7 +647,7 @@ function getGlobalLeadScoreConfig($pdo) {
 
 // ─── AUTO MIGRATION VERSION CHECK ──────────────────────────────────────────
 $db_needs_migration = false;
-$targetDbVersion = 35;
+$targetDbVersion = 36;
 
 if (!isset($isHighTrafficEndpoint) || !$isHighTrafficEndpoint) {
     try {
@@ -668,8 +668,7 @@ if (!isset($isHighTrafficEndpoint) || !$isHighTrafficEndpoint) {
             if ($legacyVer === false || $legacyVer !== '29.8') {
                 $db_needs_migration = true;
             } else {
-                // If it is 29.8, we have baseline v30, but we need to run migrations v31-34.
-                // We should write db_version = 30 to settings, but for now we say migration is needed
+                // If it is 29.8, we have baseline v30, but we need to run migrations v31-35.
                 $db_needs_migration = true;
             }
         }
@@ -680,7 +679,21 @@ if (!isset($isHighTrafficEndpoint) || !$isHighTrafficEndpoint) {
 
 $GLOBALS['db_needs_migration'] = $db_needs_migration;
 
-if ($db_needs_migration && !headers_sent()) {
-    header('X-DB-Needs-Migration: 1');
+if ($db_needs_migration) {
+    if (!headers_sent()) {
+        header('X-DB-Needs-Migration: 1');
+    }
+    // AUTOFLOW: Run migrations silently in the background
+    if (!defined('RUNNING_AUTO_MIGRATION')) {
+        define('RUNNING_AUTO_MIGRATION', true);
+        $GLOBALS['AUTOFLOW_MIGRATE_SILENT'] = true;
+        try {
+            require_once __DIR__ . '/run_migrations.php';
+            // After successful migration, reset db_needs_migration
+            $GLOBALS['db_needs_migration'] = false;
+        } catch (Throwable $e) {
+            error_log("Auto migration trigger failed: " . $e->getMessage());
+        }
+    }
 }
 ?>
