@@ -394,10 +394,11 @@ if (session_status() === PHP_SESSION_NONE) {
     
     // Custom session directory to prevent other PHP scripts from garbage collecting our sessions
     $sessionPath = __DIR__ . '/sessions';
-    if (!is_dir($sessionPath)) {
-        @mkdir($sessionPath, 0777, true);
+    if (is_dir($sessionPath) || @mkdir($sessionPath, 0777, true)) {
+        if (is_writable($sessionPath)) {
+            session_save_path($sessionPath);
+        }
     }
-    session_save_path($sessionPath);
 
     // [FIX] Tăng thời gian sống của session lên 30 ngày (2592000 giây)
     // Đảm bảo garbage collection không xóa nhầm session đang dùng.
@@ -408,12 +409,13 @@ if (session_status() === PHP_SESSION_NONE) {
     // [FIX H-01] Respect cookie lifetime set by individual files (e.g., ai_org_auth.php remember-me).
     // If CUSTOM_SESSION_LIFETIME is defined (by a calling file before our include), use that value.
     // This allows "remember me" (30 days) vs "session cookie" (0) to work correctly.
-    $isSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+    $isSecure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') 
+             || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
     $cookieLifetime = defined('CUSTOM_SESSION_LIFETIME') ? CUSTOM_SESSION_LIFETIME : 2592000;
     session_set_cookie_params([
         'lifetime' => $cookieLifetime, // Respects remember-me override; default = 30 days
         'path'     => '/',
-        'domain'   => '',
+        'domain'   => null,            // Use null instead of empty string for maximum browser compatibility
         'secure'   => $isSecure,
         'httponly' => true,
         'samesite' => 'Lax',
