@@ -153,7 +153,7 @@ function safeRebuildPK($pdo, $table, $columnsArray, $execSql, $logMsg) {
     }
 }
 
-$targetVersion = 36;
+$targetVersion = 37;
 $currentVersion = 0;
 
 // Query current DB version
@@ -648,6 +648,50 @@ try {
         }
 
         $currentVersion = 36;
+    }
+
+    // --------------------------------------------------
+    // Version 37: Performance, Index & Concurrency Hadenings
+    // --------------------------------------------------
+    if ($currentVersion < 37) {
+        $logMsg("Đang chạy cập nhật v37 (Tối ưu hóa Index & Hợp nhất Schema)...", "info");
+
+        // 1. timestamp_buffer table
+        $execSql($pdo, "CREATE TABLE IF NOT EXISTS timestamp_buffer (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            subscriber_id char(36) NOT NULL,
+            column_name VARCHAR(50) NOT NULL,
+            timestamp_value DATETIME NOT NULL,
+            processed TINYINT(1) DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_processed (processed),
+            INDEX idx_sub_col (subscriber_id, column_name)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
+        // 2. reference_key in tracking_unique_cache
+        safeAddColumn($pdo, 'tracking_unique_cache', 'reference_key', 'VARCHAR(255) DEFAULT NULL', $execSql, $logMsg);
+
+        // 3. Spam Debounce Index
+        safeAddIndex($pdo, 'subscriber_activity', 'idx_spam_debounce', 'subscriber_id, type, created_at', $execSql, $logMsg);
+
+        // 4. Anti-join Index for Campaigns
+        safeAddIndex($pdo, 'subscriber_activity', 'idx_activity_sub_camp_type', 'subscriber_id, campaign_id, type', $execSql, $logMsg);
+
+        // 5. Worker queue status/updated index
+        safeAddIndex($pdo, 'ai_pdf_chunk_results', 'idx_status_updated', 'status, updated_at', $execSql, $logMsg);
+
+        // 6. ZNS Click stats
+        safeAddColumn($pdo, 'flows', 'stat_total_zalo_clicked', "INT(11) NOT NULL DEFAULT 0 COMMENT 'ZNS click stat'", $execSql, $logMsg);
+        safeAddColumn($pdo, 'flows', 'stat_unique_zalo_clicked', "INT(11) NOT NULL DEFAULT 0 COMMENT 'ZNS click stat'", $execSql, $logMsg);
+
+        // 7. html_content in campaign_reminders
+        safeAddColumn($pdo, 'campaign_reminders', 'html_content', "MEDIUMTEXT DEFAULT NULL COMMENT 'Cached HTML build for reminder'", $execSql, $logMsg);
+
+        // 8. Clean up redundant/duplicate indexes
+        safeDropIndex($pdo, 'subscribers', 'email_2', $execSql, $logMsg);
+        safeDropIndex($pdo, 'subscriber_lists', 'list_id_2', $execSql, $logMsg);
+
+        $currentVersion = 37;
     }
 
     // Update settings table with new db_version

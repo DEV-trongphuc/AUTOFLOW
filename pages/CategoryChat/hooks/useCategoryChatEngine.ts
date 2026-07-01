@@ -26,7 +26,7 @@ export function useCategoryChatEngine() {
 
     // Dynamic Branding
     const brandColor = useMemo(() => {
-        return categorySettings?.brand_color || activeBot?.settings?.brand_color || '#ffa900';
+        return categorySettings?.brand_color || activeBot?.settings?.brand_color || '#683df2';
     }, [categorySettings, activeBot]);
 
     // --- CHAT STATE ---

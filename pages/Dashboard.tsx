@@ -312,7 +312,7 @@ const Dashboard: React.FC = () => {
                 statusText="Multi-Channel Active"
                 actions={[
                     { label: 'TỔNG QUAN HỆ THỐNG', icon: BarChart3, onClick: () => setIsOverviewOpen(true) },
-                    { label: 'CẤU HÌNH LEADSCORE', icon: Target, onClick: () => setIsLeadscoreOpen(true), primary: false },
+                    { label: 'CẤU HÌNH LEADSCORE', icon: Target, onClick: () => setIsLeadscoreOpen(true), customClass: 'bg-white dark:bg-slate-900 border border-violet-600/70 text-violet-600 hover:bg-violet-50/50 dark:hover:bg-violet-950/20 active:scale-95' },
                     { label: 'KẾT NỐI CẤU HÌNH', icon: (props: any) => <Play {...props} className={`${props.className} text-white fill-white opacity-90`} />, onClick: () => setIsConnectionsOpen(true), primary: true }
                 ]}
             />
@@ -523,6 +523,16 @@ const Dashboard: React.FC = () => {
                                 <div className="flex-1 h-[260px] w-full min-h-[220px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={statsData.chart_data} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                                            <defs>
+                                                <linearGradient id="barWebGrad" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="#a78bfa" />
+                                                    <stop offset="100%" stopColor="#7c3aed" />
+                                                </linearGradient>
+                                                <linearGradient id="barAiGrad" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="#c084fc" />
+                                                    <stop offset="100%" stopColor="#6366f1" />
+                                                </linearGradient>
+                                            </defs>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" className="dark:stroke-slate-800/40" />
                                             <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} dy={10} />
                                             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} />
@@ -531,10 +541,10 @@ const Dashboard: React.FC = () => {
                                                 labelStyle={{ fontWeight: 'bold', color: '#fff', marginBottom: '8px' }}
                                             />
                                             <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '15px' }} />
-                                            <Bar dataKey="web" name="Truy cập Web" fill="#8b5cf6" fillOpacity={0.85} radius={[4, 4, 0, 0]} maxBarSize={20}>
+                                            <Bar dataKey="web" name="Truy cập Web" fill="url(#barWebGrad)" fillOpacity={1} radius={[4, 4, 0, 0]} maxBarSize={20}>
                                                 <LabelList dataKey="web" position="top" style={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }} offset={6} />
                                             </Bar>
-                                            <Bar dataKey="ai" name="AI Phản hồi" fill="#3b82f6" fillOpacity={0.85} radius={[4, 4, 0, 0]} maxBarSize={20}>
+                                            <Bar dataKey="ai" name="AI Phản hồi" fill="url(#barAiGrad)" fillOpacity={1} radius={[4, 4, 0, 0]} maxBarSize={20}>
                                                 <LabelList dataKey="ai" position="top" style={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }} offset={6} />
                                             </Bar>
                                         </BarChart>
@@ -581,10 +591,10 @@ const Dashboard: React.FC = () => {
                                                         <div className="space-y-1">
                                                             <div className="flex justify-between text-[9px] font-bold text-slate-500 dark:text-slate-400">
                                                                 <span>Tỷ lệ Mở (Open Rate)</span>
-                                                                <span className="text-emerald-500 font-black">{openRate}% ({opened.toLocaleString()})</span>
+                                                                <span className={`font-black ${openRate >= 50 ? 'text-emerald-500' : openRate >= 10 ? 'text-amber-500' : 'text-rose-500'}`}>{openRate}% ({opened.toLocaleString()})</span>
                                                             </div>
-                                                            <div className="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                                                <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${openRate}%` }} />
+                                                            <div className="w-full h-2 bg-slate-100 dark:bg-slate-800/60 rounded-full overflow-hidden">
+                                                                <div className={`h-full rounded-full transition-all duration-500 ${openRate >= 50 ? 'bg-emerald-500' : openRate >= 10 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${openRate}%` }} />
                                                             </div>
                                                         </div>
 

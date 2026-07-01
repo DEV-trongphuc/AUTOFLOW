@@ -63,7 +63,7 @@ const ChatPage: React.FC = () => {
                     description: res.data.description,
                     settings: settingsRes.success ? settingsRes.data : {
                         bot_name: res.data.name,
-                        brand_color: '#ffa900',
+                        brand_color: '#683df2',
                         bot_avatar: '',
                         welcome_msg: 'Chào bạn! Mình có thể giúp gì cho bạn?'
                     }
@@ -143,7 +143,7 @@ const ChatPage: React.FC = () => {
         return <PremiumLoader title="Chatbot" subtitle="Đang kết nối với trí tuệ nhân tạo..." />;
     }
 
-    const brandColor = chatbot.settings.brand_color || '#ffa900';
+    const brandColor = chatbot.settings.brand_color || '#683df2';
 
     return (
         <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100">

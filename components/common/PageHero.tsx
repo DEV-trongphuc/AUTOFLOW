@@ -6,6 +6,7 @@ interface Action {
     icon: any;
     onClick: () => void;
     primary?: boolean;
+    customClass?: string;
 }
 
 interface PageHeroProps {
@@ -16,6 +17,7 @@ interface PageHeroProps {
     statusText?: string;
     customGradient?: string;
     shadowColor?: string;
+    children?: React.ReactNode;
 }
 
 const PageHero: React.FC<PageHeroProps> = ({ 
@@ -24,6 +26,7 @@ const PageHero: React.FC<PageHeroProps> = ({
     actions, 
     showStatus = false, 
     statusText = 'System Active',
+    children
 }) => {
     return (
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 sm:mb-8 mt-2 w-full">
@@ -48,33 +51,38 @@ const PageHero: React.FC<PageHeroProps> = ({
                 </p>
             </div>
 
-            {actions && actions.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 shrink-0">
-                    {actions.map((action, idx) => {
-                        return (
-                            <button 
-                                key={idx}
-                                onClick={action.onClick}
-                                title={action.title || action.label}
-                                className={`flex items-center justify-center transition-all duration-200 ${
-                                    action.label 
-                                        ? 'gap-1.5 h-[38px] rounded-xl font-bold text-xs uppercase tracking-wider px-4' 
-                                        : 'h-[38px] w-[38px] rounded-xl'
-                                } ${
-                                    action.primary 
-                                    ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm hover:shadow active:scale-95' 
-                                    : 'bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 border border-slate-200/80 active:scale-95'
-                                }`}
-                            >
-                                {action.icon && <action.icon className={action.label ? "w-3.5 h-3.5" : "w-4.5 h-4.5"} />}
-                                {action.label && (
-                                    <span>{action.label}</span>
-                                )}
-                            </button>
-                        );
-                    })}
-                </div>
-            )}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 shrink-0">
+                {children}
+                {actions && actions.length > 0 && (
+                    <>
+                        {actions.map((action, idx) => {
+                            return (
+                                <button 
+                                    key={idx}
+                                    onClick={action.onClick}
+                                    title={action.title || action.label}
+                                    className={`flex items-center justify-center transition-all duration-200 ${
+                                        action.label 
+                                            ? 'gap-1.5 h-[38px] rounded-xl font-bold text-xs uppercase tracking-wider px-4' 
+                                            : 'h-[38px] w-[38px] rounded-xl'
+                                    } ${
+                                        action.customClass 
+                                        ? action.customClass
+                                        : action.primary 
+                                          ? 'bg-violet-600 hover:bg-violet-700 text-white shadow-sm hover:shadow active:scale-95' 
+                                          : 'bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 border border-slate-200/80 active:scale-95'
+                                    }`}
+                                >
+                                    {action.icon && <action.icon className={action.label ? "w-3.5 h-3.5" : "w-4.5 h-4.5"} />}
+                                    {action.label && (
+                                        <span>{action.label}</span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </>
+                )}
+            </div>
         </div>
     );
 };

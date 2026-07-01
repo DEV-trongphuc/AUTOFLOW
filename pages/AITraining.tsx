@@ -113,7 +113,7 @@ const AITraining: React.FC = () => {
         is_enabled: 0,
         bot_name: 'AI Assistant',
         company_name: '',
-        brand_color: '#ffa900',
+        brand_color: '#683df2',
         bot_avatar: '',
         welcome_msg: 'Chào bạn! Mình có thể giúp gì cho bạn?',
         teaser_msg: 'Chat với AI',
@@ -262,7 +262,7 @@ const AITraining: React.FC = () => {
     const [newCategorySlug, setNewCategorySlug] = useState('');
     const [editingCategory, setEditingCategory] = useState<ChatbotCategory | null>(null);
     const [viewModeChat, setViewModeChat] = useState<'categories' | 'chatbots'>('categories');
-    const [currentBrandColor, setCurrentBrandColor] = useState<string>('#ffa900'); // Persistent brand color
+    const [currentBrandColor, setCurrentBrandColor] = useState<string>('#683df2'); // Persistent brand color
 
     const backToGrid = React.useCallback(() => setViewMode('grid'), []);
     const backToCategories = React.useCallback(() => setViewModeChat('categories'), []);
@@ -617,7 +617,7 @@ const AITraining: React.FC = () => {
                 setIsCreateCategoryModalOpen(false);
                 setNewCategoryName('');
                 setNewCategoryDesc('');
-                setNewCategoryColor('#ffa900');
+                setNewCategoryColor('#683df2');
                 setNewCategoryApiKey('');
                 setNewCategoryAvatar(''); setNewCategorySlug('');
                 fetchCategories();
@@ -633,7 +633,7 @@ const AITraining: React.FC = () => {
         setEditingCategory(category);
         setNewCategoryName(category.name);
         setNewCategoryDesc(category.description);
-        setNewCategoryColor(category.brand_color || '#ffa900');
+        setNewCategoryColor(category.brand_color || '#683df2');
         setNewCategoryApiKey(category.gemini_api_key || '');
         setNewCategoryAvatar(category.bot_avatar || ''); setNewCategorySlug(category.slug || '');
         setIsEditCategoryModalOpen(true);
@@ -658,7 +658,7 @@ const AITraining: React.FC = () => {
                 setEditingCategory(null);
                 setNewCategoryName('');
                 setNewCategoryDesc('');
-                setNewCategoryColor('#ffa900');
+                setNewCategoryColor('#683df2');
                 setNewCategoryApiKey('');
                 setNewCategoryAvatar(''); setNewCategorySlug('');
                 fetchCategories();

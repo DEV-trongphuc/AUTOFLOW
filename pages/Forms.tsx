@@ -251,7 +251,7 @@ const Forms: React.FC = () => {
     return (
         <div className="animate-fade-in space-y-8  mx-auto pb-40">
             <PageHeader
-                brandColor="#ffa900" title="Biểu mẫu & API"
+                brandColor="#683df2" title="Biểu mẫu & API"
                 description="Thu thập Khách hàng tiềm năng từ Website và kích hoạt Automation ngay lập tức."
                 action={
                     <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto mt-4 lg:mt-0">
@@ -353,7 +353,7 @@ const Forms: React.FC = () => {
                                 onClick={() => setSelectedFormForCode(form)}
                                 className="w-full h-10 lg:h-11 rounded-xl bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-200 group/btn"
                             >
-                                <Code2 className="w-4 h-4 text-[#ffa900] group-hover/btn:rotate-12 transition-transform" />
+                                <Code2 className="w-4 h-4 text-[#683df2] group-hover/btn:rotate-12 transition-transform" />
                                 API & Nhúng
                             </button>
                         </div>
@@ -399,7 +399,7 @@ const Forms: React.FC = () => {
                         <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-100">
                             <div>
                                 <h5 className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                                    <Bell className="w-4 h-4 text-[#ffa900]" /> Thông báo Email
+                                    <Bell className="w-4 h-4 text-[#683df2]" /> Thông báo Email
                                 </h5>
                                 <p className="text-[10px] text-slate-400 font-medium mt-1">Gửi email thông Báo cáo tư vấn viên khi có lead mới.</p>
                             </div>
@@ -457,7 +457,7 @@ const Forms: React.FC = () => {
                         <div className="flex justify-between items-end px-1 pb-2 border-b border-slate-100">
                             <div>
                                 <h5 className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                                    <Braces className="w-4 h-4 text-[#ffa900]" /> Cấu trúc trường dữ liệu
+                                    <Braces className="w-4 h-4 text-[#683df2]" /> Cấu trúc trường dữ liệu
                                 </h5>
                                 <p className="text-[10px] text-slate-400 font-medium mt-1">Định nghĩa các trường thông tin bạn muốn thu thập từ Khách hàng.</p>
                             </div>
@@ -585,7 +585,7 @@ const Forms: React.FC = () => {
                                             <input
                                                 value={field.label}
                                                 onChange={e => updateField(field.id, { label: e.target.value })}
-                                                className={`w-full h-[40px] px-4 bg-slate-50 border-2 border-transparent rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white transition-all placeholder:text-slate-300 ${isCustom ? 'focus:border-violet-400' : 'focus:border-[#ffa900]'}`}
+                                                className={`w-full h-[40px] px-4 bg-slate-50 border-2 border-transparent rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white transition-all placeholder:text-slate-300 ${isCustom ? 'focus:border-violet-400' : 'focus:border-[#683df2]'}`}
                                                 placeholder="Nhập tên trường..."
                                             />
                                         </div>

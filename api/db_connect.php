@@ -502,6 +502,7 @@ $isLocalhost = in_array($_SERVER['REMOTE_ADDR'], ['127.0.0.1', '::1', 'localhost
 if (!empty($_localDevUser) && $isLocalhost) {
     $_SESSION['user_id'] = $_localDevUser;
     $_SESSION['role'] = 'admin'; // Dev mode assumes admin
+    $_SESSION['status'] = 'approved';
     $current_admin_id = 'admin-001';
 }
 
@@ -617,9 +618,19 @@ function logSystemActivity($pdo, $module, $action, $target_id = null, $target_na
  * Lấy cấu hình Leadscore Global từ Database
  * Có cơ chế caching trong memory (biến tĩnh) để tái sử dụng trong cùng 1 request
  */
-function getGlobalLeadScoreConfig($pdo) {
-    static $config = null;
-    if ($config !== null) return $config;
+function getGlobalLeadScoreConfig($pdo, $workspace_id = null) {
+    static $configs = [];
+    
+    if ($workspace_id === null && function_exists('get_current_workspace_id')) {
+        $workspace_id = (int) get_current_workspace_id();
+    }
+    if ($workspace_id === null) {
+        $workspace_id = 0;
+    }
+    
+    if (isset($configs[$workspace_id])) {
+        return $configs[$workspace_id];
+    }
 
     // Default configuration (fallback)
     $config = [
@@ -634,7 +645,8 @@ function getGlobalLeadScoreConfig($pdo) {
     ];
 
     try {
-        $stmt = $pdo->query("SELECT `key`, `value` FROM system_settings WHERE workspace_id = 0 AND `key` LIKE 'leadscore_%'");
+        $stmt = $pdo->prepare("SELECT `key`, `value` FROM system_settings WHERE workspace_id IN (0, ?) AND `key` LIKE 'leadscore_%' ORDER BY workspace_id ASC");
+        $stmt->execute([$workspace_id]);
         while ($row = $stmt->fetch()) {
             if (is_numeric($row['value'])) {
                 $config[$row['key']] = (int) $row['value'];
@@ -644,6 +656,7 @@ function getGlobalLeadScoreConfig($pdo) {
         // Fallback to default safely if table error
     }
 
+    $configs[$workspace_id] = $config;
     return $config;
 }
 

@@ -280,7 +280,7 @@ const FormsTab: React.FC = () => {
                                 onClick={() => setSelectedFormForCode(form)}
                                 className="w-full h-11 rounded-xl bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center justify-center gap-2 group/btn"
                             >
-                                <Code2 className="w-4 h-4 text-[#ffa900] group-hover/btn:rotate-12 transition-transform" />
+                                <Code2 className="w-4 h-4 text-[#683df2] group-hover/btn:rotate-12 transition-transform" />
                                 API & Nhúng
                             </button>
                         </div>
@@ -319,7 +319,7 @@ const FormsTab: React.FC = () => {
                     <div className={`space-y-4 bg-amber-50/20 border border-amber-100 px-6 py-6 rounded-[32px] relative overflow-hidden transition-all duration-500 ${formData.notificationEnabled ? 'ring-1 ring-amber-200' : ''}`}>
                         <div className="flex justify-between items-start relative z-10">
                             <div className="flex items-center gap-4">
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm transition-all duration-500 ${formData.notificationEnabled ? 'bg-gradient-to-br from-[#ffa900] to-amber-600 text-white shadow-amber-200' : 'bg-amber-50 text-[#ffa900]'}`}>
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm transition-all duration-500 ${formData.notificationEnabled ? 'bg-gradient-to-br from-[#683df2] to-amber-600 text-white shadow-amber-200' : 'bg-amber-50 text-[#683df2]'}`}>
                                     <BellRing className="w-6 h-6" />
                                 </div>
                                 <div>
@@ -331,10 +331,10 @@ const FormsTab: React.FC = () => {
                                 onClick={() => setFormData({ ...formData, notificationEnabled: !formData.notificationEnabled })}
                                 className="flex items-center gap-3 cursor-pointer select-none bg-white p-1.5 px-3 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:border-amber-200 transition-all active:scale-95"
                             >
-                                <div className={`w-9 h-5 rounded-full p-0.5 transition-all duration-300 flex items-center ${formData.notificationEnabled ? 'bg-[#ffa900] justify-end' : 'bg-slate-200 justify-start'}`}>
+                                <div className={`w-9 h-5 rounded-full p-0.5 transition-all duration-300 flex items-center ${formData.notificationEnabled ? 'bg-[#683df2] justify-end' : 'bg-slate-200 justify-start'}`}>
                                     <div className="w-4 h-4 bg-white rounded-full shadow-sm" />
                                 </div>
-                                <span className={`text-[9px] font-black uppercase tracking-widest ${formData.notificationEnabled ? 'text-[#ffa900]' : 'text-slate-400'}`}>{formData.notificationEnabled ? 'Đang bật' : 'Đang tắt'}</span>
+                                <span className={`text-[9px] font-black uppercase tracking-widest ${formData.notificationEnabled ? 'text-[#683df2]' : 'text-slate-400'}`}>{formData.notificationEnabled ? 'Đang bật' : 'Đang tắt'}</span>
                             </div>
                         </div>
 
@@ -385,7 +385,7 @@ const FormsTab: React.FC = () => {
                         <div className="flex justify-between items-end px-1 pb-2 border-b border-slate-100">
                             <div>
                                 <h5 className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                                    <Braces className="w-4 h-4 text-[#ffa900]" /> Cấu trúc trường dữ liệu
+                                    <Braces className="w-4 h-4 text-[#683df2]" /> Cấu trúc trường dữ liệu
                                 </h5>
                             </div>
                             <div className="flex gap-2">
@@ -431,7 +431,7 @@ const FormsTab: React.FC = () => {
                                                             value={field.label}
                                                             onChange={e => updateField(field.id, { label: e.target.value })}
                                                             placeholder="VD: Nguồn Khách hàng"
-                                                            className="w-full h-[38px] px-3 bg-slate-50 border-2 border-transparent rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-[#ffa900] transition-all"
+                                                            className="w-full h-[38px] px-3 bg-slate-50 border-2 border-transparent rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-[#683df2] transition-all"
                                                         />
                                                     </div>
                                                     <div className="shrink-0">
@@ -461,7 +461,7 @@ const FormsTab: React.FC = () => {
                                         {!field.isCustom && (
                                             <div className="flex-1 w-full">
                                                 <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Tiêu đề hiển thị (Label)</label>
-                                                <input value={field.label} onChange={e => updateField(field.id, { label: e.target.value })} className="w-full h-[40px] px-4 bg-slate-50 border-2 border-transparent rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-[#ffa900] transition-all" />
+                                                <input value={field.label} onChange={e => updateField(field.id, { label: e.target.value })} className="w-full h-[40px] px-4 bg-slate-50 border-2 border-transparent rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-[#683df2] transition-all" />
                                             </div>
                                         )}
 

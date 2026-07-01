@@ -185,7 +185,7 @@ const trackPurchase = async () => {
     return (
         <div className="animate-fade-in space-y-8 mx-auto pb-40">
             <PageHeader
-                 brandColor="#ffa900"title="Hành động Mua hàng"
+                 brandColor="#683df2"title="Hành động Mua hàng"
                 description="Định nghĩa các sự kiện mua hàng để theo dõi doanh thu và kích hoạt Automation."
                 action={<Button icon={Plus} size="lg" onClick={handleCreateNew}>Tạo Sự kiện mới</Button>}
             />
@@ -262,7 +262,7 @@ const trackPurchase = async () => {
                                 onClick={() => setIntegrationModal(evt)}
                                 className="w-full h-11 rounded-xl bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center justify-center gap-2 group/btn"
                             >
-                                <Code2 className="w-4 h-4 text-[#ffa900] group-hover/btn:rotate-12 transition-transform" />
+                                <Code2 className="w-4 h-4 text-[#683df2] group-hover/btn:rotate-12 transition-transform" />
                                 Lấy mã tích hợp API
                             </button>
                         </div>

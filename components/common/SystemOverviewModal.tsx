@@ -124,10 +124,10 @@ export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose, isDarkTh
 
                 {/* Header */}
                 <div className={`px-6 py-4 border-b flex items-center justify-between relative overflow-hidden shrink-0 ${isDarkTheme ? 'bg-[#11151d] border-slate-800/80' : 'bg-slate-50 border-slate-100'}`}>
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700" />
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-violet-600 via-indigo-500 to-purple-600" />
 
                     <div className="flex items-center gap-3 relative z-10">
-                        <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-slate-200 flex items-center justify-center text-indigo-600">
+                        <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-slate-200 flex items-center justify-center text-violet-600">
                             <Server className="w-5 h-5" />
                         </div>
                         <div>
@@ -181,11 +181,11 @@ export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose, isDarkTh
                         <div className={`absolute inset-0 flex flex-col items-center justify-center z-20 ${isDarkTheme ? 'bg-[#11151d]' : 'bg-slate-900/95'}`}>
                             {/* Spinning rings from AI Generator */}
                             <div style={{ position: 'relative', width: '96px', height: '96px', marginBottom: '24px' }}>
-                                <div style={{ position: 'absolute', inset: '-14px', borderRadius: '50%', border: '2px solid rgba(217,119,6,0.12)', animation: 'pulseRing 2s ease-in-out infinite' }} />
-                                <div style={{ position: 'absolute', inset: '4px', borderRadius: '50%', border: '2.5px solid transparent', borderTopColor: '#d97706', borderRightColor: 'rgba(245,158,11,0.25)', animation: 'spin2 1.1s linear infinite' }} />
-                                <div style={{ position: 'absolute', inset: '15px', borderRadius: '50%', border: '2px solid transparent', borderBottomColor: '#d97706', borderLeftColor: 'rgba(217,119,6,0.2)', animation: 'spin2rev 0.75s linear infinite' }} />
-                                <div style={{ position: 'absolute', inset: '26px', borderRadius: '50%', background: 'linear-gradient(135deg, #fff7ed, #fef3c7)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 16px rgba(217,119,6,0.15)' }}>
-                                    <Server style={{ width: 20, height: 20, color: '#d97706' }} />
+                                <div style={{ position: 'absolute', inset: '-14px', borderRadius: '50%', border: '2px solid rgba(104,61,242,0.12)', animation: 'pulseRing 2s ease-in-out infinite' }} />
+                                <div style={{ position: 'absolute', inset: '4px', borderRadius: '50%', border: '2.5px solid transparent', borderTopColor: '#683df2', borderRightColor: 'rgba(139,92,246,0.25)', animation: 'spin2 1.1s linear infinite' }} />
+                                <div style={{ position: 'absolute', inset: '15px', borderRadius: '50%', border: '2px solid transparent', borderBottomColor: '#683df2', borderLeftColor: 'rgba(104,61,242,0.2)', animation: 'spin2rev 0.75s linear infinite' }} />
+                                <div style={{ position: 'absolute', inset: '26px', borderRadius: '50%', background: 'linear-gradient(135deg, #f5f3ff, #ede9fe)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 16px rgba(104,61,242,0.15)' }}>
+                                    <Server style={{ width: 20, height: 20, color: '#683df2' }} />
                                 </div>
                             </div>
 
@@ -199,7 +199,7 @@ export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose, isDarkTh
                                 {[0, 1, 2, 3, 4].map(i => (
                                     <div key={i} style={{
                                         width: i === 2 ? '26px' : '7px', height: '7px', borderRadius: '4px',
-                                        background: i === 2 ? 'linear-gradient(90deg, #d97706, #d97706)' : '#334155',
+                                        background: i === 2 ? 'linear-gradient(90deg, #683df2, #8b5cf6)' : '#334155',
                                         animation: 'dotBounce 1.2s ease-in-out infinite',
                                         animationDelay: `${i * 0.12}s`,
                                     }} />
@@ -232,7 +232,7 @@ export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose, isDarkTh
                                     value={(data.summary?.total_leads || 0).toLocaleString()}
                                     growth={data.summary?.growth_leads || 0}
                                     icon={<Users className="w-5 h-5" />}
-                                    gradient="from-amber-400 to-orange-500 shadow-orange-500/25"
+                                    gradient="from-violet-500 to-indigo-600 shadow-indigo-500/25"
                                     trendColor={(data.summary?.growth_leads || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}
                                 />
                             </div>
@@ -279,7 +279,7 @@ export const SystemOverviewModal: React.FC<Props> = ({ isOpen, onClose, isDarkTh
                                 {/* Top Campaigns */}
                                 <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                                     <div className="flex items-center gap-3 mb-6">
-                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-orange-500/25 flex items-center justify-center">
+                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-violet-500/20 flex items-center justify-center">
                                             <Mail className="w-5 h-5 text-white" />
                                         </div>
                                         <h3 className="font-bold text-slate-800">Top Chiến dịch Email</h3>
@@ -453,13 +453,13 @@ const EmailSentChart: React.FC = () => {
                         <button
                             onClick={() => setMode('yearly')}
                             className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
-                                mode === 'yearly' ? 'bg-white shadow text-amber-600' : 'text-slate-500 hover:text-slate-700'
+                                mode === 'yearly' ? 'bg-white shadow text-violet-600' : 'text-slate-500 hover:text-slate-700'
                             }`}
                         >Theo tháng</button>
                         <button
                             onClick={() => setMode('monthly')}
                             className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
-                                mode === 'monthly' ? 'bg-white shadow text-amber-600' : 'text-slate-500 hover:text-slate-700'
+                                mode === 'monthly' ? 'bg-white shadow text-violet-600' : 'text-slate-500 hover:text-slate-700'
                             }`}
                         >Theo ngày</button>
                     </div>
@@ -475,7 +475,7 @@ const EmailSentChart: React.FC = () => {
                             <select
                                 value={year}
                                 onChange={e => setYear(Number(e.target.value))}
-                                className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                                className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
                             >
                                 {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
                             </select>
@@ -483,7 +483,7 @@ const EmailSentChart: React.FC = () => {
                             <select
                                 value={month}
                                 onChange={e => setMonth(Number(e.target.value))}
-                                className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                                className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
                             >
                                 {VI_MONTHS.map((mn, i) => <option key={i+1} value={i+1}>{mn}</option>)}
                             </select>
@@ -500,8 +500,8 @@ const EmailSentChart: React.FC = () => {
             {/* Summary strip */}
             <div className="grid grid-cols-2 divide-x divide-slate-100 border-b border-slate-100">
                 <div className="px-6 py-3 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
-                        <Send className="w-4 h-4 text-amber-500" />
+                    <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center">
+                        <Send className="w-4 h-4 text-violet-600" />
                     </div>
                     <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tổng gửi</p>
@@ -509,8 +509,8 @@ const EmailSentChart: React.FC = () => {
                     </div>
                 </div>
                 <div className="px-6 py-3 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center">
-                        <TrendingUp className="w-4 h-4 text-orange-500" />
+                    <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+                        <TrendingUp className="w-4 h-4 text-indigo-600" />
                     </div>
                     <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cao nhất / kỳ</p>

@@ -357,7 +357,7 @@ const Settings: React.FC = () => {
                         isLoading={isSaving}
                         onClick={handleSave}
                         size="lg"
-                        className="w-full sm:w-auto shadow-lg shadow-orange-500/20 bg-[#ffa900] hover:bg-[#e69800] text-white border-none h-12 lg:h-14 px-8 rounded-2xl"
+                        className="w-full sm:w-auto shadow-lg shadow-orange-500/20 bg-[#683df2] hover:bg-[#e69800] text-white border-none h-12 lg:h-14 px-8 rounded-2xl"
                     >
                         Lưu cấu hình
                     </Button>
@@ -386,8 +386,8 @@ const Settings: React.FC = () => {
 
 
                         {/* AUTOMATION TEST SANDBOX */}
-                        <div className="bg-white rounded-2xl lg:rounded-[32px] p-5 lg:p-8 border-2 border-[#ffa900]/20 shadow-xl relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-64 lg:w-96 h-64 lg:h-96 bg-[#ffa900] opacity-10 rounded-full blur-[60px] lg:blur-[100px] -mr-32 lg:-mr-48 -mt-32 lg:-mt-48 animate-pulse"></div>
+                        <div className="bg-white rounded-2xl lg:rounded-[32px] p-5 lg:p-8 border-2 border-[#683df2]/20 shadow-xl relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-64 lg:w-96 h-64 lg:h-96 bg-[#683df2] opacity-10 rounded-full blur-[60px] lg:blur-[100px] -mr-32 lg:-mr-48 -mt-32 lg:-mt-48 animate-pulse"></div>
 
                             <div className="flex items-center gap-4 mb-6 relative z-10">
                                 <div className="p-2.5 lg:p-3 bg-orange-50 rounded-xl lg:rounded-2xl text-[#ca7900] shadow-sm"><FlaskConical className="w-5 h-5 lg:w-6 lg:h-6" /></div>
@@ -549,7 +549,7 @@ const Settings: React.FC = () => {
                                 <div className="flex flex-col items-start sm:items-end gap-2">
                                     <button
                                         onClick={() => setSmtp({ ...smtp, smtp_enabled: smtp.smtp_enabled === '1' ? '0' : '1' })}
-                                        className={`flex items-center gap-2 px-6 py-2 rounded-xl lg:rounded-2xl text-[10px] lg:text-xs font-black transition-all shadow-md ${smtp.smtp_enabled === '1' ? 'bg-[#ffa900] text-white ring-4 ring-orange-100' : 'bg-slate-200 text-slate-500'}`}
+                                        className={`flex items-center gap-2 px-6 py-2 rounded-xl lg:rounded-2xl text-[10px] lg:text-xs font-black transition-all shadow-md ${smtp.smtp_enabled === '1' ? 'bg-[#683df2] text-white ring-4 ring-orange-100' : 'bg-slate-200 text-slate-500'}`}
                                     >
                                         {smtp.smtp_enabled === '1' ? <><CheckCircle2 className="w-3.5 h-3.5" /> ĐANG BẬT</> : <><AlertTriangle className="w-3.5 h-3.5" /> ĐANG TẮT</>}
                                     </button>
@@ -631,7 +631,7 @@ const Settings: React.FC = () => {
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold uppercase text-slate-400 ml-4">Danh sách Email (Mỗi email một dòng)</label>
                                     <textarea
-                                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl px-6 py-4 text-sm focus:border-[#ffa900] focus:ring-0 outline-none transition-all min-h-[100px]"
+                                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl px-6 py-4 text-sm focus:border-[#683df2] focus:ring-0 outline-none transition-all min-h-[100px]"
                                         placeholder="admin@company.com&#10;qa@company.com"
                                         value={smtp.internal_qa_emails}
                                         onChange={e => setSmtp({ ...smtp, internal_qa_emails: e.target.value })}
@@ -661,7 +661,7 @@ const Settings: React.FC = () => {
                                     icon={Play}
                                     isLoading={isRunningEnrollment}
                                     onClick={handleRunEnrollmentWorker} // Calls the enrollment worker
-                                    className="px-8 py-4 rounded-2xl bg-[#ffa900] hover:bg-[#ca7900] text-white font-black"
+                                    className="px-8 py-4 rounded-2xl bg-[#683df2] hover:bg-[#ca7900] text-white font-black"
                                 >
                                     CHẠY ENROLLMENT
                                 </Button>
@@ -698,7 +698,7 @@ const Settings: React.FC = () => {
                     <div className="space-y-6">
                         <div className="bg-slate-900 rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden group">
                             <Globe className="absolute -bottom-10 -right-10 w-48 h-48 opacity-10 group-hover:rotate-45 transition-transform duration-1000" />
-                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Database className="w-5 h-5 text-[#ffa900]" /> API Base URL</h3>
+                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Database className="w-5 h-5 text-[#683df2]" /> API Base URL</h3>
                             <input type="text" value={apiUrl} readOnly disabled className="w-full bg-white/10 border border-white/20 rounded-2xl px-5 py-4 text-sm font-mono outline-none opacity-60 cursor-not-allowed" />
                             <p className="text-[10px] text-slate-400 mt-3 font-medium leading-relaxed italic">*Đường dẫn máy chủ chứa các file .php xử lý dữ liệu.</p>
                         </div>
@@ -830,7 +830,7 @@ const Settings: React.FC = () => {
                                 isLoading={isCheckingHealth}
                                 onClick={handleCheckHealth}
                                 size="lg"
-                                className="bg-slate-900 hover:bg-black text-[#ffa900] w-full lg:w-auto lg:px-10 rounded-xl lg:rounded-[22px] font-black uppercase tracking-widest text-[10px] lg:text-xs h-12 lg:h-[60px] shadow-xl shadow-slate-200 active:scale-95 transition-all"
+                                className="bg-slate-900 hover:bg-black text-[#683df2] w-full lg:w-auto lg:px-10 rounded-xl lg:rounded-[22px] font-black uppercase tracking-widest text-[10px] lg:text-xs h-12 lg:h-[60px] shadow-xl shadow-slate-200 active:scale-95 transition-all"
                             >
                                 KIỂM TRA NGAY
                             </Button>
@@ -845,7 +845,7 @@ const Settings: React.FC = () => {
                                     </h4>
                                     <div className="space-y-3">
                                         {healthResults.system_checks && Object.entries(healthResults.system_checks).map(([key, info]: [string, any]) => (
-                                            <div key={key} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between group/item hover:bg-white hover:border-[#ffa900]/30 transition-all hover:shadow-sm">
+                                            <div key={key} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between group/item hover:bg-white hover:border-[#683df2]/30 transition-all hover:shadow-sm">
                                                 <div className="flex flex-col">
                                                     <span className="text-xs font-black text-slate-700 capitalize group-hover/item:text-[#ca7900] transition-colors">{key.replace('dir_', 'Folder ')}</span>
                                                     <span className="text-[10px] text-slate-400 font-medium mt-0.5">{info.message}</span>
@@ -865,7 +865,7 @@ const Settings: React.FC = () => {
                                     </h4>
                                     <div className="grid grid-cols-1 gap-3">
                                         {healthResults.php_extensions && Object.entries(healthResults.php_extensions).map(([key, info]: [string, any]) => (
-                                            <div key={key} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between group/item hover:bg-white hover:border-[#ffa900]/30 transition-all hover:shadow-sm">
+                                            <div key={key} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between group/item hover:bg-white hover:border-[#683df2]/30 transition-all hover:shadow-sm">
                                                 <span className="text-xs font-black text-slate-700 font-mono group-hover/item:text-[#ca7900] transition-colors">{key}</span>
                                                 <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${info.status === 'OK' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
                                                     {info.status}
@@ -882,7 +882,7 @@ const Settings: React.FC = () => {
                                     </h4>
                                     <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                                         {healthResults.api_files && Object.entries(healthResults.api_files).map(([key, info]: [string, any]) => (
-                                            <div key={key} className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between group/item hover:bg-white hover:border-[#ffa900]/30 transition-all">
+                                            <div key={key} className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between group/item hover:bg-white hover:border-[#683df2]/30 transition-all">
                                                 <span className="text-[11px] font-bold text-slate-600 truncate max-w-[150px] group-hover/item:text-slate-900 transition-colors">{key}</span>
                                                 <div className="flex items-center gap-2">
                                                     <span className={`w-2 h-2 rounded-full ${info.status === 'OK' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-rose-500 animate-ping'}`}></span>
@@ -909,7 +909,7 @@ const Settings: React.FC = () => {
                         <Terminal className="absolute -bottom-10 -right-10 w-48 h-48 opacity-10 group-hover:rotate-12 transition-transform duration-1000" />
                         <div className="relative z-10 flex flex-col md:flex-row gap-8 items-start">
                             <div className="p-5 bg-white/10 rounded-3xl border border-white/10 shadow-inner">
-                                <Info className="w-10 h-10 text-[#ffa900]" />
+                                <Info className="w-10 h-10 text-[#683df2]" />
                             </div>
                             <div>
                                 <h3 className="text-2xl font-black mb-3 italic">Cách thức kiểm tra</h3>

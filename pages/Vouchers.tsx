@@ -141,7 +141,7 @@ const Vouchers: React.FC = () => {
     return (
         <div className="animate-fade-in space-y-6 pb-32">
             <PageHero
-                title={<>Kho <span className="text-violet-600">Voucher</span></>}
+                title={<>Kho <span className="text-slate-500 dark:text-slate-400">Voucher</span></>}
                 subtitle="Quản lý mã giảm giá, quà tặng và tích hợp trực tiếp vào chiến dịch Email/Zalo của bạn."
                 actions={[
                     {
@@ -207,8 +207,8 @@ const Vouchers: React.FC = () => {
                             <div className="absolute top-1/2 -left-4 w-8 h-8 bg-white dark:bg-slate-900 rounded-full transform -translate-y-1/2 border-r-[2px] border-dashed border-violet-500/40 dark:border-violet-500/30"></div>
                             <div className="absolute top-1/2 -right-4 w-8 h-8 bg-white dark:bg-slate-900 rounded-full transform -translate-y-1/2 border-l-[2px] border-dashed border-violet-500/40 dark:border-violet-500/30"></div>
 
-                            <Gift className="w-10 h-10 mx-auto text-violet-600 dark:text-violet-400 mb-4" />
-                            <h3 className="text-2xl font-black text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-3">Chưa có Voucher Nào</h3>
+                            <Gift className="w-10 h-10 mx-auto text-slate-500 dark:text-slate-400 mb-4" />
+                            <h3 className="text-2xl font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Chưa có Voucher Nào</h3>
                             <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-8 mx-auto max-w-sm">
                                 Khởi tạo chiến dịch quà tặng/mã giảm giá để tri ân khách hàng và tăng tỉ lệ chuyển đổi.
                             </p>

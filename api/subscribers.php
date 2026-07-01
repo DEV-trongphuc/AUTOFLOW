@@ -988,11 +988,22 @@ WHERE sfs.workspace_id = ? AND f.workspace_id = ? AND sfs.subscriber_id = ? AND 
                         $stmtStats = $pdo->prepare("SELECT IFNULL(status, 'active') as status_val, COUNT(*) as c FROM subscribers WHERE workspace_id = ? GROUP BY IFNULL(status, 'active')");
                         $stmtStats->execute([$workspace_id]);
                         $statusCounts = $stmtStats->fetchAll(PDO::FETCH_KEY_PAIR);
+
+                        $stmtEmail = $pdo->prepare("SELECT COUNT(*) FROM subscribers WHERE workspace_id = ? AND email IS NOT NULL AND email != '' AND IFNULL(status, 'active') != 'unsubscribed'");
+                        $stmtEmail->execute([$workspace_id]);
+                        $emailCount = (int) $stmtEmail->fetchColumn();
+
+                        $stmtPhone = $pdo->prepare("SELECT COUNT(*) FROM subscribers WHERE workspace_id = ? AND phone IS NOT NULL AND phone != '' AND IFNULL(status, 'active') != 'unsubscribed'");
+                        $stmtPhone->execute([$workspace_id]);
+                        $phoneCount = (int) $stmtPhone->fetchColumn();
+
                         $responsePayload['globalStats'] = [
                             'customer' => (int)($statusCounts['customer'] ?? 0),
                             'unsubscribed' => (int)($statusCounts['unsubscribed'] ?? 0),
                             'lead' => (int)($statusCounts['lead'] ?? 0),
                             'active' => (int)($statusCounts['active'] ?? 0),
+                            'email_reach' => $emailCount,
+                            'zalo_reach' => $phoneCount
                         ];
                     } catch (Throwable $e) {
                         // ignore error

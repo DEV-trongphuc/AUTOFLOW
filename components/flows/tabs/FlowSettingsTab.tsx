@@ -166,18 +166,18 @@ const FlowSettingsTab: React.FC<FlowSettingsTabProps> = ({ flow, onUpdate }) => 
 
             {/* PREEMIUM ALERT FOR PRIORITY TRIGGER */}
             {isPriorityTrigger && (
-                <div className="mb-8 p-5 bg-gradient-to-br from-amber-50 to-orange-50/50 border border-amber-200 rounded-[28px] flex items-start gap-4 shadow-sm relative overflow-hidden group">
+                <div className="mb-8 p-5 bg-gradient-to-br from-yellow-50 to-yellow-50/50 border border-yellow-200 rounded-[28px] flex items-start gap-4 shadow-sm relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-8 opacity-[0.03] -mr-8 -mt-8 group-hover:scale-110 transition-transform duration-700">
-                        <Zap className="w-32 h-32 text-orange-600" />
+                        <Zap className="w-32 h-32 text-yellow-600" />
                     </div>
-                    <div className="p-3 bg-white dark:bg-slate-900 dark:bg-slate-900 rounded-2xl text-orange-600 shadow-sm border border-amber-100/50">
+                    <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl text-yellow-600 shadow-sm border border-yellow-100/50">
                         <Zap className="w-5 h-5 animate-pulse" />
                     </div>
                     <div className="relative z-10">
-                        <p className="text-[10px] font-black text-orange-900 uppercase tracking-[0.1em]">Chế độ ưu tiên (Real-time Transaction)</p>
-                        <p className="text-[11px] font-medium text-orange-800/90 leading-relaxed mt-1.5">
-                            Kịch bản này được khởi động bởi <span className="bg-orange-100/50 px-1.5 py-0.5 rounded-md font-bold text-orange-900">{getPriorityLabel()}</span>.
-                            Hệ thống sẽ <span className="underline decoration-orange-300 decoration-2 underline-offset-2">bỏ qua</span> các giới hạn về khung giờ và tần suất để đảm bảo phản hồi tức thì cho khách hàng.
+                        <p className="text-[10px] font-black text-yellow-900 uppercase tracking-[0.1em]">Chế độ ưu tiên (Real-time Transaction)</p>
+                        <p className="text-[11px] font-medium text-yellow-800/90 leading-relaxed mt-1.5">
+                            Kịch bản này được khởi động bởi <span className="bg-yellow-100/50 px-1.5 py-0.5 rounded-md font-bold text-yellow-900">{getPriorityLabel()}</span>.
+                            Hệ thống sẽ <span className="underline decoration-yellow-300 decoration-2 underline-offset-2">bỏ qua</span> các giới hạn về khung giờ và tần suất để đảm bảo phản hồi tức thì cho khách hàng.
                         </p>
                     </div>
                 </div>

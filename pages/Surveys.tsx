@@ -319,7 +319,7 @@ const SurveyCard: React.FC<{
                         <h3 className="text-[14px] font-bold text-slate-700 truncate mb-1">{survey.name}</h3>
                         {survey.slug ? (
                             <button onClick={onSlugClick} className="flex items-center gap-1.5 w-fit px-2 py-1 rounded-lg bg-violet-50 border border-violet-200 hover:bg-violet-100 dark:bg-violet-950/20 dark:border-violet-900/30 transition-colors group/slug" title="Xem / chia sẻ khảo sát">
-                                <Link2 className="w-3 h-3 text-violet-600 dark:text-violet-400 flex-shrink-0" />
+                                <Link2 className="w-3 h-3 text-slate-500 dark:text-slate-400 flex-shrink-0" />
                                 <span className="text-[10px] font-bold text-violet-800 dark:text-violet-300 truncate line-clamp-1">/s/{survey.slug}</span>
                             </button>
                         ) : (
@@ -390,7 +390,7 @@ const SurveyCard: React.FC<{
                     className="flex items-center gap-1.5 w-fit px-3 py-1.5 rounded-xl bg-violet-50 border border-violet-200 hover:bg-violet-100 dark:bg-violet-950/20 dark:border-violet-900/30 transition-colors group/slug mb-4"
                     title="Xem / chia sẻ khảo sát"
                 >
-                    <Link2 className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400 flex-shrink-0" />
+                    <Link2 className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 flex-shrink-0" />
                     <span className="text-[11px] font-bold text-violet-800 dark:text-violet-300 truncate line-clamp-1 max-w-[200px]">
                         /s/{survey.slug}
                     </span>

@@ -45,7 +45,7 @@ const ZaloSettings: React.FC = () => {
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-20 mx-auto ">
             <PageHero
-                title={<>Zalo Official <span className="text-amber-100/80">Config</span></>}
+                title={<>Zalo Official <span className="text-slate-500 dark:text-slate-400">Config</span></>}
                 subtitle="Thiết lập OA, Quản lý người quan tâm & Tự động hóa tin nhắn đa kênh."
                 statusText="Zalo API Connected"
                 showStatus={true}

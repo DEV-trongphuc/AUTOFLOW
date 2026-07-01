@@ -214,13 +214,9 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
             else if (y > h * 0.75) setDropPosition('bottom');
             else setDropPosition('inside');
         } else {
-            // General blocks (text, image, etc.)
-            // If dragging a section, we don't want to drop it inside a text block, but rather around it.
-            // The smart drop logic in handleDrop will redirect to the parent section.
-            // Here, we just provide a visual cue.
-            if (x < w * 0.15) setDropPosition('left');
-            else if (x > w * 0.85) setDropPosition('right');
-            else setDropPosition(y < h / 2 ? 'top' : 'bottom');
+            // General content blocks (text, image, button, etc.)
+            // Only allow vertical dropping (top or bottom) to match their actual placement behavior inside columns.
+            setDropPosition(y < h / 2 ? 'top' : 'bottom');
         }
     };
 

@@ -2211,7 +2211,7 @@ const CategoryChatPage: React.FC = () => {
                 ...bot,
                 settings: settingsRes.success ? settingsRes.data : {
                     bot_name: bot.name,
-                    brand_color: '#ffa900',
+                    brand_color: '#683df2',
                     bot_avatar: '',
                     welcome_msg: 'Tôi sẵn sàng hỗ trợ.'
                 }

@@ -26,11 +26,14 @@ interface FlowCardProps {
     linkedList?: any;
     linkedTag?: string;
     isList?: boolean;
+    selected?: boolean;
+    onToggleSelect?: () => void;
 }
 
 
 const FlowCard = React.memo<FlowCardProps>((
     { flow, linkedCampaign, linkedForm, linkedPurchaseEvent, linkedCustomEvent, linkedSegment, linkedList, linkedTag, isList,
+    selected, onToggleSelect,
     onClick, onDelete, onDuplicate, onRestore,
     onOpenCampaign, onOpenForm, onOpenList, onOpenSegment, onOpenTag, onOpenPurchase, onOpenCustomEvent }
 ) => {
@@ -120,7 +123,7 @@ const FlowCard = React.memo<FlowCardProps>((
         if (triggerType === 'custom_event') {
             let label = linkedCustomEvent ? linkedCustomEvent.name : 'Sự kiện tùy chỉnh';
             let accent = 'violet';
-            let gradient = 'from-violet-500 to-indigo-600';
+            let gradient = 'from-violet-400 to-fuchsia-500';
 
             if (!linkedCustomEvent && triggerConfig.targetId) {
                 label = `Event [${(triggerConfig.targetId || '').substring(0, 6)}] đã xóa`;
@@ -129,7 +132,7 @@ const FlowCard = React.memo<FlowCardProps>((
             }
 
             return {
-                icon: Zap,
+                icon: GitMerge,
                 accent: accent as any,
                 gradientMain: gradient,
                 label: label,
@@ -153,11 +156,11 @@ const FlowCard = React.memo<FlowCardProps>((
         if (triggerType === 'tag') {
             return {
                 icon: Tag,
-                accent: 'emerald' as const,
-                gradientMain: 'from-emerald-500 to-teal-600',
-                label: triggerConfig.targetId ? `Tag: ${triggerConfig.targetId}` : 'Khi gắn nhãn',
-                isLink: !!triggerConfig.targetId,
-                onLinkClick: () => triggerConfig.targetId && onOpenTag?.(triggerConfig.targetId)
+                accent: 'teal' as const,
+                gradientMain: 'from-teal-400 to-emerald-500',
+                label: `Được gắn tag: ${linkedTag || triggerConfig.targetId || ''}`,
+                isLink: !!linkedTag,
+                onLinkClick: () => linkedTag && onOpenTag?.(linkedTag)
             };
         }
 
@@ -179,7 +182,6 @@ const FlowCard = React.memo<FlowCardProps>((
         }
 
         if (triggerType === 'segment') {
-            // isListSubtype: explicitly set OR resolved via linkedList prop (smart detection from parent)
             const isListSubtype = triggerConfig.targetSubtype === 'list' || triggerConfig.targetSubtype === 'sync' || !!linkedList;
 
             if (isListSubtype) {
@@ -225,18 +227,19 @@ const FlowCard = React.memo<FlowCardProps>((
             };
         }
 
+        // Default fallback
         return {
-            icon: Layers,
-            accent: 'amber' as const,
-            gradientMain: 'from-amber-400 to-orange-500',
+            icon: Users,
+            accent: 'violet' as const,
+            gradientMain: 'from-violet-500 to-fuchsia-500',
             label: 'Dựa trên phân khúc'
         };
-    }, [isArchived, triggerType, triggerConfig, linkedForm, linkedPurchaseEvent, linkedCustomEvent, linkedCampaign, linkedList, linkedSegment, onOpenForm, onOpenCampaign, onOpenTag, onOpenList, onOpenSegment, onOpenPurchase, onOpenCustomEvent]);
+    }, [isArchived, triggerType, triggerConfig, linkedCampaign, linkedForm, linkedPurchaseEvent, linkedCustomEvent, linkedSegment, linkedList, linkedTag, onOpenCampaign, onOpenForm, onOpenList, onOpenSegment, onOpenTag, onOpenPurchase, onOpenCustomEvent]);
 
     const Icon = theme.icon;
 
     const StatusPill = () => {
-        if (isArchived) return <span className="px-2 py-1 bg-slate-100 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700/60 leading-none">Archived</span>;
+        if (isArchived) return <span className="px-2 py-1 bg-slate-100 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-800 leading-none">Archived</span>;
         if (isActive) return <span className="flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-100 leading-none"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-subtle" /> Active</span>;
         if (flow.status === 'draft') return <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-blue-100 leading-none">Draft</span>;
         return <span className="px-2 py-1 bg-slate-100 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700/60 leading-none">Paused</span>;
@@ -249,7 +252,7 @@ const FlowCard = React.memo<FlowCardProps>((
             onClick={onClick}
             className={`
         group relative bg-white dark:bg-slate-900 border transition-all duration-300 cursor-pointer 
-        ${isArchived ? 'border-slate-200 opacity-60 grayscale' : hasWarning ? 'border-amber-300/50 hover:border-amber-400 shadow-sm hover:shadow-lg' : 'border-slate-200 dark:border-slate-700/60 hover:border-violet-300/50 hover:shadow-lg hover:shadow-violet-500/5'}
+        ${isArchived ? (selected ? 'border-violet-500 dark:border-violet-500 ring-2 ring-violet-500/20 bg-violet-50/5 grayscale-0 opacity-100' : 'border-slate-200 dark:border-slate-800 opacity-60 grayscale') : hasWarning ? 'border-amber-300/50 hover:border-amber-400 shadow-sm hover:shadow-lg' : 'border-slate-200 dark:border-slate-700/60 hover:border-violet-300/50 hover:shadow-lg hover:shadow-violet-500/5'}
         hover:-translate-y-1 hover:z-10
         ${isList ? 'rounded-[16px] flex flex-row items-center p-3 gap-0 overflow-hidden' : 'rounded-[20px] h-full flex flex-col overflow-hidden'}
       `}
@@ -267,6 +270,16 @@ const FlowCard = React.memo<FlowCardProps>((
             {isList ? (
                 // --- LIST VIEW ---
                 <>
+                    {onToggleSelect && isArchived && (
+                        <div className="mr-3 shrink-0 flex items-center justify-center z-30" onClick={(e) => e.stopPropagation()}>
+                            <input
+                                type="checkbox"
+                                checked={selected}
+                                onChange={onToggleSelect}
+                                className="w-4 h-4 rounded text-violet-600 focus:ring-violet-500 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                            />
+                        </div>
+                    )}
                     <div className="flex-1 flex items-center pr-4 relative z-10 min-w-0">
                         <div className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center text-white shadow-md transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-3 bg-gradient-to-br ${theme.gradientMain} mr-4`}>
                             <Icon className="w-5 h-5" />
@@ -348,8 +361,20 @@ const FlowCard = React.memo<FlowCardProps>((
                 <>
                     <div className="p-4 flex-1 relative z-10">
                         <div className="flex justify-between items-start mb-4">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 bg-gradient-to-br ${theme.gradientMain}`}>
-                                <Icon className="w-5 h-5" />
+                            <div className="flex items-center gap-3">
+                                {onToggleSelect && isArchived && (
+                                    <div className="z-30 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                                        <input
+                                            type="checkbox"
+                                            checked={selected}
+                                            onChange={onToggleSelect}
+                                            className="w-4 h-4 rounded text-violet-600 focus:ring-violet-500 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                                        />
+                                    </div>
+                                )}
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 bg-gradient-to-br ${theme.gradientMain}`}>
+                                    <Icon className="w-5 h-5" />
+                                </div>
                             </div>
                             <StatusPill />
                         </div>

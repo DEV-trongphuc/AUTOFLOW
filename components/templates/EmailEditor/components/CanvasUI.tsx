@@ -4,6 +4,7 @@ import * as LucideIcons from 'lucide-react'; // Import all Lucide icons
 import { createPortal } from 'react-dom';
 import { type LucideIcon } from 'lucide-react'; // Import specific type
 import { EmailBlock } from '../../../../types';
+import { sanitizeRadius } from '../utils/styleUtils';
 
 interface DropIndicatorProps {
     dropPosition: 'top' | 'bottom' | 'inside' | 'left' | 'right' | null;
@@ -11,11 +12,11 @@ interface DropIndicatorProps {
 
 export const CanvasDropIndicator: React.FC<DropIndicatorProps> = ({ dropPosition }) => (
     <>
-        {dropPosition === 'top' && <div className="absolute top-0 left-0 right-0 h-1 bg-[#ffa900] z-[60] pointer-events-none shadow-[0_0_10px_rgba(255,169,0,0.6)] animate-pulse" />}
-        {dropPosition === 'bottom' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#ffa900] z-[60] pointer-events-none shadow-[0_0_10px_rgba(255,169,0,0.6)] animate-pulse" />}
-        {dropPosition === 'left' && <div className="absolute top-0 left-0 bottom-0 w-1 bg-[#ffa900] z-[60] pointer-events-none shadow-[0_0_10px_rgba(255,169,0,0.6)] animate-pulse" />}
-        {dropPosition === 'right' && <div className="absolute top-0 right-0 bottom-0 w-1 bg-[#ffa900] z-[60] pointer-events-none shadow-[0_0_10px_rgba(255,169,0,0.6)] animate-pulse" />}
-        {dropPosition === 'inside' && <div className="absolute inset-0 bg-[#ffa900]/10 z-[55] border-2 border-[#ffa900] border-dashed pointer-events-none shadow-[inset_0_0_15px_rgba(255,169,0,0.2)]" />}
+        {dropPosition === 'top' && <div className="absolute top-0 left-0 right-0 h-1 bg-[#8b5cf6] z-[60] pointer-events-none shadow-[0_0_10px_rgba(139,92,246,0.6)] animate-pulse" />}
+        {dropPosition === 'bottom' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#8b5cf6] z-[60] pointer-events-none shadow-[0_0_10px_rgba(139,92,246,0.6)] animate-pulse" />}
+        {dropPosition === 'left' && <div className="absolute top-0 left-0 bottom-0 w-1 bg-[#8b5cf6] z-[60] pointer-events-none shadow-[0_0_10px_rgba(139,92,246,0.6)] animate-pulse" />}
+        {dropPosition === 'right' && <div className="absolute top-0 right-0 bottom-0 w-1 bg-[#8b5cf6] z-[60] pointer-events-none shadow-[0_0_10px_rgba(139,92,246,0.6)] animate-pulse" />}
+        {dropPosition === 'inside' && <div className="absolute inset-0 bg-[#8b5cf6]/10 z-[55] border-2 border-[#8b5cf6] border-dashed pointer-events-none shadow-[inset_0_0_15px_rgba(139,92,246,0.2)]" />}
     </>
 );
 
@@ -101,7 +102,10 @@ export const CanvasHandleOverlay: React.FC<HandleOverlayProps> = ({
             <div ref={anchorRef} className="pointer-events-none" style={{ position: 'absolute', inset: 0 }}>
                 {/* Border outline — stays inside td (doesn't need portal) */}
                 {isSelected && (
-                    <div className={`absolute inset-0 border-2 ${color.replace('ring-', 'border-')} pointer-events-none z-50`} />
+                    <div 
+                        className={`absolute inset-0 border-2 ${color.replace('ring-', 'border-')} pointer-events-none z-50`} 
+                        style={{ borderRadius: block.style?.borderRadius ? sanitizeRadius(block.style.borderRadius) : undefined }}
+                    />
                 )}
             </div>
 

@@ -13,7 +13,8 @@ define('ROOT_ADMIN_EMAILS', [
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-$isApprovedAdmin = (($_SESSION['role'] ?? '') === 'admin' && ($_SESSION['status'] ?? '') === 'approved');
+$role = $_SESSION['role'] ?? '';
+$isApprovedAdmin = (($role === 'admin' || $role === 'super_admin') && ($_SESSION['status'] ?? '') === 'approved');
 // Also allow from internal bypass token if needed
 if (!$isApprovedAdmin && ($GLOBALS['current_admin_id'] !== 'admin-001')) {
     jsonResponse(false, null, 'Unauthorized');
@@ -26,19 +27,42 @@ if ($method === 'GET' && $action === 'list') {
     $stmt = $pdo->query("SELECT id, email, name, role, status, last_login, picture FROM users ORDER BY last_login DESC, created_at DESC");
     $users = $stmt->fetchAll();
 
-    foreach ($users as &$user) {
+    if (!empty($users)) {
+        $userIds = array_map(function($u) { return $u['id']; }, $users);
+        $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+        
         try {
             $wsStmt = $pdo->prepare("
-                SELECT w.name as workspace_name, r.name as role_name 
+                SELECT wu.user_id, w.name as workspace_name, r.name as role_name 
                 FROM workspace_users wu
                 JOIN workspaces w ON w.id = wu.workspace_id
                 LEFT JOIN roles r ON r.id = wu.role_id
-                WHERE TRIM(wu.user_id) COLLATE utf8mb4_unicode_ci = TRIM(?) COLLATE utf8mb4_unicode_ci
+                WHERE TRIM(wu.user_id) COLLATE utf8mb4_unicode_ci IN ($placeholders)
             ");
-            $wsStmt->execute([$user['id']]);
-            $user['workspaces'] = $wsStmt->fetchAll();
+            // Map the bound parameters to execute
+            $wsStmt->execute($userIds);
+            $memberships = $wsStmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $grouped = [];
+            foreach ($memberships as $m) {
+                $uid = trim($m['user_id']);
+                if (!isset($grouped[$uid])) {
+                    $grouped[$uid] = [];
+                }
+                $grouped[$uid][] = [
+                    'workspace_name' => $m['workspace_name'],
+                    'role_name' => $m['role_name']
+                ];
+            }
+            
+            foreach ($users as &$user) {
+                $uid = trim($user['id']);
+                $user['workspaces'] = $grouped[$uid] ?? [];
+            }
         } catch (Exception $e) {
-            $user['workspaces'] = [];
+            foreach ($users as &$user) {
+                $user['workspaces'] = [];
+            }
         }
     }
 

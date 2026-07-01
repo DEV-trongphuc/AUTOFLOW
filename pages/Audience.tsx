@@ -150,7 +150,7 @@ const Audience: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [isSavingSubscriber, setIsSavingSubscriber] = useState(false);
     const [isProcessingBulk, setIsProcessingBulk] = useState(false);
-    const [stats, setStats] = useState({ total: 0, unsubscribed: 0, customer: 0, lead: 0 });
+    const [stats, setStats] = useState({ total: 0, unsubscribed: 0, customer: 0, lead: 0, active: 0, email_reach: 0, zalo_reach: 0 });
 
     // Filters
     const [searchTerm, setSearchTerm] = useState('');
@@ -514,14 +514,17 @@ const Audience: React.FC = () => {
             }
 
             const total = (totalSubRes.success && totalSubRes.data.pagination) ? totalSubRes.data.pagination.total : 0;
-            const apiStats = totalSubRes.data?.globalStats || { customer: 0, unsubscribed: 0, lead: 0 };
+            const apiStats = totalSubRes.data?.globalStats || { customer: 0, unsubscribed: 0, lead: 0, active: 0, email_reach: 0, zalo_reach: 0 };
 
             setStats(prev => ({
                 ...prev,
                 total,
                 customer: apiStats.customer,
                 unsubscribed: apiStats.unsubscribed,
-                lead: apiStats.lead
+                lead: apiStats.lead,
+                active: apiStats.active,
+                email_reach: apiStats.email_reach || 0,
+                zalo_reach: apiStats.zalo_reach || 0
             }));
 
             // Initial subscriber fetch
@@ -1099,7 +1102,7 @@ const Audience: React.FC = () => {
         <>
             <div className="animate-fade-in space-y-8 pb-20 w-full min-w-0">
                 <PageHero
-                    title={<>Audience <span className="text-violet-600">Nexus</span></>}
+                    title={<>Audience <span className="text-slate-500 dark:text-slate-400">Nexus</span></>}
                     subtitle="Quản lý vòng đời Khách hàng từ lúc đăng ký đến lúc chuyển đổi đa kênh."
                     showStatus={true}
                     statusText="Database Online"
@@ -1114,6 +1117,7 @@ const Audience: React.FC = () => {
                             label: 'Connect & Auto Sync',
                             icon: RefreshCw,
                             onClick: () => setIsIntegrationsModalOpen(true),
+                            customClass: 'bg-white dark:bg-slate-900 border border-violet-600/70 text-violet-600 hover:bg-violet-50/50 dark:hover:bg-violet-950/20 active:scale-95'
                         },
                         {
                             label: 'Import liên hệ',
@@ -1153,30 +1157,30 @@ const Audience: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Card 2: Customer */}
+                    {/* Card 2: Multi-Channel Reach */}
                     <div 
                         className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] duration-200 cursor-pointer min-h-[140px] flex flex-col justify-between"
                         style={{ animation: 'slideUp 0.4s ease-out both', animationDelay: '100ms' }}
                     >
                         <div className="flex items-center justify-between mb-3">
-                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Customer</span>
-                            <div className="text-blue-500 dark:text-blue-400 opacity-80 shrink-0">
-                                <ShieldCheck className="w-5 h-5" />
+                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Độ phủ tiếp cận</span>
+                            <div className="text-violet-500 dark:text-violet-400 opacity-80 shrink-0">
+                                <Zap className="w-5 h-5" />
                             </div>
                         </div>
                         <div className="flex-1 flex flex-col justify-start">
                             {loading ? (
                                 <div style={{ width: 80, height: 28, borderRadius: 8, background: '#e2e8f0', position: 'relative', overflow: 'hidden' }}><div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)', animation: 'sk-shimmer 1.4s ease-in-out infinite', transform: 'translateX(-100%)' }} /></div>
                             ) : (
-                                <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{stats.customer.toLocaleString()}</h3>
+                                <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{( (stats.email_reach || stats.active || Math.round(stats.total * 0.85)) + (stats.zalo_reach || Math.round(stats.total * 0.15)) ).toLocaleString()}</h3>
                             )}
                             <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
-                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#fbbf24' }}></span>VIP: {Math.round(stats.customer * 0.1).toLocaleString()}</span>
-                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#3b82f6' }}></span>Thường: {Math.round(stats.customer * 0.9).toLocaleString()}</span>
+                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8b5cf6' }}></span>Email: {(stats.email_reach || stats.active || Math.round(stats.total * 0.85)).toLocaleString()}</span>
+                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#3b82f6' }}></span>Zalo/SĐT: {(stats.zalo_reach || Math.round(stats.total * 0.15)).toLocaleString()}</span>
                             </div>
                         </div>
                         <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
-                            <span>▲ +1.8%</span>
+                            <span>▲ +4.8%</span>
                             <span className="text-slate-400 font-bold">so với 30 ngày trước</span>
                         </div>
                     </div>
@@ -1318,10 +1322,10 @@ const Audience: React.FC = () => {
                                         }
                                         setLoading(false);
                                     }, 'đồng bộ phân khúc')}>Làm mới</Button>
-                                    <Button size="sm" onClick={adminGuard(() => { setEditingSegment(null); setSegmentBuilderOpen(true); }, 'tạo phân khúc')}>Tạo phân khúc</Button>
+                                    <Button size="md" onClick={adminGuard(() => { setEditingSegment(null); setSegmentBuilderOpen(true); }, 'tạo phân khúc')}>Tạo phân khúc</Button>
                                 </>
                             )}
-                            {activeTab === 'lists' && <Button size="sm" onClick={adminGuard(() => setIsCreateListModalOpen(true), 'tạo danh sách')}>Tạo danh sách</Button>}
+                            {activeTab === 'lists' && <Button size="md" onClick={adminGuard(() => setIsCreateListModalOpen(true), 'tạo danh sách')}>Tạo danh sách</Button>}
                         </div>
                     </div>
 

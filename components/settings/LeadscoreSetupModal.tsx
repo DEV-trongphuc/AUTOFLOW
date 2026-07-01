@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Target, Mail, MousePointerClick, FileText, Globe, MessageSquare, Bot, Save, AlertCircle, ShoppingBag, Zap } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
 import toast from 'react-hot-toast';
@@ -87,10 +87,10 @@ export const LeadscoreSetupModal: React.FC<Props> = ({ isOpen, onClose }) => {
             <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-3xl overflow-hidden animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-emerald-500 to-teal-500" />
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-violet-600 to-indigo-600" />
                     <div className="flex items-center gap-3 relative z-10">
-                        <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                            <Target className="w-5 h-5 text-emerald-600" />
+                        <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center">
+                            <Target className="w-5 h-5 text-violet-600" />
                         </div>
                         <div>
                             <h2 className="text-lg font-black text-slate-800 tracking-tight">CẤU HÌNH LEADSCORE</h2>
@@ -114,12 +114,12 @@ export const LeadscoreSetupModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
                     {loading ? (
                         <div className="flex justify-center items-center py-20">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600"></div>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {scoringRules.map((rule) => (
-                                <div key={rule.key} className="flex items-center p-4 border border-slate-200 rounded-2xl hover:border-emerald-300 hover:shadow-md transition-all group">
+                                <div key={rule.key} className="flex items-center p-4 border border-slate-200 rounded-2xl hover:border-violet-300 hover:shadow-md transition-all group">
                                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${rule.bg}`}>
                                         <rule.icon className={`w-6 h-6 ${rule.color}`} />
                                     </div>
@@ -132,9 +132,9 @@ export const LeadscoreSetupModal: React.FC<Props> = ({ isOpen, onClose }) => {
                                             type="number"
                                             value={(scores as any)[rule.key]}
                                             onChange={(e) => setScores({ ...scores, [rule.key]: parseInt(e.target.value) || 0 })}
-                                            className="w-16 h-10 text-center font-black text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
+                                            className="w-16 h-10 text-center font-black text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all"
                                         />
-                                        <div className="absolute -top-2 -right-2 bg-emerald-100 text-emerald-700 text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-emerald-200">
+                                        <div className="absolute -top-2 -right-2 bg-violet-100 text-violet-700 text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-violet-200">
                                             Pts
                                         </div>
                                     </div>
@@ -155,7 +155,7 @@ export const LeadscoreSetupModal: React.FC<Props> = ({ isOpen, onClose }) => {
                     <button 
                         onClick={handleSave}
                         disabled={saving}
-                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-500/30 transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-750 shadow-lg shadow-violet-500/30 transition-all disabled:opacity-50"
                     >
                         {saving ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /> : <Save className="w-4 h-4" />}
                         Lưu Thay Đổi

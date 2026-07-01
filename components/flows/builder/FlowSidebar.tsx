@@ -172,22 +172,22 @@ const FlowSidebar: React.FC<FlowSidebarProps> = ({
                 <div className="p-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
                     <button
                         onClick={onOpenHistory}
-                        className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-950 hover:bg-amber-50 border border-slate-100 dark:border-slate-800 hover:border-amber-200 rounded-2xl transition-all group"
+                        className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-950 hover:bg-violet-50/50 border border-slate-100 dark:border-slate-800 hover:border-violet-200 rounded-2xl transition-all group"
                     >
                         <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center text-[#ca7900] group-hover:bg-[#ffa900] group-hover:text-white transition-all">
+                            <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center text-violet-600 group-hover:bg-violet-600 group-hover:text-white transition-all">
                                 <RotateCcw className="w-3.5 h-3.5" />
                             </div>
                             <div className="text-left">
-                                <p className="text-[11px] font-black text-slate-700 dark:text-slate-200 group-hover:text-[#ca7900] leading-none">Lịch sử phiên bản</p>
+                                <p className="text-[11px] font-black text-slate-700 dark:text-slate-200 group-hover:text-violet-600 leading-none">Lịch sử phiên bản</p>
                                 <p className="text-[9px] text-slate-400 font-medium mt-0.5">Khôi phục bản chỉnh sửa trước</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-1.5">
                             {snapshotCount > 0 && (
-                                <span className="text-[9px] font-black text-white bg-[#ffa900] px-1.5 py-0.5 rounded-md">{snapshotCount}</span>
+                                <span className="text-[9px] font-black text-white bg-violet-600 px-1.5 py-0.5 rounded-md">{snapshotCount}</span>
                             )}
-                            <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-[#ffa900] group-hover:translate-x-0.5 transition-transform" />
+                            <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-violet-600 group-hover:translate-x-0.5 transition-transform" />
                         </div>
                     </button>
                 </div>

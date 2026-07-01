@@ -359,7 +359,7 @@ const Tags: React.FC = () => {
     return (
         <div className="animate-fade-in space-y-8 pb-40">
             <PageHero
-                title={<>Tag <span className="text-violet-600">Classifier</span></>}
+                title={<>Tag <span className="text-slate-500 dark:text-slate-400">Classifier</span></>}
                 subtitle="Phân loại Khách hàng tự động để cá nhân hóa chiến dịch và luồng Automation."
                 showStatus={true}
                 statusText="Tagging Engine Active"

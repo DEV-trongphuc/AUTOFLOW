@@ -166,7 +166,7 @@ const FlowHeader: React.FC<FlowHeaderProps> = ({
             <Badge variant={flow.status === 'active' ? 'success' : (isArchived ? 'danger' : 'neutral')} className="text-[9px] px-2.5 py-1 uppercase font-black tracking-[0.15em] rounded-lg shadow-sm border-none bg-opacity-90 backdrop-blur-sm">
                 {flow.status === 'active' ? (
                   <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     <span>ĐANG CHẠY</span>
                   </div>
                 ) : (isArchived ? 'ĐÃ XOÁ' : 'TẠM DỪNG')}

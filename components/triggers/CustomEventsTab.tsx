@@ -240,7 +240,7 @@ const trackCustomEvent = async () => {
                                 onClick={() => setIntegrationModal(evt)}
                                 className="w-full h-11 rounded-xl bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center justify-center gap-2 group/btn"
                             >
-                                <Code2 className="w-4 h-4 text-[#ffa900] group-hover/btn:rotate-12 transition-transform" />
+                                <Code2 className="w-4 h-4 text-[#683df2] group-hover/btn:rotate-12 transition-transform" />
                                 Lấy mã tích hợp API
                             </button>
                         </div>
@@ -269,7 +269,7 @@ const trackCustomEvent = async () => {
                         <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-100 mt-2">
                             <div>
                                 <h5 className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                                    <Bell className="w-4 h-4 text-[#ffa900]" /> Lệnh gửi email Báo cáo
+                                    <Bell className="w-4 h-4 text-[#683df2]" /> Lệnh gửi email Báo cáo
                                 </h5>
                                 <p className="text-[10px] text-slate-400 font-medium mt-1">Gửi email khi nhận sự kiện.</p>
                             </div>

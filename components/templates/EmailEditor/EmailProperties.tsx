@@ -56,9 +56,16 @@ const LucideIconMap: Record<string, any> = LucideIcons; // For dynamic icon rend
 const EmailProperties: React.FC<EmailPropertiesProps> = ({
     selectedBlock, bodyStyle, deviceMode, onUpdateBlock, onUpdateBodyStyle, onDeselect, onDeleteBlock, onDuplicateBlock, blocks, customMergeTags = []
 }) => {
-    const [activeTab, setActiveTab] = useState<'content' | 'style'>('style');
+    const [activeTab, setActiveTab] = useState<'content' | 'style'>('content');
     const [editSocialId, setEditSocialId] = useState<string | null>(null);
     const [voucherCampaigns, setVoucherCampaigns] = useState<VoucherCampaign[]>([]);
+
+    // Reset to 'content' tab whenever a different block is selected
+    useEffect(() => {
+        if (selectedBlock) {
+            setActiveTab('content');
+        }
+    }, [selectedBlock?.id]);
 
     useEffect(() => {
         try {

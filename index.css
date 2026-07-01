@@ -1345,6 +1345,7 @@ html {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
 .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #475569;
 }
@@ -1571,21 +1572,21 @@ html {
    ================================================ */
 .rounded-3xl, 
 [class*="rounded-[32px]"], 
-[class*="rounded-[32px]"]/50,
+[class*="rounded-[32px]/50"],
 [class*="rounded-[2rem]"],
-[class*="rounded-[2rem]"]/50,
+[class*="rounded-[2rem]/50"],
 [class*="rounded-[40px]"],
-[class*="rounded-[40px]"]/50,
+[class*="rounded-[40px]/50"],
 [class*="rounded-[48px]"],
-[class*="rounded-[48px]"]/50 {
+[class*="rounded-[48px]/50"] {
     border-radius: 18px !important;
 }
 
 .rounded-2xl, 
 [class*="rounded-[24px]"],
-[class*="rounded-[24px]"]/50,
+[class*="rounded-[24px]/50"],
 [class*="rounded-[20px]"],
-[class*="rounded-[20px]"]/50,
+[class*="rounded-[20px]/50"],
 [class*="rounded-[22px]"] {
     border-radius: 14px !important;
 }
