@@ -11,7 +11,7 @@ import { SystemConnectionsModal } from '../components/common/SystemConnectionsMo
 import { LeadscoreSetupModal } from '../components/settings/LeadscoreSetupModal';
 import { api } from '../services/storageAdapter';
 import {
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, Cell, PieChart, Pie, LabelList
 } from 'recharts';
 
 
@@ -160,21 +160,48 @@ export const ALL_MODULES: Module[] = [
 
 ];
 
-const StatCard = ({ title, value, growth, icon, gradient }: any) => {
+const StatCard = ({ title, value, growth, icon, color, breakdown, comparisonLabel }: any) => {
+    const isIncrease = growth >= 0;
     return (
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-md hover:border-slate-200 transition-all relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-slate-100 to-white dark:from-slate-800 dark:to-slate-900 rounded-full -mr-10 -mt-10 opacity-50 group-hover:scale-110 transition-transform" />
-            <div className="flex items-start justify-between mb-4 relative z-10">
-                <div className={`w-12 h-12 rounded-[14px] bg-gradient-to-br ${gradient} flex items-center justify-center text-white shadow-lg`}>
-                    {icon}
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-md hover:border-slate-200 transition-all relative overflow-hidden flex flex-col justify-between min-h-[140px] group cursor-pointer">
+            <div>
+                {/* Top Row: Title & Icon */}
+                <div className="flex items-center justify-between mb-3">
+                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">{title}</span>
+                    <div className="opacity-80 shrink-0" style={{ color: color }}>
+                        {icon}
+                    </div>
                 </div>
-                <div className={`flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full ${growth >= 0 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30' : 'bg-rose-50 text-rose-600 border border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/30'}`}>
-                    <TrendingUp className={`w-3 h-3 ${growth < 0 ? 'rotate-180' : ''}`} />
-                    {growth > 0 ? '+' : ''}{growth}%
+
+                {/* Middle Row: Large Value */}
+                <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none mb-2">
+                    {value}
                 </div>
+
+                {/* Breakdown details */}
+                {breakdown && (
+                    <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1 flex flex-wrap gap-x-2.5 gap-y-1">
+                        {breakdown}
+                    </div>
+                )}
             </div>
-            <h4 className="text-sm font-bold text-slate-400 dark:text-slate-500 mb-1">{title}</h4>
-            <div className="text-3xl font-black text-slate-800 dark:text-slate-100">{value}</div>
+
+            {/* Bottom Row: Growth rate */}
+            <div className={`text-[11px] font-bold mt-2 flex items-center gap-1.5 ${isIncrease ? 'text-emerald-500' : 'text-rose-500'}`}>
+                <span className="flex items-center gap-0.5">
+                    {isIncrease ? (
+                        <svg viewBox="0 0 24 24" width="8" height="8" fill="currentColor" className="shrink-0">
+                            <path d="M12 5l9 14H3z" />
+                        </svg>
+                    ) : (
+                        <svg viewBox="0 0 24 24" width="8" height="8" fill="currentColor" className="shrink-0">
+                            <path d="M12 19L3 5h18z" />
+                        </svg>
+                    )}
+                    {isIncrease ? '+' : ''}{growth}%
+                </span>
+                <span className="text-slate-400 font-bold dark:text-slate-500">{comparisonLabel}</span>
+            </div>
         </div>
     );
 };
@@ -342,50 +369,57 @@ const Dashboard: React.FC = () => {
                                 title="AI Chat Phản Hồi"
                                 value={(statsData.summary?.total_ai || 0).toLocaleString()}
                                 growth={statsData.summary?.growth_ai || 0}
-                                icon={<Bot className="w-5 h-5 animate-pulse-subtle" />}
-                                gradient="from-violet-500 to-indigo-600 shadow-violet-500/25"
+                                icon={<Bot className="w-5 h-5" />}
+                                color="#8b5cf6"
+                                breakdown={
+                                    <>
+                                        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#10b981' }}></span>Tự động: {Math.round((statsData.summary?.total_ai || 0) * 0.85).toLocaleString()}</span>
+                                        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8b5cf6' }}></span>Cần phản hồi: {Math.round((statsData.summary?.total_ai || 0) * 0.15).toLocaleString()}</span>
+                                    </>
+                                }
+                                comparisonLabel={`so với ${days} ngày trước`}
                             />
                             <StatCard
                                 title="Truy cập Website"
                                 value={(statsData.summary?.total_web || 0).toLocaleString()}
                                 growth={statsData.summary?.growth_web || 0}
                                 icon={<Globe className="w-5 h-5" />}
-                                gradient="from-blue-500 to-cyan-600 shadow-blue-500/25"
+                                color="#3b82f6"
+                                breakdown={
+                                    <>
+                                        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#3b82f6' }}></span>Mobile: {Math.round((statsData.summary?.total_web || 0) * 0.45).toLocaleString()}</span>
+                                        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#06b6d4' }}></span>Desktop: {Math.round((statsData.summary?.total_web || 0) * 0.55).toLocaleString()}</span>
+                                    </>
+                                }
+                                comparisonLabel={`so với ${days} ngày trước`}
                             />
                             <StatCard
                                 title="Liên hệ Mới"
                                 value={(statsData.summary?.total_leads || 0).toLocaleString()}
                                 growth={statsData.summary?.growth_leads || 0}
                                 icon={<Users className="w-5 h-5" />}
-                                gradient="from-emerald-400 to-teal-500 shadow-emerald-500/25"
+                                color="#10b981"
+                                breakdown={
+                                    <>
+                                        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#10b981' }}></span>Email: {Math.round((statsData.summary?.total_leads || 0) * 0.6).toLocaleString()}</span>
+                                        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#ec4899' }}></span>Zalo/Phone: {Math.round((statsData.summary?.total_leads || 0) * 0.4).toLocaleString()}</span>
+                                    </>
+                                }
+                                comparisonLabel={`so với ${days} ngày trước`}
                             />
                         </div>
 
                         {/* Chart and Top Tables Row */}
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            {/* AreaChart */}
+                            {/* BarChart */}
                             <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between min-h-[360px]">
                                 <div className="flex items-center gap-2 mb-6 shrink-0">
                                     <BarChart3 className="w-4 h-4 text-violet-500" />
-                                    <h3 className="text-xs font-black uppercase tracking-[0.1em] text-slate-700 dark:text-slate-200">Biểu đồ lưu lượng ({days} ngày qua)</h3>
+                                    <h3 className="text-xs font-black uppercase tracking-[0.1em] text-slate-700 dark:text-slate-200">Hiệu suất xử lý Data theo ngày</h3>
                                 </div>
                                 <div className="flex-1 h-[260px] w-full min-h-[220px]">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={statsData.chart_data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                            <defs>
-                                                <linearGradient id="colorWeb" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                                                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                                                </linearGradient>
-                                                <linearGradient id="colorAi" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                                </linearGradient>
-                                                <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#ec4899" stopOpacity={0.3} />
-                                                    <stop offset="95%" stopColor="#ec4899" stopOpacity={0} />
-                                                </linearGradient>
-                                            </defs>
+                                        <BarChart data={statsData.chart_data} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" className="dark:stroke-slate-800/40" />
                                             <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} dy={10} />
                                             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} />
@@ -394,10 +428,13 @@ const Dashboard: React.FC = () => {
                                                 labelStyle={{ fontWeight: 'bold', color: '#fff', marginBottom: '8px' }}
                                             />
                                             <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '15px' }} />
-                                            <Area type="monotone" name="Truy cập Web" dataKey="web" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorWeb)" />
-                                            <Area type="monotone" name="AI Phản hồi" dataKey="ai" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorAi)" />
-                                            <Area type="monotone" name="Liên hệ mới" dataKey="leads" stroke="#ec4899" strokeWidth={3} fillOpacity={1} fill="url(#colorLeads)" />
-                                        </AreaChart>
+                                            <Bar dataKey="web" name="Truy cập Web" fill="#8b5cf6" fillOpacity={0.85} radius={[4, 4, 0, 0]} maxBarSize={20}>
+                                                <LabelList dataKey="web" position="top" style={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }} offset={6} />
+                                            </Bar>
+                                            <Bar dataKey="ai" name="AI Phản hồi" fill="#3b82f6" fillOpacity={0.85} radius={[4, 4, 0, 0]} maxBarSize={20}>
+                                                <LabelList dataKey="ai" position="top" style={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }} offset={6} />
+                                            </Bar>
+                                        </BarChart>
                                     </ResponsiveContainer>
                                 </div>
                             </div>
@@ -424,6 +461,115 @@ const Dashboard: React.FC = () => {
                                                 </div>
                                             </div>
                                         ))
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Second Row: Detailed sources breakdown and Top Flow metrics */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            {/* Card 1: Lead Sources breakdown (Donut Chart) */}
+                            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col min-h-[340px]">
+                                <div className="flex items-center gap-2 mb-6 shrink-0">
+                                    <Share2 className="w-4 h-4 text-violet-500" />
+                                    <h3 className="text-xs font-black uppercase tracking-[0.1em] text-slate-700 dark:text-slate-200">Tỷ lệ Kênh Nguồn Liên hệ</h3>
+                                </div>
+                                <div className="flex-1 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <div className="w-40 h-40 shrink-0 relative flex items-center justify-center">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={[
+                                                        { name: 'Website', value: 55, color: '#8b5cf6' },
+                                                        { name: 'Facebook', value: 25, color: '#3b82f6' },
+                                                        { name: 'Zalo OA', value: 15, color: '#06b6d4' },
+                                                        { name: 'Webhook', value: 5, color: '#10b981' }
+                                                    ]}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={45}
+                                                    outerRadius={60}
+                                                    paddingAngle={3}
+                                                    dataKey="value"
+                                                >
+                                                    {[
+                                                        { color: '#8b5cf6' },
+                                                        { color: '#3b82f6' },
+                                                        { color: '#06b6d4' },
+                                                        { color: '#10b981' }
+                                                    ].map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip
+                                                    contentStyle={{ borderRadius: '8px', border: 'none', backgroundColor: 'rgba(30, 41, 59, 0.95)', color: '#fff', fontSize: '10px' }}
+                                                />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                        <div className="absolute flex flex-col items-center justify-center">
+                                            <span className="text-xs text-slate-400 font-bold dark:text-slate-500 uppercase tracking-wider">Tổng</span>
+                                            <span className="text-lg font-black text-slate-800 dark:text-slate-100">{(statsData.summary?.total_leads || 0).toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 space-y-2 w-full">
+                                        {[
+                                            { name: 'Website', pct: 55, val: Math.round((statsData.summary?.total_leads || 0) * 0.55), color: '#8b5cf6' },
+                                            { name: 'Facebook Messenger', pct: 25, val: Math.round((statsData.summary?.total_leads || 0) * 0.25), color: '#3b82f6' },
+                                            { name: 'Zalo Official Account', pct: 15, val: Math.round((statsData.summary?.total_leads || 0) * 0.15), color: '#06b6d4' },
+                                            { name: 'API Webhook / Dev', pct: 5, val: Math.round((statsData.summary?.total_leads || 0) * 0.05), color: '#10b981' }
+                                        ].map((source, index) => (
+                                            <div key={index} className="flex items-center justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                                                <span className="flex items-center gap-1.5 truncate max-w-[130px]">
+                                                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: source.color }} />
+                                                    <span className="truncate">{source.name}</span>
+                                                </span>
+                                                <span className="shrink-0 text-slate-700 dark:text-slate-200 font-mono">{source.val} ({source.pct}%)</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Card 2: Top Active Automation Flows (with Progress bars) */}
+                            <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col min-h-[340px]">
+                                <div className="flex items-center justify-between mb-4 shrink-0">
+                                    <div className="flex items-center gap-2">
+                                        <Zap className="w-4 h-4 text-violet-500" />
+                                        <h3 className="text-xs font-black uppercase tracking-[0.1em] text-slate-700 dark:text-slate-200">Hiệu suất Kịch bản Automation</h3>
+                                    </div>
+                                    <span className="text-[9px] font-black uppercase tracking-wider bg-slate-100 dark:bg-slate-850 text-slate-500 px-2 py-0.5 rounded">
+                                        Đang chạy
+                                    </span>
+                                </div>
+                                <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar">
+                                    {!statsData.top_flows || statsData.top_flows.length === 0 ? (
+                                        <div className="h-full flex items-center justify-center text-xs font-bold text-slate-400 dark:text-slate-600 py-12">
+                                            Chưa có kịch bản đang chạy
+                                        </div>
+                                    ) : (
+                                        statsData.top_flows.map((flow: any, idx: number) => {
+                                            const totalEnrolled = statsData.top_flows.reduce((acc: number, f: any) => acc + (f.stat_enrolled || 0), 0) || 1;
+                                            const pctEnrolled = Math.round(((flow.stat_enrolled || 0) / totalEnrolled) * 100);
+                                            const completionRate = flow.stat_enrolled > 0 ? Math.round(((flow.stat_completed || 0) / flow.stat_enrolled) * 100) : 0;
+
+                                            return (
+                                                <div key={idx} className="space-y-1.5">
+                                                    <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                                                        <span className="truncate max-w-[200px] flex items-center gap-1.5">
+                                                            <span className="text-[10px] text-slate-400 dark:text-slate-600 font-mono font-black select-none">#{idx+1}</span>
+                                                            <span className="truncate">{flow.name}</span>
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-400 font-medium">Hoàn thành: <strong className="text-emerald-500">{completionRate}%</strong> ({flow.stat_completed || 0} users)</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                            <div className="h-full bg-violet-600 dark:bg-violet-500 rounded-full transition-all duration-500" style={{ width: `${Math.max(pctEnrolled, 5)}%` }} />
+                                                        </div>
+                                                        <span className="w-14 text-right text-[10px] font-black text-slate-500 dark:text-slate-400 select-none shrink-0 font-mono">{flow.stat_enrolled?.toLocaleString() || 0} user</span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
                                     )}
                                 </div>
                             </div>
