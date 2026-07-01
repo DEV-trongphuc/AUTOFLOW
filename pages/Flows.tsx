@@ -1821,8 +1821,8 @@ const Flows: React.FC = () => {
                                     onChange={setActiveTab as any}
                                     className="flex-nowrap overflow-x-auto scrollbar-hide"
                                     items={[
+                                        { id: 'active', label: 'Đang chạy', icon: PlayCircle },
                                         { id: 'all', label: 'Tất cả', icon: LayoutGrid },
-                                        { id: 'active', label: 'đang chạy', icon: PlayCircle },
                                         { id: 'paused', label: 'Tạm dừng', icon: PauseCircle },
                                         { id: 'draft', label: 'Bản nháp', icon: FileText },
                                         { id: 'archived', label: 'Thùng rác', icon: Trash2 },

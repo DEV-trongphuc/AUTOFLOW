@@ -249,7 +249,7 @@ const FlowCard = React.memo<FlowCardProps>((
             onClick={onClick}
             className={`
         group relative bg-white dark:bg-slate-900 border transition-all duration-300 cursor-pointer 
-        ${isArchived ? 'border-slate-200 opacity-60 grayscale' : hasWarning ? 'border-amber-300/50 hover:border-amber-400 shadow-sm hover:shadow-lg' : 'border-slate-200 dark:border-slate-700/60 hover:border-emerald-300/50 hover:shadow-lg'}
+        ${isArchived ? 'border-slate-200 opacity-60 grayscale' : hasWarning ? 'border-amber-300/50 hover:border-amber-400 shadow-sm hover:shadow-lg' : 'border-slate-200 dark:border-slate-700/60 hover:border-violet-300/50 hover:shadow-lg hover:shadow-violet-500/5'}
         hover:-translate-y-1 hover:z-10
         ${isList ? 'rounded-[16px] flex flex-row items-center p-3 gap-0 overflow-hidden' : 'rounded-[20px] h-full flex flex-col overflow-hidden'}
       `}
@@ -273,7 +273,7 @@ const FlowCard = React.memo<FlowCardProps>((
                         </div>
                         <div className="flex-1 min-w-0 pr-4">
                             <div className="flex items-center gap-3 mb-1.5">
-                                <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 leading-tight truncate group-hover:text-emerald-600 transition-colors">
+                                <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 leading-tight truncate group-hover:text-violet-600 transition-colors">
                                     {flow.name}
                                 </h3>
                             </div>
@@ -355,7 +355,7 @@ const FlowCard = React.memo<FlowCardProps>((
                         </div>
 
                         <div>
-                            <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 leading-tight mb-1 line-clamp-2 group-hover:text-emerald-600 transition-colors">
+                            <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 leading-tight mb-1 line-clamp-2 group-hover:text-violet-600 transition-colors">
                                 {flow.name}
                             </h3>
                             <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
