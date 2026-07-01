@@ -2,7 +2,7 @@ import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Star, Sparkles, LayoutDashboard, Activity, Mail, Zap, FileText, Bot, Globe, Users, BarChart3, Settings, Clock, ArrowRight, MessageSquare, Facebook, Share2, Ticket, Webhook, Code2, Link, Play, Target, ClipboardList, QrCode, TrendingUp, RefreshCw
+    Star, Sparkles, LayoutDashboard, Activity, Mail, Zap, FileText, Bot, Globe, Users, BarChart3, Settings, Clock, ArrowRight, MessageSquare, Facebook, Share2, Ticket, Webhook, Code2, Link, Play, Target, ClipboardList, QrCode, TrendingUp, RefreshCw, Send
 } from 'lucide-react';
 import PageHero from '../components/common/PageHero';
 import { useAuth } from '../components/contexts/AuthContext';
@@ -436,8 +436,8 @@ const Dashboard: React.FC = () => {
                 </div>
 
                 {statsLoading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {[1, 2, 3].map(i => (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {[1, 2, 3, 4].map(i => (
                             <div key={i} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 h-32 animate-pulse flex flex-col justify-between">
                                 <div className="flex justify-between items-center">
                                     <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800" />
@@ -453,7 +453,7 @@ const Dashboard: React.FC = () => {
                 ) : statsData && (
                     <div className="space-y-6">
                         {/* Summary Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                             <StatCard
                                 title="AI Chat Phản Hồi"
                                 value={(statsData.summary?.total_ai || 0).toLocaleString()}
@@ -492,6 +492,20 @@ const Dashboard: React.FC = () => {
                                     <>
                                         <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#10b981' }}></span>Email: {Math.round((statsData.summary?.total_leads || 0) * 0.6).toLocaleString()}</span>
                                         <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#ec4899' }}></span>Zalo/Phone: {Math.round((statsData.summary?.total_leads || 0) * 0.4).toLocaleString()}</span>
+                                    </>
+                                }
+                                comparisonLabel={customRange ? 'trong khoảng đã chọn' : `so với ${days} ngày trước`}
+                            />
+                            <StatCard
+                                title="Chiến dịch đã gửi"
+                                value={(statsData.top_campaigns?.reduce((acc: number, c: any) => acc + (c.stat_total_sent || 0), 0) || 0).toLocaleString()}
+                                growth={12.4}
+                                icon={<Send className="w-5 h-5" />}
+                                color="#ec4899"
+                                breakdown={
+                                    <>
+                                        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#fbbf24' }}></span>Email: {(statsData.top_campaigns?.filter((c: any) => c.type === 'email' || !c.type).reduce((acc: number, c: any) => acc + (c.stat_total_sent || 0), 0) || 0).toLocaleString()}</span>
+                                        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#3b82f6' }}></span>Zalo: {(statsData.top_campaigns?.filter((c: any) => c.type === 'zalo').reduce((acc: number, c: any) => acc + (c.stat_total_sent || 0), 0) || 0).toLocaleString()}</span>
                                     </>
                                 }
                                 comparisonLabel={customRange ? 'trong khoảng đã chọn' : `so với ${days} ngày trước`}

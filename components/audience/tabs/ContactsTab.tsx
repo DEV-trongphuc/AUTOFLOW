@@ -180,9 +180,6 @@ const ContactRow = React.memo(React.forwardRef<HTMLTableRowElement, ContactRowPr
 
                     return (
                         <div className="flex items-center">
-                            <div className={`h-8 w-8 rounded-lg ${color} flex items-center justify-center mr-2.5 border border-slate-200/50 dark:border-slate-800/60 shadow-sm shrink-0`}>
-                                <SrcIcon className="w-4 h-4" />
-                            </div>
                             <div>
                                 <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">{label}</div>
                                 <div className="text-[10px] text-slate-400 font-medium leading-none mt-0.5">Nguồn kênh</div>
