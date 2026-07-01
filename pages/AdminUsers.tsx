@@ -241,7 +241,6 @@ const AdminUsers: React.FC = () => {
                             <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50">
                                 <th className="px-8 py-4">User</th>
                                 <th className="px-8 py-4">Global Role</th>
-                                <th className="px-8 py-4">Workspace Roles</th>
                                 <th className="px-8 py-4">Status</th>
                                 <th className="px-8 py-4">Last Activity </th>
                                 <th className="px-8 py-4 text-right">Actions</th>
@@ -270,23 +269,11 @@ const AdminUsers: React.FC = () => {
                                                 ? 'bg-amber-50 text-amber-600 border-amber-100'
                                                 : 'bg-slate-50 text-slate-500 border-slate-100'
                                                 }`}
+                                            style={user.role === 'admin' ? { backgroundColor: '#fef3c7', color: '#d97706', borderColor: '#fde68a' } : undefined}
                                         >
                                             {user.role === 'admin' ? <Shield className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
                                             {user.role}
                                         </span>
-                                    </td>
-                                    <td className="px-8 py-5">
-                                        <div className="flex flex-wrap gap-1.5 max-w-[280px]">
-                                            {user.workspaces && user.workspaces.length > 0 ? (
-                                                user.workspaces.map((ws, i) => (
-                                                    <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-slate-50 text-slate-500 border border-slate-150 shadow-sm">
-                                                        {ws.workspace_name}: <span className="text-amber-600 font-extrabold">{ws.role_name}</span>
-                                                    </span>
-                                                ))
-                                            ) : (
-                                                <span className="text-[10px] text-slate-400 font-medium italic">Không có Workspace</span>
-                                            )}
-                                        </div>
                                     </td>
                                     <td className="px-8 py-5">
                                         <button
