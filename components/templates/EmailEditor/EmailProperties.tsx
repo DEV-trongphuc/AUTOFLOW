@@ -140,7 +140,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
         return (
             <div className="w-80 bg-white border-l border-slate-200 flex flex-col shadow-xl z-40 h-full">
                 <div className="p-5 border-b border-slate-100 font-bold text-xs uppercase tracking-widest text-slate-800 flex items-center gap-2">
-                    <LucideIcons.Settings className="w-4 h-4 text-amber-600" /> Cấu hình Body
+                    <LucideIcons.Settings className="w-4 h-4 text-violet-600" /> Cấu hình Body
                 </div>
                 <div className="p-5 space-y-6 overflow-y-auto custom-scrollbar">
                     <div className="space-y-4">
@@ -285,7 +285,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
             <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                 <div className="flex items-center gap-2"><span className="text-[10px] font-bold text-slate-700 uppercase tracking-widest bg-white px-2 py-1 rounded border shadow-sm">{selectedBlock.type}</span></div>
                 <div className="flex gap-1">
-                    <button onClick={() => onDuplicateBlock(selectedBlock)} className="p-1.5 hover:bg-white hover:text-amber-600 rounded text-slate-400 transition-all"><LucideIcons.Copy className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => onDuplicateBlock(selectedBlock)} className="p-1.5 hover:bg-white hover:text-violet-600 rounded text-slate-400 transition-all"><LucideIcons.Copy className="w-3.5 h-3.5" /></button>
                     <button onClick={() => onDeleteBlock(selectedBlock.id)} className="p-1.5 hover:bg-white hover:text-rose-600 rounded text-slate-400 transition-all"><LucideIcons.Trash2 className="w-3.5 h-3.5" /></button>
                     <button onClick={onDeselect} className="p-1.5 hover:bg-slate-200 rounded text-slate-400"><LucideIcons.X className="w-3.5 h-3.5" /></button>
                 </div>
@@ -306,7 +306,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                 <ColumnStructureControl children={selectedBlock.children || []} onUpdateChildren={(cols) => onUpdateBlock(selectedBlock.id, { children: cols })} />
                                 <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
                                     <div className="flex items-center gap-2">
-                                        <LucideIcons.LayoutPanelTop className="w-4 h-4 text-amber-600" />
+                                        <LucideIcons.LayoutPanelTop className="w-4 h-4 text-violet-600" />
                                         <div>
                                             <p className="text-[10px] font-bold text-slate-700 uppercase tracking-widest leading-none">Stack trên Mobile</p>
                                             <p className="text-[8px] text-slate-400 mt-0.5">Tự động xếp chồng cột</p>
@@ -314,7 +314,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" className="sr-only peer" checked={getStyle('noStack') !== true} onChange={(e) => updateStyle({ noStack: !e.target.checked })} />
-                                        <div className="w-10 h-5 bg-slate-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-amber-500/20 peer-checked:bg-amber-600 transition-colors shadow-inner after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:shadow-sm after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5 peer-checked:after:border-white"></div>
+                                        <div className="w-10 h-5 bg-slate-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-violet-500/20 peer-checked:bg-violet-600 transition-colors shadow-inner after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:shadow-sm after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5 peer-checked:after:border-white"></div>
                                     </label>
                                 </div>
                                 <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
@@ -342,7 +342,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                             <button
                                                 key={v}
                                                 onClick={() => updateStyle({ verticalAlign: v as any })}
-                                                className={`flex-1 py-1.5 rounded-lg flex items-center justify-center transition-all ${(getStyle('verticalAlign') || 'top') === v ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                                className={`flex-1 py-1.5 rounded-lg flex items-center justify-center transition-all ${(getStyle('verticalAlign') || 'top') === v ? 'bg-white shadow text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}
                                             >
                                                 {v === 'top' && <LucideIcons.AlignVerticalJustifyStart className="w-3.5 h-3.5" />}
                                                 {v === 'middle' && <LucideIcons.AlignVerticalJustifyCenter className="w-3.5 h-3.5" />}
@@ -403,7 +403,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                             <div className="space-y-4">
                                 <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-4">
                                     <div className="flex items-center gap-2 text-slate-700 font-bold text-xs uppercase mb-2"><LucideIcons.Clock className="w-4 h-4" /> Thời gian kết thúc</div>
-                                    <input type="datetime-local" value={getStyle('targetDate') || ''} onChange={(e) => updateStyle({ targetDate: e.target.value })} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-amber-600" />
+                                    <input type="datetime-local" value={getStyle('targetDate') || ''} onChange={(e) => updateStyle({ targetDate: e.target.value })} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-violet-600" />
                                 </div>
                                 <Accordion title="Giao diện Countdown" icon={LucideIcons.Clock} defaultOpen>
                                     <div className="space-y-4">
@@ -416,15 +416,15 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                         {selectedBlock.type === 'timeline' && (
                             <div className="space-y-4">
                                 <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sự kiện Timeline</label>
-                                {selectedBlock.items?.map((item, i) => (<div key={item.id} className="bg-slate-50 p-3 rounded-xl border border-slate-100 relative group"><button onClick={() => removeTimelineItem(i)} className="absolute top-2 right-2 text-slate-300 hover:text-rose-500"><LucideIcons.X className="w-3.5 h-3.5" /></button><div className="grid grid-cols-3 gap-2 mb-2"><input className="col-span-1 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold" value={item.date} onChange={(e) => handleTimelineItemChange(i, 'date', e.target.value)} /><input className="col-span-2 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold" value={item.title} onChange={(e) => handleTimelineItemChange(i, 'title', e.target.value)} /></div><textarea className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs h-16 outline-none focus:border-amber-600 resize-none" value={item.description} onChange={(e) => handleTimelineItemChange(i, 'description', e.target.value)} /></div>))}
-                                <button onClick={addTimelineItem} className="w-full py-2 border-2 border-dashed border-slate-200 rounded-xl text-xs font-bold text-slate-400 hover:text-amber-600"><LucideIcons.Plus className="w-3.5 h-3.5 inline mr-1" /> Thêm sự kiện</button>
+                                {selectedBlock.items?.map((item, i) => (<div key={item.id} className="bg-slate-50 p-3 rounded-xl border border-slate-100 relative group"><button onClick={() => removeTimelineItem(i)} className="absolute top-2 right-2 text-slate-300 hover:text-rose-500"><LucideIcons.X className="w-3.5 h-3.5" /></button><div className="grid grid-cols-3 gap-2 mb-2"><input className="col-span-1 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold" value={item.date} onChange={(e) => handleTimelineItemChange(i, 'date', e.target.value)} /><input className="col-span-2 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold" value={item.title} onChange={(e) => handleTimelineItemChange(i, 'title', e.target.value)} /></div><textarea className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs h-16 outline-none focus:border-violet-600 resize-none" value={item.description} onChange={(e) => handleTimelineItemChange(i, 'description', e.target.value)} /></div>))}
+                                <button onClick={addTimelineItem} className="w-full py-2 border-2 border-dashed border-slate-200 rounded-xl text-xs font-bold text-slate-400 hover:text-violet-600"><LucideIcons.Plus className="w-3.5 h-3.5 inline mr-1" /> Thêm sự kiện</button>
                                 <Accordion title="Giao diện Timeline" icon={LucideIcons.ListStart} defaultOpen>
                                     <div className="space-y-4">
                                         <ColorPicker label="Màu Chấm (Dot)" value={getStyle('timelineDotColor') || '#d97706'} onChange={(v, t) => handleColorUpdate(v, t, 'timelineDotColor' as any)} blocks={blocks} bodyStyle={bodyStyle} />
                                         <ColorPicker label="Màu Đường (Line)" value={getStyle('timelineLineColor') || '#e2e8f0'} onChange={(v, t) => handleColorUpdate(v, t, 'timelineLineColor' as any)} blocks={blocks} bodyStyle={bodyStyle} />
                                         <div className="space-y-2">
                                             <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Kiểu đường</label>
-                                            <div className="flex bg-slate-100 p-1 rounded-xl">{['solid', 'dashed', 'dotted'].map(st => (<button key={st} onClick={() => updateStyle({ timelineLineStyle: st as any })} className={`flex-1 py-1 text-[9px] font-bold uppercase rounded-lg transition-all ${getStyle('timelineLineStyle') === st ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}>{st}</button>))}</div>
+                                            <div className="flex bg-slate-100 p-1 rounded-xl">{['solid', 'dashed', 'dotted'].map(st => (<button key={st} onClick={() => updateStyle({ timelineLineStyle: st as any })} className={`flex-1 py-1 text-[9px] font-bold uppercase rounded-lg transition-all ${getStyle('timelineLineStyle') === st ? 'bg-white shadow text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}>{st}</button>))}</div>
                                         </div>
                                     </div>
                                 </Accordion>
@@ -509,8 +509,8 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
 
                                 {/* Validation hints */}
                                 {(!selectedBlock.altText || !selectedBlock.altText.trim()) && (
-                                    <div className="flex items-start gap-2 p-2 bg-amber-50 border border-amber-100 rounded-xl">
-                                        <LucideIcons.AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                                    <div className="flex items-start gap-2 p-2 bg-violet-50 border border-amber-100 rounded-xl">
+                                        <LucideIcons.AlertTriangle className="w-3.5 h-3.5 text-violet-600 shrink-0 mt-0.5" />
                                         <p className="text-[10px] text-amber-700 font-medium">Chưa có mô tả ALT — ảnh không thân thiện với email client và SEO.</p>
                                     </div>
                                 )}
@@ -535,7 +535,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                             <div className="space-y-4">
                                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <LucideIcons.Minus className="w-4 h-4 text-amber-600" />
+                                        <LucideIcons.Minus className="w-4 h-4 text-violet-600" />
                                         <span className="text-[10px] font-bold text-slate-700 uppercase tracking-widest">Kẻ ngang</span>
                                     </div>
                                     <VisualMeasure label="Độ dày" value={getStyle('borderTopWidth')} defaultValue={1} onChange={(v) => updateStyle({ borderTopWidth: v })} max={10} unit="px" />
@@ -575,7 +575,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                             const isAdded = selectedBlock.socialLinks?.some(l => l.network === net.id);
                                             const IconComponent = LucideIconMap[net.icon as string] || LucideIcons.Star;
                                             return (
-                                                <button key={net.id} onClick={() => { if (isAdded) return; const newLinks = [...(selectedBlock.socialLinks || []), { id: crypto.randomUUID(), network: net.id as any, url: '', customStyle: {} }]; onUpdateBlock(selectedBlock.id, { socialLinks: newLinks }); }} className={`p-2 rounded-xl flex items-center justify-center border ${isAdded ? 'bg-slate-100 border-slate-200 opacity-50 cursor-default' : 'bg-white border-slate-100 hover:border-amber-600 shadow-sm'}`} style={{ color: isAdded ? '#94a3b8' : net.color }}><IconComponent className="w-5 h-5" /></button>
+                                                <button key={net.id} onClick={() => { if (isAdded) return; const newLinks = [...(selectedBlock.socialLinks || []), { id: crypto.randomUUID(), network: net.id as any, url: '', customStyle: {} }]; onUpdateBlock(selectedBlock.id, { socialLinks: newLinks }); }} className={`p-2 rounded-xl flex items-center justify-center border ${isAdded ? 'bg-slate-100 border-slate-200 opacity-50 cursor-default' : 'bg-white border-slate-100 hover:border-violet-600 shadow-sm'}`} style={{ color: isAdded ? '#94a3b8' : net.color }}><IconComponent className="w-5 h-5" /></button>
                                             );
                                         })}
                                     </div>
@@ -588,10 +588,10 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                                 <div className="flex gap-2 items-center mb-2">
                                                     <div className="p-2 bg-slate-100 rounded-lg text-slate-600"><IconComponent className="w-4 h-4" /></div>
                                                     <div className="flex-1 font-bold text-[10px] uppercase text-slate-700">{link.network}</div>
-                                                    <button onClick={() => setEditSocialId(editSocialId === link.id ? null : link.id)} className={`p-1.5 rounded-lg ${editSocialId === link.id ? 'bg-amber-600 text-white' : 'text-slate-400 hover:bg-slate-100'}`}><LucideIcons.Settings className="w-3.5 h-3.5" /></button>
+                                                    <button onClick={() => setEditSocialId(editSocialId === link.id ? null : link.id)} className={`p-1.5 rounded-lg ${editSocialId === link.id ? 'bg-violet-600 text-white' : 'text-slate-400 hover:bg-slate-100'}`}><LucideIcons.Settings className="w-3.5 h-3.5" /></button>
                                                     <button onClick={() => onUpdateBlock(selectedBlock.id, { socialLinks: selectedBlock.socialLinks?.filter((_, i) => i !== idx) })} className="p-1.5 text-slate-300 hover:text-rose-500"><LucideIcons.X className="w-3.5 h-3.5" /></button>
                                                 </div>
-                                                <input className="w-full text-xs bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 outline-none focus:border-amber-600" placeholder="https://..." value={link.url} onChange={(e) => { const newLinks = [...(selectedBlock.socialLinks || [])]; newLinks[idx] = { ...newLinks[idx], url: e.target.value }; onUpdateBlock(selectedBlock.id, { socialLinks: newLinks }); }} />
+                                                <input className="w-full text-xs bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 outline-none focus:border-violet-600" placeholder="https://..." value={link.url} onChange={(e) => { const newLinks = [...(selectedBlock.socialLinks || [])]; newLinks[idx] = { ...newLinks[idx], url: e.target.value }; onUpdateBlock(selectedBlock.id, { socialLinks: newLinks }); }} />
                                                 {editSocialId === link.id && (
                                                     <div className="pt-3 mt-3 border-t border-slate-50 space-y-3 animate-in zoom-in-95">
                                                         {link.network === 'custom' && <ImageUploader label="Custom Icon (URL)" value={link.imageUrl || ''} onChange={(url) => { const newLinks = [...(selectedBlock.socialLinks || [])]; newLinks[idx] = { ...newLinks[idx], imageUrl: url }; onUpdateBlock(selectedBlock.id, { socialLinks: newLinks }); }} />}
@@ -608,7 +608,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                         {selectedBlock.type === 'check_list' && (
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <div className="flex justify-between items-center"><label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Tiêu đề List</label><label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" className="sr-only peer" checked={getStyle('showCheckListTitle') !== false} onChange={(e) => updateStyle({ showCheckListTitle: e.target.checked })} /><div className="w-9 h-5 bg-slate-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-amber-500/20 peer-checked:bg-amber-600 transition-colors shadow-inner after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:shadow-sm after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4 after:border-white"></div></label></div>
+                                    <div className="flex justify-between items-center"><label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Tiêu đề List</label><label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" className="sr-only peer" checked={getStyle('showCheckListTitle') !== false} onChange={(e) => updateStyle({ showCheckListTitle: e.target.checked })} /><div className="w-9 h-5 bg-slate-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-violet-500/20 peer-checked:bg-violet-600 transition-colors shadow-inner after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:shadow-sm after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4 after:border-white"></div></label></div>
                                     {getStyle('showCheckListTitle') !== false && (
                                         <RichText
                                             value={selectedBlock.checkListTitle || ''}
@@ -623,11 +623,11 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                 <div className="grid grid-cols-2 gap-4 py-3 border-y border-slate-100">
                                     <div className="flex flex-col gap-2">
                                         <label className="text-[9px] font-bold text-slate-400 uppercase">Tiêu đề mục</label>
-                                        <label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" className="sr-only peer" checked={getStyle('showItemTitle') !== false} onChange={(e) => { if (!e.target.checked && getStyle('showItemDescription') === false) return; updateStyle({ showItemTitle: e.target.checked }); }} /><div className="w-9 h-5 bg-slate-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-amber-500/20 peer-checked:bg-amber-600 transition-colors shadow-inner after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:shadow-sm after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4 after:border-white"></div></label>
+                                        <label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" className="sr-only peer" checked={getStyle('showItemTitle') !== false} onChange={(e) => { if (!e.target.checked && getStyle('showItemDescription') === false) return; updateStyle({ showItemTitle: e.target.checked }); }} /><div className="w-9 h-5 bg-slate-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-violet-500/20 peer-checked:bg-violet-600 transition-colors shadow-inner after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:shadow-sm after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4 after:border-white"></div></label>
                                     </div>
                                     <div className="flex flex-col gap-2">
                                         <label className="text-[9px] font-bold text-slate-400 uppercase">Mô tả mục</label>
-                                        <label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" className="sr-only peer" checked={getStyle('showItemDescription') !== false} onChange={(e) => { if (!e.target.checked && getStyle('showItemTitle') === false) return; updateStyle({ showItemDescription: e.target.checked }); }} /><div className="w-9 h-5 bg-slate-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-amber-500/20 peer-checked:bg-amber-600 transition-colors shadow-inner after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:shadow-sm after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4 after:border-white"></div></label>
+                                        <label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" className="sr-only peer" checked={getStyle('showItemDescription') !== false} onChange={(e) => { if (!e.target.checked && getStyle('showItemTitle') === false) return; updateStyle({ showItemDescription: e.target.checked }); }} /><div className="w-9 h-5 bg-slate-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-violet-500/20 peer-checked:bg-violet-600 transition-colors shadow-inner after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:shadow-sm after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4 after:border-white"></div></label>
                                     </div>
                                 </div>
                                 {/* Icon picker moved here from Design tab */}
@@ -639,7 +639,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                                 <button
                                                     key={mode}
                                                     onClick={() => updateStyle({ checkIconMode: mode } as any)}
-                                                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all ${(getStyle('checkIconMode') || 'icon') === mode ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all ${(getStyle('checkIconMode') || 'icon') === mode ? 'bg-white shadow text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}
                                                 >
                                                     {mode === 'icon' ? 'Icon thư viện' : 'Ảnh tùy chỉnh'}
                                                 </button>
@@ -660,7 +660,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                                             const isSelected = getStyle('checkIcon') === iconId || (!getStyle('checkIcon') && iconId === 'Check');
                                                             const iconColor = isSelected ? '#ffffff' : '#94a3b8';
                                                             return (
-                                                                <button key={iconId} onClick={() => updateStyle({ checkIcon: iconId })} className={`p-2 rounded-xl flex items-center justify-center border transition-all ${isSelected ? 'bg-amber-600 border-amber-600 shadow-md' : 'bg-white border-slate-100 hover:border-slate-300'}`}>
+                                                                <button key={iconId} onClick={() => updateStyle({ checkIcon: iconId })} className={`p-2 rounded-xl flex items-center justify-center border transition-all ${isSelected ? 'bg-violet-600 border-violet-600 shadow-md' : 'bg-white border-slate-100 hover:border-slate-300'}`}>
                                                                     <img src={getIconUrl(iconId, iconColor)} className="w-4 h-4 object-contain" alt={iconId} />
                                                                 </button>
                                                             );
@@ -671,13 +671,21 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                                 <div className="space-y-1.5">
                                                     <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Màu Icon</label>
                                                     <div className="flex items-center gap-3 p-2 bg-slate-50 border border-slate-100 rounded-xl">
-                                                        <input
-                                                            type="color"
-                                                            value={getStyle('checkIconColor') || '#d97706'}
-                                                            onChange={(e) => updateStyle({ checkIconColor: e.target.value } as any)}
-                                                            className="w-9 h-9 rounded-lg border-0 cursor-pointer p-0.5 bg-white shadow-sm"
-                                                        />
-                                                        <span className="text-xs font-mono text-slate-500">{getStyle('checkIconColor') || '#d97706'}</span>
+                                                        <div className="relative w-8 h-8 shrink-0">
+                                                            <div 
+                                                                className="w-8 h-8 rounded-full border-2 border-slate-200 shadow-sm flex items-center justify-center overflow-hidden" 
+                                                                style={{ backgroundColor: getStyle('checkIconColor') || '#d97706' }}
+                                                            >
+                                                                <LucideIcons.Pipette className="w-3.5 h-3.5 text-white mix-blend-difference" />
+                                                            </div>
+                                                            <input
+                                                                type="color"
+                                                                value={getStyle('checkIconColor') || '#d97706'}
+                                                                onChange={(e) => updateStyle({ checkIconColor: e.target.value } as any)}
+                                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                            />
+                                                        </div>
+                                                        <span className="text-xs font-mono font-black text-slate-600">{getStyle('checkIconColor') || '#d97706'}</span>
                                                     </div>
                                                 </div>
                                             </>
@@ -759,7 +767,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                                     <button
                                                         key={v}
                                                         onClick={() => updateStyle({ checkIconVerticalAlign: v as any })}
-                                                        className={`flex-1 py-1.5 rounded-lg flex items-center justify-center transition-all ${(getStyle('checkIconVerticalAlign') || 'top') === v ? 'bg-white shadow-sm text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                                        className={`flex-1 py-1.5 rounded-lg flex items-center justify-center transition-all ${(getStyle('checkIconVerticalAlign') || 'top') === v ? 'bg-white shadow-sm text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}
                                                     >
                                                         {v === 'top' && <LucideIcons.AlignVerticalJustifyStart className="w-3.5 h-3.5" />}
                                                         {v === 'middle' && <LucideIcons.AlignVerticalJustifyCenter className="w-3.5 h-3.5" />}
@@ -775,14 +783,14 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                 <div className="space-y-4 pt-3">
                                     <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Danh sách mục</label>
                                     {selectedBlock.items?.map((item, i) => (
-                                        <div key={item.id} className="bg-slate-50 p-4 rounded-3xl border border-slate-100 relative group animate-in slide-in-from-left-1 space-y-3 transition-all focus-within:z-[50] focus-within:ring-2 focus-within:ring-amber-600/20 focus-within:border-amber-600/30 focus-within:bg-white shadow-sm hover:shadow-md">
+                                        <div key={item.id} className="bg-slate-50 p-4 rounded-3xl border border-slate-100 relative group animate-in slide-in-from-left-1 space-y-3 transition-all focus-within:z-[50] focus-within:ring-2 focus-within:ring-violet-600/20 focus-within:border-violet-600/30 focus-within:bg-white shadow-sm hover:shadow-md">
                                             <button onClick={() => removeTimelineItem(i)} className="absolute top-3 right-3 text-slate-300 hover:text-rose-500 z-10"><LucideIcons.X className="w-4 h-4" /></button>
                                             {getStyle('showItemTitle') !== false && (
                                                 <div className="space-y-1">
                                                     <div className="flex justify-between items-center px-1">
                                                         <label className="text-[8px] font-bold text-slate-400 uppercase">Tiêu đề</label>
                                                         {getStyle('checkIndividualIcons' as any) === true && (getStyle('checkIconMode') || 'icon') === 'image' && (
-                                                            <span className="text-[8px] font-bold text-amber-600 uppercase flex items-center gap-1"><LucideIcons.Image className="w-2.5 h-2.5" /> Iconic</span>
+                                                            <span className="text-[8px] font-bold text-violet-600 uppercase flex items-center gap-1"><LucideIcons.Image className="w-2.5 h-2.5" /> Iconic</span>
                                                         )}
                                                     </div>
                                                     <RichText value={item.title} onChange={(v) => handleTimelineItemChange(i, 'title', v)} minHeight="40px" bodyLinkColor={bodyStyle.linkColor} customMergeTags={customMergeTags} usedColors={usedColors} />
@@ -806,7 +814,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                             )}
                                         </div>
                                     ))}
-                                    <button onClick={addTimelineItem} className="w-full py-4 border-2 border-dashed border-slate-200 rounded-3xl text-xs font-bold text-slate-400 hover:text-amber-600 hover:border-amber-600 hover:bg-amber-50 transition-all"><LucideIcons.Plus className="w-4 h-4 inline mr-2" /> Thêm mục mới</button>
+                                    <button onClick={addTimelineItem} className="w-full py-4 border-2 border-dashed border-slate-200 rounded-3xl text-xs font-bold text-slate-400 hover:text-violet-600 hover:border-violet-600 hover:bg-violet-50 transition-all"><LucideIcons.Plus className="w-4 h-4 inline mr-2" /> Thêm mục mới</button>
                                 </div>
                             </div>
                         )}
@@ -826,7 +834,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                     <div className="space-y-4">
                                         <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
                                             {(['link', 'button'] as const).map(v => (
-                                                <button key={v} onClick={() => updateStyle({ headerMenuType: v })} className={`flex-1 py-1.5 rounded-lg flex items-center justify-center text-[10px] uppercase font-bold transition-all ${(getStyle('headerMenuType') || 'link') === v ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}>{v === 'link' ? 'Simple Link' : 'CTA Button'}</button>
+                                                <button key={v} onClick={() => updateStyle({ headerMenuType: v })} className={`flex-1 py-1.5 rounded-lg flex items-center justify-center text-[10px] uppercase font-bold transition-all ${(getStyle('headerMenuType') || 'link') === v ? 'bg-white shadow text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}>{v === 'link' ? 'Simple Link' : 'CTA Button'}</button>
                                             ))}
                                         </div>
 
@@ -845,7 +853,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                                                     <button
                                                                         key={type}
                                                                         onClick={() => handleTimelineItemChange(i, 'menuType' as any, type)}
-                                                                        className={`p-1.5 rounded-md transition-all ${(item.menuType || (getStyle('headerMenuType') || 'link')) === type ? 'bg-white shadow-sm text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                                                        className={`p-1.5 rounded-md transition-all ${(item.menuType || (getStyle('headerMenuType') || 'link')) === type ? 'bg-white shadow-sm text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}
                                                                         title={type === 'link' ? 'Simple Link' : 'CTA Button'}
                                                                     >
                                                                         {type === 'link' ? <LucideIcons.Link className="w-3 h-3" /> : <LucideIcons.Square className="w-3 h-3" />}
@@ -859,7 +867,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                             <button onClick={() => {
                                                 const newItem: ListItem = { id: crypto.randomUUID(), title: 'New Link', description: 'https://' };
                                                 onUpdateBlock(selectedBlock.id, { items: [...(selectedBlock.items || []), newItem] });
-                                            }} className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-[10px] font-bold text-slate-400 hover:text-amber-600 hover:border-amber-600 transition-all uppercase tracking-widest leading-none"><LucideIcons.Plus className="w-3.5 h-3.5 inline mr-1" /> Thêm menu item</button>
+                                            }} className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-[10px] font-bold text-slate-400 hover:text-violet-600 hover:border-violet-600 transition-all uppercase tracking-widest leading-none"><LucideIcons.Plus className="w-3.5 h-3.5 inline mr-1" /> Thêm menu item</button>
                                         </div>
                                     </div>
                                 </Accordion>
@@ -869,7 +877,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                             <div className="space-y-4">
                                 <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-4">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <LucideIcons.Gift className="w-5 h-5 text-amber-600" />
+                                        <LucideIcons.Gift className="w-5 h-5 text-violet-600" />
                                         <span className="text-[10px] font-bold text-slate-700 uppercase tracking-widest">Cấu hình Voucher</span>
                                     </div>
                                     <CustomSelect
@@ -902,7 +910,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                             <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Kiểu viền</label>
                                             <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
                                                 {['dashed', 'dotted', 'solid'].map(v => (
-                                                    <button key={v} onClick={() => updateStyle({ voucherBorderStyle: v as any })} className={`flex-1 py-1.5 rounded-lg flex items-center justify-center text-[10px] uppercase font-bold transition-all ${(getStyle('voucherBorderStyle') || 'dashed') === v ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}>{v}</button>
+                                                    <button key={v} onClick={() => updateStyle({ voucherBorderStyle: v as any })} className={`flex-1 py-1.5 rounded-lg flex items-center justify-center text-[10px] uppercase font-bold transition-all ${(getStyle('voucherBorderStyle') || 'dashed') === v ? 'bg-white shadow text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}>{v}</button>
                                                 ))}
                                             </div>
                                         </div>
@@ -949,7 +957,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                             <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Kiểu viền</label>
                                             <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
                                                 {['solid', 'dashed', 'dotted'].map(v => (
-                                                    <button key={v} onClick={() => updateStyle({ borderStyle: v as any })} className={`flex-1 py-1.5 rounded-lg flex items-center justify-center text-[10px] uppercase font-bold transition-all ${(getStyle('borderStyle') || 'dashed') === v ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}>
+                                                    <button key={v} onClick={() => updateStyle({ borderStyle: v as any })} className={`flex-1 py-1.5 rounded-lg flex items-center justify-center text-[10px] uppercase font-bold transition-all ${(getStyle('borderStyle') || 'dashed') === v ? 'bg-white shadow text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}>
                                                         {v === 'solid' ? 'Liền' : v === 'dashed' ? 'Đứt' : 'Chấm'}
                                                     </button>
                                                 ))}
@@ -994,14 +1002,14 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                                 <div key={key} className="flex flex-col gap-1">
                                                     <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{label}</span>
                                                     <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl px-2 py-1">
-                                                        <button onMouseDown={() => setCnt(cur - 1)} className="w-5 h-5 flex items-center justify-center text-slate-400 hover:text-amber-600 font-black text-base leading-none transition-colors">-</button>
+                                                        <button onMouseDown={() => setCnt(cur - 1)} className="w-5 h-5 flex items-center justify-center text-slate-400 hover:text-violet-600 font-black text-base leading-none transition-colors">-</button>
                                                         <input
                                                             type="number" min={2} max={20}
                                                             value={cur}
                                                             onChange={e => setCnt(parseInt(e.target.value) || 2)}
                                                             className="flex-1 text-center text-[11px] font-black text-slate-700 bg-transparent outline-none"
                                                         />
-                                                        <button onMouseDown={() => setCnt(cur + 1)} className="w-5 h-5 flex items-center justify-center text-slate-400 hover:text-amber-600 font-black text-base leading-none transition-colors">+</button>
+                                                        <button onMouseDown={() => setCnt(cur + 1)} className="w-5 h-5 flex items-center justify-center text-slate-400 hover:text-violet-600 font-black text-base leading-none transition-colors">+</button>
                                                     </div>
                                                 </div>
                                             );
@@ -1020,12 +1028,12 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                         {/* Header row toggle */}
                                         <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
                                             <div className="flex items-center gap-2">
-                                                <LucideIcons.TableProperties className="w-4 h-4 text-amber-600" />
+                                                <LucideIcons.TableProperties className="w-4 h-4 text-violet-600" />
                                                 <span className="text-[10px] font-bold text-slate-700 uppercase tracking-widest">Hàng Header</span>
                                             </div>
                                             <label className="relative inline-flex items-center cursor-pointer">
                                                 <input type="checkbox" className="sr-only peer" checked={getStyle('tableHeaderRow') !== false} onChange={e => updateStyle({ tableHeaderRow: e.target.checked } as any)} />
-                                                <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:bg-amber-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+                                                <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:bg-violet-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
                                             </label>
                                         </div>
 
@@ -1041,7 +1049,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                             <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Kiểu màu hàng</label>
                                             <div className="grid grid-cols-2 gap-2">
                                                 {([['alternate', 'Xen kế'], ['solid', 'Đồng nhất']] as const).map(([val, label]) => (
-                                                    <button key={val} onClick={() => updateStyle({ tableStripe: val } as any)} className={`py-2 px-3 rounded-xl text-[10px] font-bold border transition-all ${(getStyle('tableStripe') || 'alternate') === val ? 'bg-amber-600 text-white border-amber-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'}`}>{label}</button>
+                                                    <button key={val} onClick={() => updateStyle({ tableStripe: val } as any)} className={`py-2 px-3 rounded-xl text-[10px] font-bold border transition-all ${(getStyle('tableStripe') || 'alternate') === val ? 'bg-violet-600 text-white border-violet-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'}`}>{label}</button>
                                                 ))}
                                             </div>
                                         </div>
@@ -1081,7 +1089,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Hàng cuối đặc biệt</span>
                                                 <label className="relative inline-flex items-center cursor-pointer">
                                                     <input type="checkbox" className="sr-only peer" checked={!!(getStyle('tableLastRowBg') as any)} onChange={e => updateStyle({ tableLastRowBg: e.target.checked ? '#fef9c3' : '' } as any)} />
-                                                    <div className="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:bg-amber-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-4"></div>
+                                                    <div className="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:bg-violet-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-4"></div>
                                                 </label>
                                             </div>
                                             {(getStyle('tableLastRowBg') as any) && (
@@ -1098,7 +1106,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Cột cuối đặc biệt</span>
                                                 <label className="relative inline-flex items-center cursor-pointer">
                                                     <input type="checkbox" className="sr-only peer" checked={!!(getStyle('tableLastColBg') as any)} onChange={e => updateStyle({ tableLastColBg: e.target.checked ? '#eff6ff' : '' } as any)} />
-                                                    <div className="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:bg-amber-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-4"></div>
+                                                    <div className="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:bg-violet-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-4"></div>
                                                 </label>
                                             </div>
                                             {(getStyle('tableLastColBg') as any) && (
@@ -1161,7 +1169,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                                             updated[ci] = e.target.value;
                                                             updateStyle({ tableColWidths: updated } as any);
                                                         }}
-                                                        className="w-16 px-2 py-1 rounded-lg border border-slate-200 text-[10px] font-mono bg-white focus:border-amber-400 outline-none"
+                                                        className="w-16 px-2 py-1 rounded-lg border border-slate-200 text-[10px] font-mono bg-white focus:border-violet-400 outline-none"
                                                         placeholder="auto"
                                                     />
                                                     <div className="flex gap-0.5 ml-auto">
@@ -1173,7 +1181,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                                                     const updated = [...(getStyle('tableColAligns') || Array(getStyle('tableCols') ?? 4).fill('left'))];
                                                                     updated[ci] = align;
                                                                     updateStyle({ tableColAligns: updated } as any);
-                                                                }} className={`p-1 rounded-lg transition-all ${active ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'}`}>
+                                                                }} className={`p-1 rounded-lg transition-all ${active ? 'bg-violet-600 text-white' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'}`}>
                                                                     <Icon className="w-3 h-3" />
                                                                 </button>
                                                             );
@@ -1198,7 +1206,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                             <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex items-center justify-between mx-1">
                                 <div className="flex items-center gap-2">
                                     <div className="p-1.5 bg-white rounded-lg shadow-sm">
-                                        <LucideIcons.LayoutPanelTop className="w-3.5 h-3.5 text-amber-600" />
+                                        <LucideIcons.LayoutPanelTop className="w-3.5 h-3.5 text-violet-600" />
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-bold text-slate-700 uppercase tracking-widest leading-none">Stack trên Mobile</p>
@@ -1212,7 +1220,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                         checked={getStyle('noStack') !== true}
                                         onChange={(e) => updateStyle({ noStack: !e.target.checked })}
                                     />
-                                    <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:bg-amber-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+                                    <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:bg-violet-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
                                 </label>
                             </div>
                         )}
@@ -1239,7 +1247,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                         {selectedBlock.type === 'social' && (
                             <Accordion title="Giao diện Icon" icon={LucideIcons.Share2}>
                                 <div className="space-y-4">
-                                    <div className="space-y-1"><label className="text-[9px] font-bold text-slate-400 uppercase">Kiểu</label><div className="flex bg-slate-100 p-1 rounded-xl">{['color', 'dark', 'light'].map(m => (<button key={m} onClick={() => updateStyle({ iconMode: m as any })} className={`flex-1 py-1 text-[9px] font-bold uppercase rounded-lg transition-all ${getStyle('iconMode') === m ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}>{m}</button>))}</div></div>
+                                    <div className="space-y-1"><label className="text-[9px] font-bold text-slate-400 uppercase">Kiểu</label><div className="flex bg-slate-100 p-1 rounded-xl">{['color', 'dark', 'light'].map(m => (<button key={m} onClick={() => updateStyle({ iconMode: m as any })} className={`flex-1 py-1 text-[9px] font-bold uppercase rounded-lg transition-all ${getStyle('iconMode') === m ? 'bg-white shadow text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}>{m}</button>))}</div></div>
                                     <VisualMeasure label="Cỡ Icon" value={getStyle('iconSize')} defaultValue={32} onChange={(v) => updateStyle({ iconSize: v })} max={64} unit="px" />
                                     <VisualMeasure label="Khoảng cách" value={getStyle('gap')} defaultValue={10} onChange={(v) => updateStyle({ gap: v })} max={50} unit="px" />
                                     <div className="grid grid-cols-2 gap-3"><ColorPicker label="Màu Icon" value={getStyle('iconColor')} onChange={(v, t) => handleColorUpdate(v, t, 'iconColor')} blocks={blocks} bodyStyle={bodyStyle} /><ColorPicker label="Màu Nền" value={getStyle('iconBackgroundColor')} onChange={(v, t) => handleColorUpdate(v, t, 'iconBackgroundColor')} blocks={blocks} bodyStyle={bodyStyle} /></div>
@@ -1286,7 +1294,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                                         <button
                                                             key={iconId}
                                                             onClick={() => updateStyle({ checkIcon: iconId })}
-                                                            className={`p-2 rounded-xl flex items-center justify-center border transition-all ${isSelected ? 'bg-amber-600 border-amber-600 shadow-md' : 'bg-white border-slate-100 hover:border-slate-300'}`}
+                                                            className={`p-2 rounded-xl flex items-center justify-center border transition-all ${isSelected ? 'bg-violet-600 border-violet-600 shadow-md' : 'bg-white border-slate-100 hover:border-slate-300'}`}
                                                         >
                                                             <img src={getIconUrl(iconId, iconColor)} className="w-4 h-4 object-contain" alt={iconId} />
                                                         </button>
@@ -1310,7 +1318,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                         <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Kiểu đường</label>
                                         <div className="flex bg-slate-100 p-1 rounded-xl">
                                             {['solid', 'dashed', 'dotted'].map(s => (
-                                                <button key={s} onClick={() => updateStyle({ timelineLineStyle: s as any })} className={`flex-1 py-1 text-[9px] font-bold uppercase rounded-lg transition-all ${getStyle('timelineLineStyle') === s ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}>{s}</button>
+                                                <button key={s} onClick={() => updateStyle({ timelineLineStyle: s as any })} className={`flex-1 py-1 text-[9px] font-bold uppercase rounded-lg transition-all ${getStyle('timelineLineStyle') === s ? 'bg-white shadow text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}>{s}</button>
                                             ))}
                                         </div>
                                     </div>
@@ -1370,7 +1378,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                         <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Kiểu đường</label>
                                         <div className="flex bg-slate-100 p-1 rounded-xl">
                                             {(['solid', 'dashed', 'dotted'] as const).map(style => (
-                                                <button key={style} onClick={() => updateStyle({ borderStyle: style })} className={`flex-1 py-1.5 text-[9px] font-bold uppercase rounded-lg transition-all ${getStyle('borderStyle') === style || (!getStyle('borderStyle') && style === 'solid') ? 'bg-white shadow text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}>{style}</button>
+                                                <button key={style} onClick={() => updateStyle({ borderStyle: style })} className={`flex-1 py-1.5 text-[9px] font-bold uppercase rounded-lg transition-all ${getStyle('borderStyle') === style || (!getStyle('borderStyle') && style === 'solid') ? 'bg-white shadow text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}>{style}</button>
                                             ))}
                                         </div>
                                     </div>

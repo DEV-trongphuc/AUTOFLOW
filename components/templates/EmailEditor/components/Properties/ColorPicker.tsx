@@ -1,6 +1,6 @@
 // components/templates/EmailEditor/components/Properties/ColorPicker.tsx
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Ban } from 'lucide-react';
+import { Ban, Pipette, Palette } from 'lucide-react';
 import { EmailBlock, EmailBlockStyle, EmailBodyStyle } from '../../../../../types';
 import { PREMIUM_COLORS, SUGGESTED_GRADIENTS } from '../../constants/editorConstants';
 
@@ -167,7 +167,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange, block
                 )}
             </div>
 
-            <div className={`relative border rounded-xl p-1.5 transition-all ${isOpen ? 'ring-2 ring-amber-600 border-amber-600' : 'border-slate-200'}`}>
+            <div className={`relative border rounded-xl p-1.5 transition-all ${isOpen ? 'ring-2 ring-violet-600 border-violet-600' : 'border-slate-200'}`}>
                 {mode === 'solid' ? (
                     <div ref={triggerRef} className="flex items-center gap-2 cursor-pointer" onClick={toggleOpen}>
                         {/* Color swatch - always shows border so white is visible */}
@@ -176,7 +176,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange, block
                             style={swatchStyle}
                         />
                         {/* Hex input on white bg */}
-                        <div className="flex-1 bg-white border border-slate-200 rounded-xl px-2.5 py-2 flex items-center gap-1.5 shadow-sm group-focus-within:border-amber-400 transition-colors">
+                        <div className="flex-1 bg-white border border-slate-200 rounded-xl px-2.5 py-2 flex items-center gap-1.5 shadow-sm group-focus-within:border-violet-400 transition-colors">
                             <input
                                 type="text"
                                 value={value || ''}
@@ -244,14 +244,18 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange, block
                                             </div>
                                             <button
                                                 onClick={handleHexApply}
-                                                className="bg-amber-600 hover:bg-amber-600 text-white rounded-2xl px-4 py-2 text-[11px] font-black transition-all shadow-md active:scale-95 shrink-0"
+                                                className="bg-violet-600 hover:bg-violet-700 text-white rounded-2xl px-4 py-2 text-[11px] font-black transition-all shadow-md active:scale-95 shrink-0"
                                             >OK</button>
                                         </div>
                                         {/* Native color picker */}
-                                        <div className="mt-2">
+                                        <div className="mt-2 relative">
+                                            <div className="w-full h-8 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-black text-slate-500 transition-colors pointer-events-none">
+                                                <Pipette className="w-3.5 h-3.5 text-violet-600" />
+                                                <span>CHỌN MÀU TỪ BẢNG MÀU</span>
+                                            </div>
                                             <input
                                                 type="color"
-                                                className="w-full h-8 cursor-pointer rounded-xl border border-slate-200"
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                                 value={value && !value.includes('gradient') && value !== 'transparent' && value !== 'none' ? value : '#ffffff'}
                                                 onChange={(e) => { onChange(e.target.value, 'solid'); setHexInput(e.target.value); }}
                                             />
@@ -266,7 +270,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange, block
                                                 <button
                                                     key={i}
                                                     onClick={() => { onChange(c, 'solid'); setIsOpen(false); }}
-                                                    className="w-6 h-6 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform ring-1 ring-slate-200 hover:ring-amber-400"
+                                                    className="w-6 h-6 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform ring-1 ring-slate-200 hover:ring-violet-500"
                                                     style={{ backgroundColor: c }}
                                                     title={c}
                                                 />
@@ -285,7 +289,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange, block
                                                 <button
                                                     key={c}
                                                     onClick={() => { onChange(c, 'solid'); setIsOpen(false); }}
-                                                    className="w-5 h-5 rounded-full border-2 border-white shadow-sm hover:scale-110 transition-transform ring-1 ring-slate-200 hover:ring-amber-400"
+                                                    className="w-5 h-5 rounded-full border-2 border-white shadow-sm hover:scale-110 transition-transform ring-1 ring-slate-200 hover:ring-violet-500"
                                                     style={{ backgroundColor: c }}
                                                     title={c}
                                                 />
@@ -301,14 +305,14 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange, block
                                         <div className="flex-1 space-y-1">
                                             <label className="text-[8px] font-bold uppercase text-slate-400">Start Color</label>
                                             <div className="flex items-center gap-1 border rounded-xl p-1.5 border-slate-200">
-                                                <input type="color" className="w-7 h-7 rounded-lg cursor-pointer border-none p-0" value={gradColor1} onChange={(e) => applyGradient(gradAngle, e.target.value, gradColor2)} />
+                                                <input type="color" className="w-7 h-7 rounded-full cursor-pointer border border-slate-200 p-0 overflow-hidden bg-transparent shrink-0" value={gradColor1} onChange={(e) => applyGradient(gradAngle, e.target.value, gradColor2)} />
                                                 <span className="text-[9px] font-mono text-slate-500 truncate ml-1">{gradColor1}</span>
                                             </div>
                                         </div>
                                         <div className="flex-1 space-y-1">
                                             <label className="text-[8px] font-bold uppercase text-slate-400">End Color</label>
                                             <div className="flex items-center gap-1 border rounded-xl p-1.5 border-slate-200">
-                                                <input type="color" className="w-7 h-7 rounded-lg cursor-pointer border-none p-0" value={gradColor2} onChange={(e) => applyGradient(gradAngle, gradColor1, e.target.value)} />
+                                                <input type="color" className="w-7 h-7 rounded-full cursor-pointer border border-slate-200 p-0 overflow-hidden bg-transparent shrink-0" value={gradColor2} onChange={(e) => applyGradient(gradAngle, gradColor1, e.target.value)} />
                                                 <span className="text-[9px] font-mono text-slate-500 truncate ml-1">{gradColor2}</span>
                                             </div>
                                         </div>
@@ -316,7 +320,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange, block
                                             <label className="text-[8px] font-bold uppercase text-slate-400">Góc</label>
                                             <input
                                                 type="number"
-                                                className="w-full text-xs border border-slate-200 rounded-xl px-1 py-2 text-center font-bold outline-none focus:border-amber-400"
+                                                className="w-full text-xs border border-slate-200 rounded-xl px-1 py-2 text-center font-bold outline-none focus:border-violet-400"
                                                 value={gradAngle}
                                                 onChange={(e) => applyGradient(parseInt(e.target.value) || 0, gradColor1, gradColor2)}
                                             />

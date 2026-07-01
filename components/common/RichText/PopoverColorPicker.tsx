@@ -1,7 +1,6 @@
-// components/common/RichText/PopoverColorPicker.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Ban } from 'lucide-react';
+import { Ban, Palette } from 'lucide-react';
 import { PREMIUM_COLORS } from '../../templates/EmailEditor/constants/editorConstants';
 
 interface PopoverColorPickerProps {
@@ -142,17 +141,21 @@ const PopoverColorPicker: React.FC<PopoverColorPickerProps> = ({ onSelect, onClo
                         <button
                             onClick={handleApply}
                             disabled={!isValidHex(hexInput.startsWith('#') ? hexInput : `#${hexInput}`)}
-                            className="bg-amber-600 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-xl px-2 py-1.5 text-[10px] font-black transition-all hover:bg-amber-400"
+                            className="bg-violet-600 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-xl px-2 py-1.5 text-[10px] font-black transition-all hover:bg-violet-700"
                         >
                             OK
                         </button>
                     </div>
 
                     {/* Native color picker */}
-                    <div className="mt-2">
+                    <div className="mt-2 relative">
+                        <div className="w-full h-8 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-black text-slate-500 transition-colors pointer-events-none">
+                            <Palette className="w-3.5 h-3.5 text-violet-600" />
+                            <span>CHỌN MÀU TỪ BẢNG MÀU</span>
+                        </div>
                         <input
                             type="color"
-                            className="w-full h-7 cursor-pointer rounded-xl border border-slate-200"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             value={nativeColor}
                             onChange={e => handleNativeChange(e.target.value)}
                         />
@@ -168,7 +171,7 @@ const PopoverColorPicker: React.FC<PopoverColorPickerProps> = ({ onSelect, onClo
                                 <button
                                     key={i}
                                     onClick={() => { onSelect(c); onClose(); }}
-                                    className="w-6 h-6 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform ring-1 ring-slate-200 hover:ring-amber-400"
+                                    className="w-6 h-6 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform ring-1 ring-slate-200 hover:ring-violet-500"
                                     style={{ backgroundColor: c }}
                                     title={c}
                                 />
@@ -185,7 +188,7 @@ const PopoverColorPicker: React.FC<PopoverColorPickerProps> = ({ onSelect, onClo
                             <button
                                 key={c}
                                 onClick={() => { onSelect(c); onClose(); }}
-                                className="w-6 h-6 rounded-full border-2 border-white shadow-sm hover:scale-110 transition-transform ring-1 ring-slate-200 hover:ring-amber-400"
+                                className="w-6 h-6 rounded-full border-2 border-white shadow-sm hover:scale-110 transition-transform ring-1 ring-slate-200 hover:ring-violet-500"
                                 style={{ backgroundColor: c }}
                                 title={c}
                             />
