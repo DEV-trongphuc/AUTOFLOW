@@ -1345,23 +1345,218 @@ html {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}
+
+.dark .custom-scrollbar {
+    scrollbar-color: #334155 transparent;
+}
+
+/* Smooth hover lift for cards */
+.hover-lift-sm {
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hover-lift-sm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.08);
+}
+
+/* Dark Mode Content Area Tables */
+.dark .content-area th {
+    background: #1E293B;
+    color: #94A3B8;
+    border-bottom-color: #334155;
+}
+
+.dark .content-area td {
+    border-bottom-color: #1E293B;
+}
+
+.dark .content-area tr:hover td {
+    background: #1E293B;
+}
+
+/* Dark Mode Blockquotes */
+.dark .content-area blockquote {
+    background: #1E293B;
+    border-left-color: #3B82F6;
+    color: #94A3B8;
+}
+
+/* Dark Mode Inline Code */
+.dark .content-area code:not(pre code) {
+    background: rgba(104, 61, 242, 0.1);
+    color: #60A5FA;
+    border-color: rgba(104, 61, 242, 0.2);
+}
+
+/* Search Highlights */
+@keyframes searchMatchPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(var(--brand-rgb, 104, 61, 242), 0.4);
+        background-color: rgba(var(--brand-rgb, 104, 61, 242), 0.05);
+    }
+
+    50% {
+        box-shadow: 0 0 0 10px rgba(var(--brand-rgb, 104, 61, 242), 0);
+        background-color: rgba(var(--brand-rgb, 104, 61, 242), 0.15);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(var(--brand-rgb, 104, 61, 242), 0);
+        background-color: transparent;
+    }
+}
+
+.search-match-highlight {
+    animation: searchMatchPulse 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    border-radius: 24px !important;
+    position: relative;
+    z-index: 50;
+}
+
+:root {
+    --brand-primary: #683df2;
+    --brand-rgb: 104, 61, 242;
+}
+
+/* Global Text Selection - Blue with White Text */
+::selection {
+    background-color: rgba(var(--brand-rgb), 0.95);
+    color: #ffffff !important;
+}
+
+::-moz-selection {
+    background-color: rgba(var(--brand-rgb), 0.95);
+    color: #ffffff !important;
+}
+
+/* Skeleton Loading */
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.skeleton {
+    background: linear-gradient(90deg,
+            rgba(var(--brand-rgb, 104, 61, 242), 0.05) 25%,
+            rgba(var(--brand-rgb, 104, 61, 242), 0.1) 50%,
+            rgba(var(--brand-rgb, 104, 61, 242), 0.05) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite linear;
+    border-radius: 4px;
+}
+
+.dark .skeleton {
+    background: linear-gradient(90deg,
+            rgba(30, 41, 59, 0.5) 25%,
+            rgba(51, 65, 85, 0.5) 50%,
+            rgba(30, 41, 59, 0.5) 75%);
+    background-size: 200% 100%;
+}
+
+.skeleton-circle {
+    border-radius: 50%;
+}
+
+.skeleton-text {
+    height: 1rem;
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+
+@keyframes slide-infinite {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+@keyframes slide-infinite-reverse {
+    0% { transform: translateX(-50%); }
+    100% { transform: translateX(0); }
+}
+
+.animate-slide-infinite {
+    animation: slide-infinite 60s linear infinite;
+}
+
+.animate-slide-infinite-reverse {
+    animation: slide-infinite-reverse 60s linear infinite;
+}
+
+.pause-on-hover:hover .animate-slide-infinite,
+.pause-on-hover:hover .animate-slide-infinite-reverse {
+    animation-play-state: paused;
+}
+/* =========================================
+   DOMATION FULLSTACK: UI/UX TINH T? (REFINEMENTS)
+   ========================================= */
+
+/* 1. Mu?t m khi cu?n trang (Smooth Scrolling) */
+html {
+    scroll-behavior: smooth;
+}
+
+/* 2. Mu bi den van b?n hi?n d?i (Selection Color) */
+::selection {
+    background-color: #683df2; /* Tailwind blue-500 */
+    color: #ffffff;
+}
+
+/* 3. Focus g?n gng khi dng phm Tab (Accessibility) */
+*:focus-visible {
+    outline: 2px solid #683df2;
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* 4. Hi?u ?ng Card N?i T? Tnh (Magnetic Dashboard Cards) */
+/* Thm class 'card-magnetic' vo cc div b?c bi?u d? ho?c Widget */
+.card-magnetic {
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform, box-shadow;
+}
+.card-magnetic:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08);
+    border-color: #e2e8f0;
+}
+
+/* 5. Gradient Text bng b?y cho Tiu d? Dashboard */
+.text-gradient-premium {
+    background: linear-gradient(135deg, #1e293b 0%, #683df2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.dark .text-gradient-premium {
+    background: linear-gradient(135deg, #f8fafc 0%, #60a5fa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 /* =========================================
    NPROGRESS GLOBAL ROUTER STYLES (PREMIUM)
    ========================================= */
 #nprogress .bar {
-    background: linear-gradient(to right, #f59e0b, #f97316, #ef4444) !important;
+    background: linear-gradient(to right, #8b5cf6, #6366f1, #4f46e5) !important;
     height: 3px !important;
 }
 
 #nprogress .peg {
-    box-shadow: 0 0 10px #f97316, 0 0 5px #ef4444 !important;
+    box-shadow: 0 0 10px #8b5cf6, 0 0 5px #6366f1 !important;
 }
 
 #nprogress .spinner-icon {
-    border-top-color: #f97316 !important;
-    border-left-color: #f97316 !important;
+    border-top-color: #8b5cf6 !important;
+    border-left-color: #8b5cf6 !important;
 }
 
 @keyframes float {
