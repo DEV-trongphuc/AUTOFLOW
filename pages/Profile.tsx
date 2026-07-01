@@ -60,7 +60,9 @@ const Profile: React.FC = () => {
     };
 
     const handleLogout = () => {
-        localStorage.clear();
+        localStorage.removeItem('user');
+        localStorage.removeItem('isAuthenticated');
+        localStorage.setItem('explicit_logout', 'true');
         window.location.reload();
     };
 

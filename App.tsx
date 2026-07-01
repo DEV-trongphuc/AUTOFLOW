@@ -79,7 +79,8 @@ if (
     // Only allow dev auto-login for explicit localhost/127.0.0.1 hostnames.
     (window.location.hostname === 'localhost' ||
         window.location.hostname === '127.0.0.1') &&
-    !localStorage.getItem('isAuthenticated')
+    !localStorage.getItem('isAuthenticated') &&
+    !localStorage.getItem('explicit_logout')
 ) {
     localStorage.setItem('user', JSON.stringify({
         id: 1, name: 'Dev Admin', email: 'dev@localhost',
@@ -212,7 +213,7 @@ const App: React.FC = () => {
         // On local dev, skip Google Login entirely. Inject a dev session so we
         // can reach the app directly. The X-Admin-Token header in storageAdapter
         // already authenticates every API call to the production backend proxy.
-        if (isLocalDev && !localStorage.getItem('isAuthenticated')) {
+        if (isLocalDev && !localStorage.getItem('isAuthenticated') && !localStorage.getItem('explicit_logout')) {
             localStorage.setItem('user', JSON.stringify({
                 id: 1,
                 name: 'Dev Admin',

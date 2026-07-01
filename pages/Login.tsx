@@ -76,7 +76,9 @@ const Login: React.FC = () => {
                     </div>
                     <button
                         onClick={() => {
-                            localStorage.clear();
+                            localStorage.removeItem('user');
+                            localStorage.removeItem('isAuthenticated');
+                            localStorage.setItem('explicit_logout', 'true');
                             setIsPending(false);
                         }}
                         className="w-full py-4 bg-violet-600/10 hover:bg-violet-600/20 border border-violet-500/30 rounded-2xl text-sm font-black uppercase tracking-widest text-violet-200 transition-all active:scale-[0.98]"
@@ -214,6 +216,28 @@ const Login: React.FC = () => {
                                             width="320"
                                         />
                                     </div>
+
+                                    {(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
+                                        <button 
+                                            onClick={() => {
+                                                localStorage.removeItem('explicit_logout');
+                                                localStorage.setItem('user', JSON.stringify({
+                                                    id: 1,
+                                                    name: 'Dev Admin',
+                                                    email: 'dev@localhost',
+                                                    role: 'admin',
+                                                    status: 'approved',
+                                                    isGuest: false
+                                                }));
+                                                localStorage.setItem('isAuthenticated', 'true');
+                                                window.location.href = '/';
+                                            }} 
+                                            className="w-full max-w-[320px] h-12 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-full text-[13px] font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 group"
+                                        >
+                                            <Sparkles className="w-4 h-4 text-violet-250 group-hover:scale-125 transition-transform" />
+                                            Đăng nhập Dev Admin
+                                        </button>
+                                    )}
 
                                     <div className="flex items-center gap-4 w-full max-w-[320px]">
                                         <div className="h-px flex-1 bg-slate-800" />

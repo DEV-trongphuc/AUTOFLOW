@@ -321,7 +321,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
           {!isCollapsed ? (
             <button
               onClick={() => {
-                localStorage.clear();
+                localStorage.removeItem('user');
+                localStorage.removeItem('isAuthenticated');
+                localStorage.setItem('explicit_logout', 'true');
                 window.location.reload();
               }}
               className="w-9 h-9 flex items-center justify-center text-white/40 hover:text-rose-450 hover:bg-white/10 rounded-xl transition-all border border-transparent hover:border-rose-500/20 hover:shadow-sm shrink-0"
@@ -332,7 +334,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
           ) : (
             <button
               onClick={() => {
-                localStorage.clear();
+                localStorage.removeItem('user');
+                localStorage.removeItem('isAuthenticated');
+                localStorage.setItem('explicit_logout', 'true');
                 window.location.reload();
               }}
               className="flex w-full items-center justify-center p-2 rounded-xl transition-all text-rose-400 hover:text-rose-500 hover:bg-white/5 border border-transparent hover:border-rose-500/20"
