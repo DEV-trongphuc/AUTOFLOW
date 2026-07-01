@@ -111,27 +111,19 @@ export default defineConfig(({ mode }) => {
       }
     },
     build: {
-      chunkSizeWarningLimit: 1000,
-      cssCodeSplit: true, // [PERF] Each page loads only its CSS chunk
+      chunkSizeWarningLimit: 5000,
+      cssCodeSplit: false, // Bundle all CSS into one single file
       rollupOptions: {
         output: {
-          manualChunks: {
-            // Core logic
-            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-            // [PERF NEW] State management — separate chunk so pages share it
-            'vendor-query': ['@tanstack/react-query'],
-            // Heavy visualization
-            'vendor-charts': ['apexcharts', 'react-apexcharts', 'recharts'],
-            // Heavy data processing
-            'vendor-docs': ['pdfjs-dist', 'xlsx', 'papaparse', 'mammoth'],
-            // Common icons/ui
-            'vendor-ui': ['lucide-react', 'react-hot-toast'],
-          },
-        },
+          inlineDynamicImports: true, // Force all dynamic imports into a single JS bundle
+          entryFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: 'assets/[name]-[hash].[ext]',
+          chunkFileNames: 'assets/[name]-[hash].js'
+        }
       },
       // [PERF] esbuild is ~10x faster than terser for minification
       minify: 'esbuild',
-      target: 'es2020',
+      target: 'es2020'
     }
   };
 });
