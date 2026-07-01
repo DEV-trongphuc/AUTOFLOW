@@ -9,6 +9,7 @@ import { useAuth } from '../components/contexts/AuthContext';
 import { SystemOverviewModal } from '../components/common/SystemOverviewModal';
 import { SystemConnectionsModal } from '../components/common/SystemConnectionsModal';
 import { LeadscoreSetupModal } from '../components/settings/LeadscoreSetupModal';
+import Modal from '../components/common/Modal';
 import { api } from '../services/storageAdapter';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, Cell, PieChart, Pie, LabelList
@@ -219,6 +220,10 @@ const Dashboard: React.FC = () => {
     const [days, setDays] = useState(7);
     const [statsLoading, setStatsLoading] = useState(true);
     const [statsData, setStatsData] = useState<any>(null);
+    const [customRange, setCustomRange] = useState<{ from: string; to: string } | null>(null);
+    const [isCustomDateModalOpen, setIsCustomDateModalOpen] = useState(false);
+    const [fromDate, setFromDate] = useState('');
+    const [toDate, setToDate] = useState('');
 
     const fetchDashboardStats = async (d: number, forceBust = false) => {
         setStatsLoading(true);
@@ -233,9 +238,30 @@ const Dashboard: React.FC = () => {
         setStatsLoading(false);
     };
 
+    const selectPresetDays = (d: number) => {
+        setCustomRange(null);
+        setDays(d);
+    };
+
+    const handleCustomDateSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (fromDate && toDate) {
+            setCustomRange({ from: fromDate, to: toDate });
+            setIsCustomDateModalOpen(false);
+        }
+    };
+
     useEffect(() => {
-        fetchDashboardStats(days);
-    }, [days]);
+        if (customRange) {
+            const start = new Date(customRange.from);
+            const end = new Date(customRange.to);
+            const diffTime = Math.abs(end.getTime() - start.getTime());
+            const diffDays = Math.min(90, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1);
+            fetchDashboardStats(diffDays);
+        } else {
+            fetchDashboardStats(days);
+        }
+    }, [days, customRange]);
 
     useEffect(() => {
         const storedRecents = localStorage.getItem('recent_modules');
@@ -316,6 +342,53 @@ const Dashboard: React.FC = () => {
             <SystemOverviewModal isOpen={isOverviewOpen} onClose={() => setIsOverviewOpen(false)} />
             <SystemConnectionsModal isOpen={isConnectionsOpen} onClose={() => setIsConnectionsOpen(false)} />
             <LeadscoreSetupModal isOpen={isLeadscoreOpen} onClose={() => setIsLeadscoreOpen(false)} />
+            <Modal
+                isOpen={isCustomDateModalOpen}
+                onClose={() => setIsCustomDateModalOpen(false)}
+                title="CHỌN KHOẢNG THỜI GIAN BÁO CÁO"
+                size="sm"
+            >
+                <form onSubmit={handleCustomDateSubmit} className="space-y-4 p-1">
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Từ ngày</label>
+                        <input
+                            type="date"
+                            value={fromDate}
+                            onChange={e => setFromDate(e.target.value)}
+                            max={new Date().toISOString().split('T')[0]}
+                            required
+                            className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 text-xs font-bold focus:outline-none focus:border-violet-500"
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Đến ngày</label>
+                        <input
+                            type="date"
+                            value={toDate}
+                            onChange={e => setToDate(e.target.value)}
+                            min={fromDate}
+                            max={new Date().toISOString().split('T')[0]}
+                            required
+                            className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 text-xs font-bold focus:outline-none focus:border-violet-500"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2 pt-2">
+                        <button
+                            type="button"
+                            onClick={() => setIsCustomDateModalOpen(false)}
+                            className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all"
+                        >
+                            Hủy
+                        </button>
+                        <button
+                            type="submit"
+                            className="flex-1 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all shadow-md shadow-violet-500/10"
+                        >
+                            Áp dụng 🚀
+                        </button>
+                    </div>
+                </form>
+            </Modal>
 
             {/* Analytics Dashboard Grid */}
             <div className="mb-12 space-y-6">
@@ -329,15 +402,31 @@ const Dashboard: React.FC = () => {
                             {[3, 7, 14, 30].map(d => (
                                 <button
                                     key={d}
-                                    onClick={() => setDays(d)}
-                                    className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all duration-300 ${days === d ? 'bg-white dark:bg-slate-900 shadow-sm text-violet-600 dark:text-violet-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+                                    onClick={() => selectPresetDays(d)}
+                                    className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all duration-300 ${(!customRange && days === d) ? 'bg-white dark:bg-slate-900 shadow-sm text-violet-600 dark:text-violet-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
                                 >
                                     {d} Ngày
                                 </button>
                             ))}
+                            <button
+                                onClick={() => setIsCustomDateModalOpen(true)}
+                                className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all duration-300 ${customRange ? 'bg-white dark:bg-slate-900 shadow-sm text-violet-600 dark:text-violet-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+                            >
+                                {customRange ? `${customRange.from.split('-').slice(1).reverse().join('/')} - ${customRange.to.split('-').slice(1).reverse().join('/')}` : 'Tùy chỉnh...'}
+                            </button>
                         </div>
                         <button
-                            onClick={() => fetchDashboardStats(days, true)}
+                            onClick={() => {
+                                if (customRange) {
+                                    const start = new Date(customRange.from);
+                                    const end = new Date(customRange.to);
+                                    const diffTime = Math.abs(end.getTime() - start.getTime());
+                                    const diffDays = Math.min(90, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1);
+                                    fetchDashboardStats(diffDays, true);
+                                } else {
+                                    fetchDashboardStats(days, true);
+                                }
+                            }}
                             className="p-2 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 shadow-sm hover:shadow active:scale-[0.97] transition-all"
                             title="Làm mới dữ liệu"
                         >
@@ -377,7 +466,7 @@ const Dashboard: React.FC = () => {
                                         <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8b5cf6' }}></span>Cần phản hồi: {Math.round((statsData.summary?.total_ai || 0) * 0.15).toLocaleString()}</span>
                                     </>
                                 }
-                                comparisonLabel={`so với ${days} ngày trước`}
+                                comparisonLabel={customRange ? 'trong khoảng đã chọn' : `so với ${days} ngày trước`}
                             />
                             <StatCard
                                 title="Truy cập Website"
@@ -391,7 +480,7 @@ const Dashboard: React.FC = () => {
                                         <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#06b6d4' }}></span>Desktop: {Math.round((statsData.summary?.total_web || 0) * 0.55).toLocaleString()}</span>
                                     </>
                                 }
-                                comparisonLabel={`so với ${days} ngày trước`}
+                                comparisonLabel={customRange ? 'trong khoảng đã chọn' : `so với ${days} ngày trước`}
                             />
                             <StatCard
                                 title="Liên hệ Mới"
@@ -405,14 +494,14 @@ const Dashboard: React.FC = () => {
                                         <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#ec4899' }}></span>Zalo/Phone: {Math.round((statsData.summary?.total_leads || 0) * 0.4).toLocaleString()}</span>
                                     </>
                                 }
-                                comparisonLabel={`so với ${days} ngày trước`}
+                                comparisonLabel={customRange ? 'trong khoảng đã chọn' : `so với ${days} ngày trước`}
                             />
                         </div>
 
                         {/* Chart and Top Tables Row */}
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             {/* BarChart */}
-                            <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between min-h-[360px]">
+                            <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between h-[420px]">
                                 <div className="flex items-center gap-2 mb-6 shrink-0">
                                     <BarChart3 className="w-4 h-4 text-violet-500" />
                                     <h3 className="text-xs font-black uppercase tracking-[0.1em] text-slate-700 dark:text-slate-200">Hiệu suất xử lý Data theo ngày</h3>
@@ -440,7 +529,7 @@ const Dashboard: React.FC = () => {
                             </div>
 
                             {/* Top Campaign List in Column 3 */}
-                            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col min-h-[360px]">
+                            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col h-[420px]">
                                 <div className="flex items-center gap-2 mb-4 shrink-0">
                                     <Mail className="w-4 h-4 text-violet-500" />
                                     <h3 className="text-xs font-black uppercase tracking-[0.1em] text-slate-700 dark:text-slate-200">Hiệu suất Chiến dịch</h3>
@@ -451,16 +540,48 @@ const Dashboard: React.FC = () => {
                                             Chưa có dữ liệu chiến dịch gửi
                                         </div>
                                     ) : (
-                                        statsData.top_campaigns.map((camp: any, idx: number) => (
-                                            <div key={idx} className="p-3 rounded-xl border border-slate-50 dark:border-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-all">
-                                                <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-200 truncate mb-1.5">{camp.name}</h4>
-                                                <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
-                                                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#fbbf24' }}></span>Gửi: <strong className="text-slate-700 dark:text-slate-300">{camp.stat_total_sent?.toLocaleString() || 0}</strong></span>
-                                                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: '#10b981' }}></span>Mở: <strong className="text-emerald-600">{camp.stat_total_opened?.toLocaleString() || 0}</strong></span>
-                                                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#3b82f6' }}></span>Click: <strong className="text-blue-600">{camp.stat_total_clicked?.toLocaleString() || 0}</strong></span>
+                                        statsData.top_campaigns.map((camp: any, idx: number) => {
+                                            const sent = camp.stat_total_sent || 0;
+                                            const opened = camp.stat_total_opened || 0;
+                                            const clicked = camp.stat_total_clicked || 0;
+                                            const openRate = sent > 0 ? Math.round((opened / sent) * 100) : 0;
+                                            const clickRate = sent > 0 ? Math.round((clicked / sent) * 100) : 0;
+                                            const isEmail = camp.type === 'email' || !camp.type;
+
+                                            return (
+                                                <div key={idx} className="p-3.5 rounded-2xl border border-slate-50 dark:border-slate-800/40 bg-slate-50/20 dark:bg-slate-900/10 hover:bg-slate-50 dark:hover:bg-slate-850/30 transition-all space-y-2.5">
+                                                    <div className="flex items-start justify-between gap-3">
+                                                        <div className="min-w-0 flex-1">
+                                                            <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 truncate" title={camp.name}>{camp.name}</h4>
+                                                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                                                                {isEmail ? 'Email Campaign' : 'Zalo Message'}
+                                                            </span>
+                                                        </div>
+                                                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${isEmail ? 'bg-amber-50 text-amber-500 border border-amber-100/50 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30' : 'bg-blue-50 text-blue-500 border border-blue-100/50 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/30'}`}>
+                                                            {isEmail ? <Mail className="w-3.5 h-3.5" /> : <MessageSquare className="w-3.5 h-3.5" />}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Progress Bars for Open rate */}
+                                                    <div className="space-y-1.5">
+                                                        <div className="space-y-1">
+                                                            <div className="flex justify-between text-[9px] font-bold text-slate-500 dark:text-slate-400">
+                                                                <span>Tỷ lệ Mở (Open Rate)</span>
+                                                                <span className="text-emerald-500 font-black">{openRate}% ({opened.toLocaleString()})</span>
+                                                            </div>
+                                                            <div className="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                                <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${openRate}%` }} />
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex items-center justify-between text-[9px] font-bold text-slate-400 dark:text-slate-500 pt-1.5 border-t border-slate-100 dark:border-slate-800/40">
+                                                            <span>Gửi: <strong className="text-slate-700 dark:text-slate-300 font-black">{sent.toLocaleString()}</strong></span>
+                                                            <span>Click: <strong className="text-blue-500 font-black">{clickRate}% ({clicked.toLocaleString()})</strong></span>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))
+                                            );
+                                        })
                                     )}
                                 </div>
                             </div>
