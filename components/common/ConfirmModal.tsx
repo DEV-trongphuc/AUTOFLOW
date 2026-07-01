@@ -77,24 +77,32 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             icon: AlertCircle,
             iconClass: 'text-rose-600',
             iconBg: isDarkTheme ? 'bg-rose-900/30' : 'bg-rose-50',
-            button: 'bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700'
+            inlineIconBg: undefined,
+            inlineIconColor: undefined,
+            button: 'bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 shadow-rose-500/20'
         },
         warning: {
             icon: AlertTriangle,
-            iconClass: 'text-amber-600',
-            iconBg: 'bg-amber-50',
-            button: 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700'
+            iconClass: '',
+            iconBg: '',
+            inlineIconBg: '#fef3c7',
+            inlineIconColor: '#d97706',
+            button: 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-violet-500/20'
         },
         info: {
             icon: Info,
             iconClass: 'text-blue-600',
             iconBg: isDarkTheme ? 'bg-blue-900/30' : 'bg-blue-50',
-            button: 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+            inlineIconBg: undefined,
+            inlineIconColor: undefined,
+            button: 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-blue-500/20'
         },
         success: {
             icon: CheckCircle2,
             iconClass: 'text-emerald-600',
             iconBg: 'bg-emerald-50',
+            inlineIconBg: undefined,
+            inlineIconColor: undefined,
             button: 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-500/20'
         }
     };
@@ -106,28 +114,17 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={
-                <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-2xl ${styles.iconBg} flex items-center justify-center shadow-inner relative overflow-hidden group`}>
-                        <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <Icon className={`w-6 h-6 ${styles.iconClass} relative z-10`} />
-                    </div>
-                    <div className="flex-1">
-                        <h3 className={`text-xl font-black tracking-tight ${isDarkTheme ? 'text-slate-100' : 'text-slate-800'}`}>{title}</h3>
-                        <div className={`h-1 w-12 rounded-full mt-1 bg-gradient-to-r ${variant === 'danger' ? 'from-rose-500 to-red-500' : variant === 'warning' ? 'from-amber-500 to-orange-500' : 'from-blue-500 to-indigo-500'}`} />
-                    </div>
-                </div>
-            }
+            title={title}
             size="sm"
             isLoading={activeLoading}
             isDarkTheme={isDarkTheme}
             footer={
-                <div className="flex items-center justify-end gap-3 w-full p-2">
+                <div className="flex items-center justify-center gap-3 w-full p-2">
                     {dangerText && dangerAction && (
                         <button
                             onClick={dangerAction}
                             disabled={activeLoading}
-                            className={`px-5 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${isDarkTheme ? 'text-rose-400 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/20' : 'text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-100'} mr-auto active:scale-95`}
+                            className={`px-5 py-2.5 text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${isDarkTheme ? 'text-rose-400 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/20' : 'text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-100'} mr-auto active:scale-95`}
                         >
                             {dangerText}
                         </button>
@@ -135,14 +132,18 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                     <button
                         onClick={onClose}
                         disabled={activeLoading}
-                        className={`px-5 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${isDarkTheme ? 'text-slate-400 bg-slate-800 border border-slate-750 hover:bg-slate-700 hover:text-slate-200' : 'text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-700'} active:scale-95`}
+                        className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-full border transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${isDarkTheme ? 'text-slate-400 bg-slate-800 border-slate-750 hover:bg-slate-700 hover:text-slate-200' : 'text-violet-600 bg-white border-violet-600 hover:bg-violet-50/50'} active:scale-95`}
                     >
                         {cancelText}
                     </button>
                     <button
                         onClick={handleConfirm}
                         disabled={isConfirmDisabled}
-                        className={`px-7 py-3 text-xs font-black uppercase tracking-widest text-white rounded-xl transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2 min-w-[140px] disabled:opacity-40 disabled:grayscale disabled:scale-100 disabled:cursor-not-allowed ${styles.button}`}
+                        className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest text-white rounded-full transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2 disabled:opacity-40 disabled:grayscale disabled:scale-100 disabled:cursor-not-allowed ${
+                            variant === 'danger'
+                                ? 'bg-gradient-to-b from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 shadow-rose-500/20'
+                                : 'bg-gradient-to-b from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 shadow-violet-500/20'
+                        }`}
                     >
                         {activeLoading ? (
                             <>
@@ -156,8 +157,22 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 </div>
             }
         >
-            <div className="relative py-2">
-                <div className={`text-[15px] leading-relaxed font-medium ${isDarkTheme ? 'text-slate-400' : 'text-slate-600'}`}>
+            <div className="flex flex-col items-center text-center py-4">
+                {/* Large Center Icon */}
+                <div 
+                    className={`w-16 h-16 rounded-full ${styles.iconBg} flex items-center justify-center shadow-lg shadow-slate-100 dark:shadow-none mb-4`}
+                    style={styles.inlineIconBg ? { backgroundColor: styles.inlineIconBg, color: styles.inlineIconColor } : undefined}
+                >
+                    <Icon className={`w-8 h-8 ${styles.iconClass}`} style={styles.inlineIconColor ? { color: styles.inlineIconColor } : undefined} />
+                </div>
+
+                {/* Subtitle / Big Title */}
+                <h4 className={`text-base md:text-lg font-black tracking-tight mb-2 uppercase ${isDarkTheme ? 'text-slate-100' : 'text-slate-800'}`}>
+                    {variant === 'danger' ? 'Yêu cầu nguy hiểm!' : 'Yêu cầu cần xử lý!'}
+                </h4>
+
+                {/* Message */}
+                <div className={`text-[13px] leading-relaxed font-semibold ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'} max-w-[280px] sm:max-w-xs mx-auto mb-2`}>
                     {typeof message === 'string' ? message.split('\n').map((line, i) => (
                         <React.Fragment key={i}>
                             {line}
@@ -167,7 +182,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 </div>
 
                 {requireConfirmText && (
-                    <div className="mt-8 p-5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 space-y-3">
+                    <div className="mt-6 w-full text-left p-5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 space-y-3">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block">
                             Xác nhận định danh
                         </label>
@@ -178,7 +193,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                                 value={confirmInput}
                                 onChange={(e) => setConfirmInput(e.target.value)}
                                 placeholder={confirmPlaceholder || `Nhập mã xác nhận...`}
-                                className={`w-full px-4 py-3.5 border rounded-xl text-sm font-bold focus:outline-none transition-all placeholder:font-medium placeholder:text-slate-400 ${isDarkTheme ? 'bg-slate-950 border-slate-700 text-slate-100 focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10' : 'bg-white border-slate-200 text-slate-800 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500'}`}
+                                className={`w-full px-4 py-3 border rounded-xl text-sm font-bold focus:outline-none transition-all placeholder:font-medium placeholder:text-slate-400 ${isDarkTheme ? 'bg-slate-950 border-slate-700 text-slate-100 focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10' : 'bg-white border-slate-200 text-slate-800 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500'}`}
                                 autoFocus
                             />
                         </div>
