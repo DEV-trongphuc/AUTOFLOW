@@ -141,7 +141,7 @@ const Vouchers: React.FC = () => {
     return (
         <div className="animate-fade-in space-y-6 pb-32">
             <PageHero
-                title={<>Kho <span className="text-orange-100/80">Voucher</span></>}
+                title={<>Kho <span className="text-violet-600">Voucher</span></>}
                 subtitle="Quản lý mã giảm giá, quà tặng và tích hợp trực tiếp vào chiến dịch Email/Zalo của bạn."
                 actions={[
                     {

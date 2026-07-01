@@ -404,7 +404,7 @@ const Templates: React.FC = () => {
             ) : (
                 <>
                     <PageHero
-                        title={<>Email <span className="text-orange-100/80">Templates</span></>}
+                        title={<>Email <span className="text-violet-600">Templates</span></>}
                         subtitle="Thư viện mẫu email chuyên nghiệp, bộ sưu tập thiết kế cá nhân và AI hỗ trợ templete của bạn."
                         showStatus={true}
                         statusText="Library Synced"

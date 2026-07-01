@@ -1687,7 +1687,7 @@ const Flows: React.FC = () => {
             {!selectedFlow && (
                 <>
                     <PageHero
-                        title={<>Automation <span className="text-orange-100/80">Flows</span></>}
+                        title={<>Automation <span className="text-violet-600">Flows</span></>}
                         subtitle="Quản lý vòng đời Khách hàng tự động — nuôi dưỡng & chuyển đổi thông minh đa kênh."
                         showStatus={true}
                         statusText="Orchestrator Online"
