@@ -20,6 +20,7 @@ $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
 // default 50s when a flow worker or concurrent campaign holds a subscriber row lock.
 // At 5s timeout, the job is re-queued and retried on the next cron run instead.
 $pdo->exec("SET SESSION innodb_lock_wait_timeout = 5");
+$pdo->exec("SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED");
 header('Content-Type: application/json; charset=utf-8');
 
 // NOTE: $apiUrl, $settings, $mailer are initialized inside runWorkerCampaign()
@@ -206,8 +207,8 @@ if (!function_exists('runWorkerCampaign')) {
                     // logs AND update status + audience in ONE UPDATE to avoid double row-lock on the
                     // campaigns table within the same transaction.
                     if ($wasResumedFromPause) {
-                        $pdo->prepare("UPDATE campaigns SET status = 'sending', sent_at = IFNULL(sent_at, NOW()), total_target_audience = ?, count_sent = (SELECT COUNT(*) FROM mail_delivery_logs WHERE campaign_id = ? AND status = 'success') WHERE id = ? AND workspace_id = ?")->execute([$totalAudience, $cid, $cid, $workspace_id]);
-                        writeWorkerLog("Campaign $cid: Resumed from paused — status=sending, count_sent synced from delivery logs, audience=$totalAudience.");
+                        $pdo->prepare("UPDATE campaigns SET status = 'sending', sent_at = IFNULL(sent_at, NOW()), total_target_audience = ?, count_sent = (SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_activity WHERE campaign_id = ? AND type IN ('receive_email', 'zalo_sent', 'meta_sent', 'zns_sent')) WHERE id = ? AND workspace_id = ?")->execute([$totalAudience, $cid, $cid, $workspace_id]);
+                        writeWorkerLog("Campaign $cid: Resumed from paused — status=sending, count_sent synced from activity logs, audience=$totalAudience.");
                     } else {
                         // Change status to 'sending' and ensure sent_at is marked
                         $pdo->prepare("UPDATE campaigns SET status = 'sending', sent_at = IFNULL(sent_at, NOW()), total_target_audience = ? WHERE id = ?")->execute([$totalAudience, $cid]);
@@ -936,8 +937,11 @@ if (!function_exists('runWorkerCampaign')) {
                 $stmtLeft->execute($execFinal);
                 $remaining = (int) $stmtLeft->fetchColumn();
 
+                $shouldTriggerFollowUp = false;
+                $nextRetry = 0;
+
                 if ($remaining === 0) {
-                    $pdo->prepare("UPDATE campaigns SET status = 'sent' WHERE id = ? AND workspace_id = ?")->execute([$cid, $workspace_id]);
+                    $pdo->prepare("UPDATE campaigns SET status = 'sent', count_sent = (SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_activity WHERE campaign_id = ? AND type IN ('receive_email', 'zalo_sent', 'meta_sent', 'zns_sent')) WHERE id = ? AND workspace_id = ?")->execute([$cid, $cid, $workspace_id]);
                     $logs[] = "[Campaign {$cid}] Finished. Status set to 'sent'.";
                     writeWorkerLog("Campaign $cid: Finished. Status set to 'sent'.");
                 } else {
@@ -948,15 +952,15 @@ if (!function_exists('runWorkerCampaign')) {
                     if ($totalProcessed > 0) {
                         if ($retryCount >= $MAX_RETRIES) {
                             // [FIX CB-2] Sync count_sent before pausing so UI shows accurate progress.
-                            $pdo->prepare("UPDATE campaigns SET count_sent = (SELECT COUNT(*) FROM mail_delivery_logs WHERE campaign_id = ? AND status = 'success'), status = 'paused' WHERE id = ? AND workspace_id = ?")->execute([$cid, $cid, $workspace_id]);
+                            $pdo->prepare("UPDATE campaigns SET count_sent = (SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_activity WHERE campaign_id = ? AND type IN ('receive_email', 'zalo_sent', 'meta_sent', 'zns_sent')), status = 'paused' WHERE id = ? AND workspace_id = ?")->execute([$cid, $cid, $workspace_id]);
                             $errMsg = "[CIRCUIT BREAKER] Campaign $cid auto-paused after $MAX_RETRIES consecutive retries with $remaining unsent recipients. Manual review required.";
                             $logs[] = $errMsg;
                             writeWorkerLog($errMsg);
                         } else {
                             $nextRetry = $retryCount + 1;
-                            triggerAsyncWorker('/worker_campaign.php?campaign_id=' . $cid . '&retry_count=' . $nextRetry);
-                            $logs[] = "[Campaign {$cid}] Continuous mode: $remaining remaining. Follow-up triggered (retry #$nextRetry).";
-                            writeWorkerLog("Campaign $cid: Continuous mode: $remaining remaining. Follow-up triggered (retry #$nextRetry/$MAX_RETRIES).");
+                            $shouldTriggerFollowUp = true;
+                            $logs[] = "[Campaign {$cid}] Continuous mode: $remaining remaining. Follow-up staged (retry #$nextRetry).";
+                            writeWorkerLog("Campaign $cid: Continuous mode: $remaining remaining. Follow-up staged (retry #$nextRetry/$MAX_RETRIES).");
                         }
                     } else {
                         $logs[] = "[Campaign {$cid}] Remaining $remaining are currently locked by other workers or pending recovery. Safely yielding to Cron.";
@@ -964,6 +968,12 @@ if (!function_exists('runWorkerCampaign')) {
                     }
                 }
                 $pdo->commit();
+
+                // [RACE CONDITION PREVENTER] Spawn follow-up only AFTER transaction is successfully committed!
+                if ($shouldTriggerFollowUp) {
+                    triggerAsyncWorker('/worker_campaign.php?campaign_id=' . $cid . '&retry_count=' . $nextRetry);
+                    writeWorkerLog("Campaign $cid: Spawned async follow-up worker (retry #$nextRetry).");
+                }
             } catch (Exception $e) {
                 if ($pdo->inTransaction())
                     $pdo->rollBack();

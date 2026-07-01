@@ -49,6 +49,8 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
     const [audienceStats, setAudienceStats] = useState<{ total_current: number, count_sent: number, gap: number, count_unsubscribed?: number, reminders: any[] } | null>(null);
     const [refreshLoading, setRefreshLoading] = useState(false);
     const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
+    const [activitySearch, setActivitySearch] = useState('');
+    const [debouncedActivitySearch, setDebouncedActivitySearch] = useState('');
 
 
     const [showTestModal, setShowTestModal] = useState(false);
@@ -133,10 +135,26 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
 
     // Poll for activity logs and campaign stats when drawer is open and relevant tabs are active
     useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedActivitySearch(activitySearch);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [activitySearch]);
+
+    useEffect(() => {
+        if (localCampaign?.id && isVisible && activeTab === 'activity') {
+            setLogsPagination(prev => ({ ...prev, page: 1 }));
+            if (logsPagination.page === 1) {
+                fetchLogs(1);
+            }
+        }
+    }, [debouncedActivitySearch]);
+
+    useEffect(() => {
         if (localCampaign?.id && isVisible && activeTab === 'activity') {
             fetchLogs(logsPagination.page);
         }
-    }, [localCampaign?.id, isVisible, activeTab, logsPagination.page]);
+    }, [localCampaign?.id, isVisible, activeTab, logsPagination.page, debouncedActivitySearch]);
 
     // Fetch fresh stats at least once when opened to trigger backend self-healing
     // Polling logic continues only for "sending" status progress + stats update
@@ -174,7 +192,8 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
     const fetchLogs = async (page = 1) => {
         if (!campaign) return;
         setLoadingLogs(true);
-        const res = await api.get<any>(`flows?route=history&campaign_id=${campaign.id}&page=${page}&limit=${logsPagination.limit}`);
+        const searchQuery = debouncedActivitySearch ? `&search=${encodeURIComponent(debouncedActivitySearch)}` : '';
+        const res = await api.get<any>(`flows?route=history&campaign_id=${campaign.id}&page=${page}&limit=${logsPagination.limit}${searchQuery}`);
         if (res.success) {
             if (res.data.pagination) {
                 setActivityLogs(res.data.data);
@@ -1185,6 +1204,18 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                 <button onClick={() => fetchLogs()} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors">
                                     <RefreshCw className={`w-4 h-4 ${loadingLogs ? 'animate-spin' : ''}`} />
                                 </button>
+                            </div>
+
+                            <div className="flex justify-between gap-4 items-center bg-slate-50 p-3 rounded-2xl border border-slate-100 flex-wrap">
+                                <div className="flex-1 relative group bg-white rounded-xl border border-slate-200 h-10 flex items-center overflow-hidden w-full">
+                                    <Search className="w-4 h-4 ml-4 text-slate-400" />
+                                    <input
+                                        value={activitySearch}
+                                        onChange={(e) => setActivitySearch(e.target.value)}
+                                        placeholder="Tìm kiếm email hoặc tên khách hàng..."
+                                        className="w-full h-full bg-transparent border-none outline-none text-xs font-medium px-3"
+                                    />
+                                </div>
                             </div>
 
                             <Card noPadding className="border border-slate-100 shadow-sm overflow-hidden min-h-[400px]">

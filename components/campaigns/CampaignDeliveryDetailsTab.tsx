@@ -305,12 +305,12 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
                         <CheckCircle2 className="w-7 h-7" />
                     </div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex items-center justify-between group hover:border-orange-200 transition-all">
+                <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex items-center justify-between group hover:border-purple-200 transition-all">
                     <div>
                         <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">{isZns ? 'Người xem' : 'Lượt mở'}</p>
-                        <h4 className="text-2xl font-black text-orange-600">{stats.opened.toLocaleString()}</h4>
+                        <h4 className="text-2xl font-black text-purple-600">{stats.opened.toLocaleString()}</h4>
                     </div>
-                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-[#ca7900] text-white rounded-2xl shadow-lg shadow-orange-500/10 flex items-center justify-center transition-all group-hover:scale-110">
+                    <div className="w-14 h-14 bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-2xl shadow-lg shadow-violet-500/10 flex items-center justify-center transition-all group-hover:scale-110">
                         {isZns ? <BadgeCheck className="w-7 h-7" /> : <MailOpen className="w-7 h-7" />}
                     </div>
                 </div>
