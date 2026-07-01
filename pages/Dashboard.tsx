@@ -497,7 +497,7 @@ const Dashboard: React.FC = () => {
                                 comparisonLabel={customRange ? 'trong khoảng đã chọn' : `so với ${days} ngày trước`}
                             />
                             <StatCard
-                                title="Chiến dịch đã gửi"
+                                title="Tin đã gửi"
                                 value={(statsData.top_campaigns?.reduce((acc: number, c: any) => acc + (c.stat_total_sent || 0), 0) || 0).toLocaleString()}
                                 growth={12.4}
                                 icon={<Send className="w-5 h-5" />}
