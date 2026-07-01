@@ -1,0 +1,49 @@
+name: Build and Deploy to cPanel
+
+on:
+  push:
+    branches:
+      - main  # Run deployment automatically on push to main branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Checkout repository code
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # 2. Setup Node.js environment
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+
+    # 3. Install dependencies and build React frontend
+    - name: Install dependencies & Build
+      run: |
+        npm ci
+        npm run build
+
+    # 4. Gather production-ready deployment files
+    # - Grab all build output from dist/
+    # - Copy backend PHP api/ folder to temporary folder renamed as mail_api/ to match cPanel structure
+    - name: Prepare Deployment Files
+      run: |
+        mkdir -p deploy_temp
+        cp -r dist/* deploy_temp/
+        cp -r api deploy_temp/mail_api
+        if [ -f .htaccess ]; then cp .htaccess deploy_temp/; fi
+
+    # 5. Synchronize output directory to cPanel using FTP/SFTP
+    - name: Sync files to cPanel
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./deploy_temp/
+        server-dir: /public_html/
+        dangerous-clean-slate: false
