@@ -377,7 +377,7 @@ const CustomBarTooltip = ({ active, payload, label }: any) => {
     return (
         <div className="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700">
             <p className="text-xs text-slate-400 font-bold mb-1">{label}</p>
-            <p className="text-lg font-black text-amber-400">{payload[0].value.toLocaleString()}</p>
+            <p className="text-lg font-black text-violet-500">{payload[0].value.toLocaleString()}</p>
             <p className="text-[10px] text-slate-400 font-medium">email đã gửi</p>
         </div>
     );
@@ -436,7 +436,7 @@ const EmailSentChart: React.FC = () => {
             {/* Header */}
             <div className="px-6 pt-5 pb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-50">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-orange-400/30 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-violet-500/20 flex items-center justify-center">
                         <Send className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -524,7 +524,7 @@ const EmailSentChart: React.FC = () => {
                 {loading ? (
                     <div className="absolute inset-0 flex items-center justify-center">
                         <div className="flex flex-col items-center gap-2">
-                            <Loader2 className="w-6 h-6 text-amber-500 animate-spin" />
+                            <Loader2 className="w-6 h-6 text-violet-500 animate-spin" />
                             <span className="text-xs text-slate-400 font-medium">Đang tải dữ liệu...</span>
                         </div>
                     </div>
@@ -533,12 +533,12 @@ const EmailSentChart: React.FC = () => {
                         <BarChart data={chartData} margin={{ top: 8, right: 12, left: -10, bottom: 0 }} barCategoryGap="20%">
                             <defs>
                                 <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stopColor="#f59e0b" stopOpacity={1} />
-                                    <stop offset="100%" stopColor="#ea580c" stopOpacity={0.85} />
+                                    <stop offset="0%" stopColor="#c084fc" stopOpacity={1} />
+                                    <stop offset="100%" stopColor="#7c3aed" stopOpacity={0.85} />
                                 </linearGradient>
                                 <linearGradient id="barGradientPeak" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stopColor="#fbbf24" stopOpacity={1} />
-                                    <stop offset="100%" stopColor="#f97316" stopOpacity={1} />
+                                    <stop offset="0%" stopColor="#a78bfa" stopOpacity={1} />
+                                    <stop offset="100%" stopColor="#683df2" stopOpacity={1} />
                                 </linearGradient>
                                 <linearGradient id="barGradientZero" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="0%" stopColor="#e2e8f0" stopOpacity={1} />
@@ -560,7 +560,7 @@ const EmailSentChart: React.FC = () => {
                                 tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }}
                                 tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(1)}k` : v}
                             />
-                            <Tooltip content={<CustomBarTooltip />} cursor={{ fill: 'rgba(245,158,11,0.06)', radius: 6 }} />
+                            <Tooltip content={<CustomBarTooltip />} cursor={{ fill: 'rgba(124,58,237,0.06)', radius: 6 }} />
                             <Bar dataKey="sent" radius={[6, 6, 0, 0]} maxBarSize={mode === 'monthly' ? 18 : 48}>
                                 {chartData.map((entry, index) => (
                                     <Cell
@@ -583,11 +583,11 @@ const EmailSentChart: React.FC = () => {
             {/* Legend */}
             <div className="px-6 pb-4 flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-gradient-to-br from-amber-400 to-orange-500" />
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-br from-violet-400 to-indigo-600" />
                     <span className="text-[10px] font-bold text-slate-500">Email / ZNS đã gửi</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-gradient-to-br from-amber-300 to-orange-400 ring-2 ring-amber-300" />
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-br from-violet-300 to-indigo-500 ring-2 ring-violet-300" />
                     <span className="text-[10px] font-bold text-slate-500">Cao nhất</span>
                 </div>
                 <div className="flex items-center gap-1.5">

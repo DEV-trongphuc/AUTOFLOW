@@ -135,12 +135,12 @@ const AIStatsModal: React.FC<AIStatsModalProps> = ({ propertyId, onClose, brandC
                                         <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                             <defs>
                                                 <linearGradient id="colorYellow" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.9} />
-                                                    <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.3} />
+                                                    <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.9} />
+                                                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.3} />
                                                 </linearGradient>
                                                 <linearGradient id="colorRed" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="0%" stopColor="#ef4444" stopOpacity={0.9} />
-                                                    <stop offset="100%" stopColor="#ef4444" stopOpacity={0.3} />
+                                                    <stop offset="0%" stopColor="#ec4899" stopOpacity={0.9} />
+                                                    <stop offset="100%" stopColor="#ec4899" stopOpacity={0.3} />
                                                 </linearGradient>
                                             </defs>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.6} />
@@ -181,10 +181,10 @@ const AIStatsModal: React.FC<AIStatsModalProps> = ({ propertyId, onClose, brandC
                             {/* AI Insights Button */}
                             <button
                                 onClick={() => { if (onOpenAnalysis) onOpenAnalysis(); }}
-                                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-pink-50 border border-orange-100 hover:border-orange-300 rounded-[20px] transition-all shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_rgb(249,115,22,0.15)] group"
+                                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-100 hover:border-violet-300 rounded-[20px] transition-all shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_rgba(104,61,242,0.15)] group"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-[14px] bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white shadow-md shadow-orange-500/20 group-hover:scale-110 transition-transform">
+                                    <div className="w-12 h-12 rounded-[14px] bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-violet-500/20 group-hover:scale-110 transition-transform">
                                         <Sparkles className="w-6 h-6" />
                                     </div>
                                     <div className="text-left">

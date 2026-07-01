@@ -1725,8 +1725,9 @@ const Flows: React.FC = () => {
                                 </div>
                                 <div className="flex-1 flex flex-col justify-start">
                                     <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{flowStats.total}</h3>
-                                    <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-2">
-                                        • Draft: {flows.filter(f => f.status === 'draft').length}
+                                    <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
+                                        <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8b5cf6' }}></span>Hoạt động: {flows.filter(f => f.status === 'active').length}</span>
+                                        <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#64748b' }}></span>Bản nháp: {flows.filter(f => f.status === 'draft').length}</span>
                                     </div>
                                 </div>
                                 <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
@@ -1748,8 +1749,9 @@ const Flows: React.FC = () => {
                                 </div>
                                 <div className="flex-1 flex flex-col justify-start">
                                     <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{flowStats.active}</h3>
-                                    <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-2">
-                                        • Chạy: {flows.filter(f => f.status === 'active').length}
+                                    <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
+                                        <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: '#10b981' }}></span>Đang chạy: {flows.filter(f => f.status === 'active').length}</span>
+                                        <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#f59e0b' }}></span>Tạm dừng: {flows.filter(f => f.status === 'paused').length}</span>
                                     </div>
                                 </div>
                                 <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
@@ -1771,8 +1773,9 @@ const Flows: React.FC = () => {
                                 </div>
                                 <div className="flex-1 flex flex-col justify-start">
                                     <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{flowStats.totalUsers.toLocaleString()}</h3>
-                                    <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-2">
-                                        • Mới: {Math.round(flowStats.totalUsers * 0.15).toLocaleString()}
+                                    <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
+                                        <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#3b82f6' }}></span>Mới: {Math.round(flowStats.totalUsers * 0.15).toLocaleString()}</span>
+                                        <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#ec4899' }}></span>Hoàn thành: {flows.reduce((sum, f) => sum + (f.stats?.completed || 0), 0).toLocaleString()}</span>
                                     </div>
                                 </div>
                                 <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
@@ -1796,8 +1799,9 @@ const Flows: React.FC = () => {
                                     <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">
                                         {flows.reduce((sum, f) => sum + (f.stats?.completed || 0), 0).toLocaleString()}
                                     </h3>
-                                    <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-2">
-                                        • Tỷ lệ: {flowStats.totalUsers > 0 ? Math.round(flows.reduce((sum, f) => sum + (f.stats?.completed || 0), 0) / flowStats.totalUsers * 100) : 0}%
+                                    <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
+                                        <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#10b981' }}></span>Thành công: {flows.reduce((sum, f) => sum + (f.stats?.completed || 0), 0).toLocaleString()}</span>
+                                        <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#ef4444' }}></span>Lỗi/Bỏ qua: {flows.reduce((sum, f) => sum + (f.stats?.totalFailed || 0), 0).toLocaleString()}</span>
                                     </div>
                                 </div>
                                 <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">

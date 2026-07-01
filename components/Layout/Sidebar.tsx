@@ -67,7 +67,7 @@ const updateRecentModules = (href: string) => {
   } catch (e) { }
 };
 
-const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed: boolean }> = React.memo(({ item, onClose, isCollapsed }) => {
+const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed: boolean; badgeOverride?: string | number | null }> = React.memo(({ item, onClose, isCollapsed, badgeOverride }) => {
   const navigate = useNavigate();
   const [isPending, startTransition] = useTransition();
 
@@ -114,11 +114,14 @@ const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed:
         <>
           <div className="flex items-center gap-3">
             {/* Icon Wrapper Box */}
-            <div className={`w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 transition-all duration-200 ${isActive ? 'bg-white/15' : 'bg-white/5'}`}>
+            <div className={`w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 transition-all duration-200 relative ${isActive ? 'bg-white/15' : 'bg-white/5'}`}>
               <item.icon
                 className={`w-[18px] h-[18px] transition-transform duration-200 ${isActive ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`}
                 strokeWidth={2}
               />
+              {isCollapsed && badgeOverride && (
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-[#0d0331] shadow-sm animate-pulse"></span>
+              )}
             </div>
             {!isCollapsed && (
               <span className="text-[14px] tracking-wide font-medium">
@@ -127,9 +130,9 @@ const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed:
             )}
           </div>
 
-          {!isCollapsed && item.badge && (
-            <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider ${isActive ? 'bg-violet-500/20 text-violet-300' : 'bg-white/10 text-white/50'} ml-auto`}>
-              {item.badge}
+          {!isCollapsed && (badgeOverride !== undefined ? badgeOverride !== null : item.badge) && (
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider ${isActive ? 'bg-violet-500/20 text-violet-300' : badgeOverride !== undefined ? 'bg-emerald-500/25 text-emerald-300' : 'bg-white/10 text-white/50'} ml-auto`}>
+              {badgeOverride !== undefined ? badgeOverride : item.badge}
             </span>
           )}
 
@@ -185,10 +188,22 @@ export const ANALYTICS_NAV: NavItemConfig[] = [
 
 const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollapse }) => {
   const location = useLocation();
+  const [activeFlowCount, setActiveFlowCount] = React.useState<number | null>(null);
 
   useEffect(() => {
     updateRecentModules(location.pathname);
   }, [location.pathname]);
+
+  useEffect(() => {
+    api.get<any[]>('flows')
+      .then(res => {
+        if (Array.isArray(res)) {
+          const count = res.filter(f => f.status === 'active').length;
+          setActiveFlowCount(count > 0 ? count : null);
+        }
+      })
+      .catch(err => console.error("Error fetching flows in sidebar", err));
+  }, []);
 
 
 
@@ -250,7 +265,15 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
       {/* SCROLLABLE NAV - Hidden scrollbar */}
       <nav className="flex-1 overflow-y-auto py-6 space-y-2 scrollbar-hide">
         <SidebarSection title="Marketing" isCollapsed={isCollapsed}>
-          {MAIN_NAV.map((item) => <NavItem key={item.name} item={item} onClose={onClose} isCollapsed={isCollapsed} />)}
+          {MAIN_NAV.map((item) => (
+            <NavItem
+              key={item.name}
+              item={item}
+              onClose={onClose}
+              isCollapsed={isCollapsed}
+              badgeOverride={item.name === 'Automation' ? activeFlowCount : undefined}
+            />
+          ))}
         </SidebarSection>
 
         <SidebarSection title="AI System" isCollapsed={isCollapsed}>

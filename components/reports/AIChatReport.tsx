@@ -147,12 +147,12 @@ const AIChatReport: React.FC<AIReportProps> = ({ dateRange }) => {
                             <BarChart data={dataWithTotal} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorYellowAi" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.9} />
-                                        <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.3} />
+                                        <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.9} />
+                                        <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.3} />
                                     </linearGradient>
                                     <linearGradient id="colorRedAi" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="#ef4444" stopOpacity={0.9} />
-                                        <stop offset="100%" stopColor="#ef4444" stopOpacity={0.3} />
+                                        <stop offset="0%" stopColor="#ec4899" stopOpacity={0.9} />
+                                        <stop offset="100%" stopColor="#ec4899" stopOpacity={0.3} />
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />

@@ -793,15 +793,15 @@ const LinksQR: React.FC = () => {
                                             <AreaChart data={linkStats.timeline} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                                 <defs>
                                                     <linearGradient id="colorClicks" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
-                                                        <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                                                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                                                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
                                                     </linearGradient>
                                                 </defs>
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} dy={10} />
                                                 <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} />
                                                 <Tooltip cursor={{ stroke: '#cbd5e1', strokeWidth: 1 }} contentStyle={{ borderRadius: 20, border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '12px 16px' }} />
-                                                <Area type="monotone" dataKey="clicks" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorClicks)" activeDot={{ r: 6, strokeWidth: 0, fill: '#f97316' }} />
+                                                <Area type="monotone" dataKey="clicks" stroke="#7c3aed" strokeWidth={3} fillOpacity={1} fill="url(#colorClicks)" activeDot={{ r: 6, strokeWidth: 0, fill: '#7c3aed' }} />
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </div>

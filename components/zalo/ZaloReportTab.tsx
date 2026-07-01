@@ -209,7 +209,7 @@ const ZaloReportTab: React.FC<ZaloReportProps> = ({ dateRange }) => {
                                     <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} dy={10} />
                                     <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
                                     <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} />
-                                    <Area type="monotone" dataKey="automation" name="Kích hoạt" stroke="#f97316" strokeWidth={4} fill="none" />
+                                    <Area type="monotone" dataKey="automation" name="Kích hoạt" stroke="#7c3aed" strokeWidth={4} fill="none" />
                                 </AreaChart>
                             </ResponsiveContainer>
                         )}

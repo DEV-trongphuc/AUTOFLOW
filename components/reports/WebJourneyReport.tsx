@@ -133,7 +133,7 @@ const WebJourneyReport: React.FC<WebReportProps> = ({ dateRange }) => {
                                     <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
                                     <Tooltip contentStyle={{ border: 'none', borderRadius: '24px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }} />
                                     <Area type="monotone" dataKey="sessions" name="Phiên" stroke="#3b82f6" strokeWidth={3} fill="url(#colorSessions)" />
-                                    <Area type="monotone" dataKey="pageViews" name="Xem trang" stroke="#f97316" strokeWidth={3} fill="none" />
+                                    <Area type="monotone" dataKey="pageViews" name="Xem trang" stroke="#7c3aed" strokeWidth={3} fill="none" />
                                 </AreaChart>
                             </ResponsiveContainer>
                         )}
