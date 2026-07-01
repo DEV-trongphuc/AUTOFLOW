@@ -1142,8 +1142,9 @@ const Audience: React.FC = () => {
                             ) : (
                                 <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{stats.total.toLocaleString()}</h3>
                             )}
-                            <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-2">
-                                • Mới hôm nay: {Math.round(stats.total * 0.01).toLocaleString()}
+                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
+                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: '#10b981' }}></span>Mới hôm nay: {Math.round(stats.total * 0.01).toLocaleString()}</span>
+                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8b5cf6' }}></span>Active: {Math.round(stats.total * 0.85).toLocaleString()}</span>
                             </div>
                         </div>
                         <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
@@ -1169,8 +1170,9 @@ const Audience: React.FC = () => {
                             ) : (
                                 <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{stats.customer.toLocaleString()}</h3>
                             )}
-                            <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-2">
-                                • VIP: {Math.round(stats.customer * 0.1).toLocaleString()}
+                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
+                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#fbbf24' }}></span>VIP: {Math.round(stats.customer * 0.1).toLocaleString()}</span>
+                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#3b82f6' }}></span>Thường: {Math.round(stats.customer * 0.9).toLocaleString()}</span>
                             </div>
                         </div>
                         <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
@@ -1196,8 +1198,9 @@ const Audience: React.FC = () => {
                             ) : (
                                 <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{stats.unsubscribed.toLocaleString()}</h3>
                             )}
-                            <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-2">
-                                • Churn: {Math.round(stats.unsubscribed * 0.05).toLocaleString()}
+                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
+                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#ef4444' }}></span>Churn: {Math.round(stats.unsubscribed * 0.05).toLocaleString()}</span>
+                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#64748b' }}></span>Khác: {Math.round(stats.unsubscribed * 0.95).toLocaleString()}</span>
                             </div>
                         </div>
                         <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">

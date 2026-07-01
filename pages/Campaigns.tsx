@@ -645,8 +645,9 @@ const Campaigns: React.FC = () => {
                         </div>
                         <div className="flex-1 flex flex-col justify-start">
                             <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{campaigns.length}</h3>
-                            <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-2">
-                                • Đang chạy: {campaigns.filter(c => c.status === CampaignStatus.SCHEDULED || c.status === CampaignStatus.SENDING || c.status === CampaignStatus.PAUSED).length}
+                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
+                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: '#10b981' }}></span>Đang chạy: {campaigns.filter(c => c.status === CampaignStatus.SCHEDULED || c.status === CampaignStatus.SENDING || c.status === CampaignStatus.PAUSED).length}</span>
+                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#64748b' }}></span>Bản nháp: {campaigns.filter(c => c.status === CampaignStatus.DRAFT).length}</span>
                             </div>
                         </div>
                         <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
@@ -668,8 +669,9 @@ const Campaigns: React.FC = () => {
                         </div>
                         <div className="flex-1 flex flex-col justify-start">
                             <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{stats.totalSent.toLocaleString()}</h3>
-                            <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-2">
-                                • Email: {(stats.totalSent * 0.6).toFixed(0).toLocaleString()} • Zalo: {(stats.totalSent * 0.4).toFixed(0).toLocaleString()}
+                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
+                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#3b82f6' }}></span>Email: {(stats.totalSent * 0.6).toFixed(0).toLocaleString()}</span>
+                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8b5cf6' }}></span>Zalo: {(stats.totalSent * 0.4).toFixed(0).toLocaleString()}</span>
                             </div>
                         </div>
                         <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
@@ -691,8 +693,9 @@ const Campaigns: React.FC = () => {
                         </div>
                         <div className="flex-1 flex flex-col justify-start">
                             <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{stats.openRate}%</h3>
-                            <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-2">
-                                • Lượt mở: {Math.round(stats.totalSent * Number(stats.openRate) / 100).toLocaleString()}
+                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
+                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#10b981' }}></span>Lượt mở: {Math.round(stats.totalSent * Number(stats.openRate) / 100).toLocaleString()}</span>
+                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#64748b' }}></span>Không mở: {Math.max(0, stats.totalSent - Math.round(stats.totalSent * Number(stats.openRate) / 100)).toLocaleString()}</span>
                             </div>
                         </div>
                         <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
@@ -714,8 +717,9 @@ const Campaigns: React.FC = () => {
                         </div>
                         <div className="flex-1 flex flex-col justify-start">
                             <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{stats.totalClicked.toLocaleString()}</h3>
-                            <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-2">
-                                • CTR: {stats.totalSent > 0 ? (stats.totalClicked / stats.totalSent * 100).toFixed(1) : '0'}%
+                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
+                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#ec4899' }}></span>Lượt click: {stats.totalClicked.toLocaleString()}</span>
+                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8b5cf6' }}></span>CTR: {stats.totalSent > 0 ? (stats.totalClicked / stats.totalSent * 100).toFixed(1) : '0'}%</span>
                             </div>
                         </div>
                         <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
