@@ -204,7 +204,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
           <div className="relative w-12 h-12 shrink-0 group cursor-pointer">
             <div className="absolute inset-0 bg-violet-500 blur-xl opacity-20 group-hover:opacity-50 transition-opacity duration-500 rounded-full animate-logo-pulse"></div>
             <div className="relative w-full h-full flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ease-out overflow-hidden rounded-full border-2 border-white/20 shadow-lg shadow-violet-500/10">
-              <img src="/imgs/ICON.png" className="w-full h-full object-contain relative z-10" alt="Logo" />
+              <img src="https://crm-domation.vercel.app/LOGO.jpg" className="w-full h-full object-contain relative z-10" alt="Logo" />
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-logo-shine pointer-events-none z-20"></div>
             </div>
           </div>
@@ -214,7 +214,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
             <div className="relative w-12 h-12 shrink-0">
               <div className="absolute inset-0 bg-violet-500 blur-xl opacity-20 group-hover:opacity-50 transition-opacity duration-500 rounded-full animate-logo-pulse"></div>
               <div className="relative w-full h-full flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ease-out overflow-hidden rounded-full border-2 border-white/20 shadow-lg shadow-violet-500/10">
-                <img src="/imgs/ICON.png" className="w-full h-full object-contain relative z-10" alt="Logo" />
+                <img src="https://crm-domation.vercel.app/LOGO.jpg" className="w-full h-full object-contain relative z-10" alt="Logo" />
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-logo-shine pointer-events-none z-20"></div>
               </div>
             </div>
@@ -225,7 +225,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
               </h1>
               <div className="flex items-center gap-2 mt-1.5 opacity-60 group-hover:opacity-100 transition-opacity duration-500">
                 <span className="h-3 w-[2px] bg-violet-400 rotate-12"></span>
-                <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] truncate group-hover:text-violet-400 transition-colors">
+                <span className="text-[9px] font-black text-violet-400 uppercase tracking-[0.2em] truncate group-hover:text-violet-300 transition-colors">
                   Digital AI Vision
                 </span>
               </div>
