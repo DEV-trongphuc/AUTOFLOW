@@ -670,8 +670,8 @@ const Campaigns: React.FC = () => {
                         <div className="flex-1 flex flex-col justify-start">
                             <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{stats.totalSent.toLocaleString()}</h3>
                             <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
-                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#3b82f6' }}></span>Email: {(stats.totalSent * 0.6).toFixed(0).toLocaleString()}</span>
-                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8b5cf6' }}></span>Zalo: {(stats.totalSent * 0.4).toFixed(0).toLocaleString()}</span>
+                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#fbbf24' }}></span>Email: {(stats.totalSent * 0.6).toFixed(0).toLocaleString()}</span>
+                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#3b82f6' }}></span>Zalo: {(stats.totalSent * 0.4).toFixed(0).toLocaleString()}</span>
                             </div>
                         </div>
                         <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">

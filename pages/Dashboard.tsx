@@ -2,13 +2,17 @@ import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Star, Sparkles, LayoutDashboard, Activity, Mail, Zap, FileText, Bot, Globe, Users, BarChart3, Settings, Clock, ArrowRight, MessageSquare, Facebook, Share2, Ticket, Webhook, Code2, Link, Play, Target, ClipboardList, QrCode
+    Star, Sparkles, LayoutDashboard, Activity, Mail, Zap, FileText, Bot, Globe, Users, BarChart3, Settings, Clock, ArrowRight, MessageSquare, Facebook, Share2, Ticket, Webhook, Code2, Link, Play, Target, ClipboardList, QrCode, TrendingUp, RefreshCw
 } from 'lucide-react';
 import PageHero from '../components/common/PageHero';
 import { useAuth } from '../components/contexts/AuthContext';
 import { SystemOverviewModal } from '../components/common/SystemOverviewModal';
 import { SystemConnectionsModal } from '../components/common/SystemConnectionsModal';
 import { LeadscoreSetupModal } from '../components/settings/LeadscoreSetupModal';
+import { api } from '../services/storageAdapter';
+import {
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+} from 'recharts';
 
 
 interface Module {
@@ -156,6 +160,24 @@ export const ALL_MODULES: Module[] = [
 
 ];
 
+const StatCard = ({ title, value, growth, icon, gradient }: any) => {
+    return (
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-md hover:border-slate-200 transition-all relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-slate-100 to-white dark:from-slate-800 dark:to-slate-900 rounded-full -mr-10 -mt-10 opacity-50 group-hover:scale-110 transition-transform" />
+            <div className="flex items-start justify-between mb-4 relative z-10">
+                <div className={`w-12 h-12 rounded-[14px] bg-gradient-to-br ${gradient} flex items-center justify-center text-white shadow-lg`}>
+                    {icon}
+                </div>
+                <div className={`flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full ${growth >= 0 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30' : 'bg-rose-50 text-rose-600 border border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/30'}`}>
+                    <TrendingUp className={`w-3 h-3 ${growth < 0 ? 'rotate-180' : ''}`} />
+                    {growth > 0 ? '+' : ''}{growth}%
+                </div>
+            </div>
+            <h4 className="text-sm font-bold text-slate-400 dark:text-slate-500 mb-1">{title}</h4>
+            <div className="text-3xl font-black text-slate-800 dark:text-slate-100">{value}</div>
+        </div>
+    );
+};
 
 const Dashboard: React.FC = () => {
     const navigate = useNavigate();
@@ -165,6 +187,28 @@ const Dashboard: React.FC = () => {
     const [isOverviewOpen, setIsOverviewOpen] = useState(false);
     const [isConnectionsOpen, setIsConnectionsOpen] = useState(false);
     const [isLeadscoreOpen, setIsLeadscoreOpen] = useState(false);
+
+    // Dynamic stats states
+    const [days, setDays] = useState(7);
+    const [statsLoading, setStatsLoading] = useState(true);
+    const [statsData, setStatsData] = useState<any>(null);
+
+    const fetchDashboardStats = async (d: number, forceBust = false) => {
+        setStatsLoading(true);
+        try {
+            const res = await api.get(`overview_stats?days=${d}${forceBust ? '&bust=1' : ''}`);
+            if (res?.success) {
+                setStatsData(res);
+            }
+        } catch (err) {
+            console.error('[DashboardStats] Failed to fetch stats', err);
+        }
+        setStatsLoading(false);
+    };
+
+    useEffect(() => {
+        fetchDashboardStats(days);
+    }, [days]);
 
     useEffect(() => {
         const storedRecents = localStorage.getItem('recent_modules');
@@ -245,6 +289,148 @@ const Dashboard: React.FC = () => {
             <SystemOverviewModal isOpen={isOverviewOpen} onClose={() => setIsOverviewOpen(false)} />
             <SystemConnectionsModal isOpen={isConnectionsOpen} onClose={() => setIsConnectionsOpen(false)} />
             <LeadscoreSetupModal isOpen={isLeadscoreOpen} onClose={() => setIsLeadscoreOpen(false)} />
+
+            {/* Analytics Dashboard Grid */}
+            <div className="mb-12 space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                    <div>
+                        <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Báo cáo hiệu suất</h2>
+                        <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5 font-sans">Dữ liệu thời gian thực được đồng bộ đa kênh</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/50 dark:border-slate-700/60 scale-95 origin-right">
+                            {[3, 7, 14, 30].map(d => (
+                                <button
+                                    key={d}
+                                    onClick={() => setDays(d)}
+                                    className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all duration-300 ${days === d ? 'bg-white dark:bg-slate-900 shadow-sm text-violet-600 dark:text-violet-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+                                >
+                                    {d} Ngày
+                                </button>
+                            ))}
+                        </div>
+                        <button
+                            onClick={() => fetchDashboardStats(days, true)}
+                            className="p-2 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 shadow-sm hover:shadow active:scale-[0.97] transition-all"
+                            title="Làm mới dữ liệu"
+                        >
+                            <RefreshCw className={`w-3.5 h-3.5 ${statsLoading ? 'animate-spin' : ''}`} />
+                        </button>
+                    </div>
+                </div>
+
+                {statsLoading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 h-32 animate-pulse flex flex-col justify-between">
+                                <div className="flex justify-between items-center">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800" />
+                                    <div className="w-12 h-6 rounded-full bg-slate-100 dark:bg-slate-800" />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="w-1/2 h-3 rounded bg-slate-100 dark:bg-slate-800" />
+                                    <div className="w-1/3 h-6 rounded bg-slate-100 dark:bg-slate-800" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : statsData && (
+                    <div className="space-y-6">
+                        {/* Summary Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <StatCard
+                                title="AI Chat Phản Hồi"
+                                value={(statsData.summary?.total_ai || 0).toLocaleString()}
+                                growth={statsData.summary?.growth_ai || 0}
+                                icon={<Bot className="w-5 h-5 animate-pulse-subtle" />}
+                                gradient="from-violet-500 to-indigo-600 shadow-violet-500/25"
+                            />
+                            <StatCard
+                                title="Truy cập Website"
+                                value={(statsData.summary?.total_web || 0).toLocaleString()}
+                                growth={statsData.summary?.growth_web || 0}
+                                icon={<Globe className="w-5 h-5" />}
+                                gradient="from-blue-500 to-cyan-600 shadow-blue-500/25"
+                            />
+                            <StatCard
+                                title="Liên hệ Mới"
+                                value={(statsData.summary?.total_leads || 0).toLocaleString()}
+                                growth={statsData.summary?.growth_leads || 0}
+                                icon={<Users className="w-5 h-5" />}
+                                gradient="from-emerald-400 to-teal-500 shadow-emerald-500/25"
+                            />
+                        </div>
+
+                        {/* Chart and Top Tables Row */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            {/* AreaChart */}
+                            <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between min-h-[360px]">
+                                <div className="flex items-center gap-2 mb-6 shrink-0">
+                                    <BarChart3 className="w-4 h-4 text-violet-500" />
+                                    <h3 className="text-xs font-black uppercase tracking-[0.1em] text-slate-700 dark:text-slate-200">Biểu đồ lưu lượng ({days} ngày qua)</h3>
+                                </div>
+                                <div className="flex-1 h-[260px] w-full min-h-[220px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={statsData.chart_data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                            <defs>
+                                                <linearGradient id="colorWeb" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                                                </linearGradient>
+                                                <linearGradient id="colorAi" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                                </linearGradient>
+                                                <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#ec4899" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="#ec4899" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" className="dark:stroke-slate-800/40" />
+                                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} dy={10} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} />
+                                            <Tooltip
+                                                contentStyle={{ borderRadius: '12px', border: 'none', backgroundColor: 'rgba(30, 41, 59, 0.95)', color: '#fff', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                                labelStyle={{ fontWeight: 'bold', color: '#fff', marginBottom: '8px' }}
+                                            />
+                                            <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '15px' }} />
+                                            <Area type="monotone" name="Truy cập Web" dataKey="web" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorWeb)" />
+                                            <Area type="monotone" name="AI Phản hồi" dataKey="ai" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorAi)" />
+                                            <Area type="monotone" name="Liên hệ mới" dataKey="leads" stroke="#ec4899" strokeWidth={3} fillOpacity={1} fill="url(#colorLeads)" />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            {/* Top Campaign List in Column 3 */}
+                            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col min-h-[360px]">
+                                <div className="flex items-center gap-2 mb-4 shrink-0">
+                                    <Mail className="w-4 h-4 text-violet-500" />
+                                    <h3 className="text-xs font-black uppercase tracking-[0.1em] text-slate-700 dark:text-slate-200">Hiệu suất Chiến dịch</h3>
+                                </div>
+                                <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar">
+                                    {!statsData.top_campaigns || statsData.top_campaigns.length === 0 ? (
+                                        <div className="h-full flex items-center justify-center text-xs font-bold text-slate-400 dark:text-slate-600 py-12">
+                                            Chưa có dữ liệu chiến dịch gửi
+                                        </div>
+                                    ) : (
+                                        statsData.top_campaigns.map((camp: any, idx: number) => (
+                                            <div key={idx} className="p-3 rounded-xl border border-slate-50 dark:border-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-all">
+                                                <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-200 truncate mb-1.5">{camp.name}</h4>
+                                                <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
+                                                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#fbbf24' }}></span>Gửi: <strong className="text-slate-700 dark:text-slate-300">{camp.stat_total_sent?.toLocaleString() || 0}</strong></span>
+                                                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: '#10b981' }}></span>Mở: <strong className="text-emerald-600">{camp.stat_total_opened?.toLocaleString() || 0}</strong></span>
+                                                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#3b82f6' }}></span>Click: <strong className="text-blue-600">{camp.stat_total_clicked?.toLocaleString() || 0}</strong></span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* Middle Section: Recent Access */}
             {recentModules.length > 0 && (
