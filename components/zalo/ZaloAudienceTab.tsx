@@ -258,20 +258,20 @@ const ZaloAudienceTab: React.FC = () => {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center">
                                                     <div className="relative mr-3">
-                                                        <div className="h-10 w-10 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 group-hover:from-amber-50 group-hover:to-amber-100 transition-all shadow-sm">
+                                                        <div className="h-10 w-10 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 group-hover:from-violet-50 group-hover:to-violet-100 transition-all shadow-sm">
                                                             {sub.avatar ? (
                                                                 <img src={sub.avatar} alt="" className="w-full h-full object-cover" />
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center text-slate-600 group-hover:text-amber-600 text-[13px] font-bold">
+                                                                <div className="w-full h-full flex items-center justify-center text-slate-600 group-hover:text-violet-600 text-[13px] font-bold">
                                                                     {getInitials(sub.display_name || sub.name || 'Zalo User')}
                                                                 </div>
                                                             )}
                                                         </div>
                                                     </div>
                                                     <div>
-                                                        <div className="text-sm font-bold text-slate-800 group-hover:text-amber-600 transition-colors flex items-center gap-1">
+                                                        <div className="text-sm font-bold text-slate-800 group-hover:text-violet-600 transition-colors flex items-center gap-1">
                                                             {sub.display_name || sub.name || 'Zalo User'}
-                                                            {(sub.manual_email || sub.phone_number || sub.email) && <BadgeCheck className="w-3.5 h-3.5 text-amber-600 fill-amber-50" />}
+                                                            {(sub.manual_email || sub.phone_number || sub.email) && <BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-50" />}
                                                         </div>
                                                         <div className="text-[11px] font-medium text-slate-400 truncate w-32">UID: {sub.zalo_user_id}</div>
                                                     </div>

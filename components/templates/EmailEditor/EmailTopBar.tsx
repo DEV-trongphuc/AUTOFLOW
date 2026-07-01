@@ -74,11 +74,13 @@ const EmailTopBar: React.FC<EmailTopBarProps> = ({
             {/* Save-state indicator dot */}
             <span
               title={isDirty ? 'Có thay đổi chưa lưu' : 'Đã lưu'}
-              className={`w-2 h-2 rounded-full shrink-0 transition-all duration-500 ${
-                isDirty
-                  ? 'bg-amber-400 shadow-[0_0_6px_2px_rgba(251,191,36,0.5)] animate-pulse'
-                  : 'bg-emerald-400 shadow-[0_0_4px_1px_rgba(52,211,153,0.3)]'
-              }`}
+              className="w-2.5 h-2.5 rounded-full shrink-0 transition-all duration-500"
+              style={{
+                backgroundColor: isDirty ? '#f59e0b' : '#10b981',
+                boxShadow: isDirty
+                  ? '0 0 8px 2px rgba(245, 158, 11, 0.5)'
+                  : '0 0 6px 1px rgba(16, 185, 129, 0.3)'
+              }}
             />
             <input
               value={name}

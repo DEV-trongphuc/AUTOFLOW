@@ -353,8 +353,8 @@ const MetaCustomers: React.FC = () => {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center">
                                                     <div className="relative mr-3">
-                                                        <div className="h-10 w-10 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 group-hover:from-[#fff4e0] group-hover:to-[#ffe8cc] transition-all shadow-sm">
-                                                            <div className="w-full h-full flex items-center justify-center text-slate-600 group-hover:text-[#ca7900] text-[13px] font-bold uppercase">
+                                                        <div className="h-10 w-10 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 group-hover:from-violet-50 group-hover:to-violet-100 transition-all shadow-sm">
+                                                            <div className="w-full h-full flex items-center justify-center text-slate-600 group-hover:text-violet-600 text-[13px] font-bold uppercase">
                                                                 {getInitials(sub.name || sub.display_name || 'Facebook User')}
                                                             </div>
                                                             {(sub.avatar || sub.profile_pic) && (
@@ -370,9 +370,9 @@ const MetaCustomers: React.FC = () => {
                                                         </div>
                                                     </div>
                                                     <div>
-                                                        <div className="text-sm font-bold text-slate-800 group-hover:text-[#ca7900] transition-colors flex items-center gap-1">
+                                                        <div className="text-sm font-bold text-slate-800 group-hover:text-violet-600 transition-colors flex items-center gap-1">
                                                             {sub.name || sub.display_name || 'Facebook User'}
-                                                            {(sub.manual_email || sub.phone_number || sub.email || sub.phone) && <BadgeCheck className="w-3.5 h-3.5 text-amber-600 fill-amber-50" />}
+                                                            {(sub.manual_email || sub.phone_number || sub.email || sub.phone) && <BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-50" />}
                                                         </div>
                                                         <div className="text-[11px] font-medium text-slate-400 truncate w-32">PSID: {String(sub.psid || '').substring(0, 8)}...</div>
                                                     </div>

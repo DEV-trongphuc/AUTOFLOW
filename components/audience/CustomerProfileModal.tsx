@@ -649,7 +649,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                 <div className="flex items-center gap-1.5 min-w-0">
                                     <h2 className="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-200 truncate tracking-tight">{(formData.firstName || formData.lastName) ? `${formData.firstName || ''} ${formData.lastName || ''}`.trim() : 'Chưa đặt tên'}</h2>
                                     {(Number(formData.verified) === 1) && <BadgeCheck className="w-5 h-5 md:w-6 md:h-6 text-blue-500 fill-blue-50 flex-shrink-0" />}
-                                    {formData.status === 'customer' && <BadgeCheck className="w-5 h-5 md:w-6 md:h-6 text-amber-600 fill-amber-50 flex-shrink-0" />}
+                                    {formData.status === 'customer' && <BadgeCheck className="w-5 h-5 md:w-6 md:h-6 text-blue-500 fill-blue-50 flex-shrink-0" />}
                                 </div>
                                 <Badge
                                     variant={
