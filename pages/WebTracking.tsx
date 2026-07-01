@@ -561,7 +561,7 @@ const WebTracking: React.FC = () => {
 
                         <div className="flex-1 w-full">
                             <PageHero
-                                title={<>Website: <span className="text-amber-100/80">{selectedWebsite.name}</span></>}
+                                title={<>Website: <span className="text-violet-600 dark:text-violet-400">{selectedWebsite.name}</span></>}
                                 subtitle={`Báo cáo chi tiết cho tên miền ${selectedWebsite.domain}. Phân tích hành trình người dùng và đo lường chuyển đổi.`}
                                 showStatus={true}
                                 statusText="Analytics Active"
