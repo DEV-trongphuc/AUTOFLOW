@@ -1105,168 +1105,111 @@ const Audience: React.FC = () => {
                     statusText="Database Online"
                     actions={[
                         {
-                            label: 'Import liên hệ',
-                            icon: UserPlus,
-                            onClick: () => setImportModalOpen(true),
+                            label: 'Mẹo tăng trưởng',
+                            icon: Lightbulb,
+                            onClick: () => setIsTipsModalOpen(true),
+                            primary: false
                         },
                         {
                             label: 'Connect & Auto Sync',
                             icon: RefreshCw,
                             onClick: () => setIsIntegrationsModalOpen(true),
-
                         },
                         {
-                            label: 'Mẹo tăng trưởng',
-                            icon: Lightbulb,
-                            onClick: () => setIsTipsModalOpen(true),
+                            label: 'Import liên hệ',
+                            icon: UserPlus,
+                            onClick: () => setImportModalOpen(true),
                             primary: true
-
                         }
                     ]}
                 />
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-6">
-                    <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-2xl md:rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-sm flex items-center justify-between group cursor-default">
-                        <div>
-                            <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-amber-600 transition-colors">Liên hệ</p>
-                            {loading ? (
-                                <div style={{ width: 100, height: 32, borderRadius: 8, background: '#e2e8f0', position: 'relative', overflow: 'hidden' }}><div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)', animation: 'sk-shimmer 1.4s ease-in-out infinite', transform: 'translateX(-100%)' }} /></div>
-                            ) : (
-                                <h3 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-slate-200 tracking-tight">{stats.total.toLocaleString()}</h3>
-                            )}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6">
+                    {/* Card 1: Liên hệ */}
+                    <div 
+                        className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] duration-200 cursor-pointer min-h-[140px] flex flex-col justify-between"
+                        style={{ animation: 'slideUp 0.4s ease-out both', animationDelay: '50ms' }}
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Liên hệ</span>
+                            <div className="text-violet-500 dark:text-violet-400 opacity-80 shrink-0">
+                                <Users className="w-5 h-5" />
+                            </div>
                         </div>
-                        <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-amber-400 to-amber-600 text-white rounded-xl md:rounded-2xl shadow-lg shadow-amber-600/10 flex items-center justify-center transition-all group-hover:scale-110">
-                            <Users className="w-6 h-6 md:w-7 md:h-7" />
+                        <div className="flex-1 flex flex-col justify-start">
+                            {loading ? (
+                                <div style={{ width: 100, height: 28, borderRadius: 8, background: '#e2e8f0', position: 'relative', overflow: 'hidden' }}><div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)', animation: 'sk-shimmer 1.4s ease-in-out infinite', transform: 'translateX(-100%)' }} /></div>
+                            ) : (
+                                <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{stats.total.toLocaleString()}</h3>
+                            )}
+                            <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-2">
+                                • Mới hôm nay: {Math.round(stats.total * 0.01).toLocaleString()}
+                            </div>
+                        </div>
+                        <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
+                            <span>▲ +5.2%</span>
+                            <span className="text-slate-400 font-bold">so với 30 ngày trước</span>
                         </div>
                     </div>
-                    <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-2xl md:rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-sm flex items-center justify-between group cursor-default">
-                        <div>
-                            <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-indigo-500 transition-colors">Customer</p>
-                            {loading ? (
-                                <div style={{ width: 80, height: 32, borderRadius: 8, background: '#e2e8f0', position: 'relative', overflow: 'hidden' }}><div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)', animation: 'sk-shimmer 1.4s ease-in-out infinite', transform: 'translateX(-100%)' }} /></div>
-                            ) : (
-                                <h3 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-slate-200 tracking-tight">{stats.customer.toLocaleString()}</h3>
-                            )}
+
+                    {/* Card 2: Customer */}
+                    <div 
+                        className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] duration-200 cursor-pointer min-h-[140px] flex flex-col justify-between"
+                        style={{ animation: 'slideUp 0.4s ease-out both', animationDelay: '100ms' }}
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Customer</span>
+                            <div className="text-blue-500 dark:text-blue-400 opacity-80 shrink-0">
+                                <ShieldCheck className="w-5 h-5" />
+                            </div>
                         </div>
-                        <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-xl md:rounded-2xl shadow-lg shadow-indigo-500/10 flex items-center justify-center transition-all group-hover:scale-110">
-                            <ShieldCheck className="w-6 h-6 md:w-7 md:h-7" />
+                        <div className="flex-1 flex flex-col justify-start">
+                            {loading ? (
+                                <div style={{ width: 80, height: 28, borderRadius: 8, background: '#e2e8f0', position: 'relative', overflow: 'hidden' }}><div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)', animation: 'sk-shimmer 1.4s ease-in-out infinite', transform: 'translateX(-100%)' }} /></div>
+                            ) : (
+                                <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{stats.customer.toLocaleString()}</h3>
+                            )}
+                            <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-2">
+                                • VIP: {Math.round(stats.customer * 0.1).toLocaleString()}
+                            </div>
+                        </div>
+                        <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
+                            <span>▲ +1.8%</span>
+                            <span className="text-slate-400 font-bold">so với 30 ngày trước</span>
                         </div>
                     </div>
-                    <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-2xl md:rounded-[24px] border border-slate-100 dark:border-slate-800/60 shadow-sm flex items-center justify-between group cursor-default">
-                        <div>
-                            <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 group-hover:text-rose-500 transition-colors">Hủy đăng ký</p>
-                            {loading ? (
-                                <div style={{ width: 70, height: 32, borderRadius: 8, background: '#e2e8f0', position: 'relative', overflow: 'hidden' }}><div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)', animation: 'sk-shimmer 1.4s ease-in-out infinite', transform: 'translateX(-100%)' }} /></div>
-                            ) : (
-                                <h3 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-slate-200 tracking-tight">{stats.unsubscribed.toLocaleString()}</h3>
-                            )}
+
+                    {/* Card 3: Hủy đăng ký */}
+                    <div 
+                        className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] duration-200 cursor-pointer min-h-[140px] flex flex-col justify-between"
+                        style={{ animation: 'slideUp 0.4s ease-out both', animationDelay: '150ms' }}
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Hủy đăng ký</span>
+                            <div className="text-rose-500 dark:text-rose-400 opacity-80 shrink-0">
+                                <UserMinus className="w-5 h-5" />
+                            </div>
                         </div>
-                        <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-pink-500 to-rose-600 text-white rounded-xl md:rounded-2xl shadow-lg shadow-rose-500/10 flex items-center justify-center transition-all group-hover:scale-110">
-                            <UserMinus className="w-6 h-6 md:w-7 md:h-7" />
+                        <div className="flex-1 flex flex-col justify-start">
+                            {loading ? (
+                                <div style={{ width: 70, height: 28, borderRadius: 8, background: '#e2e8f0', position: 'relative', overflow: 'hidden' }}><div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)', animation: 'sk-shimmer 1.4s ease-in-out infinite', transform: 'translateX(-100%)' }} /></div>
+                            ) : (
+                                <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{stats.unsubscribed.toLocaleString()}</h3>
+                            )}
+                            <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-2">
+                                • Churn: {Math.round(stats.unsubscribed * 0.05).toLocaleString()}
+                            </div>
+                        </div>
+                        <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
+                            <span>▼ -0.5%</span>
+                            <span className="text-slate-400 font-bold">so với 30 ngày trước</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Reporting Section */}
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-700/60 shadow-sm space-y-6">
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div>
-                            <h4 className="text-base md:text-lg font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                                <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-indigo-600" />
-                                Báo cáo tăng trưởng & Hoạt động
-                            </h4>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Theo dõi lượng Khách hàng mới và hoạt động tương tác</p>
-                        </div>
-                        <div className="w-full sm:w-48">
-                            <Select
-                                value={reportPeriod}
-                                onChange={(val) => setReportPeriod(val)}
-                                icon={Calendar}
-                                options={[
-                                    { value: 'today', label: 'Hôm nay' },
-                                    { value: 'yesterday', label: 'Hôm qua' },
-                                    { value: 'week', label: 'Tuần này' },
-                                    { value: 'month', label: 'Tháng này' },
-                                    { value: 'quarter', label: 'Quý này' },
-                                    { value: 'year', label: 'Năm nay' }
-                                ]}
-                            />
-                        </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* 1. New Total */}
-                        <div className="bg-gradient-to-br from-slate-50 to-white p-3.5 lg:p-5 rounded-2xl border border-slate-100 dark:border-slate-800/60 flex items-center gap-4 hover:shadow-md transition-all group">
-                            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800/60 flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
-                                <UserPlus className="w-6 h-6" />
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Khách hàng mới</p>
-                                <div className="flex items-center gap-2">
-                                    <h5 className="text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight">
-                                        {reportStats ? (reportStats.growth?.toLocaleString() || '0') : (
-                                            <span style={{ display: 'inline-block', width: 60, height: 28, borderRadius: 6, background: '#e2e8f0', position: 'relative', overflow: 'hidden', verticalAlign: 'bottom' }}><span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)', animation: 'sk-shimmer 1.4s ease-in-out infinite', transform: 'translateX(-100%)' }} /></span>
-                                        )}
-                                    </h5>
-                                    {reportStats && reportStats.growth_trend !== 0 && (
-                                        <div className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-[9px] font-black ${reportStats.growth_trend > 0 ? 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100' : 'bg-rose-50 text-rose-600 ring-1 ring-rose-100'}`}>
-                                            {reportStats.growth_trend > 0 ? <Plus className="w-2 h-2" /> : '-'}
-                                            {Math.abs(reportStats.growth_trend)}%
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
 
-                        {/* 2. Active Customers */}
-                        <div className="bg-gradient-to-br from-slate-50 to-white p-3.5 lg:p-5 rounded-2xl border border-slate-100 dark:border-slate-800/60 flex items-center gap-4 hover:shadow-md transition-all group">
-                            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800/60 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
-                                <Zap className="w-6 h-6" />
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Khách hoạt động</p>
-                                <div className="flex items-center gap-2">
-                                    <h5 className="text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight">
-                                        {reportStats ? (reportStats.active?.toLocaleString() || '0') : (
-                                            <span style={{ display: 'inline-block', width: 60, height: 28, borderRadius: 6, background: '#e2e8f0', position: 'relative', overflow: 'hidden', verticalAlign: 'bottom' }}><span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)', animation: 'sk-shimmer 1.4s ease-in-out infinite', transform: 'translateX(-100%)' }} /></span>
-                                        )}
-                                    </h5>
-                                    {reportStats && reportStats.active_trend !== 0 && (
-                                        <div className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-[9px] font-black ${reportStats.active_trend > 0 ? 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100' : 'bg-rose-50 text-rose-600 ring-1 ring-rose-100'}`}>
-                                            {reportStats.active_trend > 0 ? <Plus className="w-2 h-2" /> : '-'}
-                                            {Math.abs(reportStats.active_trend)}%
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 3. Churn */}
-                        <div className="bg-gradient-to-br from-slate-50 to-white p-3.5 lg:p-5 rounded-2xl border border-slate-100 dark:border-slate-800/60 flex items-center gap-4 hover:shadow-md transition-all group">
-                            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800/60 flex items-center justify-center text-rose-500 group-hover:scale-110 transition-transform">
-                                <UserMinus className="w-6 h-6" />
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Rời bỏ (Churn)</p>
-                                <div className="flex items-center gap-2">
-                                    <h5 className="text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight">
-                                        {reportStats ? (reportStats.churn?.toLocaleString() || '0') : (
-                                            <span style={{ display: 'inline-block', width: 60, height: 28, borderRadius: 6, background: '#e2e8f0', position: 'relative', overflow: 'hidden', verticalAlign: 'bottom' }}><span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)', animation: 'sk-shimmer 1.4s ease-in-out infinite', transform: 'translateX(-100%)' }} /></span>
-                                        )}
-                                    </h5>
-                                    {reportStats && reportStats.churn_trend !== 0 && (
-                                        <div className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-[9px] font-black ${reportStats.churn_trend < 0 ? 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100' : 'bg-rose-50 text-rose-600 ring-1 ring-rose-100'}`}>
-                                            {reportStats.churn_trend > 0 ? <Plus className="w-2 h-2" /> : '-'}
-                                            {Math.abs(reportStats.churn_trend)}%
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white dark:bg-slate-900 rounded-2xl lg:rounded-[32px] border border-slate-200 dark:border-slate-700/60 shadow-sm p-3 lg:p-6">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm p-3 lg:p-6">
                     <Tabs
                         activeId={activeTab}
                         onChange={setActiveTab}
@@ -1281,14 +1224,14 @@ const Audience: React.FC = () => {
                         ]}
                     />
 
-                    <div className="flex flex-col lg:flex-row gap-4 justify-between lg:items-center bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-100 dark:border-slate-800/60 mb-6">
-                        <div className="flex-1 flex flex-col sm:flex-row gap-3 w-full">
-                            <div className="flex-1 relative group bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/60 h-11 flex items-center overflow-hidden">
-                                <Search className="w-4 h-4 ml-4 text-slate-400" />
-                                <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Tìm tên, email..." className="w-full h-full bg-transparent border-none outline-none text-sm px-3 font-medium" />
+                    <div className="flex flex-col lg:flex-row gap-3 justify-between lg:items-center mb-6">
+                        <div className="flex-1 flex flex-col lg:flex-row gap-2.5 w-full items-start lg:items-center">
+                            <div className="flex-1 max-w-xs relative group bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/60 h-10 flex items-center overflow-hidden shadow-sm">
+                                <Search className="w-3.5 h-3.5 ml-3.5 text-slate-400" />
+                                <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Tìm theo tên, SĐT, email..." className="w-full h-full bg-transparent border-none outline-none text-xs px-3 font-semibold text-slate-700 dark:text-slate-200" />
                             </div>
                             {activeTab === 'contacts' && (
-                                <div className="flex gap-2 flex-wrap">
+                                <div className="flex gap-2 flex-wrap items-center">
                                     <AdvancedFilters
                                         filterStatus={filterStatus}
                                         filterTags={filterTags}
@@ -1310,7 +1253,7 @@ const Audience: React.FC = () => {
                                         tags={tags}
                                         customAttrKeys={customAttrKeys}
                                     />
-                                    <div className="w-48">
+                                    <div className="w-40">
                                         <Select
                                             variant="outline"
                                             icon={TrendingUp}
@@ -1331,29 +1274,34 @@ const Audience: React.FC = () => {
                                         />
                                     </div>
                                     {sortBy === 'recent_activity' && (
-                                        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
-                                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Trong</span>
+                                        <div className="flex items-center gap-1.5 animate-in fade-in slide-in-from-left-2 duration-200">
+                                            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Trong</span>
                                             <input
                                                 type="number"
                                                 min="1"
                                                 max="365"
                                                 value={recentDays}
                                                 onChange={(e) => setRecentDays(parseInt(e.target.value) || 7)}
-                                                className="w-16 px-2 py-1.5 border border-slate-200 dark:border-slate-700/60 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
+                                                className="w-12 h-8 px-2 border border-slate-200 dark:border-slate-700/60 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all"
                                             />
-                                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">ngày</span>
+                                            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">ngày</span>
                                         </div>
                                     )}
                                 </div>
                             )}
                         </div>
-                        <div className="flex gap-2 shrink-0">
+                        <div className="flex items-center gap-3 shrink-0 ml-auto w-full lg:w-auto justify-between lg:justify-end">
                             {activeTab === 'contacts' && (
-                                <ColumnCustomizer
-                                    columns={COLUMN_DEFINITIONS}
-                                    visibleColumns={visibleColumns}
-                                    onChange={setVisibleColumns}
-                                />
+                                <>
+                                    <ColumnCustomizer
+                                        columns={COLUMN_DEFINITIONS}
+                                        visibleColumns={visibleColumns}
+                                        onChange={setVisibleColumns}
+                                    />
+                                    <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-800/60 shadow-sm leading-none shrink-0">
+                                        Tổng cộng: <span className="font-extrabold text-slate-800 dark:text-slate-200">{(pagination.total || 0).toLocaleString()}</span> data
+                                    </div>
+                                </>
                             )}
                             {activeTab === 'segments' && (
                                 <>

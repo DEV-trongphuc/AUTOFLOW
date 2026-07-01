@@ -406,7 +406,7 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
                 <div className="flex-1 flex flex-col min-w-[300px] border-r border-slate-800">
                     <div className="flex justify-between items-center px-6 py-4 bg-slate-950 border-b border-slate-800 shrink-0">
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                            <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></span>
                             HTML Code Editor
                         </span>
                     </div>
@@ -414,7 +414,7 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
                         <textarea 
                             value={customHtml} 
                             onChange={(e) => setCustomHtml(e.target.value)} 
-                            className="w-full h-full bg-transparent text-amber-500 font-mono text-xs outline-none resize-none leading-relaxed custom-scrollbar border-none"
+                            className="w-full h-full bg-transparent text-emerald-400 font-mono text-xs outline-none resize-none leading-relaxed custom-scrollbar border-none"
                             placeholder="Dán hoặc viết mã HTML của bạn tại đây..."
                         />
                     </div>

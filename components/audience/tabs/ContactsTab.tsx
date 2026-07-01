@@ -1,7 +1,7 @@
  
 
 import React from 'react';
-import { MoreHorizontal, Clock, MailOpen, MousePointer2, UserPlus, ChevronLeft, ChevronRight, Check, Zap, BadgeCheck, MessageCircle, Facebook } from 'lucide-react';
+import { MoreHorizontal, Clock, MailOpen, MousePointer2, UserPlus, ChevronLeft, ChevronRight, Check, Zap, BadgeCheck, MessageCircle, Facebook, Globe, FileSpreadsheet, Database } from 'lucide-react';
 import Badge from '../../common/Badge';
 import { Subscriber } from '../../../types';
 import toast from 'react-hot-toast';
@@ -61,147 +61,144 @@ const ContactRow = React.memo(React.forwardRef<HTMLTableRowElement, ContactRowPr
     const isZalo = email.includes('@zalo-oa.vn');
     const isMeta = email.includes('@facebook.com') || (sub.meta_psid && sub.meta_psid !== '0');
 
+     const formatTime = (dateStr?: string) => {
+        if (!dateStr) return '-';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        const pad = (n: number) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    };
+
+    const getInitials = (name: string) => {
+        const parts = (name || '').trim().split(/\s+/);
+        if (parts.length === 0 || !parts[0]) return '?';
+        if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    };
+
+    const getAvatarBg = (name: string) => {
+        const colors = [
+            'bg-blue-500', 'bg-rose-500', 'bg-emerald-500', 'bg-amber-500', 'bg-indigo-500', 'bg-violet-500'
+        ];
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const index = Math.abs(hash) % colors.length;
+        return colors[index];
+    };
+
     return (
         <tr
             ref={ref}
             data-index={dataIndex}
-            className={`hover:bg-slate-50 transition-colors group cursor-pointer ${isSelected ? 'bg-orange-50/20' : ''}`}
+            className={`hover:bg-slate-50 transition-colors group cursor-pointer border-b border-slate-100 ${isSelected ? 'bg-violet-50/20' : ''}`}
             onClick={() => onSelect(sub)}
             onContextMenu={onContextMenu ? (e) => onContextMenu(e, sub) : undefined}
         >
-            <td className="px-6 py-4 pl-8" onClick={(e) => onToggle(sub.id, e)}>
-                <div className="relative flex items-center justify-center">
-                    <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => { }} // Handled by td onClick
-                        className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-[#ffa900] checked:bg-[#ffa900] hover:border-[#ffa900]"
-                    />
-                    <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" />
-                </div>
-            </td>
-            <td className="px-6 py-4">
+            {/* Column 1: KHÁCH HÀNG */}
+            <td className="px-6 py-4 pl-8">
                 <div className="flex items-center">
-                    <div className="relative">
-                        {sub.avatar ? (
-                            <img src={sub.avatar} alt={fullName} className="h-9 w-9 rounded-full object-cover mr-3 border border-slate-200 shadow-sm" />
-                        ) : (
-                            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-600 font-bold text-xs mr-3 border border-slate-200 group-hover:from-[#fff4e0] group-hover:to-[#ffe8cc] group-hover:text-[#ca7900] transition-all shadow-sm">
-                                {(cleanFirstName || '?')[0]}{(cleanLastName || '')[0]}
-                            </div>
-                        )}
-                        {(Number(sub.verified) === 1) && (
-                            <div className="absolute -bottom-1 -right-0 bg-white rounded-full p-[2px]">
-                                <BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-white" />
-                            </div>
-                        )}
-                    </div>
-                    <div>
-                        <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 group-hover:text-[#ca7900] transition-colors flex items-center gap-1">
-                            {fullName}
-                            {(Number(sub.verified) === 1) && <span title="Verified"><BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-50" /></span>}
-                            {sub.status === "customer" ? <span title="Customer"><BadgeCheck className="w-3.5 h-3.5 text-amber-600 fill-amber-50" /></span> : null}
-                            {isMeta ? <span title="Facebook Messenger User"><Facebook className="w-3 h-3 text-blue-600" /></span> : null}
-                            {isZalo ? <span title="Zalo Official Account User"><MessageCircle className="w-3 h-3 text-blue-500" /></span> : null}
-                            {sub.chatCount && sub.chatCount > 0 ? (
-                                <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-[10px] font-bold shrink-0" title="Conversations">
-                                    <MessageCircle className="w-3 h-3" />
-                                    {(sub.chatCount || 0).toLocaleString()}
-                                </div>
-                            ) : null}
+                    {sub.avatar ? (
+                        <img src={sub.avatar} alt={fullName} className="h-9 w-9 rounded-full object-cover mr-3 border border-slate-200 shadow-sm" />
+                    ) : (
+                        <div className={`h-9 w-9 rounded-full ${getAvatarBg(fullName)} flex items-center justify-center text-white font-bold text-xs mr-3 shadow-sm`}>
+                            {getInitials(fullName)}
                         </div>
-                        {!visibleColumns.includes('email') && (
-                            <div className="flex items-center justify-start">
-                                {isVirtualEmail ? (
-                                    <span className="inline-flex items-center gap-1.5 text-[8px] font-black uppercase tracking-tighter text-slate-400 px-1.5 py-0.5 rounded-full bg-slate-50 border border-slate-100">
-                                        <div className="w-1 h-1 rounded-full bg-purple-400 shadow-[0_0_4px_rgba(168,85,247,0.4)]" />
-                                        {isZalo ? 'Zalo' : (isMeta ? 'Meta' : 'Virtual')}
-                                    </span>
-                                ) : (
-                                    <span className="text-[11px] font-medium text-slate-400">{sub.email}</span>
-                                )}
-                            </div>
+                    )}
+                    <div>
+                        <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 group-hover:text-violet-600 transition-colors flex items-center gap-1">
+                            {fullName}
+                        </div>
+                        {Number(sub.verified) === 1 && (
+                            <span className="text-[9px] text-blue-500 font-bold uppercase tracking-wider">Verified</span>
                         )}
                     </div>
                 </div>
             </td>
-            {visibleColumns.includes('email') && (
-                <td className="px-6 py-4">
-                    <div className="flex items-center justify-start">
-                        {isVirtualEmail ? (
-                            <span className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tight text-slate-400 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200/50">
-                                <div className={`w-1.5 h-1.5 rounded-full ${isZalo ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.4)]' : 'bg-purple-500 shadow-[0_0_6px_rgba(168,85,247,0.4)]'}`} />
-                                {isZalo ? 'Zalo Identity' : (isMeta ? 'Meta Identity' : 'Virtual Identity')}
-                            </span>
-                        ) : (
-                            <span className="text-sm font-medium text-slate-600">{sub.email}</span>
-                        )}
-                    </div>
-                </td>
-            )}
-            {visibleColumns.includes('phone') && (
-                <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-slate-600">{sub.phoneNumber || '-'}</div>
-                </td>
-            )}
-            {visibleColumns.includes('company') && (
-                <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-slate-600">{sub.companyName || '-'}</div>
-                </td>
-            )}
-            {visibleColumns.includes('status') && (
-                <td className="px-6 py-4">
-                    <Badge
-                        variant={
-                            sub.status === "active" ? "success" :
-                                (sub.status === "unsubscribed" || sub.status === "bounced" || sub.status === "complained") ? "danger" :
-                                    sub.status === "lead" ? "pink" :
-                                        sub.status === "customer" ? "amber" : "neutral"
-                        }
-                    >
-                        {sub.status}
-                    </Badge>
-                </td>
-            )}
-            {visibleColumns.includes('lastActivity') && (
-                <td className="px-6 py-4">
-                    {renderLastActive(sub)}
-                </td>
-            )}
-            {visibleColumns.includes('leadScore') && (
-                <td className="px-6 py-4 text-center">
-                    {sub.leadScore && sub.leadScore > 0 ? (
-                        <div className="inline-flex items-center justify-center gap-1 px-2 py-0.5 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-lg text-xs font-bold">
-                            <Zap className="w-3 h-3 fill-yellow-500 text-yellow-500" />
-                            {(sub.leadScore || 0).toLocaleString()}
+
+            {/* Column 2: LIÊN HỆ */}
+            <td className="px-6 py-4">
+                <div className="text-xs font-bold text-slate-700 dark:text-slate-200">{sub.phoneNumber || '-'}</div>
+                <div className="text-[11px] text-slate-400 font-medium">{isVirtualEmail ? (isZalo ? 'Zalo Identity' : 'Meta Identity') : sub.email}</div>
+            </td>
+
+            {/* Column 3: TRẠNG THÁI */}
+            <td className="px-6 py-4">
+                {(() => {
+                    const status = sub.status || 'active';
+                    const statusStr = String(status);
+                    let label = 'Active';
+                    let variant: 'success' | 'danger' | 'pink' | 'amber' | 'neutral' = 'success';
+                    
+                    if (statusStr === 'active') {
+                        label = 'Active';
+                        variant = 'success';
+                    } else if (statusStr === 'unsubscribed' || statusStr === 'bounced' || statusStr === 'complained') {
+                        label = statusStr.charAt(0).toUpperCase() + statusStr.slice(1);
+                        variant = 'danger';
+                    } else if (statusStr === 'lead') {
+                        label = 'Lead';
+                        variant = 'pink';
+                    } else if (statusStr === 'customer') {
+                        label = 'Customer';
+                        variant = 'amber';
+                    } else {
+                        label = statusStr.charAt(0).toUpperCase() + statusStr.slice(1);
+                        variant = 'neutral';
+                    }
+
+                    return <Badge variant={variant}>{label}</Badge>;
+                })()}
+            </td>
+
+            {/* Column 4: NGUỒN */}
+            <td className="px-6 py-4">
+                {(() => {
+                    const s = (sub.source || '').toLowerCase();
+                    let label = sub.source || 'Web Form';
+                    let SrcIcon = Globe;
+                    let color = 'text-slate-600 bg-slate-50 dark:bg-slate-950/20';
+
+                    if (s.includes('zalo') || isZalo) {
+                        label = 'Zalo OA';
+                        SrcIcon = MessageCircle;
+                        color = 'text-blue-500 bg-blue-50 dark:bg-blue-950/20';
+                    } else if (s.includes('facebook') || s.includes('messenger') || isMeta) {
+                        label = 'Meta Messenger';
+                        SrcIcon = Facebook;
+                        color = 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950/20';
+                    } else if (s.includes('csv') || s.includes('import') || s.includes('file')) {
+                        label = 'CSV Import';
+                        SrcIcon = FileSpreadsheet;
+                        color = 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20';
+                    } else if (s.includes('api')) {
+                        label = 'API Integration';
+                        SrcIcon = Database;
+                        color = 'text-violet-600 bg-violet-50 dark:bg-violet-950/20';
+                    }
+
+                    return (
+                        <div className="flex items-center">
+                            <div className={`h-8 w-8 rounded-lg ${color} flex items-center justify-center mr-2.5 border border-slate-200/50 dark:border-slate-800/60 shadow-sm shrink-0`}>
+                                <SrcIcon className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">{label}</div>
+                                <div className="text-[10px] text-slate-400 font-medium leading-none mt-0.5">Nguồn kênh</div>
+                            </div>
                         </div>
-                    ) : (
-                        <span className="text-xs font-bold text-slate-300">-</span>
-                    )}
-                </td>
-            )}
-            {visibleColumns.includes('tags') && (
-                <td className="px-6 py-4">
-                    <div className="flex gap-1 flex-wrap">
-                        {(Array.isArray(sub.tags) ? sub.tags : []).slice(0, 2).map(tag => (
-                            <span key={tag} className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wide">{tag}</span>
-                        ))}
-                        {(Array.isArray(sub.tags) ? sub.tags : []).length > 2 && <span className="text-[10px] text-slate-400 font-bold px-1">+{((Array.isArray(sub.tags) ? sub.tags : []).length - 2)}</span>}
-                    </div>
-                </td>
-            )}
-            {visibleColumns.includes('salesperson') && (
-                <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-slate-600">{sub.salesperson || '-'}</div>
-                </td>
-            )}
-            {visibleColumns.includes('joinedAt') && (
-                <td className="px-6 py-4">
-                    {renderJoinedDate(sub.joinedAt)}
-                </td>
-            )}
+                    );
+                })()}
+            </td>
+
+            {/* Column 5: THỜI GIAN NHẬN */}
+            <td className="px-6 py-4">
+                <div className="text-xs text-slate-500 font-medium">{formatTime(sub.joinedAt || (sub as any).createdAt)}</div>
+            </td>
+
             <td className="px-6 py-4 text-right pr-8">
-                <button type="button" className="text-slate-300 hover:text-[#ca7900] p-1.5 hover:bg-orange-50 rounded-lg transition-colors"><MoreHorizontal className="w-4 h-4" /></button>
+                <button type="button" className="text-slate-300 hover:text-violet-600 p-1.5 hover:bg-violet-50 rounded-lg transition-colors"><MoreHorizontal className="w-4 h-4" /></button>
             </td>
         </tr>
     );
@@ -392,14 +389,14 @@ const ContactsTab = React.memo<ContactsTabProps>(({
                     ]}
                 />
             )}
-            <div ref={parentRef} className="overflow-x-auto overflow-y-auto max-h-[600px] min-h-[400px]">
+            <div ref={parentRef} className="overflow-x-auto overflow-y-auto max-h-[420px] min-h-[300px]">
                 <table className="w-full relative">
                     <thead className="bg-slate-50/80 border-b border-slate-200 text-left sticky top-0 z-20 backdrop-blur-sm">
                         {selectedIds.size > 0 ? (
                             <BulkActionsToolbar
                                 selectedIds={selectedIds}
                                 subscribers={subscribers}
-                                visibleColumnsCount={visibleColumns.length}
+                                visibleColumnsCount={5}
                                 isGlobalSelected={isGlobalSelected}
                                 onToggleSelectAll={onToggleSelectAll}
                                 onBulkTag={onBulkTag}
@@ -411,34 +408,23 @@ const ContactsTab = React.memo<ContactsTabProps>(({
                             />
                         ) : (
                             <tr>
-                                <th className="px-6 py-4 w-10 pl-8">
-                                    <div className="relative flex items-center justify-center">
-                                        <input type="checkbox" checked={isAllPageSelected} onChange={onToggleSelectAll} className="peer w-5 h-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-[#ffa900] checked:bg-[#ffa900] hover:border-[#ffa900]" />
-                                        <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" />
-                                    </div>
-                                </th>
-                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{"T\u00EAn"}</th>
-                                {visibleColumns.includes('email') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</th>}
-                                {visibleColumns.includes('phone') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{"S\u1ED1 \u0111i\u1EC7n tho\u1EA1i"}</th>}
-                                {visibleColumns.includes('company') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{"C\u00F4ng ty"}</th>}
-                                {visibleColumns.includes('status') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{"Tr\u1EA1ng th\u00E1i"}</th>}
-                                {visibleColumns.includes('lastActivity') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{"Ho\u1EA1t \u0111\u1ED9ng g\u1EA7n nh\u1EA5t"}</th>}
-                                {visibleColumns.includes('leadScore') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">{"\u0110i\u1EC3m Lead"}</th>}
-                                {visibleColumns.includes('tags') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tags</th>}
-                                {visibleColumns.includes('salesperson') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Salesperson</th>}
-                                {visibleColumns.includes('joinedAt') && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{"Ng\u00E0y tham gia"}</th>}
+                                <th className="px-6 py-4 pl-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">Khách hàng</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Liên hệ</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Trạng thái</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nguồn</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Thời gian nhận</th>
                                 <th className="px-6 py-4 text-right pr-8"></th>
                             </tr>
                         )}
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
                         {isAllPageSelected && totalCount > subscribers.length && (
-                            <tr className="bg-orange-50/50">
+                            <tr className="bg-violet-50/50">
                                 <td colSpan={visibleColumns.length + 2} className="px-6 py-2.5 text-center">
                                     {isGlobalSelected ? (
-                                        <p className="text-xs font-medium text-slate-600">{"\u0110\u00E3 Ch\u1ECDn t\u1EA5t c\u1EA3"} <span className="font-bold text-orange-600">{(totalCount || 0).toLocaleString()}</span> {"li\u00EAn h\u1EC7."} <button type="button" onClick={() => onToggleGlobalSelection(false)} className="ml-2 text-blue-600 font-bold hover:underline">{"B\u1ECF ch\u1ECDn"}</button></p>
+                                        <p className="text-xs font-medium text-slate-600">{"\u0110\u00E3 Ch\u1ECDn t\u1EA5t c\u1EA3"} <span className="font-bold text-violet-600">{(totalCount || 0).toLocaleString()}</span> {"li\u00EAn h\u1EC7."} <button type="button" onClick={() => onToggleGlobalSelection(false)} className="ml-2 text-blue-600 font-bold hover:underline">{"B\u1ECF ch\u1ECDn"}</button></p>
                                     ) : (
-                                        <p className="text-xs font-medium text-slate-600">{"\u0110\u00E3 ch\u1ECDn"} {subscribers.length} {"li\u00EAn h\u1EC7."} <button type="button" onClick={() => onToggleGlobalSelection(true)} className="ml-1 text-orange-600 font-bold hover:underline italic underline-offset-2">{"Ch\u1ECDn t\u1EA5t c\u1EA3"} {(totalCount || 0).toLocaleString()} {"li\u00EAn h\u1EC7?"}</button></p>
+                                        <p className="text-xs font-medium text-slate-600">{"\u0110\u00E3 ch\u1ECDn"} {subscribers.length} {"li\u00EAn h\u1EC7."} <button type="button" onClick={() => onToggleGlobalSelection(true)} className="ml-1 text-violet-600 font-bold hover:underline italic underline-offset-2">{"Ch\u1ECDn t\u1EA5t c\u1EA3"} {(totalCount || 0).toLocaleString()} {"li\u00EAn h\u1EC7?"}</button></p>
                                     )}
                                 </td>
                             </tr>
@@ -480,15 +466,54 @@ const ContactsTab = React.memo<ContactsTabProps>(({
 
             {totalPages > 1 && (
                 <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
-                    <ItemsPerPageSelector
-                        value={itemsPerPage}
-                        onChange={onItemsPerPageChange}
-                    />
-                    <div className="flex gap-2">
-                        <button type="button" onClick={() => onPageChange(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"><ChevronLeft className="w-4 h-4" /></button>
-                        <span className="px-4 py-2 bg-slate-50 rounded-lg text-xs font-bold text-slate-600 border border-slate-100">{(currentPage || 1).toLocaleString()} / {(totalPages || 1).toLocaleString()}</span>
+                    <div className="text-xs font-semibold text-slate-400 dark:text-slate-500">
+                        Hiển thị <span className="font-extrabold text-slate-700 dark:text-slate-300">{((currentPage - 1) * itemsPerPage + 1).toLocaleString()}</span> - <span className="font-extrabold text-slate-700 dark:text-slate-300">{Math.min(currentPage * itemsPerPage, totalCount).toLocaleString()}</span> trên <span className="font-extrabold text-slate-700 dark:text-slate-300">{(totalCount || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <button 
+                            type="button" 
+                            onClick={() => onPageChange(Math.max(1, currentPage - 1))} 
+                            disabled={currentPage === 1} 
+                            className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        
+                        {(() => {
+                            const range = [];
+                            const maxVisible = 5;
+                            let start = Math.max(1, currentPage - 2);
+                            let end = Math.min(totalPages, start + maxVisible - 1);
+                            if (end - start < maxVisible - 1) {
+                                start = Math.max(1, end - maxVisible + 1);
+                            }
+                            for (let i = start; i <= end; i++) {
+                                range.push(i);
+                            }
+                            return range;
+                        })().map(pageNum => (
+                            <button
+                                key={pageNum}
+                                type="button"
+                                onClick={() => onPageChange(pageNum)}
+                                className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                                    currentPage === pageNum 
+                                        ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm' 
+                                        : 'border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-slate-600 dark:text-slate-400'
+                                }`}
+                            >
+                                {pageNum}
+                            </button>
+                        ))}
 
-                        <button type="button" onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"><ChevronRight className="w-4 h-4" /></button>
+                        <button 
+                            type="button" 
+                            onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))} 
+                            disabled={currentPage === totalPages} 
+                            className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
                     </div>
                 </div>
             )}

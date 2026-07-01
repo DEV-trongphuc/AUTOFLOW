@@ -138,7 +138,7 @@ const ColumnStructureControl: React.FC<ColumnStructureControlProps> = ({ childre
                                     onClick={(e) => { e.stopPropagation(); handleToggleSplit(i + 1); }}
                                     className={`absolute -right-1.5 top-0 bottom-0 w-2 z-10 cursor-col-resize flex items-center justify-center group/line`}
                                 >
-                                    <div className={`w-0.5 h-3/4 rounded-full transition-all ${splitLines.includes(i + 1) ? 'bg-amber-500 scale-y-110 shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'bg-slate-300 group-hover/line:bg-amber-300 group-hover/line:h-full opacity-0 group-hover/line:opacity-100'}`} />
+                                    <div className={`w-0.5 h-3/4 rounded-full transition-all ${splitLines.includes(i + 1) ? 'bg-amber-500 scale-y-110 shadow-[0_0_8px_rgba(104,61,242,0.5)]' : 'bg-slate-300 group-hover/line:bg-amber-300 group-hover/line:h-full opacity-0 group-hover/line:opacity-100'}`} />
                                     {/* Tooltip or Label on Hover */}
                                     <div className="absolute -top-6 bg-slate-800 text-white text-[8px] px-1.5 py-0.5 rounded opacity-0 group-hover/line:opacity-100 pointer-events-none transition-opacity font-bold whitespace-nowrap z-50 shadow-xl">
                                         {splitLines.includes(i + 1) ? 'Gộp cột' : 'Chia tại đây'}

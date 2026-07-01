@@ -1024,7 +1024,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
             }
 
             return (
-                <div className="w-full h-full bg-gradient-to-br from-[#ffa900] to-[#ff8c00] text-white flex items-center justify-center font-black text-[10px] uppercase shadow-inner">
+                <div className="w-full h-full bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center font-black text-[10px] uppercase shadow-inner">
                     {initial}
                 </div>
             );
@@ -2492,7 +2492,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                         .map((item, idx) => (
                                             <div key={idx} className="relative pl-6 group">
                                                 <div className={`absolute left-[-6px] top-1 w-3 h-3 rounded-full border-2 border-white shadow-sm transition-all group-hover:scale-125 ${(item.type === 'pageview' || item.title === 'view') ? 'bg-blue-500' :
-                                                    (item.type === 'click' || item.title === 'click' || item.title === 'canvas_click') ? 'bg-[#ffa900]' :
+                                                    (item.type === 'click' || item.title === 'click' || item.title === 'canvas_click') ? 'bg-slate-400' :
                                                         (item.title === 'lead_capture' || item.title === 'phone_detected') ? 'bg-emerald-500 font-bold' :
                                                             item.type === 'form' ? 'bg-emerald-500' : 'bg-slate-400'
                                                     }`}></div>
@@ -2503,7 +2503,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                                                                 (item.title === 'lead_capture' || item.title === 'phone_detected') ? (
                                                                     item.title === 'phone_detected' ? <Phone className="w-3 h-3 text-emerald-500" /> : <FormInput className="w-3 h-3 text-emerald-500" />
                                                                 ) :
-                                                                    <MousePointer2 className="w-3 h-3 text-orange-400" />
+                                                                    <MousePointer2 className="w-3 h-3 text-slate-400" />
                                                             }
                                                             <span className={`text-[9px] font-black uppercase ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>
                                                                 {item.type === 'page_source'
@@ -2539,18 +2539,18 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
 
                         {
                             selectedConv?.email && (
-                                <div className={`p-6 border-t ${isDarkTheme ? 'bg-amber-950/20 border-amber-900/50' : 'bg-amber-50 border-t border-amber-100'}`}>
+                                <div className={`p-6 border-t ${isDarkTheme ? 'bg-slate-800/40 border-slate-700/50' : 'bg-slate-50 border-t border-slate-100'}`}>
                                     <div className="flex items-center gap-3 mb-3">
-                                        <div className="w-8 h-8 rounded-xl bg-amber-600 flex items-center justify-center text-white shadow-lg shadow-amber-600/30">
+                                        <div className="w-8 h-8 rounded-xl bg-slate-600 flex items-center justify-center text-white shadow-lg shadow-slate-600/30">
                                             <UserCheck className="w-4 h-4" />
                                         </div>
                                         <div>
-                                            <h4 className="text-[10px] font-black text-amber-700 uppercase tracking-widest leading-none mb-1">Lead Synced</h4>
+                                            <h4 className="text-[10px] font-black text-slate-700 dark:text-slate-400 uppercase tracking-widest leading-none mb-1">Lead Synced</h4>
                                             <div className="flex items-center gap-2">
                                                 <p className={`text-[11px] font-black ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>{selectedConv.email}</p>
                                                 {selectedConv.lead_score !== undefined && selectedConv.lead_score > 0 && (
-                                                    <div className={`inline-flex items-center justify-center gap-1 px-2 py-0.5 border rounded-lg text-xs font-bold ${isDarkTheme ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
-                                                        <Zap className="w-3 h-3 fill-yellow-500 text-yellow-500" />
+                                                    <div className={`inline-flex items-center justify-center gap-1 px-2 py-0.5 border rounded-lg text-xs font-bold ${isDarkTheme ? 'bg-slate-800/60 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                                                        <Zap className="w-3 h-3 fill-slate-500 text-slate-500" />
                                                         {selectedConv.lead_score}
                                                     </div>
                                                 )}

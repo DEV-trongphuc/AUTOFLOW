@@ -380,7 +380,7 @@ const Tags: React.FC = () => {
 
             <div className="space-y-6">
                 {/* MAIN CONTENT CONTAINER */}
-                <div className="bg-white rounded-[32px] border border-slate-200 shadow-sm p-5 md:p-8 min-h-[600px]">
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 md:p-8 min-h-[600px]">
 
                     {/* SEARCH & STATS BAR */}
                     <div className="flex items-center justify-between gap-4 mb-8">
@@ -435,7 +435,7 @@ const Tags: React.FC = () => {
                                             setTagPagination(prev => ({ ...prev, page: 1 }));
                                             setTagSearch('');
                                         }}
-                                        className="group bg-white p-5 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-emerald-500/10 hover:border-emerald-200 transition-all flex flex-col justify-between gap-4 relative overflow-hidden cursor-pointer"
+                                        className="group bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-emerald-500/10 hover:border-emerald-200 transition-all flex flex-col justify-between gap-4 relative overflow-hidden cursor-pointer"
                                     >
                                         {/* Background Decorative Icon */}
                                         <div className="absolute top-0 right-0 p-4 opacity-[0.03] text-emerald-600 group-hover:scale-110 transition-transform">

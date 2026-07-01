@@ -726,8 +726,8 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
                                 width: '52px',
                                 height: '52px',
                                 borderRadius: '50%',
-                                background: 'linear-gradient(135deg, #d97706, #d97706)',
-                                boxShadow: '0 8px 28px rgba(217,119,6,0.45), 0 2px 8px rgba(0,0,0,0.15)',
+                                background: 'linear-gradient(135deg, #683df2, #561dd0)',
+                                boxShadow: '0 8px 28px rgba(104,61,242,0.45), 0 2px 8px rgba(0,0,0,0.15)',
                                 border: 'none',
                                 cursor: 'pointer',
                                 display: 'flex',
@@ -739,12 +739,12 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
                             {/* Tooltip */}
                             <span
                                 className="absolute right-full mr-3 px-3 py-1.5 rounded-xl text-xs font-bold text-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 -translate-x-1 group-hover:translate-x-0"
-                                style={{ background: 'linear-gradient(135deg, #d97706, #d97706)', boxShadow: '0 4px 14px rgba(217,119,6,0.35)' }}
+                                style={{ background: 'linear-gradient(135deg, #683df2, #561dd0)', boxShadow: '0 4px 14px rgba(104,61,242,0.35)' }}
                             >
                                 AI Generate
                             </span>
                             {/* Pulse ring */}
-                            <span className="absolute inset-0 rounded-full animate-ping" style={{ background: 'rgba(245,158,11,0.2)', animationDuration: '2s' }} />
+                            <span className="absolute inset-0 rounded-full animate-ping" style={{ background: 'rgba(104,61,242,0.2)', animationDuration: '2s' }} />
                         </button>
                     )}
                 </div>

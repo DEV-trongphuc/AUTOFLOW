@@ -145,21 +145,21 @@ const Vouchers: React.FC = () => {
                 subtitle="Quản lý mã giảm giá, quà tặng và tích hợp trực tiếp vào chiến dịch Email/Zalo của bạn."
                 actions={[
                     {
-                        label: 'Tạo Voucher mới',
-                        icon: Plus,
-                        onClick: openCreateModal,
-                        primary: false
-                    },
-                    {
                         label: 'Hướng dẫn chi tiết',
                         icon: BookOpen,
                         onClick: () => setGuideModalOpen(true),
+                        primary: false
+                    },
+                    {
+                        label: 'Tạo Voucher mới',
+                        icon: Plus,
+                        onClick: openCreateModal,
                         primary: true
                     }
                 ]}
             />
 
-            <div className="bg-white rounded-[32px] border border-slate-200 shadow-sm p-4 lg:p-6 min-h-[500px]">
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 lg:p-6 min-h-[500px]">
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                     <Tabs
                         variant="pill"
@@ -203,20 +203,20 @@ const Vouchers: React.FC = () => {
                     <div className="flex items-center justify-center h-64"><p className="text-slate-400">Đang tải dữ liệu...</p></div>
                 ) : filteredCampaigns.length === 0 ? (
                     <div className="py-20 flex justify-center animate-in fade-in zoom-in-95 duration-700">
-                        <div className="relative bg-[#fffbe1] border-[2px] border-dashed border-[#b45309] rounded-[16px] p-10 max-w-lg w-full text-center overflow-hidden">
-                            <div className="absolute top-1/2 -left-4 w-8 h-8 bg-white rounded-full transform -translate-y-1/2 border-r-[2px] border-dashed border-[#b45309]"></div>
-                            <div className="absolute top-1/2 -right-4 w-8 h-8 bg-white rounded-full transform -translate-y-1/2 border-l-[2px] border-dashed border-[#b45309]"></div>
+                        <div className="relative bg-violet-50/40 dark:bg-violet-950/10 border-[2px] border-dashed border-violet-500/40 dark:border-violet-500/30 rounded-[16px] p-10 max-w-lg w-full text-center overflow-hidden">
+                            <div className="absolute top-1/2 -left-4 w-8 h-8 bg-white dark:bg-slate-900 rounded-full transform -translate-y-1/2 border-r-[2px] border-dashed border-violet-500/40 dark:border-violet-500/30"></div>
+                            <div className="absolute top-1/2 -right-4 w-8 h-8 bg-white dark:bg-slate-900 rounded-full transform -translate-y-1/2 border-l-[2px] border-dashed border-violet-500/40 dark:border-violet-500/30"></div>
 
-                            <Gift className="w-10 h-10 mx-auto text-[#b45309] mb-4" />
-                            <h3 className="text-2xl font-black text-[#b45309] uppercase tracking-widest mb-3">Chưa có Voucher Nào</h3>
-                            <p className="text-sm font-medium text-[#b45309]/80 mb-8 mx-auto max-w-sm">
+                            <Gift className="w-10 h-10 mx-auto text-violet-600 dark:text-violet-400 mb-4" />
+                            <h3 className="text-2xl font-black text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-3">Chưa có Voucher Nào</h3>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-8 mx-auto max-w-sm">
                                 Khởi tạo chiến dịch quà tặng/mã giảm giá để tri ân khách hàng và tăng tỉ lệ chuyển đổi.
                             </p>
 
                             <Button
                                 onClick={openCreateModal}
                                 variant="custom"
-                                className="bg-[#b45309] hover:bg-[#92400e] text-white border-0 shadow-lg shadow-[#b45309]/20 px-8 py-3 rounded-xl text-[13px] font-black uppercase tracking-widest transition-all hover:scale-105"
+                                className="bg-violet-600 hover:bg-violet-700 text-white border-0 shadow-lg shadow-violet-600/20 px-8 py-3 rounded-xl text-[13px] font-black uppercase tracking-widest transition-all hover:scale-105"
                             >
                                 Tạo chiến dịch ngay
                             </Button>

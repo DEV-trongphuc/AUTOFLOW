@@ -212,7 +212,7 @@ const LinkClicksTab: React.FC<LinkClicksTabProps> = ({ type, id, stepId, initial
                     </button>
                     <button
                         onClick={() => setViewMode('heatmap')}
-                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${viewMode === 'heatmap' ? 'bg-[#ffa900] text-white shadow-sm font-black' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${viewMode === 'heatmap' ? 'bg-violet-600 text-white shadow-sm font-black' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         <Flame className="w-4 h-4" /> Click Heatmap
                     </button>

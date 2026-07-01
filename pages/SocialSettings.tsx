@@ -52,8 +52,8 @@ const ZaloSettings: React.FC = () => {
                 actions={[
                     { label: 'QUẢN LÝ TEMPLATE', icon: FileText, onClick: handleOpenTemplates, primary: false },
                     { label: 'CẤU HÌNH ZALO', icon: Settings, onClick: () => setActiveTab('dashboard'), primary: true },
-                    { label: '', title: 'Official OA', icon: Zap, onClick: () => window.open('https://developers.zalo.me/docs/official-account/bat-dau/kham-pha', '_blank'), primary: true },
-                    { label: '', title: 'Quy tắc', icon: Info, onClick: () => setIsPolicyModalOpen(true), primary: true },
+                    { label: '', title: 'Official OA', icon: Zap, onClick: () => window.open('https://developers.zalo.me/docs/official-account/bat-dau/kham-pha', '_blank'), primary: false },
+                    { label: '', title: 'Quy tắc', icon: Info, onClick: () => setIsPolicyModalOpen(true), primary: false },
                 ]}
             />
 

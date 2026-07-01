@@ -3,7 +3,6 @@
 
 import React, { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import Lenis from 'lenis';
 import { createPortal } from 'react-dom';
 import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -200,55 +199,6 @@ const GlobalDeleteOverlay = () => {
 };
 
 const App: React.FC = () => {
-    // Global auto-prevent for Lenis scroll hijacking on nested scrollable elements
-    useEffect(() => {
-        const isScrollable = (el: HTMLElement) => {
-            const cls = el.className;
-            if (typeof cls === 'string' && (
-                cls.includes('overflow-y-auto') || 
-                cls.includes('overflow-y-scroll') || 
-                cls.includes('overflow-auto') || 
-                cls.includes('overflow-scroll') ||
-                cls.includes('overflow-x-auto') ||
-                cls.includes('overflow-x-scroll')
-            )) {
-                return true;
-            }
-            if (el.style.overflowY === 'auto' || el.style.overflowY === 'scroll' || el.style.overflowX === 'auto' || el.style.overflowX === 'scroll') {
-                return true;
-            }
-            if (el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth) {
-                const style = window.getComputedStyle(el);
-                return style.overflowY === 'auto' || style.overflowY === 'scroll' || style.overflowX === 'auto' || style.overflowX === 'scroll';
-            }
-            return false;
-        };
-
-        const autoPreventLenis = (e: Event) => {
-            let target = e.target as HTMLElement | null;
-            while (target && target !== document.body) {
-                if (target.hasAttribute('data-lenis-prevent')) {
-                    break;
-                }
-                if (isScrollable(target)) {
-                    target.setAttribute('data-lenis-prevent', 'true');
-                    break;
-                }
-                target = target.parentElement;
-            }
-        };
-
-        window.addEventListener('wheel', autoPreventLenis, { capture: true, passive: true });
-        window.addEventListener('touchstart', autoPreventLenis, { capture: true, passive: true });
-        window.addEventListener('touchmove', autoPreventLenis, { capture: true, passive: true });
-
-        return () => {
-            window.removeEventListener('wheel', autoPreventLenis, { capture: true });
-            window.removeEventListener('touchstart', autoPreventLenis, { capture: true });
-            window.removeEventListener('touchmove', autoPreventLenis, { capture: true });
-        };
-    }, []);
-
     useEffect(() => {
         // [ISOLATION] Skip all production auth side-effects in DEMO_MODE
         if (DEMO_MODE) return;

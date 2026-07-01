@@ -86,28 +86,28 @@ const Modal: React.FC<ModalProps> = ({
             relative w-full flex flex-col overflow-hidden border
             ${sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md}
             ${isDarkTheme 
-              ? 'bg-[#11151d] border-slate-800/80 shadow-[0_24px_60px_rgba(0,0,0,0.6)]' 
-              : 'bg-white border-slate-200/80 shadow-[0_24px_50px_rgba(0,0,0,0.1),0_1px_3px_rgba(0,0,0,0.02)]'}
+              ? 'bg-[#11151d] border-violet-500/10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5),0_0_40px_rgba(139,92,246,0.06)]' 
+              : 'bg-white border-slate-200/60 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.06),0_0_40px_rgba(139,92,246,0.02)]'}
           `}
           >
         {isLoading && (
           <div className={`absolute inset-0 z-50 flex items-center justify-center ${isDarkTheme ? 'bg-[#11151d]/75' : 'bg-white/75'}`}>
             <div className="flex flex-col items-center gap-2">
-              <Loader2 className="w-8 h-8 text-[#ffa900] animate-spin" />
+              <Loader2 className="w-8 h-8 text-violet-500 animate-spin" />
               <p className={`text-xs font-bold animate-pulse ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>Đang xử lý...</p>
             </div>
           </div>
         )}
         {/* Header */}
         {!noHeader && (
-          <div className={`px-6 py-5 flex justify-between items-center border-b shrink-0 ${isDarkTheme ? 'bg-[#11151d] border-slate-800/85' : 'bg-white border-slate-100'}`}>
+          <div className={`px-6 py-5 flex justify-between items-center border-b shrink-0 ${isDarkTheme ? 'bg-[#11151d] border-slate-800/60' : 'bg-white border-slate-100'}`}>
             <div>
               <h3 className={`text-base md:text-lg font-bold tracking-tight ${isDarkTheme ? 'text-slate-100' : 'text-slate-800'}`}>{title}</h3>
             </div>
             {!hideCloseButton && (
               <button
                 onClick={onClose}
-                className={`p-2 rounded-xl transition-all duration-200 ${isDarkTheme ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'} hover:scale-105 active:scale-95 bg-transparent`}
+                className={`p-2 rounded-xl transition-all duration-200 ${isDarkTheme ? 'text-slate-400 hover:text-violet-400 hover:bg-violet-500/10' : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'} hover:scale-105 active:scale-95 bg-transparent`}
               >
                 <X className="w-5 h-5 stroke-[2px]" />
               </button>
@@ -122,7 +122,7 @@ const Modal: React.FC<ModalProps> = ({
 
         {/* Footer */}
         {footer && (
-          <div className={`px-6 py-4 border-t shrink-0 flex items-center justify-end ${isDarkTheme ? 'bg-[#161b24] border-slate-800/80' : 'bg-slate-50 border-slate-100'}`}>
+          <div className={`px-6 py-4 border-t shrink-0 flex items-center justify-end ${isDarkTheme ? 'bg-[#161b24] border-slate-800/60' : 'bg-slate-50 border-slate-100'}`}>
             {footer}
           </div>
         )}

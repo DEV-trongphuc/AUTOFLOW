@@ -523,7 +523,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                 ]}
             />
 
-            <div className={`rounded-[24px] lg:rounded-[32px] border shadow-sm p-4 lg:p-6 min-h-[600px] transition-colors duration-500 animate-in fade-in slide-in-from-bottom-5 delay-200 ${isDarkTheme ? 'bg-[rgba(13,17,23,0.6)] backdrop-blur-md border-slate-800 shadow-none' : 'bg-white border-slate-200 shadow-sm'}`}>
+            <div className={`rounded-2xl border shadow-sm p-4 lg:p-6 min-h-[600px] transition-colors duration-500 animate-in fade-in slide-in-from-bottom-5 delay-200 ${isDarkTheme ? 'bg-[rgba(13,17,23,0.6)] backdrop-blur-md border-slate-800 shadow-none' : 'bg-white border-slate-200 shadow-sm'}`}>
 
 
             {/* Tabs */}
@@ -637,7 +637,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
 
                     {/* CONTENT: KNOWLEDGE BASE */}
                     <div className={`transition-all duration-500 py-4 space-y-6 ${activeFeatureTab === 'knowledge' ? 'block animate-in fade-in slide-in-from-top-4' : 'hidden'}`}>
-                        <div className={`flex flex-col lg:flex-row justify-between lg:items-center p-5 lg:p-6 rounded-[24px] border gap-5 shadow-sm ${isDarkTheme ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+                        <div className={`flex flex-col lg:flex-row justify-between lg:items-center p-5 lg:p-6 rounded-2xl border gap-5 shadow-sm ${isDarkTheme ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
                             <div className="flex items-center gap-4">
                                 <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-sm border hidden md:flex ${isDarkTheme ? 'bg-slate-700 border-slate-600' : 'bg-white border-slate-200'}`}>
                                     <Database className={`w-5 h-5 ${isDarkTheme ? 'text-orange-400' : 'text-orange-500'}`} />
@@ -702,7 +702,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
 
                         {/* Training Alert */}
                         {docs.some((d: any) => d.status === 'pending' && d.source_type !== 'folder') && (
-                            <div className={`border rounded-[24px] p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 shadow-sm ${isDarkTheme ? 'bg-slate-800/50 border-slate-700' : 'bg-brand-surface border-slate-100'}`} style={{ backgroundColor: isDarkTheme ? undefined : 'var(--brand-surface)', borderColor: isDarkTheme ? undefined : 'var(--brand-border)' }}>
+                            <div className={`border rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 shadow-sm ${isDarkTheme ? 'bg-slate-800/50 border-slate-700' : 'bg-brand-surface border-slate-100'}`} style={{ backgroundColor: isDarkTheme ? undefined : 'var(--brand-surface)', borderColor: isDarkTheme ? undefined : 'var(--brand-border)' }}>
                                 <div className="flex items-center gap-4">
                                     <div className={`w-12 h-12 rounded-full border flex items-center justify-center shadow-sm shrink-0 ${isDarkTheme ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'}`} style={{ color: 'var(--brand-primary)' }}><AlertTriangle className="w-6 h-6" /></div>
                                     <div className="flex-1">
@@ -986,7 +986,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                     const fileMB = (pendingPdfFile.size / 1024 / 1024).toFixed(2);
                     return (
                         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-                            <div className={`relative w-full max-w-[380px] rounded-[32px] shadow-2xl overflow-hidden border ${isDarkTheme ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
+                            <div className={`relative w-full max-w-[380px] rounded-2xl shadow-2xl overflow-hidden border ${isDarkTheme ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
 
                                 {/* Header */}
                                 <div className="px-8 pt-8 pb-4">
@@ -1070,7 +1070,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                 <div className="lg:col-span-2 space-y-8">
                                     {/* Configuration Form */}
-                                    <div className={`p-8 rounded-[32px] border space-y-8 transition-all duration-500 ${isDarkTheme ? 'bg-slate-800/20 border-slate-700' : 'bg-slate-50/50 border-slate-200'}`}>
+                                    <div className={`p-8 rounded-2xl border space-y-8 transition-all duration-500 ${isDarkTheme ? 'bg-slate-800/20 border-slate-700' : 'bg-slate-50/50 border-slate-200'}`}>
                                         <div className={`flex items-center justify-between border-b pb-5 ${isDarkTheme ? 'border-slate-800' : 'border-slate-200'}`}>
                                             <div className="flex items-center gap-4">
                                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm border ${isDarkTheme ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-white border-slate-100 text-slate-800'}`}>
@@ -1205,7 +1205,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                             <textarea
                                                 value={settings.welcome_msg}
                                                 onChange={(e: any) => setSettings({ ...settings, welcome_msg: e.target.value })}
-                                                className={`w-full p-5 border-2 rounded-[20px] text-xs font-bold outline-none transition-all resize-none h-24 shadow-inner ${isDarkTheme ? 'bg-slate-800/50 border-slate-700 text-slate-200 focus:border-brand shadow-none' : 'bg-white border-slate-200 text-slate-700 focus:border-amber-600'}`}
+                                                className={`w-full p-5 border-2 rounded-2xl text-xs font-bold outline-none transition-all resize-none h-24 shadow-inner ${isDarkTheme ? 'bg-slate-800/50 border-slate-700 text-slate-200 focus:border-brand shadow-none' : 'bg-white border-slate-200 text-slate-700 focus:border-amber-600'}`}
                                             />
                                         </div>
 
@@ -1222,7 +1222,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                         </div>
 
                                         {/* Notification Settings */}
-                                        <div className={`space-y-4 px-6 py-6 rounded-[32px] relative overflow-hidden transition-all duration-500 ${settings.notification_enabled ? 'ring-1 shadow-sm' : ''} ${isDarkTheme ? 'bg-slate-800/40 border-slate-700' : 'bg-amber-50/20 border border-amber-100'} ${settings.notification_enabled && !isDarkTheme ? 'ring-amber-200' : ''}`}>
+                                        <div className={`space-y-4 px-6 py-6 rounded-2xl relative overflow-hidden transition-all duration-500 ${settings.notification_enabled ? 'ring-1 shadow-sm' : ''} ${isDarkTheme ? 'bg-slate-800/40 border-slate-700' : 'bg-amber-50/20 border border-amber-100'} ${settings.notification_enabled && !isDarkTheme ? 'ring-amber-200' : ''}`}>
                                             <div className="flex justify-between items-start relative z-10">
                                                 <div className="flex items-center gap-4">
                                                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm transition-all duration-500 ${settings.notification_enabled ? 'bg-gradient-to-br from-[#ffa900] to-amber-600 text-white shadow-amber-200' : (isDarkTheme ? 'bg-slate-800 text-amber-500 border border-slate-700' : 'bg-amber-50 text-[#ffa900]')}`}>
@@ -1301,7 +1301,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
 
                                 {/* Right Preview Column */}
                                 <div className="space-y-8">
-                                    <div className={`p-8 rounded-[40px] border shadow-xl space-y-6 relative overflow-hidden transition-all duration-500 ${isDarkTheme ? 'bg-slate-800/20 border-slate-700 shadow-none' : 'bg-white border-slate-100'}`}>
+                                    <div className={`p-8 rounded-2xl border shadow-xl space-y-6 relative overflow-hidden transition-all duration-500 ${isDarkTheme ? 'bg-slate-800/20 border-slate-700 shadow-none' : 'bg-white border-slate-100'}`}>
                                         <div className="absolute top-0 right-0 p-10 opacity-50"><Bot className={`w-40 h-40 ${isDarkTheme ? 'text-slate-800' : 'text-slate-50'}`} /></div>
                                         <h3 className={`text-lg font-black tracking-tight flex items-center gap-2 ${isDarkTheme ? 'text-slate-100' : 'text-slate-800'}`}>
                                             <div className="w-8 h-8 rounded-lg bg-amber-600 flex items-center justify-center text-white"><Zap className="w-5 h-5" /></div>
@@ -1309,7 +1309,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                         </h3>
 
                                         {/* Widget Preview Container (Glassmorphism Mode) */}
-                                        <div className={`rounded-[2.5rem] overflow-hidden border relative z-10 shadow-xl transition-all duration-500 ${isDarkTheme ? 'bg-slate-900 border-slate-700 shadow-none' : 'bg-white/95 backdrop-blur-xl border-slate-100'}`}>
+                                        <div className={`rounded-2xl overflow-hidden border relative z-10 shadow-xl transition-all duration-500 ${isDarkTheme ? 'bg-slate-900 border-slate-700 shadow-none' : 'bg-white/95 backdrop-blur-xl border-slate-100'}`}>
                                             {/* Mock Header: Syncs with Brand Color & Style */}
                                             <div
                                                 className="px-6 py-5 flex items-center gap-4 relative overflow-hidden"
@@ -1386,7 +1386,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                         <p className="text-center text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">Visual Simulation</p>
                                     </div>
 
-                                    <div className="bg-slate-900 p-8 rounded-[40px] border border-slate-800 shadow-xl space-y-5 relative overflow-hidden group">
+                                    <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 shadow-xl space-y-5 relative overflow-hidden group">
                                         <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/5 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
                                         <div className="flex items-center justify-between relative z-10">
                                             <h4 className="text-sm font-black text-white flex items-center gap-2 uppercase tracking-tight">Mã nhúng Website</h4>
@@ -1444,7 +1444,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                 <div className={activeTab === 'instruction' ? "block animate-in fade-in duration-300" : "hidden"}>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                         <div className="lg:col-span-2 space-y-8">
-                            <div className={`p-8 rounded-[32px] border space-y-8 transition-all ${isDarkTheme ? 'bg-slate-800/20 border-slate-700 shadow-none' : 'bg-slate-50/50 border-slate-200'}`}>
+                            <div className={`p-8 rounded-2xl border space-y-8 transition-all ${isDarkTheme ? 'bg-slate-800/20 border-slate-700 shadow-none' : 'bg-slate-50/50 border-slate-200'}`}>
                                 <div className={`flex items-center justify-between border-b pb-5 ${isDarkTheme ? 'border-slate-800' : 'border-slate-200'}`}>
                                     <div className="flex items-center gap-4">
                                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm border ${isDarkTheme ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-white border-slate-100 text-slate-800'}`}>
@@ -1458,7 +1458,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <div className="relative w-full group overflow-hidden rounded-[20px] border-2 border-slate-800 bg-[#1e1e1e] focus-within:border-blue-500 transition-all shadow-inner">
+                                    <div className="relative w-full group overflow-hidden rounded-2xl border-2 border-slate-800 bg-[#1e1e1e] focus-within:border-blue-500 transition-all shadow-inner">
                                         <textarea
                                             value={localInstruction}
                                             onChange={(e: any) => {
@@ -1479,7 +1479,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                     {/* Toggle Advanced Settings */}
                                     <div
                                         onClick={() => setShowAdvanced(!showAdvanced)}
-                                        className={`flex items-center justify-between cursor-pointer group select-none bg-slate-900 p-4 border border-slate-800 shadow-lg transition-all relative z-20 ${showAdvanced ? 'rounded-t-[20px] border-b-0' : 'rounded-[20px] hover:shadow-xl'}`}
+                                        className={`flex items-center justify-between cursor-pointer group select-none bg-slate-900 p-4 border border-slate-800 shadow-lg transition-all relative z-20 ${showAdvanced ? 'rounded-t-[20px] border-b-0' : 'rounded-2xl hover:shadow-xl'}`}
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className={`p-2 rounded-lg transition-colors ${showAdvanced ? 'bg-amber-600 text-slate-900' : 'bg-slate-800 text-slate-400 group-hover:text-amber-600'}`}>
@@ -1681,7 +1681,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
 
                         {/* Right Sidebar: Helpers */}
                         <div className="space-y-6 sticky top-6 h-fit z-10">
-                            <div className={`p-8 rounded-[40px] border shadow-sm space-y-5 relative group overflow-hidden ${isDarkTheme ? 'bg-slate-800/20 border-slate-700 shadow-none' : 'bg-white border-amber-100'}`}>
+                            <div className={`p-8 rounded-2xl border shadow-sm space-y-5 relative group overflow-hidden ${isDarkTheme ? 'bg-slate-800/20 border-slate-700 shadow-none' : 'bg-white border-amber-100'}`}>
                                 <div className={`absolute -top-4 -right-4 w-24 h-24 rounded-full group-hover:scale-150 transition-transform duration-700 ${isDarkTheme ? 'bg-slate-700/20' : 'bg-amber-50'}`}></div>
                                 <h4 className={`text-sm font-black flex items-center gap-2 relative z-10 uppercase tracking-tight ${isDarkTheme ? 'text-slate-200' : 'text-slate-800'}`}>Các biến hỗ trợ</h4>
                                 <div className="space-y-4 relative z-10">

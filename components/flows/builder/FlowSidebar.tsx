@@ -44,25 +44,35 @@ const FlowSidebar: React.FC<FlowSidebarProps> = ({
                                 <button
                                     key={i}
                                     onClick={() => err.stepId && onSelectStep(err.stepId)}
-                                    className={`w-full text-left p-4 border rounded-[20px] transition-all group flex gap-3 items-start relative overflow-hidden ${err.type === 'critical'
+                                    className={`w-full text-left p-4 border rounded-2xl transition-all group flex gap-3 items-start relative overflow-hidden ${err.type === 'critical'
                                         ? 'bg-rose-50/50 border-rose-100 hover:border-rose-300'
-                                        : 'bg-amber-50/50 border-amber-100 hover:border-amber-300'
+                                        : 'hover:border-amber-400 bg-amber-50/30'
                                         }`}
+                                    style={err.type !== 'critical' ? { backgroundColor: 'rgba(254, 243, 199, 0.25)', borderColor: 'rgba(251, 191, 36, 0.35)' } : undefined}
                                 >
-                                    <div className={`mt-0.5 p-1.5 rounded-lg shrink-0 ${err.type === 'critical' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}`}>
+                                    <div 
+                                        className={`mt-0.5 p-1.5 rounded-lg shrink-0 ${err.type === 'critical' ? 'bg-rose-100 text-rose-600' : ''}`}
+                                        style={err.type !== 'critical' ? { backgroundColor: '#fef3c7', color: '#d97706' } : undefined}
+                                    >
                                         <AlertOctagon className="w-3.5 h-3.5" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className={`text-[11px] font-bold leading-relaxed whitespace-normal break-words ${err.type === 'critical' ? 'text-rose-800' : 'text-amber-800'}`}>
+                                        <p 
+                                            className={`text-[11px] font-bold leading-relaxed whitespace-normal break-words ${err.type === 'critical' ? 'text-rose-800' : ''}`}
+                                            style={err.type !== 'critical' ? { color: '#92400e' } : undefined}
+                                        >
                                             {err.msg}
                                         </p>
                                         {err.stepId && (
-                                            <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-tighter text-slate-400 mt-2 group-hover:text-[#ca7900] transition-colors">
+                                            <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-tighter text-slate-400 mt-2 group-hover:text-amber-600 transition-colors">
                                                 {err.msg.includes('tự sửa') ? 'Bấm để tự sửa' : 'Bấm để sửa'} <ChevronRight className="w-2.5 h-2.5" />
                                             </span>
                                         )}
                                     </div>
-                                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${err.type === 'critical' ? 'bg-rose-500' : 'bg-amber-600'}`}></div>
+                                    <div 
+                                        className={`absolute left-0 top-0 bottom-0 w-1 ${err.type === 'critical' ? 'bg-rose-500' : ''}`}
+                                        style={err.type !== 'critical' ? { backgroundColor: '#d97706' } : undefined}
+                                    ></div>
                                 </button>
                             ))}
                         </div>

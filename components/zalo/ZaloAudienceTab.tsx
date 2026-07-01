@@ -223,7 +223,7 @@ const ZaloAudienceTab: React.FC = () => {
                             </table>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto overflow-y-auto max-h-[450px] min-h-[400px]">
+                        <div className="overflow-x-auto overflow-y-auto max-h-[420px] min-h-[300px]">
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-50/80 border-b border-slate-200 text-left sticky top-0 z-20 backdrop-blur-sm">

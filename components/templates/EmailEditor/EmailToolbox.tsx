@@ -58,7 +58,7 @@ const EmailToolbox: React.FC<EmailToolboxProps> = ({ blocks, onDragStart, onSele
             <div
                 draggable
                 onDragStart={(e) => onDragStart(e, type, layout)}
-                className="bg-white border border-slate-100 rounded-3xl p-3 flex flex-col gap-2.5 cursor-grab active:cursor-grabbing hover:border-amber-600/30 hover:shadow-[0_12px_24px_-10px_rgba(245,158,11,0.25)] transition-all group h-[100px] justify-center items-center text-center shadow-[0_4px_10px_rgba(0,0,0,0.03)] active:scale-95 duration-300 relative overflow-hidden"
+                className="bg-white border border-slate-100 rounded-3xl p-3 flex flex-col gap-2.5 cursor-grab active:cursor-grabbing hover:border-amber-600/30 hover:shadow-[0_12px_24px_-10px_rgba(104,61,242,0.25)] transition-all group h-[100px] justify-center items-center text-center shadow-[0_4px_10px_rgba(0,0,0,0.03)] active:scale-95 duration-300 relative overflow-hidden"
             >
                 <div className="absolute top-0 left-0 w-full h-1 bg-amber-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="p-3 bg-slate-50 rounded-2xl group-hover:bg-amber-600/10 group-hover:text-amber-600 transition-all duration-300 text-slate-400 group-hover:scale-110">

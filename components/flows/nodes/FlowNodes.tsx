@@ -170,7 +170,12 @@ export const WaitNode: React.FC<NodeProps> = memo(({ step, onClick, isViewMode, 
             onClick={(e) => { e.stopPropagation(); if (!isViewMode) onClick?.(); }}
             className={`flow-interactive relative z-20 group ${isViewMode ? 'cursor-default' : 'cursor-pointer'}`}>
             <div className={`flex items-center gap-4 bg-white border rounded-full pl-2 pr-8 py-2 shadow-lg transition-all w-fit min-w-[200px] ${incomplete ? 'border-rose-200 ring-4 ring-rose-50' : 'border-slate-100 hover:border-amber-400'}`}>
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-lg ${incomplete ? 'bg-rose-100 text-rose-600' : 'bg-gradient-to-br from-amber-400 to-amber-600 text-white'}`}><Clock className="w-6 h-6" /></div>
+                <div 
+                    className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-lg ${incomplete ? 'bg-rose-100 text-rose-600' : 'text-white'}`}
+                    style={incomplete ? {} : { background: 'linear-gradient(135deg, #fbbf24 0%, #f97316 100%)' }}
+                >
+                    <Clock className="w-6 h-6" />
+                </div>
                 <div className="flex flex-col overflow-hidden">
                     <span className="text-[8px] font-bold uppercase text-slate-400 tracking-[0.2em] leading-none mb-1.5">Wait Delay</span>
                     <span className={`text-sm font-bold truncate ${incomplete ? 'text-rose-600' : 'text-slate-900'}`}>{incomplete ? 'Chưa cấu hình' : step.label}</span>

@@ -410,16 +410,16 @@ const Templates: React.FC = () => {
                         statusText="Library Synced"
                         actions={[
                             {
-                                label: 'Thiết kế mới',
-                                icon: Plus,
-                                onClick: () => { setEditingTemplate(undefined); setIsEditorOpen(true); },
-                            },
-                            {
                                 label: 'Thư viện Ảnh',
                                 icon: ImageIcon,
                                 onClick: () => setIsImageLibraryOpen(true),
+                                primary: false
+                            },
+                            {
+                                label: 'Thiết kế mới',
+                                icon: Plus,
+                                onClick: () => { setEditingTemplate(undefined); setIsEditorOpen(true); },
                                 primary: true
-
                             }
                         ]}
                     />

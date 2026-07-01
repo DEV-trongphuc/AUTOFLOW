@@ -208,13 +208,13 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
 
                 switch (act.type) {
                     case 'open_email':
-                        icon = MailOpen; color = 'text-orange-500 bg-orange-50'; label = 'Mở Email';
+                        icon = MailOpen; color = 'text-emerald-500 bg-emerald-50'; label = 'Mở Email';
                         break;
                     case 'skipped_email':
                         icon = Mail; color = 'text-slate-400 bg-slate-50'; label = 'Bỏ qua Email';
                         break;
                     case 'click_link':
-                        icon = MousePointer2; color = 'text-emerald-500 bg-emerald-50'; label = 'Click Link';
+                        icon = MousePointer2; color = 'text-pink-500 bg-pink-50'; label = 'Click Link';
                         break;
                     case 'reply_email':
                         icon = MessageSquare; color = 'text-indigo-600 bg-indigo-50 border-indigo-100'; label = 'Đã Phản hồi';
@@ -229,7 +229,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                         icon = Layers; color = 'text-purple-500 bg-purple-50'; label = 'Vào Phân khúc';
                         break;
                     case 'enter_flow':
-                        icon = Zap; color = 'text-yellow-500 bg-yellow-50'; label = 'Vào Automation';
+                        icon = Zap; color = 'text-violet-500 bg-violet-50'; label = 'Vào Automation';
                         break;
                     case 'note_added':
                         icon = FileText; color = 'text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950'; label = 'Ghi chú';
@@ -632,7 +632,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                     <div className="flex items-center gap-5 mb-8 px-1 shrink-0">
                         <div className="relative">
                             {formData.avatar ? (
-                                <img src={formData.avatar} alt="Avatar" className="w-14 h-14 md:w-16 md:h-16 rounded-[22px] md:rounded-[24px] object-cover border-2 border-slate-100 dark:border-slate-800/60 shadow-xl shadow-orange-500/10 shrink-0" />
+                                <img src={formData.avatar} alt="Avatar" className="w-14 h-14 md:w-16 md:h-16 rounded-[22px] md:rounded-[24px] object-cover border-2 border-slate-100 dark:border-slate-800/60 shadow-xl shadow-violet-600/10 shrink-0" />
                             ) : (
                                 <div className="w-14 h-14 md:w-16 md:h-16 rounded-[22px] md:rounded-[24px] bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-lg md:text-xl font-bold text-white shadow-xl shadow-amber-600/20 shrink-0">
                                     {(formData.firstName || '?')[0]}{(formData.lastName || '')[0]}
@@ -697,7 +697,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                         {!isEditing && (
                             <div className="flex flex-col gap-2 shrink-0 self-start w-[120px] md:w-[140px]">
                                 <button onClick={() => setIsEditing(true)} className="px-3 py-1.5 md:px-4 md:py-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] md:text-xs font-black border border-slate-200 dark:border-slate-700/60 transition-all duration-500 flex items-center justify-center gap-2 hover:shadow-sm w-full"><Edit3 className="w-3 md:w-3.5 h-3 md:h-3.5" /> Sửa hồ sơ</button>
-                                <button onClick={handleAISummarize} disabled={isSummarizing} className="px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white rounded-xl text-[10px] md:text-xs font-black border-none transition-all duration-500 flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 w-full disabled:opacity-50 active:scale-95"><Sparkles className="w-3 md:w-3.5 h-3 md:h-3.5 fill-white" /> {isSummarizing ? "Đang xử lý..." : "Tóm tắt AI"}</button>
+                                <button onClick={handleAISummarize} disabled={isSummarizing} className="px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-violet-400 to-purple-500 hover:from-violet-500 hover:to-purple-600 text-white rounded-xl text-[10px] md:text-xs font-black border-none transition-all duration-500 flex items-center justify-center gap-2 shadow-lg shadow-violet-600/20 w-full disabled:opacity-50 active:scale-95"><Sparkles className="w-3 md:w-3.5 h-3 md:h-3.5 fill-white" /> {isSummarizing ? "Đang xử lý..." : "Tóm tắt AI"}</button>
                             </div>
                         )}
                     </div>
@@ -765,14 +765,14 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                         <div className="space-y-1.5">
                                             <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 ml-1 text-slate-400">Ngày sinh</label>
                                             <div className="relative">
-                                                <input type="date" value={formData.dateOfBirth || ''} onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })} disabled={!isEditing} className={`w-full h-[42px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-xl px-4 text-sm font-bold focus:border-[#ffa900] outline-none disabled:bg-slate-50 dark:bg-slate-950 transition-all pl-10 ${!formData.dateOfBirth ? 'text-slate-300' : 'text-slate-700 dark:text-slate-200'}`} />
+                                                <input type="date" value={formData.dateOfBirth || ''} onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })} disabled={!isEditing} className={`w-full h-[42px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-xl px-4 text-sm font-bold focus:border-violet-600 outline-none disabled:bg-slate-50 dark:bg-slate-950 transition-all pl-10 ${!formData.dateOfBirth ? 'text-slate-300' : 'text-slate-700 dark:text-slate-200'}`} />
                                                 <Cake className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
                                             </div>
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 ml-1 text-slate-400">Ngày đặc biệt</label>
                                             <div className="relative">
-                                                <input type="date" value={formData.anniversaryDate || ''} onChange={(e) => setFormData({ ...formData, anniversaryDate: e.target.value })} disabled={!isEditing} className={`w-full h-[42px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-xl px-4 text-sm font-bold focus:border-[#ffa900] outline-none disabled:bg-slate-50 dark:bg-slate-950 transition-all pl-10 ${!formData.anniversaryDate ? 'text-slate-300' : 'text-slate-700 dark:text-slate-200'}`} />
+                                                <input type="date" value={formData.anniversaryDate || ''} onChange={(e) => setFormData({ ...formData, anniversaryDate: e.target.value })} disabled={!isEditing} className={`w-full h-[42px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-xl px-4 text-sm font-bold focus:border-violet-600 outline-none disabled:bg-slate-50 dark:bg-slate-950 transition-all pl-10 ${!formData.anniversaryDate ? 'text-slate-300' : 'text-slate-700 dark:text-slate-200'}`} />
                                                 <Activity className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
                                             </div>
                                         </div>
@@ -841,31 +841,31 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                 onClick={() => setAttrForm({ isOpen: true, key: '', value: '' })}
                                                 className="flex items-center gap-1.5 px-3 py-1 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700/60 rounded-xl text-[10px] font-black uppercase text-slate-600 dark:text-slate-300 transition-all hover:shadow-sm"
                                             >
-                                                <Plus className="w-3.5 h-3.5 text-orange-500" /> Thêm trường
+                                                <Plus className="w-3.5 h-3.5 text-violet-600" /> Thêm trường
                                             </button>
                                         )}
                                     </div>
 
                                     <div className="space-y-3">
                                         {attrForm.isOpen && (
-                                            <div className="bg-orange-50/50 p-4 rounded-[24px] border border-orange-200 animate-in zoom-in-95 duration-200">
+                                            <div className="bg-violet-50/50 p-4 rounded-[24px] border border-violet-200 animate-in zoom-in-95 duration-200">
                                                 <div className="grid grid-cols-2 gap-3 mb-3">
                                                     <div className="space-y-1">
-                                                        <label className="text-[9px] font-black text-orange-400 uppercase ml-1">Tên trường</label>
+                                                        <label className="text-[9px] font-black text-violet-500 uppercase ml-1">Tên trường</label>
                                                         <input
                                                             placeholder="VD: Website, Facebook..."
                                                             value={attrForm.key}
                                                             onChange={e => setAttrForm({ ...attrForm, key: e.target.value })}
-                                                            className="w-full bg-white dark:bg-slate-900 border border-orange-100 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-orange-300"
+                                                            className="w-full bg-white dark:bg-slate-900 border border-violet-100 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-violet-300"
                                                         />
                                                     </div>
                                                     <div className="space-y-1">
-                                                        <label className="text-[9px] font-black text-orange-400 uppercase ml-1">Giá trị</label>
+                                                        <label className="text-[9px] font-black text-violet-500 uppercase ml-1">Giá trị</label>
                                                         <input
                                                             placeholder="Nhập giá trị..."
                                                             value={attrForm.value}
                                                             onChange={e => setAttrForm({ ...attrForm, value: e.target.value })}
-                                                            className="w-full bg-white dark:bg-slate-900 border border-orange-100 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-orange-300"
+                                                            className="w-full bg-white dark:bg-slate-900 border border-violet-100 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-violet-300"
                                                         />
                                                     </div>
                                                 </div>
@@ -881,7 +881,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                             });
                                                             setAttrForm({ isOpen: false, key: '', value: '' });
                                                         }}
-                                                        className="px-4 py-1.5 bg-orange-500 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-orange-500/20"
+                                                        className="px-4 py-1.5 bg-violet-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-violet-600/20"
                                                     >
                                                         Xác nhận
                                                     </button>
@@ -953,8 +953,8 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                     <div className="p-6 bg-slate-50 dark:bg-slate-950/50 rounded-[28px] border border-slate-200 dark:border-slate-700/60 border-dashed">
                                         <div className="flex flex-wrap gap-2 mb-5">
                                             {(Array.isArray(formData.tags) ? formData.tags : []).map((tag: string) => (
-                                                <span key={tag} className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-xl text-[10px] font-black text-slate-700 dark:text-slate-200 shadow-sm uppercase tracking-tight group/tag transition-all hover:border-orange-200 hover:bg-orange-50/30">
-                                                    <Tag className="w-3 h-3 text-[#ca7900]" /> {tag}
+                                                <span key={tag} className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-xl text-[10px] font-black text-slate-700 dark:text-slate-200 shadow-sm uppercase tracking-tight group/tag transition-all hover:border-violet-200 hover:bg-violet-50/30">
+                                                    <Tag className="w-3 h-3 text-violet-600" /> {tag}
                                                     {isEditing && <button onClick={() => setFormData({ ...formData, tags: (Array.isArray(formData.tags) ? formData.tags : []).filter((t: string) => t !== tag) })} className="text-slate-300 hover:text-rose-500 transition-colors ml-1"><X className="w-3 h-3" /></button>}
                                                 </span>
                                             ))}
@@ -1229,9 +1229,9 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                     </h4>
                                     <div className="space-y-2">
                                         {memberInsights.segments.length > 0 ? memberInsights.segments.map(seg => (
-                                            <div key={seg.id} className="flex items-center justify-between p-4 bg-orange-50 border border-orange-100 rounded-2xl">
+                                            <div key={seg.id} className="flex items-center justify-between p-4 bg-violet-50 border border-violet-100 rounded-2xl">
                                                 <div className="flex items-center gap-3">
-                                                    <Layers className="w-5 h-5 text-[#ca7900]" />
+                                                    <Layers className="w-5 h-5 text-violet-600" />
                                                     <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{seg.name}</span>
                                                 </div>
                                                 <Badge variant="brand" className="text-[8px] uppercase tracking-tighter">Auto-Matched</Badge>
@@ -1266,10 +1266,10 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                 >
                                                     <div className="flex items-center gap-4">
                                                         <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-colors ${isActive ? 'bg-white dark:bg-slate-900/10 group-hover/flow:bg-[#ffa900]/20' : 'bg-slate-200'}`}>
-                                                            <Zap className={`w-5 h-5 ${isActive ? 'text-[#ffa900] fill-[#ffa900]' : 'text-slate-400'}`} />
+                                                            <Zap className={`w-5 h-5 ${isActive ? 'text-violet-600 fill-violet-600' : 'text-slate-400'}`} />
                                                         </div>
                                                         <div>
-                                                            <span className={`text-sm font-bold transition-colors ${isActive ? 'group-hover/flow:text-[#ffa900]' : 'text-slate-700 dark:text-slate-200'}`}>{flow.name}</span>
+                                                            <span className={`text-sm font-bold transition-colors ${isActive ? 'group-hover/flow:text-violet-600' : 'text-slate-700 dark:text-slate-200'}`}>{flow.name}</span>
                                                             <p className="text-[10px] opacity-60 font-bold uppercase tracking-widest mt-0.5">
                                                                 {isActive ? 'Active Journey' : 'Automation Paused'}
                                                             </p>
@@ -1573,7 +1573,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                 {isEditing ? (
                                     <>
                                         <textarea
-                                            className="flex-1 w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-2xl p-5 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-4 focus:ring-orange-50/5 focus:border-[#ffa900] focus:bg-white dark:bg-slate-900 transition-all shadow-inner leading-relaxed resize-none"
+                                            className="flex-1 w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-2xl p-5 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-4 focus:ring-violet-50/5 focus:border-violet-600 focus:bg-white dark:bg-slate-900 transition-all shadow-inner leading-relaxed resize-none"
                                             placeholder="Nhập ghi chú chi tiết cho Khách hàng này..."
                                             value={(() => {
                                                 // Handle different note formats
@@ -1963,7 +1963,7 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
                             key={`action-${i}`}
                             className="px-2 py-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700/60 rounded text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1"
                         >
-                            <Sparkles className="w-3 h-3 text-orange-400" />
+                            <Sparkles className="w-3 h-3 text-violet-500" />
                             {action}
                         </div>
                     ))}

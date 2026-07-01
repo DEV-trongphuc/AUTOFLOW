@@ -12,6 +12,11 @@ import { Lock } from 'lucide-react';
 import { api } from '../services/storageAdapter';
 
 
+interface WorkspaceMembership {
+    workspace_name: string;
+    role_name: string;
+}
+
 interface ManagedUser {
     id: any;
     email: string;
@@ -20,6 +25,7 @@ interface ManagedUser {
     status: 'pending' | 'approved';
     last_login?: string; lastLogin?: string;
     picture?: string;
+    workspaces?: WorkspaceMembership[];
 }
 
 const AdminUsers: React.FC = () => {
@@ -199,6 +205,22 @@ const AdminUsers: React.FC = () => {
                 ]}
             />
 
+            {/* Context Explanation Banner */}
+            <div className="p-5 bg-gradient-to-r from-amber-50/50 to-orange-50/50 border border-amber-100/70 rounded-3xl flex items-start gap-4 shadow-sm">
+                <div className="p-3 bg-amber-100 text-amber-700 rounded-2xl">
+                    <Shield className="w-5 h-5" />
+                </div>
+                <div className="space-y-1">
+                    <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider">Phân biệt Quyền Hệ thống & Quyền Workspace</h4>
+                    <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                        <strong className="text-amber-700">Quyền Hệ thống (Global Role)</strong> kiểm soát quyền truy cập trang quản trị toàn hệ thống (như quản lý user, quản lý tất cả workspace, xem logs hệ thống). 
+                        Một tài khoản có Quyền Hệ thống là <strong className="text-amber-700">ADMIN</strong> sẽ tự động có quyền quản trị tối cao trên toàn bộ các workspace của hệ thống.
+                        <br />
+                        <strong className="text-slate-700">Quyền Workspace (Workspace Roles)</strong> kiểm soát quyền thao tác trên các tài nguyên cụ thể (Campaign, Template, Flow) bên trong từng Workspace riêng lẻ.
+                    </p>
+                </div>
+            </div>
+
             <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
                 <div className="p-6 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="relative flex-1 max-w-md">
@@ -218,7 +240,8 @@ const AdminUsers: React.FC = () => {
                         <thead>
                             <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50">
                                 <th className="px-8 py-4">User</th>
-                                <th className="px-8 py-4">Role</th>
+                                <th className="px-8 py-4">Global Role</th>
+                                <th className="px-8 py-4">Workspace Roles</th>
                                 <th className="px-8 py-4">Status</th>
                                 <th className="px-8 py-4">Last Activity </th>
                                 <th className="px-8 py-4 text-right">Actions</th>
@@ -251,6 +274,19 @@ const AdminUsers: React.FC = () => {
                                             {user.role === 'admin' ? <Shield className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
                                             {user.role}
                                         </span>
+                                    </td>
+                                    <td className="px-8 py-5">
+                                        <div className="flex flex-wrap gap-1.5 max-w-[280px]">
+                                            {user.workspaces && user.workspaces.length > 0 ? (
+                                                user.workspaces.map((ws, i) => (
+                                                    <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-slate-50 text-slate-500 border border-slate-150 shadow-sm">
+                                                        {ws.workspace_name}: <span className="text-amber-600 font-extrabold">{ws.role_name}</span>
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span className="text-[10px] text-slate-400 font-medium italic">Không có Workspace</span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-8 py-5">
                                         <button

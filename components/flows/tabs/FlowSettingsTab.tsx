@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import Lenis from 'lenis';
 import { Save, Clock, Settings2, Power, Zap, Shield, Calendar, Target, Users, Globe, AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react';
 import { Flow } from '../../../types';
 import Card from '../../common/Card';
@@ -18,38 +17,6 @@ interface FlowSettingsTabProps {
 
 const FlowSettingsTab: React.FC<FlowSettingsTabProps> = ({ flow, onUpdate }) => {
     const containerRef = useRef<HTMLDivElement>(null);
-
-    // Initialize local Lenis smooth scroll on parent container
-    useEffect(() => {
-        const parent = containerRef.current?.parentElement;
-        if (!parent) return;
-
-        // Set prevent attribute so the global layout Lenis ignores this scrolling container
-        parent.setAttribute('data-lenis-prevent', 'true');
-
-        const lenis = new Lenis({
-            wrapper: parent,
-            content: containerRef.current,
-            duration: 1.2,
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-            orientation: 'vertical',
-            gestureOrientation: 'vertical',
-            smoothWheel: true,
-        });
-
-        let rafId: number;
-        function raf(time: number) {
-            lenis.raf(time);
-            rafId = requestAnimationFrame(raf);
-        }
-
-        rafId = requestAnimationFrame(raf);
-
-        return () => {
-            cancelAnimationFrame(rafId);
-            lenis.destroy();
-        };
-    }, []);
 
     const triggerStep = flow.steps.find(s => s.type === 'trigger');
 

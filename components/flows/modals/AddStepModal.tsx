@@ -61,13 +61,16 @@ const AddStepModal: React.FC<AddStepModalProps> = ({ isOpen, onClose, onAdd, par
               onClick={() => { if (!isDisabled) { onAdd(type.id as any); onClose(); } }}
               disabled={isDisabled}
               className={`
-                flex flex-col items-center text-center p-6 rounded-[32px] border-2 transition-all relative group
+                flex flex-col items-center text-center p-6 rounded-3xl border-2 transition-all relative group
                 ${isDisabled
                   ? 'bg-slate-50 border-slate-100 opacity-50 cursor-not-allowed'
                   : 'bg-white border-slate-100 hover:border-[#ffa900] hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-1'}
               `}
             >
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg mb-4 transition-all duration-300 ${isDisabled ? 'bg-slate-200 text-slate-400' : `${type.color} group-hover:scale-110 group-hover:rotate-3`}`}>
+              <div 
+                className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg mb-4 transition-all duration-300 ${isDisabled ? 'bg-slate-200 text-slate-400' : `${type.id === 'wait' ? '' : type.color} group-hover:scale-110 group-hover:rotate-3`}`}
+                style={(!isDisabled && type.id === 'wait') ? { background: 'linear-gradient(135deg, #fbbf24 0%, #f97316 100%)', color: '#fff' } : undefined}
+              >
                 <type.icon className="w-6 h-6" />
               </div>
 

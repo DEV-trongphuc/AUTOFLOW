@@ -251,7 +251,7 @@ const FlowCard = React.memo<FlowCardProps>((
         group relative bg-white dark:bg-slate-900 border transition-all duration-300 cursor-pointer 
         ${isArchived ? 'border-slate-200 opacity-60 grayscale' : hasWarning ? 'border-amber-300/50 hover:border-amber-400 shadow-sm hover:shadow-lg' : 'border-slate-200 dark:border-slate-700/60 hover:border-emerald-300/50 hover:shadow-lg'}
         hover:-translate-y-1 hover:z-10
-        ${isList ? 'rounded-[16px] flex flex-row items-center p-3 gap-0' : 'rounded-[20px] h-full flex flex-col'}
+        ${isList ? 'rounded-[16px] flex flex-row items-center p-3 gap-0 overflow-hidden' : 'rounded-[20px] h-full flex flex-col overflow-hidden'}
       `}
         >
             <div className={`absolute top-0 left-0 ${isList ? 'w-1 h-full rounded-l-[16px]' : 'w-full h-1 rounded-t-[20px]'} bg-gradient-to-r ${theme.gradientMain} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />

@@ -277,7 +277,7 @@ const WorkspaceSettings: React.FC = () => {
                 actions={heroActions}
             />
 
-            <div className="bg-white rounded-3xl lg:rounded-[32px] border border-slate-200 shadow-sm p-4 lg:p-6 min-h-[600px] flex flex-col relative z-0">
+            <div className="bg-white rounded-3xl lg:rounded-[32px] border border-slate-200 shadow-sm p-4 lg:p-6 min-h-[600px] flex flex-col relative">
                 <Tabs
                     activeId={activeTab}
                     onChange={(id) => setActiveTab(id as 'members' | 'roles')}
@@ -307,7 +307,7 @@ const WorkspaceSettings: React.FC = () => {
                                     ) : members.length === 0 ? (
                                         <tr><td colSpan={4} className="text-center py-20 text-slate-400">Workspace chưa có thành viên nào.</td></tr>
                                     ) : members.map((m, idx) => (
-                                        <tr key={m.mapping_id} className="hover:bg-slate-50/50 transition-colors group">
+                                        <tr key={m.mapping_id} className="hover:bg-slate-50/50 transition-colors group relative hover:z-20">
                                             <td className="px-6 py-5">
                                                 <div className="flex items-center gap-4">
                                                     <div
@@ -330,7 +330,7 @@ const WorkspaceSettings: React.FC = () => {
                                                     {m.email}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-5">
+                                            <td className="px-6 py-5 relative hover:z-20">
                                                 <CustomDropdown
                                                     value={m.role_id}
                                                     options={roles}

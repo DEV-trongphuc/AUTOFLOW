@@ -394,9 +394,9 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
     const virtualItems = rowVirtualizer.getVirtualItems();
 
     return (
-        <div className="min-h-[400px]">
+        <div className="min-h-[300px]">
             {/* Desktop Table View */}
-            <div ref={parentRef} className="hidden md:block overflow-x-auto overflow-y-auto max-h-[600px]">
+            <div ref={parentRef} className="hidden md:block overflow-x-auto overflow-y-auto max-h-[420px]">
                 <table className="w-full relative">
                     <thead className="bg-slate-50/50 border-b border-slate-100 text-left sticky top-0 z-20 backdrop-blur-sm">
                         <tr>

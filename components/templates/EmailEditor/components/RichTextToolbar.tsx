@@ -1,9 +1,9 @@
-
 // components/templates/EmailEditor/components/RichTextToolbar.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Bold, Italic, Underline, Strikethrough, Link, Palette, Eraser, AlignLeft, AlignCenter, AlignRight, AlignJustify, Heading1, Heading2, Heading3, Braces, Type, Tag } from 'lucide-react';
+import { Bold, Italic, Underline, Strikethrough, Link, Palette, Eraser, AlignLeft, AlignCenter, AlignRight, AlignJustify, Heading1, Heading2, Heading3, Braces, Type, Tag, Highlighter, List, ListOrdered, Undo2, Redo2 } from 'lucide-react';
 import InputModal from '../../../common/InputModal';
+import { PREMIUM_COLORS } from '../constants/editorConstants';
 
 interface RichTextToolbarProps {
     isVisible: boolean;
@@ -45,7 +45,6 @@ const MERGE_TAGS = [
     { label: 'Tên chiến dịch', val: '{{campaignName}}' },
 ];
 
-// Biến đặc biệt: ngày, random, ID
 const SPECIAL_MERGE_TAGS = [
     { label: 'Ngày hôm nay', val: '{{today}}', desc: 'dd/mm/yyyy' },
     { label: 'Ngày (yyyy-mm-dd)', val: '{{today_ymd}}', desc: 'yyyy-mm-dd' },
@@ -53,12 +52,6 @@ const SPECIAL_MERGE_TAGS = [
     { label: 'Mã 6 số', val: '{{random_6}}', desc: 'Random 6 chữ số' },
     { label: 'ID Khách hàng', val: '{{subscriber_id}}', desc: 'Full ID' },
     { label: 'ID ngắn', val: '{{subscriber_id_short}}', desc: '10 ký tự đầu' },
-];
-
-const COLORS = [
-    '#000000', '#1e293b', '#64748b', '#94a3b8', '#ffffff',
-    '#ef4444', '#f97316', '#d97706', '#22c55e', '#3b82f6',
-    '#6366f1', '#a855f7', '#ec4899', '#06b6d4', '#14b8a6',
 ];
 
 const Divider = () => <div className="w-[1px] h-4 bg-slate-700 mx-0.5 flex-shrink-0" />;
@@ -75,6 +68,7 @@ const ToolbarBtn: React.FC<{ onClick: () => void; title: string; active?: boolea
 
 const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, onApplyFontSize, onApplyFontFamily, onExecCommand, onModalToggle, onToolbarMouseEnter, onToolbarMouseLeave, elementRef, customMergeTags = [], usedColors = [] }) => {
     const [showColorPicker, setShowColorPicker] = useState(false);
+    const [colorPickerMode, setColorPickerMode] = useState<'text' | 'highlight'>('text');
     const [hexInput, setHexInput] = useState('');
     const [previewColor, setPreviewColor] = useState('');
     const [showFontFamilyDropdown, setShowFontFamilyDropdown] = useState(false);
@@ -90,38 +84,36 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
         setShowMergeTags(false);
     };
 
-    const execCommand = (command: string, value?: string) => {
-        if (onExecCommand) { onExecCommand(command, value); return; }
-        if (['fontSize', 'fontName', 'foreColor'].includes(command)) document.execCommand('styleWithCSS', false, 'true');
-        document.execCommand(command, false, value);
-    };
-
     const saveSelection = () => {
         const sel = window.getSelection();
-        if (sel && sel.rangeCount > 0) savedRange.current = sel.getRangeAt(0);
+        if (sel && sel.rangeCount > 0) {
+            savedRange.current = sel.getRangeAt(0).cloneRange();
+        }
     };
 
     const restoreSelection = () => {
         const sel = window.getSelection();
-        if (sel && savedRange.current) { sel.removeAllRanges(); sel.addRange(savedRange.current); }
+        if (sel && savedRange.current) {
+            sel.removeAllRanges();
+            sel.addRange(savedRange.current);
+        }
+    };
+
+    const execCommand = (cmd: string, val?: string) => {
+        if (onExecCommand) { onExecCommand(cmd, val); }
+        else { document.execCommand(cmd, false, val); }
+        // refocus editable component
+        if (elementRef?.current) {
+            elementRef.current.focus();
+        }
     };
 
     const handleLinkClick = () => { saveSelection(); closeAllDropdowns(); setShowLinkModal(true); onModalToggle?.(true); };
     const handleLinkConfirm = (url: string) => { restoreSelection(); if (url) execCommand('createLink', url.startsWith('http') ? url : 'https://' + url); setShowLinkModal(false); onModalToggle?.(false); };
 
     const handleFontSizeApply = (size: string) => {
-        const sizeWithPx = size + 'px';
-        if (onApplyFontSize) { onApplyFontSize(sizeWithPx); }
-        else {
-            document.execCommand('styleWithCSS', false, 'false');
-            document.execCommand('fontSize', false, '7');
-            elementRef?.current?.querySelectorAll('font[size="7"]').forEach(el => {
-                const span = document.createElement('span');
-                span.style.fontSize = sizeWithPx;
-                span.innerHTML = el.innerHTML;
-                el.parentNode?.replaceChild(span, el);
-            });
-        }
+        if (onApplyFontSize) { onApplyFontSize(size + 'px'); }
+        else { execCommand('fontSize', size); }
         setShowFontSizeDropdown(false);
     };
 
@@ -131,42 +123,18 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
         setShowFontFamilyDropdown(false);
     };
 
-    const insertHeading = (level: 1 | 2 | 3) => {
-        const tag = `h${level}`;
-        const sizes: Record<number, string> = { 1: '28px', 2: '22px', 3: '18px' };
-        const weights: Record<number, string> = { 1: '800', 2: '700', 3: '700' };
-        const sel = window.getSelection();
-        if (!sel || sel.rangeCount === 0) return;
-        const range = sel.getRangeAt(0);
-        const text = range.toString() || 'Tiêu đề';
-        const el = document.createElement(tag);
-        el.style.fontSize = sizes[level];
-        el.style.fontWeight = weights[level];
-        el.style.margin = '0';
-        el.textContent = text;
-        range.deleteContents();
-        range.insertNode(el);
-        sel.removeAllRanges();
-        // fire onChange
-        onExecCommand?.('noop');
-        // trigger input event on elementRef
-        elementRef?.current?.dispatchEvent(new Event('input', { bubbles: true }));
+    const insertHeading = (level: number) => {
+        if (onApplyFontSize) {
+            const sizeMap: Record<number, string> = { 1: '32px', 2: '24px', 3: '18px' };
+            onApplyFontSize(sizeMap[level] || '16px');
+        } else {
+            execCommand('formatBlock', `<h${level}>`);
+        }
     };
 
-    const insertMergeTag = (tag: string) => {
+    const insertMergeTag = (val: string) => {
         restoreSelection();
-        const sel = window.getSelection();
-        if (sel && sel.rangeCount > 0) {
-            const range = sel.getRangeAt(0);
-            range.deleteContents();
-            const textNode = document.createTextNode(tag);
-            range.insertNode(textNode);
-            range.setStartAfter(textNode);
-            range.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(range);
-        }
-        elementRef?.current?.dispatchEvent(new Event('input', { bubbles: true }));
+        execCommand('insertText', val);
         setShowMergeTags(false);
     };
 
@@ -179,13 +147,13 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
     return createPortal(
         <>
             <div
-                className={`fixed z-[100100] flex flex-col bg-slate-900 text-white rounded-2xl shadow-2xl px-1 py-1 gap-0.5 border border-slate-700/50 ${!isVisible ? 'invisible pointer-events-none' : 'animate-in fade-in zoom-in-95 duration-150'}`}
+                className={`fixed z-[100100] flex flex-col bg-slate-900 text-white rounded-2xl shadow-2xl px-1.5 py-1.5 gap-0.5 border border-slate-700/50 ${!isVisible ? 'invisible pointer-events-none' : 'animate-in fade-in zoom-in-95 duration-150'}`}
                 style={{ top: position.top, left: position.left, transform: 'translate(-50%, -100%)', width: 'max-content', marginTop: '-12px' }}
                 onMouseDown={(e) => e.preventDefault()}
                 onMouseEnter={onToolbarMouseEnter}
                 onMouseLeave={onToolbarMouseLeave}
             >
-                {/* ── Row 1: Headings + Font Family + Font Size ── */}
+                {/* ── Row 1: Headings + Font Family + Font Size + Undo/Redo ── */}
                 <div className="flex items-center gap-0.5">
                     <ToolbarBtn onClick={() => insertHeading(1)} title="Heading 1"><Heading1 className="w-3.5 h-3.5" /></ToolbarBtn>
                     <ToolbarBtn onClick={() => insertHeading(2)} title="Heading 2"><Heading2 className="w-3.5 h-3.5" /></ToolbarBtn>
@@ -193,7 +161,6 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
 
                     <Divider />
 
-                    {/* Font Family */}
                     <div className="relative">
                         <ToolbarBtn onClick={() => { closeAllDropdowns(); saveSelection(); setShowFontFamilyDropdown(v => !v); }} title="Font Family">
                             <Type className="w-3.5 h-3.5" />
@@ -207,7 +174,6 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
                         )}
                     </div>
 
-                    {/* Font Size */}
                     <div className="relative">
                         <button
                             onMouseDown={(e) => { e.preventDefault(); saveSelection(); closeAllDropdowns(); setShowFontSizeDropdown(v => !v); }}
@@ -222,11 +188,15 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
                             </div>
                         )}
                     </div>
+
+                    <Divider />
+
+                    <ToolbarBtn onClick={() => execCommand('undo')} title="Hoàn tác (Undo)"><Undo2 className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarBtn onClick={() => execCommand('redo')} title="Làm lại (Redo)"><Redo2 className="w-3.5 h-3.5" /></ToolbarBtn>
                 </div>
 
-                {/* ── Row 2: Format + Align + Link + Merge Tags ── */}
+                {/* ── Row 2: Format + Lists + Align + Color + Link + Merge Tags ── */}
                 <div className="flex items-center gap-0.5">
-                    {/* Formatting */}
                     <ToolbarBtn onClick={() => execCommand('bold')} title="Bold"><Bold className="w-3.5 h-3.5" /></ToolbarBtn>
                     <ToolbarBtn onClick={() => execCommand('italic')} title="Italic"><Italic className="w-3.5 h-3.5" /></ToolbarBtn>
                     <ToolbarBtn onClick={() => execCommand('underline')} title="Underline"><Underline className="w-3.5 h-3.5" /></ToolbarBtn>
@@ -234,23 +204,28 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
 
                     <Divider />
 
-                    {/* Alignment — tất cả 4 nút */}
-                    <ToolbarBtn onClick={() => execCommand('justifyLeft')} title="Còn trái"><AlignLeft className="w-3.5 h-3.5" /></ToolbarBtn>
-                    <ToolbarBtn onClick={() => execCommand('justifyCenter')} title="Còn giữa"><AlignCenter className="w-3.5 h-3.5" /></ToolbarBtn>
-                    <ToolbarBtn onClick={() => execCommand('justifyRight')} title="Còn phải"><AlignRight className="w-3.5 h-3.5" /></ToolbarBtn>
-                    <ToolbarBtn onClick={() => execCommand('justifyFull')} title="Còn đều 2 bên"><AlignJustify className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarBtn onClick={() => execCommand('insertUnorderedList')} title="Danh sách dấu chấm"><List className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarBtn onClick={() => execCommand('insertOrderedList')} title="Danh sách số"><ListOrdered className="w-3.5 h-3.5" /></ToolbarBtn>
 
                     <Divider />
 
-                    {/* Color */}
-                    <div className="relative">
-                        <ToolbarBtn onClick={() => { closeAllDropdowns(); setShowColorPicker(v => !v); }} title="Màu chữ">
+                    <ToolbarBtn onClick={() => execCommand('justifyLeft')} title="Căn trái"><AlignLeft className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarBtn onClick={() => execCommand('justifyCenter')} title="Căn giữa"><AlignCenter className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarBtn onClick={() => execCommand('justifyRight')} title="Căn phải"><AlignRight className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarBtn onClick={() => execCommand('justifyFull')} title="Căn đều 2 bên"><AlignJustify className="w-3.5 h-3.5" /></ToolbarBtn>
+
+                    <Divider />
+
+                    <div className="relative flex gap-0.5">
+                        <ToolbarBtn onClick={() => { const target = !showColorPicker || colorPickerMode !== 'text'; closeAllDropdowns(); setColorPickerMode('text'); setShowColorPicker(target); }} active={showColorPicker && colorPickerMode === 'text'} title="Màu chữ">
                             <Palette className="w-3.5 h-3.5" />
                         </ToolbarBtn>
+                        <ToolbarBtn onClick={() => { const target = !showColorPicker || colorPickerMode !== 'highlight'; closeAllDropdowns(); setColorPickerMode('highlight'); setShowColorPicker(target); }} active={showColorPicker && colorPickerMode === 'highlight'} title="Màu nền chữ (Highlight)">
+                            <Highlighter className="w-3.5 h-3.5" />
+                        </ToolbarBtn>
                         {showColorPicker && (
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-slate-900 p-3 rounded-2xl border border-slate-700 shadow-2xl z-50 animate-in slide-in-from-bottom-2 w-56">
-                                {/* Hex Input */}
-                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Nhập màu</p>
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-slate-900 p-3 rounded-2xl border border-slate-700 shadow-2xl z-50 animate-in slide-in-from-bottom-2 w-max">
+                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Nhập màu {colorPickerMode === 'text' ? 'chữ' : 'nền'}</p>
                                 <div className="flex gap-1.5 items-center mb-2">
                                     <div
                                         className="w-7 h-7 rounded-lg border-2 border-slate-600 flex-shrink-0"
@@ -274,22 +249,21 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
                                                 if (e.key === 'Enter') {
                                                     const val = hexInput.startsWith('#') ? hexInput : `#${hexInput}`;
                                                     if (/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(val)) {
-                                                        execCommand('foreColor', val);
+                                                        execCommand(colorPickerMode === 'text' ? 'foreColor' : 'backColor', val);
                                                         setShowColorPicker(false);
                                                         setHexInput('');
                                                         setPreviewColor('');
                                                     }
                                                 }
                                             }}
-                                            className="flex-1 bg-transparent text-xs font-mono font-bold text-slate-100 outline-none w-0"
-                                            style={{ minWidth: 0 }}
+                                            className="flex-1 bg-transparent text-xs font-mono font-bold text-slate-100 outline-none w-16"
                                         />
                                     </div>
                                     <button
                                         onClick={() => {
                                             const val = hexInput.startsWith('#') ? hexInput : '#' + hexInput;
                                             if (/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(val)) {
-                                                execCommand('foreColor', val);
+                                                execCommand(colorPickerMode === 'text' ? 'foreColor' : 'backColor', val);
                                                 setShowColorPicker(false);
                                                 setHexInput('');
                                                 setPreviewColor('');
@@ -298,7 +272,6 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
                                         className="bg-amber-600 text-white rounded-lg px-2 py-1.5 text-[10px] font-bold hover:bg-amber-400 transition-colors flex-shrink-0"
                                     >OK</button>
                                 </div>
-                                {/* Native color picker - apply ngay khi chọn, không dùng onBlur gây bug */}
                                 <input
                                     type="color"
                                     className="w-full h-7 cursor-pointer rounded-lg border border-slate-700 mb-2.5"
@@ -306,35 +279,31 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
                                     onChange={e => {
                                         setHexInput(e.target.value);
                                         setPreviewColor(e.target.value);
-                                        execCommand('foreColor', e.target.value);
+                                        execCommand(colorPickerMode === 'text' ? 'foreColor' : 'backColor', e.target.value);
                                     }}
                                 />
-                                {/* Used colors */}
                                 {usedColors.filter(c => c && c !== 'transparent' && c !== 'none' && !c.includes('gradient')).length > 0 && (
                                     <div className="mb-2.5">
                                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Đang dùng</p>
-                                        <div className="flex flex-wrap gap-1.5">
+                                        <div className="flex flex-wrap gap-1.5 max-w-[190px]">
                                             {usedColors.filter(c => c && c !== 'transparent' && c !== 'none' && !c.includes('gradient')).slice(0, 10).map((c, i) => (
-                                                <button key={i} onClick={() => { execCommand('foreColor', c); setShowColorPicker(false); }} className="w-5 h-5 rounded-full border border-white/10 hover:scale-125 transition-transform shadow-sm ring-offset-slate-900 hover:ring-2 hover:ring-amber-400" style={{ backgroundColor: c }} title={c} />
+                                                <button key={i} onClick={() => { execCommand(colorPickerMode === 'text' ? 'foreColor' : 'backColor', c); setShowColorPicker(false); }} className="w-5 h-5 rounded-full border border-white/10 hover:scale-125 transition-transform shadow-sm ring-offset-slate-900 hover:ring-2 hover:ring-amber-400" style={{ backgroundColor: c }} title={c} />
                                             ))}
                                         </div>
                                     </div>
                                 )}
-                                {/* Preset palette */}
                                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Palette</p>
-                                <div className="grid grid-cols-5 gap-1.5">
-                                    {COLORS.map(c => (
-                                        <button key={c} onClick={() => { execCommand('foreColor', c); setShowColorPicker(false); }} className="w-5 h-5 rounded-full border border-white/10 hover:scale-125 transition-transform shadow-sm" style={{ backgroundColor: c }} title={c} />
+                                <div className="grid grid-cols-8 gap-1 max-w-[190px]">
+                                    {PREMIUM_COLORS.slice(0, 48).map(c => (
+                                        <button key={c} onClick={() => { execCommand(colorPickerMode === 'text' ? 'foreColor' : 'backColor', c); setShowColorPicker(false); }} className="w-5 h-5 rounded-full border border-white/10 hover:scale-125 transition-transform shadow-sm" style={{ backgroundColor: c }} title={c} />
                                     ))}
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    {/* Link */}
                     <ToolbarBtn onClick={handleLinkClick} title="Chèn link"><Link className="w-3.5 h-3.5" /></ToolbarBtn>
 
-                    {/* Merge Tags (Biến) */}
                     <div className="relative">
                         <button
                             onClick={() => { saveSelection(); closeAllDropdowns(); setShowMergeTags(v => !v); }}
@@ -404,6 +373,7 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
                 placeholder="https://example.com"
                 confirmLabel="Chèn"
                 zIndex={100200}
+                isDarkTheme={true}
             />
         </>,
         document.body

@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import Lenis from 'lenis';
 import { Flow, Subscriber } from '../../../types';
 import { api } from '../../../services/storageAdapter';
 import Skeleton from '../../common/Skeleton';
@@ -29,38 +28,6 @@ import { generateFlowStepLabels } from '../../../utils/flowLabeling';
 const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
     const navigate = useNavigate();
     const containerRef = useRef<HTMLDivElement>(null);
-
-    // Initialize local Lenis smooth scroll on parent container
-    useEffect(() => {
-        const parent = containerRef.current?.parentElement;
-        if (!parent) return;
-
-        // Set prevent attribute so the global layout Lenis ignores this scrolling container
-        parent.setAttribute('data-lenis-prevent', 'true');
-
-        const lenis = new Lenis({
-            wrapper: parent,
-            content: containerRef.current,
-            duration: 1.2,
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-            orientation: 'vertical',
-            gestureOrientation: 'vertical',
-            smoothWheel: true,
-        });
-
-        let rafId: number;
-        function raf(time: number) {
-            lenis.raf(time);
-            rafId = requestAnimationFrame(raf);
-        }
-
-        rafId = requestAnimationFrame(raf);
-
-        return () => {
-            cancelAnimationFrame(rafId);
-            lenis.destroy();
-        };
-    }, []);
 
     const [modalParticipants, setModalParticipants] = useState<any[]>([]);
     const [logs, setLogs] = useState<any[]>([]);
@@ -188,8 +155,8 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
         if (type === 'trigger') {
             const tType = config.type || 'segment';
             switch (tType) {
-                case 'segment': return (config.targetSubtype === 'list' || config.targetSubtype === 'sync') ? { icon: ListPlus, gradient: 'from-emerald-500 to-teal-600', text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/10', label: 'List Trigger' } : { icon: Layers, gradient: 'from-orange-500 to-[#ca7900]', text: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-500/10', label: 'Segment Trigger' };
-                case 'form': return { icon: FileInput, gradient: 'from-amber-400 to-orange-500', text: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10', label: 'Form Trigger' };
+                case 'segment': return (config.targetSubtype === 'list' || config.targetSubtype === 'sync') ? { icon: ListPlus, gradient: 'from-emerald-500 to-teal-600', text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/10', label: 'List Trigger' } : { icon: Layers, gradient: 'from-orange-500 to-[#ca7900]', inlineGradient: 'linear-gradient(135deg, #f97316 0%, #ca7900 100%)', text: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-500/10', label: 'Segment Trigger' };
+                case 'form': return { icon: FileInput, gradient: 'from-amber-400 to-orange-500', inlineGradient: 'linear-gradient(135deg, #fbbf24 0%, #f97316 100%)', text: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10', label: 'Form Trigger' };
                 case 'purchase': return { icon: ShoppingCart, gradient: 'from-pink-500 to-rose-600', text: 'text-pink-600 dark:text-pink-400', bg: 'bg-pink-50 dark:bg-pink-500/10', label: 'Purchase Trigger' };
                 case 'custom_event': return { icon: Zap, gradient: 'from-violet-500 to-indigo-600', text: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-500/10', label: 'Custom Event' };
                 case 'tag': return { icon: Tag, gradient: 'from-emerald-500 to-teal-600', text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/10', label: 'Tag Trigger' };
@@ -215,7 +182,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                 bg: 'bg-blue-50 dark:bg-blue-500/10',
                 label: 'Zalo ZNS'
             };
-            case 'wait': return { icon: Clock, gradient: 'from-amber-400 to-orange-500', text: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10', label: 'Delay' };
+            case 'wait': return { icon: Clock, gradient: 'from-amber-400 to-orange-500', inlineGradient: 'linear-gradient(135deg, #fbbf24 0%, #f97316 100%)', text: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10', label: 'Delay' };
             case 'condition': return { icon: GitMerge, gradient: 'from-indigo-500 to-purple-600', text: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-500/10', label: 'Condition' };
             case 'advanced_condition': return { icon: GitMerge, gradient: 'from-indigo-500 to-purple-600', text: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-500/10', label: 'Adv. Condition' };
             case 'split_test': return { icon: Beaker, gradient: 'from-violet-500 to-fuchsia-600', text: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-500/10', label: 'A/B Test' };
@@ -1340,9 +1307,12 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                         return (
                                             <div key={idx} className="relative group">
                                                 {/* Timeline Connector Dot (Top Aligned to step icon) */}
-                                                <div className={`absolute -left-[21px] md:-left-[33px] top-[26px] md:top-[30px] w-3 h-3 md:w-4 md:h-4 rounded-full border-2 border-white dark:border-slate-950 shadow-sm z-10 flex items-center justify-center ${dotColorClass}`}>
-                                                    <div className="w-1 md:w-1.5 h-1 md:h-1.5 bg-white dark:bg-slate-950 rounded-full"></div>
-                                                </div>
+                                                 <div 
+                                                     className={`absolute -left-[21px] md:-left-[33px] top-[26px] md:top-[30px] w-3 h-3 md:w-4 md:h-4 rounded-full border-2 border-white dark:border-slate-950 shadow-sm z-10 flex items-center justify-center ${item.type === 'wait' && item.users > 0 ? '' : dotColorClass}`}
+                                                     style={item.type === 'wait' && item.users > 0 ? { background: '#f59e0b' } : undefined}
+                                                 >
+                                                     <div className="w-1 md:w-1.5 h-1 md:h-1.5 bg-white dark:bg-slate-950 rounded-full"></div>
+                                                 </div>
 
                                                 {/* Step Card */}
                                                 <div
@@ -1357,7 +1327,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-4">
 
                                                         <div className="flex items-center flex-1 min-w-0 gap-3 md:gap-4">
-                                                            <div className={`${item.type === 'wait' ? 'w-8 h-8' : 'w-10 h-10'} rounded-lg flex items-center justify-center shadow-sm bg-gradient-to-br ${item.style.gradient} text-white shrink-0`}>
+                                                            <div className={`${item.type === 'wait' ? 'w-8 h-8' : 'w-10 h-10'} rounded-lg flex items-center justify-center shadow-sm bg-gradient-to-br ${item.style.gradient} text-white shrink-0`} style={item.style.inlineGradient ? { background: item.style.inlineGradient } : undefined}>
                                                                 <Icon className={`${item.type === 'wait' ? 'w-4 h-4' : 'w-5 h-5'}`} />
                                                             </div>
                                                             <div className="min-w-0 flex-1">

@@ -24,7 +24,25 @@ $action = $_GET['action'] ?? '';
 
 if ($method === 'GET' && $action === 'list') {
     $stmt = $pdo->query("SELECT id, email, name, role, status, last_login, picture FROM users ORDER BY last_login DESC, created_at DESC");
-    jsonResponse(true, $stmt->fetchAll());
+    $users = $stmt->fetchAll();
+
+    foreach ($users as &$user) {
+        try {
+            $wsStmt = $pdo->prepare("
+                SELECT w.name as workspace_name, r.name as role_name 
+                FROM workspace_users wu
+                JOIN workspaces w ON w.id = wu.workspace_id
+                LEFT JOIN roles r ON r.id = wu.role_id
+                WHERE TRIM(wu.user_id) COLLATE utf8mb4_unicode_ci = TRIM(?) COLLATE utf8mb4_unicode_ci
+            ");
+            $wsStmt->execute([$user['id']]);
+            $user['workspaces'] = $wsStmt->fetchAll();
+        } catch (Exception $e) {
+            $user['workspaces'] = [];
+        }
+    }
+
+    jsonResponse(true, $users);
 }
 
 if ($method === 'POST' && $action === 'update_status') {

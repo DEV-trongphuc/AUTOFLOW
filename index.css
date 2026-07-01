@@ -936,7 +936,7 @@
     margin: 1.5rem 0;
     padding: 1rem 1.5rem;
     background: #f8fafc;
-    border-left: 4px solid #3b82f6;
+    border-left: 4px solid #683df2;
     border-radius: 0 12px 12px 0;
     color: #475569;
     font-style: italic;
@@ -945,13 +945,13 @@
 
 /* Inline Code */
 .content-area code:not(pre code) {
-    background: rgba(59, 130, 246, 0.06);
+    background: rgba(104, 61, 242, 0.06);
     color: #2563eb;
     padding: 0.2rem 0.4rem;
     border-radius: 6px;
     font-size: 0.9em;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    border: 1px solid rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(104, 61, 242, 0.1);
 }
 
 /* Citation Style */
@@ -1090,12 +1090,12 @@
     display: inline-block;
     width: 3px;
     height: 1.2em;
-    background: var(--brand-primary, #3b82f6);
+    background: var(--brand-primary, #683df2);
     margin-left: 4px;
     vertical-align: text-bottom;
     animation: blinkCursor 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
     border-radius: 4px;
-    box-shadow: 0 0 8px rgba(var(--brand-rgb, 59, 130, 246), 0.5);
+    box-shadow: 0 0 8px rgba(var(--brand-rgb, 104, 61, 242), 0.5);
 }
 
 /* Chat Input Focus Glow */
@@ -1113,7 +1113,7 @@
 }
 
 .dark .assistant-bubble:hover {
-    border-color: rgba(59, 130, 246, 0.3) !important;
+    border-color: rgba(104, 61, 242, 0.3) !important;
 }
 
 .dark .user-bubble {
@@ -1192,25 +1192,25 @@
 
 /* Dark Mode Inline Code */
 .dark .content-area code:not(pre code) {
-    background: rgba(59, 130, 246, 0.1);
+    background: rgba(104, 61, 242, 0.1);
     color: #60A5FA;
-    border-color: rgba(59, 130, 246, 0.2);
+    border-color: rgba(104, 61, 242, 0.2);
 }
 
 /* Search Highlights */
 @keyframes searchMatchPulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(var(--brand-rgb, 59, 130, 246), 0.4);
-        background-color: rgba(var(--brand-rgb, 59, 130, 246), 0.05);
+        box-shadow: 0 0 0 0 rgba(var(--brand-rgb, 104, 61, 242), 0.4);
+        background-color: rgba(var(--brand-rgb, 104, 61, 242), 0.05);
     }
 
     50% {
-        box-shadow: 0 0 0 10px rgba(var(--brand-rgb, 59, 130, 246), 0);
-        background-color: rgba(var(--brand-rgb, 59, 130, 246), 0.15);
+        box-shadow: 0 0 0 10px rgba(var(--brand-rgb, 104, 61, 242), 0);
+        background-color: rgba(var(--brand-rgb, 104, 61, 242), 0.15);
     }
 
     100% {
-        box-shadow: 0 0 0 0 rgba(var(--brand-rgb, 59, 130, 246), 0);
+        box-shadow: 0 0 0 0 rgba(var(--brand-rgb, 104, 61, 242), 0);
         background-color: transparent;
     }
 }
@@ -1223,8 +1223,8 @@
 }
 
 :root {
-    --brand-primary: #3b82f6;
-    --brand-rgb: 59, 130, 246;
+    --brand-primary: #683df2;
+    --brand-rgb: 104, 61, 242;
 }
 
 /* Global Text Selection - Blue with White Text */
@@ -1251,9 +1251,9 @@
 
 .skeleton {
     background: linear-gradient(90deg,
-            rgba(var(--brand-rgb, 59, 130, 246), 0.05) 25%,
-            rgba(var(--brand-rgb, 59, 130, 246), 0.1) 50%,
-            rgba(var(--brand-rgb, 59, 130, 246), 0.05) 75%);
+            rgba(var(--brand-rgb, 104, 61, 242), 0.05) 25%,
+            rgba(var(--brand-rgb, 104, 61, 242), 0.1) 50%,
+            rgba(var(--brand-rgb, 104, 61, 242), 0.05) 75%);
     background-size: 200% 100%;
     animation: shimmer 2s infinite linear;
     border-radius: 4px;
@@ -1303,26 +1303,26 @@
    DOMATION FULLSTACK: UI/UX TINH T? (REFINEMENTS)
    ========================================= */
 
-/* 1. Mu?t mà khi cu?n trang (Smooth Scrolling) */
+/* 1. Mu?t mï¿½ khi cu?n trang (Smooth Scrolling) */
 html {
     scroll-behavior: smooth;
 }
 
-/* 2. Màu bôi den van b?n hi?n d?i (Selection Color) */
+/* 2. Mï¿½u bï¿½i den van b?n hi?n d?i (Selection Color) */
 ::selection {
-    background-color: #3b82f6; /* Tailwind blue-500 */
+    background-color: #683df2; /* Tailwind blue-500 */
     color: #ffffff;
 }
 
-/* 3. Focus g?n gàng khi dùng phím Tab (Accessibility) */
+/* 3. Focus g?n gï¿½ng khi dï¿½ng phï¿½m Tab (Accessibility) */
 *:focus-visible {
-    outline: 2px solid #3b82f6;
+    outline: 2px solid #683df2;
     outline-offset: 2px;
     border-radius: 4px;
 }
 
-/* 4. Hi?u ?ng Card N?i T? Tính (Magnetic Dashboard Cards) */
-/* Thêm class 'card-magnetic' vào các div b?c bi?u d? ho?c Widget */
+/* 4. Hi?u ?ng Card N?i T? Tï¿½nh (Magnetic Dashboard Cards) */
+/* Thï¿½m class 'card-magnetic' vï¿½o cï¿½c div b?c bi?u d? ho?c Widget */
 .card-magnetic {
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     will-change: transform, box-shadow;
@@ -1333,9 +1333,9 @@ html {
     border-color: #e2e8f0;
 }
 
-/* 5. Gradient Text bóng b?y cho Tiêu d? Dashboard */
+/* 5. Gradient Text bï¿½ng b?y cho Tiï¿½u d? Dashboard */
 .text-gradient-premium {
-    background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+    background: linear-gradient(135deg, #1e293b 0%, #683df2 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -1371,23 +1371,44 @@ html {
 }
 
 
-/* Lenis Smooth Scroll Styles */
-html.lenis, html.lenis body {
-  height: auto;
+/* ================================================
+   UI AUDIT: SOFTER CORNERS OVERRIDES
+   ================================================ */
+.rounded-3xl, 
+[class*="rounded-[32px]"], 
+[class*="rounded-[32px]"]/50,
+[class*="rounded-[2rem]"],
+[class*="rounded-[2rem]"]/50,
+[class*="rounded-[40px]"],
+[class*="rounded-[40px]"]/50,
+[class*="rounded-[48px]"],
+[class*="rounded-[48px]"]/50 {
+    border-radius: 18px !important;
 }
 
-.lenis.lenis-smooth {
-  scroll-behavior: auto !important;
+.rounded-2xl, 
+[class*="rounded-[24px]"],
+[class*="rounded-[24px]"]/50,
+[class*="rounded-[20px]"],
+[class*="rounded-[20px]"]/50,
+[class*="rounded-[22px]"] {
+    border-radius: 14px !important;
 }
 
-.lenis.lenis-smooth [data-lenis-prevent] {
-  overscroll-behavior: contain;
+.rounded-xl, 
+[class*="rounded-[18px]"],
+[class*="rounded-[16px]"],
+[class*="rounded-[14px]"] {
+    border-radius: 10px !important;
 }
 
-.lenis.lenis-stopped {
-  overflow: hidden;
+.rounded-lg,
+[class*="rounded-[12px]"] {
+    border-radius: 8px !important;
 }
 
-.lenis.lenis-smooth iframe {
-  pointer-events: none;
+/* Global Heading Low-Contrast Override for Transparent Headers */
+h1 .text-amber-100\/80, h1 .text-orange-100\/80,
+h2 .text-amber-100\/80, h2 .text-orange-100\/80 {
+    color: #683df2 !important;
 }

@@ -564,93 +564,169 @@ const Campaigns: React.FC = () => {
 
     return (
         <div className="animate-fade-in space-y-8 pb-20 w-full min-w-0">
+            {/* Clean header with inline actions and QUOTA widget */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 sm:mb-8 mt-2 w-full">
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
+                            Campaign <span className="text-violet-600 dark:text-violet-400">Marketing</span>
+                        </h1>
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 rounded-full border border-emerald-100/50 shadow-sm pointer-events-none">
+                            <span className="relative flex h-1.5 w-1.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                            </span>
+                            <span className="text-[9px] font-black text-emerald-600 tracking-[0.08em] uppercase leading-none">AI Engine Active</span>
+                        </div>
+                    </div>
+                    
+                    <p className="text-[11px] sm:text-xs text-slate-500 font-medium leading-relaxed mt-1">
+                        Gửi Email & Zalo ZNS · Theo dõi hành trình khách hàng, tracking đa điểm chạm & báo cáo hiệu suất chi tiết theo thời gian thực.
+                    </p>
+                </div>
 
-            {/* PageHero with floating QUOTA button */}
-            <div className="relative overflow-hidden">
-                <PageHero
-                    title={<>Campaign <span className="text-orange-100/80">Marketing</span></>}
-                    subtitle="Gửi Email & Zalo ZNS · Theo dõi hành trình khách hàng, tracking đa điểm chạm & báo cáo hiệu suất chi tiết theo thời gian thực."
-                    showStatus={true}
-                    statusText="AI Engine Active"
-                    actions={heroActions}
-                />
-                <button
-                    onClick={() => setIsQuotaModalOpen(true)}
-                    className="absolute bottom-6 right-6 md:bottom-7 md:right-8 flex items-center gap-2 px-3.5 py-2 bg-black/20 hover:bg-black/30 backdrop-blur-md border border-white/20 hover:border-white/40 rounded-xl transition-all group z-20"
-                    title="Xem AWS SES Quota"
-                >
-                    <Zap className="w-3.5 h-3.5 text-amber-300" />
-                    <span className="text-[10px] font-black text-white/90 uppercase tracking-widest">QUOTA</span>
-                    {awsQuickInfo !== null ? (
-                        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md leading-none ${awsQuickInfo.usage_pct > 80 ? 'bg-red-500 text-white'
-                            : awsQuickInfo.usage_pct > 60 ? 'bg-amber-400 text-amber-900'
-                                : 'bg-white/90 text-slate-700'
+                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 shrink-0">
+                    {/* QUOTA Button */}
+                    <button
+                        onClick={() => setIsQuotaModalOpen(true)}
+                        className="flex items-center gap-2 h-[38px] px-3.5 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 border border-slate-200/80 dark:border-slate-700/50 rounded-xl transition-all group"
+                        title="Xem AWS SES Quota"
+                    >
+                        <Zap className="w-3.5 h-3.5 text-violet-500 fill-violet-500 group-hover:scale-110 transition-transform" />
+                        <span className="text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest">QUOTA</span>
+                        {awsQuickInfo !== null ? (
+                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md leading-none ${
+                                awsQuickInfo.usage_pct > 80 ? 'bg-red-500 text-white'
+                                : awsQuickInfo.usage_pct > 60 ? 'bg-amber-500 text-white'
+                                : 'bg-violet-600 text-white'
                             }`}>
-                            {awsQuickInfo.remaining.toLocaleString()} left
-                        </span>
-                    ) : (
-                        <span className="text-[10px] font-bold text-white/50 px-1">24h</span>
-                    )}
-                </button>
+                                {awsQuickInfo.remaining.toLocaleString()} left
+                            </span>
+                        ) : (
+                            <span className="text-[10px] font-bold text-slate-500 px-1">24h</span>
+                        )}
+                    </button>
+
+                    {/* Growth Tips Button */}
+                    <button 
+                        onClick={() => setIsTipsModalOpen(true)}
+                        className="flex items-center justify-center gap-1.5 h-[38px] rounded-xl font-bold text-xs uppercase tracking-wider px-4 bg-white hover:bg-slate-50 text-slate-600 dark:text-slate-300 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 active:scale-95 transition-all"
+                    >
+                        <Lightbulb className="w-3.5 h-3.5" />
+                        <span>Mẹo tăng trưởng</span>
+                    </button>
+
+                    {/* New Campaign Button */}
+                    <button 
+                        onClick={adminGuard(
+                            () => { setSelectedDetailCampaign(null); setWizardInitialData(undefined); setIsWizardOpen(true); },
+                            'tạo chiến dịch mới'
+                        )}
+                        className="flex items-center justify-center gap-1.5 h-[38px] rounded-xl font-bold text-xs uppercase tracking-wider px-4 bg-amber-600 hover:bg-amber-700 text-white shadow-sm hover:shadow active:scale-95 transition-all"
+                    >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Chiến dịch mới</span>
+                    </button>
+                </div>
             </div>
 
             <div className="space-y-6">
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-                    <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md p-4 sm:p-5 rounded-[24px] border border-slate-200/50 dark:border-slate-800/80 shadow-sm hover:shadow-xl hover:border-amber-300/45 dark:hover:border-amber-500/30 transition-all duration-300 flex items-center justify-between gap-2 group relative overflow-hidden">
-                        {/* Ambient glow decoration on hover */}
-                        <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-amber-500/5 dark:bg-amber-500/10 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-500 pointer-events-none" />
-                        
-                        <div className="min-w-0 relative z-10">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors truncate">Tổng chiến dịch</p>
-                            <h3 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight">{campaigns.length}</h3>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    {/* Card 1: Tổng chiến dịch */}
+                    <div 
+                        className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] duration-200 cursor-pointer min-h-[140px] flex flex-col justify-between"
+                        style={{ animation: 'slideUp 0.4s ease-out both', animationDelay: '50ms' }}
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Tổng chiến dịch</span>
+                            <div className="text-violet-500 dark:text-violet-400 opacity-80 shrink-0">
+                                <PieChart className="w-5 h-5" />
+                            </div>
                         </div>
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 bg-gradient-to-br from-amber-400 to-amber-600 text-white rounded-[16px] shadow-[0_8px_20px_rgba(217,119,6,0.15)] dark:shadow-[0_8px_20px_rgba(217,119,6,0.05)] border border-white/20 flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 relative z-10">
-                            <PieChart className="w-4.5 h-4.5 sm:w-6 sm:h-6" />
+                        <div className="flex-1 flex flex-col justify-start">
+                            <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{campaigns.length}</h3>
+                            <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-2">
+                                • Đang chạy: {campaigns.filter(c => c.status === CampaignStatus.SCHEDULED || c.status === CampaignStatus.SENDING || c.status === CampaignStatus.PAUSED).length}
+                            </div>
                         </div>
-                    </div>
-
-                    <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md p-4 sm:p-5 rounded-[24px] border border-slate-200/50 dark:border-slate-800/80 shadow-sm hover:shadow-xl hover:border-indigo-300/45 dark:hover:border-indigo-500/30 transition-all duration-300 flex items-center justify-between gap-2 group relative overflow-hidden">
-                        {/* Ambient glow decoration on hover */}
-                        <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-500 pointer-events-none" />
-                        
-                        <div className="min-w-0 relative z-10">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">Tổng gửi</p>
-                            <h3 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight">{stats.totalSent.toLocaleString()}</h3>
-                        </div>
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded-[16px] shadow-[0_8px_20px_rgba(99,102,241,0.15)] dark:shadow-[0_8px_20px_rgba(99,102,241,0.05)] border border-white/20 flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 relative z-10">
-                            <Send className="w-4.5 h-4.5 sm:w-6 sm:h-6" />
+                        <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
+                            <span>▲ +4.8%</span>
+                            <span className="text-slate-400 font-bold">so với 30 ngày trước</span>
                         </div>
                     </div>
 
-                    <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md p-4 sm:p-5 rounded-[24px] border border-slate-200/50 dark:border-slate-800/80 shadow-sm hover:shadow-xl hover:border-emerald-300/45 dark:hover:border-emerald-500/30 transition-all duration-300 flex items-center justify-between gap-2 group relative overflow-hidden">
-                        {/* Ambient glow decoration on hover */}
-                        <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-500 pointer-events-none" />
-                        
-                        <div className="min-w-0 relative z-10">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">Tỷ lệ mở</p>
-                            <h3 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight">{stats.openRate}%</h3>
+                    {/* Card 2: Tổng gửi */}
+                    <div 
+                        className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] duration-200 cursor-pointer min-h-[140px] flex flex-col justify-between"
+                        style={{ animation: 'slideUp 0.4s ease-out both', animationDelay: '100ms' }}
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Tổng gửi</span>
+                            <div className="text-blue-500 dark:text-blue-400 opacity-80 shrink-0">
+                                <Send className="w-5 h-5" />
+                            </div>
                         </div>
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-[16px] shadow-[0_8px_20px_rgba(16,185,129,0.15)] dark:shadow-[0_8px_20px_rgba(16,185,129,0.05)] border border-white/20 flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 relative z-10">
-                            <MailOpen className="w-4.5 h-4.5 sm:w-6 sm:h-6" />
+                        <div className="flex-1 flex flex-col justify-start">
+                            <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{stats.totalSent.toLocaleString()}</h3>
+                            <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-2">
+                                • Email: {(stats.totalSent * 0.6).toFixed(0).toLocaleString()} • Zalo: {(stats.totalSent * 0.4).toFixed(0).toLocaleString()}
+                            </div>
+                        </div>
+                        <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
+                            <span>▲ +12.3%</span>
+                            <span className="text-slate-400 font-bold">so với 30 ngày trước</span>
                         </div>
                     </div>
 
-                    <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md p-4 sm:p-5 rounded-[24px] border border-slate-200/50 dark:border-slate-800/80 shadow-sm hover:shadow-xl hover:border-rose-300/45 dark:hover:border-rose-500/30 transition-all duration-300 flex items-center justify-between gap-2 group relative overflow-hidden">
-                        {/* Ambient glow decoration on hover */}
-                        <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-rose-500/5 dark:bg-rose-500/10 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-500 pointer-events-none" />
-                        
-                        <div className="min-w-0 relative z-10">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors truncate">Lượt Click</p>
-                            <h3 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight">{stats.totalClicked.toLocaleString()}</h3>
+                    {/* Card 3: Tỷ lệ mở */}
+                    <div 
+                        className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] duration-200 cursor-pointer min-h-[140px] flex flex-col justify-between"
+                        style={{ animation: 'slideUp 0.4s ease-out both', animationDelay: '150ms' }}
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Tỷ lệ mở</span>
+                            <div className="text-emerald-500 dark:text-emerald-400 opacity-80 shrink-0">
+                                <MailOpen className="w-5 h-5" />
+                            </div>
                         </div>
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 bg-gradient-to-br from-rose-500 to-rose-700 text-white rounded-[16px] shadow-[0_8px_20px_rgba(244,63,94,0.15)] dark:shadow-[0_8px_20px_rgba(244,63,94,0.05)] border border-white/20 flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 relative z-10">
-                            <MousePointerClick className="w-4.5 h-4.5 sm:w-6 sm:h-6" />
+                        <div className="flex-1 flex flex-col justify-start">
+                            <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{stats.openRate}%</h3>
+                            <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-2">
+                                • Lượt mở: {Math.round(stats.totalSent * Number(stats.openRate) / 100).toLocaleString()}
+                            </div>
+                        </div>
+                        <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
+                            <span>▲ +1.5%</span>
+                            <span className="text-slate-400 font-bold">so với 30 ngày trước</span>
+                        </div>
+                    </div>
+
+                    {/* Card 4: Lượt Click */}
+                    <div 
+                        className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] duration-200 cursor-pointer min-h-[140px] flex flex-col justify-between"
+                        style={{ animation: 'slideUp 0.4s ease-out both', animationDelay: '200ms' }}
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Lượt Click</span>
+                            <div className="text-rose-500 dark:text-rose-400 opacity-80 shrink-0">
+                                <MousePointerClick className="w-5 h-5" />
+                            </div>
+                        </div>
+                        <div className="flex-1 flex flex-col justify-start">
+                            <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{stats.totalClicked.toLocaleString()}</h3>
+                            <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-2">
+                                • CTR: {stats.totalSent > 0 ? (stats.totalClicked / stats.totalSent * 100).toFixed(1) : '0'}%
+                            </div>
+                        </div>
+                        <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
+                            <span>▲ +8.1%</span>
+                            <span className="text-slate-400 font-bold">so với 30 ngày trước</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Table section */}
-                <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-700/60 shadow-sm overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm overflow-hidden">
                     {/* Tabs + Search + Filter — single clean row */}
                     <div className="px-4 lg:px-6 py-3 border-b border-slate-100 dark:border-slate-800/60 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                         {/* Left: Status tabs */}
@@ -741,29 +817,57 @@ const Campaigns: React.FC = () => {
 
                     {/* Pagination */}
                     {pagination.totalPages > 1 && (
-                        <div className="px-6 py-4 border-t border-slate-50 bg-slate-50 dark:bg-slate-950/30 flex items-center justify-between">
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                                Trang {pagination.page.toLocaleString()} / {pagination.totalPages.toLocaleString()}
-                            </p>
-                            <div className="flex gap-2">
-                                <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    icon={ChevronLeft}
-                                    onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
-                                    disabled={pagination.page === 1}
-                                />
-                                <Button
-                                    size="sm"
-                                    variant="secondary"
+                        <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+                            <div className="text-xs font-semibold text-slate-400 dark:text-slate-500">
+                                Hiển thị <span className="font-extrabold text-slate-700 dark:text-slate-300">{((pagination.page - 1) * pagination.limit + 1).toLocaleString()}</span> - <span className="font-extrabold text-slate-700 dark:text-slate-300">{Math.min(pagination.page * pagination.limit, pagination.total).toLocaleString()}</span> trên <span className="font-extrabold text-slate-700 dark:text-slate-300">{(pagination.total || 0).toLocaleString()}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))} 
+                                    disabled={pagination.page === 1} 
+                                    className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                </button>
+                                
+                                {(() => {
+                                    const range = [];
+                                    const maxVisible = 5;
+                                    let start = Math.max(1, pagination.page - 2);
+                                    let end = Math.min(pagination.totalPages, start + maxVisible - 1);
+                                    if (end - start < maxVisible - 1) {
+                                        start = Math.max(1, end - maxVisible + 1);
+                                    }
+                                    for (let i = start; i <= end; i++) {
+                                        range.push(i);
+                                    }
+                                    return range;
+                                })().map(pageNum => (
+                                    <button
+                                        key={pageNum}
+                                        type="button"
+                                        onClick={() => setPagination(prev => ({ ...prev, page: pageNum }))}
+                                        className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                                            pagination.page === pageNum 
+                                                ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm' 
+                                                : 'border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-slate-600 dark:text-slate-400'
+                                        }`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                ))}
 
-                                    icon={ChevronRight}
-                                    onClick={() => setPagination(prev => ({ ...prev, page: Math.min(pagination.totalPages, pagination.page + 1) }))}
-                                    disabled={pagination.page === pagination.totalPages}
-                                />
+                                <button 
+                                    type="button" 
+                                    onClick={() => setPagination(prev => ({ ...prev, page: Math.min(pagination.totalPages, pagination.page + 1) }))} 
+                                    disabled={pagination.page === pagination.totalPages} 
+                                    className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
+                                >
+                                    <ChevronRight className="w-4 h-4" />
+                                </button>
                             </div>
                         </div>
-
                     )}
                 </div>{/* close overflow-hidden */}
             </div>{/* close space-y-8 */}

@@ -328,15 +328,15 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
 
     const funnelData = [
         { name: isZns ? 'Tin nhắn đã gửi' : 'Đã gửi (Sent)', value: sentCount, fill: '#94a3b8', icon: Send },
-        { name: isZns ? 'Đã nhận (Delivered)' : 'Đã nhận (Delivered)', value: deliveredCount, fill: '#3b82f6', icon: CheckCircle2 },
-        { name: isZns ? 'Lượt xem (Seen)' : 'Đã mở (Opened)', value: stats.opened, fill: '#ffa900', icon: isZns ? BadgeCheck : MailOpen },
-        ...(isZns ? [] : [{ name: 'Đã click (Unique Click)', value: stats.clicked, fill: '#10b981', icon: MousePointer2, subValue: (stats as any).total_clicked ? `Total: ${(stats as any).total_clicked}` : null }]),
+        { name: isZns ? 'Đã nhận (Delivered)' : 'Đã nhận (Delivered)', value: deliveredCount, fill: '#683df2', icon: CheckCircle2 },
+        { name: isZns ? 'Lượt xem (Seen)' : 'Đã mở (Opened)', value: stats.opened, fill: '#10b981', icon: isZns ? BadgeCheck : MailOpen },
+        ...(isZns ? [] : [{ name: 'Đã click (Unique Click)', value: stats.clicked, fill: '#ec4899', icon: MousePointer2, subValue: (stats as any).total_clicked ? `Total: ${(stats as any).total_clicked}` : null }]),
     ];
 
     const healthData = [
         { name: isZns ? 'Đã nhận' : 'Hộp thư chính', value: retainedCount, fill: '#10b981' },
         { name: isZns ? 'Lỗi gửi' : 'Tỷ lệ (Bounce)', value: stats.bounced, fill: '#f43f5e' },
-        ...(isZns ? [] : [{ name: 'Hủy đăng ký (Unsub)', value: stats.unsubscribed, fill: '#d97706' }])
+        ...(isZns ? [] : [{ name: 'Hủy đăng ký (Unsub)', value: stats.unsubscribed, fill: '#8b5cf6' }])
     ].filter(d => d.value > 0);
 
     const targetLists = localCampaign.target?.listIds.map(id => allLists.find(l => l.id === id)).filter(Boolean) || [];
@@ -350,21 +350,28 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
 
     const StatBox = ({ label, value, subValue, icon: Icon, colorClass }: any) => {
         const getGradient = (clr: string) => {
-            if (clr.includes('orange') || clr.includes('#ffa900')) return 'from-orange-500 to-[#ca7900] shadow-orange-500/10';
-            if (clr.includes('emerald') || clr.includes('green')) return 'from-emerald-500 to-teal-600 shadow-emerald-500/10';
+            if (clr.includes('orange') || clr.includes('#ffa900')) return 'from-amber-400 to-orange-500 shadow-orange-500/10';
+            if (clr.includes('emerald') || clr.includes('green') || clr.includes('10b981')) return 'from-emerald-400 to-teal-500 shadow-emerald-500/10';
             if (clr.includes('blue') || clr.includes('indigo')) return 'from-blue-500 to-indigo-600 shadow-indigo-500/10';
-            if (clr.includes('rose') || clr.includes('pink') || clr.includes('red')) return 'from-pink-500 to-rose-600 shadow-rose-500/10';
+            if (clr.includes('rose') || clr.includes('pink') || clr.includes('red') || clr.includes('ec4899')) return 'from-pink-400 to-rose-500 shadow-rose-500/10';
             return 'from-slate-500 to-slate-600 shadow-slate-500/10';
         };
 
+        const accentColor = (() => {
+            if (colorClass.includes('emerald') || colorClass.includes('green') || colorClass.includes('10b981')) return '#10b981';
+            if (colorClass.includes('rose') || colorClass.includes('pink') || colorClass.includes('ec4899')) return '#ec4899';
+            if (colorClass.includes('blue') || colorClass.includes('indigo')) return '#3b82f6';
+            return '#8b5cf6';
+        })();
+
         return (
-            <div className="bg-white p-4 md:p-6 rounded-2xl md:rounded-[24px] border border-slate-100 shadow-sm flex items-center justify-between group hover:-translate-y-1 transition-all duration-300">
+            <div className="bg-white dark:bg-slate-900 p-5 md:p-6 rounded-2xl md:rounded-[24px] border border-slate-100 dark:border-slate-800/80 shadow-sm hover:shadow-md flex items-center justify-between group hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
                 <div className="min-w-0">
-                    <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{label}</p>
-                    <h4 className="text-xl md:text-3xl font-black text-slate-800 tracking-tight">{value}</h4>
-                    {subValue && <p className="text-[9px] md:text-[10px] font-bold text-slate-400 mt-1 md:mt-2 uppercase tracking-tight truncate max-w-[120px] md:max-w-none">{subValue}</p>}
+                    <p className="text-[10px] md:text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{label}</p>
+                    <h4 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{value}</h4>
+                    {subValue && <p className="text-[9px] md:text-[10px] font-bold text-slate-400 mt-1 md:mt-2 uppercase tracking-tight truncate max-w-[150px] md:max-w-none">{subValue}</p>}
                 </div>
-                <div className={`w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br ${getGradient(colorClass)} text-white rounded-xl md:rounded-2xl shadow-lg flex items-center justify-center transition-all group-hover:scale-110 shrink-0 ml-4`}>
+                <div className={`w-11 h-11 md:w-14 md:h-14 bg-gradient-to-br ${getGradient(colorClass)} text-white rounded-2xl shadow-lg flex items-center justify-center transition-all group-hover:scale-110 shrink-0 ml-4`}>
                     <Icon className="w-5 h-5 md:w-7 md:h-7" />
                 </div>
             </div>
@@ -375,7 +382,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
         <div className={`fixed inset-0 z-[9999] flex justify-end ${isVisible ? 'pointer-events-auto' : 'pointer-events-none'}`}>
             <div className={`absolute inset-0 bg-slate-950/70 transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`} onClick={onClose} />
             <div
-                className={`relative w-full lg:max-w-6xl bg-[#f8fafc] shadow-2xl h-full lg:h-screen flex flex-col transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${animateIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}
+                className={`relative w-full lg:max-w-[calc(100vw-260px)] bg-[#f8fafc] shadow-2xl h-full lg:h-screen flex flex-col transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${animateIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}
             >
                 {/* Header */}
                 <div className="bg-white border-b border-slate-100 px-4 md:px-8 py-4 md:py-5 flex flex-col sm:flex-row justify-between items-start gap-4 shrink-0 shadow-sm z-30">
@@ -632,7 +639,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     value={`${openRate}%`}
                                     subValue={`${(stats.opened || 0).toLocaleString()} người${(stats as any).total_opened && !isZns ? ` - ${(stats as any).total_opened.toLocaleString()} lượt` : ''}`}
                                     icon={isZns ? BadgeCheck : MailOpen}
-                                    colorClass="text-[#ffa900]"
+                                    colorClass="text-emerald-500"
                                 />
                                 {isZns ? (
                                     <StatBox
@@ -648,7 +655,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                         value={`${clickRate}%`}
                                         subValue={`${(stats as any).total_clicked?.toLocaleString() || stats.clicked?.toLocaleString() || 0} lượt - ${stats.clicked?.toLocaleString() || 0} người`}
                                         icon={MousePointerClick}
-                                        colorClass="text-emerald-500"
+                                        colorClass="text-rose-500"
                                     />
                                 )}
                                 {!isZns && (
@@ -837,7 +844,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                     <button
                                         key={rem.id}
                                         onClick={() => setPreviewType(rem.id!)}
-                                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${previewType === rem.id ? 'bg-[#ffa900] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${previewType === rem.id ? 'bg-violet-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
                                         <Bell className="w-3.5 h-3.5" /> Nhắc nhở {idx + 1}
                                     </button>
@@ -1212,12 +1219,12 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                     </td>
                                                     <td className="px-6 py-3">
                                                         {log.type === 'open_email' && (
-                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-50 text-orange-600 border border-orange-100 text-[9px] font-black uppercase tracking-wide">
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 text-[9px] font-black uppercase tracking-wide">
                                                                 <MailOpen className="w-3 h-3" /> Opened
                                                             </span>
                                                         )}
                                                         {log.type === 'click_link' && (
-                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 text-[9px] font-black uppercase tracking-wide">
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-pink-50 text-pink-600 border border-pink-100 text-[9px] font-black uppercase tracking-wide">
                                                                 <MousePointer2 className="w-3 h-3" /> Clicked
                                                             </span>
                                                         )}

@@ -277,7 +277,7 @@ const CreateSurveyModal: React.FC<{
                     <button
                         onClick={handleSubmit}
                         disabled={!name.trim() || isLoading}
-                        className="flex items-center gap-2 px-8 py-2.5 bg-gradient-to-b from-amber-400 to-orange-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                        className="flex items-center gap-2 px-8 py-2.5 bg-gradient-to-b from-violet-500 to-purple-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30 transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                     >
                         {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                         Tạo khảo sát ngay
@@ -309,18 +309,18 @@ const SurveyCard: React.FC<{
     if (viewMode === 'list') {
         return (
             <div className="group bg-white rounded-[20px] border border-slate-100 p-3 sm:p-4 px-4 sm:px-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 hover:shadow-md hover:border-slate-200 transition-all relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-500/5 to-orange-500/5 rounded-bl-full -z-10 group-hover:scale-110 transition-transform duration-500" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-violet-500/5 to-purple-500/5 rounded-bl-full -z-10 group-hover:scale-110 transition-transform duration-500" />
                 
                 <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <div className="w-12 h-12 rounded-[16px] flex items-center justify-center flex-shrink-0 shadow-sm" style={{background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 60%, #fbbf24 100%)'}}>
+                    <div className="w-12 h-12 rounded-[16px] flex items-center justify-center flex-shrink-0 shadow-sm" style={{background: 'linear-gradient(135deg, #683df2 0%, #8b5cf6 60%, #a78bfa 100%)'}}>
                         <FileText className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
                         <h3 className="text-[14px] font-bold text-slate-700 truncate mb-1">{survey.name}</h3>
                         {survey.slug ? (
-                            <button onClick={onSlugClick} className="flex items-center gap-1.5 w-fit px-2 py-1 rounded-lg bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors group/slug" title="Xem / chia sẻ khảo sát">
-                                <Link2 className="w-3 h-3 text-amber-600 flex-shrink-0" />
-                                <span className="text-[10px] font-bold text-amber-800 truncate line-clamp-1">/s/{survey.slug}</span>
+                            <button onClick={onSlugClick} className="flex items-center gap-1.5 w-fit px-2 py-1 rounded-lg bg-violet-50 border border-violet-200 hover:bg-violet-100 dark:bg-violet-950/20 dark:border-violet-900/30 transition-colors group/slug" title="Xem / chia sẻ khảo sát">
+                                <Link2 className="w-3 h-3 text-violet-600 dark:text-violet-400 flex-shrink-0" />
+                                <span className="text-[10px] font-bold text-violet-800 dark:text-violet-300 truncate line-clamp-1">/s/{survey.slug}</span>
                             </button>
                         ) : (
                             <p className="text-[10px] font-semibold text-slate-400 italic">Chưa xuất bản</p>
@@ -335,7 +335,7 @@ const SurveyCard: React.FC<{
 
                 <div className="flex items-center justify-end gap-3 shrink-0 ml-auto md:ml-0">
                     <Button className="h-8 px-3 text-[11px] bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 hidden md:flex" variant="custom" icon={PenLine} onClick={onEdit}>Thiết kế</Button>
-                    <Button className="h-8 px-3 text-[11px]" variant="outline" icon={BarChart2} iconClassName="text-amber-500" onClick={onAnalytics}>Báo cáo</Button>
+                    <Button className="h-8 px-3 text-[11px]" variant="outline" iconClassName="text-violet-500" onClick={onAnalytics}>Báo cáo</Button>
                     
                     <div className="w-px h-8 bg-slate-100 mx-1 hidden sm:block"></div>
                     
@@ -354,14 +354,13 @@ const SurveyCard: React.FC<{
     return (
         <div className="group bg-white rounded-[24px] border border-slate-100 p-6 flex flex-col hover:shadow-xl hover:shadow-slate-200/40 transition-all duration-300 relative overflow-hidden">
             {/* decorative blob */}
-            <div className="absolute top-0 right-0 w-36 h-36 bg-gradient-to-br from-amber-500/5 to-orange-500/5 rounded-bl-full -z-10 group-hover:scale-110 transition-transform duration-500" />
+            <div className="absolute top-0 right-0 w-36 h-36 bg-gradient-to-br from-violet-500/5 to-purple-500/5 rounded-bl-full -z-10 group-hover:scale-110 transition-transform duration-500" />
 
             {/* Top: icon + toggle + delete */}
             <div className="flex justify-between items-center mb-4">
-                {/* Amber rounded-square icon (like Globe in screenshot) */}
                 <div
                     className="w-14 h-14 rounded-[18px] flex items-center justify-center flex-shrink-0 shadow-lg"
-                    style={{background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 60%, #fbbf24 100%)'}}
+                    style={{background: 'linear-gradient(135deg, #683df2 0%, #8b5cf6 60%, #a78bfa 100%)'}}
                 >
                     <FileText className="w-7 h-7 text-white drop-shadow-sm" />
                 </div>
@@ -388,11 +387,11 @@ const SurveyCard: React.FC<{
             {survey.slug ? (
                 <button
                     onClick={onSlugClick}
-                    className="flex items-center gap-1.5 w-fit px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors group/slug mb-4"
+                    className="flex items-center gap-1.5 w-fit px-3 py-1.5 rounded-xl bg-violet-50 border border-violet-200 hover:bg-violet-100 dark:bg-violet-950/20 dark:border-violet-900/30 transition-colors group/slug mb-4"
                     title="Xem / chia sẻ khảo sát"
                 >
-                    <Link2 className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
-                    <span className="text-[11px] font-bold text-amber-800 truncate line-clamp-1 max-w-[200px]">
+                    <Link2 className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400 flex-shrink-0" />
+                    <span className="text-[11px] font-bold text-violet-800 dark:text-violet-300 truncate line-clamp-1 max-w-[200px]">
                         /s/{survey.slug}
                     </span>
                 </button>
@@ -429,9 +428,9 @@ const SurveyCard: React.FC<{
                 </Button>
                 <Button
                     variant="outline"
-                    className="flex-[2] border-amber-200 text-amber-700 hover:bg-amber-50"
+                    className="flex-[2] border-violet-200 text-violet-700 hover:bg-violet-50 dark:border-violet-800 dark:text-violet-300 dark:hover:bg-violet-950/20"
                     icon={BarChart2}
-                    iconClassName="text-amber-500"
+                    iconClassName="text-violet-500"
                     onClick={onAnalytics}
                 >
                     Xem báo cáo
@@ -526,13 +525,13 @@ const Surveys: React.FC = () => {
                 showStatus={surveys.some(s => s.status === 'active')}
                 statusText={`${surveys.filter(s => s.status === 'active').length} Đang chạy`}
                 actions={[
-                    { label: 'Tạo khảo sát mới', icon: Plus,     onClick: () => setShowCreate(true), primary: true },
                     { label: 'Hướng dẫn chi tiết', icon: Lightbulb, onClick: () => setIsGuideOpen(true), primary: false },
+                    { label: 'Tạo khảo sát mới', icon: Plus,     onClick: () => setShowCreate(true), primary: true },
                 ]}
             />
 
             {/* Content card */}
-            <div className="bg-white rounded-[32px] border border-slate-200 shadow-sm p-4 lg:p-6 min-h-[500px]">
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 lg:p-6 min-h-[500px]">
                 {/* Tabs + Search */}
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                     <Tabs

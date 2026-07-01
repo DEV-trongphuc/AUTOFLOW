@@ -101,37 +101,40 @@ const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed:
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       className={({ isActive }) => `
-        relative flex items-center ${isCollapsed ? 'justify-center px-3' : 'justify-between px-5'} py-3.5 mx-4 rounded-xl transition-all duration-300 group outline-none focus:outline-none focus:ring-0
+        relative flex items-center ${isCollapsed ? 'justify-center py-2.5' : 'px-6 py-2.5'} transition-all duration-200 group outline-none focus:outline-none focus:ring-0
         ${isPending ? 'opacity-70 scale-[0.98]' : ''}
         ${isActive
-          ? 'bg-amber-500/10 backdrop-blur-md text-amber-950 shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-amber-500/20 shadow-[inset_0_1px_rgba(255,255,255,0.7)]'
-          : 'text-slate-500 hover:bg-slate-100/50 hover:text-slate-800 border border-transparent hover:backdrop-blur-sm'
+          ? 'bg-white/10 text-white'
+          : 'text-white/50 hover:bg-white/5 hover:text-white'
         }
       `}
       title={isCollapsed ? item.name : undefined}
     >
       {({ isActive }) => (
         <>
-          <div className={`flex items-center ${isCollapsed ? '' : 'gap-3'}`}>
-            <item.icon
-              className={`w-[20px] h-[20px] transition-transform duration-300 ${isActive ? 'text-amber-600 scale-105' : 'text-slate-400 group-hover:text-slate-600 group-hover:scale-110'}`}
-              strokeWidth={isActive ? 2 : 2}
-            />
+          <div className="flex items-center gap-3">
+            {/* Icon Wrapper Box */}
+            <div className={`w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 transition-all duration-200 ${isActive ? 'bg-white/15' : 'bg-white/5'}`}>
+              <item.icon
+                className={`w-[18px] h-[18px] transition-transform duration-200 ${isActive ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`}
+                strokeWidth={2}
+              />
+            </div>
             {!isCollapsed && (
-              <span className={`text-[14px] tracking-wide font-medium`}>
+              <span className="text-[14px] tracking-wide font-medium">
                 {item.name}
               </span>
             )}
           </div>
 
           {!isCollapsed && item.badge && (
-            <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider ${isActive ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider ${isActive ? 'bg-violet-500/20 text-violet-300' : 'bg-white/10 text-white/50'} ml-auto`}>
               {item.badge}
             </span>
           )}
 
           {isActive && (
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-amber-600 rounded-r-full"></div>
+            <div className="absolute left-0 top-0 w-1 h-full bg-violet-500"></div>
           )}
         </>
       )}
@@ -142,13 +145,13 @@ const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed:
 const SidebarSection: React.FC<{ title: string; children: React.ReactNode; isCollapsed: boolean }> = React.memo(({ title, children, isCollapsed }) => (
   <div className="mb-8">
     {!isCollapsed && (
-      <h4 className="px-8 mb-3 text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">
+      <h4 className="px-6 mb-3 text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">
         {title}
       </h4>
     )}
     {isCollapsed && (
       <div className="px-4 mb-3 flex justify-center">
-        <div className="w-8 h-px bg-slate-200"></div>
+        <div className="w-8 h-px bg-white/10"></div>
       </div>
     )}
     <div className="space-y-1">
@@ -193,14 +196,14 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
   const isAdmin = user.role === 'admin';
 
   return (
-    <div className={`flex flex-col h-full bg-white lg:bg-slate-50/40 lg:backdrop-blur-3xl border-r border-white/60 shadow-[4px_0_30px_rgba(0,0,0,0.03)] transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'} group/sidebar z-20 relative`}>
+    <div className={`flex flex-col h-full bg-[#0d0331] text-[#dadada] border-r border-[#1a134d]/40 shadow-[4px_0_24px_rgba(0,0,0,0.12)] transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'} group/sidebar z-20 relative`}>
 
       {/* BRAND HEADER */}
-      <div className={`h-28 ${isCollapsed ? 'px-3' : 'px-6'} flex items-center justify-center shrink-0 relative`}>
+      <div className={`h-28 ${isCollapsed ? 'px-3' : 'px-6'} flex items-center justify-center shrink-0 relative border-b border-white/5`}>
         {isCollapsed ? (
           <div className="relative w-12 h-12 shrink-0 group cursor-pointer">
-            <div className="absolute inset-0 bg-amber-400 blur-xl opacity-20 group-hover:opacity-50 transition-opacity duration-500 rounded-full animate-logo-pulse"></div>
-            <div className="relative w-full h-full flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ease-out overflow-hidden rounded-full border-2 border-white/80 shadow-lg shadow-amber-600/20">
+            <div className="absolute inset-0 bg-violet-500 blur-xl opacity-20 group-hover:opacity-50 transition-opacity duration-500 rounded-full animate-logo-pulse"></div>
+            <div className="relative w-full h-full flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ease-out overflow-hidden rounded-full border-2 border-white/20 shadow-lg shadow-violet-500/10">
               <img src="/imgs/ICON.png" className="w-full h-full object-contain relative z-10" alt="Logo" />
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-logo-shine pointer-events-none z-20"></div>
             </div>
@@ -209,20 +212,20 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
           <div className="relative flex items-center gap-4 w-full group cursor-pointer">
             {/* Animated Logo Icon */}
             <div className="relative w-12 h-12 shrink-0">
-              <div className="absolute inset-0 bg-amber-400 blur-xl opacity-20 group-hover:opacity-50 transition-opacity duration-500 rounded-full animate-logo-pulse"></div>
-              <div className="relative w-full h-full flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ease-out overflow-hidden rounded-full border-2 border-white/80 shadow-lg shadow-amber-600/20">
+              <div className="absolute inset-0 bg-violet-500 blur-xl opacity-20 group-hover:opacity-50 transition-opacity duration-500 rounded-full animate-logo-pulse"></div>
+              <div className="relative w-full h-full flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ease-out overflow-hidden rounded-full border-2 border-white/20 shadow-lg shadow-violet-500/10">
                 <img src="/imgs/ICON.png" className="w-full h-full object-contain relative z-10" alt="Logo" />
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-logo-shine pointer-events-none z-20"></div>
               </div>
             </div>
 
             <div className="flex flex-col min-w-0">
-              <h1 className="text-2xl font-black text-slate-900 tracking-tighter leading-none group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-amber-600 group-hover:to-amber-700 transition-all duration-500">
+              <h1 className="text-2xl font-black text-white tracking-tighter leading-none group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-violet-400 group-hover:to-violet-600 transition-all duration-500">
                 DOMATION
               </h1>
               <div className="flex items-center gap-2 mt-1.5 opacity-60 group-hover:opacity-100 transition-opacity duration-500">
-                <span className="h-3 w-[2px] bg-amber-300 rotate-12"></span>
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] truncate group-hover:text-amber-600 transition-colors">
+                <span className="h-3 w-[2px] bg-violet-400 rotate-12"></span>
+                <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] truncate group-hover:text-violet-400 transition-colors">
                   Digital AI Vision
                 </span>
               </div>
@@ -233,7 +236,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
         {/* Toggle Button */}
         <button
           onClick={onToggleCollapse}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border-2 border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-amber-600 hover:border-amber-300 hover:bg-amber-50 transition-all shadow-md hover:shadow-lg z-10 group/toggle opacity-0 group-hover/sidebar:opacity-100"
+          className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-[#13113c] border-2 border-[#2b216c] rounded-full flex items-center justify-center text-white/40 hover:text-violet-400 hover:border-violet-500/50 hover:bg-[#1a134d] transition-all shadow-md hover:shadow-lg z-10 group/toggle opacity-0 group-hover/sidebar:opacity-100"
           title={isCollapsed ? 'Mở rộng' : 'Thu gọn'}
         >
           {isCollapsed ? (
@@ -267,27 +270,27 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
       </nav>
 
       {/* SIDEBAR FOOTER - PROFILE & SETTING */}
-      <div className={`${isCollapsed ? 'p-2' : 'p-4'} border-t border-white/50 bg-transparent space-y-2`}>
+      <div className={`${isCollapsed ? 'p-2' : 'p-4'} border-t border-white/10 bg-transparent space-y-2`}>
         {/* Profile & Logout Unified Container */}
-        <div className={`bg-white/40 border border-white/60 rounded-2xl flex items-center backdrop-blur-md shadow-[0_2px_8px_rgba(0,0,0,0.02)] ${isCollapsed ? 'flex-col p-2 gap-2' : 'p-1.5 gap-1'}`}>
+        <div className={`bg-white/5 border border-white/10 rounded-2xl flex items-center backdrop-blur-md shadow-lg ${isCollapsed ? 'flex-col p-2 gap-2' : 'p-1.5 gap-1'}`}>
           <NavLink
             to="/profile"
             onClick={onClose}
             className={({ isActive }) => `
                 flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 flex-1'} py-2 rounded-xl transition-all duration-300
                 ${isActive
-                ? 'bg-white/80 text-amber-900 shadow-sm border border-white scale-[1.02]'
-                : 'text-slate-600 hover:bg-white/60 border border-transparent hover:border-white'}`
+                ? 'bg-white/15 text-white shadow-sm border border-white/20 scale-[1.02]'
+                : 'text-white/60 hover:bg-white/10 border border-transparent hover:border-white/10'}`
             }
             title={isCollapsed ? 'Thông tin cá nhân' : undefined}
           >
-            <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border-2 border-white bg-white shadow-sm">
+            <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border-2 border-white/10 bg-white/10 shadow-sm">
               <img src={user.picture || "/imgs/ICON.png"} className="w-full h-full object-cover" alt="" />
             </div>
             {!isCollapsed && (
               <div className="flex flex-col min-w-0">
-                <span className="text-[11px] font-black tracking-tight text-amber-900 truncate uppercase">{user.name}</span>
-                <span className="text-[9px] font-bold text-amber-600/70 uppercase tracking-tighter">{user.role}</span>
+                <span className="text-[11px] font-black tracking-tight text-white truncate uppercase">{user.name}</span>
+                <span className="text-[9px] font-bold text-violet-350 uppercase tracking-tighter">{user.role}</span>
               </div>
             )}
           </NavLink>
@@ -298,7 +301,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
                 localStorage.clear();
                 window.location.reload();
               }}
-              className="w-9 h-9 flex items-center justify-center text-amber-600/50 hover:text-rose-500 hover:bg-white rounded-xl transition-all border border-transparent hover:border-rose-100 hover:shadow-sm shrink-0"
+              className="w-9 h-9 flex items-center justify-center text-white/40 hover:text-rose-450 hover:bg-white/10 rounded-xl transition-all border border-transparent hover:border-rose-500/20 hover:shadow-sm shrink-0"
               title="Đăng xuất"
             >
               <LogOut className="w-4 h-4" />
@@ -309,7 +312,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
                 localStorage.clear();
                 window.location.reload();
               }}
-              className="flex w-full items-center justify-center p-2 rounded-xl transition-all text-rose-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200"
+              className="flex w-full items-center justify-center p-2 rounded-xl transition-all text-rose-400 hover:text-rose-500 hover:bg-white/5 border border-transparent hover:border-rose-500/20"
               title="Đăng xuất"
             >
               <LogOut className="w-4 h-4" />

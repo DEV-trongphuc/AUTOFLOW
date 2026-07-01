@@ -115,9 +115,8 @@ const Tabs: React.FC<TabsProps> = ({ items, activeId, onChange, variant = 'under
         );
       })}
 
-      {/* Indicator */}
       <span
-        className={`absolute bottom-0 h-[2px] transition-all duration-300 ease-out ${isDarkTheme ? 'bg-brand' : 'bg-[#ffa900]'}`}
+        className="absolute bottom-0 h-[2.5px] transition-all duration-300 ease-out bg-violet-600 dark:bg-violet-400"
         style={{ left: indicatorStyle.left, width: indicatorStyle.width }}
       />
     </div>

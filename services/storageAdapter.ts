@@ -180,6 +180,8 @@ async function request<T>(
       custom_events:   ['custom_events', 'flows'],
       // forms are loaded by both Flows and Templates — invalidate all 3 on change
       forms:           ['forms', 'flows', 'templates'],
+      // bulk_operations can modify subscribers, lists, tags, segments, etc. — invalidate all related caches
+      bulk_operations: ['subscribers', 'lists', 'tags', 'segments', 'overview_stats', 'audience_report'],
     };
     const toInvalidate = relatedPrefixes[mutatedResource] ?? [mutatedResource];
     Object.keys(apiCache).forEach(key => {

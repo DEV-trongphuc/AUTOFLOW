@@ -21,7 +21,7 @@ const FLOW_TEMPLATES = [
     desc: 'Kích hoạt ngay khi Bot AI Chatbot hoặc Auto-fill Website capture thông tin Lead (Email/SDT).',
     icon: Bot,
     theme: 'rose', // Đỏ đô sáng
-    gradient: 'from-rose-500 to-rose-700',
+    gradient: 'linear-gradient(135deg, #f43f5e 0%, #be123c 100%)',
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi có Lead từ AI', iconName: 'zap', config: { type: 'ai_capture', targetId: '' }, nextStepId: 'a1' },
       { id: 'a1', type: 'action', label: 'Email Chào Mừng', iconName: 'mail', config: { subject: 'Tài liệu bạn yêu cầu từ AI của chúng tôi! 🚀' } }
@@ -33,7 +33,7 @@ const FLOW_TEMPLATES = [
     desc: 'Tự động chạy khi Khách hàng thỏa mãn bộ lọc (VD: VIP, Mới mua hàng).',
     icon: Layers,
     theme: 'orange',
-    gradient: 'from-orange-500 to-[#ca7900]',
+    gradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi vào Phân khúc', iconName: 'zap', config: { type: 'segment', targetSubtype: 'segment', targetId: '' }, nextStepId: 'a1' },
       { id: 'a1', type: 'action', label: 'Email Chăm sóc Phân khúc', iconName: 'mail', config: { subject: 'Chào mừng bạn đến với nhóm đặc quyền! ✨' } }
@@ -45,7 +45,7 @@ const FLOW_TEMPLATES = [
     desc: 'Kích hoạt khi Khách hàng được thêm vào một danh sách tĩnh (VD: Import, API).',
     icon: ListPlus,
     theme: 'indigo',
-    gradient: 'from-indigo-500 to-blue-600',
+    gradient: 'linear-gradient(135deg, #6366f1 0%, #3b82f6 100%)',
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi vào Danh sách', iconName: 'zap', config: { type: 'segment', targetSubtype: 'list', targetId: '' }, nextStepId: 'a1' },
       { id: 'a1', type: 'action', label: 'Email Chào mừng', iconName: 'mail', config: { subject: 'Cảm ơn bạn đã tham gia cộng đồng! 👋' } }
@@ -57,7 +57,7 @@ const FLOW_TEMPLATES = [
     desc: 'Gửi thư cảm ơn xác nhận ngay khi Khách hàng phát sinh đơn hàng mới.',
     icon: ShoppingCart,
     theme: 'pink',
-    gradient: 'from-pink-500 to-rose-500',
+    gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi Mua hàng', iconName: 'zap', config: { type: 'purchase', targetId: '' }, nextStepId: 'a1' },
       { id: 'a1', type: 'action', label: 'Email Cảm ơn', iconName: 'mail', config: { subject: 'Xác nhận đơn hàng thành công! 🛍️' } }
@@ -69,7 +69,7 @@ const FLOW_TEMPLATES = [
     desc: 'Kích hoạt khi nhận được một API Event bất kỳ (VD: Click Banner, App Login).',
     icon: Zap,
     theme: 'violet',
-    gradient: 'from-violet-500 to-indigo-600',
+    gradient: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi có Custom Event', iconName: 'zap', config: { type: 'custom_event', targetId: '' }, nextStepId: 'a1' },
       { id: 'a1', type: 'action', label: 'Email Phản hồi', iconName: 'mail', config: { subject: 'Chúng tôi nhận được tương tác của bạn! 🚀' } }
@@ -81,7 +81,7 @@ const FLOW_TEMPLATES = [
     desc: 'Kích hoạt ngay khi hồ sơ Khách hàng được gắn một nhãn cụ thể.',
     icon: Tag,
     theme: 'emerald',
-    gradient: 'from-emerald-500 to-teal-600',
+    gradient: 'linear-gradient(135deg, #10b981 0%, #0d9488 100%)',
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi được gắn nhãn', iconName: 'zap', config: { type: 'tag', targetId: '' }, nextStepId: 'a1' },
       { id: 'a1', type: 'action', label: 'Email Phản hồi Tag', iconName: 'mail', config: { subject: 'Bạn vừa nhận được nhãn mới! Xem ngay ưu đãi' } }
@@ -93,7 +93,7 @@ const FLOW_TEMPLATES = [
     desc: 'Tự động phản hồi Khách hàng ngay sau khi họ điền Form đăng ký.',
     icon: FileInput,
     theme: 'amber',
-    gradient: 'from-amber-400 to-orange-500',
+    gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi khách gửi Form', iconName: 'zap', config: { type: 'form', targetId: '' }, nextStepId: 'a1' },
       { id: 'a1', type: 'action', label: 'Email Phản hồi Form', iconName: 'mail', config: { subject: 'Cảm ơn bạn đã quan tâm! Tài liệu của bạn đây' } }
@@ -105,7 +105,7 @@ const FLOW_TEMPLATES = [
     desc: 'Tự động gửi Email cảm ơn hoặc gắn Tag ngay khi khách hàng nộp phản hồi khảo sát.',
     icon: ClipboardList,
     theme: 'amber',
-    gradient: 'from-amber-500 to-orange-500',
+    gradient: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)',
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi nộp Khảo sát', iconName: 'zap', config: { type: 'survey', targetId: '' }, nextStepId: 'a1' },
       { id: 'a1', type: 'action', label: 'Email Cảm ơn', iconName: 'mail', config: { subject: 'Cảm ơn ý kiến đóng góp của bạn! 🙏' } }
@@ -117,7 +117,7 @@ const FLOW_TEMPLATES = [
     desc: 'Bắt đầu chăm sóc ngay khi khách hàng nhấn "Quan tâm" trang Zalo OA của bạn.',
     icon: UserPlus,
     theme: 'cyan',
-    gradient: 'from-blue-400 to-cyan-500',
+    gradient: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)',
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi Quan tâm Zalo', iconName: 'zap', config: { type: 'zalo_follow' }, nextStepId: 'a1' },
       { id: 'a1', type: 'zalo_zns', label: 'Tin nhắn Chào mừng Zalo', iconName: 'message-square', config: { subject: 'Chào mừng bạn đã quan tâm OA của chúng tôi! 💐' } }
@@ -129,7 +129,7 @@ const FLOW_TEMPLATES = [
     desc: 'Kích hoạt ngay khi một email trong chiến dịch chính vừa được gửi đi.',
     icon: Send,
     theme: 'violet',
-    gradient: 'from-violet-500 to-purple-600',
+    gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi gửi Campaign', iconName: 'zap', config: { type: 'campaign', targetId: '' }, nextStepId: 'w1' },
       { id: 'w1', type: 'wait', label: 'Chờ 2 ngày', iconName: 'clock', config: { duration: 2, unit: 'days' }, nextStepId: 'a1' },
@@ -142,7 +142,7 @@ const FLOW_TEMPLATES = [
     desc: 'Tự động gửi thông tin khi khách nhắn các từ khóa như "GIÁ", "TƯ VẤN" qua Meta/Zalo.',
     icon: MessageSquare,
     theme: 'blue',
-    gradient: 'from-blue-500 to-indigo-600',
+    gradient: 'linear-gradient(135deg, #3b82f6 0%, #4f46e5 100%)',
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi có từ khóa: GIÁ, TƯ VẤN', iconName: 'zap', config: { type: 'inbound_message', targetId: 'TƯ VẤN' }, nextStepId: 'a1' },
       { id: 'a1', type: 'action', label: 'Gửi Báo giá / Tài liệu', iconName: 'mail', config: { subject: 'Tài liệu bạn yêu cầu đã sẵn sàng! 📄' } }
@@ -154,7 +154,7 @@ const FLOW_TEMPLATES = [
     desc: 'Gửi mã giảm giá cho sản phẩm liên quan sau khi khách hoàn thành đơn hàng 3 ngày.',
     icon: Gift,
     theme: 'orange',
-    gradient: 'from-orange-400 to-amber-600',
+    gradient: 'linear-gradient(135deg, #f97316 0%, #d97706 100%)',
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi Mua hàng thành công', iconName: 'zap', config: { type: 'purchase', targetId: '' }, nextStepId: 'w1' },
       { id: 'w1', type: 'wait', label: 'Chờ 3 ngày', iconName: 'clock', config: { duration: 3, unit: 'days' }, nextStepId: 'a1' },
@@ -167,7 +167,7 @@ const FLOW_TEMPLATES = [
     desc: 'Tự động gửi tin nhắn nhắc nhở khi khách đã thêm hàng vào giỏ nhưng chưa thanh toán.',
     icon: ShoppingCart,
     theme: 'rose',
-    gradient: 'from-rose-400 to-pink-600',
+    gradient: 'linear-gradient(135deg, #f43f5e 0%, #db2777 100%)',
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi thêm vào giỏ hàng', iconName: 'zap', config: { type: 'custom_event', targetId: 'add_to_cart' }, nextStepId: 'w1' },
       { id: 'w1', type: 'wait', label: 'Chờ 2 giờ', iconName: 'clock', config: { duration: 2, unit: 'hours' }, nextStepId: 'c1' },
@@ -181,7 +181,7 @@ const FLOW_TEMPLATES = [
     desc: 'Kích hoạt khi Khách hàng KHÔNG có tương tác (Mở/Click) trong 30 ngày.',
     icon: Snowflake,
     theme: 'blue',
-    gradient: 'from-blue-500 to-indigo-600',
+    gradient: 'linear-gradient(135deg, #3b82f6 0%, #4f46e5 100%)',
     steps: [
       {
         id: 't1',
@@ -204,7 +204,7 @@ const FLOW_TEMPLATES = [
     desc: 'Tự động gửi quà tặng đúng ngày sinh nhật của Khách hàng.',
     icon: Cake,
     theme: 'pink',
-    gradient: 'from-pink-400 to-rose-500',
+    gradient: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)',
     steps: [
       { id: 't1', type: 'trigger', label: 'Đúng ngày sinh nhật', iconName: 'zap', config: { type: 'date', dateField: 'dateOfBirth' }, nextStepId: 'a1' },
       { id: 'a1', type: 'action', label: 'Email Tặng Quà', iconName: 'mail', config: { subject: 'Chúc mừng sinh nhật! Nhận quà ngay 🎂' } }
@@ -216,7 +216,7 @@ const FLOW_TEMPLATES = [
     desc: 'Tự động gửi thư tri ân khách hàng vào ngày kỷ niệm 1 năm, 2 năm gia nhập.',
     icon: PartyPopper,
     theme: 'violet',
-    gradient: 'from-violet-500 to-fuchsia-600',
+    gradient: 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)',
     steps: [
       { id: 't1', type: 'trigger', label: 'Kỷ niệm ngày gia nhập', iconName: 'zap', config: { type: 'date', dateField: 'joinedAt' }, nextStepId: 'a1' },
       { id: 'a1', type: 'action', label: 'Email Tri ân', iconName: 'mail', config: { subject: 'Cảm ơn bạn đã đồng hành cùng chúng tôi suốt 1 năm qua! ❤️' } }
@@ -228,7 +228,7 @@ const FLOW_TEMPLATES = [
     desc: 'Tự động gắn nhãn "Unsubscribed" hoặc dọn dẹp CRM khi khách nhấn link hủy đăng ký.',
     icon: UserMinus,
     theme: 'red',
-    gradient: 'from-red-500 to-rose-700',
+    gradient: 'linear-gradient(135deg, #ef4444 0%, #be123c 100%)',
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi Hủy đăng ký', iconName: 'zap', config: { type: 'unsubscribe' }, nextStepId: 'a1' },
       { id: 'a1', type: 'update_tag', label: 'Gắn nhãn: STOP', iconName: 'tag', config: { action: 'add', tags: ['UNSUBSCRIBED', 'STOP_MARKETING'] } }
@@ -240,7 +240,7 @@ const FLOW_TEMPLATES = [
     desc: 'Tự động gửi email khi có Khách hàng mới từ Google Sheets.',
     icon: FileSpreadsheet,
     theme: 'emerald',
-    gradient: 'from-emerald-400 to-green-600',
+    gradient: 'linear-gradient(135deg, #10b981 0%, #16a34a 100%)',
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi gia nhập List Sheets', iconName: 'zap', config: { type: 'segment', targetSubtype: 'list', targetId: '' }, nextStepId: 'a1' },
       { id: 'a1', type: 'action', label: 'Email Chào mừng', iconName: 'mail', config: { subject: 'Chào mừng bạn!' } }
@@ -252,7 +252,7 @@ const FLOW_TEMPLATES = [
     desc: 'Tự động nhắc nhở Khách hàng trước ngày hẹn/lịch đặt được lưu trong Custom Field.',
     icon: BellRing,
     theme: 'violet',
-    gradient: 'from-violet-500 to-purple-700',
+    gradient: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
     steps: [
       {
         id: 't1',
@@ -286,7 +286,7 @@ const FLOW_TEMPLATES = [
     desc: 'Tự động gửi email đính kèm mã khi khách hàng xí Voucher, hoặc upsell sau vài ngày.',
     icon: Ticket,
     theme: 'amber',
-    gradient: 'from-amber-400 to-orange-500',
+    gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi nhận Voucher', iconName: 'zap', config: { type: 'voucher', targetId: '' }, nextStepId: 'a1' },
       { id: 'a1', type: 'action', label: 'Email tặng mã', iconName: 'mail', config: { subject: 'Mã giảm giá của bạn đây! 🎟️' }, nextStepId: 'w1' },
@@ -301,7 +301,7 @@ const FLOW_TEMPLATES = [
     desc: 'Bắt sự kiện khách hàng Gạch mã Voucher tại Cửa hàng. Tự động gửi thư Cảm ơn và mã giảm giá cho Lần Kế tiếp.',
     icon: PartyPopper,
     theme: 'emerald',
-    gradient: 'from-emerald-400 to-green-500',
+    gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
     steps: [
       { id: 't1', type: 'trigger', label: 'Khi khách Dùng mã', iconName: 'zap', config: { type: 'voucher_redeem', targetId: '' }, nextStepId: 'a1' },
       { id: 'a1', type: 'action', label: 'Zalo ZNS Cảm ơn', iconName: 'message-square', config: { templateId: 'thanks_zns' }, nextStepId: 'w1' },
@@ -452,7 +452,10 @@ const FlowCreationModal: React.FC<FlowCreationModalProps> = ({
                   <Check className={`w-3.5 h-3.5 ${getCheckColor(tpl.theme)} stroke-[4px]`} />
                 </div>
 
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg transition-all duration-500 bg-gradient-to-br ${tpl.gradient} ${isSelected ? 'scale-110 rotate-3 shadow-xl' : 'group-hover:scale-110 group-hover:rotate-3'}`}>
+                <div 
+                  className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg transition-all duration-500 ${isSelected ? 'scale-110 rotate-3 shadow-xl' : 'group-hover:scale-110 group-hover:rotate-3'}`}
+                  style={{ background: tpl.gradient }}
+                >
                   <tpl.icon className="w-7 h-7" />
                 </div>
                 <div>

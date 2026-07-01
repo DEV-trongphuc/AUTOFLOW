@@ -28,7 +28,7 @@ const Button: React.FC<ButtonProps> = ({
   const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-300 active:scale-[0.97] disabled:opacity-60 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:ring-offset-1 tracking-tight select-none';
 
   const variants = {
-    primary: 'bg-gradient-to-b from-amber-400 to-amber-500 text-amber-950 font-bold border border-amber-400 shadow-[0_4px_14px_0_rgba(251,191,36,0.25)] hover:shadow-amber-500/40 hover:from-amber-400 hover:to-amber-500 hover:brightness-105 shadow-[inset_0_1px_rgba(255,255,255,0.4)]',
+    primary: 'bg-gradient-to-b from-amber-400 to-amber-500 text-white font-bold border border-amber-400 shadow-[0_4px_14px_0_rgba(104,61,242,0.25)] hover:shadow-amber-500/40 hover:from-amber-400 hover:to-amber-500 hover:brightness-105 shadow-[inset_0_1px_rgba(255,255,255,0.4)]',
     secondary: isDarkTheme
       ? 'bg-slate-800/80 backdrop-blur-md text-slate-200 border border-slate-700/80 hover:bg-slate-700 hover:border-slate-600 hover:text-white shadow-sm shadow-[inset_0_1px_rgba(255,255,255,0.05)]'
       : 'bg-white/90 backdrop-blur-md text-slate-700 border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 shadow-[0_2px_8px_rgba(0,0,0,0.04)] shadow-[inset_0_1px_rgba(255,255,255,1)]',
