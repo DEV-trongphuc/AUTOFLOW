@@ -463,7 +463,6 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
                     backgroundPosition: bodyStyle.backgroundPosition || 'center',
                     backgroundRepeat: bodyStyle.backgroundRepeat || 'no-repeat'
                 }}
-                onClick={() => handleSelectBlock(null)}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => handleDrop(e, 'root')}
             >
