@@ -38,7 +38,7 @@ interface CanvasBlockProps {
 
 const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
     const {
-        block, bodyStyle, viewMode, selectedBlockId, dragOverId, dropPosition,
+        block, bodyStyle, viewMode, selectedBlockId, dragOverId, dropPosition, draggingBlockId,
         onSelectBlock, onDragStart, onDragOver, onDrop, onMoveOrder, onSwapColumns,
         onDuplicateBlock, onDeleteBlock, onUpdateBlockContent, onUpdateBlockStyle, onUpdateBlock, onSaveSection, onSelectParent,
         customMergeTags = [],
@@ -925,9 +925,18 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                 zIndex: isSelected ? 1000 : 'auto'
             }}
         >
-            <td className={`relative transition-all w-full ${!isSelected ? 'hover:ring-2 hover:ring-amber-600 hover:ring-dashed hover:bg-amber-600/5' : ''}`} style={wrapperTdStyles}>
+            <td 
+                className={`relative transition-all w-full ${
+                    draggingBlockId === block.id 
+                        ? 'opacity-30 border-2 border-dashed border-violet-500 bg-violet-50/5' 
+                        : !isSelected 
+                            ? 'hover:ring-2 hover:ring-violet-600 hover:ring-dashed hover:bg-violet-600/5' 
+                            : ''
+                }`} 
+                style={wrapperTdStyles}
+            >
                 {dragOverId === block.id && dropPosition && <CanvasDropIndicator dropPosition={dropPosition} />}
-                <CanvasHandleOverlay block={block} color="ring-amber-600" isSelected={isSelected} onDragStart={onDragStart} onMoveOrder={onMoveOrder} onSwapColumns={onSwapColumns} onDuplicateBlock={onDuplicateBlock} onDeleteBlock={onDeleteBlock} onSelectParent={onSelectParent} onSaveSection={onSaveSection} />
+                <CanvasHandleOverlay block={block} color="ring-violet-600" isSelected={isSelected} onDragStart={onDragStart} onMoveOrder={onMoveOrder} onSwapColumns={onSwapColumns} onDuplicateBlock={onDuplicateBlock} onDeleteBlock={onDeleteBlock} onSelectParent={onSelectParent} onSaveSection={onSaveSection} />
 
                 <div style={{
                     ...decorativeStyles,

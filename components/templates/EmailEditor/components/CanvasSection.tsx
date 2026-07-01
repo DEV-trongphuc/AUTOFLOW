@@ -33,13 +33,14 @@ interface CanvasSectionProps {
 
 const CanvasSection: React.FC<CanvasSectionProps> = (props) => {
     const {
-        section, bodyStyle, viewMode, selectedBlockId, dragOverId, dropPosition,
+        section, bodyStyle, viewMode, selectedBlockId, dragOverId, dropPosition, draggingBlockId,
         onSelectBlock, onDragStart, onDragOver, onDrop, onMoveOrder, onSwapColumns, onDuplicateBlock, onDeleteBlock, onUpdateBlockContent, onSaveSection, onResizeColumns, onLeftResizeColumns
     } = props;
 
     const css = buildCss(section.style, viewMode, bodyStyle.fontFamily, 'section');
     const innerBg = section.style.contentBackgroundColor || 'transparent';
     const isSelected = selectedBlockId === section.id;
+    const isThisDragging = draggingBlockId === section.id;
 
     // Overlay Logic
     const overlayColor = section.style.overlayColor;
@@ -72,6 +73,7 @@ const CanvasSection: React.FC<CanvasSectionProps> = (props) => {
     return (
         <div
             key={section.id} id={`block-${section.id}`}
+            className={`transition-all duration-200 ${isThisDragging ? 'opacity-35 border-2 border-dashed border-violet-500/60 bg-violet-50/5' : ''}`}
             style={{
                 position: 'relative',
                 width: '100%',
@@ -122,7 +124,15 @@ const CanvasSection: React.FC<CanvasSectionProps> = (props) => {
                                     {(!section.children || section.children.length === 0) && (
                                         <tr>
                                             <td>
-                                                <div className="py-12 text-center text-slate-300 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 m-8 rounded-[32px] bg-slate-50/50 hover:bg-slate-50 hover:border-amber-600/30 transition-all group/empty">
+                                                <div 
+                                                    className={`py-12 text-center flex flex-col items-center justify-center border-2 border-dashed m-8 rounded-[32px] transition-all duration-300 group/empty
+                                                        ${dragOverId === section.id
+                                                            ? "border-violet-600 bg-violet-50/50 text-violet-600 scale-[0.98] ring-2 ring-violet-500/20"
+                                                            : draggingBlockId !== null
+                                                                ? "border-violet-400/50 bg-violet-50/10 text-violet-500/60 animate-pulse"
+                                                                : "bg-slate-50/50 border-slate-200 text-slate-300 hover:bg-slate-50 hover:border-violet-600/30"
+                                                        }`}
+                                                >
                                                     <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 group-hover/empty:scale-110 transition-transform">
                                                         <Layout className="w-8 h-8 text-slate-200" />
                                                     </div>

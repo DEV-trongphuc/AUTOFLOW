@@ -151,10 +151,12 @@ const CanvasColumn: React.FC<CanvasColumnProps> = (props) => {
 
             {(!col.children || col.children.length === 0) && (
                 <div
-                    className={`relative border-2 border-dashed rounded-2xl flex flex-col items-center justify-center transition-all group/col
+                    className={`relative border-2 border-dashed rounded-2xl flex flex-col items-center justify-center transition-all duration-300 group/col
                         ${(dragOverId === col.id)
-                            ? "border-amber-400 bg-amber-50 text-amber-500 shadow-sm"
-                            : "border-slate-100 text-slate-300 hover:border-amber-600/20 hover:bg-amber-600/5 hover:text-amber-600/40"
+                            ? "border-violet-600 bg-violet-50/50 text-violet-600 scale-[0.98] ring-2 ring-violet-500/20"
+                            : isDragging
+                                ? "border-violet-400/50 bg-violet-50/10 text-violet-500/60 animate-pulse"
+                                : "border-slate-100 text-slate-300 hover:border-violet-600/20 hover:bg-violet-600/5 hover:text-violet-600/40"
                         }`}
                     style={{ minHeight: '80px', width: '100%' }}
                 >

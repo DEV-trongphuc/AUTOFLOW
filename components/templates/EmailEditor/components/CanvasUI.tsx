@@ -114,18 +114,19 @@ export const CanvasHandleOverlay: React.FC<HandleOverlayProps> = ({
                 <div
                     style={{
                         position: 'fixed',
-                        top: barPos.top - 28,
+                        top: barPos.top < 85 ? barPos.top + 8 : barPos.top - 28,
                         left: barPos.left,
                         width: barPos.width,
                         zIndex: 100050,
                         pointerEvents: 'none',
+                        transition: 'top 0.15s ease-out',
                     }}
                 >
-                    <div className="absolute right-0 top-0 flex gap-1 pointer-events-auto origin-bottom-right">
+                    <div className="absolute right-0 top-0 flex gap-1 pointer-events-auto origin-bottom-right transform scale-95 hover:scale-100 transition-transform duration-200">
                         <button
                             onClick={(e) => { e.stopPropagation(); onSelectParent?.(); }}
                             disabled={!onSelectParent}
-                            className="bg-slate-800 hover:bg-slate-700 text-white px-2 py-1 text-[9px] font-black uppercase rounded-l-md shadow-md flex items-center gap-1 transition-colors disabled:hover:bg-slate-800"
+                            className="bg-slate-900/90 hover:bg-slate-800 text-white px-2 py-1 text-[9px] font-black uppercase rounded-l-md shadow-md flex items-center gap-1 transition-colors disabled:hover:bg-slate-900/90"
                             title={onSelectParent ? 'Chọn phần tử cha' : ''}
                         >
                             <BlockTypeIcon className="w-3 h-3 text-white" /> {block.type} {onSelectParent && <IconMap.ChevronUp size={10} className="ml-1 opacity-50" />}
@@ -134,10 +135,10 @@ export const CanvasHandleOverlay: React.FC<HandleOverlayProps> = ({
                             <IconMap.GripVertical as LucideIcon className="w-3.5 h-3.5" />
                         </div>
                         <div className="flex bg-white border border-slate-200 shadow-md">
-                            <button onClick={(e) => { e.stopPropagation(); onMoveOrder(block.id, 'up'); }} className="p-1 text-amber-600 hover:bg-amber-50 border-r border-slate-100" title="Move Up">
+                            <button onClick={(e) => { e.stopPropagation(); onMoveOrder(block.id, 'up'); }} className="p-1 text-violet-600 hover:bg-violet-50 border-r border-slate-100" title="Move Up">
                                 <IconMap.ArrowUp as LucideIcon className="w-3.5 h-3.5" />
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); onMoveOrder(block.id, 'down'); }} className="p-1 text-amber-600 hover:bg-amber-50" title="Move Down">
+                            <button onClick={(e) => { e.stopPropagation(); onMoveOrder(block.id, 'down'); }} className="p-1 text-violet-600 hover:bg-violet-50" title="Move Down">
                                 <IconMap.ArrowDown as LucideIcon className="w-3.5 h-3.5" />
                             </button>
                         </div>
@@ -147,7 +148,7 @@ export const CanvasHandleOverlay: React.FC<HandleOverlayProps> = ({
                             </button>
                         )}
                         {(block.type === 'section' || block.type === 'row') && onSaveSection && (
-                            <button onClick={(e) => { e.stopPropagation(); onSaveSection(block); }} className="bg-white border border-slate-200 p-1 text-amber-600 hover:bg-amber-50 shadow-md" title="Save Block">
+                            <button onClick={(e) => { e.stopPropagation(); onSaveSection(block); }} className="bg-white border border-slate-200 p-1 text-violet-600 hover:bg-violet-50 shadow-md" title="Save Block">
                                 <IconMap.Save as LucideIcon className="w-3.5 h-3.5" />
                             </button>
                         )}
