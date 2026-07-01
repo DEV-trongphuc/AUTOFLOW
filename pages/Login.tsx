@@ -50,25 +50,28 @@ const Login: React.FC = () => {
 
     if (isPending) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#0f172a] p-4 text-white">
-                <div className="max-w-md w-full bg-white/5 backdrop-blur-xl border border-white/10 p-10 rounded-[40px] text-center space-y-8 animate-in zoom-in-95 duration-500 shadow-2xl">
-                    <div className="w-24 h-24 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto border-2 border-amber-500/50 animate-pulse">
-                        <Clock className="w-12 h-12 text-amber-500" />
+            <div className="min-h-screen flex items-center justify-center bg-[#070b19] p-4 text-white relative overflow-hidden">
+                {/* Background Glow */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-violet-600/10 blur-[100px] rounded-full" />
+                
+                <div className="max-w-md w-full bg-slate-900/40 backdrop-blur-xl border border-slate-800/80 p-10 rounded-[40px] text-center space-y-8 animate-in zoom-in-95 duration-500 shadow-2xl relative z-10">
+                    <div className="w-24 h-24 bg-violet-500/10 rounded-full flex items-center justify-center mx-auto border-2 border-violet-500/50 animate-pulse">
+                        <Clock className="w-12 h-12 text-violet-400" />
                     </div>
                     <div className="space-y-4">
-                        <h2 className="text-3xl font-black tracking-tight">Access Locked 🔒</h2>
+                        <h2 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300">Access Locked 🔒</h2>
                         <p className="text-slate-400 font-medium leading-relaxed">
                             Chào <span className="text-white font-bold">{(()=>{try{return JSON.parse(localStorage.getItem('user')||'{}')}catch{return{}}})().name}</span>! Tài khoản của bạn đã được đăng ký thành công nhưng cần Admin phê duyệt để truy cập hệ thống.
                         </p>
                     </div>
-                    <div className="p-4 bg-amber-500/5 rounded-2xl border border-amber-500/20 text-xs font-bold text-amber-500/80 uppercase tracking-widest text-left">
+                    <div className="p-4 bg-violet-500/5 rounded-2xl border border-violet-500/20 text-xs font-bold text-violet-400/80 uppercase tracking-widest text-left">
                         <div className="flex gap-2">
-                            <div className="w-1 h-1 bg-amber-500 rounded-full mt-1.5 shrink-0" />
+                            <div className="w-1 h-1 bg-violet-400 rounded-full mt-1.5 shrink-0" />
                             <span>Hệ thống bảo mật đa lớp chặn truy cập trái phép.</span>
                         </div>
                         <div className="flex gap-2 mt-2">
-                            <div className="w-1 h-1 bg-amber-500 rounded-full mt-1.5 shrink-0" />
-                            <span>Chúng tôi đã thông Báo cáo quản trị viên.</span>
+                            <div className="w-1 h-1 bg-violet-400 rounded-full mt-1.5 shrink-0" />
+                            <span>Chúng tôi đã thông báo cho quản trị viên.</span>
                         </div>
                     </div>
                     <button
@@ -76,7 +79,7 @@ const Login: React.FC = () => {
                             localStorage.clear();
                             setIsPending(false);
                         }}
-                        className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-sm font-black uppercase tracking-widest transition-all"
+                        className="w-full py-4 bg-violet-600/10 hover:bg-violet-600/20 border border-violet-500/30 rounded-2xl text-sm font-black uppercase tracking-widest text-violet-200 transition-all active:scale-[0.98]"
                     >
                         Quay lại trang đăng nhập
                     </button>
@@ -86,24 +89,24 @@ const Login: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen relative flex flex-col lg:flex-row bg-[#0f172a] overflow-hidden">
+        <div className="min-h-screen relative flex flex-col lg:flex-row bg-[#080d1a] overflow-hidden">
             {/* Background Effects */}
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-600/10 blur-[100px] rounded-full -mr-64 -mt-64" />
-            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/10 blur-[100px] rounded-full -ml-64 -mb-64" />
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-violet-600/10 blur-[120px] rounded-full -mr-64 -mt-64 animate-pulse duration-[8s]" />
+            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-fuchsia-600/10 blur-[120px] rounded-full -ml-64 -mb-64 animate-pulse duration-[10s]" />
 
             {/* Left Side: Brand & Visuals */}
             <div className="relative flex-1 p-8 lg:p-20 flex flex-col justify-center min-h-[50vh] lg:min-h-screen overflow-hidden">
                 <div className="relative z-10 space-y-12">
                     {/* Header Badge */}
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 backdrop-blur-sm border border-amber-500/30 rounded-full">
-                        <Sparkles className="w-4 h-4 text-amber-500" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">Digital Marketing Ecosystem</span>
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-violet-500/10 backdrop-blur-md border border-violet-500/25 rounded-full animate-float">
+                        <Sparkles className="w-4 h-4 text-violet-400" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-violet-300">Digital Marketing Ecosystem</span>
                     </div>
 
                     <div className="space-y-6">
                         <h1 className="text-5xl lg:text-7xl font-black text-white leading-[1.1] tracking-tighter">
                             DOMATION <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-500 to-indigo-400">
                                 AI VISION 2026.
                             </span>
                         </h1>
@@ -115,15 +118,15 @@ const Login: React.FC = () => {
                     {/* Scrolling Features Marquee */}
                     <div className="relative w-full max-w-5xl overflow-hidden pause-on-hover mask-fade-edges mt-8">
                         {/* Fade masks for smooth disappearance at edges */}
-                        <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#0f172a] to-transparent z-10 pointer-events-none" />
-                        <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[#0f172a] to-transparent z-10 pointer-events-none" />
+                        <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#080d1a] to-transparent z-10 pointer-events-none" />
+                        <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[#080d1a] to-transparent z-10 pointer-events-none" />
                         
                         <div className="flex flex-col gap-4 w-full relative">
                             {/* Row 1 (Forward) */}
                             <div className="flex w-max animate-slide-infinite gap-4 pl-4 hover:[animation-play-state:paused]">
                                 {[...row1, ...row1, ...row1].map((f, i) => (
-                                    <div key={`r1-${i}`} className="w-[300px] shrink-0 p-5 bg-white/5 backdrop-blur-sm border border-white/5 rounded-3xl hover:bg-white/10 hover:border-white/10 transition-all duration-300">
-                                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center mb-4 shadow-lg shadow-black/20`}>
+                                    <div key={`r1-${i}`} className="w-[300px] shrink-0 p-5 bg-[#12192a]/50 backdrop-blur-md border border-slate-800/80 rounded-3xl hover:bg-slate-800/60 hover:border-violet-500/40 hover:scale-[1.03] transition-all duration-300 group">
+                                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center mb-4 shadow-lg shadow-black/20 group-hover:scale-110 transition-transform`}>
                                             <f.icon className="w-6 h-6 text-white" />
                                         </div>
                                         <h3 className="text-white font-bold mb-1 truncate">{f.title}</h3>
@@ -135,8 +138,8 @@ const Login: React.FC = () => {
                             {/* Row 2 (Reverse) */}
                             <div className="flex w-max animate-slide-infinite-reverse gap-4 pl-4 hover:[animation-play-state:paused]">
                                 {[...row2, ...row2, ...row2].map((f, i) => (
-                                    <div key={`r2-${i}`} className="w-[300px] shrink-0 p-5 bg-white/5 backdrop-blur-sm border border-white/5 rounded-3xl hover:bg-white/10 hover:border-white/10 transition-all duration-300">
-                                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center mb-4 shadow-lg shadow-black/20`}>
+                                    <div key={`r2-${i}`} className="w-[300px] shrink-0 p-5 bg-[#12192a]/50 backdrop-blur-md border border-slate-800/80 rounded-3xl hover:bg-slate-800/60 hover:border-violet-500/40 hover:scale-[1.03] transition-all duration-300 group">
+                                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center mb-4 shadow-lg shadow-black/20 group-hover:scale-110 transition-transform`}>
                                             <f.icon className="w-6 h-6 text-white" />
                                         </div>
                                         <h3 className="text-white font-bold mb-1 truncate">{f.title}</h3>
@@ -149,20 +152,20 @@ const Login: React.FC = () => {
                 </div>
 
                 {/* Animated Circles Decor */}
-                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[800px] h-[800px] border border-white/[0.03] rounded-full pointer-events-none" />
-                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[600px] h-[600px] border border-white/[0.03] rounded-full pointer-events-none translate-x-10" />
-                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[400px] h-[400px] border border-white/[0.05] rounded-full pointer-events-none translate-x-20" />
+                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[800px] h-[800px] border border-white/[0.02] rounded-full pointer-events-none" />
+                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[600px] h-[600px] border border-white/[0.02] rounded-full pointer-events-none translate-x-10" />
+                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[400px] h-[400px] border border-white/[0.03] rounded-full pointer-events-none translate-x-20" />
             </div>
 
             {/* Right Side: Identity Check */}
-            <div className="relative w-full lg:w-[600px] bg-white/5 backdrop-blur-2xl border-l border-white/5 p-8 lg:p-20 flex flex-col justify-center items-center overflow-hidden">
+            <div className="relative w-full lg:w-[600px] bg-[#0c1220]/60 backdrop-blur-3xl border-l border-slate-800/80 p-8 lg:p-20 flex flex-col justify-center items-center overflow-hidden">
                 <div className="relative z-10 w-full max-w-sm space-y-12">
                     <div className="text-center space-y-4">
-                        <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-amber-600 rounded-[28px] flex items-center justify-center mx-auto shadow-2xl shadow-amber-600/30 rotate-3 overflow-hidden p-2">
-                            <img src="/imgs/ICON.png" className="w-full h-full object-contain" alt="Brand Icon" />
+                        <div className="w-20 h-20 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-indigo-600 rounded-[28px] flex items-center justify-center mx-auto shadow-2xl shadow-violet-500/20 rotate-3 overflow-hidden p-1.5 border border-white/10">
+                            <img src="https://crm-domation.vercel.app/LOGO.jpg" className="w-full h-full object-contain rounded-2xl" alt="Brand Logo" />
                         </div>
                         <div className="pt-4">
-                            <h2 className="text-3xl font-black text-white tracking-tight">
+                            <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-200 tracking-tight">
                                 {DEMO_MODE ? 'Trải nghiệm Demo' : 'Identity Check'}
                             </h2>
                             <p className="text-slate-400 font-medium mt-2">
@@ -173,7 +176,7 @@ const Login: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="p-8 bg-white/5 border border-white/5 rounded-[40px] shadow-inner">
+                    <div className="p-8 bg-slate-900/40 border border-slate-800/80 rounded-[36px] shadow-2xl backdrop-blur-xl shadow-black/20">
                         <div className="flex justify-center flex-col items-center gap-6 animate-in fade-in zoom-in-95 duration-500">
                             {DEMO_MODE ? (
                                 <div className="w-full text-center max-w-[320px] mx-auto">
@@ -190,7 +193,7 @@ const Login: React.FC = () => {
                                             localStorage.setItem('isAuthenticated', 'true');
                                             window.location.href = '/';
                                         }}
-                                        className="w-full h-14 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white rounded-2xl font-black uppercase tracking-widest text-[13px] flex items-center justify-center gap-2 transition-all shadow-xl shadow-amber-500/20 active:scale-95 group"
+                                        className="w-full h-14 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-indigo-500 text-white rounded-2xl font-black uppercase tracking-widest text-[13px] flex items-center justify-center gap-2 transition-all shadow-xl shadow-violet-500/20 active:scale-95 group"
                                     >
                                         <Sparkles className="w-5 h-5 group-hover:scale-125 transition-transform" />
                                         Trải nghiệm Guest
@@ -200,26 +203,28 @@ const Login: React.FC = () => {
                                 </div>
                             ) : (
                                 <>
-                                    <GoogleLogin
-                                        onSuccess={handleGoogleSuccess}
-                                        onError={() => toast.error('Google Sign In failed')}
-                                        useOneTap
-                                        theme="filled_black"
-                                        shape="pill"
-                                        size="large"
-                                        width="320"
-                                    />
+                                    <div className="google-btn-wrapper">
+                                        <GoogleLogin
+                                            onSuccess={handleGoogleSuccess}
+                                            onError={() => toast.error('Google Sign In failed')}
+                                            useOneTap
+                                            theme="filled_black"
+                                            shape="pill"
+                                            size="large"
+                                            width="320"
+                                        />
+                                    </div>
 
                                     <div className="flex items-center gap-4 w-full max-w-[320px]">
-                                        <div className="h-px flex-1 bg-white/10" />
+                                        <div className="h-px flex-1 bg-slate-800" />
                                         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Hoặc</span>
-                                        <div className="h-px flex-1 bg-white/10" />
+                                        <div className="h-px flex-1 bg-slate-800" />
                                     </div>
 
                                     <button onClick={() => {
                                         window.location.href = 'https://open.domation.net';
-                                    }} className="w-full max-w-[320px] h-12 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-white text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-sm">
-                                        <User className="w-4 h-4 text-amber-500" />
+                                    }} className="w-full max-w-[320px] h-12 bg-violet-600/10 hover:bg-violet-600/20 border border-violet-500/20 rounded-full text-violet-200 text-sm font-semibold flex items-center justify-center gap-2 transition-all shadow-sm hover:border-violet-500/40">
+                                        <User className="w-4 h-4 text-violet-400" />
                                         View as a Guest (Demo)
                                     </button>
 
@@ -232,18 +237,18 @@ const Login: React.FC = () => {
                     </div>
 
                     {/* Trust Badges */}
-                    <div className="flex items-center justify-center gap-8 pt-8 opacity-40">
-                        <div className="flex flex-col items-center gap-2">
-                            <History className="w-5 h-5 text-white" />
-                            <span className="text-[8px] font-black uppercase tracking-tighter text-white">Log Tracking</span>
+                    <div className="flex items-center justify-center gap-8 pt-8 opacity-50">
+                        <div className="flex flex-col items-center gap-2 group cursor-pointer">
+                            <History className="w-5 h-5 text-violet-400 group-hover:scale-110 transition-transform" />
+                            <span className="text-[8px] font-black uppercase tracking-tighter text-slate-400 group-hover:text-violet-300">Log Tracking</span>
                         </div>
-                        <div className="flex flex-col items-center gap-2">
-                            <CheckCircle2 className="w-5 h-5 text-white" />
-                            <span className="text-[8px] font-black uppercase tracking-tighter text-white">Verified Users</span>
+                        <div className="flex flex-col items-center gap-2 group cursor-pointer">
+                            <CheckCircle2 className="w-5 h-5 text-violet-400 group-hover:scale-110 transition-transform" />
+                            <span className="text-[8px] font-black uppercase tracking-tighter text-slate-400 group-hover:text-violet-300">Verified Users</span>
                         </div>
-                        <div className="flex flex-col items-center gap-2">
-                            <Zap className="w-5 h-5 text-white" />
-                            <span className="text-[8px] font-black uppercase tracking-tighter text-white">Quick Access</span>
+                        <div className="flex flex-col items-center gap-2 group cursor-pointer">
+                            <Zap className="w-5 h-5 text-violet-400 group-hover:scale-110 transition-transform" />
+                            <span className="text-[8px] font-black uppercase tracking-tighter text-slate-400 group-hover:text-violet-300">Quick Access</span>
                         </div>
                     </div>
                 </div>
