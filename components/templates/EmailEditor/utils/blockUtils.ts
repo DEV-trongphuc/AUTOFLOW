@@ -750,3 +750,11 @@ export const swapColumnsInRow = (colId: string, blocks: EmailBlock[]): EmailBloc
     };
     return process(blocks);
 };
+
+export const ensureUniqueIds = (list: EmailBlock[]): EmailBlock[] => {
+    return list.map(b => ({
+        ...b,
+        id: createUniqueId(),
+        children: b.children ? ensureUniqueIds(b.children) : undefined
+    }));
+};

@@ -18,7 +18,7 @@ import AIEmailGeneratorModal from './AIEmailGeneratorModal';
 // Import constants and utilities
 import { DEFAULT_BODY_STYLE, DEFAULT_BLOCKS } from './constants/editorConstants';
 import { compileHTML } from './utils/htmlCompiler';
-import { createBlock, insertDeep, deleteBlockDeep, duplicateBlockDeep } from './utils/blockUtils'; // Import necessary block utils
+import { createBlock, insertDeep, deleteBlockDeep, duplicateBlockDeep, ensureUniqueIds } from './utils/blockUtils'; // Import necessary block utils
 import { API_BASE_URL } from '@/utils/config';
 import { api } from '../../../services/storageAdapter';
 
@@ -317,7 +317,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
         (template?.htmlContent && (!template.blocks || template.blocks.length === 0)) ? 'code' : 'visual'
     );
     const [blocks, setBlocks] = useState<EmailBlock[]>(
-        (template?.blocks && template.blocks.length > 0) ? template.blocks : DEFAULT_BLOCKS
+        (template?.blocks && template.blocks.length > 0) ? ensureUniqueIds(template.blocks) : DEFAULT_BLOCKS
     );
     const [bodyStyle, setBodyStyle] = useState<EmailBodyStyle>(template?.bodyStyle || DEFAULT_BODY_STYLE);
     const [name, setName] = useState(template?.name || 'Thiết kế mới');
@@ -859,7 +859,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
                     // Samsung AI fade effect
                     setIsApplyingAI(true);
                     setTimeout(() => {
-                        updateBlocks(newBlocks);
+                        updateBlocks(ensureUniqueIds(newBlocks));
                         setSelectedBlockId(null);
                     }, 200);
                     setTimeout(() => {
