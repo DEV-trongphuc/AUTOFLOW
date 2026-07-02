@@ -157,6 +157,49 @@ const getThumbnailUrl = (t: any, index: number) => {
     return defaults[index % defaults.length];
 };
 
+const VisualTemplate: React.FC<{ template: any; bodyStyle: any }> = ({ template, bodyStyle }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [scale, setScale] = useState(0.25);
+
+    const html = template.htmlContent || (template.blocks ? compileHTML(template.blocks, bodyStyle || template.bodyStyle || DEFAULT_BODY_STYLE, template.name) : '');
+
+    useEffect(() => {
+        const updateScale = () => {
+            if (containerRef.current) {
+                setScale(containerRef.current.offsetWidth / 800);
+            }
+        };
+        updateScale();
+        const timer = setTimeout(updateScale, 100);
+        window.addEventListener('resize', updateScale);
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('resize', updateScale);
+        };
+    }, []);
+
+    return (
+        <div ref={containerRef} style={{ width: '100%', height: '100%', backgroundColor: '#fff', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+            <div style={{
+                position: 'absolute',
+                top: 0,
+                transformOrigin: 'top center',
+                width: '800px',
+                height: '1000px',
+                transform: `scale(${scale})`,
+                pointerEvents: 'none'
+            }}>
+                <iframe
+                    srcDoc={html}
+                    style={{ width: '100%', height: '100%', border: 'none' }}
+                    title="preview"
+                    scrolling="no"
+                />
+            </div>
+        </div>
+    );
+};
+
 const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
     isOpen, onClose, onApply, onSaveSection, currentBlocks, bodyStyle = DEFAULT_BODY_STYLE, templateName = 'Email', emailId
 }) => {
@@ -325,7 +368,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
 
             {/* Backdrop */}
             <div onClick={handleClose} style={{
-                position: 'fixed', inset: 0, zIndex: 500,
+                position: 'fixed', inset: 0, zIndex: 200000,
                 background: 'rgba(15,23,42,0.5)',
                 backdropFilter: 'blur(10px)',
                 animation: 'backdropIn 0.25s ease forwards',
@@ -333,7 +376,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
 
             {/* Modal container */}
             <div style={{
-                position: 'fixed', inset: 0, zIndex: 501,
+                position: 'fixed', inset: 0, zIndex: 200001,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 padding: '16px', pointerEvents: 'none',
             }}>
@@ -545,16 +588,8 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                                                                 }
                                                             }}
                                                         >
-                                                            {/* Image / Thumbnail */}
-                                                            <img 
-                                                                src={thumb} 
-                                                                alt={t.name}
-                                                                style={{
-                                                                    width: '100%',
-                                                                    height: '100%',
-                                                                    objectFit: 'cover',
-                                                                }}
-                                                            />
+                                                            {/* Live Preview Email Template */}
+                                                            <VisualTemplate template={t} bodyStyle={bodyStyle} />
                                                             
                                                             {/* Shadow Overlay */}
                                                             <div style={{
@@ -984,7 +1019,7 @@ const AIEmailGeneratorModal: React.FC<AIEmailGeneratorModalProps> = ({
                 <div style={{
                     position: 'fixed',
                     inset: 0,
-                    zIndex: 600,
+                    zIndex: 200002,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
