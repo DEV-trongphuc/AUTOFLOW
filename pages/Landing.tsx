@@ -503,9 +503,9 @@ const Landing: React.FC = () => {
                                 <div className="absolute inset-0 bg-gradient-to-tr from-rose-500/5 to-transparent rounded-2xl md:rounded-3xl pointer-events-none" />
                                 <div className="flex justify-between items-center px-2 pb-3 md:pb-4 border-b border-white/10 mb-3 md:mb-4">
                                     <div className="flex gap-1.5">
-                                        <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-rose-500" />
-                                        <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-amber-400" />
-                                        <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-emerald-400" />
+                                        <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#ff5f56]" />
+                                        <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#ffbd2e]" />
+                                        <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#27c93f]" />
                                     </div>
                                     <div className="text-xs font-bold text-slate-400 flex items-center gap-1.5"><LayoutTemplate className="w-3.5 h-3.5" /> Studio Design</div>
                                 </div>

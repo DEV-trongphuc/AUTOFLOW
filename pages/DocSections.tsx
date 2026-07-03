@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import {
     Send, Users, FileEdit, BarChart3, GitMerge, Tag, Webhook, Zap, Bot,
     Facebook, Globe, Settings, ChevronRight, Search, MousePointer,
@@ -325,7 +325,7 @@ export const SectionEmailBuilder = () => (
             {/* Mock builder */}
             <div className="lg:col-span-2 relative rounded-3xl bg-slate-50 border-2 border-slate-200 overflow-hidden min-h-[480px]">
                 <div className="h-10 bg-white border-b border-slate-200 flex items-center px-4 gap-2">
-                    <div className="flex gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-rose-400" /><div className="w-2.5 h-2.5 rounded-full bg-amber-400" /><div className="w-2.5 h-2.5 rounded-full bg-emerald-400" /></div>
+                    <div className="flex gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" /><div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" /><div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" /></div>
                     <div className="ml-4 h-6 px-3 bg-slate-100 rounded text-[10px] text-slate-400 flex items-center font-bold">Welcome_Campaign.mail</div>
                 </div>
                 <div className="absolute top-10 left-0 bottom-0 w-14 bg-white border-r border-slate-100 flex flex-col items-center py-4 gap-4">

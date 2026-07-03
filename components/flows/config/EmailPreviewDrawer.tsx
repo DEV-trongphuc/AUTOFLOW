@@ -113,9 +113,9 @@ const EmailPreviewDrawer: React.FC<EmailPreviewDrawerProps> = ({ template, htmlC
           <div className={`bg-white shadow-2xl transition-all duration-500 rounded-lg overflow-hidden border border-slate-200 flex flex-col ${viewMode === 'mobile' ? 'w-[375px]' : 'w-full h-full'}`}>
             <div className="bg-slate-100 px-4 py-2 flex items-center gap-2 border-b border-slate-200 shrink-0">
               <div className="flex gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
-                <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
+                <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
+                <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
               </div>
               <div className="bg-white px-3 py-1 rounded text-[10px] text-slate-400 flex-1 text-center font-mono truncate">
                 about:blank
