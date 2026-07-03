@@ -69,6 +69,11 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
         return () => clearTimeout(timer);
     }, [search]);
 
+    // Sync filter state with initialFilter prop changes (e.g. from parent tab switches)
+    useEffect(() => {
+        setFilter(initialFilter);
+    }, [initialFilter]);
+
     // Fetch when filters/search/page changes (wait, we need to handle page separately or reset it)
     // Actually, when Filter/Search changes, we MUST reset to Page 1.
     // So we use a separate effect for that? Or just call fetch with page 1.

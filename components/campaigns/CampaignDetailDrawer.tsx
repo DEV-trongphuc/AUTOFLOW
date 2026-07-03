@@ -638,7 +638,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                     </div>
                                                 </div>
                                                 <Button
-                                                    onClick={() => setActiveTab('delivery')}
+                                                    onClick={() => handleNavigateToAudienceFilter('failed')}
                                                     variant="secondary"
                                                     className="bg-white text-rose-600 border-rose-200 hover:bg-rose-50 shadow-sm !rounded-xl px-6"
                                                     icon={BarChart2}
