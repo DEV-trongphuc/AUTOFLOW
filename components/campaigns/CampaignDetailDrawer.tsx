@@ -478,7 +478,12 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                 <div className="px-4 md:px-8 pt-2 bg-white border-b border-slate-100 overflow-x-auto whitespace-nowrap scrollbar-hide">
                     <Tabs
                         activeId={activeTab}
-                        onChange={setActiveTab}
+                        onChange={(tabId) => {
+                            if (tabId === 'delivery') {
+                                setInitialAudienceFilter('all');
+                            }
+                            setActiveTab(tabId);
+                        }}
                         items={[
                             { id: 'overview', label: 'Báo cáo', icon: BarChart2 },
                             { id: 'content', label: localCampaign.type === 'zalo_zns' ? 'Nội dung' : 'Nội dung', icon: FileText },
@@ -1187,6 +1192,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                     {activeTab === 'delivery' && localCampaign && (
                         <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                             <CampaignDeliveryDetailsTab
+                                key={`${localCampaign.id}-${initialAudienceFilter}`}
                                 campaign={localCampaign}
                                 allLists={allLists}
                                 allTags={allTags}
