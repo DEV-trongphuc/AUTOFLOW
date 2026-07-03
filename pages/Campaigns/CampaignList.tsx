@@ -63,7 +63,7 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                     <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all shadow-sm border ${c.type === 'zalo_zns' ? 'bg-white text-[#0068ff] border-[#0068ff]/20 shadow-[0_0_15px_rgba(0,104,255,0.1)] p-2 group-hover:border-[#0068ff]/40 group-hover:shadow-[0_0_20px_rgba(0,104,255,0.15)]' :
                         (showFlowStatus ? 'bg-violet-50 text-violet-600 border-violet-100' :
                             (showReminderBadge ? 'bg-orange-50 text-orange-500 border-orange-100' :
-                                (isSent ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                (isSent ? 'bg-blue-50 text-blue-600 border-blue-100' :
                                     (isWaiting ? 'bg-amber-50 text-amber-600 border-amber-100' :
                                         (isSending ? 'bg-blue-50 text-blue-600 border-blue-100' :
                                             (isPaused ? 'bg-orange-50 text-orange-600 border-orange-200' :
@@ -108,7 +108,7 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                         <GitMerge className="w-3 h-3" /> FLOW
                     </button>
                 ) : isSent ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-black uppercase tracking-wide">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-black uppercase tracking-wide">
                         <><CheckCircle2 className="w-3 h-3" /> Sent</>
                     </span>
                 ) : isPaused ? (
@@ -139,6 +139,21 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                                 <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1.5">
                                     <Calendar className="w-3 h-3 text-slate-400" />
                                     {new Date(c.sentAt).toLocaleDateString('vi-VN')}   {new Date(c.sentAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                ) : isSending ? (
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
+                            <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin" />
+                            {sentCount.toLocaleString()} / {(c.totalTargetAudience || 0).toLocaleString()} <span translate="no" className="text-[10px] text-slate-400 font-medium uppercase tracking-wider whitespace-nowrap">{c.type === 'zalo_zns' ? 'Tin nhắn' : 'Emails'}</span>
+                        </div>
+                        {c.scheduledAt && (
+                            <div className="flex flex-col gap-0.5">
+                                <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1.5">
+                                    <Calendar className="w-3 h-3 text-slate-400" />
+                                    Bắt đầu: {new Date(c.scheduledAt).toLocaleDateString('vi-VN')}   {new Date(c.scheduledAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                             </div>
                         )}
@@ -179,11 +194,15 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                                             ({c.totalTargetAudience ? Math.round((sentCount / c.totalTargetAudience) * 100) : 0}%)
                                         </span>
                                     )}
-                                    {!isSending && c.type !== 'zalo_zns' && <span className={`text-[9px] font-black ${openRate > 0 ? 'text-emerald-500' : 'text-slate-300'}`}>({openRate}%)</span>}
+                                    {!isSending && c.type !== 'zalo_zns' && <span className={`text-[9px] font-black ${openRate > 0 ? (showFlowStatus ? 'text-violet-500' : 'text-blue-500') : 'text-slate-300'}`}>({openRate}%)</span>}
                                 </div>
                             </div>
-                            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <div className={`h-full bg-gradient-to-r ${isSending ? 'from-blue-400 to-blue-600 animate-pulse' : (c.type === 'zalo_zns' ? 'from-blue-500 to-blue-700 shadow-[0_0_10px_rgba(0,104,255,0.2)]' : 'from-emerald-400 to-emerald-600')} rounded-full transition-all duration-1000`} style={{ width: `${isSending ? (c.totalTargetAudience ? Math.min((sentCount / c.totalTargetAudience) * 100, 100) : 0) : (c.type === 'zalo_zns' ? 100 : Math.min(openRate, 100))}%` }}></div>
+                            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden relative">
+                                <div className={`h-full bg-gradient-to-r ${isSending ? 'from-blue-500 to-blue-600 shadow-[0_0_10px_rgba(59,130,246,0.35)]' : (showFlowStatus ? 'from-violet-500 to-purple-600 shadow-[0_0_10px_rgba(139,92,246,0.35)]' : (c.type === 'zalo_zns' ? 'from-blue-500 to-blue-700 shadow-[0_0_10px_rgba(0,104,255,0.2)]' : 'from-blue-500 to-blue-600 shadow-[0_0_10px_rgba(59,130,246,0.35)]'))} rounded-full transition-all duration-1000 relative overflow-hidden`} style={{ width: `${isSending ? (c.totalTargetAudience ? Math.min((sentCount / c.totalTargetAudience) * 100, 100) : 0) : (c.type === 'zalo_zns' ? 100 : Math.min(openRate, 100))}%` }}>
+                                    {(isSending) && (
+                                        <div className="absolute inset-0 animate-sending-shimmer"></div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -260,7 +279,7 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
                         {c.type === 'zalo_zns' ? <img src={`${EXTERNAL_ASSET_BASE}/imgs/zalolog.png`} alt="Zalo" className="w-full h-full object-contain" /> :
                             (showFlowStatus ? <GitMerge className="w-4 h-4 text-violet-600" /> :
                                 (showReminderBadge ? <Clock className="w-4 h-4 text-orange-500" /> :
-                                    (isSent ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> :
+                                    (isSent ? <CheckCircle2 className="w-4 h-4 text-blue-600" /> :
                                         (isWaiting ? <GitMerge className="w-4 h-4 text-amber-600" /> :
                                             (isSending ? <Loader2 className="w-4 h-4 animate-spin text-blue-600" /> :
                                                 (c.status === CampaignStatus.SCHEDULED ? <CalendarClock className="w-4 h-4 text-indigo-600" /> : <FileText className="w-4 h-4 text-slate-400" />))))))}
@@ -280,23 +299,35 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Trạng thái</p>
                     <div className="flex">
                         {isWaiting ? (
-                            <Badge variant="warning" className="text-[8px] px-1.5 py-0.5">WAITING</Badge>
+                            <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-100 text-[8px] font-black uppercase tracking-wide">
+                                WAITING
+                            </span>
                         ) : isSending ? (
-                            <Badge variant="info" className="text-[8px] px-1.5 py-0.5 animate-pulse-subtle">SENDING</Badge>
+                            <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100 text-[8px] font-black uppercase tracking-wide animate-pulse-subtle">
+                                SENDING
+                            </span>
+                        ) : showFlowStatus ? (
+                            <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-md bg-violet-50 text-violet-700 border border-violet-100 text-[8px] font-black uppercase tracking-wide">
+                                FLOW
+                            </span>
                         ) : showReminderBadge ? (
                             // [UI-R1] Mobile sent+reminder badge
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-orange-50 text-orange-600 border border-orange-200 text-[8px] font-black uppercase tracking-wide">
                                 <Clock className="w-2.5 h-2.5" /> +Reminder
                             </span>
                         ) : isSent ? (
-                            <Badge variant="success" className="text-[8px] px-1.5 py-0.5">SENT</Badge>
+                            <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100 text-[8px] font-black uppercase tracking-wide">
+                                SENT
+                            </span>
                         ) : isPaused ? (
                             // [FIX P7-C1] Mobile paused badge — orange to match desktop
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-orange-50 text-orange-700 border border-orange-200 text-[8px] font-black uppercase tracking-wide">
                                 <PauseCircle className="w-2.5 h-2.5" /> PAUSED
                             </span>
                         ) : (
-                            <Badge variant="neutral" className="text-[8px] px-1.5 py-0.5">{(c.status || 'DRAFT').toUpperCase()}</Badge>
+                            <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 text-[8px] font-black uppercase tracking-wide">
+                                {(c.status || 'DRAFT').toUpperCase()}
+                            </span>
                         )}
                     </div>
                 </div>
@@ -321,15 +352,22 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
                                 }
                             </span>
                         </div>
-                        <span translate="no" className={`text-[9px] font-black whitespace-nowrap ${isSending ? 'text-blue-500' : 'text-emerald-600'}`}>
+                        <span translate="no" className={`text-[9px] font-black whitespace-nowrap ${isSending ? 'text-blue-500' : (showFlowStatus ? 'text-violet-500' : 'text-blue-500')}`}>
                             {isSending
                                 ? `${c.totalTargetAudience ? Math.round((sentCount / c.totalTargetAudience) * 100) : 0}% Tiến độ`
                                 : `${openRate}% ${c.type === 'zalo_zns' ? '' : 'Open'}`
                             }
                         </span>
                     </div>
-                    <div className="h-1 w-full bg-white rounded-full overflow-hidden border border-slate-200">
-                        <div className={`h-full bg-gradient-to-r ${isSending ? 'from-blue-400 to-blue-600 animate-pulse' : (c.type === 'zalo_zns' ? 'from-blue-500 to-blue-700' : 'from-emerald-400 to-emerald-600')} transition-all`} style={{ width: `${isSending ? (c.totalTargetAudience ? Math.min((sentCount / c.totalTargetAudience) * 100, 100) : 0) : (c.type === 'zalo_zns' ? 100 : Math.min(openRate, 100))}%` }}></div>
+                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200 relative">
+                        <div
+                            className={`h-full bg-gradient-to-r ${isSending ? 'from-blue-500 to-blue-600 shadow-[0_0_8px_rgba(59,130,246,0.3)]' : (showFlowStatus ? 'from-violet-500 to-purple-600 shadow-[0_0_8px_rgba(139,92,246,0.3)]' : (c.type === 'zalo_zns' ? 'from-blue-500 to-blue-700' : 'from-blue-500 to-blue-600 shadow-[0_0_8px_rgba(59,130,246,0.3)]'))} transition-all relative overflow-hidden`}
+                            style={{ width: `${isSending ? (c.totalTargetAudience ? Math.min((sentCount / c.totalTargetAudience) * 100, 100) : 0) : (c.type === 'zalo_zns' ? 100 : Math.min(openRate, 100))}%` }}
+                        >
+                            {(isSending) && (
+                                <div className="absolute inset-0 animate-sending-shimmer"></div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
@@ -395,6 +433,27 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
 
     return (
         <div className="min-h-[300px]">
+            {/* Custom styles for progress bar animations */}
+            <style>{`
+                @keyframes progressBarStripes {
+                    0% { background-position: 1rem 0; }
+                    100% { background-position: 0 0; }
+                }
+                .animate-sending-shimmer {
+                    background-image: linear-gradient(
+                        45deg, 
+                        rgba(255, 255, 255, 0.25) 25%, 
+                        transparent 25%, 
+                        transparent 50%, 
+                        rgba(255, 255, 255, 0.25) 50%, 
+                        rgba(255, 255, 255, 0.25) 75%, 
+                        transparent 75%, 
+                        transparent
+                    );
+                    background-size: 1rem 1rem;
+                    animation: progressBarStripes 1s linear infinite;
+                }
+            `}</style>
             {/* Desktop Table View */}
             <div ref={parentRef} className="hidden md:block overflow-x-auto overflow-y-auto max-h-[420px]">
                 <table className="w-full relative">

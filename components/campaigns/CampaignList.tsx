@@ -27,6 +27,27 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
 
     return (
         <div className="overflow-x-auto min-h-[400px]">
+            {/* Custom styles for progress bar animations */}
+            <style>{`
+                @keyframes progressBarStripes {
+                    0% { background-position: 1rem 0; }
+                    100% { background-position: 0 0; }
+                }
+                .animate-sending-shimmer {
+                    background-image: linear-gradient(
+                        45deg, 
+                        rgba(255, 255, 255, 0.25) 25%, 
+                        transparent 25%, 
+                        transparent 50%, 
+                        rgba(255, 255, 255, 0.25) 50%, 
+                        rgba(255, 255, 255, 0.25) 75%, 
+                        transparent 75%, 
+                        transparent
+                    );
+                    background-size: 1rem 1rem;
+                    animation: progressBarStripes 1s linear infinite;
+                }
+            `}</style>
             <table className="w-full">
                 <thead className="bg-slate-50/50 border-b border-slate-100 text-left">
                     <tr>
@@ -43,6 +64,7 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
                         const isWaiting = c.status === CampaignStatus.WAITING_FLOW;
                         const isSending = c.status === CampaignStatus.SENDING;
                         const sentCount = c.stats?.sent || 0;
+                        const showFlowStatus = isSent && c.linkedFlow;
 
                         // FIX: Calculate openRate and clickRate based on new stats properties
                         const openRate = sentCount > 0 ? Math.round(((c.stats?.opened || 0) / sentCount) * 100) : 0;
@@ -66,16 +88,18 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
                                 <td className="px-8 py-5 pl-8">
                                     <div className="flex items-center gap-4">
                                         <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all shadow-sm border ${c.type === 'zalo_zns' ? 'bg-white text-[#0068ff] border-[#0068ff]/20 shadow-[0_0_15px_rgba(0,104,255,0.1)] p-2 group-hover:border-[#0068ff]/40 group-hover:shadow-[0_0_20px_rgba(0,104,255,0.15)]' :
-                                            (isSent ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                                (isWaiting ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                                    (isSending ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                                        (c.status === CampaignStatus.SCHEDULED ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-50 text-slate-400 border-slate-100'))))
+                                            (showFlowStatus ? 'bg-violet-50 text-violet-600 border-violet-100' :
+                                                (isSent ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                                    (isWaiting ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                        (isSending ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                                            (c.status === CampaignStatus.SCHEDULED ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-50 text-slate-400 border-slate-100')))))
                                             }`}>
                                             {c.type === 'zalo_zns' ? <CheckCircle2 className="w-5 h-5" /> :
-                                                (isSent ? <CheckCircle2 className="w-5 h-5" /> :
-                                                    (isWaiting ? <GitMerge className="w-5 h-5" /> :
-                                                        (isSending ? <Loader2 className="w-5 h-5 animate-spin" /> :
-                                                            (c.status === CampaignStatus.SCHEDULED ? <CalendarClock className="w-5 h-5" /> : <FileText className="w-5 h-5" />))))}
+                                                (showFlowStatus ? <GitMerge className="w-5 h-5" /> :
+                                                    (isSent ? <CheckCircle2 className="w-5 h-5" /> :
+                                                        (isWaiting ? <GitMerge className="w-5 h-5" /> :
+                                                            (isSending ? <Loader2 className="w-5 h-5 animate-spin" /> :
+                                                                (c.status === CampaignStatus.SCHEDULED ? <CalendarClock className="w-5 h-5" /> : <FileText className="w-5 h-5" />)))))}
                                         </div>
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
@@ -100,11 +124,15 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
                                             <GitMerge className="w-3 h-3" /> Waiting Flow
                                         </span>
                                     ) : isSending ? (
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-black uppercase tracking-wide">
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-black uppercase tracking-wide animate-pulse-subtle">
                                             <Loader2 className="w-3 h-3 animate-spin" /> Sending...
                                         </span>
+                                    ) : showFlowStatus ? (
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-violet-50 text-violet-700 border border-violet-100 text-[10px] font-black uppercase tracking-wide">
+                                            <GitMerge className="w-3 h-3" /> Flow
+                                        </span>
                                     ) : isSent ? (
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-black uppercase tracking-wide">
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-black uppercase tracking-wide">
                                             <CheckCircle2 className="w-3 h-3" /> Sent
                                         </span>
                                     ) : c.status === CampaignStatus.SCHEDULED ? (
@@ -157,11 +185,11 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
                                                         <span className="text-[9px] font-medium text-slate-400">
                                                             {c.type === 'zalo_zns' ? `${(sentCount * 300).toLocaleString()}đ` : `${c.stats?.opened || 0}/${sentCount}`}
                                                         </span>
-                                                        {c.type !== 'zalo_zns' && <span className={`text-[9px] font-black ${openRate > 0 ? 'text-emerald-500' : 'text-slate-300'}`}>({openRate}%)</span>}
+                                                        {c.type !== 'zalo_zns' && <span className={`text-[9px] font-black ${openRate > 0 ? (showFlowStatus ? 'text-violet-500' : 'text-blue-500') : 'text-slate-300'}`}>({openRate}%)</span>}
                                                     </div>
                                                 </div>
-                                                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                                    <div className={`h-full bg-gradient-to-r ${c.type === 'zalo_zns' ? 'from-blue-500 to-blue-700 shadow-[0_0_10px_rgba(0,104,255,0.2)]' : 'from-emerald-400 to-emerald-600'} rounded-full transition-all duration-1000`} style={{ width: `${c.type === 'zalo_zns' ? 100 : Math.min(openRate, 100)}%` }}></div>
+                                                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden relative">
+                                                    <div className={`h-full bg-gradient-to-r ${showFlowStatus ? 'from-violet-500 to-purple-600 shadow-[0_0_10px_rgba(139,92,246,0.35)]' : (c.type === 'zalo_zns' ? 'from-blue-500 to-blue-700 shadow-[0_0_10px_rgba(0,104,255,0.2)]' : 'from-blue-500 to-blue-600 shadow-[0_0_10px_rgba(59,130,246,0.35)]')} rounded-full transition-all duration-1000 relative overflow-hidden`} style={{ width: `${c.type === 'zalo_zns' ? 100 : Math.min(openRate, 100)}%` }}></div>
                                                 </div>
                                             </div>
                                             {/* Click Stat (Text Only) */}
@@ -173,16 +201,18 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
                                     ) : isSending ? (
                                         <div className="w-full max-w-[140px]">
                                             <div className="flex justify-between items-end mb-1">
-                                                <span className="text-[9px] font-bold text-blue-500 uppercase animate-pulse">Progress</span>
+                                                <span className="text-[9px] font-bold text-blue-500 uppercase">Progress</span>
                                                 <span className="text-[9px] font-black text-blue-600">
                                                     {totalTargetAudience > 0 ? Math.round((sentCount / totalTargetAudience) * 100) : 0}%
                                                 </span>
                                             </div>
-                                            <div className="h-1.5 w-full bg-blue-50 rounded-full overflow-hidden border border-blue-100/50">
+                                            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden relative">
                                                 <div
-                                                    className="h-full bg-gradient-to-r from-blue-400 to-indigo-600 rounded-full transition-all duration-1000"
+                                                    className="h-full bg-gradient-to-r from-blue-500 to-blue-600 shadow-[0_0_10px_rgba(59,130,246,0.35)] rounded-full transition-all duration-1000 relative overflow-hidden"
                                                     style={{ width: `${totalTargetAudience > 0 ? Math.min((sentCount / totalTargetAudience) * 100, 100) : 0}%` }}
-                                                ></div>
+                                                >
+                                                    <div className="absolute inset-0 animate-sending-shimmer"></div>
+                                                </div>
                                             </div>
                                             <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter mt-1 text-center">
                                                 {sentCount.toLocaleString()} / {totalTargetAudience.toLocaleString()}
