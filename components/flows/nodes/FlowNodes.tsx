@@ -1,7 +1,7 @@
 
 import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import React, { memo } from 'react';
-import { Zap, Mail, Clock, GitMerge, Tag, Link as LinkIcon, MoreHorizontal, AlertOctagon, AlertTriangle, Beaker, Hourglass, MousePointer2, MailOpen, MessageSquare, UserMinus, Filter, ShoppingCart, Layers, Cake, Snowflake, Send, Plus, Minus, Trash2, List, ListPlus, Paperclip } from 'lucide-react';
+import { Zap, Mail, Clock, GitMerge, Tag, Link as LinkIcon, MoreHorizontal, AlertOctagon, AlertTriangle, Beaker, Hourglass, MousePointer2, MailOpen, MessageSquare, UserMinus, Filter, ShoppingCart, Layers, Cake, Snowflake, Send, Plus, Minus, Trash2, List, ListPlus, Paperclip, FileInput } from 'lucide-react';
 import { FlowStep, Flow, FormDefinition } from '../../../types';
 
 interface NodeProps {
@@ -78,7 +78,7 @@ export const TriggerNode: React.FC<NodeProps> = memo(({ step, onClick, isViewMod
         if (isFormDeleted) return { icon: AlertOctagon, color: 'from-rose-500 to-red-700', label: 'LỖI LIÊN KẾT' };
         switch (triggerType) {
             case 'segment': return (step.config.targetSubtype === 'list' || step.config.targetSubtype === 'sync') ? { icon: ListPlus, color: 'from-emerald-500 to-teal-600', label: 'List Entry' } : { icon: Layers, color: 'from-amber-400 to-amber-600', label: 'Segment Entry' };
-            case 'form': return { icon: Send, color: 'from-amber-400 to-amber-600', label: 'Form Submit' };
+            case 'form': return { icon: FileInput, color: 'from-[#f59e0b] to-[#d97706]', label: 'Form Submit' };
             case 'purchase': return { icon: ShoppingCart, color: 'from-pink-500 to-rose-600', label: 'Purchase Event' };
             case 'tag': return { icon: Tag, color: 'from-emerald-500 to-teal-600', label: 'Tag Added' };
             case 'birthday': return { icon: Cake, color: 'from-pink-400 to-rose-500', label: 'Birthday Event' };

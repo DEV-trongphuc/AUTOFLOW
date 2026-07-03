@@ -141,7 +141,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
 
     const triggerOptions = [
         { id: 'segment', label: 'Danh sách & Phân khúc', icon: Layers, color: 'orange', desc: 'Bộ lọc thông minh' },
-        { id: 'form', label: 'Gửi Biểu mẫu', icon: FileInput, color: 'amber', desc: 'Từ Landing Page' },
+        { id: 'form', label: 'Gửi Biểu mẫu', icon: FileInput, color: 'yellow', desc: 'Từ Landing Page' },
         { id: 'survey', label: 'Làm Khảo sát', icon: ClipboardList, color: 'emerald', desc: 'Hoàn thành Survey' },
         { id: 'purchase', label: 'Khách hàng Mua', icon: ShoppingCart, color: 'pink', desc: 'Sự kiện API' },
         { id: 'inbound_message', label: 'Tin nhắn đến', icon: MessageSquare, color: 'blue', desc: 'Meta / Zalo OA / Keyword' },
@@ -243,6 +243,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
         const colors: any = {
             orange: isSelected ? 'border-orange-500 bg-orange-50 ring-orange-50' : 'hover:border-orange-200',
             amber: isSelected ? 'border-amber-600 bg-amber-50 ring-amber-50' : 'hover:border-amber-200',
+            yellow: isSelected ? 'border-yellow-500 bg-yellow-50 ring-yellow-50' : 'hover:border-yellow-200',
             pink: isSelected ? 'border-pink-500 bg-pink-50 ring-pink-50' : 'hover:border-pink-200',
             emerald: isSelected ? 'border-emerald-500 bg-emerald-50 ring-emerald-50' : 'hover:border-emerald-200',
             blue: isSelected ? 'border-blue-500 bg-blue-50 ring-blue-50' : 'hover:border-blue-200',
@@ -256,6 +257,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
         const colors: any = {
             orange: isSelected ? 'bg-orange-500 text-white' : 'bg-orange-50 text-orange-500',
             amber: isSelected ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-600',
+            yellow: isSelected ? 'bg-yellow-500 text-white' : 'bg-yellow-50 text-yellow-600',
             pink: isSelected ? 'bg-pink-500 text-white' : 'bg-pink-50 text-pink-500',
             emerald: isSelected ? 'bg-emerald-500 text-white' : 'bg-emerald-50 text-emerald-500',
             blue: isSelected ? 'bg-blue-500 text-white' : 'bg-blue-50 text-blue-500',

@@ -80,8 +80,8 @@ const FlowCard = React.memo<FlowCardProps>((
 
         if (triggerType === 'form') {
             let formName = linkedForm ? linkedForm.name : (triggerConfig.targetId ? `Form ${triggerConfig.targetId.substring(0, 6)}...` : 'Form không xác định');
-            let accent = 'amber';
-            let gradient = 'from-amber-400 to-orange-500';
+            let accent = 'yellow';
+            let gradient = 'from-[#f59e0b] to-[#d97706]';
 
             if (!linkedForm && triggerConfig.targetId) {
                 accent = 'rose';
