@@ -121,6 +121,9 @@ try {
                                     dispatchFlowWorker($pdo, 'flows', ['trigger_type' => 'tag', 'target_id' => $tagName, 'subscriber_id' => $sid]);
                                 }
                             }
+                        } elseif ($dbField === 'first_name' || $dbField === 'last_name') {
+                            $updateSqlParts[] = "$dbField = IF(COALESCE($dbField, '') = '', ?, $dbField)";
+                            $updateValues[] = $data[$dataKey];
                         } else {
                             $updateSqlParts[] = "$dbField = ?";
                             $updateValues[] = $data[$dataKey];

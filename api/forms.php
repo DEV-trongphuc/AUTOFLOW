@@ -162,6 +162,9 @@ try {
                     if (isset($data[$dataKey]) && $data[$dataKey] !== '' && $data[$dataKey] !== null) {
                         if ($dbField === 'tags') {
                             // Handle tags after the main UPDATE below
+                        } elseif ($dbField === 'first_name' || $dbField === 'last_name') {
+                            $updateSqlParts[] = "$dbField = IF(COALESCE($dbField, '') = '', ?, $dbField)";
+                            $updateValues[] = $data[$dataKey];
                         } else {
                             $updateSqlParts[] = "$dbField = ?";
                             $updateValues[] = $data[$dataKey];

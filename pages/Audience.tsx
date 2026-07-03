@@ -1220,7 +1220,8 @@ const Audience: React.FC = () => {
                     <Tabs
                         activeId={activeTab}
                         onChange={setActiveTab}
-                        className="flex-nowrap overflow-x-auto scrollbar-hide -mx-3 px-3 lg:mx-0 lg:px-0 mb-6"
+                        variant="segmented"
+                        className="mb-6"
                         items={[
                             { id: 'contacts', label: 'Tất cả liên hệ', icon: Users, count: pagination.total },
                             { id: 'segments', label: 'Phân khúc', icon: Layers, count: segmentsPagination.total },
