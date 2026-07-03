@@ -1223,7 +1223,7 @@ switch ($method) {
                     $syncNeeded = (time() - $lastUpdated) > 60;
 
                     // [SELF-HEALING] inconsistencies in count_unsubscribed
-                    if ($syncNeeded && empty($camp['count_unsubscribed'])) {
+                    if (($syncNeeded || in_array(strtolower($camp['status'] ?? ''), ['sent', 'sending'])) && empty($camp['count_unsubscribed'])) {
                         $stmtUnsub = $pdo->prepare("SELECT COUNT(*) FROM subscriber_activity WHERE campaign_id = ? AND type = 'unsubscribe'");
                         $stmtUnsub->execute([$path]);
                         $realUnsub = (int) $stmtUnsub->fetchColumn();
@@ -1234,9 +1234,9 @@ switch ($method) {
                     }
 
                     // [SELF-HEALING] count_sent and count_bounced sync (throttled)
-                    // Force sync if status is 'sending' to keep progress bar in sync with history tab
+                    // Force sync if status is 'sending' or 'sent' to keep stats in sync with logs
                     $isSending = strtolower($camp['status'] ?? '') === 'sending';
-                    if (($syncNeeded || $isSending) && in_array(strtolower($camp['status'] ?? ''), ['sent', 'sending'])) {
+                    if (in_array(strtolower($camp['status'] ?? ''), ['sent', 'sending'])) {
                         $isZns = ($camp['type'] ?? '') === 'zalo_zns';
                         if ($isZns) {
                             $stmtSync = $pdo->prepare("SELECT COUNT(*) FROM zalo_delivery_logs WHERE flow_id = ? AND status IN ('sent', 'seen', 'delivered')");
@@ -1265,7 +1265,7 @@ switch ($method) {
                     }
 
                     // [SELF-HEALING] Clicks + Opens sync (throttled, 1 query + at most 1 write)
-                    if (($syncNeeded || $isSending) && in_array(strtolower($camp['status'] ?? ''), ['sent', 'sending'])) {
+                    if (in_array(strtolower($camp['status'] ?? ''), ['sent', 'sending'])) {
                         // [PERF] Merged 2 separate SELECT queries into 1 GROUP BY
                         $stmtAS = $pdo->prepare("SELECT type, COUNT(*) as total, COUNT(DISTINCT subscriber_id) as unique_count
                             FROM subscriber_activity WHERE campaign_id = ? AND type IN ('click_link','open_email') GROUP BY type");
