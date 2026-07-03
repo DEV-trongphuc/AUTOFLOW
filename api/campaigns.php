@@ -1234,7 +1234,9 @@ switch ($method) {
                     }
 
                     // [SELF-HEALING] count_sent and count_bounced sync (throttled)
-                    if ($syncNeeded && in_array(strtolower($camp['status'] ?? ''), ['sent', 'sending'])) {
+                    // Force sync if status is 'sending' to keep progress bar in sync with history tab
+                    $isSending = strtolower($camp['status'] ?? '') === 'sending';
+                    if (($syncNeeded || $isSending) && in_array(strtolower($camp['status'] ?? ''), ['sent', 'sending'])) {
                         $isZns = ($camp['type'] ?? '') === 'zalo_zns';
                         if ($isZns) {
                             $stmtSync = $pdo->prepare("SELECT COUNT(*) FROM zalo_delivery_logs WHERE flow_id = ? AND status IN ('sent', 'seen', 'delivered')");
@@ -1263,7 +1265,7 @@ switch ($method) {
                     }
 
                     // [SELF-HEALING] Clicks + Opens sync (throttled, 1 query + at most 1 write)
-                    if ($syncNeeded && in_array(strtolower($camp['status'] ?? ''), ['sent', 'sending'])) {
+                    if (($syncNeeded || $isSending) && in_array(strtolower($camp['status'] ?? ''), ['sent', 'sending'])) {
                         // [PERF] Merged 2 separate SELECT queries into 1 GROUP BY
                         $stmtAS = $pdo->prepare("SELECT type, COUNT(*) as total, COUNT(DISTINCT subscriber_id) as unique_count
                             FROM subscriber_activity WHERE campaign_id = ? AND type IN ('click_link','open_email') GROUP BY type");

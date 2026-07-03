@@ -38,6 +38,7 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
     const isPaused = c.status === CampaignStatus.PAUSED;
     const sentCount = c.stats?.sent || 0;
     const linkedFlow = c.linkedFlow;
+    const isFlow = !!linkedFlow;
     const showFlowStatus = isSent && linkedFlow;
     // [UI-R1] Campaign has pending reminders → orange clock instead of green sent badge
     const hasReminders = (c.reminderCount ?? (c.reminders?.length ?? 0)) > 0;
@@ -61,7 +62,7 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
             <td className="px-8 py-5">
                 <div className="flex items-center gap-4">
                     <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all shadow-sm border ${c.type === 'zalo_zns' ? 'bg-white text-[#0068ff] border-[#0068ff]/20 shadow-[0_0_15px_rgba(0,104,255,0.1)] p-2 group-hover:border-[#0068ff]/40 group-hover:shadow-[0_0_20px_rgba(0,104,255,0.15)]' :
-                        (showFlowStatus ? 'bg-violet-50 text-violet-600 border-violet-100' :
+                        (isFlow ? 'bg-violet-50 text-violet-600 border-violet-100 shadow-[0_0_15px_rgba(139,92,246,0.1)]' :
                             (showReminderBadge ? 'bg-orange-50 text-orange-500 border-orange-100' :
                                 (isSent ? 'bg-blue-50 text-blue-600 border-blue-100' :
                                     (isWaiting ? 'bg-amber-50 text-amber-600 border-amber-100' :
@@ -70,13 +71,13 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                                                 (c.status === CampaignStatus.SCHEDULED ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-50 text-slate-400 border-slate-100')))))))
                         }`}>
                         {c.type === 'zalo_zns' ? <img src={`${EXTERNAL_ASSET_BASE}/imgs/zalolog.png`} alt="Zalo" className="w-full h-full object-contain" /> :
-                            (showFlowStatus ? <GitMerge className="w-5 h-5" /> :
-                                (showReminderBadge ? <Clock className="w-5 h-5" /> :
-                                    (isSent ? <CheckCircle2 className="w-5 h-5" /> :
-                                        (isWaiting ? <GitMerge className="w-5 h-5" /> :
-                                            (isSending ? <Loader2 className="w-5 h-5 animate-spin" /> :
-                                                (isPaused ? <PauseCircle className="w-5 h-5" /> :
-                                                    (c.status === CampaignStatus.SCHEDULED ? <CalendarClock className="w-5 h-5" /> : <FileText className="w-5 h-5" />)))))))}
+                            (isFlow ? (isSending ? <Loader2 className="w-5 h-5 animate-spin text-violet-600" /> : <GitMerge className="w-5 h-5 text-violet-600" />) :
+                                (showReminderBadge ? <Clock className="w-5 h-5 text-orange-500" /> :
+                                    (isSent ? <CheckCircle2 className="w-5 h-5 text-blue-600" /> :
+                                        (isWaiting ? <GitMerge className="w-5 h-5 text-amber-600" /> :
+                                            (isSending ? <Loader2 className="w-5 h-5 animate-spin text-blue-600" /> :
+                                                (isPaused ? <PauseCircle className="w-5 h-5 text-orange-600" /> :
+                                                    (c.status === CampaignStatus.SCHEDULED ? <CalendarClock className="w-5 h-5 text-indigo-600" /> : <FileText className="w-5 h-5" />)))))))}
 
                     </div>
                     <div className="min-w-0">
@@ -190,15 +191,15 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                                         }
                                     </span>
                                     {isSending && (
-                                        <span className="text-[9px] font-black text-blue-500">
+                                        <span className={`text-[9px] font-black ${isFlow ? 'text-violet-500' : 'text-blue-500'}`}>
                                             ({c.totalTargetAudience ? Math.round((sentCount / c.totalTargetAudience) * 100) : 0}%)
                                         </span>
                                     )}
-                                    {!isSending && c.type !== 'zalo_zns' && <span className={`text-[9px] font-black ${openRate > 0 ? (showFlowStatus ? 'text-violet-500' : 'text-blue-500') : 'text-slate-300'}`}>({openRate}%)</span>}
+                                    {!isSending && c.type !== 'zalo_zns' && <span className={`text-[9px] font-black ${openRate > 0 ? (isFlow ? 'text-violet-500' : 'text-blue-500') : 'text-slate-300'}`}>({openRate}%)</span>}
                                 </div>
                             </div>
                             <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden relative">
-                                <div className={`h-full bg-gradient-to-r ${isSending ? 'from-blue-500 to-blue-600 shadow-[0_0_10px_rgba(59,130,246,0.35)]' : (showFlowStatus ? 'from-violet-500 to-purple-600 shadow-[0_0_10px_rgba(139,92,246,0.35)]' : (c.type === 'zalo_zns' ? 'from-blue-500 to-blue-700 shadow-[0_0_10px_rgba(0,104,255,0.2)]' : 'from-blue-500 to-blue-600 shadow-[0_0_10px_rgba(59,130,246,0.35)]'))} rounded-full transition-all duration-1000 relative overflow-hidden`} style={{ width: `${isSending ? (c.totalTargetAudience ? Math.min((sentCount / c.totalTargetAudience) * 100, 100) : 0) : (c.type === 'zalo_zns' ? 100 : Math.min(openRate, 100))}%` }}>
+                                <div className={`h-full bg-gradient-to-r ${isFlow ? 'from-violet-500 to-purple-600 shadow-[0_0_10px_rgba(139,92,246,0.35)]' : (c.type === 'zalo_zns' ? 'from-blue-500 to-blue-700 shadow-[0_0_10px_rgba(0,104,255,0.2)]' : 'from-blue-500 to-blue-600 shadow-[0_0_10px_rgba(59,130,246,0.35)]')} rounded-full transition-all duration-1000 relative overflow-hidden`} style={{ width: `${isSending ? (c.totalTargetAudience ? Math.min((sentCount / c.totalTargetAudience) * 100, 100) : 0) : (c.type === 'zalo_zns' ? 100 : Math.min(openRate, 100))}%` }}>
                                     {(isSending) && (
                                         <div className="absolute inset-0 animate-sending-shimmer"></div>
                                     )}
@@ -246,7 +247,6 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
         </tr>
     );
 }));
-
 const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, onDelete, onPlayFlow, navigate }) => {
     const isSent = c.status === CampaignStatus.SENT;
     const isWaiting = c.status === CampaignStatus.WAITING_FLOW;
@@ -255,6 +255,7 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
     const isPaused = c.status === CampaignStatus.PAUSED;
     const sentCount = c.stats?.sent || 0;
     const linkedFlow = c.linkedFlow;
+    const isFlow = !!linkedFlow;
     const showFlowStatus = isSent && linkedFlow;
     // [UI-R1] Reminder badge for mobile
     const hasReminders = (c.reminderCount ?? (c.reminders?.length ?? 0)) > 0;
@@ -275,9 +276,9 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
         >
             <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${c.type === 'zalo_zns' ? 'bg-white p-1.5 border-[#0068ff]/20' : 'bg-slate-50 border-slate-100'}`}>
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${c.type === 'zalo_zns' ? 'bg-white p-1.5 border-[#0068ff]/20' : (isFlow ? 'bg-violet-50 text-violet-600 border-violet-100 shadow-[0_0_10px_rgba(139,92,246,0.1)]' : 'bg-slate-50 border-slate-100')}`}>
                         {c.type === 'zalo_zns' ? <img src={`${EXTERNAL_ASSET_BASE}/imgs/zalolog.png`} alt="Zalo" className="w-full h-full object-contain" /> :
-                            (showFlowStatus ? <GitMerge className="w-4 h-4 text-violet-600" /> :
+                            (isFlow ? (isSending ? <Loader2 className="w-4 h-4 animate-spin text-violet-600" /> : <GitMerge className="w-4 h-4 text-violet-600" />) :
                                 (showReminderBadge ? <Clock className="w-4 h-4 text-orange-500" /> :
                                     (isSent ? <CheckCircle2 className="w-4 h-4 text-blue-600" /> :
                                         (isWaiting ? <GitMerge className="w-4 h-4 text-amber-600" /> :
@@ -344,7 +345,7 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
                 <div className="bg-slate-50/50 p-2 rounded-xl border border-slate-100">
                     <div className="flex justify-between items-center mb-1">
                         <div className="flex items-center gap-1.5 flex-nowrap">
-                            <Send className="w-3 h-3 text-blue-500 shrink-0" />
+                            <Send className={`w-3 h-3 shrink-0 ${isFlow ? 'text-violet-500' : 'text-blue-500'}`} />
                             <span translate="no" className="text-[9px] font-black text-slate-700 whitespace-nowrap">
                                 {isSending
                                     ? `${sentCount.toLocaleString()} / ${(c.totalTargetAudience || 0).toLocaleString()} ${c.type === 'zalo_zns' ? 'ZNS' : 'Emails'}`
@@ -352,7 +353,7 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
                                 }
                             </span>
                         </div>
-                        <span translate="no" className={`text-[9px] font-black whitespace-nowrap ${isSending ? 'text-blue-500' : (showFlowStatus ? 'text-violet-500' : 'text-blue-500')}`}>
+                        <span translate="no" className={`text-[9px] font-black whitespace-nowrap ${isFlow ? 'text-violet-500' : 'text-blue-500'}`}>
                             {isSending
                                 ? `${c.totalTargetAudience ? Math.round((sentCount / c.totalTargetAudience) * 100) : 0}% Tiến độ`
                                 : `${openRate}% ${c.type === 'zalo_zns' ? '' : 'Open'}`
@@ -361,7 +362,7 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
                     </div>
                     <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200 relative">
                         <div
-                            className={`h-full bg-gradient-to-r ${isSending ? 'from-blue-500 to-blue-600 shadow-[0_0_8px_rgba(59,130,246,0.3)]' : (showFlowStatus ? 'from-violet-500 to-purple-600 shadow-[0_0_8px_rgba(139,92,246,0.3)]' : (c.type === 'zalo_zns' ? 'from-blue-500 to-blue-700' : 'from-blue-500 to-blue-600 shadow-[0_0_8px_rgba(59,130,246,0.3)]'))} transition-all relative overflow-hidden`}
+                            className={`h-full bg-gradient-to-r ${isFlow ? 'from-violet-500 to-purple-600 shadow-[0_0_8px_rgba(139,92,246,0.3)]' : (c.type === 'zalo_zns' ? 'from-blue-500 to-blue-700 shadow-[0_0_8px_rgba(0,104,255,0.2)]' : 'from-blue-500 to-blue-600 shadow-[0_0_8px_rgba(59,130,246,0.3)]')} transition-all relative overflow-hidden`}
                             style={{ width: `${isSending ? (c.totalTargetAudience ? Math.min((sentCount / c.totalTargetAudience) * 100, 100) : 0) : (c.type === 'zalo_zns' ? 100 : Math.min(openRate, 100))}%` }}
                         >
                             {(isSending) && (

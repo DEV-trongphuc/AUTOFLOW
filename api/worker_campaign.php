@@ -327,6 +327,12 @@ if (!function_exists('runWorkerCampaign')) {
                 $totalProcessed = 0;
                 $startTimeRun = microtime(true);
 
+                // [DYNAMIC TIME LIMIT] Read php max_execution_time to avoid brutal FPM/CGI termination.
+                // Leave a 5s safety buffer for the final status check & next-worker spawn.
+                $maxExecutionTime = (int) ini_get('max_execution_time');
+                $timeLimit = ($maxExecutionTime > 0) ? ($maxExecutionTime - 5) : 30; // standard default is 30s
+                $timeLimit = max(10, min($timeLimit, 450)); // clamp between 10s and 450s
+
                 // [PERF B2] Pre-decode linked flow JSON once  avoids 200x json_decode per batch.
                 // linkedFlow config/steps are the same for every subscriber in the batch.
                 $linkedFlowConfig = $linkedFlow ? (json_decode($linkedFlow['config'], true) ?: []) : null;
@@ -377,10 +383,10 @@ if (!function_exists('runWorkerCampaign')) {
                 while ($hasMore && $batchCount < $MAX_BATCHES) {
                     $batchCount++;
 
-                    // [TIME GUARD] Stop if we've been running for more than 450 seconds (7.5 min)
+                    // [TIME GUARD] Stop if we've been running for more than $timeLimit seconds
                     // limit is 600s, but we want to leave room for final updates and cleanup.
-                    if (microtime(true) - $startTimeRun > 450) {
-                        writeWorkerLog("Campaign $cid: Execution time limit reached. Stopping batch loop.");
+                    if (microtime(true) - $startTimeRun > $timeLimit) {
+                        writeWorkerLog("Campaign $cid: Execution time limit ($timeLimit s) reached. Stopping batch loop.");
                         break;
                     }
                     $pdo->beginTransaction();
