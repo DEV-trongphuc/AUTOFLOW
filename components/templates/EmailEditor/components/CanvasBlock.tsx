@@ -83,7 +83,11 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
     if (!isFilteredType) {
         decorativeProps.forEach(prop => {
             // @ts-ignore
-            if (css[prop] !== undefined) decorativeStyles[prop] = css[prop];
+            if (css[prop] !== undefined) {
+                // Divider line border should be rendered on the inner element, not the outer wrapper
+                if (block.type === 'divider' && prop.startsWith('border') && prop !== 'borderRadius') return;
+                decorativeStyles[prop] = css[prop];
+            }
         });
         decorativeStyles.overflow = (css.borderRadius && parseFloat(String(css.borderRadius)) > 0 && !isSelected) ? 'hidden' : 'visible';
         decorativeStyles.borderRadius = css.borderRadius ? sanitizeRadius(css.borderRadius) : undefined;

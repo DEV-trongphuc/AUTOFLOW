@@ -918,7 +918,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
 
 
         // [FIX] Divider: use hr-mimicking table cell (div is unreliable in Outlook)
-        if (b.type === 'divider') return wrapWithMargin(`<td class="${customClassName}" style="${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${getBorderStyle(s)} ${hideOnDesktopCss}"><table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%"><tr><td height="1" style="font-size: 1px; line-height: 1px; border-top: ${s.borderTopWidth || '1px'} ${s.borderStyle || 'solid'} ${s.borderColor || '#eeeeee'}; mso-line-height-rule: exactly;">&nbsp;</td></tr></table></td>`);
+        if (b.type === 'divider') return wrapWithMargin(`<td class="${customClassName}" style="${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${hideOnDesktopCss}"><table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%"><tr><td height="1" style="font-size: 1px; line-height: 1px; border-top: ${s.borderTopWidth || '1px'} ${s.borderStyle || 'solid'} ${s.borderColor || '#eeeeee'}; mso-line-height-rule: exactly;">&nbsp;</td></tr></table></td>`);
         // [FIX] Spacer: mso-line-height-rule: exactly for Outlook
         if (b.type === 'spacer') { const h = parseInt(s.height?.replace('px', '') || '20'); return wrapWithMargin(`<td class="${customClassName}" height="${h}" style="font-size: ${h}px; line-height: ${h}px; mso-line-height-rule: exactly; ${getBackgroundStyle(s)} ${paddingCss} ${radiusStyle} ${getBorderStyle(s)} ${hideOnDesktopCss}">&nbsp;</td>`); }
 
