@@ -368,7 +368,7 @@ const Settings: React.FC = () => {
                 <Tabs
                     activeId={activeTab}
                     onChange={setActiveTab}
-                    variant="pill"
+                    variant="segmented"
                     className="flex-nowrap overflow-x-auto scrollbar-hide pb-2"
                     items={[
                         { id: 'system', label: 'Máy chủ & Mail', icon: Server },

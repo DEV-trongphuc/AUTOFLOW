@@ -60,7 +60,7 @@ const ZaloSettings: React.FC = () => {
             <div className="bg-white rounded-3xl lg:rounded-[32px] border border-slate-200 shadow-sm overflow-hidden min-h-[600px]">
                 <div className="px-4 lg:px-6 py-4 border-b border-slate-50 bg-slate-50/30">
                     <Tabs
-                        variant="pill"
+                        variant="segmented"
                         activeId={activeTab}
                         onChange={setActiveTab as any}
                         items={[

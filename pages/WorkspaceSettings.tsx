@@ -281,7 +281,7 @@ const WorkspaceSettings: React.FC = () => {
                 <Tabs
                     activeId={activeTab}
                     onChange={(id) => setActiveTab(id as 'members' | 'roles')}
-                    variant="pill"
+                    variant="segmented"
                     className="mb-8"
                     items={[
                         { id: 'members', label: 'Nhân sự Workspace', icon: Users, count: members.length },

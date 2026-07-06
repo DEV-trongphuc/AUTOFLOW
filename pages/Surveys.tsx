@@ -535,7 +535,7 @@ const Surveys: React.FC = () => {
                 {/* Tabs + Search */}
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                     <Tabs
-                        variant="pill"
+                        variant="segmented"
                         activeId={activeTab}
                         onChange={setActiveTab}
                         items={TABS}

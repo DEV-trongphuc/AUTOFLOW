@@ -736,7 +736,7 @@ const Campaigns: React.FC = () => {
                         {/* Left: Status tabs */}
                         <div className="overflow-x-auto pb-1 -mx-4 px-4 lg:mx-0 lg:px-0 lg:pb-0 scrollbar-hide">
                             <Tabs
-                                variant="pill"
+                                variant="segmented"
                                 activeId={activeTab}
                                 onChange={setActiveTab as any}
                                 items={TAB_ITEMS as any}

@@ -43,7 +43,7 @@ const ApiTriggers: React.FC = () => {
                 <Tabs
                     activeId={activeTab}
                     onChange={setActiveTab as any}
-                    variant="pill"
+                    variant="segmented"
                     className="mb-8"
                     items={[
                         { id: 'forms', label: 'Biểu mẫu (Forms)', icon: FileInput },

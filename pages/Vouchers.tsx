@@ -162,7 +162,7 @@ const Vouchers: React.FC = () => {
             <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 lg:p-6 min-h-[500px]">
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                     <Tabs
-                        variant="pill"
+                        variant="segmented"
                         activeId={activeTab}
                         onChange={setActiveTab}
                         items={[

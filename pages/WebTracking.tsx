@@ -437,7 +437,7 @@ const WebTracking: React.FC = () => {
                                 <Tabs
                                     activeId="web"
                                     onChange={() => { }}
-                                    variant="pill"
+                                    variant="segmented"
                                     items={[
                                         { id: 'web', label: 'Website Tracking', icon: Globe },
                                     ]}
@@ -573,9 +573,9 @@ const WebTracking: React.FC = () => {
                         {/* Report Header & Tabs */}
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
                             <Tabs
-                                activeId={tab}
-                                onChange={setTab as any}
-                                variant="pill"
+                                    activeId={tab}
+                                    onChange={setTab as any}
+                                    variant="segmented"
                                 items={[
                                     { id: 'overview', label: 'Tổng quan', icon: BarChart2 },
                                     { id: 'visitors', label: 'Hành trình User', icon: GanttChartSquare },

@@ -1816,7 +1816,7 @@ const Flows: React.FC = () => {
                             {/* Toolbar */}
                             <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                                 <Tabs
-                                    variant="pill"
+                                    variant="segmented"
                                     activeId={activeTab}
                                     onChange={setActiveTab as any}
                                     className="flex-nowrap overflow-x-auto scrollbar-hide"
