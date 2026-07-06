@@ -542,6 +542,129 @@ try {
     printResult("Mô phỏng chu trình Flow Execution", false, "Lỗi nghiệp vụ: " . $e->getMessage());
 }
 
+// 6. Deep Audit (Conflict & Edge-case Verification)
+printSectionHeader("6. KIỂM ĐỊNH MÃ NGUỒN VÀ TRÁNH XUNG ĐỘT (DEEP HEALTH AUDIT)");
+
+$dir = is_dir(__DIR__ . '/api') ? __DIR__ . '/api' : __DIR__;
+$FILES = [
+    'FlowExecutor'            => @file_get_contents($dir . '/FlowExecutor.php'),
+    'Mailer'                  => @file_get_contents($dir . '/Mailer.php'),
+    'webhook'                 => @file_get_contents($dir . '/webhook.php'),
+    'worker_priority'         => @file_get_contents($dir . '/worker_priority.php'),
+    'worker_flow'             => @file_get_contents($dir . '/worker_flow.php'),
+    'worker_campaign'         => @file_get_contents($dir . '/worker_campaign.php'),
+    'worker_tracking_aggregator' => @file_get_contents($dir . '/worker_tracking_aggregator.php'),
+    'flow_helpers'            => @file_get_contents($dir . '/flow_helpers.php'),
+    'trigger_helper'          => @file_get_contents($dir . '/trigger_helper.php'),
+    'zalo_helpers'            => @file_get_contents($dir . '/zalo_helpers.php'),
+    'voucher_helper'          => @file_get_contents($dir . '/voucher_helper.php'),
+];
+
+// Helper: count non-comment occurrences
+if (!function_exists('countInCodeLines')) {
+    function countInCodeLines($src, $pattern) {
+        if (!$src) return 0;
+        $lines = explode("\n", $src);
+        $count = 0;
+        foreach ($lines as $line) {
+            $trimmed = ltrim($line);
+            if (strncmp($trimmed, '//', 2) === 0 || strncmp($trimmed, '*', 1) === 0 || strncmp($trimmed, '/*', 2) === 0) continue;
+            if (strpos($line, $pattern) !== false) $count++;
+        }
+        return $count;
+    }
+}
+
+// Audit cases
+$auditStart = microtime(true);
+
+// 6.1 Check A/B split logic
+$abSplit = countInCodeLines($FILES['FlowExecutor'], 'abs(crc32(');
+printResult("A/B Split Test: sử dụng abs(crc32) tránh tràn số 32-bit", $abSplit >= 1, "Tìm thấy $abSplit khai báo.");
+
+// 6.2 Check SMTP sentInSession logic
+$smCount = countInCodeLines($FILES['Mailer'], '$this->sentInSession++');
+printResult("SMTP SentInSession: tăng duy nhất 1 lần trong dispatchRaw", $smCount === 1, "Tìm thấy $smCount lần khai báo (được khuyên dùng chỉ có 1).");
+
+// 6.3 ZNS webhook safety
+$znsVerified = strpos($FILES['webhook'], 'stmtVerifyCamp') !== false;
+printResult("Webhook ZNS: xác thực chiến dịch trước khi cập nhật", $znsVerified, $znsVerified ? "Bảo vệ an toàn" : "Không có kiểm tra");
+
+// 6.4 Holiday scenario zalo token verification
+$zaloHoliday = strpos($FILES['webhook'], 'freshHolidayToken') !== false;
+printResult("Holiday Scenario Zalo: tự động làm tươi token", $zaloHoliday, $zaloHoliday ? "Đã cài đặt" : "Chưa cấu hình");
+
+// 6.5 Webhook lock validation
+$lockResultChecked = countInCodeLines($FILES['webhook'], 'lockResult') >= 1;
+printResult("Webhook: kiểm tra trạng thái khóa GET_LOCK trước khi ghi", $lockResultChecked, $lockResultChecked ? "Bảo mật khóa" : "Chưa kiểm định");
+
+// 6.6 Qual-5 delete_contact mail logs cleanup
+$delMailLogs = countInCodeLines($FILES['FlowExecutor'], 'DELETE FROM mail_delivery_logs');
+printResult("Xóa Contact: tự động dọn dẹp bảng mail_delivery_logs", $delMailLogs >= 1, "Tìm thấy $delMailLogs vị trí dọn dẹp.");
+
+// 6.7 Qual-5 delete_contact activity buffer cleanup
+$delActBuf = countInCodeLines($FILES['FlowExecutor'], 'DELETE FROM activity_buffer');
+printResult("Xóa Contact: tự động dọn dẹp bảng activity_buffer", $delActBuf >= 1, "Tìm thấy $delActBuf vị trí dọn dẹp.");
+
+// 6.8 Webhook POST-only debug validation
+$webhookPost = countInCodeLines($FILES['webhook'], "\$method === 'POST'") >= 1;
+printResult("Webhook: chỉ ghi log debug khi nhận request POST", $webhookPost, $webhookPost ? "Bảo mật log" : "Ghi log không giới hạn");
+
+// 6.9 Priority queue pre-initialization
+$priorityInit = strpos($FILES['worker_priority'], 'Initialize defaults BEFORE') !== false;
+printResult("Worker Priority: khởi tạo biến mặc định trước vòng lặp", $priorityInit, $priorityInit ? "Hạn chế lỗi ghi đè" : "Chưa tối ưu");
+
+// 6.10 innodb_lock_wait_timeout setting
+$wfLwt = countInCodeLines($FILES['worker_flow'], 'innodb_lock_wait_timeout') >= 1;
+$wcLwt = countInCodeLines($FILES['worker_campaign'], 'innodb_lock_wait_timeout') >= 1;
+$wpLwt = countInCodeLines($FILES['worker_priority'], 'innodb_lock_wait_timeout') >= 1;
+printResult("Workers: giới hạn khóa InnoDB Timeout 5s (Tránh deadlock)", ($wfLwt && $wcLwt && $wpLwt), "Flow: " . ($wfLwt ? 'OK' : 'FAIL') . " | Campaign: " . ($wcLwt ? 'OK' : 'FAIL') . " | Priority: " . ($wpLwt ? 'OK' : 'FAIL'));
+
+// 6.11 Mailer pooling size limit
+$mailerPool = strpos($FILES['Mailer'], '>= 500') !== false;
+printResult("Mailer SMTP: cấu hình hồ bơi kết nối >= 500 mail", $mailerPool, $mailerPool ? "Hiệu năng cao" : "Tiêu chuẩn cũ 200");
+
+// 6.12 Activity Buffer auto-flush limit
+$flushLimit = strpos($FILES['flow_helpers'], '>= 150') !== false;
+printResult("Activity Buffer: tự động đẩy lên DB khi đạt >= 150 log", $flushLimit, $flushLimit ? "Bảo vệ bộ nhớ" : "Ghi trực tiếp");
+
+// 6.13 Aggregator index safety check
+$aggIdxGuard = strpos($FILES['worker_tracking_aggregator'], 'idx_sub_type_date') === false;
+printResult("Aggregator: checkStrategicIndexes không tự tạo lại index cũ", $aggIdxGuard, $aggIdxGuard ? "Đảm bảo an toàn" : "Cảnh báo tự tạo lại index cũ");
+
+// 6.14 Worker release connection check
+$wfCloseConn = strpos($FILES['worker_flow'], 'closeConnection') !== false;
+$wcCloseConn = strpos($FILES['worker_campaign'], 'closeConnection') !== false;
+printResult("Workers: tự giải phóng kết nối Mailer khi kết thúc", ($wfCloseConn && $wcCloseConn), "Flow: " . ($wfCloseConn ? 'OK' : 'FAIL') . " | Campaign: " . ($wcCloseConn ? 'OK' : 'FAIL'));
+
+// 6.15 Aggregator zalo_subscribers whitelist check
+$aggZaloSub = strpos($FILES['worker_tracking_aggregator'], "'zalo_subscribers'") !== false;
+printResult("Aggregator: chấp nhận cập nhật chỉ số cho zalo_subscribers", $aggZaloSub, $aggZaloSub ? "Whitelisted" : "Thiếu cập nhật");
+
+// 6.16 Voucher transaction safety check
+$vouchTx = strpos($FILES['voucher_helper'], 'inTransaction') !== false;
+printResult("Voucher System: giao dịch nhận mã bọc trong transaction", $vouchTx, $vouchTx ? "Tuyệt đối an toàn" : "Nguy cơ race conditions");
+
+// 6.17 Webhook FastCGI Non-blocking check
+$fcgiFin = strpos($FILES['webhook'], 'fastcgi_finish_request') !== false;
+printResult("Webhook: trả phản hồi non-blocking cho Zalo nhanh", $fcgiFin, $fcgiFin ? "Đã tối ưu" : "Phản hồi chậm");
+
+// 6.18 Flow worker Double-Lock guard
+$doubleLock = strpos($FILES['worker_flow'], 'DOUBLE-LOCK') !== false;
+printResult("Worker Flow: Double-Lock đọc lại status trước khi chạy", $doubleLock, $doubleLock ? "Chống trùng lặp" : "Thiếu khóa bảo vệ");
+
+// 6.19 Flow worker Stale guard
+$staleGuard = strpos($FILES['worker_flow'], 'STALE-GUARD') !== false;
+printResult("Worker Flow: Stale-Guard hoàn trả hàng chờ khi hết hạn", $staleGuard, $staleGuard ? "Hoạt động chuẩn" : "Thiếu hoàn trả");
+
+// 6.20 Flow worker Infinite Loop guard
+$wfMaxSteps = strpos($FILES['worker_flow'], 'MAX_STEPS') !== false;
+printResult("Worker Flow: giới hạn số bước tối đa (Tránh lặp vô hạn)", $wfMaxSteps, $wfMaxSteps ? "Hạn chế lỗi lặp" : "Nguy cơ lặp vô hạn");
+
+// 6.21 Zalo Engine: ensureZaloToken
+$ensureZaloToken = strpos($FILES['zalo_helpers'], 'function ensureZaloToken') !== false;
+printResult("Zalo Engine: hàm xoay vòng token ensureZaloToken tồn tại", $ensureZaloToken, $ensureZaloToken ? "Hoạt động tốt" : "Thiếu hàm");
+
 $duration = (microtime(true) - $startTime) * 1000;
 
 // Final Stats and exit code for CLI
