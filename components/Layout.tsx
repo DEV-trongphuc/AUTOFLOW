@@ -72,7 +72,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <Header onMenuClick={() => setSidebarOpen(true)} />
 
         <main ref={mainRef} className="flex-1 w-full overflow-y-auto overflow-x-hidden p-0 relative">
-          <div className="grid w-full p-3 lg:p-10 min-h-full overflow-hidden">
+          <div className="grid w-full p-3 lg:px-8 lg:py-5 min-h-full overflow-hidden">
             {/* Violet glow decor — top-right corner accent */}
             <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[400px] z-0" style={{ background: 'radial-gradient(ellipse at 100% 0%, rgba(139,92,246,0.08) 0%, transparent 65%)' }} />
 

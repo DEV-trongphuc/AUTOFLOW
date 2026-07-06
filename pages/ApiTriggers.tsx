@@ -30,7 +30,7 @@ const ApiTriggers: React.FC = () => {
     return (
         <div className="animate-fade-in space-y-8  mx-auto pb-40">
             <PageHero
-                title={<>API & <span className="text-amber-100/80">Events</span></>}
+                title={<>API & <span className="text-slate-500 dark:text-slate-400">Events</span></>}
                 subtitle="Quản lý Biểu mẫu, Đơn hàng và Sự kiện thông qua hệ thống API Webhook."
                 showStatus={true}
                 statusText="API Gateway Online"

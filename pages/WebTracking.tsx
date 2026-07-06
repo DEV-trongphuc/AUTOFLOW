@@ -386,7 +386,7 @@ const WebTracking: React.FC = () => {
             {view === 'list' && (
                 <>
                     <PageHero
-                        title={<>Web <span className="text-amber-100/80">Tracking</span></>}
+                        title={<>Web <span className="text-slate-500 dark:text-slate-400">Tracking</span></>}
                         subtitle="Theo dõi toàn diện hành trình người dùng: Visitors, Sessions, Heatmaps."
                         showStatus={true}
                         statusText="Realtime Engine Active"

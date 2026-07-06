@@ -270,7 +270,7 @@ const WorkspaceSettings: React.FC = () => {
     return (
         <div className="animate-fade-in space-y-8 mx-auto pb-40">
             <PageHero
-                title={<>Cài đặt <span className="text-amber-100/80">Phân quyền</span></>}
+                title={<>Cài đặt <span className="text-slate-500 dark:text-slate-400">Phân quyền</span></>}
                 subtitle={`Quản lý Nhân sự, Chức vụ và Truy cập trong môi trường hiện tại.`}
                 showStatus={true}
                 statusText={`Đang truy cập: ${currentWorkspace?.name}`}

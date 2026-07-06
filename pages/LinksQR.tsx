@@ -379,7 +379,7 @@ const LinksQR: React.FC = () => {
             {view === 'list' && (
                 <>
                     <PageHero
-                        title={<>Link <span className="text-amber-100/80">& QR Tracker</span></>}
+                        title={<>Link <span className="text-slate-500 dark:text-slate-400">& QR Tracker</span></>}
                         subtitle="Tạo link rút gọn nội bộ, thiết kế QR Code Campaign và đo lường truy cập sâu theo thiết bị, vị trí."
                         showStatus={true}
                         statusText="Realtime Log Engine"

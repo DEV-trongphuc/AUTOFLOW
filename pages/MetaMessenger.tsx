@@ -16,7 +16,7 @@ const MetaMessenger: React.FC = () => {
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-20 mx-auto ">
             <PageHero
-                title={<>Meta <span className="text-amber-100/80">Messenger</span></>}
+                title={<>Meta <span className="text-slate-500 dark:text-slate-400">Messenger</span></>}
                 subtitle="Quản lý tin nhắn, Chatbot và Tự động hóa cho Facebook Fanpages."
                 statusText="Meta Cloud API Active"
                 showStatus={true}

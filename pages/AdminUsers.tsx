@@ -195,7 +195,7 @@ const AdminUsers: React.FC = () => {
         <div className="space-y-8 animate-in fade-in duration-500 pb-20">
 
             <PageHero
-                title={<>User <span className="text-amber-100/80">Management</span></>}
+                title={<>User <span className="text-slate-500 dark:text-slate-400">Management</span></>}
                 subtitle="Quản lý quyền truy cập, nâng cấp/hạ cấp và phê duyệt người dùng mới."
                 showStatus={true}
                 statusText="System Security Active"

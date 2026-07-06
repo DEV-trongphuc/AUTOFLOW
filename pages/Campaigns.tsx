@@ -569,7 +569,7 @@ const Campaigns: React.FC = () => {
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3">
                         <h1 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
-                            Campaign <span className="text-violet-600 dark:text-violet-400">Marketing</span>
+                            Campaign <span className="text-slate-500 dark:text-slate-400">Marketing</span>
                         </h1>
                         <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 rounded-full border border-emerald-100/50 shadow-sm pointer-events-none">
                             <span className="relative flex h-1.5 w-1.5">

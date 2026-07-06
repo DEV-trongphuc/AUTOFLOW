@@ -80,7 +80,7 @@ const Profile: React.FC = () => {
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-5xl mx-auto">
             <PageHero 
-                title={<>My <span className="text-amber-100/80">Account</span></>}
+                title={<>My <span className="text-slate-500 dark:text-slate-400">Account</span></>}
                 subtitle="Quản lý thông tin cá nhân, bảo mật và theo dõi lịch sử truy cập hệ thống."
                 actions={[
                     ...(isAdmin ? [{ label: 'Cấu hình Admin', icon: Settings, onClick: () => navigate('/settings'), primary: true }] : []),

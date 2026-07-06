@@ -29,7 +29,7 @@ const PageHero: React.FC<PageHeroProps> = ({
     children
 }) => {
     return (
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 sm:mb-8 mt-2 w-full">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4 sm:mb-6 mt-0 w-full">
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3">
                     <h1 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">

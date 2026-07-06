@@ -520,7 +520,7 @@ const Surveys: React.FC = () => {
         <div className="animate-fade-in space-y-6 pb-32">
             {/* Hero */}
             <PageHero
-                title={<>Trung tâm <span className="text-amber-100/80">Khảo Sát</span></>}
+                title={<>Trung tâm <span className="text-slate-500 dark:text-slate-400">Khảo Sát</span></>}
                 subtitle="Thu thập phản hồi khách hàng, phân tích mức độ hài lòng và thiết lập dữ liệu (Zero-party Data) cho luồng Automation của bạn."
                 showStatus={surveys.some(s => s.status === 'active')}
                 statusText={`${surveys.filter(s => s.status === 'active').length} Đang chạy`}
