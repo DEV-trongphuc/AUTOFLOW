@@ -20,6 +20,15 @@ try {
     echo "ATTR_EMULATE_PREPARES check failed: " . $e->getMessage() . "\n";
 }
 
+try {
+    $testStmt = $pdo->prepare("SELECT 1");
+    $testStmt->execute();
+    $testStmt->closeCursor();
+    echo "Test Query SELECT 1: SUCCESS\n";
+} catch (Exception $e) {
+    echo "Test Query SELECT 1: FAILED - " . $e->getMessage() . "\n";
+}
+
 echo "\n=== FILE CONTENTS ON SERVER ===\n";
 $optimizeSrc = @file_get_contents(__DIR__ . '/db_auto_optimize.php');
 if ($optimizeSrc) {
