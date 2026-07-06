@@ -43,7 +43,7 @@ function printLog($message, $type = 'info') {
     }
 }
 
-printLog("=== KHỞI ĐỘNG HỆ THỐNG BẢO TRÌ DATABASE AUTOFLOW v1.0.3 ===", 'info');
+printLog("=== KHỞI ĐỘNG HỆ THỐNG BẢO TRÌ DATABASE AUTOFLOW v1.0.4 ===", 'info');
 
 // 1. Connection
 $pdo = null;
@@ -104,7 +104,10 @@ foreach ($orphanChecks as $table => $queries) {
     if ($dbType !== 'mysql') continue; // Skip on non-mysql for safety
     try {
         $start = microtime(true);
-        $count = (int)$pdo->query($queries['check_query'])->fetchColumn();
+        $stmtCount = $pdo->prepare($queries['check_query']);
+        $stmtCount->execute();
+        $count = (int)$stmtCount->fetchColumn();
+        $stmtCount->closeCursor();
         $deleted = 0;
         
         if ($count > 0) {
