@@ -25,29 +25,29 @@ const Button: React.FC<ButtonProps> = ({
   fullWidth = false,
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-300 active:scale-[0.97] disabled:opacity-60 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:ring-offset-1 tracking-tight select-none';
+  const baseStyles = 'inline-flex items-center justify-center font-bold transition-all duration-200 active:scale-[0.95] disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-amber-500/20 tracking-tight select-none';
 
   const variants = {
-    primary: 'bg-gradient-to-b from-amber-400 to-amber-500 text-white font-bold border border-amber-400 shadow-[0_4px_14px_0_rgba(104,61,242,0.25)] hover:shadow-amber-500/40 hover:from-amber-400 hover:to-amber-500 hover:brightness-105 shadow-[inset_0_1px_rgba(255,255,255,0.4)]',
+    primary: 'bg-gradient-to-b from-amber-400 to-amber-550 text-white border border-amber-500/10 shadow-[0_6px_18px_-4px_rgba(104,61,242,0.22),inset_0_1.5px_0_rgba(255,255,255,0.3)] hover:brightness-[1.03] active:brightness-95',
     secondary: isDarkTheme
-      ? 'bg-slate-800/80 backdrop-blur-md text-slate-200 border border-slate-700/80 hover:bg-slate-700 hover:border-slate-600 hover:text-white shadow-sm shadow-[inset_0_1px_rgba(255,255,255,0.05)]'
-      : 'bg-white/90 backdrop-blur-md text-slate-700 border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 shadow-[0_2px_8px_rgba(0,0,0,0.04)] shadow-[inset_0_1px_rgba(255,255,255,1)]',
+      ? 'bg-slate-800/80 backdrop-blur-md text-slate-200 border border-slate-700/80 hover:bg-slate-700/80 hover:border-slate-650 hover:text-white shadow-sm shadow-[inset_0_1px_rgba(255,255,255,0.05)]'
+      : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 shadow-[0_2px_8px_rgba(0,0,0,0.02)] shadow-[inset_0_1.5px_rgba(255,255,255,1)]',
     outline: isDarkTheme
-      ? 'bg-transparent border border-slate-700 text-slate-300 hover:border-slate-600 hover:bg-slate-800/50'
-      : 'bg-transparent border border-slate-300 text-slate-600 hover:border-slate-400 hover:bg-slate-50/50 hover:text-slate-900',
+      ? 'bg-transparent border border-slate-700 text-slate-300 hover:border-slate-600 hover:bg-slate-800/40'
+      : 'bg-transparent border border-slate-250 text-slate-500 hover:border-slate-350 hover:bg-slate-50/50 hover:text-slate-900',
     ghost: isDarkTheme
       ? 'bg-transparent text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
       : 'bg-transparent text-slate-500 hover:bg-slate-100/50 hover:text-slate-900',
     danger: isDarkTheme
       ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30 hover:border-rose-500/50'
-      : 'bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-100 hover:border-rose-200',
+      : 'bg-rose-50/80 text-rose-600 hover:bg-rose-100 border border-rose-100 hover:border-rose-200',
     custom: '', // Allows full override via className
   };
 
   const sizes = {
-    sm: 'px-3 py-1.5 text-[11px] md:text-xs gap-1.5',
-    md: 'px-4 py-2 md:px-5 md:py-2.5 text-xs md:text-sm gap-2',
-    lg: 'px-6 py-3 md:px-7 md:py-3.5 text-sm md:text-base gap-2.5',
+    sm: 'px-3.5 py-1.5 text-[11px] md:text-xs gap-1.5 rounded-full',
+    md: 'px-5 py-2.5 text-xs md:text-sm gap-2 rounded-2xl',
+    lg: 'px-7 py-3.5 text-sm md:text-base gap-2.5 rounded-3xl',
   };
 
   return (

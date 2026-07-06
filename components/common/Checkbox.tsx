@@ -35,8 +35,8 @@ const Checkbox: React.FC<CheckboxProps> = ({
     return (
         <label
             className={`
-        flex items-center gap-3 cursor-pointer select-none group
-        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+        flex items-center gap-3 cursor-pointer select-none group active:scale-[0.985] transition-transform duration-150
+        ${disabled ? 'opacity-50 cursor-not-allowed scale-100' : ''}
         ${className}
       `}
             onClick={(e) => {
@@ -48,15 +48,15 @@ const Checkbox: React.FC<CheckboxProps> = ({
         >
             <div
                 className={`
-          flex items-center justify-center transition-all duration-300 border-2
+          flex items-center justify-center transition-all duration-200 border-2
           ${sizeClasses[size]}
           ${checked
-                        ? 'bg-amber-600 border-amber-600 text-white shadow-lg shadow-amber-600/20'
-                        : 'bg-white border-slate-200 group-hover:border-slate-300'}
+                        ? 'bg-amber-600 border-amber-600 text-white shadow-lg shadow-amber-600/10'
+                        : 'bg-white border-slate-200 group-hover:border-slate-350'}
           ${disabled ? 'bg-slate-100 border-slate-200' : ''}
         `}
             >
-                {checked && <Check size={iconSize[size]} strokeWidth={3} className="animate-in zoom-in duration-300" />}
+                {checked && <Check size={iconSize[size]} strokeWidth={3} className="animate-in zoom-in duration-150" />}
             </div>
             {label && (
                 <span className="text-sm font-bold text-slate-600 transition-colors group-hover:text-slate-800">

@@ -66,22 +66,21 @@ const Modal: React.FC<ModalProps> = ({
           className={`fixed inset-0 flex items-center justify-center overflow-y-auto overflow-x-hidden ${size === 'full' ? 'w-full h-full' : 'p-4 py-8 sm:p-6 sm:py-12'}`}
           style={{ zIndex: zIndex ?? 150 }}
         >
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="absolute inset-0 bg-slate-950/70"
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="absolute inset-0 bg-slate-950/40 backdrop-blur-md"
             onClick={onClose}
           />
 
           {/* Modal Content */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.97, y: 8 }}
+            initial={{ opacity: 0, scale: 0.95, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.97, y: 8 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 380, mass: 0.9 }}
+            exit={{ opacity: 0, scale: 0.95, y: 12 }}
+            transition={{ type: 'spring', damping: 30, stiffness: 340, mass: 0.85 }}
             className={`
             relative w-full flex flex-col overflow-hidden border
             ${sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md}
@@ -107,7 +106,7 @@ const Modal: React.FC<ModalProps> = ({
             {!hideCloseButton && (
               <button
                 onClick={onClose}
-                className={`p-2 rounded-xl transition-all duration-200 ${isDarkTheme ? 'text-slate-400 hover:text-violet-400 hover:bg-violet-500/10' : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'} hover:scale-105 active:scale-95 bg-transparent`}
+                className={`p-2 rounded-full transition-all duration-200 ${isDarkTheme ? 'text-slate-400 hover:text-violet-400 hover:bg-violet-500/10' : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'} hover:scale-105 active:scale-95 bg-transparent`}
               >
                 <X className="w-5 h-5 stroke-[2px]" />
               </button>

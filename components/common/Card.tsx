@@ -22,9 +22,10 @@ const Card: React.FC<CardProps> = ({
   icon: Icon,
   onClick
 }) => {
+  const clickableClasses = onClick ? 'cursor-pointer active:scale-[0.985] hover:border-slate-200/80' : '';
   return (
     <div 
-      className={`bg-white rounded-[24px] border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-all duration-300 ${className}`}
+      className={`bg-white rounded-[24px] border border-slate-100/70 shadow-[0_4px_20px_rgba(0,0,0,0.015)] hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] transition-all duration-300 group ${clickableClasses} ${className}`}
       onClick={onClick}
     >
       {(title || action || Icon) && (
