@@ -275,22 +275,24 @@ function isSystemHealthy($maxLoadMultiplier = 1.5, $minFreeRamMB = 128)
     if (function_exists('sys_getloadavg')) {
         $load = sys_getloadavg();
         $coreCount = 1;
-        if (is_file('/proc/cpuinfo')) {
-            $cpuinfo = file_get_contents('/proc/cpuinfo');
-            preg_match_all('/^processor/m', $cpuinfo, $matches);
-            $coreCount = count($matches[0]) ?: 1;
+        if (is_file('/proc/cpuinfo') && is_readable('/proc/cpuinfo')) {
+            $cpuinfo = @file_get_contents('/proc/cpuinfo');
+            if ($cpuinfo) {
+                preg_match_all('/^processor/m', $cpuinfo, $matches);
+                $coreCount = count($matches[0]) ?: 1;
+            }
         }
         
         // If 1-minute load average > (Cores * Multiplier), system is saturated
-        if ($load[0] > ($coreCount * $maxLoadMultiplier)) {
+        if (is_array($load) && isset($load[0]) && $load[0] > ($coreCount * $maxLoadMultiplier)) {
             return false;
         }
     }
 
     // 2. Check RAM (Linux only)
-    if (is_file('/proc/meminfo')) {
-        $meminfo = file_get_contents('/proc/meminfo');
-        if (preg_match('/MemAvailable:\s+(\d+) kB/', $meminfo, $matches)) {
+    if (is_file('/proc/meminfo') && is_readable('/proc/meminfo')) {
+        $meminfo = @file_get_contents('/proc/meminfo');
+        if ($meminfo && preg_match('/MemAvailable:\s+(\d+) kB/', $meminfo, $matches)) {
             $freeRamMB = $matches[1] / 1024;
             if ($freeRamMB < $minFreeRamMB) {
                 return false;
@@ -312,7 +314,7 @@ function isSystemHealthy($maxLoadMultiplier = 1.5, $minFreeRamMB = 128)
  */
 function isDiskSpaceHealthy($minFreeMB = 50)
 {
-    $freeBytes = disk_free_space(__DIR__);
+    $freeBytes = @disk_free_space(__DIR__);
     if ($freeBytes === false) return true; // Could not determine
     
     $freeMB = $freeBytes / 1024 / 1024;
