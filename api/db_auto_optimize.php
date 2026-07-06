@@ -43,7 +43,7 @@ function printLog($message, $type = 'info') {
     }
 }
 
-printLog("=== KHỞI ĐỘNG HỆ THỐNG BẢO TRÌ DATABASE AUTOFLOW v1.0.6 ===", 'info');
+printLog("=== KHỞI ĐỘNG HỆ THỐNG BẢO TRÌ DATABASE AUTOFLOW v1.0.7 ===", 'info');
 
 // 1. Connection
 $pdo = null;
@@ -237,12 +237,20 @@ foreach ($tablesToOptimize as $table) {
         }
         
         // Run ANALYZE TABLE to recalculate key statistics
-        $pdo->exec("ANALYZE TABLE `$table`");
+        $stmtAnalyze = $pdo->query("ANALYZE TABLE `$table`");
+        if ($stmtAnalyze) {
+            $stmtAnalyze->fetchAll();
+            $stmtAnalyze->closeCursor();
+        }
         
         // Run OPTIMIZE TABLE to rebuild table, indexes and release free space
         // Note: In InnoDB, OPTIMIZE TABLE is mapped to ALTER TABLE ... FORCE which rebuilds the table.
         // This is safe but holds a lock for some time. We use try/catch to log any timeouts.
-        $pdo->exec("OPTIMIZE TABLE `$table`");
+        $stmtOptimize = $pdo->query("OPTIMIZE TABLE `$table`");
+        if ($stmtOptimize) {
+            $stmtOptimize->fetchAll();
+            $stmtOptimize->closeCursor();
+        }
         
         // Get size after optimization
         $sizeAfter = $sizeBefore;
