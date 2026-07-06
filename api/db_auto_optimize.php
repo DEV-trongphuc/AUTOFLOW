@@ -43,7 +43,7 @@ function printLog($message, $type = 'info') {
     }
 }
 
-printLog("=== KHỞI ĐỘNG HỆ THỐNG BẢO TRÌ DATABASE AUTOFLOW v1.0.5 ===", 'info');
+printLog("=== KHỞI ĐỘNG HỆ THỐNG BẢO TRÌ DATABASE AUTOFLOW v1.0.6 ===", 'info');
 
 // 1. Connection
 $pdo = null;
@@ -55,6 +55,8 @@ try {
     if (!isset($pdo) || !$pdo) {
         throw new Exception("Không thể khởi tạo thực thể PDO.");
     }
+    $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+    $pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
 } catch (Exception $e) {
     if (ob_get_level() > 0) ob_end_clean();
     printLog("LỖI KẾT NỐI DATABASE: " . $e->getMessage(), 'error');
