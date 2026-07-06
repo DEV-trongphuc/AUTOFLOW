@@ -23,6 +23,7 @@ import TestEmailModal from './TestEmailModal';
 import LinkClicksTab from '../common/LinkClicksTab';
 import TechStatsTab from './TechStatsTab';
 import ConfirmModal from '../common/ConfirmModal';
+import Pagination from '../common/Pagination';
 
 interface CampaignDetailDrawerProps {
     campaign: Campaign | null;
@@ -33,6 +34,44 @@ interface CampaignDetailDrawerProps {
     allTags: any[];
     allFlows: Flow[];
 }
+
+const renderAvatar = (email: string, displayName?: string) => {
+    const cleanEmail = (email || '').trim();
+    const cleanName = (displayName || '').trim();
+    
+    let fullName = '';
+    if (cleanName) {
+        fullName = cleanName;
+    } else {
+        fullName = cleanEmail.split('@')[0] || '?';
+    }
+
+    const parts = fullName.split(/\s+/);
+    let initials = '?';
+    if (parts.length > 0 && parts[0]) {
+        if (parts.length === 1) {
+            initials = parts[0].substring(0, 2).toUpperCase();
+        } else {
+            initials = (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+    }
+
+    const colors = [
+        'bg-blue-500', 'bg-rose-500', 'bg-emerald-500', 'bg-amber-500', 'bg-indigo-500', 'bg-violet-500'
+    ];
+    let hash = 0;
+    const textToHash = fullName;
+    for (let i = 0; i < textToHash.length; i++) {
+        hash = textToHash.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const colorClass = colors[Math.abs(hash) % colors.length];
+
+    return (
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-sm mr-1 ${colorClass}`}>
+            {initials}
+        </div>
+    );
+};
 
 const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
     campaign, isOpen, onClose, allLists, allSegments, allTags, allFlows
@@ -475,8 +514,9 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                 </div>
 
                 {/* Tabs */}
-                <div className="px-4 md:px-8 pt-2 bg-white border-b border-slate-100 overflow-x-auto whitespace-nowrap scrollbar-hide">
+                <div className="px-4 md:px-8 py-3 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800/60 overflow-x-auto whitespace-nowrap scrollbar-hide">
                     <Tabs
+                        variant="segmented"
                         activeId={activeTab}
                         onChange={(tabId) => {
                             if (tabId === 'delivery') {
@@ -724,15 +764,22 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                         <div className="p-6 h-[320px]">
                                             {stats.sent > 0 ? (
                                                 <ResponsiveContainer width="100%" height="100%">
-                                                    <BarChart data={funnelData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-                                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                                                    <BarChart data={funnelData} layout="vertical" margin={{ top: 5, right: 15, left: 10, bottom: 5 }}>
+                                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-border-light, #f1f5f9)" className="dark:stroke-slate-800/40" />
                                                         <XAxis type="number" hide />
-                                                        <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fontWeight: 700, fill: '#64748b' }} width={120} tickLine={false} axisLine={false} />
+                                                        <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fontWeight: 700, fill: 'var(--color-text-light, #64748b)' }} width={100} tickLine={false} axisLine={false} />
                                                         <Tooltip
-                                                            cursor={{ fill: '#f8fafc' }}
-                                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}
+                                                            cursor={{ fill: 'var(--color-border-light, #f8fafc)', opacity: 0.15 }}
+                                                            contentStyle={{
+                                                                backgroundColor: 'var(--color-surface, #fff)',
+                                                                border: '1px solid var(--color-border, #e2e8f0)',
+                                                                borderRadius: 'var(--radius-lg, 12px)',
+                                                                boxShadow: 'var(--shadow-lg)',
+                                                                padding: '8px 12px'
+                                                            }}
+                                                            itemStyle={{ color: 'var(--color-text, #0f172a)', fontWeight: 650, fontSize: '11px' }}
                                                         />
-                                                        <Bar dataKey="value" radius={[0, 8, 8, 0]} barSize={32}>
+                                                        <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={24}>
                                                             {funnelData.map((entry, index) => (
                                                                 <Cell key={`cell-${index}`} fill={entry.fill} />
                                                             ))}
@@ -779,9 +826,9 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                                 data={healthData}
                                                                 cx="50%"
                                                                 cy="50%"
-                                                                innerRadius={40}
-                                                                outerRadius={60}
-                                                                paddingAngle={5}
+                                                                innerRadius={48}
+                                                                outerRadius={62}
+                                                                paddingAngle={4}
                                                                 dataKey="value"
                                                             >
                                                                 {healthData.map((entry, index) => (
@@ -789,14 +836,21 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                                 ))}
                                                             </Pie>
                                                             <Tooltip
-                                                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}
+                                                                contentStyle={{
+                                                                    backgroundColor: 'var(--color-surface, #fff)',
+                                                                    border: '1px solid var(--color-border, #e2e8f0)',
+                                                                    borderRadius: 'var(--radius-lg, 12px)',
+                                                                    boxShadow: 'var(--shadow-md)',
+                                                                    padding: '8px 12px'
+                                                                }}
+                                                                itemStyle={{ color: 'var(--color-text, #0f172a)', fontWeight: 650, fontSize: '11px' }}
                                                             />
                                                         </RePieChart>
                                                     </ResponsiveContainer>
                                                     {/* Center Text */}
                                                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                                        <span className="text-xl font-black text-slate-800">{retainedRate}%</span>
-                                                        <span className="text-[8px] font-bold text-slate-400 uppercase">Success</span>
+                                                        <span className="text-xl font-black text-slate-800 dark:text-slate-100">{retainedRate}%</span>
+                                                        <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Success</span>
                                                     </div>
                                                 </div>
                                             ) : (
@@ -1249,9 +1303,12 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                             ) : activityLogs.map((log, idx) => (
                                                 <tr key={idx} className="hover:bg-slate-50 transition-colors">
                                                     <td className="px-6 py-3">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-xs font-bold text-slate-700">{log.first_name} {log.last_name}</span>
-                                                            <span className="text-[10px] text-slate-400">{log.email}</span>
+                                                        <div className="flex items-center gap-3">
+                                                            {renderAvatar(log.email, `${log.first_name} ${log.last_name}`)}
+                                                            <div className="flex flex-col">
+                                                                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{log.first_name} {log.last_name}</span>
+                                                                <span className="text-[10px] text-slate-400 dark:text-slate-500">{log.email}</span>
+                                                            </div>
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-3">
@@ -1287,29 +1344,13 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                 </div>
 
                                 {/* Pagination */}
-                                {logsPagination.totalPages > 1 && (
-                                    <div className="px-6 py-4 border-t border-slate-50 bg-slate-50/30 flex items-center justify-between">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                                            Trang {logsPagination.page} / {logsPagination.totalPages}
-                                        </p>
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => setLogsPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
-                                                disabled={logsPagination.page <= 1 || loadingLogs}
-                                                className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 transition-all font-black text-[10px]"
-                                            >
-                                                <ChevronLeft className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => setLogsPagination(prev => ({ ...prev, page: Math.min(logsPagination.totalPages, prev.page + 1) }))}
-                                                disabled={logsPagination.page >= logsPagination.totalPages || loadingLogs}
-                                                className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 transition-all font-black text-[10px]"
-                                            >
-                                                <ChevronRight className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
+                                <Pagination
+                                    currentPage={logsPagination.page}
+                                    totalPages={logsPagination.totalPages}
+                                    totalCount={logsPagination.total}
+                                    itemsPerPage={logsPagination.limit}
+                                    onPageChange={(p) => setLogsPagination(prev => ({ ...prev, page: p }))}
+                                />
                             </Card>
                         </div>
                     )}

@@ -713,10 +713,10 @@ const HeroStatCard = ({ label, value, icon: Icon, color }: any) => {
         orange: 'from-[#ffa900] to-[#ca7900] shadow-orange-500/20',
     };
     return (
-        <div className="bg-white p-6 rounded-[28px] border border-slate-100 shadow-sm flex items-center justify-between group hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-[28px] border border-slate-100/70 dark:border-slate-800/80 shadow-sm flex items-center justify-between group hover:shadow-md hover:-translate-y-1 transition-all duration-300">
             <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">{label}</p>
-                <h4 className="text-3xl font-black text-slate-800 tracking-tight">{value.toLocaleString()}</h4>
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">{label}</p>
+                <h4 className="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{value.toLocaleString()}</h4>
             </div>
             <div className={`w-14 h-14 bg-gradient-to-br ${themes[color]} text-white rounded-2xl shadow-lg flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-3`}>
                 <Icon className="w-7 h-7" />

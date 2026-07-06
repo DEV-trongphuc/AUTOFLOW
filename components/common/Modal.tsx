@@ -70,23 +70,23 @@ const Modal: React.FC<ModalProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute inset-0 bg-slate-950/40 backdrop-blur-md"
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="absolute inset-0 bg-slate-950/45 backdrop-blur-lg"
             onClick={onClose}
           />
 
           {/* Modal Content */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 12 }}
+            initial={{ opacity: 0, scale: 0.96, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 12 }}
-            transition={{ type: 'spring', damping: 30, stiffness: 340, mass: 0.85 }}
+            exit={{ opacity: 0, scale: 0.96, y: 15 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 320, mass: 0.9 }}
             className={`
             relative w-full flex flex-col overflow-hidden border
             ${sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md}
             ${isDarkTheme 
-              ? 'bg-[#11151d] border-violet-500/10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5),0_0_40px_rgba(139,92,246,0.06)]' 
-              : 'bg-white border-slate-200/60 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.06),0_0_40px_rgba(139,92,246,0.02)]'}
+              ? 'bg-[#11151d] border-slate-800/80 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5),0_0_40px_rgba(124,58,237,0.05)]' 
+              : 'bg-white border-slate-100 shadow-[0_20px_50px_rgba(15,23,42,0.08),0_0_40px_rgba(124,58,237,0.03)]'}
           `}
           >
         {isLoading && (

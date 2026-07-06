@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import Tabs from '../common/Tabs';
@@ -26,6 +26,7 @@ const VoucherGuideModal: React.FC<VoucherGuideModalProps> = ({ isOpen, onClose }
         >
             <div className="space-y-6">
                 <Tabs 
+                    variant="segmented"
                     activeId={activeTab}
                     onChange={setActiveTab}
                     items={[

@@ -164,18 +164,18 @@ export const ALL_MODULES: Module[] = [
 const StatCard = ({ title, value, growth, icon, color, breakdown, comparisonLabel }: any) => {
     const isIncrease = growth >= 0;
     return (
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-md hover:border-slate-200 transition-all relative overflow-hidden flex flex-col justify-between min-h-[140px] group cursor-pointer">
+        <div className="bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.015)] border border-slate-100/70 dark:border-slate-800/80 hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col justify-between min-h-[145px] group cursor-pointer">
             <div>
                 {/* Top Row: Title & Icon */}
-                <div className="flex items-center justify-between mb-3">
-                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">{title}</span>
-                    <div className="opacity-80 shrink-0" style={{ color: color }}>
-                        {icon}
+                <div className="flex items-center justify-between mb-3.5">
+                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest leading-none">{title}</span>
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110" style={{ backgroundColor: `${color}15`, color: color }}>
+                        {React.cloneElement(icon, { className: 'w-4 h-4' })}
                     </div>
                 </div>
 
                 {/* Middle Row: Large Value */}
-                <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none mb-2">
+                <div className="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight leading-none mb-2.5">
                     {value}
                 </div>
 
@@ -189,7 +189,7 @@ const StatCard = ({ title, value, growth, icon, color, breakdown, comparisonLabe
 
             {/* Bottom Row: Growth rate */}
             <div className={`text-[11px] font-bold mt-2 flex items-center gap-1.5 ${isIncrease ? 'text-emerald-500' : 'text-rose-500'}`}>
-                <span className="flex items-center gap-0.5">
+                <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md" style={{ backgroundColor: isIncrease ? 'rgba(16, 185, 129, 0.08)' : 'rgba(244, 63, 94, 0.08)' }}>
                     {isIncrease ? (
                         <svg viewBox="0 0 24 24" width="8" height="8" fill="currentColor" className="shrink-0">
                             <path d="M12 5l9 14H3z" />
@@ -199,7 +199,7 @@ const StatCard = ({ title, value, growth, icon, color, breakdown, comparisonLabe
                             <path d="M12 19L3 5h18z" />
                         </svg>
                     )}
-                    {isIncrease ? '+' : ''}{growth}%
+                    <span className="ml-0.5">{isIncrease ? '+' : ''}{growth}%</span>
                 </span>
                 <span className="text-slate-400 font-bold dark:text-slate-500">{comparisonLabel}</span>
             </div>
@@ -533,19 +533,27 @@ const Dashboard: React.FC = () => {
                                                     <stop offset="100%" stopColor="#6366f1" />
                                                 </linearGradient>
                                             </defs>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" className="dark:stroke-slate-800/40" />
-                                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} dy={10} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} />
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border-light, #f1f5f9)" className="dark:stroke-slate-800/40" />
+                                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--color-text-muted, #94a3b8)', fontWeight: 600 }} dy={10} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--color-text-muted, #94a3b8)', fontWeight: 600 }} />
                                             <Tooltip
-                                                contentStyle={{ borderRadius: '12px', border: 'none', backgroundColor: 'rgba(30, 41, 59, 0.95)', color: '#fff', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                                labelStyle={{ fontWeight: 'bold', color: '#fff', marginBottom: '8px' }}
+                                                cursor={{ fill: 'var(--color-border-light, #f8fafc)', opacity: 0.15 }}
+                                                contentStyle={{
+                                                    backgroundColor: 'var(--color-surface, #fff)',
+                                                    border: '1px solid var(--color-border, #e2e8f0)',
+                                                    borderRadius: 'var(--radius-lg, 12px)',
+                                                    boxShadow: 'var(--shadow-lg)',
+                                                    padding: '10px 14px'
+                                                }}
+                                                labelStyle={{ fontWeight: 'bold', color: 'var(--color-text, #0f172a)', marginBottom: '4px', fontSize: '12px' }}
+                                                itemStyle={{ fontWeight: 600, fontSize: '11px' }}
                                             />
-                                            <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '15px' }} />
+                                            <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '15px', color: 'var(--color-text-light, #64748b)' }} />
                                             <Bar dataKey="web" name="Truy cập Web" fill="url(#barWebGrad)" fillOpacity={1} radius={[4, 4, 0, 0]} maxBarSize={20}>
-                                                <LabelList dataKey="web" position="top" style={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }} offset={6} />
+                                                <LabelList dataKey="web" position="top" style={{ fill: 'var(--color-text-light, #64748b)', fontSize: 10, fontWeight: 700 }} offset={6} />
                                             </Bar>
                                             <Bar dataKey="ai" name="AI Phản hồi" fill="url(#barAiGrad)" fillOpacity={1} radius={[4, 4, 0, 0]} maxBarSize={20}>
-                                                <LabelList dataKey="ai" position="top" style={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }} offset={6} />
+                                                <LabelList dataKey="ai" position="top" style={{ fill: 'var(--color-text-light, #64748b)', fontSize: 10, fontWeight: 700 }} offset={6} />
                                             </Bar>
                                         </BarChart>
                                     </ResponsiveContainer>
@@ -632,9 +640,9 @@ const Dashboard: React.FC = () => {
                                                     ]}
                                                     cx="50%"
                                                     cy="50%"
-                                                    innerRadius={45}
-                                                    outerRadius={60}
-                                                    paddingAngle={3}
+                                                    innerRadius={48}
+                                                    outerRadius={62}
+                                                    paddingAngle={4}
                                                     dataKey="value"
                                                 >
                                                     {[
@@ -647,7 +655,14 @@ const Dashboard: React.FC = () => {
                                                     ))}
                                                 </Pie>
                                                 <Tooltip
-                                                    contentStyle={{ borderRadius: '8px', border: 'none', backgroundColor: 'rgba(30, 41, 59, 0.95)', color: '#fff', fontSize: '10px' }}
+                                                    contentStyle={{
+                                                        backgroundColor: 'var(--color-surface, #fff)',
+                                                        border: '1px solid var(--color-border, #e2e8f0)',
+                                                        borderRadius: 'var(--radius-lg, 12px)',
+                                                        boxShadow: 'var(--shadow-md)',
+                                                        padding: '8px 12px'
+                                                    }}
+                                                    itemStyle={{ color: 'var(--color-text, #0f172a)', fontWeight: 650, fontSize: '11px' }}
                                                 />
                                             </PieChart>
                                         </ResponsiveContainer>

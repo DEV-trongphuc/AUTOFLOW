@@ -704,8 +704,8 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                 </div>
 
                 <div className="shrink-0 mb-4">
-                    <Tabs activeId={activeTab} onChange={setActiveTab} items={[
-                        { id: 'info', label: 'Cònhân', icon: User },
+                    <Tabs variant="segmented" activeId={activeTab} onChange={setActiveTab} items={[
+                        { id: 'info', label: 'Cá nhân', icon: User },
                         { id: 'stats', label: 'Số liệu', icon: BarChart2 },
                         { id: 'automation', label: 'Tham gia', icon: Activity, count: memberInsights.segments.length + (Array.isArray(formData.listIds) ? formData.listIds.length : 0) },
                         { id: 'activity', label: 'Hành trình', icon: History },

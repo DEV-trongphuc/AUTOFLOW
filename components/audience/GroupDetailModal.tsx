@@ -4,6 +4,7 @@ import { X, Search, UserMinus, Edit3, ShieldCheck, Tag, Filter, ChevronLeft, Che
 import Skeleton from '../common/Skeleton';
 import Modal from '../common/Modal';
 import Badge from '../common/Badge';
+import Pagination from '../common/Pagination';
 import Button from '../common/Button';
 import Input from '../common/Input';
 import Checkbox from '../common/Checkbox';
@@ -33,6 +34,45 @@ interface GroupDetailModalProps {
     onCleanup?: (id: string) => void;
     loading?: boolean;
 }
+
+const renderMemberAvatar = (email: string, firstName?: string, lastName?: string) => {
+    const fName = (firstName || '').trim();
+    const lName = (lastName || '').trim();
+    const cleanEmail = (email || '').trim();
+    
+    let fullName = '';
+    if (fName || lName) {
+        fullName = `${fName} ${lName}`.trim();
+    } else {
+        fullName = cleanEmail.split('@')[0] || '?';
+    }
+
+    const parts = fullName.split(/\s+/);
+    let initials = '?';
+    if (parts.length > 0 && parts[0]) {
+        if (parts.length === 1) {
+            initials = parts[0].substring(0, 2).toUpperCase();
+        } else {
+            initials = (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+    }
+
+    const colors = [
+        'bg-blue-500', 'bg-rose-500', 'bg-emerald-500', 'bg-amber-500', 'bg-indigo-500', 'bg-violet-500'
+    ];
+    let hash = 0;
+    const textToHash = fullName;
+    for (let i = 0; i < textToHash.length; i++) {
+        hash = textToHash.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const colorClass = colors[Math.abs(hash) % colors.length];
+
+    return (
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-sm ${colorClass}`}>
+            {initials}
+        </div>
+    );
+};
 
 const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
     isOpen, onClose, group, members, onRemoveFromList, onRemoveFromTag, onExcludeFromSegment, onSplit, onViewProfile,
@@ -983,9 +1023,7 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                                         </td>
                                         <td className="px-6 py-3 cursor-pointer" onClick={() => onViewProfile(member)}>
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500">
-                                                    {(member.firstName || '?')[0]}
-                                                </div>
+                                                {renderMemberAvatar(member.email, member.firstName, member.lastName)}
                                                 <div>
                                                     <p className="text-sm font-bold text-slate-700">{member.firstName} {member.lastName}</p>
                                                     <div className="flex items-center gap-2">
@@ -1045,29 +1083,13 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                     </div>
 
                     {/* Pagination Footer */}
-                    {totalPages > 1 && (
-                        <div className="pt-4 border-t border-slate-100 flex items-center justify-between shrink-0">
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-                                    disabled={currentPage === 1}
-                                    className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                                >
-                                    <ChevronLeft className="w-4 h-4" />
-                                </button>
-                                <span className="px-4 py-2 bg-slate-50 rounded-lg text-xs font-bold text-slate-600 border border-slate-100">
-                                    {currentPage} / {totalPages}
-                                </span>
-                                <button
-                                    onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-                                    disabled={currentPage === totalPages}
-                                    className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                                >
-                                    <ChevronRight className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
-                    )}
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        totalCount={totalCount}
+                        itemsPerPage={20}
+                        onPageChange={onPageChange}
+                    />
 
                     {/* Segment Note */}
                     {group.type === 'segment' && (
@@ -1274,9 +1296,12 @@ const GroupDetailModal: React.FC<GroupDetailModalProps> = ({
                                                 {previewMembers.map((m, i) => (
                                                     <tr key={m.id} className="hover:bg-slate-50/50 transition-colors">
                                                         <td className="px-6 py-4">
-                                                            <div className="flex flex-col">
-                                                                <span className="font-bold text-slate-700">{m.firstName} {m.lastName}</span>
-                                                                <span className="text-[11px] text-slate-400 font-medium">{m.email}</span>
+                                                            <div className="flex items-center gap-3">
+                                                                {renderMemberAvatar(m.email, m.firstName, m.lastName)}
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-bold text-slate-700">{m.firstName} {m.lastName}</span>
+                                                                    <span className="text-[11px] text-slate-400 font-medium">{m.email}</span>
+                                                                </div>
                                                             </div>
                                                         </td>
                                                         <td className="px-6 py-4">

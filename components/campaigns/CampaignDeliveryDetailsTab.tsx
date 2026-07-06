@@ -13,6 +13,7 @@ import Checkbox from '../common/Checkbox';
 import Radio from '../common/Radio';
 import TabTransition from '../common/TabTransition';
 import toast from 'react-hot-toast';
+import Pagination from '../common/Pagination';
 
 interface Props {
     campaign: Campaign;
@@ -20,6 +21,36 @@ interface Props {
     allTags: any[];
     initialFilter?: string;
 }
+
+const renderAvatar = (email: string, isZns: boolean) => {
+    let initials = '';
+    const cleanText = (email || '').trim();
+
+    if (isZns) {
+        initials = 'ZP';
+    } else if (cleanText.includes('@')) {
+        const username = cleanText.split('@')[0];
+        initials = username.substring(0, 2).toUpperCase();
+    } else {
+        initials = cleanText.substring(0, 2).toUpperCase() || '?';
+    }
+
+    const colors = [
+        'bg-blue-500', 'bg-rose-500', 'bg-emerald-500', 'bg-amber-500', 'bg-indigo-500', 'bg-violet-500'
+    ];
+    let hash = 0;
+    const textToHash = cleanText || 'default';
+    for (let i = 0; i < textToHash.length; i++) {
+        hash = textToHash.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const colorClass = colors[Math.abs(hash) % colors.length];
+
+    return (
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-sm mr-1 ${colorClass}`}>
+            {initials}
+        </div>
+    );
+};
 
 const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTags, initialFilter = 'all' }) => {
     const isZns = campaign.type === 'zalo_zns';
@@ -517,7 +548,7 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
                                 recipients.map((r, i) => (
                                     <tr
                                         key={i}
-                                        className={`group transition-colors ${r.subscriber_id ? 'cursor-pointer' : ''} ${selectedIds.includes(r.subscriber_id) ? 'bg-orange-50/20' : 'hover:bg-slate-50'}`}
+                                        className={`group/row transition-colors ${r.subscriber_id ? 'cursor-pointer' : ''} ${selectedIds.includes(r.subscriber_id) ? 'bg-orange-50/20' : 'hover:bg-slate-50'}`}
                                         onClick={() => r.subscriber_id && handleSelectRow(r.subscriber_id)}
                                     >
                                         <td className="px-6 py-3" onClick={(e) => e.stopPropagation()}>
@@ -534,8 +565,11 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
                                             </span>
                                         </td>
                                         <td className="px-6 py-3 max-w-[220px]">
-                                            <div className="text-xs font-bold text-slate-700 group-hover:text-[#ca7900] transition-colors truncate" title={r.email}>{r.email}</div>
-                                        </td>
+                                             <div className="flex items-center gap-3">
+                                                 {renderAvatar(r.email, isZns)}
+                                                 <div className="text-xs font-bold text-slate-700 dark:text-slate-200 group-hover/row:text-orange-600 transition-colors truncate" title={r.email}>{r.email}</div>
+                                             </div>
+                                         </td>
                                         <td className="px-6 py-3">
                                             <Badge variant={r.delivery_status === 'success' ? 'success' : 'danger'} className="uppercase text-[9px]">
                                                 {r.delivery_status}
@@ -566,34 +600,13 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
                 </div>
 
                 {/* Result Count and Pagination Footer */}
-                <div className="px-6 py-4 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
-                    <span className="text-xs font-bold text-slate-500">
-                        Tất cả: <span className="text-orange-600 text-sm font-black">{pagination.total.toLocaleString()}</span> kết quả
-                        {(filter !== 'all' || debouncedSearch || typeFilter !== 'all' || minOpens || minClicks) && ' (đã lọc)'}
-                    </span>
-
-                    {pagination.totalPages > 1 && (
-                        <div className="flex items-center gap-2">
-                            <button
-                                disabled={pagination.page <= 1}
-                                onClick={() => fetchRecipients(pagination.page - 1)}
-                                className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                Trang trước
-                            </button>
-                            <span className="text-[10px] font-semibold text-slate-400 bg-slate-50 px-2 py-1 rounded">
-                                {pagination.page.toLocaleString()} / {pagination.totalPages.toLocaleString()}
-                            </span>
-                            <button
-                                disabled={pagination.page >= pagination.totalPages}
-                                onClick={() => fetchRecipients(pagination.page + 1)}
-                                className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                Trang sau
-                            </button>
-                        </div>
-                    )}
-                </div>
+                <Pagination
+                    currentPage={pagination.page}
+                    totalPages={pagination.totalPages}
+                    totalCount={pagination.total}
+                    itemsPerPage={pagination.limit}
+                    onPageChange={(p) => fetchRecipients(p)}
+                />
             </Card>
 
             <ConfirmModal

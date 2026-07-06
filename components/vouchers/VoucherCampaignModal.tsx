@@ -275,6 +275,7 @@ const VoucherCampaignModal: React.FC<VoucherCampaignModalProps> = ({ isOpen, onC
                     <div className="space-y-3">
                         <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Loại mã Voucher</label>
                         <Tabs 
+                            variant="segmented"
                             activeId={formData.codeType as string}
                             onChange={(id) => setFormData(p => ({ ...p, codeType: id as any, staticCode: id === 'dynamic' ? '' : p.staticCode }))}
                             items={[

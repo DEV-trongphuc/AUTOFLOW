@@ -11,6 +11,7 @@ import Skeleton from '../../common/Skeleton';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ContextMenu } from '../../common/ContextMenu';
 import { Edit, Tag, PlusSquare, Trash2 } from 'lucide-react';
+import Pagination from '../../common/Pagination';
 
 interface ContactsTabProps {
     loading?: boolean;
@@ -92,7 +93,7 @@ const ContactRow = React.memo(React.forwardRef<HTMLTableRowElement, ContactRowPr
         <tr
             ref={ref}
             data-index={dataIndex}
-            className={`hover:bg-slate-50 transition-colors group cursor-pointer border-b border-slate-100 ${isSelected ? 'bg-violet-50/20' : ''}`}
+            className={`hover:bg-slate-50 transition-colors group/row cursor-pointer border-b border-slate-100 ${isSelected ? 'bg-violet-50/20' : ''}`}
             onClick={() => onSelect(sub)}
             onContextMenu={onContextMenu ? (e) => onContextMenu(e, sub) : undefined}
         >
@@ -107,7 +108,7 @@ const ContactRow = React.memo(React.forwardRef<HTMLTableRowElement, ContactRowPr
                         </div>
                     )}
                     <div>
-                        <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 group-hover:text-violet-600 transition-colors flex items-center gap-1">
+                        <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 group-hover/row:text-violet-600 transition-colors flex items-center gap-1">
                             {fullName}
                         </div>
                         {Number(sub.verified) === 1 && (
@@ -461,59 +462,13 @@ const ContactsTab = React.memo<ContactsTabProps>(({
                 </table>
             </div>
 
-            {totalPages > 1 && (
-                <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
-                    <div className="text-xs font-semibold text-slate-400 dark:text-slate-500">
-                        Hiển thị <span className="font-extrabold text-slate-700 dark:text-slate-300">{((currentPage - 1) * itemsPerPage + 1).toLocaleString()}</span> - <span className="font-extrabold text-slate-700 dark:text-slate-300">{Math.min(currentPage * itemsPerPage, totalCount).toLocaleString()}</span> trên <span className="font-extrabold text-slate-700 dark:text-slate-300">{(totalCount || 0).toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <button 
-                            type="button" 
-                            onClick={() => onPageChange(Math.max(1, currentPage - 1))} 
-                            disabled={currentPage === 1} 
-                            className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
-                        >
-                            <ChevronLeft className="w-4 h-4" />
-                        </button>
-                        
-                        {(() => {
-                            const range = [];
-                            const maxVisible = 5;
-                            let start = Math.max(1, currentPage - 2);
-                            let end = Math.min(totalPages, start + maxVisible - 1);
-                            if (end - start < maxVisible - 1) {
-                                start = Math.max(1, end - maxVisible + 1);
-                            }
-                            for (let i = start; i <= end; i++) {
-                                range.push(i);
-                            }
-                            return range;
-                        })().map(pageNum => (
-                            <button
-                                key={pageNum}
-                                type="button"
-                                onClick={() => onPageChange(pageNum)}
-                                className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
-                                    currentPage === pageNum 
-                                        ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm' 
-                                        : 'border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-slate-600 dark:text-slate-400'
-                                }`}
-                            >
-                                {pageNum}
-                            </button>
-                        ))}
-
-                        <button 
-                            type="button" 
-                            onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))} 
-                            disabled={currentPage === totalPages} 
-                            className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
-                        >
-                            <ChevronRight className="w-4 h-4" />
-                        </button>
-                    </div>
-                </div>
-            )}
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalCount={totalCount}
+                itemsPerPage={itemsPerPage}
+                onPageChange={onPageChange}
+            />
 
         </>
     );

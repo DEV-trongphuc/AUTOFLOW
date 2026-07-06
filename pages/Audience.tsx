@@ -1365,6 +1365,8 @@ const Audience: React.FC = () => {
                                     lists={staticLists.filter(isManualList)}
                                     currentPage={listsPagination.page}
                                     totalPages={listsPagination.totalPages}
+                                    totalCount={listsPagination.total}
+                                    itemsPerPage={listsPagination.limit}
                                     onPageChange={(p) => setListsPagination(prev => ({ ...prev, page: p }))}
                                     onView={(list) => setViewingGroup({ id: list.id, name: list.name, type: 'list', count: list.count })}
                                     onEdit={adminGuard(setEditingList, 'sửa danh sách')}
@@ -1443,6 +1445,8 @@ const Audience: React.FC = () => {
                                     segments={segments}
                                     currentPage={segmentsPagination.page}
                                     totalPages={segmentsPagination.totalPages}
+                                    totalCount={segmentsPagination.total}
+                                    itemsPerPage={segmentsPagination.limit}
                                     onPageChange={(p) => setSegmentsPagination(prev => ({ ...prev, page: p }))}
                                     onView={(seg) => setViewingGroup({ id: seg.id, name: seg.name, type: 'segment', count: seg.count })}
                                     onEdit={adminGuard((seg) => { setEditingSegment(seg); setSegmentBuilderOpen(true); }, 'sửa phân khúc')}

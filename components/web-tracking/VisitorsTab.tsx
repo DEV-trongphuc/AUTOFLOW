@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useMemo, useEffect } from 'react';
 import { User, Users, X, Smartphone, Tablet, Monitor, Terminal, MapPin, Search, Globe, ChevronDown, RefreshCw, ChevronLeft, ChevronRight, Repeat, Clock, ShieldAlert, Check, List, BarChart3, ShieldCheck, Trash2, Bot, MessageSquare } from 'lucide-react';
 import { Visitor, VisitorStats, WebProperty } from './types';
@@ -181,7 +181,7 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
             <Tabs
                 activeId={mainTab}
                 onChange={setMainTab as any}
-                variant="underline"
+                variant="segmented"
                 items={[
                     { id: 'list', label: 'Danh sách Visitor', icon: List },
                     { id: "loyalty", label: "Báo cáo Trung thành", icon: BarChart3 },

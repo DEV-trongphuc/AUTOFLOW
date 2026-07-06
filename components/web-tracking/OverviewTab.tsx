@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState } from 'react';
 import { Zap, Smartphone, FileText, Share2 } from 'lucide-react';
 import { WebStats, WebProperty } from './types';
@@ -28,7 +28,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, formatDuration, shorte
             <Tabs
                 activeId={activeTab}
                 onChange={setActiveTab as any}
-                variant="underline"
+                variant="segmented"
                 items={[
                     { id: 'general', label: 'Tổng quan', icon: Zap },
                     { id: 'audience', label: 'Thiết bị - Vị trí', icon: Smartphone },

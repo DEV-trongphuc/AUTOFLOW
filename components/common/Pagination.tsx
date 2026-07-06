@@ -2,102 +2,103 @@ import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface PaginationProps {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    itemsPerPage: number;
-    onPageChange: (page: number) => void;
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+  itemsPerPage?: number;
+  onPageChange: (page: number) => void;
+  className?: string;
+  isDarkTheme?: boolean;
 }
 
 const Pagination: React.FC<PaginationProps> = ({
-    currentPage,
-    totalPages,
-    totalItems,
-    itemsPerPage,
-    onPageChange
+  currentPage,
+  totalPages,
+  totalCount,
+  itemsPerPage,
+  onPageChange,
+  className = '',
+  isDarkTheme
 }) => {
-    if (totalPages <= 1) return null;
+  if (totalPages <= 1) return null;
 
-    const startItem = (currentPage - 1) * itemsPerPage + 1;
-    const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+  // Calculate range to display
+  const hasRange = itemsPerPage !== undefined && itemsPerPage > 0;
+  const from = hasRange ? ((currentPage - 1) * itemsPerPage + 1) : 0;
+  const to = hasRange ? Math.min(currentPage * itemsPerPage, totalCount) : 0;
 
-    const getPageNumbers = () => {
-        const pages: (number | string)[] = [];
-        const maxVisible = 5;
+  return (
+    <div className={`px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 ${isDarkTheme ? 'border-slate-800/80 bg-slate-900/10' : 'border-slate-100 bg-white'} ${className}`}>
+      <div className="text-xs font-semibold text-slate-400 dark:text-slate-500">
+        {hasRange ? (
+          <>
+            Hiển thị <span className="font-extrabold text-slate-700 dark:text-slate-350">{from.toLocaleString()}</span> - <span className="font-extrabold text-slate-700 dark:text-slate-350">{to.toLocaleString()}</span> trên <span className="font-extrabold text-slate-700 dark:text-slate-350">{totalCount.toLocaleString()}</span>
+          </>
+        ) : (
+          <>
+            Tất cả: <span className="font-extrabold text-slate-750 dark:text-slate-300">{totalCount.toLocaleString()}</span> kết quả (Trang {currentPage}/{totalPages})
+          </>
+        )}
+      </div>
 
-        if (totalPages <= maxVisible) {
-            for (let i = 1; i <= totalPages; i++) {
-                pages.push(i);
-            }
-        } else {
-            if (currentPage <= 3) {
-                for (let i = 1; i <= 4; i++) pages.push(i);
-                pages.push('...');
-                pages.push(totalPages);
-            } else if (currentPage >= totalPages - 2) {
-                pages.push(1);
-                pages.push('...');
-                for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
-            } else {
-                pages.push(1);
-                pages.push('...');
-                for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
-                pages.push('...');
-                pages.push(totalPages);
-            }
-        }
+      <div className="flex items-center gap-1.5 font-sans">
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+          disabled={currentPage === 1}
+          className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all ${
+            isDarkTheme 
+              ? 'border-slate-800 bg-slate-900 text-slate-500 hover:text-slate-300 disabled:opacity-20' 
+              : 'border-slate-200 bg-white text-slate-400 hover:bg-slate-50 disabled:opacity-50'
+          } disabled:cursor-not-allowed`}
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
 
-        return pages;
-    };
+        {(() => {
+          const range: number[] = [];
+          const maxVisible = 5;
+          let start = Math.max(1, currentPage - 2);
+          let end = Math.min(totalPages, start + maxVisible - 1);
+          if (end - start < maxVisible - 1) {
+            start = Math.max(1, end - maxVisible + 1);
+          }
+          for (let i = start; i <= end; i++) {
+            range.push(i);
+          }
+          return range;
+        })().map(pageNum => (
+          <button
+            key={pageNum}
+            type="button"
+            onClick={() => onPageChange(pageNum)}
+            className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+              currentPage === pageNum
+                ? 'bg-violet-600 hover:bg-violet-700 text-white shadow-sm font-extrabold'
+                : isDarkTheme
+                  ? 'border border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700 hover:bg-slate-850'
+                  : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-550'
+            }`}
+          >
+            {pageNum}
+          </button>
+        ))}
 
-    return (
-        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/30">
-            <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold text-slate-500">
-                    Hiển thị <span className="text-slate-800 font-black">{startItem}-{endItem}</span> trong <span className="text-slate-800 font-black">{totalItems.toLocaleString()}</span>
-                </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-                <button
-                    onClick={() => onPageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all disabled:hover:bg-white"
-                >
-                    <ChevronLeft className="w-4 h-4 text-slate-600" />
-                </button>
-
-                <div className="flex items-center gap-1">
-                    {getPageNumbers().map((page, idx) => (
-                        typeof page === 'number' ? (
-                            <button
-                                key={idx}
-                                onClick={() => onPageChange(page)}
-                                className={`min-w-[36px] h-9 px-3 rounded-xl text-[11px] font-black transition-all ${currentPage === page
-                                        ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20'
-                                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                                    }`}
-                            >
-                                {page}
-                            </button>
-                        ) : (
-                            <span key={idx} className="px-2 text-slate-400 text-[11px] font-bold">
-                                {page}
-                            </span>
-                        )
-                    ))}
-                </div>
-
-                <button
-                    onClick={() => onPageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all disabled:hover:bg-white"
-                >
-                    <ChevronRight className="w-4 h-4 text-slate-600" />
-                </button>
-            </div>
-        </div>
-    );
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+          disabled={currentPage === totalPages}
+          className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all ${
+            isDarkTheme 
+              ? 'border-slate-800 bg-slate-900 text-slate-500 hover:text-slate-300 disabled:opacity-20' 
+              : 'border-slate-200 bg-white text-slate-400 hover:bg-slate-50 disabled:opacity-50'
+          } disabled:cursor-not-allowed`}
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
 };
 
 export default Pagination;

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Layers, RefreshCw, Filter, Edit3, Trash2, Check, X, Scissors, Eraser, ChevronLeft, ChevronRight } from 'lucide-react';
 import Card from '../../common/Card';
 import Skeleton from '../../common/Skeleton';
+import Pagination from '../../common/Pagination';
 import { Segment } from '../../../types';
 
 
@@ -11,6 +12,8 @@ interface SegmentsTabProps {
     segments: Segment[];
     currentPage?: number;
     totalPages?: number;
+    totalCount?: number;
+    itemsPerPage?: number;
     onPageChange?: (page: number) => void;
     onView: (segment: Segment) => void;
     onEdit: (segment: Segment) => void;
@@ -142,7 +145,7 @@ const SegmentSkeleton = () => (
     </tr>
 );
 
-const SegmentsTab: React.FC<SegmentsTabProps> = ({ loading, segments, currentPage = 1, totalPages = 1, onPageChange, onView, onEdit, onDelete, onBulkDelete, onSplit, onRefresh, onCleanup }) => {
+const SegmentsTab: React.FC<SegmentsTabProps> = ({ loading, segments, currentPage = 1, totalPages = 1, totalCount = 0, itemsPerPage = 10, onPageChange, onView, onEdit, onDelete, onBulkDelete, onSplit, onRefresh, onCleanup }) => {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
     const toggleSelectAll = React.useCallback(() => {
@@ -255,16 +258,13 @@ const SegmentsTab: React.FC<SegmentsTabProps> = ({ loading, segments, currentPag
 
             </div>
             {onPageChange && totalPages > 1 && (
-                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-                    <p className="text-xs text-slate-500 font-medium">Trang <span className="font-bold text-slate-800">{(currentPage || 1).toLocaleString()}</span> / {(totalPages || 1).toLocaleString()}</p>
-
-                    <div className="flex gap-2">
-                        <button onClick={() => onPageChange(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"><ChevronLeft className="w-4 h-4" /></button>
-                        <span className="px-4 py-2 bg-slate-50 rounded-lg text-xs font-bold text-slate-600 border border-slate-100">{(currentPage || 1).toLocaleString()} / {(totalPages || 1).toLocaleString()}</span>
-
-                        <button onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"><ChevronRight className="w-4 h-4" /></button>
-                    </div>
-                </div>
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalCount={totalCount}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={onPageChange}
+                />
             )}
         </Card>
     );

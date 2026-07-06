@@ -25,20 +25,20 @@ const Card: React.FC<CardProps> = ({
   const clickableClasses = onClick ? 'cursor-pointer active:scale-[0.985] hover:border-slate-200/80' : '';
   return (
     <div 
-      className={`bg-white rounded-[24px] border border-slate-100/70 shadow-[0_4px_20px_rgba(0,0,0,0.015)] hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] transition-all duration-300 group ${clickableClasses} ${className}`}
+      className={`bg-white dark:bg-slate-900 rounded-[24px] border border-slate-100/70 dark:border-slate-800/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)] hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] transition-all duration-300 group ${clickableClasses} ${className}`}
       onClick={onClick}
     >
       {(title || action || Icon) && (
         <div className="px-8 py-6 flex justify-between items-start">
           <div className="flex items-center gap-4">
             {Icon && (
-              <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-indigo-500 transition-colors">
+              <div className="w-10 h-10 rounded-2xl bg-slate-50 dark:bg-slate-850 flex items-center justify-center text-slate-400 group-hover:text-violet-500 transition-colors">
                 <Icon className="w-5 h-5" />
               </div>
             )}
             <div>
-              {title && <h3 className="text-lg font-extrabold text-slate-800 tracking-tight">{title}</h3>}
-              {description && <p className="text-sm font-medium text-slate-400 mt-1">{description}</p>}
+              {title && <h3 className="text-lg font-extrabold text-slate-800 dark:text-slate-100 tracking-tight">{title}</h3>}
+              {description && <p className="text-sm font-medium text-slate-400 dark:text-slate-500 mt-1">{description}</p>}
             </div>
           </div>
           {action && <div>{action}</div>}

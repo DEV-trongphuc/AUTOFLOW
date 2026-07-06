@@ -472,13 +472,16 @@ const ZaloAudienceTab: React.FC = () => {
 };
 
 const StatCard = ({ label, value, icon: Icon, color }: any) => (
-    <div className="bg-white px-5 py-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 group hover:border-amber-200 transition-all duration-300">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-${color}-50 text-${color === 'blue' ? 'amber-600' : color === 'emerald' ? 'emerald-600' : 'amber-600'} group-hover:scale-105`}>
+    <div className="bg-white dark:bg-slate-900 px-5 py-4 rounded-3xl border border-slate-100/70 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-4 group">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${color === 'blue' ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-450' :
+            color === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-450' :
+                'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-450'
+            } group-hover:scale-110`}>
             {Icon && <Icon className="w-5 h-5" />}
         </div>
         <div>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{label}</p>
-            <p className="text-xl font-black text-slate-800 tracking-tighter">{(value || 0).toLocaleString()}</p>
+            <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">{label}</p>
+            <p className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tighter">{(value || 0).toLocaleString()}</p>
         </div>
     </div>
 );
